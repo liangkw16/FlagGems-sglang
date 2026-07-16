@@ -14,6 +14,7 @@ from flaggems_sglang.ops.fused_recurrent_gated_delta_rule_packed_decode import (
 from flaggems_sglang.ops.gemma_rms_norm import gemma_rms_norm  # noqa: F401
 from flaggems_sglang.ops.mrotary_embedding import (  # noqa: F401
     _rope_1d,
+    mrotary_embedding,
     triton_mrope_fused,
 )
 
