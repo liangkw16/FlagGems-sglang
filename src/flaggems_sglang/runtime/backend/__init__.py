@@ -21,7 +21,6 @@ import sys
 from pathlib import Path
 
 from ..common import vendors
-from . import backend_utils
 
 vendor_module = None
 device_name = None
