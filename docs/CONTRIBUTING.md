@@ -107,13 +107,10 @@ Rules:
 ### 2.2 Vendor specialization
 
 Create `src/flaggems_sglang/runtime/backend/_<vendor>/ops/my_op.py` with the
-same function name, then re-export from `_<vendor>/ops/__init__.py`:
-
-```python
-from .my_op import my_op
-
-__all__ = ["my_op"]
-```
+same function name and the same `__all__ = ["my_op"]` contract as a generic
+op. The registrar walks every `*.py` in the vendor `ops/` package the same
+way it walks the generic tier — you do **not** need to re-export from
+`_<vendor>/ops/__init__.py`.
 
 If the vendor gates ops via `enable_configs.yaml` (see
 `_nvidia/enable_configs.yaml`), add the op name there when it should be
@@ -122,8 +119,10 @@ active for that vendor.
 ### 2.3 Arch specialization
 
 Same idea, one level deeper:
-`_<vendor>/<arch>/ops/my_op.py` and its `ops/__init__.py`. `<arch>` is
-resolved via the vendor's `ARCH_MAP` (see `_nvidia/__init__.py`).
+`_<vendor>/<arch>/ops/my_op.py`. `<arch>` is resolved via the vendor's
+`ARCH_MAP` (see `_nvidia/__init__.py`). Again: the op file's `__all__` is
+what gets discovered; the `ops/__init__.py` at this tier does not need any
+re-export.
 
 ### 2.4 Verify the registration
 
@@ -348,9 +347,9 @@ Before you hit "Create PR":
       `benchmark/attri_util.py`.
 - [ ] `pre-commit run --all-files` passes.
 - [ ] `pytest -q tests/test_my_op.py --quick` passes on your device.
-- [ ] For vendor/arch specializations: op is re-exported from the
-      appropriate `ops/__init__.py`, and `enable_configs.yaml` is updated
-      if the vendor uses gating.
+- [ ] For vendor/arch specializations: op file defines
+      `__all__ = ["<op_name>"]`, and `enable_configs.yaml` is updated if
+      the vendor uses gating.
 - [ ] PR description follows the template.
 
 ---
@@ -369,9 +368,10 @@ validation against a held-out harness.
   - Generic Triton kernel → `src/flaggems_sglang/ops/<op_name>.py`.
   - Vendor-specialized → `src/flaggems_sglang/runtime/backend/_<vendor>/ops/<op_name>.py`.
   - Arch-specialized → `src/flaggems_sglang/runtime/backend/_<vendor>/<arch>/ops/<op_name>.py`.
-- The matching `ops/__init__.py` update (re-export + `__all__` entry) for
-  vendor/arch tiers, and an `enable_configs.yaml` entry if the target
-  vendor uses gating.
+- Every op file defines `__all__ = ["<op_name>"]`. The registrar picks up
+  every tier by walking the corresponding `ops/` package and reading each
+  module's `__all__` — no `ops/__init__.py` re-export needed at any tier.
+- An `enable_configs.yaml` entry if the target vendor uses gating.
 - The Apache 2.0 copyright header on every new file.
 
 **What you do *not* need to submit:**
@@ -417,8 +417,9 @@ Use the standard template at `.github/PULL_REQUEST_TEMPLATE.md`, and in the
 
 - [ ] Op file lives in the correct dispatcher tier folder.
 - [ ] Apache 2.0 header + `__all__` present.
-- [ ] For vendor/arch tiers: re-exported from `ops/__init__.py`;
-      `enable_configs.yaml` updated if the vendor uses gating.
+- [ ] For vendor/arch tiers: op file defines
+      `__all__ = ["<op_name>"]`; `enable_configs.yaml` updated if the
+      vendor uses gating.
 - [ ] `import flaggems_sglang; flaggems_sglang.all_registered_ops()`
       shows your op locally.
 - [ ] `pre-commit run --all-files` passes.
