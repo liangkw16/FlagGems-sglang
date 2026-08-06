@@ -21,10 +21,11 @@ Priority (higher wins on name collision):
     Level 1: ``flaggems_sglang.runtime.backend._<vendor>.ops`` (vendor)
     Level 2: ``flaggems_sglang.runtime.backend._<vendor>.<arch>.ops`` (arch)
 
-A vendor or arch module registers an override simply by defining a
-top-level function whose name matches a generic op (e.g. ``gemma_rms_norm``).
-The registrar collects generic ops from each ``ops/*.py`` module's
-``__all__`` and stacks vendor / arch replacements on top.
+Every tier is discovered the same way: walk the ``ops`` package,
+import each ``*.py`` module, and merge every function listed in that
+module's ``__all__``. Vendor / arch overrides just define a same-named
+function in a file whose ``__all__`` lists it — no ``ops/__init__.py``
+re-export required.
 """
 
 from __future__ import annotations
@@ -34,7 +35,7 @@ import inspect
 import pkgutil
 from typing import Callable, Dict, List, Optional
 
-from . import backend
+from .backend import BackendArchEvent
 from .backend.device import DeviceDetector
 
 
@@ -73,32 +74,38 @@ class OpRegistrar:
         return self._resolved.get(name)
 
     def _collect_generic(self) -> None:
-        try:
-            pkg = importlib.import_module(self._generic_pkg)
-        except ModuleNotFoundError:
-            return
-        for mod_info in pkgutil.iter_modules(pkg.__path__):
-            if mod_info.ispkg or mod_info.name.startswith("_"):
-                continue
-            mod = importlib.import_module(
-                f"{self._generic_pkg}.{mod_info.name}"
-            )
-            self._merge_from_module(mod)
+        self._collect_from_package(self._generic_pkg)
 
     def _collect_vendor(self) -> None:
-        for fn_name, fn in backend.get_current_device_extend_op(
-            self._device.vendor_name
-        ):
-            if inspect.isfunction(fn):
-                self._resolved[fn_name] = fn
+        vendor = self._device.vendor_name
+        if not vendor:
+            return
+        self._collect_from_package(
+            f"flaggems_sglang.runtime.backend._{vendor}.ops"
+        )
 
     def _collect_arch(self) -> None:
-        event = backend.BackendArchEvent()
-        if not event.has_arch:
+        event = BackendArchEvent()
+        if not event.has_arch or not event.arch:
             return
-        for fn_name, fn in event.get_arch_ops():
-            if inspect.isfunction(fn):
-                self._resolved[fn_name] = fn
+        vendor = self._device.vendor_name
+        self._collect_from_package(
+            f"flaggems_sglang.runtime.backend._{vendor}.{event.arch}.ops"
+        )
+
+    def _collect_from_package(self, pkg_name: str) -> None:
+        try:
+            pkg = importlib.import_module(pkg_name)
+        except ModuleNotFoundError:
+            return
+        pkg_path = getattr(pkg, "__path__", None)
+        if pkg_path is None:
+            return
+        for mod_info in pkgutil.iter_modules(pkg_path):
+            if mod_info.ispkg or mod_info.name.startswith("_"):
+                continue
+            mod = importlib.import_module(f"{pkg_name}.{mod_info.name}")
+            self._merge_from_module(mod)
 
     def _merge_from_module(self, module) -> None:
         exported = getattr(module, "__all__", None)

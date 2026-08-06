@@ -45,7 +45,6 @@ Minimum layout:
 ```
 _<vendor>/
 ├── __init__.py
-├── enable_configs.yaml       # optional, op gating
 └── ops/
     ├── __init__.py
     ├── add.py
@@ -58,7 +57,6 @@ Ampere), add per-arch subfolders alongside `ops/`:
 ```
 _<vendor>/
 ├── __init__.py
-├── enable_configs.yaml
 ├── ops/                      # vendor-wide implementations
 │   └── ...
 ├── hopper/                   # arch-specific specialization
@@ -126,32 +124,20 @@ translate it to a subfolder, and load
 
 The `ops/` directory holds your vendor-customized operator
 implementations. For a custom `add`, drop the implementation in
-`ops/add.py` and re-export it from `ops/__init__.py`:
+`ops/add.py`:
 
 ```python
-from .add import add
-from .gelu import gelu
+# ops/add.py
+def add(...):
+    ...
 
-__all__ = ["add", "gelu"]
+__all__ = ["add"]
 ```
 
-Each op file must define its own `__all__` — the registrar walks it
-to discover public entry points; anything not listed is invisible.
-
-#### Step 2.3 — `enable_configs.yaml` (optional)
-
-If your backend wants to opt into only a subset of ops (e.g. because
-some are still WIP or intentionally routed to the generic tier), add an
-`enable_configs.yaml` at `_<vendor>/enable_configs.yaml`:
-
-```yaml
-include:
-  - relu
-  - add
-```
-
-Only listed ops will be picked up as vendor-tier overrides. Ops absent
-from this list fall back through the standard resolution order.
+Each op file must define its own `__all__` — the registrar walks each
+`*.py` in the `ops/` package and merges every name listed in that
+module's `__all__`. Nothing needs to be re-exported from
+`ops/__init__.py`; anything not in a module's `__all__` is invisible.
 
 ### Step 3 — verify
 
@@ -180,10 +166,12 @@ on name collision:
 
 Routing is driven by function **name**. A vendor override for
 `gemma_rms_norm` simply defines `def gemma_rms_norm(...)` in
-`_<vendor>/ops/gemma_rms_norm.py` and re-exports it via
-`ops/__init__.py`'s `__all__`. Missing operators automatically fall back
-to the generic `flaggems_sglang.ops.*` implementation, so vendors only
-ship the kernels they actually specialize.
+`_<vendor>/ops/gemma_rms_norm.py` with
+`__all__ = ["gemma_rms_norm"]` at the module level — the registrar
+discovers it by walking the `ops/` package, no `ops/__init__.py`
+re-export required. Missing operators automatically fall back to the
+generic `flaggems_sglang.ops.*` implementation, so vendors only ship
+the kernels they actually specialize.
 
 The resolver lives in `runtime/op_registrar.py` (`OpRegistrar`) and is
 invoked once from `flaggems_sglang/__init__.py`. To introspect the
