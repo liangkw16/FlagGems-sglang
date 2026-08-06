@@ -390,3 +390,6 @@ def mrotary_embedding(
         )
 
     return query, key
+
+
+__all__ = ["triton_mrope_fused", "mrotary_embedding"]

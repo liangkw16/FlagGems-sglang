@@ -14,9 +14,7 @@
 
 from . import backend, common, error
 from .backend.device import DeviceDetector
-from .configloader import ConfigLoader
 
-config_loader = ConfigLoader()
 device = DeviceDetector()
 
 """
@@ -30,14 +28,6 @@ torch_device_fn = backend.gen_torch_device_object()
 
 # torch_backend_device is like 'torch.backend.cuda' object
 torch_backend_device = backend.get_torch_backend_device_fn()
-
-
-def get_tuned_config(op_name):
-    return config_loader.get_tuned_config(op_name)
-
-
-def get_heuristic_config(op_name):
-    return config_loader.get_heuristics_config(op_name)
 
 
 def replace_customized_ops(_globals):

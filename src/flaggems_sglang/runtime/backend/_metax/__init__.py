@@ -12,4 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__all__ = []
+from backend_utils import VendorDescriptor  # noqa: E402
+
+vendor_info = VendorDescriptor(
+    vendor_name="metax", device_name="cuda", device_query_cmd="mx-smi"
+)
+
+CUSTOMIZED_UNUSED_OPS = ()
+
+__all__ = ["vendor_info"]

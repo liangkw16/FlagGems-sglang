@@ -12,4 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__all__ = []
+from backend_utils import VendorDescriptor  # noqa: E402
+
+vendor_info = VendorDescriptor(
+    vendor_name="mthreads",
+    device_name="musa",
+    device_query_cmd="mthreads-gmi",
+    fp64_enabled=False,
+    tle_enabled=True,
+)
+
+CUSTOMIZED_UNUSED_OPS = ()
+
+
+__all__ = ["*"]

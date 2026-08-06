@@ -18,7 +18,6 @@ from typing import Tuple
 import triton
 
 from flaggems_sglang.runtime import device
-from flaggems_sglang.runtime.backend import vendor_module
 from flaggems_sglang.runtime.common import vendors
 
 
@@ -47,10 +46,6 @@ def hygon_heuristics_for_num_warps(tile_size):
         return 8
     else:
         return 16
-
-
-def cambricon_heuristics_for_num_warps(tile_size):
-    return 1
 
 
 def tsingmicro_heuristics_for_num_warps(tile_size):
@@ -91,17 +86,6 @@ CODEGEN_COFIGS = {
         32,
         True,
         prefer_1d_tile=int(triton.__version__[0]) < 3,
-    ),
-    vendors.CAMBRICON: (
-        CodeGenConfig(
-            8192,
-            tuple([vendor_module.TOTAL_CORE_NUM, 1, 1]),
-            32,
-            True,
-            prefer_1d_tile=int(triton.__version__[0]) < 3,
-        )
-        if vendor_module.vendor_info.vendor_name == "cambricon"
-        else None
     ),
     vendors.METAX: CodeGenConfig(
         2048,
@@ -150,7 +134,6 @@ CODEGEN_COFIGS = {
 HEURISTICS_CONFIG = {
     vendors.NVIDIA: default_heuristics_for_num_warps,
     vendors.METAX: metax_heuristics_for_num_warps,
-    vendors.CAMBRICON: cambricon_heuristics_for_num_warps,
     vendors.HYGON: hygon_heuristics_for_num_warps,
     vendors.TSINGMICRO: tsingmicro_heuristics_for_num_warps,
     vendors.SUNRISE: sunrise_heuristics_for_num_warps,

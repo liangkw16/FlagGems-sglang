@@ -21,7 +21,6 @@ import sys
 from pathlib import Path
 
 from ..common import vendors
-from . import backend_utils
 
 vendor_module = None
 device_name = None
@@ -30,7 +29,6 @@ torch_device_fn_device = None
 tl_extra_backend_module = None
 ops_module = None
 fused_module = None
-heuristic_config_module = None
 vendor_extra_lib_imported = False
 device_fn_cache: dict = {}
 customized_ops = None
@@ -59,29 +57,9 @@ class BackendArchEvent:
             # FlagGems/src/flaggems_sglang/runtime/backend/_nvidia/hopper
             self.current_arch_path = self.supported_archs.get(self.arch)
             self.arch_module = self.get_arch_module()
-            self.autotune_configs = self.get_autotune_configs()
-            self.heuristics_configs = self.get_heuristics_configs()
 
     def get_functions_from_module(self, module):
         return inspect.getmembers(module, inspect.isfunction) if module else []
-
-    def get_heuristics_configs(self):
-        heuristic_module = None
-        try:
-            heuristic_module = self.arch_module
-        except Exception:  # noqa E722
-            sys.path.insert(0, str(self.current_arch_path))
-            heuristic_module = importlib.import_module(
-                "heuristics_config_utils"
-            )
-            sys.path.remove(str(self.current_arch_path))
-        if hasattr(heuristic_module, "HEURISTICS_CONFIGS"):
-            return heuristic_module.HEURISTICS_CONFIGS
-        return None
-
-    def get_autotune_configs(self):
-        path = self.current_arch_path
-        return backend_utils.get_tune_config(file_path=path)
 
     def get_arch(self, device=0):
         if not hasattr(vendor_module, "ARCH_MAP"):
@@ -226,7 +204,7 @@ def set_torch_backend_device_fn(vendor_name=None):
     global device_name, torch_device_fn_device
     device_name = device_name or get_vendor_info(vendor_name).device_name
     module_str = f"torch.backends.{device_name}"
-    if device_name in ("musa", "aipu", "npu", "txda", "ptpu"):
+    if device_name in ("musa", "npu", "txda", "ptpu"):
         torch_device_fn_device = None
     else:
         torch_device_fn_device = importlib.import_module(module_str)
@@ -306,27 +284,6 @@ def get_curent_device_unused_op(vendor_name=None):
     global vendor_module  # noqa: F824
     get_vendor_module(vendor_name)
     return list(vendor_module.CUSTOMIZED_UNUSED_OPS)
-
-
-def get_heuristic_config(vendor_name=None):
-    global heuristic_config_module
-    try:
-        heuristic_config_module = importlib.import_module(
-            f"_{vendor_name}.heuristics_config_utils"
-        )
-    except:  # noqa E722
-        heuristic_config_module = importlib.import_module(
-            "_nvidia.heuristics_config_utils"
-        )
-    if hasattr(heuristic_config_module, "HEURISTICS_CONFIGS"):
-        return heuristic_config_module.HEURISTICS_CONFIGS
-    return None
-
-
-def get_tune_config(vendor_name=None):
-    global vendor_module  # noqa: F824
-    get_vendor_module(vendor_name)
-    return backend_utils.get_tune_config(vendor_name)
 
 
 __all__ = ["*"]

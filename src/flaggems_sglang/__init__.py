@@ -13,26 +13,43 @@
 # limitations under the License.
 
 """
-flag_dnn - DNN operations implemented with Triton
+flaggems_sglang - DNN operations implemented with Triton.
+
+Operators are routed through a three-level registrar
+(``runtime.op_registrar.OpRegistrar``):
+
+    generic ops < vendor ops < arch ops
+
+The resolved implementations are attached directly to this package's
+namespace, so callers use ``flaggems_sglang.<op>(...)`` regardless of the
+underlying vendor.
 """
+
+from typing import Callable, List, Optional
 
 from flaggems_sglang import runtime  # noqa: F401
 from flaggems_sglang import testing  # noqa: F401
-from flaggems_sglang.ops.fused_moe import (  # noqa: F401
-    triton_kernel_fused_experts,
-    triton_kernel_fused_experts_with_bias,
-)
-from flaggems_sglang.ops.fused_recurrent_gated_delta_rule_packed_decode import (  # noqa: F401, E501
-    fused_recurrent_gated_delta_rule_packed_decode,
-)
-from flaggems_sglang.ops.gemma_rms_norm import gemma_rms_norm  # noqa: F401
-from flaggems_sglang.ops.mrotary_embedding import (  # noqa: F401
-    _rope_1d,
-    mrotary_embedding,
-    triton_mrope_fused,
-)
+from flaggems_sglang.runtime.op_registrar import OpRegistrar
+
+_op_registrar = OpRegistrar()
+_op_registrar.apply(globals())
+
+
+def all_registered_ops() -> List[str]:
+    """Return the names of all operators currently resolved on the package."""
+    return _op_registrar.names()
+
+
+def get_op(name: str) -> Optional[Callable]:
+    """Look up a resolved operator by name; ``None`` if not registered."""
+    return _op_registrar.get(name)
+
 
 device = runtime.device.name
 vendor_name = runtime.device.vendor_name
 
 __version__ = "0.1.0"
+
+__all__ = ["all_registered_ops", "get_op", "device", "vendor_name"] + list(
+    _op_registrar.names()
+)

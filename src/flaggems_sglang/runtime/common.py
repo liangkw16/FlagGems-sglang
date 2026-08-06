@@ -12,22 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from enum import Enum
+from enum import Enum, auto
 
 
 class vendors(Enum):
-    NVIDIA = 0
-    CAMBRICON = 1
-    METAX = 2
-    ILUVATAR = 3
-    MTHREADS = 4
-    KUNLUNXIN = 5
-    HYGON = 6
-    AMD = 7
-    AIPU = 8
-    ASCEND = 9
-    TSINGMICRO = 10
-    SUNRISE = 11
+    NVIDIA = auto()
+    METAX = auto()
+    ILUVATAR = auto()
+    MTHREADS = auto()
+    KUNLUNXIN = auto()
+    HYGON = auto()
+    AMD = auto()
+    ASCEND = auto()
+    TSINGMICRO = auto()
+    SUNRISE = auto()
+    THEAD = auto()
 
     @classmethod
     def get_all_vendors(cls) -> dict:

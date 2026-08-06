@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from backend_utils import VendorInfoBase  # noqa: E402
+from backend_utils import VendorDescriptor  # noqa: E402
 
-vendor_info = VendorInfoBase(
+vendor_info = VendorDescriptor(
     vendor_name="nvidia", device_name="cuda", device_query_cmd="nvidia-smi"
 )
 ARCH_MAP = {"9": "hopper", "8": "ampere"}
