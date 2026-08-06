@@ -45,7 +45,6 @@ Minimum layout:
 ```
 _<vendor>/
 ├── __init__.py
-├── enable_configs.yaml       # optional, op gating
 └── ops/
     ├── __init__.py
     ├── add.py
@@ -58,7 +57,6 @@ Ampere), add per-arch subfolders alongside `ops/`:
 ```
 _<vendor>/
 ├── __init__.py
-├── enable_configs.yaml
 ├── ops/                      # vendor-wide implementations
 │   └── ...
 ├── hopper/                   # arch-specific specialization
@@ -140,21 +138,6 @@ Each op file must define its own `__all__` — the registrar walks each
 `*.py` in the `ops/` package and merges every name listed in that
 module's `__all__`. Nothing needs to be re-exported from
 `ops/__init__.py`; anything not in a module's `__all__` is invisible.
-
-#### Step 2.3 — `enable_configs.yaml` (optional)
-
-If your backend wants to opt into only a subset of ops (e.g. because
-some are still WIP or intentionally routed to the generic tier), add an
-`enable_configs.yaml` at `_<vendor>/enable_configs.yaml`:
-
-```yaml
-include:
-  - relu
-  - add
-```
-
-Only listed ops will be picked up as vendor-tier overrides. Ops absent
-from this list fall back through the standard resolution order.
 
 ### Step 3 — verify
 
