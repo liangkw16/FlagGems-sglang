@@ -46,7 +46,9 @@ class OpRegistrar:
         self._device = DeviceDetector()
         self._resolved: Dict[str, Callable] = {}
 
-    def apply(self, target_globals: Optional[Dict] = None) -> Dict[str, Callable]:
+    def apply(
+        self, target_globals: Optional[Dict] = None
+    ) -> Dict[str, Callable]:
         """
         Resolve the operator map and (optionally) inject it into a
         target namespace dict (typically the caller's ``globals()``).
@@ -78,7 +80,9 @@ class OpRegistrar:
         for mod_info in pkgutil.iter_modules(pkg.__path__):
             if mod_info.ispkg or mod_info.name.startswith("_"):
                 continue
-            mod = importlib.import_module(f"{self._generic_pkg}.{mod_info.name}")
+            mod = importlib.import_module(
+                f"{self._generic_pkg}.{mod_info.name}"
+            )
             self._merge_from_module(mod)
 
     def _collect_vendor(self) -> None:
