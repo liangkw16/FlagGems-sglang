@@ -24,21 +24,17 @@ from .. import backend, error
 from ..common import vendors
 
 UNSUPPORT_FP64 = [
-    vendors.CAMBRICON,
     vendors.ILUVATAR,
     vendors.KUNLUNXIN,
     vendors.MTHREADS,
-    vendors.AIPU,
     vendors.ASCEND,
     vendors.TSINGMICRO,
     vendors.SUNRISE,
 ]
 UNSUPPORT_BF16 = [
-    vendors.AIPU,
     vendors.SUNRISE,
 ]
 UNSUPPORT_INT64 = [
-    vendors.AIPU,
     vendors.TSINGMICRO,
     vendors.SUNRISE,
 ]
@@ -81,7 +77,7 @@ class DeviceDetector(object):
 
     def get_vendor(self, vendor_name=None) -> tuple:
         # Try to get the vendor name from a quick special
-        # command like 'torch.mlu'.
+        # command like 'torch.npu'.
         vendor_from_env = self._get_vendor_from_env()
         if vendor_from_env is not None:
             return backend.get_vendor_info(vendor_from_env)
@@ -98,7 +94,6 @@ class DeviceDetector(object):
 
     def _get_vendor_from_quick_cmd(self):
         cmd = {
-            "cambricon": "mlu",
             "mthreads": "musa",
             "iluvatar": "corex",
             "ascend": "npu",

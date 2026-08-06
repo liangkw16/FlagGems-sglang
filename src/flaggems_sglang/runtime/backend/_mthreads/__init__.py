@@ -12,25 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from enum import Enum, auto
+from backend_utils import VendorDescriptor  # noqa: E402
+
+vendor_info = VendorDescriptor(
+    vendor_name="mthreads",
+    device_name="musa",
+    device_query_cmd="mthreads-gmi",
+    fp64_enabled=False,
+    tle_enabled=True,
+)
+
+CUSTOMIZED_UNUSED_OPS = ()
 
 
-class vendors(Enum):
-    NVIDIA = auto()
-    METAX = auto()
-    ILUVATAR = auto()
-    MTHREADS = auto()
-    KUNLUNXIN = auto()
-    HYGON = auto()
-    AMD = auto()
-    ASCEND = auto()
-    TSINGMICRO = auto()
-    SUNRISE = auto()
-    THEAD = auto()
-
-    @classmethod
-    def get_all_vendors(cls) -> dict:
-        vendorDict = {}
-        for member in cls:
-            vendorDict[member.name.lower()] = member
-        return vendorDict
+__all__ = ["*"]

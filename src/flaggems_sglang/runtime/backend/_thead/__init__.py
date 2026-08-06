@@ -12,13 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+T-Head Zhenwu (真武) PPU Backend Configuration
+
+Product: Zhenwu PPU (真武处理器)
+- Model: Zhenwu 810E (supports up to 16 cards with ICN interconnect)
+- Architecture: Proprietary T-Head AI accelerator architecture
+- SDK: PPU SDK v2.0.0+
+
+Key Features:
+- Full CUDA API compatibility (cuda runtime & driver APIs)
+- Triton support: 2.3.x, 3.0.x - 3.4.x with AIU extensions
+- Device management: ppu-smi tool (similar to nvidia-smi)
+"""
+
 from backend_utils import VendorDescriptor  # noqa: E402
 
 vendor_info = VendorDescriptor(
-    vendor_name="iluvatar",
+    vendor_name="thead",
+    # PPU uses CUDA-compatible API, accessed via torch.cuda
     device_name="cuda",
-    device_query_cmd="ixsmi",
-    fp64_enabled=False,
+    # PPU device management tool (similar to nvidia-smi)
+    device_query_cmd="ppu-smi",
+    dispatch_key=None,
+    triton_extra_name=None,
 )
 
 CUSTOMIZED_UNUSED_OPS = ()

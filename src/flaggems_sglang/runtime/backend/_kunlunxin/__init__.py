@@ -12,25 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from enum import Enum, auto
+from backend_utils import VendorDescriptor  # noqa: E402
+
+vendor_info = VendorDescriptor(
+    vendor_name="kunlunxin",
+    device_name="cuda",
+    device_query_cmd="xpu-smi",
+    triton_extra_name="xpu",
+    fp64_enabled=False,
+)
+
+CUSTOMIZED_UNUSED_OPS = (
+    "cummin",
+    "cumsum",
+    "randperm",
+    "sort",
+    "topk",
+    "unique",
+)
 
 
-class vendors(Enum):
-    NVIDIA = auto()
-    METAX = auto()
-    ILUVATAR = auto()
-    MTHREADS = auto()
-    KUNLUNXIN = auto()
-    HYGON = auto()
-    AMD = auto()
-    ASCEND = auto()
-    TSINGMICRO = auto()
-    SUNRISE = auto()
-    THEAD = auto()
-
-    @classmethod
-    def get_all_vendors(cls) -> dict:
-        vendorDict = {}
-        for member in cls:
-            vendorDict[member.name.lower()] = member
-        return vendorDict
+__all__ = ["*"]

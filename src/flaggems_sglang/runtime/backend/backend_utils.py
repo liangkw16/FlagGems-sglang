@@ -12,46 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from dataclasses import dataclass
-
-import yaml  # type: ignore[import-untyped]
 
 
 # Metadata template, Each vendor needs to specialize
 # instances of this template
 @dataclass
-class VendorInfoBase:
+class VendorDescriptor:
+    """
+    A dataclass to describe the vendor-specific information for a hardware backend.
+    """
+
     vendor_name: str
     device_name: str
     device_query_cmd: str
     dispatch_key: str = None
     triton_extra_name: str = None
+    trademark: str = None
+    fp64_enabled: bool = True
+    bf16_enabled: bool = True
+    int64_enabled: bool = True
+    tle_enabled: bool = False
 
 
-def get_tune_config(vendor_name=None, file_mode="r", file_path=None):
-    BACKEND_EVENT = file_path is not None
-    config = None
-    try:
-        if not file_path:
-            vendor_name = "_" + vendor_name
-            script_path = os.path.abspath(__file__)
-            base_dir = os.path.dirname(script_path)
-            file_path = os.path.join(
-                base_dir, vendor_name, "tune_configs.yaml"
-            )
-        else:
-            file_path = os.path.join(file_path, "tune_configs.yaml")
-        with open(file_path, file_mode) as file:
-            config = yaml.safe_load(file)
-    except FileNotFoundError:
-        if not BACKEND_EVENT:
-            raise FileNotFoundError(
-                f"Configuration file not found: {file_path}"
-            )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Failed to parse YAML file: {e}")
-    except Exception as e:
-        raise RuntimeError(f"An unexpected error occurred: {e}")
-
-    return config
+# Keep VendorInfoBase as alias for backward compatibility
+VendorInfoBase = VendorDescriptor
