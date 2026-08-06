@@ -12,26 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from flaggems_sglang.ops.fused_moe import (
-    triton_kernel_fused_experts,
-    triton_kernel_fused_experts_with_bias,
-)
-from flaggems_sglang.ops.fused_recurrent_gated_delta_rule_packed_decode import (  # noqa: E501
-    fused_recurrent_gated_delta_rule_packed_decode,
-)
-from flaggems_sglang.ops.gemma_rms_norm import gemma_rms_norm
-from flaggems_sglang.ops.mrotary_embedding import (  # noqa: F401
-    _rope_1d,
-    mrotary_embedding,
-    triton_mrope_fused,
-)
+"""
+Generic (device-agnostic) Triton operator implementations.
 
-__all__ = [
-    "fused_recurrent_gated_delta_rule_packed_decode",
-    "triton_kernel_fused_experts",
-    "triton_kernel_fused_experts_with_bias",
-    "gemma_rms_norm",
-    "mrotary_embedding",
-    "triton_mrope_fused",
-    "_rope_1d",
-]
+Each submodule defines its public API via its own ``__all__``. The
+top-level ``flaggems_sglang`` package auto-discovers these entries at
+import time through ``runtime.op_registrar.OpRegistrar`` and exposes the
+resolved implementation (generic, vendor, or arch) on the package
+namespace.
+"""

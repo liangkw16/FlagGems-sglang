@@ -403,3 +403,6 @@ def fused_recurrent_gated_delta_rule_packed_decode(
                 num_stages=3,
             )
     return out, initial_state
+
+
+__all__ = ["fused_recurrent_gated_delta_rule_packed_decode"]

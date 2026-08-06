@@ -263,3 +263,6 @@ def gemma_rms_norm(x, weight, eps=1e-6, residual=None):
     if residual is not None:
         return gemma_fused_add_rmsnorm(x, residual, weight, eps)
     return gemma_rmsnorm(x, weight, eps)
+
+
+__all__ = ["gemma_rms_norm"]

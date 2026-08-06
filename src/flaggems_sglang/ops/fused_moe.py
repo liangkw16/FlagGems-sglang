@@ -420,3 +420,9 @@ def fused_moe_flagos(
         output.mul_(obj.runner.config.routed_scaling_factor)
 
     return StandardCombineInput(hidden_states=output)
+
+
+__all__ = [
+    "triton_kernel_fused_experts",
+    "triton_kernel_fused_experts_with_bias",
+]

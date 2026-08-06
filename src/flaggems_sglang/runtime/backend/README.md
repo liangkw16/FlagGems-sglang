@@ -6,12 +6,10 @@ The `flaggems_sglang` operator library provides the ability to access multiple b
 Create a folder named after your vendor in the `FlagGems-sglang/src/flaggems_sglang/runtime/backend` directory, following the pattern `_vendorname`. For example, you can refer to the structure of `FlagGems-sglang/src/flaggems_sglang/runtime/backend/_nvidia`.
 
 #### step 2:
-Create the necessary files, including but not limited to `__init__.py`, `heuristics_config_utils.py`, `tune_configs.yaml`, as well as a folder named `ops`. This is an example under `_nvidia`:
+Create the necessary files, including `__init__.py` and a folder named `ops`. This is an example under `_nvidia`:
 ```
 _nvidia/
 ├── __init__.py
-├── heuristics_config_utils.py
-├── tune_configs.yaml
 └── ops
     ├── __init__.py
     ├── add.py
@@ -49,4 +47,35 @@ from .add import add
 from .gelu import gelu
 
 __all__ = ["add", "gelu"]
+```
+
+## Multi-level operator routing
+
+`flaggems_sglang` picks the operator implementation for the current device
+using three priority levels — later levels override earlier ones on name
+collision:
+
+| Priority | Source                                            | Purpose                            |
+|----------|---------------------------------------------------|------------------------------------|
+| 0        | `flaggems_sglang.ops`                             | generic Triton fallback            |
+| 1        | `runtime/backend/_<vendor>/ops`                   | per-vendor specialization          |
+| 2        | `runtime/backend/_<vendor>/<arch>/ops` (e.g. `_nvidia/hopper/ops`) | per-arch specialization            |
+
+Routing is driven by function **name** — a vendor override for
+`gemma_rms_norm` simply defines `def gemma_rms_norm(...)` in
+`_<vendor>/ops/gemma_rms_norm.py` and re-exports it via `ops/__init__.py`'s
+`__all__`. Missing operators automatically fall back to the generic
+`flaggems_sglang.ops.*` implementation, so vendors only need to ship the
+kernels they actually specialize.
+
+The resolver lives in `runtime/op_registrar.py` (`OpRegistrar`) and is
+invoked once from `flaggems_sglang/__init__.py`. To introspect the routing
+result at runtime use:
+
+```python
+import flaggems_sglang
+
+flaggems_sglang.all_registered_ops()          # -> ['fused_recurrent_...', 'gemma_rms_norm', ...]
+flaggems_sglang.get_op("gemma_rms_norm")      # -> resolved callable for current device
+flaggems_sglang.gemma_rms_norm.__module__     # -> module the resolved impl came from
 ```

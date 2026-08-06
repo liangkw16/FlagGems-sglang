@@ -475,10 +475,9 @@ class Benchmark:
                                 self.gems_op, *args, **kwargs
                             )
                         else:
-                            with flaggems_sglang.use_gems():
-                                metric.latency = self.get_latency(
-                                    self.torch_op, *args, **kwargs
-                                )
+                            metric.latency = self.get_latency(
+                                self.torch_op, *args, **kwargs
+                            )
                     if "speedup" in self.to_bench_metrics:
                         metric.speedup = metric.latency_base / metric.latency
                     if "gbps" in self.to_bench_metrics:
