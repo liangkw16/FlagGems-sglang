@@ -1,24 +1,83 @@
-## Multiple backend adaptations
-### Introduction
-The `flaggems_sglang` operator library provides the ability to access multiple backends. If you are a chip vendor and wish to integrate `your flaggems_sglang code` into our official main branch, you simply need to follow these steps to complete the process.
+<!--
+ Copyright 2026 FlagOS Contributors
 
-#### step 1:
-Create a folder named after your vendor in the `FlagGems-sglang/src/flaggems_sglang/runtime/backend` directory, following the pattern `_vendorname`. For example, you can refer to the structure of `FlagGems-sglang/src/flaggems_sglang/runtime/backend/_nvidia`.
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
 
-#### step 2:
-Create the necessary files, including `__init__.py` and a folder named `ops`. This is an example under `_nvidia`:
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+# Multi-backend adaptation
+
+This README is the entry point for **hardware vendors** integrating their
+own backend into `flaggems_sglang`. If you're contributing a single
+operator (generic, vendor, or arch tier) rather than bringing up a whole
+new vendor, use [`docs/CONTRIBUTING.md`](../../../../docs/CONTRIBUTING.md)
+instead — this file focuses on the vendor-bring-up flow.
+
+## Introduction
+
+`flaggems_sglang` supports multiple hardware backends through a
+three-tier dispatcher rooted at
+`src/flaggems_sglang/runtime/backend/`. To land your backend on the
+official main branch, follow the steps below.
+
+## Vendor bring-up
+
+### Step 1 — create the vendor folder
+
+Create a folder named after your vendor at
+`src/flaggems_sglang/runtime/backend/`, following the pattern
+`_<vendorname>`. Refer to
+`src/flaggems_sglang/runtime/backend/_nvidia/` as the canonical example.
+
+### Step 2 — populate the folder
+
+Minimum layout:
+
 ```
-_nvidia/
+_<vendor>/
 ├── __init__.py
-└── ops
+├── enable_configs.yaml       # optional, op gating
+└── ops/
     ├── __init__.py
     ├── add.py
     └── gelu.py
 ```
 
-##### step 2.1  `__init__.py`
+If your backend has multiple architectures (e.g. NVIDIA Hopper vs.
+Ampere), add per-arch subfolders alongside `ops/`:
 
-You can copy `FlagGems-sglang/src/flaggems_sglang/runtime/backend/_nvidia/__init__.py` and the ***only change*** you need to make is to configure the `VendorDescriptor` class:
+```
+_<vendor>/
+├── __init__.py
+├── enable_configs.yaml
+├── ops/                      # vendor-wide implementations
+│   └── ...
+├── hopper/                   # arch-specific specialization
+│   ├── __init__.py
+│   └── ops/
+│       ├── __init__.py
+│       └── my_op.py
+└── ampere/
+    ├── __init__.py
+    └── ops/
+        ├── __init__.py
+        └── my_op.py
+```
+
+#### Step 2.1 — `__init__.py`
+
+Copy `_nvidia/__init__.py` as a starting point. The **only change**
+required is the `VendorDescriptor` construction:
+
 ```python
 from backend_utils import VendorDescriptor
 
@@ -29,19 +88,46 @@ vendor_info = VendorDescriptor(
 )
 ```
 
-###### Necessary fields:
-- `vendor_name` is your vendor name, like `nvidia`
-- `device_name` is your device name, like `cuda`
-- `device_query_cmd` is a command that can only be successfully executed on your vendor's device, like `nvidia-smi`
+##### Required fields
 
-###### Optional fields:
-- `dispatch_key`: The operator registration field of `torch.library.Library` in PyTorch, like `PrivateUse1`
-- `triton_extra_name`: Triton extra module name (e.g., `hip`, `xpu`, `cann`)
-- `fp64_enabled` / `bf16_enabled` / `int64_enabled`: dtype capability flags (default `True`)
-- `tle_enabled`: whether the vendor exposes a TLE runtime hook (default `False`)
+- `vendor_name` — your vendor name (e.g. `nvidia`).
+- `device_name` — your PyTorch device name (e.g. `cuda`).
+- `device_query_cmd` — a shell command that only succeeds on your
+  vendor's device (e.g. `nvidia-smi`). This is how the runtime
+  auto-detects which backend to load.
 
-##### step 2.2  `ops`
-The `ops` directory is where `vendor-customized operator` implementations are stored. For instance, if you want to create a custom `add` operation, you should place the implementation in `ops/add.py`. Following that, you should configure `ops/__init__.py` accordingly.
+##### Optional fields
+
+- `dispatch_key` — `torch.library.Library` registration key (e.g.
+  `PrivateUse1`).
+- `triton_extra_name` — Triton extra module name (e.g. `hip`, `xpu`,
+  `cann`).
+- `fp64_enabled` / `bf16_enabled` / `int64_enabled` — dtype capability
+  flags (default `True`).
+- `tle_enabled` — whether the vendor exposes a TLE runtime hook
+  (default `False`).
+
+##### Arch mapping (optional)
+
+If you ship arch-specific specializations, define `ARCH_MAP` at the
+bottom of `_<vendor>/__init__.py`. Keys are the arch discriminator
+strings returned by your device query (major compute capability, arch
+family, etc.); values are subfolder names. Example from `_nvidia`:
+
+```python
+ARCH_MAP = {"9": "hopper", "8": "ampere"}
+```
+
+The resolver will look up the current device's arch, use `ARCH_MAP` to
+translate it to a subfolder, and load
+`_<vendor>/<arch>/ops/` on top of `_<vendor>/ops/`.
+
+#### Step 2.2 — `ops/`
+
+The `ops/` directory holds your vendor-customized operator
+implementations. For a custom `add`, drop the implementation in
+`ops/add.py` and re-export it from `ops/__init__.py`:
+
 ```python
 from .add import add
 from .gelu import gelu
@@ -49,28 +135,59 @@ from .gelu import gelu
 __all__ = ["add", "gelu"]
 ```
 
+Each op file must define its own `__all__` — the registrar walks it
+to discover public entry points; anything not listed is invisible.
+
+#### Step 2.3 — `enable_configs.yaml` (optional)
+
+If your backend wants to opt into only a subset of ops (e.g. because
+some are still WIP or intentionally routed to the generic tier), add an
+`enable_configs.yaml` at `_<vendor>/enable_configs.yaml`:
+
+```yaml
+include:
+  - relu
+  - add
+```
+
+Only listed ops will be picked up as vendor-tier overrides. Ops absent
+from this list fall back through the standard resolution order.
+
+### Step 3 — verify
+
+From a Python shell on your device:
+
+```python
+import flaggems_sglang
+
+flaggems_sglang.device                    # -> your device_name
+flaggems_sglang.vendor_name               # -> your vendor_name
+flaggems_sglang.all_registered_ops()      # -> includes your vendor overrides
+flaggems_sglang.get_op("add").__module__  # -> _<vendor>.ops.add or arch path
+```
+
 ## Multi-level operator routing
 
-`flaggems_sglang` picks the operator implementation for the current device
-using three priority levels — later levels override earlier ones on name
-collision:
+`flaggems_sglang` picks the operator implementation for the current
+device using three priority levels — later levels override earlier ones
+on name collision:
 
-| Priority | Source                                            | Purpose                            |
-|----------|---------------------------------------------------|------------------------------------|
-| 0        | `flaggems_sglang.ops`                             | generic Triton fallback            |
-| 1        | `runtime/backend/_<vendor>/ops`                   | per-vendor specialization          |
-| 2        | `runtime/backend/_<vendor>/<arch>/ops` (e.g. `_nvidia/hopper/ops`) | per-arch specialization            |
+| Priority | Source                                                            | Purpose                     |
+|----------|-------------------------------------------------------------------|-----------------------------|
+| 0        | `flaggems_sglang.ops`                                             | Generic Triton fallback     |
+| 1        | `runtime/backend/_<vendor>/ops`                                   | Per-vendor specialization   |
+| 2        | `runtime/backend/_<vendor>/<arch>/ops` (e.g. `_nvidia/hopper/ops`) | Per-arch specialization     |
 
-Routing is driven by function **name** — a vendor override for
+Routing is driven by function **name**. A vendor override for
 `gemma_rms_norm` simply defines `def gemma_rms_norm(...)` in
-`_<vendor>/ops/gemma_rms_norm.py` and re-exports it via `ops/__init__.py`'s
-`__all__`. Missing operators automatically fall back to the generic
-`flaggems_sglang.ops.*` implementation, so vendors only need to ship the
-kernels they actually specialize.
+`_<vendor>/ops/gemma_rms_norm.py` and re-exports it via
+`ops/__init__.py`'s `__all__`. Missing operators automatically fall back
+to the generic `flaggems_sglang.ops.*` implementation, so vendors only
+ship the kernels they actually specialize.
 
 The resolver lives in `runtime/op_registrar.py` (`OpRegistrar`) and is
-invoked once from `flaggems_sglang/__init__.py`. To introspect the routing
-result at runtime use:
+invoked once from `flaggems_sglang/__init__.py`. To introspect the
+routing result at runtime:
 
 ```python
 import flaggems_sglang
@@ -79,3 +196,16 @@ flaggems_sglang.all_registered_ops()          # -> ['fused_recurrent_...', 'gemm
 flaggems_sglang.get_op("gemma_rms_norm")      # -> resolved callable for current device
 flaggems_sglang.gemma_rms_norm.__module__     # -> module the resolved impl came from
 ```
+
+## Adding operators to an existing backend
+
+Once your vendor folder is in place, adding or overriding individual
+operators follows the standard operator-contribution flow. See
+[`docs/CONTRIBUTING.md`](../../../../docs/CONTRIBUTING.md) for:
+
+- Choosing the right tier (generic / vendor / arch).
+- File layout, `__all__`, and Apache 2.0 header requirements.
+- Adding correctness tests (`tests/test_<op>.py`) and benchmarks
+  (`benchmark/test_<op>.py`).
+- Code style (pre-commit, black, isort, flake8) and CI expectations.
+- The FlagOS × SGLang competition submission flow.
