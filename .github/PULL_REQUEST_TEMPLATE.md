@@ -15,27 +15,67 @@
  -->
 
 ### PR Category
-<!-- [ Operator | OP Test | Model Test | Benchmark | CI/CD | User Experience | Other] -->
+<!-- [ Operator | OP Test | Model Test | Benchmark | CI/CD | User Experience | Other ] -->
 
 ### Type of Change
-<!-- [ Bug Fix | New Feature | Performance Optimization | Refactor | Documentation Update | Other] -->
+<!-- [ Bug Fix | New Feature | Performance Optimization | Refactor | Documentation Update | Other ] -->
 
 ### Description
-<!-- Briefly describe the changes and the purpose of the changes.-->
+<!--
+Briefly describe the changes and the purpose of the changes. For a new
+operator, name the op and the tier it targets (generic / vendor / arch),
+plus the target hardware if applicable.
+-->
 
 ### Issue
-
 <!--
-List any related issues that this PR resolves, if applicable, for example:
+List any related issues that this PR resolves, for example:
 - Resolves #123
 - Associated with Feature #456
 -->
 
+### Accuracy Tests
+<!--
+Fill in the reference implementation you compare against, the
+tolerances used, and paste the test summary (pytest output or table).
+Leave the row blank when a shape/dtype is not covered.
+
+Reference implementation: <e.g. sgl_kernel.silu_and_mul / torch>
+Tolerances: atol=<...>, rtol=<...>
+
+| Shape          | dtype    | Max abs err | Max rel err | Pass |
+|----------------|----------|-------------|-------------|------|
+| (1, 512)       | fp16     |             |             |      |
+| (4, 1024)      | bf16     |             |             |      |
+| (32, 2048)     | bf16     |             |             |      |
+-->
+
+### Speed Tests and Profiling
+<!--
+Paste benchmark numbers for the shapes representative of your target
+workload. Include the hardware, driver, and command used so the
+numbers are reproducible.
+
+Hardware: <e.g. NVIDIA H100 80GB, CUDA 12.4, Triton 3.x>
+Command:  pytest -q benchmark/test_<op>.py --level core
+
+| Shape          | dtype    | Baseline (us) | This PR (us) | Speedup |
+|----------------|----------|---------------|--------------|---------|
+| (1, 512)       | fp16     |               |              |         |
+| (4, 1024)      | bf16     |               |              |         |
+| (32, 2048)     | bf16     |               |              |         |
+
+Optional: attach an Nsight / rocprof / ncu profile screenshot or trace
+link if the change is performance-motivated.
+-->
+
 ### Progress
 
-- [ ] Change is properly reviewed (1 reviewer required, 2 recommended).
-- [ ] Change is responded to an issue.
-- [ ] Change is fully covered by a UT.
-
-### Performance
-<!-- Please describe any performance tests you have added or the results of any benchmarks. -->
+- [ ] `pre-commit run --all-files` passes.
+- [ ] Op file has Apache 2.0 header and defines `__all__`.
+- [ ] `import flaggems_sglang; flaggems_sglang.all_registered_ops()` lists the op locally.
+- [ ] Unit test at `tests/test_<op>.py` covers the target dtypes and shape regimes.
+- [ ] Benchmark at `benchmark/test_<op>.py` with shapes added to `benchmark/attri_util.py`.
+- [ ] Accuracy Tests table filled in above.
+- [ ] Speed Tests table filled in above (perf-motivated changes).
+- [ ] Change reviewed (1 reviewer required, 2 recommended).
