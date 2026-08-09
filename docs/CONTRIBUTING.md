@@ -425,6 +425,8 @@ Use the standard template at `.github/PULL_REQUEST_TEMPLATE.md`, and in the
 - The **target hardware** (vendor + arch) it was tuned for.
 - Any calling-convention or dtype constraints the scoring harness needs
   to know about.
+- **Accuracy Tests** is optional
+- **Speed Tests and Profiling** results are from the submission system. You just copy the results and paste them here.
 
 **Competition checklist:**
 
