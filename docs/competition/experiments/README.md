@@ -17,7 +17,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 
 | Task | 算子账本 | 候选 | ZIP SHA-256 | 当前证据 | 建议 |
 | ---: | --- | --- | --- | --- | --- |
-| 08 | [`apply_token_bitmask`](apply_token_bitmask.md) | `s0-3fac516` | `394d287484e04c62eba5deea0c3f698787b1bd053ee7803598a7e9c98567a4b7` | NVIDIA 3.333–5.154x；未平台 | 第 2 个提交 |
+| 08 | [`apply_token_bitmask`](apply_token_bitmask.md) | `s0-3fac516` | `394d287484e04c62eba5deea0c3f698787b1bd053ee7803598a7e9c98567a4b7` | 5/5 回归；E1 仅 0.9983x，保留 S0；未平台 | 第 2 个提交 |
 | 09 | [`bmm_chunk`](bmm_chunk.md) | `s0-b05bfeb` | `058b016c309c0affa5ecbbcb125de415a6565be93e2b76a9535473021169c4e3` | NVIDIA 1.670–2.199x；未平台 | 第 6 个提交 |
 | 10 | [`chunk_cumsum`](chunk_cumsum.md) | `s0-3fac516` | `81a1cff508d5ca8a7eb921d8644e4061b40382ea2ab9e4ce12a231118e48c607` | NVIDIA 3.184–29.044x；未平台 | 第 11 个提交 |
 | 11 | [`chunk_local_cumsum_vector`](chunk_local_cumsum_vector.md) | `s0-3fac516` | `b4ab7b21ecd5a4f23b0d53aab00e8ef504c2e2f329c27b1bbf77306db5daab3a` | NVIDIA 1.605–2.919x；未平台 | 第 10 个提交 |
