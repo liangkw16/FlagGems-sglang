@@ -15,7 +15,8 @@
    源码的测试结果替旧 commit 的 ZIP 背书。
 3. 用 `nohup` 在远端后台依次执行：
    - 目标源码和测试的 `py_compile`；
-   - Black 79、isort、flake8；
+   - `black --check --line-length 79`、`isort --check-only`、`flake8`；
+   - 复验源码和测试 SHA-256，确认静态门禁没有改写已验签字节；
    - `python -m unittest -v tests/test_<operator>.py`。
 4. 记录远端目录、PID、日志路径和启动时间；前台继续本地源码审查、上游检索和
    账本准备。轮询日志，不用长时间阻塞 shell。

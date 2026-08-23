@@ -22,6 +22,7 @@ VENDORS = {
     "metax",
     "nvidia",
 }
+ZIP_LIMIT = 10 * 1024 * 1024
 
 
 def git(root: Path, *args: str, text: bool = True):
@@ -33,6 +34,22 @@ def git(root: Path, *args: str, text: bool = True):
 
 def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def archive_matches(archive: zipfile.ZipFile, members: dict) -> bool:
+    infos = archive.infolist()
+    if [info.filename for info in infos] != list(members):
+        return False
+    if any(
+        info.is_dir()
+        or info.file_size != len(members[info.filename])
+        or info.compress_type not in {zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED}
+        for info in infos
+    ):
+        return False
+    return archive.testzip() is None and all(
+        archive.read(member) == data for member, data in members.items()
+    )
 
 
 def git_tree(root: Path, commit: str):
@@ -164,21 +181,14 @@ def main() -> None:
             archive.writestr(info, data)
     canonical_payload = buffer.getvalue()
     payload = canonical_payload
-    if len(canonical_payload) >= 10 * 1024 * 1024:
+    if len(canonical_payload) >= ZIP_LIMIT:
         raise SystemExit(
             f"ZIP exceeds platform limit: {len(canonical_payload)} bytes"
         )
 
     with zipfile.ZipFile(io.BytesIO(canonical_payload)) as archive:
-        if archive.testzip() is not None or archive.namelist() != list(
-            members
-        ):
+        if not archive_matches(archive, members):
             raise SystemExit("ZIP integrity or member validation failed")
-        for member, data in members.items():
-            if archive.read(member) != data:
-                raise SystemExit(
-                    f"ZIP member differs from committed source: {member}"
-                )
 
     output = (
         root
@@ -190,17 +200,15 @@ def main() -> None:
     )
     status = "dry-run"
     if output.exists():
+        existing_size = output.stat().st_size
+        if existing_size >= ZIP_LIMIT:
+            raise SystemExit(
+                f"ZIP exceeds platform limit: {existing_size} bytes"
+            )
         existing = output.read_bytes()
         try:
             with zipfile.ZipFile(io.BytesIO(existing)) as archive:
-                valid = (
-                    archive.testzip() is None
-                    and archive.namelist() == list(members)
-                )
-                valid = valid and all(
-                    archive.read(member) == data
-                    for member, data in members.items()
-                )
+                valid = archive_matches(archive, members)
         except zipfile.BadZipFile:
             valid = False
         if not valid:
@@ -223,7 +231,7 @@ def main() -> None:
     elif not args.dry_run:
         publish(output, payload)
         status = "created"
-    if len(payload) >= 10 * 1024 * 1024:
+    if len(payload) >= ZIP_LIMIT:
         raise SystemExit(f"ZIP exceeds platform limit: {len(payload)} bytes")
 
     print(

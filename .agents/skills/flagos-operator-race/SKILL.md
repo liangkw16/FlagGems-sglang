@@ -55,7 +55,13 @@ artifacts/competition/<operator>/<stage>-<code-commit>/<operator>.zip
 
 写操作前先检查 `git status --short` 和目标路径的 diff；现有改动归用户，
 只 stage 本次明确的文件。若目标文件已有归属不明的改动，先停止并请用户
-确认，不把它们夹带进算子、验证或账本 commit。
+确认，不把它们夹带进算子、验证或账本 commit。提交前再检查
+`git diff --cached --name-only`；若 index 中有无关的已暂存改动，不要替用户
+unstage。先完整复核 `git diff HEAD -- <本次明确路径>`，再只 stage 这些路径，
+并确认 `git diff --quiet -- <本次明确路径>` 成功，避免同路径的未暂存字节
+被夹带。然后使用 `git commit --only -- <本次明确路径>` 隔离提交；该命令取
+working-tree 字节，所以上述检查不能省略。提交后复核完整 commit diff，
+并确认无关已暂存改动仍留在 index。
 
 `artifacts/` 被 Git 忽略；账本必须记录源码 commit、各文件 SHA-256、ZIP
 SHA-256、成员列表和平台结果，才能重新定位实际上传字节。
@@ -169,52 +175,11 @@ python .agents/skills/flagos-operator-race/scripts/build_submission.py \
 若用户只要求开发或明确说暂不提交平台，到此停止：状态记为“候选就绪，
 未提交”，不运行浏览器预检、不索要提交确认、不消耗额度。
 
-## 阶段 B：平台提交
+## 平台提交与逐芯迭代
 
-先使用 `chrome:control-chrome` skill 做只读预检：核对登录团队、Task、batch、
-截止时间、两分钟间隔、当前剩余额度和当次页面规则，但不选择文件、不点击提交。
-然后取得 action-time 确认，确认内容至少包括：
-
-- Task 编号和 operator；
-- ZIP 的绝对路径与 SHA-256；
-- 当前剩余额度，以及本次会消耗 1 次。
-
-旧的“继续”“可以上传”不能授权后来生成的另一份 ZIP。每个新候选重新确认。
-
-确认后立即只读复核上述状态；任一值变化都停止并重新确认。状态不变时：
-
-1. 选择已确认的绝对路径；
-2. 等待平台识别正确的 `.py` 数量；
-3. 只有当次上传器显示的全部基础校验通过且提交按钮启用时才点击；
-4. 捕获“提交成功”、额度扣减、流水时间和状态。
-
-页面刚选文件时可能短暂显示 `0 个 .py`；等待校验完成，不要在异常状态提交。
-若 Chrome 文件权限失败，遵循 Chrome skill 的 file-upload troubleshooting。
-验证码或新的风险提示交给用户处理。
-
-## 阶段 C：逐芯结果与最小迭代
-
-评测记录可能需要主动切换“题目说明 → 提交代码”刷新。逐芯记录：正确性、
-speedup、平均值、状态、失败详情、排名、首次有效提交时间和剩余额度。页面不展示
-独立 submission ID 时，用 `Task + 文件名 + 时间` 联合定位，不编造 ID。
-
-按根因分类：
-
-| 现象 | 最小动作 |
-| --- | --- |
-| 多芯同类数值失败 | 修 generic 根因，不加多份 vendor |
-| 单芯编译/正确性失败 | generic 保持不变，只加该 vendor |
-| `grid.x` 超硬件上限 | 从固定 vendor policy 取 grid 上限，改 grid-stride |
-| 输出像归一化中间值 | 检查最终缩放、scalar broadcast 和 lowering 顺序 |
-| 正确但低于题面门槛 | 先恢复门槛，再做性能排名 |
-| 通过但明显落后榜首 | 每次只改 BLOCK、grid、warps、数学 lowering 或布局之一 |
-
-vendor 文件必须自包含、保持同一函数签名并导出同一 `__all__`。已经通过的芯片
-继续使用原 generic，避免无关回归。一次提交只改变一个可解释变量；若为恢复
-正确性必须同时消除已知 grid 风险，在账本明确说明。
-
-每轮重复：最小回归 → 远端代理 → 新 commit → 新 ZIP/hash → 新确认 → 平台。
-至少预留两次额度给截止日前最终回归。
+只有用户明确要求实时平台预检、提交、查看评测或基于逐芯结果迭代时，
+才完整读取[平台提交与逐芯结果](references/platform-workflow.md)。“先不要提交平台”
+的开发请求在 ZIP、账本、commit 和 push 完成后停止，不读取该引用、不启动浏览器。
 
 ## 完成标准
 
