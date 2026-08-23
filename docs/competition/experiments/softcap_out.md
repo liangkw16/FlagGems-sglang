@@ -2,7 +2,7 @@
 
 ## S0：generic baseline
 
-状态：平台首轮完成，6/8 通过；S1 vendor 修复中
+状态：平台首轮 6/8；已由 S1 vendor 修复至 8/8
 验证时间：2026-08-24 00:26–00:27 CST  
 源码 commit：`196ee005b4d18f388e112920332c1bd1abe7b921`
 
@@ -118,7 +118,7 @@ S0 与 PyTorch reference 每组轮换先后顺序。表中时间为五组 p50 �
 
 ## S1：Ascend / Enflame correctness recovery
 
-状态：本地代理验证通过，等待人工确认后上传比赛平台
+状态：平台复测完成，8/8 通过；当前单题第 8 名
 
 ### 构建身份
 
@@ -149,10 +149,29 @@ S0 与 PyTorch reference 每组轮换先后顺序。表中时间为五组 p50 �
   Ascend、Enflame 两份 vendor 均通过 FP32 `1e-4` 容差。
 - Black 79、isort、flake8、Python 语法和 ZIP manifest 门禁通过。
 
-### 仍需平台证明
+### 平台复测
 
-- CUDA 代理不能证明 Ascend 的 operand-order workaround；若 S1 仍丢失 cap
-  缩放，下一候选才把 cap 改为 `tl.constexpr`。
-- Enflame 在最大用例中每个 CTA 循环约 21,376 次；先恢复正确性，若低于
-  `0.1x`，保持 grid 12 后单变量比较 BLOCK 1024 和 4096。
-- 本 ZIP 尚未上传；继续保留至少两次最终回归额度。
+- 提交时间：2026-08-24 01:03:51 CST
+- 团队：`SoulCoder`；8/8 通过，平均加速比 1.90x，当前单题第 8/8 名
+- 本次提交后今日剩余额度：13/15
+- 页面未展示独立提交 ID，以 Task24、文件名和时间联合定位
+
+| 芯片 | 正确性 | speedup | 相对 S0 |
+| --- | --- | ---: | ---: |
+| 天数智芯 | 通过 | 3.66x | +0.06x |
+| 沐曦 | 通过 | 1.93x | -0.03x |
+| 燧原 | 通过 | 0.35x | 从失败恢复 |
+| 海光 | 通过 | 2.13x | -0.01x |
+| 昆仑芯 | 通过 | 0.45x | +0.01x |
+| 华为 | 通过 | 0.77x | 从失败恢复 |
+| 国际通用 A | 通过 | 3.14x | -0.02x |
+| 国际通用 B | 通过 | 2.77x | -0.01x |
+
+### 后续优化
+
+- Ascend operand-order workaround 已由本次平台复测证明可用；不再引入
+  `tl.constexpr` 候选。
+- Enflame 正确性已恢复，但 0.35x 说明 BLOCK 256 的约 21,376 次/CTA 循环
+  开销过高；S2 保持 grid 12，单变量优先测试 BLOCK 4096。
+- 当前榜首 2.43x；最大差距依次在 Enflame（0.35x 对 3.12x）和 Hygon
+  （2.13x 对 3.27x）。下一轮先优化 Enflame，再评估 Hygon BLOCK。
