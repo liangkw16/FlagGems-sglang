@@ -24,7 +24,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 12 | [`chunk_state`](chunk_state.md) | `e2-67350fa` | `35f11803055ccc0a7e6bff71c974ad3671032c1cec35d2a556367789206de9e3` | 3/3 回归；K>=256 受影响点 1.1198x；未平台 | 第 5 个提交 |
 | 13 | [`chunk_state_varlen`](chunk_state_varlen.md) | `s1-7911930` | `fcc17df06adf338578402f315e4dab75bf2361e641885bb99f94e23be46efd49` | 5/5 release；修复跨 chunk 单 scale 广播与空序列越界；controls 1.0023x；未平台 | 第 14 个提交 |
 | 14 | [`context_attention`](context_attention.md) | `e1-a085dc4` | `1bd5f7483bac887f92c6be3e2aea81ac2c69f519aeafd28f267585f37a7da777` | 6/6 release；NVIDIA vendor 1.685–2.056x over S0，原最差点达 1.066x reference；未平台 | 第 15 个提交 |
-| 15 | [`decode_attention`](decode_attention.md) | `s0-f431ba4` | `850cf12333241a450b342edbd2e108dca5841ddfb4f576129df45d863e5123b9` | 5/5 回归；tile64 E1 为 1.198–1.449x 但新增 12 spills，保留 S0；未平台 | 第 12 个提交 |
+| 15 | [`decode_attention`](decode_attention.md) | `e2-59cb094` | `0170fd15d5da5e0bd268fa1c5d12c7e9ee36e5cb5af50625a33da26e6ef4da62` | 7/7 release；NVIDIA 长序列 1.197–1.501x，短序列门控最差 1.000x，0 spill；未平台 | 第 12 个提交 |
 | 16 | [`decode_grouped_attention`](decode_grouped_attention.md) | `e1-bc729bd` | `088a9ebfcae10a608528e5614a684997753cd8693ac13f49496383ced4ca80c0` | 6/6 release；grouped KV reuse 1.326–1.845x，controls 1.0009x；未平台 | 第 13 个提交 |
 | 17 | [`embedding_lora_a`](embedding_lora_a.md) | `s1-d101ebe` | `49d7a33648c31d2b13e46c7e3dba8e7a4b88ecadce7da444c2ed5bac6b0ac09f` | 5/5 release；修复空 segment metadata 越界；2-warps E1 仅 0.999994x，保留 S1；未平台 | 第 7 个提交 |
 | 18 | [`fused_recurrent_gdn`](fused_recurrent_gdn.md) | `s0-de1530b` | `cf27e0e48f41fc1948075cd3bc22864e45d2387d8e61b5b6371fe1147fe9ce7f` | NVIDIA 21.92–110.36x；八芯状态资源高风险 | 暂缓，受控实验 |

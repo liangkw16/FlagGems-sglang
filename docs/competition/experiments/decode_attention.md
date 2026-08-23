@@ -117,3 +117,68 @@ PyTorch 2.13.0+cu130，Triton 3.7.1，CUDA 13.0。新增 spill 在其余后端�
 
 未打开浏览器、未读取或消耗平台额度。后续若有真实平台 shape/resource 反馈，再
 考虑 split-KV 或 vendor 限定配置；旧的上传确认不授权任何新产物。
+
+## E2：NVIDIA 长度门控 tile64（晋升）
+
+状态：源码、测试、release 代理验证和不可变 ZIP 门禁通过；未提交平台
+
+验证时间：2026-08-24 07:34–07:48 CST
+
+### 变更与边界
+
+E2 保持 generic S0 字节不变，只新增自包含 NVIDIA vendor。E1 已证明 tile64
+对 `L>=33` 有收益但会让 `L<=32` 变慢并在四个编译特化中产生 12 spills；E2
+用可在 host 直接读取、不会触发 device 同步的 `kv_indices.numel()` 选择 tile：
+
+- 总 page 数不超过 `batch_size * 32` 时保持 S0 tile32/4 warps；否则用 tile64。
+- tile64 默认仍是 4 warps；int64 CSR 或 BF16 `D=D_v=128` 使用 8 warps，
+  消除 E1 已定位的寄存器溢出。
+- kernel 数学、在线 FP32 softmax、真实 stride、mask 和输出均与 S0 相同；
+  其余七芯继续使用 generic S0。
+
+源码 commit 为 `59cb094e8e5662aadabce3bfc55a23c9e8a97e76`。generic SHA-256
+仍为 `886332facce98b6fa3ab783de064e322ddbcabb3a66f9b17bad70914fc3212aa`，
+NVIDIA vendor 为
+`0c52bfe006212dd7dab9ab88229d4ca7bdec158bbd95a3434a0a642521ca2a07`，
+测试为 `1776bf99e046b67d3bc1724eb09c44acd4b383898208567f877b3e995558f474`。
+
+### Release 代理验证
+
+固定 release 目录 `gpu:/tmp/flagos-decode-attention-release.6fs4hq`，mode 0700；
+source 和 verification commit 均为 `59cb094e8e5662aadabce3bfc55a23c9e8a97e76`。
+RTX 5070 Ti 16 GB 环境与 E1 相同。
+
+- Black 79、isort、flake8、py_compile、逐文件 SHA-256 和共享 unittest
+  7/7 通过；新增测试实际执行 tile32、tile64/4-warps、tile64/8-warps、
+  int32/int64 CSR 和 BF16 资源敏感路径。
+- 主矩阵共 66 次 base/vendor reference 检查通过。五轮交替 A/B，
+  `warmup=25, rep=100`，每次 wrapper 批量 20 次：9 个长序列 affected
+  几何平均 `1.3285x`，FP16/BF16/FP32 分别为
+  `1.3370/1.3131/1.3354x`，最差 `1.1974x`；6 个 controls 几何平均
+  `0.99997x`，范围 `0.99976–1.00010x`。
+- 补充 `L=1/31/32/33/63/64/65` 共 84 次 correctness 检查通过；21 个
+  dtype/length 点整体几何平均 `1.1045x`，最差 `1.0000x`。`L<=32`
+  保持 S0，`L>=33` 获得收益。
+- 24 个 NVIDIA vendor 编译变体最高 128 registers/thread、4,096 bytes
+  shared；spill、global scratch、local load/store 均为 0。18 个 S0 变体
+  同样无 spill/scratch/local。
+
+release gates、主 A/B、短序列 A/B、provenance 和 A/B harness 的 SHA-256
+依次为
+`faf7691fffc5129aee13f1959651a40c2a49a32e669812cde2a6e0a6dfaccd44`、
+`04efae18c3d1a4e5ecf1896ef982ceba0d84af2184fb434ee382de400cc9728b`、
+`4e9a929b3bac5f2c37bfacef375e3cac2c810c37de1b6b2d391056364e8a9d30`、
+`c64d29360d6d39dacd12b09edb0cd4375b30e2376eb1acd78a6cba2d3e430492`、
+`40725faa5110729a0fc3232d33c2e8d50fdc8cbc2b129557bb3345922281098f`。
+
+### 产物
+
+- ZIP：`artifacts/competition/decode_attention/e2-59cb094/decode_attention.zip`
+- ZIP SHA-256：
+  `0170fd15d5da5e0bd268fa1c5d12c7e9ee36e5cb5af50625a33da26e6ef4da62`
+- 大小 / 成员：10,637 bytes；`decode_attention.py` 5,016 bytes，
+  `decode_attention_nvidia.py` 5,357 bytes。
+
+确定性构建与 `--verify-existing`、`unzip -t`、UTF-8、basename、10 MB 和
+逐字节来源门禁均通过。NVIDIA 结果只为代理证据；未打开浏览器、未读取实时额度、
+未提交平台，旧确认不授权此 ZIP。
