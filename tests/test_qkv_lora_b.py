@@ -193,6 +193,46 @@ class QkvLoraBTest(unittest.TestCase):
         ):
             torch.testing.assert_close(value, original, atol=0, rtol=0)
 
+    def test_seg_indptr_is_authoritative_and_empty_metadata_is_ignored(self):
+        info = SimpleNamespace(
+            bs=3,
+            max_len=17,
+            seg_lens=torch.tensor([1, 0, 1], device="cuda"),
+            seg_indptr=torch.tensor(
+                [0, -1, 17, -1, 17, -1, 18, -1], device="cuda"
+            )[::2],
+            weight_indices=torch.tensor(
+                [0, 1 << 28, 0], device="cuda", dtype=torch.int64
+            ),
+            lora_ranks=torch.tensor([33], device="cuda"),
+            scalings=torch.tensor([0.5], device="cuda"),
+            permutation=None,
+        )
+        output_offset = torch.tensor([0, -1, 65, -1, 66, -1], device="cuda")[
+            ::2
+        ]
+        x = (
+            torch.arange(18 * 66, device="cuda", dtype=torch.float32)
+            .reshape(18, 66)
+            .div(100)
+        )
+        weights = (
+            torch.arange(66 * 33, device="cuda", dtype=torch.float32)
+            .reshape(1, 66, 33)
+            .div(1000)
+        )
+        base = torch.linspace(
+            -1, 1, 18 * 66, device="cuda", dtype=torch.float32
+        ).reshape(18, 66)
+
+        actual = MODULE.qkv_lora_b(x, weights, info, output_offset, 65, base)
+        expected = reference(x, weights, info, output_offset, 65, base)
+        torch.cuda.synchronize()
+
+        torch.testing.assert_close(actual, expected, atol=1e-4, rtol=1e-4)
+        self.assertEqual(info.seg_indptr.stride(), (2,))
+        self.assertEqual(output_offset.stride(), (2,))
+
 
 if __name__ == "__main__":
     unittest.main()

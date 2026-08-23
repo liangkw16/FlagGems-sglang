@@ -21,7 +21,6 @@ def _qkv_lora_b_kernel(
     x_ptr,
     weights_ptr,
     output_ptr,
-    seg_lens_ptr,
     seg_indptr_ptr,
     weight_indices_ptr,
     lora_ranks_ptr,
@@ -36,7 +35,6 @@ def _qkv_lora_b_kernel(
     weight_stride_rank,
     output_stride_token,
     output_stride_col,
-    seg_lens_stride,
     seg_indptr_stride,
     weight_indices_stride,
     lora_ranks_stride,
@@ -59,16 +57,9 @@ def _qkv_lora_b_kernel(
 
     batch_id = tl.program_id(2)
     slice_id = tl.program_id(1)
-    weight_index = tl.load(
-        weight_indices_ptr + batch_id * weight_indices_stride
-    )
-    if tl.load(lora_ranks_ptr + weight_index * lora_ranks_stride) == 0:
-        return
-
-    segment_length = tl.load(seg_lens_ptr + batch_id * seg_lens_stride)
-    if segment_length == 0:
-        return
     segment_start = tl.load(seg_indptr_ptr + batch_id * seg_indptr_stride)
+    segment_end = tl.load(seg_indptr_ptr + (batch_id + 1) * seg_indptr_stride)
+    segment_length = segment_end - segment_start
     output_start = tl.load(output_offset_ptr + slice_id * output_offset_stride)
     output_end = tl.load(
         output_offset_ptr + (slice_id + 1) * output_offset_stride
@@ -81,6 +72,15 @@ def _qkv_lora_b_kernel(
     output_block = matrix_pid - token_block * num_output_blocks
     if token_block * BLOCK_S >= segment_length:
         return
+    if output_block * BLOCK_N >= output_size:
+        return
+
+    weight_index = tl.load(
+        weight_indices_ptr + batch_id * weight_indices_stride
+    )
+    if tl.load(lora_ranks_ptr + weight_index * lora_ranks_stride) == 0:
+        return
+
     token_offsets = token_block * BLOCK_S + tl.arange(0, BLOCK_S)
     output_offsets = output_block * BLOCK_N + tl.arange(0, BLOCK_N)
     token_mask = token_offsets < segment_length
@@ -166,7 +166,6 @@ def qkv_lora_b(
         x,
         qkv_lora_b,
         output,
-        batch_info.seg_lens,
         batch_info.seg_indptr,
         batch_info.weight_indices,
         batch_info.lora_ranks,
@@ -177,7 +176,6 @@ def qkv_lora_b(
         *x.stride(),
         *qkv_lora_b.stride(),
         *output.stride(),
-        batch_info.seg_lens.stride(0),
         batch_info.seg_indptr.stride(0),
         batch_info.weight_indices.stride(0),
         batch_info.lora_ranks.stride(0),
