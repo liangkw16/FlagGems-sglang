@@ -285,7 +285,11 @@ def fused_recurrent_gdn(
         STORE_FINAL_STATE=final_state is not None,
         BETA_IS_VECTOR=beta_is_vector,
         USE_QK_L2NORM=bool(use_qk_l2norm_in_kernel),
-        num_warps=4,
+        num_warps=(
+            1
+            if block_k == 128 and q.dtype in (torch.float16, torch.bfloat16)
+            else 4
+        ),
         num_stages=1,
     )
     return output, final_state

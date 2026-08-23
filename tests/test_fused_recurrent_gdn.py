@@ -282,6 +282,27 @@ class FusedRecurrentGdnTest(unittest.TestCase):
             use_qk_l2norm_in_kernel=False,
         )
 
+    def test_key_dimension_warp_boundary(self):
+        for dtype, key_dim in (
+            (torch.float16, 128),
+            (torch.float32, 128),
+            (torch.float16, 129),
+        ):
+            with self.subTest(dtype=dtype, key_dim=key_dim):
+                self.assert_matches(
+                    make_case(
+                        dtype,
+                        batch=1,
+                        sequence_length=2,
+                        query_heads=1,
+                        value_heads=1,
+                        key_dim=key_dim,
+                        value_dim=7,
+                    ),
+                    output_final_state=True,
+                    use_qk_l2norm_in_kernel=False,
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
