@@ -4,9 +4,9 @@
 
 状态：P1 修复后 NVIDIA 代理正确性、编译资源和不可变 ZIP 门禁通过；**八芯高风险，未提交平台**
 
-验证时间：2026-08-24 01:44–02:15 CST
+验证时间：2026-08-24 01:44–02:15 CST；打包门禁：2026-08-24 02:21 CST
 
-源码 commit：`fbbf74f`；未上传
+源码 commit：`fbbf74fc8b39d69c5476ae6618cc6345fd0c763c`；未上传
 
 ### 决策
 
@@ -28,6 +28,7 @@
 | 数值 | Q/K/V 转 FP32，score、softmax 和输出累加均 FP32；FP32 dot 显式 IEEE |
 | 输出 | 与 Q 同 shape，固定 FP32，out-of-place；输入不变 |
 | 容差 | `atol=1e-2, rtol=1e-2` |
+| 题面未公开 | input dtype、shape/head_dim 上界和 stride 范围；三 dtype 与非连续 stride 是代理验证范围 |
 | 支持芯片 | 天数、沐曦、燧原、海光、昆仑芯、华为、国际通用 A/B，共 8 款 |
 | 截止 / 门槛 | 2026-08-27 19:59:59；每芯 `speedup >= 0.1` |
 
@@ -67,8 +68,11 @@ reference/demo 和额外公开 alias。
 | 测试 SHA-256 | `644cc247e2fd7929578a3dfd5cf726e05ce0fa957e8582b4d15f3e30fed442fe` |
 | ZIP | `artifacts/competition/context_attention/s0-fbbf74f/context_attention.zip` |
 | ZIP SHA-256 | `38ce76db6fee2121a765a1cd741138b9c2ded2478fdd85b1bfb4bba3d0f97456` |
+| ZIP 大小 / 成员 | 2,363 bytes；`context_attention.py` 7,861 bytes，SHA-256 与源文件相同 |
+| ZIP 门禁 | `unzip -t` PASS；单个顶层 UTF-8 `.py`；ZIP 内源码与 commit 源码逐字节一致 |
 | 远端证据目录 | `gpu:/tmp/flagos-context-attention.VQOW2U`、`gpu:/tmp/flagos-batch2.SQaIX2` |
 | 远端环境 | RTX 5070 Ti 16 GB；PyTorch 2.13.0+cu130；Triton 3.7.1；CUDA 13.0 |
+| 平台结果 | 未提交；submission ID、逐芯 speedup、均值、排名和额度均为 N/A |
 
 - `D=8` 回归先于修复落盘，旧实现的 causal/non-causal 两个子例都以
   `tl.dot: Input shapes ... K >= 16` 编译失败。最终远端 unittest 5/5 通过；
@@ -76,8 +80,9 @@ reference/demo 和额外公开 alias。
   `1/5/33/7`、16-token block 边界、`D=37`、Q/K/V 与 metadata 非连续
   stride、输入不变，以及
   `max_input_len=1` 的低报；新增 `D=8`、长度 `3/33` 的双 causal 回归，以及
-  257 条单 token 序列、`H=2,D=16,max_input_len=2048` 的 65,535-program
-  分片回归；另覆盖空 packed batch。
+  257 条单 token 序列、`H=2,D=16,max_input_len=2048` 的分片回归：65,792
+  个逻辑 programs 被拆为 `65,408 + 384` 两次 launch，均不超过 65,535；另
+  覆盖空 packed batch。
 - 本地 `py_compile`、`git diff --check` 通过；远端 Black 79、isort、flake8
   全部通过。本地与远端最终 source/test 哈希一致。
 - 隔离 Triton cache `gpu:/tmp/flagos-context-direct.8F7Tg8` 产生 6 个 NVIDIA

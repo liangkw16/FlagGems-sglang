@@ -5,6 +5,7 @@
 - [比赛要求、提交规范与资料入口](docs/competition/README.md)
 - [第一批、第二批赛题索引](docs/competition/task-index.md)
 - [第二批快速开发策略](docs/competition/strategy-batch2.md)
+- [第二批候选、产物哈希与提交队列](docs/competition/experiments/README.md)
 - [参考仓库与本地 Git 引用](docs/competition/reference-repositories.md)
 - 完整题面：`docs/competition/tasks/`
 - 结构化赛题数据：`docs/competition/data/task-catalog.json`
