@@ -1,7 +1,8 @@
 ---
 name: flagos-operator-race
-description: "End-to-end FlagOS operator competition workflow for this repository: refresh and cache race tasks, select an operator, lock its contract, research fixed-source chip constraints, implement a generic Triton baseline, validate on a remote GPU, build and hash a legal ZIP, obtain action-time confirmation, submit through Chrome, capture per-chip results, and iterate minimal vendor overrides. Use this skill whenever the user mentions FlagOS、算子赛、赛题批次、跨芯优化、Triton/TLE 参赛代码、提交 ZIP、多芯评测、榜单或继续优化，即使没有显式说‘使用 skill’。"
-compatibility: Requires this repository, git, Python, an SSH GPU host for proxy validation, and the Chrome control skill for platform interaction.
+description: "FlagOS 第二季算子竞赛的项目内闭环工作流：缓存赛题资料，锁定算子契约，调研芯片约束，开发 Triton/TLE generic 或 vendor 实现，在远端 GPU 做代理验证，生成可追溯 ZIP，并在逐次确认后网页提交和记录多芯结果。适用于本仓库中的 FlagOS/算子赛题、批次、跨芯优化、提交包、评测或榜单任务；普通 Triton 开发不自动触发。"
+metadata:
+  short-description: FlagOS 算子赛调研、开发、验证与提交闭环
 ---
 
 # FlagOS 算子竞赛工作流
@@ -61,6 +62,10 @@ SHA-256、成员列表和平台结果，才能重新定位实际上传字节。
 
 没有锁定这些字段前不写 kernel。不要把未公开 shape、芯片型号或匿名 A/B
 映射当作事实。
+
+题面未公开 shape/dtype/stride 范围时，把它们明确标为未知，并分开记录“题面
+事实”和“代理验证假设”。若公开 signature 与 reference 已能定义可执行契约，采用
+保守 generic 覆盖继续；只有未知项会改变接口、输出语义或合法实现时才停止并询问。
 
 ### 2. 选择最短可行算子
 
