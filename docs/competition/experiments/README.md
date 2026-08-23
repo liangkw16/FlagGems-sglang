@@ -30,7 +30,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 18 | [`fused_recurrent_gdn`](fused_recurrent_gdn.md) | `s0-de1530b` | `cf27e0e48f41fc1948075cd3bc22864e45d2387d8e61b5b6371fe1147fe9ce7f` | NVIDIA 21.92–110.36x；八芯状态资源高风险 | 暂缓，受控实验 |
 | 19 | [`fused_rmsnorm`](fused_rmsnorm.md) | `s0-3fac516` | `93780caf704341737ddfe5925cfacdcd7115ccefc2f38edf3c7ff006716d1820` | 3/3 回归；NVIDIA 1.830–5.837x；跨芯风险已审计；未平台 | 第 1 个提交 |
 | 20 | [`mamba_layernorm_gated`](mamba_layernorm_gated.md) | `s0-f431ba4` | `0bf5d8f26c6e3b3b827e2541bc58c058dc6b6fec05efe7bcff127492dfaedf76` | NVIDIA 3.016–6.333x；未平台 | 第 4 个提交 |
-| 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s0-3fac516` | `ef3c30e416d24d8268a1c252261676f3e540910a8836a93d2520917580f514bf` | NVIDIA 1.063–2.917x；未平台 | 第 3 个提交 |
+| 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s0-3fac516` | `ef3c30e416d24d8268a1c252261676f3e540910a8836a93d2520917580f514bf` | 4/4 回归；E1 仅 1.0111x，保留 S0；未平台 | 第 3 个提交 |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s0-b05bfeb` | `ec395510ac56ccd289f53f95dab584c9502950e7a8b5d30d0681a3e2a1ab8a30` | NVIDIA 49.133–150.855x；未平台 | 第 9 个提交 |
 | 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `s0-b05bfeb` | `d3a05c053120e9bf575125f28798eac0c5b5fdf9a9bf25f57fb83a8d1df2e348` | NVIDIA 60.948–103.665x；未平台 | 第 8 个提交 |
 | 24 | [`softcap_out`](softcap_out.md) | `s2-5cd6019` | `3746930f19d1a255571906fd4defd59b4a7ee272a65343f519969cd265e3db20` | S1 平台 8/8、1.90x；S2 Enflame 大 shape 代理提升 3.53–5.66x | 优化候选；覆盖其他任务后再投 |
