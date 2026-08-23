@@ -167,6 +167,29 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
             make_case(4, 1, 16, 9, [5], torch.float32),
         )
 
+    def test_grouped_kernel_varied_group_sizes_and_dtypes(self):
+        for query_heads, kv_heads, lengths, dtype in (
+            (32, 8, [33] * 8, torch.float16),
+            (32, 4, [33] * 16, torch.bfloat16),
+            (16, 1, [33] * 64, torch.float16),
+        ):
+            with self.subTest(group_size=query_heads // kv_heads, dtype=dtype):
+                case = list(
+                    make_case(
+                        query_heads,
+                        kv_heads,
+                        64,
+                        64,
+                        lengths,
+                        dtype,
+                    )
+                )
+                case[:3] = [tensor.contiguous() for tensor in case[:3]]
+                self.assert_matches(
+                    DECODE_GROUPED_ATTENTION.decode_grouped_attention,
+                    tuple(case),
+                )
+
     def test_value_dim_larger_than_qk_dim(self):
         self.assert_matches(
             DECODE_ATTENTION.decode_attention,
