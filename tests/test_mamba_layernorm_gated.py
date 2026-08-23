@@ -175,6 +175,54 @@ class MambaLayernormGatedTest(unittest.TestCase):
         self.assertEqual(actual.dtype, x.dtype)
         self.assertEqual(actual.numel(), 0)
 
+    def test_group_boundaries_match_reference(self):
+        torch.manual_seed(20260825)
+        tolerances = {
+            torch.float16: 1e-2,
+            torch.bfloat16: 1.5e-2,
+            torch.float32: 1e-4,
+        }
+
+        for dtype, tolerance in tolerances.items():
+            for group_size in (1, 255, 256, 257, 511, 512, 513):
+                with self.subTest(dtype=dtype, group_size=group_size):
+                    hidden_size = group_size * 2
+                    x = torch.randn(
+                        (2, hidden_size), device="cuda", dtype=dtype
+                    )
+                    weight = torch.randn(
+                        hidden_size, device="cuda", dtype=dtype
+                    )
+                    bias = torch.randn(
+                        hidden_size, device="cuda", dtype=dtype
+                    )
+                    z = torch.randn_like(x)
+
+                    actual = MODULE.mamba_layernorm_gated(
+                        x,
+                        weight,
+                        bias,
+                        1e-6,
+                        z=z,
+                        group_size=group_size,
+                        norm_before_gate=False,
+                        is_rms_norm=False,
+                    )
+                    expected = _reference(
+                        x,
+                        weight,
+                        bias,
+                        1e-6,
+                        z=z,
+                        group_size=group_size,
+                        norm_before_gate=False,
+                        is_rms_norm=False,
+                    )
+
+                    torch.testing.assert_close(
+                        actual, expected, atol=tolerance, rtol=tolerance
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()
