@@ -1,0 +1,85 @@
+{
+  "as_of": "2026-08-23T21:59:35.325809",
+  "current_batch": {
+    "batch_no": 2,
+    "task_count": 17,
+    "task_release_time": "2026.08.20 / 08.21 / 08.22 20:00:00",
+    "supported_gpus": [
+      "tianshu",
+      "muxi",
+      "enflame",
+      "haiguang",
+      "kunlunxin",
+      "huawei",
+      "card_a",
+      "card_b"
+    ],
+    "supported_gpu_count": 8,
+    "submit_start_at": "2026-08-20T20:00:00",
+    "submit_end_at": "2026-08-27T19:59:59",
+    "review_start_at": "2026-08-28T00:00:00",
+    "review_end_at": "2026-09-03T23:59:59",
+    "pr_start_at": "2026-09-04T00:00:00",
+    "pr_end_at": "2026-09-10T23:59:59",
+    "status": "submitting",
+    "is_current": true,
+    "countdown_target_at": "2026-08-27T19:59:59",
+    "remaining_seconds": 338423
+  },
+  "gpu_catalog": {
+    "tianshu": {
+      "cn": "天数智芯",
+      "en": "Iluvatar",
+      "filename": "iluvatar"
+    },
+    "muxi": {
+      "cn": "沐曦",
+      "en": "MetaX",
+      "filename": "metax"
+    },
+    "enflame": {
+      "cn": "燧原",
+      "en": "Enflame",
+      "filename": "enflame"
+    },
+    "haiguang": {
+      "cn": "海光信息",
+      "en": "Hygon",
+      "filename": "hygon"
+    },
+    "kunlunxin": {
+      "cn": "昆仑芯",
+      "en": "Kunlunxin",
+      "filename": "kunlunxin"
+    },
+    "huawei": {
+      "cn": "华为",
+      "en": "Ascend",
+      "filename": "ascend"
+    },
+    "card_a": {
+      "cn": "国际通用芯片A",
+      "en": "General-Purpose Chip A",
+      "filename": ""
+    },
+    "card_b": {
+      "cn": "国际通用芯片B",
+      "en": "General-Purpose Chip B",
+      "filename": ""
+    }
+  },
+  "stats": {
+    "total_task_count": 24,
+    "released_task_count": 24,
+    "chip_count": 8,
+    "pending_challenge_count": 2,
+    "competing_count": 15,
+    "reviewing_count": 7,
+    "occupied_count": 0,
+    "total_submission_count": 1626,
+    "evaluating_submission_count": 5,
+    "participating_team_count": 69,
+    "daily_submission_limit": 15,
+    "min_submission_interval_seconds": 120
+  }
+}
