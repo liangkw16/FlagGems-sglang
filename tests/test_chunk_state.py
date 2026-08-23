@@ -123,7 +123,7 @@ class ChunkStateTest(unittest.TestCase):
         headdim, dstate = 33, 35
 
         for dtype in (torch.float16, torch.bfloat16, torch.float32):
-            for chunk_size in (1, 31, 32, 33, 63, 64, 65):
+            for chunk_size in (1, 31, 32, 33, 63, 64, 65, 255, 256, 257):
                 with self.subTest(dtype=dtype, chunk_size=chunk_size):
                     seqlen = nchunks * chunk_size
                     B = torch.randn(

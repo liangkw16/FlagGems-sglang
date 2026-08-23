@@ -183,6 +183,7 @@ def chunk_state(B, x, dt, dA_cumsum):
 
     block_m = 32
     block_n = 32
+    block_k = 64 if chunk_size >= 256 else 32
     grid = (
         triton.cdiv(headdim, block_m) * triton.cdiv(dstate, block_n),
         batch * nchunks,
@@ -206,7 +207,7 @@ def chunk_state(B, x, dt, dA_cumsum):
         *output.stride(),
         BLOCK_M=block_m,
         BLOCK_N=block_n,
-        BLOCK_K=32,
+        BLOCK_K=block_k,
         num_warps=4,
         num_stages=1,
     )
