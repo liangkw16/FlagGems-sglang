@@ -33,6 +33,16 @@ if SPEC is None or SPEC.loader is None:
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
+VENDOR_MODULE_PATHS = {
+    vendor: MODULE_PATH.parents[1]
+    / "runtime"
+    / "backend"
+    / f"_{vendor}"
+    / "ops"
+    / "softcap_out.py"
+    for vendor in ("ascend", "enflame")
+}
+
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class SoftcapOutTest(unittest.TestCase):
@@ -206,6 +216,37 @@ class SoftcapOutTest(unittest.TestCase):
         expected = torch.tanh(x.to(torch.float32) / 5.0) * 5.0
 
         torch.testing.assert_close(actual, expected, atol=1e-4, rtol=1e-4)
+
+    def test_vendor_overrides_preserve_cap_scaling(self):
+        tolerances = {
+            torch.float16: 1e-2,
+            torch.bfloat16: 1.5e-2,
+            torch.float32: 1e-4,
+        }
+        for dtype, tolerance in tolerances.items():
+            x = torch.linspace(
+                -60.0, 60.0, 48 * 256 + 17, device="cuda", dtype=dtype
+            )
+            expected = torch.tanh(x.to(torch.float32) / 30.0) * 30.0
+
+            for vendor, module_path in VENDOR_MODULE_PATHS.items():
+                with self.subTest(vendor=vendor, dtype=dtype):
+                    self.assertTrue(
+                        module_path.is_file(), f"missing {module_path}"
+                    )
+                    spec = importlib.util.spec_from_file_location(
+                        f"softcap_out_{vendor}_module", module_path
+                    )
+                    if spec is None or spec.loader is None:
+                        self.fail(f"cannot load {module_path}")
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+
+                    actual = module.softcap_out(x, 30.0)
+
+                    torch.testing.assert_close(
+                        actual, expected, atol=tolerance, rtol=tolerance
+                    )
 
     def test_scalar_tensor_cap_matches_reference(self):
         x = torch.tensor([-10.0, 0.0, 10.0], device="cuda")
