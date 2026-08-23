@@ -70,3 +70,50 @@ softmax 思路，删除 reference/demo、Torch 计算、`.contiguous()`、host/�
 - ZIP 由 commit `f431ba4` 直接生成；`unzip -t`、UTF-8、单一 `.py`、10 MB、
   basename 和 ZIP 内源码哈希门禁均通过。尚未上传或消耗额度；上述 ZIP 需要
   用户当次确认。
+
+## E1：sequence tile 上限 32 → 64（否决）
+
+状态：未晋升；源码已恢复 S0，未生成新 ZIP，未提交平台
+
+验证时间：2026-08-24 06:42–06:45 CST
+
+### 假设与单变量
+
+S0 在 `BLOCK_D/BLOCK_DV <= 128` 时仍把 sequence tile 限为 32，在线 softmax
+对 L=128 需循环 4 次。固定 community 来源存在同类 64/128 tile 的可编译锚点，
+因此 E1 只把 host 公式中的上限 `32` 改为 `64`；kernel、grid、4 warps、数学、
+mask、stride 和 FP32 累加均保持不变。`D=129` 与 `D_v=257` controls 的 tile
+仍分别为 32 和 16。
+
+### 结果与停止门禁
+
+- 证据目录 `gpu:/tmp/flagos-decode-attention-e1.EC7hh6`，mode 0700；静态/共享
+  unittest PID/PGID `82952`，5/5 通过。候选源码 SHA-256 为
+  `28852592ad7dc14e4645bbe7ca3c11ade8cb5259382d883a1a7b365a625c899e`。
+- 正确性覆盖三 dtype、非连续 Q/K/V、strided int32/int64 CSR，以及
+  `D=33,D_v=17,L=31/32/33/63/64/65`；含性能规格共 66/66 次
+  base/candidate module-case 检查通过。
+- 五轮交替 AB/BA，`warmup=25, rep=100`，每次 wrapper 批量 20 次；每点以
+  5 个配对 speedup 的中位数计。9 个 affected 点几何均值 `1.3201x`，
+  FP16/BF16/FP32 分别为 `1.3373x`、`1.2880x`、`1.3355x`，范围
+  `1.1976–1.4488x`。6 个 controls 几何均值 `1.0000x`，范围
+  `0.9999–1.0001x`。
+- 性能门禁全部通过，但资源门禁失败：base/candidate 最大均为 128
+  registers/thread、2,048 bytes shared，base 18 个变体 spill 总数为 0；
+  candidate 18 个变体中 4 个出现 2–4 spills，合计 12。映射探针确认连续
+  `D=D_v=128` 的 BF16 变体已有 2 spills，其余出现在非连续边界特化；两者都在
+  公开契约内。global scratch 与 local load/store 为 0。
+- corrected A/B harness SHA-256 为
+  `40725faa5110729a0fc3232d33c2e8d50fdc8cbc2b129557bb3345922281098f`；
+  `screening.log`、`ab-corrected.log`、`resources.log` SHA-256 分别为
+  `baf53bfe3dfd2dbfaadf37fc2e279bae1c6acf717e2e2bb8ee42babfc15e0e34`、
+  `868b5ce86d9e481dcd2e10da7b58f961a70a53c65d8415591bd4b0f6361f6322`、
+  `d73af848a3744758c6638fc2c500ae31a381314ebddc9ae865354a171bc60bdf`。
+
+验证环境：NVIDIA GeForce RTX 5070 Ti 16 GB，driver 610.57.04，Python 3.12.13，
+PyTorch 2.13.0+cu130，Triton 3.7.1，CUDA 13.0。新增 spill 在其余后端可能放大为
+寄存器溢出或编译资源失败，因此严格按预设“无新 spill”停止：E1 不晋升，不继续
+用 dtype/stride 特判过拟合代理机，当前不可变候选仍为 S0 `f431ba4`。
+
+未打开浏览器、未读取或消耗平台额度。后续若有真实平台 shape/resource 反馈，再
+考虑 split-KV 或 vendor 限定配置；旧的上传确认不授权任何新产物。
