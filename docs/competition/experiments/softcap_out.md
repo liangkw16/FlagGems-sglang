@@ -175,3 +175,74 @@ S0 与 PyTorch reference 每组轮换先后顺序。表中时间为五组 p50 �
   开销过高；S2 保持 grid 12，单变量优先测试 BLOCK 4096。
 - 当前榜首 2.43x；最大差距依次在 Enflame（0.35x 对 3.12x）和 Hygon
   （2.13x 对 3.27x）。下一轮先优化 Enflame，再评估 Hygon BLOCK。
+
+## S2：Enflame 4096 tile 性能候选
+
+状态：远端 NVIDIA 代理正确性、性能筛选和不可变 ZIP 门禁通过；**未提交平台，
+S1 仍是当前平台有效版本**
+
+### 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| 源码 commit | `5cd60194ee4761b097f089b6eae96e54254cfada` |
+| ZIP | `artifacts/competition/softcap_out/s2-5cd6019/softcap_out.zip` |
+| ZIP SHA-256 | `3746930f19d1a255571906fd4defd59b4a7ee272a65343f519969cd265e3db20` |
+| generic SHA-256 | `e6ab1c434aa793bc58357e3d45d2eec7fd2ec56bebb65538b2a6049ca9a37ddc` |
+| Ascend SHA-256 | `cf79382068d6127548594c38ccc3951ff8f255e56eb73bad0c24dcf7a5871425` |
+| Enflame SHA-256 | `f9cbdd5eb5b13e6b754bb2666e81e68523f17270246a006893db85be27a8c562` |
+| 测试 SHA-256 | `28f5399a3b04afc5593bfbcd061a4c07072e0c89e241843f7ff0641ac2d2f273` |
+| ZIP 内容 | 三个顶层 UTF-8 `.py`；7,289 bytes 源码、3,591 bytes ZIP |
+| 远端证据目录 | `gpu:/tmp/flagos-softcap-s2.L88VNU`，mode 0700 |
+| 平台结果 | 未提交；逐芯结果、均值、排名和本次额度均为 N/A |
+
+### 单变量与固定依据
+
+- generic 和 Ascend 文件逐字节保持 S1；Enflame 只把 grid 计算及 kernel 的
+  `BLOCK_SIZE` 从 256 改为 4096，物理 grid 继续固定最多 12，数学和 launch
+  其他参数不变。
+- 固定 FlagGems commit `ed2508bcb5a03000e9774734201d840ba362cd11`
+  的 Enflame pointwise policy 为最大 tile 4096、最大 grid 12、4 warps；这是
+  上游软件策略，不是比赛 GCU 资源保证。
+- 平台观测最大用例 `N=65,667,072` 从 256,512 个旧 logical blocks 变为
+  16,032 个 blocks，每个 CTA 的循环次数由 21,376 降至 1,336，恰好减少 16 倍。
+
+### 代理验证
+
+- 远端 py_compile、Black 79、isort、flake8 全部通过；unittest 11/11 通过。
+  vendor 回归使用 `N=12*4096+17`：Enflame 为 13 blocks / 12 CTA，Ascend
+  为 193 blocks / 48 CTA；三种 dtype 均覆盖第二轮循环、17 元素 tail 和输入
+  不变性。
+- `N=65,667,072` 的 FP16、BF16、FP32 全量输出均与题面 reference 通过对应
+  容差；该探针同时覆盖每 CTA 1,336 次动态循环。
+- RTX 5070 Ti 编译产物均为 4 warps、3 stages、0 global scratch、0 spill；
+  FP16/BF16 为 56 registers、4,096 bytes shared，FP32 为 93 registers、
+  0 shared。这些资源数字不能替代真实 Enflame JIT。
+- ZIP 的三个成员名、UTF-8、10 MB、`unzip -t` 和 ZIP 内源码与 commit 源码
+  逐字节一致门禁均通过。
+
+wrapper-inclusive NVIDIA 单变量对比；每项五组交替顺序，组内
+`warmup=25, rep=100`，表中为五组 p50 的中位数：
+
+| dtype | numel | S1 ms | S2 ms | S2 / S1 |
+| --- | ---: | ---: | ---: | ---: |
+| FP16 | 4,096 | 0.004529 | 0.004465 | 1.0145x |
+| FP16 | 65,536 | 0.012925 | 0.006319 | 2.0453x |
+| FP16 | 1,048,576 | 0.133449 | 0.028173 | 4.7367x |
+| FP16 | 16,777,216 | 2.032990 | 0.374900 | 5.4228x |
+| FP16 | 65,667,072 | 7.906453 | 1.435665 | 5.5072x |
+| BF16 | 4,096 | 0.004463 | 0.004423 | 1.0092x |
+| BF16 | 65,536 | 0.012896 | 0.006330 | 2.0374x |
+| BF16 | 1,048,576 | 0.133126 | 0.027249 | 4.8856x |
+| BF16 | 16,777,216 | 2.029226 | 0.359651 | 5.6422x |
+| BF16 | 65,667,072 | 7.894272 | 1.394875 | 5.6595x |
+| FP32 | 4,096 | 0.004402 | 0.005410 | 0.8136x |
+| FP32 | 65,536 | 0.012706 | 0.007359 | 1.7266x |
+| FP32 | 1,048,576 | 0.135484 | 0.038376 | 3.5304x |
+| FP32 | 16,777,216 | 2.069782 | 0.501093 | 4.1305x |
+| FP32 | 65,667,072 | 8.058147 | 1.928959 | 4.1775x |
+
+NVIDIA 上仅 FP32 `N=4096` 回退 18.6%，其余代理点持平或提升；真实 GCU 的
+编译资源、大小 shape 权重和 speedup 仍未知。S2 只作为受控性能候选；网页上传
+必须重新读取额度，并取得用户对 Task 24、上述绝对 ZIP 路径及 SHA-256 的当次
+确认。若真实 Enflame 编译失败或总体均值下降，直接保留平台 S1，不叠加其他改动。

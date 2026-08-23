@@ -33,7 +33,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s0-3fac516` | `ef3c30e416d24d8268a1c252261676f3e540910a8836a93d2520917580f514bf` | NVIDIA 1.063–2.917x；未平台 | 第 3 个提交 |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s0-b05bfeb` | `ec395510ac56ccd289f53f95dab584c9502950e7a8b5d30d0681a3e2a1ab8a30` | NVIDIA 49.133–150.855x；未平台 | 第 9 个提交 |
 | 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `s0-b05bfeb` | `d3a05c053120e9bf575125f28798eac0c5b5fdf9a9bf25f57fb83a8d1df2e348` | NVIDIA 60.948–103.665x；未平台 | 第 8 个提交 |
-| 24 | [`softcap_out`](softcap_out.md) | `s1-fe2348e` | `698a7d9652d973868941e6e9e773d7d62ec1dceb87e0e392430b4b1c9cc69ded` | 平台 8/8，平均 1.90x，第 8 名 | 已完成；暂不再投正确性包 |
+| 24 | [`softcap_out`](softcap_out.md) | `s2-5cd6019` | `3746930f19d1a255571906fd4defd59b4a7ee272a65343f519969cd265e3db20` | S1 平台 8/8、1.90x；S2 Enflame 大 shape 代理提升 3.53–5.66x | 优化候选；覆盖其他任务后再投 |
 
 ## 建议提交顺序
 
@@ -44,7 +44,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 ```
 
 Task 13、18、14 暂缓，分别等待语义确认、仅作状态资源实验、仅作 attention
-资源实验。Task 24 已通过，不重复消耗正确性额度。Task 24 在
+资源实验。Task 24 已通过；S2 只优化 Enflame，不重复消耗正确性额度。Task 24 在
 2026-08-24 01:03:51 CST 提交后页面显示当日剩余 `13/15`，这只是历史观察；
 每次上传前必须重新读取实时额度。
 
