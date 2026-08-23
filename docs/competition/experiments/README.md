@@ -26,7 +26,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 14 | [`context_attention`](context_attention.md) | `s0-fbbf74f` | `38ce76db6fee2121a765a1cd741138b9c2ded2478fdd85b1bfb4bba3d0f97456` | NVIDIA 0.5797–6.4198x；大 D 资源风险 | 暂缓，受控实验 |
 | 15 | [`decode_attention`](decode_attention.md) | `s0-f431ba4` | `850cf12333241a450b342edbd2e108dca5841ddfb4f576129df45d863e5123b9` | NVIDIA 16.213x；未平台 | 第 12 个提交 |
 | 16 | [`decode_grouped_attention`](decode_grouped_attention.md) | `s0-f431ba4` | `4ed5e04d8453e100a38feff3d8986801fab9a13c4d77481e070a3260855136ef` | NVIDIA 5.285x；未平台 | 第 13 个提交 |
-| 17 | [`embedding_lora_a`](embedding_lora_a.md) | `s0-f431ba4` | `e0fd0124cece568d536efaa89d05779c1f7457d9f0abf13efba8d190c482567e` | NVIDIA 25.228–134.092x；未平台 | 第 7 个提交 |
+| 17 | [`embedding_lora_a`](embedding_lora_a.md) | `s1-d101ebe` | `49d7a33648c31d2b13e46c7e3dba8e7a4b88ecadce7da444c2ed5bac6b0ac09f` | 5/5 release；修复空 segment metadata 越界；2-warps E1 仅 0.999994x，保留 S1；未平台 | 第 7 个提交 |
 | 18 | [`fused_recurrent_gdn`](fused_recurrent_gdn.md) | `s0-de1530b` | `cf27e0e48f41fc1948075cd3bc22864e45d2387d8e61b5b6371fe1147fe9ce7f` | NVIDIA 21.92–110.36x；八芯状态资源高风险 | 暂缓，受控实验 |
 | 19 | [`fused_rmsnorm`](fused_rmsnorm.md) | `s0-3fac516` | `93780caf704341737ddfe5925cfacdcd7115ccefc2f38edf3c7ff006716d1820` | 3/3 回归；NVIDIA 1.830–5.837x；跨芯风险已审计；未平台 | 第 1 个提交 |
 | 20 | [`mamba_layernorm_gated`](mamba_layernorm_gated.md) | `e2-345413d` | `78c56c2955981833242d9fc2ed13dca1373014fc49f12072d469f34987875f03` | 3/3 回归；E2 受影响点 1.0803x；未平台 | 第 4 个提交 |
@@ -52,9 +52,9 @@ Task 13、18、14 暂缓，分别等待语义确认、仅作状态资源实验�
 
 每次只确认一个不可变 ZIP，确认信息必须同时包含：
 
-- Task 编号和 operator；
+- race ID/赛季、登录账号、登录团队、batch、Task 编号和 operator；
 - ZIP 绝对路径和完整 SHA-256；
 - 平台实时剩余额度，以及本次消耗 1 次。
 
-旧的“继续”或“上传”不授权后来生成的 ZIP。确认后才按项目 Skill 执行网页选择
-文件和提交，并把逐芯结果写回对应账本。
+旧的“继续”或“上传”不授权后来生成的 ZIP。用户当次确认只授权上述 tuple 的一次
+提交点击；确认后才按项目 Skill 执行网页选择文件和提交，并把逐芯结果写回对应账本。

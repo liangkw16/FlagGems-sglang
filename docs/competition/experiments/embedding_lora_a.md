@@ -2,7 +2,7 @@
 
 ## S0：generic baseline
 
-状态：S0 已打包并通过本地门禁；等待当次上传确认
+状态：S0 已由 S1 正确性修复取代；保留为历史回退，不再建议上传
 
 验证时间：2026-08-24 01:28–01:37 CST
 
@@ -112,3 +112,88 @@ Python segment 循环。
 - ZIP 由 commit `f431ba4` 直接生成；`unzip -t`、UTF-8、单一 `.py`、10 MB、
   basename 和 ZIP 内源码哈希门禁均通过。首次平台失败若只集中在单芯，保持
   generic 不变并加最小 vendor override；上述 ZIP 仍需当次用户确认。
+
+## S1：以 `seg_indptr` 为准并保护空 segment
+
+状态：候选就绪，尚未提交平台
+
+验证时间：2026-08-24 05:22–05:51 CST
+
+### 根因与最小修复
+
+S0 在判断 segment 是否为空前先读取 `weight_indices[b]` 和
+`lora_ranks[weight_index]`。题面 reference 先检查
+`seg_indptr[b] == seg_indptr[b+1]`；因此空 segment 的 metadata 即使不应被访问，
+S0 仍可能越界读取并在部分后端 fault。S0 还额外用 `seg_lens[b]` 决定有效 token，
+而 reference 的数据边界只由 `seg_indptr` 定义。
+
+S1 的 kernel 先读取相邻两个 `seg_indptr`，对超出 `[start:end)` 的 program 立即
+返回，然后才读取 adapter index 和 rank；同时删除 kernel 参数中的 `seg_lens` 及其
+stride。`max_len` 仍作为 host grid 上界保留，避免为推导最大 segment 长度引入
+device-to-host 同步。
+
+### TDD 与 release 验证
+
+- 新回归故意设置 `seg_lens=[1,0,1]`、`seg_indptr=[0,2,2,3]`，并给空 segment
+  一个越界 adapter 哨兵；S0 在远端稳定触发 CUDA illegal memory access：
+  `gpu:/tmp/flagos-embedding-lora-a.EJr2yH/tdd-old-source.log`。
+- 修复后 5/5 unittest 通过：原三组回归，加 rank 127/128/129、metadata stride、
+  输入不变性，以及 `seg_indptr` authoritative/空 metadata 不访问。
+- release 证据目录：
+  `gpu:/tmp/flagos-embedding-lora-a-release.JvZPhH`，mode 0700；
+  `release.log` 绑定 source/test commit 字节，`release-probe.log` 绑定 15 组
+  shape×dtype 探针。
+- release 探针在 A1/A2/A3 和 rank 65/130 controls 上覆盖 FP16/BF16/FP32、
+  base/extra、rank 0 与第二 rank block，正确性 15/15；wrapper-inclusive 中位延迟
+  范围 `0.006144–0.018432 ms`。
+- 共 12 个编译变体，均为 4 warps、1 stage；最大 32 registers/thread，shared、
+  spill、global/profile scratch、local load/store 全为 0。
+
+验证环境：NVIDIA GeForce RTX 5070 Ti 16 GB，driver 610.57.04，Python 3.12.13，
+PyTorch 2.13.0+cu130，Triton 3.7.1，CUDA 13.0。该结果仅是 NVIDIA 代理证据。
+
+### E1：小 rank 使用 2 warps（拒绝）
+
+单变量候选只把 `weights.shape[1] <= 64` 的 launch 从 4 warps 改为 2；rank 65/130
+controls 保持 4 warps。候选未提交，source SHA-256 为
+`6caa508e964fd3277f68eab6934f04d59a8aa210b0eebefca49a579b71542989`，screening
+目录为 `gpu:/tmp/flagos-embedding-lora-a-warp-screen.g0Q62D`。
+
+- 候选 unittest 5/5、A/B correctness 15/15。
+- 五轮交替 AB/BA，`warmup=25, rep=100`：affected 几何均值
+  `0.999994x`；FP16/BF16/FP32 分别为 `0.999329x`、`1.000653x`、
+  `1.000000x`；最差 affected 点 `0.997988x`。
+- controls 几何均值 `1.000650x`，范围 `1.000000–1.003906x`。
+- 2-warps base 路径为 30 regs/thread，对比 S1 的 20；extra 路径为 38，对比
+  S1 的 32。CTA register footprint 仍下降，且两边均无 spill/shared/scratch/local，
+  但没有可测性能收益。
+
+预声明门槛要求 affected 总体 `>=1.05x`、每 dtype `>=1.02x`、单点
+`>=0.98x`，controls 在 `0.98–1.02x`。E1 未达到收益门槛，已拒绝并回退；没有 E1
+commit 或 ZIP。
+
+### S1 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| source commit | `d101ebe56cd37dc5fbe423bd4d029227181461f8` |
+| verification commit | `d101ebe56cd37dc5fbe423bd4d029227181461f8` |
+| ledger commit | 本节所在 commit |
+| 源文件 SHA-256 | `fb29244a40cffdf0d585615cb1dc9f9272063c2028792ac914e57e7a562a5f92` |
+| 测试 SHA-256 | `e8532f0c55ca1fcd534a626446b449d62ebcce5722ba9541f303c303ba6586c3` |
+| ZIP | `artifacts/competition/embedding_lora_a/s1-d101ebe/embedding_lora_a.zip` |
+| ZIP SHA-256 | `49d7a33648c31d2b13e46c7e3dba8e7a4b88ecadce7da444c2ed5bac6b0ac09f` |
+| ZIP manifest | 顶层 `embedding_lora_a.py`，4722 bytes；ZIP 4858 bytes |
+
+`unzip -t`、UTF-8/语法、唯一普通 `.py`、basename、大小、成员字节与 source
+commit 均已复验；打包器第二次运行状态为 `verified-existing`。
+
+### 剩余风险与停止点
+
+- `max_len` 仍必须覆盖 `seg_indptr` 的最大 segment 长度；它是题面 batch metadata
+  和 launch grid 上界。S1 不读取 `seg_lens`，但不为错误的 `max_len` 引入 host
+  同步修复。
+- runtime rank loop、scalar control flow 和 2D grid 仍需八芯平台验证；不把 RTX
+  5070 Ti 结果外推到其他芯片。
+- S1 当前为“候选就绪、未提交”。未打开浏览器、未读取或消耗平台额度；上传必须
+  重新执行本地验签、平台只读预检并取得用户针对完整 tuple 的当次一次性确认。
