@@ -22,8 +22,9 @@ import torch
 OPS_PATH = Path(__file__).parents[1] / "src" / "flaggems_sglang" / "ops"
 
 
-def _load_module(name):
-    path = OPS_PATH / f"{name}.py"
+def _load_module(name, path=None):
+    if path is None:
+        path = OPS_PATH / f"{name}.py"
     spec = importlib.util.spec_from_file_location(f"{name}_module", path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot load {path}")
@@ -33,7 +34,20 @@ def _load_module(name):
 
 
 DECODE_ATTENTION = _load_module("decode_attention")
+DECODE_ATTENTION_NVIDIA = _load_module(
+    "decode_attention_nvidia",
+    OPS_PATH.parent
+    / "runtime"
+    / "backend"
+    / "_nvidia"
+    / "ops"
+    / "decode_attention.py",
+)
 DECODE_GROUPED_ATTENTION = _load_module("decode_grouped_attention")
+MHA_FUNCTIONS = (
+    DECODE_ATTENTION.decode_attention,
+    DECODE_ATTENTION_NVIDIA.decode_attention,
+)
 
 
 def reference(q, k_buffer, v_buffer, kv_indptr, kv_indices, sm_scale):
@@ -146,7 +160,9 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
     def test_mha_strides_variable_lengths_and_value_dim(self):
         case = make_case(4, 4, 33, 17, [1, 35, 65], torch.float16)
 
-        self.assert_matches(DECODE_ATTENTION.decode_attention, case)
+        for function in MHA_FUNCTIONS:
+            with self.subTest(function=function.__module__):
+                self.assert_matches(function, case)
 
     def test_gqa_strides_variable_lengths_and_value_dim(self):
         case = list(make_case(8, 2, 40, 24, [3, 70], torch.bfloat16))
@@ -158,14 +174,35 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
         )
 
     def test_fp32_mha_and_gqa(self):
-        self.assert_matches(
-            DECODE_ATTENTION.decode_attention,
-            make_case(2, 2, 16, 9, [5], torch.float32),
-        )
+        mha_case = make_case(2, 2, 16, 9, [5], torch.float32)
+        for function in MHA_FUNCTIONS:
+            with self.subTest(function=function.__module__):
+                self.assert_matches(function, mha_case)
         self.assert_matches(
             DECODE_GROUPED_ATTENTION.decode_grouped_attention,
             make_case(4, 1, 16, 9, [5], torch.float32),
         )
+
+    def test_nvidia_tile_schedule_boundaries(self):
+        for length, qk_dim, dtype, csr_dtype in (
+            (32, 64, torch.float16, torch.int32),
+            (33, 64, torch.float16, torch.int32),
+            (33, 64, torch.float16, torch.int64),
+            (33, 128, torch.bfloat16, torch.int32),
+        ):
+            with self.subTest(
+                length=length,
+                qk_dim=qk_dim,
+                dtype=dtype,
+                csr_dtype=csr_dtype,
+            ):
+                case = list(make_case(4, 4, qk_dim, qk_dim, [length], dtype))
+                case[:3] = [tensor.contiguous() for tensor in case[:3]]
+                case[3] = case[3].to(csr_dtype)
+                case[4] = case[4].to(csr_dtype)
+                self.assert_matches(
+                    DECODE_ATTENTION_NVIDIA.decode_attention, tuple(case)
+                )
 
     def test_grouped_kernel_varied_group_sizes_and_dtypes(self):
         for query_heads, kv_heads, lengths, dtype in (
@@ -191,10 +228,10 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
                 )
 
     def test_value_dim_larger_than_qk_dim(self):
-        self.assert_matches(
-            DECODE_ATTENTION.decode_attention,
-            make_case(4, 4, 64, 257, [33, 65], torch.float16),
-        )
+        mha_case = make_case(4, 4, 64, 257, [33, 65], torch.float16)
+        for function in MHA_FUNCTIONS:
+            with self.subTest(function=function.__module__):
+                self.assert_matches(function, mha_case)
         self.assert_matches(
             DECODE_GROUPED_ATTENTION.decode_grouped_attention,
             make_case(8, 2, 64, 257, [33, 65], torch.float16),
@@ -203,6 +240,7 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
     def test_empty_batch(self):
         for function, query_heads, kv_heads in (
             (DECODE_ATTENTION.decode_attention, 4, 4),
+            (DECODE_ATTENTION_NVIDIA.decode_attention, 4, 4),
             (
                 DECODE_GROUPED_ATTENTION.decode_grouped_attention,
                 8,
