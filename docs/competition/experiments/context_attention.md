@@ -121,3 +121,67 @@ wrapper-inclusive FP16 代理 benchmark 使用 PR #31 固定的三组公开 shap
 - 结论：保留该 experimental candidate 的不可变 ZIP；优先提交已有多芯成功
   证据的低风险任务。只有平台额度充足，且用户针对上述 Task、ZIP 路径、哈希
   和实时额度当次确认时，才用一次提交换取逐芯反馈。
+
+## Experimental E1：NVIDIA `tf32x3` dot vendor
+
+状态：NVIDIA 单变量优化通过提交字节发布门禁并生成不可变 ZIP；未提交平台
+
+验证时间：2026-08-24 07:02–07:14 CST
+
+源码 commit：`a085dc495b2ac84855784ff7694a83f050070908`
+
+### 设计与边界
+
+E1 不改 S0 generic，也不放大 tile。新增自包含
+`runtime/backend/_nvidia/ops/context_attention.py`，仅把两个主导 FP32
+`tl.dot` 的 precision 做成 compile-time 参数：
+
+- `head_dim <= 128` 使用 `tf32x3`，让 NVIDIA 生成 TF32 MMA；online softmax、
+  accumulator 和输出仍保持 FP32。
+- `head_dim > 128` 原样使用 `ieee`。初筛中无门控版本在 D=257/512 虽数值正确，
+  但出现约 960/1008-byte stack；门控后对应大 D 路径与 S0 一致，避免资源回退。
+- grid、M/N/D tile、warps、stages、stride、mask、wrapper validation 和 generic
+  七芯路径全部不变；没有设备判断、fallback、autotune 或额外依赖。
+
+### 发布验证
+
+| 项目 | 值 |
+| --- | --- |
+| generic SHA-256 | `23b9388fefd2adb333fbfe047b3d09945715ad3a181ea7175b85f9e8ca10002a` |
+| NVIDIA vendor SHA-256 | `6ed12afdae00d614d7ed9e6cd00e9376e764df5c11467ec265cf2090f0962340` |
+| 测试 SHA-256 | `63263732d5545254a5191c8539cbdf93c12423b716b61e97224a37f60551f375` |
+| ZIP | `artifacts/competition/context_attention/e1-a085dc4/context_attention.zip` |
+| ZIP SHA-256 | `1bd5f7483bac887f92c6be3e2aea81ac2c69f519aeafd28f267585f37a7da777` |
+| ZIP 大小 / 成员 | 16,138 bytes；generic 7,861 bytes，NVIDIA vendor 8,009 bytes |
+| 远端发布目录 | `gpu:/tmp/flagos-context-nvidia-release.QXbnko`，mode 0700 |
+| 远端环境 | RTX 5070 Ti 16 GB；PyTorch 2.13.0+cu130；Triton 3.7.1；CUDA 13.0 |
+
+- source commit 导出的发布字节 unittest 6/6 通过；generic 与 NVIDIA vendor
+  都直接覆盖 FP16/BF16/FP32、causal/non-causal、D=8/37、非连续 stride、hint
+  低报、65,535-grid 分片、空输入及输入不变。新增 D=257 回归验证 IEEE 回退。
+- 发布前扩大筛选另覆盖输入尺度 `0.125/1/8`；24 个子例最大 normalized error
+  `0.00855`、最大绝对误差 `1.90e-4`，远低于题面 `1e-2/1e-2` 容差。
+- Black 79、isort、flake8、`py_compile` 和 `git diff --check` 通过；发布目录三份
+  文件与 source commit SHA-256 一致。
+- E1 PTX 已从 IEEE-only `fma.rn.f32` 转为 TF32 MMA。发布矩阵的 MMA 变体为
+  91–150 registers/thread、2,560–12,288-byte shared；D=128 性能变体最高 186
+  registers/thread、20,480-byte shared。全部为 0 stack、0 local、0 scratch；
+  D=257 IEEE 变体也为 0 stack/local/scratch。
+
+五轮交替、wrapper-inclusive FP16 配对结果：
+
+| shape | S0 ms | E1 ms | paired E1/S0 | E1/reference |
+| --- | ---: | ---: | ---: | ---: |
+| `[128]x4,H16,D64`, non-causal | 0.0755 | 0.0418 | 1.8044x | 6.8207x |
+| `[128]x4,H16,D64`, causal | 0.0555 | 0.0329 | 1.6851x | 11.1494x |
+| `[512]x2,H16,D64`, non-causal | 0.5100 | 0.2481 | 2.0558x | 1.2897x |
+| `[2048],H16,D128`, non-causal | 7.4892 | 4.0569 | 1.8461x | 1.0664x |
+| `[2048],H16,D128`, causal | 4.0484 | 2.1731 | 1.8631x | 2.4095x |
+
+确定性打包器从 commit 生成 generic 与 `context_attention_nvidia.py` 两个顶层
+成员；重复验签得到相同 canonical ZIP SHA-256，`unzip -t`、UTF-8、10 MB 和
+逐字节来源门禁均通过。
+
+E1 只证明 RTX 5070 Ti 的 NVIDIA 路径；generic 在其余七芯的动态 while、IEEE
+dot 和大 D shared-memory 风险没有因此消失。上传前必须重新读取实时额度，并取得
+用户针对 Task 14、上述绝对 ZIP 路径和完整 SHA-256 的当次确认。
