@@ -225,8 +225,9 @@ class SoftcapOutTest(unittest.TestCase):
         }
         for dtype, tolerance in tolerances.items():
             x = torch.linspace(
-                -60.0, 60.0, 48 * 256 + 17, device="cuda", dtype=dtype
+                -60.0, 60.0, 12 * 4096 + 17, device="cuda", dtype=dtype
             )
+            original = x.clone()
             expected = torch.tanh(x.to(torch.float32) / 30.0) * 30.0
 
             for vendor, module_path in VENDOR_MODULE_PATHS.items():
@@ -244,6 +245,7 @@ class SoftcapOutTest(unittest.TestCase):
 
                     actual = module.softcap_out(x, 30.0)
 
+                    torch.testing.assert_close(x, original, atol=0.0, rtol=0.0)
                     torch.testing.assert_close(
                         actual, expected, atol=tolerance, rtol=tolerance
                     )
