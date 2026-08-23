@@ -1,0 +1,118 @@
+# Task 14 `context_attention` 实验记录
+
+## Experimental S0：generic packed prefill attention
+
+状态：P1 修复后 NVIDIA 代理正确性、编译资源和不可变 ZIP 门禁通过；**八芯高风险，未提交平台**
+
+验证时间：2026-08-24 01:44–02:15 CST
+
+源码 commit：`fbbf74f`；未上传
+
+### 决策
+
+2026-08-24 02:15 CST 的公开 API 已更新为 97 次提交、19 支队伍、1 支达到
+门槛；榜首 EvokeAgent 为 8/8、3.7924375x。此前 2026-08-23 21:59 CST 的
+83 次提交、0 支 8 芯达标只是历史快照，不能继续当作当前状态。固定
+`origin/pr31` 候选暴露过 shared-memory、超时和 grid 上限风险；本轮根据只读
+交叉审查修复已证实的 `D < 16` 编译、O(batch) owner scan 和物理 grid 风险，
+但 NVIDIA 代理仍不能证明本候选复制了榜首的八芯结果。
+
+### 契约
+
+| 项目 | 值 |
+| --- | --- |
+| 公开接口 | `context_attention(q, k, v, b_start_loc, b_seq_len, max_input_len, is_causal)` |
+| packed 输入 | Q/K/V `[total_tokens,num_heads,head_dim]`；每条序列由 start 和 length 指定 |
+| attention | 每条序列独立执行 `softmax(Q @ K.T / sqrt(D)) @ V`；causal mask 使用序列内局部位置 |
+| `max_input_len` | 只供 kernel 规划；题面 reference 未使用，低报也不能改变正确性 |
+| 数值 | Q/K/V 转 FP32，score、softmax 和输出累加均 FP32；FP32 dot 显式 IEEE |
+| 输出 | 与 Q 同 shape，固定 FP32，out-of-place；输入不变 |
+| 容差 | `atol=1e-2, rtol=1e-2` |
+| 支持芯片 | 天数、沐曦、燧原、海光、昆仑芯、华为、国际通用 A/B，共 8 款 |
+| 截止 / 门槛 | 2026-08-27 19:59:59；每芯 `speedup >= 0.1` |
+
+题面 reference 只明确同头数 MHA。S0 保留固定 SGLang/PR31 中的整除 GQA
+head 映射，但本轮不把它当作平台已承诺的输入契约。
+
+固定来源：本地 Task 14 题面；SGLang commit
+`8014d9d062c3cc5d393596ecdf2f7009191965df` 的
+`prefill_attention.py`；以及官方 PR #31 的 `origin/pr31`（tip `3f5aa55`，
+实现 commit `73110e7`）。S0 删除设备识别、fallback、autotune、vendor、
+reference/demo 和额外公开 alias。
+
+### 唯一候选
+
+- 单个 Triton online-softmax kernel。扁平一维 program 直接映射到
+  `(query_slot, query_head, batch)`，不再让每个 program 扫描完整
+  starts/lengths。program 内用 `query_block += QUERY_SLOTS` 扫描真实
+  `seq_len`，所以低报 `max_input_len` 只降低并行度，不截断输出。
+- `QUERY_SLOTS=max(ceil(max_input_len/16),1)`，最大 65,535；每次物理 launch
+  也严格不超过 65,535 programs，超出的 batch-head 分片为多个互不重叠的
+  Triton launch。logical grid 不使用受限的二维 `grid.y`。
+- `BLOCK_M=BLOCK_N=16`；`BLOCK_D=max(16,next_power_of_2(head_dim))`，修复
+  `D <= 8` 时 `tl.dot` 要求 K 至少 16 的编译错误，并降低 QK/PV tile 资源。
+- 4 warps、1 stage。Q/K/V、metadata 与输出全部使用真实 stride；任意尾块和
+  非 2 次幂 head_dim 均完整 mask。
+- QK 和 probability-V 两个 `tl.dot` 的输入均显式转 FP32，并设置
+  `input_precision="ieee"`；online maximum、denominator、probability 和
+  accumulator 全部为 FP32，输出直接写 FP32。
+- 非空核心路径只运行 Triton；wrapper 仅做 shape 契约检查和 FP32 输出分配。
+  无 PyTorch 计算、设备判断、fallback、autotune 或私有后端 API。
+
+### 验证
+
+| 项目 | 值 |
+| --- | --- |
+| 源文件 SHA-256 | `23b9388fefd2adb333fbfe047b3d09945715ad3a181ea7175b85f9e8ca10002a` |
+| 测试 SHA-256 | `644cc247e2fd7929578a3dfd5cf726e05ce0fa957e8582b4d15f3e30fed442fe` |
+| ZIP | `artifacts/competition/context_attention/s0-fbbf74f/context_attention.zip` |
+| ZIP SHA-256 | `38ce76db6fee2121a765a1cd741138b9c2ded2478fdd85b1bfb4bba3d0f97456` |
+| 远端证据目录 | `gpu:/tmp/flagos-context-attention.VQOW2U`、`gpu:/tmp/flagos-batch2.SQaIX2` |
+| 远端环境 | RTX 5070 Ti 16 GB；PyTorch 2.13.0+cu130；Triton 3.7.1；CUDA 13.0 |
+
+- `D=8` 回归先于修复落盘，旧实现的 causal/non-causal 两个子例都以
+  `tl.dot: Input shapes ... K >= 16` 编译失败。最终远端 unittest 5/5 通过；
+  主测试内部覆盖 FP16/BF16/FP32 × causal/non-causal 六个子例、变长
+  `1/5/33/7`、16-token block 边界、`D=37`、Q/K/V 与 metadata 非连续
+  stride、输入不变，以及
+  `max_input_len=1` 的低报；新增 `D=8`、长度 `3/33` 的双 causal 回归，以及
+  257 条单 token 序列、`H=2,D=16,max_input_len=2048` 的 65,535-program
+  分片回归；另覆盖空 packed batch。
+- 本地 `py_compile`、`git diff --check` 通过；远端 Black 79、isort、flake8
+  全部通过。本地与远端最终 source/test 哈希一致。
+- 隔离 Triton cache `gpu:/tmp/flagos-context-direct.8F7Tg8` 产生 6 个 NVIDIA
+  编译变体，均为 4 warps、1 stage、0 global scratch；`D=8/64/128` 的
+  shared memory 分别为 3,072 / 9,216 / 17,472 bytes。PTX 中无 `tf32`，
+  dot lowering 使用 `fma.rn.f32`。
+- ZIP 由 commit `fbbf74f` 的算子源码直接生成，仅含顶层 UTF-8
+  `context_attention.py`。文件小于 10 MB，`unzip -t`、成员名和 ZIP 内源码与
+  commit 源文件逐字节一致门禁均通过。
+
+wrapper-inclusive FP16 代理 benchmark 使用 PR #31 固定的三组公开 shape：
+
+| lengths / heads / dim | causal | S0 ms | reference ms | 代理 speedup |
+| --- | ---: | ---: | ---: | ---: |
+| `[128,128,128,128] / 16 / 64` | false | 0.075585 | 0.281325 | 3.7220x |
+| `[128,128,128,128] / 16 / 64` | true | 0.055571 | 0.356758 | 6.4198x |
+| `[512,512] / 16 / 64` | false | 0.508648 | 0.319238 | 0.6276x |
+| `[512,512] / 16 / 64` | true | 0.301512 | 0.380644 | 1.2625x |
+| `[2048] / 16 / 128` | false | 7.466771 | 4.328212 | 0.5797x |
+| `[2048] / 16 / 128` | true | 4.053038 | 5.231508 | 1.2908x |
+
+对应 max absolute error 为 `9.24e-7` 到 `2.06e-6`，均远低于题面容差。
+
+### 淘汰证据与风险
+
+- 5070 Ti 只能证明 NVIDIA 代理路径；当前公开榜首 8/8 不能证明本地字节在
+  MetaX/昆仑芯/Ascend 等后端编译或达到门槛。
+- P1 owner scan 和无界二维 grid 已从结构上移除；17,472-byte NVIDIA shared
+  峰值也显著低于旧候选。但各后端的 `tl.dot(input_precision="ieee")`、动态
+  while 和多 launch 行为仍需平台逐芯验证。
+- 题面未公开 head_dim 上界。NVIDIA 编译探针覆盖 `D=8/128/257/512`；
+  `D=513/1024` 仍因 132,160-byte shared memory 超过 101,376-byte 上限失败，
+  这是未解决的 P2，不能声称覆盖任意 D。
+- 长序列 non-causal 代理速度为 0.5797x reference，说明 IEEE FP32 dot 和
+  小 tile 的成本明显。虽高于 0.1 最低门槛，不能外推到其余七个 backend。
+- 结论：保留该 experimental candidate 的不可变 ZIP；优先提交已有多芯成功
+  证据的低风险任务。只有平台额度充足，且用户针对上述 Task、ZIP 路径、哈希
+  和实时额度当次确认时，才用一次提交换取逐芯反馈。
