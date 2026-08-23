@@ -184,7 +184,7 @@ class MambaLayernormGatedTest(unittest.TestCase):
         }
 
         for dtype, tolerance in tolerances.items():
-            for group_size in (1, 255, 256, 257, 511, 512, 513):
+            for group_size in (1, 255, 256, 257, 511, 512, 513, 1025):
                 with self.subTest(dtype=dtype, group_size=group_size):
                     hidden_size = group_size * 2
                     x = torch.randn(
