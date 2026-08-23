@@ -32,7 +32,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 20 | [`mamba_layernorm_gated`](mamba_layernorm_gated.md) | `e2-345413d` | `78c56c2955981833242d9fc2ed13dca1373014fc49f12072d469f34987875f03` | 3/3 回归；E2 受影响点 1.0803x；未平台 | 第 4 个提交 |
 | 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s0-3fac516` | `ef3c30e416d24d8268a1c252261676f3e540910a8836a93d2520917580f514bf` | 4/4 回归；E1 仅 1.0111x，保留 S0；未平台 | 第 3 个提交 |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s0-b05bfeb` | `ec395510ac56ccd289f53f95dab584c9502950e7a8b5d30d0681a3e2a1ab8a30` | NVIDIA 49.133–150.855x；未平台 | 第 9 个提交 |
-| 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `s0-b05bfeb` | `d3a05c053120e9bf575125f28798eac0c5b5fdf9a9bf25f57fb83a8d1df2e348` | NVIDIA 60.948–103.665x；未平台 | 第 8 个提交 |
+| 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `s1-222dd77` | `4223927a48608887b322b87611001f65102cd0e6fa2bf432b4efb50a7773a03f` | 4/4 release；修复空段 metadata 越界并跳过无效 GEMM；ragged 1.881–4.541x；未平台 | 第 8 个提交 |
 | 24 | [`softcap_out`](softcap_out.md) | `s2-5cd6019` | `3746930f19d1a255571906fd4defd59b4a7ee272a65343f519969cd265e3db20` | S1 平台 8/8、1.90x；S2 Enflame 大 shape 代理提升 3.53–5.66x | 优化候选；覆盖其他任务后再投 |
 
 ## 建议提交顺序

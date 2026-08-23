@@ -2,7 +2,7 @@
 
 ## S0：generic baseline
 
-状态：本地静态检查、RTX 5070 Ti 代理验证和不可变 ZIP 门禁通过；未提交平台
+状态：已被 S1 的 segment 边界修复替代；历史 ZIP 保持不可变，未提交平台
 
 ### 契约
 
@@ -78,3 +78,80 @@ ZIP 由 commit `b05bfeb` 的算子子树直接生成，仅含顶层 UTF-8
 - 若输入不是一一映射的真 permutation，并行 segment 可能写同一行；题面称其
   为“permutation 重排”，S0 不增加 GPU 去重开销。
 - 未提交平台或消耗额度；上传前仍需用户确认上述路径、SHA-256 和实时额度。
+
+## S1：以 `seg_indptr` 为准并跳过无效 token blocks
+
+状态：候选就绪，尚未提交平台
+
+验证时间：2026-08-24 06:02–06:13 CST
+
+### 根因与最小修复
+
+S0 在确认 segment 是否为空前先读取 `weight_indices[b]` 和
+`lora_ranks[weight_index]`。题面 reference 先比较相邻两个 `seg_indptr` 并跳过
+空 segment；因此空段的 adapter metadata 即使不应被访问，S0 仍可能越界读取。
+S0 还用 `seg_lens[b]` 决定有效 token，而 reference 的 segment 边界只由
+`seg_indptr` 定义。
+
+S1 先读取 `seg_indptr[b:b+2]`，对
+`token_block * BLOCK_S >= end - start` 的 program 立即返回，再读取 adapter
+index、rank、x 和 weights；同时删除 kernel 中的 `seg_lens` 参数。该 guard 与固定
+SGLang 上游删除 ragged segment 无效 GEMM 的做法一致，并把空段保护提前到 metadata
+读取前。`max_len` 仍只作为 host grid 上界，避免引入 device-to-host 同步。
+
+### TDD 与 release 验证
+
+- 新回归使用 strided `seg_indptr=[0,17,17,18]`，故意令
+  `seg_lens=[1,0,1]` 失配，并给空 segment 一个越界 adapter 哨兵；S0 在独立进程
+  稳定触发 CUDA illegal memory access，退出码 1：
+  `gpu:/tmp/flagos-sgemm-lora-b-tdd.2A07xU/old-source.log`，日志 SHA-256
+  `f859498a...6cbda46`。即使后端未 fault，S0 也只会更新首行而不是 reference 的
+  17 行，因此回归不依赖越界行为。
+- 修复后的 screening 与 release 均为 4/4 unittest 通过；新 case 同时覆盖
+  `S=17` 两个 token tiles、`K=65` 三个 K tiles、`N=67` 两个 N tiles、metadata
+  stride，以及空段 metadata 不访问。Black 79、isort、flake8、py_compile 和文件
+  哈希门禁全部通过。
+- release 证据目录：`gpu:/tmp/flagos-sgemm-lora-b-release.biIhDM`，mode 0700；
+  静态/单测任务 PID/PGID `80558`，性能探针 PID/PGID `80652`。`release.log`、
+  `release-ab.log`、`release-precision.log` 的 SHA-256 分别为
+  `63b22c5f...ec6514`、`fa10de89...7cb20`、`2e20d756...f624`。
+- release A/B 对四组 segment 分布的三种 dtype 共完成 12/12 reference correctness；
+  五轮交替 AB/BA，`warmup=25, rep=100`。20 次 wrapper 批量计时消除短 kernel 的
+  计时量化后，ragged affected 几何均值为 `2.9339x`；FP16/BF16/FP32 分别为
+  `2.3901x`、`2.3833x`、`4.4336x`，范围 `1.8812–4.5407x`。
+- 等长 controls 的几何均值为 `0.9845x`，范围 `0.9638–1.0012x`。FP16
+  `(16 segments × 64 tokens, K=32, N=1024)` 约慢 `3.62%`，说明 guard 对完全
+  等长的小 kernel 有可测控制流成本；ragged 分布收益和公开 reference correctness
+  修复共同支持保留 S1，账本不把该 trade-off 隐藏为纯性能无回归。
+- base/candidate 各编译 6 个变体；最大均为 106 registers/thread、10,240 bytes
+  shared、4 warps、1 stage，spill、global scratch、local load/store 全为 0。
+
+验证环境：NVIDIA GeForce RTX 5070 Ti 16 GB，driver 610.57.04，Python 3.12.13，
+PyTorch 2.13.0+cu130，Triton 3.7.1，CUDA 13.0。该结果仅是 NVIDIA 代理证据。
+
+### S1 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| source commit | `222dd77bc855c16c8ce87b61a723cf5f573ef540` |
+| verification commit | `222dd77bc855c16c8ce87b61a723cf5f573ef540` |
+| ledger commit | 本节所在 commit |
+| 源文件 SHA-256 | `34e752d5ce942d03c0c70e24c0a26b10df90a1fc841888b915c207219b11a269` |
+| 测试 SHA-256 | `11e286d6ec8d954f7ae5f7d1b30df1bcb0c0250826264dbf46a6d9b86b179bb1` |
+| ZIP | `artifacts/competition/sgemm_lora_b/s1-222dd77/sgemm_lora_b.zip` |
+| ZIP SHA-256 | `4223927a48608887b322b87611001f65102cd0e6fa2bf432b4efb50a7773a03f` |
+| ZIP manifest | 顶层 `sgemm_lora_b.py`，5091 bytes；ZIP 5219 bytes |
+
+`unzip -t`、UTF-8/语法、唯一普通 `.py`、basename、大小和成员逐字节哈希均已
+复验；打包器第二次运行状态为 `verified-existing`。
+
+### 剩余风险与停止点
+
+- `max_len` 必须覆盖 `seg_indptr` 的最大 segment 长度；S1 不再信任
+  `seg_lens`，但不会为错误的 host grid hint 引入同步修复。
+- 等长 FP16/BF16 小 shape 存在最多约 `3.62%` 的 NVIDIA 控制流成本；实际 LoRA
+  batch 的 segment 分布和其余七类后端表现只能由平台验证。
+- 2D grid、runtime segment metadata、permutation 和 IEEE dot 仍未在八芯实测；
+  当前不预建 vendor 分支。
+- S1 为“候选就绪、未提交”。未打开浏览器、未读取或消耗平台额度；上传前必须
+  重新验签 ZIP、读取平台实时 tuple，并取得用户针对该精确产物的一次性确认。
