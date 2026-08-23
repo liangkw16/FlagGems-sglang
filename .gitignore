@@ -17,6 +17,7 @@ build/
 *.egg-info/
 .eggs/
 dist/
+artifacts/
 
 # An auxiliary product of unittests
 tests/*.json
