@@ -125,6 +125,8 @@ def mamba_layernorm_gated(
     z_rows = x if z is None else z
     block_size = triton.next_power_of_2(group_size)
     num_warps = min(max(block_size // 256, 4), 8)
+    if block_size == 512 and group_size < 512:
+        num_warps = 2
     grid = (rows, hidden_size // group_size)
 
     _mamba_layernorm_gated_kernel[grid](
