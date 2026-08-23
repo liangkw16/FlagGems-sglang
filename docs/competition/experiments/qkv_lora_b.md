@@ -2,7 +2,7 @@
 
 ## S0：generic baseline
 
-状态：本地静态检查、NVIDIA 代理验证和不可变 ZIP 门禁通过；未提交平台
+状态：已被 S1 的 segment/slice 边界修复替代；历史 ZIP 保持不可变，未提交平台
 验证时间：2026-08-24 CST
 
 ### 契约
@@ -109,3 +109,81 @@ ZIP 由 commit `b05bfeb` 的算子子树直接生成，仅含顶层 UTF-8
 - S0 信任 `max_qkv_out_dim` 不小于最大 slice 宽度，与固定 wrapper 一致。
 - 若首次平台仅单芯失败，保持 generic 与已通过芯片不变，只做最小 vendor
   override；下一门禁是用户针对上述 ZIP 路径、哈希和实时额度作当次确认。
+
+## S1：以 `seg_indptr` 为准并跳过无效 QKV tiles
+
+状态：候选就绪，尚未提交平台
+
+验证时间：2026-08-24 06:16–06:22 CST
+
+### 根因与最小修复
+
+S0 在确认 segment 是否为空前先读取 `weight_indices[b]` 和
+`lora_ranks[weight_index]`。题面 reference 先比较相邻两个 `seg_indptr` 并跳过
+空 segment；因此空段不应访问的 adapter metadata 在 S0 仍可能越界。S0 还用
+`seg_lens[b]` 判断 token block，而 reference 的 segment 边界只由
+`seg_indptr[b:b+2]` 定义。
+
+此外，wrapper 按最大 slice 宽度为每个 Q/K/V slice 启动相同数量的 output
+blocks；较窄 slice 的越界 blocks 虽然最终 masked store，却仍执行完整 K-loop 和
+dot。S1 先从 `seg_indptr` 计算 segment 长度，依次跳过无效 token block 和无效
+output block，之后才读取 adapter index/rank 和矩阵数据；同时删除 kernel 的
+`seg_lens` 参数。tile、数学顺序、FP32/IEEE 路径和地址语义均未改变。
+
+### TDD 与 release 验证
+
+- 新回归使用 strided `seg_indptr=[0,17,17,18]`，故意令
+  `seg_lens=[1,0,1]` 失配，并给空 segment 越界 adapter 哨兵。S0 在隔离进程触发
+  CUDA illegal memory access、退出码 1；即使后端未 fault，S0 也只会更新首行，
+  与 reference 要求的 17 行不同。日志位于
+  `gpu:/tmp/flagos-qkv-lora-b-tdd.SQMRBc/old-source.log`，SHA-256 为
+  `1fa722b5f6de6a9e183657f67174fd1ae6b9943549592a6cbe6e1e3cd2aa4534`。
+- 新 case 同时覆盖 `S=17` 两个 token tiles、`K=33` 两个 K tiles、slice 宽度
+  `65/1` 的两个/一个 output tiles、strided metadata，以及空段 metadata 不访问。
+  修复后的 screening 和 release 静态/公开接口门禁均为 3/3 通过；Black 79、
+  isort、flake8、py_compile 与提交源码/测试哈希门禁通过。
+- release 证据目录为 `gpu:/tmp/flagos-qkv-lora-b-release.eNynkq`，mode 0700；
+  静态/单测任务 PID/PGID `81318`，A/B 任务 PID/PGID `81416`。release 源码和
+  测试逐字节等于 commit；`release.log` 与 `release-ab.log` SHA-256 分别为
+  `8f0d43bf08e3e0ccce9b9653740908bdeaace146fec1f35d2c4378d208c72fa6`、
+  `7169d27969ec877c7d56372869bfcc337a31c218316a056ecb9563fa063ca639`；
+  12/12 reference correctness 通过。
+- 五轮交替 AB/BA，`warmup=25, rep=100`，每次 wrapper 批量 20 次。非等宽
+  affected 几何均值 `1.1163x`；FP16/BF16/FP32 分别为 `1.0887x`、
+  `1.0883x`、`1.1742x`，范围 `1.0056–1.3712x`。
+- 等宽 controls 几何均值 `1.0297x`，范围 `1.0132–1.0615x`。metadata guard
+  的执行顺序调整也覆盖 controls；未观察到 NVIDIA 代理回退。
+- base/candidate 各编译 6 个变体，最大分别为 108/110 registers/thread；均为
+  10,240 bytes shared、4 warps、1 stage，spill、global scratch、local
+  load/store 全为 0。
+
+验证环境：NVIDIA GeForce RTX 5070 Ti 16 GB，driver 610.57.04，Python 3.12.13，
+PyTorch 2.13.0+cu130，Triton 3.7.1，CUDA 13.0。该结果仅是 NVIDIA 代理证据。
+
+### S1 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| source commit | `11ae343f3a5864fa0b175faff3b84e932a1b4a0f` |
+| verification commit | `11ae343f3a5864fa0b175faff3b84e932a1b4a0f` |
+| ledger commit | 本节所在 commit |
+| 源文件 SHA-256 | `3906b26f941eebb2a30704b90120a838e052bb7f83474ebd1d2d92e6b4ec1d9c` |
+| 测试 SHA-256 | `40aa5a140346825443bfd1cbe3728ec31fbd928f04766c095f33ec635a1755ce` |
+| ZIP | `artifacts/competition/qkv_lora_b/s1-11ae343/qkv_lora_b.zip` |
+| ZIP SHA-256 | `bec21ac8d198d0eefd3d7c0ef68bf3a2c654017c00656c230ab12bc04f0f4d9c` |
+| ZIP manifest | 顶层 `qkv_lora_b.py`，6190 bytes；ZIP 6314 bytes |
+
+`unzip -t`、UTF-8/语法、唯一普通 `.py`、basename、大小和成员逐字节哈希均已
+复验；打包器第二次运行状态为 `verified-existing`。
+
+### 剩余风险与停止点
+
+- `max_qkv_out_dim` 必须不小于最大 slice 宽度；题面 reference 不使用该参数，
+  但 canonical SGLang caller 把它作为正确的 host grid hint。S1 不为错误 hint
+  改用总输出宽度过量启动，也不引入 device-to-host 同步。
+- `max_len` 同样必须覆盖 `seg_indptr` 的最大 segment 长度；`seg_lens` 已不再参与
+  kernel 正确性。
+- 3D grid、runtime slice/segment metadata、permutation 和 IEEE dot 尚未在八芯
+  实测；当前不预建 vendor 分支。
+- S1 为“候选就绪、未提交”。未打开浏览器、未读取或消耗平台额度；上传前必须
+  重新验签 ZIP、读取平台实时 tuple，并取得用户针对该精确产物的一次性确认。
