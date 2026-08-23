@@ -88,12 +88,14 @@ class BmmChunkTest(unittest.TestCase):
 
     def test_noncontiguous_inputs_use_all_strides(self):
         a_base = torch.randn((2, 18, 6, 22), device="cuda")
-        b_base = torch.randn((2, 18, 6, 22), device="cuda")
         a = a_base[:, 1::2, ::2, 1::2]
-        b = b_base[:, 1::2, ::2, 1::2]
+        b_base = torch.randn((11, 3, 9, 2), device="cuda")
+        b = b_base.permute(3, 2, 1, 0)
         self.assertEqual(a.shape, (2, 9, 3, 11))
+        self.assertEqual(b.shape, a.shape)
         self.assertFalse(a.is_contiguous())
         self.assertFalse(b.is_contiguous())
+        self.assertNotEqual(a.stride(), b.stride())
         a_before, b_before = a.clone(), b.clone()
 
         actual = MODULE.bmm_chunk(a, b, 3)
@@ -102,6 +104,40 @@ class BmmChunkTest(unittest.TestCase):
         torch.testing.assert_close(actual, expected, atol=1e-4, rtol=1e-4)
         torch.testing.assert_close(a, a_before, atol=0, rtol=0)
         torch.testing.assert_close(b, b_before, atol=0, rtol=0)
+
+    def test_tile_and_k_block_boundaries(self):
+        generator = torch.Generator(device="cuda").manual_seed(20260825)
+        cases = (
+            (31, 17),
+            (32, 17),
+            (33, 17),
+            (17, 31),
+            (17, 32),
+            (17, 33),
+        )
+
+        for chunk_size, k_size in cases:
+            with self.subTest(chunk_size=chunk_size, k_size=k_size):
+                shape = (1, 2 * chunk_size, 3, k_size)
+                a = torch.randn(
+                    shape,
+                    device="cuda",
+                    dtype=torch.float32,
+                    generator=generator,
+                )
+                b = torch.randn(
+                    shape,
+                    device="cuda",
+                    dtype=torch.float32,
+                    generator=generator,
+                )
+
+                actual = MODULE.bmm_chunk(a, b, chunk_size)
+                expected = reference(a, b, chunk_size)
+
+                torch.testing.assert_close(
+                    actual, expected, atol=1e-4, rtol=1e-4
+                )
 
     def test_empty_sequence_returns_empty_fp32(self):
         a = torch.empty((2, 0, 3, 5), device="cuda", dtype=torch.float16)
