@@ -83,6 +83,17 @@ S0 与 PyTorch reference 每组轮换先后顺序。表中时间为五组 p50 �
   shape，再创建 Ascend persistent vendor 候选。
 - 不自动上传。以下平台结果只有在用户确认上传并获得真实返回后填写。
 
+### GitHub 交付
+
+- 研究分支已推送到
+  `liangkw16/FlagGems-sglang:research/season2-batch2`。
+- 为避免把竞赛资料提交带入上游，从 `origin/master@3946b9a` 建立了只含算子
+  和测试的 `ci/softcap-out`，commit 为 `e38ac7c`。
+- 上游 [Draft PR #32](https://github.com/flagos-ai/FlagGems-sglang/pull/32)。
+- [`basic ci` run 32651948481](https://github.com/flagos-ai/FlagGems-sglang/actions/runs/32651948481)
+  当前为 `action_required`：首次外部 fork workflow 等待上游维护者批准，
+  并非测试失败；CLA check 同时等待本人签署。
+
 ### 平台结果
 
 | 芯片 | 正确性 | speedup | 决策 |
