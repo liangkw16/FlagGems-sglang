@@ -1,0 +1,165 @@
+# Copyright 2026 FlagOS Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import torch
+import triton
+import triton.language as tl
+
+
+@triton.jit
+def _bmm_chunk_kernel(
+    a_ptr,
+    b_ptr,
+    output_ptr,
+    chunk_size,
+    k_size,
+    ngroups,
+    a_stride_batch,
+    a_stride_seqlen,
+    a_stride_group,
+    a_stride_k,
+    b_stride_batch,
+    b_stride_seqlen,
+    b_stride_group,
+    b_stride_k,
+    output_stride_batch,
+    output_stride_chunk,
+    output_stride_group,
+    output_stride_m,
+    output_stride_n,
+    BLOCK_M: tl.constexpr,
+    BLOCK_N: tl.constexpr,
+    BLOCK_K: tl.constexpr,
+):
+    a_stride_batch = tl.cast(a_stride_batch, tl.int64)
+    a_stride_seqlen = tl.cast(a_stride_seqlen, tl.int64)
+    a_stride_group = tl.cast(a_stride_group, tl.int64)
+    a_stride_k = tl.cast(a_stride_k, tl.int64)
+    b_stride_batch = tl.cast(b_stride_batch, tl.int64)
+    b_stride_seqlen = tl.cast(b_stride_seqlen, tl.int64)
+    b_stride_group = tl.cast(b_stride_group, tl.int64)
+    b_stride_k = tl.cast(b_stride_k, tl.int64)
+    output_stride_batch = tl.cast(output_stride_batch, tl.int64)
+    output_stride_chunk = tl.cast(output_stride_chunk, tl.int64)
+    output_stride_group = tl.cast(output_stride_group, tl.int64)
+    output_stride_m = tl.cast(output_stride_m, tl.int64)
+    output_stride_n = tl.cast(output_stride_n, tl.int64)
+
+    tile_id = tl.program_id(0)
+    batch_id = tl.program_id(1)
+    chunk_group_id = tl.program_id(2)
+    chunk_id = chunk_group_id // ngroups
+    group_id = chunk_group_id - chunk_id * ngroups
+    num_n_tiles = tl.cdiv(chunk_size, BLOCK_N)
+    m_tile = tile_id // num_n_tiles
+    n_tile = tile_id - m_tile * num_n_tiles
+
+    m_offsets = m_tile * BLOCK_M + tl.arange(0, BLOCK_M)
+    n_offsets = n_tile * BLOCK_N + tl.arange(0, BLOCK_N)
+    k_offsets = tl.arange(0, BLOCK_K)
+    a_base = (
+        batch_id * a_stride_batch
+        + chunk_id * chunk_size * a_stride_seqlen
+        + group_id * a_stride_group
+    )
+    b_base = (
+        batch_id * b_stride_batch
+        + chunk_id * chunk_size * b_stride_seqlen
+        + group_id * b_stride_group
+    )
+    accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
+
+    for k_block in range(0, tl.cdiv(k_size, BLOCK_K)):
+        current_k = k_block * BLOCK_K + k_offsets
+        a = tl.load(
+            a_ptr
+            + a_base
+            + m_offsets[:, None] * a_stride_seqlen
+            + current_k[None, :] * a_stride_k,
+            mask=(m_offsets[:, None] < chunk_size)
+            & (current_k[None, :] < k_size),
+            other=0.0,
+        ).to(tl.float32)
+        b = tl.load(
+            b_ptr
+            + b_base
+            + current_k[:, None] * b_stride_k
+            + n_offsets[None, :] * b_stride_seqlen,
+            mask=(current_k[:, None] < k_size)
+            & (n_offsets[None, :] < chunk_size),
+            other=0.0,
+        ).to(tl.float32)
+        accumulator += tl.dot(a, b, input_precision="ieee")
+
+    output_offsets = (
+        batch_id * output_stride_batch
+        + chunk_id * output_stride_chunk
+        + group_id * output_stride_group
+        + m_offsets[:, None] * output_stride_m
+        + n_offsets[None, :] * output_stride_n
+    )
+    tl.store(
+        output_ptr + output_offsets,
+        accumulator,
+        mask=(m_offsets[:, None] < chunk_size)
+        & (n_offsets[None, :] < chunk_size),
+    )
+
+
+def bmm_chunk(a, b, chunk_size, causal=False):
+    if a.ndim != 4 or b.shape != a.shape:
+        raise ValueError("a and b must have the same four-dimensional shape")
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
+
+    batch, seqlen, ngroups, k_size = a.shape
+    if seqlen % chunk_size:
+        raise ValueError("seqlen must be divisible by chunk_size")
+
+    nchunks = seqlen // chunk_size
+    output = torch.empty(
+        (batch, nchunks, ngroups, chunk_size, chunk_size),
+        dtype=torch.float32,
+        device=a.device,
+    )
+    if output.numel() == 0:
+        return output
+
+    block_m = 32
+    block_n = 32
+    grid = (
+        triton.cdiv(chunk_size, block_m) * triton.cdiv(chunk_size, block_n),
+        batch,
+        nchunks * ngroups,
+    )
+    _bmm_chunk_kernel[grid](
+        a,
+        b,
+        output,
+        chunk_size,
+        k_size,
+        ngroups,
+        *a.stride(),
+        *b.stride(),
+        *output.stride(),
+        BLOCK_M=block_m,
+        BLOCK_N=block_n,
+        BLOCK_K=32,
+        num_warps=4,
+        num_stages=1,
+    )
+    return output
+
+
+__all__ = ["bmm_chunk"]
