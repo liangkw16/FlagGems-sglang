@@ -23,8 +23,9 @@ import torch.nn.functional as F
 OPS_PATH = Path(__file__).parents[1] / "src" / "flaggems_sglang" / "ops"
 
 
-def _load_module(name):
-    path = OPS_PATH / f"{name}.py"
+def _load_module(name, path=None):
+    if path is None:
+        path = OPS_PATH / f"{name}.py"
     spec = importlib.util.spec_from_file_location(f"{name}_module", path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot load {path}")
@@ -34,6 +35,16 @@ def _load_module(name):
 
 
 CONTEXT_ATTENTION = _load_module("context_attention")
+CONTEXT_ATTENTION_NVIDIA = _load_module(
+    "context_attention_nvidia",
+    OPS_PATH.parent
+    / "runtime"
+    / "backend"
+    / "_nvidia"
+    / "ops"
+    / "context_attention.py",
+)
+CONTEXT_ATTENTION_MODULES = (CONTEXT_ATTENTION, CONTEXT_ATTENTION_NVIDIA)
 
 
 def reference(q, k, v, starts, lengths, is_causal):
@@ -99,20 +110,21 @@ def make_case(
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class ContextAttentionTest(unittest.TestCase):
     def test_public_contract(self):
-        function = CONTEXT_ATTENTION.context_attention
-        self.assertEqual(
-            list(inspect.signature(function).parameters),
-            [
-                "q",
-                "k",
-                "v",
-                "b_start_loc",
-                "b_seq_len",
-                "max_input_len",
-                "is_causal",
-            ],
-        )
-        self.assertEqual(CONTEXT_ATTENTION.__all__, ["context_attention"])
+        for module in CONTEXT_ATTENTION_MODULES:
+            function = module.context_attention
+            self.assertEqual(
+                list(inspect.signature(function).parameters),
+                [
+                    "q",
+                    "k",
+                    "v",
+                    "b_start_loc",
+                    "b_seq_len",
+                    "max_input_len",
+                    "is_causal",
+                ],
+            )
+            self.assertEqual(module.__all__, ["context_attention"])
 
     def test_variable_lengths_causal_boundaries_strides_and_dtypes(self):
         for dtype in (torch.float16, torch.bfloat16, torch.float32):
@@ -123,24 +135,24 @@ class ContextAttentionTest(unittest.TestCase):
                         tensor.clone() for tensor in (q, k, v, starts, lengths)
                     )
 
-                    actual = CONTEXT_ATTENTION.context_attention(
-                        q,
-                        k,
-                        v,
-                        starts,
-                        lengths,
-                        1,
-                        is_causal,
-                    )
                     expected = reference(q, k, v, starts, lengths, is_causal)
-
-                    self.assertEqual(
-                        (actual.shape, actual.dtype),
-                        (q.shape, torch.float32),
-                    )
-                    torch.testing.assert_close(
-                        actual, expected, atol=1e-2, rtol=1e-2
-                    )
+                    for module in CONTEXT_ATTENTION_MODULES:
+                        actual = module.context_attention(
+                            q,
+                            k,
+                            v,
+                            starts,
+                            lengths,
+                            1,
+                            is_causal,
+                        )
+                        self.assertEqual(
+                            (actual.shape, actual.dtype),
+                            (q.shape, torch.float32),
+                        )
+                        torch.testing.assert_close(
+                            actual, expected, atol=1e-2, rtol=1e-2
+                        )
                     for tensor, snapshot in zip(
                         (q, k, v, starts, lengths), snapshots
                     ):
@@ -155,13 +167,13 @@ class ContextAttentionTest(unittest.TestCase):
         starts = torch.empty(0, device="cuda", dtype=torch.int32)
         lengths = torch.empty(0, device="cuda", dtype=torch.int32)
 
-        actual = CONTEXT_ATTENTION.context_attention(
-            q, k, v, starts, lengths, 0, True
-        )
-
-        self.assertEqual(
-            (actual.shape, actual.dtype), (q.shape, torch.float32)
-        )
+        for module in CONTEXT_ATTENTION_MODULES:
+            actual = module.context_attention(
+                q, k, v, starts, lengths, 0, True
+            )
+            self.assertEqual(
+                (actual.shape, actual.dtype), (q.shape, torch.float32)
+            )
 
     def test_head_dim_eight_and_underreported_max_input_len(self):
         q, k, v, starts, lengths = make_case(
@@ -171,11 +183,34 @@ class ContextAttentionTest(unittest.TestCase):
             head_dim=8,
         )
         for is_causal in (False, True):
-            with self.subTest(is_causal=is_causal):
-                actual = CONTEXT_ATTENTION.context_attention(
-                    q, k, v, starts, lengths, 1, is_causal
+            for module in CONTEXT_ATTENTION_MODULES:
+                with self.subTest(module=module.__name__, is_causal=is_causal):
+                    actual = module.context_attention(
+                        q, k, v, starts, lengths, 1, is_causal
+                    )
+                    expected = reference(q, k, v, starts, lengths, is_causal)
+
+                    self.assertEqual(
+                        (actual.shape, actual.dtype),
+                        (q.shape, torch.float32),
+                    )
+                    torch.testing.assert_close(
+                        actual, expected, atol=1e-2, rtol=1e-2
+                    )
+
+    def test_large_head_dim_uses_ieee_path(self):
+        q, k, v, starts, lengths = make_case(
+            torch.float16,
+            sequence_lengths=[17],
+            num_heads=1,
+            head_dim=257,
+        )
+        for module in CONTEXT_ATTENTION_MODULES:
+            with self.subTest(module=module.__name__):
+                actual = module.context_attention(
+                    q, k, v, starts, lengths, 17, False
                 )
-                expected = reference(q, k, v, starts, lengths, is_causal)
+                expected = reference(q, k, v, starts, lengths, False)
 
                 self.assertEqual(
                     (actual.shape, actual.dtype),
@@ -193,15 +228,15 @@ class ContextAttentionTest(unittest.TestCase):
             head_dim=16,
         )
 
-        actual = CONTEXT_ATTENTION.context_attention(
-            q, k, v, starts, lengths, 2048, False
-        )
         expected = reference(q, k, v, starts, lengths, False)
-
-        self.assertEqual(
-            (actual.shape, actual.dtype), (q.shape, torch.float32)
-        )
-        torch.testing.assert_close(actual, expected, atol=1e-2, rtol=1e-2)
+        for module in CONTEXT_ATTENTION_MODULES:
+            actual = module.context_attention(
+                q, k, v, starts, lengths, 2048, False
+            )
+            self.assertEqual(
+                (actual.shape, actual.dtype), (q.shape, torch.float32)
+            )
+            torch.testing.assert_close(actual, expected, atol=1e-2, rtol=1e-2)
 
 
 if __name__ == "__main__":
