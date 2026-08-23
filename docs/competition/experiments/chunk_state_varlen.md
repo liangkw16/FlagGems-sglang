@@ -78,3 +78,59 @@
   由赛方澄清是“仅末 chunk token”还是“前序 chunk_states 延续”，不能猜测。
 - 若平台正确但矩阵维度尾块性能不足，下一单变量候选才调整 32×32 tile。
 - 未提交平台或消耗额度；上传前仍需用户确认上述路径、SHA-256 和实时额度。
+
+## S1：匹配公开 reference 的 Python slice 与广播语义
+
+状态：确定性正确性修复已通过提交字节发布门禁并生成不可变 ZIP；未提交平台
+
+验证时间：2026-08-24 07:02–07:09 CST
+
+源码 commit：`791193061b115177052b365441baee52c1f3a81e`
+
+### 根因与修复
+
+S0 不是公开 reference 的实现。`chunk_size=8`、`cu_seqlens=[0,9]` 时，公开
+reference 将最后 chunk 的单个 scale 广播到整段；S0 却从最后 chunk 指针向前
+线性读取前一 chunk，导致 `x=B=1`、前一 chunk 的 `dt=0`、最后 scale 为 1 时
+reference 返回 9、S0 返回 1。现有用例中的每条序列都恰好位于其结束 chunk
+内，未覆盖该反例。空序列还会让 S0 构造 `dA[-1]` 地址。
+
+S1 只修正这一根因，不调整 tile 或并行策略：
+
+- 按长度为 `chunk_size` 的 Python 一维 slice 规则归一化负 `start_relative`，
+  计算 `slice_start`、`slice_stop` 和 `scale_length`。
+- `scale_length == 1` 时把唯一 dt/dA scale 广播到整段；
+  `scale_length == sequence_length` 时逐 token 读取。
+- `dA_last` 对空序列使用 masked load；K 循环执行零次并写出全零，消除负地址
+  读取。
+- 对公开 reference 自身会因 shape 不匹配而报错的
+  `scale_length not in {1, sequence_length}` 保持未定义，不猜测 Mamba 的
+  `chunk_states` 延续语义。
+
+### 发布验证
+
+| 项目 | 值 |
+| --- | --- |
+| 源文件 SHA-256 | `025ac23b0026a423e381f8fffe3715c4e21ce64558e79ad4841145351f11d4f1` |
+| 测试 SHA-256 | `c827c21d3dc44c3ae344cf93d680b2ba2fef44e1670a741427fe47ae0c85b27c` |
+| ZIP | `artifacts/competition/chunk_state_varlen/s1-7911930/chunk_state_varlen.zip` |
+| ZIP SHA-256 | `fcc17df06adf338578402f315e4dab75bf2361e641885bb99f94e23be46efd49` |
+| ZIP 大小 / 成员 | 7,516 bytes；顶层 `chunk_state_varlen.py` 7,376 bytes |
+| 远端发布目录 | `gpu:/tmp/flagos-chunk-state-release.KKAmMf`，mode 0700 |
+| 远端环境 | RTX 5070 Ti 16 GB；PyTorch 2.13.0+cu130；Triton 3.7.1；CUDA 13.0 |
+
+- 从 source commit 导出的发布字节执行 unittest 5/5 通过。新增永久回归精确
+  覆盖 `[0,9]` 的单 scale 广播，以及 `[0,0,1]` 的 leading-empty 序列；原有
+  三 dtype、GQA、非连续 stride、int32/int64 和输入不变回归全部保留。
+- Black 79、isort、flake8、`py_compile` 和 `git diff --check` 通过；远端
+  source/test 与 commit SHA-256 一致。
+- 仅在 S0/S1 都正确的两个 control shape 上做 FP16/BF16/FP32 五轮交替配对：
+  六点中位 speedup 为 `1.0020/0.9997`、`1.0004/0.9972`、
+  `0.9965/1.0182`，几何均值 `1.0023x`。编译变体为 40–56
+  registers/thread、8,192-byte shared，0 stack、0 local、0 scratch。
+- 确定性打包器从 commit 直接生成 ZIP；重复验签得到相同 canonical SHA-256，
+  `unzip -t`、UTF-8、成员名、10 MB 和逐字节来源门禁均通过。
+
+S1 只解决公开 reference 能正常返回的域，未做性能 E1，也未获得八芯平台证据。
+上传前必须重新读取实时额度，并取得用户针对 Task 13、上述绝对 ZIP 路径和完整
+SHA-256 的当次确认。

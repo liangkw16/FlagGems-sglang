@@ -22,7 +22,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 10 | [`chunk_cumsum`](chunk_cumsum.md) | `s1-a4e84aa` | `f9fd0d595aeb5a4a4da76514321790815fbad9ccc39faa447c8bfa120f0e7db9` | 4/4 回归；修复尾块 dA carry；E1 仅 0.9995x，保留 S1；未平台 | 第 11 个提交 |
 | 11 | [`chunk_local_cumsum_vector`](chunk_local_cumsum_vector.md) | `e1-528a2bb` | `7f0484b9b2ae078bf284e4fda1c5a1a0ffb0c8545b907e801d9fa21200fde7d8` | 2/2 release；tiny chunks 2-warps affected 1.032–1.162x；controls 0.997–1.002x；未平台 | 第 10 个提交 |
 | 12 | [`chunk_state`](chunk_state.md) | `e2-67350fa` | `35f11803055ccc0a7e6bff71c974ad3671032c1cec35d2a556367789206de9e3` | 3/3 回归；K>=256 受影响点 1.1198x；未平台 | 第 5 个提交 |
-| 13 | [`chunk_state_varlen`](chunk_state_varlen.md) | `s0-b05bfeb` | `bd23ddad1c833c8f9ba2c8e0e551fa5e4c3d7ad446351d74a346af14c850603b` | NVIDIA 613.340x 单 case；题面 reference 跨 chunk 语义冲突 | 暂缓，先确认语义 |
+| 13 | [`chunk_state_varlen`](chunk_state_varlen.md) | `s1-7911930` | `fcc17df06adf338578402f315e4dab75bf2361e641885bb99f94e23be46efd49` | 5/5 release；修复跨 chunk 单 scale 广播与空序列越界；controls 1.0023x；未平台 | 第 14 个提交 |
 | 14 | [`context_attention`](context_attention.md) | `s0-fbbf74f` | `38ce76db6fee2121a765a1cd741138b9c2ded2478fdd85b1bfb4bba3d0f97456` | NVIDIA 0.5797–6.4198x；大 D 资源风险 | 暂缓，受控实验 |
 | 15 | [`decode_attention`](decode_attention.md) | `s0-f431ba4` | `850cf12333241a450b342edbd2e108dca5841ddfb4f576129df45d863e5123b9` | 5/5 回归；tile64 E1 为 1.198–1.449x 但新增 12 spills，保留 S0；未平台 | 第 12 个提交 |
 | 16 | [`decode_grouped_attention`](decode_grouped_attention.md) | `s0-f431ba4` | `4ed5e04d8453e100a38feff3d8986801fab9a13c4d77481e070a3260855136ef` | NVIDIA 5.285x；未平台 | 第 13 个提交 |
@@ -40,11 +40,12 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 按实现复杂度、公开达标队伍数、代理覆盖和跨芯风险排序：
 
 ```text
-19 → 08 → 21 → 20 → 12 → 09 → 17 → 23 → 22 → 11 → 10 → 15 → 16
+19 → 08 → 21 → 20 → 12 → 09 → 17 → 23 → 22 → 11 → 10 → 15 → 16 → 13
 ```
 
-Task 13、18、14 暂缓，分别等待语义确认、仅作状态资源实验、仅作 attention
-资源实验。Task 24 已通过；S2 只优化 Enflame，不重复消耗正确性额度。Task 24 在
+Task 18、14 暂缓，分别仅作状态资源实验和 attention 资源实验。Task 13 已按
+公开 reference 可返回域修复；其余 shape 仍需赛方澄清。Task 24 已通过；S2 只优化
+Enflame，不重复消耗正确性额度。Task 24 在
 2026-08-24 01:03:51 CST 提交后页面显示当日剩余 `13/15`，这只是历史观察；
 每次上传前必须重新读取实时额度。
 
