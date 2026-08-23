@@ -45,6 +45,44 @@ def reference(logits, bitmask):
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class ApplyTokenBitmaskTest(unittest.TestCase):
+    def test_word_and_block_boundaries_all_dtypes(self):
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            for vocab_size in (31, 32, 33, 255, 256, 257):
+                with self.subTest(dtype=dtype, vocab_size=vocab_size):
+                    logits = (
+                        torch.linspace(
+                            -3,
+                            3,
+                            2 * vocab_size,
+                            device="cuda",
+                        )
+                        .reshape(2, vocab_size)
+                        .to(dtype)
+                    )
+                    words = (vocab_size + 31) // 32
+                    bitmask = torch.zeros(
+                        (2, words), device="cuda", dtype=torch.int32
+                    )
+                    bitmask[0, 0] = -2147483648
+                    bitmask[1].fill_(-1)
+                    if words > 1:
+                        bitmask[0, 1] = 5
+                    logits_before = logits.clone()
+                    bitmask_before = bitmask.clone()
+
+                    actual = MODULE.apply_token_bitmask(logits, bitmask)
+                    expected = reference(logits, bitmask)
+
+                    torch.testing.assert_close(
+                        actual, expected, atol=0.0, rtol=0.0
+                    )
+                    torch.testing.assert_close(
+                        logits, logits_before, atol=0.0, rtol=0.0
+                    )
+                    torch.testing.assert_close(
+                        bitmask, bitmask_before, atol=0.0, rtol=0.0
+                    )
+
     def test_out_of_place_strided_tail_and_sign_bit(self):
         logits_base = torch.arange(
             2 * 70, device="cuda", dtype=torch.float32
