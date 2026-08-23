@@ -83,10 +83,19 @@ def _chunk_state_varlen_kernel(
     chunk_start = chunk * chunk_size
     start_relative = start - chunk_start
     end_relative = end - chunk_start
+    slice_start = tl.where(
+        start_relative < 0,
+        tl.maximum(start_relative + chunk_size, 0),
+        tl.minimum(start_relative, chunk_size),
+    )
+    slice_stop = tl.minimum(tl.maximum(end_relative, 0), chunk_size)
+    scale_length = tl.maximum(slice_stop - slice_start, 0)
 
     dA_base = head * stride_dA_head + chunk * stride_dA_chunk
     dA_last = tl.load(
-        dA_ptr + dA_base + (end_relative - 1) * stride_dA_csize
+        dA_ptr + dA_base + (end_relative - 1) * stride_dA_csize,
+        mask=sequence_length > 0,
+        other=0.0,
     ).to(tl.float32)
 
     offsets_m = tile_m * BLOCK_M + tl.arange(0, BLOCK_M)
@@ -98,7 +107,9 @@ def _chunk_state_varlen_kernel(
         current_k = block_start + offsets_k
         k_mask = current_k < sequence_length
         token = start + current_k
-        relative = start_relative + current_k
+        scale_k = tl.where(scale_length == 1, 0, current_k)
+        scale_mask = k_mask & (scale_k < scale_length)
+        relative = slice_start + scale_k
 
         x = tl.load(
             x_ptr
@@ -121,15 +132,15 @@ def _chunk_state_varlen_kernel(
             + head * stride_dt_head
             + chunk * stride_dt_chunk
             + relative * stride_dt_csize,
-            mask=k_mask,
+            mask=scale_mask,
             other=0.0,
         ).to(tl.float32)
         dA = tl.load(
             dA_ptr + dA_base + relative * stride_dA_csize,
-            mask=k_mask,
+            mask=scale_mask,
             other=0.0,
         ).to(tl.float32)
-        scale = tl.where(k_mask, tl.exp(dA_last - dA) * dt, 0.0)
+        scale = tl.where(scale_mask, tl.exp(dA_last - dA) * dt, 0.0)
         accumulator += tl.dot(x, B * scale[:, None], input_precision="ieee")
 
     output_offsets = (

@@ -170,6 +170,45 @@ class ChunkStateVarlenTest(unittest.TestCase):
 
         torch.testing.assert_close(actual, changed, atol=0.0, rtol=0.0)
 
+    def test_cross_chunk_single_scale_broadcast(self):
+        x = torch.ones((9, 1, 1), device="cuda", dtype=torch.float32)
+        B = torch.ones_like(x)
+        dt = torch.zeros((1, 2, 8), device="cuda", dtype=torch.float32)
+        dt[0, 1, 0] = 1.0
+        dA_cumsum = torch.zeros_like(dt)
+        cu_seqlens = torch.tensor([0, 9], device="cuda", dtype=torch.int64)
+        chunk_states = torch.ones(
+            (2, 1, 1, 1), device="cuda", dtype=torch.float32
+        )
+
+        expected = reference(B, x, dt, dA_cumsum, cu_seqlens, chunk_states)
+        actual = MODULE.chunk_state_varlen(
+            B, x, dt, dA_cumsum, cu_seqlens, chunk_states
+        )
+
+        self.assertEqual(expected.item(), 9.0)
+        torch.testing.assert_close(actual, expected, atol=0.0, rtol=0.0)
+
+    def test_leading_empty_sequence(self):
+        x = torch.ones((1, 1, 1), device="cuda", dtype=torch.float32)
+        B = torch.ones_like(x)
+        dt = torch.ones((1, 1, 8), device="cuda", dtype=torch.float32)
+        dA_cumsum = torch.zeros_like(dt)
+        cu_seqlens = torch.tensor([0, 0, 1], device="cuda", dtype=torch.int64)
+        chunk_states = torch.ones(
+            (1, 1, 1, 1), device="cuda", dtype=torch.float32
+        )
+
+        expected = reference(B, x, dt, dA_cumsum, cu_seqlens, chunk_states)
+        actual = MODULE.chunk_state_varlen(
+            B, x, dt, dA_cumsum, cu_seqlens, chunk_states
+        )
+
+        torch.testing.assert_close(
+            expected.flatten(), torch.tensor([0.0, 1.0], device="cuda")
+        )
+        torch.testing.assert_close(actual, expected, atol=0.0, rtol=0.0)
+
     def test_empty_batch(self):
         B = torch.empty((0, 2, 7), device="cuda", dtype=torch.float16)
         x = torch.empty((0, 4, 5), device="cuda", dtype=torch.float16)
