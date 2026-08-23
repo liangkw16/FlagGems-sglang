@@ -115,7 +115,7 @@ def chunk_local_cumsum_vector(g, chunk_size, reverse=False, scale=None):
         BLOCK_F=block_f,
         REVERSE=reverse,
         HAS_SCALE=scale is not None,
-        num_warps=4,
+        num_warps=2 if chunk_size <= 8 else 4,
         num_stages=1,
     )
     return output
