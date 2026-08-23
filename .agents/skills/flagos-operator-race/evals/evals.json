@@ -37,6 +37,18 @@
         "Checks ZIP basename, member list, UTF-8, size, integrity, member hashes, and ZIP hash.",
         "Does not rebuild, edit, push, connect remotely, or upload under the read-only request."
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "继续开发第二批 chunk_state，但先不要提交平台。工作区里已有一个未提交测试改动，不确定是谁的。",
+      "expected_output": "A development workflow that protects the existing dirty change, binds final remote evidence to committed bytes, prepares an immutable candidate and ledger, and stops before browser or platform actions.",
+      "files": [],
+      "expectations": [
+        "Inspects status and the target diff before writing, and does not stage an ownership-unclear change without confirmation.",
+        "Allows uncommitted experiments only for screening, then commits the selected source and tests before release validation.",
+        "Builds the ZIP from the explicit source commit and records source, verification, and ledger identities.",
+        "Stops with candidate ready and unsubmitted; does not open the browser, request upload confirmation, or consume quota."
+      ]
     }
   ]
 }

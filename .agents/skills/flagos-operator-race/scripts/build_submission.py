@@ -5,8 +5,10 @@ import argparse
 import hashlib
 import io
 import json
+import os
 import re
 import subprocess
+import tempfile
 import zipfile
 from pathlib import Path
 
@@ -31,6 +33,46 @@ def git(root: Path, *args: str, text: bool = True):
 
 def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def git_tree(root: Path, commit: str):
+    entries = {}
+    payload = git(root, "ls-tree", "-r", "-z", commit, text=False)
+    for record in payload.split(b"\0"):
+        if not record:
+            continue
+        metadata, raw_path = record.split(b"\t", 1)
+        mode, object_type, _ = metadata.split(b" ", 2)
+        path = raw_path.decode("utf-8", errors="surrogateescape")
+        entries[path] = (
+            mode.decode("ascii"),
+            object_type.decode("ascii"),
+        )
+    return entries
+
+
+def publish(output: Path, payload: bytes) -> None:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        dir=output.parent,
+        prefix=f".{output.name}.",
+        suffix=".tmp",
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as artifact:
+            artifact.write(payload)
+            artifact.flush()
+            os.fsync(artifact.fileno())
+        os.chmod(temporary, 0o644)
+        try:
+            os.link(temporary, output)
+        except FileExistsError as error:
+            raise SystemExit(
+                f"refusing to overwrite existing artifact: {output}"
+            ) from error
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def main() -> None:
@@ -76,7 +118,7 @@ def main() -> None:
     )
     short_commit = git(root, "rev-parse", "--short=7", commit)
     generic = f"src/flaggems_sglang/ops/{args.operator}.py"
-    tree = git(root, "ls-tree", "-r", "--name-only", commit).splitlines()
+    tree = git_tree(root, commit)
     if generic not in tree:
         raise SystemExit(f"missing generic source at {commit}: {generic}")
 
@@ -95,6 +137,14 @@ def main() -> None:
                 f"unsupported competition vendor suffix: {vendor}"
             )
         sources[f"{args.operator}_{vendor}.py"] = source
+
+    for source in sources.values():
+        mode, object_type = tree[source]
+        if object_type != "blob" or mode not in {"100644", "100755"}:
+            raise SystemExit(
+                "submission source must be a regular Git blob "
+                f"(100644 or 100755): {source} is {mode} {object_type}"
+            )
 
     members = {}
     for member, source in sorted(sources.items()):
@@ -171,9 +221,7 @@ def main() -> None:
     elif args.verify_existing:
         raise SystemExit(f"artifact does not exist: {output}")
     elif not args.dry_run:
-        output.parent.mkdir(parents=True, exist_ok=True)
-        with output.open("xb") as artifact:
-            artifact.write(payload)
+        publish(output, payload)
         status = "created"
     if len(payload) >= 10 * 1024 * 1024:
         raise SystemExit(f"ZIP exceeds platform limit: {len(payload)} bytes")

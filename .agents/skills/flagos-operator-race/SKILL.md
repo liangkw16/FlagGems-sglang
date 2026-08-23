@@ -53,6 +53,10 @@ docs/competition/experiments/<operator>.md
 artifacts/competition/<operator>/<stage>-<code-commit>/<operator>.zip
 ```
 
+写操作前先检查 `git status --short` 和目标路径的 diff；现有改动归用户，
+只 stage 本次明确的文件。若目标文件已有归属不明的改动，先停止并请用户
+确认，不把它们夹带进算子、验证或账本 commit。
+
 `artifacts/` 被 Git 忽略；账本必须记录源码 commit、各文件 SHA-256、ZIP
 SHA-256、成员列表和平台结果，才能重新定位实际上传字节。
 
@@ -125,6 +129,11 @@ S0 只追求全部支持芯片正确且每芯达到题面最低门槛：
 4. 主要 shape 的正确性；
 5. wrapper-inclusive benchmark 与编译产物检查。
 
+未提交候选可用于快速筛选，但不能作为 ZIP 的最终验证证据。候选通过初筛后，
+先将本次 source 和 test 按明确路径 commit，再用该 commit 的逐字节内容重跑
+发布门禁。失败后修正则产生新 commit，不用已被验证记录引用的旧 commit
+冒充新候选。
+
 连接、传输、后台日志和证据保留按
 [远端 GPU 代理验证](references/remote-validation.md) 执行。
 
@@ -138,8 +147,10 @@ S0 只追求全部支持芯片正确且每芯达到题面最低门槛：
 
 ```bash
 python .agents/skills/flagos-operator-race/scripts/build_submission.py \
-  <operator> --stage s0 --commit <code-commit>
+  <operator> --stage <stage> --commit <code-commit>
 ```
+
+首个基线使用 `s0`，后续单变量候选使用 `e1`、`e2` 递增。
 
 历史 ZIP 若不是该工具的规范字节，只能用 `--verify-existing` 做只读内容验签；结果会
 标记 `verified-existing-legacy` 并同时输出实际与规范 ZIP 哈希，不能据此重写旧产物。
@@ -155,6 +166,8 @@ python .agents/skills/flagos-operator-race/scripts/build_submission.py \
 - ZIP 内源码与对应 commit 源文件逐字节一致。
 
 先把构建身份、验证环境、结果和已知风险写入实验账本，再 commit、push。
+若用户只要求开发或明确说暂不提交平台，到此停止：状态记为“候选就绪，
+未提交”，不运行浏览器预检、不索要提交确认、不消耗额度。
 
 ## 阶段 B：平台提交
 
