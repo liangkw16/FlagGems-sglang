@@ -68,3 +68,85 @@ split 临时张量或私有 API。
 - ZIP 由 commit `f431ba4` 直接生成；`unzip -t`、UTF-8、单一 `.py`、10 MB、
   basename 和 ZIP 内源码哈希门禁均通过。尚未上传或消耗额度；上述 ZIP 需要
   用户当次确认。
+
+## E1：同组 query heads 复用 KV tiles
+
+状态：受控 grouped fast path 已通过提交字节发布门禁并生成不可变 ZIP；未提交平台
+
+验证时间：2026-08-24 07:15–07:31 CST
+
+源码 commit：`bc729bd18a039bc183d7bb2aa6b069869ff08007`
+
+### 设计
+
+E1 保留 S0 kernel 作为完整 fallback，只为 tensor-core 友好的 GQA shape 增加
+一个 `BLOCK_H=16` kernel：每个 `(batch,kv_head)` program 一次载入 K/V，并为
+同组 query heads 共同计算 online softmax，消除 S0 对共享 KV head 的重复读取。
+
+fast path 同时满足以下条件才启用：
+
+- `4 <= H_Q/H_KV <= 16`，且 `batch * H_KV >= 64`；
+- Q/K/V 同 dtype，且为 FP16 或 BF16；
+- D/Dv 为 16–128 的完整 2 次幂 tile；
+- Q/K/V 最内维连续。
+
+其余 FP32、group 2/3 或大于 16、低并行、大/尾维、混合 dtype 和非连续最内维
+全部逐字节走原 S0 Triton kernel。QK 使用输入 dtype dot 并 FP32 累加；online
+maximum、denominator、probability、`P @ V` 和输出均为 FP32，其中 `P @ V`
+显式 IEEE。没有设备识别、Torch 计算 fallback、autotune 或临时张量。
+
+### 收敛证据
+
+宽门控原型暴露了三个可复现风险，均在发布版本中从结构上排除：
+
+- FP32 group2 点仅 `0.8308x`，且 FP32 grouped 变体达到 255 registers/thread、
+  40-byte stack，因此最终 FP32 走 S0。
+- 非连续最内维 grouped 变体达到 149–163 registers/thread，因此只对连续最内维
+  启用。
+- `D=33,Dv=65` 尾维变体达到 200 registers/thread，因此只覆盖完整幂次 tile。
+
+最初将 FP32 probability 降到输入 dtype 做 `P @ V` 虽快，但存在大值相消误差；
+发布版本改回 FP32 IEEE dot。构造两 token 概率接近 0.5、V 为 `+1000/-1000`
+的反例后，FP16/BF16 最大误差仅 `2.56e-5`。
+
+### 发布验证
+
+| 项目 | 值 |
+| --- | --- |
+| 源文件 SHA-256 | `f1885afedc06f059a27b9bd66554ad49a44f096cf11f6f4c10816fea3c769ee7` |
+| 测试 SHA-256 | `cb3207348e1d1efce1f38b47ed59f28ebb5b54ac0aaf67b1a9ffa302335516b0` |
+| ZIP | `artifacts/competition/decode_grouped_attention/e1-bc729bd/decode_grouped_attention.zip` |
+| ZIP SHA-256 | `088a9ebfcae10a608528e5614a684997753cd8693ac13f49496383ced4ca80c0` |
+| ZIP 大小 / 成员 | 10,020 bytes；顶层 `decode_grouped_attention.py` 9,868 bytes |
+| 远端发布目录 | `gpu:/tmp/flagos-decode-gqa-release.rZei2o`，mode 0700 |
+| 远端环境 | RTX 5070 Ti 16 GB；PyTorch 2.13.0+cu130；Triton 3.7.1；CUDA 13.0 |
+
+- source commit 导出的发布字节 unittest 6/6 通过。新增直接 fast-path 回归覆盖
+  group 4/8/16、FP16/BF16 和连续 D/Dv=64；原有三 dtype、非连续 stride、
+  int32/int64 CSR、尾维、大 Dv、变长和空 batch 全部保留。
+- 扩大筛选另覆盖 group 4/8/16、D/Dv `15/17`、`33/65`、`128/128`，长度
+  `31/33/65/257`，scale `-0.25/0/4`、重复 page、int32/int64 和混合 dtype；
+  最大绝对误差 `0.002424`，均通过题面容差。
+- Black 79、isort、flake8、`py_compile`、`git diff --check` 和独立只读审查
+  通过；发布目录 source/test 与 commit SHA-256 一致。
+- 发布 grouped 变体为 72–80 registers/thread、12,352-byte shared、0 stack、
+  0 local、0 scratch；PTX 保留 QK MMA，FP32 `P @ V` 使用 IEEE 路径。
+
+五轮交替、wrapper-inclusive 配对结果：
+
+| dtype / shape | S0 ms | E1 ms | paired E1/S0 |
+| --- | ---: | ---: | ---: |
+| FP16 `B8,HQ32,HK8,D128,Dv64,L256,g4` | 0.0392 | 0.0293 | 1.3373x |
+| FP16 `B16,HQ32,HK4,D64,Dv128,L512,g8` | 0.0871 | 0.0472 | 1.8453x |
+| BF16 `B8,HQ32,HK8,D128,Dv64,L256,g4` | 0.0391 | 0.0295 | 1.3261x |
+| BF16 `B16,HQ32,HK4,D64,Dv128,L512,g8` | 0.0871 | 0.0473 | 1.8416x |
+
+受影响点几何均值 `1.5668x`、最差 `1.3261x`。七个 fallback controls 覆盖
+FP32 group4/8、group2、低 grid、大 Dv、尾维和 group32，中位 speedup 范围
+`0.9994–1.0033x`，几何均值 `1.0009x`。
+
+确定性打包器从 commit 生成单一 generic 成员；重复验签得到相同 canonical ZIP
+SHA-256，`unzip -t`、UTF-8、10 MB 和逐字节来源门禁均通过。E1 仍只有 NVIDIA
+代理证据，各 vendor 对 mixed-precision QK dot 和 16-head layout 的 lowering
+必须由平台证明。上传前需重新读取实时额度，并取得用户针对 Task 16、上述绝对
+ZIP 路径和完整 SHA-256 的当次确认。
