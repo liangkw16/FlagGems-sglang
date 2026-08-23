@@ -1,7 +1,8 @@
 # 远端 GPU 代理验证
 
-只在用户要求开发、修改或验证时连接远端；只读调研、审计或报告请求不产生远端
-目录、传输或任务。当前项目默认 SSH alias 是 `gpu`，Python 是
+只在用户明确要求 GPU/runtime 代理验证，或验证本次开发改动确有需要时连接远端；
+静态验证、现有 ZIP 验签、只读调研、审计或报告请求不产生远端目录、传输或任务。
+当前项目默认 SSH alias 是 `gpu`，Python 是
 `/home/kevin/notebook/.venv/bin/python`；先用 `ssh -G gpu` 和远端版本命令核对，
 不要把解析出的 IP 写进仓库。环境变化时以 SSH config 和实际解释器为准。
 
@@ -18,11 +19,14 @@
    - `black --check --line-length 79`、`isort --check-only`、`flake8`；
    - 复验源码和测试 SHA-256，确认静态门禁没有改写已验签字节；
    - `python -m unittest -v tests/test_<operator>.py`。
-4. 记录远端目录、PID、日志路径和启动时间；前台继续本地源码审查、上游检索和
-   账本准备。轮询日志，不用长时间阻塞 shell。
-5. 单测通过后再跑题面主要 shape 的正确性、wrapper-inclusive benchmark 和编译
+4. 启动前为每阶段和整次运行设定并记录 wall-clock 上限，命令使用远端 `timeout`
+   或等价机制，禁止无界 `nohup`。超时或任一步失败时终止该进程组并停止后续阶段；
+   只有已记录原因时才扩大上限重试。
+5. 记录远端目录、PID/进程组、日志路径和启动时间；前台继续本地源码审查、上游
+   检索和账本准备。有限次轮询日志，不用长时间阻塞 shell。
+6. 单测通过后再跑题面主要 shape 的正确性、wrapper-inclusive benchmark 和编译
    资源检查；每组性能数据至少交替运行五组，保留中位数或稳定统计。
-6. 记录 GPU、driver、Python、PyTorch、Triton 和 CUDA 版本，以及最大实际验证
+7. 记录 GPU、driver、Python、PyTorch、Triton 和 CUDA 版本，以及最大实际验证
    shape。远端 NVIDIA 结果只标记为代理证据。
 
 使用远端临时目录中的源码和测试做验证，不在远端仓库分支提交或 push。日志和

@@ -1,6 +1,6 @@
 ---
 name: flagos-operator-race
-description: "FlagOS 第二季算子竞赛的项目内闭环工作流：缓存赛题资料，锁定算子契约，调研芯片约束，开发 Triton/TLE generic 或 vendor 实现，在远端 GPU 做代理验证，生成可追溯 ZIP，并在逐次确认后网页提交和记录多芯结果。适用于本仓库中的 FlagOS/算子赛题、批次、跨芯优化、提交包、评测或榜单任务；普通 Triton 开发不自动触发。"
+description: "FlagOS 第二季算子竞赛的项目内闭环工作流：缓存赛题资料，锁定算子契约，调研芯片约束，开发 Triton/TLE generic 或 vendor 实现，在远端 GPU 做代理验证，生成可追溯 ZIP，并在逐次确认后网页提交和记录多芯结果。仅适用于明确关联第二季竞赛 Task、提交包、评测或榜单的请求；普通 FlagOS 仓库维护和普通 Triton 开发不触发。"
 metadata:
   short-description: FlagOS 算子赛调研、开发、验证与提交闭环
 ---
@@ -11,10 +11,12 @@ metadata:
 generic 基线 → 代理验证 → 不可变 ZIP → 人工确认 → 逐芯结果 → 最小 vendor
 修复 → 账本与 Git 证据。
 
-先服从请求边界：调研、审计、解释或状态报告只做只读检查，不刷新快照、不连接
-远端、不改文件、不打包、不 commit/push、不操作浏览器；若用户明确要求实时平台
-状态，可做浏览器只读检查。开发、修改或验证请求可做范围内的本地与远端工作并按
-项目约定 commit/push，但平台提交始终另需当次确认。
+先服从请求边界：调研、审计、解释、状态报告、静态验证或现有产物验签只做只读
+本地检查，不刷新快照、不连接远端、不改文件、不打包、不 commit/push、不操作
+浏览器；若用户明确要求实时平台状态，可做浏览器只读检查。开发或修改请求可做
+范围内的本地工作；只有明确要求 GPU/runtime 代理验证，或验证本次开发改动确有
+需要时才连接远端。只有实际产生的代码或账本改动才按项目约定 commit/push，平台
+提交始终另需当次确认。
 
 ## 先读本地资料
 
@@ -55,13 +57,17 @@ artifacts/competition/<operator>/<stage>-<code-commit>/<operator>.zip
 
 写操作前先检查 `git status --short` 和目标路径的 diff；现有改动归用户，
 只 stage 本次明确的文件。若目标文件已有归属不明的改动，先停止并请用户
-确认，不把它们夹带进算子、验证或账本 commit。提交前再检查
+确认，不把它们夹带进算子、验证或账本 commit。若用户明确说有本地改动而当前
+检查未发现，先核对仓库根目录、worktree、分支和目标路径；信息仍对不上就停止并
+请用户定位，不把“未发现”当作继续写入的授权。提交前再检查
 `git diff --cached --name-only`；若 index 中有无关的已暂存改动，不要替用户
 unstage。先完整复核 `git diff HEAD -- <本次明确路径>`，再只 stage 这些路径，
 并确认 `git diff --quiet -- <本次明确路径>` 成功，避免同路径的未暂存字节
 被夹带。然后使用 `git commit --only -- <本次明确路径>` 隔离提交；该命令取
 working-tree 字节，所以上述检查不能省略。提交后复核完整 commit diff，
-并确认无关已暂存改动仍留在 index。
+并确认无关已暂存改动仍留在 index。push 前核对 upstream、push 目标和
+`@{upstream}..HEAD` 的全部待推 commit；若会带上既有无关 commit，停止并请用户
+决定，不改 upstream、不 force-push。
 
 `artifacts/` 被 Git 忽略；账本必须记录源码 commit、各文件 SHA-256、ZIP
 SHA-256、成员列表和平台结果，才能重新定位实际上传字节。
@@ -181,7 +187,10 @@ python .agents/skills/flagos-operator-race/scripts/build_submission.py \
 才完整读取[平台提交与逐芯结果](references/platform-workflow.md)。“先不要提交平台”
 的开发请求在 ZIP、账本、commit 和 push 完成后停止，不读取该引用、不启动浏览器。
 
-## 完成标准
+## 平台闭环完成标准
+
+局部调研、开发、验证或打包请求以用户指定交付物为完成条件；以下标准只适用于
+用户要求完成平台提交和八芯评测闭环时。
 
 只有同时满足以下条件才称为完成：
 

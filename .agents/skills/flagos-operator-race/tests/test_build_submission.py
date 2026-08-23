@@ -118,6 +118,56 @@ class BuildSubmissionTest(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("regular Git blob", result.stderr)
 
+    def test_rejects_symlink_output_paths(self):
+        for symlink_part in ("parent", "file"):
+            with self.subTest(symlink_part=symlink_part):
+                with tempfile.TemporaryDirectory() as directory:
+                    with tempfile.TemporaryDirectory() as outside_directory:
+                        root = Path(directory)
+                        source = (
+                            root
+                            / "src"
+                            / "flaggems_sglang"
+                            / "ops"
+                            / "demo.py"
+                        )
+                        source.parent.mkdir(parents=True)
+                        source.write_text("VALUE = 1\n")
+                        commit = commit_all(root)
+                        artifact = (
+                            root
+                            / "artifacts"
+                            / "competition"
+                            / "demo"
+                            / f"s0-{commit[:7]}"
+                            / "demo.zip"
+                        )
+                        outside = Path(outside_directory)
+                        sentinel = outside / "sentinel"
+                        sentinel.write_bytes(b"unchanged")
+                        if symlink_part == "parent":
+                            os.symlink(outside, root / "artifacts")
+                        else:
+                            artifact.parent.mkdir(parents=True)
+                            os.symlink(sentinel, artifact)
+
+                        result = subprocess.run(
+                            [
+                                sys.executable,
+                                str(SCRIPT),
+                                "demo",
+                                "--stage",
+                                "s0",
+                            ],
+                            cwd=root,
+                            capture_output=True,
+                            text=True,
+                        )
+
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertIn("symlink output path", result.stderr)
+                        self.assertEqual(sentinel.read_bytes(), b"unchanged")
+
     def test_cli_uses_commit_bytes_and_never_rewrites_existing(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

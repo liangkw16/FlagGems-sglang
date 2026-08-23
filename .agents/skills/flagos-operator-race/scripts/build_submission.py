@@ -92,6 +92,21 @@ def publish(output: Path, payload: bytes) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def validate_output_path(root: Path, output: Path) -> None:
+    relative = output.relative_to(root)
+    current = root
+    for part in relative.parts:
+        current /= part
+        if current.is_symlink():
+            raise SystemExit(f"refusing symlink output path: {current}")
+    try:
+        output.resolve(strict=False).relative_to(root)
+    except ValueError as error:
+        raise SystemExit(
+            f"output resolves outside repository: {output}"
+        ) from error
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("operator", help="operator basename, without .py")
@@ -125,7 +140,7 @@ def main() -> None:
             capture_output=True,
             text=True,
         ).stdout.strip()
-    )
+    ).resolve()
     commit = git(
         root,
         "rev-parse",
@@ -198,6 +213,7 @@ def main() -> None:
         / f"{args.stage}-{short_commit}"
         / f"{args.operator}.zip"
     )
+    validate_output_path(root, output)
     status = "dry-run"
     if output.exists():
         existing_size = output.stat().st_size
