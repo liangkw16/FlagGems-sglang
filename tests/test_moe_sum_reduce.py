@@ -40,6 +40,37 @@ def reference(input, routed_scaling_factor):
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class MoeSumReduceTest(unittest.TestCase):
+    def test_block_boundaries_all_dtypes(self):
+        tolerances = {
+            torch.float16: 1e-2,
+            torch.bfloat16: 1.5e-2,
+            torch.float32: 1e-4,
+        }
+        for dtype, tolerance in tolerances.items():
+            for hidden_dim in (255, 256, 257, 511, 512, 513):
+                with self.subTest(dtype=dtype, hidden_dim=hidden_dim):
+                    input = (
+                        torch.linspace(
+                            -2,
+                            2,
+                            2 * 3 * hidden_dim,
+                            device="cuda",
+                        )
+                        .reshape(2, 3, hidden_dim)
+                        .to(dtype)
+                    )
+                    original = input.clone()
+
+                    actual = MODULE.moe_sum_reduce(input, 1.25)
+                    expected = reference(input, 1.25)
+
+                    torch.testing.assert_close(
+                        input, original, atol=0.0, rtol=0.0
+                    )
+                    torch.testing.assert_close(
+                        actual, expected, atol=tolerance, rtol=tolerance
+                    )
+
     def test_dtypes_and_hidden_tail_match_reference(self):
         tolerances = {
             torch.float16: 1e-2,
