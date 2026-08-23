@@ -42,6 +42,45 @@ def _reference(x, weight, eps):
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class FusedRmsnormTest(unittest.TestCase):
+    def test_contiguous_decode_shapes_match_reference(self):
+        tolerances = {
+            torch.float16: 1e-2,
+            torch.bfloat16: 1.5e-2,
+            torch.float32: 1e-4,
+        }
+        for dtype, tolerance in tolerances.items():
+            for rows, hidden_size in (
+                (1, 512),
+                (4, 4096),
+                (4, 5120),
+                (4, 8192),
+            ):
+                with self.subTest(
+                    dtype=dtype, rows=rows, hidden_size=hidden_size
+                ):
+                    x = (
+                        torch.linspace(
+                            -3.0,
+                            3.0,
+                            rows * hidden_size,
+                            device="cuda",
+                        )
+                        .reshape(rows, hidden_size)
+                        .to(dtype)
+                    )
+                    if rows == 1:
+                        x.zero_()
+                    weight = torch.linspace(
+                        0.5, 1.5, hidden_size, device="cuda"
+                    ).to(dtype)
+
+                    actual = MODULE.fused_rmsnorm(x, weight, 1e-5)
+                    expected = _reference(x, weight, 1e-5)
+
+                    torch.testing.assert_close(
+                        actual, expected, atol=tolerance, rtol=tolerance
+                    )
+
     def test_public_api_matches_reference(self):
         tolerances = {
             torch.float16: 1e-2,
