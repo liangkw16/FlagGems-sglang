@@ -11,6 +11,11 @@ metadata:
 generic 基线 → 代理验证 → 不可变 ZIP → 人工确认 → 逐芯结果 → 最小 vendor
 修复 → 账本与 Git 证据。
 
+先服从请求边界：调研、审计、解释或状态报告只做只读检查，不刷新快照、不连接
+远端、不改文件、不打包、不 commit/push、不操作浏览器；若用户明确要求实时平台
+状态，可做浏览器只读检查。开发、修改或验证请求可做范围内的本地与远端工作并按
+项目约定 commit/push，但平台提交始终另需当次确认。
+
 ## 先读本地资料
 
 从仓库根目录工作，并按需读取，不重复抓取已经落盘的资料：
@@ -18,6 +23,7 @@ generic 基线 → 代理验证 → 不可变 ZIP → 人工确认 → 逐芯结
 - `COMPETITION.md`：入口和常用检索命令；
 - `docs/competition/README.md`：评分、额度、命名和提交规范；
 - `docs/competition/task-index.md`：批次和动态榜单快照；
+- `docs/competition/experiments/README.md`：当前候选、产物哈希和提交队列；
 - `docs/competition/tasks/<batch>/<task>.md`：完整题面；
 - `docs/competition/reference-repositories.md`：固定 Git 引用和上游来源；
 - `docs/competition/strategy-batch2.md`：候选优先级和已知语义陷阱；
@@ -28,6 +34,9 @@ generic 基线 → 代理验证 → 不可变 ZIP → 人工确认 → 逐芯结
 ```bash
 python tools/sync_flagos_season2_docs.py
 ```
+
+同步脚本会改写本地快照；只读调研、审计或报告请求不要运行，除非用户明确要求
+刷新或更新资料。
 
 比赛截止时间、额度、登录状态和提交结果以平台当前页面为准。来源冲突时采用
 更严格的截止时间，并把冲突写入账本。
@@ -46,6 +55,10 @@ artifacts/competition/<operator>/<stage>-<code-commit>/<operator>.zip
 
 `artifacts/` 被 Git 忽略；账本必须记录源码 commit、各文件 SHA-256、ZIP
 SHA-256、成员列表和平台结果，才能重新定位实际上传字节。
+
+分别记录三个身份：`source commit` 是 ZIP 逐字节取源的提交；`verification
+commit` 是最新测试和验证证据的提交；`ledger commit` 是写回产物与结果的提交。
+三者可以不同，但账本必须写清关系，产物目录使用 `source commit` 短哈希。
 
 ## 阶段 A：从题面到 S0
 
@@ -112,11 +125,25 @@ S0 只追求全部支持芯片正确且每芯达到题面最低门槛：
 4. 主要 shape 的正确性；
 5. wrapper-inclusive benchmark 与编译产物检查。
 
+连接、传输、后台日志和证据保留按
+[远端 GPU 代理验证](references/remote-validation.md) 执行。
+
 远端 NVIDIA 只能筛选语法、数值和候选，不能证明其他芯片正确或性能。
 
 ### 6. 生成不可变 ZIP
 
 从已提交的源码构建，不维护 `submissions/` 副本。目录名使用代码 commit 短哈希。
+优先使用 Skill 自带的确定性打包器；它从指定 commit 读取 generic 和已有 vendor
+源码、生成固定字节 ZIP、拒绝覆盖同路径的不同产物，并输出可直接写入账本的哈希：
+
+```bash
+python .agents/skills/flagos-operator-race/scripts/build_submission.py \
+  <operator> --stage s0 --commit <code-commit>
+```
+
+历史 ZIP 若不是该工具的规范字节，只能用 `--verify-existing` 做只读内容验签；结果会
+标记 `verified-existing-legacy` 并同时输出实际与规范 ZIP 哈希，不能据此重写旧产物。
+
 打包后逐项检查：
 
 - `.zip` 小于 10 MB；
@@ -131,7 +158,9 @@ S0 只追求全部支持芯片正确且每芯达到题面最低门槛：
 
 ## 阶段 B：平台提交
 
-网页写操作必须获得 action-time 确认。确认内容至少包括：
+先使用 `chrome:control-chrome` skill 做只读预检：核对登录团队、Task、batch、
+截止时间、两分钟间隔、当前剩余额度和当次页面规则，但不选择文件、不点击提交。
+然后取得 action-time 确认，确认内容至少包括：
 
 - Task 编号和 operator；
 - ZIP 的绝对路径与 SHA-256；
@@ -139,14 +168,12 @@ S0 只追求全部支持芯片正确且每芯达到题面最低门槛：
 
 旧的“继续”“可以上传”不能授权后来生成的另一份 ZIP。每个新候选重新确认。
 
-确认后使用 `chrome:control-chrome` skill：
+确认后立即只读复核上述状态；任一值变化都停止并重新确认。状态不变时：
 
-1. 核对登录团队、Task、batch、截止时间、两分钟间隔和额度；
-2. 打开“提交代码”，阅读当次页面规则；
-3. 选择已确认的绝对路径；
-4. 等待平台识别正确的 `.py` 数量；
-5. 只有四项基础校验通过且提交按钮启用时才点击；
-6. 捕获“提交成功”、额度扣减、流水时间和状态。
+1. 选择已确认的绝对路径；
+2. 等待平台识别正确的 `.py` 数量；
+3. 只有当次上传器显示的全部基础校验通过且提交按钮启用时才点击；
+4. 捕获“提交成功”、额度扣减、流水时间和状态。
 
 页面刚选文件时可能短暂显示 `0 个 .py`；等待校验完成，不要在异常状态提交。
 若 Chrome 文件权限失败，遵循 Chrome skill 的 file-upload troubleshooting。

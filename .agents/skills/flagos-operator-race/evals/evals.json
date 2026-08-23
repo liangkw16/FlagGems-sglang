@@ -10,6 +10,7 @@
         "Reads or names the repository competition index, full task statement, submission rules, and reference repository notes.",
         "Locks signature, dtype, shape/stride semantics, tolerance, supported chips, and ZIP basename before implementation.",
         "Keeps S0 generic-only and excludes PyTorch fallback or speculative vendor files.",
+        "Keeps the read-only request read-only: does not refresh snapshots, connect to the remote host, edit files, or upload.",
         "Requires exact Task, ZIP path, hash, quota, and fresh user confirmation before browser submission."
       ]
     },
@@ -23,6 +24,18 @@
         "Classifies Enflame as a grid-limit failure and Ascend as a missing final cap scaling/lowering failure.",
         "Uses fixed vendor policies or official sources rather than inventing hardware counts.",
         "Requires remote proxy tests, exact ZIP/member hashes, ledger update, and a new action-time confirmation before resubmission."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Task 19 的源码候选来自旧 commit，测试后来扩充，账本也会再单独提交。只验签现有 ZIP 并说明这三类 commit 如何记录；不要重打包、改文件或上传。",
+      "expected_output": "A read-only artifact audit that verifies committed source bytes and the existing ZIP, distinguishes source, verification, and ledger commits, and stops before every write or upload.",
+      "files": [],
+      "expectations": [
+        "Uses the immutable packaging helper in dry-run or verification mode without overwriting the existing artifact.",
+        "Records the source commit as the ZIP byte source, the verification commit as the tested state, and the ledger commit as the evidence write-back.",
+        "Checks ZIP basename, member list, UTF-8, size, integrity, member hashes, and ZIP hash.",
+        "Does not rebuild, edit, push, connect remotely, or upload under the read-only request."
       ]
     }
   ]
