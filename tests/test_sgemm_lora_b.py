@@ -149,6 +149,42 @@ class SgemmLoraBTest(unittest.TestCase):
 
         torch.testing.assert_close(actual, expected, atol=1e-4, rtol=1e-4)
 
+    def test_seg_indptr_is_authoritative_and_empty_metadata_is_ignored(self):
+        info = SimpleNamespace(
+            bs=3,
+            max_len=17,
+            seg_lens=torch.tensor([1, 0, 1], device="cuda"),
+            seg_indptr=torch.tensor(
+                [0, -1, 17, -1, 17, -1, 18, -1], device="cuda"
+            )[::2],
+            weight_indices=torch.tensor(
+                [0, 1 << 28, 0], device="cuda", dtype=torch.int64
+            ),
+            lora_ranks=torch.tensor([65], device="cuda"),
+            scalings=torch.tensor([0.5], device="cuda"),
+            permutation=None,
+        )
+        x = (
+            torch.arange(18 * 65, device="cuda", dtype=torch.float32)
+            .reshape(18, 65)
+            .div(100)
+        )
+        weights = (
+            torch.arange(67 * 65, device="cuda", dtype=torch.float32)
+            .reshape(1, 67, 65)
+            .div(1000)
+        )
+        base = torch.linspace(
+            -1, 1, 18 * 67, device="cuda", dtype=torch.float32
+        ).reshape(18, 67)
+
+        actual = MODULE.sgemm_lora_b(x, weights, info, base)
+        expected = reference(x, weights, info, base)
+        torch.cuda.synchronize()
+
+        torch.testing.assert_close(actual, expected, atol=1e-4, rtol=1e-4)
+        self.assertEqual(info.seg_indptr.stride(), (2,))
+
     def test_empty_input(self):
         info = make_batch_info([], [], [], [])
         x = torch.empty((0, 7), device="cuda")

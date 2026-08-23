@@ -21,7 +21,6 @@ def _sgemm_lora_b_kernel(
     x_ptr,
     weights_ptr,
     output_ptr,
-    seg_lens_ptr,
     seg_indptr_ptr,
     weight_indices_ptr,
     lora_ranks_ptr,
@@ -35,7 +34,6 @@ def _sgemm_lora_b_kernel(
     weight_stride_rank,
     output_stride_token,
     output_stride_col,
-    seg_lens_stride,
     seg_indptr_stride,
     weight_indices_stride,
     lora_ranks_stride,
@@ -48,6 +46,16 @@ def _sgemm_lora_b_kernel(
     HAS_PERMUTATION: tl.constexpr,
 ):
     batch_id = tl.program_id(1)
+    segment_start = tl.load(seg_indptr_ptr + batch_id * seg_indptr_stride)
+    segment_end = tl.load(seg_indptr_ptr + (batch_id + 1) * seg_indptr_stride)
+    segment_length = segment_end - segment_start
+    num_output_blocks = tl.cdiv(output_dim, BLOCK_N)
+    matrix_pid = tl.program_id(0)
+    token_block = matrix_pid // num_output_blocks
+    output_block = matrix_pid % num_output_blocks
+    if token_block * BLOCK_S >= segment_length:
+        return
+
     weight_index = tl.load(
         weight_indices_ptr + batch_id * weight_indices_stride
     )
@@ -55,12 +63,6 @@ def _sgemm_lora_b_kernel(
     if rank == 0:
         return
 
-    segment_length = tl.load(seg_lens_ptr + batch_id * seg_lens_stride)
-    segment_start = tl.load(seg_indptr_ptr + batch_id * seg_indptr_stride)
-    num_output_blocks = tl.cdiv(output_dim, BLOCK_N)
-    matrix_pid = tl.program_id(0)
-    token_block = matrix_pid // num_output_blocks
-    output_block = matrix_pid % num_output_blocks
     offsets_s = token_block * BLOCK_S + tl.arange(0, BLOCK_S)
     offsets_n = output_block * BLOCK_N + tl.arange(0, BLOCK_N)
     mask_s = offsets_s < segment_length
@@ -134,7 +136,6 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
         x,
         weights,
         output,
-        batch_info.seg_lens,
         batch_info.seg_indptr,
         batch_info.weight_indices,
         batch_info.lora_ranks,
@@ -148,7 +149,6 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
         weights.stride(2),
         output.stride(0),
         output.stride(1),
-        batch_info.seg_lens.stride(0),
         batch_info.seg_indptr.stride(0),
         batch_info.weight_indices.stride(0),
         batch_info.lora_ranks.stride(0),
