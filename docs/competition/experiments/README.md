@@ -21,7 +21,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 09 | [`bmm_chunk`](bmm_chunk.md) | `s0-b05bfeb` | `058b016c309c0affa5ecbbcb125de415a6565be93e2b76a9535473021169c4e3` | NVIDIA 1.670–2.199x；未平台 | 第 6 个提交 |
 | 10 | [`chunk_cumsum`](chunk_cumsum.md) | `s0-3fac516` | `81a1cff508d5ca8a7eb921d8644e4061b40382ea2ab9e4ce12a231118e48c607` | NVIDIA 3.184–29.044x；未平台 | 第 11 个提交 |
 | 11 | [`chunk_local_cumsum_vector`](chunk_local_cumsum_vector.md) | `s0-3fac516` | `b4ab7b21ecd5a4f23b0d53aab00e8ef504c2e2f329c27b1bbf77306db5daab3a` | NVIDIA 1.605–2.919x；未平台 | 第 10 个提交 |
-| 12 | [`chunk_state`](chunk_state.md) | `s0-b05bfeb` | `c689def894513d211ae96a1085d9e937a6b2da6dbc40e3db4aa5e9c9cb0a9686` | NVIDIA 2.611–4.406x；未平台 | 第 5 个提交 |
+| 12 | [`chunk_state`](chunk_state.md) | `e2-67350fa` | `35f11803055ccc0a7e6bff71c974ad3671032c1cec35d2a556367789206de9e3` | 3/3 回归；K>=256 受影响点 1.1198x；未平台 | 第 5 个提交 |
 | 13 | [`chunk_state_varlen`](chunk_state_varlen.md) | `s0-b05bfeb` | `bd23ddad1c833c8f9ba2c8e0e551fa5e4c3d7ad446351d74a346af14c850603b` | NVIDIA 613.340x 单 case；题面 reference 跨 chunk 语义冲突 | 暂缓，先确认语义 |
 | 14 | [`context_attention`](context_attention.md) | `s0-fbbf74f` | `38ce76db6fee2121a765a1cd741138b9c2ded2478fdd85b1bfb4bba3d0f97456` | NVIDIA 0.5797–6.4198x；大 D 资源风险 | 暂缓，受控实验 |
 | 15 | [`decode_attention`](decode_attention.md) | `s0-f431ba4` | `850cf12333241a450b342edbd2e108dca5841ddfb4f576129df45d863e5123b9` | NVIDIA 16.213x；未平台 | 第 12 个提交 |
