@@ -41,6 +41,7 @@ def _bmm_chunk_kernel(
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
+    USE_INPUT_DTYPE: tl.constexpr,
 ):
     a_stride_batch = tl.cast(a_stride_batch, tl.int64)
     a_stride_seqlen = tl.cast(a_stride_seqlen, tl.int64)
@@ -90,7 +91,7 @@ def _bmm_chunk_kernel(
             mask=(m_offsets[:, None] < chunk_size)
             & (current_k[None, :] < k_size),
             other=0.0,
-        ).to(tl.float32)
+        )
         b = tl.load(
             b_ptr
             + b_base
@@ -99,7 +100,10 @@ def _bmm_chunk_kernel(
             mask=(current_k[:, None] < k_size)
             & (n_offsets[None, :] < chunk_size),
             other=0.0,
-        ).to(tl.float32)
+        )
+        if not USE_INPUT_DTYPE:
+            a = a.to(tl.float32)
+            b = b.to(tl.float32)
         accumulator += tl.dot(a, b, input_precision="ieee")
 
     output_offsets = (
@@ -156,6 +160,8 @@ def bmm_chunk(a, b, chunk_size, causal=False):
         BLOCK_M=block_m,
         BLOCK_N=block_n,
         BLOCK_K=32,
+        USE_INPUT_DTYPE=a.dtype == b.dtype
+        and a.dtype in (torch.float16, torch.bfloat16),
         num_warps=4,
         num_stages=1,
     )

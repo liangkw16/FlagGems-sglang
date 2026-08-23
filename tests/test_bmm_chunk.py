@@ -105,6 +105,27 @@ class BmmChunkTest(unittest.TestCase):
         torch.testing.assert_close(a, a_before, atol=0, rtol=0)
         torch.testing.assert_close(b, b_before, atol=0, rtol=0)
 
+    def test_mixed_dtypes_keep_fp32_path(self):
+        generator = torch.Generator(device="cuda").manual_seed(20260826)
+        shape = (1, 66, 2, 65)
+        a = torch.randn(
+            shape,
+            device="cuda",
+            dtype=torch.float16,
+            generator=generator,
+        )
+        b = torch.randn(
+            shape,
+            device="cuda",
+            dtype=torch.bfloat16,
+            generator=generator,
+        )
+
+        actual = MODULE.bmm_chunk(a, b, 33)
+        expected = reference(a, b, 33)
+
+        torch.testing.assert_close(actual, expected, atol=1.5e-2, rtol=1.5e-2)
+
     def test_tile_and_k_block_boundaries(self):
         generator = torch.Generator(device="cuda").manual_seed(20260825)
         cases = (
