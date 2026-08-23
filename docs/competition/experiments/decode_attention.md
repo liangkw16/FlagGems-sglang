@@ -1,0 +1,72 @@
+# Task 15 `decode_attention` 实验记录
+
+## S0：generic MHA baseline
+
+状态：S0 已打包并通过本地门禁；等待当次上传确认
+
+验证时间：2026-08-24 01:28–01:37 CST
+
+源码 commit：`f431ba4`
+
+### 契约
+
+| 项目 | 值 |
+| --- | --- |
+| 公开接口 | `decode_attention(q, k_buffer, v_buffer, kv_indptr, kv_indices, sm_scale)` |
+| MHA 约束 | `H_Q == H_KV` |
+| 输入 | q `[B,H_Q,D]`；K `[P,H_KV,D]`；V `[P,H_KV,D_v]`；CSR page 索引 |
+| 计算 | `softmax(q @ K.T * sm_scale) @ V`，logits/softmax/累加均 FP32 |
+| 输出 | `[B,H_Q,D_v]`，FP32，out-of-place；输入不变 |
+| 支持芯片 | 天数、沐曦、燧原、海光、昆仑芯、华为、国际通用 A/B，共 8 款 |
+| 截止 / 门槛 | 2026-08-27 19:59:59；`speedup_threshold=0.1` |
+
+固定来源：本地 Task 15 题面、SGLang
+`8014d9d062c3cc5d393596ecdf2f7009191965df` 的 production decode attention，
+以及 community commit `0e8023d` 的 `whd3/decode_attention.py`。S0 只保留在线
+softmax 思路，删除 reference/demo、Torch 计算、`.contiguous()`、host/设备识别、
+设备迁移、fallback、split 临时张量和设备 SM 策略。
+
+2026-08-24 01:31 CST 公开 API 状态：41 次提交、10 支队伍、1 支达到门槛；
+榜首 c2flow 为 8/8、78.2958x。动态值仅用于当时决策。
+
+### 唯一候选
+
+- 单 kernel、每个 `(batch, query_head)` 一个 program；4 warps、1 stage。
+- Q/K/V、CSR indptr/indices 和输出全部使用真实 stride；page ID 转 int64 后参与
+  地址计算。
+- `BLOCK_D`、`BLOCK_DV` 为实际维度的下一 2 次幂。sequence tile 为
+  `max(8, min(32, 8192 / max(BLOCK_D, BLOCK_DV)))`，限制常见大 `D_v` 的
+  二维 gather tile。
+- 跨 sequence tile 使用 FP32 online softmax；完整 mask 覆盖任意非整块长度。
+- 仅 `torch.empty` 分配 FP32 输出；非空路径核心计算全在 Triton。
+
+### 验证
+
+| 项目 | 值 |
+| --- | --- |
+| 源文件 SHA-256 | `886332facce98b6fa3ab783de064e322ddbcabb3a66f9b17bad70914fc3212aa` |
+| 测试 SHA-256 | `8e7a714a79a3487d4c4ebb4fc4abbebad92fc12f1afbdd5beda750344019f43b` |
+| ZIP | `artifacts/competition/decode_attention/s0-f431ba4/decode_attention.zip` |
+| ZIP SHA-256 | `850cf12333241a450b342edbd2e108dca5841ddfb4f576129df45d863e5123b9` |
+| ZIP manifest | 顶层 `decode_attention.py`，5016 bytes |
+| 远端证据目录 | `gpu:/tmp/flagos-batch2.SQaIX2` |
+| 远端环境 | RTX 5070 Ti 16 GB；PyTorch 2.13.0+cu130；Triton 3.7.1；CUDA 13.0 |
+
+- 共享 unittest 5/5 通过；Task 15 覆盖 FP16/FP32，真实非连续 strides，
+  int64 非连续 CSR，变长 `1/35/65`，`D=33,D_v=17`，以及
+  `D=64,D_v=257` 和空 batch。
+- `py_compile`、`git diff --check`、Black 79、isort、flake8 均通过；本地与
+  远端源码/测试哈希一致。
+- wrapper-inclusive FP16 benchmark：`B=8,H=16,D=D_v=64,L=128`，S0
+  `0.038249 ms`，题面 reference `0.620144 ms`，代理 speedup `16.213x`。
+
+### 风险与下一步
+
+- NVIDIA 代理不能证明其余七款芯片；平台前不增加 vendor 文件。
+- 公开 reference 对单个 `L=0` 的序列会在 empty `amax` 处报错；S0 覆盖其
+  可定义的空 batch，不另行发明空序列数值。CSR tensor 需与输入位于同一设备。
+- 单 program 顺序扫描长序列。若平台正确但长序列性能不足，下一单变量候选是
+  split-KV；若大 `D/D_v` 编译超资源，再按失败芯片做 128-wide dim chunk。
+- ZIP 由 commit `f431ba4` 直接生成；`unzip -t`、UTF-8、单一 `.py`、10 MB、
+  basename 和 ZIP 内源码哈希门禁均通过。尚未上传或消耗额度；上述 ZIP 需要
+  用户当次确认。
