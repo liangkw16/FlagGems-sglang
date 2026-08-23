@@ -193,9 +193,7 @@ class MambaLayernormGatedTest(unittest.TestCase):
                     weight = torch.randn(
                         hidden_size, device="cuda", dtype=dtype
                     )
-                    bias = torch.randn(
-                        hidden_size, device="cuda", dtype=dtype
-                    )
+                    bias = torch.randn(hidden_size, device="cuda", dtype=dtype)
                     z = torch.randn_like(x)
 
                     actual = MODULE.mamba_layernorm_gated(
