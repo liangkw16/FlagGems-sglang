@@ -33,14 +33,17 @@
 5. 本地做语法/风格检查；有任一目标芯片时加随机、极大正负值和三种 dtype 对照。
 6. ZIP 中先只放 `softcap_out.py`。平台返回按芯片结果后，再决定是否增加 vendor 文件。
 
+先按项目 skill 提交已选中的 source/test、完成 release 门禁，再把 manifest 中的完整
+source commit 写入下方变量：
+
 ```bash
-python -m py_compile submissions/softcap_out.py
-pre-commit run --files submissions/softcap_out.py
-cd submissions && zip -j softcap_out.zip softcap_out.py
-unzip -l softcap_out.zip
+source_commit="SOURCE_COMMIT_FULL_SHA"
+python .agents/skills/flagos-operator-race/scripts/build_submission.py \
+  softcap_out --stage s0 --commit "$source_commit"
 ```
 
-网页上传会消耗每日额度并产生外部提交；本地资料整理没有执行上传。实际提交前应再次确认 ZIP 内容和目标题目。
+网页上传会消耗每日额度并产生外部提交；本地资料整理没有执行上传。实际提交遵循
+[完整平台门禁](../../.agents/skills/flagos-operator-race/references/platform-workflow.md)。
 
 ## 17 题上游映射与语义陷阱
 
@@ -83,4 +86,5 @@ SGLang 链接固定在 commit `8014d9d062c3cc5d393596ecdf2f7009191965df`，避�
 1. 首日只用 3–5 次打通一个低风险算子的全流程。
 2. 一次提交只改变一个变量，保存 ZIP、commit 和逐芯片结果。
 3. generic 正确后再按失败芯片补 `<operator>_<gpu>.py`，不要一开始维护 8 份实现。
-4. 至少预留 2 次给截止日前的最终回归；按 2026-08-27 19:59:59 截止执行。
+4. 默认建议预留 2 次给截止日前的最终回归；用户可在看到实时额度和完整提交 tuple
+   后，通过当次确认明确使用保留额度。按 2026-08-27 19:59:59 截止执行。

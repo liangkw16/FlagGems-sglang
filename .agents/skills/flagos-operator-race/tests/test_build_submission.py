@@ -2,11 +2,14 @@ import importlib.util
 import io
 import json
 import os
+import stat
+import struct
 import subprocess
 import sys
 import tempfile
 import unittest
 import zipfile
+import zlib
 from pathlib import Path
 from unittest import mock
 
@@ -52,8 +55,11 @@ class BuildSubmissionTest(unittest.TestCase):
             with self.subTest(size=size, compression=compression):
                 info = mock.Mock(
                     filename="demo.py",
+                    orig_filename="demo.py",
                     file_size=size,
                     compress_type=compression,
+                    external_attr=stat.S_IFREG << 16,
+                    extra=b"",
                 )
                 info.is_dir.return_value = False
                 archive = mock.Mock()
@@ -66,6 +72,114 @@ class BuildSubmissionTest(unittest.TestCase):
                 )
                 archive.testzip.assert_not_called()
                 archive.read.assert_not_called()
+
+    def test_archive_rejects_non_regular_metadata_before_reading(self):
+        for mode, dos_attributes in (
+            (stat.S_IFLNK | 0o777, 0),
+            (stat.S_IFCHR | 0o666, 0),
+            (stat.S_IFREG | 0o644, 0x10),
+        ):
+            with self.subTest(mode=mode, dos_attributes=dos_attributes):
+                info = mock.Mock(
+                    filename="demo.py",
+                    orig_filename="demo.py",
+                    file_size=8,
+                    compress_type=zipfile.ZIP_STORED,
+                    external_attr=(mode << 16) | dos_attributes,
+                    extra=b"",
+                )
+                info.is_dir.return_value = False
+                archive = mock.Mock()
+                archive.infolist.return_value = [info]
+
+                self.assertFalse(
+                    BUILD_SUBMISSION.archive_matches(
+                        archive, {"demo.py": b"expected"}
+                    )
+                )
+                archive.testzip.assert_not_called()
+                archive.read.assert_not_called()
+
+    def test_archive_rejects_ambiguous_unicode_path_extra(self):
+        for raw_name, alternate_name in (
+            ("../evil.py", "demo.py"),
+            ("demo.py", "../evil.py"),
+        ):
+            with self.subTest(
+                raw_name=raw_name, alternate_name=alternate_name
+            ):
+                raw = raw_name.encode("ascii")
+                alternate = alternate_name.encode("utf-8")
+                unicode_path = (
+                    struct.pack(
+                        "<HHBI",
+                        0x7075,
+                        1 + 4 + len(alternate),
+                        1,
+                        zlib.crc32(raw) & 0xFFFFFFFF,
+                    )
+                    + alternate
+                )
+                info = zipfile.ZipInfo(raw_name)
+                info.extra = unicode_path
+                buffer = io.BytesIO()
+                with zipfile.ZipFile(buffer, "w") as archive:
+                    archive.writestr(info, b"expected")
+                with zipfile.ZipFile(io.BytesIO(buffer.getvalue())) as archive:
+                    self.assertFalse(
+                        BUILD_SUBMISSION.archive_matches(
+                            archive, {"demo.py": b"expected"}
+                        )
+                    )
+
+    def test_archive_rejects_unsafe_paths_and_duplicate_basenames(self):
+        for names in (
+            ["../demo.py"],
+            ["first/demo.py", "second/demo.py"],
+            ["demo.py", "extra.py"],
+        ):
+            with self.subTest(names=names):
+                buffer = io.BytesIO()
+                with zipfile.ZipFile(buffer, "w") as archive:
+                    for name in names:
+                        archive.writestr(name, b"expected")
+                with zipfile.ZipFile(io.BytesIO(buffer.getvalue())) as archive:
+                    self.assertFalse(
+                        BUILD_SUBMISSION.archive_matches(
+                            archive, {"demo.py": b"expected"}
+                        )
+                    )
+
+    def test_archive_rejects_file_and_directory_path_conflicts(self):
+        for entries, members in (
+            (
+                [("demo.py/", b""), ("demo.py", b"generic")],
+                {"demo.py": b"generic"},
+            ),
+            (
+                [
+                    ("demo.py", b"generic"),
+                    ("demo.py/demo_amd.py", b"vendor"),
+                ],
+                {"demo.py": b"generic", "demo_amd.py": b"vendor"},
+            ),
+            (
+                [
+                    ("legacy/demo.py/", b""),
+                    ("legacy/demo.py", b"generic"),
+                ],
+                {"demo.py": b"generic"},
+            ),
+        ):
+            with self.subTest(entries=entries):
+                buffer = io.BytesIO()
+                with zipfile.ZipFile(buffer, "w") as archive:
+                    for name, payload in entries:
+                        archive.writestr(name, payload)
+                with zipfile.ZipFile(io.BytesIO(buffer.getvalue())) as archive:
+                    self.assertFalse(
+                        BUILD_SUBMISSION.archive_matches(archive, members)
+                    )
 
     def test_publish_never_overwrites(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -262,6 +376,123 @@ class BuildSubmissionTest(unittest.TestCase):
             )
             self.assertNotEqual(oversized.returncode, 0)
             self.assertIn("exceeds platform limit", oversized.stderr)
+
+    def test_cli_ignores_git_replace_refs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            generic = root / "src" / "flaggems_sglang" / "ops" / "demo.py"
+            generic.parent.mkdir(parents=True)
+            generic.write_text('VALUE = "original"\n')
+            original = commit_all(root)
+
+            generic.write_text('VALUE = "replacement"\n')
+            subprocess.run(["git", "add", "."], cwd=root, check=True)
+            subprocess.run(
+                [
+                    "git",
+                    "-c",
+                    "user.name=Skill Test",
+                    "-c",
+                    "user.email=skill-test@example.invalid",
+                    "commit",
+                    "-qm",
+                    "replacement",
+                ],
+                cwd=root,
+                check=True,
+            )
+            replacement = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=root,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            subprocess.run(
+                ["git", "replace", original, replacement],
+                cwd=root,
+                check=True,
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "demo",
+                    "--stage",
+                    "s0",
+                    "--commit",
+                    original,
+                ],
+                cwd=root,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            manifest = json.loads(result.stdout)
+            self.assertEqual(manifest["commit"], original)
+            with zipfile.ZipFile(manifest["artifact"]) as archive:
+                self.assertEqual(
+                    archive.read("demo.py"), b'VALUE = "original"\n'
+                )
+
+    def test_verify_existing_accepts_safe_legacy_subdirectories(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            generic = root / "src" / "flaggems_sglang" / "ops" / "demo.py"
+            vendor = (
+                root
+                / "src"
+                / "flaggems_sglang"
+                / "runtime"
+                / "backend"
+                / "_amd"
+                / "ops"
+                / "demo.py"
+            )
+            generic.parent.mkdir(parents=True)
+            vendor.parent.mkdir(parents=True)
+            generic.write_text('VALUE = "generic"\n')
+            vendor.write_text('VALUE = "amd"\n')
+            commit = commit_all(root)
+            artifact = (
+                root
+                / "artifacts"
+                / "competition"
+                / "demo"
+                / f"s0-{commit[:7]}"
+                / "demo.zip"
+            )
+            artifact.parent.mkdir(parents=True)
+            with zipfile.ZipFile(
+                artifact, "w", compression=zipfile.ZIP_DEFLATED
+            ) as archive:
+                archive.writestr("legacy/", b"")
+                archive.writestr("legacy/demo_amd.py", b'VALUE = "amd"\n')
+                archive.writestr("legacy/demo.py", b'VALUE = "generic"\n')
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "demo",
+                    "--stage",
+                    "s0",
+                    "--commit",
+                    commit,
+                    "--verify-existing",
+                ],
+                cwd=root,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            manifest = json.loads(result.stdout)
+            self.assertEqual(manifest["status"], "verified-existing-legacy")
+            self.assertEqual(
+                manifest["archive_members"],
+                ["legacy/demo_amd.py", "legacy/demo.py"],
+            )
 
 
 if __name__ == "__main__":

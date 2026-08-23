@@ -29,6 +29,8 @@ generic 基线 → 代理验证 → 不可变 ZIP → 人工确认 → 逐芯结
 - `docs/competition/tasks/<batch>/<task>.md`：完整题面；
 - `docs/competition/reference-repositories.md`：固定 Git 引用和上游来源；
 - `docs/competition/strategy-batch2.md`：候选优先级和已知语义陷阱；
+- `docs/competition/learning-path.md`：仅在题型学习、芯片调研或跨芯优化时读取
+  对应章节和固定 backend 证据；
 - `docs/competition/experiments/<operator>.md`：该算子的实验账本。
 
 动态状态可能过期。需要最新公开题面或榜单时运行：
@@ -126,10 +128,12 @@ S0 只追求全部支持芯片正确且每芯达到题面最低门槛：
 
 ### 5. 测试优先并远端验证
 
-以公开函数作为测试 seam。先留下一个会失败的最小回归，再实现代码。至少覆盖：
+以公开函数作为测试 seam。正确性修复先留下一个旧实现会失败的最小回归；纯性能
+候选先声明 affected shape 和晋级阈值，存在明确未受影响路径时再加 control，并复用
+完整正确性矩阵。至少覆盖：
 
 - 题面 dtype 与容差；
-- 空输入、尾块边界、非连续输入和输入不变性；
+- 题面允许且相关时的空输入、尾块边界、非连续输入和输入不变性；
 - 公式分支、极值、NaN/Inf（题面相关时）；
 - 平台报错对应的精确回归 case。
 
@@ -164,8 +168,9 @@ python .agents/skills/flagos-operator-race/scripts/build_submission.py \
 
 首个基线使用 `s0`，后续单变量候选使用 `e1`、`e2` 递增。
 
-历史 ZIP 若不是该工具的规范字节，只能用 `--verify-existing` 做只读内容验签；结果会
-标记 `verified-existing-legacy` 并同时输出实际与规范 ZIP 哈希，不能据此重写旧产物。
+历史 ZIP 若不是该工具的规范字节，只能用 `--verify-existing` 按安全路径、唯一
+basename 和提交源码内容做只读验签；结果会标记 `verified-existing-legacy` 并同时
+输出实际成员路径、实际与规范 ZIP 哈希，不能据此重写旧产物。
 
 打包后逐项检查：
 
@@ -173,7 +178,8 @@ python .agents/skills/flagos-operator-race/scripts/build_submission.py \
 - 只有 UTF-8 `.py` 文件；
 - generic basename 精确为 `<operator>.py`；
 - vendor basename 精确为 `<operator>_<suffix>.py`；
-- 无测试、缓存、目录前缀或 macOS 垃圾文件；
+- 新建规范包无测试、缓存、目录前缀或 macOS 垃圾文件；历史包的安全子目录仅能
+  通过只读 legacy 验签保留；
 - `unzip -t`、`unzip -l`、每个成员 SHA-256 和 ZIP SHA-256 均已记录；
 - ZIP 内源码与对应 commit 源文件逐字节一致。
 

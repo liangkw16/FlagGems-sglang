@@ -6,29 +6,44 @@
 `/home/kevin/notebook/.venv/bin/python`；先用 `ssh -G gpu` 和远端版本命令核对，
 不要把解析出的 IP 写进仓库。环境变化时以 SSH config 和实际解释器为准。
 
+## 两种证据模式
+
+- `screening`：允许传未提交候选做快速淘汰；记录 base commit、明确文件列表以及
+  本地/远端 SHA-256。结果只能标为探索证据，不能为 ZIP、发布门禁或平台提交背书。
+- `release`：候选 source 和 test 已提交；source 使用打包器 manifest 绑定，test
+  使用 verification commit 绑定。只有该模式的结果可把候选标为“就绪”。
+
+每份日志先写明模式，不把 screening 结果升级成 release 结果。
+
 ## 每次运行
 
 1. 用远端 `mktemp -d /tmp/flagos-<operator>.XXXXXX` 建独立目录并设为 `0700`。
-2. 先运行打包器的 dry-run 或 existing 验签，取得 `source commit` 的成员哈希。
-   只传本次 generic、vendor、`tests/test_<operator>.py` 及测试实际导入的文件，
-   保留仓库相对路径。远端 generic/vendor 哈希必须等于打包器输出的 ZIP 成员哈希；
-   测试文件哈希绑定 `verification commit`。传输前后任一不一致就停止，不能拿 HEAD
-   源码的测试结果替旧 commit 的 ZIP 背书。
-3. 用 `nohup` 在远端后台依次执行：
+2. 只传本次 generic、vendor、`tests/test_<operator>.py` 及测试实际导入的文件，
+   保留仓库相对路径。screening 在传输前记录 base commit 和当前工作区各文件哈希；
+   release 先运行打包器 dry-run 或 existing 验签，取得 source commit 的成员哈希，
+   测试文件哈希绑定 verification commit。远端哈希必须逐项相同；任一不一致就停止，
+   不能拿 HEAD 或 screening 的结果替旧 commit 的 ZIP 背书。
+3. 用 `setsid`（或等价方式）建立属于该临时目录的独立进程组，再配合 `nohup` 在
+   远端后台依次执行：
    - 目标源码和测试的 `py_compile`；
    - `black --check --line-length 79`、`isort --check-only`、`flake8`；
    - 复验源码和测试 SHA-256，确认静态门禁没有改写已验签字节；
    - `python -m unittest -v tests/test_<operator>.py`。
 4. 启动前为每阶段和整次运行设定并记录 wall-clock 上限，命令使用远端 `timeout`
-   或等价机制，禁止无界 `nohup`。超时或任一步失败时终止该进程组并停止后续阶段；
+   或等价机制，禁止无界 `nohup`。超时或任一步失败时，先核验 PID、PGID 和命令均
+   属于该临时目录，再只终止该进程组并停止后续阶段；不终止其他用户或任务进程。
    只有已记录原因时才扩大上限重试。
 5. 记录远端目录、PID/进程组、日志路径和启动时间；前台继续本地源码审查、上游
    检索和账本准备。有限次轮询日志，不用长时间阻塞 shell。
 6. 单测通过后再跑题面主要 shape 的正确性、wrapper-inclusive benchmark 和编译
-   资源检查；每组性能数据至少交替运行五组，保留中位数或稳定统计。
+   资源检查。性能实验先声明 affected、晋级阈值和资源上限；存在明确未受影响路径
+   时再加 control。确认设备没有竞争 workload 后同步执行至少五轮交替 AB/BA，按
+   paired speedup 的稳定统计判断。不终止他人 workload；存在竞争、结果落在噪声内
+   或资源明显退化时，不晋级候选并记录负结果。
 7. 记录 GPU、driver、Python、PyTorch、Triton 和 CUDA 版本，以及最大实际验证
    shape。远端 NVIDIA 结果只标记为代理证据。
 
-使用远端临时目录中的源码和测试做验证，不在远端仓库分支提交或 push。日志和
-临时目录至少保留到对应实验账本 commit 完成；若要删除，先确认账本已包含复现实验
-所需的命令、版本、哈希和结果。
+使用远端临时目录中的源码和测试做验证，不在远端仓库分支提交或 push。NVIDIA
+代理只验证实际可执行的 generic/NVIDIA 路径；其他 vendor 路径若不能在该环境执行，
+只做静态检查并明确标记 runtime 未验证。日志和临时目录至少保留到对应实验账本
+commit 完成；若要删除，先确认账本已包含复现实验所需的命令、版本、哈希和结果。

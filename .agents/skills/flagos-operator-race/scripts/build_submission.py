@@ -7,6 +7,7 @@ import io
 import json
 import os
 import re
+import stat
 import subprocess
 import tempfile
 import zipfile
@@ -27,7 +28,11 @@ ZIP_LIMIT = 10 * 1024 * 1024
 
 def git(root: Path, *args: str, text: bool = True):
     result = subprocess.run(
-        ["git", *args], cwd=root, check=True, capture_output=True, text=text
+        ["git", "--no-replace-objects", *args],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=text,
     )
     return result.stdout.strip() if text else result.stdout
 
@@ -36,20 +41,101 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def archive_matches(archive: zipfile.ZipFile, members: dict) -> bool:
+def safe_archive_path(name: str, is_directory: bool) -> bool:
+    if not name or "\\" in name or "\0" in name:
+        return False
+    parts = name.split("/")
+    if is_directory:
+        if parts[-1]:
+            return False
+        parts = parts[:-1]
+    return bool(parts) and all(part not in {"", ".", ".."} for part in parts)
+
+
+def safe_extra_fields(extra: bytes) -> bool:
+    offset = 0
+    while offset < len(extra):
+        if len(extra) - offset < 4:
+            return False
+        field_id = int.from_bytes(extra[offset : offset + 2], "little")
+        field_size = int.from_bytes(extra[offset + 2 : offset + 4], "little")
+        offset += 4
+        if field_id == 0x7075 or field_size > len(extra) - offset:
+            return False
+        offset += field_size
+    return True
+
+
+def matching_archive_members(archive: zipfile.ZipFile, members: dict):
     infos = archive.infolist()
-    if [info.filename for info in infos] != list(members):
-        return False
-    if any(
-        info.is_dir()
-        or info.file_size != len(members[info.filename])
-        or info.compress_type not in {zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED}
-        for info in infos
+    matched = []
+    seen = set()
+    file_paths = set()
+    directory_paths = set()
+    for info in infos:
+        is_directory = info.is_dir()
+        file_type = stat.S_IFMT((info.external_attr >> 16) & 0xFFFF)
+        if (
+            info.orig_filename != info.filename
+            or not safe_extra_fields(info.extra)
+            or not safe_archive_path(info.filename, is_directory)
+            or info.compress_type
+            not in {zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED}
+            or (
+                is_directory
+                and (info.file_size != 0 or file_type not in {0, stat.S_IFDIR})
+            )
+            or (
+                not is_directory
+                and (
+                    info.external_attr & 0x10
+                    or file_type not in {0, stat.S_IFREG}
+                )
+            )
+        ):
+            return None
+        if is_directory:
+            directory_path = info.filename[:-1]
+            if directory_path in directory_paths:
+                return None
+            directory_paths.add(directory_path)
+            continue
+        basename = info.filename.rsplit("/", 1)[-1]
+        if (
+            basename not in members
+            or basename in seen
+            or info.filename in file_paths
+            or info.file_size != len(members[basename])
+        ):
+            return None
+        seen.add(basename)
+        file_paths.add(info.filename)
+        matched.append(info.filename)
+    ancestors = set()
+    for file_path in file_paths:
+        parts = file_path.split("/")
+        ancestors.update(
+            "/".join(parts[:index]) for index in range(1, len(parts))
+        )
+    if (
+        file_paths & ancestors
+        or file_paths & directory_paths
+        or not directory_paths <= ancestors
     ):
-        return False
-    return archive.testzip() is None and all(
-        archive.read(member) == data for member, data in members.items()
-    )
+        return None
+    if seen != set(members) or archive.testzip() is not None:
+        return None
+    if any(
+        archive.read(info) != members[info.filename.rsplit("/", 1)[-1]]
+        for info in infos
+        if not info.is_dir()
+    ):
+        return None
+    return matched
+
+
+def archive_matches(archive: zipfile.ZipFile, members: dict) -> bool:
+    return matching_archive_members(archive, members) is not None
 
 
 def git_tree(root: Path, commit: str):
@@ -202,7 +288,8 @@ def main() -> None:
         )
 
     with zipfile.ZipFile(io.BytesIO(canonical_payload)) as archive:
-        if not archive_matches(archive, members):
+        canonical_members = matching_archive_members(archive, members)
+        if canonical_members != list(members):
             raise SystemExit("ZIP integrity or member validation failed")
 
     output = (
@@ -214,6 +301,7 @@ def main() -> None:
         / f"{args.operator}.zip"
     )
     validate_output_path(root, output)
+    archive_member_names = canonical_members
     status = "dry-run"
     if output.exists():
         existing_size = output.stat().st_size
@@ -224,10 +312,15 @@ def main() -> None:
         existing = output.read_bytes()
         try:
             with zipfile.ZipFile(io.BytesIO(existing)) as archive:
-                valid = archive_matches(archive, members)
+                existing_members = matching_archive_members(archive, members)
         except zipfile.BadZipFile:
-            valid = False
-        if not valid:
+            existing_members = None
+        if existing_members is None:
+            if args.verify_existing:
+                raise SystemExit(
+                    "existing artifact does not match committed source or "
+                    f"safe submission structure: {output}"
+                )
             raise SystemExit(
                 f"refusing to overwrite different artifact: {output}"
             )
@@ -237,6 +330,7 @@ def main() -> None:
                 "--verify-existing for a read-only legacy audit"
             )
         payload = existing
+        archive_member_names = existing_members
         status = (
             "verified-existing"
             if existing == canonical_payload
@@ -260,6 +354,7 @@ def main() -> None:
                 "size": len(payload),
                 "zip_sha256": sha256(payload),
                 "canonical_zip_sha256": sha256(canonical_payload),
+                "archive_members": archive_member_names,
                 "members": [
                     {
                         "name": member,

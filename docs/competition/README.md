@@ -41,6 +41,9 @@
 - 其他 Python 文件只能是 `<operator>_<gpu>.py`。
 - 源文件使用 UTF-8；核心计算不得只调用 PyTorch。
 
+项目内规范产物把所有成员放在 ZIP 根目录；平台也允许安全子目录中的同名
+basename，已有历史包只能做只读内容验签，不要为改目录结构重写原产物。
+
 芯片后缀：
 
 | 芯片 | 后缀 |
@@ -71,13 +74,19 @@ softcap_out.zip
 └── softcap_out_nvidia.py
 ```
 
-打包前检查：
+先按项目 skill 提交已选中的 source/test、完成 release 门禁，并从 manifest 复制完整
+source commit；不要用可能仍指向旧字节的 `HEAD` 代替：
 
 ```bash
-python -m py_compile submissions/softcap_out.py
-cd submissions && zip -j softcap_out.zip softcap_out.py
-unzip -l softcap_out.zip
+source_commit="SOURCE_COMMIT_FULL_SHA"
+python .agents/skills/flagos-operator-race/scripts/build_submission.py \
+  softcap_out --stage s0 --commit "$source_commit" --dry-run
+python .agents/skills/flagos-operator-race/scripts/build_submission.py \
+  softcap_out --stage s0 --commit "$source_commit"
 ```
+
+产物写入 `artifacts/competition/softcap_out/s0-<短提交>/softcap_out.zip`；命令输出
+成员来源、成员 SHA-256、实际 ZIP SHA-256 和规范 ZIP SHA-256。
 
 ## 5. 提交额度
 
@@ -127,6 +136,7 @@ docs/competition/
 ├── README.md                 # 本文：要求和提交规范
 ├── task-index.md             # 两批赛题与动态榜单快照
 ├── strategy-batch2.md        # 第二批开发优先级与复用线索
+├── learning-path.md          # 题型学习和八芯固定资料入口
 ├── reference-repositories.md # 已抓取 Git refs 与固定上游链接
 ├── data/race-overview.json   # 公开赛程、芯片目录和全局统计
 ├── data/task-catalog.json    # 清洗后的公开结构化数据

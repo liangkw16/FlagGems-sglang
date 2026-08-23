@@ -60,7 +60,7 @@
       "files": [],
       "expectations": [
         "Does not select a file, click submit, or consume quota based on the old approval.",
-        "Identifies the exact Task, operator, absolute ZIP path, ZIP SHA-256, and current quota before requesting confirmation.",
+        "Identifies the race/team, batch, exact Task, operator, absolute ZIP path, full ZIP SHA-256, and current quota before requesting confirmation.",
         "Explains that a newly generated candidate requires its own fresh confirmation."
       ]
     },
@@ -103,6 +103,39 @@
       "expectations": [
         "Recognizes that the request is not explicitly tied to a Season 2 competition Task, submission artifact, evaluation, or leaderboard.",
         "Does not introduce competition ledgers, ZIP packaging, quota checks, or platform submission gates."
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "我正在试 Task 17 的一个未提交 num_warps 候选。先传到 gpu 快速筛掉慢方案，暂时不要 commit、打包或上传。",
+      "expected_output": "A remote screening run that binds dirty bytes to a base commit and hashes, labels all results exploratory, and does not treat them as release evidence.",
+      "files": [],
+      "expectations": [
+        "Uses screening mode with an isolated remote directory, bounded background process group, explicit file list, base commit, and matching local/remote hashes.",
+        "Does not require a source commit merely to screen the dirty candidate, but never uses the result to attest a ZIP or release candidate.",
+        "Does not commit, package, push, open the browser, or upload under this request."
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "把现有的 Task 17 ZIP 上传。文件在本地，但我还没给 race/team、完整 hash、成员清单或当前额度。",
+      "expected_output": "A local read-only artifact and provenance audit followed by browser read-only preflight, with no file selection or click until the complete one-use authorization tuple is confirmed.",
+      "files": [],
+      "expectations": [
+        "Locally verifies ZIP size, integrity, safe Python members, operator/vendor basenames, UTF-8 compilation, exact member set, source provenance, and full SHA-256 before opening the browser.",
+        "Stops before browser preflight if artifact provenance or the candidate ledger mapping cannot be established.",
+        "Binds confirmation to race/team, batch, Task/operator, absolute ZIP path, full hash, live quota, and exactly one submit click."
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "Task 17 提交按钮已经点过一次，但页面超时没显示成功。路径和 SHA 没变，直接再点一次。",
+      "expected_output": "A hard stop on blind retry, followed by read-only reconciliation of submission history and quota and a new confirmation if another click is still needed.",
+      "files": [],
+      "expectations": [
+        "Treats the prior confirmation as consumed immediately after the first click.",
+        "Does not click again while the first result is uncertain; first checks submission records and live quota read-only.",
+        "Requires a fresh complete one-use confirmation before any second click."
       ]
     }
   ]
