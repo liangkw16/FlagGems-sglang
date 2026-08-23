@@ -53,6 +53,31 @@ def reference(dt, a, chunk_size, dt_bias=None, dt_softplus=False):
     return dt_out, (dt_out * a.float()[None, :, None, None]).cumsum(-1)
 
 
+def padded_reference(dt, a, chunk_size, dt_bias=None, dt_softplus=False):
+    batch, seqlen, nheads = dt.shape
+    nchunks = math.ceil(seqlen / chunk_size)
+    dt_f = dt.float()
+    if dt_bias is not None:
+        dt_f = dt_f + dt_bias.float()
+    if dt_softplus:
+        dt_f = torch.where(dt_f <= 20.0, F.softplus(dt_f), dt_f)
+    dt_f = dt_f.clamp(min=0.0)
+    padded = torch.zeros(
+        batch,
+        nchunks * chunk_size,
+        nheads,
+        device=dt.device,
+        dtype=torch.float32,
+    )
+    padded[:, :seqlen] = dt_f
+    dt_out = (
+        padded.reshape(batch, nchunks, chunk_size, nheads)
+        .permute(0, 3, 1, 2)
+        .contiguous()
+    )
+    return dt_out, (dt_out * a.float()[None, :, None, None]).cumsum(-1)
+
+
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class ChunkCumsumTest(unittest.TestCase):
     def test_matches_reference(self):
@@ -65,7 +90,12 @@ class ChunkCumsumTest(unittest.TestCase):
         cases = ((2, 30, 7, 5), (1, 256, 32, 64), (3, 96, 9, 16))
         for dtype, tolerance in tolerances.items():
             for batch, seqlen, nheads, chunk_size in cases:
-                for has_bias, softplus in ((False, False), (True, True)):
+                for has_bias, softplus in (
+                    (False, False),
+                    (False, True),
+                    (True, False),
+                    (True, True),
+                ):
                     with self.subTest(
                         dtype=dtype,
                         shape=(batch, seqlen, nheads),
@@ -82,16 +112,22 @@ class ChunkCumsumTest(unittest.TestCase):
                             dtype=dtype,
                         )[:, :, ::2]
                         a = -torch.rand(
-                            nheads, generator=generator, device="cuda"
-                        )
+                            nheads * 2, generator=generator, device="cuda"
+                        )[::2]
                         bias = (
                             torch.randn(
-                                nheads, generator=generator, device="cuda"
-                            )
+                                nheads * 2,
+                                generator=generator,
+                                device="cuda",
+                            )[::2]
                             if has_bias
                             else None
                         )
                         original = dt.clone()
+                        original_a = a.clone()
+                        original_bias = (
+                            bias.clone() if bias is not None else None
+                        )
 
                         actual = MODULE.chunk_cumsum(
                             dt, a, chunk_size, bias, softplus
@@ -108,6 +144,72 @@ class ChunkCumsumTest(unittest.TestCase):
                         torch.testing.assert_close(
                             dt, original, atol=0.0, rtol=0.0
                         )
+                        torch.testing.assert_close(
+                            a, original_a, atol=0.0, rtol=0.0
+                        )
+                        if bias is not None:
+                            torch.testing.assert_close(
+                                bias, original_bias, atol=0.0, rtol=0.0
+                            )
+
+    def test_partial_chunk_matches_fixed_upstream(self):
+        generator = torch.Generator(device="cuda").manual_seed(10)
+        dt = torch.randn(
+            1,
+            5,
+            6,
+            generator=generator,
+            device="cuda",
+            dtype=torch.float32,
+        )[:, :, ::2]
+        a = -torch.rand(6, generator=generator, device="cuda")[::2]
+        bias = torch.rand(6, generator=generator, device="cuda")[::2]
+
+        actual = MODULE.chunk_cumsum(dt, a, 4, bias, True)
+        expected = padded_reference(dt, a, 4, bias, True)
+
+        for got, want in zip(actual, expected):
+            torch.testing.assert_close(got, want, atol=1e-4, rtol=1e-4)
+        torch.testing.assert_close(
+            actual[0][:, :, -1, 1:],
+            torch.zeros_like(actual[0][:, :, -1, 1:]),
+            atol=0.0,
+            rtol=0.0,
+        )
+        torch.testing.assert_close(
+            actual[1][:, :, -1, 1:],
+            actual[1][:, :, -1, :1].expand_as(actual[1][:, :, -1, 1:]),
+            atol=0.0,
+            rtol=0.0,
+        )
+
+    def test_softplus_threshold(self):
+        dt = torch.tensor(
+            [-30.0, -1.0, 0.0, 20.0, 21.0],
+            device="cuda",
+            dtype=torch.float32,
+        ).reshape(1, 5, 1)
+        a = torch.tensor([-0.5], device="cuda")
+
+        actual = MODULE.chunk_cumsum(dt, a, 5, dt_softplus=True)
+        expected = reference(dt, a, 5, dt_softplus=True)
+
+        for got, want in zip(actual, expected):
+            torch.testing.assert_close(got, want, atol=1e-4, rtol=1e-4)
+
+    def test_empty_inputs(self):
+        for shape in ((0, 8, 3), (1, 0, 3), (1, 8, 0)):
+            with self.subTest(shape=shape):
+                dt = torch.empty(shape, device="cuda", dtype=torch.float32)
+                a = torch.empty(shape[2], device="cuda", dtype=torch.float32)
+
+                actual = MODULE.chunk_cumsum(dt, a, 4)
+                expected = reference(dt, a, 4)
+
+                for got, want in zip(actual, expected):
+                    self.assertEqual(got.shape, want.shape)
+                    self.assertEqual(got.dtype, torch.float32)
+                    self.assertEqual(got.numel(), 0)
 
 
 if __name__ == "__main__":

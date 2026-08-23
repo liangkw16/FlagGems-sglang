@@ -81,8 +81,9 @@ def _chunk_cumsum_kernel(
         + pid_chunk * out_stride_c
         + offsets_c[None, :] * out_stride_s
     )
-    tl.store(dt_out_ptr + out_offsets, values, mask=mask)
-    tl.store(da_cumsum_ptr + out_offsets, da_cumsum, mask=mask)
+    output_mask = mask_h[:, None] & (offsets_c[None, :] < CHUNK_SIZE)
+    tl.store(dt_out_ptr + out_offsets, values, mask=output_mask)
+    tl.store(da_cumsum_ptr + out_offsets, da_cumsum, mask=output_mask)
 
 
 def chunk_cumsum(dt, A, chunk_size, dt_bias=None, dt_softplus=False):
