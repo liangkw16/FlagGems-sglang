@@ -1,6 +1,6 @@
 # Task 24 `softcap_out` 跨芯优化设计
 
-状态：已确认设计，等待书面规格复核
+状态：已确认设计，Phase A 本地验证完成
 日期：2026-08-23
 范围：FlagOS 第二届算子挑战赛第二批 Task 24
 
@@ -9,7 +9,7 @@
 采用“一个可移植通用实现 + 仅对有平台证据的瓶颈芯片增加 vendor
 实现”的路线。
 
-第一阶段只实现通用 `softcap_out.py`，固定稳定 FP32 数学路径和
+第一阶段只实现通用 `softcap_out.py`，固定混合稳定 FP32 数学路径和
 `BLOCK_SIZE=256`，launch 参数使用各后端默认值，先获得八类芯片的正确性
 和性能基线。基线通过后，按 S0 与公开最好成绩的差距选择最多三个 vendor
 进入下一轮。当前公开数据提示沐曦、昆仑芯和华为优先级较高，但 S0 实测
@@ -25,6 +25,9 @@
   为 `1e-2`。
 - 支持天数智芯、沐曦、燧原、海光、昆仑芯、华为及国际通用 A/B。
 - 赛方未公开具体芯片型号、驱动版本、Triton 版本和隐藏 shape。
+- Ascend `coreDim` 上限为 65535；BLOCK 256 时，普通 grid 对
+  `numel > 16,776,960` 存在已知风险。S0 仍按已确认决策只提交 generic，
+  若平台命中该风险再增加 Ascend persistent vendor 实现。
 - 题面没有声明输入一定连续，也没有声明 `softcap_const` 的 Python/tensor
   表示形式或正负取值域；实现不得把这些假设当作题面事实。
 - 通用 A/B 与 AMD/NVIDIA 的展示映射未公开；只能使用平台支持的
@@ -148,9 +151,11 @@ docs/competition/experiments/softcap_out.md
 5. 非空张量启动单个 Triton kernel，并返回原 shape 输出。
 
 `softcap_const` 接受 Python 实数或单元素 tensor。tensor 输入必须恰有一个
-元素，由 wrapper 规范化为 Python 数值；其他 tensor shape 明确报错。cap 作为
-运行时标量传入 kernel 并转换为 FP32，不使用 `tl.constexpr`，也不限制正负或
-零值，从而保持参考表达式的取值域。
+元素，由 wrapper 规范化为 Python float；其他 tensor shape 明确报错。cap
+本身作为 FP32 运行时标量传入 kernel，不使用 `tl.constexpr`，也不限制正负、
+零或非有限值。仅额外传入一个 host 侧 constexpr 布尔值，用于匹配
+`|cap| <= 2^-128` 时 PyTorch 倒数溢出的零输入 NaN 语义；正常 cap 热路径会
+编译掉该保护。
 
 wrapper 不检查设备厂商，不捕获 kernel 异常，也不提供 PyTorch fallback。
 
@@ -162,11 +167,13 @@ wrapper 不检查设备厂商，不捕获 kernel 异常，也不提供 PyTorch f
 2. 使用同一个 `offset < numel` mask 完成 load 和 store。
 3. 输入显式转换为 FP32。
 4. `softcap_const` 转换为 FP32 运行时标量。
-5. 使用稳定公式：
+5. 使用近零五阶奇多项式与稳定 exp 的混合公式：
 
    ```text
    z = fp32(x) / softcap_const
-   y = softcap_const * (2 / (1 + exp(-2 * z)) - 1)
+   small = z * (1 - z^2 / 3 + 2 * z^4 / 15)
+   large = 2 / (1 + exp(-2 * z)) - 1
+   y = softcap_const * where(abs(z) < 0.25, small, large)
    ```
 
 6. FP32 结果直接写入 FP32 输出。
@@ -182,9 +189,10 @@ grid = ceil(numel / BLOCK_SIZE)
 后端分别使用其合法默认值。kernel 不使用
 libdevice、cache modifier、alignment hint、shared memory、TLE 或 autotune。
 
-稳定公式采用 FlagGems 已有实现，避免 SGLang 正指数比值在大正输入上的
-`inf/inf`。近零区域可能存在 `2*sigmoid-1` 的消减误差，因此它是正确性
-测试的重点。
+exp 分支采用 FlagGems 已有稳定实现，避免 SGLang 正指数比值在大正输入上的
+`inf/inf`。`2*sigmoid-1` 在近零区域会发生消减；五阶分支消除该误差，
+`|z| < 0.25` 的阈值为精确二进制数。FP32 数值扫描的最坏误差约为题面容差的
+0.133 倍。
 
 ## 6. 固定源码事实与实验假设
 
@@ -213,7 +221,8 @@ libdevice、cache modifier、alignment hint、shared memory、TLE 或 autotune�
 ### S0：通用基线
 
 - ZIP 只包含 `softcap_out.py`。
-- 稳定 core-exp 公式，BLOCK 256，后端默认 launch 参数，普通一维 grid。
+- 近零五阶 + 稳定 core-exp，BLOCK 256，后端默认 launch 参数，普通一维
+  grid。
 - 目标是八芯正确且全部达到 `0.1x`。
 
 若 S0 存在正确性失败，停止性能实验，先按 dtype、极值和尾块分类定位。
