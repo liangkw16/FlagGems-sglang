@@ -115,3 +115,44 @@ S0 与 PyTorch reference 每组轮换先后顺序。表中时间为五组 p50 �
 | 华为 | 失败 | — | S1 显式保留 cap 缩放并限制 grid |
 | 国际通用 A | 通过 | 3.16x | 保留 generic |
 | 国际通用 B | 通过 | 2.78x | 保留 generic |
+
+## S1：Ascend / Enflame correctness recovery
+
+状态：本地代理验证通过，等待人工确认后上传比赛平台
+
+### 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| 源码 commit | `fe2348eae40cb59ffe8945676cb56e1958e58706` |
+| ZIP | `artifacts/competition/softcap_out/s1-fe2348e/softcap_out.zip` |
+| ZIP SHA-256 | `698a7d9652d973868941e6e9e773d7d62ec1dceb87e0e392430b4b1c9cc69ded` |
+| generic SHA-256 | `e6ab1c434aa793bc58357e3d45d2eec7fd2ec56bebb65538b2a6049ca9a37ddc` |
+| Ascend SHA-256 | `cf79382068d6127548594c38ccc3951ff8f255e56eb73bad0c24dcf7a5871425` |
+| Enflame SHA-256 | `9524cc41a0bf8f6a9b2cc011e5fc09d7c2d47382bf4dd797662981489b6e2af2` |
+| ZIP 内容 | 三个顶层文件：generic、`_ascend.py`、`_enflame.py`；3589 bytes |
+
+### 唯一改动
+
+- generic 文件逐字节保持 S0，不影响已通过的六款芯片。
+- Ascend 保持 BLOCK 256，把物理 grid 上限设为 48 并在 program 内遍历
+  logical blocks；最终缩放改为 `softcap_const * normalized`，匹配 Ascend
+  官方同类 softcap 写法，并避开 S0 中 scalar 位于乘法右侧的 lowering 路径。
+- Enflame 保持 BLOCK 256 和数值路径不变，把 grid 上限设为 12 并在
+  program 内遍历 logical blocks，消除 S0 的 `grid.x > 65535`。
+
+### 代理验证
+
+- 远端 RTX 5070 Ti 16 GB：11/11 unittest 通过；vendor 回归覆盖 FP16、
+  BF16、FP32，长度 `48*256+17`，同时命中 Ascend 和 Enflame 的多轮循环。
+- 以平台失败规模上界 `N=65,667,072` 完整生成并逐元素比对 reference：
+  Ascend、Enflame 两份 vendor 均通过 FP32 `1e-4` 容差。
+- Black 79、isort、flake8、Python 语法和 ZIP manifest 门禁通过。
+
+### 仍需平台证明
+
+- CUDA 代理不能证明 Ascend 的 operand-order workaround；若 S1 仍丢失 cap
+  缩放，下一候选才把 cap 改为 `tl.constexpr`。
+- Enflame 在最大用例中每个 CTA 循环约 21,376 次；先恢复正确性，若低于
+  `0.1x`，保持 grid 12 后单变量比较 BLOCK 1024 和 4096。
+- 本 ZIP 尚未上传；继续保留至少两次最终回归额度。
