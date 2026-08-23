@@ -116,6 +116,41 @@ class ChunkStateTest(unittest.TestCase):
         self.assertEqual(actual.shape, (0, 1, 2, 5, 7))
         self.assertEqual(actual.dtype, torch.float32)
 
+    def test_chunk_k_boundaries_with_fp32_scales(self):
+        torch.manual_seed(20260824)
+        batch, nchunks = 1, 2
+        nheads, ngroups = 4, 2
+        headdim, dstate = 33, 35
+
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            for chunk_size in (1, 31, 32, 33, 63, 64, 65):
+                with self.subTest(dtype=dtype, chunk_size=chunk_size):
+                    seqlen = nchunks * chunk_size
+                    B = torch.randn(
+                        (batch, seqlen, ngroups, dstate),
+                        device="cuda",
+                        dtype=dtype,
+                    )
+                    x = torch.randn(
+                        (batch, seqlen, nheads, headdim),
+                        device="cuda",
+                        dtype=dtype,
+                    )
+                    dt = torch.rand(
+                        (batch, nheads, nchunks, chunk_size),
+                        device="cuda",
+                        dtype=torch.float32,
+                    ).mul_(0.1)
+                    dA_cumsum = -(torch.rand_like(dt) * 0.01).cumsum(-1)
+
+                    actual = MODULE.chunk_state(B, x, dt, dA_cumsum)
+                    expected = _reference(B, x, dt, dA_cumsum)
+
+                    self.assertEqual(actual.dtype, torch.float32)
+                    torch.testing.assert_close(
+                        actual, expected, atol=3e-2, rtol=3e-2
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()
