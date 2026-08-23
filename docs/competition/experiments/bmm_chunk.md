@@ -204,3 +204,59 @@ E2 资源检查覆盖 14 个 S0 编译变体（均 8 KiB）和 20 个候选变�
   在没有平台 shape/profile 新证据前不再追加本地 tile 试探。
 - 若首次平台仅单芯失败，保持 generic 与已通过芯片不变，只做最小 vendor
   override；下一门禁是用户针对上述 ZIP 路径、哈希和实时额度作当次确认。
+
+## E3：低精度输入直送 `tl.dot`（晋升）
+
+状态：源码、测试、release 代理验证和不可变 ZIP 门禁通过；未提交平台
+
+验证时间：2026-08-24 07:48–07:52 CST
+
+### 单变量
+
+E3 保持 `32x32x32` tile、grid、4 warps、1 stage、FP32 accumulator 和输出不变。
+当 a/b 同为 FP16 或 BF16 时，load 后直接送入 `tl.dot`；两个低精度数的乘积可由
+FP32 accumulator 精确承载，差异只剩允许容差内的归约顺序。FP32 或 mixed-dtype
+继续先转 FP32，并显式使用 IEEE input precision。该路径与固定 Mamba forward
+的输入 dtype 用法一致，不增加 vendor API 或设备分支。
+
+源码 commit 为 `a5afc1902d1eeb5b6c42657110f4dfed31d90b18`；源码 SHA-256
+`e3bd27c94affcf9987f75751e3a23fadc6eb4b9056ce26fe3e013dbd7380b7b7`，
+测试 SHA-256
+`6e9f0c318d62213b7f9460984244c1a357c6304f111f842511be27601b382836`。
+新增 mixed FP16/BF16 用例，明确锁住原 FP32 control 路径。
+
+### Release 代理验证
+
+release 目录 `gpu:/tmp/flagos-bmm-chunk-release-e3.F5TK11`，mode 0700；source
+和 verification commit 均为 `a5afc1902d1eeb5b6c42657110f4dfed31d90b18`。
+RTX 5070 Ti 16 GB；driver 610.57.04；Python 3.12.13；PyTorch
+2.13.0+cu130；Triton 3.7.1；CUDA 13.0。
+
+- py_compile、Black 79、isort、flake8、逐文件哈希和 unittest 6/6 通过。
+- 31 个随机/边界/非连续 case 同时对照 S0、E3 和 reference 通过。五轮交替
+  A/B，`warmup=25, rep=100`，按每轮配对 speedup 中位数统计：8 个 FP16/BF16
+  affected 几何平均 `1.4306x`，FP16/BF16 分别为 `1.4308/1.4304x`，
+  范围 `1.0000–4.1475x`；4 个 FP32 controls 全部 `1.0000x`。
+- 另做 23 个 `chunk_size/K=31/32/33/63/64/65/127/128/129/257`、
+  FP16/BF16 pair-cancellation、动态范围与 mixed-dtype case，最大绝对误差
+  `3.815e-5`，抵消和 mixed controls 的误差为 0。
+- S0/E3 各 13 个编译变体，最高均为 114 registers/thread、8 KiB shared；
+  spill、global scratch、local load/store 和 TF32 PTX 标记均为 0。
+
+release gates、A/B、扩展正确性、provenance 和 A/B harness 的 SHA-256 依次为
+`b0e4055ede75a871a2325b1b64a6147607e08e2eb8cdf403375b0d413afad884`、
+`6009c15b6efa953315e722247b0cbeafe2be486f68053f8c730279accc6c820f`、
+`73a7f1bf507d89a95834a412cbefbe646568ddbca6dbb9f15ddcc31c22976f68`、
+`57ff2e4ee58b14dd399b227353dcc868972f7fb94f6d7ada35f621312be4ddfc`、
+`1375e537579b22ce0dd767298f2003ecd17ba5f00f3eea72c45e9d64d8f99836`。
+
+### 产物
+
+- ZIP：`artifacts/competition/bmm_chunk/e3-a5afc19/bmm_chunk.zip`
+- ZIP SHA-256：
+  `d8577b2ee314cad758f756d47794685240448d2654baf6b685a7e53fac415b95`
+- 大小 / 成员：5,323 bytes；顶层 `bmm_chunk.py` 5,201 bytes。
+
+确定性构建、`--verify-existing`、`unzip -t`、UTF-8、basename、10 MB 和逐字节
+来源门禁均通过。标准低精度 `tl.dot` 在其余七芯仍需平台证明；未打开浏览器、未读取
+实时额度、未提交平台，旧确认不授权此 ZIP。
