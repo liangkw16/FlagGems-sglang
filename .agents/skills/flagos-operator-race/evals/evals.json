@@ -1,0 +1,29 @@
+{
+  "skill_name": "flagos-operator-race",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "在这个仓库接手 FlagOS 第二批 Task 21 moe_sum_reduce。只做调研、契约锁定和最短开发计划，不改文件也不上传。给出需要读取的本地资料、S0 范围、验证门禁和提交前停止点。",
+      "expected_output": "A repository-specific plan that starts from local cached task data, locks the exact contract, proposes a generic-only S0, uses remote GPU validation only as a proxy, and requires action-time confirmation before upload.",
+      "files": [],
+      "expectations": [
+        "Reads or names the repository competition index, full task statement, submission rules, and reference repository notes.",
+        "Locks signature, dtype, shape/stride semantics, tolerance, supported chips, and ZIP basename before implementation.",
+        "Keeps S0 generic-only and excludes PyTorch fallback or speculative vendor files.",
+        "Requires exact Task, ZIP path, hash, quota, and fresh user confirmation before browser submission."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "某算子 S0 平台结果是 6/8：燧原报 grid.x Required 256512 / limit 65535，华为 actual 基本等于 expected/30；其余六芯已通过。只给最小 S1 设计、测试和再次提交门禁，不改文件、不上传。",
+      "expected_output": "A vendor-only recovery plan that preserves the proven generic implementation, classifies both failures, proposes fixed-source grid-stride and final scaling workarounds, leaves public-interface regressions, and requires a new immutable artifact and confirmation.",
+      "files": [],
+      "expectations": [
+        "Preserves the generic path for the six passing chips and adds only Enflame and Ascend vendor candidates.",
+        "Classifies Enflame as a grid-limit failure and Ascend as a missing final cap scaling/lowering failure.",
+        "Uses fixed vendor policies or official sources rather than inventing hardware counts.",
+        "Requires remote proxy tests, exact ZIP/member hashes, ledger update, and a new action-time confirmation before resubmission."
+      ]
+    }
+  ]
+}
