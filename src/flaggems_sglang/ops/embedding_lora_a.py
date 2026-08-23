@@ -33,11 +33,9 @@ def _embedding_lora_a_kernel(
     extra_stride_lora,
     extra_stride_token,
     extra_stride_rank,
-    seg_lens,
     seg_indptr,
     weight_indices,
     lora_ranks,
-    seg_lens_stride,
     seg_indptr_stride,
     weight_indices_stride,
     lora_ranks_stride,
@@ -56,16 +54,16 @@ def _embedding_lora_a_kernel(
 
     batch_id = tl.program_id(1)
     token_offset = tl.program_id(0)
+    segment_start = tl.load(seg_indptr + batch_id * seg_indptr_stride)
+    segment_end = tl.load(seg_indptr + (batch_id + 1) * seg_indptr_stride)
+    if token_offset >= segment_end - segment_start:
+        return
+
     weight_index = tl.load(weight_indices + batch_id * weight_indices_stride)
     rank = tl.load(lora_ranks + weight_index * lora_ranks_stride)
     if rank == 0:
         return
 
-    segment_length = tl.load(seg_lens + batch_id * seg_lens_stride)
-    if token_offset >= segment_length:
-        return
-
-    segment_start = tl.load(seg_indptr + batch_id * seg_indptr_stride)
     token_id = tl.load(
         input_ids + (segment_start + token_offset) * input_stride
     )
@@ -138,11 +136,9 @@ def embedding_lora_a(
         *weights.stride(),
         *output.stride(),
         *extra_strides,
-        batch_info.seg_lens,
         batch_info.seg_indptr,
         batch_info.weight_indices,
         batch_info.lora_ranks,
-        batch_info.seg_lens.stride(0),
         batch_info.seg_indptr.stride(0),
         batch_info.weight_indices.stride(0),
         batch_info.lora_ranks.stride(0),

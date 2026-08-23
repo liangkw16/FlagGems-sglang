@@ -188,6 +188,85 @@ class EmbeddingLoraATest(unittest.TestCase):
 
         torch.testing.assert_close(actual, expected, atol=1e-4, rtol=1e-4)
 
+    def test_rank_block_boundaries_and_metadata_strides(self):
+        def strided(values):
+            storage = torch.empty(
+                len(values) * 2, device="cuda", dtype=torch.int32
+            )
+            storage[::2] = torch.tensor(
+                values, device="cuda", dtype=torch.int32
+            )
+            return storage[::2]
+
+        input_ids = torch.tensor(
+            [1, 99, 4, 99], device="cuda", dtype=torch.int32
+        )[::2]
+        for rank in (127, 128, 129):
+            with self.subTest(rank=rank):
+                info = SimpleNamespace(
+                    bs=1,
+                    max_len=2,
+                    seg_lens=strided([2]),
+                    seg_indptr=strided([0, 2]),
+                    weight_indices=strided([0]),
+                    lora_ranks=strided([rank]),
+                )
+                weights = torch.arange(
+                    rank * 16, device="cuda", dtype=torch.float32
+                ).reshape(1, rank, 16)[:, :, ::2]
+                originals = (
+                    input_ids.clone(),
+                    weights.clone(),
+                    info.seg_lens.clone(),
+                    info.seg_indptr.clone(),
+                    info.weight_indices.clone(),
+                    info.lora_ranks.clone(),
+                )
+
+                actual = MODULE.embedding_lora_a(
+                    input_ids, weights, info, vocab_size=8
+                )
+                expected = reference(input_ids, weights, info, vocab_size=8)
+
+                torch.testing.assert_close(
+                    actual, expected, atol=1e-4, rtol=1e-4
+                )
+                for value, before in zip(
+                    (
+                        input_ids,
+                        weights,
+                        info.seg_lens,
+                        info.seg_indptr,
+                        info.weight_indices,
+                        info.lora_ranks,
+                    ),
+                    originals,
+                ):
+                    torch.testing.assert_close(value, before, atol=0, rtol=0)
+                self.assertEqual(info.seg_indptr.stride(), (2,))
+
+    def test_seg_indptr_is_authoritative_and_empty_metadata_is_ignored(self):
+        info = SimpleNamespace(
+            bs=3,
+            max_len=2,
+            seg_lens=torch.tensor([1, 0, 1], device="cuda"),
+            seg_indptr=torch.tensor([0, 2, 2, 3], device="cuda"),
+            weight_indices=torch.tensor(
+                [0, 1 << 28, 0], device="cuda", dtype=torch.int64
+            ),
+            lora_ranks=torch.tensor([2], device="cuda", dtype=torch.int64),
+        )
+        input_ids = torch.tensor([1, 2, 3], device="cuda")
+        weights = torch.arange(
+            2 * 8, device="cuda", dtype=torch.float32
+        ).reshape(1, 2, 8)
+
+        actual = MODULE.embedding_lora_a(input_ids, weights, info, 8)
+        expected = reference(input_ids, weights, info, 8)
+        torch.cuda.synchronize()
+
+        torch.testing.assert_close(actual, expected, atol=1e-4, rtol=1e-4)
+
 
 if __name__ == "__main__":
     unittest.main()
