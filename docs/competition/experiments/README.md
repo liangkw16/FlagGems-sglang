@@ -28,7 +28,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 16 | [`decode_grouped_attention`](decode_grouped_attention.md) | `s0-f431ba4` | `4ed5e04d8453e100a38feff3d8986801fab9a13c4d77481e070a3260855136ef` | NVIDIA 5.285x；未平台 | 第 13 个提交 |
 | 17 | [`embedding_lora_a`](embedding_lora_a.md) | `s1-d101ebe` | `49d7a33648c31d2b13e46c7e3dba8e7a4b88ecadce7da444c2ed5bac6b0ac09f` | 5/5 release；修复空 segment metadata 越界；2-warps E1 仅 0.999994x，保留 S1；未平台 | 第 7 个提交 |
 | 18 | [`fused_recurrent_gdn`](fused_recurrent_gdn.md) | `s0-de1530b` | `cf27e0e48f41fc1948075cd3bc22864e45d2387d8e61b5b6371fe1147fe9ce7f` | NVIDIA 21.92–110.36x；八芯状态资源高风险 | 暂缓，受控实验 |
-| 19 | [`fused_rmsnorm`](fused_rmsnorm.md) | `s0-3fac516` | `93780caf704341737ddfe5925cfacdcd7115ccefc2f38edf3c7ff006716d1820` | 3/3 回归；NVIDIA 1.830–5.837x；跨芯风险已审计；未平台 | 第 1 个提交 |
+| 19 | [`fused_rmsnorm`](fused_rmsnorm.md) | `s0-3fac516` | `93780caf704341737ddfe5925cfacdcd7115ccefc2f38edf3c7ff006716d1820` | 3/3 回归；multi-row E1 仅 0.195–0.981x，保留 S0；跨芯风险已审计；未平台 | 第 1 个提交 |
 | 20 | [`mamba_layernorm_gated`](mamba_layernorm_gated.md) | `e2-345413d` | `78c56c2955981833242d9fc2ed13dca1373014fc49f12072d469f34987875f03` | 3/3 回归；E2 受影响点 1.0803x；未平台 | 第 4 个提交 |
 | 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s0-3fac516` | `ef3c30e416d24d8268a1c252261676f3e540910a8836a93d2520917580f514bf` | 4/4 回归；E1 仅 1.0111x，保留 S0；未平台 | 第 3 个提交 |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s1-11ae343` | `bec21ac8d198d0eefd3d7c0ef68bf3a2c654017c00656c230ab12bc04f0f4d9c` | 3/3 release；修复空段 metadata 越界并跳过窄 slice 无效 GEMM；affected 1.006–1.371x；未平台 | 第 9 个提交 |

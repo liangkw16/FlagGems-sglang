@@ -155,3 +155,50 @@ wrapper-inclusive NVIDIA decode 代理；五组交替顺序，组内
 打包器确认旧 ZIP 的唯一成员与 source commit 逐字节一致；旧容器字节保持不可变，
 不以规范 ZIP 覆盖。S0 单文件 ZIP 继续作为 Task 19 首投候选；NVIDIA 结果不能
 替代八芯评测。
+
+## E1：小 hidden multi-row（否决）
+
+状态：未晋升；源码与测试均已恢复，S0 ZIP 不变，未提交平台
+
+验证时间：2026-08-24 06:50–06:52 CST
+
+### 假设与实现
+
+E1 复用仓库 `gemma_rms_norm.py` 的 multi-row 模式，保持 8 warps 和原数值路径：
+`BLOCK_SIZE<=512/1024/2048` 时分别让一个 program 处理 `16/8/4` 行，并把
+weight load 移到静态行循环外；行数不足对应分组时仍走单行 S0。grid 改为
+`ceil(rows/ROWS_PER_PROGRAM)`，尾 program 用 `row < rows` 保护。没有引入 vendor、
+autotune、fallback 或额外张量。
+
+永久回归候选曾覆盖 RPP16 exact/tail、RPP8、RPP4；独立 harness 还覆盖三 dtype、
+hidden 边界 `255/256/257`、`511/512/513`、`1023/1024/1025`、
+`2047/2048/2049`，以及非连续 x/weight。候选 3/3 unittest 和 138/138 次
+base/candidate module-case correctness 均通过。
+
+### A/B 与停止结论
+
+- 证据目录 `gpu:/tmp/flagos-fused-rmsnorm-multirow.RX6luz`，mode 0700；
+  静态/单测 PID/PGID `83413`，A/B PID/PGID `83521`。
+- 五轮交替 AB/BA，`warmup=25, rep=100`，每次 wrapper 批量 20 次；每点取
+  5 个配对 speedup 的中位数。15 个 affected 点几何均值仅 `0.5715x`，
+  FP16/BF16/FP32 分别为 `0.5570x`、`0.5659x`、`0.5922x`，范围
+  `0.1951–0.9809x`。
+- RPP1 controls 也因统一 kernel 多出的 static loop/row guard 和 weight-load 顺序
+  变化而落在 `0.9268–1.0769x`，超出 `0.98–1.02x` 门禁。
+- base/candidate 最大分别为 186/194 registers/thread，shared 最大从 32 bytes
+  增至 8,192 bytes；两者均无 spill、global scratch 或 local load/store。候选
+  同时未通过预设寄存器/资源门禁。
+- 候选源码、测试、harness SHA-256 分别为
+  `281ca1c76fd8e93b378ad9093b683e769ed7beddd7ffb829a03446e1bfeef409`、
+  `4159b1f41b0eea69085a5861181f5a1d8bc092b1160420ee892f9db4a2e24eef`、
+  `0660b8393278b15d6191f0e75425f63506111507df9b2c80826396c63f902661`；
+  `screening.log` 与 `ab.log` SHA-256 分别为
+  `c8783713b302def2d0663e900e3d82f2509f3164ba5a96b71b321d6d5494bd4f`、
+  `5305fa1c2e03be6377436b7dc3b5f1f2aa24c790703c69ed437ed2f9f99e5958`。
+
+验证环境为 NVIDIA GeForce RTX 5070 Ti 16 GB、driver 610.57.04、Python
+3.12.13、PyTorch 2.13.0+cu130、Triton 3.7.1、CUDA 13.0。E1 正确但性能和
+资源均明确失败，已按停止门禁删除候选 diff，不再为 NVIDIA 细分 RPP；当前源码
+SHA-256 恢复为 `02bed1a5...b964997`，不可变首投仍为 S0 `3fac516`。
+
+未打开浏览器、未读取或消耗平台额度；旧确认不授权新产物。
