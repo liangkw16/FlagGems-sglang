@@ -86,3 +86,98 @@ wrapper-inclusive；shape `[64, 4096]`；每个候选先做正确性检查和 JI
   仍需隐藏 harness 或平台验证。
 - ZIP 由 commit `f431ba4` 直接生成；`unzip -t`、UTF-8、单一 `.py`、10 MB、
   basename 和 ZIP 内源码哈希门禁均通过。没有平台提交授权，也未消耗额度。
+
+## E1 拒绝与 E2 tail warp 候选
+
+状态：E1 未过线；E2 已通过本地代理门禁并生成不可变 ZIP；未平台提交
+
+验证时间：2026-08-24 03:24–03:39 CST
+
+### 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `345413d2e328ff3503f90af65a585b894869bf4d` |
+| E2 源码 SHA-256 | `b7b81a64a9abfa5a9cf3d69e0ad066ae7dc6c1ed3aa5a34c900d811fc1fbc346` |
+| E1 临时源码 SHA-256 | `b00f1e8874c10d4ab74ba2112dfb394e97de7817b40333a269cba68c3281addc` |
+| 最终测试 SHA-256 | `b7bd60f3a2ce837b6cec9d2b2c7c7131c86a2434811d1e02a33994dce0cab474` |
+| E2 ZIP | `artifacts/competition/mamba_layernorm_gated/e2-345413d/mamba_layernorm_gated.zip` |
+| E2 ZIP SHA-256 | `78c56c2955981833242d9fc2ed13dca1373014fc49f12072d469f34987875f03` |
+| ZIP manifest | 顶层 `mamba_layernorm_gated.py`，4463 bytes，成员 SHA 与 E2 源码相同 |
+| S0 回滚 ZIP | `s0-f431ba4`，SHA-256 `0bf5d8f26c6e3b3b827e2541bc58c058dc6b6fec05efe7bcff127492dfaedf76` |
+| 平台结果 | 未提交；逐芯结果、均值、排名和实时额度均为 N/A |
+
+打包器从上述 commit 生成 4609-byte 规范 ZIP；创建后再次得到
+`verified-existing`。`unzip -t/-l`、UTF-8、单一顶层 `.py`、10 MB、basename、
+成员源码哈希和 ZIP 哈希门禁全部通过。
+
+### 最终回归与远端证据
+
+新增第三个 unittest 方法，覆盖三 dtype ×
+`group_size=1/255/256/257/511/512/513/1025`，包含 256/512 tail 和首个
+2048-block/8-warp 转换；使用分组 LN、bias、前 gate 并逐项对题面 reference。
+原 12 个语义组合、非连续四类输入、输入不变性、空输入和三 dtype 容差继续保留。
+
+远端目录为 `gpu:/tmp/flagos-task20.02omgb`，mode 0700；环境仍是 RTX 5070 Ti
+16 GB、driver 610.57.04、Python 3.12.13、PyTorch 2.13.0+cu130、Triton 3.7.1、
+CUDA 13.0。源码和测试字节与 commit 相同；最终 S0 和 E2 均通过 py_compile、
+Black 79、isort、flake8 和 3/3 unittest。
+
+| 证据 | PID / 时间 | 脚本 SHA-256 | 日志 SHA-256 |
+| --- | --- | --- | --- |
+| 最终 S0 门禁 | `73519` / 03:30:54 | 仓库 unittest | `85d64604abecf5ab50b42e5165bacc64d4196306896f6eb85799e92d776a1273` |
+| E1 门禁 | `73121` / 03:26:50 | 仓库 unittest | `e3b545a52e495cf168ce4e813f655eebcb522888db8372e6329f3d3ef6bc8c58` |
+| E1 A/B | `73227` / 03:27:41 | `ab0033b70933eba3927ea146ec35a555146ca0f21672eef30421d02d2b3b9c0d` | `d274d13917a4a2a8aa97fdbb6f4c5836c35e59958abbf81ad70de32e4882cc91` |
+| E2 门禁 | `73614` / 03:31:51 | 仓库 unittest | `667b3269398fb58d87059189ae76a2ad3dd6c077a82fc575f6fe094f3f8d60b5` |
+| E2 高并行 A/B | `73744` / 03:32:21 | `0a5506b3c3b214dbb4503ce82b1f94c108c4edc6aa9dad8104355f10ada1acfb` | `39806dd056e6495c219313b624c1778836394f381d2e1aa3cec8f87e827b1648` |
+| E2 资源 | `73902` / 03:33:49 | `0c63e6ad1cfa6ca6efcd052859ec96a082d4e19b6ab9da7c808a982ba1cc9465` | `2dd8de9b03ac5d632cd2e465ba6153d59eeb69495d8aaf2914d44a4baa1bdf42` |
+| 大 group probe | `74015` / 03:37:22 | `00a4c2f6e7400bd845128330d0b590179b2ea2bed954cd5e97f2ca6d2033a0e2` | `6dc7c8a6e137e1348cc99d7e50a0aa57ede9f2f55b3f707fbb89720706d038a2` |
+| E2 低并行 A/B | `74102` / 03:38:03 | `c843275943f2ca429b5014c6ca55c42835142f7e4f1673661cf44bfb06d79445` | `52edb650e1bcdfde76648e753482f12729926f28c523a8daf742081e3433c8a9` |
+
+### 单变量实验
+
+E1 只把全部 `BLOCK_SIZE=512` 变体从 4 warps 改为 2。27 点五组轮换 A/B
+使用 `warmup=25, rep=100`；每点先对 reference 验证。目标点几何平均只有
+`1.030229x`，全套 `1.016686x`，最差回退 `2.669%`，没有达到预设的
+`>=1.05x`，因此拒绝。它只暴露出不满 512 的 `group_size=257` 三 dtype
+一致获得约 1.13–1.15x。
+
+E2 保留 S0 默认策略，仅对 `257 <= group_size < 512` 的 512-block 使用
+2 warps；完整 512、256 和其他 block 均保持 S0。高并行集合为五组轮换、
+21 个受影响点加 6 个 control：
+
+| 指标 | 结果 |
+| --- | ---: |
+| 全 27 点 S0 / E2 几何平均 | `1.061458x` |
+| 21 个受影响点几何平均 | `1.080317x` |
+| control 几何平均 | `0.998006x` |
+| 受影响点最差回退 | `0.890%` |
+| control 最大偏移 | `0.476%` |
+
+| group_size | 三 dtype 主分支 S0 / E2 几何平均 |
+| ---: | ---: |
+| 257 | `1.179013x` |
+| 320 | `1.151706x` |
+| 384 | `1.079529x` |
+| 448 | `1.062594x` |
+| 511 | `1.106206x` |
+
+低并行补测覆盖 `M * ngroups=1/2`、group 257/384/511、三 dtype 共 18 个
+受影响点。E2 与 control 几何平均分别为 `0.996430x` 与 `0.997107x`，相对
+control 归一化约 `0.99932x`；最差回退 `1.998%`，处于 control 的 `1.252%`
+波动量级，没有稳定回退。五轮轮换已经足以停止阈值搜索，不再做 E3 或 autotune。
+
+资源抽查覆盖 group 257/384/511/512 × 三 dtype × S0/E2 共 24 个产物。S0
+为 23–28 registers、shared 16 bytes；E2 为 24–40 registers、shared 8 或
+16 bytes。两者均为 0 spill、0 global scratch 且 PTX 无 local load/store；
+完整 512 在两者中均为 4 warps、24 registers、shared 16 bytes。
+
+额外大 group probe 用最重的分组 LN + bias + 前 gate，覆盖三 dtype ×
+`group_size=1025/2048/4096/4097/8192`，全部通过 reference。编译资源为
+32–88 registers、shared 32 bytes，0 spill/scratch/local；最大实际验证 group
+为 8192。大于 8192 的隐藏 shape 与极端二维 grid 仍未公开，继续作为平台风险。
+
+固定 SGLang `8014d9d` 对 512-block 使用 2 warps，固定 FlagGems `ed2508b`
+的六个国产后端也有合法 2-warp 实例，因此 E2 配置合法性风险较低；但八芯性能
+仍必须由平台证明。原 S0 ZIP 保留为回滚。上传前必须重新读取实时额度，并针对
+Task 20、E2 ZIP 的绝对路径和完整 SHA-256 取得当次确认；本记录不构成授权。
