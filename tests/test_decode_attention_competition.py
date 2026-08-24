@@ -44,6 +44,15 @@ DECODE_ATTENTION_NVIDIA = _load_module(
     / "decode_attention.py",
 )
 DECODE_GROUPED_ATTENTION = _load_module("decode_grouped_attention")
+DECODE_GROUPED_ILUVATAR = _load_module(
+    "decode_grouped_iluvatar",
+    OPS_PATH.parent
+    / "runtime"
+    / "backend"
+    / "_iluvatar"
+    / "ops"
+    / "decode_grouped_attention.py",
+)
 MHA_FUNCTIONS = (
     DECODE_ATTENTION.decode_attention,
     DECODE_ATTENTION_NVIDIA.decode_attention,
@@ -222,10 +231,14 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
                     )
                 )
                 case[:3] = [tensor.contiguous() for tensor in case[:3]]
-                self.assert_matches(
-                    DECODE_GROUPED_ATTENTION.decode_grouped_attention,
-                    tuple(case),
-                )
+                for module in (
+                    DECODE_GROUPED_ATTENTION,
+                    DECODE_GROUPED_ILUVATAR,
+                ):
+                    self.assert_matches(
+                        module.decode_grouped_attention,
+                        tuple(case),
+                    )
 
     def test_value_dim_larger_than_qk_dim(self):
         mha_case = make_case(4, 4, 64, 257, [33, 65], torch.float16)
