@@ -17,7 +17,9 @@ repos:
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
+        exclude: ^docs/competition/data/vendor-backends/
       - id: end-of-file-fixer
+        exclude: ^docs/competition/data/vendor-backends/
       - id: check-yaml
       - id: check-added-large-files
 
@@ -28,6 +30,7 @@ repos:
         entry: flake8
         language: system
         types: [python]
+        exclude: ^docs/competition/data/vendor-backends/
         args: ["--ignore=F405,E731,W503,E203,E704", --max-line-length=120]
 
       - id: isort
@@ -35,6 +38,7 @@ repos:
         entry: isort
         language: system
         types: [python]
+        exclude: ^docs/competition/data/vendor-backends/
         args: ["--profile", "black", "--line-length", "80"]
 
       - id: black
@@ -42,3 +46,4 @@ repos:
         entry: black
         language: system
         types: [python]
+        exclude: ^docs/competition/data/vendor-backends/

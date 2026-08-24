@@ -123,15 +123,106 @@ HIP/ROCm，wave64 语义（见 FlagTree AMD backend 固定源码）。
 
 ## 4. 对跨芯 kernel 的直接影响
 
-1. **warp/wave 语义不统一**：NVIDIA 32；AMD/海光 wave64；昇腾无 warp 概念
-   （Vector Core）；昆仑芯 launch 参数另有语义。generic kernel 不硬编码
-   `num_warps` 的硬件假设。
-2. **int64 支持**：燧原不原生支持 F64/I64，索引计算有隐式降位风险。
-3. **带宽量级差 4 倍以上**（819GB/s ~ 3.2TB/s）：bandwidth-bound 算子
+本节结论已由本地缓存的 backend 源码逐条核对，见
+[`data/vendor-backends/`](data/vendor-backends/README.md)（固定 commit +
+SHA-256 manifest）。以下引用的行号对应该缓存。
+
+### 4.1 backend 源码可证的编译期事实
+
+**warp 语义：默认值没有一个是 32，且昆仑根本没有 warp**
+
+| 芯片 | `warp_size` | 证据 | launch 实际 block 线程 |
+| --- | --- | --- | --- |
+| 天数 `_iluvatar` | `64` | `iluvatar/compiler.py:122`、`driver.py:731` | `64*num_warps`（`driver.py:320` 硬编码） |
+| 沐曦 `_metax` | `64` | `metax/compiler.py:120` | `64*num_warps`（`driver.py:267` 硬编码） |
+| 海光 `_hygon` | `32 if gfx_major>=10 else 64` | `hygon/compiler_hcu.py:110` | `{warp_size}*num_warps`（`driver.py:536`） |
+| 燧原 `_enflame` | `1`；gcu500 为 `128` | `enflame/compiler.py:474,535` | SIMT，gcu500 下 1 warp = 128 threads |
+| 昆仑 `_kunlunxin` | `1`，注释 `we don't have warp` | `kunlunxin/driver.py:969` | 不适用 |
+| NVIDIA `_nvidia` | `32` | `nvidia/compiler.py:113` | `32*num_warps` |
+| AMD `_amd` | `32 if gfx_major>=10 else 64` | `amd/compiler.py:107` | wave64 由 `__oclc_wavefrontsize64` 控制 |
+| 华为 `_ascend` | 无 warp 概念（Vector Core） | triton-ascend 指南 | 不适用 |
+
+结论：generic kernel 绝不能假设 warp=32，也不能假设 `num_warps` 的语义在各芯
+一致。
+
+**`num_warps` 的有效性与上限差异极大**
+
+- 昆仑：`num_warps: int = -1`，注释写明 *"invalid value, just to keep
+  num_warps function signature"*；`__post_init__` 把传入的 `num_warps`、
+  `num_ctas`、`num_stages` 全部记为 `invalid_params`
+  （`kunlunxin/compiler.py:140,172`）。**在昆仑上调这三个参数是无效操作**，
+  这解释了为什么 Task 21 昆仑最终生效的是 `BLOCK` 而不是 warps。
+- 燧原：**编译期硬 assert**，不是软性建议。`make_ttir` 中 gcu400/gcu410
+  `num_warps > 4` 直接 `assert False`，gcu300/gcu500 上限 8
+  （`enflame/compiler.py:102-108`）。
+- 昆仑真正可调的是 `cluster_num=12`（arch 3）、`core_num=64`、
+  `buffer_size_limit=512`（`TRITONXPU_BUFFER_SIZE`），以及一批
+  `TRITONXPU_*` 开关（`kunlunxin/compiler.py:105-129`）。
+
+**昆仑物理并行度固定，与 grid 无关**
+
+`kunlunxin/driver.py:41-53` 的 `get_xpu_spec` 对 arch 3 返回
+`(12, 64)`，launch 时 `nclusters`/`ncores` 是**编译进 launcher 的常量**
+（`driver.py:703-710`）；`gridX/Y/Z` 由 `LoopGrid` pass 在设备侧
+`launch.cpp` 注入（`driver.py:554-556`）。因此昆仑上"加大 grid 提高并行度"
+的 GPU 直觉不成立。
+
+另注：`TTXPU_F_INTERLEAVE` 仅在 `metadata["grid"] == (12, 1, 1)` 时才开启
+（`kunlunxin/compiler.py:255`）——grid 恰为 cluster 数时才走 interleave 优化。
+
+**`tl.dot` 默认精度：天数与沐曦默认降 tf32**
+
+| 芯片 | `default_dot_input_precision` |
+| --- | --- |
+| 天数 | `tf32`（`iluvatar/compiler.py:137`） |
+| 沐曦 | `tf32`（`metax/compiler.py:130`） |
+| 昆仑 | `tf32`（`kunlunxin/compiler.py:135`） |
+| 燧原 / 海光 / AMD | `ieee` |
+
+对 FP32 严容差的 GEMM 类题（Task 09/12/22/23），天数/沐曦/昆仑会**默认**用
+tf32 输入精度，是隐藏的数值风险；需要 `ieee` 时必须在 `tl.dot` 显式指定
+`input_precision`。注意昆仑的允许集合只有 `("ieee", "tf32")`，没有
+`tf32x3`。
+
+**片上存储上限差异**
+
+燧原有显式 `OutOfResources` 判据（`enflame/compiler.py:303-323`）：
+`max_dsm` gcu400/410 为 `896 KiB`、gcu500 为 `312 KiB`；gcu300 的
+`max_shared = 8 MiB * num_warps`——**随 `num_warps` 线性变化**，因此在燧原上
+减 warps 会同时压缩可用 shared。
+
+**燧原 int64**：`enable_i64: bool = False` 默认关闭
+（`enflame/compiler.py:491`），与 torch-gcu 文档的 F64/I64 降位说明一致。
+索引计算走 int64 的算子在燧原路径有静默风险。
+
+### 4.2 backend 源码不能证明的（必须花额度买）
+
+**`grid` 展平上限 65535 在全部 8 份源码中都不存在。**
+`grep -rn 65535` 只命中海光 driver 的无关 `gridX*gridY*gridZ == 0` 判断。
+它属于 runtime/驱动层约束，只能由平台报错反推：
+
+| 芯片 | 平台报错形态 | 本仓库证据 |
+| --- | --- | --- |
+| 昆仑 | `uni_sram PassManager::run` 编译期失败 | Task 21 S0c/S1/S2 |
+| 华为 | `Invalid_Argument(EE1003) coreDim=114688` 启动失败 | Task 20 E2、Task 21 S0c |
+| 燧原 | `grid.x` 超上限 | Task 24 S0（256512）、Task 08 S0c（2433024） |
+
+这也解释了为什么昆仑假设矩阵需要 S0c→S1→S2→S3 四次提交才收敛：**结构约束
+可静态读，规模约束只能实测。**
+
+### 4.3 其余跨芯影响
+
+1. **带宽量级差 4 倍以上**（819GB/s ~ 3.2TB/s）：bandwidth-bound 算子
    （`moe_sum_reduce`、`fused_rmsnorm` 等）各芯最优 BLOCK/向量化策略可能
    完全不同，逐芯结果才是调参依据。
-4. **架构同源分组**：海光（ROCm 系）≈ AMD 路径；天数/昆仑芯/沐曦为类 CUDA
-   GPGPU；昇腾是唯一矩阵 Cube + Vector 的 NPU，需要最多的单独验证。
+2. **架构同源分组**：海光（ROCm 系）≈ AMD 路径；天数/沐曦为类 CUDA GPGPU
+   （但 wave64 + 默认 tf32）；昆仑虽宣称兼容 CUDA 风格，实际 launch 模型
+   最特殊（无 warp、固定 cluster/core）；昇腾是唯一矩阵 Cube + Vector 的
+   NPU，需要最多的单独验证。
+3. **华为官方建议与本仓库实测一致**：triton-ascend Vector Operator 指南原文
+   为"关键不是创建尽可能多的 grid program，而是让 launch 接近物理 Vector
+   Core 数"，并直接给出 `range(pid, num_blocks, num_core)` 写法。本仓库
+   Task 08/20/21 三次验证成功的 capped grid-stride 即该官方范式。
 
 ## 5. 主要来源
 

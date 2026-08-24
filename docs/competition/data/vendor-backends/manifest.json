@@ -1,0 +1,139 @@
+{
+  "generated_at": "2026-08-24T23:54:21+08:00",
+  "pins": {
+    "flagos-ai/FlagTree": "c1ea8285a06e97afad9dd2644bc71f2efca072f4",
+    "triton-lang/triton": "dff2f7d03532e9ca0598c728c60c204ae7555fc9",
+    "Ascend/triton-ascend": "865691e2e9b656bc58008170207b4108d92e8dd1"
+  },
+  "note": "Read-only upstream mirror for cross-chip constraint review. Do not edit cached bytes; re-run this script to refresh.",
+  "files": [
+    {
+      "chip": "昆仑芯 Kunlunxin XPU",
+      "vendor_suffix": "_kunlunxin",
+      "path": "kunlunxin/compiler.py",
+      "upstream_url": "https://raw.githubusercontent.com/flagos-ai/FlagTree/c1ea8285a06e97afad9dd2644bc71f2efca072f4/third_party/xpu/backend/compiler.py",
+      "bytes": 28540,
+      "sha256": "7133710c0153c52dfe17822eb03cfd026a19c7c861b293dd3c9e818b6a64abef"
+    },
+    {
+      "chip": "昆仑芯 Kunlunxin XPU",
+      "vendor_suffix": "_kunlunxin",
+      "path": "kunlunxin/driver.py",
+      "upstream_url": "https://raw.githubusercontent.com/flagos-ai/FlagTree/c1ea8285a06e97afad9dd2644bc71f2efca072f4/third_party/xpu/backend/driver.py",
+      "bytes": 38611,
+      "sha256": "025d809db0a05a6704b50d07440651ca9c8f9ab8ec7732276e221e40b12f1509"
+    },
+    {
+      "chip": "燧原 Enflame GCU",
+      "vendor_suffix": "_enflame",
+      "path": "enflame/compiler.py",
+      "upstream_url": "https://raw.githubusercontent.com/flagos-ai/FlagTree/c1ea8285a06e97afad9dd2644bc71f2efca072f4/third_party/enflame/backend/compiler.py",
+      "bytes": 30255,
+      "sha256": "198a9dbf5c85e5a199f77b1142fe2207ffe3503c3ae64942708220fab5a58a71"
+    },
+    {
+      "chip": "燧原 Enflame GCU",
+      "vendor_suffix": "_enflame",
+      "path": "enflame/driver.py",
+      "upstream_url": "https://raw.githubusercontent.com/flagos-ai/FlagTree/c1ea8285a06e97afad9dd2644bc71f2efca072f4/third_party/enflame/backend/driver.py",
+      "bytes": 5762,
+      "sha256": "023f2668b139e0d4ed71855c6a69a9b2c520129f2c8a052cb92b8c0290b2fdb0"
+    },
+    {
+      "chip": "天数智芯 Iluvatar CoreX",
+      "vendor_suffix": "_iluvatar",
+      "path": "iluvatar/compiler.py",
+      "upstream_url": "https://raw.githubusercontent.com/flagos-ai/FlagTree/c1ea8285a06e97afad9dd2644bc71f2efca072f4/third_party/iluvatar/backend/compiler.py",
+      "bytes": 20775,
+      "sha256": "80c201f48f33f4b54d442ef29c307693faf621d88d85d43d5e6d724b3fe95109"
+    },
+    {
+      "chip": "天数智芯 Iluvatar CoreX",
+      "vendor_suffix": "_iluvatar",
+      "path": "iluvatar/driver.py",
+      "upstream_url": "https://raw.githubusercontent.com/flagos-ai/FlagTree/c1ea8285a06e97afad9dd2644bc71f2efca072f4/third_party/iluvatar/backend/driver.py",
+      "bytes": 25970,
+      "sha256": "504765e4b5f923f75585c49b65e2c4044f877d1430c5f90774f21bb836bbf631"
+    },
+    {
+      "chip": "沐曦 MetaX MACA",
+      "vendor_suffix": "_metax",
+      "path": "metax/compiler.py",
+      "upstream_url": "https://raw.githubusercontent.com/flagos-ai/FlagTree/c1ea8285a06e97afad9dd2644bc71f2efca072f4/third_party/metax/backend/compiler.py",
+      "bytes": 22162,
+      "sha256": "bab52ac9e011798b945b0c4eaffc8977a8c2ae0b524c985a6be018f285d61512"
+    },
+    {
+      "chip": "沐曦 MetaX MACA",
+      "vendor_suffix": "_metax",
+      "path": "metax/driver.py",
+      "upstream_url": "https://raw.githubusercontent.com/flagos-ai/FlagTree/c1ea8285a06e97afad9dd2644bc71f2efca072f4/third_party/metax/backend/driver.py",
+      "bytes": 17587,
+      "sha256": "cad8e86eddc3a9f2ea29b736f87a8ff1d3b2621fcc6cf27cfe35ec1e52472b8f"
+    },
+    {
+      "chip": "海光 Hygon HCU/DCU",
+      "vendor_suffix": "_hygon",
+      "path": "hygon/compiler_hcu.py",
+      "upstream_url": "https://raw.githubusercontent.com/flagos-ai/FlagTree/c1ea8285a06e97afad9dd2644bc71f2efca072f4/third_party/hcu/backend/compiler_hcu.py",
+      "bytes": 37967,
+      "sha256": "3d6fe9044081a587938b6f2350d0173e6c4a0daf477038e9d4fa68b0acaccadb"
+    },
+    {
+      "chip": "海光 Hygon HCU/DCU",
+      "vendor_suffix": "_hygon",
+      "path": "hygon/compiler.py",
+      "upstream_url": "https://raw.githubusercontent.com/flagos-ai/FlagTree/c1ea8285a06e97afad9dd2644bc71f2efca072f4/third_party/hcu/backend/compiler.py",
+      "bytes": 23259,
+      "sha256": "343431d02e3e83f56a962acba7f32c374d412a35f3636cc5b89574a18b4d499e"
+    },
+    {
+      "chip": "海光 Hygon HCU/DCU",
+      "vendor_suffix": "_hygon",
+      "path": "hygon/driver.py",
+      "upstream_url": "https://raw.githubusercontent.com/flagos-ai/FlagTree/c1ea8285a06e97afad9dd2644bc71f2efca072f4/third_party/hcu/backend/driver.py",
+      "bytes": 33628,
+      "sha256": "e06e5aad9ba2963ec3b4e8cae7a2c4c473657db37ceecaee99e8092c46736753"
+    },
+    {
+      "chip": "华为昇腾 Ascend NPU",
+      "vendor_suffix": "_ascend",
+      "path": "ascend/vector_operator.md",
+      "upstream_url": "https://raw.githubusercontent.com/Ascend/triton-ascend/865691e2e9b656bc58008170207b4108d92e8dd1/docs/en/programming_guide/vector_operator.md",
+      "bytes": 3865,
+      "sha256": "d46f5d088b4992fa7a2f76b319c3cc02cd06e27a52c9ae7530594ce96a3a4a96"
+    },
+    {
+      "chip": "国际通用 AMD 路径",
+      "vendor_suffix": "_amd",
+      "path": "amd/compiler.py",
+      "upstream_url": "https://raw.githubusercontent.com/triton-lang/triton/dff2f7d03532e9ca0598c728c60c204ae7555fc9/third_party/amd/backend/compiler.py",
+      "bytes": 27668,
+      "sha256": "df38ccc54404c3e2e274ea30fb9cacff85dc4454d1bc0bd005dbd22ab914e1c5"
+    },
+    {
+      "chip": "国际通用 AMD 路径",
+      "vendor_suffix": "_amd",
+      "path": "amd/driver.py",
+      "upstream_url": "https://raw.githubusercontent.com/triton-lang/triton/dff2f7d03532e9ca0598c728c60c204ae7555fc9/third_party/amd/backend/driver.py",
+      "bytes": 17305,
+      "sha256": "b813448c1720311b9661bcbe59c4fbdc49bde82c31b94a510f356fbc10ba0f8c"
+    },
+    {
+      "chip": "国际通用 NVIDIA 路径",
+      "vendor_suffix": "_nvidia",
+      "path": "nvidia/compiler.py",
+      "upstream_url": "https://raw.githubusercontent.com/triton-lang/triton/dff2f7d03532e9ca0598c728c60c204ae7555fc9/third_party/nvidia/backend/compiler.py",
+      "bytes": 28088,
+      "sha256": "c55adf3396dce96a9982b45c6b64702fe64b392c2197fd35e325f5fa3c080786"
+    },
+    {
+      "chip": "国际通用 NVIDIA 路径",
+      "vendor_suffix": "_nvidia",
+      "path": "nvidia/driver.py",
+      "upstream_url": "https://raw.githubusercontent.com/triton-lang/triton/dff2f7d03532e9ca0598c728c60c204ae7555fc9/third_party/nvidia/backend/driver.py",
+      "bytes": 14831,
+      "sha256": "90d04d97fd0cac43a045325d64bd8c217aed1ad173f1d18542a651f3356cdc80"
+    }
+  ]
+}
