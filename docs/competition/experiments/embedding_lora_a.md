@@ -259,3 +259,32 @@ generic + ascend/enflame/kunlunxin 三 vendor，`unzip -t` 通过。本任务提
 （extra/regular 载入二选一）在 GCU 编译器上不兼容；dot kernel 的 stages≥2
 经验不可迁移到分支 gather kernel。第 2 次尝试（2/3）：燧原 vendor 改回与
 generic 逐字节相同（128/4/1），其余文件不变。
+
+### S1b/S1c 平台结果与 Task 17 停止（3 次预算用尽）
+
+S1b（燧原 vendor 与 generic 逐字节相同，commit
+`e7ea0645c357c5dc8eaf63e25b09b85f2b5eb9ff`，submission `4377`，01:13:16，
+额度 `24/30`→`23/30`）：燧原对同字节 generic kernel 仍以同一
+`Pipeline run failed` 编译失败，证明与 BLOCK_RANK/stages 配置无关，是
+generic 的 kernel 结构本身（early return 与依赖加载数值的运行时分支）不被
+GCU Pipeline pass 接受。其余七芯通过（天数 25.9825x、海光 24.8760x、国际 A
+32.3185x；华为 vendor 1.9355x、昆仑 vendor 0.3260x）。
+
+S1c（燧原 vendor 重写为全无分支：early return 改 token_valid mask、
+is_extra 运行时分支改双路 masked load + `tl.where`，HAS_EXTRA_EMBEDDINGS
+保持 constexpr 分支；commit `e12c7a9b02706a860ae9db8041e438558c405576`，
+submission `4384`，01:21:18，额度 `23/30`→`22/30`，`file_url_sha256` 为
+`9c96f7754d01f3d0c2cf3f6214ff756bca91a67f1c9f5c7ea030438128d0e397`）：
+燧原仍以同一 `Pipeline run failed: PassManager execution failed` 失败（case
+0–4）。剩余嫌疑：标量 masked load（`tl.load(ptr, mask=scalar)`）、seg_indptr
+多次标量载入或该 gather 访存模式本身；需要 GCU 环境才能进一步定位。其余
+七芯全部通过且分数稳定（天数 26.1420x、国际 A 31.7860x、华为 vendor
+1.9845x、昆仑 vendor 0.3395x）。
+
+Task 17 三次提交预算用尽（S1a/S1b/S1c 均 7/8，燧原编译失败），按规则停止，
+额度转 Task 23。已沉淀可迁移知识：(1) 华为/昆仑 token 折叠 vendor
+（`token_cap = 65535 // bs` + token 循环）两芯同时平台验证成功，直接适用于
+Task 22/23 的同构 batch_info kernel；(2) GCU 编译器拒绝该 family 的三种
+kernel 形态（含分支、无分支、generic 同字节），后续遇燧原 gather 类 kernel
+失败时优先怀疑标量 masked load 与元数据标量载入，考虑把标量元数据改为
+向量化载入或地址钳制后无 mask 载入。
