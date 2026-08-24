@@ -220,3 +220,24 @@ canonical ZIP
 `artifacts/competition/qkv_lora_b/s2-0d8511c/qkv_lora_b.zip`，SHA-256
 `6b1f604afcace52211d4ac1f4ff880df17c609d24412ecdb16758d55f6b8cf18`，成员
 generic + ascend/enflame/iluvatar/kunlunxin 四 vendor，`unzip -t` 通过。
+
+### S2 平台首投：燧原 case 2 编译失败 → S2c stages=1（第 2/2 次）
+
+S2 于 02:25:26 CST 提交（submission `4451`，当日序号 `11`，额度
+`20/30`→`19/30` 前后区间）。燧原 vendor（split-fp16 + 64/128 + stages 3）
+在 correctness case 2 以 `Pipeline run failed: PassManager execution failed`
+编译失败，其余 case 通过——shape 相关：特定 chunk_size 下 BLOCK_SIZE×
+`tl.cumsum` 与 stages=3 的软件流水线组合触发 GCU Pipeline pass 崩溃（Task
+23 同形式 dot kernel 无 cumsum，stages 3 平台通过；Task 17 亦证明分支
+kernel 与 stages>1 不兼容）。昆仑 vendor 被选中时平台尚在
+`waiting_callback`（保守 32/32/32/stages1 配置）。S2c 只把燧原 vendor 的
+`num_stages` 改回 1（tile 与 split-fp16 不变），screening
+`gpu:/tmp/flagos-qkv-s2c.RvcuB1`，PID/PGID `112580`（02:27:50，wall 900s），
+4/4 unittest；release `gpu:/tmp/flagos-qkv-s2c-release.*`，commit
+`7857dcaa071c3715813fb4723b003326ef1ad4a8`，`RELEASE_OK`，`release.log`
+SHA-256
+`228ecd30c6dc01c265293719bc32cec77982e03c1c80c7d2edba63dd16c77b81`。
+canonical ZIP `artifacts/competition/qkv_lora_b/s2c-7857dc/qkv_lora_b.zip`，
+SHA-256
+`357e8a690cca68123aabebdbb5500a86ebd66fe328105a8b91f7c1afe489cb38`。
+本提交为 2 次预算的最后一次。
