@@ -111,7 +111,10 @@ wrapper-inclusive；shape `[64, 4096]`；每个候选先做正确性检查和 JI
 `verified-existing`。`unzip -t/-l`、UTF-8、单一顶层 `.py`、10 MB、basename、
 成员源码哈希和 ZIP 哈希门禁全部通过。
 
-### 最终回归与远端证据
+### Screening 回归与远端证据
+
+以下证据均早于 source commit `345413d2e328ff3503f90af65a585b894869bf4d`，
+按当前工作流只作为 screening；提交背书使用后文 commit-bound release。
 
 新增第三个 unittest 方法，覆盖三 dtype ×
 `group_size=1/255/256/257/511/512/513/1025`，包含 256/512 tail 和首个
@@ -181,3 +184,56 @@ control 归一化约 `0.99932x`；最差回退 `1.998%`，处于 control 的 `1.
 的六个国产后端也有合法 2-warp 实例，因此 E2 配置合法性风险较低；但八芯性能
 仍必须由平台证明。原 S0 ZIP 保留为回滚。上传前必须重新读取实时额度，并针对
 Task 20、E2 ZIP 的绝对路径和完整 SHA-256 取得当次确认；本记录不构成授权。
+
+## E2 commit-bound release
+
+状态：候选就绪，未提交平台
+
+2026-08-24 20:09–20:15 CST 从 source / verification commit
+`345413d2e328ff3503f90af65a585b894869bf4d` 的 Git 对象建立 fresh release；源码和
+测试 SHA-256 分别为
+`b7b81a64a9abfa5a9cf3d69e0ad066ae7dc6c1ed3aa5a34c900d811fc1fbc346`、
+`b7bd60f3a2ce837b6cec9d2b2c7c7131c86a2434811d1e02a33994dce0cab474`，
+与远端字节一致。目录
+`gpu:/tmp/flagos-mamba-layernorm-gated-e2-release.BVy770` 为 mode 0700；环境仍为
+RTX 5070 Ti 16 GB、driver 610.57.04、Python 3.12.13、PyTorch 2.13.0+cu130、
+Triton 3.7.1、CUDA 13.0。ledger commit 为本节所在 commit。
+
+| 证据 | 启动 / PID=PGID / wall limit | 脚本 SHA-256 | 日志 / SHA-256 |
+| --- | --- | --- | --- |
+| release 静态与 unittest | 20:09:23 / `101073` / 600s | `f7660a622e355f80be1a6c6edcbde6492d984d84623757925753ac07eb7e8850` | `release.log` / `af625c461d5705e90558872bfc19f926205a5e7d9341522a855a1b38c2af702b` |
+| 补充高吞吐 A/B | 20:10:38 / `101201` / 900s | `c41af397ff69122957f3a84c5dcef1307be9238180456389f33ea955cca4d9d5` | `ab.log` / `4e030ad4330e327b69cc2be363e79ecfcf72ec3ee1e8c2ae28e086e2426276f3` |
+| 固定 affected/control A/B | 20:12:56 / `101345` / 900s | `0a5506b3c3b214dbb4503ce82b1f94c108c4edc6aa9dad8104355f10ada1acfb` | `release-e2-ab.log` / `50fb83f4e7ca0b039ef1bf454e0384e7380cc830a56dd182952725520a0fc16f` |
+| 资源 | 20:14:05 / `101459` / 600s | `0c63e6ad1cfa6ca6efcd052859ec96a082d4e19b6ab9da7c808a982ba1cc9465` | `release-resources.log` / `2dd8de9b03ac5d632cd2e465ba6153d59eeb69495d8aaf2914d44a4baa1bdf42` |
+| 大 group | 20:14:55 / `101565` / 600s | `00a4c2f6e7400bd845128330d0b590179b2ea2bed954cd5e97f2ca6d2033a0e2` | `release-large-probe.log` / `6dc7c8a6e137e1348cc99d7e50a0aa57ede9f2f55b3f707fbb89720706d038a2` |
+
+release 通过 py_compile、Black 79、isort、flake8 和 3/3 unittest（0.547s）。
+GPU 无竞争 workload 时，固定脚本对 commit 字节做五轮 AB/BA：全体几何平均
+`1.063577x`，affected `1.082205x`，control `1.000866x`；最差 affected 回退
+`0.419%`，control 最大偏移 `0.655%`。各 group_size 跨三 dtype 的几何平均为：
+
+| group_size | S0 / E2 几何平均 |
+| ---: | ---: |
+| 257 | `1.184073x` |
+| 320 | `1.156675x` |
+| 384 | `1.079199x` |
+| 448 | `1.061655x` |
+| 511 | `1.105799x` |
+
+补充脚本 `flagos-mamba-e2-ab-r2.py` 使用 `M=64`、`ngroups=4`，affected
+`group_size=257/384/511`、control `256/512`，覆盖三 dtype 与分组 LN + bias +
+前 gate；affected / control 分别为 `1.000375x` / `0.998766x`。该补充集合上表现
+中性，不改变固定 affected 集合的晋级结论。两个 A/B 日志均保留逐点五轮原始样本。
+24 个资源产物复现 S0 23–28、E2 24–40 registers；均为 0 spill、0 scratch，
+shared 不超过 16 bytes，PTX 无 local load/store。大 group 的 15 个 case 全部通过
+reference，覆盖到 `group_size=8192`，32–88 registers、shared 32 bytes、0
+spill/scratch/local。资源与大 group 脚本输出只含确定性结构化结果，fresh release
+重跑后分别与 screening 日志逐字节同 SHA；新目录、启动时间和 PID 如上表。
+
+release 后规范 ZIP 再次为 `verified-existing`：
+`artifacts/competition/mamba_layernorm_gated/e2-345413d/mamba_layernorm_gated.zip`，
+4609 bytes，唯一成员 `mamba_layernorm_gated.py` 4463 bytes，ZIP SHA-256
+`78c56c2955981833242d9fc2ed13dca1373014fc49f12072d469f34987875f03`；成员哈希与
+source commit 完全一致，`unzip -t` 通过。固定 21 点 affected 集合超过
+`>=1.05x`，原 control 与补充高吞吐 affected/control 均超过 `>=0.97x` 无回退
+门禁，且资源无 spill；E2 晋级首次平台提交候选，S0 作为回滚。
