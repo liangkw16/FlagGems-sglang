@@ -45,6 +45,30 @@ CONTEXT_ATTENTION_NVIDIA = _load_module(
     / "context_attention.py",
 )
 CONTEXT_ATTENTION_MODULES = (CONTEXT_ATTENTION, CONTEXT_ATTENTION_NVIDIA)
+CONTEXT_ATTENTION_ILUVATAR = _load_module(
+    "context_attention_iluvatar",
+    OPS_PATH.parent
+    / "runtime"
+    / "backend"
+    / "_iluvatar"
+    / "ops"
+    / "context_attention.py",
+)
+CONTEXT_ATTENTION_ENFLAME = _load_module(
+    "context_attention_enflame",
+    OPS_PATH.parent
+    / "runtime"
+    / "backend"
+    / "_enflame"
+    / "ops"
+    / "context_attention.py",
+)
+CONTEXT_ATTENTION_MODULES = (
+    CONTEXT_ATTENTION,
+    CONTEXT_ATTENTION_NVIDIA,
+    CONTEXT_ATTENTION_ILUVATAR,
+    CONTEXT_ATTENTION_ENFLAME,
+)
 
 
 def reference(q, k, v, starts, lengths, is_causal):
