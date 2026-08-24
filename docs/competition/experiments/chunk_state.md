@@ -392,3 +392,36 @@ canonical ZIP
 `ff1a27fd142d3f8ec92a09da7bc9c625463e0d62e771e8f99116d5b1fe9b06ad`，成员
 generic + `_ascend` + `_iluvatar`，`unzip -t` 通过。若本轮天数仍失败，
 记录负结果后停止 Task 12 迭代，额度转队列下一任务。
+
+### E2c 平台结果：仍 7/8，指纹不变 → E2d fp16 dot（天数最后一轮）
+
+E2c 于 2026-08-24 23:59:01 CST 提交，submission ID `4323`、当日序号 `16`，
+额度 `15/30` 变 `14/30`，`file_url_sha256` 为
+`4ee88f32b950fb6714daa0351ce528f6bebfd0c76aacd375d9864387f0bcf660`；23:59:49
+CST 终态 7/8。天数仍失败 case 0–4，且不匹配计数、差值与索引与 E2a/E2b
+逐字节一致。三个不同假设（ieee 参数、plain dot、contiguous 输入）产生完全
+相同的错误输出，最一致的解释：kernel 在天数上未能实际执行（异步编译/launch
+失败），`torch.empty` 输出携带 harness 固定序列残留的确定性内存，故指纹恒
+定；case 5–7 通过说明其 launch 成功，差异维度未定位。固定 community
+`0e8023d` 的 context_attention（平台多芯通过）明确记录"q/k/v 统一转 fp16
+走 tl.dot"，是唯一有天数成功案例背书的 dot 形式；fp32 操作数 `tl.dot` 在
+天数上可能整体不受支持。
+
+## E2d：天数 fp16 操作数 dot（本轮最后一次尝试）
+
+天数 vendor 的 dot 改为 `tl.dot(x.to(tl.float16), B.to(tl.float16))`（fp32
+累加不变），contiguous 处理保留；generic 与华为 vendor 不变。screening
+`gpu:/tmp/flagos-chunk-state-ilv3.ZHCDSj`：第一次因新折行 Black 失败
+（PID `105857` 跑旧字节后被终止，PID `106072` 前还有一次 Black 折行修正），
+最终 PID/PGID `106072`（00:03:38，wall 900s，脚本同 E2b）6/6 unittest，
+`screening.log` SHA-256
+`a3edd2c186c273b90a379b45526dafb3714fdbc5d3d4890a303c49f9a0a009cb`；vendor
+blob
+`9b96f58cb15e96a17457604374048e3f37d242218eda8115144c251020b36fd7`。release
+`gpu:/tmp/flagos-chunk-state-ilv3-release.4rj0aP`，source/verification
+commit `3d3148187541d87dfab0664fba38468408e815de`，PID/PGID `106276`
+（00:06:07），`RELEASE_OK`，`release.log` SHA-256
+`fb0add4e31c3afe3f158424aa955b9b51c0e8cd5e484462ad3f21466ec9fc555`。canonical
+ZIP `artifacts/competition/chunk_state/e2d-3d31481/chunk_state.zip`，SHA-256
+`3c06525a76dd00e338d40107feca666e43dd7f99b097e00da5e87f7ca548623b`。无论
+结果如何，本轮后停止 Task 12 迭代并记录结论。
