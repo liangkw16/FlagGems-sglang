@@ -57,6 +57,10 @@ ENFLAME_MODULE = _load_module(
     "qkv_lora_b_enflame_module",
     BACKEND_ROOT / "_enflame" / "ops" / "qkv_lora_b.py",
 )
+KUNLUN_MODULE = _load_module(
+    "qkv_lora_b_kunlunxin_module",
+    BACKEND_ROOT / "_kunlunxin" / "ops" / "qkv_lora_b.py",
+)
 
 
 def make_batch_info(
@@ -307,6 +311,7 @@ class QkvLoraBTest(unittest.TestCase):
                     ("ascend", ASCEND_MODULE),
                     ("iluvatar", ILUVATAR_MODULE),
                     ("enflame", ENFLAME_MODULE),
+                    ("kunlunxin", KUNLUN_MODULE),
                 ):
                     with self.subTest(module=name):
                         actual = module.qkv_lora_b(
