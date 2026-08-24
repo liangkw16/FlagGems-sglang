@@ -256,3 +256,9 @@ GCU 环境可复现定位。Task 22 两次预算用尽（S2、S2c），按规则
 同族 kernel 中 cumsum/slice 元数据与 GCU Pipeline pass 的组合是燧原编译
 失败的高发区，后续含 cumsum 的 dot kernel（Task 13/14/15/16）燧原 vendor
 优先使用最简结构（无 cumsum、无 slice 标量载入）。
+
+### S2c 终态补充：昆仑亦失败
+
+昆仑 vendor（32/32/32/stages1 保守配置）最终同样未通过（评测长时间
+`waiting_callback` 后失败），Task 22 最终 6/8。两芯失败互独立：燧原为
+case 2 编译失败，昆仑为超时/评测异常。Task 22 维持停止结论。

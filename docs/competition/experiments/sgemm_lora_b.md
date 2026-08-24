@@ -296,3 +296,14 @@ SHA-256
 `3b022a2b66b170c99d3aa0f94c9f5f878489df1fad729bc43d94ba09af993db0`，成员
 generic + ascend/enflame/iluvatar/kunlunxin 四 vendor。本提交为 2 次预算的
 最后一次。
+
+### S2b 平台结果：仍 7/8，昆仑结构性超时 → Task 23 停止（2 次用尽）
+
+S2b 于 02:21:15 CST 提交（submission `4443`，当日序号 `10`）。七芯维持
+高分（同 S2）；昆仑保守 vendor（32/32/32/stages1）仍以同一形态失败：
+验证执行阶段超时（1830s/1800s）+ 子进程 `Fatal Python error: Aborted`。
+结论：昆仑 SDNN 路径对本 kernel 的 ragged permutation/segment 间接寻址
+结构编译爆炸，与 tile/stages 无关（Task 09/12 的规整 dot kernel 同配置
+可通过）。Task 23 两次预算用尽，停止；最佳成绩为 7/8（invalid）。后续
+昆仑方向需改写为规整 batched-GEMM 形式（如按 segment 长度分桶后连续
+GEMM），非单变量可及。
