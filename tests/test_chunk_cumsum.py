@@ -233,49 +233,61 @@ class ChunkCumsumTest(unittest.TestCase):
 
     def test_vendors_cover_folded_grid(self):
         torch.manual_seed(20260824)
-        batch, seqlen, nheads, chunk_size = 2, 16384, 96, 64
+        shapes = ((2, 16384, 96, 64), (4, 32768, 288, 256), (1, 8192, 32, 256))
+        batch, seqlen, nheads, chunk_size = shapes[0]
         nchunks = (seqlen + chunk_size - 1) // chunk_size
         block_h = 4
         total = ((nheads + block_h - 1) // block_h) * nchunks * batch
         self.assertGreater(total, 4096)
+        head_blocks_256 = (288 + 1) // 2
+        self.assertGreater(head_blocks_256 * (32768 // 256) * 4, 65535)
 
-        for dtype, tolerance in (
-            (torch.float32, 1e-4),
-            (torch.float16, 1e-2),
-        ):
-            for softplus in (False, True):
-                with self.subTest(dtype=dtype, softplus=softplus):
-                    dt = torch.randn(
-                        (batch, seqlen, nheads),
-                        device="cuda",
-                        dtype=dtype,
-                    )
-                    a = torch.randn((nheads,), device="cuda", dtype=dtype)
-                    bias = torch.randn((nheads,), device="cuda", dtype=dtype)
-                    expected = reference(
-                        dt,
-                        a,
-                        chunk_size,
-                        dt_bias=bias,
-                        dt_softplus=softplus,
-                    )
-                    for name, module in (
-                        ("generic", MODULE),
-                        ("ascend", ASCEND_MODULE),
-                        ("kunlunxin", KUNLUN_MODULE),
+        for shape in shapes:
+            batch, seqlen, nheads, chunk_size = shape
+            for dtype, tolerance in (
+                (torch.float32, 1e-4),
+                (torch.float16, 1e-2),
+            ):
+                for softplus in (False, True):
+                    with self.subTest(
+                        shape=shape, dtype=dtype, softplus=softplus
                     ):
-                        with self.subTest(module=name):
-                            actual = module.chunk_cumsum(
-                                dt,
-                                a,
-                                chunk_size,
-                                dt_bias=bias,
-                                dt_softplus=softplus,
-                            )
-                            for out, exp in zip(actual, expected):
-                                torch.testing.assert_close(
-                                    out, exp, atol=tolerance, rtol=tolerance
+                        dt = torch.randn(
+                            (batch, seqlen, nheads),
+                            device="cuda",
+                            dtype=dtype,
+                        )
+                        a = torch.randn((nheads,), device="cuda", dtype=dtype)
+                        bias = torch.randn(
+                            (nheads,), device="cuda", dtype=dtype
+                        )
+                        expected = reference(
+                            dt,
+                            a,
+                            chunk_size,
+                            dt_bias=bias,
+                            dt_softplus=softplus,
+                        )
+                        for name, module in (
+                            ("generic", MODULE),
+                            ("ascend", ASCEND_MODULE),
+                            ("kunlunxin", KUNLUN_MODULE),
+                        ):
+                            with self.subTest(module=name):
+                                actual = module.chunk_cumsum(
+                                    dt,
+                                    a,
+                                    chunk_size,
+                                    dt_bias=bias,
+                                    dt_softplus=softplus,
                                 )
+                                for out, exp in zip(actual, expected):
+                                    torch.testing.assert_close(
+                                        out,
+                                        exp,
+                                        atol=tolerance,
+                                        rtol=tolerance,
+                                    )
 
 
 if __name__ == "__main__":

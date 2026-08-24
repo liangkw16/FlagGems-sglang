@@ -177,7 +177,7 @@ def chunk_cumsum(dt, A, chunk_size, dt_bias=None, dt_softplus=False):
         return dt_out, da_cumsum
 
     block_size = triton.next_power_of_2(chunk_size)
-    block_h = max(1, min(8, 4096 // block_size))
+    block_h = max(1, min(8, 512 // block_size))
     head_blocks = triton.cdiv(nheads, block_h)
     total_programs = head_blocks * nchunks * batch
     if total_programs <= 65535:
