@@ -405,3 +405,28 @@ blob
 `1bd32eb20aa822692feefe8840872f1f3136b7cdf365662ef88f13ac21cd0d43`。canonical
 ZIP `artifacts/competition/bmm_chunk/e3d-57b7130/bmm_chunk.zip`，SHA-256
 `ad546c3942c40689649c48b4399bf72da318fba04179df1d93d9a85d823fd5ee`。
+
+### E3d 平台结果与 Task 09 停止决定
+
+E3d 于 00:44:04 CST 提交（submission `4359`，当日序号 `5`，额度
+`26/30`→`25/30`，`file_url_sha256` 为
+`856d3bcb16e768eadc771f7d468d167d10b214220c4b618b9705704a2e75d133`），00:44:33
+终态 8/8 正确、`invalid_threshold`：燧原 `0.0900x`（E3c 0.0745 → +20.8%），
+仍差 0.01x 到 0.1x 门槛；其余七芯稳定（天数 1.7345x、华为 0.4335x、card_a
+3.3685x）。
+
+E3e（燧原 capped grid-stride 折叠，cap 64，tile 64/64/128、stages 2）已完成
+screening：`gpu:/tmp/flagos-bmm-chunk-e3e.hIFVuj`，PID/PGID `108471`
+（00:45:12，wall 900s），8/8 unittest（3.865s），`screening.log` SHA-256
+`ba0e5a3027a94f8e3bc7aab8ee55e62d5df92dd6aa36d8646551aa3ed5432378`，vendor
+blob
+`7a0e8a7c9a5740c476164d8e89d247732ff19a6b4797a3954cb57e3ac1776a61`；按新的
+每任务最多 3 次提交规则（Task 09 已用 4 次：E3a/E3b/E3c/E3d），E3e 不再
+提交，screening 证据保留备用。
+
+Task 09 结论：八芯 correctness 全部通过；燧原在 stages=1 串行化根因修复后
+由 0.001x 提至 0.090x（90 倍），但未达 0.1x 门槛，任务暂记未完成。已沉淀
+的可迁移知识：(1) dot 类 kernel 在燧原必须 stages≥2 且 tile≥64，BLOCK_K
+加宽持续正收益；(2) 天数 split-fp16 三点积与华为 capped grid-stride 均
+平台验证成功；(3) 后续 dot 算子（Task 13/14/15/16）的燧原 vendor 直接以
+stages≥2 + 64×64×128 起步，并优先考虑 grid-stride 折叠。额度转 Task 17。
