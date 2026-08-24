@@ -355,3 +355,31 @@ SHA-256
 `13560bd24f6e8d597a8eb5246dcbf52e8d8eb7b5f4330c90bdb9a4ce22f15ee7`，成员
 generic + ascend/enflame/iluvatar 三 vendor，`unzip -t` 通过。平台门禁：
 燧原 ≥0.1x 且其余七芯不回退。
+
+### E3b 平台结果：燧原仍 0.001x → E3c tile/stages 配置
+
+E3b 于 00:27:57 CST 提交（submission `4348`，当日序号 `3`，额度
+`28/30`→`27/30`，`file_url_sha256` 为
+`ce4e395e806528e610949e6de179e30f32c94af565b0afedaabe912f107afb4f`），00:29:21
+终态 8/8 正确、燧原 vendor 被选中但 speedup 仍为 `0.0010x`——dot 精度假设
+排除，慢度与 kernel 配置相关。固定缓存源码
+`docs/competition/data/vendor-backends/enflame/compiler.py`：`num_stages`
+默认 3 且 gcu400 的 warp specialization pass 直接消费该参数；generic 固定
+`num_stages=1` 使 K 循环完全串行化，是 1000 倍慢度的最合理解释。E3c 把
+燧原 vendor 的 BLOCK 提为 64/64/64、`num_stages=3`（warps 保持 4，符合
+gcu400 编译期 `num_warps<=4` 断言；64 tile 对齐 FlagGems FLA 家族与燧原
+2048B 向量宽度），screening `gpu:/tmp/flagos-bmm-chunk-e3c.V3K57s`，PID/PGID
+`107506`（00:30:36，wall 900s），8/8 unittest（2.288s），`screening.log`
+SHA-256
+`5319d7f4696428c26f6bf49f25749938c4ab69cec32fcc0a0cf710fb643ca53c`；vendor
+blob
+`fdbc8e504248631987db69d422ec5f6f81c4202096b4b7b88df0f2964f0a971e`。release
+`gpu:/tmp/flagos-bmm-chunk-e3c-release.nM0Mci`，commit
+`f477e6105076582c4ce039c32b0bdee3b8bb7b90`，PID/PGID `107718`（00:33:12）。
+canonical ZIP `artifacts/competition/bmm_chunk/e3c-f477e61/bmm_chunk.zip`，
+SHA-256
+`3e1b2a992b1aa5d310664c9bde0df08667c6ea119f12857fe93da08af3908e30`，成员
+generic + ascend/enflame/iluvatar 三 vendor，`unzip -t` 通过，release
+`RELEASE_OK`（`release.log` SHA-256
+`75476587a7659da953e79d08364601e0faefff5412414eea700b52a810274fe6`）。平台
+门禁：燧原 ≥0.1x 且其余七芯不回退。
