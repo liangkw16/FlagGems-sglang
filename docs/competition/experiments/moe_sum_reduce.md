@@ -416,3 +416,74 @@ bytes，SHA-256
 `moe_sum_reduce_kunlunxin.py` 2866 bytes，`unzip -t` 通过。平台晋级门禁：
 8/8 通过、昆仑选中轴交换 vendor 且华为继续选中 ascend vendor，两芯均高于
 0.1x。NVIDIA 不能证明 XPU 编译行为。
+
+### S2 平台结果：7/8，昆仑假设二否决
+
+2026-08-24 23:13:00 CST 提交，submission ID `4288`、当日序号 `12`，额度由
+`19/30` 变为 `18/30`；远端验签 `verified`（9305 bytes，SHA-256 一致），
+`file_url_sha256` 为
+`e2280198b218da3753194275906063a18a9921b52ab662acccaa8d2b345660ec`。23:13:47
+CST 终态 `completed` / `invalid_correctness`，7/8。华为 vendor 继续被选中并
+通过（`0.6610x`）；天数 4.7238x、沐曦 3.5172x、海光 6.3594x、国际 A
+3.7584x、国际 B 2.2194x；燧原第二次出现 `0.2072x`（同字节 generic 在 S0c 为
+2.3126x，已连续两次低读数，与 ZIP 从单成员变为三成员在时间上相关，原因
+未明，作为开放观察保留）。
+
+昆仑 vendor 被选中后 case 0–7 依旧全部以同一 `uni_sram PassManager::run
+failed` 编译失败。S2 的 vendor kernel 与 generic 逐字相同、仅交换
+`tl.program_id` 两轴，而同数学 generic 在 S0c 通过 case 0–6；结论：该 XPU
+编译器对 program 轴语义敏感，token（外层标量维）必须位于 pid(0)、hidden
+block（arange 向量维）必须位于 pid(1)，交换即无法编译，与 grid 规模无关。
+
+至此昆仑假设矩阵为：2D 原始布局通过 total≤65535 的全部 case、仅 total=
+114688>65535 的 case 7 失败；Task 24 generic 曾在昆仑以 256512 规模纯一维
+grid 通过（排除 grid.x 上限）；Task 19 vendor 以 total≤2048×1 通过。最强
+假设：XPU 将 2D grid 展平为总 program 数并在编译期以 65535 为上限（与
+Ascend `coreDim` 同类约束、不同报错形态）。据此 S3 把昆仑 vendor 的 kernel
+恢复为与 generic 逐字节相同（token=pid(0)），仅把 wrapper 的 BLOCK_SIZE 从
+256 提到 1024：case 7 的 grid 由 `(4096, 28)` 变为 `(4096, 7)`，total 28672
+≤ 65535；该配置同时有固定 FlagGems `ed2508b` kunlunxin pointwise 策略
+（BLOCK 1024 / 8 warps）背书。残余风险：若隐藏 shape 出现
+`num_tokens × cdiv(hidden,1024) > 65535`（如 num_tokens ≥ 16384 且 hidden
+7168）仍会失败。S3 为本轮昆仑最后一次单变量尝试；若仍失败则保留 S1/S2 证据
+并转其他算子。
+
+## S3：昆仑 BLOCK 1024 vendor
+
+状态：release 门禁通过，候选就绪，等待 preflight 与提交
+
+S3 把昆仑 vendor 的 kernel 恢复为与 generic 逐字节相同（token=pid(0)、
+hidden block=pid(1)、无循环、无 div/mod），仅将 wrapper 的 `block_size` 从
+256 提升到 1024；generic、华为 vendor 不变。case 7 的 grid 由 `(4096, 28)`
+变为 `(4096, 7)`，总 program 数 28672 ≤ 65535。新增回归
+`test_kunlun_vendor_block1024_boundaries` 覆盖三 dtype × hidden
+`1023/1024/1025/2049` 的 1024 边界与尾块。固定依据：FlagGems `ed2508b`
+kunlunxin pointwise 通用策略即为 BLOCK 1024；XPU 编译证据链见 S2 结论。
+
+screening 目录 `gpu:/tmp/flagos-moe-sum-reduce-s3.wjvB8H`（mode 0700），
+PID/PGID `104064`（23:15:52，wall 900s，脚本同 S1，SHA-256
+`f675c56cab6910fd9b02d826b31692cc962075514ceda62654875353ca9aa2e9`）；静态
+门禁与 6/6 unittest（0.837s）通过，`screening.log` SHA-256
+`dc7418a4d0971b610f56f45b03839ac62ff25113681b01620778a648a4997edd`。失败规模
+代理计时 generic/昆仑/华为 p50 为 FP16
+`0.695485/0.676984/0.685337 ms`、BF16 `0.707215/0.684037/0.687108 ms`、
+FP32 `1.333114/1.327501/1.334707 ms`，无回退。
+
+source/verification commit 均为
+`1ca7dd280e4f795e81fc7954b8c2b6c3fdc17f4b`；昆仑 vendor Git blob SHA-256
+`68b0abe07e3cf4f2b9cb86063e9ad1e18edd83d90341410cd281ec595c83406d`，测试
+`118e1747ca47b7283a15cf36b075c4ae9ffccf81cd185d1504c3c0f3b3e2fa99`。release
+目录 `gpu:/tmp/flagos-moe-sum-reduce-s3-release.RYZbso`（mode 0700）从该
+commit 的 Git 对象建立，PID/PGID `104297`（23:18:57，wall 600s，脚本复用
+S1 模板，头部 commit 标签陈旧，权威绑定以日志内文件哈希对 1ca7dd2 blobs
+逐项一致为准）；静态门禁与 6/6 unittest 通过并输出 `RELEASE_OK`，
+`release.log` SHA-256
+`6102e562295e0767e42f7c1fca33d8c9f363df97ce09a9d3193f14638f35cb49`。
+
+canonical ZIP 为
+`artifacts/competition/moe_sum_reduce/s3-1ca7dd2/moe_sum_reduce.zip`，9240
+bytes，SHA-256
+`159911639601002f9be5e083309d9a5cac1d1d32617e1fe31207486cc267b2f8`；成员
+`moe_sum_reduce.py`、`moe_sum_reduce_ascend.py`、
+`moe_sum_reduce_kunlunxin.py`，`unzip -t` 通过。平台晋级门禁：8/8 通过、
+昆仑选中 BLOCK 1024 vendor 且华为继续选中 ascend vendor。
