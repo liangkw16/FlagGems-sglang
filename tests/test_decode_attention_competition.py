@@ -43,6 +43,15 @@ DECODE_ATTENTION_NVIDIA = _load_module(
     / "ops"
     / "decode_attention.py",
 )
+DECODE_ATTENTION_ASCEND = _load_module(
+    "decode_attention_ascend",
+    OPS_PATH.parent
+    / "runtime"
+    / "backend"
+    / "_ascend"
+    / "ops"
+    / "decode_attention.py",
+)
 DECODE_GROUPED_ATTENTION = _load_module("decode_grouped_attention")
 DECODE_GROUPED_ILUVATAR = _load_module(
     "decode_grouped_iluvatar",
@@ -169,7 +178,9 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
     def test_mha_strides_variable_lengths_and_value_dim(self):
         case = make_case(4, 4, 33, 17, [1, 35, 65], torch.float16)
 
-        for function in MHA_FUNCTIONS:
+        for function in MHA_FUNCTIONS + (
+            DECODE_ATTENTION_ASCEND.decode_attention,
+        ):
             with self.subTest(function=function.__module__):
                 self.assert_matches(function, case)
 
