@@ -115,7 +115,16 @@ def _qkv_lora_b_kernel(
             mask=k_mask[:, None] & output_mask[None, :],
             other=0.0,
         )
-        accumulator += tl.dot(x, weights, input_precision="ieee")
+        if x.dtype == tl.float32:
+            x_hi = x.to(tl.float16)
+            x_lo = (x - x_hi.to(tl.float32)).to(tl.float16)
+            w_hi = weights.to(tl.float16)
+            w_lo = (weights - w_hi.to(tl.float32)).to(tl.float16)
+            accumulator += tl.dot(x_hi, w_hi)
+            accumulator += tl.dot(x_hi, w_lo)
+            accumulator += tl.dot(x_lo, w_hi)
+        else:
+            accumulator += tl.dot(x, weights)
 
     output_ptrs = (
         output_ptr
