@@ -260,3 +260,55 @@ release gates、A/B、扩展正确性、provenance 和 A/B harness 的 SHA-256 �
 确定性构建、`--verify-existing`、`unzip -t`、UTF-8、basename、10 MB 和逐字节
 来源门禁均通过。标准低精度 `tl.dot` 在其余七芯仍需平台证明；未打开浏览器、未读取
 实时额度、未提交平台，旧确认不授权此 ZIP。
+
+## E3a：预防性 Ascend capped grid + 天数 split-fp16 vendor（首投候选）
+
+状态：release 门禁通过，候选就绪，等待 preflight 与提交
+
+背景：E3 generic 为 3D grid `(tiles, batch, nchunks*ngroups)`，总数在大 shape
+可超 65535（Ascend 展平限制，Task 12 已平台证实）；其 fp32 输入路径使用
+fp32 操作数 + `input_precision="ieee"` 的 `tl.dot`，按 Task 12 E2a–E2d 的
+平台证据（fp32 操作数 dot 在天数静默失败，fp16 操作数可执行）需要天数
+vendor。题面 fp32 容差 1e-4，直接降 fp16（rel ~1e-3）不满足，故 fp32 路径
+采用 split-fp16 三点积仿真（a = a_hi + a_lo，dot(a_hi,b_hi)+dot(a_hi,b_lo)
++dot(a_lo,b_hi)，有效精度 ~2^-22）。
+
+- `_ascend/ops/bmm_chunk.py`：Task 12 平台验证的 capped grid-stride 模式，
+  一维物理 grid `min(total, 4096)`，逻辑 id 按 batch → chunk·group → tile
+  分解；kernel 数学、BLOCK 32/32/32、ieee dot 与 causal wrapper 逐行保持
+  generic。
+- `_iluvatar/ops/bmm_chunk.py`：仅改 dot 块——fp16/bf16 输入路径
+  `USE_INPUT_DTYPE` 保持原样走裸 `tl.dot`；fp32 路径 split-fp16 三点积，
+  累加仍为 fp32。grid 与 generic 相同（天数无展平限制）。
+
+新增回归：`test_ascend_capped_grid_multi_iteration`（(2,128chunks,8组,
+chunk64) 总数 8192 > 4096，覆盖两轮 grid-stride，fp32 1e-4 / fp16 1e-2）与
+`test_iluvatar_split_fp16_precision`（chunk/k 组合 `64/64、33/65、257/64`
+× 三 dtype，fp32 按 1e-4 验证）。共 8/8 unittest。
+
+screening 目录 `gpu:/tmp/flagos-bmm-chunk-vend.tTsu4Q`（mode 0700）：首跑
+PID `106470`/`106549` 因脚本 FILES 行漏列 iluvatar 文件与测试一处超长行
+先后停止（脚本修正后 SHA-256
+`31ba42b832644b6b7f107dc694289a13610a492abf7e52390cac97057e0ab076`）；最终
+PID/PGID `106699`（00:16:55，wall 900s）静态门禁与 8/8 unittest（1.438s）
+通过，`screening.log` SHA-256
+`43745ba1d038837042833bc9a41baacf1d425429cf630e78024295c5a07f63f1`。环境
+RTX 5070 Ti 16 GB、Python 3.12.13、PyTorch 2.13.0+cu130、Triton 3.7.1、
+CUDA 13.0。Ascend vendor blob
+`a2fa97a9cf813f36629f64469f62dd6469c788113f571a0b86322985966cc682`，天数
+vendor blob
+`3d547d5b0bd6b68bac11c6faadccb6f0e87cb5d4616256e1f897619a30e4c3e1`，测试
+`3d18cf686e3902d6b8166c8fc9574836f4ca8f4f2ead3fce3204a416b9f5aaf1`。
+release 目录 `gpu:/tmp/flagos-bmm-chunk-vend-release.sAPBpV`，
+source/verification commit `4fb53d61e83ff06e6b3d5e81bb5634ae3a351828`，
+PID/PGID `106903`（00:19:43，wall 600s），`RELEASE_OK`，`release.log`
+SHA-256
+`b16e3416900d5fedf86dbd045b0f7d5b504d62841bf4243f2260c961a87da7a8`。
+
+canonical ZIP
+`artifacts/competition/bmm_chunk/e3a-4fb53d6/bmm_chunk.zip`，16962 bytes，
+SHA-256
+`3de1f1379434e1e7e65fd74168354485da92e003cc061b445f1bc2ccce924f4f`，成员
+`bmm_chunk.py`、`bmm_chunk_ascend.py`、`bmm_chunk_iluvatar.py`，
+`unzip -t` 通过。平台门禁：8/8 通过且每芯 ≥0.1x；天数与华为各自选中
+vendor，其余六芯 generic。
