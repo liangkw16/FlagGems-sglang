@@ -253,3 +253,75 @@ canonical ZIP 完全一致；`file_url_sha256` 为
 其余六芯全部通过且远高于 0.1x 门槛。下一轮保持 generic 字节不变，只加两个
 自包含 vendor：昆仑改为与 generic 数学一致的一维展平 grid；华为沿用
 Task 08/20 平台已验证的 capped grid-stride 模式。
+
+## S1：昆仑一维展平 grid 与华为 capped grid-stride vendor
+
+状态：release 门禁通过，候选就绪，等待 preflight 与提交
+
+### 假设与单变量
+
+generic 源码逐字节保持 S0 不变，只新增两个自包含 vendor：
+
+- 昆仑 `_kunlunxin/ops/moe_sum_reduce.py`：kernel 数学、BLOCK 256、4 warps、
+  1 stage、stride 与 FP32 累加均不变；把 2D grid
+  `(num_tokens, hidden_blocks)` 展平为一维
+  `(num_tokens * hidden_blocks,)`，program 内以
+  `program // hidden_blocks`、`program % hidden_blocks` 还原 token 与
+  hidden block。依据：S0c 失败是 XPU 编译期 `make_ttxir` 对 2D grid
+  `(4096, 28)` 的 pass 失败，而 Task 08 平台记录中昆仑以 304128/2433024
+  规模的一维 grid 正确执行 pointwise kernel。
+- 华为 `_ascend/ops/moe_sum_reduce.py`：同样的一维逻辑 program 分解，外加
+  物理网格 `min(total_programs, 4096)` 与 `tl.num_programs(0)` 步长的
+  grid-stride 循环。依据：Task 20 E3 平台验证 cap 4096 在 Ascend 通过并达
+  1.8838x，且其代理 cap 扫描中 4096 优于 48/256/1024/16384/32768/65535；
+  S0c 华为失败仅为展平 `coreDim=114688 > 65535` 的启动越界。
+
+失败规模回归 `test_vendors_cover_platform_failure_scale` 使用
+`(num_tokens, top_k, hidden_dim) = (4096, 8, 7168)`，断言逻辑 program 总数
+114688，并在三 dtype 下对 generic、昆仑、华为三个模块与 reference 精确比对，
+同时验证输入不变性。其余四个既有回归方法不变。
+
+### Screening 与 Release
+
+screening 目录 `gpu:/tmp/flagos-moe-sum-reduce-s1.ge5pXH`（mode 0700）。
+第一次运行 PID/PGID `103080`（22:55:42，wall 900s，脚本 SHA-256
+`f675c56cab6910fd9b02d826b31692cc962075514ceda62654875353ca9aa2e9`）因测试
+文件一处 Black 折行失败停止，无源码数学变化；本地修正折行（测试 SHA-256 由
+`ea1641c64c6da6ca10f0266485ec2e2459471e76d07be737d5fd41d2b95ae7da` 变为
+`f1ca0bcadb1393f2da5188a5597839abe71bd85eff996a230113d5872ca76dc8`）后以
+PID/PGID `103179`（22:57:20，wall 900s，同脚本）重跑通过：
+`screening.log` SHA-256
+`69647fe844abf963c5bee3d22f3928a87a571af84b028397bb5cb9aae79f28c7`。远端
+环境 RTX 5070 Ti 16 GB、driver 610.57.04、Python 3.12.13、PyTorch
+2.13.0+cu130、Triton 3.7.1、CUDA 13.0。py_compile、Black 79、isort、flake8
+与 5/5 unittest（0.748s）通过，前后 SHA-256 复核一致。同脚本附带的失败规模
+代理计时（informative）三 dtype 下三模块全部正确：generic/昆仑/华为 p50 分别为
+FP16 `0.694812/0.662263/0.685105 ms`、BF16 `0.705952/0.665458/0.688049 ms`、
+FP32 `1.329962/1.337104/1.340918 ms`；一维昆仑不慢于 2D generic，华为
+grid-stride 与 generic 持平，无代理回退。
+
+source/verification commit 均为
+`849527f184df53fe21150fd635e044c614dc9651`，其 Git blob SHA-256 与 screening
+字节逐项一致（generic
+`52a2fc979784f2bd25e7e17b9822c23b4f438efdf062c70bfb09aba9ba732335`、昆仑
+`8b425964dc50d523506ec4b5379b2dd33490f0b0ca611787da52ff5e230ac079`、华为
+`516979df657248bc5d6bd14dde9af06e21a09c6ed70e404998851af87aca229f`、测试
+`f1ca0bcadb1393f2da5188a5597839abe71bd85eff996a230113d5872ca76dc8`）。
+release 目录 `gpu:/tmp/flagos-moe-sum-reduce-s1-release.5BOySW`（mode 0700）
+从该 commit 的 Git 对象建立，PID/PGID `103426`（23:00:21，wall 600s，脚本
+SHA-256
+`708f6ea5c2db1c4d753f88289674b87c651db4a14b160d953521a3511d0b915d`）；
+py_compile、Black 79、isort、flake8 与 5/5 unittest（0.575s）全部通过并输出
+`RELEASE_OK`，`release.log` SHA-256
+`d7969825cd1fdc946fa987f170598db09da0720ea9ded31b1288bd94729cd8b2`。
+
+canonical ZIP 为
+`artifacts/competition/moe_sum_reduce/s1-849527f/moe_sum_reduce.zip`，9395
+bytes，SHA-256
+`a8416396f76c624ebbc06033b1daba88858fd97b65c6c74a5f9c83f1c30f25c9`，与
+release 前 dry-run manifest 的 commit、成员集合、成员 SHA-256 和 canonical
+ZIP SHA-256 完全相同。成员为 `moe_sum_reduce.py` 2800 bytes、
+`moe_sum_reduce_ascend.py` 3253 bytes、`moe_sum_reduce_kunlunxin.py` 2956
+bytes；`unzip -t` 通过。平台晋级门禁：8/8 通过、昆仑与华为各自选中对应
+vendor 文件且高于 0.1x；其余六芯继续使用未变 generic。NVIDIA 只能代理编译与
+数值，不能证明 XPU/Ascend runtime 实际行为。
