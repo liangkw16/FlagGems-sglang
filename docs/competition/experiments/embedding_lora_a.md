@@ -244,3 +244,18 @@ SHA-256
 `3e5e15064613c9223491ed2745502ec5f535df1bc07c27698bb259dcb72f82c4`，成员
 generic + ascend/enflame/kunlunxin 三 vendor，`unzip -t` 通过。本任务提交
 预算 ≤3 次（本候选为第 1 次）。
+
+### S1a 平台首投：7/8，燧原 vendor 编译失败
+
+2026-08-25 01:10:36 CST 提交，submission ID `4372`、当日序号 `6`，额度
+`25/30` 变 `24/30`，`file_url_sha256` 为
+`8a7c10911a609ab7bb8b93c9552fdeb87a3a4e6dc3aa6c53e57e4c567d8a97f7`。01:11:23
+终态 `completed` / `invalid_correctness`，7/8：天数 24.8645x、沐曦 7.3265x、
+海光 27.1970x、国际 A 31.3045x、国际 B 17.1815x；华为 vendor 选中并通过
+（1.9120x），昆仑 vendor 选中并通过（0.3320x）——token 折叠设计在两芯同时
+成立。燧原 vendor（BLOCK_RANK 64/stages 2）编译失败：
+`RuntimeError: Pipeline run failed: PassManager execution failed`（case 0 起
+全部 case）。结论：`num_stages=2` 的软件流水线与该 kernel 的数据依赖分支
+（extra/regular 载入二选一）在 GCU 编译器上不兼容；dot kernel 的 stages≥2
+经验不可迁移到分支 gather kernel。第 2 次尝试（2/3）：燧原 vendor 改回与
+generic 逐字节相同（128/4/1），其余文件不变。
