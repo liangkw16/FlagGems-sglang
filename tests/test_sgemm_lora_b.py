@@ -57,6 +57,10 @@ ENFLAME_MODULE = _load_module(
     "sgemm_lora_b_enflame_module",
     BACKEND_ROOT / "_enflame" / "ops" / "sgemm_lora_b.py",
 )
+KUNLUN_MODULE = _load_module(
+    "sgemm_lora_b_kunlunxin_module",
+    BACKEND_ROOT / "_kunlunxin" / "ops" / "sgemm_lora_b.py",
+)
 
 
 def make_batch_info(
@@ -256,6 +260,7 @@ class SgemmLoraBTest(unittest.TestCase):
                     ("ascend", ASCEND_MODULE),
                     ("iluvatar", ILUVATAR_MODULE),
                     ("enflame", ENFLAME_MODULE),
+                    ("kunlunxin", KUNLUN_MODULE),
                 ):
                     with self.subTest(module=name):
                         actual = module.sgemm_lora_b(x, weights, info, base)
