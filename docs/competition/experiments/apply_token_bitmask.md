@@ -2,7 +2,7 @@
 
 ## S0：generic baseline
 
-状态：S1 已提交平台并通过 8/8；平均 4.3870x，第 12/13 名
+当前状态：E2 已提交平台并通过 8/8；平均 4.686925x，第 12/13 名
 
 验证时间：2026-08-24 01:22–01:28 CST
 
@@ -236,12 +236,13 @@ daily seq `6`。平台远端 ZIP 为 8382 bytes，下载后 SHA-256 与本地
 
 两份 vendor 均被正确选中，原 grid/coreDim 超限消失，八芯全部高于 0.1x。官方
 Task 08 leaderboard 在 2026-08-24 19:23:43 CST 显示 `SoulCoder` 第 12/13 名，
-本次也是团队首次有效及当前最佳提交。下一条单变量假设只改燧原 BLOCK 256 → 4096，
+本次也是团队首次有效及截至当时的最佳提交。当时的下一条单变量假设只改燧原
+BLOCK 256 → 4096，
 保持 grid 12 和其余文件不变；先做代理验证，不沿用本次已消耗的提交确认。
 
 ## E2：燧原 BLOCK 4096
 
-状态：候选就绪，未提交平台
+状态：平台有效，8/8，团队当前最佳
 
 源码与验证 commit：`86fca8738c850a9d1b83ff3a9ace06d71cc9f6cf`
 
@@ -287,5 +288,28 @@ affected 代理 shape `(512,152064)` 的 BLOCK256 `total_blocks=304128`，与平
 affected 三 dtype 几何平均为 `4.788597x`，超过 `>=1.05x` 晋级线，control 也高于
 `>=0.97x` 门禁。规范 ZIP 的三个成员与 release 前 manifest、commit 源码和上述哈希
 完全一致，并通过 `verified-existing` 与 `unzip -t`。平台门禁为继续 8/8、燧原选中
-vendor 且从 S1 的 0.4292x 提升到至少 0.4507x；否则保留 S1。E2 需要绑定新 ZIP
-并重新读取实时额度；最近历史读数为 `9/15`，S1 的确认已经消耗。
+vendor 且从 S1 的 0.4292x 提升到至少 0.4507x；否则保留 S1。
+
+2026-08-24 19:53:06 CST 在账号 `15600308080`、团队 `SoulCoder` 下提交一次，
+submission ID `4215`、daily seq `7`，实时额度由 `9/15` 变为 `8/15`。提交命令
+未设置可信对象存储 hostname，因此内置远端验签为 `unavailable`；随后从已核实的
+`flagos.ks3-cn-beijing.ksyuncs.com` 无认证下载同一对象，得到 8383 bytes，SHA-256
+与确认值 `88d2e8387ac2e7de785cf1574ad9c762df54c0baa79e4ada67fad7252987c1dc`
+一致。`file_url_sha256` 为
+`60844196c1021250756fd87df74561490bdbb4049f5a9f073e92d4713f9c8472`。
+
+| 芯片 | 结果 | speedup | 选中文件 |
+| --- | --- | ---: | --- |
+| 天数 | 通过 | 10.0010x | `apply_token_bitmask.py` |
+| 沐曦 | 通过 | 4.7746x | `apply_token_bitmask.py` |
+| 燧原 | 通过 | 2.8510x | `apply_token_bitmask_enflame.py` |
+| 海光 | 通过 | 4.9626x | `apply_token_bitmask.py` |
+| 昆仑芯 | 通过 | 0.7686x | `apply_token_bitmask.py` |
+| 华为 | 通过 | 0.9646x | `apply_token_bitmask_ascend.py` |
+| 国际通用 A | 通过 | 6.9462x | `apply_token_bitmask.py` |
+| 国际通用 B | 通过 | 6.2268x | `apply_token_bitmask.py` |
+
+E2 平均 `4.686925x`，较 S1 提升 `0.299925x`（6.8367%）；燧原由 `0.4292x`
+升至 `2.8510x`，为原来的 6.6426 倍，单变量门禁通过。官方 Task 08 leaderboard
+在 2026-08-24 19:56:01 CST 显示 `SoulCoder` 第 12/13 名，本次为团队当前最佳。
+保留 E2，不再继续同一燧原 BLOCK 假设；后续额度优先用于其他算子。
