@@ -160,3 +160,35 @@ screening base commit 为 `3c38f1c25db250e1a290067a610ae77170b89b6a`；最终
 `f647610d779661a65a67ef4d7fc52dcbf2ea15d68c59de5d9066775c9c76e5a1`，反例
 日志 SHA-256 为
 `208cd018d28fe8af01e855b299a6b02a9cca8d5a0d8c416ecaf32c537c916786`。
+
+## S1a：Ascend 折叠 + 天数/燧原 fp16-dot vendor（首投候选，≤2 次预算）
+
+状态：release 门禁通过，候选就绪
+
+grid 审计：3D `(tiles, batch, nheads)` 展平总数可超 65535（同 Task 12）。
+vendor：`_ascend` 为 Task 12 平台验证的 capped grid-stride 折叠（cap 4096，
+逻辑 id 按 head→batch→tile 分解）；`_iluvatar`/`_enflame`（同字节）把
+ieee fp32 dot 改为 fp16 操作数 dot（题面容差 3e-2，无需 split；天数依据
+Task 12/22/23 平台证据，燧原依据 Task 23 4.05x 证据）。题面 reference 的
+段语义要求每段长度小于 chunk_size（现有测试约定），新增回归
+`test_vendors_cover_fold_and_fp16_dot` 以 `[1,7,2,6]×8` 共 32 段 × 两 dtype
+× 四模块覆盖。screening `gpu:/tmp/flagos-csv-vend.8oIvfU`（含一次 Black
+回拷与三次测试 shape 修正——make_case 的全局 chunk 语义与段长 ≤
+chunk_size 约束），最终 PID/PGID `117015`（03:36 前后，wall 900s），6/6
+unittest（0.634s），`screening.log` SHA-256
+`aa93469405f5afb1a21da2a5ea3276c5049c1466777e92108f6dbad6afd7bbbb`。
+ascend vendor blob
+`a8bf24b42a1f7a73ab4f9635b928e0a28094b258a04cf4de4d39ae52f08c9e4b`，
+iluvatar=enflame
+`86419a800ebf783d70f0392ae7c71ad06e755844197efe8ce23a6b7b394276e8`，测试
+`08684018d37274fa90180aeeb731c9e340351f426a33d166559c06e2412bcd6b`（后再
+修正段长，最终以 Git blob 为准）。release
+`gpu:/tmp/flagos-csv-release.*`，source/verification commit
+`dccd88d3b90526d3da3510c12e0622cd6b9528df`，`RELEASE_OK`，`release.log`
+SHA-256
+`0496e6f96e93bdb8338fd6ab1204849e38103cde6ded75179faaf3883d06a16d`。
+canonical ZIP
+`artifacts/competition/chunk_state_varlen/s1a-dccd88d/chunk_state_varlen.zip`，
+SHA-256
+`ad05f226981d59fcbc054aed46d35aa03a2bbcec2120d5402940584ad7452690`，
+成员 generic + ascend/enflame/iluvatar，`unzip -t` 通过。
