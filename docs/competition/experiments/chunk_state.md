@@ -249,3 +249,56 @@ E2 的 64 registers、8192-byte shared、0 spill 变为 80 registers、
 无 TF32，但违反 0-spill 门槛。aggregate 收益不能覆盖稳定的小 shape 回退和
 新增 spill，因此不做事后 shape 缩窗，不晋级 E3，继续保留 E2 作为 Task 12
 唯一候选。
+
+## E2a：预防性 Ascend capped grid vendor（首投候选）
+
+状态：release 门禁通过，候选就绪，等待 preflight 与提交
+
+背景：Task 08/20/21/24 的平台记录证明 Ascend 把全部 grid 维展平为总
+`coreDim` 且上限 65535；本 generic 为 3D grid
+`(tiles, batch*nchunks, nheads)`，总 program 数在较大隐藏 shape（如
+seqlen 16384、chunk 64、batch 2、nheads 32、H64/N128 时约 131072）会超限。
+为避免 Task 21 式 6/8→7/8 的额度消耗，首投前预防性加入华为 vendor。
+
+E2a 的 generic 与 E2 逐字节相同；新增 `_ascend/ops/chunk_state.py` 采用
+Task 20 E3 平台验证三次的 capped grid-stride 模式：一维物理 grid
+`min(total_programs, 4096)`，program 内以 `tl.num_programs(0)` 跨步遍历
+逻辑 id，并按 `head → batch·chunk → tile` 分解还原三元组；kernel 数学、
+BLOCK 32/32/64|32、4 warps、1 stage、stride 与 `tl.dot` 路径逐行保持 E2。
+新增回归 `test_ascend_capped_grid_covers_multi_iteration_scale`：
+`(2,128,64,8,64,64)` 的总 program 数 8192 > 4096，覆盖每 program 两轮
+grid-stride；`(2,3,17,6,19,23)` 覆盖非 2 次幂尾块；均与 reference 按
+`3e-2` 容差比对。既有四个回归不变。
+
+screening 目录 `gpu:/tmp/flagos-chunk-state-asc.n46PpQ`（mode 0700）。第一
+次 PID/PGID `104493`（23:30:51，wall 900s，脚本 SHA-256
+`70ca1d86c85ead3db06dd2d54ba8e652307d802d82d7696bbff92454bee71da7`）因测试
+新增方法的 Black 折行失败停止；本地仅修折行（测试 SHA-256 由
+`f2c85270601a390d42cc83181626117d4edb338be28f0bb7fd1edc6082c8a53d` 变为
+`b44848d183139069253aa082fefa225d9ffefe484e86a8ea1dbf3cf138dc3f48`）后以
+PID/PGID `104636`（23:32:46）重跑通过：py_compile、Black 79、isort、
+flake8 与 4/4 unittest（1.242s），`screening.log` SHA-256
+`a0b778ff2e7a7f981bae4a25bdaa2cb8ed387f533343de73addf037a767b1c7b`。环境
+RTX 5070 Ti 16 GB、driver 610.57.04、Python 3.12.13、PyTorch 2.13.0+cu130、
+Triton 3.7.1、CUDA 13.0。
+
+source/verification commit 均为
+`9816257680bbd1f59716359993c3b1327786ac7d`；generic blob 仍为
+`c50cda381c48712e108e34578c9805e74422b6b7b81be9b6dd6b2972d3753c47`（与 E2
+一致），Ascend vendor blob
+`7d3f772f586ab54f9764200697aabdfe0e7c9c224aa14f113d12cd3d0f7cc637`，测试
+`b44848d183139069253aa082fefa225d9ffefe484e86a8ea1dbf3cf138dc3f48`。release
+目录 `gpu:/tmp/flagos-chunk-state-asc-release.KkyZYv`（mode 0700）从该
+commit 的 Git 对象建立，PID/PGID `104814`（23:34:37，wall 600s）；静态
+门禁与 4/4 unittest（0.571s）通过并输出 `RELEASE_OK`，`release.log`
+SHA-256
+`9851c2e56e7e72ccb5a2ed3a3cc612144e66db08c0d8c67d055c2370cd4779dc`。
+
+canonical ZIP 为
+`artifacts/competition/chunk_state/e2a-9816257/chunk_state.zip`，15365
+bytes，SHA-256
+`f09ffdcaa945c5781220a67bed96732b33c00d0c7dfafc39f7c829d1a64cf506`；成员
+`chunk_state.py`、`chunk_state_ascend.py`，`unzip -t` 通过。平台门禁：8/8
+通过且每芯 ≥0.1x；华为在超限 shape 选中 vendor，其余七芯 generic。昆仑 dot
+kernel 走 XPU SDNN 路径，grid 行为未知，若失败则按 Task 21 的 BLOCK 放大
+模式修复；燧原 grid.x（tiles ≤64）安全。
