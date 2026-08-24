@@ -229,7 +229,8 @@ SHA-256 恢复为 `02bed1a5...b964997`，不可变首投仍为 S0 `3fac516`。
 
 ## E2：昆仑 small-hidden/high-rows multi-row vendor
 
-状态：release 与 canonical ZIP 已就绪，未提交平台
+状态：平台二投完成，8/8、平均 4.5467x、当前第 7；平台标记 team best，
+但昆仑 0.9308x 未过 E2 专项目标
 
 验证时间：2026-08-24 15:11–15:26 CST
 
@@ -317,5 +318,39 @@ SHA-256
 验签。
 
 平台晋级门禁预设为 8/8 正确、Kunlun 至少 `1.05x` 且优于 S0 的 `0.94x`、平均
-高于 `4.53x`；若未达标则保留 S0。尚未打开平台、读取实时额度或提交；任何历史
-确认都不授权 E2。
+高于 `4.53x`；若未达标则保留 S0。
+
+### 平台二投
+
+- 提交时间：2026-08-24 17:05:45 CST；submission ID `4163`，当日第 4 次提交
+- 登录账号 / 团队：`15600308080` / `SoulCoder`
+- 提交产物：
+  `/Users/bytedance/ccc/flagos/artifacts/competition/fused_rmsnorm/e2-a5b2986/fused_rmsnorm.zip`；
+  6428 bytes；SHA-256
+  `04e24fd06f26144bb6b5824b720678edd48a731f34ced48eab8600c30c65c124`
+- ZIP 成员仅 `fused_rmsnorm.py`、`fused_rmsnorm_kunlunxin.py`；远端下载产物的
+  大小和 SHA-256 与本地 canonical ZIP 完全一致
+- 提交前后当日剩余额度：`12/15` → `11/15`
+- 提交 POST 返回业务码 `202`，旧脚本先保守标记为 `uncertain`；只读状态随后以
+  同一上传对象定位到 submission `4163`，本地 intent 对账为
+  `reconciled_submitted`，全程没有重试或重复提交。脚本已在 commit `4ff2be5`
+  接受 queued 响应码 `202`
+- 终态：有效、8/8 通过、平均 `4.54668333x`、当前第 7，平台标记为 team best
+
+| 芯片 | 选中文件 | 正确性 | speedup |
+| --- | --- | --- | ---: |
+| 天数智芯 | `fused_rmsnorm.py` | 通过 | 7.7700x |
+| 沐曦 | `fused_rmsnorm.py` | 通过 | 5.3862x |
+| 燧原 | `fused_rmsnorm.py` | 通过 | 1.50486667x |
+| 海光 | `fused_rmsnorm.py` | 通过 | 7.50766667x |
+| 昆仑芯 | `fused_rmsnorm_kunlunxin.py` | 通过 | 0.9308x |
+| 华为 | `fused_rmsnorm.py` | 通过 | 1.67373333x |
+| 国际通用 A | `fused_rmsnorm.py` | 通过 | 5.9490x |
+| 国际通用 B | `fused_rmsnorm.py` | 通过 | 5.6512x |
+
+结论：七芯继续选用未变的 generic 文件且整体无明显回归；昆仑确实选中了 vendor
+文件，但 `0.9308x` 略低于 S0 的 `0.9354x`，未达到 `1.05x` 门禁。NVIDIA 上的
+multi-row 收益没有迁移到平台隐藏昆仑 workload，停止沿同一二维 multi-row shape
+假设继续试参。平台将 E2 记为 team best，是因为平均值较 S0 高
+`0.01191666x`（约 0.263%）；保留该已提交产物作为平台最佳记录，但判定昆仑专项
+实验失败。下一轮转其他算子；若再改昆仑，先取得实际隐藏 shape 或编译器证据。

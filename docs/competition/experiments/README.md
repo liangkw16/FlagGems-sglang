@@ -29,7 +29,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 16 | [`decode_grouped_attention`](decode_grouped_attention.md) | `e1-bc729bd` | `088a9ebfcae10a608528e5614a684997753cd8693ac13f49496383ced4ca80c0` | 6/6 release；grouped KV reuse 1.326–1.845x，controls 1.0009x；未平台 | 第 13 个提交 |
 | 17 | [`embedding_lora_a`](embedding_lora_a.md) | `s1-d101ebe` | `49d7a33648c31d2b13e46c7e3dba8e7a4b88ecadce7da444c2ed5bac6b0ac09f` | 5/5 release；修复空 segment metadata 越界；2-warps E1 仅 0.999994x，保留 S1；未平台 | 第 7 个提交 |
 | 18 | [`fused_recurrent_gdn`](fused_recurrent_gdn.md) | `e2-2ba2813` | `4be0a8135cc5dcc23a33b31852b6754fa44a2959e8d035e49a113d07edaf14eb` | 3/3 release；低精度 K65–128 为 1.479–1.525x；大 K 八芯状态资源仍高风险 | 最后受控提交 |
-| 19 | [`fused_rmsnorm`](fused_rmsnorm.md) | `e2-a5b2986` | `04e24fd06f26144bb6b5824b720678edd48a731f34ced48eab8600c30c65c124` | S0 平台 8/8、4.53x；E2 仅加 Kunlun 2D multi-row，4/4 release，NVIDIA affected 1.9521x、controls 1.0005x | 待受控二投；只验证昆仑增量 |
+| 19 | [`fused_rmsnorm`](fused_rmsnorm.md) | `e2-a5b2986` | `04e24fd06f26144bb6b5824b720678edd48a731f34ced48eab8600c30c65c124` | E2 平台 8/8、4.5467x、第 7；Kunlun vendor 被选中但仅 0.9308x，未过 1.05x 门禁 | 停止同一 multi-row 假设；转其他算子 |
 | 20 | [`mamba_layernorm_gated`](mamba_layernorm_gated.md) | `e2-345413d` | `78c56c2955981833242d9fc2ed13dca1373014fc49f12072d469f34987875f03` | 3/3 回归；E2 受影响点 1.0803x；未平台 | 第 4 个提交 |
 | 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s0-3fac516` | `ef3c30e416d24d8268a1c252261676f3e540910a8836a93d2520917580f514bf` | 4/4 回归；512/1024/2048 tile 均未过 1.05x，保留 S0；未平台 | 第 3 个提交 |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s1-11ae343` | `bec21ac8d198d0eefd3d7c0ef68bf3a2c654017c00656c230ab12bc04f0f4d9c` | 3/3 release；修复空段 metadata 越界并跳过窄 slice 无效 GEMM；affected 1.006–1.371x；未平台 | 第 9 个提交 |
@@ -46,9 +46,9 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 
 Task 18 暂缓，仅作状态资源实验。Task 13 已按公开 reference 可返回域修复；
 其余 shape 仍需赛方澄清。Task 14 已有 NVIDIA 优化，但七芯 generic 风险仍需平台
-证明。Task 19 已通过，E2 canonical 包只优化首投为 0.94x 的昆仑芯；燧原仍为
-1.52x。Task 24 已通过，S2 只优化 Enflame。Task 19 在
-2026-08-24 14:08:35 CST 提交后页面显示当日剩余 `12/15`，这只是历史观察；
+证明。Task 19 的 E2 已通过 8/8，但昆仑专项优化未生效；燧原为 1.5049x。
+Task 24 已通过，S2 只优化 Enflame。Task 19 在
+2026-08-24 17:05:45 CST 二投后平台显示当日剩余 `11/15`，这只是历史观察；
 每次上传前必须重新读取实时额度。
 
 ## 上传确认门禁
