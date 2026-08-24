@@ -19,18 +19,40 @@ from pathlib import Path
 
 import torch
 
-MODULE_PATH = (
+BACKEND_ROOT = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+)
+
+
+def _load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+MODULE = _load_module(
+    "bmm_chunk_module",
     Path(__file__).parents[1]
     / "src"
     / "flaggems_sglang"
     / "ops"
-    / "bmm_chunk.py"
+    / "bmm_chunk.py",
 )
-SPEC = importlib.util.spec_from_file_location("bmm_chunk_module", MODULE_PATH)
-if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"cannot load {MODULE_PATH}")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+ASCEND_MODULE = _load_module(
+    "bmm_chunk_ascend_module",
+    BACKEND_ROOT / "_ascend" / "ops" / "bmm_chunk.py",
+)
+ILUVATAR_MODULE = _load_module(
+    "bmm_chunk_iluvatar_module",
+    BACKEND_ROOT / "_iluvatar" / "ops" / "bmm_chunk.py",
+)
 
 
 def reference(a, b, chunk_size, causal=False):
@@ -177,6 +199,53 @@ class BmmChunkTest(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "divisible"):
             MODULE.bmm_chunk(a, b, 4)
+
+    def test_ascend_capped_grid_multi_iteration(self):
+        torch.manual_seed(20260824)
+        batch, chunk_size, ngroups, k = 2, 64, 8, 64
+        nchunks = 128
+        seqlen = nchunks * chunk_size
+        tiles = 2 * 2
+        self.assertGreater(tiles * batch * nchunks * ngroups, 4096)
+
+        for dtype, tolerance in (
+            (torch.float32, 1e-4),
+            (torch.float16, 1e-2),
+        ):
+            with self.subTest(dtype=dtype):
+                a = torch.randn(
+                    (batch, seqlen, ngroups, k), device="cuda", dtype=dtype
+                )
+                b = torch.randn_like(a)
+
+                actual = ASCEND_MODULE.bmm_chunk(a, b, chunk_size)
+                expected = reference(a, b, chunk_size)
+
+                torch.testing.assert_close(
+                    actual, expected, atol=tolerance, rtol=tolerance
+                )
+
+    def test_iluvatar_split_fp16_precision(self):
+        torch.manual_seed(20260824)
+        for chunk_size, k in ((64, 64), (33, 65), (257, 64)):
+            for dtype, tolerance in (
+                (torch.float32, 1e-4),
+                (torch.float16, 1e-2),
+                (torch.bfloat16, 1.5e-2),
+            ):
+                with self.subTest(chunk=chunk_size, k=k, dtype=dtype):
+                    seqlen = 2 * chunk_size
+                    a = torch.randn(
+                        (2, seqlen, 4, k), device="cuda", dtype=dtype
+                    )
+                    b = torch.randn_like(a)
+
+                    actual = ILUVATAR_MODULE.bmm_chunk(a, b, chunk_size)
+                    expected = reference(a, b, chunk_size)
+
+                    torch.testing.assert_close(
+                        actual, expected, atol=tolerance, rtol=tolerance
+                    )
 
 
 if __name__ == "__main__":
