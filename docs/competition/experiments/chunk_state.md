@@ -302,3 +302,55 @@ bytes，SHA-256
 通过且每芯 ≥0.1x；华为在超限 shape 选中 vendor，其余七芯 generic。昆仑 dot
 kernel 走 XPU SDNN 路径，grid 行为未知，若失败则按 Task 21 的 BLOCK 放大
 模式修复；燧原 grid.x（tiles ≤64）安全。
+
+### E2a 平台首投：7/8
+
+2026-08-24 23:36:30 CST 提交，submission ID `4298`、当日序号 `14`，额度由
+`17/30` 变为 `16/30`；远端验签 `verified`，`file_url_sha256` 为
+`c0d1c6da5d6c50321ed5b66d3e9dd74215bc0740b01e506db940d92d49d17780`。
+23:40:47 CST 终态 `completed` / `invalid_correctness`，7/8：沐曦 2.7285x、
+燧原 0.1340x、海光 4.4840x、昆仑 0.2510x（generic，XPU SDNN 路径正确处理
+dot 与 3D grid）、华为 0.2720x（`chunk_state_ascend.py`，预防性 vendor 按
+预期被选中并通过）、国际 A 3.8365x、国际 B 2.9190x。天数智芯 correctness
+case 0–4 失败：单 case 489/512 元素不匹配，最大绝对差 6.40、最大相对差
+449.87，远超 TF32 级噪声，属结构性数值错误而非精度损失。
+
+根因假设：generic 的 `tl.dot(x, B, input_precision="ieee")` 在天数后端被
+错误编译。依据：固定 FlagGems `ed2508b` 的全部 FLA kernel（含
+`chunk_delta_h.py`）均使用不带 `input_precision` 的裸 `tl.dot` 并在含
+`_iluvatar` 的全部后端运行；其 `_iluvatar` heuristics 无任何 dot 精度
+workaround。天数无 grid 展平限制（Task 21 天数以总 program 114688 通过），
+故 vendor 只做单变量：去掉 `input_precision="ieee"`。
+
+## E2b：天数 plain-dot vendor
+
+状态：release 门禁通过，候选就绪，等待 preflight 与提交
+
+E2b 新增 `_iluvatar/ops/chunk_state.py`：kernel 与 generic 逐字节相同，仅
+`tl.dot(x, B, input_precision="ieee")` 改为 `tl.dot(x, B)`；generic、华为
+vendor 与 grid 不变。新增回归
+`test_iluvatar_plain_dot_chunk_boundary_precision`（fp32/fp16 × chunk
+`63/64/255/256/257`，代理上 NVIDIA 对 fp32 dot 默认 tf32，验证 3e-2 容差仍
+满足）并把天数 vendor 纳入多迭代规模回归。共 5/5 unittest。
+
+screening 目录 `gpu:/tmp/flagos-chunk-state-ilv.WZ9o1L`（mode 0700），
+PID/PGID `105015`（23:43:56，wall 900s，脚本 SHA-256
+`33b991989d954003c302da6c9af9a867a9c2f19a0544c9ab2cedaf25cb442ee1`）：静态
+门禁与 5/5 unittest（1.695s）通过，`screening.log` SHA-256
+`592ca3064954a7edc85377c72163451e26139218ba2ccd678e0c8e945296bb4a`。
+天数 vendor blob
+`add042f318103aa58c89d5eac7a856b0f2c3132527f99c364b12c80c65571d19`，测试
+`8f70bf5e232ef4782251bb89a0de6f6f15d6d9857f96c360debd70ff79959d08`。
+release 目录 `gpu:/tmp/flagos-chunk-state-ilv-release.syDsTG`（mode 0700），
+source/verification commit `b5ff6524acb1c175e79c44ea866c50f201e7d686`，
+PID/PGID `105212`（23:46:11，wall 600s）；`RELEASE_OK`，`release.log`
+SHA-256
+`8d9ab87f5ddf30b952952784332150dedd2fb5f56eadb6527508e37de45a32a1`。
+
+canonical ZIP 为
+`artifacts/competition/chunk_state/e2b-b5ff652/chunk_state.zip`，成员
+`chunk_state.py`、`chunk_state_ascend.py`、`chunk_state_iluvatar.py`，
+SHA-256
+`80db396c711dc482470c37374f49a3c505793daab730e455a0a2c5ad33ab9948`，
+`unzip -t` 通过。平台门禁：8/8 通过且每芯 ≥0.1x；天数选中 plain-dot
+vendor，华为继续选中 ascend vendor。
