@@ -181,6 +181,10 @@ def chunk_state(B, x, dt, dA_cumsum):
     if output.numel() == 0:
         return output
 
+    B = B.contiguous()
+    x = x.contiguous()
+    dt = dt.contiguous()
+    dA_cumsum = dA_cumsum.contiguous()
     block_m = 32
     block_n = 32
     block_k = 64 if chunk_size >= 256 else 32

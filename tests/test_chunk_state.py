@@ -279,6 +279,47 @@ class ChunkStateTest(unittest.TestCase):
                         actual, expected, atol=3e-2, rtol=3e-2
                     )
 
+    def test_iluvatar_vendor_strided_inputs(self):
+        torch.manual_seed(20260824)
+        batch, nchunks, chunk_size = 2, 3, 17
+        seqlen = nchunks * chunk_size
+        nheads, ngroups = 6, 2
+        headdim, dstate = 19, 23
+
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            with self.subTest(dtype=dtype):
+                B_storage = torch.randn(
+                    (batch, seqlen, ngroups, dstate * 2),
+                    device="cuda",
+                    dtype=dtype,
+                )
+                x_storage = torch.randn(
+                    (batch, seqlen, nheads, headdim * 2),
+                    device="cuda",
+                    dtype=dtype,
+                )
+                dt_storage = torch.empty(
+                    (batch, nheads, nchunks, chunk_size * 2),
+                    device="cuda",
+                    dtype=dtype,
+                )
+                dA_storage = torch.empty_like(dt_storage)
+                B = B_storage[..., ::2]
+                x = x_storage[..., 1::2]
+                dt = dt_storage[..., ::2]
+                dA_cumsum = dA_storage[..., 1::2]
+                dt.copy_(torch.rand_like(dt) * 0.1)
+                dA_cumsum.copy_(-torch.rand_like(dA_cumsum).cumsum(-1))
+
+                actual = ILUVATAR_MODULE.chunk_state(B, x, dt, dA_cumsum)
+                expected = _reference(B, x, dt, dA_cumsum)
+
+                self.assertFalse(B.is_contiguous())
+                self.assertFalse(x.is_contiguous())
+                torch.testing.assert_close(
+                    actual, expected, atol=3e-2, rtol=3e-2
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
