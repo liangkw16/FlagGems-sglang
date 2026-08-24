@@ -312,3 +312,21 @@ SHA-256
 `bmm_chunk.py`、`bmm_chunk_ascend.py`、`bmm_chunk_iluvatar.py`，
 `unzip -t` 通过。平台门禁：8/8 通过且每芯 ≥0.1x；天数与华为各自选中
 vendor，其余六芯 generic。
+
+### E3a 平台首投：8/8 正确性通过，invalid_threshold（燧原 0.001x）
+
+2026-08-25 00:21:17 CST 提交，submission ID `4345`、当日序号 `2`，额度
+`29/30` 变 `28/30`，`file_url_sha256` 为
+`94cc9010a1e3e724b650c8f3fbc86650bbcba481a2398585f1ea931827f9bdae`。
+00:22:42 CST 终态 `completed` / `invalid_threshold`：八芯 correctness 全部
+通过，天数选中 `_iluvatar`（1.6900x，split-fp16 生效）、华为选中
+`_ascend`（0.4370x）；但燧原 `0.0010x` 低于 0.1x 门槛，平均分
+`1.28425x` 不计。其余：card_a 3.3190x、海光 1.9460x、沐曦 1.7530x、
+card_b 0.9420x、昆仑 0.1860x。
+
+诊断：燧原在 Task 12 以同型 ieee-fp32 dot（32×32×64 tile）拿到
+0.116–0.24x，本题 0.001x 差两个数量级，排除 grid（grid.x=tiles ≤64 远小于
+燧原 65535 上限）与 warps（已为 4）。最可能根因：fp32 操作数 + ieee
+`tl.dot` 在 GCU 上退化为极慢路径。下一轮 E3b：燧原 vendor 复用天数
+split-fp16 形式（fp32 路径三点积、fp16/bf16 路径裸 dot），tile 与 grid
+不变；若仍 ~0.001x 则判定为 tile 尺寸问题，再试 BLOCK 64。
