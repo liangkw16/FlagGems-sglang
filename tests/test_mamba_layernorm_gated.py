@@ -18,20 +18,38 @@ from pathlib import Path
 
 import torch
 
-MODULE_PATH = (
+GENERIC_MODULE_PATH = (
     Path(__file__).parents[1]
     / "src"
     / "flaggems_sglang"
     / "ops"
     / "mamba_layernorm_gated.py"
 )
-SPEC = importlib.util.spec_from_file_location(
-    "mamba_layernorm_gated_module", MODULE_PATH
+ASCEND_MODULE_PATH = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+    / "_ascend"
+    / "ops"
+    / "mamba_layernorm_gated.py"
 )
-if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"cannot load {MODULE_PATH}")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+
+
+def _load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+MODULE = _load_module("mamba_layernorm_gated_module", GENERIC_MODULE_PATH)
+ASCEND_MODULE = _load_module(
+    "mamba_layernorm_gated_ascend_module", ASCEND_MODULE_PATH
+)
 
 
 def _reference(
@@ -123,16 +141,6 @@ class MambaLayernormGatedTest(unittest.TestCase):
                     bias_before = bias.clone() if bias is not None else None
                     z_before = z.clone() if z is not None else None
 
-                    actual = MODULE.mamba_layernorm_gated(
-                        x,
-                        weight,
-                        bias,
-                        1e-6,
-                        z=z,
-                        group_size=group_size,
-                        norm_before_gate=norm_before_gate,
-                        is_rms_norm=is_rms_norm,
-                    )
                     expected = _reference(
                         x,
                         weight,
@@ -145,35 +153,55 @@ class MambaLayernormGatedTest(unittest.TestCase):
                     )
 
                     self.assertFalse(x.is_contiguous())
-                    self.assertEqual(actual.shape, x.shape)
-                    self.assertEqual(actual.dtype, x.dtype)
-                    torch.testing.assert_close(
-                        actual, expected, atol=tolerance, rtol=tolerance
-                    )
-                    torch.testing.assert_close(x, x_before, atol=0.0, rtol=0.0)
-                    torch.testing.assert_close(
-                        weight, weight_before, atol=0.0, rtol=0.0
-                    )
-                    if bias is not None:
-                        torch.testing.assert_close(
-                            bias, bias_before, atol=0.0, rtol=0.0
-                        )
-                    if z is not None:
-                        torch.testing.assert_close(
-                            z, z_before, atol=0.0, rtol=0.0
-                        )
+                    for module in (MODULE, ASCEND_MODULE):
+                        with self.subTest(module=module.__name__):
+                            actual = module.mamba_layernorm_gated(
+                                x,
+                                weight,
+                                bias,
+                                1e-6,
+                                z=z,
+                                group_size=group_size,
+                                norm_before_gate=norm_before_gate,
+                                is_rms_norm=is_rms_norm,
+                            )
+
+                            self.assertEqual(actual.shape, x.shape)
+                            self.assertEqual(actual.dtype, x.dtype)
+                            torch.testing.assert_close(
+                                actual,
+                                expected,
+                                atol=tolerance,
+                                rtol=tolerance,
+                            )
+                            torch.testing.assert_close(
+                                x, x_before, atol=0.0, rtol=0.0
+                            )
+                            torch.testing.assert_close(
+                                weight, weight_before, atol=0.0, rtol=0.0
+                            )
+                            if bias is not None:
+                                torch.testing.assert_close(
+                                    bias, bias_before, atol=0.0, rtol=0.0
+                                )
+                            if z is not None:
+                                torch.testing.assert_close(
+                                    z, z_before, atol=0.0, rtol=0.0
+                                )
 
     def test_empty_input_preserves_contract(self):
         x = torch.empty((0, 259), device="cuda", dtype=torch.float16)
         weight = torch.ones(259, device="cuda", dtype=torch.float16)
 
-        actual = MODULE.mamba_layernorm_gated(
-            x, weight, None, 1e-6, group_size=37
-        )
+        for module in (MODULE, ASCEND_MODULE):
+            with self.subTest(module=module.__name__):
+                actual = module.mamba_layernorm_gated(
+                    x, weight, None, 1e-6, group_size=37
+                )
 
-        self.assertEqual(actual.shape, x.shape)
-        self.assertEqual(actual.dtype, x.dtype)
-        self.assertEqual(actual.numel(), 0)
+                self.assertEqual(actual.shape, x.shape)
+                self.assertEqual(actual.dtype, x.dtype)
+                self.assertEqual(actual.numel(), 0)
 
     def test_group_boundaries_match_reference(self):
         torch.manual_seed(20260825)
@@ -196,16 +224,6 @@ class MambaLayernormGatedTest(unittest.TestCase):
                     bias = torch.randn(hidden_size, device="cuda", dtype=dtype)
                     z = torch.randn_like(x)
 
-                    actual = MODULE.mamba_layernorm_gated(
-                        x,
-                        weight,
-                        bias,
-                        1e-6,
-                        z=z,
-                        group_size=group_size,
-                        norm_before_gate=False,
-                        is_rms_norm=False,
-                    )
                     expected = _reference(
                         x,
                         weight,
@@ -217,9 +235,59 @@ class MambaLayernormGatedTest(unittest.TestCase):
                         is_rms_norm=False,
                     )
 
-                    torch.testing.assert_close(
-                        actual, expected, atol=tolerance, rtol=tolerance
-                    )
+                    for module in (MODULE, ASCEND_MODULE):
+                        with self.subTest(module=module.__name__):
+                            actual = module.mamba_layernorm_gated(
+                                x,
+                                weight,
+                                bias,
+                                1e-6,
+                                z=z,
+                                group_size=group_size,
+                                norm_before_gate=False,
+                                is_rms_norm=False,
+                            )
+
+                            torch.testing.assert_close(
+                                actual,
+                                expected,
+                                atol=tolerance,
+                                rtol=tolerance,
+                            )
+
+    def test_ascend_capped_grid_covers_platform_failure(self):
+        torch.manual_seed(20260826)
+        rows, group_count, group_size = 64, 2048, 2
+        hidden_size = group_count * group_size
+        dtype = torch.bfloat16
+        x = torch.randn((rows, hidden_size), device="cuda", dtype=dtype)
+        weight = torch.randn(hidden_size, device="cuda", dtype=dtype)
+        bias = torch.randn(hidden_size, device="cuda", dtype=dtype)
+        z = torch.randn_like(x)
+
+        self.assertEqual(rows * group_count, 131072)
+        actual = ASCEND_MODULE.mamba_layernorm_gated(
+            x,
+            weight,
+            bias,
+            1e-6,
+            z=z,
+            group_size=group_size,
+            norm_before_gate=True,
+            is_rms_norm=False,
+        )
+        expected = _reference(
+            x,
+            weight,
+            bias,
+            1e-6,
+            z=z,
+            group_size=group_size,
+            norm_before_gate=True,
+            is_rms_norm=False,
+        )
+
+        torch.testing.assert_close(actual, expected, atol=1.5e-2, rtol=1.5e-2)
 
 
 if __name__ == "__main__":
