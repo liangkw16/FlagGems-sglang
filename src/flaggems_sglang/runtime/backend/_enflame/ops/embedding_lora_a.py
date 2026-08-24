@@ -56,41 +56,50 @@ def _embedding_lora_a_kernel(
     token_offset = tl.program_id(0)
     segment_start = tl.load(seg_indptr + batch_id * seg_indptr_stride)
     segment_end = tl.load(seg_indptr + (batch_id + 1) * seg_indptr_stride)
-    if token_offset >= segment_end - segment_start:
-        return
+    token_valid = token_offset < segment_end - segment_start
 
     weight_index = tl.load(weight_indices + batch_id * weight_indices_stride)
     rank = tl.load(lora_ranks + weight_index * lora_ranks_stride)
-    if rank == 0:
-        return
 
     token_id = tl.load(
-        input_ids + (segment_start + token_offset) * input_stride
+        input_ids + (segment_start + token_offset) * input_stride,
+        mask=token_valid,
+        other=0,
     )
     num_rank_blocks = tl.cdiv(rank, BLOCK_RANK)
 
     for rank_block in range(num_rank_blocks):
         rank_offsets = rank_block * BLOCK_RANK + tl.arange(0, BLOCK_RANK)
-        rank_mask = rank_offsets < rank
-        is_extra = token_id >= vocab_size
+        rank_mask = (rank_offsets < rank) & token_valid
 
-        if HAS_EXTRA_EMBEDDINGS and is_extra:
-            extra_token_id = token_id - vocab_size
-            values = tl.load(
-                extra_embeddings
-                + weight_index * extra_stride_lora
-                + extra_token_id * extra_stride_token
-                + rank_offsets * extra_stride_rank,
-                mask=rank_mask,
+        if HAS_EXTRA_EMBEDDINGS:
+            is_extra = token_id >= vocab_size
+            regular_id = tl.minimum(token_id, vocab_size - 1)
+            regular = tl.load(
+                weights
+                + weight_index * weight_stride_lora
+                + rank_offsets * weight_stride_rank
+                + regular_id * weight_stride_vocab,
+                mask=rank_mask & (token_id < vocab_size),
                 other=0.0,
             )
+            extra_id = tl.maximum(token_id - vocab_size, 0)
+            extra = tl.load(
+                extra_embeddings
+                + weight_index * extra_stride_lora
+                + extra_id * extra_stride_token
+                + rank_offsets * extra_stride_rank,
+                mask=rank_mask & is_extra,
+                other=0.0,
+            )
+            values = tl.where(is_extra, extra, regular)
         else:
-            token_id = tl.minimum(token_id, vocab_size - 1)
+            regular_id = tl.minimum(token_id, vocab_size - 1)
             values = tl.load(
                 weights
                 + weight_index * weight_stride_lora
                 + rank_offsets * weight_stride_rank
-                + token_id * weight_stride_vocab,
+                + regular_id * weight_stride_vocab,
                 mask=rank_mask,
                 other=0.0,
             )

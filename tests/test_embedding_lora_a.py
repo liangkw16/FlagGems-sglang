@@ -324,6 +324,48 @@ class EmbeddingLoraATest(unittest.TestCase):
                     actual, expected, atol=0.0, rtol=0.0
                 )
 
+    def test_vendors_extra_embeddings_branch_free_path(self):
+        torch.manual_seed(20260824)
+        vocab_size = 512
+        extra_vocab = 64
+        seg_indptr = [0, 700, 1500, 2600]
+        info = batch_info(seg_indptr, [0, 1, 2], [32, 32, 32])
+        total = seg_indptr[-1]
+        base_ids = torch.randint(0, vocab_size, (total,), device="cuda").to(
+            torch.int32
+        )
+        extra_positions = torch.rand(total, device="cuda") < 0.3
+        input_ids = torch.where(
+            extra_positions,
+            torch.randint(
+                vocab_size, vocab_size + extra_vocab, (total,), device="cuda"
+            ).to(torch.int32),
+            base_ids,
+        )
+        weights = torch.randn(
+            (3, 32, vocab_size), device="cuda", dtype=torch.float16
+        )
+        extra_embeddings = torch.randn(
+            (3, extra_vocab, 32), device="cuda", dtype=torch.float16
+        )
+        expected = reference(
+            input_ids, weights, info, vocab_size, extra_embeddings
+        )
+
+        for name, module in (
+            ("generic", MODULE),
+            ("ascend", ASCEND_MODULE),
+            ("kunlunxin", KUNLUN_MODULE),
+            ("enflame", ENFLAME_MODULE),
+        ):
+            with self.subTest(module=name):
+                actual = module.embedding_lora_a(
+                    input_ids, weights, info, vocab_size, extra_embeddings
+                )
+                torch.testing.assert_close(
+                    actual, expected, atol=0.0, rtol=0.0
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
