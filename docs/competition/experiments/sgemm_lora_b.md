@@ -265,3 +265,34 @@ canonical ZIP `artifacts/competition/sgemm_lora_b/s2-1e834e2/sgemm_lora_b.zip`�
 SHA-256
 `a85c8ae3f1b6e82ebde27b5ab9675c105e2fc2b40f5b38568094ff597973fb1e`，成员
 generic + ascend/enflame/iluvatar，`unzip -t` 通过。本任务预算 2 次提交。
+
+### S2 平台首投：7/8（昆仑超时崩溃）→ S2b 昆仑保守 vendor
+
+S2 于 2026-08-25 01:43:55 CST 提交（submission `4403`，当日序号 `9`，额度
+`22/30`→`21/30`，`file_url_sha256` 为
+`5d0229231d69f7d9786cea363a0de23fab6443b97f2702ec16ee0e92e7b332a6`）。
+七芯成绩优异：海光 46.4090x、国际 A 46.6575x、天数 34.1355x（split-fp16
+vendor 生效）、国际 B 29.0540x、华为 18.4110x（fold vendor 生效）、沐曦
+17.5935x、**燧原 4.0475x**（64/128 + stages 3 修复了 Task 09 型慢路径，
+为本队燧原 dot 最佳）。昆仑芯在验证执行阶段超时（1830s/1800s）并发生子进
+程崩溃（`Fatal Python error: Aborted`），无逐 case 结果——判断为 generic 的
+64/128 tile + `num_stages=3` 在 XPU SDNN 编译路径上编译爆炸；缓存源码亦
+记录昆仑 `num_stages` 属 invalid 参数。S2b 新增 `_kunlunxin` vendor：kernel
+与 generic 相同，launch 退回 Task 09/12 平台通过的保守配置 32/32/32、
+warps 4、stages 1。screening `gpu:/tmp/flagos-sglb-s2b.ci3uNg`，PID/PGID
+`111772`（02:17:37，wall 900s，脚本 SHA-256 同 /tmp/flagos-sglb-s2b-
+screening.sh），5/5 unittest（含昆仑 vendor 回归），`screening.log`
+SHA-256
+`fef4f429cf4cdffe681027c32ca94602f938460d9e4bb0be75602fd4550489a9`；昆仑
+vendor blob
+`bdfe676a86e5ac718d8f0565cb78374395af3ec614ea1f2407ff37a11e47ade3`，测试
+`2a2e8c5af3c5b923ca14b735bfb5ef4f152d04baf672c41d86c1dbb2e7ef3a21`。release
+`gpu:/tmp/flagos-sglb-s2b-release.XXXXXX 系目录`，commit
+`4c184b63f2b2452d76d53ef78f672b38b1df5147`，`RELEASE_OK`，`release.log`
+SHA-256
+`be2faedf1f2c779bae5a694f18143a42394f71779daadebf45fd692a6c81fb41`。
+canonical ZIP `artifacts/competition/sgemm_lora_b/s2b-4c184b6/sgemm_lora_b.zip`，
+SHA-256
+`3b022a2b66b170c99d3aa0f94c9f5f878489df1fad729bc43d94ba09af993db0`，成员
+generic + ascend/enflame/iluvatar/kunlunxin 四 vendor。本提交为 2 次预算的
+最后一次。
