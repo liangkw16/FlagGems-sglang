@@ -2,7 +2,7 @@
 
 ## S0：generic baseline
 
-状态：S0 已通过发布门禁，canonical S0c ZIP 已就绪；等待当次上传确认
+状态：S0c 已提交平台，6/8；燧原、华为因物理 grid 超限失败
 
 验证时间：2026-08-24 01:22–01:28 CST
 
@@ -75,8 +75,7 @@ indices，并依赖设备 SM 数；本题只复用 int32 bit 位布局，不复�
   32 bit，减少重复 bitmask load。
 - ZIP 由 commit `3fac516` 的算子目录直接通过 `git archive` 生成；`unzip -t`、
   UTF-8、单一 `.py`、10 MB、basename 和 ZIP 内源码哈希门禁均通过。
-- 尚未上传，也未消耗提交额度；必须由用户针对上述 ZIP 路径和 SHA-256
-  当次确认后才能上传。
+- 本节记录发布门禁完成时的状态，当时尚未上传；实际首投与额度变化见 S0c。
 
 ## S0 发布复核与 E1 word-expansion 负实验
 
@@ -131,9 +130,9 @@ wrapper-inclusive 五组轮换 A/B，组内 `warmup=25, rep=100`：
 工作树源码已恢复到 S0 SHA-256；扩大后的测试继续保留。下一次源码迭代等待 S0
 八芯结果或新的固定来源，不在 NVIDIA 上继续微调同一路径。
 
-## S0c：canonical 首投包
+## S0c：canonical 首投包与平台结果
 
-状态：候选就绪，未提交平台
+状态：已提交；`invalid_correctness`，6/8，平均值与排名 N/A
 
 生成时间：2026-08-24 17:20 CST
 
@@ -153,6 +152,66 @@ canonical ZIP 为
 确定性打包器 dry-run、生成后 `verified-existing` 和 `unzip -t` 均通过。旧 S0 legacy
 ZIP 保持原字节不覆盖，平台候选只使用本节 S0c。
 
-2026-08-24 17:19:51 CST 的只读平台状态为账号 `15600308080`、团队
-`SoulCoder`、Task 08 / tid `s2t1op008`、竞赛中、尚无本队该题提交，实时剩余额度
-`11/15`。该读数不构成提交授权；真正提交前仍须重新预检并绑定完整 tuple。
+2026-08-24 17:26:16 CST 在账号 `15600308080`、团队 `SoulCoder` 下提交一次，
+submission ID `4170`、daily seq `5`。平台远端 ZIP 为 2600 bytes，下载后
+SHA-256 与本地 `f4068dd290bb16821d75eb669485b5607bf8cd3a8f4b1807af2e67aa23d41a21`
+一致；`file_url_sha256` 为
+`a8318bb48e09ac02022de7f9e774f83fcadf3a626894dfb3d3b1265f55103b14`。
+实时额度由 `11/15` 变为 `10/15`。
+
+| 芯片 | 结果 | speedup | 选中文件 |
+| --- | --- | ---: | --- |
+| 天数 | 通过 | 9.8134x | `apply_token_bitmask.py` |
+| 沐曦 | 通过 | 4.9598x | `apply_token_bitmask.py` |
+| 燧原 | 失败 | N/A | `apply_token_bitmask.py` |
+| 海光 | 通过 | 4.8052x | `apply_token_bitmask.py` |
+| 昆仑芯 | 通过 | 0.6448x | `apply_token_bitmask.py` |
+| 华为 | 失败 | N/A | `apply_token_bitmask.py` |
+| 国际通用 A | 通过 | 6.7162x | `apply_token_bitmask.py` |
+| 国际通用 B | 通过 | 6.1658x | `apply_token_bitmask.py` |
+
+燧原 correctness case 6/7 分别要求 `grid.x=304128/2433024`，超过硬件上限
+65535。华为 case 6 同样因 `coreDim=304128` 超过 65535 导致 kernel launch 失败；
+输出比较错误只是异步 launch 错误的外层表现。其余六芯全部通过且均高于 0.1x，
+因此下一轮保持 generic 字节不变，只为这两芯增加 capped grid-stride vendor。
+
+## S1：燧原/华为 capped grid-stride 修复
+
+状态：候选就绪，未提交平台
+
+源码与验证 commit：`c33d45fb47e6dce7a72d440b3f4eca4dfe486d6a`
+
+generic 源码逐字节保持 S0 不变。只增加两个自包含 vendor 文件：燧原使用
+`grid=(min(total_blocks, 12),)`，华为使用
+`grid=(min(total_blocks, 48),)`；kernel 以 `tl.num_programs(0)` 为步长遍历逻辑
+block，BLOCK 256、4 warps、1 stage、stride、tail mask 和计算公式均不变。固定
+backend 证据来自 Triton-Ascend commit
+`865691e2e9b656bc58008170207b4108d92e8dd1` 与 FlagGems commit
+`ed2508bcb5a03000e9774734201d840ba362cd11`：华为二维 grid 会展平为总
+`coreDim`，因此不使用二维拆分；12/48 也与 Task 24 已恢复两芯通过的平台模式一致。
+
+回归新增 `(B,V)=(256,65537)`，共 65792 个逻辑 block，能让旧的一 program/block
+实现越过 65535，并对两个 vendor 与 Torch reference 做 FP16 精确比较。screening
+和从 commit Git 对象生成的 release 均通过 py_compile、Black、isort、flake8 与
+6/6 unittest；最大代理 shape 即 `(256,65537)`。screening 的三份源码与测试
+SHA-256 也和晋级后的 `c33d45f` Git objects 逐项一致。
+
+| 项目 | 值 |
+| --- | --- |
+| generic SHA-256 | `5da3d966936c919cd4b0fab2c32ecc66526eb375c3cdc20a2e3f2f37cddb697c` |
+| 华为 vendor SHA-256 | `7c4daf2fa5774dcbf0c9891b787c77d18d4d0766ae94292ed38347172ead3fd8` |
+| 燧原 vendor SHA-256 | `69bfed8aeb81e36402406d2f5d5727cfd924cd589f0a2f1e856f4fadffe260bc` |
+| 测试 SHA-256 | `981f91d58cc0e04914244f0c4d00cf6086c990e378ea97fb487311b9651b90f1` |
+| screening | `gpu:/tmp/flagos-apply-token-bitmask.SqYnGH`；PID/PGID `98490`；`screening.log` SHA-256 `2b03ec9cb0d1f28b210593420e7abfacf146a840e198cce1ddfc6fa4d4dc6da8`；6/6，0.803s |
+| release | `gpu:/tmp/flagos-apply-token-bitmask-release.o2UHwd`；PID/PGID `99223`；`release.log` SHA-256 `2afad9a11806e2626f9a9c4c71104b7c5c2f5d5ea7c870665ce9c39700f95e93`；6/6，0.551s，`RELEASE_OK` |
+| 代理环境 | RTX 5070 Ti 16 GB；driver 610.57.04；Python 3.12.13；PyTorch 2.13.0+cu130；Triton 3.7.1；CUDA 13.0 |
+| 编译资源 | 2026-08-24 18:05:41 CST；同一 release 目录 `resource.log`，mode 0600、700 bytes、SHA-256 `a5b4d75f515a629fc88abf443ec53ded307e5a58f805442bfca1f4386d5c3e41`；两个 vendor 均 26 registers、0 spill、0 shared、0 global scratch |
+| ZIP | `artifacts/competition/apply_token_bitmask/s1-c33d45f/apply_token_bitmask.zip`，8382 bytes |
+| ZIP SHA-256 | `c6304895495de8aa601ba61acff6b18f0e3f3cc45158ec1b0aa90856927a60c6` |
+
+ZIP 由确定性打包器从上述 commit 生成并以 `verified-existing`、`unzip -t` 复验。
+成员为 `apply_token_bitmask.py` 2458 bytes、`apply_token_bitmask_ascend.py` 2756
+bytes、`apply_token_bitmask_enflame.py` 2756 bytes，成员哈希与上表源码完全一致。
+NVIDIA release 只能证明代理编译和数值，不能证明两款目标 runtime；平台晋级门禁为
+8/8、两芯都选中对应 vendor 且各自不低于 0.1x。若燧原恢复正确但性能偏低，下一轮
+才单变量尝试 BLOCK 256 → 4096。
