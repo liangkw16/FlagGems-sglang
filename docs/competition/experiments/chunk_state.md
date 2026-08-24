@@ -194,3 +194,58 @@ E2 超过预设的全套 `>=1.05x`、每 dtype `>=1.02x`、稳定回退
 正确性与性能仍必须由平台逐芯证明。上传前须重新读取实时额度，
 并针对 Task 12、E2 ZIP 的绝对路径和完整 SHA-256 取得当次确认；
 本记录不构成上传授权。
+
+## E3：short-K `BLOCK_M=64` 拒绝
+
+状态：严格 screening 拒绝，源码和测试已逐字节恢复 E2；未生成新 ZIP，
+未提交平台
+
+验证时间：2026-08-24 10:15–10:19 CST
+
+### 假设与身份
+
+E3 只在 `headdim >= 64 and chunk_size < 256` 时把 `BLOCK_M` 从 32
+改为 64，其他 tile、warps、stages、计算和 grid 规则不变。affected 固定为
+6 个 short-K/M>=64 shape × 3 dtype，control 固定为 M63 与 K256 × 3
+dtype；晋级前预注册总体 `>=1.05x`、每 dtype `>=1.02x`、最差点
+`>=0.98x`、最差单轮 `>=0.95x`、control 点 `[0.98,1.02]`，并要求
+`<=128` registers、`<=16 KiB` shared、0 spill/scratch/local、无 TF32。
+
+| 项目 | 值 |
+| --- | --- |
+| baseline commit | `67350fa9bc365d7b26b2c5215f1cd716f244fbc2` |
+| baseline 源码 SHA-256 | `c50cda381c48712e108e34578c9805e74422b6b7b81be9b6dd6b2972d3753c47` |
+| E3 临时源码 SHA-256 | `5d6778e717f247528f3678f0b40dcf21f8f3061ace8513095b17d8cf461da1d8` |
+| E3 临时测试 SHA-256 | `8e35df823b7e6ae7d7cad2e0850bc03d1625e8e2da003b1f1dc03a00126c0d95` |
+| harness / gates SHA-256 | `037b5ef95ad0bfbaa69f7287332e5a08351d741989813820b7c5ef3cc5042475` / `4e721269b169e9eda83bbf144c37229468b93af73124687cf146e63435ed08df` |
+| raw JSON / gates log SHA-256 | `5855dc73ca3c17818d4728e74fb3ba0bc75ca5a601d211e6f53d36ae49164548` / `459a05153458d3d73889e93455fa6aa0c132ba40f35750c22f3377e87f7825ec` |
+| static/unit log SHA-256 | `5d343776167b28e63884688befaa78c5a89fa3d1b1e0a2bbccff08b5276e3017` |
+| 远端证据 | `gpu:/tmp/flagos-chunk-state-e3.dgS8ng`，mode 0700，PID/PGID `94177` |
+
+远端 RTX 5070 Ti 环境与 E2 相同。静态门禁和 3/3 unittest 通过；screening
+对 54 个 case 做 reference 正确性，全部通过。性能使用 batch 20、
+`warmup=25, rep=100`，六轮严格 `AB/BA` 各三轮，并以逐轮 paired
+speedup 中位数裁决。
+
+### 拒绝证据
+
+| 指标 | 结果 | 门槛 |
+| --- | ---: | ---: |
+| affected 18 点几何平均 | `1.120652x` | `>=1.05x` |
+| FP16 / BF16 / FP32 | `1.135781/1.120736/1.105642x` | 各 `>=1.02x` |
+| affected 最差点 | `0.959101x` | `>=0.98x` |
+| affected 最差单轮 | `0.958203x` | `>=0.95x` |
+| control 6 点几何平均 | `0.999767x` | `[0.98,1.02]` |
+| control 点范围 | `0.998567–1.000166x` | `[0.98,1.02]` |
+
+最差点为 BF16 `a1_small=(batch=1,nchunks=2,chunk_size=31,nheads=4,
+headdim=65,ngroups=2,dstate=35)`：E2/E3 中位数分别为
+`0.0024576/0.0025624 ms`，六轮 speedup 为
+`0.958802/0.959400/0.960025/0.960025/0.958203/0.958802x`。
+
+资源门禁也独立失败：FP32 `a1_small` 和 `a3_tail` 的 E3 编译产物均从
+E2 的 64 registers、8192-byte shared、0 spill 变为 80 registers、
+12288-byte shared、2 spills；虽仍为 0 scratch/local、4 warps、1 stage、
+无 TF32，但违反 0-spill 门槛。aggregate 收益不能覆盖稳定的小 shape 回退和
+新增 spill，因此不做事后 shape 缩窗，不晋级 E3，继续保留 E2 作为 Task 12
+唯一候选。
