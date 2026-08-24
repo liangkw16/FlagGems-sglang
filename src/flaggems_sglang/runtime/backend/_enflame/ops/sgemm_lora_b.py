@@ -96,7 +96,16 @@ def _sgemm_lora_b_kernel(
             mask=mask_k[:, None] & mask_n[None, :],
             other=0.0,
         )
-        accumulator += tl.dot(x, weights, input_precision="ieee")
+        if x.dtype == tl.float32:
+            x_hi = x.to(tl.float16)
+            x_lo = (x - x_hi.to(tl.float32)).to(tl.float16)
+            w_hi = weights.to(tl.float16)
+            w_lo = (weights - w_hi.to(tl.float32)).to(tl.float16)
+            accumulator += tl.dot(x_hi, w_hi)
+            accumulator += tl.dot(x_hi, w_lo)
+            accumulator += tl.dot(x_lo, w_hi)
+        else:
+            accumulator += tl.dot(x, weights)
 
     output_offsets = (
         rows[:, None] * output_stride_token

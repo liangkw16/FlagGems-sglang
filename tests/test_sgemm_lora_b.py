@@ -19,20 +19,44 @@ from types import SimpleNamespace
 
 import torch
 
-MODULE_PATH = (
+BACKEND_ROOT = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+)
+
+
+def _load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+MODULE = _load_module(
+    "sgemm_lora_b_module",
     Path(__file__).parents[1]
     / "src"
     / "flaggems_sglang"
     / "ops"
-    / "sgemm_lora_b.py"
+    / "sgemm_lora_b.py",
 )
-SPEC = importlib.util.spec_from_file_location(
-    "sgemm_lora_b_module", MODULE_PATH
+ASCEND_MODULE = _load_module(
+    "sgemm_lora_b_ascend_module",
+    BACKEND_ROOT / "_ascend" / "ops" / "sgemm_lora_b.py",
 )
-if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"cannot load {MODULE_PATH}")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+ILUVATAR_MODULE = _load_module(
+    "sgemm_lora_b_iluvatar_module",
+    BACKEND_ROOT / "_iluvatar" / "ops" / "sgemm_lora_b.py",
+)
+ENFLAME_MODULE = _load_module(
+    "sgemm_lora_b_enflame_module",
+    BACKEND_ROOT / "_enflame" / "ops" / "sgemm_lora_b.py",
+)
 
 
 def make_batch_info(
@@ -195,6 +219,52 @@ class SgemmLoraBTest(unittest.TestCase):
 
         self.assertEqual(actual.shape, base.shape)
         self.assertEqual(actual.dtype, base.dtype)
+
+    def test_vendors_cover_fold_and_split_fp16(self):
+        torch.manual_seed(20260824)
+        bs, max_len, rank, out_dim = 8, 2048, 64, 4096
+        lens = torch.randint(700, max_len + 1, (bs,)).tolist()
+        seg = [0]
+        for length in lens:
+            seg.append(seg[-1] + length)
+        total = seg[-1]
+        tiles = ((max_len + 63) // 64) * ((out_dim + 127) // 128)
+        self.assertGreater(tiles * bs, 4096)
+        perm = torch.randperm(total).tolist()
+
+        for dtype, tolerance in (
+            (torch.float32, 1e-4),
+            (torch.float16, 1e-2),
+            (torch.bfloat16, 1.5e-2),
+        ):
+            with self.subTest(dtype=dtype):
+                x = torch.randn((total, rank), device="cuda", dtype=dtype)
+                weights = torch.randn(
+                    (bs, out_dim, rank), device="cuda", dtype=dtype
+                )
+                base = (
+                    torch.randn((total, out_dim), device="cuda", dtype=dtype)
+                    * 0.01
+                )
+                info = make_batch_info(
+                    seg, list(range(bs)), [rank] * bs, [1.0] * bs, perm
+                )
+                expected = reference(x, weights, info, base)
+
+                for name, module in (
+                    ("generic", MODULE),
+                    ("ascend", ASCEND_MODULE),
+                    ("iluvatar", ILUVATAR_MODULE),
+                    ("enflame", ENFLAME_MODULE),
+                ):
+                    with self.subTest(module=name):
+                        actual = module.sgemm_lora_b(x, weights, info, base)
+                        torch.testing.assert_close(
+                            actual,
+                            expected,
+                            atol=tolerance,
+                            rtol=tolerance,
+                        )
 
 
 if __name__ == "__main__":
