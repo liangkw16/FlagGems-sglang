@@ -142,10 +142,10 @@ def embedding_lora_a(
         batch_info.seg_indptr.stride(0),
         batch_info.weight_indices.stride(0),
         batch_info.lora_ranks.stride(0),
-        BLOCK_RANK=64,
+        BLOCK_RANK=128,
         HAS_EXTRA_EMBEDDINGS=extra_embeddings is not output,
         num_warps=4,
-        num_stages=2,
+        num_stages=1,
     )
     return output
 
