@@ -18,20 +18,36 @@ from pathlib import Path
 
 import torch
 
-MODULE_PATH = (
-    Path(__file__).parents[1]
-    / "src"
-    / "flaggems_sglang"
-    / "ops"
-    / "apply_token_bitmask.py"
+ROOT = Path(__file__).parents[1]
+
+
+def load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+MODULE = load_module(
+    "apply_token_bitmask_module",
+    ROOT / "src/flaggems_sglang/ops/apply_token_bitmask.py",
 )
-SPEC = importlib.util.spec_from_file_location(
-    "apply_token_bitmask_module", MODULE_PATH
-)
-if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"cannot load {MODULE_PATH}")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+VENDOR_MODULES = {
+    "ascend": load_module(
+        "apply_token_bitmask_ascend_module",
+        ROOT
+        / "src/flaggems_sglang/runtime/backend/_ascend/ops"
+        / "apply_token_bitmask.py",
+    ),
+    "enflame": load_module(
+        "apply_token_bitmask_enflame_module",
+        ROOT
+        / "src/flaggems_sglang/runtime/backend/_enflame/ops"
+        / "apply_token_bitmask.py",
+    ),
+}
 
 
 def reference(logits, bitmask):
@@ -164,6 +180,32 @@ class ApplyTokenBitmaskTest(unittest.TestCase):
                     (actual.shape, actual.dtype), (shape, logits.dtype)
                 )
                 self.assertIsNot(actual, logits)
+
+    def test_vendor_grid_stride_above_grid_limit(self):
+        batch_size, vocab_size = 256, 65537
+        generator = torch.Generator(device="cuda").manual_seed(20260824)
+        logits = torch.randn(
+            (batch_size, vocab_size),
+            generator=generator,
+            device="cuda",
+            dtype=torch.float16,
+        )
+        bitmask = torch.randint(
+            0,
+            2**32,
+            (batch_size, (vocab_size + 31) // 32),
+            generator=generator,
+            device="cuda",
+            dtype=torch.int64,
+        ).to(torch.int32)
+        expected = reference(logits, bitmask)
+
+        for vendor, module in VENDOR_MODULES.items():
+            with self.subTest(vendor=vendor):
+                actual = module.apply_token_bitmask(logits, bitmask)
+                torch.testing.assert_close(
+                    actual, expected, atol=0.0, rtol=0.0
+                )
 
 
 if __name__ == "__main__":
