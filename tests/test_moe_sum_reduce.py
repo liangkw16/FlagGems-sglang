@@ -25,13 +25,44 @@ MODULE_PATH = (
     / "ops"
     / "moe_sum_reduce.py"
 )
-SPEC = importlib.util.spec_from_file_location(
-    "moe_sum_reduce_module", MODULE_PATH
+KUNLUN_MODULE_PATH = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+    / "_kunlunxin"
+    / "ops"
+    / "moe_sum_reduce.py"
 )
-if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"cannot load {MODULE_PATH}")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+ASCEND_MODULE_PATH = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+    / "_ascend"
+    / "ops"
+    / "moe_sum_reduce.py"
+)
+
+
+def _load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+MODULE = _load_module("moe_sum_reduce_module", MODULE_PATH)
+KUNLUN_MODULE = _load_module(
+    "moe_sum_reduce_kunlunxin_module", KUNLUN_MODULE_PATH
+)
+ASCEND_MODULE = _load_module(
+    "moe_sum_reduce_ascend_module", ASCEND_MODULE_PATH
+)
 
 
 def reference(input, routed_scaling_factor):
@@ -126,6 +157,46 @@ class MoeSumReduceTest(unittest.TestCase):
                 torch.testing.assert_close(
                     actual, expected, atol=1e-2, rtol=1e-2
                 )
+
+    def test_vendors_cover_platform_failure_scale(self):
+        num_tokens, top_k, hidden_dim = 4096, 8, 7168
+        hidden_blocks = (hidden_dim + 255) // 256
+        self.assertEqual(num_tokens * hidden_blocks, 114688)
+        tolerances = {
+            torch.float16: 1e-2,
+            torch.bfloat16: 1.5e-2,
+            torch.float32: 1e-4,
+        }
+        generator = torch.Generator(device="cuda").manual_seed(20260824)
+
+        for dtype, tolerance in tolerances.items():
+            with self.subTest(dtype=dtype):
+                input = torch.randn(
+                    (num_tokens, top_k, hidden_dim),
+                    device="cuda",
+                    dtype=dtype,
+                    generator=generator,
+                )
+                original = input.clone()
+                expected = reference(input, 0.75)
+
+                for name, module in (
+                    ("generic", MODULE),
+                    ("kunlunxin", KUNLUN_MODULE),
+                    ("ascend", ASCEND_MODULE),
+                ):
+                    with self.subTest(module=name):
+                        actual = module.moe_sum_reduce(input, 0.75)
+
+                        self.assertEqual(
+                            actual.shape, (num_tokens, hidden_dim)
+                        )
+                        self.assertEqual(actual.dtype, dtype)
+                        torch.testing.assert_close(
+                            actual, expected, atol=tolerance, rtol=tolerance
+                        )
+
+                torch.testing.assert_close(input, original, atol=0.0, rtol=0.0)
 
 
 if __name__ == "__main__":
