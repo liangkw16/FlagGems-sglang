@@ -6,8 +6,11 @@
 - [第一批、第二批赛题索引](docs/competition/task-index.md)
 - [第二批快速开发策略](docs/competition/strategy-batch2.md)
 - [题型学习与八芯资料入口](docs/competition/learning-path.md)
+- [跨芯极致优化方案](docs/competition/cross-chip-optimization-plan.md)
+- [八芯公开规格与编译期约束](docs/competition/chip-landscape.md)
 - [第二批候选、产物哈希与提交队列](docs/competition/experiments/README.md)
 - [参考仓库与本地 Git 引用](docs/competition/reference-repositories.md)
+- 厂商 backend 源码缓存：`docs/competition/data/vendor-backends/`
 - 完整题面：`docs/competition/tasks/`
 - 结构化赛题数据：`docs/competition/data/task-catalog.json`
 - 公开赛程/芯片/统计快照：`docs/competition/data/race-overview.json`
@@ -25,4 +28,10 @@ jq '.tasks[] | select(.batch_no == 2)' docs/competition/data/task-catalog.json
 
 ```bash
 python tools/sync_flagos_season2_docs.py
+```
+
+刷新或验签厂商 backend 源码缓存（跨芯约束审查用，离线可读）：
+
+```bash
+python tools/fetch_vendor_backends.py --verify
 ```

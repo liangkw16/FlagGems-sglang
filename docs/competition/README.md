@@ -137,10 +137,12 @@ docs/competition/
 ├── task-index.md             # 两批赛题与动态榜单快照
 ├── strategy-batch2.md        # 第二批开发优先级与复用线索
 ├── learning-path.md          # 题型学习和八芯固定资料入口
-├── chip-landscape.md         # 八芯公开规格与架构差异调研
+├── chip-landscape.md         # 八芯公开规格与编译期约束（源码可证）
+├── cross-chip-optimization-plan.md  # 跨芯极致优化方案与候选假设
 ├── reference-repositories.md # 已抓取 Git refs 与固定上游链接
 ├── data/race-overview.json   # 公开赛程、芯片目录和全局统计
 ├── data/task-catalog.json    # 清洗后的公开结构化数据
+├── data/vendor-backends/     # 厂商 backend 源码只读缓存 + SHA-256 manifest
 └── tasks/
     ├── batch-1/*.md          # 第一批 7 道完整题面/参考实现
     └── batch-2/*.md          # 第二批 17 道完整题面/参考实现
