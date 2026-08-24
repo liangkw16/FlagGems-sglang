@@ -99,3 +99,74 @@ ZIP 由 commit `de1530b` 的算子子树直接生成，仅含顶层 UTF-8
   三 dtype 与大维度探针均有充分余量，但不能替代八芯结果。
 - 该 S0 只适合作为一次受控平台实验；尚未消耗额度。网页上传必须取得用户对
   明确 Task、上述 ZIP 路径、SHA-256 和实时额度的当次确认。
+
+## E1：`BLOCK_K<=128 → 1 warp`（否决）
+
+状态：未晋升；未生成 ZIP，未提交平台
+
+固定上游使用 1 warp，因此先保持 kernel、tile、状态和数学不变，只把
+`BLOCK_K<=128` 的 launch 从 4 warps 改为 1。正确性与资源门禁通过，但五轮配对
+A/B 的 affected 几何平均仅 `0.9181x`：低精度 K128 为 `1.513–1.524x`，
+K64 却降到 `0.543–0.576x`，FP32 K64/K128 仅 `0.885/0.939x`。K129 controls
+几何平均 `0.9997x`。因此 E1 按预设最差点门禁否决，不把上游固定配置直接泛化。
+
+## E2：低精度 `BLOCK_K=128 → 1 warp`（晋升）
+
+状态：源码、测试、release 代理验证和不可变 ZIP 门禁通过；**八芯仍高风险，未提交平台**
+
+验证时间：2026-08-24 07:53–08:00 CST
+
+### 最小门控
+
+E2 只在 `BLOCK_K==128` 且 q 为 FP16/BF16 时使用 1 warp，即实际
+`65<=K<=128` 的低精度路径。K<=64、FP32 以及 K>=129 全部保持 S0 的 4 warps。
+kernel 数学、`BLOCK_V=8` 上限、状态 dtype、grid、1 stage 和所有 constexpr
+功能开关均不变。新增测试实际编译 FP16 K128 affected、FP32 K128 control 和
+FP16 K129 control。
+
+源码 commit 为 `2ba2813756162abcfc3ef72e620f67f5e65eccca`；源码 SHA-256
+`50877b97299f6bc15d0dc694391c5c3439b96596356efe9405b195bc63b58506`，
+测试 SHA-256
+`776a0ac2105df255452df145dd7479b1c0c1422451e2face7ee2ef5ea65d1303`。
+
+### Release 代理验证
+
+release 目录 `gpu:/tmp/flagos-fused-recurrent-gdn-release.mkgMaK`，mode 0700；
+source 与 verification commit 均为
+`2ba2813756162abcfc3ef72e620f67f5e65eccca`。环境为 RTX 5070 Ti 16 GB、
+driver 610.57.04、Python 3.12.13、PyTorch 2.13.0+cu130、Triton 3.7.1、
+CUDA 13.0。
+
+- py_compile、Black 79、isort、flake8、逐文件哈希和 unittest 3/3 通过。
+- 主矩阵 22 次 S0/E2/reference correctness 检查通过；五轮交替 A/B，
+  `warmup=25, rep=100`、每次 wrapper 批量 10 次：FP16/BF16 K128 affected
+  几何平均 `1.5127x`、最差 `1.5126x`；K64、FP32 和 K129 共 7 个 controls
+  全部为 `1.0000x`。
+- `K=65/96/127/128` 的 FP16/BF16 扩展矩阵 affected 几何平均 `1.5007x`，
+  范围 `1.4785–1.5250x`；FP32 K96 control 为 `1.0000x`。
+- S0/E2 各 11 个编译变体，最高均为 96 registers/thread、4,096 bytes
+  shared，spill、global scratch、local load/store 均为 0。1-warp affected
+  特化为 77–83 registers/thread、16 bytes shared。
+
+release gates、主 A/B、BLOCK_K=128 扩展 A/B、provenance 和 corrected harness
+的 SHA-256 依次为
+`2bb7d01c6342fb3e1191b2f05fed86f815a5abf053025cb3c6a2226615ce3f16`、
+`877bccb30065b15b616b405d4d3f5ccc09b28983e307d2de2752826d90ca8abc`、
+`73672ad16bd3d9000681104cb47a5ad5f0179d1c99abb6577b31d07a39c44756`、
+`8a8f420136d3cd106565fbbfbb009480f4aed85accb8fc93c6528b2ab991d5d6`、
+`1ae87b7a3816f73dcb9749f11ca473d8f15b288186fbdc58cb2ce7840d74356d`。
+corrected harness 对长随机递推先按 `sqrt(K)` 缩放 q/k，并避免 FP32 reference
+对 q view 做 in-place scale；这些只影响代理数据生成与 reference，不改候选字节。
+
+### 产物与剩余风险
+
+- ZIP：
+  `artifacts/competition/fused_recurrent_gdn/e2-2ba2813/fused_recurrent_gdn.zip`
+- ZIP SHA-256：
+  `4be0a8135cc5dcc23a33b31852b6754fa44a2959e8d035e49a113d07edaf14eb`
+- 大小 / 成员：9,877 bytes；顶层 `fused_recurrent_gdn.py` 9,735 bytes。
+
+确定性构建、`--verify-existing`、`unzip -t`、UTF-8、basename、10 MB 和逐字节
+来源门禁均通过。E2 没有改变 K>=129 的高状态资源路径，因此 S0 所述八芯资源风险
+仍然成立；本结果只证明 NVIDIA 代理。未打开浏览器、未读取实时额度、未提交平台，
+旧确认不授权此 ZIP。

@@ -27,7 +27,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 15 | [`decode_attention`](decode_attention.md) | `e2-59cb094` | `0170fd15d5da5e0bd268fa1c5d12c7e9ee36e5cb5af50625a33da26e6ef4da62` | 7/7 release；NVIDIA 长序列 1.197–1.501x，短序列门控最差 1.000x，0 spill；未平台 | 第 12 个提交 |
 | 16 | [`decode_grouped_attention`](decode_grouped_attention.md) | `e1-bc729bd` | `088a9ebfcae10a608528e5614a684997753cd8693ac13f49496383ced4ca80c0` | 6/6 release；grouped KV reuse 1.326–1.845x，controls 1.0009x；未平台 | 第 13 个提交 |
 | 17 | [`embedding_lora_a`](embedding_lora_a.md) | `s1-d101ebe` | `49d7a33648c31d2b13e46c7e3dba8e7a4b88ecadce7da444c2ed5bac6b0ac09f` | 5/5 release；修复空 segment metadata 越界；2-warps E1 仅 0.999994x，保留 S1；未平台 | 第 7 个提交 |
-| 18 | [`fused_recurrent_gdn`](fused_recurrent_gdn.md) | `s0-de1530b` | `cf27e0e48f41fc1948075cd3bc22864e45d2387d8e61b5b6371fe1147fe9ce7f` | NVIDIA 21.92–110.36x；八芯状态资源高风险 | 暂缓，受控实验 |
+| 18 | [`fused_recurrent_gdn`](fused_recurrent_gdn.md) | `e2-2ba2813` | `4be0a8135cc5dcc23a33b31852b6754fa44a2959e8d035e49a113d07edaf14eb` | 3/3 release；低精度 K65–128 为 1.479–1.525x；大 K 八芯状态资源仍高风险 | 最后受控提交 |
 | 19 | [`fused_rmsnorm`](fused_rmsnorm.md) | `s0-3fac516` | `93780caf704341737ddfe5925cfacdcd7115ccefc2f38edf3c7ff006716d1820` | 3/3 回归；multi-row E1 仅 0.195–0.981x，保留 S0；跨芯风险已审计；未平台 | 第 1 个提交 |
 | 20 | [`mamba_layernorm_gated`](mamba_layernorm_gated.md) | `e2-345413d` | `78c56c2955981833242d9fc2ed13dca1373014fc49f12072d469f34987875f03` | 3/3 回归；E2 受影响点 1.0803x；未平台 | 第 4 个提交 |
 | 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s0-3fac516` | `ef3c30e416d24d8268a1c252261676f3e540910a8836a93d2520917580f514bf` | 4/4 回归；E1 仅 1.0111x，保留 S0；未平台 | 第 3 个提交 |
