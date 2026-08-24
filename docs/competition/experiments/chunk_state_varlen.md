@@ -192,3 +192,26 @@ canonical ZIP
 SHA-256
 `ad05f226981d59fcbc054aed46d35aa03a2bbcec2120d5402940584ad7452690`，
 成员 generic + ascend/enflame/iluvatar，`unzip -t` 通过。
+
+### S1a 平台首投：6/8 → S1b 燧原回退 generic（第 2/2 次）
+
+S1a 于 03:48:19 CST 提交（submission `4514`，当日序号 `20`，额度区间
+`12/30`→`11/30`，`file_url_sha256` 为
+`9dd07764e65363ad207f61f67a8273480e1bae13d80bb1a4dc63c5ea8f8e39dd`）。
+六芯高分通过：海光 533.9010x、国际 A 377.28x、天数 132.0380x（fp16-dot
+vendor）、国际 B 119.0415x、沐曦 114.3535x、华为 27.7100x（fold vendor）。
+燧原 fp16-dot vendor 全 case `Pipeline run failed`（与 Task 22 同型：GCU
+对 32×32 tile + fp16 dot 组合编译失败；Task 23 的 64×128 通过）；昆仑
+generic 全 case `PassManager::run failed`——varlen 的 cu_seqlens/边界
+`tl.where` 结构在 XPU 编译器不可编译（与 Task 12 非 varlen 版通过形成
+对照），结构性无解。S1b 把燧原 vendor 改回与 generic 逐字节相同
+（ieee-fp32 dot + 32 tile，Task 12 燧原 0.1160x 平台通过的同款形式），
+昆仑不设 vendor；release `gpu:/tmp/flagos-csv-release2.*`，commit
+`1975cf7dd7a206f6727d6b425e551c63bef5d36a`，`RELEASE_OK`，`release.log`
+SHA-256
+`2c4399ec6f165cc77d57c6f0913749e92cf5750df10efc6a8aeef8e7690b85a3`。
+canonical ZIP
+`artifacts/competition/chunk_state_varlen/s1b-1975cf7/chunk_state_varlen.zip`，
+SHA-256
+`0319c0e26b7cd6fb12f33b43771572a058306e89ac5982234531552daa0203d1`。
+本提交为 2 次预算的最后一次。
