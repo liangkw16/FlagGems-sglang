@@ -18,20 +18,40 @@ from pathlib import Path
 
 import torch
 
-MODULE_PATH = (
+BACKEND_ROOT = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+)
+
+
+def _load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+MODULE = _load_module(
+    "chunk_local_cumsum_vector_module",
     Path(__file__).parents[1]
     / "src"
     / "flaggems_sglang"
     / "ops"
-    / "chunk_local_cumsum_vector.py"
+    / "chunk_local_cumsum_vector.py",
 )
-SPEC = importlib.util.spec_from_file_location(
-    "chunk_local_cumsum_vector_module", MODULE_PATH
+ASCEND_MODULE = _load_module(
+    "chunk_local_cumsum_vector_ascend_module",
+    BACKEND_ROOT / "_ascend" / "ops" / "chunk_local_cumsum_vector.py",
 )
-if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"cannot load {MODULE_PATH}")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+KUNLUN_MODULE = _load_module(
+    "chunk_local_cumsum_vector_kunlunxin_module",
+    BACKEND_ROOT / "_kunlunxin" / "ops" / "chunk_local_cumsum_vector.py",
+)
 
 
 def reference(g, chunk_size, reverse=False, scale=None):
@@ -105,6 +125,45 @@ class ChunkLocalCumsumVectorTest(unittest.TestCase):
 
         self.assertEqual(actual.shape, g.shape)
         self.assertEqual(actual.dtype, torch.float32)
+
+    def test_vendors_cover_folded_grid(self):
+        torch.manual_seed(20260824)
+        batch, seqlen, nheads, state_size, chunk_size = 2, 8192, 32, 16, 64
+        block_f = min(8, max(1, 4096 // chunk_size))
+        feature_blocks = (nheads * state_size + block_f - 1) // block_f
+        total = feature_blocks * (seqlen // chunk_size) * batch
+        self.assertGreater(total, 4096)
+
+        for dtype, tolerance in (
+            (torch.float32, 1e-4),
+            (torch.float16, 1e-2),
+            (torch.bfloat16, 1.5e-2),
+        ):
+            for reverse in (False, True):
+                with self.subTest(dtype=dtype, reverse=reverse):
+                    g = torch.randn(
+                        (batch, seqlen, nheads, state_size),
+                        device="cuda",
+                        dtype=dtype,
+                    )
+                    expected = reference(
+                        g, chunk_size, reverse=reverse, scale=1.5
+                    )
+                    for name, module in (
+                        ("generic", MODULE),
+                        ("ascend", ASCEND_MODULE),
+                        ("kunlunxin", KUNLUN_MODULE),
+                    ):
+                        with self.subTest(module=name):
+                            actual = module.chunk_local_cumsum_vector(
+                                g, chunk_size, reverse=reverse, scale=1.5
+                            )
+                            torch.testing.assert_close(
+                                actual,
+                                expected,
+                                atol=tolerance,
+                                rtol=tolerance,
+                            )
 
 
 if __name__ == "__main__":
