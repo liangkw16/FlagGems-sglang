@@ -19,20 +19,44 @@ from types import SimpleNamespace
 
 import torch
 
-MODULE_PATH = (
+BACKEND_ROOT = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+)
+
+
+def _load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+MODULE = _load_module(
+    "embedding_lora_a_module",
     Path(__file__).parents[1]
     / "src"
     / "flaggems_sglang"
     / "ops"
-    / "embedding_lora_a.py"
+    / "embedding_lora_a.py",
 )
-SPEC = importlib.util.spec_from_file_location(
-    "embedding_lora_a_module", MODULE_PATH
+ASCEND_MODULE = _load_module(
+    "embedding_lora_a_ascend_module",
+    BACKEND_ROOT / "_ascend" / "ops" / "embedding_lora_a.py",
 )
-if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"cannot load {MODULE_PATH}")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+KUNLUN_MODULE = _load_module(
+    "embedding_lora_a_kunlunxin_module",
+    BACKEND_ROOT / "_kunlunxin" / "ops" / "embedding_lora_a.py",
+)
+ENFLAME_MODULE = _load_module(
+    "embedding_lora_a_enflame_module",
+    BACKEND_ROOT / "_enflame" / "ops" / "embedding_lora_a.py",
+)
 
 
 def reference(
@@ -266,6 +290,39 @@ class EmbeddingLoraATest(unittest.TestCase):
         torch.cuda.synchronize()
 
         torch.testing.assert_close(actual, expected, atol=1e-4, rtol=1e-4)
+
+    def test_vendors_cover_token_fold_and_configs(self):
+        torch.manual_seed(20260824)
+        vocab_size = 1024
+        seg_indptr = [0]
+        import random
+
+        random.seed(20260824)
+        for _ in range(8):
+            seg_indptr.append(seg_indptr[-1] + random.randint(9000, 16384))
+        info = batch_info(seg_indptr, list(range(8)), [64] * 8)
+        self.assertGreater(info.max_len, 65535 // 8)
+        input_ids = torch.randint(
+            0, vocab_size, (seg_indptr[-1],), device="cuda"
+        ).to(torch.int32)
+        weights = torch.randn(
+            (8, 64, vocab_size), device="cuda", dtype=torch.float16
+        )
+        expected = reference(input_ids, weights, info, vocab_size)
+
+        for name, module in (
+            ("generic", MODULE),
+            ("ascend", ASCEND_MODULE),
+            ("kunlunxin", KUNLUN_MODULE),
+            ("enflame", ENFLAME_MODULE),
+        ):
+            with self.subTest(module=name):
+                actual = module.embedding_lora_a(
+                    input_ids, weights, info, vocab_size
+                )
+                torch.testing.assert_close(
+                    actual, expected, atol=0.0, rtol=0.0
+                )
 
 
 if __name__ == "__main__":
