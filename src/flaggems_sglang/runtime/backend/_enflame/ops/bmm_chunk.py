@@ -165,11 +165,11 @@ def bmm_chunk(a, b, chunk_size, causal=False):
         *output.stride(),
         BLOCK_M=block_m,
         BLOCK_N=block_n,
-        BLOCK_K=64,
+        BLOCK_K=128,
         USE_INPUT_DTYPE=a.dtype == b.dtype
         and a.dtype in (torch.float16, torch.bfloat16),
         num_warps=4,
-        num_stages=3,
+        num_stages=2,
     )
     return output
 
