@@ -53,6 +53,10 @@ ILUVATAR_MODULE = _load_module(
     "bmm_chunk_iluvatar_module",
     BACKEND_ROOT / "_iluvatar" / "ops" / "bmm_chunk.py",
 )
+ENFLAME_MODULE = _load_module(
+    "bmm_chunk_enflame_module",
+    BACKEND_ROOT / "_enflame" / "ops" / "bmm_chunk.py",
+)
 
 
 def reference(a, b, chunk_size, causal=False):
@@ -240,12 +244,13 @@ class BmmChunkTest(unittest.TestCase):
                     )
                     b = torch.randn_like(a)
 
-                    actual = ILUVATAR_MODULE.bmm_chunk(a, b, chunk_size)
                     expected = reference(a, b, chunk_size)
+                    for vendor in (ILUVATAR_MODULE, ENFLAME_MODULE):
+                        actual = vendor.bmm_chunk(a, b, chunk_size)
 
-                    torch.testing.assert_close(
-                        actual, expected, atol=tolerance, rtol=tolerance
-                    )
+                        torch.testing.assert_close(
+                            actual, expected, atol=tolerance, rtol=tolerance
+                        )
 
 
 if __name__ == "__main__":
