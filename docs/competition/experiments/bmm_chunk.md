@@ -330,3 +330,28 @@ card_b 0.9420x、昆仑 0.1860x。
 `tl.dot` 在 GCU 上退化为极慢路径。下一轮 E3b：燧原 vendor 复用天数
 split-fp16 形式（fp32 路径三点积、fp16/bf16 路径裸 dot），tile 与 grid
 不变；若仍 ~0.001x 则判定为 tile 尺寸问题，再试 BLOCK 64。
+
+## E3b：燧原 split-fp16 vendor
+
+E3b 新增 `_enflame/ops/bmm_chunk.py`：kernel 与天数 vendor 逐字节相同
+（fp32 路径 split-fp16 三点积、fp16/bf16 路径裸 dot），grid/tile 与 generic
+一致；generic、华为、天数 vendor 不变。测试把燧原 vendor 纳入
+`test_iluvatar_split_fp16_precision` 的同一循环（chunk/k × 三 dtype ×
+1e-4/1e-2/1.5e-2）。screening
+`gpu:/tmp/flagos-bmm-chunk-e3b.RFw7pE`，PID/PGID `107102`（00:23:43，wall
+900s，脚本 SHA-256
+`e0dffefa460864631e639bc3acda1e611a2895371aefdc7e96cea8b96d6bd515`），静态
+门禁与 8/8 unittest（0.562s）通过，`screening.log` SHA-256
+`74c501d22ea38e21aee38998c31cc211cf0210a297979d5c8b31bdced0613947`。燧原
+vendor blob
+`3d547d5b0bd6b68bac11c6faadccb6f0e87cb5d4616256e1f897619a30a4c3e1`，测试
+`3ca69d721730eb3167203705192aa485e552c3d688690e26c882103cebe47caa`。release
+`gpu:/tmp/flagos-bmm-chunk-e3b-release.w26swH`，source/verification commit
+`4972cec4f7d0a2460dbb66a1fd5d975be0ae21c2`，PID/PGID `107302`（00:26:31），
+`RELEASE_OK`，`release.log` SHA-256
+`5e386211e84ec281aaa519de2b10efad882aed19f320fc44952dd837b9c95082`。
+canonical ZIP `artifacts/competition/bmm_chunk/e3b-4972cec/bmm_chunk.zip`，
+SHA-256
+`13560bd24f6e8d597a8eb5246dcbf52e8d8eb7b5f4330c90bdb9a4ce22f15ee7`，成员
+generic + ascend/enflame/iluvatar 三 vendor，`unzip -t` 通过。平台门禁：
+燧原 ≥0.1x 且其余七芯不回退。
