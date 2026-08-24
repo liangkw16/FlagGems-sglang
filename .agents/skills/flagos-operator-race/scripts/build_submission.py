@@ -7,9 +7,10 @@ import io
 import json
 import os
 import re
+import secrets
 import stat
+import struct
 import subprocess
-import tempfile
 import zipfile
 from pathlib import Path
 
@@ -24,6 +25,8 @@ VENDORS = {
     "nvidia",
 }
 ZIP_LIMIT = 10 * 1024 * 1024
+LOCAL_HEADER = struct.Struct("<4s5H3L2H")
+LOCAL_HEADER_SIGNATURE = b"PK\x03\x04"
 
 
 def git(root: Path, *args: str, text: bool = True):
@@ -66,6 +69,35 @@ def safe_extra_fields(extra: bytes) -> bool:
     return True
 
 
+def safe_local_header(archive: zipfile.ZipFile, info: zipfile.ZipInfo) -> bool:
+    position = archive.fp.tell()
+    try:
+        archive.fp.seek(info.header_offset)
+        header = archive.fp.read(LOCAL_HEADER.size)
+        if len(header) != LOCAL_HEADER.size:
+            return False
+        fields = LOCAL_HEADER.unpack(header)
+        flag_bits = fields[2]
+        compress_type = fields[3]
+        name_size, extra_size = fields[-2:]
+        raw_name = archive.fp.read(name_size)
+        extra = archive.fp.read(extra_size)
+        if len(raw_name) != name_size or len(extra) != extra_size:
+            return False
+        encoding = "utf-8" if flag_bits & 0x800 else "cp437"
+        return (
+            fields[0] == LOCAL_HEADER_SIGNATURE
+            and flag_bits == info.flag_bits
+            and compress_type == info.compress_type
+            and raw_name.decode(encoding) == info.orig_filename
+            and safe_extra_fields(extra)
+        )
+    except (AttributeError, UnicodeDecodeError):
+        return False
+    finally:
+        archive.fp.seek(position)
+
+
 def matching_archive_members(archive: zipfile.ZipFile, members: dict):
     infos = archive.infolist()
     matched = []
@@ -95,6 +127,8 @@ def matching_archive_members(archive: zipfile.ZipFile, members: dict):
         ):
             return None
         if is_directory:
+            if not safe_local_header(archive, info):
+                return None
             directory_path = info.filename[:-1]
             if directory_path in directory_paths:
                 return None
@@ -107,6 +141,8 @@ def matching_archive_members(archive: zipfile.ZipFile, members: dict):
             or info.filename in file_paths
             or info.file_size != len(members[basename])
         ):
+            return None
+        if not safe_local_header(archive, info):
             return None
         seen.add(basename)
         file_paths.add(info.filename)
@@ -154,43 +190,116 @@ def git_tree(root: Path, commit: str):
     return entries
 
 
-def publish(output: Path, payload: bytes) -> None:
-    output.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(
-        dir=output.parent,
-        prefix=f".{output.name}.",
-        suffix=".tmp",
-    )
-    temporary = Path(temporary_name)
+def open_output_directory(root: Path, output: Path, create: bool):
     try:
+        relative = output.relative_to(root)
+    except ValueError as error:
+        raise SystemExit(
+            f"output resolves outside repository: {output}"
+        ) from error
+    if not relative.parts or any(
+        part in {"", ".", ".."} for part in relative.parts
+    ):
+        raise SystemExit(f"refusing unsafe output path: {output}")
+
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    directory = os.open(root, flags)
+    try:
+        for part in relative.parts[:-1]:
+            if create:
+                try:
+                    os.mkdir(part, mode=0o755, dir_fd=directory)
+                except FileExistsError:
+                    pass
+            child = os.open(part, flags, dir_fd=directory)
+            os.close(directory)
+            directory = child
+        return directory, relative.name
+    except Exception:
+        os.close(directory)
+        raise
+
+
+def read_existing(root: Path, output: Path):
+    try:
+        directory, name = open_output_directory(root, output, create=False)
+    except FileNotFoundError:
+        return None
+    except OSError as error:
+        raise SystemExit(f"refusing unsafe output path: {output}") from error
+    try:
+        try:
+            descriptor = os.open(
+                name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=directory
+            )
+        except FileNotFoundError:
+            return None
+        except OSError as error:
+            raise SystemExit(
+                f"refusing unsafe output path: {output}"
+            ) from error
+        with os.fdopen(descriptor, "rb") as artifact:
+            metadata = os.fstat(artifact.fileno())
+            if not stat.S_ISREG(metadata.st_mode):
+                raise SystemExit(
+                    f"submission artifact must be a regular file: {output}"
+                )
+            if metadata.st_size >= ZIP_LIMIT:
+                raise SystemExit(
+                    f"ZIP exceeds platform limit: {metadata.st_size} bytes"
+                )
+            return artifact.read()
+    finally:
+        os.close(directory)
+
+
+def publish(root: Path, output: Path, payload: bytes) -> None:
+    try:
+        directory, name = open_output_directory(root, output, create=True)
+    except OSError as error:
+        raise SystemExit(f"refusing unsafe output path: {output}") from error
+    temporary = None
+    try:
+        for _ in range(128):
+            candidate = f".{name}.{secrets.token_hex(8)}.tmp"
+            try:
+                descriptor = os.open(
+                    candidate,
+                    os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                    0o600,
+                    dir_fd=directory,
+                )
+                temporary = candidate
+                break
+            except FileExistsError:
+                continue
+        else:
+            raise SystemExit(f"unable to create temporary artifact: {output}")
+
         with os.fdopen(descriptor, "wb") as artifact:
             artifact.write(payload)
             artifact.flush()
             os.fsync(artifact.fileno())
-        os.chmod(temporary, 0o644)
+            os.fchmod(artifact.fileno(), 0o644)
         try:
-            os.link(temporary, output)
+            os.link(
+                temporary,
+                name,
+                src_dir_fd=directory,
+                dst_dir_fd=directory,
+                follow_symlinks=False,
+            )
         except FileExistsError as error:
             raise SystemExit(
                 f"refusing to overwrite existing artifact: {output}"
             ) from error
     finally:
-        temporary.unlink(missing_ok=True)
-
-
-def validate_output_path(root: Path, output: Path) -> None:
-    relative = output.relative_to(root)
-    current = root
-    for part in relative.parts:
-        current /= part
-        if current.is_symlink():
-            raise SystemExit(f"refusing symlink output path: {current}")
-    try:
-        output.resolve(strict=False).relative_to(root)
-    except ValueError as error:
-        raise SystemExit(
-            f"output resolves outside repository: {output}"
-        ) from error
+        if temporary is not None:
+            try:
+                os.unlink(temporary, dir_fd=directory)
+            except FileNotFoundError:
+                pass
+        os.close(directory)
 
 
 def main() -> None:
@@ -300,16 +409,10 @@ def main() -> None:
         / f"{args.stage}-{short_commit}"
         / f"{args.operator}.zip"
     )
-    validate_output_path(root, output)
     archive_member_names = canonical_members
     status = "dry-run"
-    if output.exists():
-        existing_size = output.stat().st_size
-        if existing_size >= ZIP_LIMIT:
-            raise SystemExit(
-                f"ZIP exceeds platform limit: {existing_size} bytes"
-            )
-        existing = output.read_bytes()
+    existing = read_existing(root, output)
+    if existing is not None:
         try:
             with zipfile.ZipFile(io.BytesIO(existing)) as archive:
                 existing_members = matching_archive_members(archive, members)
@@ -339,7 +442,7 @@ def main() -> None:
     elif args.verify_existing:
         raise SystemExit(f"artifact does not exist: {output}")
     elif not args.dry_run:
-        publish(output, payload)
+        publish(root, output, payload)
         status = "created"
     if len(payload) >= ZIP_LIMIT:
         raise SystemExit(f"ZIP exceeds platform limit: {len(payload)} bytes")

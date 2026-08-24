@@ -132,6 +132,73 @@ class BuildSubmissionTest(unittest.TestCase):
                         )
                     )
 
+    def test_archive_rejects_local_only_unicode_path_extra(self):
+        name = b"demo.py"
+        payload = b"expected"
+        alternate = b"../evil.py"
+        crc = zlib.crc32(payload) & 0xFFFFFFFF
+        unicode_path = (
+            struct.pack(
+                "<HHBI",
+                0x7075,
+                1 + 4 + len(alternate),
+                1,
+                zlib.crc32(name) & 0xFFFFFFFF,
+            )
+            + alternate
+        )
+        local = struct.pack(
+            "<4s5H3L2H",
+            b"PK\x03\x04",
+            20,
+            0,
+            0,
+            0,
+            0,
+            crc,
+            len(payload),
+            len(payload),
+            len(name),
+            len(unicode_path),
+        ) + name + unicode_path + payload
+        central = struct.pack(
+            "<4s6H3L5H2L",
+            b"PK\x01\x02",
+            0x0314,
+            20,
+            0,
+            0,
+            0,
+            0,
+            crc,
+            len(payload),
+            len(payload),
+            len(name),
+            0,
+            0,
+            0,
+            0,
+            (stat.S_IFREG | 0o644) << 16,
+            0,
+        ) + name
+        end = struct.pack(
+            "<4s4H2LH",
+            b"PK\x05\x06",
+            0,
+            0,
+            1,
+            1,
+            len(central),
+            len(local),
+            0,
+        )
+        with zipfile.ZipFile(io.BytesIO(local + central + end)) as archive:
+            self.assertFalse(
+                BUILD_SUBMISSION.archive_matches(
+                    archive, {"demo.py": payload}
+                )
+            )
+
     def test_archive_rejects_unsafe_paths_and_duplicate_basenames(self):
         for names in (
             ["../demo.py"],
@@ -183,28 +250,48 @@ class BuildSubmissionTest(unittest.TestCase):
 
     def test_publish_never_overwrites(self):
         with tempfile.TemporaryDirectory() as directory:
-            output = Path(directory) / "operator.zip"
-            BUILD_SUBMISSION.publish(output, b"first")
+            root = Path(directory)
+            output = root / "operator.zip"
+            BUILD_SUBMISSION.publish(root, output, b"first")
 
             with self.assertRaises(SystemExit):
-                BUILD_SUBMISSION.publish(output, b"second")
+                BUILD_SUBMISSION.publish(root, output, b"second")
 
             self.assertEqual(output.read_bytes(), b"first")
             self.assertEqual(list(Path(directory).iterdir()), [output])
 
     def test_publish_failure_never_creates_final_artifact(self):
         with tempfile.TemporaryDirectory() as directory:
-            output = Path(directory) / "operator.zip"
+            root = Path(directory)
+            output = root / "operator.zip"
             with mock.patch.object(
                 BUILD_SUBMISSION.os,
                 "fsync",
                 side_effect=OSError("simulated write failure"),
             ):
                 with self.assertRaises(OSError):
-                    BUILD_SUBMISSION.publish(output, b"payload")
+                    BUILD_SUBMISSION.publish(root, output, b"payload")
 
             self.assertFalse(output.exists())
             self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_publish_rejects_parent_replaced_by_symlink(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with tempfile.TemporaryDirectory() as outside_directory:
+                root = Path(directory)
+                output = root / "artifacts" / "competition" / "demo.zip"
+                (root / "artifacts").mkdir()
+                (root / "artifacts").rmdir()
+                os.symlink(outside_directory, root / "artifacts")
+
+                with self.assertRaises(SystemExit):
+                    BUILD_SUBMISSION.publish(root, output, b"payload")
+
+                self.assertFalse(
+                    (
+                        Path(outside_directory) / "competition" / "demo.zip"
+                    ).exists()
+                )
 
     def test_rejects_symlink_source(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -279,7 +366,7 @@ class BuildSubmissionTest(unittest.TestCase):
                         )
 
                         self.assertNotEqual(result.returncode, 0)
-                        self.assertIn("symlink output path", result.stderr)
+                        self.assertIn("unsafe output path", result.stderr)
                         self.assertEqual(sentinel.read_bytes(), b"unchanged")
 
     def test_cli_uses_commit_bytes_and_never_rewrites_existing(self):
