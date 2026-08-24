@@ -150,3 +150,29 @@ SHA-256，`unzip -t`、UTF-8、10 MB 和逐字节来源门禁均通过。E1 仍�
 代理证据，各 vendor 对 mixed-precision QK dot 和 16-head layout 的 lowering
 必须由平台证明。上传前需重新读取实时额度，并取得用户针对 Task 16、上述绝对
 ZIP 路径和完整 SHA-256 的当次确认。
+
+## E1a：天数 fp16-dot vendor（首投候选，≤2 次预算）
+
+状态：release 门禁通过，候选就绪
+
+E1 generic 的两个 `tl.dot(..., input_precision="ieee")` 为 fp32 操作数，按
+Task 12/22/23 平台证据在天数上不可执行。题面容差 `atol=3e-2, rtol=1e-2`
+宽松，`_iluvatar` vendor 直接把两处 dot 操作数降为 fp16（累加/softmax 路径
+保持 fp32），无需 split 仿真。grid 为一维小规模（bs×heads），华为/昆仑/
+燧原均不加 vendor。测试把天数 vendor 纳入 grouped 回归循环。screening
+`gpu:/tmp/flagos-dga-vend.8QQN3z`（先后补传 decode_attention.py、
+_nvidia vendor 两个测试依赖；含一次 Black 回拷），最终 PID/PGID `115351`
+（03:11:11，wall 900s），7/7 unittest（0.910s），`screening.log` SHA-256
+`c07da3861cc827f0dbcff4c624a65e15adc5b7791895bd1e4f2450d09660063a`。
+天数 vendor blob
+`96ae034897773a3d3066ccd62b40bb1095b875067a9b41346d0cc61a926b7ae8`，测试
+`63309bcc9149b7d5c694ddd1c9fe0cbb68fd01aabc192636f276f94fd552b7e3`。
+release `gpu:/tmp/flagos-dga-release.*`，source/verification commit
+`9801c56bdfa8be3854f991e339783177a29abade`，`RELEASE_OK`，`release.log`
+SHA-256
+`20df68d617a46dc6511f4b8da28c0b381f1cdadfde28381d9c6507cb21dd520b`。
+canonical ZIP
+`artifacts/competition/decode_grouped_attention/e1a-9801c56/decode_grouped_attention.zip`，
+SHA-256
+`c8dd889f7820f52e73bfc2ea1c88c007b2a969c3811e0970b260f911e25a5b2b`，
+成员 generic + iluvatar，`unzip -t` 通过。
