@@ -187,3 +187,36 @@ PyTorch 2.13.0+cu130，Triton 3.7.1，CUDA 13.0。该结果仅是 NVIDIA 代理�
   实测；当前不预建 vendor 分支。
 - S1 为“候选就绪、未提交”。未打开浏览器、未读取或消耗平台额度；上传前必须
   重新验签 ZIP、读取平台实时 tuple，并取得用户针对该精确产物的一次性确认。
+
+## S2：64×128 tile generic + 四 vendor（首投候选，≤2 次预算）
+
+状态：release 门禁通过，候选就绪
+
+与 Task 23 同族同法：generic 由 S1 的 16/64/32/4/1 升级为 **64/128/32/4/3**
+（配置依据 Task 23 的 NVIDIA sweep：同族 kernel 三 shape 全 case 最优，
+1.19–1.58x）。vendor：
+
+- `_ascend`：3D `(tiles, n_slices, bs)` 折叠为 1D `min(total, 4096)`，逻辑
+  id 按 batch→slice→tile 分解，三个 early return 改循环内复合守卫；
+- `_iluvatar`/`_enflame`（同字节）：fp32 路径 split-fp16 三点积（编译期
+  `x.dtype == tl.float32` 分支），低精度路径裸 dot；
+- `_kunlunxin`：预防性回退 32/32/32/4/1——Task 23 S2 平台实测 64/128+
+  stages 3 在昆仑 SDNN 路径编译爆炸（1830s 超时 + 子进程崩溃），保守配置
+  为 Task 09/12 平台通过形态。
+
+新增回归 `test_vendors_cover_fold_and_split_fp16`：bs=4、max_len 4096、三
+slice（768/512/1024）、permutation，总 program 6144 > 4096 覆盖两轮折叠，
+三 dtype（fp32 1e-4）× 五模块。screening 首跑经远端 Black 原地格式化回拷
+（`gpu:/tmp/flagos-qkv-vend.AiDiI8`，最终 PID `111568`，4/4）；加昆仑
+  vendor 后复跑 `gpu:/tmp/flagos-qkv-s2b.xNlhQV`，PID/PGID `112362`
+（02:22:05，wall 900s），4/4 unittest（0.943s），`screening.log` SHA-256
+`8a135f0bde50cc5561b3812c1f2ef1026367403ae4cbcbf01830f01c6ef326c6`。release
+`gpu:/tmp/flagos-qkv-release.*`（四文件版）与 s2b 版（含昆仑）均
+`RELEASE_OK`；s2b 的 source/verification commit
+`0d8511c28968fef6a4d3014278226052d891c045`。昆仑 vendor blob
+`0270e3b489151eeb94d5edd57f5d4991a6f6a00d50677775b252659b2fbfe3e8`，测试
+`27e78bd1cdfde0a1d9ea7ccdbd891b8d853aaec23fbc80d07db918dc9317b093`。
+canonical ZIP
+`artifacts/competition/qkv_lora_b/s2-0d8511c/qkv_lora_b.zip`，SHA-256
+`6b1f604afcace52211d4ac1f4ff880df17c609d24412ecdb16758d55f6b8cf18`，成员
+generic + ascend/enflame/iluvatar/kunlunxin 四 vendor，`unzip -t` 通过。
