@@ -184,3 +184,14 @@ canonical ZIP
 SHA-256
 `cf4dcaf05640599fe5b50ee9633ba19d2a4f13f2b47f856e88259242e975bab9`，
 成员 generic + ascend/enflame/kunlunxin，`unzip -t` 通过。
+
+### E1b 平台终态：7/8，Task 11 停止（2 次预算用尽）
+
+E1b 于 02:49:40 CST 提交（submission `4482`，当日序号 `15`，额度区间
+`17/30`→`16/30`）。昆仑 0.0160x、华为 0.02550x 与 E1a 完全一致——benchmark
+规模确实超过 65535，hybrid 仍走折叠路径，慢度确认为 cumsum 在两芯的
+lowering 固有瓶颈；燧原 BLOCK_F=1 vendor 编译失败（`Pipeline run failed`），
+最终 7/8（invalid_correctness）。Task 11 两次预算用尽，停止。cumsum 家族
+（Task 10/11）双题四轮平台证据一致：昆仑 ~0.012–0.016x、燧原
+0.0035–0.0375x 或编译失败，非 grid/配置/stages 单变量可解，重试需在
+XPU/GCU 上改写 cumsum 算法形式（两阶段分块扫描）。

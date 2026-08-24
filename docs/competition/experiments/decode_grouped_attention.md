@@ -176,3 +176,14 @@ canonical ZIP
 SHA-256
 `c8dd889f7820f52e73bfc2ea1c88c007b2a969c3811e0970b260f911e25a5b2b`，
 成员 generic + iluvatar，`unzip -t` 通过。
+
+### E1a 平台结果与 Task 16 停止（保留 1 次额度）
+
+E1a 于 03:15:04 CST 提交（submission `4499`，当日序号 `18`，额度区间
+`14/30`→`13/30`，`file_url_sha256` 为
+`e2452ab1c7d6a20e78392fb0eb46323040548a26b98c94df66eee60a5cd00948`）。
+五芯通过（天数 vendor 生效）；燧原为评测超时 + `Segmentation fault`、
+昆仑为评测超时 + `Aborted`（评测器崩溃族）、华为 case 7 数值失败且指纹
+与 Task 15 华为同型（整行重复，Ascend flash 型 kernel 边界 bug）。三芯
+失败互独立且无单变量公共解，按"大把握才提交"原则不再使用第 2 次额度，
+Task 16 记 5/8 停止；未用额度转 Task 14。

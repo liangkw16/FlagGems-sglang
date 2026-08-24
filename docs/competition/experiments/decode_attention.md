@@ -182,3 +182,14 @@ release gates、主 A/B、短序列 A/B、provenance 和 A/B harness 的 SHA-256
 确定性构建与 `--verify-existing`、`unzip -t`、UTF-8、basename、10 MB 和
 逐字节来源门禁均通过。NVIDIA 结果只为代理证据；未打开浏览器、未读取实时额度、
 未提交平台，旧确认不授权此 ZIP。
+
+### E2/E2a 平台结果与 Task 15 停止（2 次预算用尽）
+
+E2 于 03:00:45 CST 提交（submission `4496`，当日序号 `17`）：华为 case 8
+数值失败（输出呈整行重复的确定性错误指纹，疑似 Ascend 对该 flash 型
+kernel 特定 shape 的 load/broadcast lowering bug）；其余在评。E2a（华为
+2D-grid vendor，免 div/mod；commit `5add38cd68e26ac52a7e6d8e2ab6f541b0cfd512`，
+submission `4502`，03:27:01，额度区间 `13/30`→`12/30`）华为仍以同一
+case 8 同指纹失败，昆仑为评测超时崩溃（`Fatal Python error: Aborted`，
+与 Task 16/23 昆仑评测器崩溃同族）。最终 6–7/8（invalid）。Task 15 两次
+预算用尽，停止；燧原/国际系芯片路径未被两轮证伪，天数/沐曦/海光正常。
