@@ -16,9 +16,11 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 
 ## 候选清单
 
+以下顺序只覆盖尚无 8 芯结果的任务；Task 08 E2 单独排队做受控优化提交。
+
 | Task | 算子账本 | 候选 | ZIP SHA-256 | 当前证据 | 建议 |
 | ---: | --- | --- | --- | --- | --- |
-| 08 | [`apply_token_bitmask`](apply_token_bitmask.md) | `s1-c33d45f` | `c6304895495de8aa601ba61acff6b18f0e3f3cc45158ec1b0aa90856927a60c6` | S1 平台 8/8、4.3870x、第 12/13；燧原 0.4292x、华为 0.9710x，grid 修复生效 | 燧原仅改 BLOCK 256 → 4096 后再验证 |
+| 08 | [`apply_token_bitmask`](apply_token_bitmask.md) | `e2-86fca87` | `88d2e8387ac2e7de785cf1574ad9c762df54c0baa79e4ada67fad7252987c1dc` | S1 平台 8/8、4.3870x、第 12/13；E2 仅改燧原 BLOCK 4096，release affected 4.7886x、control 1.0000x、0 spill | 下一次受控优化提交 |
 | 09 | [`bmm_chunk`](bmm_chunk.md) | `e3-a5afc19` | `d8577b2ee314cad758f756d47794685240448d2654baf6b685a7e53fac415b95` | 6/6 release；低精度 affected 1.4306x，FP32 controls 1.0000x，资源与 S0 相同；未平台 | 第 6 个提交 |
 | 10 | [`chunk_cumsum`](chunk_cumsum.md) | `s1-a4e84aa` | `f9fd0d595aeb5a4a4da76514321790815fbad9ccc39faa447c8bfa120f0e7db9` | 4/4 回归；E1–E4 均拒绝，E4 大 shape 有效但 medium/low 仅 1.0091/0.9999x；保留 S1，未平台 | 第 11 个提交 |
 | 11 | [`chunk_local_cumsum_vector`](chunk_local_cumsum_vector.md) | `e1-528a2bb` | `7f0484b9b2ae078bf284e4fda1c5a1a0ffb0c8545b907e801d9fa21200fde7d8` | 2/2 release；tiny chunks 2-warps affected 1.032–1.162x；controls 0.997–1.002x；未平台 | 第 10 个提交 |

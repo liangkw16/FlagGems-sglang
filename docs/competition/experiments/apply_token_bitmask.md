@@ -238,3 +238,54 @@ daily seq `6`。平台远端 ZIP 为 8382 bytes，下载后 SHA-256 与本地
 Task 08 leaderboard 在 2026-08-24 19:23:43 CST 显示 `SoulCoder` 第 12/13 名，
 本次也是团队首次有效及当前最佳提交。下一条单变量假设只改燧原 BLOCK 256 → 4096，
 保持 grid 12 和其余文件不变；先做代理验证，不沿用本次已消耗的提交确认。
+
+## E2：燧原 BLOCK 4096
+
+状态：候选就绪，未提交平台
+
+源码与验证 commit：`86fca8738c850a9d1b83ff3a9ace06d71cc9f6cf`
+
+E2 只把燧原 vendor 的 `block_size` 从 256 改为 4096；grid 上限仍为 12，generic、
+华为 vendor、公式和 launch 其余参数逐字节不变。固定 FlagGems commit
+`ed2508bcb5a03000e9774734201d840ba362cd11` 的 Enflame pointwise policy 允许
+4096 tile / grid 12 / 4 warps；Task 24 同型代理结果支持该方向，但都不是本题真实
+GCU 性能保证。
+
+新增 Enflame 三 dtype 回归使用 `V=12*4096+17`，覆盖第二轮 grid-stride 和 17-token
+tail。最终 screening 与从 commit Git 对象生成的 release 均通过 py_compile、Black、
+isort、flake8 和 7/7 unittest；screening 的源码与测试 SHA-256 和 Git objects 完全
+一致。第一次 screening 因临时目录没有仓库 `pyproject.toml`、Black 使用默认行宽而在
+测试前停止；修正为显式仓库行宽 79 后通过，未因此改源码。
+
+| 项目 | 值 |
+| --- | --- |
+| generic SHA-256 | `5da3d966936c919cd4b0fab2c32ecc66526eb375c3cdc20a2e3f2f37cddb697c` |
+| 华为 vendor SHA-256 | `7c4daf2fa5774dcbf0c9891b787c77d18d4d0766ae94292ed38347172ead3fd8` |
+| 燧原 vendor SHA-256 | `0aa6cd79e37408623eeded1d123b23b114b973f63c9b526f1fe3e1a56cb7b380` |
+| 测试 SHA-256 | `876fe5cbf46cbf50ecde5f72c94d9d2646e14970245b4fbdf1f91dcd57dee510` |
+| screening | `gpu:/tmp/flagos-apply-token-bitmask-e2.98iRfU`；600s wall limit；19:30:15 首次 PID/PGID `100046`、脚本 SHA-256 `425f410e0f10a149b0c5b7d1b3922221acde6aa10db5f0f71a8ee626a6631697`，配置失败日志 SHA-256 `9db83b32433cba6b4b976212b3551a2a94496c6eac1ad6de532dc39618c9521c`；19:31:40 r2 PID/PGID `100121`、6/6、0.634s，日志 SHA-256 `38fc345b9dca230a88895d5096f208713eeed1c660277401403fa5e4f64b800d`；新增回归后 19:36:41 r3 PID/PGID `100424`、脚本 SHA-256 `2dab4b84bc3c5a665bb472e5fd201fe83aabb389a39ceaf2a968d20a9774a49d`，7/7、0.804s，日志 SHA-256 `18c336f7a862d1ce97434cfdeb23442c031872c467c460ab0e80345b94f8e929` |
+| screening A/B | 19:34:16；900s wall limit；PID/PGID `100277`；脚本 SHA-256 `946f0ad12ff7de7463d7dc96a30005501d53338da7035e2ac3f9a21571328b12`；`benchmark.log` SHA-256 `d771a93a75b280dcc217011bf7fe5b635f5bd3507222908c8f4c44a400f75b88`；affected 几何平均 4.790304x |
+| release | `gpu:/tmp/flagos-apply-token-bitmask-e2-release.HMJ520`；19:38:38；600s wall limit；PID/PGID `100638`；脚本 SHA-256 `399d0290a6510174e730d40bbea2a28990932c489defe8f052cacc8b0dc74abc`；`release.log` SHA-256 `b3cdd82b6c195df5a1a15bf295e58db13cce276a538ceb444307659eff642fab`；7/7，0.547s，`RELEASE_OK` |
+| A/B | 19:38:58；900s wall limit；release PID/PGID `100742`；脚本 SHA-256 `946f0ad12ff7de7463d7dc96a30005501d53338da7035e2ac3f9a21571328b12`；`benchmark.log` SHA-256 `e9c3ae8187b8ca467a9c45d159a4e804cf4379218d3268cdcc437ae6902b6dbd` |
+| 代理环境 | RTX 5070 Ti 16 GB；driver 610.57.04；Python 3.12.13；PyTorch 2.13.0+cu130；Triton 3.7.1；CUDA 13.0 |
+| 编译资源 | 本次 A/B 变体中 S1 为 20–23 registers、E2 为 48–76；两者均 0 spill、0 shared、0 global scratch，4 warps、1 stage |
+| ZIP | `artifacts/competition/apply_token_bitmask/e2-86fca87/apply_token_bitmask.zip`，8383 bytes |
+| ZIP 成员 | `apply_token_bitmask.py` 2458 bytes；`apply_token_bitmask_ascend.py` 2756 bytes；`apply_token_bitmask_enflame.py` 2757 bytes |
+| ZIP SHA-256 | `88d2e8387ac2e7de785cf1574ad9c762df54c0baa79e4ada67fad7252987c1dc` |
+
+wrapper-inclusive A/B 在无竞争 workload 时按 AB/BA 交替五组，每组
+`warmup=25, rep=100`。control `(B,V)=(12,256)` 的三 dtype 均为 `1.000000x`；
+affected 代理 shape `(512,152064)` 的 BLOCK256 `total_blocks=304128`，与平台 S0c
+失败值相同，但不据此声称它就是 hidden case。候选输出均与 S1 精确一致：
+
+| dtype | 五组 S1/E2 speedup | 中位数 |
+| --- | --- | ---: |
+| FP16 | 4.703450 / 4.704456 / 4.704211 / 4.697376 / 4.703442 | 4.703450x |
+| BF16 | 4.704274 / 4.703711 / 4.703703 / 4.702181 / 4.703957 | 4.703711x |
+| FP32 | 4.963269 / 4.961438 / 4.963846 / 4.968179 / 4.961059 | 4.963269x |
+
+affected 三 dtype 几何平均为 `4.788597x`，超过 `>=1.05x` 晋级线，control 也高于
+`>=0.97x` 门禁。规范 ZIP 的三个成员与 release 前 manifest、commit 源码和上述哈希
+完全一致，并通过 `verified-existing` 与 `unzip -t`。平台门禁为继续 8/8、燧原选中
+vendor 且从 S1 的 0.4292x 提升到至少 0.4507x；否则保留 S1。E2 需要绑定新 ZIP
+并重新读取实时额度；最近历史读数为 `9/15`，S1 的确认已经消耗。
