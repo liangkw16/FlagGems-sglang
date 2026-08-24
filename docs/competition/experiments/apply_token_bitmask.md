@@ -2,7 +2,7 @@
 
 ## S0：generic baseline
 
-状态：S0 已打包并通过本地门禁；等待当次上传确认
+状态：S0 已通过发布门禁，canonical S0c ZIP 已就绪；等待当次上传确认
 
 验证时间：2026-08-24 01:22–01:28 CST
 
@@ -91,7 +91,7 @@ indices，并依赖设备 SM 数；本题只复用 int32 bit 位布局，不复�
 | S0 源码 SHA-256 | `5da3d966936c919cd4b0fab2c32ecc66526eb375c3cdc20a2e3f2f37cddb697c` |
 | 当前测试 SHA-256 | `78cfb2fb10c97e54d70877178391a181d44edad0565fd2fa8f12cecd73ebb967` |
 | S0 ZIP SHA-256 | `394d287484e04c62eba5deea0c3f698787b1bd053ee7803598a7e9c98567a4b7`，`verified-existing-legacy` |
-| 规范 ZIP SHA-256 | `f4068dd290bb16821d75eb669485b5607bf8cd3a8f4b1807af2e67aa23d41a21`，仅内存生成 |
+| 规范 ZIP SHA-256 | `f4068dd290bb16821d75eb669485b5607bf8cd3a8f4b1807af2e67aa23d41a21`，已生成 S0c |
 | E1 临时源码 SHA-256 | `6d74aafacc53922890ae5e3041231eb1860851a59de3467c75d00206a4ae044e` |
 | 远端证据目录 | `gpu:/tmp/flagos-task08.rF1D2s`，mode 0700 |
 | baseline 门禁 | PID `71769`；03:07:08 CST；`baseline-release-gates.log`；SHA-256 `aaf6f11860fb7824bbfb74cfbb15c0c2401c7a338262458cb63b1846c686ea41` |
@@ -130,3 +130,29 @@ wrapper-inclusive 五组轮换 A/B，组内 `warmup=25, rep=100`：
 `>=1.05x` 晋级线，而且部分变体寄存器增加，因此不提交 E1，也不生成新 ZIP。
 工作树源码已恢复到 S0 SHA-256；扩大后的测试继续保留。下一次源码迭代等待 S0
 八芯结果或新的固定来源，不在 NVIDIA 上继续微调同一路径。
+
+## S0c：canonical 首投包
+
+状态：候选就绪，未提交平台
+
+生成时间：2026-08-24 17:20 CST
+
+不改 kernel，复用 source commit
+`3fac516a8d64c88b183801668a7857d969a05e37` 与 verification commit
+`1197a410b1cbdaa6ab138c37b2e13225f6e0b195` 的 5/5 release 证据。当前源码与测试
+SHA-256 仍分别为
+`5da3d966936c919cd4b0fab2c32ecc66526eb375c3cdc20a2e3f2f37cddb697c`、
+`78cfb2fb10c97e54d70877178391a181d44edad0565fd2fa8f12cecd73ebb967`，因此不重复消耗
+远端 GPU 做同字节验证。
+
+canonical ZIP 为
+`artifacts/competition/apply_token_bitmask/s0c-3fac516/apply_token_bitmask.zip`，
+2600 bytes，SHA-256
+`f4068dd290bb16821d75eb669485b5607bf8cd3a8f4b1807af2e67aa23d41a21`；唯一成员
+`apply_token_bitmask.py` 为 2458 bytes，成员 SHA-256 与 source commit 完全一致。
+确定性打包器 dry-run、生成后 `verified-existing` 和 `unzip -t` 均通过。旧 S0 legacy
+ZIP 保持原字节不覆盖，平台候选只使用本节 S0c。
+
+2026-08-24 17:19:51 CST 的只读平台状态为账号 `15600308080`、团队
+`SoulCoder`、Task 08 / tid `s2t1op008`、竞赛中、尚无本队该题提交，实时剩余额度
+`11/15`。该读数不构成提交授权；真正提交前仍须重新预检并绑定完整 tuple。

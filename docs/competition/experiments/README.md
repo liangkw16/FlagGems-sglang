@@ -18,7 +18,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 
 | Task | 算子账本 | 候选 | ZIP SHA-256 | 当前证据 | 建议 |
 | ---: | --- | --- | --- | --- | --- |
-| 08 | [`apply_token_bitmask`](apply_token_bitmask.md) | `s0-3fac516` | `394d287484e04c62eba5deea0c3f698787b1bd053ee7803598a7e9c98567a4b7` | 5/5 回归；E1 仅 0.9983x，保留 S0；未平台 | 第 2 个提交 |
+| 08 | [`apply_token_bitmask`](apply_token_bitmask.md) | `s0c-3fac516` | `f4068dd290bb16821d75eb669485b5607bf8cd3a8f4b1807af2e67aa23d41a21` | 5/5 release；E1 仅 0.9983x，保留 S0；canonical 包已验签，未平台 | 下一次受控首投 |
 | 09 | [`bmm_chunk`](bmm_chunk.md) | `e3-a5afc19` | `d8577b2ee314cad758f756d47794685240448d2654baf6b685a7e53fac415b95` | 6/6 release；低精度 affected 1.4306x，FP32 controls 1.0000x，资源与 S0 相同；未平台 | 第 6 个提交 |
 | 10 | [`chunk_cumsum`](chunk_cumsum.md) | `s1-a4e84aa` | `f9fd0d595aeb5a4a4da76514321790815fbad9ccc39faa447c8bfa120f0e7db9` | 4/4 回归；E1–E4 均拒绝，E4 大 shape 有效但 medium/low 仅 1.0091/0.9999x；保留 S1，未平台 | 第 11 个提交 |
 | 11 | [`chunk_local_cumsum_vector`](chunk_local_cumsum_vector.md) | `e1-528a2bb` | `7f0484b9b2ae078bf284e4fda1c5a1a0ffb0c8545b907e801d9fa21200fde7d8` | 2/2 release；tiny chunks 2-warps affected 1.032–1.162x；controls 0.997–1.002x；未平台 | 第 10 个提交 |
