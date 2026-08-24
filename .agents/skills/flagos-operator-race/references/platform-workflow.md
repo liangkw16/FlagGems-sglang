@@ -12,7 +12,7 @@ basename 和提交源码内容验签，不重写字节。实际成员清单必�
 generic/vendor 集合一致，不能因打包器自动收集 commit 中已有 vendor 而夹带文件。
 
 同时建立 provenance：source commit、成员来源与 SHA、实际 ZIP SHA 必须能互相
-对应。验签或来源不完整就停止，不进入平台预检和额度确认。
+对应。验签或来源不完整就停止，不进入平台预检和自动提交。
 
 ## 脚本查分
 
@@ -86,18 +86,20 @@ python .agents/skills/flagos-operator-race/scripts/platform_cli.py preflight \
 
 每个 vendor 文件再增加一个 `--member chunk_state_<vendor>.py`。预检不发 POST；它在
 Git 内部目录 `.git/flagos-platform/` 创建权限为 `0600`、十分钟有效的一次性 intent，
-并打印完整 tuple 和随机 nonce。然后取得用户当次的一次性 action-time 确认，确认
-内容至少包括：
+并打印完整 tuple、随机 nonce 和 `confirm_command`。命令中的 `--confirm` 只消费已经
+验签的机器 intent，不表示人工确认。当前任务包含平台提交、完整闭环或继续既有竞赛
+闭环时，逐项核对 tuple：
 
-- race ID/赛季、登录账号、登录团队、batch、Task 编号和 operator；
-- ZIP 的绝对路径与完整 SHA-256；
-- 当前剩余额度，以及本次会消耗 1 次。
+- race ID/赛季、登录账号、登录团队、batch、Task 编号、tid 和 operator 精确匹配；
+- source commit、stage、成员集合、ZIP 绝对路径与完整 SHA-256 匹配账本和本地证据；
+- Task 为 `competing`、处于提交时间窗、最小间隔已满足且当前剩余额度至少为 1。
 
-旧的“继续”“可以上传”不能授权后来生成的另一份 ZIP。每个新候选重新确认。
-一次确认只授权上述 tuple 的一次提交点击；点击后无论成功、失败或结果不确定，确认
-都立即失效。
+全部匹配就立即运行预检输出的 `confirm_command`，无需再向用户询问。任一字段缺失、
+变化或不一致都视为自动提交门禁失败，停止并报告，不能靠交互确认绕过。intent 在任何
+POST 前过期或变成 `stale` 时，可重新运行只读 preflight 并重新核对；只要门禁仍全部
+满足即可自动提交。每个新候选必须生成新的 ZIP SHA 和 intent。
 
-确认后只运行预检输出的命令：
+只运行预检输出的命令：
 
 ```bash
 python .agents/skills/flagos-operator-race/scripts/platform_cli.py submit \
@@ -125,14 +127,14 @@ intent、未决发送或成功记录时不生成第二个 nonce；新候选必�
 不修改账本。
 
 脚本因验证码、新风险提示、认证协议或 API schema 漂移无法执行时，才回退到
-`chrome:control-chrome`。先只读核对登录账号、团队、Task、剩余额度和既有提交；取得
-绑定同一完整 tuple 的新一次性确认后，点击页面可见上传按钮触发 `filechooser`，并在
-点击前为 `waitForEvent("filechooser")` 立即挂成功与 rejection handler，再用 chooser
-设置 ZIP 绝对路径；不要依赖点击隐藏 `input[type=file]`。提交按钮只点击一次；
+`chrome:control-chrome`。先只读核对登录账号、团队、Task、剩余额度和既有提交；同一
+完整 tuple 的门禁全部通过后，点击页面可见上传按钮触发 `filechooser`，无需再向用户
+询问。点击前为 `waitForEvent("filechooser")` 立即挂成功与 rejection handler，再用
+chooser 设置 ZIP 绝对路径；不要依赖点击隐藏 `input[type=file]`。提交按钮只点击一次；
 chooser 超时、页面重载或结果不确定都转 `status` 只读核对，绝不再次点击。
 
 浏览器 fallback 提交后，平台一旦返回 HTTPS `file_url`，下载远端 ZIP，核对实际字节数
-和 SHA-256 与本次确认值完全一致；页面展示的文件大小不作为验签证据。下载失败或哈希
+和 SHA-256 与本次 intent 值完全一致；页面展示的文件大小不作为验签证据。下载失败或哈希
 不一致时保留“提交已发送”事实，记录远端验签未确认/失败，并停止重试提交 POST。
 
 ## 逐芯结果与最小迭代
@@ -157,5 +159,5 @@ vendor 文件必须自包含、保持同一函数签名并导出同一 `__all__`
 正确性必须同时消除已知 grid 风险，在账本明确说明。
 
 每轮重复：最小回归 → 适用路径的远端代理或明确的静态未验证 → 新 commit → 新
-ZIP/hash → 新确认 → 平台。默认建议至少预留两次额度给截止日前最终回归；用户可在
-看到实时剩余额度后，通过当次确认明确使用保留额度。
+ZIP/hash → 新 preflight → 单次自动提交 → 平台。默认建议至少预留两次额度给截止日前
+最终回归；实时剩余额度必须写入账本和最终回复，不能靠重复提交碰运气。

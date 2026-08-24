@@ -56,13 +56,15 @@ Task 24 已通过，S2 只优化 Enflame。Task 19 在
 `9/15`，E2 提交后在 19:55:10 CST 为 `8/15`。这些只是历史观察，每次上传前
 必须重新读取实时额度。
 
-## 上传确认门禁
+## 自动提交门禁
 
-每次只确认一个不可变 ZIP，确认信息必须同时包含：
+每次只为一个不可变 ZIP 建立 preflight intent，tuple 必须同时包含：
 
 - race ID/赛季、登录账号、登录团队、batch、Task 编号和 operator；
-- ZIP 绝对路径和完整 SHA-256；
+- source commit、stage、成员集合、ZIP 绝对路径和完整 SHA-256；
 - 平台实时剩余额度，以及本次消耗 1 次。
 
-旧的“继续”或“上传”不授权后来生成的 ZIP。用户当次确认只授权上述 tuple 的一次
-提交点击；确认后才按项目 Skill 执行网页选择文件和提交，并把逐芯结果写回对应账本。
+当前任务包含平台提交、完整闭环或继续既有竞赛闭环，且完整 tuple 与本地证据一致时，
+按项目 Skill 立即执行一次性 submit 命令，无需再询问。每个新 ZIP 都重新 preflight；
+`sending`、`uncertain`、`stale_after_upload` 或已提交状态只读核对，绝不自动重试。
+逐芯结果写回对应账本。
