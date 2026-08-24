@@ -155,3 +155,67 @@ PyTorch 2.13.0+cu130，Triton 3.7.1，CUDA 13.0。该结果仅是 NVIDIA 代理�
   当前不预建 vendor 分支。
 - S1 为“候选就绪、未提交”。未打开浏览器、未读取或消耗平台额度；上传前必须
   重新验签 ZIP、读取平台实时 tuple，并取得用户针对该精确产物的一次性确认。
+
+## E2–E3：宽 `BLOCK_N` 候选，拒绝
+
+固定 SGLang 上游对宽输出使用 `BLOCK_N=256`，因此 E2 只在
+`output_dim>=1024 && output_dim%256==0` 时把 S1 的 N64 改为 N256；E3 是一次
+预先声明的减半实验，在 `output_dim>=1024 && output_dim%128==0` 时使用 N128。
+两者都保持 S1 的 kernel、segment guard、BLOCK_S/K、4 warps、1 stage、IEEE dot
+和 fallback 路径不变。两次 screening 均未过门禁，未 commit、未生成 ZIP；
+最终源码和测试已逐字节恢复 S1。
+
+共同矩阵包含 4/4 unittest、21 个额外正确性 case、12 个 affected、6 个
+control 和 15 组 affected resource。性能使用 batch20、六轮严格 3 AB/3 BA、
+`warmup=25, rep=100`；晋级要求整体 `>=1.05x`、每 dtype `>=1.02x`、任一点/
+单组 `>=0.98x`、controls `0.98–1.02x`，且不超过 160 registers、40 KiB shared、
+至少 2 CTA/SM、0 spill/scratch/local load-store。三 dtype、permutation、ragged、
+非连续输入、K65、空段越界 metadata 和完整 K 语义均对题面 reference 通过。
+
+### E2：N256
+
+候选源码/测试 SHA-256 为
+`47ff05cb9cc5791946c5c7bba3a7072317e47c097f1c0bf817edfb7dba0f17d6` /
+`a4874927b65b1c1fc2d91a20c9110cfeeb7af1985c6d61f6947aa1214eda5651`。
+
+| 指标 | 结果 |
+| --- | ---: |
+| affected 几何平均 | `0.980470x` |
+| FP16 / BF16 / FP32 | `0.904148/0.897662/1.161318x` |
+| 最差 affected 点 / 单组 | `0.717499/0.715185x` |
+| control 几何平均 / 范围 | `1.000000x / 1.000000–1.000000x` |
+
+低精度 ragged-permutation 为 `0.717–0.723x`；FP32 虽有收益，但不允许按 dtype
+事后切分。K65 FP16/BF16 编译物达到 255 registers、17 KiB shared 和 22 spills；
+FP32 最高 254 registers、34 KiB shared，故性能和资源门禁均失败。
+
+远端目录 `gpu:/tmp/flagos-sgemm-lora-b-e2.faH2bL`，PID/PGID `93118`，运行时间
+09:13:47–09:14:22 CST。harness/gates、原始 JSON、gates 日志 SHA-256 分别为
+`5689d5cbc5d4e31f88e54e54e9c05775078ca1f1878a59b43bc32c19e94fb816`、
+`966089121417c17aa10c37d0edbf97f3db9ff3c68b53547b3c17245336a3b23e`、
+`d3b11ee1d792197fc30977e348bfab9870b2ea512c07bed003d9c1ab2b002090`、
+`e3e2efe5157eb69402b7d9887c18b75f4605e6b0e7b44e5bf65147da9ca8e58c`。
+
+### E3：N128
+
+候选源码/测试 SHA-256 为
+`46b32c1a8ecbf362021848aea48d0ba7aaf0fba538fae6b51e05dee3411bdf88` /
+`a4874927b65b1c1fc2d91a20c9110cfeeb7af1985c6d61f6947aa1214eda5651`。
+
+| 指标 | 结果 |
+| --- | ---: |
+| affected 几何平均 | `0.894789x` |
+| FP16 / BF16 / FP32 | `0.857401/0.854931/0.977342x` |
+| 最差 affected 点 / 单组 | `0.584699/0.584614x` |
+| control 几何平均 / 范围 | `0.999984x / 0.999901–1.000000x` |
+
+低精度 ragged-permutation 进一步降到约 `0.585x`。候选最高 168 registers、
+18 KiB shared；K7 permutation 的 FP16/BF16 仍有 2 spills，性能和资源均失败。
+不再尝试 dtype/shape 特判或更多 N tile。
+
+远端目录 `gpu:/tmp/flagos-sgemm-lora-b-e3.1DnsbT`，PID/PGID `93575`，运行时间
+09:17:47–09:18:18 CST。harness/gates、原始 JSON、gates 日志 SHA-256 分别为
+`c6e0aab3916d7b0d98db32e7772a70d9be3d852d592c079b77bd71b0f01f0fde`、
+`41fa9e2146bc50b33fe163a0174d0d85479fd76f07e43c7e2fe3e34d26e33651`、
+`711f0083250912590fc433ef492317093bc2f83f5d7e4ae5071b4a721916bd04`、
+`45f04bbce04e80176bc66355a3b8ca9686c9e60e502ab37c1831437b8c3b02b5`。
