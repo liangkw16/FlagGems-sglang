@@ -487,3 +487,35 @@ bytes，SHA-256
 `moe_sum_reduce.py`、`moe_sum_reduce_ascend.py`、
 `moe_sum_reduce_kunlunxin.py`，`unzip -t` 通过。平台晋级门禁：8/8 通过、
 昆仑选中 BLOCK 1024 vendor 且华为继续选中 ascend vendor。
+
+### S3 平台结果：8/8，有效，团队当前最佳
+
+2026-08-24 23:20:43 CST 提交，submission ID `4291`、当日序号 `13`，额度由
+`18/30` 变为 `17/30`；远端验签 `verified`（9240 bytes，SHA-256 一致），
+`file_url_sha256` 为
+`6202dd08e2cc83dbb2a93ebfb583e5f4756e974d05bb7c6fd5d809dae7e7ac98`。
+23:21:15 CST 终态 `completed` / `valid`，8/8 通过，平均 `2.7096x`，平台标记
+team best：
+
+| 芯片 | 结果 | speedup | 选中文件 |
+| --- | --- | ---: | --- |
+| 天数 | 通过 | 4.6448x | `moe_sum_reduce.py` |
+| 沐曦 | 通过 | 3.5248x | `moe_sum_reduce.py` |
+| 燧原 | 通过 | 0.2060x | `moe_sum_reduce.py` |
+| 海光 | 通过 | 6.4578x | `moe_sum_reduce.py` |
+| 昆仑芯 | 通过 | 0.1754x | `moe_sum_reduce_kunlunxin.py` |
+| 华为 | 通过 | 0.5982x | `moe_sum_reduce_ascend.py` |
+| 国际通用 A | 通过 | 3.8554x | `moe_sum_reduce.py` |
+| 国际通用 B | 通过 | 2.2144x | `moe_sum_reduce.py` |
+
+结论：昆仑 BLOCK 1024 vendor 全部 case 编译并运行通过，"XPU 将 2D grid
+展平为总 program 数、编译期上限 65535"的假设被平台证实（S0c/S1/S2/S3 四组
+反例与正例构成完整证据链）。华为 ascend vendor 第三次平台验证成功。Task 21
+八芯全部通过 0.1x 门槛，闭环完成；S3 为当前团队最佳。
+
+遗留观察与下一步：燧原已连续三次出现 `~0.207x`（同字节 generic 首投为
+2.3126x），与 ZIP 从单成员变为三成员时间上相关，属平台侧持续状态而非单次
+噪声；若后续继续优化 Task 21，优先做燧原性能 vendor（如 Task 08 式
+BLOCK 4096/grid 12）并同时在账本跟踪三成员 ZIP 与首投的差异。昆仑 0.1754x
+与华为 0.5982x 亦有较大提升空间，但本轮停止迭代，额度转向队列中未首投的
+12 个算子。

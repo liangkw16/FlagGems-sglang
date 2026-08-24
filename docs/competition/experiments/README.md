@@ -5,8 +5,8 @@
 `2026-08-24T02:17:26+08:00`。
 
 当前覆盖：17/17 个算子都有已提交源码、远端 NVIDIA 代理验证和不可变 ZIP。
-Task 08、Task 19、Task 20 和 Task 24 已经平台 8/8；Task 21 S0c 平台 6/8；
-其余 12 个尚无八芯平台结果，代理加速比不能外推。
+Task 08、Task 19、Task 20、Task 21 和 Task 24 已经平台 8/8；其余 12 个尚无
+八芯平台结果，代理加速比不能外推。
 
 产物路径统一为：
 
@@ -33,7 +33,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 18 | [`fused_recurrent_gdn`](fused_recurrent_gdn.md) | `e2-2ba2813` | `4be0a8135cc5dcc23a33b31852b6754fa44a2959e8d035e49a113d07edaf14eb` | 3/3 release；低精度 K65–128 为 1.479–1.525x；大 K 八芯状态资源仍高风险 | 最后受控提交 |
 | 19 | [`fused_rmsnorm`](fused_rmsnorm.md) | `e2-a5b2986` | `04e24fd06f26144bb6b5824b720678edd48a731f34ced48eab8600c30c65c124` | E2 平台 8/8、4.5467x、第 7；Kunlun vendor 被选中但仅 0.9308x，未过 1.05x 门禁 | 停止同一 multi-row 假设；转其他算子 |
 | 20 | [`mamba_layernorm_gated`](mamba_layernorm_gated.md) | `e3-374e06c` | `afe450702c551fc83395432733dd22e98840125a31247c5e43117983ee30bb3d` | E3 平台 8/8、4.2526x、第 6/6；华为由启动失败恢复至 1.8838x，团队当前最佳 | 保留 E3，转其他算子 |
-| 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s1-849527f` | `a8416396f76c624ebbc06033b1daba88858fd97b65c6c74a5f9c83f1c30f25c9` | S1 平台 7/8；华为 vendor 恢复通过 0.6496x；昆仑 1D div/mod vendor 全 case 编译失败 | S2 昆仑 vendor 改 2D 结构 + cap grid.x |
+| 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s3-1ca7dd2` | `159911639601002f9be5e083309d9a5cac1d1d32617e1fe31207486cc267b2f8` | S3 平台 8/8、2.7096x、valid、team best；昆仑 BLOCK 1024 与华为 capped grid-stride 均选中通过 | 闭环完成；燧原 0.206x 连续低读数为后续优化点 |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s1-11ae343` | `bec21ac8d198d0eefd3d7c0ef68bf3a2c654017c00656c230ab12bc04f0f4d9c` | 3/3 release；修复空段 metadata 越界并跳过窄 slice 无效 GEMM；affected 1.006–1.371x；未平台 | 第 9 个提交 |
 | 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `s1-222dd77` | `4223927a48608887b322b87611001f65102cd0e6fa2bf432b4efb50a7773a03f` | 4/4 release；N256/N128 均在低精度 ragged 回退且资源失败，保留 S1；未平台 | 第 8 个提交 |
 | 24 | [`softcap_out`](softcap_out.md) | `s2c-5cd6019` | `999f2dea69774c2f9756748a2a113c7ad54d3e2fdce18bfd24b014a96fed1f46` | S1 平台 8/8、1.90x；S2 Enflame 大 shape 代理提升 3.53–5.66x；canonical 包已验签 | 优化候选；实时预检后确认提交 |
@@ -46,8 +46,10 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 12 → 09 → 17 → 23 → 22 → 11 → 10 → 15 → 16 → 13 → 14
 ```
 
-Task 18 暂缓，仅作状态资源实验。Task 21 正在 S2 昆仑 vendor 修复迭代
-（S0c 6/8 → S1 7/8，华为已修复）；其后续提交优先于新算子首投。Task 13 已按公开 reference 可返回域修复；
+Task 18 暂缓，仅作状态资源实验。Task 21 已闭环（S0c 6/8 → S1 7/8 → S2 7/8
+→ S3 8/8、2.7096x、team best；昆仑 XPU 2D grid 展平总数上限 65535 的证据
+链完整，华为 capped grid-stride 第三次平台验证）。队列恢复新算子首投。
+Task 13 已按公开 reference 可返回域修复；
 其余 shape 仍需赛方澄清。Task 14 已有 NVIDIA 优化，但七芯 generic 风险仍需平台
 证明。Task 08 的 E2 已通过 8/8，燧原 BLOCK 优化完成。Task 19 的 E2 已
 通过 8/8，但昆仑专项优化未生效；燧原为 1.5049x。Task 20 E3 已通过 8/8，
@@ -59,8 +61,9 @@ Task 24 已通过，S2 只优化 Enflame。Task 19 在
 提交，20:53:09 CST 只读状态为新口径剩余 `22/30`；E3 于 22:34:19 CST 提交，
 22:35:10 CST 终态只读状态为 `21/30`。Task 21 S0c 于 22:46:50 CST 提交，
 22:50:18 CST 终态时剩余 `20/30`；S1 于 23:02:23 CST 提交，23:03:08 CST 终态时
-剩余 `19/30`。这些只是历史观察，每次上传前必须重新读取
-实时额度。
+剩余 `19/30`；S2 于 23:13:00 CST 提交，23:13:47 CST 剩余 `18/30`；S3 于
+23:20:43 CST 提交，23:21:15 CST 终态时剩余 `17/30`。这些只是历史观察，每次
+上传前必须重新读取实时额度。
 
 ## 自动提交门禁
 
