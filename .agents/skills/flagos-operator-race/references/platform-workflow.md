@@ -4,7 +4,7 @@
 
 ## 提交前本地只读验签
 
-仅当本次要选择文件或提交时执行本节；纯状态或评测查询直接进入浏览器只读检查，
+仅当本次要选择文件或提交时执行本节；纯状态或评测查询直接使用下文只读脚本，
 不要求存在候选 ZIP。提交前先对实际候选做只读验签：计算 ZIP SHA-256，检查小于
 10 MB、ZIP 完整性、安全普通文件、UTF-8/可编译、operator basename 和允许的
 vendor 后缀。规范产物使用打包器 `--verify-existing`；安全子目录中的历史包按
@@ -12,13 +12,42 @@ basename 和提交源码内容验签，不重写字节。实际成员清单必�
 generic/vendor 集合一致，不能因打包器自动收集 commit 中已有 vendor 而夹带文件。
 
 同时建立 provenance：source commit、成员来源与 SHA、实际 ZIP SHA 必须能互相
-对应。验签或来源不完整就停止，不进入浏览器预检和额度确认。
+对应。验签或来源不完整就停止，不进入平台预检和额度确认。
 
-## 平台提交
+## 脚本查分
 
-本地验签通过后使用 `chrome:control-chrome` skill 做只读预检：核对 race ID/赛季、
-登录账号、登录团队、Task、batch、截止时间、两分钟间隔、当前剩余额度和当次页面
-规则，但不选择文件、不点击提交。然后取得用户当次的一次性 action-time 确认，确认
+日常查分不操作浏览器。先从用户合法持有的登录凭证设置环境变量；不要把 token 写进
+命令历史，也不要由脚本读取浏览器 cookie/localStorage：
+
+```bash
+read -r -s FLAGOS_TOKEN
+export FLAGOS_TOKEN
+python .agents/skills/flagos-operator-race/scripts/platform_cli.py status \
+  --race 782kzq4m --batch 2 --task 12 --operator chunk_state
+```
+
+持续等待终态时追加 `--watch --interval 15 --timeout 900`。`status` 只发 GET，不创建
+竞赛账本或本地 intent。也可使用绝对路径的 `FLAGOS_TOKEN_FILE`，但文件必须为普通
+文件且权限不宽于 `0600`。
+
+## 脚本提交
+
+本地验签通过后运行 `preflight`；它调用规范打包器的 `--verify-existing`，并只读核对
+race、登录账号、登录团队、精确 Task/tid、batch、截止时间、平台实时最小提交间隔、
+提交记录快照和当前剩余额度。完整 commit、ZIP SHA-256、ZIP 绝对路径和成员必须由
+调用者显式提供：
+
+```bash
+python .agents/skills/flagos-operator-race/scripts/platform_cli.py preflight \
+  --season 2 --race 782kzq4m --account '<账号>' --team '<团队>' \
+  --batch 2 --task 12 --operator chunk_state --stage e2 \
+  --commit '<40位commit>' --zip '<ZIP绝对路径>' --sha256 '<64位SHA-256>' \
+  --member chunk_state.py
+```
+
+每个 vendor 文件再增加一个 `--member chunk_state_<vendor>.py`。预检不发 POST；它在
+Git 内部目录 `.git/flagos-platform/` 创建权限为 `0600`、十分钟有效的一次性 intent，
+并打印完整 tuple 和随机 nonce。然后取得用户当次的一次性 action-time 确认，确认
 内容至少包括：
 
 - race ID/赛季、登录账号、登录团队、batch、Task 编号和 operator；
@@ -29,22 +58,25 @@ generic/vendor 集合一致，不能因打包器自动收集 commit 中已有 ve
 一次确认只授权上述 tuple 的一次提交点击；点击后无论成功、失败或结果不确定，确认
 都立即失效。
 
-确认后立即只读复核上述状态；任一值变化都停止并重新确认。状态不变时：
+确认后只运行预检输出的命令：
 
-1. 重新计算本地 ZIP SHA-256；与确认值不一致就停止并重新确认；
-2. 选择已确认的绝对路径；
-3. 等待平台识别正确的 `.py` 数量；
-4. 点击前再次计算本地 ZIP SHA-256；字节变化就停止，不点击并重新确认；
-5. 只有当次上传器显示的全部基础校验通过且提交按钮启用时才点击；
-6. 捕获“提交成功”、额度扣减、流水时间和状态。
+```bash
+python .agents/skills/flagos-operator-race/scripts/platform_cli.py submit \
+  --confirm '<本次nonce>'
+```
 
-提交点击后若页面超时、断连或结果不确定，先只读核对提交记录和额度，不得直接
-重试。只有确认没有可定位的结果并重新展示实时 tuple、取得新的当次确认后，才能
-再次点击。
+`submit` 持本地锁，重新验签 ZIP 并复核整个 live binding；任一值变化都把 intent 标为
+`stale`，且不发 POST。状态不变时只读入一次 ZIP 字节，用同一份字节执行“上传文件”
+和“正式提交”各一次。发送前 intent 先落盘为 `sending`；成功后为 `submitted`，发送
+阶段任何异常为 `uncertain`。非 `prepared` nonce 永不复用，也没有 `--force`、自动
+重试或可替换 API host。同一 race/account/team/Task/operator/ZIP SHA tuple 已存在有效
+intent、未决发送或成功记录时不生成第二个 nonce；新候选必须有新的 ZIP SHA。
 
-页面刚选文件时可能短暂显示 `0 个 .py`；等待校验完成，不要在异常状态提交。
-若 Chrome 文件权限失败，遵循 Chrome skill 的 file-upload troubleshooting。
-验证码或新的风险提示交给用户处理。
+出现 `sending`/`uncertain` 时先用 `status` 核对提交记录和额度，不得直接重试。若
+提交记录出现同一 `file_url`，下次预检只会把旧 intent 标成已提交并拒绝重复；若仍无
+可定位结果，脚本保持阻塞，不删除或手改 intent。实际平台响应和逐芯结果仍写入对应
+实验账本。验证码、新风险提示、认证协议、API schema 漂移或未决 intent 需人工处置
+时，改用 `chrome:control-chrome` 做只读复核，并在新的明确授权下补充恢复流程。
 
 ## 逐芯结果与最小迭代
 
