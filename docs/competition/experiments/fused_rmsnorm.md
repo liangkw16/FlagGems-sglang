@@ -226,3 +226,96 @@ base/candidate module-case correctness 均通过。
 SHA-256 恢复为 `02bed1a5...b964997`，不可变首投仍为 S0 `3fac516`。
 
 未打开浏览器、未读取或消耗平台额度；旧确认不授权新产物。
+
+## E2：昆仑 small-hidden/high-rows multi-row vendor
+
+状态：release 与 canonical ZIP 已就绪，未提交平台
+
+验证时间：2026-08-24 15:11–15:26 CST
+
+### 假设与单变量
+
+S0 平台首投只有昆仑芯低于 1x（`0.94x`）。固定 FlagGems `ed2508b` 的
+Kunlun RMSNorm 记录 `[10000,256]` 单行 kernel 只有 `0.006x`，并在
+`hidden <= 256, rows >= 4096` 时切换二维 multi-row。E2 因此只新增
+`runtime/backend/_kunlunxin/ops/fused_rmsnorm.py`：
+
+- generic SHA-256 仍为
+  `02bed1a5cb28b583c343892569d9e25d1ef3d888e124fdd066d1155a0b964997`，
+  其他七芯字节与 S0 相同；
+- 连续 x/weight 命中 `ROWS_PER_PROGRAM=max(1, 8192 // hidden)`，grid 为
+  `ceil(rows / ROWS_PER_PROGRAM)`；`H=256` 时每个 program 处理 32 行；
+- 使用 exact-hidden 二维 tile、FP32 reduction 和尾行 mask；非连续输入及阈值外
+  shape 仍走与 S0 等价的 stride-aware 单行 Triton kernel；
+- 没有设备判断、PyTorch fallback、autotune 或其他 vendor 改动。
+
+该方案不复用 E1 的全局 static-row-loop：E2 是 Kunlun-only 2D tile，E1 则会
+改变全部芯片且在 NVIDIA 上扰动 controls。XPU 专用 Triton 前端允许非 2 次幂
+`tl.arange`；NVIDIA 只能代理验证 2 次幂 hidden，不能据此缩窄目标分支。
+
+### Screening 与 A/B
+
+证据目录 `gpu:/tmp/flagos-fused-rmsnorm-kunlun.Xj3EBL`，mode 0700；最终回归
+PID/PGID `96703`，A/B PID/PGID `96206`。回归覆盖三 dtype：affected
+`(4096,256)`、row tail `(4097,256)`、RPP64 tail `(4097,128)`，threshold
+controls `(4095,256)` / `(4096,257)`，以及非连续 `(4096,256)` fallback；
+4/4 unittest 方法通过，输出 shape/dtype、reference 数值及输入不变性均通过。
+
+五轮交替 AB/BA，`warmup=25, rep=100`，每次 wrapper 批量 20 次。表中是五轮
+paired speedup 的中位数：
+
+| dtype | rows | H=256 candidate/base |
+| --- | ---: | ---: |
+| FP16 | 4096 | 2.4146x |
+| BF16 | 4096 | 2.4561x |
+| FP32 | 4096 | 1.4388x |
+| FP16 | 10000 | 3.1021x |
+| BF16 | 10000 | 3.0710x |
+| FP32 | 10000 | 1.4879x |
+| FP16 | 65536 | 1.8395x |
+| BF16 | 65536 | 1.8374x |
+| FP32 | 65536 | 1.0072x |
+
+9 个 affected 点几何均值 `1.9521428x`，范围 `1.0072004–3.1021472x`；9 个
+controls 几何均值 `1.0005405x`，范围 `1.0000000–1.0038141x`。CUDA metadata
+记录 multi-row shared memory 为 1024 bytes；三份 PTX 经 CUDA 13.3 `ptxas`
+复核最大 128 registers/thread、0 stack、0 spill load/store，resource log
+SHA-256 为
+`0e669cc9f17e84aa6d607262805d75b6701f828e0f18e4b259de6e671daef35a`。
+
+验证环境为 NVIDIA GeForce RTX 5070 Ti 16 GB、driver 610.57.04、Python
+3.12.13、PyTorch 2.13.0+cu130、Triton 3.7.1、CUDA 13.0。上述结果只证明
+标准 Triton 语法、2 次幂形状数值和 NVIDIA 代理资源/性能；不能证明 Kunlun
+exact-N 编译、block DMA 或实际收益。
+
+最终 generic/vendor/test/harness SHA-256 分别为
+`02bed1a5cb28b583c343892569d9e25d1ef3d888e124fdd066d1155a0b964997`、
+`167c23715a11c459db2244c4ae05b18941f8ee2f0af6bfb6d6ed781b0a0d5512`、
+`bae6ed3269ccc64122656daab056a9708ebf5274108038afc263bc1ea1b2f4a0`、
+`7dd20f9680816b71255de70d1a862dd976416343ccd92cf048972114824d90af`；
+`unit2.log` / `ab.log` SHA-256 分别为
+`d70b5174d26345ca9c8e45ca9bcd21ae13612bcdff099d473837807e84abc7a5`、
+`b7b63132bc679d4f635af51147c3dac904ee0699b83de8192036f89cec4aff63`。
+
+### Release 与提交门禁
+
+source/verification commit 均为
+`a5b29861f1a62abec87c65f1a29c595275b3e2a3`，已推送；generic/vendor/test Git
+blob 分别为 `e2026246bd63f53e13b8bec10f4a53bf50f63d0a`、
+`425c81bc712115acd7a0bf1fc78142edd637b2c2`、
+`c25e22bbc9ba258fbf186b0595fc2ef868cc19ad`。从 Git 对象导出到独立目录
+`gpu:/tmp/flagos-fused-rmsnorm-kunlun-release.rEiN0W` 后，SHA-256 与 screening
+逐字节一致，格式门禁和 4/4 release 回归通过；PID/PGID `96864`，
+`release.log` SHA-256 为
+`281931f4a18c69d7b8310ddbed8ed9b1028df14918bf4d5001694eeb694e85fa`。
+
+canonical ZIP：
+`artifacts/competition/fused_rmsnorm/e2-a5b2986/fused_rmsnorm.zip`，6428 bytes，
+SHA-256
+`04e24fd06f26144bb6b5824b720678edd48a731f34ced48eab8600c30c65c124`；ZIP 成员仅为
+`fused_rmsnorm.py`、`fused_rmsnorm_kunlunxin.py`，均已用 committed blobs
+验签。
+
+平台晋级门禁预设为 8/8 正确、Kunlun 至少 `1.05x` 且优于 S0 的 `0.94x`、平均
+高于 `4.53x`；若未达标则保留 S0。尚未打开平台、读取实时额度或提交；任何历史
+确认都不授权 E2。
