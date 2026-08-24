@@ -197,3 +197,50 @@ commit 均已复验；打包器第二次运行状态为 `verified-existing`。
   5070 Ti 结果外推到其他芯片。
 - S1 当前为“候选就绪、未提交”。未打开浏览器、未读取或消耗平台额度；上传必须
   重新执行本地验签、平台只读预检并取得用户针对完整 tuple 的当次一次性确认。
+
+## S1a：预防性 Ascend/Kunlun token 折叠 + Enflame 配置 vendor（首投候选）
+
+状态：release 门禁通过，候选就绪，等待 preflight 与提交
+
+NVIDIA 调参 sweep（`gpu:/tmp/flagos-ela-sweep.575RVG`，PID `108768`，
+00:56:20，脚本 SHA-256
+`96be021c60f76e14d9a646e5ffecd7b8aa7bbca4b9d04bbd8ab28a1d0b6a13ca`，修正版
+含路径/生成器两处修复）：4 个代表 shape × BLOCK_RANK{64,128,256,512} ×
+warps{2,4,8} × stages{1,2} 共 66 个有效配置点，S1 的 128/4/1 在 3/4 case
+处于噪声内最优（≤1.4% 差距），仅 bs2-len4096-r128-bf16 上 64/4/2 快
+13.7%——generic 保持不变；64/4/2 作为燧原 vendor 配置依据。
+
+grid 审计：`(max_len, bs)` 2D 展平总数可超 65535（华为 launch 越界、昆仑
+编译失败，均已有平台证据）。vendor 设计：
+
+- `_ascend` 与 `_kunlunxin`（逐字节相同文件）：`token_cap =
+  max(1, 65535 // bs)`，物理 grid `(min(max_len, token_cap), bs)` 使展平总数
+  ≤65535；kernel 把两个 early-return 改为 token 折叠循环
+  `for token in range(pid, max_len, num_programs)` 内的 `token < seg_len and
+  rank != 0` 守卫，segment/rank 元数据载入外提；数学与 BLOCK_RANK 128 不变。
+- `_enflame`：仅配置换为 BLOCK_RANK 64 / warps 4 / stages 2（sweep + 燧原
+  stages≥2 平台教训），grid 不变。
+
+新增回归 `test_vendors_cover_token_fold_and_configs`：bs=8、随机 segment 长
+9000–16384（max_len > token_cap=8191，覆盖两轮 token 折叠），四模块对
+reference 逐字节相等。共 6/6 unittest。screening
+`gpu:/tmp/flagos-ela-vend.UOxCaI`（首跑 Black 折行失败后以远端 Black 原地
+格式化回拷修正），PID/PGID `109180`（01:06:07，wall 900s，脚本 SHA-256
+`0b95a4c5b3d715339bd322b11fcbfaa9a7e902e84f5c167d71939803574bed17`），
+`screening.log` SHA-256
+`b905a375f476b59dd4812ee34f345ae2faf192c9dfd44ff7b45a62669e9d38b0`；ascend/
+kunlunxin vendor blob
+`1c4524e6f2c742d2d4950af8ecb53c6598a9a1f8eba0cb67ba79b309f6dee958`，enflame
+vendor blob
+`8151f7cbed9ccaa2d5e35dd4a85edd573fea5ccddda4380413a38c64d28bf592`，测试
+`9d624b465b268b0211183fafa9fce8304a84799ae9aac576f59c4e0c82244338`。release
+`gpu:/tmp/flagos-ela-release.cTDJau`，source/verification commit
+`4db86a68f8e5038ece0d89b8387643b2c787c986`，PID/PGID `109366`（01:08:59），
+`RELEASE_OK`，`release.log` SHA-256
+`fa77a2f2cb18997a21f893eb9b887e87b72ebb8119e48eaff327196177bb1d5d`。
+canonical ZIP
+`artifacts/competition/embedding_lora_a/s1a-4db86a6/embedding_lora_a.zip`，
+SHA-256
+`3e5e15064613c9223491ed2745502ec5f535df1bc07c27698bb259dcb72f82c4`，成员
+generic + ascend/enflame/kunlunxin 三 vendor，`unzip -t` 通过。本任务提交
+预算 ≤3 次（本候选为第 1 次）。
