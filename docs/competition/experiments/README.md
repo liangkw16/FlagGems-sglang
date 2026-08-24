@@ -5,8 +5,8 @@
 `2026-08-24T02:17:26+08:00`。
 
 当前覆盖：17/17 个算子都有已提交源码、远端 NVIDIA 代理验证和不可变 ZIP。
-Task 08、Task 19 和 Task 24 已经平台 8/8；Task 20 E2 为 7/8，E3 是华为启动
-网格越界的恢复候选；其余 13 个尚无八芯平台结果，代理加速比不能外推。
+Task 08、Task 19、Task 20 和 Task 24 已经平台 8/8；其余 13 个尚无八芯平台
+结果，代理加速比不能外推。
 
 产物路径统一为：
 
@@ -32,8 +32,8 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 17 | [`embedding_lora_a`](embedding_lora_a.md) | `s1-d101ebe` | `49d7a33648c31d2b13e46c7e3dba8e7a4b88ecadce7da444c2ed5bac6b0ac09f` | 5/5 release；修复空 segment metadata 越界；2-warps E1 仅 0.999994x，保留 S1；未平台 | 第 7 个提交 |
 | 18 | [`fused_recurrent_gdn`](fused_recurrent_gdn.md) | `e2-2ba2813` | `4be0a8135cc5dcc23a33b31852b6754fa44a2959e8d035e49a113d07edaf14eb` | 3/3 release；低精度 K65–128 为 1.479–1.525x；大 K 八芯状态资源仍高风险 | 最后受控提交 |
 | 19 | [`fused_rmsnorm`](fused_rmsnorm.md) | `e2-a5b2986` | `04e24fd06f26144bb6b5824b720678edd48a731f34ced48eab8600c30c65c124` | E2 平台 8/8、4.5467x、第 7；Kunlun vendor 被选中但仅 0.9308x，未过 1.05x 门禁 | 停止同一 multi-row 假设；转其他算子 |
-| 20 | [`mamba_layernorm_gated`](mamba_layernorm_gated.md) | `e3-374e06c` | `afe450702c551fc83395432733dd22e98840125a31247c5e43117983ee30bb3d` | E2 平台 7/8，华为 `coreDim=131072` 越界；E3 release 4/4，故障规模代理 0.498/0.461x | 华为恢复候选 |
-| 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s0-3fac516` | `ef3c30e416d24d8268a1c252261676f3e540910a8836a93d2520917580f514bf` | 4/4 回归；512/1024/2048 tile 均未过 1.05x，保留 S0；未平台 | Task 20 之后 |
+| 20 | [`mamba_layernorm_gated`](mamba_layernorm_gated.md) | `e3-374e06c` | `afe450702c551fc83395432733dd22e98840125a31247c5e43117983ee30bb3d` | E3 平台 8/8、4.2526x、第 6/6；华为由启动失败恢复至 1.8838x，团队当前最佳 | 保留 E3，转其他算子 |
+| 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s0-3fac516` | `ef3c30e416d24d8268a1c252261676f3e540910a8836a93d2520917580f514bf` | 4/4 回归；512/1024/2048 tile 均未过 1.05x，保留 S0；未平台 | 下一次受控提交候选 |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s1-11ae343` | `bec21ac8d198d0eefd3d7c0ef68bf3a2c654017c00656c230ab12bc04f0f4d9c` | 3/3 release；修复空段 metadata 越界并跳过窄 slice 无效 GEMM；affected 1.006–1.371x；未平台 | 第 9 个提交 |
 | 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `s1-222dd77` | `4223927a48608887b322b87611001f65102cd0e6fa2bf432b4efb50a7773a03f` | 4/4 release；N256/N128 均在低精度 ragged 回退且资源失败，保留 S1；未平台 | 第 8 个提交 |
 | 24 | [`softcap_out`](softcap_out.md) | `s2c-5cd6019` | `999f2dea69774c2f9756748a2a113c7ad54d3e2fdce18bfd24b014a96fed1f46` | S1 平台 8/8、1.90x；S2 Enflame 大 shape 代理提升 3.53–5.66x；canonical 包已验签 | 优化候选；实时预检后确认提交 |
@@ -43,19 +43,21 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 按实现复杂度、公开达标队伍数、代理覆盖和跨芯风险排序：
 
 ```text
-20 → 21 → 12 → 09 → 17 → 23 → 22 → 11 → 10 → 15 → 16 → 13 → 14
+21 → 12 → 09 → 17 → 23 → 22 → 11 → 10 → 15 → 16 → 13 → 14
 ```
 
 Task 18 暂缓，仅作状态资源实验。Task 13 已按公开 reference 可返回域修复；
 其余 shape 仍需赛方澄清。Task 14 已有 NVIDIA 优化，但七芯 generic 风险仍需平台
 证明。Task 08 的 E2 已通过 8/8，燧原 BLOCK 优化完成。Task 19 的 E2 已
-通过 8/8，但昆仑专项优化未生效；燧原为 1.5049x。
+通过 8/8，但昆仑专项优化未生效；燧原为 1.5049x。Task 20 E3 已通过 8/8，
+Ascend capped grid-stride 将华为从启动失败恢复至 1.8838x。
 Task 24 已通过，S2 只优化 Enflame。Task 19 在
 2026-08-24 17:05:45 CST 二投后平台显示当日剩余 `11/15`；Task 08 S0c 首投后，
 2026-08-24 18:00:04 CST 只读状态为 `10/15`；S1 提交后在 19:24:01 CST 为
 `9/15`，E2 提交后在 19:55:10 CST 为 `8/15`。Task 20 E2 在 20:38:59 CST
-提交，20:53:09 CST 只读状态为新口径剩余 `22/30`。这些只是历史观察，每次上传
-前必须重新读取实时额度。
+提交，20:53:09 CST 只读状态为新口径剩余 `22/30`；E3 于 22:34:19 CST 提交，
+22:35:10 CST 终态只读状态为 `21/30`。这些只是历史观察，每次上传前必须重新读取
+实时额度。
 
 ## 自动提交门禁
 

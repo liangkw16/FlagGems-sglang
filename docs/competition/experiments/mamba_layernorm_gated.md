@@ -265,7 +265,7 @@ kernel 未启动。平台随后展示的数值无效，根因是启动网格越�
 
 ## E3：Ascend capped grid-stride recovery
 
-状态：候选就绪，尚未提交平台
+状态：平台 8/8，有效，团队当前最佳
 
 E3 只新增 Ascend vendor，不改 generic 数学与 E2 tail-warp 策略。物理 grid 为
 `min(total_groups, 4096)`，每个 program 按 `tl.num_programs(0)` 跨步遍历逻辑
@@ -311,3 +311,30 @@ reference，结果为 48=`0.038828x`、256=`0.194729x`、1024=`0.365852x`、
 因此选择 4096。该 NVIDIA 扫描只能证明映射正确并排除明显代理回退，不能外推华为
 性能；E3 的晋级目标是恢复华为启动与正确性，最终八芯结果仍以平台为准。ZIP 已通过
 成员哈希和 `unzip -t` 验签。
+
+## E3 平台结果：8/8
+
+账号 `15600308080`、团队 `SoulCoder` 于 2026-08-24 22:34:19 CST 提交一次；
+submission ID `4268`、当日序号 `9`，额度由 `22/30` 变为 `21/30`。远端对象为
+9715 bytes，SHA-256
+`afe450702c551fc83395432733dd22e98840125a31247c5e43117983ee30bb3d`，与本地
+canonical ZIP 完全一致；`file_url_sha256` 为
+`25964167ece218042f4cdaba5f4ed69ed68c873d331e0b95651281141205cd4b`。
+
+| 芯片 | 选中文件 | 结果 | speedup |
+| --- | --- | --- | ---: |
+| 天数智芯 | `mamba_layernorm_gated.py` | 通过 | `9.3056x` |
+| 沐曦 | `mamba_layernorm_gated.py` | 通过 | `3.4172x` |
+| 燧原 | `mamba_layernorm_gated.py` | 通过 | `0.5090x` |
+| 海光 | `mamba_layernorm_gated.py` | 通过 | `6.3094x` |
+| 昆仑芯 | `mamba_layernorm_gated.py` | 通过 | `0.3360x` |
+| 华为 | `mamba_layernorm_gated_ascend.py` | 通过 | `1.8838x` |
+| card_a | `mamba_layernorm_gated.py` | 通过 | `6.7256x` |
+| card_b | `mamba_layernorm_gated.py` | 通过 | `5.5342x` |
+
+22:35:10 CST 终态为 `completed` / `valid`，8/8 通过，平均 `4.2526x`，平台标记
+为团队当前最佳。华为确实选中 Ascend vendor，E2 的 `coreDim=131072` 启动失败已
+消除并达到 `1.8838x`；其余七芯继续使用未变 generic。公开榜单
+`as_of=2026-08-24T22:35:37.794558+08:00` 显示 SoulCoder 第 6/6，参与 8 队、
+达标上榜 6 队，榜首 EvokeAgent 为 `6.5554x`。保留 E3 作为团队最佳，不再沿同一
+Ascend grid-cap 假设试参；后续额度转其他算子。
