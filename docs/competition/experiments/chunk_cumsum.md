@@ -286,3 +286,28 @@ PID/PGID `92624`，运行时间为 09:03:44–09:05:35 CST。
   反馈前不再追加本地 mask/tile 猜测。
 - 当前可交付物是 S1，状态为候选就绪、未提交；下一门禁是用户针对 Task 10、
   ZIP 绝对路径/哈希和平台实时额度作当次确认。
+
+## S2：hybrid grid Ascend/Kunlun vendor（首投候选，≤2 次预算）
+
+状态：release 门禁通过，候选就绪
+
+grid 审计同 Task 11：3D `(head_blocks, nchunks, batch)` 展平总数可超
+65535。吸取 Task 11 E1a 教训（无条件折叠 vendor 使华为 0.0255x、昆仑
+0.012x——benchmark 规模未超限时折叠循环纯属开销），本 vendor 采用
+**hybrid**：`total ≤ 65535` 走与 generic 逐字节相同的 kernel 与 3D grid，
+超限时才切换到折叠 kernel（1D `min(total,4096)` + div/mod 分解）。两个
+kernel 共存于同一 vendor 文件，wrapper 按 total 分派。新增回归
+`test_vendors_cover_folded_grid`（2×16384×96、chunk 64、总 program >4096，
+fp32/fp16 × softplus 开关 × 三模块）。screening
+`gpu:/tmp/flagos-cc-v2.1mWuse`（首跑 Black 折行经远端格式化回拷），最终
+PID/PGID `113930`（02:41 前后，wall 900s），5/5 unittest（0.842s），
+`screening.log` SHA-256
+`3ac450cebd5ae38ab02e12329c01be4b91c3f88913ccd988941cce46406963b4`。
+release `gpu:/tmp/flagos-dual-release.*/a`，source/verification commit
+`5e776b5a9b22c77a547947291cacec45b4707ec2`，`RELEASE_OK`，`release.log`
+SHA-256
+`01146b80a3171c4a260ce013326cb40958a578ea8a887ac21878674096595f60`。
+canonical ZIP `artifacts/competition/chunk_cumsum/s2-5e776b5/chunk_cumsum.zip`，
+SHA-256
+`d104ad83075e0b8f2bf34c8e82f5c6dbd396dc19dca65fc3b872a5eda15ec835`，
+成员 generic + ascend/kunlunxin，`unzip -t` 通过。

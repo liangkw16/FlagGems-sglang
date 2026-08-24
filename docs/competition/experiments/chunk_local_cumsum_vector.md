@@ -159,3 +159,28 @@ canonical ZIP
 SHA-256
 `3ef95e909fa8d4018ccb7ea0569776e24bf61cfa15fcd4523d5c390bd589bf4c`，成员
 generic + ascend/kunlunxin，`unzip -t` 通过。
+
+### E1a 平台首投：8/8 正确、invalid_threshold → E1b hybrid + BLOCK_F=1 燧原
+
+E1a 于 02:35:35 CST 提交（submission `4463`，当日序号 `13`，额度区间
+`19/30`→`18/30`，`file_url_sha256` 为
+`32021d2ca2caae0c8e0f5f362b153fd7ef1903301c42223f990bdedab4bc024b`）。
+八芯 correctness 全过（天数 0.8165x、沐曦 1.2385x、海光 2.5845x、国际 A
+2.5970x、国际 B 1.6335x），但燧原 `0.0035x`、昆仑 `0.0120x`、华为
+`0.0255x` 低于 0.1x 门槛——三芯 vendor 被选中且正确，但无条件折叠循环在
+benchmark 规模未超 65535 时是纯开销（对比 Task 20/23 折叠高分，本 kernel
+每 program 工作极轻，循环开销占比放大）。E1b（第 2/2 次）：华为/昆仑改
+hybrid（≤65535 走 generic 同字节 kernel 与 3D grid，超限才折叠）；燧原
+新增 `BLOCK_F=1` vendor（纯一维 cumsum，规避 GCU 二维 tile lowering）。
+screening `gpu:/tmp/flagos-clcv-v2.adREsd`（含 Black 回拷修正），最终
+PID/PGID `113931`，3/3 unittest（0.753s），`screening.log` SHA-256
+`ec14ea68ee22acc7ebe60444fd1e46890d4f0edaf5d824be875a257548893a85`。
+release `gpu:/tmp/flagos-dual-release.*/b`，commit
+`dddef74fb5c6ec6fad33cd262482be425b9b0598`，`RELEASE_OK`，`release.log`
+SHA-256
+`dbf7567d21855ab0acd1d7bd9c212869d98a914232b5426f4e8dcdab7afbd100`。
+canonical ZIP
+`artifacts/competition/chunk_local_cumsum_vector/e1b-dddef74/chunk_local_cumsum_vector.zip`，
+SHA-256
+`cf4dcaf05640599fe5b50ee9633ba19d2a4f13f2b47f856e88259242e975bab9`，
+成员 generic + ascend/enflame/kunlunxin，`unzip -t` 通过。
