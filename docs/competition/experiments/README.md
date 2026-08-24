@@ -5,8 +5,8 @@
 `2026-08-24T02:17:26+08:00`。
 
 当前覆盖：17/17 个算子都有已提交源码、远端 NVIDIA 代理验证和不可变 ZIP。
-Task 08、Task 19、Task 20、Task 21 和 Task 24 已经平台 8/8；其余 12 个尚无
-八芯平台结果，代理加速比不能外推。
+Task 08、12、19、20、21 和 24 已经平台 8/8；其余 11 个尚无八芯平台结果，
+代理加速比不能外推。
 
 产物路径统一为：
 
@@ -24,7 +24,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 09 | [`bmm_chunk`](bmm_chunk.md) | `e3-a5afc19` | `d8577b2ee314cad758f756d47794685240448d2654baf6b685a7e53fac415b95` | 6/6 release；低精度 affected 1.4306x，FP32 controls 1.0000x，资源与 S0 相同；未平台 | 第 6 个提交 |
 | 10 | [`chunk_cumsum`](chunk_cumsum.md) | `s1-a4e84aa` | `f9fd0d595aeb5a4a4da76514321790815fbad9ccc39faa447c8bfa120f0e7db9` | 4/4 回归；E1–E4 均拒绝，E4 大 shape 有效但 medium/low 仅 1.0091/0.9999x；保留 S1，未平台 | 第 11 个提交 |
 | 11 | [`chunk_local_cumsum_vector`](chunk_local_cumsum_vector.md) | `e1-528a2bb` | `7f0484b9b2ae078bf284e4fda1c5a1a0ffb0c8545b907e801d9fa21200fde7d8` | 2/2 release；tiny chunks 2-warps affected 1.032–1.162x；controls 0.997–1.002x；未平台 | 第 10 个提交 |
-| 12 | [`chunk_state`](chunk_state.md) | `e2-67350fa` | `35f11803055ccc0a7e6bff71c974ad3671032c1cec35d2a556367789206de9e3` | 3/3 E2 release；E3 聚合 1.1207x，但最差 0.9591x 且 FP32 新增 spill，拒绝；未平台 | 第 5 个提交 |
+| 12 | [`chunk_state`](chunk_state.md) | `e2d-3d31481` | `3c06525a76dd00e338d40107feca666e43dd7f99b097e00da5e87f7ca548623b` | E2d 平台 8/8、1.948x、valid、team best；天数 fp16-dot、华为 capped grid vendor 均选中 | 闭环完成；燧原 0.116x 贴门槛为后续优化点 |
 | 13 | [`chunk_state_varlen`](chunk_state_varlen.md) | `s1-7911930` | `fcc17df06adf338578402f315e4dab75bf2361e641885bb99f94e23be46efd49` | 5/5 release；低精度 dot E1 因确定性 `0.0625>0.03` 反例拒绝；未平台 | 第 14 个提交 |
 | 14 | [`context_attention`](context_attention.md) | `e1-a085dc4` | `1bd5f7483bac887f92c6be3e2aea81ac2c69f519aeafd28f267585f37a7da777` | 6/6 release；NVIDIA vendor 1.685–2.056x over S0，原最差点达 1.066x reference；未平台 | 第 15 个提交 |
 | 15 | [`decode_attention`](decode_attention.md) | `e2-59cb094` | `0170fd15d5da5e0bd268fa1c5d12c7e9ee36e5cb5af50625a33da26e6ef4da62` | 7/7 release；NVIDIA 长序列 1.197–1.501x，短序列门控最差 1.000x，0 spill；未平台 | 第 12 个提交 |
