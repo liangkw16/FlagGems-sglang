@@ -71,8 +71,8 @@ autotune 和最高 32 warps 未进入 generic 首版。
 
 ## S0 发布复核：保留单文件候选
 
-状态：扩展 decode-shape 回归、逐 shape 性能和 Enflame launch 审计通过；源码与
-ZIP 不变，仍等待当次上传确认
+状态：扩展 decode-shape 回归、逐 shape 性能和 Enflame launch 审计通过；
+canonical ZIP 已验签，等待实时预检和当次上传确认
 
 复核时间：2026-08-24 02:42–03:03 CST
 
@@ -83,7 +83,8 @@ ZIP 不变，仍等待当次上传确认
 | 当前测试 SHA-256 | `e8f275f23912cafcf258df664499d34c70a05fb698d124bdbb073bd8daa59f59` |
 | 源文件 SHA-256 | `02bed1a5cb28b583c343892569d9e25d1ef3d888e124fdd066d1155a0b964997`，与 S0 不变 |
 | ZIP SHA-256 | `93780caf704341737ddfe5925cfacdcd7115ccefc2f38edf3c7ff006716d1820`，`verified-existing-legacy` |
-| 规范 ZIP SHA-256 | `442f480b91396829f3ea81501a01e5134aa42acf2fb0b5636434247341a3ce4b`，仅内存生成、未覆盖旧产物 |
+| canonical ZIP | `artifacts/competition/fused_rmsnorm/s0c-3fac516/fused_rmsnorm.zip`；2026-08-24 11:59 CST 生成并以 `verified-existing` 复核，未覆盖旧产物 |
+| canonical ZIP SHA-256 | `442f480b91396829f3ea81501a01e5134aa42acf2fb0b5636434247341a3ce4b` |
 | 远端证据目录 | `gpu:/tmp/flagos-rmsnorm-s1.giHJqZ`，mode 0700 |
 | 发布门禁任务 | PID `71212`；`release-gates.log`；2026-08-24 02:47:26 CST |
 | 高行数探针 | PID `71556`；`high-m-probe.log`；2026-08-24 03:03:25 CST |
