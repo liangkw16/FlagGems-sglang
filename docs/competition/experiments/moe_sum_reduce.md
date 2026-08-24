@@ -201,3 +201,55 @@ E2 gates/A-B、E3 gates/A-B、provenance 和 harness 的 SHA-256 依次为
 当前源码已恢复 S0 SHA-256
 `52a2fc979784f2bd25e7e17b9822c23b4f438efdf062c70bfb09aba9ba732335`；
 不可变候选仍是 `s0-3fac516`。
+
+## S0c：canonical 首投包与平台结果
+
+状态：已提交；`invalid_correctness`，6/8，平均值与排名 N/A
+
+生成与提交时间：2026-08-24 22:46 CST。不改 kernel，复用 source commit
+`3fac516a8d64c88b183801668a7857d969a05e37` 与既有 4/4 回归证据。dry-run manifest
+与账本完全一致后，canonical ZIP 为
+`artifacts/competition/moe_sum_reduce/s0c-3fac516/moe_sum_reduce.zip`，2932
+bytes，SHA-256
+`d000d65f081f1bebcd9e1f1193e9d6d2fa95886658c412df9d58aa4f47414e2d`（即
+2026-08-24 03:12 复核时仅在内存生成的规范字节）；唯一成员
+`moe_sum_reduce.py` 2800 bytes，成员 SHA-256 与 source commit 一致，
+`unzip -t` 通过。旧 `s0-3fac516` legacy ZIP 保持原字节不覆盖。
+
+实时 preflight 通过：race `782kzq4m`、season 2、账号 `15600308080`、团队
+`SoulCoder`、batch 2、Task 21、tid `s2t1op021`、task `competing`、提交窗口
+2026-08-20 20:00 至 2026-08-27 19:59:59、最小间隔满足、额度 `21/30`。2026-08-24
+22:46:50 CST 按当次 nonce 提交一次，submission ID `4274`、daily seq `10`，额度
+变为 `20/30`。内置远端验签为 `verified`：平台对象 2932 bytes，SHA-256 与本地
+canonical ZIP 完全一致；`file_url_sha256` 为
+`ede4247c1b3737377466b4ee5ae85311672f5147df8532e094b16da3f8637d60`。
+
+22:50:18 CST 终态 `completed` / `invalid_correctness`，6/8 通过：
+
+| 芯片 | 结果 | speedup | 选中文件 |
+| --- | --- | ---: | --- |
+| 天数 | 通过 | 4.6870x | `moe_sum_reduce.py` |
+| 沐曦 | 通过 | 3.5474x | `moe_sum_reduce.py` |
+| 燧原 | 通过 | 2.3126x | `moe_sum_reduce.py` |
+| 海光 | 通过 | 6.6266x | `moe_sum_reduce.py` |
+| 昆仑芯 | 失败 | N/A | `moe_sum_reduce.py` |
+| 华为 | 失败 | N/A | `moe_sum_reduce.py` |
+| 国际通用 A | 通过 | 3.9612x | `moe_sum_reduce.py` |
+| 国际通用 B | 通过 | 2.2598x | `moe_sum_reduce.py` |
+
+两芯失败均在 correctness case 7（隐藏 shape `num_tokens=4096`、
+`hidden_dim=7168`，2D grid `(4096, 28)`，逻辑 program 总数 `114688`）：
+
+- 华为：`Invalid_Argument(EE1003) KernelLaunch failed because value 114688
+  for parameter coreDim is invalid. Expected <= 65535`。与 Task 08 S0c、
+  Task 20 E2 同一 Ascend 2D grid 展平越界模式；输出比较错误只是异步 launch
+  失败的外层表现，算子数学未被证伪。
+- 昆仑芯：XPU 编译失败于 `make_ttxir` 的 `pm.run`（arch=3、cluster_num=12、
+  core_num=64、buffer_size_limit=512），包装为
+  `OutOfResources: uni_sram PassManager::run failed`。这是 2D grid
+  `(4096, 28)` 的编译期失败，不是运行期 grid 越界；Task 08 平台记录证明昆仑
+  可正常执行 304128/2433024 规模的一维 grid pointwise kernel。
+
+其余六芯全部通过且远高于 0.1x 门槛。下一轮保持 generic 字节不变，只加两个
+自包含 vendor：昆仑改为与 generic 数学一致的一维展平 grid；华为沿用
+Task 08/20 平台已验证的 capped grid-stride 模式。
