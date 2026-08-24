@@ -383,3 +383,25 @@ generic + ascend/enflame/iluvatar 三 vendor，`unzip -t` 通过，release
 `RELEASE_OK`（`release.log` SHA-256
 `75476587a7659da953e79d08364601e0faefff5412414eea700b52a810274fe6`）。平台
 门禁：燧原 ≥0.1x 且其余七芯不回退。
+
+### E3c 平台结果：燧原 0.0745x → E3d K tile 128
+
+E3c 于 00:34:45 CST 提交（submission `4355`，当日序号 `4`，额度
+`27/30`→`26/30`，`file_url_sha256` 为
+`8a870b0ca41339b77760948e0953bcc9159b78f8f76fa2350148e8effe5f54a8`），00:35:19
+终态 8/8 正确、`invalid_threshold`：燧原由 `0.0010x` 升至 `0.0745x`（74.5
+倍），确认 stages=1 串行化是主因，但仍差 0.0255x 到门槛；其余七芯与 E3b
+一致（天数 1.7265x、华为 0.4355x、card_a 3.419x）。E3d 把燧原 vendor 的
+BLOCK_K 64→128 并将 stages 降为 2（BLOCK_K 128 × stages 3 需 128KB shared，
+超代理 101376B 上限，screening 首跑以 `OutOfResources` 拒绝后修正）。最终
+screening `gpu:/tmp/flagos-bmm-chunk-e3d.tyfcbV`，PID/PGID `108065`
+（00:38:58，wall 900s），8/8 unittest（3.137s），`screening.log` SHA-256
+`62f6c3478793fb2657fc69fbb831a274e29429f3aa751650499d8b0e32b8e2a2`；vendor
+blob
+`d63b6c6738f46aaa2169d2568f9730b658243d1b7e35d604bd4983cf124d59c9`。release
+`gpu:/tmp/flagos-bmm-chunk-e3d-release.FfWbOr`，commit
+`57b71306a494d678c03098405339a884d254c016`，PID/PGID `108271`（00:41:35），
+`RELEASE_OK`，`release.log` SHA-256
+`1bd32eb20aa822692feefe8840872f1f3136b7cdf365662ef88f13ac21cd0d43`。canonical
+ZIP `artifacts/competition/bmm_chunk/e3d-57b7130/bmm_chunk.zip`，SHA-256
+`ad546c3942c40689649c48b4399bf72da318fba04179df1d93d9a85d823fd5ee`。
