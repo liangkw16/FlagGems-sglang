@@ -208,3 +208,15 @@ canonical ZIP
 SHA-256
 `8bfc8843bb6951de12160d83dbd56428c3697262ad331a05183217b9aa2d7861`，
 成员 generic + enflame/iluvatar/nvidia，`unzip -t` 通过。
+
+### E1a 平台结果（观测态收尾）
+
+E1a 于 03:58:50 CST 提交（submission `4519`，当日序号 `22`，额度
+`10/30`→`9/30`，`file_url_sha256` 为
+`daaf9d7439f1b1cdf52d3a41ef900e71142186b76b0967ca6357e26191459e44`）。
+五芯通过：天数 1.9943x（fp16-dot vendor 生效）、国际 A 6.3175x（nvidia
+vendor 被选中）、海光 4.1352x、国际 B 1.6697x、沐曦 1.6620x。华为为
+case 级异步错误（与 Task 15/16 的 Ascend flash 型边界 bug 同族，无单变量
+解）；燧原/昆仑在评测队列滞留 40 分钟以上未出分（当晚该两芯评测器多次
+超时崩溃），任务收尾时仍未终态。Task 14 按两次规则保留第 2 次额度，
+以 5/8（观测态）+两芯待评记录；若后续出分为 7/8 亦无已知修复路径。
