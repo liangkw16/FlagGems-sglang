@@ -354,3 +354,41 @@ SHA-256
 `80db396c711dc482470c37374f49a3c505793daab730e455a0a2c5ad33ab9948`，
 `unzip -t` 通过。平台门禁：8/8 通过且每芯 ≥0.1x；天数选中 plain-dot
 vendor，华为继续选中 ascend vendor。
+
+### E2b 平台结果：仍 7/8，天数错误指纹不变
+
+2026-08-24 23:48:05 CST 提交，submission ID `4311`、当日序号 `15`，额度
+`16/30` 变 `15/30`，远端验签 `verified`，`file_url_sha256` 为
+`26d529d12a3b2a226c7f358fa2ca0ca8d3972d618221d895c5d41c76a4b41dd7`。
+23:52:04 CST 终态 `completed` / `invalid_correctness`，7/8；天数选中
+`chunk_state_iluvatar.py` 但 case 0–4 仍失败，逐 case 的不匹配计数、最大
+绝对/相对差与出错索引与 E2a 完全一致（489/512、6.40、449.87 等），证明
+`input_precision` 不是根因，存在确定性结构错误。相对差高达 2.8e7 说明读到
+的是不相关内存而非精度损失；case 5–7（推断为连续输入）通过、0–4（推断为
+非连续输入）全挂，且 Task 21 天数以显式 stride 的一维 kernel 通过——新
+假设：天数后端对二维 stride load 的显式 stride 处理有缺陷。固定
+community `0e8023d` 的多芯笔记亦表明跨芯 dot 惯例为低精度操作数 + fp32
+累加，与本假设正交。
+
+## E2c：天数 contiguous 输入 vendor
+
+E2c 在天数 vendor 的 wrapper 中对 B/x/dt/dA_cumsum 增加 `.contiguous()`
+（已连续时为零拷贝），kernel 与 E2b 逐字节相同；generic 与华为 vendor 不
+变。新增回归 `test_iluvatar_vendor_strided_inputs`（三 dtype 非连续
+B/x/dt/dA）。screening `gpu:/tmp/flagos-chunk-state-ilv2.3siJcY`，PID/PGID
+`105414`（23:54:54，wall 900s，脚本同 E2b，SHA-256
+`33b991989d954003c302da6c9af9a867a9c2f19a0544c9ab2cedaf25cb442ee1`），
+6/6 unittest，`screening.log` SHA-256
+`2fffb693726de937165b3de57214c25a6f502b3df50a863d7edf167c74a24ada`。
+天数 vendor blob
+`3c15e6b9e677aa408f1b2dc9d27a97089d52c914140b67f5c439f672b68b9c5c`，测试
+`c5831b866b973b272b4ee4ccd7525946c6f94fd5f5224b2fd0389350824be6e5`。release
+`gpu:/tmp/flagos-chunk-state-ilv2-release.0Hpyr4`，source/verification
+commit `c18553db285f163f9027991e4e745485779eb807`，PID/PGID `105603`
+（23:57:11，wall 600s），`RELEASE_OK`，`release.log` SHA-256
+`43a4baa47298aa8b2a17362f2360cf7c37732220351a6aa72d9b68b68cc259d5`。
+canonical ZIP
+`artifacts/competition/chunk_state/e2c-c18553d/chunk_state.zip`，SHA-256
+`ff1a27fd142d3f8ec92a09da7bc9c625463e0d62e771e8f99116d5b1fe9b06ad`，成员
+generic + `_ascend` + `_iluvatar`，`unzip -t` 通过。若本轮天数仍失败，
+记录负结果后停止 Task 12 迭代，额度转队列下一任务。
