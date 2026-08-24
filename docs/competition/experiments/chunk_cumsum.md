@@ -339,3 +339,15 @@ canonical ZIP `artifacts/competition/chunk_cumsum/s2b-63e7943/chunk_cumsum.zip`�
 SHA-256
 `c822f75d719f8919269c7566b1210b6e31dc6ce3292229a838723f7945b15923`。
 本提交为 2 次预算的最后一次。
+
+### S2b 平台结果：8/8 正确、invalid_threshold → Task 10 停止（2 次用尽）
+
+S2b 于 02:58:15 CST 提交（submission `4493`，当日序号 `16`，额度
+`16/30`→`15/30`）。华为 UB 收缩生效：八芯 correctness 全部通过（S2 的
+MLIR 编译失败消除），平均 `3.5502x`；但燧原 `0.0375x`、昆仑 `0.0120x`
+低于 0.1x 门槛，`invalid_threshold`。结论：华为 tile 上限经验
+（`block_h ≤ 512 // block_size`）沉淀成功；昆仑与燧原的 `tl.cumsum`
+lowering 是 cumsum 家族（Task 10/11 双题证实）的固有瓶颈——昆仑无论
+grid 形态稳定 0.012–0.016x、燧原 0.0035–0.0375x，非 grid/配置可解。
+Task 10 两次预算用尽，停止。后续若重试需在 XPU/GCU 上改写 cumsum 的
+算法形式（如分块两阶段扫描），非单变量可及。
