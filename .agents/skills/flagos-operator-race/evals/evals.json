@@ -48,7 +48,9 @@
         "If the claimed dirty change is not visible, reconciles the repository root, worktree, branch, and path before doing any write.",
         "Inspects the existing index before commit and preserves unrelated staged changes by stopping or using a path-limited commit rather than unstaging or including them.",
         "Allows uncommitted experiments only for screening, then commits the selected source and tests before release validation.",
+        "Requires the promoted screening hashes to match the committed Git blobs and materializes every repository file used by release from explicit Git objects, not the dirty worktree.",
         "Builds the ZIP from the explicit source commit and records source, verification, and ledger identities.",
+        "Binds the final ZIP member and canonical hashes to the pre-release manifest and retains reproducible commands, complete log hashes, and raw paired benchmark samples.",
         "Audits the upstream and every pending commit before push, stopping if unrelated commits would be included.",
         "Stops with candidate ready and unsubmitted; does not open the browser, request upload confirmation, or consume quota."
       ]

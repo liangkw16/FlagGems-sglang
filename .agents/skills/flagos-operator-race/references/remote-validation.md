@@ -11,7 +11,8 @@
 - `screening`：允许传未提交候选做快速淘汰；记录 base commit、明确文件列表以及
   本地/远端 SHA-256。结果只能标为探索证据，不能为 ZIP、发布门禁或平台提交背书。
 - `release`：候选 source 和 test 已提交；source 使用打包器 manifest 绑定，test
-  使用 verification commit 绑定。只有该模式的结果可把候选标为“就绪”。
+  使用 verification commit 绑定。临时目录中的每个仓库文件都从对应 commit 的
+  Git 对象生成，不从当前工作树复制。只有该模式的结果可把候选标为“就绪”。
 
 每份日志先写明模式，不把 screening 结果升级成 release 结果。
 
@@ -21,8 +22,11 @@
 2. 只传本次 generic、vendor、`tests/test_<operator>.py` 及测试实际导入的文件，
    保留仓库相对路径。screening 在传输前记录 base commit 和当前工作区各文件哈希；
    release 先运行打包器 dry-run 或 existing 验签，取得 source commit 的成员哈希，
-   测试文件哈希绑定 verification commit。远端哈希必须逐项相同；任一不一致就停止，
-   不能拿 HEAD 或 screening 的结果替旧 commit 的 ZIP 背书。
+   测试及仓库内导入依赖绑定 verification commit，并用 `git archive`、`git show` 或
+   等价的 Git 对象读取方式建立临时目录。screening 候选哈希还必须与晋级后对应
+   Git blob 的 SHA-256 相同；不同时把它视为新候选，重新筛选或仅以独立 release
+   结果判断。远端哈希必须逐项相同；任一不一致就停止，不能拿 HEAD、工作树或
+   screening 的结果替旧 commit 的 ZIP 背书。
 3. 用 `setsid`（或等价方式）建立属于该临时目录的独立进程组，再配合 `nohup` 在
    远端后台依次执行：
    - 目标源码和测试的 `py_compile`；
@@ -41,7 +45,13 @@
    paired speedup 的稳定统计判断。不终止他人 workload；存在竞争、结果落在噪声内
    或资源明显退化时，不晋级候选并记录负结果。
 7. 记录 GPU、driver、Python、PyTorch、Triton 和 CUDA 版本，以及最大实际验证
-   shape。远端 NVIDIA 结果只标记为代理证据。
+   shape。账本保留可直接重放的完整命令（或脚本完整 SHA-256）、完整输入文件哈希、
+   完整日志 SHA-256/保留位置和 AB/BA 原始样本；不截断哈希。远端 NVIDIA 结果只
+   标记为代理证据。
+
+release 完成后生成 ZIP 时，再核对最终打包器输出与 release 前 manifest 的 source
+commit、成员集合、成员 SHA-256 和 canonical ZIP SHA-256；任一变化都需要重新做
+release，不能只重打包后沿用旧证据。
 
 使用远端临时目录中的源码和测试做验证，不在远端仓库分支提交或 push。NVIDIA
 代理只验证实际可执行的 generic/NVIDIA 路径；其他 vendor 路径若不能在该环境执行，

@@ -150,6 +150,10 @@ S0 只追求全部支持芯片正确且每芯达到题面最低门槛：
 发布门禁。失败后修正则产生新 commit，不用已被验证记录引用的旧 commit
 冒充新候选。
 
+晋级时把 screening 的 source/test SHA-256 与提交后的 Git blob 逐项比较；任一
+变化都视为新候选，旧 screening 不再为它背书。release 临时目录只从明确 commit
+的 Git 对象生成，不能从当前工作树复制源码、测试或其仓库内导入依赖。
+
 连接、传输、后台日志和证据保留按
 [远端 GPU 代理验证](references/remote-validation.md) 执行。
 
@@ -158,6 +162,8 @@ S0 只追求全部支持芯片正确且每芯达到题面最低门槛：
 ### 6. 生成不可变 ZIP
 
 从已提交的源码构建，不维护 `submissions/` 副本。目录名使用代码 commit 短哈希。
+release 前先用 `--dry-run` 取得 source manifest；最终 ZIP 的 commit、成员集合、
+成员 SHA-256 和 canonical ZIP SHA-256 必须与该 manifest 完全相同。
 优先使用 Skill 自带的确定性打包器；它从指定 commit 读取 generic 和已有 vendor
 源码、生成固定字节 ZIP、拒绝覆盖同路径的不同产物，并输出可直接写入账本的哈希：
 
