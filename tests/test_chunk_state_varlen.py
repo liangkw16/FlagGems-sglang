@@ -18,20 +18,44 @@ from pathlib import Path
 
 import torch
 
-MODULE_PATH = (
+BACKEND_ROOT = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+)
+
+
+def _load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+MODULE = _load_module(
+    "chunk_state_varlen_module",
     Path(__file__).parents[1]
     / "src"
     / "flaggems_sglang"
     / "ops"
-    / "chunk_state_varlen.py"
+    / "chunk_state_varlen.py",
 )
-SPEC = importlib.util.spec_from_file_location(
-    "chunk_state_varlen_module", MODULE_PATH
+ASCEND_MODULE = _load_module(
+    "chunk_state_varlen_ascend_module",
+    BACKEND_ROOT / "_ascend" / "ops" / "chunk_state_varlen.py",
 )
-if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"cannot load {MODULE_PATH}")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+ILUVATAR_MODULE = _load_module(
+    "chunk_state_varlen_iluvatar_module",
+    BACKEND_ROOT / "_iluvatar" / "ops" / "chunk_state_varlen.py",
+)
+ENFLAME_MODULE = _load_module(
+    "chunk_state_varlen_enflame_module",
+    BACKEND_ROOT / "_enflame" / "ops" / "chunk_state_varlen.py",
+)
 
 
 def reference(B, x, dt, dA_cumsum, cu_seqlens, chunk_states):
@@ -226,6 +250,27 @@ class ChunkStateVarlenTest(unittest.TestCase):
         self.assertEqual(
             (actual.shape, actual.dtype), ((0, 4, 5, 7), torch.bfloat16)
         )
+
+    def test_vendors_cover_fold_and_fp16_dot(self):
+        lengths = [1, 7, 2, 6] * 8
+
+        for dtype in (torch.float32, torch.float16):
+            with self.subTest(dtype=dtype):
+                case = make_case(lengths, dtype, dtype)
+
+                for name, module in (
+                    ("generic", MODULE),
+                    ("ascend", ASCEND_MODULE),
+                    ("iluvatar", ILUVATAR_MODULE),
+                    ("enflame", ENFLAME_MODULE),
+                ):
+                    with self.subTest(module=name):
+                        actual = module.chunk_state_varlen(*case)
+                        expected = reference(*case)
+
+                        torch.testing.assert_close(
+                            actual, expected, atol=3e-2, rtol=3e-2
+                        )
 
 
 if __name__ == "__main__":
