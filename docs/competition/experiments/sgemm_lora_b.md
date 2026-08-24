@@ -219,3 +219,49 @@ FP32 最高 254 registers、34 KiB shared，故性能和资源门禁均失败。
 `41fa9e2146bc50b33fe163a0174d0d85479fd76f07e43c7e2fe3e34d26e33651`、
 `711f0083250912590fc433ef492317093bc2f83f5d7e4ae5071b4a721916bd04`、
 `45f04bbce04e80176bc66355a3b8ca9686c9e60e502ab37c1831437b8c3b02b5`。
+
+## S2：64×128 tile generic + 三 vendor（首投候选，≤2 次预算）
+
+状态：release 门禁通过，候选就绪
+
+NVIDIA sweep（`gpu:/tmp/flagos-sglb-sweep.b7LokE`，PID `110215`，01:23:30，
+wall 1200s，脚本 SHA-256
+`d415ae925f2c2e757477fae705635b36a1185e70d065562e91f5c5345f6f7ea7`）：
+3 个代表 shape（bs4/1024/r64/o1024/fp16、bs8/512/r256/o4096/bf16+perm、
+bs2/2048/r16/o512/fp32）× block_s{16,32,64}×block_n{64,128}×block_k{32,64}
+×warps{4,8}×stages{1,3} 共 72 配置。**64/128/32/4/3** 为全 case 最优：
+1.274x/1.191x/1.578x（对 S1 的 16/64/32/4/1），几何均值约 1.34x。generic
+据此升级为 64/128/32/4/3。
+
+vendor（均按平台证据预防性预置）：
+
+- `_ascend`：capped grid-stride 折叠（1D `min(total,4096)`，逻辑 id 按
+  batch→tile 分解；early return 改循环内守卫），tile 同新 generic，ieee dot
+  保留（华为可执行）。
+- `_iluvatar` / `_enflame`（同字节）：fp32 路径 split-fp16 三点积
+  （`x.dtype == tl.float32` 编译期分支），低精度路径裸 dot；tile 64/128、
+  stages 3（满足燧原 stages≥2）。昆仑不加 vendor（Task 12/09 dot kernel
+  generic 经 SDNN 路径平台通过）。
+
+新增回归 `test_vendors_cover_fold_and_split_fp16`：bs=8、max_len 2048、
+out 4096（总 program 8192 > 4096，覆盖两轮折叠）× 三 dtype（fp32 按 1e-4）
+× permutation，四模块对 reference。screening
+`gpu:/tmp/flagos-sglb-vend.rOMrhP`（两次 Black 原地格式化回拷 + 一次测试
+shape 断言修正），最终 PID/PGID `110817`（01:39:51，wall 900s，脚本
+SHA-256 与 /tmp/flagos-sglb-screening.sh 一致），5/5 unittest（2.451s），
+`screening.log` SHA-256
+`5c2e057c3d79b8c199b493f4ac55e3bffdbe0e239fbdd625fd246400b5a9ecc6`。release
+`gpu:/tmp/flagos-sglb-release.FPKgsy`，source/verification commit
+`1e834e2e6e10e88f08a9494727684b974d849123`，5/5 unittest，`release.log`
+SHA-256
+`7f22a25294163e492647fd352a2a27638d54760d36b17fe5cd7b531f4faa9a8d`（尾行
+标签沿用 SCREENING_OK，门禁项齐全）。generic blob
+`9b1a9a6c98b2cb7f9647a51276fda261f39be1eda06a866e3e3ad561a68bb355`，ascend
+`41416a252cbf5aaa5bf57dcb6de3da20fd7cdc52e2a471d995c4c603f68fd2de`，
+iluvatar=enflame
+`34fa4c8def315c6277fd087f6c85692273b2bc5a13e46bc135c0a495f6db41e4`，测试
+`4aa2133b16c9b321480ef06ac7c68d26bcd10200036671399c2f83485f1a036d`。
+canonical ZIP `artifacts/competition/sgemm_lora_b/s2-1e834e2/sgemm_lora_b.zip`，
+SHA-256
+`a85c8ae3f1b6e82ebde27b5ab9675c105e2fc2b40f5b38568094ff597973fb1e`，成员
+generic + ascend/enflame/iluvatar，`unzip -t` 通过。本任务预算 2 次提交。
