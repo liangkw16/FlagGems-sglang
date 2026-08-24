@@ -170,3 +170,15 @@ corrected harness 对长随机递推先按 `sqrt(K)` 缩放 q/k，并避免 FP32
 来源门禁均通过。E2 没有改变 K>=129 的高状态资源路径，因此 S0 所述八芯资源风险
 仍然成立；本结果只证明 NVIDIA 代理。未打开浏览器、未读取实时额度、未提交平台，
 旧确认不授权此 ZIP。
+
+## 平台尝试记录：pending_challenge，无法提交
+
+2026-08-25 04:5x CST 对现成候选 `e2-2ba2813`（ZIP
+`artifacts/competition/fused_recurrent_gdn/e2-2ba2813/fused_recurrent_gdn.zip`，
+SHA-256
+`4be0a8135cc5dcc23a33b31852b6754fa44a2959e8d035e49a113d07edaf14eb`，本地
+逐字节复验一致，沿用既有 3/3 release 证据）执行只读 preflight，平台返回
+`error: task is not competing: pending_challenge`——Task 18 当前处于
+challenge 待定状态，不接受任何提交（与赛题索引自始的 `pending_challenge`
+一致）。结论：Task 18 的"尝试"以平台拒绝为终态，非预算或候选问题；候选
+与证据保留，待平台恢复 `competing` 后可直接复用本 preflight 流程。
