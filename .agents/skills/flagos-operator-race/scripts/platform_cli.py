@@ -9,6 +9,7 @@ import gzip
 import hashlib
 import io
 import json
+import math
 import os
 import re
 import secrets
@@ -90,7 +91,10 @@ def _token() -> str:
             raise CliError("FLAGOS_TOKEN_FILE must have mode 0600")
         if info.st_size > 65536:
             raise CliError("FLAGOS_TOKEN_FILE is unexpectedly large")
-        value = os.read(descriptor, 65537).decode("utf-8").strip()
+        try:
+            value = os.read(descriptor, 65537).decode("utf-8").strip()
+        except UnicodeDecodeError as error:
+            raise CliError("FLAGOS_TOKEN_FILE must be UTF-8") from error
     finally:
         os.close(descriptor)
     if not value or "\n" in value or "\r" in value:
@@ -161,8 +165,15 @@ class HttpClient:
             result = json.loads(payload)
         except (UnicodeDecodeError, json.JSONDecodeError) as error:
             raise CliError("FlagOS returned non-JSON data") from error
-        if not isinstance(result, dict) or result.get("code") != 200:
-            raise CliError("FlagOS returned an unsuccessful API response")
+        if not isinstance(result, dict):
+            raise CliError("FlagOS returned an invalid API response")
+        if result.get("code") != 200:
+            code = result.get("code")
+            if isinstance(code, bool) or not isinstance(code, int):
+                code = "unknown"
+            raise CliError(
+                f"FlagOS API code {code} at {url.split('?')[0]}"
+            )
         return result.get("data")
 
     def get(self, url: str, params: dict[str, Any] | None = None) -> Any:
@@ -503,6 +514,69 @@ def _read_zip(spec: dict[str, Any]) -> bytes:
     return payload
 
 
+def _remote_zip_fingerprint(url: str, expected_size: int) -> dict[str, Any]:
+    try:
+        target = urlsplit(url)
+        host = target.hostname
+        port = target.port
+    except ValueError as error:
+        raise CliError("remote ZIP URL is invalid") from error
+    allowed_host = os.environ.get("FLAGOS_REMOTE_ZIP_HOST", "").strip().lower()
+    if not re.fullmatch(
+        r"(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}",
+        allowed_host,
+    ):
+        raise CliError(
+            "set FLAGOS_REMOTE_ZIP_HOST to the exact trusted hostname"
+        )
+    if (
+        target.scheme != "https"
+        or host != allowed_host
+        or target.username is not None
+        or target.password is not None
+        or port is not None
+        or target.fragment
+    ):
+        raise CliError("refusing unsafe remote ZIP URL")
+    if expected_size < 0 or expected_size >= ZIP_LIMIT:
+        raise CliError("invalid expected remote ZIP size")
+
+    request = Request(
+        url,
+        headers={
+            "Accept": "application/zip",
+            "Accept-Encoding": "identity",
+            "User-Agent": "FlagOS-operator-race-cli/1.0",
+        },
+        method="GET",
+    )
+    try:
+        with build_opener(_NoRedirect()).open(
+            request, timeout=120
+        ) as response:
+            encoding = (
+                response.headers.get("Content-Encoding") or ""
+            ).lower()
+            if encoding not in {"", "identity"}:
+                raise CliError(
+                    f"unsupported remote ZIP content encoding: {encoding}"
+                )
+            payload = response.read(expected_size + 1)
+    except HTTPError as error:
+        raise CliError(
+            f"remote ZIP HTTP {error.code} at {url.split('?')[0]}"
+        ) from error
+    except URLError as error:
+        raise CliError(
+            f"remote ZIP network error: {error.reason}"
+        ) from error
+    except OSError as error:
+        raise CliError(
+            f"remote ZIP network error: {type(error).__name__}"
+        ) from error
+    return {"size": len(payload), "sha256": _sha256(payload)}
+
+
 def _state_dir() -> Path:
     result = subprocess.run(
         ["git", "rev-parse", "--git-path", "flagos-platform"],
@@ -730,7 +804,56 @@ def _submit(nonce: str, client: Any, state_dir: Path) -> dict[str, Any]:
         intent["submitted_at"] = time.time()
         intent["result"] = submitted
         _write_intent(path, intent)
-        return {"state": "submitted", "nonce": nonce, "result": submitted}
+        expected = {
+            "expected_size": len(payload),
+            "expected_sha256": spec["zip_sha256"],
+        }
+        try:
+            actual = _remote_zip_fingerprint(uploaded["url"], len(payload))
+            remote_verification = {
+                "status": (
+                    "verified"
+                    if actual["size"] == len(payload)
+                    and actual["sha256"] == spec["zip_sha256"]
+                    else "mismatch"
+                ),
+                **expected,
+                **actual,
+            }
+        except Exception as error:
+            if isinstance(error, CliError):
+                message = str(error)
+            else:
+                message = (
+                    "remote ZIP verification failed: "
+                    f"{type(error).__name__}"
+                )
+            remote_verification = {
+                "status": "unavailable",
+                **expected,
+                "error": message,
+            }
+        intent["remote_verification"] = remote_verification
+        _write_intent(path, intent)
+        latest_at = intent["live_binding"].get("latest_submission_at")
+        after = _parse_time(latest_at)
+        after_option = (
+            f" --after-epoch {after.timestamp():.6f}" if after else ""
+        )
+        return {
+            "state": "submitted",
+            "nonce": nonce,
+            "result": submitted,
+            "remote_verification": remote_verification,
+            "watch_command": (
+                f"{sys.executable} {Path(__file__).resolve()} status "
+                f"--race {spec['race_id']} --batch {spec['batch_no']} "
+                f"--task {spec['task_no']} --operator {spec['operator']} "
+                f"--file-url-sha256 {_sha256(uploaded['url'].encode())}"
+                f"{after_option} "
+                "--watch --interval 15 --timeout 900"
+            ),
+        }
 
 
 def _status(args: argparse.Namespace, client: Any) -> int:
@@ -744,9 +867,50 @@ def _status(args: argparse.Namespace, client: Any) -> int:
             for key, value in live.items()
             if key != "submission_fingerprint"
         }
+        view["submissions"] = []
+        for record in live["submissions"]:
+            public_record = dict(record)
+            file_url = public_record.get("file_url")
+            if isinstance(file_url, str):
+                public_record["file_url_sha256"] = _sha256(
+                    file_url.encode()
+                )
+                try:
+                    target = urlsplit(file_url)
+                    if (
+                        target.scheme != "https"
+                        or not target.hostname
+                        or target.username is not None
+                        or target.password is not None
+                        or target.port is not None
+                    ):
+                        raise ValueError
+                    public_record["file_url"] = target._replace(
+                        query="", fragment=""
+                    ).geturl()
+                except ValueError:
+                    public_record["file_url"] = "<invalid>"
+            view["submissions"].append(public_record)
         view["observed_at"] = datetime.now().astimezone().isoformat()
         print(_json(view, compact=args.watch), flush=True)
+        expected = getattr(args, "file_url_sha256", None)
+        after_epoch = getattr(args, "after_epoch", None)
         latest = live["submissions"][0] if live["submissions"] else None
+        if expected:
+            latest = None
+            for record in live["submissions"]:
+                file_url = record.get("file_url")
+                created = _parse_time(record.get("created_at"))
+                if not isinstance(file_url, str):
+                    continue
+                if _sha256(file_url.encode()) != expected:
+                    continue
+                if after_epoch is not None and (
+                    created is None or created.timestamp() <= after_epoch
+                ):
+                    continue
+                latest = record
+                break
         if not args.watch or (latest and latest.get("status") in TERMINAL):
             return 0
         if time.monotonic() >= deadline:
@@ -771,6 +935,8 @@ def _parser() -> argparse.ArgumentParser:
     status_parser.add_argument("--watch", action="store_true")
     status_parser.add_argument("--interval", type=float, default=15)
     status_parser.add_argument("--timeout", type=float, default=600)
+    status_parser.add_argument("--file-url-sha256")
+    status_parser.add_argument("--after-epoch", type=float)
 
     preflight = commands.add_parser(
         "preflight", help="create a one-use intent"
@@ -801,6 +967,20 @@ def _validate(args: argparse.Namespace) -> None:
     if args.command == "status":
         if args.interval < 5 or args.timeout < 0:
             raise CliError("watch interval must be >=5s and timeout >=0")
+        if args.file_url_sha256 and not re.fullmatch(
+            r"[0-9a-f]{64}", args.file_url_sha256
+        ):
+            raise CliError(
+                "--file-url-sha256 must be a full lowercase SHA-256"
+            )
+        if args.after_epoch is not None and (
+            not args.file_url_sha256
+            or not math.isfinite(args.after_epoch)
+            or args.after_epoch < 0
+        ):
+            raise CliError(
+                "--after-epoch requires a file URL hash and finite epoch"
+            )
     if args.command == "preflight":
         if not re.fullmatch(r"[0-9a-f]{40}", args.commit):
             raise CliError("--commit must be a full lowercase Git SHA")

@@ -95,7 +95,12 @@ class PlatformCliTest(unittest.TestCase):
             return PLATFORM._preflight(self.args, client, self.root / "state")
 
     def submit(self, nonce, client):
-        with mock.patch.object(PLATFORM, "_verify_artifact", return_value={}):
+        remote = {"size": len(self.archive.read_bytes()), "sha256": self.sha}
+        with mock.patch.object(
+            PLATFORM, "_verify_artifact", return_value={}
+        ), mock.patch.object(
+            PLATFORM, "_remote_zip_fingerprint", return_value=remote
+        ):
             return PLATFORM._submit(nonce, client, self.root / "state")
 
     def intent(self, nonce):
@@ -121,11 +126,26 @@ class PlatformCliTest(unittest.TestCase):
 
     def test_preflight_does_not_post_and_submit_is_one_shot(self):
         client = FakeClient()
+        client.records = [
+            {
+                "batch_no": 2,
+                "task_no": 12,
+                "operator": "demo",
+                "file_url": "https://upload.example/previous.zip",
+                "status": "completed",
+                "created_at": "2020-01-01T00:00:00+08:00",
+            }
+        ]
         prepared = self.preflight(client)
         self.assertEqual(client.posts, [])
 
         result = self.submit(prepared["nonce"], client)
         self.assertEqual(result["state"], "submitted")
+        self.assertEqual(
+            result["remote_verification"]["status"], "verified"
+        )
+        self.assertIn("--file-url-sha256", result["watch_command"])
+        self.assertIn("--after-epoch", result["watch_command"])
         self.assertEqual(len(client.posts), 2)
         self.assertEqual(
             client.posts[0][1]["fields"],
@@ -151,12 +171,87 @@ class PlatformCliTest(unittest.TestCase):
             self.preflight(client)
         self.assertEqual(len(client.posts), 2)
 
+    def test_remote_verification_failure_keeps_submission_one_shot(self):
+        client = FakeClient()
+        prepared = self.preflight(client)
+        with mock.patch.object(
+            PLATFORM, "_verify_artifact", return_value={}
+        ), mock.patch.object(
+            PLATFORM,
+            "_remote_zip_fingerprint",
+            side_effect=ValueError("simulated secret download failure"),
+        ):
+            result = PLATFORM._submit(
+                prepared["nonce"], client, self.root / "state"
+            )
+
+        self.assertEqual(result["state"], "submitted")
+        self.assertEqual(
+            result["remote_verification"]["status"], "unavailable"
+        )
+        self.assertNotIn("secret", json.dumps(result))
+        self.assertEqual(
+            self.intent(prepared["nonce"])["state"], "submitted"
+        )
+        self.assertEqual(len(client.posts), 2)
+        with self.assertRaisesRegex(PLATFORM.CliError, "not reusable"):
+            self.submit(prepared["nonce"], client)
+        self.assertEqual(len(client.posts), 2)
+
     def test_duplicate_preflight_is_rejected(self):
         client = FakeClient()
         self.preflight(client)
         with self.assertRaisesRegex(PLATFORM.CliError, "already exists"):
             self.preflight(client)
         self.assertEqual(client.posts, [])
+
+    def test_watch_can_bind_to_exact_file_url(self):
+        client = FakeClient()
+        client.records = [
+            {
+                "batch_no": 2,
+                "task_no": 12,
+                "operator": "demo",
+                "file_url": "https://upload.example/new.zip?secret=new",
+                "status": "completed",
+                "created_at": "2020-01-01T00:00:00+08:00",
+            },
+            {
+                "batch_no": 2,
+                "task_no": 12,
+                "operator": "demo",
+                "file_url": "https://user:password@upload.example/old.zip",
+                "status": "completed",
+                "created_at": "2019-01-01T00:00:00+08:00",
+            },
+        ]
+        args = argparse.Namespace(
+            race="race1",
+            batch=2,
+            task=12,
+            operator="demo",
+            watch=True,
+            timeout=0,
+            interval=15,
+            file_url_sha256=hashlib.sha256(
+                b"https://upload.example/new.zip?secret=new"
+            ).hexdigest(),
+            after_epoch=PLATFORM._parse_time(
+                "2020-01-01T00:00:00+08:00"
+            ).timestamp(),
+        )
+        with redirect_stdout(StringIO()) as output:
+            self.assertEqual(PLATFORM._status(args, client), 124)
+        public_record = json.loads(output.getvalue())["submissions"][0]
+        self.assertEqual(
+            public_record["file_url"], "https://upload.example/new.zip"
+        )
+        self.assertNotIn("secret=new", output.getvalue())
+        self.assertNotIn("password", output.getvalue())
+        self.assertEqual(
+            json.loads(output.getvalue())["submissions"][1]["file_url"],
+            "<invalid>",
+        )
 
     def test_live_drift_makes_intent_stale_without_post(self):
         client = FakeClient()
@@ -216,6 +311,9 @@ class PlatformCliTest(unittest.TestCase):
         class Response:
             headers = {"Content-Encoding": "gzip"}
 
+            def __init__(self, payload=b'{"code":200,"data":{"ok":true}}'):
+                self.payload = payload
+
             def __enter__(self):
                 return self
 
@@ -223,7 +321,7 @@ class PlatformCliTest(unittest.TestCase):
                 return False
 
             def read(self, unused):
-                return gzip.compress(b'{"code":200,"data":{"ok":true}}')
+                return gzip.compress(self.payload)
 
         client = PLATFORM.HttpClient("secret")
         client._opener = mock.Mock()
@@ -232,6 +330,11 @@ class PlatformCliTest(unittest.TestCase):
             client.get("https://flagos.io/flagos/api/v1/races/race1"),
             {"ok": True},
         )
+        client._opener.open.return_value = Response(
+            b'{"code":401,"data":null}'
+        )
+        with self.assertRaisesRegex(PLATFORM.CliError, "API code 401"):
+            client.get("https://flagos.io/flagos/api/v1/races/race1")
 
         with self.assertRaises(HTTPError):
             PLATFORM._NoRedirect().redirect_request(
@@ -241,6 +344,56 @@ class PlatformCliTest(unittest.TestCase):
                 "Found",
                 {},
                 "https://example.invalid/steal",
+            )
+
+    def test_remote_verifier_sends_no_credentials(self):
+        payload = self.archive.read_bytes()
+
+        class Response:
+            headers = {}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *unused):
+                return False
+
+            def read(self, limit):
+                self.limit = limit
+                return payload
+
+        response = Response()
+        opener = mock.Mock()
+        opener.open.return_value = response
+        with mock.patch.dict(
+            os.environ,
+            {"FLAGOS_REMOTE_ZIP_HOST": "objects.example.com"},
+        ), mock.patch.object(PLATFORM, "build_opener", return_value=opener):
+            result = PLATFORM._remote_zip_fingerprint(
+                "https://objects.example.com/demo.zip?signature=secret",
+                len(payload),
+            )
+            with self.assertRaisesRegex(PLATFORM.CliError, "unsafe"):
+                PLATFORM._remote_zip_fingerprint(
+                    "https://127.1/demo.zip", len(payload)
+                )
+            with self.assertRaisesRegex(PLATFORM.CliError, "unsafe"):
+                PLATFORM._remote_zip_fingerprint(
+                    "https://other.example.com/demo.zip", len(payload)
+                )
+
+        self.assertEqual(opener.open.call_count, 1)
+        request = opener.open.call_args.args[0]
+        self.assertIsNone(request.get_header("Authorization"))
+        self.assertIsNone(request.get_header("Cookie"))
+        self.assertEqual(request.get_header("Accept-encoding"), "identity")
+        self.assertEqual(response.limit, len(payload) + 1)
+        self.assertEqual(result, {"size": len(payload), "sha256": self.sha})
+        with mock.patch.dict(
+            os.environ, {"FLAGOS_REMOTE_ZIP_HOST": ""}
+        ), self.assertRaisesRegex(PLATFORM.CliError, "exact trusted"):
+            PLATFORM._remote_zip_fingerprint(
+                "https://objects.example.com/demo.zip", len(payload)
             )
 
     def test_token_file_must_be_private(self):
@@ -256,6 +409,9 @@ class PlatformCliTest(unittest.TestCase):
                 PLATFORM._token()
             token_file.chmod(0o600)
             self.assertEqual(PLATFORM._token(), "secret")
+            token_file.write_bytes(b"\xff")
+            with self.assertRaisesRegex(PLATFORM.CliError, "UTF-8"):
+                PLATFORM._token()
 
 
 if __name__ == "__main__":

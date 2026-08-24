@@ -26,9 +26,36 @@ python .agents/skills/flagos-operator-race/scripts/platform_cli.py status \
   --race 782kzq4m --batch 2 --task 12 --operator chunk_state
 ```
 
-持续等待终态时追加 `--watch --interval 15 --timeout 900`。`status` 只发 GET，不创建
-竞赛账本或本地 intent。也可使用绝对路径的 `FLAGOS_TOKEN_FILE`，但文件必须为普通
-文件且权限不宽于 `0600`。
+持续等待终态时追加 `--watch --interval 15 --timeout 900`。提交后优先直接运行 `submit`
+返回的 `watch_command`；它同时绑定 `file_url` 的 SHA-256 和提交前最新记录时间，尚未
+出现本次记录时不会误把同一 Task 的旧终态当成结果。`status` 只发 GET，不创建竞赛
+账本或本地 intent，同时会验证 token、账号、团队、race、Task、额度和提交记录。输出
+中的 `file_url` 会移除
+可能存在的签名 query，并另给 `file_url_sha256`；内部去重仍使用完整 URL。
+也可把用户合法持有的 token 一次写入 Git 内部目录，避免每次重新输入；文件必须为
+普通文件、绝对路径且权限不宽于 `0600`：
+
+```bash
+flagos_token_file="$(git rev-parse --absolute-git-dir)/flagos-token"
+(
+  umask 077
+  IFS= read -r -s flagos_token
+  printf '%s\n' "$flagos_token" > "$flagos_token_file"
+)
+unset FLAGOS_TOKEN
+export FLAGOS_TOKEN_FILE="$flagos_token_file"
+```
+
+不要把 token 作为命令参数、写入仓库或从浏览器 cookie/localStorage 提取。
+
+远端 ZIP 自动验签默认 fail closed。仅把平台官方资料或既有 `status` 输出中已核实的
+对象存储 hostname 精确设为 `FLAGOS_REMOTE_ZIP_HOST`；不要从本次尚未信任的上传响应
+自动派生。未配置或本次 `file_url` hostname 不匹配时不发下载 GET，只报告
+`remote_verification.status=unavailable`。
+
+```bash
+export FLAGOS_REMOTE_ZIP_HOST='<已核实的对象存储hostname>'
+```
 
 ## 脚本提交
 
@@ -72,11 +99,29 @@ python .agents/skills/flagos-operator-race/scripts/platform_cli.py submit \
 重试或可替换 API host。同一 race/account/team/Task/operator/ZIP SHA tuple 已存在有效
 intent、未决发送或成功记录时不生成第二个 nonce；新候选必须有新的 ZIP SHA。
 
+正式提交 POST 成功后，脚本先把 intent 原子写为 `submitted`，再用独立的无认证 HTTPS
+请求下载上传接口返回的同一 `file_url`，核对实际字节数和 SHA-256。远端验签结果为
+`verified`、`mismatch` 或 `unavailable`；后两者只表示远端字节未确认，不能把已经成功
+发送的提交改成 `uncertain`，也不能据此重试提交 POST。下载请求不携带 Bearer token/Cookie、
+不跟随重定向，且只读取本地 ZIP 长度再加一个字节。
+
 出现 `sending`/`uncertain` 时先用 `status` 核对提交记录和额度，不得直接重试。若
 提交记录出现同一 `file_url`，下次预检只会把旧 intent 标成已提交并拒绝重复；若仍无
 可定位结果，脚本保持阻塞，不删除或手改 intent。实际平台响应和逐芯结果仍写入对应
-实验账本。验证码、新风险提示、认证协议、API schema 漂移或未决 intent 需人工处置
-时，改用 `chrome:control-chrome` 做只读复核，并在新的明确授权下补充恢复流程。
+实验账本。`watch` 超时或长期查不到本次记录时保留 intent、POST 响应、nonce、
+`file_url_sha256`、提交时间和额度变化，稍后只读重查或交平台支持；纯查分请求只输出，
+不修改账本。
+
+脚本因验证码、新风险提示、认证协议或 API schema 漂移无法执行时，才回退到
+`chrome:control-chrome`。先只读核对登录账号、团队、Task、剩余额度和既有提交；取得
+绑定同一完整 tuple 的新一次性确认后，点击页面可见上传按钮触发 `filechooser`，并在
+点击前为 `waitForEvent("filechooser")` 立即挂成功与 rejection handler，再用 chooser
+设置 ZIP 绝对路径；不要依赖点击隐藏 `input[type=file]`。提交按钮只点击一次；
+chooser 超时、页面重载或结果不确定都转 `status` 只读核对，绝不再次点击。
+
+浏览器 fallback 提交后，平台一旦返回 HTTPS `file_url`，下载远端 ZIP，核对实际字节数
+和 SHA-256 与本次确认值完全一致；页面展示的文件大小不作为验签证据。下载失败或哈希
+不一致时保留“提交已发送”事实，记录远端验签未确认/失败，并停止重试提交 POST。
 
 ## 逐芯结果与最小迭代
 
