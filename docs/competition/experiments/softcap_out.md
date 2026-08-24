@@ -246,3 +246,17 @@ NVIDIA 上仅 FP32 `N=4096` 回退 18.6%，其余代理点持平或提升；真�
 编译资源、大小 shape 权重和 speedup 仍未知。S2 只作为受控性能候选；网页上传
 必须重新读取额度，并取得用户对 Task 24、上述绝对 ZIP 路径及 SHA-256 的当次
 确认。若真实 Enflame 编译失败或总体均值下降，直接保留平台 S1，不叠加其他改动。
+
+### Canonical 提交产物
+
+2026-08-24 11:39 CST 从同一 source commit `5cd60194ee4761b097f089b6eae96e54254cfada`
+重新生成独立 stage，不覆盖或改写原 S2 legacy ZIP。源码、测试和既有 release
+证据均未变化。
+
+| 项目 | 值 |
+| --- | --- |
+| stage / ZIP | `s2c-5cd6019` / `artifacts/competition/softcap_out/s2c-5cd6019/softcap_out.zip` |
+| ZIP SHA-256 | `999f2dea69774c2f9756748a2a113c7ad54d3e2fdce18bfd24b014a96fed1f46` |
+| 大小 / 状态 | 7,653 bytes；`verified-existing`，与 canonical SHA 相同 |
+| 成员 | `softcap_out.py`、`softcap_out_ascend.py`、`softcap_out_enflame.py` |
+| 平台状态 | 未提交；需实时账号、团队、额度和本次 tuple 确认 |

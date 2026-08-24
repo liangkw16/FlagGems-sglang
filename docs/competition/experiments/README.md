@@ -33,7 +33,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s0-3fac516` | `ef3c30e416d24d8268a1c252261676f3e540910a8836a93d2520917580f514bf` | 4/4 回归；512/1024/2048 tile 均未过 1.05x，保留 S0；未平台 | 第 3 个提交 |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s1-11ae343` | `bec21ac8d198d0eefd3d7c0ef68bf3a2c654017c00656c230ab12bc04f0f4d9c` | 3/3 release；修复空段 metadata 越界并跳过窄 slice 无效 GEMM；affected 1.006–1.371x；未平台 | 第 9 个提交 |
 | 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `s1-222dd77` | `4223927a48608887b322b87611001f65102cd0e6fa2bf432b4efb50a7773a03f` | 4/4 release；N256/N128 均在低精度 ragged 回退且资源失败，保留 S1；未平台 | 第 8 个提交 |
-| 24 | [`softcap_out`](softcap_out.md) | `s2-5cd6019` | `3746930f19d1a255571906fd4defd59b4a7ee272a65343f519969cd265e3db20` | S1 平台 8/8、1.90x；S2 Enflame 大 shape 代理提升 3.53–5.66x | 优化候选；覆盖其他任务后再投 |
+| 24 | [`softcap_out`](softcap_out.md) | `s2c-5cd6019` | `999f2dea69774c2f9756748a2a113c7ad54d3e2fdce18bfd24b014a96fed1f46` | S1 平台 8/8、1.90x；S2 Enflame 大 shape 代理提升 3.53–5.66x；canonical 包已验签 | 优化候选；实时预检后确认提交 |
 
 ## 建议提交顺序
 
