@@ -311,3 +311,31 @@ canonical ZIP `artifacts/competition/chunk_cumsum/s2-5e776b5/chunk_cumsum.zip`�
 SHA-256
 `d104ad83075e0b8f2bf34c8e82f5c6dbd396dc19dca65fc3b872a5eda15ec835`，
 成员 generic + ascend/kunlunxin，`unzip -t` 通过。
+
+### S2 平台首投：7/8（华为 UB 溢出）→ S2b tile 收缩（第 2/2 次）
+
+S2 于 02:47:12 CST 提交（submission `4478`，当日序号 `14`，额度区间
+`18/30`→`17/30`）。七芯通过（含昆仑 hybrid vendor 正确通过）；华为在
+correctness case 3/4 以 `MLIRCompilationError` 失败：
+`ub overflow, requires 2621696 bits while 1572864 bits available`——大
+chunk_size（≥128）下 `block_h=8` 的 tile 触发 Ascend Unified Buffer 溢出，
+与缓存的 Ascend vector operator 指南"UB overflow 时减小 tile"一致。
+S2b 把华为 vendor 的 `block_h` 由 `min(8, 4096 // block_size)` 收缩为
+`min(8, 512 // block_size)`（chunk 64 不变，128→4，256→2），并把回归扩为
+三 shape：`(2,16384,96,64)`（原 grid 路径）、`(4,32768,288,256)`（总
+program 73728 > 65535，折叠路径 + UB 边界）、`(1,8192,32,256)`。screening
+`gpu:/tmp/flagos-cc-v3.6iw08X`（含一次 Black 回拷），最终 PID/PGID
+`114629`（02:54:27，wall 900s），5/5 unittest（1.653s），`screening.log`
+SHA-256
+`ea89c0a70427d4feec12f387fc2bd49469bd9dd6d6e4eb76b4e91cc3e3785eb4`；ascend
+vendor blob
+`24b2a5d3d5aec1ac6bbc3dcf470bf578174e4b0889d1a2eafccb1a90610e1873`，测试
+`4c448ed9ad90dc24d41de8b4a1af892c6a27e8300b756ffa6d57540135bfdb64`。
+release `gpu:/tmp/flagos-cc-v3-release.*`，commit
+`63e7943ab0f0ea2a9811731feab1ec5b234436bb`，`RELEASE_OK`，`release.log`
+SHA-256
+`ec659f6457f476e7c6b5f620a3c81aabbd0e0446de1b0bb8a0f5d103337527b1`。
+canonical ZIP `artifacts/competition/chunk_cumsum/s2b-63e7943/chunk_cumsum.zip`，
+SHA-256
+`c822f75d719f8919269c7566b1210b6e31dc6ce3292229a838723f7945b15923`。
+本提交为 2 次预算的最后一次。
