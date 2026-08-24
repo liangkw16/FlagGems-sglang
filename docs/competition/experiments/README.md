@@ -21,7 +21,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | Task | 算子账本 | 候选 | ZIP SHA-256 | 当前证据 | 建议 |
 | ---: | --- | --- | --- | --- | --- |
 | 08 | [`apply_token_bitmask`](apply_token_bitmask.md) | `e2-86fca87` | `88d2e8387ac2e7de785cf1574ad9c762df54c0baa79e4ada67fad7252987c1dc` | E2 平台 8/8、4.686925x、第 12/13；燧原 0.4292x → 2.8510x，团队当前最佳 | 保留 E2，转其他算子 |
-| 09 | [`bmm_chunk`](bmm_chunk.md) | `e3-a5afc19` | `d8577b2ee314cad758f756d47794685240448d2654baf6b685a7e53fac415b95` | 6/6 release；低精度 affected 1.4306x，FP32 controls 1.0000x，资源与 S0 相同；未平台 | 第 6 个提交 |
+| 09 | [`bmm_chunk`](bmm_chunk.md) | `e3d-57b7130` | `ad546c3942c40689649c48b4399bf72da318fba04179df1d93d9a85d823fd5ee` | 4 次提交均 8/8 正确、燧原 0.001→0.090x 未达 0.1x 门槛；天数/华为 vendor 已验证；已按三次规则停止 | 待燧根 dot 配置知识成熟后重试（stages≥2 起步） |
 | 10 | [`chunk_cumsum`](chunk_cumsum.md) | `s1-a4e84aa` | `f9fd0d595aeb5a4a4da76514321790815fbad9ccc39faa447c8bfa120f0e7db9` | 4/4 回归；E1–E4 均拒绝，E4 大 shape 有效但 medium/low 仅 1.0091/0.9999x；保留 S1，未平台 | 第 11 个提交 |
 | 11 | [`chunk_local_cumsum_vector`](chunk_local_cumsum_vector.md) | `e1-528a2bb` | `7f0484b9b2ae078bf284e4fda1c5a1a0ffb0c8545b907e801d9fa21200fde7d8` | 2/2 release；tiny chunks 2-warps affected 1.032–1.162x；controls 0.997–1.002x；未平台 | 第 10 个提交 |
 | 12 | [`chunk_state`](chunk_state.md) | `e2d-3d31481` | `3c06525a76dd00e338d40107feca666e43dd7f99b097e00da5e87f7ca548623b` | E2d 平台 8/8、1.948x、valid、team best；天数 fp16-dot、华为 capped grid vendor 均选中 | 闭环完成；燧原 0.116x 贴门槛为后续优化点 |
