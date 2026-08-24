@@ -185,3 +185,26 @@ E1 不改 S0 generic，也不放大 tile。新增自包含
 E1 只证明 RTX 5070 Ti 的 NVIDIA 路径；generic 在其余七芯的动态 while、IEEE
 dot 和大 D shared-memory 风险没有因此消失。上传前必须重新读取实时额度，并取得
 用户针对 Task 14、上述绝对 ZIP 路径和完整 SHA-256 的当次确认。
+
+## E1a：天数/燧原 fp16-dot vendor（首投候选，≤2 次预算）
+
+状态：release 门禁通过，候选就绪
+
+E1 generic 自带 `_MAX_GRID_PROGRAMS = 65535` 分块 launch，华为/昆仑 grid
+风险已由 generic 处理；其两个 ieee fp32 dot 在天数不可执行（平台证据）。
+`_iluvatar`/`_enflame`（同字节）把两处 dot 操作数降为 fp16（容差 1e-2，
+累加 fp32）。`_nvidia` vendor 保持 E1 原样。测试的
+CONTEXT_ATTENTION_MODULES 元组扩入两 vendor，全回归覆盖。screening
+`gpu:/tmp/flagos-ca-vend.OxccH9`（含一次 Black 回拷），最终 PID/PGID
+`117722`（03:57 前后，wall 900s），6/6 unittest（5.084s），`screening.log`
+SHA-256
+`ceb071abe8b6ea0153c11f510a09935d17d978b43a04b68cfac297ba7259fd74`。
+release `gpu:/tmp/flagos-ca-release.*`，source/verification commit
+`6246fa87c4d6b0ecc35ca9cdb395f915d422b60e`，`RELEASE_OK`，`release.log`
+SHA-256
+`7ba7942c289ba47243f9b4f83cddd473e18beed27110c31f2070ea8c99fb5f4f`。
+canonical ZIP
+`artifacts/competition/context_attention/e1a-6246fa8/context_attention.zip`，
+SHA-256
+`8bfc8843bb6951de12160d83dbd56428c3697262ad331a05183217b9aa2d7861`，
+成员 generic + enflame/iluvatar/nvidia，`unzip -t` 通过。
