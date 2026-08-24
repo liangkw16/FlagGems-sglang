@@ -226,6 +226,7 @@ class HttpClient:
         fields: dict[str, str],
         files: dict[str, tuple[str, bytes]],
         headers: dict[str, str] | None = None,
+        success_codes: tuple[int, ...] = (200,),
     ) -> Any:
         boundary = f"flagos-{secrets.token_hex(16)}"
         chunks: list[bytes] = []
@@ -258,7 +259,11 @@ class HttpClient:
             **(headers or {}),
         }
         return self._request(
-            "POST", url, body=b"".join(chunks), headers=request_headers
+            "POST",
+            url,
+            body=b"".join(chunks),
+            headers=request_headers,
+            success_codes=success_codes,
         )
 
 
@@ -839,6 +844,7 @@ def _submit(nonce: str, client: Any, state_dir: Path) -> dict[str, Any]:
                 },
                 files={"archive": (Path(spec["zip_path"]).name, payload)},
                 headers={"Idempotency-Key": f"flagos-{nonce}"},
+                success_codes=(200, 202),
             )
         except BaseException:
             intent["state"] = "uncertain"

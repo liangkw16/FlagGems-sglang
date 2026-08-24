@@ -159,6 +159,7 @@ class PlatformCliTest(unittest.TestCase):
             client.posts[1][1]["headers"]["Idempotency-Key"],
             f"flagos-{prepared['nonce']}",
         )
+        self.assertEqual(client.posts[1][1]["success_codes"], (200, 202))
         upload_bytes = client.posts[0][1]["files"]["file"][1]
         archive_bytes = client.posts[1][1]["files"]["archive"][1]
         self.assertIs(upload_bytes, archive_bytes)
@@ -344,6 +345,20 @@ class PlatformCliTest(unittest.TestCase):
                 "username"
             ],
             "alice",
+        )
+
+        client._opener.open.return_value = Response(
+            b'{"code":202,"data":{"status":"queued"}}'
+        )
+        self.assertEqual(
+            client.post_multipart(
+                "https://flagos.io/flagos/api/v1/races/race1/"
+                "operator-submissions",
+                fields={},
+                files={},
+                success_codes=(200, 202),
+            ),
+            {"status": "queued"},
         )
 
         with self.assertRaises(HTTPError):
