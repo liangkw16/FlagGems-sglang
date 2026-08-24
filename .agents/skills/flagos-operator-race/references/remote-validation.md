@@ -30,7 +30,10 @@
 3. 用 `setsid`（或等价方式）建立属于该临时目录的独立进程组，再配合 `nohup` 在
    远端后台依次执行：
    - 目标源码和测试的 `py_compile`；
-   - `black --check --line-length 79`、`isort --check-only`、`flake8`；
+   - 优先运行仓库定义的 `pre-commit run --files <本次 Python 文件>`；远端没有
+     `pre-commit` 时使用与 `.pre-commit-config.yaml` 等价的命令：
+     `black --check`、`isort --check-only --profile black --line-length 80`、
+     `flake8 --ignore=F405,E731,W503,E203,E704 --max-line-length=120`；
    - 复验源码和测试 SHA-256，确认静态门禁没有改写已验签字节；
    - `python -m unittest -v tests/test_<operator>.py`。
 4. 启动前为每阶段和整次运行设定并记录 wall-clock 上限，命令使用远端 `timeout`
