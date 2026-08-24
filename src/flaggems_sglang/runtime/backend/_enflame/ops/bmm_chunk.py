@@ -146,8 +146,8 @@ def bmm_chunk(a, b, chunk_size, causal=False):
     if output.numel() == 0:
         return output
 
-    block_m = 32
-    block_n = 32
+    block_m = 64
+    block_n = 64
     grid = (
         triton.cdiv(chunk_size, block_m) * triton.cdiv(chunk_size, block_n),
         batch,
@@ -165,11 +165,11 @@ def bmm_chunk(a, b, chunk_size, causal=False):
         *output.stride(),
         BLOCK_M=block_m,
         BLOCK_N=block_n,
-        BLOCK_K=32,
+        BLOCK_K=64,
         USE_INPUT_DTYPE=a.dtype == b.dtype
         and a.dtype in (torch.float16, torch.bfloat16),
         num_warps=4,
-        num_stages=1,
+        num_stages=3,
     )
     return output
 
