@@ -2,7 +2,7 @@
 
 ## S0：generic baseline
 
-状态：S0c 已提交平台，6/8；燧原、华为因物理 grid 超限失败
+状态：S1 已提交平台并通过 8/8；平均 4.3870x，第 12/13 名
 
 验证时间：2026-08-24 01:22–01:28 CST
 
@@ -177,7 +177,7 @@ SHA-256 与本地 `f4068dd290bb16821d75eb669485b5607bf8cd3a8f4b1807af2e67aa23d41
 
 ## S1：燧原/华为 capped grid-stride 修复
 
-状态：候选就绪，未提交平台
+状态：已提交；`valid`，8/8，平均 4.3870x，第 12/13 名
 
 源码与验证 commit：`c33d45fb47e6dce7a72d440b3f4eca4dfe486d6a`
 
@@ -215,3 +215,26 @@ bytes、`apply_token_bitmask_enflame.py` 2756 bytes，成员哈希与上表源�
 NVIDIA release 只能证明代理编译和数值，不能证明两款目标 runtime；平台晋级门禁为
 8/8、两芯都选中对应 vendor 且各自不低于 0.1x。若燧原恢复正确但性能偏低，下一轮
 才单变量尝试 BLOCK 256 → 4096。
+
+2026-08-24 19:14:49 CST 在同一账号和团队下提交一次，submission ID `4207`、
+daily seq `6`。平台远端 ZIP 为 8382 bytes，下载后 SHA-256 与本地
+`c6304895495de8aa601ba61acff6b18f0e3f3cc45158ec1b0aa90856927a60c6` 一致；
+`file_url_sha256` 为
+`5d39b0a2c98a4b27f59ab754a266c3c61710a8eb6c56b59cd7c13aba3749eb32`。
+实时额度由 `10/15` 变为 `9/15`。
+
+| 芯片 | 结果 | speedup | 选中文件 |
+| --- | --- | ---: | --- |
+| 天数 | 通过 | 10.2536x | `apply_token_bitmask.py` |
+| 沐曦 | 通过 | 4.7580x | `apply_token_bitmask.py` |
+| 燧原 | 通过 | 0.4292x | `apply_token_bitmask_enflame.py` |
+| 海光 | 通过 | 4.9440x | `apply_token_bitmask.py` |
+| 昆仑芯 | 通过 | 0.7674x | `apply_token_bitmask.py` |
+| 华为 | 通过 | 0.9710x | `apply_token_bitmask_ascend.py` |
+| 国际通用 A | 通过 | 6.7830x | `apply_token_bitmask.py` |
+| 国际通用 B | 通过 | 6.1898x | `apply_token_bitmask.py` |
+
+两份 vendor 均被正确选中，原 grid/coreDim 超限消失，八芯全部高于 0.1x。官方
+Task 08 leaderboard 在 2026-08-24 19:23:43 CST 显示 `SoulCoder` 第 12/13 名，
+本次也是团队首次有效及当前最佳提交。下一条单变量假设只改燧原 BLOCK 256 → 4096，
+保持 grid 12 和其余文件不变；先做代理验证，不沿用本次已消耗的提交确认。
