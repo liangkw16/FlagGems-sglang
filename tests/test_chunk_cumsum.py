@@ -20,20 +20,40 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 
-MODULE_PATH = (
+BACKEND_ROOT = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+)
+
+
+def _load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+MODULE = _load_module(
+    "chunk_cumsum_competition_module",
     Path(__file__).parents[1]
     / "src"
     / "flaggems_sglang"
     / "ops"
-    / "chunk_cumsum.py"
+    / "chunk_cumsum.py",
 )
-SPEC = importlib.util.spec_from_file_location(
-    "chunk_cumsum_competition_module", MODULE_PATH
+ASCEND_MODULE = _load_module(
+    "chunk_cumsum_ascend_module",
+    BACKEND_ROOT / "_ascend" / "ops" / "chunk_cumsum.py",
 )
-if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"cannot load {MODULE_PATH}")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+KUNLUN_MODULE = _load_module(
+    "chunk_cumsum_kunlunxin_module",
+    BACKEND_ROOT / "_kunlunxin" / "ops" / "chunk_cumsum.py",
+)
 
 
 def reference(dt, a, chunk_size, dt_bias=None, dt_softplus=False):
@@ -210,6 +230,52 @@ class ChunkCumsumTest(unittest.TestCase):
                     self.assertEqual(got.shape, want.shape)
                     self.assertEqual(got.dtype, torch.float32)
                     self.assertEqual(got.numel(), 0)
+
+    def test_vendors_cover_folded_grid(self):
+        torch.manual_seed(20260824)
+        batch, seqlen, nheads, chunk_size = 2, 16384, 96, 64
+        nchunks = (seqlen + chunk_size - 1) // chunk_size
+        block_h = 4
+        total = ((nheads + block_h - 1) // block_h) * nchunks * batch
+        self.assertGreater(total, 4096)
+
+        for dtype, tolerance in (
+            (torch.float32, 1e-4),
+            (torch.float16, 1e-2),
+        ):
+            for softplus in (False, True):
+                with self.subTest(dtype=dtype, softplus=softplus):
+                    dt = torch.randn(
+                        (batch, seqlen, nheads),
+                        device="cuda",
+                        dtype=dtype,
+                    )
+                    a = torch.randn((nheads,), device="cuda", dtype=dtype)
+                    bias = torch.randn((nheads,), device="cuda", dtype=dtype)
+                    expected = reference(
+                        dt,
+                        a,
+                        chunk_size,
+                        dt_bias=bias,
+                        dt_softplus=softplus,
+                    )
+                    for name, module in (
+                        ("generic", MODULE),
+                        ("ascend", ASCEND_MODULE),
+                        ("kunlunxin", KUNLUN_MODULE),
+                    ):
+                        with self.subTest(module=name):
+                            actual = module.chunk_cumsum(
+                                dt,
+                                a,
+                                chunk_size,
+                                dt_bias=bias,
+                                dt_softplus=softplus,
+                            )
+                            for out, exp in zip(actual, expected):
+                                torch.testing.assert_close(
+                                    out, exp, atol=tolerance, rtol=tolerance
+                                )
 
 
 if __name__ == "__main__":
