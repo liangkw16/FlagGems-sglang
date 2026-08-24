@@ -237,3 +237,77 @@ release 后规范 ZIP 再次为 `verified-existing`：
 source commit 完全一致，`unzip -t` 通过。固定 21 点 affected 集合超过
 `>=1.05x`，原 control 与补充高吞吐 affected/control 均超过 `>=0.97x` 无回退
 门禁，且资源无 spill；E2 晋级首次平台提交候选，S0 作为回滚。
+
+## E2 平台首投：7/8
+
+账号 `15600308080`、团队 `SoulCoder` 于 2026-08-24 20:38:59 CST 提交 E2，
+submission ID `4229`、当日序号 `8`；
+20:53:09 CST 只读查询显示 `completed` / `invalid_correctness`，平均分和排名均为
+N/A。提交前后额度由 `23/30` 变为 `22/30`。平台回传 ZIP 为 4609 bytes，SHA-256
+`78c56c2955981833242d9fc2ed13dca1373014fc49f12072d469f34987875f03`，与本地 E2
+不可变产物一致；规范化 URL 的 `file_url_sha256` 为
+`748b2ab5a8c7263da69b3f62409f0907ecfe7875f6b273e78418c71d599c36db`。
+
+| 芯片 | 结果 | 加速比 |
+| --- | --- | ---: |
+| 天数智芯 | 通过 | `9.3550x` |
+| 沐曦 | 通过 | `3.3548x` |
+| 燧原 | 通过 | `0.5106x` |
+| 海光 | 通过 | `6.2808x` |
+| 昆仑芯 | 通过 | `0.3628x` |
+| card_a | 通过 | `7.4232x` |
+| card_b | 通过 | `5.6172x` |
+| 华为 | 失败 | N/A |
+
+华为 case 8 选择 generic `mamba_layernorm_gated.py` 后建立二维 grid；Ascend 后端
+将两维展平为总 `coreDim=rows*group_count=131072`，超过 `coreDim<=65535` 约束，
+kernel 未启动。平台随后展示的数值无效，根因是启动网格越界而非算子数学错误。
+
+## E3：Ascend capped grid-stride recovery
+
+状态：候选就绪，尚未提交平台
+
+E3 只新增 Ascend vendor，不改 generic 数学与 E2 tail-warp 策略。物理 grid 为
+`min(total_groups, 4096)`，每个 program 按 `tl.num_programs(0)` 跨步遍历逻辑
+group；因此 E2 失败规模的物理 `coreDim` 为 4096，同时完整覆盖 131072 个逻辑
+group。
+
+| 构建项 | 值 |
+| --- | --- |
+| source / verification commit | `374e06c05af98e24d151c6d5f178cd62dd2d82e6` |
+| ledger commit | 本节所在 commit |
+| generic SHA-256 | `b7b81a64a9abfa5a9cf3d69e0ad066ae7dc6c1ed3aa5a34c900d811fc1fbc346` |
+| Ascend vendor SHA-256 | `07c87ed8f0e1a4f18ddcf2557c8b40d6c6829eca4279cf9a3c3bc561a4a9d4e6` |
+| test SHA-256 | `768157f0b2814ca9b3768e9de901e5accc4eebe77b150a1439d2944ccf0e1fa2` |
+| canonical ZIP | `artifacts/competition/mamba_layernorm_gated/e3-374e06c/mamba_layernorm_gated.zip` |
+| ZIP size / SHA-256 | 9715 bytes / `afe450702c551fc83395432733dd22e98840125a31247c5e43117983ee30bb3d` |
+| ZIP members | generic 4463 bytes；Ascend 4968 bytes |
+
+测试同时加载 generic 与 Ascend vendor，覆盖既有 dtype、LN/RMS、bias、前后 gate、
+非连续输入、空输入和边界；新增 BF16 `64 * 2048 = 131072` logical groups 的失败
+规模回归。最终 release 从该 commit 的 Git 对象建立，目录
+`gpu:/tmp/flagos-mamba-layernorm-gated-e3-release.dk5UUb`，mode 0700；环境为 RTX
+5070 Ti 16 GB、driver 610.57.04、Python 3.12.13、PyTorch 2.13.0+cu130、Triton
+3.7.1、CUDA 13.0。
+
+| release 证据 | 启动 / PID=PGID / wall limit | 脚本 SHA-256 | 日志 SHA-256 |
+| --- | --- | --- | --- |
+| 静态与 unittest | 22:23:35 / `102729` / 600s | `d1d66769ce1a9f2ad22e5ced030e3ccce092162de0eaec120dfa372062950d71` | `543b061623e2c875090871f305ad8fbf9169302cd2dc9113eb1600ba1954ebad` |
+| 三点性能与资源 | 22:23:49 / `102842` / 600s | `8564403a29c147d5f356769f7bf512b2cbb6fda36e22b577131d75f2a7e0086d` | `0f5424b8731c82c2703991ff0a76da4aabad6fb54ae561a248a1d30b5dfc529a` |
+
+release 通过 py_compile、Black 79、isort、flake8 和 4/4 unittest（0.575s）。相对
+Torch reference，故障规模的 wide-groups 与 many-rows 五轮中位数分别为
+`0.498173x`、`0.461446x`，control 为 `5.012515x`。资源抽查：group 2 为 36
+registers、0 shared；group 257 为 40 registers、8 bytes shared；group 8192 为
+97 registers、32 bytes shared；三者均为 0 spill、0 global scratch、无 local PTX。
+
+cap 单变量扫描在
+`gpu:/tmp/flagos-mamba-layernorm-gated-e3-screen.UJO6UU` 启动于 22:17:43，
+PID=PGID `102371`、wall limit 600s；脚本 SHA-256 为
+`dcf204c8102ec06184209a075bc8a80fc5fb65af7a6d7d8720995725951e293f`，日志 SHA-256
+为 `d6173b362f5473072c1a4966e338b8ba34629291ded6335f65acdf145a26f1c6`。相对 Torch
+reference，结果为 48=`0.038828x`、256=`0.194729x`、1024=`0.365852x`、
+4096=`0.496595x`、16384=`0.489792x`、32768=`0.459019x`、65535=`0.413324x`，
+因此选择 4096。该 NVIDIA 扫描只能证明映射正确并排除明显代理回退，不能外推华为
+性能；E3 的晋级目标是恢复华为启动与正确性，最终八芯结果仍以平台为准。ZIP 已通过
+成员哈希和 `unzip -t` 验签。
