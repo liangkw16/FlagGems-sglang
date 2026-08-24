@@ -413,6 +413,96 @@ class PlatformCliTest(unittest.TestCase):
             with self.assertRaisesRegex(PLATFORM.CliError, "UTF-8"):
                 PLATFORM._token()
 
+    def test_auth_saves_only_an_iam_validated_token(self):
+        login_client = mock.Mock()
+        login_client.post_json.side_effect = [None, {"token": "secret-token"}]
+        validation_client = mock.Mock()
+        validation_client.get.return_value = {
+            "userResponse": {"username": "alice"}
+        }
+        token_file = self.root / "flagos-token"
+        args = argparse.Namespace(method="email", accept_terms=True)
+
+        with mock.patch("builtins.input", return_value="alice@example.com"), (
+            mock.patch.object(
+                PLATFORM.getpass, "getpass", return_value="123456"
+            )
+        ), mock.patch.object(
+            PLATFORM,
+            "HttpClient",
+            side_effect=[login_client, validation_client],
+        ), mock.patch.object(
+            PLATFORM, "_git_path", return_value=token_file
+        ), redirect_stdout(StringIO()) as output:
+            self.assertEqual(PLATFORM._auth(args), 0)
+
+        self.assertEqual(token_file.read_text(), "secret-token\n")
+        self.assertEqual(token_file.stat().st_mode & 0o777, 0o600)
+        self.assertNotIn("secret-token", output.getvalue())
+        self.assertEqual(json.loads(output.getvalue())["account"], "alice")
+        self.assertEqual(
+            login_client.post_json.call_args_list[0].args,
+            (
+                f"{PLATFORM.AUTH}/sendMailVerifyCode",
+                {"mailAddr": "alice@example.com", "language": 0},
+            ),
+        )
+        self.assertEqual(
+            login_client.post_json.call_args_list[1].args,
+            (
+                f"{PLATFORM.AUTH}/mailLoginRegister",
+                {"mailAddr": "alice@example.com", "code": "123456"},
+            ),
+        )
+
+    def test_auth_failure_preserves_existing_token(self):
+        token_file = self.root / "flagos-token"
+        token_file.write_text("old-token\n")
+        token_file.chmod(0o600)
+        login_client = mock.Mock()
+        login_client.post_json.side_effect = [None, {"token": "new-token"}]
+        validation_client = mock.Mock()
+        validation_client.get.return_value = {}
+
+        with mock.patch("builtins.input", return_value="13800138000"), (
+            mock.patch.object(
+                PLATFORM.getpass, "getpass", return_value="123456"
+            )
+        ), mock.patch.object(
+            PLATFORM,
+            "HttpClient",
+            side_effect=[login_client, validation_client],
+        ), mock.patch.object(
+            PLATFORM, "_git_path", return_value=token_file
+        ), self.assertRaisesRegex(PLATFORM.CliError, "incomplete"):
+            PLATFORM._auth(
+                argparse.Namespace(method="phone", accept_terms=True)
+            )
+
+        self.assertEqual(token_file.read_text(), "old-token\n")
+
+    def test_auth_requires_explicit_terms_acceptance(self):
+        with mock.patch.object(PLATFORM, "HttpClient") as client, (
+            self.assertRaisesRegex(PLATFORM.CliError, "accept-terms")
+        ):
+            PLATFORM._auth(
+                argparse.Namespace(method="email", accept_terms=False)
+            )
+        client.assert_not_called()
+
+    def test_token_defaults_to_git_internal_file(self):
+        token_file = self.root / "flagos-token"
+        token_file.write_text("secret\n")
+        token_file.chmod(0o600)
+        with mock.patch.dict(
+            os.environ,
+            {"FLAGOS_TOKEN": "", "FLAGOS_TOKEN_FILE": ""},
+            clear=False,
+        ), mock.patch.object(
+            PLATFORM, "_git_path", return_value=token_file
+        ):
+            self.assertEqual(PLATFORM._token(), "secret")
+
 
 if __name__ == "__main__":
     unittest.main()

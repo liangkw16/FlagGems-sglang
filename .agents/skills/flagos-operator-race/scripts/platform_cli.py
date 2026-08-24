@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import fcntl
+import getpass
 import gzip
 import hashlib
 import io
@@ -20,14 +21,21 @@ import tempfile
 import time
 from contextlib import contextmanager
 from datetime import datetime
+from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlsplit
-from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.request import (
+    HTTPCookieProcessor,
+    HTTPRedirectHandler,
+    Request,
+    build_opener,
+)
 
 API = "https://flagos.io/flagos/api/v1"
 IAM = "https://flagos.io/flagos/iam/user/getCurrentUserBaseInfo"
+AUTH = "https://flagos.io/flagos/user-srv/auth"
 UPLOAD = "https://flagos.net/flagos/api/v1/upload/file"
 ZIP_LIMIT = 10 * 1024 * 1024
 INTENT_TTL = 10 * 60
@@ -72,7 +80,11 @@ def _token() -> str:
 
     filename = os.environ.get("FLAGOS_TOKEN_FILE", "")
     if not filename:
-        raise CliError("set FLAGOS_TOKEN or FLAGOS_TOKEN_FILE")
+        filename = str(_git_path("flagos-token"))
+        if not Path(filename).exists():
+            raise CliError(
+                "run the auth command or set FLAGOS_TOKEN/FLAGOS_TOKEN_FILE"
+            )
     path = Path(filename)
     if not path.is_absolute():
         raise CliError("FLAGOS_TOKEN_FILE must be absolute")
@@ -103,14 +115,18 @@ def _token() -> str:
 
 
 class HttpClient:
-    def __init__(self, token: str) -> None:
+    def __init__(self, token: str, *, cookies: bool = False) -> None:
         self._headers = {
             "Accept": "application/json",
-            "Authorization": f"Bearer {token}",
             "Lang": "CN",
             "User-Agent": "FlagOS-operator-race-cli/1.0",
         }
-        self._opener = build_opener(_NoRedirect())
+        if token:
+            self._headers["Authorization"] = f"Bearer {token}"
+        handlers = [_NoRedirect()]
+        if cookies:
+            handlers.append(HTTPCookieProcessor(CookieJar()))
+        self._opener = build_opener(*handlers)
 
     def _request(
         self,
@@ -119,6 +135,7 @@ class HttpClient:
         *,
         body: bytes | None = None,
         headers: dict[str, str] | None = None,
+        success_codes: tuple[int, ...] = (200,),
     ) -> Any:
         target = urlsplit(url)
         if (
@@ -167,8 +184,8 @@ class HttpClient:
             raise CliError("FlagOS returned non-JSON data") from error
         if not isinstance(result, dict):
             raise CliError("FlagOS returned an invalid API response")
-        if result.get("code") != 200:
-            code = result.get("code")
+        code = result.get("code")
+        if isinstance(code, bool) or code not in success_codes:
             if isinstance(code, bool) or not isinstance(code, int):
                 code = "unknown"
             raise CliError(
@@ -180,6 +197,21 @@ class HttpClient:
         if params:
             url = f"{url}?{urlencode(params)}"
         return self._request("GET", url)
+
+    def post_json(
+        self,
+        url: str,
+        value: dict[str, Any],
+        *,
+        success_codes: tuple[int, ...] = (0, 200),
+    ) -> Any:
+        return self._request(
+            "POST",
+            url,
+            body=_json(value, compact=True).encode(),
+            headers={"Content-Type": "application/json"},
+            success_codes=success_codes,
+        )
 
     def post_multipart(
         self,
@@ -577,14 +609,21 @@ def _remote_zip_fingerprint(url: str, expected_size: int) -> dict[str, Any]:
     return {"size": len(payload), "sha256": _sha256(payload)}
 
 
-def _state_dir() -> Path:
-    result = subprocess.run(
-        ["git", "rev-parse", "--git-path", "flagos-platform"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+def _git_path(name: str) -> Path:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--git-path", name],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise CliError("current directory is not a Git worktree") from error
     return Path(result.stdout.strip()).resolve()
+
+
+def _state_dir() -> Path:
+    return _git_path("flagos-platform")
 
 
 def _prepare_state_dir(path: Path) -> None:
@@ -918,6 +957,109 @@ def _status(args: argparse.Namespace, client: Any) -> int:
         time.sleep(min(args.interval, max(0, deadline - time.monotonic())))
 
 
+def _write_token(path: Path, token: str) -> None:
+    token = token.strip()
+    if (
+        not token
+        or len(token.encode()) > 65536
+        or "\n" in token
+        or "\r" in token
+    ):
+        raise CliError("FlagOS returned an invalid token")
+    descriptor, temporary = tempfile.mkstemp(
+        prefix=".flagos-token-", dir=path.parent
+    )
+    try:
+        os.fchmod(descriptor, 0o600)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(token)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        path.chmod(0o600)
+    finally:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+
+
+def _auth(args: argparse.Namespace) -> int:
+    if not args.accept_terms:
+        raise CliError(
+            "--accept-terms is required; the FlagOS endpoint may register "
+            "an unknown email or phone"
+        )
+    try:
+        contact = input(f"FlagOS {args.method}: ").strip()
+    except EOFError as error:
+        raise CliError(
+            "authentication requires an interactive terminal"
+        ) from error
+
+    if args.method == "email":
+        if not re.fullmatch(
+            r"[A-Za-z0-9._-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", contact
+        ):
+            raise CliError("invalid email address")
+        send_url = f"{AUTH}/sendMailVerifyCode"
+        login_url = f"{AUTH}/mailLoginRegister"
+        send_body = {"mailAddr": contact, "language": 0}
+        login_body = {"mailAddr": contact}
+    else:
+        if not re.fullmatch(r"1[3-9]\d{9}", contact):
+            raise CliError("phone must be an 11-digit mainland China number")
+        send_url = f"{AUTH}/sendSmsVerifyCode"
+        login_url = f"{AUTH}/smsLogin"
+        send_body = {"phoneNumber": contact, "language": 0}
+        login_body = {"phoneNumber": contact}
+
+    client = HttpClient("", cookies=True)
+    client.post_json(send_url, send_body)
+    try:
+        code = getpass.getpass("Verification code: ").strip()
+    except EOFError as error:
+        raise CliError(
+            "authentication requires an interactive terminal"
+        ) from error
+    if not re.fullmatch(r"\d{6}", code):
+        raise CliError("verification code must contain 6 digits")
+    login_body["code"] = code
+    data = client.post_json(login_url, login_body)
+    token = data.get("token") if isinstance(data, dict) else None
+    if not isinstance(token, str):
+        raise CliError("FlagOS login response omitted the token")
+    token = token.strip()
+    if (
+        not token
+        or len(token.encode()) > 65536
+        or "\n" in token
+        or "\r" in token
+    ):
+        raise CliError("FlagOS returned an invalid token")
+
+    identity = HttpClient(token).get(IAM)
+    user = identity.get("userResponse") if isinstance(identity, dict) else None
+    username = user.get("username") if isinstance(user, dict) else None
+    if not isinstance(username, str) or not username:
+        raise CliError("authenticated account response is incomplete")
+
+    token_path = _git_path("flagos-token")
+    _write_token(token_path, token)
+    print(
+        _json(
+            {
+                "status": "authenticated",
+                "account": username,
+                "token_file": str(token_path),
+                "mode": "0600",
+            }
+        )
+    )
+    return 0
+
+
 def _common(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--race", required=True)
     parser.add_argument("--batch", required=True, type=int)
@@ -928,6 +1070,15 @@ def _common(parser: argparse.ArgumentParser) -> None:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    auth = commands.add_parser(
+        "auth", help="log in with a verification code and save the token"
+    )
+    auth.add_argument("--method", choices=("email", "phone"), required=True)
+    auth.add_argument(
+        "--accept-terms",
+        action="store_true",
+        help="confirm the account and FlagOS terms before login/register",
+    )
     status_parser = commands.add_parser(
         "status", help="read submission scores"
     )
@@ -1001,6 +1152,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         args = _parser().parse_args(argv)
         _validate(args)
+        if args.command == "auth":
+            return _auth(args)
         client = HttpClient(_token())
         if args.command == "status":
             return _status(args, client)

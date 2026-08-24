@@ -16,12 +16,24 @@ generic/vendor 集合一致，不能因打包器自动收集 commit 中已有 ve
 
 ## 脚本查分
 
-日常查分不操作浏览器。先从用户合法持有的登录凭证设置环境变量；不要把 token 写进
-命令历史，也不要由脚本读取浏览器 cookie/localStorage：
+日常查分不操作浏览器。首次使用时，优先通过平台官方邮箱或手机号验证码接口登录；
+命令会交互读取账号和验证码、用 IAM 接口验真，并将 token 原子写入 Git 内部的
+`.git/flagos-token`（`0600`），不会打印 token，也不读取浏览器 cookie/localStorage。
+必须使用已有 FlagOS 账号绑定的邮箱或手机号：
 
 ```bash
-read -r -s FLAGOS_TOKEN
-export FLAGOS_TOKEN
+python .agents/skills/flagos-operator-race/scripts/platform_cli.py auth \
+  --method email --accept-terms
+# 手机号登录改为：--method phone --accept-terms
+```
+
+`--accept-terms` 是显式门禁：当前官方端点兼具登录/注册能力，邮箱或手机号输错可能
+创建新账号。认证接口来自当前生产前端，若平台协议变化则命令失败关闭并回退网页登录，
+不尝试抓取浏览器凭证。
+
+后续 `status`、`preflight`、`submit` 会自动读取该文件：
+
+```bash
 python .agents/skills/flagos-operator-race/scripts/platform_cli.py status \
   --race 782kzq4m --batch 2 --task 12 --operator chunk_state
 ```
@@ -32,8 +44,8 @@ python .agents/skills/flagos-operator-race/scripts/platform_cli.py status \
 账本或本地 intent，同时会验证 token、账号、团队、race、Task、额度和提交记录。输出
 中的 `file_url` 会移除
 可能存在的签名 query，并另给 `file_url_sha256`；内部去重仍使用完整 URL。
-也可把用户合法持有的 token 一次写入 Git 内部目录，避免每次重新输入；文件必须为
-普通文件、绝对路径且权限不宽于 `0600`：
+若验证码接口不可用，也可把用户合法持有的 token 一次写入 Git 内部目录；文件必须
+为普通文件、绝对路径且权限不宽于 `0600`：
 
 ```bash
 flagos_token_file="$(git rev-parse --absolute-git-dir)/flagos-token"
