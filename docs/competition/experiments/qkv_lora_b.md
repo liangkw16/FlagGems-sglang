@@ -241,3 +241,18 @@ canonical ZIP `artifacts/competition/qkv_lora_b/s2c-7857dc/qkv_lora_b.zip`，
 SHA-256
 `357e8a690cca68123aabebdbb5500a86ebd66fe328105a8b91f7c1afe489cb38`。
 本提交为 2 次预算的最后一次。
+
+### S2c 平台结果与 Task 22 停止（2 次预算用尽）
+
+S2c 于 02:33:03 CST 提交（submission `4458`，当日序号 `12`，额度
+`19/30`→`18/30`，`file_url_sha256` 为
+`96eac69a78b858e333c958f2bbfdc70e63c24fec626adedb97d78798242b2ab8`）。
+七芯中六芯高分通过：海光 82.6125x、国际 A 80.0090x、天数 47.8050x
+（split-fp16 vendor）、国际 B 49.8585x、沐曦 43.7250x、华为 24.2540x
+（fold vendor）；昆仑评测中。燧原 vendor（stages 1）仍在 case 2 以同一
+`Pipeline run failed: PassManager execution failed` 编译失败——stages 不是
+根因，该 case 的 kernel 特化在 GCU 编译器上无法通过 Pipeline pass，且无
+GCU 环境可复现定位。Task 22 两次预算用尽（S2、S2c），按规则停止；已沉淀：
+同族 kernel 中 cumsum/slice 元数据与 GCU Pipeline pass 的组合是燧原编译
+失败的高发区，后续含 cumsum 的 dot kernel（Task 13/14/15/16）燧原 vendor
+优先使用最简结构（无 cumsum、无 slice 标量载入）。
