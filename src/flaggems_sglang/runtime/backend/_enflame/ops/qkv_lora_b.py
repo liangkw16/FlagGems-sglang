@@ -197,7 +197,7 @@ def qkv_lora_b(
         BLOCK_K=block_k,
         HAS_PERMUTATION=permutation is not None,
         num_warps=4,
-        num_stages=3,
+        num_stages=1,
     )
     return output
 
