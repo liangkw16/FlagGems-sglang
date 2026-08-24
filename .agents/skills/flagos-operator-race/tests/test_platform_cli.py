@@ -27,7 +27,7 @@ class FakeClient:
         self.fail_final = False
         self.change_quota_on_upload = False
 
-    def get(self, url, params=None):
+    def get(self, url, params=None, **unused):
         if url == PLATFORM.IAM:
             return {"userResponse": {"username": "alice", "userId": "u1"}}
         if url.endswith("/user/teams"):
@@ -335,6 +335,16 @@ class PlatformCliTest(unittest.TestCase):
         )
         with self.assertRaisesRegex(PLATFORM.CliError, "API code 401"):
             client.get("https://flagos.io/flagos/api/v1/races/race1")
+
+        client._opener.open.return_value = Response(
+            b'{"code":0,"data":{"userResponse":{"username":"alice"}}}'
+        )
+        self.assertEqual(
+            client.get(PLATFORM.IAM, success_codes=(0, 200))["userResponse"][
+                "username"
+            ],
+            "alice",
+        )
 
         with self.assertRaises(HTTPError):
             PLATFORM._NoRedirect().redirect_request(

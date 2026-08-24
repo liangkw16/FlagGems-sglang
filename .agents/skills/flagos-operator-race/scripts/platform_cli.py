@@ -193,10 +193,16 @@ class HttpClient:
             )
         return result.get("data")
 
-    def get(self, url: str, params: dict[str, Any] | None = None) -> Any:
+    def get(
+        self,
+        url: str,
+        params: dict[str, Any] | None = None,
+        *,
+        success_codes: tuple[int, ...] = (200,),
+    ) -> Any:
         if params:
             url = f"{url}?{urlencode(params)}"
-        return self._request("GET", url)
+        return self._request("GET", url, success_codes=success_codes)
 
     def post_json(
         self,
@@ -299,7 +305,7 @@ def _live_state(
     if not isinstance(race_data, dict) or str(race_data.get("rid")) != race:
         raise CliError("race ID did not resolve exactly")
 
-    identity = client.get(IAM)
+    identity = client.get(IAM, success_codes=(0, 200))
     user = identity.get("userResponse") if isinstance(identity, dict) else None
     if not isinstance(user, dict) or not user.get("username"):
         raise CliError("authenticated account response is incomplete")
@@ -1039,7 +1045,7 @@ def _auth(args: argparse.Namespace) -> int:
     ):
         raise CliError("FlagOS returned an invalid token")
 
-    identity = HttpClient(token).get(IAM)
+    identity = HttpClient(token).get(IAM, success_codes=(0, 200))
     user = identity.get("userResponse") if isinstance(identity, dict) else None
     username = user.get("username") if isinstance(user, dict) else None
     if not isinstance(username, str) or not username:
