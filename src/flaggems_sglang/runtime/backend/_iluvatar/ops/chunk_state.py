@@ -139,7 +139,7 @@ def _chunk_state_kernel(
         ).to(tl.float32)
         scale = tl.where(k_mask, tl.exp(dA_last - dA) * dt, 0.0)
         B *= scale[:, None]
-        accumulator += tl.dot(x, B)
+        accumulator += tl.dot(x.to(tl.float16), B.to(tl.float16))
 
     output_offsets = (
         batch_id * stride_output_batch
