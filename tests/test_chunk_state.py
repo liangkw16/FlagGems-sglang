@@ -25,13 +25,29 @@ MODULE_PATH = (
     / "ops"
     / "chunk_state.py"
 )
-SPEC = importlib.util.spec_from_file_location(
-    "chunk_state_module", MODULE_PATH
+ASCEND_MODULE_PATH = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+    / "_ascend"
+    / "ops"
+    / "chunk_state.py"
 )
-if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"cannot load {MODULE_PATH}")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+
+
+def _load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+MODULE = _load_module("chunk_state_module", MODULE_PATH)
+ASCEND_MODULE = _load_module("chunk_state_ascend_module", ASCEND_MODULE_PATH)
 
 
 def _reference(B, x, dt, dA_cumsum):
@@ -150,6 +166,64 @@ class ChunkStateTest(unittest.TestCase):
                     torch.testing.assert_close(
                         actual, expected, atol=3e-2, rtol=3e-2
                     )
+
+    def test_ascend_capped_grid_covers_multi_iteration_scale(self):
+        torch.manual_seed(20260824)
+        shapes = (
+            (2, 128, 64, 8, 2, 64, 64),
+            (2, 3, 17, 6, 2, 19, 23),
+        )
+        for (
+            batch,
+            nchunks,
+            chunk_size,
+            nheads,
+            ngroups,
+            headdim,
+            dstate,
+        ) in shapes:
+            tiles = (headdim + 31) // 32 * ((dstate + 31) // 32)
+            total = tiles * batch * nchunks * nheads
+            for dtype in (torch.float32, torch.float16):
+                with self.subTest(
+                    shape=(
+                        batch,
+                        nchunks,
+                        chunk_size,
+                        nheads,
+                        headdim,
+                        dstate,
+                    ),
+                    dtype=dtype,
+                    total_programs=total,
+                ):
+                    seqlen = nchunks * chunk_size
+                    B = torch.randn(
+                        (batch, seqlen, ngroups, dstate),
+                        device="cuda",
+                        dtype=dtype,
+                    )
+                    x = torch.randn(
+                        (batch, seqlen, nheads, headdim),
+                        device="cuda",
+                        dtype=dtype,
+                    )
+                    dt = torch.rand(
+                        (batch, nheads, nchunks, chunk_size),
+                        device="cuda",
+                        dtype=torch.float32,
+                    ).mul_(0.1)
+                    dA_cumsum = -(torch.rand_like(dt) * 0.01).cumsum(-1)
+
+                    actual = ASCEND_MODULE.chunk_state(B, x, dt, dA_cumsum)
+                    expected = _reference(B, x, dt, dA_cumsum)
+
+                    self.assertEqual(actual.dtype, torch.float32)
+                    torch.testing.assert_close(
+                        actual, expected, atol=3e-2, rtol=3e-2
+                    )
+        tiles = (64 + 31) // 32 * ((64 + 31) // 32)
+        self.assertGreater(tiles * 2 * 128 * 8, 4096)
 
 
 if __name__ == "__main__":
