@@ -160,3 +160,44 @@ wrapper-inclusive 五组轮换 A/B，组内 `warmup=25, rep=100`：
 它没有达到预设的 `>=1.05x` 晋级线，且寄存器上限增加，因此不提交 E1，也不
 生成新 ZIP。工作树源码已恢复到 S0 SHA-256；扩大后的测试继续保留。下一次源码
 迭代等待 S0 八芯结果，不用 NVIDIA 的约 1% 噪声收益换取跨芯占用风险。
+
+## E2/E3：NVIDIA 大 hidden tile（否决）
+
+状态：两项均未晋升；源码恢复 S0，未生成 ZIP，未提交平台
+
+验证时间：2026-08-24 08:00–08:04 CST
+
+在不改 kernel 数学、grid 维度、FP32 累加、stride、TOP_K constexpr 和 1 stage
+的前提下，对 `num_tokens>=32 && hidden_dim>=2048` 做了两个相邻 screening：
+
+- E2：`BLOCK_SIZE=2048, num_warps=8`，临时源码 SHA-256
+  `427751040bde8c2cea9a8255c48186f3aee5bc8c7dc3dc3159cfd1bae25f3f54`。
+- E3：`BLOCK_SIZE=1024, num_warps=8`，临时源码 SHA-256
+  `19072de7644742aca488352e26d162316a2e64ce271b668c4c5c2074a12defbe`。
+
+两项都通过 py_compile、Black 79、isort、flake8、4/4 unittest 和 18 个
+dtype/shape reference 检查。screening 目录
+`gpu:/tmp/flagos-moe-sum-reduce-e2.87tnS3`，mode 0700；环境仍为 RTX 5070 Ti、
+PyTorch 2.13.0+cu130、Triton 3.7.1、CUDA 13.0。
+
+五组轮换、wrapper-inclusive `warmup=25, rep=100` 的 screening 中：
+
+| 候选 | 12 个 affected 几何平均 | dtype 几何平均 FP16/BF16/FP32 | 最差 affected | 6 个 controls 几何平均 |
+| --- | ---: | --- | ---: | ---: |
+| E2 2048/8 | `0.9886x` | `1.0184/0.9328/1.0171x` | `0.6833x` | `0.9961x` |
+| E3 1024/8 | `1.0077x` | `1.0096/1.0075/1.0061x` | `0.9658x` | `0.9927x` |
+
+E2 的明确失败点是 BF16 `[32,16,4096]`，从 S0 `0.01110 ms` 退化到
+`0.01625 ms`；E3 虽消除该大回退，但总体远低于 `1.05x` 晋级线。差距足够大，
+不再为失败候选追加 release/资源门禁或事后 dtype/shape 过拟合。
+
+E2 gates/A-B、E3 gates/A-B、provenance 和 harness 的 SHA-256 依次为
+`4d18192cf69f6b34ade12a9ff8fc69d25af53fbae2e2f33283ebeeef72289488`、
+`2594280110e2fd1aa47347a922b6808784e29301a85c18383c8fd4ef9ddd17b9`、
+`f1f677f714e597b1c7a91c78b28935c05b0288815484478c531f5db08d54c576`、
+`901e1aaf3fc5ab275878a0a2c87dc933ff14f0b9d78f87e6daec222074bcf820`、
+`91f8e504929ba7a52f2f7daad246d7f5fba3f8ea3b445fe6671aa1233b2f772e`、
+`47cdb3c4e1cbb1c3cb2cce46893937997c2f2115a02793a9a50407a6a0ee4b35`。
+当前源码已恢复 S0 SHA-256
+`52a2fc979784f2bd25e7e17b9822c23b4f438efdf062c70bfb09aba9ba732335`；
+不可变候选仍是 `s0-3fac516`。
