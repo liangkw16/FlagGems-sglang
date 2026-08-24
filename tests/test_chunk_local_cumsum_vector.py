@@ -52,6 +52,10 @@ KUNLUN_MODULE = _load_module(
     "chunk_local_cumsum_vector_kunlunxin_module",
     BACKEND_ROOT / "_kunlunxin" / "ops" / "chunk_local_cumsum_vector.py",
 )
+ENFLAME_MODULE = _load_module(
+    "chunk_local_cumsum_vector_enflame_module",
+    BACKEND_ROOT / "_enflame" / "ops" / "chunk_local_cumsum_vector.py",
+)
 
 
 def reference(g, chunk_size, reverse=False, scale=None):
@@ -153,6 +157,7 @@ class ChunkLocalCumsumVectorTest(unittest.TestCase):
                         ("generic", MODULE),
                         ("ascend", ASCEND_MODULE),
                         ("kunlunxin", KUNLUN_MODULE),
+                        ("enflame", ENFLAME_MODULE),
                     ):
                         with self.subTest(module=name):
                             actual = module.chunk_local_cumsum_vector(
