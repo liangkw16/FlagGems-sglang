@@ -33,6 +33,15 @@ if SPEC is None or SPEC.loader is None:
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
+KUNLUN_MODULE_PATH = (
+    MODULE_PATH.parents[1]
+    / "runtime"
+    / "backend"
+    / "_kunlunxin"
+    / "ops"
+    / "fused_rmsnorm.py"
+)
+
 
 def _reference(x, weight, eps):
     x32 = x.float()
@@ -42,6 +51,80 @@ def _reference(x, weight, eps):
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class FusedRmsnormTest(unittest.TestCase):
+    def test_kunlun_multirow_and_boundaries_match_reference(self):
+        spec = importlib.util.spec_from_file_location(
+            "fused_rmsnorm_kunlunxin_module", KUNLUN_MODULE_PATH
+        )
+        if spec is None or spec.loader is None:
+            self.fail(f"cannot load {KUNLUN_MODULE_PATH}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        tolerances = {
+            torch.float16: 1e-2,
+            torch.bfloat16: 1.5e-2,
+            torch.float32: 1e-4,
+        }
+        generator = torch.Generator(device="cuda").manual_seed(20260824)
+        for dtype, tolerance in tolerances.items():
+            for rows, hidden_size, noncontiguous in (
+                (4096, 256, False),
+                (4097, 256, False),
+                (4097, 128, False),
+                (4095, 256, False),
+                (4096, 257, False),
+                (4096, 256, True),
+            ):
+                with self.subTest(
+                    dtype=dtype,
+                    rows=rows,
+                    hidden_size=hidden_size,
+                    noncontiguous=noncontiguous,
+                ):
+                    if noncontiguous:
+                        x = torch.randn(
+                            rows,
+                            hidden_size * 2,
+                            device="cuda",
+                            dtype=dtype,
+                            generator=generator,
+                        )[:, ::2]
+                        weight = torch.randn(
+                            hidden_size * 2,
+                            device="cuda",
+                            dtype=dtype,
+                            generator=generator,
+                        )[::2]
+                    else:
+                        x = torch.randn(
+                            rows,
+                            hidden_size,
+                            device="cuda",
+                            dtype=dtype,
+                            generator=generator,
+                        )
+                        weight = torch.randn(
+                            hidden_size,
+                            device="cuda",
+                            dtype=dtype,
+                            generator=generator,
+                        )
+                    x_before = x.clone()
+                    weight_before = weight.clone()
+
+                    actual = module.fused_rmsnorm(x, weight, 1e-6)
+                    expected = _reference(x, weight, 1e-6)
+
+                    self.assertEqual(actual.shape, x.shape)
+                    self.assertEqual(actual.dtype, x.dtype)
+                    torch.testing.assert_close(
+                        actual, expected, atol=tolerance, rtol=tolerance
+                    )
+                    torch.testing.assert_close(x, x_before, atol=0.0, rtol=0.0)
+                    torch.testing.assert_close(
+                        weight, weight_before, atol=0.0, rtol=0.0
+                    )
+
     def test_contiguous_decode_shapes_match_reference(self):
         tolerances = {
             torch.float16: 1e-2,
