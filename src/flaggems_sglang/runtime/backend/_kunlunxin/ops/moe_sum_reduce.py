@@ -37,9 +37,8 @@ def _moe_sum_reduce_kernel(
     output_stride_token = tl.cast(output_stride_token, tl.int64)
     output_stride_hidden = tl.cast(output_stride_hidden, tl.int64)
 
-    hidden_block = tl.program_id(0)
-    token_offset = tl.program_id(1)
-    hidden_offsets = hidden_block * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+    token_offset = tl.program_id(0)
+    hidden_offsets = tl.program_id(1) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
     hidden_mask = hidden_offsets < hidden_dim
     input_offsets = (
         token_offset * input_stride_token
@@ -74,9 +73,8 @@ def moe_sum_reduce(input, routed_scaling_factor):
     if num_tokens == 0 or hidden_dim == 0:
         return output
 
-    block_size = 256
-    hidden_blocks = triton.cdiv(hidden_dim, block_size)
-    grid = (hidden_blocks, num_tokens)
+    block_size = 1024
+    grid = (num_tokens, triton.cdiv(hidden_dim, block_size))
     _moe_sum_reduce_kernel[grid](
         input,
         output,

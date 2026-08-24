@@ -198,6 +198,33 @@ class MoeSumReduceTest(unittest.TestCase):
 
                 torch.testing.assert_close(input, original, atol=0.0, rtol=0.0)
 
+    def test_kunlun_vendor_block1024_boundaries(self):
+        tolerances = {
+            torch.float16: 1e-2,
+            torch.bfloat16: 1.5e-2,
+            torch.float32: 1e-4,
+        }
+        generator = torch.Generator(device="cuda").manual_seed(20260824)
+
+        for dtype, tolerance in tolerances.items():
+            for hidden_dim in (1023, 1024, 1025, 2049):
+                with self.subTest(dtype=dtype, hidden_dim=hidden_dim):
+                    input = torch.randn(
+                        (5, 4, hidden_dim),
+                        device="cuda",
+                        dtype=dtype,
+                        generator=generator,
+                    )
+                    expected = reference(input, 0.75)
+
+                    actual = KUNLUN_MODULE.moe_sum_reduce(input, 0.75)
+
+                    self.assertEqual(actual.shape, (5, hidden_dim))
+                    self.assertEqual(actual.dtype, dtype)
+                    torch.testing.assert_close(
+                        actual, expected, atol=tolerance, rtol=tolerance
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()
