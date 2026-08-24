@@ -131,3 +131,31 @@ PyTorch 2.13.0+cu130，Triton 3.7.1，CUDA 13.0。该结果仅是 NVIDIA 代理�
   这些路径。
 - E1 为“候选就绪、未提交”。未打开浏览器、未读取或消耗平台额度；上传前必须
   重新验签 ZIP、读取平台实时 tuple，并取得用户针对该精确产物的一次性确认。
+
+## E1a：折叠 grid Ascend/Kunlun vendor（首投候选，≤2 次预算）
+
+状态：release 门禁通过，候选就绪
+
+grid 审计：generic 3D `(feature_blocks, nchunks, batch)` 展平总数在大 shape
+可超 65535（如 features 4096/block_f 8=512 块 × 128 chunk × 2 batch =
+131072），触发华为 launch 越界与昆仑编译失败。vendor（ascend/kunlunxin 同
+字节）：1D `min(total, 4096)` + 逻辑 id 按 batch→chunk→feature 分解（div/mod
+形式，Task 08 generic 在两芯平台通过的同款结构）；kernel 数学、BLOCK、
+warps、stages=1 与 E1 generic 逐行一致。天数无 dot、燧原无分支均不需要
+vendor。新增回归 `test_vendors_cover_folded_grid`（2×8192×32×16、chunk 64，
+总 program >4096，三 dtype × 正反向 × 三模块对 reference）。screening
+`gpu:/tmp/flagos-clcv-vend.URFrLw`（首跑 Black 折行经远端格式化回拷修正），
+最终 PID/PGID `112894`，3/3 unittest（1.063s），`screening.log` SHA-256
+`48fc39bbf4365cdb14897f72e995d67d83c10afb387ad5bce9573d477ac01034`。
+release `gpu:/tmp/flagos-clcv-release.*`，source/verification commit
+`6b4794050ef6c3ebd3e247c2c6540ee61390ab8f`，`RELEASE_OK`，`release.log`
+SHA-256
+`a38432f3401fe37fd5868fe6e495ec43130b84e5a37ea2531834821527a61c39`。
+vendor blob
+`62fbabc03c2ef1521a2f75243ef61135b42c5b21ba3865c887dfe5ab9a3d508e`，测试
+`331fdb9834c7794dfd476e8496a5834494b25da2240cd37e2ce817211bfe25df`。
+canonical ZIP
+`artifacts/competition/chunk_local_cumsum_vector/e1a-6b47940/chunk_local_cumsum_vector.zip`，
+SHA-256
+`3ef95e909fa8d4018ccb7ea0569776e24bf61cfa15fcd4523d5c390bd589bf4c`，成员
+generic + ascend/kunlunxin，`unzip -t` 通过。
