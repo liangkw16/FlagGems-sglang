@@ -325,3 +325,41 @@ ZIP SHA-256 完全相同。成员为 `moe_sum_reduce.py` 2800 bytes、
 bytes；`unzip -t` 通过。平台晋级门禁：8/8 通过、昆仑与华为各自选中对应
 vendor 文件且高于 0.1x；其余六芯继续使用未变 generic。NVIDIA 只能代理编译与
 数值，不能证明 XPU/Ascend runtime 实际行为。
+
+### S1 平台结果：7/8
+
+2026-08-24 23:02:23 CST 提交一次，submission ID `4283`、当日序号 `11`，额度由
+`20/30` 变为 `19/30`。远端对象 9395 bytes，SHA-256 与本地 canonical ZIP 一致
+（`verified`）；`file_url_sha256` 为
+`f11dcbd706d6d3a7a75d0040af0a08be1f4464fac9f396a316fb3e9db05f0739`。23:03:08
+CST 终态 `completed` / `invalid_correctness`，7/8：
+
+| 芯片 | 结果 | speedup | 选中文件 |
+| --- | --- | ---: | --- |
+| 天数 | 通过 | 4.7174x | `moe_sum_reduce.py` |
+| 沐曦 | 通过 | 3.5052x | `moe_sum_reduce.py` |
+| 燧原 | 通过 | 0.2074x | `moe_sum_reduce.py` |
+| 海光 | 通过 | 6.4758x | `moe_sum_reduce.py` |
+| 昆仑芯 | 失败 | N/A | `moe_sum_reduce_kunlunxin.py` |
+| 华为 | 通过 | 0.6496x | `moe_sum_reduce_ascend.py` |
+| 国际通用 A | 通过 | 3.8572x | `moe_sum_reduce.py` |
+| 国际通用 B | 通过 | 2.2328x | `moe_sum_reduce.py` |
+
+结论分三部分：
+
+- 华为 vendor 完成恢复：`_ascend` 文件被选中，case 7 的 `coreDim=114688`
+  启动越界消除，八 case 全部通过且 `0.6496x` 远高于 0.1x 门槛；capped
+  grid-stride 模式在 Ascend 第三次平台验证成功（Task 08/20/21）。
+- 昆仑 vendor 失败且范围扩大：vendor 被选中后 correctness case 0–7 全部以
+  同一 `OutOfResources: uni_sram PassManager::run failed` 编译失败收场；而
+  S0c 中同数学的 2D grid generic 在昆仑通过 case 0–6。证明失败与 grid 规模
+  无关，而是一维 `program // hidden_blocks` 分解这一 kernel 结构在该 XPU
+  编译器（arch=3）上无法通过 `make_ttxir`。Task 08 同款 div/mod 能过，但彼
+  kernel 无 int64 stride cast 与 TOP_K 静态累加循环，不能互相背书。
+- 燧原本次 `0.2074x`，而 S0c 同字节 generic 为 `2.3126x`；其余六芯数值接
+  近。generic 字节未变，判定为平台侧 GCU 当次测量波动，不据此改燧原路径，
+  待下一轮平台数据复核。
+
+下一轮 S2 只改昆仑 vendor：保留平台已证明可编译的 2D grid 结构，把 grid.x
+（num_tokens 维）封顶并让 program 内按 `tl.num_programs(0)` 跨步遍历 token；
+generic、华为 vendor 与全部既有回归保持不变。
