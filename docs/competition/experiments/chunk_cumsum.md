@@ -3,7 +3,8 @@
 ## 当前结论
 
 状态：S1 已修复固定 Mamba 尾块前缀语义，通过提交字节发布门禁并生成规范 ZIP；
-E1 `EXACT_SHAPE` 去 mask 未过预设性能/资源门禁，保留 S1；未提交平台。
+E1 `EXACT_SHAPE`、E2 `chunk_size<=8` 两 warps、E3 `chunk_size<=4` 两 warps及
+E4 `chunk_size==3` 两 warps均未过各自预注册门禁，保留 S1；未提交平台。
 
 当前候选：`s1-a4e84aa`，ZIP SHA-256
 `f9fd0d595aeb5a4a4da76514321790815fbad9ccc39faa447c8bfa120f0e7db9`。
@@ -181,6 +182,101 @@ E1 unittest PID `78012`（05:07:41），A/B PID `78311`（05:09:57）。
 独立只读复审确认本次 `promote=false` 不受 harness 配对问题影响；若未来候选可能
 晋升，须把最差单组纳入 gate，并用五个配对 speedup 的中位数，而不是两个独立
 时间中位数之比。
+
+## E2–E4：tiny chunk 两 warps，拒绝
+
+三次 screening 都只改 launch 参数，kernel、grid、tile、stride、公式、4-warps
+fallback 和 1 stage 不变；均以 S1 源码为 baseline，未 commit、未生成 ZIP。
+E2 的宽阈值先暴露资源退化，E3 缩到 `chunk_size<=4` 后仍未达到整体收益门槛；
+E3 中事后表现最好的 CS3 点又全部开启 softplus，不能直接支持 `chunk_size==3`。
+因此 E4 在运行前冻结全新 shape/seed、四个 bias×softplus cell、四个 shape family
+和严格 3 AB/3 BA 门禁，只运行一次，避免继续按结果切片。
+
+### E2：`chunk_size<=8`，性能与资源均失败
+
+候选源码 SHA-256 为
+`ba4cdac2ea848c1af834b2ac662ef9fdefbcb01d2dac8037c9c6f36724e451c3`，
+screening base commit 为 `9dd09424e937503315cedb7a4214b70e214a381d`。
+4/4 unittest 和 192 个扩展正确性 case 通过；72 个 affected、12 个 control 的
+方向性计时结果如下。该首轮脚本没有 batch20，短 kernel 结果存在计时量化，只能
+作为淘汰证据；候选同时明确未过资源门禁，结论不依赖边界计时精度。
+
+| 指标 | 结果 |
+| --- | ---: |
+| affected 几何平均 | `1.039474x` |
+| FP16 / BF16 / FP32 | `1.044884/1.036623/1.036935x` |
+| 最差 affected 点 / 单组 | `1.000000/1.000000x` |
+| control 几何平均 / 范围 | `0.998850x / 0.989378–1.000000x` |
+
+CS5–8 的两-warps 编译物把 shared 从 0 增至 256 bytes；CS5–7 registers 也从
+`17–20` 增至 `19–22`，虽无 spill/scratch/local load-store，仍违反资源不增门禁。
+远端目录为 `gpu:/tmp/flagos-chunk-cumsum.8P8PPQ`；gates 和 screening PID/PGID
+分别为 `91166`、`91386`，screening 时间为 08:46:29–08:48:11 CST。
+
+| E2 证据 | SHA-256 |
+| --- | --- |
+| gates 日志 | `5072bb5bca3ce28b98e6d448523e3c1c678674e6f1553edd9ade4e555d8a1de7` |
+| A/B 脚本 | `f4a254c5c903f00aeb7cd41b57d48ed1a0c5774331814f0c937c5ba83860b295` |
+| 原始 JSON 日志 | `f8f7a85f91a7b909b318eeda89ada8151f2dc4d32856c310a229afb40b3c2c40` |
+
+### E3：`chunk_size<=4`，性能失败
+
+候选源码 SHA-256 为
+`28c4c277c3600bbcf3068d16b22ff4c55b8289d3e7c8d90c467ce727b30ecc92`，
+screening base commit 为 `ecd27066183af03e2f1207db29b2d2514f9111f6`。
+4/4 unittest、216 个扩展正确性 case 和资源门禁通过；batch20、五组配对 AB/BA
+覆盖 36 个 affected、18 个 control，但整体未达到预设 `1.05x`。
+
+| 指标 | 结果 |
+| --- | ---: |
+| affected 几何平均 | `1.025243x` |
+| FP16 / BF16 / FP32 | `1.026578/1.027181/1.021979x` |
+| 最差 affected 点 / 单组 | `0.990538/0.984328x` |
+| control 几何平均 / 范围 | `0.999709x / 0.995282–1.000000x` |
+
+最高资源为 40 registers、4 KiB shared，全部 0 spill/scratch/local load-store。
+远端目录为 `gpu:/tmp/flagos-chunk-cumsum-e3.i3OghE`；gates 和 screening
+PID/PGID 分别为 `91969`、`92103`，screening 时间为 08:53:35–08:54:46 CST。
+
+| E3 证据 | SHA-256 |
+| --- | --- |
+| gates 脚本 / 日志 | `a730ac849f696326deacf042c287aa1657612a61cdd784f7ab80be8013413f64` / `17586890f21d720b2f635294a12460b9363143f8cfcaffdf95d10c0e9595270c` |
+| A/B 脚本 / 原始 JSON | `5e736ca533fc8ccb8b05a5e568604f3413fa89cae04aca3e0a30964a97543a51` / `87ae3d3feec4e38b3217bfbd228913e266cd1106883fbb9d06768ec28f332330` |
+
+### E4：`chunk_size==3`，全新留出集 shape-family 失败
+
+候选源码 SHA-256 为
+`9bd77c2b19cc1445b84f1ff4eabbe3b440f27d8b857e55690efcdba7ea6bd9f6`。
+运行前独立审查并冻结四个新 family：high exact `[2,1008,96]`、high tail
+`[2,1007,63]`、medium exact `[1,384,32]`、low tail `[1,95,7]`；tail case 使用
+非连续输入。每个 family 覆盖四个 bias×softplus cell 和三 dtype，共 48 个
+affected；CS2/CS4 controls 共 24 个点。batch20、六轮严格 3 AB/3 BA，晋级除
+整体 `>=1.05x` 外，还要求每 dtype、softplus 分层、四个 flag cell 和四个
+family 各自 `>=1.02x`。
+
+4/4 unittest、216 个扩展正确性 case、全部 control 和资源门禁通过。总体收益
+达到 `1.057866x`，但只集中在大 shape；medium/low family 分别只有
+`1.009096x/0.999916x`，故 `performance_gate=false`，不按结果继续缩窄条件。
+
+| 指标 | 结果 |
+| --- | ---: |
+| FP16 / BF16 / FP32 | `1.058507/1.059066/1.056026x` |
+| softplus false / true | `1.030372/1.086092x` |
+| flag cells `b0s0/b0s1/b1s0/b1s1` | `1.028041/1.081526/1.032709/1.090678x` |
+| family `high_exact/high_tail/medium_exact/low_tail` | `1.132476/1.095966/1.009096/0.999916x` |
+| 最差 affected 点 / 单组 | `0.999421/0.984357x` |
+| control 几何平均 / 范围 | `0.999974x / 0.999005–1.000497x` |
+
+Affected 的 base/candidate 均最高 20 registers、0 shared；controls 均最高 22
+registers、0 shared，全部 0 spill/scratch/local load-store。远端目录为
+`gpu:/tmp/flagos-chunk-cumsum-e4.sJGwPL`；gates PID/PGID `92460`，screening
+PID/PGID `92624`，运行时间为 09:03:44–09:05:35 CST。
+
+| E4 证据 | SHA-256 |
+| --- | --- |
+| gates 脚本 / 日志 | `c9a6130973e76ea3be68dd03fddeda02f8dd704718969c60a10bfe5ff239f567` / `101775d5b6c00a9aca1c9d4c467d7bc7bf3a145da65fe2b45075b52badb32931` |
+| 留出脚本 / 原始 JSON | `4bc520eacab419cfbed227bade368b7cc01e854c426cf4aebbcf24b9bb20ba93` / `283534b7a0222acb5b736afba9f1ccd7009fc86ef37c7b79b7231e933eda977b` |
+| 空 stderr | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
 
 ### S1 剩余风险与下一步
 
