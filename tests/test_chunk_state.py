@@ -48,6 +48,19 @@ def _load_module(name, path):
 
 MODULE = _load_module("chunk_state_module", MODULE_PATH)
 ASCEND_MODULE = _load_module("chunk_state_ascend_module", ASCEND_MODULE_PATH)
+ILUVATAR_MODULE_PATH = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+    / "_iluvatar"
+    / "ops"
+    / "chunk_state.py"
+)
+ILUVATAR_MODULE = _load_module(
+    "chunk_state_iluvatar_module", ILUVATAR_MODULE_PATH
+)
 
 
 def _reference(B, x, dt, dA_cumsum):
@@ -222,8 +235,49 @@ class ChunkStateTest(unittest.TestCase):
                     torch.testing.assert_close(
                         actual, expected, atol=3e-2, rtol=3e-2
                     )
+
+                    iluvatar_actual = ILUVATAR_MODULE.chunk_state(
+                        B, x, dt, dA_cumsum
+                    )
+                    torch.testing.assert_close(
+                        iluvatar_actual, expected, atol=3e-2, rtol=3e-2
+                    )
         tiles = (64 + 31) // 32 * ((64 + 31) // 32)
         self.assertGreater(tiles * 2 * 128 * 8, 4096)
+
+    def test_iluvatar_plain_dot_chunk_boundary_precision(self):
+        torch.manual_seed(20260824)
+        batch, nchunks = 1, 2
+        nheads, ngroups = 4, 2
+        headdim, dstate = 33, 35
+
+        for dtype in (torch.float32, torch.float16):
+            for chunk_size in (63, 64, 255, 256, 257):
+                with self.subTest(dtype=dtype, chunk_size=chunk_size):
+                    seqlen = nchunks * chunk_size
+                    B = torch.randn(
+                        (batch, seqlen, ngroups, dstate),
+                        device="cuda",
+                        dtype=dtype,
+                    )
+                    x = torch.randn(
+                        (batch, seqlen, nheads, headdim),
+                        device="cuda",
+                        dtype=dtype,
+                    )
+                    dt = torch.rand(
+                        (batch, nheads, nchunks, chunk_size),
+                        device="cuda",
+                        dtype=torch.float32,
+                    ).mul_(0.1)
+                    dA_cumsum = -(torch.rand_like(dt) * 0.01).cumsum(-1)
+
+                    actual = ILUVATAR_MODULE.chunk_state(B, x, dt, dA_cumsum)
+                    expected = _reference(B, x, dt, dA_cumsum)
+
+                    torch.testing.assert_close(
+                        actual, expected, atol=3e-2, rtol=3e-2
+                    )
 
 
 if __name__ == "__main__":
