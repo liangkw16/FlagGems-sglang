@@ -141,9 +141,7 @@ def _chunk_state_varlen_kernel(
             other=0.0,
         ).to(tl.float32)
         scale = tl.where(scale_mask, tl.exp(dA_last - dA) * dt, 0.0)
-        accumulator += tl.dot(
-            x.to(tl.float16), (B * scale[:, None]).to(tl.float16)
-        )
+        accumulator += tl.dot(x, B * scale[:, None], input_precision="ieee")
 
     output_offsets = (
         batch * stride_output_batch
