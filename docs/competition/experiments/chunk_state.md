@@ -425,3 +425,30 @@ commit `3d3148187541d87dfab0664fba38468408e815de`，PID/PGID `106276`
 ZIP `artifacts/competition/chunk_state/e2d-3d31481/chunk_state.zip`，SHA-256
 `3c06525a76dd00e338d40107feca666e43dd7f99b097e00da5e87f7ca548623b`。无论
 结果如何，本轮后停止 Task 12 迭代并记录结论。
+
+### E2d 平台结果：8/8，有效，团队当前最佳
+
+2026-08-25 00:08:03 CST 提交，submission ID `4332`、当日序号 `1`（新额度日，
+提交前后 `30/30` → `29/30`），远端验签 `verified`，`file_url_sha256` 为
+`45123e678fd1a1a5fb6652d147983c8a2e9b6e4ddd2b0585bd279a7bcd7bb9a0`。
+00:08:58 CST 终态 `completed` / `valid`，8/8 通过，平均 `1.948x`，team best：
+
+| 芯片 | 结果 | speedup | 选中文件 |
+| --- | --- | ---: | --- |
+| 天数 | 通过 | 1.9815x | `chunk_state_iluvatar.py` |
+| 沐曦 | 通过 | 2.7295x | `chunk_state.py` |
+| 燧原 | 通过 | 0.1160x | `chunk_state.py` |
+| 海光 | 通过 | 4.4845x | `chunk_state.py` |
+| 昆仑芯 | 通过 | 0.2510x | `chunk_state.py` |
+| 华为 | 通过 | 0.2735x | `chunk_state_ascend.py` |
+| 国际通用 A | 通过 | 3.8370x | `chunk_state.py` |
+| 国际通用 B | 通过 | 1.9110x | `chunk_state.py` |
+
+结论：天数 fp16 操作数 dot 假设被平台证实——E2a/E2b/E2c 三轮相同错误指纹
+对应 kernel 未执行，fp16 操作数 + fp32 累加后全部 case 通过且拿到 1.98x。
+根因定性：fp32 操作数 `tl.dot` 在天数 Triton 后端不受支持（静默失败），
+跨芯 dot 应使用低精度操作数 + fp32 累加（与 community `0e8023d` 惯例一致，
+后续含 dot 的算子直接沿用该写法做天数 vendor）。华为 capped grid-stride
+vendor 第四次平台验证成功；昆仑 dot 走 SDNN 路径以 generic 通过。Task 12
+闭环完成。遗留观察：燧原 0.1160x 贴近 0.1x 门槛，性能优化时优先处理；
+本轮按预定停止迭代，额度转队列下一任务。
