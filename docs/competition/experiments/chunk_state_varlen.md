@@ -215,3 +215,13 @@ canonical ZIP
 SHA-256
 `0319c0e26b7cd6fb12f33b43771572a058306e89ac5982234531552daa0203d1`。
 本提交为 2 次预算的最后一次。
+
+### S1b 平台结果与 Task 13 停止（2 次预算用尽）
+
+S1b 于 03:50:42 CST 提交（submission `4516`，当日序号 `21`，额度区间
+`11/30`→`10/30`）。六芯维持高分（天数 130.283x、沐曦 125.738x、海光
+517.7335x、华为 29.341x）；燧原对与 generic 逐字节相同的 vendor 仍全
+case `Pipeline run failed`——证明该 varlen kernel 结构本身在 GCU 编译器
+不可编译（与 Task 22 qkv 同型结论），非 dot 精度或配置问题。昆仑维持
+`PassManager::run failed`。Task 13 两次预算用尽，最终 6/8
+（invalid_correctness）；两轮沉淀的天数/华为 vendor 形式已可复用。
