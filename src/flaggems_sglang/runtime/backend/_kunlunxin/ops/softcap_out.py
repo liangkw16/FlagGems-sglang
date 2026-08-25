@@ -56,13 +56,13 @@ def softcap_out(x, softcap_const):
     n_elements = x.numel()
     if n_elements == 0:
         return output
-    grid = (triton.cdiv(n_elements, 1024),)
+    grid = (triton.cdiv(n_elements, 4096),)
     _softcap_out_kernel[grid](
         x,
         output,
         n_elements,
         softcap_const,
-        BLOCK_SIZE=1024,
+        BLOCK_SIZE=4096,
         CAP_RECIPROCAL_OVERFLOWS=cap_reciprocal_overflows,
         num_warps=4,
         num_stages=1,
