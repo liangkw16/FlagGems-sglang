@@ -29,6 +29,8 @@ def _chunk_state_kernel(
     chunk_size,
     nchunks,
     head_group_ratio,
+    bh_count,
+    total_programs,
     stride_B_batch,
     stride_B_seqlen,
     stride_B_group,
@@ -76,83 +78,91 @@ def _chunk_state_kernel(
     stride_output_headdim = tl.cast(stride_output_headdim, tl.int64)
     stride_output_dstate = tl.cast(stride_output_dstate, tl.int64)
 
-    tile_id = tl.program_id(0)
-    batch_chunk_id = tl.program_id(1)
-    head_id = tl.program_id(2)
-    batch_id = batch_chunk_id // nchunks
-    chunk_id = batch_chunk_id - batch_id * nchunks
-    group_id = head_id // head_group_ratio
+    program_id = tl.program_id(0)
+    grid_size = tl.num_programs(0)
+    nheads = bh_count // nchunks
     n_tiles = tl.cdiv(dstate, BLOCK_N)
-    m_tile = tile_id // n_tiles
-    n_tile = tile_id - m_tile * n_tiles
+    m_tiles_count = tl.cdiv(headdim, BLOCK_M)
+    tiles_per_bh = m_tiles_count * n_tiles
+    for logical_id in range(program_id, total_programs, grid_size):
+        batch_id = logical_id // (bh_count * tiles_per_bh)
+        remainder = logical_id - batch_id * (bh_count * tiles_per_bh)
+        chunk_head_id = remainder // tiles_per_bh
+        tile_id = remainder - chunk_head_id * tiles_per_bh
+        chunk_id = chunk_head_id // nheads
+        head_id = chunk_head_id - chunk_id * nheads
+        group_id = head_id // head_group_ratio
+        m_tile = tile_id // n_tiles
+        n_tile = tile_id - m_tile * n_tiles
 
-    m_offsets = m_tile * BLOCK_M + tl.arange(0, BLOCK_M)
-    n_offsets = n_tile * BLOCK_N + tl.arange(0, BLOCK_N)
-    k_offsets = tl.arange(0, BLOCK_K)
-    sequence_base = chunk_id * chunk_size
-    B_base = batch_id * stride_B_batch + group_id * stride_B_group
-    x_base = batch_id * stride_x_batch + head_id * stride_x_head
-    dt_base = (
-        batch_id * stride_dt_batch
-        + head_id * stride_dt_head
-        + chunk_id * stride_dt_chunk
-    )
-    dA_base = (
-        batch_id * stride_dA_batch
-        + head_id * stride_dA_head
-        + chunk_id * stride_dA_chunk
-    )
-    dA_last = tl.load(
-        dA_cumsum_ptr + dA_base + (chunk_size - 1) * stride_dA_csize
-    ).to(tl.float32)
-    accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
-
-    for k_block in range(0, tl.cdiv(chunk_size, BLOCK_K)):
-        current_k = k_block * BLOCK_K + k_offsets
-        sequence_offsets = sequence_base + current_k
-        k_mask = current_k < chunk_size
-        x = tl.load(
-            x_ptr
-            + x_base
-            + sequence_offsets[None, :] * stride_x_seqlen
-            + m_offsets[:, None] * stride_x_headdim,
-            mask=(m_offsets[:, None] < headdim) & k_mask[None, :],
-            other=0.0,
+        m_offsets = m_tile * BLOCK_M + tl.arange(0, BLOCK_M)
+        n_offsets = n_tile * BLOCK_N + tl.arange(0, BLOCK_N)
+        k_offsets = tl.arange(0, BLOCK_K)
+        sequence_base = chunk_id * chunk_size
+        B_base = batch_id * stride_B_batch + group_id * stride_B_group
+        x_base = batch_id * stride_x_batch + head_id * stride_x_head
+        dt_base = (
+            batch_id * stride_dt_batch
+            + head_id * stride_dt_head
+            + chunk_id * stride_dt_chunk
         )
-        B = tl.load(
-            B_ptr
-            + B_base
-            + sequence_offsets[:, None] * stride_B_seqlen
-            + n_offsets[None, :] * stride_B_dstate,
-            mask=k_mask[:, None] & (n_offsets[None, :] < dstate),
-            other=0.0,
+        dA_base = (
+            batch_id * stride_dA_batch
+            + head_id * stride_dA_head
+            + chunk_id * stride_dA_chunk
         )
-        dt = tl.load(
-            dt_ptr + dt_base + current_k * stride_dt_csize,
-            mask=k_mask,
-            other=0.0,
+        dA_last = tl.load(
+            dA_cumsum_ptr + dA_base + (chunk_size - 1) * stride_dA_csize
         ).to(tl.float32)
-        dA = tl.load(
-            dA_cumsum_ptr + dA_base + current_k * stride_dA_csize,
-            mask=k_mask,
-            other=0.0,
-        ).to(tl.float32)
-        scale = tl.where(k_mask, tl.exp(dA_last - dA) * dt, 0.0)
-        B = (B.to(tl.float32) * scale[:, None]).to(tl.float16)
-        accumulator += tl.dot(x.to(tl.float16), B)
+        accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
 
-    output_offsets = (
-        batch_id * stride_output_batch
-        + chunk_id * stride_output_chunk
-        + head_id * stride_output_head
-        + m_offsets[:, None] * stride_output_headdim
-        + n_offsets[None, :] * stride_output_dstate
-    )
-    tl.store(
-        output_ptr + output_offsets,
-        accumulator,
-        mask=(m_offsets[:, None] < headdim) & (n_offsets[None, :] < dstate),
-    )
+        for k_block in range(0, tl.cdiv(chunk_size, BLOCK_K)):
+            current_k = k_block * BLOCK_K + k_offsets
+            sequence_offsets = sequence_base + current_k
+            k_mask = current_k < chunk_size
+            x = tl.load(
+                x_ptr
+                + x_base
+                + sequence_offsets[None, :] * stride_x_seqlen
+                + m_offsets[:, None] * stride_x_headdim,
+                mask=(m_offsets[:, None] < headdim) & k_mask[None, :],
+                other=0.0,
+            )
+            B = tl.load(
+                B_ptr
+                + B_base
+                + sequence_offsets[:, None] * stride_B_seqlen
+                + n_offsets[None, :] * stride_B_dstate,
+                mask=k_mask[:, None] & (n_offsets[None, :] < dstate),
+                other=0.0,
+            )
+            dt = tl.load(
+                dt_ptr + dt_base + current_k * stride_dt_csize,
+                mask=k_mask,
+                other=0.0,
+            ).to(tl.float32)
+            dA = tl.load(
+                dA_cumsum_ptr + dA_base + current_k * stride_dA_csize,
+                mask=k_mask,
+                other=0.0,
+            ).to(tl.float32)
+            scale = tl.where(k_mask, tl.exp(dA_last - dA) * dt, 0.0)
+            B = (B.to(tl.float32) * scale[:, None]).to(tl.float16)
+            accumulator += tl.dot(x.to(tl.float16), B)
+
+        output_offsets = (
+            batch_id * stride_output_batch
+            + chunk_id * stride_output_chunk
+            + head_id * stride_output_head
+            + m_offsets[:, None] * stride_output_headdim
+            + n_offsets[None, :] * stride_output_dstate
+        )
+        tl.store(
+            output_ptr + output_offsets,
+            accumulator,
+            mask=(m_offsets[:, None] < headdim)
+            & (n_offsets[None, :] < dstate),
+        )
 
 
 def chunk_state(B, x, dt, dA_cumsum):
@@ -184,11 +194,14 @@ def chunk_state(B, x, dt, dA_cumsum):
     block_m = 64
     block_n = 64
     block_k = 128
-    grid = (
-        triton.cdiv(headdim, block_m) * triton.cdiv(dstate, block_n),
-        batch * nchunks,
-        nheads,
+    bh_count = nchunks * nheads
+    total_programs = (
+        triton.cdiv(headdim, block_m)
+        * triton.cdiv(dstate, block_n)
+        * batch
+        * bh_count
     )
+    grid = (min(total_programs, 64),)
     _chunk_state_kernel[grid](
         B,
         x,
@@ -200,6 +213,8 @@ def chunk_state(B, x, dt, dA_cumsum):
         chunk_size,
         nchunks,
         nheads // ngroups,
+        bh_count,
+        total_programs,
         *B.stride(),
         *x.stride(),
         *dt.stride(),
