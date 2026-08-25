@@ -36,7 +36,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s3-1ca7dd2` | `159911639601002f9be5e083309d9a5cac1d1d32617e1fe31207486cc267b2f8` | S3 平台 8/8、2.7096x、valid、team best；昆仑 BLOCK 1024 与华为 capped grid-stride 均选中通过 | 闭环完成；燧原 0.206x 连续低读数为后续优化点 |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s2c-7857dca` | `357e8a690cca68123aabebdbb5500a86ebd66fe328105a8b91f7c1afe489cb38` | S2c 终态 6/8；六芯高分（海光 82.6x、天数 47.8x）；燧原 case 2 编译失败、昆仑评测异常 | 已按两次规则停止 |
 | 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `s2b-4c184b6` | `3b022a2b66b170c99d3aa0f94c9f5f878489df1fad729bc43d94ba09af993db0` | 两次提交均 7/8；燧原 64/128+stages3 达 4.05x、天数 34x、华为 18x；昆仑 SDNN 对 ragged 结构编译爆炸 | 已按两次规则停止；昆仑需规整 batched-GEMM 改写 |
-| 24 | [`softcap_out`](softcap_out.md) | `s2c-5cd6019` | `999f2dea69774c2f9756748a2a113c7ad54d3e2fdce18bfd24b014a96fed1f46` | S1 平台 8/8、1.90x；S2 Enflame 大 shape 代理提升 3.53–5.66x；canonical 包已验签 | 优化候选；实时预检后确认提交 |
+| 24 | [`softcap_out`](softcap_out.md) | `s2c-5cd6019` | `999f2dea69774c2f9756748a2a113c7ad54d3e2fdce18bfd24b014a96fed1f46` | S2c 平台 8/8、1.9855x、valid、team best；燧原 0.3458x → 1.1892x | 保留 S2c，转其他算子 |
 
 ## 建议提交顺序
 
@@ -54,7 +54,8 @@ Task 13 已按公开 reference 可返回域修复；
 证明。Task 08 的 E2 已通过 8/8，燧原 BLOCK 优化完成。Task 19 的 E2 已
 通过 8/8，但昆仑专项优化未生效；燧原为 1.5049x。Task 20 E3 已通过 8/8，
 Ascend capped grid-stride 将华为从启动失败恢复至 1.8838x。
-Task 24 已通过，S2 只优化 Enflame。Task 19 在
+Task 24 S2c 已通过，Enflame-only BLOCK 4096 将燧原从 0.3458x 提升至
+1.1892x，平均 1.9855x。Task 19 在
 2026-08-24 17:05:45 CST 二投后平台显示当日剩余 `11/15`；Task 08 S0c 首投后，
 2026-08-24 18:00:04 CST 只读状态为 `10/15`；S1 提交后在 19:24:01 CST 为
 `9/15`，E2 提交后在 19:55:10 CST 为 `8/15`。Task 20 E2 在 20:38:59 CST
@@ -84,13 +85,14 @@ Task 24 已通过，S2 只优化 Enflame。Task 19 在
 T08/T09/T17 按当时的 3 次规则执行）。终态：
 
 - **8/8 有效（6 题）**：Task 08（4.687x）、19（4.547x）、20（4.253x）、
-  21（2.710x）、12（1.948x）、24（1.90x）。
+  21（2.710x）、24（1.9855x）、12（1.948x）。
 - **尝试后停止（10 题）**：T23/T11/T09 7/8；T22/T15/T13 6/8（T15 一轮
   6–7/8）；T10 8 芯正确但燧原 0.0375x/昆仑 0.012x 低于 0.1x 门槛；
   T16/T14 5/8（各保留 1 次额度，三芯失败互独立无单变量解）；T18 平台
   `pending_challenge` 拒绝提交（候选 `e2-2ba2813` 已留证，恢复
   competing 后可直接复用 preflight 流程）。
-- **额度**：2026-08-25 剩 8/30；截止 2026-08-27 19:59:59。
+- **额度**：2026-08-25 Task 24 S2c 提交后剩 7/30；截止
+  2026-08-27 19:59:59。
 
 ### 已平台验证的跨芯知识（均有逐芯证据，详见各账本）
 

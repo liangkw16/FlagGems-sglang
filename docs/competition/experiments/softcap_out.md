@@ -178,8 +178,8 @@ S0 与 PyTorch reference 每组轮换先后顺序。表中时间为五组 p50 �
 
 ## S2：Enflame 4096 tile 性能候选
 
-状态：远端 NVIDIA 代理正确性、性能筛选和不可变 ZIP 门禁通过；**未提交平台，
-S1 仍是当前平台有效版本**
+状态：远端 NVIDIA 代理正确性、性能筛选和不可变 ZIP 门禁通过；S2c 已于
+2026-08-25 提交平台并 8/8 通过，见下方平台复测
 
 ### 构建身份
 
@@ -243,9 +243,7 @@ wrapper-inclusive NVIDIA 单变量对比；每项五组交替顺序，组内
 | FP32 | 65,667,072 | 8.058147 | 1.928959 | 4.1775x |
 
 NVIDIA 上仅 FP32 `N=4096` 回退 18.6%，其余代理点持平或提升；真实 GCU 的
-编译资源、大小 shape 权重和 speedup 仍未知。S2 只作为受控性能候选；网页上传
-必须重新读取额度，并取得用户对 Task 24、上述绝对 ZIP 路径及 SHA-256 的当次
-确认。若真实 Enflame 编译失败或总体均值下降，直接保留平台 S1，不叠加其他改动。
+编译资源、大小 shape 权重和 speedup 在下方 S2c 平台复测中确认。
 
 ### Canonical 提交产物
 
@@ -259,4 +257,30 @@ NVIDIA 上仅 FP32 `N=4096` 回退 18.6%，其余代理点持平或提升；真�
 | ZIP SHA-256 | `999f2dea69774c2f9756748a2a113c7ad54d3e2fdce18bfd24b014a96fed1f46` |
 | 大小 / 状态 | 7,653 bytes；`verified-existing`，与 canonical SHA 相同 |
 | 成员 | `softcap_out.py`、`softcap_out_ascend.py`、`softcap_out_enflame.py` |
-| 平台状态 | 未提交；需实时账号、团队、额度和本次 tuple 确认 |
+| 平台状态 | submission `4536`，8/8、1.9855x、valid、team best |
+
+### S2c 平台复测
+
+- 提交时间：2026-08-25 08:43:20 CST；平台 submission `4536`。
+- preflight 实时核对 Task 24、`s2t1op024`、账号、团队 `SoulCoder`、
+  source commit、三成员集合、ZIP 绝对路径及 SHA-256；提交前额度 `8/30`。
+- 上传与正式提交各执行一次。平台对象存储回读为 7,653 bytes，SHA-256
+  `999f2dea69774c2f9756748a2a113c7ad54d3e2fdce18bfd24b014a96fed1f46`，
+  与本地不可变 ZIP 完全一致。
+- 终态：8/8、`valid`、平均 1.9855x、team best；提交后额度 `7/30`。
+  状态 API 不返回实时榜单名次，因此不记录推测排名。
+
+| 芯片 | S1 speedup | S2c speedup | 选择文件 | 结果 |
+| --- | ---: | ---: | --- | --- |
+| 天数智芯 | 3.65525x | 3.62800x | `softcap_out.py` | 通过 |
+| 沐曦 | 1.92817x | 1.73042x | `softcap_out.py` | 通过 |
+| 燧原 | 0.34575x | 1.18917x | `softcap_out_enflame.py` | 通过 |
+| 海光 | 2.13033x | 2.17225x | `softcap_out.py` | 通过 |
+| 昆仑芯 | 0.44750x | 0.44442x | `softcap_out.py` | 通过 |
+| 华为 | 0.76958x | 0.70975x | `softcap_out_ascend.py` | 通过 |
+| 国际通用 A | 3.13533x | 3.20033x | `softcap_out.py` | 通过 |
+| 国际通用 B | 2.77033x | 2.80967x | `softcap_out.py` | 通过 |
+
+S2c 把唯一改动芯片燧原提升至 S1 的 3.439x；平均加速比绝对增加
+0.08772x（+4.62%）。其余七芯复用原字节并保持通过。该受控候选成为团队当前
+最佳，停止继续扩大同一 tile 假设。
