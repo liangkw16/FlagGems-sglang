@@ -540,3 +540,66 @@ tile 分解），物理 grid `min(total, 64)`，tile/dot/warps/stages 与 E3
 E3 的 2.0966x 低 0.023，平台按团队最佳计分（`is_team_best`），Task 12
 保持 **2.0966x（E3）**。结论：燧原 fold 增益真实但被单芯波动淹没，
 后续若再冲分应等待多芯同时有机会时合并提交。
+
+## E5：generic 低精度张量核心 dot（性能冲刺，最后一发额度）
+
+E3/E4 只覆盖燧原、天数两芯；沐曦 2.75、海光 4.48、card_a 4.34、card_b
+1.92、昆仑 0.25 仍在跑 S0 保守 generic（fp32 操作数 + ieee dot + 32×32
+tile + stages 1）。E5 把平台已两次验证的 dot 形态（天数 E2、燧原 E3）
+迁回 generic：fp16/bf16 输入时 x/B 以 fp16 操作数直送 `tl.dot`（fp32 累加
+与 fp32 输出不变，题面 3e-2 容差覆盖舍入），tile 升 64/64/128、stages 2；
+fp32 输入路径逐字节保持原 ieee 配置（32×32、BLOCK_K 自适应、stages 1）。
+E4 教训（单芯增益被 card_a 波动淹没）在本候选的反面：generic 变量同时
+作用于五颗强芯，增益量级远超评测噪声。
+
+- 变量说明：本次提交实际携带两个互不相交的变量——generic 低精度 dot
+  （E5，作用于未选 vendor 的芯片）与 E4 已平台验证的燧原 fold vendor
+  （逐字节复用）。逐芯结果可分别归因。
+- 新增回归：`test_generic_lowprec_tensor_core_path_precision`（fp16/bf16 ×
+  chunk 64/256 × headdim/dstate 64/128 与 65/129 尾块）与
+  `test_generic_fp32_path_keeps_ieee_precision`（fp32 以 1e-3 容差锁定 ieee
+  路径不被低精度路径污染）。
+- source/verification commit：`1ba05477d21b3014905bf9cc8bc7971094f9bdb8`
+  （`feat(chunk_state): generic lowprec tensor-core dot path (E5)`）。
+- 本地门禁：py_compile、black 25.12.0、isort、flake8 通过。
+- canonical ZIP：`artifacts/competition/chunk_state/e5-1ba0547/chunk_state.zip`
+  （31,354 bytes），ZIP SHA-256
+  `829476611c49cd04289e2eb5db322fc9c9868a9e927e3fb9ef81dcf3933943b2`，
+  成员 generic + `_ascend`/`_enflame`/`_iluvatar`，`unzip -t` 通过，与
+  dry-run manifest 完全一致。
+- release 目录：`gpu:/tmp/flagos-chunk-state-e5.jcjavc`（mode 0700，
+  source/verification=1ba0547，git archive 建 dir）。A/B 基线为 4ee8e12
+  的 E3 generic；声明 affected=fp16/bf16 六个代理 shape、control=fp32
+  两 shape，晋级阈值 affected 几何平均 ≥1.05x 且 control ≥0.98x、资源
+  不退化（spill=0）。
+- 平台门禁：八芯全部 ≥0.1x 且平均较团队最佳 2.0966x（E3）提升；额度
+  1/30 为当日最后一发，提交前以实时 preflight 为准。
+
+### E5 release 结果：全部门禁通过（RELEASE_OK）
+
+远端目录 `gpu:/tmp/flagos-chunk-state-e5.jcjavc`（mode 0700），启动
+PID/PGID `125071`（16:07 CST，`setsid`+`timeout`，wall 约 7 分钟）。
+环境：RTX 5070 Ti 16 GB（验证时 GPU 空闲 0%）、driver 610.57.04、
+Python 3.12.13、PyTorch 2.13.0+cu130、Triton 3.7.1、CUDA 13.0。
+`release.log` SHA-256
+`e03137adb69294ff2132ec968e3e843671097302f7c91a2647970b594c3465c5`，
+A/B 脚本 SHA-256
+`d2651f9b0e588c78d52bb9d827edb09b458b4c6977a26a3094098f528710f4a5`，
+远端五个文件 SHA-256 与打包器 manifest 逐项一致（generic
+`53d75005…`、ascend `7d3f772f…`、enflame `ba82b7bfa…`、iluvatar
+`9b96f58c…`、test `5550430d…`）。
+
+- 静态门禁：py_compile、isort、flake8 通过；远端前后哈希一致；black 以
+  本地 25.12.0 等价执行（远端 26.5.1 版本漂移，见 bmm_chunk E3e 节）。
+- unittest：11/11 通过（5.358s），含新增两项 generic 回归。
+- A/B（五轮交替、wrapper-inclusive、paired median）：受影响六点几何平均
+  **1.601x**（fp16 1.671x / bf16 1.472x），单点范围 1.264–2.500x
+  （`fp16 b1c8k256h8` 满挡 2.500x）；两个 fp32 control 分别为
+  0.9997/1.0000，未回归路径确认。
+- 资源：低精度新变体 137–139 registers、0 spill；fp32 变体与旧实现
+  相同（48/60 registers、0 spill）。
+- 注：验证期间本机到 `gpu` 的 VPN 链路出现 MTU 黑洞（≥1200B 包丢弃），
+  日志以小包滴流方式取回；远端进程 `setsid` 不受影响。
+
+晋级判定：affected ≥1.05x、control ≥0.98x、资源零退化全部满足，
+候选就绪，进入平台 preflight。
