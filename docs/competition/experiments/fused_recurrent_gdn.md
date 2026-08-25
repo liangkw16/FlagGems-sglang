@@ -171,14 +171,34 @@ corrected harness 对长随机递推先按 `sqrt(K)` 缩放 q/k，并避免 FP32
 仍然成立；本结果只证明 NVIDIA 代理。未打开浏览器、未读取实时额度、未提交平台，
 旧确认不授权此 ZIP。
 
-## 平台尝试记录：pending_challenge，无法提交
+## E2 平台首投：7/8 terminal、0 通过，长递推归约不一致
 
-2026-08-25 04:5x CST 对现成候选 `e2-2ba2813`（ZIP
-`artifacts/competition/fused_recurrent_gdn/e2-2ba2813/fused_recurrent_gdn.zip`，
-SHA-256
-`4be0a8135cc5dcc23a33b31852b6754fa44a2959e8d035e49a113d07edaf14eb`，本地
-逐字节复验一致，沿用既有 3/3 release 证据）执行只读 preflight，平台返回
-`error: task is not competing: pending_challenge`——Task 18 当前处于
-challenge 待定状态，不接受任何提交（与赛题索引自始的 `pending_challenge`
-一致）。结论：Task 18 的"尝试"以平台拒绝为终态，非预算或候选问题；候选
-与证据保留，待平台恢复 `competing` 后可直接复用本 preflight 流程。
+2026-08-25 11:56:58 CST，平台实时契约同时返回
+`status=submitting`、`can_submit=true`、`challenge_operator`；修正本地 preflight
+对 `pending_challenge` 的过时硬拒绝后，复验 E2 的 commit、ZIP、唯一成员和
+SHA-256，执行一次性提交。submission `4595`，额度 `7/30` → `6/30`；未重试。
+
+截至 12:14:11 CST 为 `evaluating`、7/8 terminal、0 通过，昆仑仍为
+`waiting_callback`。七芯均在隐藏长 BF16 递推失败：case 3 的错误数依次为沐曦
+130805、燧原 668、海光 614、华为 532、国际 A 644、国际 B 827；case 4 除燧原
+外分别仅错 2、7、21、9、4、17 个元素。燧原 case 4 另有确定的
+`grid.y=256 > 255` 启动上限。输出总元素均为 524288；日志高置信对应
+`B,T,H,HV,K,V=(8,128,4,8,64,64)` 与 `(32,32,4,8,64,64)`。case 3 从后段
+出现 Inf/NaN 分类分岔，case 4 则是取消敏感的少量元素，指向 Torch
+`einsum→bmm` 与 Triton `tl.sum` 的 FP32 归约树差异被不稳定递推放大。
+
+### E3 screening：否决，不提交
+
+先把 2D grid 展平为 1D，可独立修复燧原硬上限；数值侧在 RTX 5070 Ti 上用固定
+seed、`atol=rtol=0.015`、`equal_nan=True` 重放两个隐藏形态。固定 1 warp、
+2/4/8 warp、关闭 FP fusion、chunk 8/16 和串行 4×16 归约均未清零；最佳长形态
+仍错 262/524288。原生 N=1 `tl.dot(input_precision="ieee")` 能编译且性能与基线
+相当，但错误由 26/302 增至 29/1144；16 列 padded dot 同样更差且慢 3 倍。
+
+证据目录为 `gpu:/tmp/flagos-fused-recurrent-gdn-e3.ENzFB5`、
+`gpu:/tmp/flagos-fused-recurrent-gdn-reduce.xJDx4L` 和
+`gpu:/tmp/flagos-fused-recurrent-gdn-dot.vdenQU`。reduce 统一日志 SHA-256
+`7d5287e25ba86423222ad4624529d084b09e2116d2ccf960a25d3adecd5b46de`，N=1 dot
+日志 SHA-256
+`7ac1fd32d36e4267db9ece6ff8bd296e302fcbb28c59035c2efde14d62c68526`。所有候选均
+未通过本地正确性门禁，因此未构建 ZIP、未执行第二次提交，worktree 恢复 E2。
