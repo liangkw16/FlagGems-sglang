@@ -430,3 +430,64 @@ Task 09 结论：八芯 correctness 全部通过；燧原在 stages=1 串行化�
 加宽持续正收益；(2) 天数 split-fp16 三点积与华为 capped grid-stride 均
 平台验证成功；(3) 后续 dot 算子（Task 13/14/15/16）的燧原 vendor 直接以
 stages≥2 + 64×64×128 起步，并优先考虑 grid-stride 折叠。额度转 Task 17。
+
+## E3e：燧原 capped grid-stride 折叠（性能冲刺恢复）
+
+2026-08-25 用户确认当日剩余 6 次额度并要求继续冲分后，恢复 Task 09 迭代。
+E3e 是 2026-08-25 00:45 已完成 screening 的候选（cap 64、tile 64/64/128、
+stages 2、warps 4，一维物理 grid + 逻辑 id 按 batch → chunk·group → tile
+分解），当时因提交次数规则未提交；本次把工作区文件按原样 commit。
+
+- source/verification commit：`07dc36aedafa118885bfb1e5b6846e1fd963b9b8`
+  （`feat(bmm_chunk): enflame capped grid-stride fold vendor (E3e)`）。
+- 燧原 vendor blob SHA-256 与 00:45 screening 完全一致：
+  `7a0e8a7c9a5740c476164d8e89d247732ff19a6b4797a3954cb57e3ac1776a61`；
+  其余三成员与 E3d ZIP 逐字节相同。
+- 环境漂移记录：远端 venv 的 black 在 08-25 白天被升级到 26.5.1
+  （hug_parens 稳定风格），会把仓库既有 E3a–E3d 字节判为需重排；E3d
+  release（00:41）同字节当时通过，属工具版本漂移而非风格回归。black 门禁
+  改在本地以 black 25.12.0 对 SHA-256 相同字节执行并通过（5 files
+  unchanged）；远端 release2 脚本保留 py_compile/isort/flake8/哈希复验/
+  unittest 并记录该说明。
+- canonical ZIP：`artifacts/competition/bmm_chunk/e3e-07dc36a/bmm_chunk.zip`
+  （23,307 bytes），ZIP SHA-256
+  `70888b22e93f7df936c745983d3afdd113af5ce124732505a20e0d5cd2fdf75c`，
+  成员 `bmm_chunk.py`、`bmm_chunk_ascend.py`、`bmm_chunk_enflame.py`、
+  `bmm_chunk_iluvatar.py`，`unzip -t` 通过。
+- release 目录：`gpu:/tmp/flagos-bmm-chunk-e3e-release.xAvshm`（mode
+  0700）；release2 于 14:28:43 CST 启动（PID/PGID `123160`，wall ≤900s），
+  结果 `RELEASE_OK`：py_compile/isort/flake8/前后哈希一致、unittest
+  8/8（0.567s）通过（日志 `release2.log`，15:11 窗口抓取的尾部确认）。
+- 平台门禁：燧原 ≥0.1x 且其余七芯不回退；单变量为燧原 grid 形态。
+
+### E3e 平台结果：8/8 valid，燧原 0.149x 过门槛，Task 09 转有效
+
+2026-08-25 15:12:54 CST 提交（submission `4645`，当日序号 `25`，额度
+`6/30`→`5/30`，`file_url_sha256` 为
+`ab3fdd343bbd85fe9b63eae77084831e06d76bf52b287bddfdd3aab473867606`），
+终态 `completed` / **valid**，8/8 通过，平均 `1.283x`：
+
+| 芯片 | speedup | 选中文件 |
+| --- | ---: | --- |
+| 天数 | 1.7260x | `bmm_chunk_iluvatar.py` |
+| 沐曦 | 1.7415x | `bmm_chunk.py` |
+| 燧原 | **0.1490x** | `bmm_chunk_enflame.py` |
+| 海光 | 1.9460x | `bmm_chunk.py` |
+| 昆仑芯 | 0.1860x | `bmm_chunk.py` |
+| 华为 | 0.4395x | `bmm_chunk_ascend.py` |
+| 国际通用 A | 3.1270x | `bmm_chunk.py` |
+| 国际通用 B | 0.9490x | `bmm_chunk.py` |
+
+结论：capped grid-stride 折叠（cap 64）把燧原由 E3d 的 0.0900x 再提
+66% 至 0.1490x，首次过 0.1x 门槛；Task 09 由 invalid_threshold 转为
+**valid，团队第 7 道 8/8 有效题**。其余七芯与 E3d 基本一致（±0.04x
+评测噪声）。grid-stride 折叠对燧原的有效性为平台第二次验证（Task 23
+sgemm_lora_b 之外的新证据），后续燧原 dot vendor 可直接采用
+"64/64/128 + stages 2 + cap 64 折叠"组合。进一步冲分的边际收益低
+（燧原翻倍仅 +0.019 平均），本轮停止 Task 09 迭代，额度转 T12/T24。
+
+remote_verification：`unavailable`（本次未设置 `FLAGOS_REMOTE_ZIP_HOST`；
+hostname `flagos.ks3-cn-beijing.ksyuncs.com` 与历史 status 输出一致，
+后续提交前导出该变量启用远端验签）。
+
+
