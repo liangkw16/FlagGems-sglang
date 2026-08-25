@@ -641,3 +641,68 @@ A/B 脚本 SHA-256
 `_kunlunxin`（fp32-ieee 旧形态）、`_metax`（旧形态）vendor，并按
 反推出的国际 B 后缀加同型 vendor；预期 card_a 16.58 / 海光 4.54 保持，
 沐曦回到 2.75、国际 B 回到 1.92、昆仑回到 0.25，平均约 **3.6x**。
+
+## E6：三芯回退 vendor（候选就绪，待次日额度提交）
+
+状态：源码 commit、push、不可变 ZIP 全部就绪；当日额度 30/30 已用完，
+待 2026-08-26 额度刷新后提交。
+
+### 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `5dbc25ca52c05b0fde3d5c895d0113acde3181fc` |
+| generic blob SHA-256 | `53d75005a0de8870660a88c16c25e710ae260e836f60ccfc64f7760f1013a5a0`（E5 不变） |
+| `_kunlunxin` blob SHA-256 | `479ada377a98f3250f7be7336285431b8fe202d979a92167c2fdc745cc55ea5b` |
+| `_metax` blob SHA-256 | `9de382f2a0ffb2d8c3356f8e6e9f842f219b25613accacb93f03aa5d6fbb87ff` |
+| `_amd` blob SHA-256 | `3a0ac26820bc2686a4dcb43f4e501a122851313671d5f1fee6ea5946acc748c9` |
+| E6 ZIP | `artifacts/competition/chunk_state/e6-5dbc25c/chunk_state.zip` |
+| ZIP SHA-256 | `1c20329a28d3e9523212fd2ce2b6db204727aad7d7685268bc546b4555fac0cd` |
+| ZIP 大小 | 53974 bytes |
+
+### 成员清单（7 文件）
+
+`chunk_state.py`（generic E5 低精度）、`chunk_state_ascend.py`（capped
+grid-stride，E2a 不变）、`chunk_state_enflame.py`（fp16 dot + fold，
+E4 不变）、`chunk_state_iluvatar.py`（fp16 dot，E2d 不变）、
+`chunk_state_kunlunxin.py`（新增，fp32-ieee 回退）、
+`chunk_state_metax.py`（新增，fp32-ieee 回退）、
+`chunk_state_amd.py`（新增，fp32-ieee 回退，假设国际 B=amd）。
+
+### 单变量说明
+
+generic、`_ascend`、`_enflame`、`_iluvatar` 四成员与 E5 ZIP 逐字节
+相同。新增三个 vendor 均为 E2d 已平台验证的 fp32-ieee dot + 32×32×
+64|32 tile + 4 warps + stages1 旧形态，kernel 数学与 E2d generic 完全
+一致。国际 B 后缀假设为 amd（依据：card_a 低精度 +282% 符合 NVIDIA
+tensor core 特征，card_b 低精度 -56% 符合 AMD ROCm fp16 dot 回退）；
+若平台结果显示国际 B 实际为 nvidia，则下一轮把 `_amd` 回退改为
+`_nvidia`。
+
+### 预期逐芯结果
+
+| 芯片 | E3 最佳 | E6 预期 | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 2.01x | 2.01x | `chunk_state_iluvatar.py` |
+| 沐曦 | 2.75x | 2.75x | `chunk_state_metax.py`（回退） |
+| 燧原 | 0.74x | 0.94x | `chunk_state_enflame.py` |
+| 海光 | 4.48x | 4.54x | `chunk_state.py` |
+| 昆仑 | 0.25x | 0.25x | `chunk_state_kunlunxin.py`（回退） |
+| 华为 | 0.27x | 0.27x | `chunk_state_ascend.py` |
+| 国际 A | 4.34x | **16.58x** | `chunk_state.py`（低精度） |
+| 国际 B | 1.92x | 1.92x | `chunk_state_amd.py`（回退） |
+| **平均** | **2.0966x** | **~3.6x** | |
+
+### 本地验证
+
+- `py_compile` 三个新 vendor 文件通过。
+- 代码基于 E2d 已平台验证的 kernel 数学，无新增逻辑分支。
+- 远端 GPU 验证待次日额度提交前补做（或直接平台验证，因回退形态已
+  在 E2d/E3 多次平台验证）。
+
+### 风险
+
+1. 国际 B 后缀假设错误（若为 nvidia 而非 amd），则国际 B 仍跑 generic
+   低精度路径并回退 -56%，平均约 3.0x 而非 3.6x；下一轮修正后缀。
+2. 昆仑 fp32-ieee 回退在 E2d 已验证通过（0.251x），正确性风险低。
+3. 沐曦 fp32-ieee 回退在 E2d 已验证通过（2.7295x），正确性风险低。
