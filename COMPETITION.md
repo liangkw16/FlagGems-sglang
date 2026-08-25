@@ -5,6 +5,7 @@
 - [比赛要求、提交规范与资料入口](docs/competition/README.md)
 - [第一批、第二批赛题索引](docs/competition/task-index.md)
 - [第二批快速开发策略](docs/competition/strategy-batch2.md)
+- [已发布 24 题算子功能与原理图谱](docs/competition/operator-atlas.md)
 - [题型学习与八芯资料入口](docs/competition/learning-path.md)
 - [跨芯极致优化方案](docs/competition/cross-chip-optimization-plan.md)
 - [八芯公开规格与编译期约束](docs/competition/chip-landscape.md)

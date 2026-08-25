@@ -38,7 +38,8 @@
 - [六、Attention](#六attention)
 - [七、位置编码与布局变换](#七位置编码与布局变换)
 - [八、题型与跨芯风险对照](#八题型与跨芯风险对照)
-- [九、学习与复用路径](#九学习与复用路径)
+- [九、易误读的契约点](#九易误读的契约点首投前逐条核对)
+- [十、学习与复用路径](#十学习与复用路径)
 
 ---
 
@@ -257,8 +258,10 @@ def reference(B, x, dt, dA_cumsum)
 权重累加，得到该 chunk 结束时的状态。`dA_last - dA_t` 保证衰减对齐到块尾
 （越早的 token 衰减越多）。
 
-**难点**：`ngroups` 与 `nheads` 可能不等（GQA 式共享），head→group 映射易错。
-容差 **`3e-2`（宽）**，为低精度 dot 留出空间。
+**难点**：题面显式警告参数 `B` 是 SSM 状态投影矩阵、**不是 batch size**。
+`ngroups` 与 `nheads` 是独立维度（题面未声明二者相等，Mamba 结构上 group 可被
+多个 head 共享，但这属于结构推断、非题面事实），head→group 映射需按实际
+shape 推导。容差 **`3e-2`（宽）**，为低精度 dot 留出空间。
 
 ### T13 `chunk_state_varlen`（mamba）
 
@@ -541,7 +544,41 @@ def reference(a, expert_offsets, m_alignment=1)
 
 ---
 
-## 九、学习与复用路径
+## 九、易误读的契约点（首投前逐条核对）
+
+以下每条都是**只看算子名或凭经验推测会写错、必须回到题面才能确认**的语义。
+整理来源是逐条比对题面原文与直觉描述后发现的实际偏差，不是假想风险。
+
+| 题号 | 直觉推测 | 题面实际要求 |
+| --- | --- | --- |
+| T21 | top-k 加权求和，权重 per-token | `routed_scaling_factor` 是**标量**；带 per-token 权重的是 T03 |
+| T13 | `chunk_states` 参与状态累积 | **仅用于确定输出 dtype**，不参与任何计算 |
+| T10 | 单输出 cumsum | **返回两个张量** `(dt_out, dA_cumsum)` |
+| T24 | 输出 cast 回输入 dtype | 输出**保持 float32** |
+| T06 | 全局转置 | 逐组转置，**写回原扁平字节偏移**，输出总 shape 同输入 |
+| T06 | `m_alignment` 影响布局 | 仅编译对齐提示，**不影响输出值** |
+| T03 | 需要 `sorted_token_ids` 等入参 | 那是调度元数据，`baseline.py` 内部自算，**不属于逻辑契约** |
+| T14 | 输出 dtype 跟随 `q` | 输出 shape 同 `q`，但 **dtype 为 float32** |
+| T14 | `max_input_len` 参与计算 | 仅为 kernel 预留临时空间，**reference 未使用** |
+| T04 | `inf` 按正无穷处理 | `inf` **按 `-inf` 处理**（空段语义） |
+| T05 | 返回新张量 | **in-place** 修改 Q 和 K |
+| T05 | 全部通道旋转 | 超出 `rotary_dim` 的通道**原样透传**（partial rotary） |
+| T01 | 可跨序列回看 | 因果且序列边界隔离，**不跨序列**；左填 `width-1` 个零 |
+| T02 | 全局 cumsum | **chunk-local**，块间不累积 |
+| T20 | 只有一种门控顺序 | `norm_before_gate` 决定**前门控或后门控**，四种组合都要对 |
+| T17 | weights 布局为 `[w_idx, vocab, r]` | 实际 `[w_idx, r, vocab]`，**需转置** |
+| T12 | 参数 `B` 是 batch size | 题面显式警告：`B` 是 **SSM 状态投影矩阵** `[batch, seqlen, ngroups, dstate]` |
+
+**范围限定**（题面显式声明"不在范围内"，实现时不要多做）：
+
+- T07：量化路径（`quantize=`/`scales=`）不在范围
+- T01：仅 fresh prefill，无 cache / `conv_states` / `cache_indices`
+- T02：`head_first=False` 布局、`cu_seqlens=None` 定长 batching
+- T05：non-interleaved、neox 风格（rotate-half）、无 axis map
+
+---
+
+## 十、学习与复用路径
 
 按骨架复用度递增，每步只新增一个概念：
 

@@ -136,6 +136,7 @@ docs/competition/
 ├── README.md                 # 本文：要求和提交规范
 ├── task-index.md             # 两批赛题与动态榜单快照
 ├── strategy-batch2.md        # 第二批开发优先级与复用线索
+├── operator-atlas.md         # 已发布 24 题功能、原理、契约与容差图谱
 ├── learning-path.md          # 题型学习和八芯固定资料入口
 ├── chip-landscape.md         # 八芯公开规格与编译期约束（源码可证）
 ├── cross-chip-optimization-plan.md  # 跨芯极致优化方案与候选假设
