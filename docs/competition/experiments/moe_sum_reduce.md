@@ -519,3 +519,65 @@ team best：
 BLOCK 4096/grid 12）并同时在账本跟踪三成员 ZIP 与首投的差异。昆仑 0.1754x
 与华为 0.5982x 亦有较大提升空间，但本轮停止迭代，额度转向队列中未首投的
 12 个算子。
+
+## E4：燧原 BLOCK 4096 负实验
+
+状态：严格 screening 拒绝；源码和测试已恢复 S3，未 commit 候选、未生成
+ZIP、未提交平台
+
+验证时间：2026-08-25 11:19–11:29 CST。候选只新增自包含 Enflame vendor，
+该文件与 generic 逐字仅 `block_size = 256` 改为 `4096`；2D grid、4 warps、
+1 stage、TOP_K constexpr、FP32 累加、stride 与数学均不变。generic、华为和
+昆仑源码保持原 SHA-256。最大已知平台 shape 的 Enflame grid 从
+`(4096, 28)` 降为 `(4096, 2)`；未迁移 Task 08/24 的 cap-12 grid-stride，
+避免混入第二变量。
+
+### Screening 身份与正确性
+
+| 项目 | 值 |
+| --- | --- |
+| base commit | `514bcc16a009342940fca184e9aca0e369badaa8` |
+| 临时 Enflame 源码 SHA-256 | `d42e7c32ec5e077367014a08374c080ba15f7ec3e48fb713419a5dee34d0f106` |
+| 临时测试 SHA-256 | `a5420ea6d979ef358a1528240c9efa6d25210a37c29ac16b0bb7fc7915573ff8` |
+| 远端目录 | `gpu:/tmp/flagos-moe-sum-reduce-e4.JP7eZH`，mode 0700 |
+| gates 脚本 / hash manifest | `f98af586632e02dcb60e87a303bb44dad7c346746eb3161820fef3d4dd5782dd` / `bd753ca8c83c4c1fc13cde2e8633154d28710d7779b2d1bb43e1524e0cd070bd` |
+| unittest 日志 SHA-256 | `2b19fcb1722550ac0ecc0f74b64639eac392048515aa375798e511aa3c814243` |
+
+首次单日志 gates 进程 `119133` 的 2390-byte tmpfs 日志出现不可读异常且未保留
+退出码，不作为证据。拆分阶段日志后的重跑 `119460` 依次通过 py_compile、
+Black 79、isort、flake8、前后哈希复验和 7/7 unittest。永久回归临时扩展覆盖
+Enflame 三 dtype 的 hidden `4095/4096/4097`，并把最大已知平台 shape
+`(4096,8,7168)` 加入 Enflame 直达路径；screening harness 另验证非连续 stride、
+空维和 zero-top-k。候选全部正确，输入不变。
+
+### 六轮 AB/BA 与拒绝
+
+GPU 运行前为 0% utilization、34 MiB/16303 MiB，且无其他 compute process。
+脚本 `screening-ab.py` SHA-256 为
+`9f421435ab849397ced37f1b01a8e4d639f4bfb03a0ce8a8d0b88c1f6d169820`；
+完整原始 JSON SHA-256 为
+`7f314392f1703d643b1f98ec6225a0295c1c01352a4dfc53a6af58b9f44c32c5`，
+摘要日志 SHA-256 为
+`4e01a73b6660314d8c29d7212acffa7872d0603df9e9b15571db54517283536f`。
+环境仍为 RTX 5070 Ti、Python 3.12.13、PyTorch 2.13.0+cu130、Triton
+3.7.1、CUDA 13.0。
+
+三 dtype 覆盖 `(1,8,4096)`、`(32,8,4096)`、`(128,8,7168)`、
+`(4096,8,7168)`、`(32,1,4096)`、`(32,16,4096)`，另以
+`(32,3,513)` 和 `(32,8,4097)` 作回退 guard；每点严格六轮
+`AB/BA/AB/BA/AB/BA`、`warmup=25, rep=100`：
+
+| 指标 | 结果 | 门槛 |
+| --- | ---: | ---: |
+| affected 几何平均 | `0.555139x` | `>=1.05x` |
+| FP16 / BF16 / FP32 affected | `0.588252/0.588966/0.493800x` | 各 `>=1.00x` |
+| 最差 affected 点 | `0.161780x` | `>=0.95x` |
+| 最差 guard 点 | `0.567265x` | `>=0.97x` |
+| 最差单轮 | `0.152068x` | `>=0.90x` |
+
+TOP_K `1/8/16` × 三 dtype 的 NVIDIA 编译资源门禁通过：不超过 128
+registers/8 KiB shared，且未发现 spill、global scratch 或 PTX local load/store。
+因此拒绝原因是稳定而全面的代理性能退化，不是正确性或资源失败。Task 08/24
+的 pointwise BLOCK 4096 收益不能外推到保活 4096-wide FP32 accumulator 的
+reduction；不做事后 shape 缩窗，不消耗平台额度。S3 继续作为 Task 21 唯一
+有效候选。
