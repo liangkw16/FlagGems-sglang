@@ -21,10 +21,10 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | Task | 算子账本 | 候选 | ZIP SHA-256 | 当前证据 | 建议 |
 | ---: | --- | --- | --- | --- | --- |
 | 08 | [`apply_token_bitmask`](apply_token_bitmask.md) | `e2-86fca87` | `88d2e8387ac2e7de785cf1574ad9c762df54c0baa79e4ada67fad7252987c1dc` | E2 平台 8/8、4.686925x、第 12/13；燧原 0.4292x → 2.8510x，团队当前最佳 | 保留 E2，转其他算子 |
-| 09 | [`bmm_chunk`](bmm_chunk.md) | `e3d-57b7130` | `ad546c3942c40689649c48b4399bf72da318fba04179df1d93d9a85d823fd5ee` | 4 次提交均 8/8 正确、燧原 0.001→0.090x 未达 0.1x 门槛；天数/华为 vendor 已验证；已按三次规则停止 | 待燧根 dot 配置知识成熟后重试（stages≥2 起步） |
+| 09 | [`bmm_chunk`](bmm_chunk.md) | `e3e-07dc36a` | `70888b22e93f7df936c745983d3afdd113af5ce124732505a20e0d5cd2fdf75c` | E3e 平台 8/8、valid、1.283x；燧原 0.090→0.149x 首次过线（capped grid-stride fold cap 64），团队第 7 道有效题 | 闭环完成；燧原 fold 组合（64/64/128+stages2+cap64）可迁移 |
 | 10 | [`chunk_cumsum`](chunk_cumsum.md) | `s2b-63e7943` | `c822f75d719f8919269c7566b1210b6e31dc6ce3292229a838723f7945b15923` | S2b 平台 8/8 正确、invalid_threshold；华为 UB tile 上限修复生效；燧原 0.0375x/昆仑 0.012x 为 cumsum lowering 固有瓶颈 | 已按两次规则停止；重试需改写 cumsum 算法形式 |
 | 11 | [`chunk_local_cumsum_vector`](chunk_local_cumsum_vector.md) | `e1b-dddef74` | `cf4dcaf05640599fe5b50ee9633ba19d2a4f13f2b47f856e88259242e975bab9` | 两次提交均 7/8；昆仑 0.016x/华为 0.0255x 与折叠形态无关，cumsum 固有；燧原三形态编译失败 | 已按两次规则停止；同 Task 10 结论 |
-| 12 | [`chunk_state`](chunk_state.md) | `e2d-3d31481` | `3c06525a76dd00e338d40107feca666e43dd7f99b097e00da5e87f7ca548623b` | E2d 平台 8/8、1.948x、valid、team best；天数 fp16-dot、华为 capped grid vendor 均选中 | 闭环完成；燧原 0.116x 贴门槛为后续优化点 |
+| 12 | [`chunk_state`](chunk_state.md) | `e3-4ee8e12` | `51459aabebabb0096f8485d0cd0dcc3821b34dcc7705f7e78914da9bbe499f00` | E3 平台 8/8、valid、2.0966x team best（E4 fold 使燧原 0.743→0.939x 但均分被 card_a 波动抵消，平台按最佳计分保持 E3）；天数 fp16-dot、华为 capped grid、燧原 64/64/128+stages2 vendor 均选中 | 闭环完成；昆仑 0.2505/华为 0.2735 无新杠杆 |
 | 13 | [`chunk_state_varlen`](chunk_state_varlen.md) | `s1b-1975cf7` | `0319c0e26b7cd6fb12f33b43771572a058306e89ac5982234531552daa0203d1` | 两次提交均 6/8；天数 vendor 132x、华为 27.7x 生效；燧原/昆仑对该 varlen 结构编译失败（结构性） | 已按两次规则停止 |
 | 14 | [`context_attention`](context_attention.md) | `e1a-6246fa8` | `8bfc8843bb6951de12160d83dbd56428c3697262ad331a05183217b9aa2d7861` | E1a 终态 5/8：天数 vendor 1.99x、nvidia vendor 6.32x；燧原超时疑似死循环、昆仑评测器崩溃、华为 flash 边界 bug | 保留第 2 次额度；三芯失败互独立无单变量解 |
 | 15 | [`decode_attention`](decode_attention.md) | `e2a-5add38c` | `b2fdcbc98b098165c3defe61cb9b0a5f5e021dfe04dbb5798dfd684b0fac8751` | 两次提交 6–7/8；华为 case 8 整行重复指纹（Ascend flash 边界 bug）两种 grid 均现；昆仑评测超时崩溃 | 已按两次规则停止 |
@@ -36,7 +36,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s3-1ca7dd2` | `159911639601002f9be5e083309d9a5cac1d1d32617e1fe31207486cc267b2f8` | S3 平台 8/8、2.7096x、valid、team best；E4 燧原 BLOCK 4096 screening 仅 0.555x，已拒绝 | 保留 S3；停止同一大 tile 假设 |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s2c-7857dca` | `357e8a690cca68123aabebdbb5500a86ebd66fe328105a8b91f7c1afe489cb38` | S2c 终态 6/8；六芯高分（海光 82.6x、天数 47.8x）；燧原 case 2 编译失败、昆仑评测异常 | 已按两次规则停止 |
 | 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `s2b-4c184b6` | `3b022a2b66b170c99d3aa0f94c9f5f878489df1fad729bc43d94ba09af993db0` | 两次提交均 7/8；燧原 64/128+stages3 达 4.05x、天数 34x、华为 18x；昆仑 SDNN 对 ragged 结构编译爆炸 | 已按两次规则停止；昆仑需规整 batched-GEMM 改写 |
-| 24 | [`softcap_out`](softcap_out.md) | `s2c-5cd6019` | `999f2dea69774c2f9756748a2a113c7ad54d3e2fdce18bfd24b014a96fed1f46` | S2c 平台 8/8、1.9855x、valid、team best；燧原 0.3458x → 1.1892x | 保留 S2c，转其他算子 |
+| 24 | [`softcap_out`](softcap_out.md) | `s2e-1a5ea26` | `8469beb23dbaa27fbfbd7f6f74b650ee899586f43bacfb7e3fdd40e8dd566ed0` | S2e 平台 8/8、valid、2.0179x team best；昆仑 BLOCK 256→1024→4096 达 0.8637x（S2d/S2e 两连升），燧原 1.1881x | 闭环完成；昆仑 BLOCK 曲线未饱和 |
 
 ## 建议提交顺序
 
@@ -84,15 +84,33 @@ Task 24 S2c 已通过，Enflame-only BLOCK 4096 将燧原从 0.3458x 提升至
 第二轮全部 17 个任务已按"每任务 ≤2 次提交、按序尝试"规则处理完毕（早期
 T08/T09/T17 按当时的 3 次规则执行）。终态：
 
-- **8/8 有效（6 题）**：Task 08（4.687x）、19（4.547x）、20（4.253x）、
-  21（2.710x）、24（1.9855x）、12（1.948x）。
-- **尝试后停止（10 题）**：T23/T11/T09 7/8；T22/T15/T13 6/8（T15 一轮
+- **8/8 有效（7 题）**：Task 08（4.687x）、19（4.547x）、20（4.253x）、
+  21（2.710x）、24（**2.0179x**）、12（**2.0966x**）、09（**1.283x**）。
+  加粗为 2026-08-25 下午冲刺轮（5 次提交全部 valid）更新：T09 E3e 过线
+  新增第 7 道有效题；T12 E3/E4 燧原 0.116→0.743→0.939x；T24 S2d/S2e
+  昆仑 0.444→0.764→0.864x。
+- **尝试后停止（9 题）**：T23/T11 7/8；T22/T15/T13 6/8（T15 一轮
   6–7/8）；T10 8 芯正确但燧原 0.0375x/昆仑 0.012x 低于 0.1x 门槛；
   T16/T14 5/8（各保留 1 次额度，三芯失败互独立无单变量解）；T18 平台
   `pending_challenge` 拒绝提交（候选 `e2-2ba2813` 已留证，恢复
   competing 后可直接复用 preflight 流程）。
-- **额度**：2026-08-25 Task 24 S2c 提交后剩 7/30；截止
+- **额度**：2026-08-25 Task 24 S2e 提交后剩 1/30（当日 6 次机会用 5 次，
+  1 次留作截止前回归储备）；08-26/08-27 每日仍有 30 次；截止
   2026-08-27 19:59:59。
+
+### 2026-08-25 冲刺轮沉淀的跨芯新知识
+
+1. 燧原 grid-stride 折叠（cap 64）两次平台验证：T09 +66%（0.090→
+   0.149x）、T12 +26%（0.743→0.939x）；与 "64/64/128+stages2" 组合
+   是燧原 dot vendor 当前最优模板。
+2. 燧原 dot 配置迁移性：fp16 操作数 + 64/64/128 + stages2 在 T12 上
+   0.116→0.743x（6.4 倍），病理配置（ieee-fp32 dot + 32 tile +
+   stages1）跨题复现。
+3. 昆仑 elementwise BLOCK 曲线：256→1024→4096 对应 0.444→0.764→
+   0.864x（T24），仍未饱和；与 T21 reduction BLOCK 1024 证据互补。
+4. 平台按团队最佳计分（`is_team_best` 字段），追投无下行风险。
+5. 远端 venv black 升级至 26.5.1（hug_parens）与仓库既有字节冲突，
+   属工具漂移；release 门禁以本地 black 25.12.0 等价执行并记录。
 
 ### 已平台验证的跨芯知识（均有逐芯证据，详见各账本）
 

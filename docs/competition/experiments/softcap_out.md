@@ -284,3 +284,50 @@ NVIDIA 上仅 FP32 `N=4096` 回退 18.6%，其余代理点持平或提升；真�
 S2c 把唯一改动芯片燧原提升至 S1 的 3.439x；平均加速比绝对增加
 0.08772x（+4.62%）。其余七芯复用原字节并保持通过。该受控候选成为团队当前
 最佳，停止继续扩大同一 tile 假设。
+
+## S2d：昆仑 BLOCK 1024 vendor（性能冲刺）
+
+Task 24 S2c 已 8/8 有效（平均 1.9855x），昆仑 0.44442x 是最弱芯。昆仑
+知识（Task 21 平台验证）：BLOCK 是唯一有效调参轴，1024 是唯一平台成功
+先例。S2d 新增 `_kunlunxin/ops/softcap_out.py`：kernel 与 generic 逐行
+相同，仅 `BLOCK_SIZE` 256→1024（1D 平铺 grid，num_warps 4、stages 1 与
+Task 21 昆仑 vendor 同形）。
+
+- 单变量：仅昆仑。generic、`_ascend`、`_enflame` 与 S2c ZIP 逐字节相同；
+  `test_vendor_overrides_preserve_cap_scaling` 的 vendor 元组加入
+  `kunlunxin`（49152+17 元素输入自动覆盖多 program 路径）。
+- source/verification commit：
+  `8928ef286b9f0b432d1f1140c0c9d0fa6d41269c`；本地 py_compile、black
+  25.12.0、isort、flake8 通过。
+- canonical ZIP：`artifacts/competition/softcap_out/s2d-8928ef2/softcap_out.zip`，
+  ZIP SHA-256
+  `113c5e7233c213dec6a54b73188acda22a011210876861dad487010dbd11126a`，
+  成员 generic + `_ascend`/`_enflame`/`_kunlunxin`，`unzip -t` 通过。
+- release 目录：`gpu:/tmp/flagos-multi-release.JfYAit/t24-stage`（与
+  T12 E3 同批串行）。
+- 平台门禁：昆仑 ≥0.1x 且平均较 S2c 1.9855x 提升；其余七芯文件不变。
+
+<!-- T24_S2D_RELEASE_RESULT_PENDING -->
+
+### S2d/S2e 平台结果：昆仑 BLOCK 1024→4096 两连升，平均 2.0179x
+
+- S2d（BLOCK 1024）：2026-08-25 15:33:56 提交（submission `4652`，序号
+  `27`，额度 `5/30`→`4/30`，`file_url_sha256`
+  `2ca3bff66142dac19838ab626aa013e0128f320f7b5402d894cea2ce33921fc8`），
+  8/8 **valid**，平均 `1.9943x`：昆仑 0.4444→**0.7645x**（+72%，
+  BLOCK 是昆仑唯一有效调参轴的第三次平台验证）；release
+  `gpu:/tmp/flagos-multi-release.JfYAit/t24-stage`（`Ran 11 tests in
+  0.648s`、`RELEASE_OK`）。
+- S2e（BLOCK 4096，commit `1a5ea268de23bc5e5ba7ca7e8c7acd5390ac3725`，
+  ZIP `s2e-1a5ea26` SHA-256
+  `8469beb23dbaa27fbfbd7f6f74b650ee899586f43bacfb7e3fdd40e8dd566ed0`，
+  release `gpu:/tmp/flagos-multi3-release.x58bBH/t24s2e-stage`
+  `RELEASE_OK`）：15:44:56 提交（submission `4657`，序号 `29`，额度
+  `2/30`→`1/30`），8/8 **valid**，平均 **`2.0179x`（team best，
+  `is_team_best=true`）**：昆仑 0.7645→**0.8637x**（+13%），燧原
+  1.1881x、华为 0.7371x、天数 3.6039x、海光 2.1488x、card_a 3.1368x、
+  card_b 2.7835x、沐曦 1.6817x。
+- Task 24 闭环：平均 1.9855→2.0179x；昆仑 BLOCK 曲线 256（generic，
+  0.444x）→1024（0.7645x）→4096（0.8637x）仍未饱和，4096 为当前
+  团队昆仑 elementwise 最佳配置。今日额度用尽后停止，剩 1 次留作
+  截止前回归储备。

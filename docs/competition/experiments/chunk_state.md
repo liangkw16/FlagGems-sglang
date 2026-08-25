@@ -452,3 +452,91 @@ ZIP `artifacts/competition/chunk_state/e2d-3d31481/chunk_state.zip`，SHA-256
 vendor 第四次平台验证成功；昆仑 dot 走 SDNN 路径以 generic 通过。Task 12
 闭环完成。遗留观察：燧原 0.1160x 贴近 0.1x 门槛，性能优化时优先处理；
 本轮按预定停止迭代，额度转队列下一任务。
+
+## E3：燧原 fp16-dot vendor（性能冲刺）
+
+Task 12 E2d 已 8/8 有效（平均 1.948x），但燧原 0.1160x 贴门槛且跑的是
+generic（32 tile + ieee-fp32 操作数 dot + stages 1）——正是 Task 09 平台
+证明的燧原病理配置。E3 是性能冲刺：把 Task 09 沉淀的燧原配置迁移为
+Task 12 的 `_enflame` vendor。
+
+- 单变量：仅燧原。generic、`_ascend`、`_iluvatar` 三成员与 E2d ZIP
+  逐字节相同。
+- `_enflame/ops/chunk_state.py`：x/B load 后不再统一转 fp32；B 以 fp32
+  scale（`exp(dA_last - dA) * dt`）缩放后转 fp16，x 直接转 fp16，`tl.dot`
+  fp16 操作数 + fp32 累加（天数 E2d 已平台验证该 dot 形态在本题 3e-2
+  容差下通过）。launch 配置 64/64/128、warps 4、stages 2、3D grid 与
+  generic 相同；题面容差 atol=3e-2/rtol=3e-2 覆盖 fp16 舍入。
+- 新增回归：`test_enflame_dot_config_precision`（fp32/fp16/bf16 ×
+  chunk 63/64/127/128/255/256/257，覆盖 1–3 个 K block 与尾掩码）与
+  `test_enflame_vendor_strided_inputs`（三维均带真实 stride）。
+- source/verification commit：
+  `4ee8e1223c0613c1c888ac6bc427c25131433e8c`；本地 py_compile、black
+  25.12.0（远端 26.5.1 版本漂移，见 bmm_chunk 账本 E3e 节）、isort、
+  flake8 通过。
+- canonical ZIP：`artifacts/competition/chunk_state/e3-4ee8e12/chunk_state.zip`，
+  ZIP SHA-256
+  `51459aabebabb0096f8485d0cd0dcc3821b34dcc7705f7e78914da9bbe499f00`，
+  成员 generic + `_ascend`/`_enflame`/`_iluvatar`，`unzip -t` 通过。
+- release 目录：`gpu:/tmp/flagos-multi-release.JfYAit/t12-stage`（mode
+  0700，与 T24 s2d 同批串行执行）。
+- 平台门禁：燧原不跌破 0.1x 且平均加速比较 E2d 1.948x 提升；其余七芯
+  文件不变。
+
+- release：`gpu:/tmp/flagos-multi-release.JfYAit/t12-stage`（mode 0700），
+  `MODE=release source/verification=4ee8e12`，`Ran 8 tests in 5.353s`、
+  `OK`、`RELEASE_OK`（`release.log`；与 T24 s2d 同批串行执行）。远端
+  py_compile/isort/flake8/前后哈希一致，black 以本地 25.12.0 等价执行
+  （远端 26.5.1 版本漂移，见 bmm_chunk 账本 E3e 节）。
+
+### E3 平台结果：8/8 valid，平均 1.948x → 2.0966x，燧原 6.4 倍提升
+
+2026-08-25 15:31:27 CST 提交（submission `4651`，当日序号 `26`，额度
+`5/30`→`4/30`，`file_url_sha256` 为
+`4de5648e28edb44610da9d4f27bde24ebbe6647dd2d020f865c739af774446bd`），
+终态 `completed` / **valid**，8/8 通过，平均 `2.096625x`（team best）：
+
+| 芯片 | E2d | E3 | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 1.9815x | 2.0100x | `chunk_state_iluvatar.py` |
+| 沐曦 | 2.7295x | 2.7535x | `chunk_state.py` |
+| 燧原 | 0.1160x | **0.7430x** | `chunk_state_enflame.py` |
+| 海光 | 4.4845x | 4.4815x | `chunk_state.py` |
+| 昆仑芯 | 0.2510x | 0.2505x | `chunk_state.py` |
+| 华为 | 0.2735x | 0.2735x | `chunk_state_ascend.py` |
+| 国际通用 A | 3.8370x | 4.3440x | `chunk_state.py` |
+| 国际通用 B | 1.9110x | 1.9170x | `chunk_state.py` |
+
+结论：Task 09 沉淀的燧原 dot 配置（fp16 操作数 + 64/64/128 + stages 2）
+迁移成功——燧原 0.1160→0.7430x（6.4 倍），仅 vendor 生效、其余七芯
+文件不变且无回退（card_a +13% 属评测正向波动）。平均 1.948→2.0966x。
+后续空间：燧原再加 capped grid-stride fold（T09 E3e 平台 +66% 证据）
+预计 0.74→~1.2x；昆仑 0.2505/华为 0.2735 无新证据杠杆，维持。
+remote_verification `unavailable`（环境变量未带入 submit 进程）。
+
+
+## E4：燧原 capped grid-stride fold（追投）
+
+E3 平台证实配置迁移后，E4 给燧原 vendor 追加 T09 E3e 平台验证的
+grid-stride 折叠：3D grid 展平为一维逻辑 id（batch → chunk·head →
+tile 分解），物理 grid `min(total, 64)`，tile/dot/warps/stages 与 E3
+一致。新增回归 `test_enflame_fold_covers_multi_iteration`（(2,32 chunks,
+8 heads, headdim 64, dstate 128) total 1024 > 64 覆盖 16 轮迭代）。
+
+- source/verification commit：`ef065601279fe967970cb5a2cd5f5f213e452573`。
+- release：`gpu:/tmp/flagos-multi3-release.x58bBH/t12e4-stage`，
+  `Ran 9 tests in 7.473s`、`OK`、`RELEASE_OK`（15:38:27 done，与 s2e
+  同批串行；black 仍以本地 25.12.0 等价执行）。
+- canonical ZIP：`artifacts/competition/chunk_state/e4-ef06560/chunk_state.zip`，
+  SHA-256
+  `0d5fb3b11ff3969ae99a1f4b582d87d43324489d76f7c1312f286ab8baed9fbd`。
+
+### E4 平台结果：燧原 +26% 至 0.939x，团队最佳保持 E3
+
+2026-08-25 15:42:12 CST 提交（submission `4655`，当日序号 `28`，额度
+`4/30`→`3/30`），终态 8/8 **valid**，平均 `2.0733x`：燧原
+0.7430→**0.9390x**（fold +26%，T09 +66% 之后 fold 对燧原的第二份平台
+证据），昆仑/华为/其余持平；card_a 4.344→3.975（评测波动），平均较
+E3 的 2.0966x 低 0.023，平台按团队最佳计分（`is_team_best`），Task 12
+保持 **2.0966x（E3）**。结论：燧原 fold 增益真实但被单芯波动淹没，
+后续若再冲分应等待多芯同时有机会时合并提交。
