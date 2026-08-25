@@ -40,7 +40,7 @@ VENDOR_MODULE_PATHS = {
     / f"_{vendor}"
     / "ops"
     / "softcap_out.py"
-    for vendor in ("ascend", "enflame")
+    for vendor in ("ascend", "enflame", "kunlunxin")
 }
 
 
