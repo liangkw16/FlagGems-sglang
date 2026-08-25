@@ -603,3 +603,41 @@ A/B 脚本 SHA-256
 
 晋级判定：affected ≥1.05x、control ≥0.98x、资源零退化全部满足，
 候选就绪，进入平台 preflight。
+
+### E5 平台结果：7/8 通过但昆仑正确性失败，validity=invalid_correctness
+
+2026-08-25 16:48:28 CST 提交（submission `4683`，当日序号 `30`，额度
+`1/30`→`0/30`，`file_url_sha256` 为
+`681905beb94c5aa94b9abeb6a59c5149c762536de2453d246f150f5db69db470`），
+昆仑于 17:3x 回调后终态 7/8、**invalid_correctness**：
+
+| 芯片 | E3/E4 最佳 | E5 | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 2.0100x | 2.0095x | `chunk_state_iluvatar.py` |
+| 沐曦 | 2.7535x | **1.9290x** | `chunk_state.py` |
+| 燧原 | 0.9390x | 0.9375x | `chunk_state_enflame.py` |
+| 海光 | 4.4845x | **4.5435x** | `chunk_state.py` |
+| 昆仑芯 | 0.2510x | **correctness 失败** | `chunk_state.py` |
+| 华为 | 0.2735x | 0.2730x | `chunk_state_ascend.py` |
+| 国际通用 A | 4.3440x | **16.5830x** | `chunk_state.py` |
+| 国际通用 B | 1.9170x | **0.8395x** | `chunk_state.py` |
+
+结论与沉淀：
+
+1. **generic 低精度 dot 的收益被平台实锤**：card_a 4.344→16.583x
+   （+282%，张量核心解锁），海光 +1.4%；代理 A/B 1.601x 的方向正确。
+2. **新增昆仑反例**：昆仑 SDNN 路径对 fp16 操作数 `tl.dot` 产生正确性
+   错误（fp32-ieee 操作数在 E2d 通过）。generic 低精度 dot 必须搭配
+   `_kunlunxin` vendor 回退旧形态。与天数"fp32 操作数 dot 静默不可执行"
+   互为镜像：两芯对 dot 操作数 dtype 的兼容集合相反。
+3. 沐曦 -30%、国际 B -56%：低精度路径对这两芯是回退，需要 vendor 保持
+   旧 fp32-ieee 形态（沐曦后缀 `_metax` 可直接做；国际 B 的 amd/nvidia
+   后缀映射未公开，可从 Task 14 `context_attention_nvidia.py` 的选中记录
+   反推）。
+4. 团队最佳保持 **2.0966x（E3）**；平台按 is_team_best 计分，本次失败
+   不降低已有记录，消耗当日最后一发额度（30/30）。
+
+下一候选（E6，需次日额度）：generic 保持 E5 低精度形态，新增
+`_kunlunxin`（fp32-ieee 旧形态）、`_metax`（旧形态）vendor，并按
+反推出的国际 B 后缀加同型 vendor；预期 card_a 16.58 / 海光 4.54 保持，
+沐曦回到 2.75、国际 B 回到 1.92、昆仑回到 0.25，平均约 **3.6x**。
