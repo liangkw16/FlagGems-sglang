@@ -53,6 +53,7 @@ def _chunk_state_kernel(
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
+    LOWPREC: tl.constexpr,
 ):
     stride_B_batch = tl.cast(stride_B_batch, tl.int64)
     stride_B_seqlen = tl.cast(stride_B_seqlen, tl.int64)
@@ -118,7 +119,7 @@ def _chunk_state_kernel(
             + m_offsets[:, None] * stride_x_headdim,
             mask=(m_offsets[:, None] < headdim) & k_mask[None, :],
             other=0.0,
-        ).to(tl.float32)
+        )
         B = tl.load(
             B_ptr
             + B_base
@@ -126,7 +127,7 @@ def _chunk_state_kernel(
             + n_offsets[None, :] * stride_B_dstate,
             mask=k_mask[:, None] & (n_offsets[None, :] < dstate),
             other=0.0,
-        ).to(tl.float32)
+        )
         dt = tl.load(
             dt_ptr + dt_base + current_k * stride_dt_csize,
             mask=k_mask,
@@ -138,8 +139,15 @@ def _chunk_state_kernel(
             other=0.0,
         ).to(tl.float32)
         scale = tl.where(k_mask, tl.exp(dA_last - dA) * dt, 0.0)
-        B *= scale[:, None]
-        accumulator += tl.dot(x, B, input_precision="ieee")
+        if LOWPREC:
+            B = (B.to(tl.float32) * scale[:, None]).to(tl.float16)
+            accumulator += tl.dot(x.to(tl.float16), B)
+        else:
+            accumulator += tl.dot(
+                x.to(tl.float32),
+                B.to(tl.float32) * scale[:, None],
+                input_precision="ieee",
+            )
 
     output_offsets = (
         batch_id * stride_output_batch
@@ -181,9 +189,20 @@ def chunk_state(B, x, dt, dA_cumsum):
     if output.numel() == 0:
         return output
 
-    block_m = 32
-    block_n = 32
-    block_k = 64 if chunk_size >= 256 else 32
+    lowprec = x.dtype in (torch.float16, torch.bfloat16) and B.dtype in (
+        torch.float16,
+        torch.bfloat16,
+    )
+    if lowprec:
+        block_m = 64
+        block_n = 64
+        block_k = 128
+        num_stages = 2
+    else:
+        block_m = 32
+        block_n = 32
+        block_k = 64 if chunk_size >= 256 else 32
+        num_stages = 1
     grid = (
         triton.cdiv(headdim, block_m) * triton.cdiv(dstate, block_n),
         batch * nchunks,
@@ -208,8 +227,9 @@ def chunk_state(B, x, dt, dA_cumsum):
         BLOCK_M=block_m,
         BLOCK_N=block_n,
         BLOCK_K=block_k,
+        LOWPREC=lowprec,
         num_warps=4,
-        num_stages=1,
+        num_stages=num_stages,
     )
     return output
 

@@ -71,9 +71,7 @@ ENFLAME_MODULE_PATH = (
     / "ops"
     / "chunk_state.py"
 )
-ENFLAME_MODULE = _load_module(
-    "chunk_state_enflame_module", ENFLAME_MODULE_PATH
-)
+ENFLAME_MODULE = _load_module("chunk_state_enflame_module", ENFLAME_MODULE_PATH)
 
 
 def _reference(B, x, dt, dA_cumsum):
@@ -192,6 +190,90 @@ class ChunkStateTest(unittest.TestCase):
                     torch.testing.assert_close(
                         actual, expected, atol=3e-2, rtol=3e-2
                     )
+
+    def test_generic_lowprec_tensor_core_path_precision(self):
+        torch.manual_seed(20260825)
+        shapes = (
+            (1, 2, 256, 4, 2, 64, 128),
+            (1, 2, 64, 4, 2, 64, 128),
+            (2, 3, 17, 6, 2, 65, 129),
+        )
+        for (
+            batch,
+            nchunks,
+            chunk_size,
+            nheads,
+            ngroups,
+            headdim,
+            dstate,
+        ) in shapes:
+            for dtype in (torch.float16, torch.bfloat16):
+                with self.subTest(
+                    shape=(
+                        batch,
+                        nchunks,
+                        chunk_size,
+                        nheads,
+                        headdim,
+                        dstate,
+                    ),
+                    dtype=dtype,
+                ):
+                    seqlen = nchunks * chunk_size
+                    B = torch.randn(
+                        (batch, seqlen, ngroups, dstate),
+                        device="cuda",
+                        dtype=dtype,
+                    )
+                    x = torch.randn(
+                        (batch, seqlen, nheads, headdim),
+                        device="cuda",
+                        dtype=dtype,
+                    )
+                    dt = torch.rand(
+                        (batch, nheads, nchunks, chunk_size),
+                        device="cuda",
+                        dtype=torch.float32,
+                    ).mul_(0.1)
+                    dA_cumsum = -(torch.rand_like(dt) * 0.01).cumsum(-1)
+
+                    actual = MODULE.chunk_state(B, x, dt, dA_cumsum)
+                    expected = _reference(B, x, dt, dA_cumsum)
+
+                    self.assertEqual(actual.dtype, torch.float32)
+                    torch.testing.assert_close(
+                        actual, expected, atol=3e-2, rtol=3e-2
+                    )
+
+    def test_generic_fp32_path_keeps_ieee_precision(self):
+        torch.manual_seed(20260825)
+        batch, nchunks, chunk_size = 2, 4, 64
+        seqlen = nchunks * chunk_size
+        nheads, ngroups = 4, 2
+        headdim, dstate = 64, 128
+
+        B = torch.randn(
+            (batch, seqlen, ngroups, dstate),
+            device="cuda",
+            dtype=torch.float32,
+        )
+        x = torch.randn(
+            (batch, seqlen, nheads, headdim),
+            device="cuda",
+            dtype=torch.float32,
+        )
+        dt = torch.rand(
+            (batch, nheads, nchunks, chunk_size),
+            device="cuda",
+            dtype=torch.float32,
+        ).mul_(0.1)
+        dA_cumsum = -(torch.rand_like(dt) * 0.01).cumsum(-1)
+
+        actual = MODULE.chunk_state(B, x, dt, dA_cumsum)
+        expected = _reference(B, x, dt, dA_cumsum)
+
+        self.assertEqual(actual.dtype, torch.float32)
+        torch.testing.assert_close(actual, expected, atol=1e-3, rtol=1e-3)
 
     def test_ascend_capped_grid_covers_multi_iteration_scale(self):
         torch.manual_seed(20260824)
