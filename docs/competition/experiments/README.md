@@ -24,7 +24,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 09 | [`bmm_chunk`](bmm_chunk.md) | `e3e-07dc36a` | `70888b22e93f7df936c745983d3afdd113af5ce124732505a20e0d5cd2fdf75c` | E3e 平台 8/8、valid、1.283x；燧原 0.090→0.149x 首次过线（capped grid-stride fold cap 64），团队第 7 道有效题 | 闭环完成；燧原 fold 组合（64/64/128+stages2+cap64）可迁移 |
 | 10 | [`chunk_cumsum`](chunk_cumsum.md) | `s2b-63e7943` | `c822f75d719f8919269c7566b1210b6e31dc6ce3292229a838723f7945b15923` | S2b 平台 8/8 正确、invalid_threshold；华为 UB tile 上限修复生效；燧原 0.0375x/昆仑 0.012x 为 cumsum lowering 固有瓶颈 | 已按两次规则停止；重试需改写 cumsum 算法形式 |
 | 11 | [`chunk_local_cumsum_vector`](chunk_local_cumsum_vector.md) | `e1b-dddef74` | `cf4dcaf05640599fe5b50ee9633ba19d2a4f13f2b47f856e88259242e975bab9` | 两次提交均 7/8；昆仑 0.016x/华为 0.0255x 与折叠形态无关，cumsum 固有；燧原三形态编译失败 | 已按两次规则停止；同 Task 10 结论 |
-| 12 | [`chunk_state`](chunk_state.md) | `e3-4ee8e12` | `51459aabebabb0096f8485d0cd0dcc3821b34dcc7705f7e78914da9bbe499f00` | E3 平台 8/8、valid、2.0966x team best（E4 fold 使燧原 0.743→0.939x 但均分被 card_a 波动抵消，平台按最佳计分保持 E3）；天数 fp16-dot、华为 capped grid、燧原 64/64/128+stages2 vendor 均选中 | 闭环完成；昆仑 0.2505/华为 0.2735 无新杠杆 |
+| 12 | [`chunk_state`](chunk_state.md) | `e5-1ba0547` | `829476611c49cd04289e2eb5db322fc9c9868a9e927e3fb9ef81dcf3933943b2` | E5 平台 7/8、invalid_correctness（昆仑对 fp16 操作数 dot 正确性失败）；card_a 4.344→**16.583x** 实锤 generic 低精度 dot 收益；团队最佳保持 E3 2.0966x | E6（次日额度）：generic 保 lowprec + 昆仑/沐曦/国际B 回退 vendor，预期约 3.6x |
 | 13 | [`chunk_state_varlen`](chunk_state_varlen.md) | `s1b-1975cf7` | `0319c0e26b7cd6fb12f33b43771572a058306e89ac5982234531552daa0203d1` | 两次提交均 6/8；天数 vendor 132x、华为 27.7x 生效；燧原/昆仑对该 varlen 结构编译失败（结构性） | 已按两次规则停止 |
 | 14 | [`context_attention`](context_attention.md) | `e1a-6246fa8` | `8bfc8843bb6951de12160d83dbd56428c3697262ad331a05183217b9aa2d7861` | E1a 终态 5/8：天数 vendor 1.99x、nvidia vendor 6.32x；燧原超时疑似死循环、昆仑评测器崩溃、华为 flash 边界 bug | 保留第 2 次额度；三芯失败互独立无单变量解 |
 | 15 | [`decode_attention`](decode_attention.md) | `e2a-5add38c` | `b2fdcbc98b098165c3defe61cb9b0a5f5e021dfe04dbb5798dfd684b0fac8751` | 两次提交 6–7/8；华为 case 8 整行重复指纹（Ascend flash 边界 bug）两种 grid 均现；昆仑评测超时崩溃 | 已按两次规则停止 |
@@ -111,6 +111,13 @@ T08/T09/T17 按当时的 3 次规则执行）。终态：
 4. 平台按团队最佳计分（`is_team_best` 字段），追投无下行风险。
 5. 远端 venv black 升级至 26.5.1（hug_parens）与仓库既有字节冲突，
    属工具漂移；release 门禁以本地 black 25.12.0 等价执行并记录。
+6. 昆仑 fp16 操作数 `tl.dot` 正确性失败（T12 E5 平台证据，代理 NVIDIA
+   全对、七芯全对仅昆仑错）；fp32-ieee 操作数在 E2d 通过。与天数
+   "fp32 操作数 dot 静默不可执行"互为镜像：两芯 dot 操作数 dtype 兼容集
+   相反，generic 低精度 dot 必须搭配 `_kunlunxin` 回退 vendor。
+7. generic 低精度 dot 的分芯收益谱（T12 E5）：card_a +282%（张量核心
+   解锁）、海光 +1.4%、沐曦 -30%、国际 B -56%——低精度 dot 不是普适
+   提速，逐芯 vendor 选择是必要配套。
 
 ### 已平台验证的跨芯知识（均有逐芯证据，详见各账本）
 
