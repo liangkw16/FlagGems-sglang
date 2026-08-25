@@ -92,7 +92,9 @@ Git 内部目录 `.git/flagos-platform/` 创建权限为 `0600`、十分钟有�
 
 - race ID/赛季、登录账号、登录团队、batch、Task 编号、tid 和 operator 精确匹配；
 - source commit、stage、成员集合、ZIP 绝对路径与完整 SHA-256 匹配账本和本地证据；
-- Task 为 `competing`、处于提交时间窗、最小间隔已满足且当前剩余额度至少为 1。
+- Task 为 `competing`；或为等待首个有效解的 `pending_challenge`，且平台同时明确返回
+  `status=submitting`、`can_submit=true` 和 `challenge_operator`。此外必须处于提交
+  时间窗、最小间隔已满足且当前剩余额度至少为 1。
 
 全部匹配就立即运行预检输出的 `confirm_command`，无需再向用户询问。任一字段缺失、
 变化或不一致都视为自动提交门禁失败，停止并报告，不能靠交互确认绕过。intent 在任何

@@ -26,6 +26,10 @@ class FakeClient:
         self.records = []
         self.fail_final = False
         self.change_quota_on_upload = False
+        self.task_competition_status = "competing"
+        self.task_submission_status = "submitting"
+        self.task_can_submit = True
+        self.task_action_codes = ["continue_challenge_operator"]
 
     def get(self, url, params=None, **unused):
         if url == PLATFORM.IAM:
@@ -41,7 +45,12 @@ class FakeClient:
                     "batch_no": 2,
                     "task_no": 12,
                     "operator": "demo",
-                    "competition_status": "competing",
+                    "status": self.task_submission_status,
+                    "competition_status": self.task_competition_status,
+                    "status_detail": {
+                        "can_submit": self.task_can_submit,
+                        "action_codes": self.task_action_codes,
+                    },
                     "submit_start_at": "2020-01-01T00:00:00+08:00",
                     "submit_end_at": "2100-01-01T00:00:00+08:00",
                 }
@@ -147,6 +156,7 @@ class PlatformCliTest(unittest.TestCase):
         self.assertIn("--file-url-sha256", result["watch_command"])
         self.assertIn("--after-epoch", result["watch_command"])
         self.assertEqual(len(client.posts), 2)
+
         self.assertEqual(
             client.posts[0][1]["fields"],
             {"white_code": "expected_white_code"},
@@ -171,6 +181,24 @@ class PlatformCliTest(unittest.TestCase):
         with self.assertRaisesRegex(PLATFORM.CliError, "already submitted"):
             self.preflight(client)
         self.assertEqual(len(client.posts), 2)
+
+    def test_pending_challenge_requires_explicit_submit_signals(self):
+        client = FakeClient()
+        client.task_competition_status = "pending_challenge"
+        client.task_action_codes = ["challenge_operator"]
+        live = PLATFORM._live_state(client, "race1", 2, 12, "demo")
+        PLATFORM._assert_open(live, 2_000_000_000)
+
+        for field, value, message in (
+            ("task_submission_status", "reviewing", "window is not active"),
+            ("task_can_submit", False, "not accepting submissions"),
+            ("task_action_codes", [], "missing the submit action"),
+        ):
+            with self.subTest(field=field):
+                blocked = dict(live)
+                blocked[field] = value
+                with self.assertRaisesRegex(PLATFORM.CliError, message):
+                    PLATFORM._assert_open(blocked, 2_000_000_000)
 
     def test_remote_verification_failure_keeps_submission_one_shot(self):
         client = FakeClient()

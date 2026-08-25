@@ -393,6 +393,13 @@ def _live_state(
     except (TypeError, ValueError) as error:
         raise CliError("invalid minimum submission interval") from error
 
+    status_detail = task.get("status_detail")
+    if not isinstance(status_detail, dict):
+        status_detail = {}
+    action_codes = status_detail.get("action_codes")
+    if not isinstance(action_codes, list):
+        action_codes = []
+
     return {
         "race_id": race,
         "account": user["username"],
@@ -404,6 +411,9 @@ def _live_state(
         "operator": operator,
         "tid": task["tid"],
         "task_status": task.get("competition_status") or task.get("status"),
+        "task_submission_status": task.get("status"),
+        "task_can_submit": status_detail.get("can_submit"),
+        "task_action_codes": action_codes,
         "submit_start_at": task.get("submit_start_at"),
         "submit_end_at": task.get("submit_end_at"),
         "quota": {"used": used, "total": total, "remaining": total - used},
@@ -415,8 +425,18 @@ def _live_state(
 
 
 def _assert_open(live: dict[str, Any], now: float) -> None:
-    if live["task_status"] != "competing":
-        raise CliError(f"task is not competing: {live['task_status']}")
+    task_status = live["task_status"]
+    if task_status not in {"competing", "pending_challenge"}:
+        raise CliError(f"task is not open: {task_status}")
+    if live.get("task_submission_status") != "submitting":
+        raise CliError("task submission window is not active")
+    if live.get("task_can_submit") is not True:
+        raise CliError("task is not accepting submissions")
+    if (
+        task_status == "pending_challenge"
+        and "challenge_operator" not in live.get("task_action_codes", [])
+    ):
+        raise CliError("pending challenge is missing the submit action")
     start = _parse_time(live["submit_start_at"])
     end = _parse_time(live["submit_end_at"])
     if start is None or end is None:
