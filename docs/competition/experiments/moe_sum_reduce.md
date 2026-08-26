@@ -888,7 +888,7 @@ team best。相对 E7 平均下降 `0.243025x`（-8.30%）；Hygon 选中文件�
 
 ## E10：Ascend 官方 dual-level tile autotune
 
-状态：release 与不可变 ZIP 门禁通过，待唯一一次平台提交
+状态：submission `5246` 已唯一提交并完成对象回读，等待八芯终态
 
 E10 从 E7 已验证成员集合分叉，只替换 Ascend vendor；候选 Git tree 无 E8
 Enflame 与 E9 Hygon。实现迁移官方 FlagGems `moe_sum` 的 outer BLOCK
@@ -927,3 +927,11 @@ PTX 无 local load/store。最高风险 `(2048,256,topk16,stage2)` 三 dtype 均
 必须严格高于 `1.0948x` 且整题严格高于 `2.95495x` 才保留；稳健目标为华为
 高于 `1.4158x`。同时要求 8/8 valid、华为选中 `_ascend`、其余 selected-file
 不变。任一门不满足即保留 E7，永久停止 dual-tile/stage 轴。
+
+2026-08-27 02:34:42 CST 经实时门禁执行 E10 唯一一次提交，submission `5246`、
+当日序号 `20`，额度由 `11/30` 变为 `10/30`。平台选中预期的 Ascend、AMD、
+MetaX、Kunlun 与 generic 路径；`file_url_sha256` 为
+`93208cc80c41096bc433207b1c57d5d19a9f5dbb7983e965f0bf11b669fc2dc4`。
+内置回读因可信主机环境变量未配置而返回 `unavailable`，随后从平台返回的同一对象
+存储地址无认证回读 16,233 bytes，SHA-256 与 canonical ZIP 完全一致，五个成员
+均通过 `unzip -t`。候选已提交，禁止重传。
