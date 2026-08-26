@@ -250,6 +250,67 @@ class SoftcapOutTest(unittest.TestCase):
                         actual, expected, atol=tolerance, rtol=tolerance
                     )
 
+    def test_kunlun_direct_tanh_boundaries_and_special_values(self):
+        module_path = VENDOR_MODULE_PATHS["kunlunxin"]
+        spec = importlib.util.spec_from_file_location(
+            "softcap_out_kunlunxin_direct_tanh_module", module_path
+        )
+        if spec is None or spec.loader is None:
+            self.fail(f"cannot load {module_path}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        tolerances = {
+            torch.float16: 1e-2,
+            torch.bfloat16: 1.5e-2,
+            torch.float32: 1e-4,
+        }
+        special = torch.tensor(
+            [
+                float("-inf"),
+                -3000.0,
+                -7.50003,
+                -7.5,
+                -7.49997,
+                -0.0,
+                0.0,
+                7.49997,
+                7.5,
+                7.50003,
+                3000.0,
+                float("inf"),
+                float("nan"),
+            ],
+            device="cuda",
+        )
+        for dtype, tolerance in tolerances.items():
+            with self.subTest(dtype=dtype):
+                x = torch.linspace(
+                    -60.0, 60.0, 4097, device="cuda", dtype=torch.float32
+                ).to(dtype)
+                x[: special.numel()] = special.to(dtype)
+                actual = module.softcap_out(x, 30.0)
+                expected = torch.tanh(x.to(torch.float32) / 30.0) * 30.0
+
+                self.assertEqual(
+                    (actual.shape, actual.dtype), (x.shape, torch.float32)
+                )
+                torch.testing.assert_close(
+                    actual,
+                    expected,
+                    atol=tolerance,
+                    rtol=tolerance,
+                    equal_nan=True,
+                )
+
+        x = torch.tensor([-1.0, -0.0, 0.0, 1.0], device="cuda")
+        cap = float.fromhex("0x1p-128")
+        actual = module.softcap_out(x, cap)
+        expected = torch.tanh(x / cap) * cap
+        torch.testing.assert_close(
+            actual, expected, atol=1e-4, rtol=1e-4, equal_nan=True
+        )
+
     def test_ascend_block_boundaries_and_maximum_platform_size(self):
         module_path = VENDOR_MODULE_PATHS["ascend"]
         spec = importlib.util.spec_from_file_location(
