@@ -495,3 +495,23 @@ E5 只允许一次提交。基础门为 8/8 valid、Enflame 高于 E2 `2.851x` �
 `5d858b62cabf069609570bbf7bbc9d024711c1521ba0832caf18e59640c79810`；匿名对象
 回读为 8384 bytes，SHA-256 与 canonical ZIP 完全一致，三个成员均通过
 `unzip -t`。平台选中预期的 generic、Ascend、Enflame 路径；禁止重传。
+
+01:34:53 CST 终态为 8/8、`valid`，平均 `4.6384x`、非 team best，额度确认为
+`16/30`。Enflame 从 E2 `2.851x` 降至 `2.6866x`（-5.77%），整题下降
+`0.048525x`，基础门和显著收益门均失败：
+
+| 芯片 | E5 speedup | 选中文件 |
+| --- | ---: | --- |
+| 天数 | 10.1178x | `apply_token_bitmask.py` |
+| 沐曦 | 4.7470x | `apply_token_bitmask.py` |
+| 燧原 | 2.6866x | `apply_token_bitmask_enflame.py` |
+| 海光 | 4.9514x | `apply_token_bitmask.py` |
+| 昆仑芯 | 0.7178x | `apply_token_bitmask.py` |
+| 华为 | 0.9648x | `apply_token_bitmask_ascend.py` |
+| 国际通用 A | 6.7394x | `apply_token_bitmask.py` |
+| 国际通用 B | 6.1824x | `apply_token_bitmask.py` |
+
+结论：Task24 的 GCU pointwise 32K 收益不能迁移到本题的位运算/间接 bitmask
+load；保留 E2 `4.686925x` 为 team best，永久停止 Enflame tile 轴，不试 64K、
+warps 或 grid 变体。若继续本题，只允许与 tile 无关且有独立证据的 word-layout
+结构重写。
