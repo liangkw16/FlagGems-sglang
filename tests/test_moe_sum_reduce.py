@@ -66,16 +66,6 @@ AMD_MODULE_PATH = (
     / "ops"
     / "moe_sum_reduce.py"
 )
-HYGON_MODULE_PATH = (
-    Path(__file__).parents[1]
-    / "src"
-    / "flaggems_sglang"
-    / "runtime"
-    / "backend"
-    / "_hygon"
-    / "ops"
-    / "moe_sum_reduce.py"
-)
 
 
 def _load_module(name, path):
@@ -96,7 +86,6 @@ ASCEND_MODULE = _load_module(
 )
 METAX_MODULE = _load_module("moe_sum_reduce_metax_module", METAX_MODULE_PATH)
 AMD_MODULE = _load_module("moe_sum_reduce_amd_module", AMD_MODULE_PATH)
-HYGON_MODULE = _load_module("moe_sum_reduce_hygon_module", HYGON_MODULE_PATH)
 
 
 def reference(input, routed_scaling_factor):
@@ -195,19 +184,33 @@ class AmdLaunchPolicyTest(unittest.TestCase):
         self.assertEqual(fake_kernel.kwargs["topk"], 3)
 
 
-class HygonLaunchPolicyTest(unittest.TestCase):
-    def test_hygon_uses_official_configs_without_duplicate_block_kwarg(self):
-        configs = HYGON_MODULE._moe_sum_reduce_kernel.configs
+class AscendLaunchPolicyTest(unittest.TestCase):
+    def test_ascend_uses_safe_official_dual_level_configs(self):
+        configs = ASCEND_MODULE._moe_sum_reduce_kernel.configs
         self.assertEqual(
-            HYGON_MODULE._moe_sum_reduce_kernel.keys,
+            ASCEND_MODULE._moe_sum_reduce_kernel.keys,
             ["hidden_size", "topk"],
         )
         self.assertEqual(
             [
-                (config.kwargs["BLOCK_SIZE"], config.num_warps)
+                (
+                    config.kwargs["BLOCK_SIZE"],
+                    config.kwargs["BLOCK_SIZE_SUB"],
+                    config.num_warps,
+                    config.num_stages,
+                )
                 for config in configs
             ],
-            [(128, 2), (256, 4), (512, 8), (1024, 8)],
+            [
+                (512, 256, 4, 2),
+                (512, 512, 4, 2),
+                (1024, 256, 4, 2),
+                (1024, 512, 4, 2),
+                (1024, 1024, 4, 2),
+                (2048, 256, 4, 2),
+                (2048, 512, 4, 2),
+                (2048, 1024, 4, 2),
+            ],
         )
 
         class FakeKernel:
@@ -218,7 +221,7 @@ class HygonLaunchPolicyTest(unittest.TestCase):
             def __getitem__(self, grid):
                 self.grids = [
                     grid({"BLOCK_SIZE": block_size})
-                    for block_size in (128, 256, 512, 1024)
+                    for block_size in (512, 1024, 2048)
                 ]
 
                 def launch(*args, **kwargs):
@@ -228,18 +231,43 @@ class HygonLaunchPolicyTest(unittest.TestCase):
 
         fake_kernel = FakeKernel()
         with mock.patch.object(
-            HYGON_MODULE, "_moe_sum_reduce_kernel", fake_kernel
+            ASCEND_MODULE, "_moe_sum_reduce_kernel", fake_kernel
         ):
-            HYGON_MODULE.moe_sum_reduce(torch.empty((2, 3, 1025)), 0.75)
+            ASCEND_MODULE.moe_sum_reduce(torch.empty((2, 3, 1025)), 0.75)
 
         self.assertEqual(
             fake_kernel.grids,
-            [(2, 9), (2, 5), (2, 3), (2, 2)],
+            [(6,), (4,), (2,)],
         )
         self.assertNotIn("BLOCK_SIZE", fake_kernel.kwargs)
+        self.assertNotIn("BLOCK_SIZE_SUB", fake_kernel.kwargs)
         self.assertNotIn("num_warps", fake_kernel.kwargs)
         self.assertNotIn("num_stages", fake_kernel.kwargs)
         self.assertEqual(fake_kernel.kwargs["topk"], 3)
+
+    def test_ascend_caps_all_max_shape_config_grids(self):
+        class FakeKernel:
+            def __init__(self):
+                self.grids = []
+
+            def __getitem__(self, grid):
+                self.grids = [
+                    grid({"BLOCK_SIZE": block_size})
+                    for block_size in (512, 1024, 2048)
+                ]
+
+                def launch(*args, **kwargs):
+                    return None
+
+                return launch
+
+        fake_kernel = FakeKernel()
+        with mock.patch.object(
+            ASCEND_MODULE, "_moe_sum_reduce_kernel", fake_kernel
+        ):
+            ASCEND_MODULE.moe_sum_reduce(torch.empty((4096, 8, 7168)), 0.75)
+
+        self.assertEqual(fake_kernel.grids, [(4096,), (4096,), (4096,)])
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
@@ -274,7 +302,7 @@ class MoeSumReduceTest(unittest.TestCase):
                 )
                 torch.testing.assert_close(input, original, atol=0.0, rtol=0.0)
 
-    def test_hygon_autotune_all_dtypes_noncontiguous(self):
+    def test_ascend_autotune_all_dtypes_noncontiguous(self):
         tolerances = {
             torch.float16: 1e-2,
             torch.bfloat16: 1.5e-2,
@@ -294,7 +322,7 @@ class MoeSumReduceTest(unittest.TestCase):
                 self.assertFalse(input.is_contiguous())
                 original = input.clone()
 
-                actual = HYGON_MODULE.moe_sum_reduce(input, -0.125)
+                actual = ASCEND_MODULE.moe_sum_reduce(input, -0.125)
                 expected = reference(input, -0.125)
 
                 self.assertEqual(actual.shape, (4, 1025))
@@ -332,6 +360,35 @@ class MoeSumReduceTest(unittest.TestCase):
                         torch.testing.assert_close(
                             actual, expected, atol=tolerance, rtol=tolerance
                         )
+                    torch.testing.assert_close(
+                        input, original, atol=0.0, rtol=0.0
+                    )
+
+    def test_ascend_outer_block_boundaries_all_dtypes(self):
+        tolerances = {
+            torch.float16: 1e-2,
+            torch.bfloat16: 1.5e-2,
+            torch.float32: 1e-4,
+        }
+        generator = torch.Generator(device="cuda").manual_seed(20260827)
+
+        for dtype, tolerance in tolerances.items():
+            for hidden_size in (1023, 1024, 1025, 2047, 2048, 2049):
+                with self.subTest(dtype=dtype, hidden_size=hidden_size):
+                    input = torch.randn(
+                        (2, 3, hidden_size),
+                        device="cuda",
+                        dtype=dtype,
+                        generator=generator,
+                    )
+                    original = input.clone()
+
+                    actual = ASCEND_MODULE.moe_sum_reduce(input, 1.25)
+                    expected = reference(input, 1.25)
+
+                    torch.testing.assert_close(
+                        actual, expected, atol=tolerance, rtol=tolerance
+                    )
                     torch.testing.assert_close(
                         input, original, atol=0.0, rtol=0.0
                     )
@@ -383,30 +440,15 @@ class MoeSumReduceTest(unittest.TestCase):
             with self.subTest(shape=shape):
                 input = torch.empty(shape, device="cuda", dtype=torch.float16)
 
-                actual = MODULE.moe_sum_reduce(input, 2.0)
                 expected = reference(input, 2.0)
 
-                self.assertEqual(actual.shape, (shape[0], shape[2]))
-                self.assertEqual(actual.dtype, input.dtype)
-                torch.testing.assert_close(
-                    actual, expected, atol=1e-2, rtol=1e-2
-                )
-
-    def test_hygon_empty_dimensions_and_zero_topk_match_reference(self):
-        shapes = ((0, 4, 17), (3, 4, 0), (2, 0, 17))
-
-        for shape in shapes:
-            with self.subTest(shape=shape):
-                input = torch.empty(shape, device="cuda", dtype=torch.float16)
-
-                actual = HYGON_MODULE.moe_sum_reduce(input, 2.0)
-                expected = reference(input, 2.0)
-
-                self.assertEqual(actual.shape, (shape[0], shape[2]))
-                self.assertEqual(actual.dtype, input.dtype)
-                torch.testing.assert_close(
-                    actual, expected, atol=1e-2, rtol=1e-2
-                )
+                for module in (MODULE, ASCEND_MODULE):
+                    actual = module.moe_sum_reduce(input, 2.0)
+                    self.assertEqual(actual.shape, (shape[0], shape[2]))
+                    self.assertEqual(actual.dtype, input.dtype)
+                    torch.testing.assert_close(
+                        actual, expected, atol=1e-2, rtol=1e-2
+                    )
 
     def test_vendors_cover_platform_failure_scale(self):
         num_tokens, top_k, hidden_dim = 4096, 8, 7168
@@ -434,7 +476,6 @@ class MoeSumReduceTest(unittest.TestCase):
                     ("generic", MODULE),
                     ("kunlunxin", KUNLUN_MODULE),
                     ("ascend", ASCEND_MODULE),
-                    ("hygon", HYGON_MODULE),
                 ):
                     with self.subTest(module=name):
                         actual = module.moe_sum_reduce(input, 0.75)
