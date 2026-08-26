@@ -335,7 +335,7 @@ E3 只提交一次。若 8/8 即停止 Task 22；若 Enflame 恢复但昆仑仍�
 根因成立但任务仍无效，永久停止；若 Enflame 仍失败，也不再调 tile/stages/grid，
 转投 Task 14。
 
-### E3 平台提交与当前结果
+### E3 平台提交与终态
 
 E3 于 2026-08-26 15:57:01 CST 正式提交一次（submission `5064`，当日序号
 `6`，额度 `25/30`→`24/30`）。上传后的远端对象为 33,551B，SHA-256 与
@@ -347,6 +347,12 @@ canonical ZIP 的
 15:57:40 的平台观测已达到 7/7 已回调芯全部通过：天数 47.3460x、沐曦
 32.7265x、燧原 **4.7495x**、海光 82.2330x、华为 21.7705x、国际 A
 77.1000x、国际 B 48.2245x，合计 314.1500x。燧原从 S2/S2c 稳定
-PassManager 失败恢复为全 case 正确，直接证实 E3 的 i64 根因；当前只剩昆仑
-`waiting_callback`。若昆仑达到最低 0.1x，最终平均分至少为 39.28125x。
-本候选已提交，不得重试；终态回调后补记 validity、平均分和排名。
+PassManager 失败恢复为全 case 正确，直接证实 E3 的 i64 根因。
+
+16:28:28 CST 终态为 `completed / invalid_correctness`，7/8。昆仑在约
+1,834.4s 后执行超时，子进程在结果送达前退出；错误仍是
+`Fatal Python error: Aborted`，栈停在 Torch Inductor compile worker 的
+`subproc_pool.py`，与 S2/S2c 同型。Enflame 根因已修复，但昆仑是独立且连续三轮
+复现的后端编译/评测崩溃；按预写停止门禁，Task 22 永久停止，不再上传或正式
+提交。若只按七芯已得分计算，潜在八芯平均下界为 39.28125x，但本轮不构成有效
+成绩，`average_speedup` 与排名均为 N/A。
