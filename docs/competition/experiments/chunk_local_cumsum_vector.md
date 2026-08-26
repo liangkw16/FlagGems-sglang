@@ -195,3 +195,61 @@ lowering 固有瓶颈；燧原 BLOCK_F=1 vendor 编译失败（`Pipeline run fai
 （Task 10/11）双题四轮平台证据一致：昆仑 ~0.012–0.016x、燧原
 0.0035–0.0375x 或编译失败，非 grid/配置/stages 单变量可解，重试需在
 XPU/GCU 上改写 cumsum 算法形式（两阶段分块扫描）。
+
+## E2：官方 FlagGems 三角 FP32 `tl.dot`（新算法，一次性探索）
+
+状态：release 门禁通过；只允许一次正式提交，不对同一方案重试
+
+验证时间：2026-08-26 17:14–17:42 CST
+
+E1b 的停止条件允许“改写 cumsum 算法形式”后重开。官方 FlagGems 在固定 commit
+[`d1c970e`](https://github.com/flagos-ai/FlagGems/blob/d1c970e0c9ccb3c26d9fc8de906a7e21a64cc0a1/src/flag_gems/fused/FLA/cumsum.py#L83-L156)
+已用三角矩阵乘向量实现同语义前缀和；FlagTree 同时证明
+[燧原支持该 FP32 IEEE dot](https://github.com/flagos-ai/FlagTree/blob/367dc5794f678a70ec57bb8a1b3d24bf9b855ca6/third_party/enflame/backend/compiler.py#L467-L485)、
+[昆仑允许 IEEE dot](https://github.com/flagos-ai/FlagTree/blob/367dc5794f678a70ec57bb8a1b3d24bf9b855ca6/third_party/xpu/backend/compiler.py#L131-L136)，
+且燧原 launch 是逐轴限制而非 grid 总乘积限制。E2 因此不是继续调 E1b 的配置，
+而是把 `chunk_size <= 64` 的三颗问题芯改为 FP32 triangular dot；大 chunk 保留旧
+cumsum。华为/昆仑总 program 超 65535 时由 host 分段 launch，每个 program 仍只算
+一个 tile；reverse 用反向读写，scale 在 dot 后执行，输出保持 FP32。
+
+### Screening 与 release
+
+- screening：`gpu:/tmp/flagos-task11.xYfbLM/screening5.log`，SHA-256
+  `9c55bf2c13d3e64b303e31d96a6319a4bd5ccfbc5a8b5a074af3a6234612f2ee`；
+  三 vendor × 六个 affected/control 点总体 A/B 几何均值 `1.563666x`，相关 dot
+  路径 `1.956762x`，正确性覆盖三 dtype、forward/reverse、scale、chunk
+  `5/16/64`、非连续输入和超 65535 分段路径。
+- fresh release：`gpu:/tmp/flagos-task11-release.ztYN5Y`，从 source commit 的 Git
+  对象重建；6/6 unittest 通过，18 个 A/B 点总体几何均值 `1.563811x`。
+  三 vendor 的 base/candidate 六点分别为 Ascend
+  `[0.993525, 0.999756, 1.000636, 1.296864, 1.275923, 1.379564]`、Kunlun
+  `[1.000777, 1.002007, 0.999761, 1.296300, 1.273205, 1.386510]`、Enflame
+  `[1.787228, 1.127222, 3.445877, 7.196208, 3.449175, 3.487932]`。
+- fresh Triton cache/dump 共 100 个变体；37 个 dot 变体均无 `tt.scan`，最大
+  69 registers/thread、1,024 bytes shared，stack/local 均为 0。release log
+  SHA-256 `3e55133251dbde741231c4985989fda9aca6aad3981a2641939cd6262b8d45dd`；
+  release/screen script SHA-256 分别为
+  `98ef5699836b0096a781bb433d09dff0dc520751007ead354080891b0058cc37`、
+  `b81814be1aa22022a50c680d5b384c0a41eb60a132af501d8b83f1d4789e92a6`。
+
+验证环境：NVIDIA GeForce RTX 5070 Ti 16 GB，Python 3.12.13，PyTorch
+2.13.0+cu130，Triton 3.7.1，CUDA 13.0。NVIDIA 仅证明语法、数值和候选健康度，
+不能预测三颗目标芯的矩阵 lowering。
+
+### 构建身份与平台门槛
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `ca09e17ae34c4aefc0a29c60b0af8791ed778397` |
+| generic SHA-256 | `3b151d953ac283e436600ee7aa5e9db6e2e6718c135d1916f138cee3d3f14e88` |
+| Ascend / Kunlun SHA-256 | `26b811e9f366ecbf61fc79045f93d7c302e082feaf08be157f609c44c438b35b` |
+| Enflame SHA-256 | `0933768cd5a0f08841f229e40ea1f5174a5c57fb72bb44b23fc420f59ea6b65f` |
+| test SHA-256 | `e2ffc52b4feafead1f936d3a42e08fd4c2de348beedc9321697194668af1bae0` |
+| ZIP | `artifacts/competition/chunk_local_cumsum_vector/e2-ca09e17/chunk_local_cumsum_vector.zip` |
+| ZIP SHA-256 | `b15b545d3761800dfcd81887a28471d37c0de99a23ebb9036bf36ad7af31d590` |
+| ZIP manifest | generic + ascend/enflame/kunlunxin，32,473 bytes |
+
+实时 17:40 状态：Task 11 可提交，额度 `20/30`。旧五芯合计约 `8.903x`；新三芯
+只恢复到 0.1x 时整题约 `1.1504x`，超过当时榜首 `2.1208125x` 需三芯合计
+`>8.0635x`。因此本次价值是验证官方 dot 能否跨越病理 cumsum lowering；无论结果
+为正确性失败、仅过门槛或未超榜首，E2 都只提交一次并停止同方案。
