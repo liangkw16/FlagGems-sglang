@@ -416,3 +416,11 @@ RTX 5070 Ti 上 BLOCK256↔512 五组 AB/BA 覆盖长度 255、513、49,169、
 0 global scratch。该性能只作资源与明显回退门禁，不外推为 Ascend 收益。
 canonical ZIP 四个成员均与 source commit 一致，`dry-run`、
 `verified-existing`、UTF-8、10 MB 和 `unzip -t` 门禁通过。
+
+2026-08-27 00:16:50 CST 在账号 `15600308080`、团队 `SoulCoder` 下执行 S4
+唯一一次提交，submission `5204`、当日序号 `1`，额度由 `30/30` 变为
+`29/30`。`file_url_sha256` 为
+`e8fad19f54654b50953dae5189cc17292417a96b187782c587305c0f1317139a`；从已核实
+对象存储地址无认证回读 10,099 bytes，SHA-256 与 canonical ZIP 完全一致。
+平台选中了预期的 generic、Ascend、Enflame、Kunlun 四条路径；当前八芯排队，
+禁止重传。

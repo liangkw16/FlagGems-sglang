@@ -36,7 +36,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `e5-f2e9fc9` | `9544a54ff611e69bd5c42fc3aba2d440d4bca431bd0b665a940a0e24f3d38035` | E5 平台 8/8、2.76185x team best；华为 0.5982→0.8104x（+35.5%） | 保留 E5；下一步仅评估 MetaX 官方 BLOCK1024/8 warps |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s2c-7857dca` | `357e8a690cca68123aabebdbb5500a86ebd66fe328105a8b91f7c1afe489cb38` | S2c 终态 6/8；六芯高分（海光 82.6x、天数 47.8x）；燧原 case 2 编译失败、昆仑评测异常 | 已按两次规则停止 |
 | 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `e11-dd4632a` | `c23266792c400636b2a7a4aa418defa2eb15f19623e8419316133dceb4463ff7` | E11 官方 XPU legacy masked-memory 使昆仑五个 case 全部跑完，但均数值失败；燧原回调待定，其余六芯已通过 | 官方两种 masked-memory 路径均验证失败，Task 23/22 永久停止 |
-| 24 | [`softcap_out`](softcap_out.md) | `s4-1dadfcd` | `592d5dc80568fc9883bba0939e9eb45604037cdfc0f181e0b1b57b885c0536f1` | S4 仅改 Ascend BLOCK256→512；release 12/12，代理最大 shape 1.67–1.76x、零 spill/scratch | one-shot：8/8、华为 >0.7371x、平均 >2.0179x |
+| 24 | [`softcap_out`](softcap_out.md) | `s4-1dadfcd` | `592d5dc80568fc9883bba0939e9eb45604037cdfc0f181e0b1b57b885c0536f1` | S4 仅改 Ascend BLOCK256→512；submission 5204 已单次提交且远端字节验签一致 | 等待终态，禁止重传；门为 8/8、华为 >0.7371x、平均 >2.0179x |
 
 ## 建议提交顺序
 
