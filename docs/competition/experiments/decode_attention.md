@@ -203,7 +203,7 @@ case 8 同指纹失败，昆仑为评测超时崩溃（`Fatal Python error: Abor
 
 ## E3-i32：三失败芯统一 page-routing int32（一次性重开）
 
-状态：source/test、Git-object release 与不可变 ZIP 门禁通过，待实时 preflight。
+状态：submission `5053` 已终态 5/8，正确性无效；Task 15 永久停止。
 
 ### 新证据与单变量
 
@@ -276,3 +276,27 @@ canonical ZIP 为
 `ba8b013b8e21c4f2edd34808c6dae93764ee0a8795b9801831955714534e98d7`；
 成员为 generic + ascend/enflame/kunlunxin/nvidia。`--verify-existing`、
 `unzip -t` 与成员白名单全部通过。
+
+### E3-i32 平台终态与停止
+
+E3-i32 于 2026-08-26 15:23:10 CST 严格按一次性 preflight 命令提交一次，
+submission `5053`，当日序号 `5`，额度 `26/30`→`25/30`；平台回读的远端
+ZIP 与上述不可变产物逐字节一致。终态为 `completed / invalid_correctness`，5/8：
+
+| 芯片 | 结果 | speedup / 失败指纹 |
+| --- | --- | --- |
+| 天数 | 通过 | `15.3936x` |
+| 沐曦 | 通过 | `36.3022x` |
+| 燧原 | 失败 | case 8，`grid.x Required 131072 > 65535` |
+| 海光 | 通过 | `81.6698x` |
+| 昆仑 | 失败 | 约 1833.6s，执行超时；子进程 `Fatal Python error: Aborted`，停在 compile worker |
+| 华为 | 失败 | case 8，仍为确定性重复行数值错误 |
+| 国际 A | 通过 | `91.2698x` |
+| 国际 B | 通过 | `83.4538x` |
+
+平台回传后曾在本地准备但**未发布、未打包、未提交**一个 launch-cap 诊断候选
+（commit `ee13599`）：Ascend 按 32,768、Enflame 按 65,535 分片，并用显式
+program 起始偏移保持逐 program 数学不变；远端 10/10 回归通过。它能直接解释并
+规避 Enflame 的 launcher 上限，也可能规避 Ascend 的旧 32,774-block 报错，
+但无法改变昆仑连续多轮独立的 1830s 编译器崩溃。按 E3 预先写定的“一芯仍失败
+即永久停止”门禁，Task 15 到此停止，不为未闭环的两芯修复再消耗额度。
