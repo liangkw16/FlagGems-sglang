@@ -467,3 +467,76 @@ scratch、1D grid、wrapper 和 NVIDIA vendor 全部冻结。候选工作树源�
 该结果证明当前编译器把这次轴转置规范化为与 E6 相同的归约；没有形成新数值路径，
 也不能解决昆仑 1830s 超时。工作树已恢复 E6 字节，未新增测试、commit、ZIP、
 preflight 或平台提交；Task 18 永久停止。
+
+## E9：按芯分发显式归约树（重开攻坚，晋升提交）
+
+状态：release 与不可变 ZIP 门禁通过；submission 评测中
+验证时间：2026-08-27 00:20–00:50 CST；source / verification commit
+`c5c9715cae2c1974395fd5097b942e7a27958a80`
+
+### 对 08-26 协调门禁的响应与机制依据
+
+E2–E8 的负结果共同指向一个可证伪解释：各 backend 把 `tl.sum` lowering 成各自的
+加法序列，且我们的 grid/warp/layout 改动不改变该序列（华为 `532/9`、燧原
+`583/3` 三轮逐字复现）。唯一的通过案例（国际 A × E4 vendor）证明了反面机制：
+**逐字复现该芯 Torch bmm 的 FP32 加法顺序即可清零并通过性能门槛（5.39–5.505x）**。
+因此 E9 不再改 topology，而是换成全新单变量类：
+
+1. 放弃任何 reduction 原语（`tl.sum`/`tl.dot`），改用标量累加器 +
+   显式元素级加法把归约顺序硬编码为常量表达式；编译器无法在不破坏 IEEE
+   逐元素语义的前提下重结合，"backend lowering" 这一自由度被消除。
+2. 平台按文件后缀自动选择每芯执行文件（E4–E6 已实证：国际 A 选
+   `_nvidia`、其余选 generic）。据此为六颗未过芯片各发布一个互不相同
+   的 cuBLAS 系 bmm 归约顺序假设文件；已通过的国际 A 保持 E4 原字节不动，
+   generic 作为缺省回退也保持原字节不动。
+
+K=64/BF16 隐藏形态走 kernel 内专用分支，是六颗芯片共同的实际执行路径；
+非 K64/L2 路径在各文件内逐字节保持 E6 行为。昆仑芯未发布特殊文件——其失败是
+验证期 `1830s/1800s` 编译侧超时崩溃，与本数值变量正交。
+
+### 六个候选的顺序假设（提交前预注册）
+
+| 文件 | 假设来源 | K=64 归约顺序 |
+| --- | --- | --- |
+| `_iluvatar` | 天数 CoreX 栈兼容 CUDA 生态，若 bmm 源自 cuBLAS 系则同指纹 | 四累加器 k%4 FMA 链，合并 `(a0+a2)+(a1+a3)`（cuBLAS 同款） |
+| `_metax` | 沐曦 MCUDA wave 宽 64，小 K GEMV 常见八路分段 | 八累加器 k%8 FMA 链，成对树 `((a0+a1)+(a2+a3))+((a4+a5)+(a6+a7))` |
+| `_hygon` | DTK/rocBLAS 血统 GEMV 线程独占输出、串行累加 | 单累加器 k=0..63 串行 FMA |
+| `_enflame` | 烧原 GEMV 二路 ILP 形态 | even/odd 双串行链，`even+odd` 合并 |
+| `_ascend` | 向量机 vcadd 相邻折叠 | 元素积先行舍入后相邻对全二叉树（6 层） |
+| `_amd`（国际 B） | rocBLAS 分半连续段 + 段间一次相加 | 前 32 串行链 + 后 32 串行链，`lo+hi` |
+
+每份文件除两个点积段外与其余文件及 E6 字节完全一致；外积 eager 舍入边界、
+libdevice exp、state/outer scratch、1D one-row grid、wrapper 契约全部冻结。
+
+### 证据
+
+| 项目 | 值 |
+| --- | --- |
+| generic SHA-256 | `87d092112fe3f55747300df246fe4cb7f328576945f4ce3f47e38e999cd923e9`（= E6） |
+| NVIDIA vendor SHA-256 | `c328d858139f446ee76f5e8f5be02776135b3ef6174d9dbc4a50b06601b98317`（= E4/E5/E6） |
+| amd / ascend / enflame | `9caf54ec0fe2fa4203ea5c07117c9a91d5e127686c11abd0a5ab84337ad8a959` / `286a3802d71e9bf5fd8e3b1d0b628138c2609aa0cf873825c5d44d33498a3367` / `59c748d4fa151badf13a2073dff4b7eee5257dea8272be7362a0f0a5e13e2229` |
+| hygon / iluvatar / metax | `9a3aad5780804b9baa3c78378dfe497995dfaa4fda12e28fdd28e0afab351851` / `80356eca70ae7f5dc854348aef82fa549e3aaee09b29f6865100575fedae1c8c` / `957b10b74747ccfb090b2c158f4b0a3a7a6d7085e2f3cece54aaeafe1bcf8f96` |
+| 测试 SHA-256 | `bb77964146d33ce8986703414a29491c9f77a5f73a77b0ec50ae35101cfa955e` |
+| release 目录 | `gpu:/tmp/flagos-fused-recurrent-gdn-e9.qw6zFA`（mode 0700） |
+| release log SHA-256 | `2ca561b4b4ea865bfdf28786f30684af89006e22e3cbfca4161756f7362bced4` |
+| ZIP | `artifacts/competition/fused_recurrent_gdn/e9-c5c9715/fused_recurrent_gdn.zip` |
+| ZIP SHA-256 | `63188c757c0f16baf6fe718619a3fbf4aceabad56b07172dac1ebaee78efc763` |
+| ZIP 大小 / 成员 | 168,364 bytes；generic + 7 个 vendor，共 8 个顶层 `.py` |
+
+release 由 commit `c5c9715` 经 `git archive` 生成到远端临时目录；九文件远端
+SHA 与 Git blob 逐项相同。py_compile、black/isort/flake8（仓库配置）、
+unittest 8/8（含六个 vendor 模块的 K64 契约 smoke、scalar beta、空序列）全部
+通过。环境：RTX 5070 Ti、driver 610.57.04、PyTorch 2.13.0+cu130、
+Triton 3.7.1、CUDA 13.0。
+
+wrapper-inclusive do_bench（BF16，含 initial/final state）代理证据：
+
+| shape | generic ms | 各 vendor 变体 ms 范围 | 对照 reference ms | 变体代理 speedup |
+| --- | ---: | ---: | ---: | ---: |
+| `(32,32,4,8,64,64)` | 0.254 | 3.158–3.848（ascend 最慢） | ≈2.63 | ≈0.69–0.83x |
+| `(8,128,4,8,64,64)` | 0.260 | 3.265–3.971 | ≈10.36 | ≈2.61–3.17x |
+
+两隐藏形态均高于题面 0.1x 门槛；NVIDIA 上这些变体并非实际选中路径，上述数字
+仅为资源/编译/性能风险证据。其余五颗芯片与昆仑的真实正确性与 speedup 只能由
+平台回调判定；本候选相对 E2/E6 的增量风险仅限"新文件能否在目标芯编译运行"
+这一被机制目标所要求的变量。额度当日剩余 29/30，满足协调门禁的成本约束。
