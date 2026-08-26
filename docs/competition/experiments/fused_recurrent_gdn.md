@@ -636,3 +636,40 @@ submission `5218`。海光从 E9 的单 case `3/1048576` 恶化为双 case
 远端九文件哈希与 commit blob 一致；py_compile/lint/unittest 8/8 全过；
 do_bench hygon/amd ≈3.20/3.43 ms 同级。dry-run 与正式构建 canonical SHA
 一致，`unzip -t` 通过。
+
+### E11 平台七投：确定性对照成立；AMD 对融合不敏感、对树形敏感
+
+submission `5221`：
+- `_hygon` 恢复后海光精确复现单 case `3`——同字节同判定，平台评测确定性成立；
+- 国际 B `402/26` 与 E10 的 unfused-serial **完全相同**：AMD 栈把分离乘加重新
+  融合为 FMA，该芯对融合方式不敏感、只对归约树结构响应（halves 567 → serial
+  402）；
+- 天数/沐曦/华为对照位继续逐字复现（893/4、131052/16、531/6）；国际 A
+  5.5315x 三连过；
+- 昆仑芯本轮判定 `pass=false` 空 case 列表，与既往编译期超时崩溃一致。
+
+## E12：amd even/odd 交错双链（晋升提交）
+
+状态：release 与不可变 ZIP 门禁通过；提交中
+验证时间：2026-08-27 01:30–01:45 CST；source / verification commit
+`79afc084ddf891e826c9b479a8c9cb3cd7caccc2`
+
+唯一变量：`_amd` 改为 even/odd 交错 FMA 双链（k%2 分组，even+odd 合并）——
+经典族谱中该芯未试的最后形态。其余七个文件与 E11 字节完全一致。
+
+发布纪律证据：第一次生成时误将单累加器合并式 `"prediction = prediction_0"`
+带入双链文件（奇链整段被丢弃），远端 release unittest 以 `815/816` 元素失败
+将其拦截；修正合并式为 `"@ = @_0 + @_1"` 后重走全部验证，8/8 通过。错误字节
+从未进入 ZIP 或平台。
+
+| 项目 | 值 |
+| --- | --- |
+| amd SHA-256 | `31e59173c273141bf23471116a2ecefaa58f06516ca68ec2ce4aa1f27466e3e8` |
+| release 目录 | `gpu:/tmp/flagos-fused-recurrent-gdn-e12.eSQdWX`（mode 0700） |
+| release log SHA-256 | `5af7b61f064bf6942d52011442a0e73c145b2d57f04047ccc216330d18171912` |
+| ZIP | `artifacts/competition/fused_recurrent_gdn/e12-79afc08/fused_recurrent_gdn.zip` |
+| ZIP SHA-256 | `3f058ea65ac64a07918ad4b28af4f2d03cf40c57e98099d1925494a60c46707a` |
+| ZIP 大小 / 成员 | 168,331 bytes；generic + 7 vendor |
+
+期望读数：card_b 较 402 继续下探则交错族更优并指引"每链更短+多链"方向；
+回到 ~560 量级则串行仍是当前最优假设。
