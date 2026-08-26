@@ -425,3 +425,11 @@ one-shot 晋级门：8/8 valid、华为选中 Ascend vendor、实际平均至少
 `4.706925x`（E2 `4.686925x` + `0.02x`）。冻结其余七芯时，华为需从
 `0.9646x` 提升至至少 `1.1246x`（+16.59%）。若任一门不满足即保留 E2，停止
 Task08 Ascend tile 轴；平台 reference 若再次 OOM，也不重传相同字节。
+
+2026-08-27 00:52:53 CST 在账号 `15600308080`、团队 `SoulCoder` 下执行 E4
+唯一一次提交，submission `5216`、当日序号 `6`，实时额度由 `25/30` 变为
+`24/30`。`file_url_sha256` 为
+`31f0f9fa190ecd19ff15bc5e237956cda45e48d1883088417c438d6db443f3e9`；提交器因
+未继承受信 hostname 把内置远端验签标记为 `unavailable`，随后从平台返回的已核实
+对象地址匿名回读 8383 bytes，SHA-256 与 canonical ZIP 完全一致。平台选中了
+预期的 generic、Ascend、Enflame 三条路径；禁止重传。
