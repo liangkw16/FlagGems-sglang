@@ -81,6 +81,8 @@ def _moe_sum_reduce_kernel(
                     + expert_offset * input_stride_topk,
                     mask=hidden_mask,
                     other=0.0,
+                    # Adapted from FlagGems@ed2508b, PR #2037 (Apache-2.0).
+                    care_padding=False,
                 ).to(tl.float32)
                 accumulator += values
 
@@ -106,7 +108,7 @@ def moe_sum_reduce(input, routed_scaling_factor):
     grid = lambda meta: (
         min(
             num_tokens * triton.cdiv(hidden_dim, meta["BLOCK_SIZE"]),
-            65535,
+            4096,
         ),
     )
     _moe_sum_reduce_kernel[grid](

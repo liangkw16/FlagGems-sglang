@@ -185,6 +185,11 @@ class AmdLaunchPolicyTest(unittest.TestCase):
 
 
 class AscendLaunchPolicyTest(unittest.TestCase):
+    def test_ascend_uses_backend_padding_hint(self):
+        source = ASCEND_MODULE_PATH.read_text()
+        self.assertEqual(source.count("care_padding=False"), 1)
+        self.assertIn("FlagGems@ed2508b, PR #2037", source)
+
     def test_ascend_uses_safe_official_dual_level_configs(self):
         configs = ASCEND_MODULE._moe_sum_reduce_kernel.configs
         self.assertEqual(
@@ -245,7 +250,7 @@ class AscendLaunchPolicyTest(unittest.TestCase):
         self.assertNotIn("num_stages", fake_kernel.kwargs)
         self.assertEqual(fake_kernel.kwargs["topk"], 3)
 
-    def test_ascend_uses_all_safe_max_shape_programs(self):
+    def test_ascend_caps_all_max_shape_config_grids(self):
         class FakeKernel:
             def __init__(self):
                 self.grids = []
@@ -267,31 +272,7 @@ class AscendLaunchPolicyTest(unittest.TestCase):
         ):
             ASCEND_MODULE.moe_sum_reduce(torch.empty((4096, 8, 7168)), 0.75)
 
-        self.assertEqual(fake_kernel.grids, [(57344,), (28672,), (16384,)])
-
-    def test_ascend_caps_above_official_grid_limit(self):
-        class FakeKernel:
-            def __init__(self):
-                self.grids = []
-
-            def __getitem__(self, grid):
-                self.grids = [
-                    grid({"BLOCK_SIZE": block_size})
-                    for block_size in (512, 1024, 2048)
-                ]
-
-                def launch(*args, **kwargs):
-                    return None
-
-                return launch
-
-        fake_kernel = FakeKernel()
-        with mock.patch.object(
-            ASCEND_MODULE, "_moe_sum_reduce_kernel", fake_kernel
-        ):
-            ASCEND_MODULE.moe_sum_reduce(torch.empty((65536, 1, 17)), 0.75)
-
-        self.assertEqual(fake_kernel.grids, [(65535,), (65535,), (65535,)])
+        self.assertEqual(fake_kernel.grids, [(4096,), (4096,), (4096,)])
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
