@@ -649,3 +649,21 @@ stages、stride 和其他七芯源码均不变。
 E10 只提交一次：仅当 8/8 且昆仑 ≥0.1x 才恢复有效分；按 E9 七芯合计
 200.4165x，最低有效平均约 25.0646x。若仍 error 700、编译失败或昆仑低于门槛，
 Task 23/22 永久停止，不追加 BMM flag，也不再调 tile/grid。
+
+### E10 平台结果：7/8；mask-zero 改变错误但未修复 launch failure
+
+- 2026-08-26 21:12:37 CST 单次提交，submission `5138`、当日序号 `18`，
+  额度 `13/30`→`12/30`；平台对象从历史可信 hostname 无认证回读 35,162B，
+  SHA-256
+  `505c73a8b6aab2e15ea7c3a40a35ea2ced7eb6b83ded58147dde586c44becfa5`，
+  与 canonical ZIP 完全一致。`file_url_sha256` 为
+  `b5526636fd5b8379594d1fb9bdd7927624e1ac0cf1a459ca989038a989872e97`。
+- 七芯仍通过：天数 33.6650x、沐曦 18.1810x、燧原 4.0795x、海光
+  44.7110x、华为 17.7510x、国际 A 45.5395x、国际 B 27.8890x，合计
+  191.8160x。
+- 昆仑 case 0 在 8.285s 后于 `assert_close` 的首次同步点报 error 719
+  `unspecified launch failure`；case 1–4 在首错后于 reference clone/copy 失败，
+  仍只视为设备污染。相对 E9 的 error 700，mask-zero 确实改变了后端运行路径，
+  但没有使任一 case 通过，也不能从异步上报定位具体 launch。
+- E10 未达到 8/8 门槛。按预设止损，Task 23 与同结构 Task 22 永久停止；不把
+  mask-zero 追加到已冻结的 SDNN BMM，也不再猜 dtype、stride、tile 或 grid。
