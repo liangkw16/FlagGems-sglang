@@ -885,3 +885,45 @@ team best。相对 E7 平均下降 `0.243025x`（-8.30%）；Hygon 选中文件�
 
 结论：官方四档在 Hygon 平台是明确反优化，保留 E7，永久停止 Hygon autotune
 轴；不重传、不扩展 tile 搜索。
+
+## E10：Ascend 官方 dual-level tile autotune
+
+状态：release 与不可变 ZIP 门禁通过，待唯一一次平台提交
+
+E10 从 E7 已验证成员集合分叉，只替换 Ascend vendor；候选 Git tree 无 E8
+Enflame 与 E9 Hygon。实现迁移官方 FlagGems `moe_sum` 的 outer BLOCK
+`512/1024/2048`、inner SUB `256/512/1024`、4 warps、2 stages 机制，同时保留
+本题 scaling、五个真实 stride、TOP_K constexpr、空维语义和已平台验证的
+4096 physical-grid cap + grid-stride。官方笛卡尔积中的 `(512,1024)` 会跨相邻
+outer block 重叠写，故只保留满足 `SUB <= BLOCK` 的 8 个安全配置。
+
+初版官方 key `[hidden_size,topk]` 的冷缓存正序 tokens `1→32→4096` 选择
+`(512,512)`，反序选择 `(2048,1024)`；反序选档使 tokens 1/32/4096 分别慢
+53.70% / 12.05% / 0.34%，三点几何平均差 20.0%。该实证触发预设修复：最终
+commit 将 `num_tokens` 加入 autotune key。修复后正反序最坏差 0.825%、几何
+平均差 0.278%，缓存条目按 token shape 独立增长，跨 shape 污染消失。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `75be1f0cb39d8fec3510270df28bad5b5d7b00bd` |
+| generic / AMD SHA-256 | `52a2fc979784f2bd25e7e17b9822c23b4f438efdf062c70bfb09aba9ba732335` / `3b0de225dbf5ffc1004096055da871c919870cc0ba6e4a0297551c5c7537e399` |
+| Ascend SHA-256 | `1c1bb25e642ac4e55a457508eee9e97d1c8b182f045e57176134f798f307a991` |
+| Kunlun / MetaX SHA-256 | `68b0abe07e3cf4f2b9cb86063e9ad1e18edd83d90341410cd281ec595c83406d` / `20db4f49aada2976723ab9dabd7013545a30a0998ee8fb21ad655375bd2cb794` |
+| test SHA-256 | `ec739d9e128d88713d4e86e302009c3712f3e2c283536603ca20b9aef73452cb` |
+| release | `gpu:/tmp/flagos-moe-sum-reduce-ascend-token-key-release.BYfYv2`；14/14、`RELEASE_OK`；脚本/日志 SHA-256 `2f5c2df41f82a609c5f7f73d30e53f1a05a874fd09adc54531a4abb6ec153251` / `68b4f76e59a925d3ae512b55ed2086251e780730b2096e3956e406012d0d1a98` |
+| 初版 key 补强日志 | `gpu:/tmp/flagos-moe-sum-reduce-ascend-release.Y5HCQW/extra_verify_full.log`，SHA-256 `168198da6aa3983b809d61f0b6d2b21e88143ff8a69c49285ea3827b3f23a616` |
+| Git archive SHA-256 | `1e8196445f3357b66e0d6c6d976b58677d3bc212ee7da302d21fa1475c02fd6b` |
+| canonical ZIP | `artifacts/competition/moe_sum_reduce/e10-75be1f0/moe_sum_reduce.zip`，16,233 bytes，SHA-256 `867cb2ee504b655f12af21c59c7d9801d71236c9319026f2c681648c602bd9c4` |
+
+8 configs × 3 dtypes × top-k `{1,2,3,8,16}` 共 120/120 个 forced 变体均
+编译、执行并匹配 reference；26–54 registers、0 spill/shared/global scratch，
+PTX 无 local load/store。最高风险 `(2048,256,topk16,stage2)` 三 dtype 均为
+40 registers。三种 outer BLOCK 的 logical total 4095/4096/4097 及各自 cap
+邻界全部正确，超过 cap 时均走 grid-stride。最大 `(4096,8,7168)` 三 dtype、
+非连续 stride、空维/zero top-k 与 BLOCK 边界均通过。对 E7 的代理 A/B 几何
+平均 `0.999853x`，最差中位 `0.930008x`，通过 0.95/0.90 门禁。
+
+02:33 CST 实时公开榜第 10 名仍为 `2.95495x`。冻结 E7 其余七芯时，华为
+必须严格高于 `1.0948x` 且整题严格高于 `2.95495x` 才保留；稳健目标为华为
+高于 `1.4158x`。同时要求 8/8 valid、华为选中 `_ascend`、其余 selected-file
+不变。任一门不满足即保留 E7，永久停止 dual-tile/stage 轴。
