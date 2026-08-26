@@ -192,43 +192,42 @@ class DecodeAttentionLaunchTest(unittest.TestCase):
         kv_indptr = torch.zeros(2049, dtype=torch.int32)
         kv_indices = torch.empty(0, dtype=torch.int32)
 
-        for module, expected in (
-            (
-                DECODE_ATTENTION_ASCEND,
-                [
-                    (0, 32768),
-                    (32768, 32768),
-                    (65536, 32768),
-                    (98304, 32768),
-                ],
-            ),
-            (
-                DECODE_ATTENTION_ENFLAME,
-                [(0, 65535), (65535, 65535), (131070, 2)],
-            ),
-        ):
-            fake_kernel = FakeKernel()
-            real_kernel = module._decode_attention_kernel
-            module._decode_attention_kernel = fake_kernel
-            try:
-                module.decode_attention(
-                    q,
-                    k_buffer,
-                    v_buffer,
-                    kv_indptr,
-                    kv_indices,
-                    1.0,
-                )
-            finally:
-                module._decode_attention_kernel = real_kernel
-
-            self.assertEqual(fake_kernel.launches, expected)
-            self.assertEqual(sum(count for _, count in expected), 131072)
-            self.assertTrue(
-                all(
-                    count <= module._MAX_GRID_PROGRAMS for _, count in expected
-                )
+        fake_kernel = FakeKernel()
+        real_kernel = DECODE_ATTENTION_ASCEND._decode_attention_kernel
+        real_core_count = DECODE_ATTENTION_ASCEND._get_num_vector_cores
+        DECODE_ATTENTION_ASCEND._decode_attention_kernel = fake_kernel
+        DECODE_ATTENTION_ASCEND._get_num_vector_cores = lambda _: 40
+        try:
+            DECODE_ATTENTION_ASCEND.decode_attention(
+                q,
+                k_buffer,
+                v_buffer,
+                kv_indptr,
+                kv_indices,
+                1.0,
             )
+        finally:
+            DECODE_ATTENTION_ASCEND._decode_attention_kernel = real_kernel
+            DECODE_ATTENTION_ASCEND._get_num_vector_cores = real_core_count
+        self.assertEqual(fake_kernel.launches, [(131072, 40)])
+
+        fake_kernel = FakeKernel()
+        real_kernel = DECODE_ATTENTION_ENFLAME._decode_attention_kernel
+        DECODE_ATTENTION_ENFLAME._decode_attention_kernel = fake_kernel
+        try:
+            DECODE_ATTENTION_ENFLAME.decode_attention(
+                q,
+                k_buffer,
+                v_buffer,
+                kv_indptr,
+                kv_indices,
+                1.0,
+            )
+        finally:
+            DECODE_ATTENTION_ENFLAME._decode_attention_kernel = real_kernel
+        expected = [(0, 65535), (65535, 65535), (131070, 2)]
+        self.assertEqual(fake_kernel.launches, expected)
+        self.assertEqual(sum(count for _, count in expected), 131072)
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
@@ -282,8 +281,8 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
     def test_vendor_chunked_launch_uses_logical_program_offset(self):
         case = make_case(4, 4, 16, 9, [3, 5], torch.float16)
         for module, cap in (
-            (DECODE_ATTENTION_ASCEND, 3),
             (DECODE_ATTENTION_ENFLAME, 5),
+            (DECODE_ATTENTION_KUNLUN, 5),
         ):
             real_cap = module._MAX_GRID_PROGRAMS
             module._MAX_GRID_PROGRAMS = cap
@@ -291,6 +290,21 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
                 self.assert_matches(module.decode_attention, case)
             finally:
                 module._MAX_GRID_PROGRAMS = real_cap
+
+        real_core_count = DECODE_ATTENTION_ASCEND._get_num_vector_cores
+        DECODE_ATTENTION_ASCEND._get_num_vector_cores = lambda _: 1
+        try:
+            self.assert_matches(DECODE_ATTENTION_ASCEND.decode_attention, case)
+        finally:
+            DECODE_ATTENTION_ASCEND._get_num_vector_cores = real_core_count
+
+    def test_kunlun_scalar_gqa_value_tiles_and_repeated_pages(self):
+        case = list(make_case(8, 2, 64, 257, [1, 31, 33], torch.bfloat16))
+        case[3] = case[3].to(torch.int32)
+        case[4] = case[4].to(torch.int32)
+        case[4][1::3] = case[4][0]
+
+        self.assert_matches(DECODE_ATTENTION_KUNLUN.decode_attention, case)
 
     def test_gqa_strides_variable_lengths_and_value_dim(self):
         case = list(make_case(8, 2, 40, 24, [3, 70], torch.bfloat16))

@@ -15,8 +15,14 @@
 import torch
 import triton
 import triton.language as tl
+import triton.runtime.driver as driver
 
-_MAX_GRID_PROGRAMS = 32768
+_DEFAULT_VECTOR_CORES = 40
+
+
+def _get_num_vector_cores(device_index):
+    properties = driver.active.utils.get_device_properties(device_index)
+    return int(properties.get("num_vectorcore", _DEFAULT_VECTOR_CORES))
 
 
 @triton.jit
@@ -46,84 +52,88 @@ def _decode_attention_kernel(
     output_stride_batch,
     output_stride_head,
     output_stride_dim,
-    program_start,
+    total_programs,
     BLOCK_LENGTH: tl.constexpr,
     BLOCK_D: tl.constexpr,
     BLOCK_DV: tl.constexpr,
 ):
-    program_id = program_start + tl.program_id(0)
-    batch = program_id // query_heads
-    query_head = program_id % query_heads
-    kv_head = query_head // (query_heads // kv_heads)
+    worker_id = tl.program_id(0)
+    worker_count = tl.num_programs(0)
+    for program_id in range(worker_id, total_programs, worker_count):
+        batch = program_id // query_heads
+        query_head = program_id % query_heads
+        kv_head = query_head // (query_heads // kv_heads)
 
-    start = tl.load(indptr_ptr + batch * indptr_stride).to(tl.int32)
-    end = tl.load(indptr_ptr + (batch + 1) * indptr_stride).to(tl.int32)
-    sequence_length = end - start
+        start = tl.load(indptr_ptr + batch * indptr_stride).to(tl.int32)
+        end = tl.load(indptr_ptr + (batch + 1) * indptr_stride).to(tl.int32)
+        sequence_length = end - start
 
-    dim = tl.arange(0, BLOCK_D)
-    dim_mask = dim < qk_dim
-    query = tl.load(
-        q_ptr
-        + batch * q_stride_batch
-        + query_head * q_stride_head
-        + dim * q_stride_dim,
-        mask=dim_mask,
-        other=0.0,
-    ).to(tl.float32)
-
-    value_offset = tl.arange(0, BLOCK_DV)
-    value_mask = value_offset < value_dim
-    maximum = float("-inf")
-    denominator = 0.0
-    accumulator = tl.zeros([BLOCK_DV], dtype=tl.float32)
-
-    for block_start in range(0, sequence_length, BLOCK_LENGTH):
-        positions = block_start + tl.arange(0, BLOCK_LENGTH)
-        position_mask = positions < sequence_length
-        pages = tl.load(
-            indices_ptr + (start + positions) * indices_stride,
-            mask=position_mask,
-            other=0,
-        ).to(tl.int32)
-
-        keys = tl.load(
-            k_ptr
-            + pages[:, None] * k_stride_page
-            + kv_head * k_stride_head
-            + dim[None, :] * k_stride_dim,
-            mask=position_mask[:, None] & dim_mask[None, :],
+        dim = tl.arange(0, BLOCK_D)
+        dim_mask = dim < qk_dim
+        query = tl.load(
+            q_ptr
+            + batch * q_stride_batch
+            + query_head * q_stride_head
+            + dim * q_stride_dim,
+            mask=dim_mask,
             other=0.0,
         ).to(tl.float32)
-        logits = tl.sum(query[None, :] * keys, axis=1) * sm_scale
-        logits = tl.where(position_mask, logits, float("-inf"))
 
-        new_maximum = tl.maximum(maximum, tl.max(logits, axis=0))
-        correction = tl.exp(maximum - new_maximum)
-        probabilities = tl.exp(logits - new_maximum)
-        denominator = denominator * correction + tl.sum(probabilities, axis=0)
+        value_offset = tl.arange(0, BLOCK_DV)
+        value_mask = value_offset < value_dim
+        maximum = float("-inf")
+        denominator = 0.0
+        accumulator = tl.zeros([BLOCK_DV], dtype=tl.float32)
 
-        values = tl.load(
-            v_ptr
-            + pages[:, None] * v_stride_page
-            + kv_head * v_stride_head
-            + value_offset[None, :] * v_stride_dim,
-            mask=position_mask[:, None] & value_mask[None, :],
-            other=0.0,
-        ).to(tl.float32)
-        accumulator = accumulator * correction + tl.sum(
-            probabilities[:, None] * values, axis=0
+        for block_start in range(0, sequence_length, BLOCK_LENGTH):
+            positions = block_start + tl.arange(0, BLOCK_LENGTH)
+            position_mask = positions < sequence_length
+            pages = tl.load(
+                indices_ptr + (start + positions) * indices_stride,
+                mask=position_mask,
+                other=0,
+            ).to(tl.int32)
+
+            keys = tl.load(
+                k_ptr
+                + pages[:, None] * k_stride_page
+                + kv_head * k_stride_head
+                + dim[None, :] * k_stride_dim,
+                mask=position_mask[:, None] & dim_mask[None, :],
+                other=0.0,
+            ).to(tl.float32)
+            logits = tl.sum(query[None, :] * keys, axis=1) * sm_scale
+            logits = tl.where(position_mask, logits, float("-inf"))
+
+            new_maximum = tl.maximum(maximum, tl.max(logits, axis=0))
+            correction = tl.exp(maximum - new_maximum)
+            probabilities = tl.exp(logits - new_maximum)
+            denominator = denominator * correction + tl.sum(
+                probabilities, axis=0
+            )
+
+            values = tl.load(
+                v_ptr
+                + pages[:, None] * v_stride_page
+                + kv_head * v_stride_head
+                + value_offset[None, :] * v_stride_dim,
+                mask=position_mask[:, None] & value_mask[None, :],
+                other=0.0,
+            ).to(tl.float32)
+            accumulator = accumulator * correction + tl.sum(
+                probabilities[:, None] * values, axis=0
+            )
+            maximum = new_maximum
+
+        output = accumulator / denominator
+        tl.store(
+            output_ptr
+            + batch * output_stride_batch
+            + query_head * output_stride_head
+            + value_offset * output_stride_dim,
+            output,
+            mask=value_mask,
         )
-        maximum = new_maximum
-
-    output = accumulator / denominator
-    tl.store(
-        output_ptr
-        + batch * output_stride_batch
-        + query_head * output_stride_head
-        + value_offset * output_stride_dim,
-        output,
-        mask=value_mask,
-    )
 
 
 def decode_attention(q, k_buffer, v_buffer, kv_indptr, kv_indices, sm_scale):
@@ -151,44 +161,44 @@ def decode_attention(q, k_buffer, v_buffer, kv_indptr, kv_indices, sm_scale):
     block_d = triton.next_power_of_2(qk_dim)
     block_dv = triton.next_power_of_2(value_dim)
     block_length = max(8, min(32, 8192 // max(block_d, block_dv)))
-    logical_programs = batch_size * query_heads
-    for program_start in range(0, logical_programs, _MAX_GRID_PROGRAMS):
-        program_count = min(
-            _MAX_GRID_PROGRAMS, logical_programs - program_start
-        )
-        _decode_attention_kernel[(program_count,)](
-            q,
-            k_buffer,
-            v_buffer,
-            routed_indptr,
-            routed_indices,
-            output,
-            query_heads,
-            kv_heads,
-            qk_dim,
-            value_dim,
-            float(sm_scale),
-            q.stride(0),
-            q.stride(1),
-            q.stride(2),
-            k_buffer.stride(0),
-            k_buffer.stride(1),
-            k_buffer.stride(2),
-            v_buffer.stride(0),
-            v_buffer.stride(1),
-            v_buffer.stride(2),
-            routed_indptr.stride(0),
-            routed_indices.stride(0),
-            output.stride(0),
-            output.stride(1),
-            output.stride(2),
-            program_start,
-            BLOCK_LENGTH=block_length,
-            BLOCK_D=block_d,
-            BLOCK_DV=block_dv,
-            num_warps=4,
-            num_stages=1,
-        )
+    total_programs = batch_size * query_heads
+    worker_count = min(
+        total_programs,
+        _get_num_vector_cores(q.device.index),
+    )
+    _decode_attention_kernel[(worker_count,)](
+        q,
+        k_buffer,
+        v_buffer,
+        routed_indptr,
+        routed_indices,
+        output,
+        query_heads,
+        kv_heads,
+        qk_dim,
+        value_dim,
+        float(sm_scale),
+        q.stride(0),
+        q.stride(1),
+        q.stride(2),
+        k_buffer.stride(0),
+        k_buffer.stride(1),
+        k_buffer.stride(2),
+        v_buffer.stride(0),
+        v_buffer.stride(1),
+        v_buffer.stride(2),
+        routed_indptr.stride(0),
+        routed_indices.stride(0),
+        output.stride(0),
+        output.stride(1),
+        output.stride(2),
+        total_programs,
+        BLOCK_LENGTH=block_length,
+        BLOCK_D=block_d,
+        BLOCK_DV=block_dv,
+        num_warps=4,
+        num_stages=1,
+    )
     return output
 
 
