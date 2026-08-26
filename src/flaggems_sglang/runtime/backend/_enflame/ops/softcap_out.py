@@ -27,7 +27,7 @@ def _softcap_out_kernel(
     x_ptr,
     output_ptr,
     n_elements,
-    softcap_const,
+    softcap_const: tl.constexpr,
     BLOCK_SIZE: tl.constexpr,
     CAP_RECIPROCAL_OVERFLOWS: tl.constexpr,
 ):
