@@ -1021,3 +1021,38 @@ team best；02:47:58 CST 公开榜刷新为第 `10/11`，超过原第 10 的 `2.
 合计正向波动。永久停止 65,535 cap 轴，不重传，也不再扩展 cap 搜索。当前第 9 名
 为 `3.0826x`，仍差 `0.087225x` 平均（`0.6978` 总分）；后续必须有独立单芯直接
 证据，不能依赖再次波动。
+
+## E12：Ascend masked-load `care_padding=False`
+
+状态：release 门禁通过，候选就绪，尚未提交
+
+E12 从 E10 `75be1f0` 的安全 `4096` physical-grid cap 分叉，只给 Ascend
+masked input load 增加 `care_padding=False`；八档 tile、autotune key、grid-stride、
+stride 数学、缩放和其余四个提交成员均与 E10 逐字节相同。固定
+FlagGems `ed2508b` 的 Ascend `moe_sum`（PR #2037，Apache-2.0）使用同一 hint；
+其后端说明指出它可消除 mask padding 引入的 Vector→MTE2 依赖。这是独立于 E11
+已停止 grid-cap 的 load-lowering 变量，不迁移 dense 地址分支或 top-k=2 kernel。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `b62fb7e71337ae0aa6dec6bb4cf4d85ba4071820` |
+| generic / AMD SHA-256 | `52a2fc979784f2bd25e7e17b9822c23b4f438efdf062c70bfb09aba9ba732335` / `3b0de225dbf5ffc1004096055da871c919870cc0ba6e4a0297551c5c7537e399` |
+| Ascend SHA-256 | `f6bb435e94d5018035d039bf56d2464ce2483cda823cade7667ac528fac09865` |
+| Kunlun / MetaX SHA-256 | `68b0abe07e3cf4f2b9cb86063e9ad1e18edd83d90341410cd281ec595c83406d` / `20db4f49aada2976723ab9dabd7013545a30a0998ee8fb21ad655375bd2cb794` |
+| test SHA-256 | `1bcda8e23a4dd5d5a23dcf27d91d9ea7e9fef8a179fafc9e735335e23bd081fd` |
+| screening | 首次目录 `gpu:/tmp/flagos-moe-sum-reduce-care-screen.2Kb0aE` 仅因未携带仓库 Black 79 列配置停止，日志 SHA-256 `badf22b4eb80ba437d80361cc795aaade9976c8871868e8bd05fddf4ae42b365`；修正后的独立目录 `gpu:/tmp/flagos-moe-sum-reduce-care-screen.UcFzdp` 为 10/10、`SCREENING_OK`，日志 SHA-256 `78394570a460e95cf814952564905247456069c7ca7a52135112fb5f4739d979` |
+| release | `gpu:/tmp/flagos-moe-sum-reduce-care-release.zgthXU`；10/10、`RELEASE_OK`；脚本/日志 SHA-256 `dc6f39f332aeda68e35a4c3c4dda2d2d94a2db2040287fa1c928f40cc99ba9a9` / `891a6f1fff60d09c61a1b1c3780dc37fc8cf7d3f6bd87fd77bf30629f1a52528` |
+| Git archive SHA-256 | `cb8f0f4451777e313ebb26b4fff373f9f589e027d09a673c08d71c8dbbd6e483` |
+| canonical ZIP | `artifacts/competition/moe_sum_reduce/e12-b62fb7e/moe_sum_reduce.zip`，16,349 bytes，SHA-256 `73f31ce3a95bf0557a159a9a851c454fa8df7fde53c392bd34d33f937e50c089` |
+
+远端 RTX 5070 Ti 的标准 Triton 3.7.1 不接受 Ascend 扩展关键字，因此 release
+只对该 vendor 做 py_compile、格式、静态来源和 launch/路由合约检查；未声称在
+NVIDIA 上运行 Ascend kernel。generic、AMD、Kunlun、MetaX 的 7 个 runtime
+回归与 3 个静态/launch 测试全部通过；E10 已有 Ascend 120/120 forced-config
+正确性证据，E12 只改变后端 padding lowering。
+
+03:21 CST 实时额度为 `8/30`；当前团队最佳 E11 为 `2.995375x`、公开第 10，
+第 9 为 `3.0826x`。若冻结 E11 其余七芯，华为需由 `1.1336x` 提高到
+`>1.8314x` 才跨榜；以 E10 同 cap 的 `1.2604x` 为直接机制基线，稳健目标为
+`>2.3372x`。平台门要求 8/8 valid、华为选中 `_ascend`、平均高于 team best；
+无论结果均只提交一次并停止 `care_padding` 单变量，后续 dense 地址分支另立候选。
