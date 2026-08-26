@@ -185,11 +185,6 @@ class AmdLaunchPolicyTest(unittest.TestCase):
 
 
 class AscendLaunchPolicyTest(unittest.TestCase):
-    def test_ascend_uses_backend_padding_hint(self):
-        source = ASCEND_MODULE_PATH.read_text()
-        self.assertEqual(source.count("care_padding=False"), 1)
-        self.assertIn("FlagGems@ed2508b, PR #2037", source)
-
     def test_ascend_uses_safe_official_dual_level_configs(self):
         configs = ASCEND_MODULE._moe_sum_reduce_kernel.configs
         self.assertEqual(
@@ -249,6 +244,23 @@ class AscendLaunchPolicyTest(unittest.TestCase):
         self.assertNotIn("num_warps", fake_kernel.kwargs)
         self.assertNotIn("num_stages", fake_kernel.kwargs)
         self.assertEqual(fake_kernel.kwargs["topk"], 3)
+        self.assertFalse(fake_kernel.kwargs["IS_CONTIGUOUS"])
+
+        with mock.patch.object(
+            ASCEND_MODULE, "_moe_sum_reduce_kernel", fake_kernel
+        ):
+            ASCEND_MODULE.moe_sum_reduce(torch.empty((32, 3, 1025)), 0.75)
+
+        self.assertTrue(fake_kernel.kwargs["IS_CONTIGUOUS"])
+
+        with mock.patch.object(
+            ASCEND_MODULE, "_moe_sum_reduce_kernel", fake_kernel
+        ):
+            ASCEND_MODULE.moe_sum_reduce(
+                torch.empty((32, 3, 2050))[:, :, ::2], 0.75
+            )
+
+        self.assertFalse(fake_kernel.kwargs["IS_CONTIGUOUS"])
 
     def test_ascend_caps_all_max_shape_config_grids(self):
         class FakeKernel:
