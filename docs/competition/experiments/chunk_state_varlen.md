@@ -228,7 +228,7 @@ case `Pipeline run failed`——证明该 varlen kernel 结构本身在 GCU 编�
 
 ## E2：metadata pack + 规整 FP32 BMM（高倍数冲刺重开）
 
-状态：screening 与代理基准通过，release 待执行。
+状态：release 门禁与不可变 ZIP 验签通过，候选就绪，待实时 preflight。
 
 2026-08-26 14:04 CST 实时状态为团队 `SoulCoder`、Task 13 `competing` 且可
 提交，当日剩余额度 `28/30`。S1b 已通过六芯合计 1301.519x；只要燧原与昆仑
@@ -283,6 +283,25 @@ wrapper-inclusive 代理中位：generic 0.04018ms、Enflame 0.06625ms、Kunlun
 `a4df7689bf02a90d68cd82c1b12476d0123ec8fa87ee9460a484dfba2896ab10`，
 尾行为 `BENCHMARK_OK`。该数据仅作 NVIDIA 资源代理；两款目标编译器仍以平台
 结果为准。
+
+source/verification commit 均为
+`fff9ea904d025a589cff2c4daf6cec057075dcac` 的 Git-object release 位于
+`gpu:/tmp/flagos-chunk-state-varlen-e2-release.p50nDq`，PID/PGID `132120`，
+wall 900s；`replay.sh` SHA-256
+`7bb6457e79c4f4b964786086b9b941eef68f30ca96a405952f6ae494bc55297b`。
+10/10 unittest 通过（0.728s），尾行为 `RELEASE_OK`，`release.log`
+SHA-256
+`5e3cf904d9a96f8fa50e914a2fa0226485e02a7a97b60e18cdac64686a48ec79`；
+release 前后 manifest SHA-256 均为
+`3f2931b1a566c1b085af12b856123c009491c60dd7724dc925e44646ab383d0c`，
+与最终 screening 一致。
+
+canonical ZIP
+`artifacts/competition/chunk_state_varlen/e2-fff9ea9/chunk_state_varlen.zip`，
+大小 44399B，SHA-256
+`91ec55f502bcdb4156f422e2f61f10350d5177113b0d7eae9c23ebe389984330`，
+成员为 generic + ascend/enflame/iluvatar/kunlunxin；`--verify-existing`、
+`unzip -t` 和成员白名单均通过。
 
 E2 只提交一次；若 8/8 即停止 Task 13。若仅一款失败且 traceback 明确落在
 pack 的地址/资源结构，最多允许一个结构不同的 pack 修复；若 BMM 失败、两款
