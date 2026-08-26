@@ -341,7 +341,7 @@ generic。远端 ZIP 回读仍因未配置受信 hostname 为 `unavailable`，�
 
 ## E6：恢复 `BV=8` / 4-warps reduction ownership（晋升）
 
-状态：release 与不可变 ZIP 门禁通过；待实时 preflight
+状态：release 与不可变 ZIP 门禁通过；submission `5087` 评测中
 
 验证时间：2026-08-26 16:44–16:47 CST
 
@@ -373,3 +373,30 @@ speedup 9.8554x/37.9849x；generic contract/empty 均 `(0,0)`。NVIDIA vendor
 三文件 commit/远端 SHA 一致；py_compile、isort、flake8、Black 26.5.1、
 unittest、规范构建与 `--verify-existing` 全部通过。E6 用一轮平台结果判定
 layout/warp ownership 是否是 E2 数值指纹的必要条件。
+
+### E6 平台四投：BV8 ownership 否决
+
+2026-08-26 16:49:07 CST，E6 经实时 preflight 后执行一次性提交；submission
+`5087`，额度 21/30 → 20/30，国际 A 选择 NVIDIA vendor，其余芯选择 generic。
+远端 ZIP 回读仍为 `unavailable`，但平台提交成功，未重试。
+
+截至 16:52:04 CST 为 7/8 terminal、1 通过：国际 A 5.505x；天数、沐曦、
+燧原、海光、华为、国际 B 的 case 3/case 4 错误数分别为 `881/5`、
+`131012/10`、`583/3`、`727/13`、`532/9`、`844/32`；昆仑待回调。BV8/4-warp
+没有恢复 E2 的天数近零指纹，且没有新增非 NVIDIA 通过，layout/warp ownership
+假设被否决。
+
+同一时刻三笔 submission 均未完整终态：5082 为 6/8（燧原、昆仑 pending），
+5083 与 5087 均为 7/8（昆仑 pending）；三笔都只有国际 A 通过。
+
+### E7 offline：generic 恢复 `tl.exp`（不晋升）
+
+缓存 backend 静态审计显示，Iluvatar/MetaX descriptor 的 `device_name="cuda"` 会让
+项目 extra shim 尝试 CUDA libdevice，因此 E2 `tl.exp` → E4–E6 shim 是值得隔离的
+变量。只读代理筛选将 E6 generic 恢复为 `tl.exp` 后，RTX 8-seed 短/长累计错误仅
+从 `142/8469` 变为 `141/8456`，仍无任何非 NVIDIA 零误差证据。该工作树实验已
+回退，未 commit、未构建 ZIP、未 preflight。
+
+按 2026-08-26 16:52 CST 协调门禁，后续必须先取得新的非 NVIDIA 逐芯正信号，
+或严格证明候选为何能相对 E2/E5 清零，才允许再次提交；当前保留 20/30 额度并只读
+观察三笔 pending 回调。
