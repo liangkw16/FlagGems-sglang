@@ -462,3 +462,13 @@ generic + ascend/enflame/iluvatar/kunlunxin，重复构建状态
 E4 只允许一次正式提交。E3 七个冻结后端合计 1290.8345x；昆仑只要达到
 0.1x，理论平均即 161.3668x。若 Kunlun 编译/正确性失败或低于门槛，永久停止
 Task 13，不对 tile、warps 或逐段 launch 再做微调。
+
+### E4 平台提交
+
+2026-08-27 01:15:35 CST 执行唯一一次正式提交（submission `5220`、当日序号
+`10`，preflight 额度 `21/30`）。平台返回的 `file_url_sha256` 为
+`9b9bce972e4eb6540ca27588a24578d1de8df69fb1974615ee243c45edbaa34a`；对官方
+对象存储 URL 做无认证、无重定向回读，复验为 42,317B、SHA-256
+`bd112d1efa5098b8294c2b772ef2fa8ee99783e1b2b880521995eac76a770b1b`，与本地
+canonical ZIP 完全一致。八芯均已进入队列，平台选择的 generic 与四个 vendor
+文件符合 manifest；等待同一 submission 终态，不重试。
