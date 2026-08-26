@@ -35,6 +35,7 @@ NVIDIA_MODULE_PATH = (
     / "ops"
     / "fused_recurrent_gdn.py"
 )
+E9_VENDORS = ("iluvatar", "metax", "enflame", "hygon", "ascend", "amd")
 
 
 def load_module(name, path):
@@ -50,6 +51,20 @@ GENERIC_MODULE = load_module(
     "fused_recurrent_gdn_generic", GENERIC_MODULE_PATH
 )
 MODULE = load_module("fused_recurrent_gdn_nvidia", NVIDIA_MODULE_PATH)
+VENDOR_MODULES = {
+    vendor: load_module(
+        f"fused_recurrent_gdn_{vendor}",
+        Path(__file__).parents[1]
+        / "src"
+        / "flaggems_sglang"
+        / "runtime"
+        / "backend"
+        / f"_{vendor}"
+        / "ops"
+        / "fused_recurrent_gdn.py",
+    )
+    for vendor in E9_VENDORS
+}
 
 
 def reference(
@@ -408,6 +423,46 @@ class FusedRecurrentGdnTest(unittest.TestCase):
                     atol=1e-2,
                     rtol=1e-2,
                     equal_nan=True,
+                )
+
+    def test_e9_vendor_reduction_orders_k64_contract(self):
+        case = make_case(
+            torch.bfloat16,
+            batch=2,
+            sequence_length=6,
+            query_heads=2,
+            value_heads=4,
+            key_dim=64,
+            value_dim=17,
+            beta_is_vector=True,
+            use_initial_state=True,
+        )
+        for vendor, module in VENDOR_MODULES.items():
+            with self.subTest(vendor=vendor):
+                self.assert_matches(
+                    case,
+                    output_final_state=True,
+                    use_qk_l2norm_in_kernel=False,
+                    module=module,
+                )
+
+    def test_e9_vendor_scalar_beta_and_empty_sequence(self):
+        for vendor, module in VENDOR_MODULES.items():
+            with self.subTest(vendor=vendor):
+                self.assert_matches(
+                    make_case(
+                        torch.bfloat16,
+                        batch=1,
+                        sequence_length=0,
+                        query_heads=1,
+                        value_heads=2,
+                        key_dim=64,
+                        value_dim=8,
+                        use_initial_state=True,
+                    ),
+                    output_final_state=True,
+                    use_qk_l2norm_in_kernel=False,
+                    module=module,
                 )
 
 
