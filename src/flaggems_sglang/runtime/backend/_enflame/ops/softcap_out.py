@@ -17,7 +17,7 @@ import triton
 import triton.language as tl
 
 try:
-    from flaggems_sglang.utils.triton_lang_helper import tl_extra_shim
+    from triton.language.extra.gcu import libdevice as tl_extra_shim
 except ImportError:
     from triton.language.extra import libdevice as tl_extra_shim
 
