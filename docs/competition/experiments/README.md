@@ -21,10 +21,10 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | Task | 算子账本 | 候选 | ZIP SHA-256 | 当前证据 | 建议 |
 | ---: | --- | --- | --- | --- | --- |
 | 08 | [`apply_token_bitmask`](apply_token_bitmask.md) | `e2-86fca87` | `88d2e8387ac2e7de785cf1574ad9c762df54c0baa79e4ada67fad7252987c1dc` | E2 平台 8/8、4.686925x、第 12/13；燧原 0.4292x → 2.8510x，团队当前最佳 | 保留 E2，转其他算子 |
-| 09 | [`bmm_chunk`](bmm_chunk.md) | `e4-93035e4` | `a967742cbeee3053b8f2b9af261a30cf3bae7b9a745c8adaf15abc61cd434f85` | E3e 平台 8/8、1.283x；E4 仅按官方 GCU300 把燧原 grid cap 64→6，Git-object release 8/8 与 total=400 多轮覆盖通过 | E4 只提交一次；燧原不高于 0.149x 即永久停止 |
+| 09 | [`bmm_chunk`](bmm_chunk.md) | `e4-93035e4` | `a967742cbeee3053b8f2b9af261a30cf3bae7b9a745c8adaf15abc61cd434f85` | E4 平台 8/8、1.27375x；官方 GCU300 cap 6 使燧原 0.149→0.153x，但平均未超过 E3e 的 1.283x | 保留 E3e team best；Task 09 永久停止 |
 | 10 | [`chunk_cumsum`](chunk_cumsum.md) | `s2b-63e7943` | `c822f75d719f8919269c7566b1210b6e31dc6ce3292229a838723f7945b15923` | S2b 平台 8/8 正确、invalid_threshold；华为 UB tile 上限修复生效；燧原 0.0375x/昆仑 0.012x 为 cumsum lowering 固有瓶颈 | 已按两次规则停止；重试需改写 cumsum 算法形式 |
 | 11 | [`chunk_local_cumsum_vector`](chunk_local_cumsum_vector.md) | `e1b-dddef74` | `cf4dcaf05640599fe5b50ee9633ba19d2a4f13f2b47f856e88259242e975bab9` | 两次提交均 7/8；昆仑 0.016x/华为 0.0255x 与折叠形态无关，cumsum 固有；燧原三形态编译失败 | 已按两次规则停止；同 Task 10 结论 |
-| 12 | [`chunk_state`](chunk_state.md) | `e7-294990c` | `583b55a2518091cd707ff6dbf1080a10bd1fe2fd690da2885d0bfd48daae04a8` | E7 平台 8/8、**4.0371875x team best**；官方 Ascend Cube 路线使华为 0.329→2.1185x（6.44 倍），其余七芯稳定 | Task 12 停止；继续 Task 09 燧原官方 cap 6 |
+| 12 | [`chunk_state`](chunk_state.md) | `e7-294990c` | `583b55a2518091cd707ff6dbf1080a10bd1fe2fd690da2885d0bfd48daae04a8` | E7 平台 8/8、**4.0371875x team best**；官方 Ascend Cube 路线使华为 0.329→2.1185x（6.44 倍），其余七芯稳定 | Task 12 永久停止；保留 E7 |
 | 13 | [`chunk_state_varlen`](chunk_state_varlen.md) | `s1b-1975cf7` | `0319c0e26b7cd6fb12f33b43771572a058306e89ac5982234531552daa0203d1` | 两次提交均 6/8；天数 vendor 132x、华为 27.7x 生效；燧原/昆仑对该 varlen 结构编译失败（结构性） | 已按两次规则停止 |
 | 14 | [`context_attention`](context_attention.md) | `e1a-6246fa8` | `8bfc8843bb6951de12160d83dbd56428c3697262ad331a05183217b9aa2d7861` | E1a 终态 5/8：天数 vendor 1.99x、nvidia vendor 6.32x；燧原超时疑似死循环、昆仑评测器崩溃、华为 flash 边界 bug | 保留第 2 次额度；三芯失败互独立无单变量解 |
 | 15 | [`decode_attention`](decode_attention.md) | `e2a-5add38c` | `b2fdcbc98b098165c3defe61cb9b0a5f5e021dfe04dbb5798dfd684b0fac8751` | 两次提交 6–7/8；华为 case 8 整行重复指纹（Ascend flash 边界 bug）两种 grid 均现；昆仑评测超时崩溃 | 已按两次规则停止 |

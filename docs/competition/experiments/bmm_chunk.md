@@ -546,3 +546,28 @@ warps/stages、索引、strides 与其余三个 ZIP 成员全部冻结。现有
 无论结果如何均永久停止 Task 09，不扫 cap 3/12/24。新均值公式为
 `1.283 + (Enflame_new - 0.149) / 8`。
 
+### E4 平台结果：官方 cap 6 小幅改善燧原，保留 E3e
+
+2026-08-26 19:51:31 CST 唯一提交（submission `5125`，当日序号 `14`，
+额度 `17/30`→`16/30`，`file_url_sha256` 为
+`92c5501b120dddb26509ef1a7763435d8b49aff912d3d1e5ab5972d3f59ec192`）。
+上传后远端文件 23,306 bytes，SHA-256 与 canonical ZIP
+`a967742cbeee3053b8f2b9af261a30cf3bae7b9a745c8adaf15abc61cd434f85`
+一致。19:52:15 查询终态 `completed` / **valid**，8/8 通过，平均
+`1.27375x`：
+
+| 芯片 | speedup | 选中文件 |
+| --- | ---: | --- |
+| 天数 | 1.6890x | `bmm_chunk_iluvatar.py` |
+| 沐曦 | 1.6855x | `bmm_chunk.py` |
+| 燧原 | **0.1530x** | `bmm_chunk_enflame.py` |
+| 海光 | 1.9460x | `bmm_chunk.py` |
+| 昆仑芯 | 0.1860x | `bmm_chunk.py` |
+| 华为 | 0.4330x | `bmm_chunk_ascend.py` |
+| 国际通用 A | 3.1475x | `bmm_chunk.py` |
+| 国际通用 B | 0.9500x | `bmm_chunk.py` |
+
+官方 GCU300 的 cap 6 使燧原相对 E3e `0.1490x→0.1530x`（+2.7%），
+验证方向但收益过小；其余芯片的同字节结果波动令平均低于 E3e 的
+`1.283x`，因此 submission `4645` 继续作为 team best。按预设止损门禁，
+Task 09 永久停止，不扫描更多 cap。
