@@ -1,6 +1,6 @@
 {
   "race_id": "782kzq4m",
-  "fetched_at": "2026-08-27T00:31:02+08:00",
+  "fetched_at": "2026-08-27T01:18:19+08:00",
   "tasks": [
     {
       "tid": "s2t1op001",
@@ -236,7 +236,7 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 176,
+      "submission_count": 177,
       "participating_team_count": 23,
       "current_leader_team_name": "hbmu9306",
       "current_best_speedup": 709.436825,
@@ -298,7 +298,7 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 336,
+      "submission_count": 338,
       "participating_team_count": 28,
       "current_leader_team_name": "c2flow",
       "current_best_speedup": 5.0000625,
@@ -391,12 +391,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 106,
+      "submission_count": 107,
       "participating_team_count": 19,
       "current_leader_team_name": "c2flow",
       "current_best_speedup": 707.0045,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 5
+      "threshold_team_count": 6
     },
     {
       "tid": "s2t1op014",
@@ -546,7 +546,7 @@
       "status": "submitting",
       "competition_status": "pending_challenge",
       "speedup_threshold": 0.1,
-      "submission_count": 119,
+      "submission_count": 122,
       "participating_team_count": 28,
       "current_leader_team_name": null,
       "current_best_speedup": null,
@@ -577,7 +577,7 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 89,
+      "submission_count": 90,
       "participating_team_count": 20,
       "current_leader_team_name": "MakeYUNAGreatAgain",
       "current_best_speedup": 5.55235,
@@ -732,7 +732,7 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 163,
+      "submission_count": 165,
       "participating_team_count": 19,
       "current_leader_team_name": "MakeYUNAGreatAgain",
       "current_best_speedup": 58.56308333,
