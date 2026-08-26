@@ -636,3 +636,9 @@ Ascend、Kunlun 与 S6 逐字节相同。
 8/8 valid、Enflame 高于 S6 `1.38541667x` 且平均高于 `2.05411458x`；显著收益门
 为 Enflame 至少 `1.54541667x`。任一基础门失败即保留 S6，并永久停止 Enflame
 tile 轴，不尝试 64K、warps、grid 或数学变体。
+
+2026-08-27 01:21:49 CST 经实时门禁执行 S8 唯一一次提交，submission `5222`、
+当日序号 `12`，额度预计由 `19/30` 变为 `18/30`。`file_url_sha256` 为
+`068ee11071f32b153e259693f637021533daa5bdf1fba15b24e7e5d78c04e151`；匿名对象
+回读为 10,025 bytes，SHA-256 与 canonical ZIP 完全一致，四个成员均通过
+`unzip -t`。平台已选中预期的 generic、Ascend、Enflame、Kunlun 路径；禁止重传。

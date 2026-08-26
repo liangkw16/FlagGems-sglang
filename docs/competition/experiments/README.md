@@ -36,7 +36,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `e6-9d3c82a` | `cf5ccff1f3724f1f1561b1a174327a961ef44db037c0c1a15e8d2dc660e7782d` | E6 平台 8/8、2.795625x team best；沐曦 3.504→3.863x（+10.25%） | 保留 E6；MetaX launch 轴停止 |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s2c-7857dca` | `357e8a690cca68123aabebdbb5500a86ebd66fe328105a8b91f7c1afe489cb38` | S2c 终态 6/8；六芯高分（海光 82.6x、天数 47.8x）；燧原 case 2 编译失败、昆仑评测异常 | 已按两次规则停止 |
 | 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `e11-dd4632a` | `c23266792c400636b2a7a4aa418defa2eb15f19623e8419316133dceb4463ff7` | E11 官方 XPU legacy masked-memory 使昆仑五个 case 全部跑完，但均数值失败；燧原回调待定，其余六芯已通过 | 官方两种 masked-memory 路径均验证失败，Task 23/22 永久停止 |
-| 24 | [`softcap_out`](softcap_out.md) | `s8-b2a249b` | `9fd897ad5b1e167c8c0a49826c295b2387b160b2d378ffacec61d74a6e469899` | S8 release 14/14；仅将燧原 tile 4096→32768，grid cap 12 不变 | canonical ZIP 已冻结，待一次性平台提交；S6 2.05411458x 仍为 team best |
+| 24 | [`softcap_out`](softcap_out.md) | `s8-b2a249b` | `9fd897ad5b1e167c8c0a49826c295b2387b160b2d378ffacec61d74a6e469899` | S8 submission 5222 评测中；仅将燧原 tile 4096→32768，grid cap 12 不变 | 已完成唯一提交和匿名回读；S6 2.05411458x 暂为 team best |
 
 ## 建议提交顺序
 
