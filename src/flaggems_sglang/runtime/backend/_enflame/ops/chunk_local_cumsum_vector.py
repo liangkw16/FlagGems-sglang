@@ -37,6 +37,7 @@ def _chunk_local_cumsum_vector_kernel(
     BLOCK_F: tl.constexpr,
     REVERSE: tl.constexpr,
     HAS_SCALE: tl.constexpr,
+    USE_DOT: tl.constexpr,
 ):
     pid_feature = tl.program_id(0)
     pid_chunk = tl.program_id(1)
@@ -47,30 +48,51 @@ def _chunk_local_cumsum_vector_kernel(
     offsets_s = offsets_f - offsets_h * state_size
     mask_f = offsets_f < nheads * state_size
     mask_c = offsets_c < CHUNK_SIZE
-    mask = mask_f[:, None] & mask_c[None, :]
     if REVERSE:
         offsets_t = pid_chunk * CHUNK_SIZE + CHUNK_SIZE - 1 - offsets_c
     else:
         offsets_t = pid_chunk * CHUNK_SIZE + offsets_c
 
-    input_offsets = (
-        pid_batch * g_stride_b
-        + offsets_t[None, :] * g_stride_t
-        + offsets_h[:, None] * g_stride_h
-        + offsets_s[:, None] * g_stride_s
-    )
-    values = tl.load(g_ptr + input_offsets, mask=mask, other=0.0).to(
-        tl.float32
-    )
-    output = tl.cumsum(values, axis=1)
+    if USE_DOT:
+        mask = mask_c[:, None] & mask_f[None, :]
+        input_offsets = (
+            pid_batch * g_stride_b
+            + offsets_t[:, None] * g_stride_t
+            + offsets_h[None, :] * g_stride_h
+            + offsets_s[None, :] * g_stride_s
+        )
+        values = tl.load(g_ptr + input_offsets, mask=mask, other=0.0).to(
+            tl.float32
+        )
+        triangle = tl.arange(0, BLOCK_SIZE)
+        triangle = tl.where(triangle[:, None] >= triangle[None, :], 1.0, 0.0)
+        output = tl.dot(triangle, values, input_precision="ieee")
+        output_offsets = (
+            pid_batch * output_stride_b
+            + offsets_t[:, None] * output_stride_t
+            + offsets_h[None, :] * output_stride_h
+            + offsets_s[None, :] * output_stride_s
+        )
+    else:
+        mask = mask_f[:, None] & mask_c[None, :]
+        input_offsets = (
+            pid_batch * g_stride_b
+            + offsets_t[None, :] * g_stride_t
+            + offsets_h[:, None] * g_stride_h
+            + offsets_s[:, None] * g_stride_s
+        )
+        values = tl.load(g_ptr + input_offsets, mask=mask, other=0.0).to(
+            tl.float32
+        )
+        output = tl.cumsum(values, axis=1)
+        output_offsets = (
+            pid_batch * output_stride_b
+            + offsets_t[None, :] * output_stride_t
+            + offsets_h[:, None] * output_stride_h
+            + offsets_s[:, None] * output_stride_s
+        )
     if HAS_SCALE:
         output *= scale
-    output_offsets = (
-        pid_batch * output_stride_b
-        + offsets_t[None, :] * output_stride_t
-        + offsets_h[:, None] * output_stride_h
-        + offsets_s[:, None] * output_stride_s
-    )
     tl.store(output_ptr + output_offsets, output, mask=mask)
 
 
@@ -88,8 +110,9 @@ def chunk_local_cumsum_vector(g, chunk_size, reverse=False, scale=None):
     if output.numel() == 0:
         return output
 
-    block_size = triton.next_power_of_2(chunk_size)
-    block_f = 1
+    use_dot = chunk_size <= 64
+    block_size = max(16, triton.next_power_of_2(chunk_size))
+    block_f = 32 if use_dot else 1
     features = nheads * state_size
     grid = (
         triton.cdiv(features, block_f),
@@ -115,7 +138,8 @@ def chunk_local_cumsum_vector(g, chunk_size, reverse=False, scale=None):
         BLOCK_F=block_f,
         REVERSE=reverse,
         HAS_SCALE=scale is not None,
-        num_warps=2 if chunk_size <= 8 else 4,
+        USE_DOT=use_dot,
+        num_warps=4 if use_dot or chunk_size > 8 else 2,
         num_stages=1,
     )
     return output

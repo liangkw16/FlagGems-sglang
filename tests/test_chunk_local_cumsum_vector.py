@@ -122,6 +122,28 @@ class ChunkLocalCumsumVectorTest(unittest.TestCase):
                                 g, original, atol=0.0, rtol=0.0
                             )
 
+    def test_vendors_preserve_folded_cumsum(self):
+        batch, seqlen, nheads, state_size, chunk_size = 1, 16384, 64, 64, 128
+        feature_blocks = (nheads * state_size + 7) // 8
+        total = feature_blocks * (seqlen // chunk_size) * batch
+        self.assertGreater(total, 65535)
+        g = torch.randn(
+            (batch, seqlen, nheads, state_size),
+            device="cuda",
+            dtype=torch.bfloat16,
+        )
+        expected = reference(g, chunk_size)
+
+        for name, module in (
+            ("ascend", ASCEND_MODULE),
+            ("kunlunxin", KUNLUN_MODULE),
+        ):
+            with self.subTest(module=name):
+                actual = module.chunk_local_cumsum_vector(g, chunk_size)
+                torch.testing.assert_close(
+                    actual, expected, atol=1.5e-2, rtol=1.5e-2
+                )
+
     def test_empty_input(self):
         g = torch.empty((2, 0, 3, 5), device="cuda")
 
@@ -130,10 +152,52 @@ class ChunkLocalCumsumVectorTest(unittest.TestCase):
         self.assertEqual(actual.shape, g.shape)
         self.assertEqual(actual.dtype, torch.float32)
 
-    def test_vendors_cover_folded_grid(self):
+    def test_dot_vendors_cover_non_power_of_two_chunk(self):
+        g = torch.randn((1, 320, 64, 256), device="cuda", dtype=torch.float32)
+
+        for reverse in (False, True):
+            expected = reference(g, 5, reverse=reverse, scale=1.5)
+            for name, module in (
+                ("ascend", ASCEND_MODULE),
+                ("kunlunxin", KUNLUN_MODULE),
+                ("enflame", ENFLAME_MODULE),
+            ):
+                with self.subTest(module=name, reverse=reverse):
+                    actual = module.chunk_local_cumsum_vector(
+                        g, 5, reverse=reverse, scale=1.5
+                    )
+                    torch.testing.assert_close(
+                        actual, expected, atol=1e-4, rtol=1e-4
+                    )
+
+    def test_dot_vendors_cover_segmented_grid(self):
+        batch, seqlen, nheads, state_size, chunk_size = 1, 128, 64, 256, 1
+        feature_blocks = (nheads * state_size + 31) // 32
+        total = feature_blocks * (seqlen // chunk_size) * batch
+        self.assertGreater(total, 65535)
+        g = torch.randn(
+            (batch, seqlen, nheads, state_size),
+            device="cuda",
+            dtype=torch.bfloat16,
+        )
+        expected = reference(g, chunk_size, reverse=True)
+
+        for name, module in (
+            ("ascend", ASCEND_MODULE),
+            ("kunlunxin", KUNLUN_MODULE),
+        ):
+            with self.subTest(module=name):
+                actual = module.chunk_local_cumsum_vector(
+                    g, chunk_size, reverse=True
+                )
+                torch.testing.assert_close(
+                    actual, expected, atol=1.5e-2, rtol=1.5e-2
+                )
+
+    def test_vendors_cover_large_grid(self):
         torch.manual_seed(20260824)
         batch, seqlen, nheads, state_size, chunk_size = 2, 8192, 32, 16, 64
-        block_f = min(8, max(1, 4096 // chunk_size))
+        block_f = 8
         feature_blocks = (nheads * state_size + block_f - 1) // block_f
         total = feature_blocks * (seqlen // chunk_size) * batch
         self.assertGreater(total, 4096)

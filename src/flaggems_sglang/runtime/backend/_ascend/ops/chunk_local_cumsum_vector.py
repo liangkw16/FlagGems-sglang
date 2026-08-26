@@ -37,6 +37,7 @@ def _chunk_local_cumsum_vector_kernel(
     BLOCK_F: tl.constexpr,
     REVERSE: tl.constexpr,
     HAS_SCALE: tl.constexpr,
+    USE_DOT: tl.constexpr,
 ):
     pid_feature = tl.program_id(0)
     pid_chunk = tl.program_id(1)
@@ -47,30 +48,51 @@ def _chunk_local_cumsum_vector_kernel(
     offsets_s = offsets_f - offsets_h * state_size
     mask_f = offsets_f < nheads * state_size
     mask_c = offsets_c < CHUNK_SIZE
-    mask = mask_f[:, None] & mask_c[None, :]
     if REVERSE:
         offsets_t = pid_chunk * CHUNK_SIZE + CHUNK_SIZE - 1 - offsets_c
     else:
         offsets_t = pid_chunk * CHUNK_SIZE + offsets_c
 
-    input_offsets = (
-        pid_batch * g_stride_b
-        + offsets_t[None, :] * g_stride_t
-        + offsets_h[:, None] * g_stride_h
-        + offsets_s[:, None] * g_stride_s
-    )
-    values = tl.load(g_ptr + input_offsets, mask=mask, other=0.0).to(
-        tl.float32
-    )
-    output = tl.cumsum(values, axis=1)
+    if USE_DOT:
+        mask = mask_c[:, None] & mask_f[None, :]
+        input_offsets = (
+            pid_batch * g_stride_b
+            + offsets_t[:, None] * g_stride_t
+            + offsets_h[None, :] * g_stride_h
+            + offsets_s[None, :] * g_stride_s
+        )
+        values = tl.load(g_ptr + input_offsets, mask=mask, other=0.0).to(
+            tl.float32
+        )
+        triangle = tl.arange(0, BLOCK_SIZE)
+        triangle = tl.where(triangle[:, None] >= triangle[None, :], 1.0, 0.0)
+        output = tl.dot(triangle, values, input_precision="ieee")
+        output_offsets = (
+            pid_batch * output_stride_b
+            + offsets_t[:, None] * output_stride_t
+            + offsets_h[None, :] * output_stride_h
+            + offsets_s[None, :] * output_stride_s
+        )
+    else:
+        mask = mask_f[:, None] & mask_c[None, :]
+        input_offsets = (
+            pid_batch * g_stride_b
+            + offsets_t[None, :] * g_stride_t
+            + offsets_h[:, None] * g_stride_h
+            + offsets_s[:, None] * g_stride_s
+        )
+        values = tl.load(g_ptr + input_offsets, mask=mask, other=0.0).to(
+            tl.float32
+        )
+        output = tl.cumsum(values, axis=1)
+        output_offsets = (
+            pid_batch * output_stride_b
+            + offsets_t[None, :] * output_stride_t
+            + offsets_h[:, None] * output_stride_h
+            + offsets_s[:, None] * output_stride_s
+        )
     if HAS_SCALE:
         output *= scale
-    output_offsets = (
-        pid_batch * output_stride_b
-        + offsets_t[None, :] * output_stride_t
-        + offsets_h[:, None] * output_stride_h
-        + offsets_s[:, None] * output_stride_s
-    )
     tl.store(output_ptr + output_offsets, output, mask=mask)
 
 
@@ -138,6 +160,90 @@ def _chunk_local_cumsum_vector_folded_kernel(
         tl.store(output_ptr + output_offsets, output, mask=mask)
 
 
+@triton.jit
+def _chunk_local_cumsum_vector_segmented_kernel(
+    g_ptr,
+    output_ptr,
+    nheads,
+    state_size,
+    nchunks,
+    base_program,
+    g_stride_b,
+    g_stride_t,
+    g_stride_h,
+    g_stride_s,
+    output_stride_b,
+    output_stride_t,
+    output_stride_h,
+    output_stride_s,
+    scale,
+    CHUNK_SIZE: tl.constexpr,
+    BLOCK_SIZE: tl.constexpr,
+    BLOCK_F: tl.constexpr,
+    REVERSE: tl.constexpr,
+    HAS_SCALE: tl.constexpr,
+    USE_DOT: tl.constexpr,
+):
+    logical_id = base_program + tl.program_id(0)
+    feature_blocks = tl.cdiv(nheads * state_size, BLOCK_F)
+    pid_batch = logical_id // (nchunks * feature_blocks)
+    remainder = logical_id - pid_batch * (nchunks * feature_blocks)
+    pid_chunk = remainder // feature_blocks
+    pid_feature = remainder - pid_chunk * feature_blocks
+    offsets_f = pid_feature * BLOCK_F + tl.arange(0, BLOCK_F)
+    offsets_c = tl.arange(0, BLOCK_SIZE)
+    offsets_h = offsets_f // state_size
+    offsets_s = offsets_f - offsets_h * state_size
+    mask_f = offsets_f < nheads * state_size
+    mask_c = offsets_c < CHUNK_SIZE
+    if REVERSE:
+        offsets_t = pid_chunk * CHUNK_SIZE + CHUNK_SIZE - 1 - offsets_c
+    else:
+        offsets_t = pid_chunk * CHUNK_SIZE + offsets_c
+
+    if USE_DOT:
+        mask = mask_c[:, None] & mask_f[None, :]
+        input_offsets = (
+            pid_batch * g_stride_b
+            + offsets_t[:, None] * g_stride_t
+            + offsets_h[None, :] * g_stride_h
+            + offsets_s[None, :] * g_stride_s
+        )
+        values = tl.load(g_ptr + input_offsets, mask=mask, other=0.0).to(
+            tl.float32
+        )
+        triangle = tl.arange(0, BLOCK_SIZE)
+        triangle = tl.where(triangle[:, None] >= triangle[None, :], 1.0, 0.0)
+        output = tl.dot(triangle, values, input_precision="ieee")
+        output_offsets = (
+            pid_batch * output_stride_b
+            + offsets_t[:, None] * output_stride_t
+            + offsets_h[None, :] * output_stride_h
+            + offsets_s[None, :] * output_stride_s
+        )
+    else:
+        mask = mask_f[:, None] & mask_c[None, :]
+        input_offsets = (
+            pid_batch * g_stride_b
+            + offsets_t[None, :] * g_stride_t
+            + offsets_h[:, None] * g_stride_h
+            + offsets_s[:, None] * g_stride_s
+        )
+        values = tl.load(g_ptr + input_offsets, mask=mask, other=0.0).to(
+            tl.float32
+        )
+        output = tl.cumsum(values, axis=1)
+        output_offsets = (
+            pid_batch * output_stride_b
+            + offsets_t[None, :] * output_stride_t
+            + offsets_h[:, None] * output_stride_h
+            + offsets_s[:, None] * output_stride_s
+        )
+    if HAS_SCALE:
+        output *= scale
+    tl.store(output_ptr + output_offsets, output, mask=mask)
+
+
 def chunk_local_cumsum_vector(g, chunk_size, reverse=False, scale=None):
     if chunk_size <= 0:
         raise ValueError("chunk_size must be positive")
@@ -152,15 +258,20 @@ def chunk_local_cumsum_vector(g, chunk_size, reverse=False, scale=None):
     if output.numel() == 0:
         return output
 
-    block_size = triton.next_power_of_2(chunk_size)
-    block_f = max(1, min(8, 4096 // block_size))
+    cumsum_block_size = triton.next_power_of_2(chunk_size)
+    cumsum_block_f = max(1, min(8, 4096 // cumsum_block_size))
     features = nheads * state_size
+    nchunks = seqlen // chunk_size
+    cumsum_programs = triton.cdiv(features, cumsum_block_f) * nchunks * batch
+    use_dot = chunk_size <= 64 and cumsum_programs > 65535
+    block_size = max(16, cumsum_block_size) if use_dot else cumsum_block_size
+    block_f = 32 if use_dot else cumsum_block_f
     feature_blocks = triton.cdiv(features, block_f)
-    total_programs = feature_blocks * (seqlen // chunk_size) * batch
+    total_programs = feature_blocks * nchunks * batch
     if total_programs <= 65535:
         grid = (
             feature_blocks,
-            seqlen // chunk_size,
+            nchunks,
             batch,
         )
         _chunk_local_cumsum_vector_kernel[grid](
@@ -182,58 +293,65 @@ def chunk_local_cumsum_vector(g, chunk_size, reverse=False, scale=None):
             BLOCK_F=block_f,
             REVERSE=reverse,
             HAS_SCALE=scale is not None,
+            USE_DOT=use_dot,
+            num_warps=4 if use_dot or chunk_size > 8 else 2,
+            num_stages=1,
+        )
+        return output
+    if not use_dot:
+        grid = (min(total_programs, 4096),)
+        _chunk_local_cumsum_vector_folded_kernel[grid](
+            g,
+            output,
+            nheads,
+            state_size,
+            nchunks,
+            total_programs,
+            g.stride(0),
+            g.stride(1),
+            g.stride(2),
+            g.stride(3),
+            output.stride(0),
+            output.stride(1),
+            output.stride(2),
+            output.stride(3),
+            scale,
+            CHUNK_SIZE=chunk_size,
+            BLOCK_SIZE=block_size,
+            BLOCK_F=block_f,
+            REVERSE=reverse,
+            HAS_SCALE=scale is not None,
             num_warps=2 if chunk_size <= 8 else 4,
             num_stages=1,
         )
         return output
-    grid = (min(total_programs, 4096),)
-    _chunk_local_cumsum_vector_folded_kernel[grid](
-        g,
-        output,
-        nheads,
-        state_size,
-        seqlen // chunk_size,
-        total_programs,
-        g.stride(0),
-        g.stride(1),
-        g.stride(2),
-        g.stride(3),
-        output.stride(0),
-        output.stride(1),
-        output.stride(2),
-        output.stride(3),
-        scale,
-        CHUNK_SIZE=chunk_size,
-        BLOCK_SIZE=block_size,
-        BLOCK_F=block_f,
-        REVERSE=reverse,
-        HAS_SCALE=scale is not None,
-        num_warps=2 if chunk_size <= 8 else 4,
-        num_stages=1,
-    )
-    return output
-    _chunk_local_cumsum_vector_kernel[grid](
-        g,
-        output,
-        nheads,
-        state_size,
-        g.stride(0),
-        g.stride(1),
-        g.stride(2),
-        g.stride(3),
-        output.stride(0),
-        output.stride(1),
-        output.stride(2),
-        output.stride(3),
-        1.0 if scale is None else float(scale),
-        CHUNK_SIZE=chunk_size,
-        BLOCK_SIZE=block_size,
-        BLOCK_F=block_f,
-        REVERSE=reverse,
-        HAS_SCALE=scale is not None,
-        num_warps=2 if chunk_size <= 8 else 4,
-        num_stages=1,
-    )
+    for base_program in range(0, total_programs, 65535):
+        grid = (min(65535, total_programs - base_program),)
+        _chunk_local_cumsum_vector_segmented_kernel[grid](
+            g,
+            output,
+            nheads,
+            state_size,
+            nchunks,
+            base_program,
+            g.stride(0),
+            g.stride(1),
+            g.stride(2),
+            g.stride(3),
+            output.stride(0),
+            output.stride(1),
+            output.stride(2),
+            output.stride(3),
+            1.0 if scale is None else float(scale),
+            CHUNK_SIZE=chunk_size,
+            BLOCK_SIZE=block_size,
+            BLOCK_F=block_f,
+            REVERSE=reverse,
+            HAS_SCALE=scale is not None,
+            USE_DOT=use_dot,
+            num_warps=4 if use_dot or chunk_size > 8 else 2,
+            num_stages=1,
+        )
     return output
 
 
