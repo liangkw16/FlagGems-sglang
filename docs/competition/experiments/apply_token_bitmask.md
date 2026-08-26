@@ -489,3 +489,9 @@ E5 只允许一次提交。基础门为 8/8 valid、Enflame 高于 E2 `2.851x` �
 `4.686925x`；显著收益门为 Enflame 至少 `3.011x`（整题约 `+0.02x`）。当前
 第 14 名为 `5.021775x`，冻结其余七芯时 Enflame 必须严格超过 `5.5298x` 才升
 一位。若基础门失败，永久停止 Enflame tile 轴，不试 64K、warps 或 grid 变体。
+
+2026-08-27 01:33:05 CST 经实时门禁执行 E5 唯一一次提交，submission `5225`、
+当日序号 `14`，额度预计由 `17/30` 变为 `16/30`。`file_url_sha256` 为
+`5d858b62cabf069609570bbf7bbc9d024711c1521ba0832caf18e59640c79810`；匿名对象
+回读为 8384 bytes，SHA-256 与 canonical ZIP 完全一致，三个成员均通过
+`unzip -t`。平台选中预期的 generic、Ascend、Enflame 路径；禁止重传。
