@@ -743,3 +743,30 @@ Task 18 submission `5087` 已实证国际 A 选择 `_nvidia`；因此 `_amd` 对
 路径。即使 `_amd` 未命中，按 E5 实测值回填其余回退，预计平均约 `3.524x`；若命中
 并恢复国际 B，则约 `3.658x`。平台门禁仍为 8/8 correctness、每芯 `>=0.1x`；无论
 结果如何 E6r 只提交一次，再根据实际 selected file 决定是否开发新的 Huawei 候选。
+
+### E6r 平台终态：8/8 valid，团队最佳 `3.828875x`
+
+2026-08-26 17:59:17 CST 执行唯一一次正式提交（submission `5107`，当日序号
+`12`，额度 `19/30`→`18/30`）。平台对象存储回读 53,117 bytes，SHA-256 与本地
+规范 ZIP 完全一致；本次 `file_url_sha256` 为
+`0c147ad8cdf01b48aa4bd4ccff2fb985e4668054b70e53ea7e5f43758d1e4c63`。
+
+终态为 `completed` / **valid** / `is_team_best=true`，八芯全部 correctness 通过：
+
+| 芯片 | E6r | 选中文件 |
+| --- | ---: | --- |
+| 天数 | `2.0100x` | `chunk_state_iluvatar.py` |
+| 沐曦 | `2.7425x` | `chunk_state_metax.py` |
+| 燧原 | `0.9420x` | `chunk_state_enflame.py` |
+| 海光 | `4.5405x` | `chunk_state.py` |
+| 昆仑 | `0.2505x` | `chunk_state_kunlunxin.py` |
+| 华为 | `0.3290x` | `chunk_state_ascend.py` |
+| 国际 A | `17.9020x` | `chunk_state.py` |
+| 国际 B | `1.9145x` | `chunk_state_amd.py` |
+| **平均** | **`3.828875x`** | |
+
+E6r 相比旧团队最佳 E3 `2.096625x` 提升 `1.73225x` 绝对均值、约 **82.62%**。
+三份回退全部被目标芯精确选中：昆仑恢复 correctness，沐曦/国际 B 恢复旧性能；
+generic 低精度路径在国际 A 由 E5 的 `16.583x` 进一步测得 `17.902x`。本候选按
+预注册规则停止，不再重投。下一步只评估官方 FlagGems Ascend 同构 state kernel
+能否单独提升当前最低但已过门槛的华为 `0.329x`，不得改动其余七个已验证成员。
