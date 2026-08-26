@@ -466,3 +466,38 @@ generic 的 `0.8292x/0.9300x/0.7896x`，几何均值 `0.8476x`，未达到
 两阶段 route 的额外 launch/临时张量在 NVIDIA 上不能抵消原 kernel 的 metadata
 分支成本，因此 E3 不晋升、不生成 ZIP、不运行 preflight、不消耗额度；候选源码和
 测试已逐字节撤回，Task 17 继续保留 E2a-i32 的 13.8620625x team best。
+
+## E4 Hygon：128-rank tile 使用 2 个 wave64
+
+状态：commit-bound release 与 canonical ZIP 门禁通过，待唯一一次平台提交
+
+E2a-i32 的停止结论针对 Enflame route/gather；E4 由固定 FlagTree HCU backend
+对 legacy gfx928/gfx936 使用 64-lane wave，以及固定 FlagGems Hygon
+`index_select_backward` 对 BLOCK 128 使用 `num_warps=2` 的新证据触发。E4 新增
+自包含 `_hygon` vendor；它与已在海光平台通过的 generic 逐字节一致，唯一把
+launch 的 `num_warps=4` 改为 `2`。BLOCK_RANK 128、stage 1、grid、地址、数学与
+控制流全部冻结；generic、Ascend、Enflame、Kunlun 逐字节保持 E2a-i32。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `d33b89dba8b0adc431731dae489673a50dfcdef3` |
+| generic / Ascend SHA-256 | `fb29244a40cffdf0d585615cb1dc9f9272063c2028792ac914e57e7a562a5f92` / `1c4524e6f2c742d2d4950af8ecb53c6598a9a1f8eba0cb67ba79b309f6dee958` |
+| Enflame / Kunlun SHA-256 | `962b8db7ce6fa1e3d317c309e77ef6069f97f0fa69888b760892c774098a25ac` / `1c4524e6f2c742d2d4950af8ecb53c6598a9a1f8eba0cb67ba79b309f6dee958` |
+| Hygon / test SHA-256 | `cba1acc19bfda66ec5f7f8af977f335255728de9da51f3bb8a8d19a811b03c35` / `6f755e5a1f8cc2945566cd1aedd9e803f2241ff2894a846342a96bf73209a907` |
+| source Git archive SHA-256 | `90467df961d4291292677267823efe5234733afa894136aa883bb2cba575963b` |
+| screening | `gpu:/tmp/flagos-task17-hygon-warps-screen.JpZEkU`；8/8、静态检查、A/B 与 `SCREENING_OK` |
+| release | `gpu:/tmp/flagos-task17-hygon-warps-release.QAIXhW`；8/8、0.559s、单变量字节断言、静态检查、A/B 与 `RELEASE_OK`；日志 mode 0600、SHA-256 `081663134b5c699ba5697d8c1db5d7b1330f87b86f84c60c7a64ef6ea4be6f8c` |
+| canonical ZIP | `artifacts/competition/embedding_lora_a/e4-hygon-d33b89d/embedding_lora_a.zip`，27,567B，SHA-256 `74cff90ca2a055624647ee36b004372fe044282e9b1798b52de903bd33f31cfe` |
+
+RTX 5070 Ti 上五个 shape × 三 dtype 的交替 A/B（5 组、warmup 25、rep 100）
+先逐点与 E2a generic 精确比对；release 几何均值 `0.993774x`、最小点
+`0.916905x`，通过预声明的 0.95/0.90 灾难门。candidate 为 30 regs、2 warps、
+1 stage，零 spill/shared/scratch；baseline 为 22–24 regs、4 warps、1 stage，
+同样零 spill/shared/scratch。该 wave32 代理不能验证 Hygon wave64 收益，只排除
+正确性和资源灾难。
+
+2026-08-27 04:19 CST 实时榜单中 E2a-i32 为第 `6`、`13.8620625x`，第 5 名
+`14.19725x`。若其余七芯不变，海光需从 `26.805x` 严格升至
+`>29.4865x`（+10.0037%）才能升名；公开第 5 名的海光为 `31.3005x`。一次提交
+基础门为 8/8 valid、海光高于 26.805x 且平均高于 13.8620625x；升名门为海光
+高于 29.4865x。提交后无论升降都永久停止 Hygon warps 轴，不重传相同字节。
