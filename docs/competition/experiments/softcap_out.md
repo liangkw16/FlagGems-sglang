@@ -381,3 +381,38 @@ S3c 因此明确传入三维 grid，并保持 BLOCK 4096、四 warps、单 stage
   team best，源码已恢复到 S2e 的 Kunlun SHA-256
   `f34b06168ec951453601f552d3b6aa7bef1dac954a592226d3ac76ec248066bb`；
   永久停止 grid=12/interleave 假设，不做 grid 或 round sweep。
+
+## S4：Ascend BLOCK 512
+
+状态：独立 release 与不可变 ZIP 门禁通过，等待一次平台验证
+
+S4 只把 Ascend vendor 的 capped grid-stride tile 从 256 改为 512；physical
+worker cap 48、数学、operand order 和 launch 其余参数不变。generic、Enflame、
+Kunlun 继续冻结为 S2e 字节。预注册晋级门为 8/8 valid、华为高于 S2e 的
+`0.7371x` 且平均高于 `2.0179x`；任一不满足即保留 S2e，不扩 sweep。
+
+| 项目 | 值 |
+| --- | --- |
+| source commit | `1dadfcdac849fdb72386016b15b19180d0a2e93e` |
+| verification commit | `54c4f69629fc14f26eafea61a638499e24a105bb` |
+| generic / Ascend SHA-256 | `e6ab1c434aa793bc58357e3d45d2eec7fd2ec56bebb65538b2a6049ca9a37ddc` / `bb98a5fda924e09954ce5778a859d064daaa560ebc7d49f6dbd1229dadabb50b` |
+| Enflame / Kunlun SHA-256 | `f9cbdd5eb5b13e6b754bb2666e81e68523f17270246a006893db85be27a8c562` / `f34b06168ec951453601f552d3b6aa7bef1dac954a592226d3ac76ec248066bb` |
+| 测试 SHA-256 | `83cd2bea1f52fa626126dc183c77ceb4566c1a788b59f3a83bec973bcf8713ca` |
+| screening | `gpu:/tmp/flagos-softcap-out-s4-screen.HTXRbr`；PID/PGID `159847`；12/12、0.555s、`SCREENING_OK`；脚本/日志 SHA-256 `f89edbfda763585cf0bbab45c8bf8e974828ee74ccd6668a9857cd15a1caeb3a` / `35917f752770550aa29df2c2cb71886f5c33ee3fef6773b174c6b03e2011c725` |
+| 交替 A/B | 同目录；PID/PGID `159961`；脚本/日志 SHA-256 `3eb7e6c8562c85006ea2acba15b81691524aa2950c9bd303bc871cb2e402bbb5` / `ca58571a79582e29fb8ca49b8fcfa0b623ba5df4cbd0bf3d2030295f1318dd76` |
+| release | `gpu:/tmp/flagos-softcap-out-s4-release.shg1iC`；PID/PGID `160083`；12/12、0.556s、`RELEASE_OK`；脚本/日志 SHA-256 `424df31756ad0237a9432838e59456922e6bce364df50c1577912987b8992ace` / `82dd3d8fa487e0e9273ccb96f90e81445b6eaf17f72783d4bf9203e6f0035a38` |
+| source Git archive SHA-256 | `c3a08acebde8fa3a216848907589231799db2416a6b0e0a2b96570cc1491b5c0` |
+| canonical ZIP | `artifacts/competition/softcap_out/s4-1dadfcd/softcap_out.zip`，10,099 bytes，SHA-256 `592d5dc80568fc9883bba0939e9eb45604037cdfc0f181e0b1b57b885c0536f1` |
+
+新增回归覆盖 Ascend 256/512 边界及平台最大 `N=65,667,072`。首次 screening
+揭示 CUDA FP16 `torch.linspace` 在该长度只生成 131,040 个有限值、其余
+65,536,032 个为 NaN；验证 commit 改为先生成 FP32 再 cast，输入全有限后重跑
+完整门禁。此修复仅改变测试数据生成，不改变 ZIP 源码。
+
+RTX 5070 Ti 上 BLOCK256↔512 五组 AB/BA 覆盖长度 255、513、49,169、
+1,000,003、65,667,072 与三 dtype；非 control 中位 speedup 几何平均
+`1.362511x`，最差中位 `1.000000x`。最大规模 FP16/BF16/FP32 分别为
+`1.758058/1.757346/1.665585x`；candidate 23–32 registers、0 spill、0 shared、
+0 global scratch。该性能只作资源与明显回退门禁，不外推为 Ascend 收益。
+canonical ZIP 四个成员均与 source commit 一致，`dry-run`、
+`verified-existing`、UTF-8、10 MB 和 `unzip -t` 门禁通过。
