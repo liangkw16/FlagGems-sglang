@@ -621,3 +621,11 @@ canonical ZIP 仅含 generic、Ascend、Kunlun 三个白名单成员，成员哈
 一致；`dry-run`、`verified-existing` 与 `unzip -t` 均通过。E5 只允许一次平台
 提交，晋级门为 8/8 valid、华为高于 S3 的 `0.5982x`、平均高于 `2.7096x`；
 任一不满足即保留 S3 team best 并停止 Ascend 大 tile 假设。
+
+2026-08-26 23:56:55 CST 在账号 `15600308080`、团队 `SoulCoder` 下执行 E5
+唯一一次提交，submission ID `5199`、daily seq `24`，额度由 `7/30` 变为
+`6/30`。`file_url_sha256` 为
+`c5804f2f80eecd120d276958ac74737995a2eab7a8e80f53dc130956ab7f57cb`；内置远端验签
+因未配置可信 hostname 为 `unavailable`，随后从返回的已核实对象存储地址无认证
+下载，得到 9240 bytes，SHA-256 与 canonical 值完全一致。平台已选中预期的
+generic、Ascend、Kunlun 三条路径；当前等待八芯回调，禁止重传。
