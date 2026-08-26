@@ -307,3 +307,72 @@ S2b 于 02:21:15 CST 提交（submission `4443`，当日序号 `10`）。七芯�
 可通过）。Task 23 两次预算用尽，停止；最佳成绩为 7/8（invalid）。后续
 昆仑方向需改写为规整 batched-GEMM 形式（如按 segment 长度分桶后连续
 GEMM），非单变量可及。
+
+## E7：昆仑 ragged 隔离 + 规整 FP32 BMM（高倍数冲刺重开）
+
+状态：release 门禁通过，候选就绪，待实时 preflight 单次提交。
+
+2026-08-26 11:04:55 CST 实时状态为团队 `SoulCoder`、Task 23 可提交、当日
+额度 `30/30`，截止时间 `2026-08-27 19:59:59`。在新的高倍数冲刺预算下重开
+Task 23，但不再调整 tile/stages：S2/S2b 已证明昆仑失败是 ragged metadata 与
+`tl.dot` 同处一个 SDNN 编译单元造成的结构性编译爆炸。
+
+E7 只改 `_kunlunxin` vendor：
+
+- 无 dot 的 pack-X 把 ragged/permutation 行整理为 FP32 `[B,L,K]`；
+- 无 dot 的 pack-W 选择 adapter 并转置为 N 连续的 FP32 `[B,K,N]`；
+- regular BMM 只读取连续临时张量，采用 32×64×32、FP32 IEEE dot、stages 1；
+- scatter kernel 再按 permutation 写回，并以 FP32 执行
+  `base + scaling * product` 后 cast；空 segment 在读取非法 adapter sentinel 前
+  退出，非零 `lora_ranks` 仍覆盖完整 stored K。
+
+所有 kernel 用 1D 逻辑 program 分块启动，单次物理 grid 不超过 65535。已知最大
+回归 `B=8,L=2048,K=64,N=4096` 的 BMM/scatter program 从 32×32 的 65536
+降为 32×64 的 32768。新增 Kunlun-only 组合回归覆盖三 dtype、K65/N67、
+segment `[17,0,1,33]`、permutation、非连续数据/metadata、rank0、空段非法
+adapter、非零小 rank 仍 full-K 以及输入不变性。
+
+screening 位于
+`gpu:/tmp/flagos-sgemm-lora-b-e7-screening.ktAbZF`，base commit
+`c19883b3921a44e59578e4ff7197f6e99e2139b1`，PID/PGID `128978`，wall
+900s；launcher 的 `setsid` 行为在同机实测为 PID=PGID，逐字重放脚本
+`replay.sh` SHA-256
+`1464dded128704d6636efad3b4be3cf014b6ac5bea1c29f15f4978631fe33594`。
+6/6 unittest 通过（1.861s），`screening.log` SHA-256
+`a67f788c751122d3813309d14305950b5ee470d679702f233cd97ce587b6289a`。
+screening 输入中 Kunlun vendor SHA-256
+`55f29037308d31dcf7c171c6d3cd39c555cbeb18692f772c2f025cc9d42cb839`，测试
+`d53bc6d2cec921e68269ba73995160a861c3d7a69571ba9deeeeac8c79228736`；
+generic/ascend/enflame/iluvatar 分别保持
+`9b1a9a6c98b2cb7f9647a51276fda261f39be1eda06a866e3e3ad561a68bb355`、
+`41416a252cbf5aaa5bf57dcb6de3da20fd7cdc52e2a471d995c4c603f68fd2de`、
+`34fa4c8def315c6277fd087f6c85692273b2bc5a13e46bc135c0a495f6db41e4`、
+`34fa4c8def315c6277fd087f6c85692273b2bc5a13e46bc135c0a495f6db41e4`。
+
+同目录在 RTX 5070 Ti（driver 610.57.04，16 GiB；Python 3.12.13、
+PyTorch 2.13.0+cu130、Triton 3.7.1、CUDA 13.0）无竞争 workload 时，对上述
+最大回归做 5 轮交替 wrapper-inclusive 代理基准：S2b 中位 0.9050ms，E7 中位
+1.4817ms（约 1.64× 代价），E7 峰值显存增量 415236096B；无 OOM/编译异常。
+基准脚本 SHA-256
+`14e1a963c9f4dc6b83db17c62cc14212ccdd039e9cb073e3e50aeecf01ddb505`，
+`benchmark.log` SHA-256
+`f9412d95ef6dd4aea3fd8fb1e52db819bb377f7e038929a27394bdbbd4dc739e`。
+该结果只作 NVIDIA 资源代理；晋级依据是昆仑旧结构完全不可执行，而 E7 完成完整
+正确性路径。
+
+source/verification commit
+`1953fde4c21727b68ddf121092b1adf5e2aa97b4` 的 Git-object release 位于
+`gpu:/tmp/flagos-sgemm-lora-b-e7-release.jYTCOa`，PID/PGID `129403`，wall
+900s，`replay.sh` SHA-256
+`05bf2221145a45ed6234926063b8ecfa7d9c85de21d43c15cf7eab56fc07e716`；
+6/6 unittest 通过（0.675s），尾行为 `RELEASE_OK`，`release.log` SHA-256
+`f97f3e83de583b0ad16eac4b3fa8fab0827739b936d605faf8ae5e7fa2dc0be8`。
+screening 的 source/test 字节与 Git blob 逐项一致。
+
+canonical ZIP
+`artifacts/competition/sgemm_lora_b/e7-1953fde/sgemm_lora_b.zip`，SHA-256
+`f5ac39fba6b3c6f100b925fb7849174abbfbbeef1262451653ddb940052825da`，
+成员为 generic + ascend/enflame/iluvatar/kunlunxin，`--verify-existing` 与
+`unzip -t` 均通过。平台止损规则：E7 只提交一次；昆仑 ≥39x 即停止 T23，
+15–39x 才进入 E8 scatter/output 融合，valid 但 <15x 则直接切换 T13；若编译
+失败只允许一次无-dot FP32 multiply-sum fallback，不再调 tile/warps/stages。
