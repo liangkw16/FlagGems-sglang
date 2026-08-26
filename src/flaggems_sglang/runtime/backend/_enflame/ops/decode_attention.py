@@ -16,6 +16,8 @@ import torch
 import triton
 import triton.language as tl
 
+_MAX_GRID_PROGRAMS = 65535
+
 
 @triton.jit
 def _decode_attention_kernel(
@@ -44,11 +46,12 @@ def _decode_attention_kernel(
     output_stride_batch,
     output_stride_head,
     output_stride_dim,
+    program_start,
     BLOCK_LENGTH: tl.constexpr,
     BLOCK_D: tl.constexpr,
     BLOCK_DV: tl.constexpr,
 ):
-    program_id = tl.program_id(0)
+    program_id = program_start + tl.program_id(0)
     batch = program_id // query_heads
     query_head = program_id % query_heads
     kv_head = query_head // (query_heads // kv_heads)
@@ -148,38 +151,44 @@ def decode_attention(q, k_buffer, v_buffer, kv_indptr, kv_indices, sm_scale):
     block_d = triton.next_power_of_2(qk_dim)
     block_dv = triton.next_power_of_2(value_dim)
     block_length = max(8, min(32, 8192 // max(block_d, block_dv)))
-    _decode_attention_kernel[(batch_size * query_heads,)](
-        q,
-        k_buffer,
-        v_buffer,
-        routed_indptr,
-        routed_indices,
-        output,
-        query_heads,
-        kv_heads,
-        qk_dim,
-        value_dim,
-        float(sm_scale),
-        q.stride(0),
-        q.stride(1),
-        q.stride(2),
-        k_buffer.stride(0),
-        k_buffer.stride(1),
-        k_buffer.stride(2),
-        v_buffer.stride(0),
-        v_buffer.stride(1),
-        v_buffer.stride(2),
-        routed_indptr.stride(0),
-        routed_indices.stride(0),
-        output.stride(0),
-        output.stride(1),
-        output.stride(2),
-        BLOCK_LENGTH=block_length,
-        BLOCK_D=block_d,
-        BLOCK_DV=block_dv,
-        num_warps=4,
-        num_stages=1,
-    )
+    logical_programs = batch_size * query_heads
+    for program_start in range(0, logical_programs, _MAX_GRID_PROGRAMS):
+        program_count = min(
+            _MAX_GRID_PROGRAMS, logical_programs - program_start
+        )
+        _decode_attention_kernel[(program_count,)](
+            q,
+            k_buffer,
+            v_buffer,
+            routed_indptr,
+            routed_indices,
+            output,
+            query_heads,
+            kv_heads,
+            qk_dim,
+            value_dim,
+            float(sm_scale),
+            q.stride(0),
+            q.stride(1),
+            q.stride(2),
+            k_buffer.stride(0),
+            k_buffer.stride(1),
+            k_buffer.stride(2),
+            v_buffer.stride(0),
+            v_buffer.stride(1),
+            v_buffer.stride(2),
+            routed_indptr.stride(0),
+            routed_indices.stride(0),
+            output.stride(0),
+            output.stride(1),
+            output.stride(2),
+            program_start,
+            BLOCK_LENGTH=block_length,
+            BLOCK_D=block_d,
+            BLOCK_DV=block_dv,
+            num_warps=4,
+            num_stages=1,
+        )
     return output
 
 

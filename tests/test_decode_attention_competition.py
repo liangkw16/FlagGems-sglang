@@ -173,6 +173,64 @@ def make_case(query_heads, kv_heads, qk_dim, value_dim, lengths, dtype):
     return q, k_buffer, v_buffer, kv_indptr, kv_indices
 
 
+class DecodeAttentionLaunchTest(unittest.TestCase):
+    def test_vendor_launches_stay_within_physical_grid_caps(self):
+        class FakeKernel:
+            def __init__(self):
+                self.launches = []
+
+            def __getitem__(self, grid):
+                def launch(*args, **kwargs):
+                    del kwargs
+                    self.launches.append((args[-1], grid[0]))
+
+                return launch
+
+        q = torch.empty((2048, 64, 1), dtype=torch.float16)
+        k_buffer = torch.empty((1, 64, 1), dtype=torch.float16)
+        v_buffer = torch.empty((1, 64, 1), dtype=torch.float16)
+        kv_indptr = torch.zeros(2049, dtype=torch.int32)
+        kv_indices = torch.empty(0, dtype=torch.int32)
+
+        for module, expected in (
+            (
+                DECODE_ATTENTION_ASCEND,
+                [
+                    (0, 32768),
+                    (32768, 32768),
+                    (65536, 32768),
+                    (98304, 32768),
+                ],
+            ),
+            (
+                DECODE_ATTENTION_ENFLAME,
+                [(0, 65535), (65535, 65535), (131070, 2)],
+            ),
+        ):
+            fake_kernel = FakeKernel()
+            real_kernel = module._decode_attention_kernel
+            module._decode_attention_kernel = fake_kernel
+            try:
+                module.decode_attention(
+                    q,
+                    k_buffer,
+                    v_buffer,
+                    kv_indptr,
+                    kv_indices,
+                    1.0,
+                )
+            finally:
+                module._decode_attention_kernel = real_kernel
+
+            self.assertEqual(fake_kernel.launches, expected)
+            self.assertEqual(sum(count for _, count in expected), 131072)
+            self.assertTrue(
+                all(
+                    count <= module._MAX_GRID_PROGRAMS for _, count in expected
+                )
+            )
+
+
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class DecodeAttentionCompetitionTest(unittest.TestCase):
     def assert_matches(self, function, case):
@@ -220,6 +278,19 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
         for function in PAGE_I32_FUNCTIONS:
             with self.subTest(function=function.__module__):
                 self.assert_matches(function, tuple(case))
+
+    def test_vendor_chunked_launch_uses_logical_program_offset(self):
+        case = make_case(4, 4, 16, 9, [3, 5], torch.float16)
+        for module, cap in (
+            (DECODE_ATTENTION_ASCEND, 3),
+            (DECODE_ATTENTION_ENFLAME, 5),
+        ):
+            real_cap = module._MAX_GRID_PROGRAMS
+            module._MAX_GRID_PROGRAMS = cap
+            try:
+                self.assert_matches(module.decode_attention, case)
+            finally:
+                module._MAX_GRID_PROGRAMS = real_cap
 
     def test_gqa_strides_variable_lengths_and_value_dim(self):
         case = list(make_case(8, 2, 40, 24, [3, 70], torch.bfloat16))
