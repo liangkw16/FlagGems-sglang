@@ -648,3 +648,40 @@ S3 平均增加 `0.05225x`（+1.93%），通过预注册晋级门；新日额度
 结论：Ascend BLOCK 512 假设被平台证实，保留 E5。燧原的同字节 generic
 读数同时恢复一倍，属于平台波动，不能归因于 Ascend-only 改动。下一候选必须
 继续冻结 E5 的 generic、Ascend 和昆仑字节，只允许新增单芯 vendor。
+
+## E6：MetaX 官方 Qwen launch policy
+
+状态：独立 release 与不可变 ZIP 门禁通过，等待一次平台验证
+
+E6 只新增 MetaX vendor。固定官方
+`FlagGems-vllm@43624463db77618b6d0e3f47fac990cea8c51a30` 的 MetaX
+`moe_sum.py` 对 contiguous、top-k 8、hidden 2048/4096 使用 BLOCK1024、
+8 warps，并保留 backend 默认 stages；本题沿用同一 launch policy，同时保留
+题面要求的 scalar scaling、真实 stride 和 FP32 累加。其他 shape、top-k 或
+非连续输入在同一文件使用 E5 generic 的 BLOCK256、4 warps、1 stage。
+
+独立审查发现首版错误地把 fast path 也锁为 stage1；在任何 commit、release 或
+平台提交前已改为官方的 `launch_kwargs` 形式：fast path 不传 `num_stages`，
+fallback 才传 1。generic、Ascend、Kunlun 三个已有成员与 E5 逐字节一致。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `9d3c82a0433295c30f7fd2dcfe3896ddf57483cf` |
+| generic / Ascend SHA-256 | `52a2fc979784f2bd25e7e17b9822c23b4f438efdf062c70bfb09aba9ba732335` / `f740604cd4a0506a3e41776f3f9a001edffafef45f04aff78d1ee8a208f2132b` |
+| Kunlun / MetaX SHA-256 | `68b0abe07e3cf4f2b9cb86063e9ad1e18edd83d90341410cd281ec595c83406d` / `20db4f49aada2976723ab9dabd7013545a30a0998ee8fb21ad655375bd2cb794` |
+| 测试 SHA-256 | `0c31a7a5f6ac5362f739d7b6b58f501f5fb2a35207122b75ba22a9d7c8bc7136` |
+| screening | `gpu:/tmp/flagos-moe-sum-reduce-e6-metax-screen.NnUURp`；PID/PGID `160329`；8/8、0.756s、`SCREENING_OK`；脚本/日志 SHA-256 `e4709693d4f51ead44bc6a63f3b50c281a54d021eb2a9db45a599752118042d0` / `6e2b96372efd59875e649af9131dfab53384f826fdc6844a743023edb013be63` |
+| 交替 A/B | 同目录；PID/PGID `160428`；脚本/日志 SHA-256 `2bc7226c7958cf8d8c943f3b503584262828fe8076726d154c0dc0bcb581c81d` / `d4c03e5837f47c6a50e14ae89e03b456aa48a6d0372c3bce0acf4d19e14997ef` |
+| release | `gpu:/tmp/flagos-moe-sum-reduce-e6-metax-release.k2HsCz`；PID/PGID `160514`；8/8、0.599s、`RELEASE_OK`；脚本/日志 SHA-256 `3f5dd03ac21627eceae49391adffa86f602c09646a0cbc78288ae95c406c3eca` / `43900ba0016450d0025e363c8fcb91be3e40fec4d2d36ffa88d743cb60ae48c4` |
+| Git archive SHA-256 | `ad0cd85b66468decacb8460fc100d114d783078c2d2fda00a39ba2a37e94d5b8` |
+| canonical ZIP | `artifacts/competition/moe_sum_reduce/e6-9d3c82a/moe_sum_reduce.zip`，12,410 bytes，SHA-256 `cf5ccff1f3724f1f1561b1a174327a961ef44db037c0c1a15e8d2dc660e7782d` |
+
+代理 A/B 覆盖 fallback hidden7168 与 fast hidden2048/4096、三 dtype、最大
+`(4096,8,4096)`；affected 中位 speedup 几何平均 `1.006816x`，fallback
+最差 `1.000000x`。候选最多 40 registers、0 spill、0 shared、0 scratch；
+8-warp fast path实际编译为 3 stages。NVIDIA 只证明无明显回退和资源风险，
+不代表 MetaX 收益。
+
+平台 one-shot 门：8/8 valid、沐曦选中 `_metax` 且高于 E5 的 `3.5040x`、
+平均高于 `2.76185x`；显著收益目标为沐曦至少 `3.6640x`（整题约 +0.02x）。
+任一基础门不满足即保留 E5，停止该 launch 假设。
