@@ -301,6 +301,29 @@ class ChunkStateVarlenTest(unittest.TestCase):
                     actual, expected, atol=3e-2, rtol=3e-2
                 )
 
+    def test_vendor_large_fp32_scale_stays_finite(self):
+        x = torch.ones((2, 1, 1), device="cuda", dtype=torch.float32)
+        B = torch.ones_like(x)
+        dt = torch.ones((1, 1, 2), device="cuda", dtype=torch.float32)
+        dA_cumsum = torch.tensor(
+            [[[0.0, 12.0]]], device="cuda", dtype=torch.float32
+        )
+        cu_seqlens = torch.tensor([0, 2], device="cuda", dtype=torch.int64)
+        chunk_states = torch.empty((1,), device="cuda", dtype=torch.float32)
+        case = B, x, dt, dA_cumsum, cu_seqlens, chunk_states
+        expected = reference(*case)
+
+        self.assertTrue(torch.isfinite(expected).all())
+        for name, module in (
+            ("enflame", ENFLAME_MODULE),
+            ("kunlunxin", KUNLUN_MODULE),
+        ):
+            with self.subTest(module=name):
+                actual = module.chunk_state_varlen(*case)
+                torch.testing.assert_close(
+                    actual, expected, atol=3e-2, rtol=3e-2
+                )
+
     def test_leading_empty_sequence(self):
         x = torch.ones((1, 1, 1), device="cuda", dtype=torch.float32)
         B = torch.ones_like(x)

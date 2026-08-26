@@ -201,13 +201,7 @@ def _regular_bmm_kernel(
             & (offsets_n[None, :] < dstate),
             other=0.0,
         )
-        x_hi = x.to(tl.float16)
-        x_lo = (x - x_hi.to(tl.float32)).to(tl.float16)
-        B_hi = B.to(tl.float16)
-        B_lo = (B - B_hi.to(tl.float32)).to(tl.float16)
-        accumulator += tl.dot(x_hi, B_hi)
-        accumulator += tl.dot(x_hi, B_lo)
-        accumulator += tl.dot(x_lo, B_hi)
+        accumulator += tl.dot(x, B, input_precision="ieee")
 
     output_offsets = (
         batch_head * headdim * dstate
@@ -252,7 +246,7 @@ def chunk_state_varlen(B, x, dt, dA_cumsum, cu_seqlens, chunk_states):
     if output.numel() == 0:
         return output
 
-    block_m, block_n, block_k = 64, 64, 128
+    block_m, block_n, block_k = 32, 32, 32
     pack_block_k = 32
     pack_block_d = 32
     batch_heads = batch * nheads
@@ -319,7 +313,7 @@ def chunk_state_varlen(B, x, dt, dA_cumsum, cu_seqlens, chunk_states):
             BLOCK_N=block_n,
             BLOCK_K=block_k,
             num_warps=4,
-            num_stages=2,
+            num_stages=1,
         )
 
     return output
