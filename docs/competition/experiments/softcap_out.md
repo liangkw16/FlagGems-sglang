@@ -441,3 +441,37 @@ canonical ZIP 四个成员均与 source commit 一致，`dry-run`、
 
 结论：Ascend BLOCK512 单变量被平台证实；保留 S4 为 Task24 team best，停止
 Ascend tile 扩展。其余七芯使用冻结字节并全部过门槛。
+
+## S5：Kunlun 原生 `tanh`
+
+状态：release 门禁通过，待平台一次性验证
+
+S5 只把 Kunlun vendor 的手写 `exp` 多项式 `tanh` 换成 XPU 官方
+`tl_extra_shim.tanh`；BLOCK 4096、grid、四 warps、单 stage、cap 分支及输出
+缩放均不变，generic、Ascend、Enflame 继续冻结为 S4 字节。固定官方依据：
+FlagGems-Experimental `c73617ac10535ba3140a3e41e0291556d68d41b2` 的 Kunlun
+`tanh.py` 与 `flash_kernel.py` 均直接使用该 intrinsic；FlagTree
+`c1ea8285a06e97afad9dd2644bc71f2efca072f4` 将其落到 XPU `tanhf`，向量化
+pass 支持 16-lane `tanh`。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `76551bc02a1f09763f04a5872627b440c45c8213` |
+| generic / Ascend SHA-256 | `e6ab1c434aa793bc58357e3d45d2eec7fd2ec56bebb65538b2a6049ca9a37ddc` / `bb98a5fda924e09954ce5778a859d064daaa560ebc7d49f6dbd1229dadabb50b` |
+| Enflame / Kunlun SHA-256 | `f9cbdd5eb5b13e6b754bb2666e81e68523f17270246a006893db85be27a8c562` / `7c6121b04f4960040296bbc13f911e583f2b3151a0f67e2589117a2323a8674e` |
+| 测试 SHA-256 | `7ea3feab807eff27aa630101bd8ae0256df21af83ac6750f3e45b984fc308d57` |
+| screening | `gpu:/tmp/flagos-softcap-out-s5-kunlun-tanh-screen.9ivSL9`；PID/PGID `160675`；13/13、0.980s、`SCREENING_OK`；脚本/日志 SHA-256 `31593ba3f641f6c0ed6662ae4e00975a32c42fd3cd396ba2d5d98d41b0efd1c1` / `4681a8d466c331a2fcae0ac284c9b6ec04b5eab190221ad75b9d3b7d66f81516` |
+| 交替 A/B | 同目录；PID/PGID `160834`；脚本/日志 SHA-256 `a1204ab905441ea21d621f89ddc48ddb31f0e49a6dd4057bb73dbc68f88e2c8c` / `2c513ad71dfaef0b952f705db2c21dc14e08b52e74893e67a76d4fc511652356` |
+| release | `gpu:/tmp/flagos-softcap-out-s5-kunlun-tanh-release.dCgFal`；PID/PGID `160962`；13/13、0.563s、`RELEASE_OK`；脚本/日志 SHA-256 `dd6e11b856f27c157ebfa4badcf482db35e4043d2271dc94a94d54e0c22c9712` / `c15a52e6882ac558fe15ec08a220322e7e062f99969ee2e02400437db36464d7` |
+| source Git archive SHA-256 | `e6ef337ca1a7d461ef348b280ad494b8408448f3f19bb3ca82d5627607c0bbd3` |
+| canonical ZIP | `artifacts/competition/softcap_out/s5-76551bc/softcap_out.zip`，10,043 bytes，SHA-256 `891c641685bbf7bf44e2fdac5df27c58e949372fe87e692082b74708653fb3a1` |
+
+新增回归直接覆盖 NaN、正负无穷、零、边界值与极端 cap。RTX 5070 Ti 代理上
+最大平台 shape 的 FP16/BF16/FP32 中位比为 `0.994555/0.992570/1.000554x`，
+candidate 最大 72 registers（旧式最高 96）、zero spill/scratch；小 shape 因
+CUDA libdevice 调用开销使非 control 几何平均为 `0.961117x`，只作为资源和
+正确性代理，不把 CUDA 时延外推成 XPU 收益。
+
+一次提交晋级门：8/8 valid、Kunlun 高于 S4 的 `0.86508333x`、平均高于
+`2.04696875x`；显著收益目标为 Kunlun 至少 `1.02508333x`（对应整题平均约
+`+0.02x`）。任一基础门不满足即保留 S4，并永久停止 native-`tanh` 轴。
