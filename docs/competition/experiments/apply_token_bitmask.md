@@ -515,3 +515,35 @@ E5 只允许一次提交。基础门为 8/8 valid、Enflame 高于 E2 `2.851x` �
 load；保留 E2 `4.686925x` 为 team best，永久停止 Enflame tile 轴，不试 64K、
 warps 或 grid 变体。若继续本题，只允许与 tile 无关且有独立证据的 word-layout
 结构重写。
+
+## E6：Enflame 连续 word load / 2D bit 展开
+
+状态：release 与 IR 硬门通过，canonical ZIP 已冻结，待一次性平台提交
+
+E6 从 E2 team best 的 BLOCK4096 分叉，不携带 E5 已证伪的 32K tile。唯一
+实现变化是把每个 token 的 `(token // 32)` 重复 bitmask 地址改为一次连续加载
+128 个 int32 word，再广播为 `[128,32]` 的 bit 维；BLOCK4096、grid cap12、
+grid-stride、四 warps、单 stage、真实 strides 与 wrapper 全部冻结。generic 与
+Ascend 恢复并冻结为 E2 字节，不带 Kunlun/MetaX。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `c8b4b2b31f95a9993f6f6975e92f875accc5a237` |
+| generic / Ascend SHA-256 | `5da3d966936c919cd4b0fab2c32ecc66526eb375c3cdc20a2e3f2f37cddb697c` / `7c4daf2fa5774dcbf0c9891b787c77d18d4d0766ae94292ed38347172ead3fd8` |
+| Enflame / test SHA-256 | `a3368315736c05c07c4ed15f9ee7d84b6a55f8800c379a61cb0e354f7f8f571e` / `50be9f23220ca6c347fd90b999ccd573d47a182d20f77d316240e7398fe302fd` |
+| release | `gpu:/tmp/flagos-apply-token-bitmask-e6-release.4ShUQl`；PID/PGID `165913`；8/8、`RELEASE_OK`；重放/日志 SHA-256 `d51ecd97da47def9a4504be1ad03aee61b688b46e59baa0c21aeaac92c82dcf9` / `be2e7b9eba687ac72b897c9e0aee2def2a80a40a33ea728f456235573a7af183` |
+| source Git archive SHA-256 | `88b2292c3001dc5902f9397aad02a3105f26b2073a3b826653ea4c93dddec858` |
+| IR / resource audit | 日志 SHA-256 `dabb479a29bb018d2e78e67dd5f9b3ee2e0129d5a54cf2486d846a8f4fca4286` / `56f19ef88a3f7b359f2fc3bc6218c7f8fc5e7ea35dfb855c0e669e4c391519ae`；TTIR SHA-256 `1b1a9a9f33f1df0bdd37c2d776eb119f1ccd31182ac449e5f87e18cbfd315a36` |
+| canonical ZIP | `artifacts/competition/apply_token_bitmask/e6-c8b4b2b/apply_token_bitmask.zip`，8519 bytes，SHA-256 `4414d9deed8d7c73f4fa86d49aa7ab3605cffdc0604e8f92654428a7631bf01a` |
+
+TTIR 中 packed mask 正好一次连续 `tensor<128xi32>` load，地址链没有
+`divsi/remsi`；logits load 与 output store 均为 `tensor<128x32>`。冻结的
+logical-id 到 batch/block 映射仍各有一个 scalar 除余。索引 tensor 无 i64；资源
+为 120 registers、0 spill、512B shared、0 global/profile/local scratch，PTX
+无 local load/store。现有三 dtype、bit31、非连续 stride、tail 和 grid-stride
+回归 8/8 通过。
+
+该候选是 GCU DMA eligibility 的结构变化，不是 tile 变体。one-shot 基础门为
+8/8 valid、Enflame 高于 E2 `2.851x` 且平均高于 `4.686925x`；当前第 14 名
+`5.021775x`，冻结其余七芯时 Enflame 需严格超过 `5.5298x` 才升一位。若 invalid
+或不增益即永久停止 word-layout 轴，不再扫 BLOCK、warps、grid 或与 32K 组合。
