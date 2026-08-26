@@ -667,3 +667,52 @@ Task 23/22 永久停止，不追加 BMM flag，也不再调 tile/grid。
   但没有使任一 case 通过，也不能从异步上报定位具体 launch。
 - E10 未达到 8/8 门槛。按预设止损，Task 23 与同结构 Task 22 永久停止；不把
   mask-zero 追加到已冻结的 SDNN BMM，也不再猜 dtype、stride、tile 或 grid。
+
+## E11：昆仑 legacy masked-memory simulation（最终一次重开）
+
+状态：Git-object release 与不可变 ZIP 门禁通过，待实时 preflight。
+
+E10 之后继续扫描官方仓发现，FlagTree 把 masked-memory 的两种配置明确列为等价
+二选一：E10 使用的 mask-zero 需要 XRE >5.0.21.37 与系统 `dma_excp_mask`；legacy
+兼容路径则同时设置 `TRITONXPU_OTHER_SIM=1` 与
+`TRITONXPU_STORE_MASK_SIM=1`，分别在 semantic lowering 中修正 masked load 的
+`other` 和粗粒度 DMA masked store 的尾 lane。FlagGems Kunlun 的 max、cumsum、
+layernorm、unique 等正式实现均在目标 JIT launch 前设置这对环境变量、调用后删除。
+E10 从 error 700 变为 719 又未通过，与新路径运行时前置条件缺失相容，因而构成一次
+新的、官方锁定的重开依据。
+
+E11 删除三处 `is_use_mask_zero=True`，按官方模式只包围 safe-adapter/pack-X 与
+scatter 的首次 JIT/launch；两段之间先删除变量，使 regular BMM 完全在 flags-off
+区间执行。没有 try/except、设备判断或 fallback；算法、kernel body、BLOCK、grid、
+warps、stages 和其他七芯源码继续冻结。
+
+- source/verification commit：
+  `dd4632a368ec34d4354af642ac151cd4bf5f0244`；Kunlun vendor/test SHA-256
+  分别为
+  `88244cb90c98639ef6cc87de7307e9b2b5ca9d532a83977995811b11793c8d27`、
+  `0e734dff304c82604033ebaa2bc60e1952b89ea0f090e1e69c1bde8544b85653`。
+  回归在每次 mock launch 记录两变量：safe/pack/scatter 均为 `("1","1")`，BMM
+  均为 `(None,None)`，wrapper 返回前变量已删除；四种 launch 均不再携带
+  `is_use_mask_zero`。
+- Git-object release：`gpu:/tmp/flagos-sgemm-legacy-mask-release.8pdAkV`，mode
+  0700，PID/PGID `154999`、wall 420s；exact E11 在 RTX 5070 Ti 上 py_compile、
+  isort、flake8、完整 unittest 10/10、30 个定向 shape 与资源门禁全部通过，尾行为
+  `RELEASE_OK`。scatter 为 20 registers、0 shared/scratch，无 vector div/rem/dot。
+- 最大回归 `B8/L2048/K64/N4096` 五轮独占代理中位：E9 1.629753ms、E11
+  1.628911ms，E11/E9=`0.999483`，峰值增量 411,042,304B。`release.log`、
+  `replay.sh`、candidate/baseline tar SHA-256 分别为
+  `1feee6e6da64d48b2e32d2e2c9d2f7c460b6f489360fb90d3d263ada97e6df0b`、
+  `14cd924d302d0ecc8ad7c6430c3c8830e9d70245878532529f702a666b84ebc4`、
+  `d69b97ebd81d3983964461ee722e48c3fdb49cb4c5c4e8e6d3fbd72a711f7c74`、
+  `f7041ad9ba017f912bdb0f26a33aa20797708523d970b4dfd3162d30b5b3268a`；
+  前后 manifest SHA-256 同为
+  `3a66705a9f2e3e8cf7f9c29366ba7b21a5439ea54f1a1725b53d355980135341`。
+- canonical ZIP：
+  `artifacts/competition/sgemm_lora_b/e11-dd4632a/sgemm_lora_b.zip`，35,432B，
+  SHA-256
+  `c23266792c400636b2a7a4aa418defa2eb15f19623e8419316133dceb4463ff7`；五成员、
+  `verified-existing`、UTF-8/语法/成员白名单均通过。
+
+E11 是 Task 23/22 的最终一次提交：只有 8/8 且昆仑 ≥0.1x 才晋级；按 E10 七芯
+合计 191.816x，最低有效平均约 23.9895x。若仍失败或低于门槛，不再以任何新证据
+重开 Task 23/22。
