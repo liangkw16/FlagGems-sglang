@@ -77,16 +77,6 @@ def _gather_routes_kernel(
     BLOCK_RANK: tl.constexpr,
     HAS_EXTRA_EMBEDDINGS: tl.constexpr,
 ):
-    input_stride = tl.cast(input_stride, tl.int64)
-    weight_stride_lora = tl.cast(weight_stride_lora, tl.int64)
-    weight_stride_rank = tl.cast(weight_stride_rank, tl.int64)
-    weight_stride_vocab = tl.cast(weight_stride_vocab, tl.int64)
-    output_stride_token = tl.cast(output_stride_token, tl.int64)
-    output_stride_rank = tl.cast(output_stride_rank, tl.int64)
-    extra_stride_lora = tl.cast(extra_stride_lora, tl.int64)
-    extra_stride_token = tl.cast(extra_stride_token, tl.int64)
-    extra_stride_rank = tl.cast(extra_stride_rank, tl.int64)
-
     logical_id = program_start + tl.program_id(0)
     token_offset = logical_id // rank_tiles
     rank_tile = logical_id - token_offset * rank_tiles
@@ -148,6 +138,27 @@ def embedding_lora_a(
     ):
         return output
 
+    routed_input_ids = (
+        input_ids.to(torch.int32)
+        if input_ids.dtype == torch.int64
+        else input_ids
+    )
+    seg_indptr = (
+        batch_info.seg_indptr.to(torch.int32)
+        if batch_info.seg_indptr.dtype == torch.int64
+        else batch_info.seg_indptr
+    )
+    weight_indices = (
+        batch_info.weight_indices.to(torch.int32)
+        if batch_info.weight_indices.dtype == torch.int64
+        else batch_info.weight_indices
+    )
+    lora_ranks = (
+        batch_info.lora_ranks.to(torch.int32)
+        if batch_info.lora_ranks.dtype == torch.int64
+        else batch_info.lora_ranks
+    )
+
     route_block = 128
     tiles_per_batch = triton.cdiv(batch_info.max_len, route_block)
     route_programs = batch_info.bs * tiles_per_batch
@@ -164,16 +175,16 @@ def embedding_lora_a(
     for program_start in range(0, route_programs, _MAX_GRID_SIZE):
         grid = (min(_MAX_GRID_SIZE, route_programs - program_start),)
         _expand_routes_kernel[grid](
-            batch_info.seg_indptr,
-            batch_info.weight_indices,
-            batch_info.lora_ranks,
+            seg_indptr,
+            weight_indices,
+            lora_ranks,
             token_weight_indices,
             token_ranks,
             tiles_per_batch,
             program_start,
-            batch_info.seg_indptr.stride(0),
-            batch_info.weight_indices.stride(0),
-            batch_info.lora_ranks.stride(0),
+            seg_indptr.stride(0),
+            weight_indices.stride(0),
+            lora_ranks.stride(0),
             BLOCK_TOKENS=route_block,
             num_warps=4,
             num_stages=1,
@@ -191,7 +202,7 @@ def embedding_lora_a(
     for program_start in range(0, gather_programs, _MAX_GRID_SIZE):
         grid = (min(_MAX_GRID_SIZE, gather_programs - program_start),)
         _gather_routes_kernel[grid](
-            input_ids,
+            routed_input_ids,
             weights,
             output,
             extra_embeddings,
@@ -200,7 +211,7 @@ def embedding_lora_a(
             vocab_size,
             rank_tiles,
             program_start,
-            input_ids.stride(0),
+            routed_input_ids.stride(0),
             *weights.stride(),
             *output.stride(),
             *extra_strides,
