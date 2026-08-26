@@ -193,3 +193,86 @@ submission `4502`，03:27:01，额度区间 `13/30`→`12/30`）华为仍以同�
 case 8 同指纹失败，昆仑为评测超时崩溃（`Fatal Python error: Aborted`，
 与 Task 16/23 昆仑评测器崩溃同族）。最终 6–7/8（invalid）。Task 15 两次
 预算用尽，停止；燧原/国际系芯片路径未被两轮证伪，天数/沐曦/海光正常。
+
+2026-08-26 实时 API 复核修正上述早期观察：两轮终态实际均为 5/8。E2 的
+燧原在验证阶段 1830s 后 segmentation fault，E2a 又遇服务线程卡死自动恢复；
+昆仑两轮均 1830s 后 `Fatal Python error: Aborted`；华为两轮均为 case 8
+确定性重复行数值错误。最近 E2a 五颗通过芯分数为天数 14.7238x、沐曦
+34.5286x、海光 81.8842x、国际 A 98.6508x、国际 B 84.9164x，合计
+314.7038x。
+
+## E3-i32：三失败芯统一 page-routing int32（一次性重开）
+
+状态：source/test、Git-object release 与不可变 ZIP 门禁通过，待实时 preflight。
+
+### 新证据与单变量
+
+Task 17 submission `5048` 已平台实证：删除 Enflame kernel 的 i64 IR 后，燧原
+从连续三轮 `PassManager` 全 case 失败恢复为正确且 0.3885x。GitHub 一手源码又
+显示 FlagGems [Kunlun paged attention](https://github.com/flagos-ai/FlagGems/blob/d1c970e0c9ccb3c26d9fc8de906a7e21a64cc0a1/src/flag_gems/runtime/backend/_kunlunxin/ops/flash_kernel.py#L1162-L1170)
+把 page table load 固定为 int32；FlagTree
+[#922](https://github.com/flagos-ai/FlagTree/issues/922) 记录 XPU attention
+runtime loop 的 pointer-state pass 失败。旧 Task 15 generic/Ascend kernel 则让
+`kv_indptr` 的 dtype 贯穿动态 loop，并把每个 page ID 强制 cast 为 int64。
+
+因此按用户批准的高倍数冲刺破例重开一次，但只改变一个结构变量：新增
+Enflame/Kunlun vendor，并在三颗失败芯的 wrapper 把 int64
+`kv_indptr/kv_indices` 有界转换为 int32；kernel 的 `start/end/pages` 全部保持
+int32。Ascend 保留既有 2D grid，Enflame/Kunlun 保留 generic 1D grid；数学、
+BLOCK、warps、stages、在线 softmax 与 Q/K/V stride 全部冻结。generic、NVIDIA
+vendor 逐字节不变，因此五颗已过芯不受影响。竞赛 page/cache 元数据与官方实现均
+在 int32 范围；题面未明写大于 `2^31-1` 的理论边界作为已知风险，不加会拒绝
+隐藏 case 的 host assert。
+
+若三颗失败芯只达到最低 0.1x，而五颗冻结芯保持 E2a 分数，平均也约为
+`39.3755x`。E3-i32 只正式提交一次；任一芯仍失败或低于 0.1x 即永久停止
+Task 15，不追加 dtype/tile/warps/stages 碰运气。
+
+### 验证与产物
+
+source/verification commit 为
+`49d07a9d0a35183278dfbcb4232b326816652451`。generic/NVIDIA/Ascend/Enflame/
+Kunlun/test SHA-256 分别为
+`886332facce98b6fa3ab783de064e322ddbcabb3a66f9b17bad70914fc3212aa`、
+`0c52bfe006212dd7dab9ab88229d4ca7bdec158bbd95a3434a0a642521ca2a07`、
+`0a1b0fbc51d8d5b1464e3e7a35ca78dfa444ed6f3250d0d38c152b45ab7b0fc7`、
+`bb7befaff0688cebb247cad7ec18769e324f397b053ef009e46a9bfd811884c0`、
+`bb7befaff0688cebb247cad7ec18769e324f397b053ef009e46a9bfd811884c0`、
+`ca76378eb93e3e702d1015fdf5e4edc1ef77e6f8a259b0aa2fc50c547d35b1ab`。
+三份失败芯 vendor 均无 `tl.int64`/`to(tl.int64)` 命中。回归覆盖非连续
+int64 CSR 的转换路径、非连续 int32 CSR 的无转换路径、长度 `1/35/65`、
+非连续 Q/K/V、输入不变和 reference 容差。
+
+最终 screening 位于
+`gpu:/tmp/flagos-decode-attention-i32-screening.wPNIGQ`，base commit
+`68b4e90`，最终 PID/PGID `135624`；`replay.sh` SHA-256 为
+`01ff475a2ae59aa044f1176cf8fa6758e7bb939f612aa1f014121835e33e0c51`。
+8/8 unittest 通过（0.867s），尾行为 `SCREENING_OK`，最终
+`screening-r2.log` SHA-256
+`d5fc0d47aa6107a7d2bdf0c3fbfe199e3d8969e7e8c841baba34a0c896c30a56`；
+输入前后 manifest SHA-256 均为
+`6467fd12903118168acdb560dbbce03e323e37900b063fa20ddb924dcc3df5a0`。
+
+同目录 wrapper-inclusive NVIDIA 代理基准 PID/PGID `135374`；脚本/日志
+SHA-256 分别为
+`228a8ca878d6dda321baef4abf4dbb9fd02725975ae9c4dacdadd4d1bd73d3f1`、
+`900f0f3cec5982ea9755fee64972fa9e588e0acfcaddaf85a2e073b045a6b390`，
+尾行为 `BENCHMARK_OK`。三个代表 shape 的候选延迟为
+0.01438/0.03214/0.04946ms，相对 generic 为 1.452/1.212/1.475x，相对
+reference 为 16.29/19.25/6.45x；峰值显存增量 2,048/37,376/20,992B。
+该结果只排除代理门槛与资源灾难，不外推三款目标芯。
+
+Git-object release 位于
+`gpu:/tmp/flagos-decode-attention-i32-release.CuOydK`，PID/PGID `135933`；
+`replay.sh` SHA-256
+`d7766bc8abe8a3c726fd0d3cb0771787ee19745246db00dcb1c5297b4802c7e2`。
+8/8 unittest 通过（0.638s），尾行为 `RELEASE_OK`，`release.log` SHA-256
+为 `b531106bf8b270c2f61119b9c21775c5b7e42aeb36f01ab6a73a5be6cfef2949`；
+release 前后 manifest 与最终 screening 完全相同。
+
+canonical ZIP 为
+`artifacts/competition/decode_attention/e3-i32-49d07a9/decode_attention.zip`，
+26,924B，SHA-256
+`ba8b013b8e21c4f2edd34808c6dae93764ee0a8795b9801831955714534e98d7`；
+成员为 generic + ascend/enflame/kunlunxin/nvidia。`--verify-existing`、
+`unzip -t` 与成员白名单全部通过。
