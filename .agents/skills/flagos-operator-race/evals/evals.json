@@ -51,7 +51,7 @@
         "Requires the promoted screening hashes to match the committed Git blobs and materializes every repository file used by release from explicit Git objects, not the dirty worktree.",
         "Builds the ZIP from the explicit source commit and records source, verification, and ledger identities.",
         "Binds the final ZIP member and canonical hashes to the pre-release manifest and retains reproducible commands, complete log hashes, and raw paired benchmark samples.",
-        "Audits the upstream and every pending commit before push, stopping if unrelated commits would be included.",
+        "Keeps competition commits local by default; audits upstream and pending commits only if the user explicitly asks to publish or sync GitHub.",
         "Stops with candidate ready and unsubmitted; does not run platform preflight, open the browser, or consume quota."
       ]
     },
@@ -120,13 +120,14 @@
     },
     {
       "id": 11,
-      "prompt": "把现有的 Task 17 ZIP 上传。文件在本地，但我还没给 race/team、完整 hash、成员清单或当前额度。",
-      "expected_output": "A local artifact and provenance audit followed by live preflight and exactly one automatic submission when the complete one-use intent tuple passes.",
+      "prompt": "只打榜，不提交 GitHub。把现有的 Task 17 ZIP 上传。文件在本地，但我还没给 race/team、完整 hash、成员清单或当前额度。",
+      "expected_output": "A local artifact and provenance audit followed by live preflight and exactly one automatic leaderboard submission when the complete one-use intent tuple passes, without pushing GitHub.",
       "files": [],
       "expectations": [
         "Locally verifies ZIP size, integrity, safe Python members, operator/vendor basenames, UTF-8 compilation, exact member set, source provenance, and full SHA-256 before opening the browser.",
         "Stops before platform preflight if artifact provenance or the candidate ledger mapping cannot be established.",
-        "Binds the machine intent to race/team, batch, Task/operator, source commit, members, absolute ZIP path, full hash, live quota, and exactly one submit action, then proceeds without asking."
+        "Binds the machine intent to race/team, batch, Task/operator, source commit, members, absolute ZIP path, full hash, live quota, and exactly one submit action, then proceeds without asking.",
+        "Keeps source, test, and ledger commits local before and after leaderboard submission; GitHub sync requires a separate explicit request."
       ]
     },
     {
