@@ -26,20 +26,22 @@ def _softcap_out_kernel(
     BLOCK_SIZE: tl.constexpr,
     CAP_RECIPROCAL_OVERFLOWS: tl.constexpr,
 ):
-    offsets = tl.program_id(0) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
-    mask = offsets < n_elements
-    x = tl.load(x_ptr + offsets, mask=mask, other=0.0).to(tl.float32)
-    scaled = x / softcap_const
-    scaled_sq = scaled * scaled
-    near_zero = scaled * (
-        1.0 + scaled_sq * (-1.0 / 3.0 + scaled_sq * (2.0 / 15.0))
-    )
-    saturated = 2.0 / (1.0 + tl.exp(-2.0 * scaled)) - 1.0
-    output = tl.where(tl.abs(scaled) < 0.25, near_zero, saturated)
-    output *= softcap_const
-    if CAP_RECIPROCAL_OVERFLOWS:
-        output = tl.where(x == 0.0, x / (x - x), output)
-    tl.store(output_ptr + offsets, output, mask=mask)
+    n_blocks = tl.cdiv(n_elements, BLOCK_SIZE)
+    for block_id in range(tl.program_id(0), n_blocks, 12):
+        offsets = block_id * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+        mask = offsets < n_elements
+        x = tl.load(x_ptr + offsets, mask=mask, other=0.0).to(tl.float32)
+        scaled = x / softcap_const
+        scaled_sq = scaled * scaled
+        near_zero = scaled * (
+            1.0 + scaled_sq * (-1.0 / 3.0 + scaled_sq * (2.0 / 15.0))
+        )
+        saturated = 2.0 / (1.0 + tl.exp(-2.0 * scaled)) - 1.0
+        output = tl.where(tl.abs(scaled) < 0.25, near_zero, saturated)
+        output *= softcap_const
+        if CAP_RECIPROCAL_OVERFLOWS:
+            output = tl.where(x == 0.0, x / (x - x), output)
+        tl.store(output_ptr + offsets, output, mask=mask)
 
 
 def softcap_out(x, softcap_const):
@@ -56,7 +58,7 @@ def softcap_out(x, softcap_const):
     n_elements = x.numel()
     if n_elements == 0:
         return output
-    grid = (triton.cdiv(n_elements, 4096),)
+    grid = (min(triton.cdiv(n_elements, 4096), 12),)
     _softcap_out_kernel[grid](
         x,
         output,
