@@ -506,7 +506,7 @@ team best；额度确认为 `27/30`。Kunlun 原生 `tanh` 把目标芯从
 
 ## S6：Enflame GCU 原生 `tanh`
 
-状态：release 门禁通过，待平台一次性验证
+状态：平台 submission `5213` 评测中
 
 S5 的停止门限定于 Kunlun/XPU vendor：本候选由 2026-08-27 00:31 CST 新同步
 的同题逐芯榜单证据触发，是不同文件、compiler 和 libdevice 的 Enflame/GCU 新轴，
@@ -543,3 +543,10 @@ candidate 最大 77 registers（baseline 93）、zero spill/scratch，且所有�
 `2.06696875x`（整题 `+0.02x`）；若冻结其余芯，要超过当前第 12 名均值
 `2.18982292x`，Enflame 需约 `2.327x`。任一基础门不满足即保留 S4，并停止
 Enflame native-`tanh` 轴。
+
+2026-08-27 00:43:20 CST 在账号 `15600308080`、团队 `SoulCoder` 下执行 S6
+唯一一次提交，submission `5213`、当日序号 `4`，额度预计由 `27/30` 变为
+`26/30`。`file_url_sha256` 为
+`4810f049fa6d82b99753d48d5275109838af35b6b739c938a336038e9ec55620`；对平台
+返回的匿名对象限长回读为 10,023 bytes，SHA-256 与 canonical ZIP 完全一致。
+平台选中了预期的 generic、Ascend、Enflame、Kunlun 四条路径；禁止重传。
