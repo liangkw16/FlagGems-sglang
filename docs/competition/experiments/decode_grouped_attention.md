@@ -187,3 +187,69 @@ E1a 于 03:15:04 CST 提交（submission `4499`，当日序号 `18`，额度区�
 与 Task 15 华为同型（整行重复，Ascend flash 型 kernel 边界 bug）。三芯
 失败互独立且无单变量公共解，按"大把握才提交"原则不再使用第 2 次额度，
 Task 16 记 5/8 停止；未用额度转 Task 14。
+
+## E2：三失败芯结构恢复（最终一次重开）
+
+状态：Git-object release 与不可变 ZIP 门禁通过；等待实时 preflight。
+
+Task 15 E4 的平台结果为 Task 16 三个失败指纹提供了新的逐芯根因证据，因此只新增
+三个 vendor，generic 与 Iluvatar 分别冻结为
+`f1885afedc06f059a27b9bd66554ad49a44f096cf11f6f4c10816fea3c769ee7`、
+`96ae034897773a3d3066ccd62b40bb1095b875067a9b41346d0cc61a926b7ae8`：
+
+- Ascend 使用真实 `num_vectorcore` worker grid，并在 kernel 内 grid-stride
+  遍历全部 `B*H_Q` logical programs，避开 case 7 的重复行。
+- Enflame 精确复用 Task 15 已在平台正确的 manual-sum 路径，CSR 转 int32，host
+  按 65,535 programs 分片；没有重用原来发生段错误的 grouped dot 快路径。
+- Kunlun 使用逐 key 标量 `tl.sum`、FP32 online softmax 与 2 warps；Q/K/V 均为
+  safe-address 后无 mask 读取，输出写入 64 对齐的 padded storage 再切片，源码无
+  `mask=`、`other=` 或 `tl.dot`，同时规避旧 masked load/store 与编译崩溃族。
+
+source/verification commit 为
+`a574a772c737b8e1f77f2a6c5591b172a20216cc`；Ascend、Enflame、Kunlun、测试
+SHA-256 分别为
+`3d8d2551aafcd903725cc96cf407bd46a9ff0c823d04ad2587c3b5bc4b63bbdf`、
+`704faa45193ad9f5a2f0869fd5af507bcfed61968fa0d00f77026b3993c7face`、
+`5c31b08d9c2fc504ef8e9776290e6f519f26676896051dab1344f530f52bce86`、
+`20fab4a091490f7fb32b6ea36d3760cd16f5335d3b98450f3d07fe7dc3809723`。
+
+最终 screening 位于
+`gpu:/tmp/flagos-decode-grouped-attention-e2-screening-r2.WMxICB`，PID/PGID
+`158185`；py_compile、Black 79、isort、flake8 和共享 unittest 18/18 通过
+（3.036s）。测试覆盖 FP16/BF16/FP32、group 2/3/4/8/16/17、非连续
+Q/K/V、strided int32 与 int64 CSR、重复 page、跨 host chunk 的多 value tile、
+安全尾维和 `D_v=257`。`replay.sh` 与 `screening.log` SHA-256 为
+`b8cd4657fbe2fe6a030f19d2b87c8c7f0b5dbee2bad180676f2f5aee69ef1a8e`、
+`0e98f506cac0afa857a4388115626eced870dc8223d4f45336154203ffdb6fc6`。
+
+同目录 benchmark PID/PGID `158437`；脚本与日志 SHA-256 为
+`69361245ff223dcb310296b46c09b05fc6d6d6a24ddb702beca377b47414feed`、
+`6591358b4c3e823da4de3f0f8bad94744fa327c2964d80fd9d3ce604818ebfe5`。
+六轮交替、wrapper-inclusive 的三 vendor 相对题面 reference 结果如下：
+
+| 代表点 | Ascend | Enflame | Kunlun |
+| --- | ---: | ---: | ---: |
+| FP16 `B8,HQ32,HK8,D128,Dv64,L256` | 0.7755x | 12.5117x | 3.2995x |
+| BF16 `B16,HQ32,HK4,D64,Dv128,L512` | 1.3065x | 9.6559x | 3.4252x |
+| BF16 `B2,HQ8,HK2,D40,Dv24,L3/70` | 0.2233x | 14.0241x | 3.1570x |
+| FP16 `B2,HQ8,HK2,D80,Dv96,L3/33` | 0.2227x | 15.1995x | 5.8810x |
+| BF16 `B3,HQ8,HK2,D64,Dv257,L1/31/33` | 0.3215x | 19.1191x | 9.3582x |
+
+所有点超过事前逐点 `0.2x` 门；隔离缓存中的 15 个编译变体均为 0 global/profile
+scratch、PTX 0 local load/store。NVIDIA 只提供代理证据，不证明目标 vendor 性能。
+
+Git-object release 位于
+`gpu:/tmp/flagos-decode-grouped-attention-e2-release.7fsCgC`，PID/PGID
+`158639`；18/18 unittest 在 0.720s 内通过，尾行为 `RELEASE_OK`。release
+脚本、日志与 Git archive SHA-256 分别为
+`3f36bfe5fd6c8bfb9f1f59f49b3cc18fea7b1d58190c61ff1aca391547d8c710`、
+`46c74f341e5f211bb3cb932a64e22555b5bd92b231ab73ead698b04052abe957`、
+`b5fe38470bad240e1440528ed4003f6ef7bf3b47a977b1c00061ca4d5d0c21da`。
+
+不可变 ZIP 为
+`artifacts/competition/decode_grouped_attention/e2-a574a77/decode_grouped_attention.zip`，
+38,145 bytes，canonical SHA-256
+`78d84fc861683b5d70a5435a4b94d6ca50a0bcd176f3d5ab7051b17d89d2d13e`；成员仅为
+generic + Ascend/Enflame/Iluvatar/Kunlun 五个白名单文件，`verify-existing` 与
+`unzip -t` 通过。E2 只允许一次正式提交；任一芯错误或低于 `0.1x` 即停止，
+不重试同候选。
