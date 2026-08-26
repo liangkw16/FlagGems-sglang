@@ -438,3 +438,31 @@ SHA-256 与本地 canonical ZIP 完全一致；本次 `file_url_sha256` 为
 历史 traceback 也直接包含 `i64` loop/value IR，与公开 GCU300 verifier 证据吻合。
 因此“消除 Enflame 64-bit IR”假设被平台证实，E2a stop gate 触发：Task 17
 闭环完成，不再调 BLOCK/warps/stages 或追加提交。
+
+## E3 offline：NVIDIA route + gather vendor（拒绝，不提交）
+
+2026-08-26 在 E2a-i32 已 8/8 的前提下，只离线评估把 E2a 的 metadata route +
+固定 rank gather 结构复制为 `_nvidia` vendor；generic 和四个既有 vendor 均冻结。
+候选源码 SHA-256 为
+`746bc29d5d0fe5daee91a3428ff85c03462f887e86560a4c4bdf1071ca5805e6`。
+
+screening 位于
+`gpu:/tmp/flagos-embedding-lora-a-nvidia-screening.68Ovmm`，base commit
+`80c517b3da87fc7ea676f8946d2567e49b6339b6`，PID/PGID `156325`；8/8
+unittest、py_compile、Black/isort/flake8 和前后哈希通过，尾行为
+`SCREENING_OK`。`replay.sh` / `screening.log` SHA-256 分别为
+`d39b9a0b7a54848e68444c89b759b8be7ecbe7b7f15373470f942850872f683f`、
+`ea27732223e2e889f39cb4a8f8fd3538fd9b1139228ddb15063aaaa70dc7b520`。
+
+同目录对当前 generic 做六轮交替 direct A/B；三点
+`(tokens,batch,rank,vocab,extra)` 为 `(256,16,32,8192,False)`、
+`(1024,32,64,32000,False)`、`(2600,3,129,1024,True)`，候选速度仅为
+generic 的 `0.8292x/0.9300x/0.7896x`，几何均值 `0.8476x`，未达到
+`>=1.35x` 晋级线。benchmark script/log SHA-256 分别为
+`0eee4cf67504324d2e552325ad51dc451b310a6f59d91e07c22598239404959f`、
+`6ec63639125be1dc4a39d49f4b120dc019f888c7ec665a74f6a4d59dd6909750`，尾行为
+`BENCHMARK_OK`。
+
+两阶段 route 的额外 launch/临时张量在 NVIDIA 上不能抵消原 kernel 的 metadata
+分支成本，因此 E3 不晋升、不生成 ZIP、不运行 preflight、不消耗额度；候选源码和
+测试已逐字节撤回，Task 17 继续保留 E2a-i32 的 13.8620625x team best。
