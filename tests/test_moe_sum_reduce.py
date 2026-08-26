@@ -189,7 +189,7 @@ class AscendLaunchPolicyTest(unittest.TestCase):
         configs = ASCEND_MODULE._moe_sum_reduce_kernel.configs
         self.assertEqual(
             ASCEND_MODULE._moe_sum_reduce_kernel.keys,
-            ["hidden_size", "topk"],
+            ["num_tokens", "hidden_size", "topk"],
         )
         self.assertEqual(
             [

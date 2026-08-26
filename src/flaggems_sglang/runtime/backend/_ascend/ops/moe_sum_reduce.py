@@ -28,7 +28,10 @@ _ASCEND_CONFIGS = [
 ]
 
 
-@triton.autotune(configs=_ASCEND_CONFIGS, key=["hidden_size", "topk"])
+@triton.autotune(
+    configs=_ASCEND_CONFIGS,
+    key=["num_tokens", "hidden_size", "topk"],
+)
 @triton.jit
 def _moe_sum_reduce_kernel(
     input_ptr,
