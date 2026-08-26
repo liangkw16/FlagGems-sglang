@@ -66,6 +66,16 @@ AMD_MODULE_PATH = (
     / "ops"
     / "moe_sum_reduce.py"
 )
+ENFLAME_MODULE_PATH = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+    / "_enflame"
+    / "ops"
+    / "moe_sum_reduce.py"
+)
 
 
 def _load_module(name, path):
@@ -86,6 +96,9 @@ ASCEND_MODULE = _load_module(
 )
 METAX_MODULE = _load_module("moe_sum_reduce_metax_module", METAX_MODULE_PATH)
 AMD_MODULE = _load_module("moe_sum_reduce_amd_module", AMD_MODULE_PATH)
+ENFLAME_MODULE = _load_module(
+    "moe_sum_reduce_enflame_module", ENFLAME_MODULE_PATH
+)
 
 
 def reference(input, routed_scaling_factor):
@@ -137,20 +150,21 @@ class MetaxLaunchPolicyTest(unittest.TestCase):
                 self.assertEqual(kwargs.get("num_stages"), num_stages)
 
 
-class AmdLaunchPolicyTest(unittest.TestCase):
-    def test_amd_uses_official_configs_and_config_driven_grid(self):
-        configs = AMD_MODULE._moe_sum_reduce_kernel.configs
-        self.assertEqual(
-            AMD_MODULE._moe_sum_reduce_kernel.keys,
-            ["hidden_size", "topk"],
-        )
-        self.assertEqual(
-            [
-                (config.kwargs["BLOCK_SIZE"], config.num_warps)
-                for config in configs
-            ],
-            [(128, 2), (256, 4), (512, 8), (1024, 8)],
-        )
+class AutotuneLaunchPolicyTest(unittest.TestCase):
+    def test_vendors_use_official_configs_and_config_driven_grid(self):
+        for module in (AMD_MODULE, ENFLAME_MODULE):
+            configs = module._moe_sum_reduce_kernel.configs
+            self.assertEqual(
+                module._moe_sum_reduce_kernel.keys,
+                ["hidden_size", "topk"],
+            )
+            self.assertEqual(
+                [
+                    (config.kwargs["BLOCK_SIZE"], config.num_warps)
+                    for config in configs
+                ],
+                [(128, 2), (256, 4), (512, 8), (1024, 8)],
+            )
 
         class FakeKernel:
             def __init__(self):
@@ -168,25 +182,26 @@ class AmdLaunchPolicyTest(unittest.TestCase):
 
                 return launch
 
-        fake_kernel = FakeKernel()
-        with mock.patch.object(
-            AMD_MODULE, "_moe_sum_reduce_kernel", fake_kernel
-        ):
-            AMD_MODULE.moe_sum_reduce(torch.empty((2, 3, 1025)), 0.75)
+        for module in (AMD_MODULE, ENFLAME_MODULE):
+            fake_kernel = FakeKernel()
+            with mock.patch.object(
+                module, "_moe_sum_reduce_kernel", fake_kernel
+            ):
+                module.moe_sum_reduce(torch.empty((2, 3, 1025)), 0.75)
 
-        self.assertEqual(
-            fake_kernel.grids,
-            [(2, 9), (2, 5), (2, 3), (2, 2)],
-        )
-        self.assertNotIn("BLOCK_SIZE", fake_kernel.kwargs)
-        self.assertNotIn("num_warps", fake_kernel.kwargs)
-        self.assertNotIn("num_stages", fake_kernel.kwargs)
-        self.assertEqual(fake_kernel.kwargs["topk"], 3)
+            self.assertEqual(
+                fake_kernel.grids,
+                [(2, 9), (2, 5), (2, 3), (2, 2)],
+            )
+            self.assertNotIn("BLOCK_SIZE", fake_kernel.kwargs)
+            self.assertNotIn("num_warps", fake_kernel.kwargs)
+            self.assertNotIn("num_stages", fake_kernel.kwargs)
+            self.assertEqual(fake_kernel.kwargs["topk"], 3)
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class MoeSumReduceTest(unittest.TestCase):
-    def test_amd_autotune_all_dtypes_noncontiguous(self):
+    def test_autotune_vendors_all_dtypes_noncontiguous(self):
         tolerances = {
             torch.float16: 1e-2,
             torch.bfloat16: 1.5e-2,
@@ -206,14 +221,15 @@ class MoeSumReduceTest(unittest.TestCase):
                 self.assertFalse(input.is_contiguous())
                 original = input.clone()
 
-                actual = AMD_MODULE.moe_sum_reduce(input, -0.125)
                 expected = reference(input, -0.125)
 
-                self.assertEqual(actual.shape, (4, 1025))
-                self.assertEqual(actual.dtype, dtype)
-                torch.testing.assert_close(
-                    actual, expected, atol=tolerance, rtol=tolerance
-                )
+                for module in (AMD_MODULE, ENFLAME_MODULE):
+                    actual = module.moe_sum_reduce(input, -0.125)
+                    self.assertEqual(actual.shape, (4, 1025))
+                    self.assertEqual(actual.dtype, dtype)
+                    torch.testing.assert_close(
+                        actual, expected, atol=tolerance, rtol=tolerance
+                    )
                 torch.testing.assert_close(input, original, atol=0.0, rtol=0.0)
 
     def test_block_boundaries_all_dtypes(self):
@@ -295,14 +311,15 @@ class MoeSumReduceTest(unittest.TestCase):
             with self.subTest(shape=shape):
                 input = torch.empty(shape, device="cuda", dtype=torch.float16)
 
-                actual = MODULE.moe_sum_reduce(input, 2.0)
                 expected = reference(input, 2.0)
 
-                self.assertEqual(actual.shape, (shape[0], shape[2]))
-                self.assertEqual(actual.dtype, input.dtype)
-                torch.testing.assert_close(
-                    actual, expected, atol=1e-2, rtol=1e-2
-                )
+                for module in (MODULE, ENFLAME_MODULE):
+                    actual = module.moe_sum_reduce(input, 2.0)
+                    self.assertEqual(actual.shape, (shape[0], shape[2]))
+                    self.assertEqual(actual.dtype, input.dtype)
+                    torch.testing.assert_close(
+                        actual, expected, atol=1e-2, rtol=1e-2
+                    )
 
     def test_vendors_cover_platform_failure_scale(self):
         num_tokens, top_k, hidden_dim = 4096, 8, 7168
