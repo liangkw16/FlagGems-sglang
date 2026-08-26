@@ -33,7 +33,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 18 | [`fused_recurrent_gdn`](fused_recurrent_gdn.md) | `e6-b528e9c` | `6093114cf384aa3fe81a5291b6a48bd64d0b72f2c4969fc6906062967cf97764` | E6 平台仅国际 A vendor 通过；官方 `[BK,BV]` 轴转置 E8 offline 的两组错误数与 E6 逐字相同，昆仑仍有系统性 1830s 超时 | 官方唯一新归约形态已离线否决，Task 18 永久停止 |
 | 19 | [`fused_rmsnorm`](fused_rmsnorm.md) | `e2-a5b2986` | `04e24fd06f26144bb6b5824b720678edd48a731f34ced48eab8600c30c65c124` | E2 平台 8/8、4.5467x、第 7；Kunlun vendor 被选中但仅 0.9308x，未过 1.05x 门禁 | 停止同一 multi-row 假设；转其他算子 |
 | 20 | [`mamba_layernorm_gated`](mamba_layernorm_gated.md) | `e3-374e06c` | `afe450702c551fc83395432733dd22e98840125a31247c5e43117983ee30bb3d` | E3 平台 8/8、4.2526x、第 6/6；华为由启动失败恢复至 1.8838x，团队当前最佳 | 保留 E3，转其他算子 |
-| 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `e5-f2e9fc9` | `9544a54ff611e69bd5c42fc3aba2d440d4bca431bd0b665a940a0e24f3d38035` | E5 仅改 Ascend BLOCK256→512；release 6/6、零 spill/scratch；submission 5199 已提交 | one-shot 已用；等待终态，禁止重传 |
+| 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `e5-f2e9fc9` | `9544a54ff611e69bd5c42fc3aba2d440d4bca431bd0b665a940a0e24f3d38035` | E5 平台 8/8、2.76185x team best；华为 0.5982→0.8104x（+35.5%） | 保留 E5；下一步仅评估 MetaX 官方 BLOCK1024/8 warps |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s2c-7857dca` | `357e8a690cca68123aabebdbb5500a86ebd66fe328105a8b91f7c1afe489cb38` | S2c 终态 6/8；六芯高分（海光 82.6x、天数 47.8x）；燧原 case 2 编译失败、昆仑评测异常 | 已按两次规则停止 |
 | 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `e11-dd4632a` | `c23266792c400636b2a7a4aa418defa2eb15f19623e8419316133dceb4463ff7` | E11 官方 XPU legacy masked-memory 使昆仑五个 case 全部跑完，但均数值失败；燧原回调待定，其余六芯已通过 | 官方两种 masked-memory 路径均验证失败，Task 23/22 永久停止 |
 | 24 | [`softcap_out`](softcap_out.md) | `s2e-1a5ea26` | `8469beb23dbaa27fbfbd7f6f74b650ee899586f43bacfb7e3fdd40e8dd566ed0` | S2e 平台 8/8、valid、2.0179x team best；S3c grid=12 interleave 仍正确但昆仑仅 0.2418x、平均 1.9516x | 保留 S2e；永久停止 interleave 假设 |
@@ -47,8 +47,8 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 ```
 
 Task 18 暂缓，仅作状态资源实验。Task 21 已闭环（S0c 6/8 → S1 7/8 → S2 7/8
-→ S3 8/8、2.7096x、team best；昆仑 XPU 2D grid 展平总数上限 65535 的证据
-链完整，华为 capped grid-stride 第三次平台验证）。队列恢复新算子首投。
+→ S3 8/8、2.7096x → E5 8/8、2.76185x、team best；昆仑 XPU 2D grid 展平
+总数上限 65535 的证据链完整，Ascend BLOCK512 平台验证有效）。
 Task 13 已按公开 reference 可返回域修复；
 其余 shape 仍需赛方澄清。Task 14 已有 NVIDIA 优化，但七芯 generic 风险仍需平台
 证明。Task 08 的 E2 已通过 8/8，燧原 BLOCK 优化完成。Task 19 的 E2 已

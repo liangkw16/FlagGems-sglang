@@ -584,7 +584,7 @@ reduction；不做事后 shape 缩窗，不消耗平台额度。S3 继续作为 
 
 ## E5：华为 BLOCK 512
 
-状态：release 通过，等待一次平台验证
+状态：平台 8/8、`valid`、`2.76185x`，团队当前最佳
 
 source/verification commit：`f2e9fc90837dd5169186bdecbaba7869959c44a4`。
 E5 只把 Ascend vendor 的 `block_size` 从 256 改为 512；physical worker cap
@@ -628,4 +628,23 @@ canonical ZIP 仅含 generic、Ascend、Kunlun 三个白名单成员，成员哈
 `c5804f2f80eecd120d276958ac74737995a2eab7a8e80f53dc130956ab7f57cb`；内置远端验签
 因未配置可信 hostname 为 `unavailable`，随后从返回的已核实对象存储地址无认证
 下载，得到 9240 bytes，SHA-256 与 canonical 值完全一致。平台已选中预期的
-generic、Ascend、Kunlun 三条路径；当前等待八芯回调，禁止重传。
+generic、Ascend、Kunlun 三条路径；该候选禁止重传。
+
+2026-08-27 00:05:45 CST 最后一颗燧原完成；00:12:05 CST 只读复核为
+`completed` / `valid`、8/8、平均 `2.76185x`，平台标记 team best。E5 相对
+S3 平均增加 `0.05225x`（+1.93%），通过预注册晋级门；新日额度为 `30/30`：
+
+| 芯片 | E5 speedup | 相对 S3 | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 4.7638x | +2.56% | `moe_sum_reduce.py` |
+| 沐曦 | 3.5040x | -0.59% | `moe_sum_reduce.py` |
+| 燧原 | 0.4210x | +104.37% | `moe_sum_reduce.py` |
+| 海光 | 6.4886x | +0.48% | `moe_sum_reduce.py` |
+| 昆仑芯 | 0.1760x | +0.34% | `moe_sum_reduce_kunlunxin.py` |
+| 华为 | 0.8104x | +35.47% | `moe_sum_reduce_ascend.py` |
+| 国际通用 A | 3.7662x | -2.31% | `moe_sum_reduce.py` |
+| 国际通用 B | 2.1648x | -2.24% | `moe_sum_reduce.py` |
+
+结论：Ascend BLOCK 512 假设被平台证实，保留 E5。燧原的同字节 generic
+读数同时恢复一倍，属于平台波动，不能归因于 Ascend-only 改动。下一候选必须
+继续冻结 E5 的 generic、Ascend 和昆仑字节，只允许新增单芯 vendor。
