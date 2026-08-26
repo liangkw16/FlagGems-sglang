@@ -415,3 +415,50 @@ Kunlun 五个 case 全部执行完但数值失败，错误元素比例依次为
 终态为 `completed` / `invalid_correctness`、7/8；七芯合计 1290.8345x，但
 无有效平均分。按提交前的一次性 stop gate，Task 13 永久停止，不生成 E4、不重试
 同一 ZIP，剩余 10 次额度转投其他任务。
+
+## E4：host-resolved 变长边界 + XPU direct dot（结构性重开）
+
+状态：release、代理性能和不可变 ZIP 门禁通过，待实时 preflight。
+
+E3 后只因出现了结构不同且已有目标芯平台证据的新机制而重开一次：Task 12 的
+32×32 FP32 IEEE direct-dot 已在昆仑 0.2510x 通过；官方 FlagGems Kunlun
+MM/BMM 同样由 host 提供 M/N/K，再运行规整 dot kernel。E4 仅替换 Kunlun
+vendor：wrapper 一次 `cu_seqlens.tolist()` 解析每段 start/length/chunk/slice，
+每个非空段直接启动同构 dot；删除 E3 的 metadata pack、FP32 scratch、regular
+BMM 及 kernel 内 metadata 指针。其余七芯文件逐字冻结。
+
+source/verification commit 均为
+`46c8b3c20649dfba27f1c472ee3323bade94ae70`。generic、Ascend、Iluvatar、
+Enflame、Kunlun、test SHA-256 分别为：
+
+- `025ac23b0026a423e381f8fffe3715c4e21ce64558e79ad4841145351f11d4f1`
+- `a8bf24b42a1f7a73ab4f9635b928e0a28094b258a04cf4de4d39ae52f08c9e4b`
+- `86419a800ebf783d70f0392ae7c71ad06e755844197efe8ce23a6b7b394276e8`
+- `9c3f4fc80e362369c90e54519056f0e1189ea8d229bfb03107c866b4a5067d6c`
+- `f376eb99fc9b3466df849be62c97bceef2df6913dc4c8294c862edccb35eb934`
+- `6bfd26077850f8a65e1777bfed23063f0f4b11a8b39ffe41ac751e02e1f504ef`
+
+screening 位于 `gpu:/tmp/flagos-chunk-state-varlen-e4-screen.tToj0z`，mode
+0700；`replay.sh`、`screening.log`、benchmark 脚本/日志 SHA-256 分别为
+`44624ba9...3b0427`、`ee087bd7...c91bb`、`0eb7219c...8fb0`、
+`1c1c0ea4...8a1e`。12/12 unittest 通过（5.560s），覆盖三 dtype、非连续
+stride、int32/int64 边界、跨 chunk 单 scale 广播、mixed/all-empty、数值边界
+和输入不变性。五个代表 shape 的 wrapper-inclusive NVIDIA 代理相对题面
+reference 为 9.159–280.408x，最低值远高于 0.1x；该数字只作资源下限证据。
+
+Git-object release 位于
+`gpu:/tmp/flagos-chunk-state-varlen-e4-release.Qg1suB`，mode 0700；源 archive
+SHA-256 为 `f4ad1d08...fc40c3`，`replay.sh`/`release.log` SHA-256 为
+`04ae1103...12c7b`/`1bc616a7...0a464`。12/12 unittest（0.758s）、格式、
+`py_compile`、文件哈希与结构门禁全部通过，尾行为 `RELEASE_OK`。
+
+canonical ZIP 为
+`artifacts/competition/chunk_state_varlen/e4-46c8b3c/chunk_state_varlen.zip`，
+42,317B，SHA-256
+`bd112d1efa5098b8294c2b772ef2fa8ee99783e1b2b880521995eac76a770b1b`；成员为
+generic + ascend/enflame/iluvatar/kunlunxin，重复构建状态
+`verified-existing`，`unzip -t` 与逐成员来源哈希通过。
+
+E4 只允许一次正式提交。E3 七个冻结后端合计 1290.8345x；昆仑只要达到
+0.1x，理论平均即 161.3668x。若 Kunlun 编译/正确性失败或低于门槛，永久停止
+Task 13，不对 tile、warps 或逐段 launch 再做微调。
