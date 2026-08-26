@@ -224,6 +224,79 @@ class SgemmLoraBTest(unittest.TestCase):
         self.assertEqual(actual.shape, base.shape)
         self.assertEqual(actual.dtype, base.dtype)
 
+    def test_kunlun_regular_bmm_handles_ragged_strided_inputs(self):
+        torch.manual_seed(20260826)
+        seg_indptr = torch.tensor(
+            [0, -1, 17, -1, 17, -1, 18, -1, 51, -1], device="cuda"
+        )[::2]
+        weight_indices = torch.tensor(
+            [0, -1, 1 << 28, -1, 1, -1, 2, -1], device="cuda"
+        )[::2]
+        lora_ranks = torch.tensor([1, -1, 0, -1, 65, -1], device="cuda")[::2]
+        scalings = torch.tensor(
+            [0.75, 0.0, 1.0, 0.0, -0.5, 0.0], device="cuda"
+        )[::2]
+        permutation_storage = torch.empty(
+            51 * 2, device="cuda", dtype=torch.int64
+        )
+        permutation_storage[::2] = torch.randperm(51, device="cuda")
+        permutation = permutation_storage[::2]
+        info = SimpleNamespace(
+            bs=4,
+            max_len=33,
+            seg_lens=seg_indptr[1:] - seg_indptr[:-1],
+            seg_indptr=seg_indptr,
+            weight_indices=weight_indices,
+            lora_ranks=lora_ranks,
+            scalings=scalings,
+            permutation=permutation,
+        )
+        tolerances = {
+            torch.float16: 1e-2,
+            torch.bfloat16: 1.5e-2,
+            torch.float32: 1e-4,
+        }
+
+        for dtype, tolerance in tolerances.items():
+            with self.subTest(dtype=dtype):
+                x = (torch.randn((51, 130), device="cuda", dtype=dtype) * 0.1)[
+                    :, ::2
+                ]
+                weights = (
+                    torch.randn((3, 134, 130), device="cuda", dtype=dtype)
+                    * 0.1
+                )[:, ::2, ::2]
+                base = (
+                    torch.randn((51, 134), device="cuda", dtype=dtype) * 0.01
+                )[:, ::2]
+                for value in (x, weights, base):
+                    self.assertFalse(value.is_contiguous())
+                values = (
+                    x,
+                    weights,
+                    base,
+                    seg_indptr,
+                    weight_indices,
+                    lora_ranks,
+                    scalings,
+                    permutation,
+                )
+                before = tuple(value.clone() for value in values)
+
+                actual = KUNLUN_MODULE.sgemm_lora_b(x, weights, info, base)
+                expected = reference(x, weights, info, base)
+                torch.cuda.synchronize()
+
+                self.assertEqual(actual.shape, base.shape)
+                self.assertEqual(actual.dtype, base.dtype)
+                torch.testing.assert_close(
+                    actual, expected, atol=tolerance, rtol=tolerance
+                )
+                for value, original in zip(values, before):
+                    torch.testing.assert_close(
+                        value, original, atol=0.0, rtol=0.0
+                    )
+
     def test_vendors_cover_fold_and_split_fp16(self):
         torch.manual_seed(20260824)
         bs, max_len, rank, out_dim = 8, 2048, 64, 4096
@@ -234,6 +307,14 @@ class SgemmLoraBTest(unittest.TestCase):
         total = seg[-1]
         tiles = ((max_len + 63) // 64) * ((out_dim + 127) // 128)
         self.assertGreater(tiles * bs, 4096)
+        self.assertEqual(
+            bs * ((max_len + 31) // 32) * ((out_dim + 31) // 32),
+            65536,
+        )
+        self.assertEqual(
+            bs * ((max_len + 31) // 32) * ((out_dim + 63) // 64),
+            32768,
+        )
         perm = torch.randperm(total).tolist()
 
         for dtype, tolerance in (

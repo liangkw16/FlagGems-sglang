@@ -12,26 +12,203 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import torch
 import triton
 import triton.language as tl
 
+_MAX_GRID_SIZE = 65535
+
 
 @triton.jit
-def _sgemm_lora_b_kernel(
+def _pack_x_kernel(
     x_ptr,
+    packed_x_ptr,
+    seg_indptr_ptr,
+    permutation_ptr,
+    max_len,
+    program_start,
+    x_stride_token,
+    x_stride_rank,
+    seg_indptr_stride,
+    permutation_stride,
+    RANK: tl.constexpr,
+    BLOCK_M: tl.constexpr,
+    BLOCK_K: tl.constexpr,
+    HAS_PERMUTATION: tl.constexpr,
+):
+    x_stride_token = tl.cast(x_stride_token, tl.int64)
+    x_stride_rank = tl.cast(x_stride_rank, tl.int64)
+
+    rank_tiles = tl.cdiv(RANK, BLOCK_K)
+    tiles_per_batch = tl.cdiv(max_len, BLOCK_M) * rank_tiles
+    logical_id = program_start + tl.program_id(0)
+    batch_id = logical_id // tiles_per_batch
+    matrix_id = logical_id - batch_id * tiles_per_batch
+    token_tile = matrix_id // rank_tiles
+    rank_tile = matrix_id - token_tile * rank_tiles
+
+    segment_start = tl.load(seg_indptr_ptr + batch_id * seg_indptr_stride)
+    segment_end = tl.load(seg_indptr_ptr + (batch_id + 1) * seg_indptr_stride)
+    segment_length = segment_end - segment_start
+    token_offsets = token_tile * BLOCK_M + tl.arange(0, BLOCK_M)
+    rank_offsets = rank_tile * BLOCK_K + tl.arange(0, BLOCK_K)
+    token_mask = token_offsets < segment_length
+    rank_mask = rank_offsets < RANK
+    if HAS_PERMUTATION:
+        rows = tl.load(
+            permutation_ptr
+            + (segment_start + token_offsets) * permutation_stride,
+            mask=token_mask,
+            other=0,
+        )
+    else:
+        rows = segment_start + token_offsets
+
+    values = tl.load(
+        x_ptr
+        + rows[:, None] * x_stride_token
+        + rank_offsets[None, :] * x_stride_rank,
+        mask=token_mask[:, None] & rank_mask[None, :],
+        other=0.0,
+    )
+    packed_offsets = (
+        batch_id * max_len + token_offsets[:, None]
+    ) * RANK + rank_offsets[None, :]
+    tl.store(
+        packed_x_ptr + packed_offsets,
+        values,
+        mask=(token_offsets[:, None] < max_len) & rank_mask[None, :],
+    )
+
+
+@triton.jit
+def _pack_weights_kernel(
     weights_ptr,
+    packed_weights_ptr,
+    seg_indptr_ptr,
+    weight_indices_ptr,
+    lora_ranks_ptr,
+    output_dim,
+    program_start,
+    weight_stride_lora,
+    weight_stride_output,
+    weight_stride_rank,
+    seg_indptr_stride,
+    weight_indices_stride,
+    lora_ranks_stride,
+    RANK: tl.constexpr,
+    BLOCK_N: tl.constexpr,
+    BLOCK_K: tl.constexpr,
+):
+    weight_stride_lora = tl.cast(weight_stride_lora, tl.int64)
+    weight_stride_output = tl.cast(weight_stride_output, tl.int64)
+    weight_stride_rank = tl.cast(weight_stride_rank, tl.int64)
+
+    rank_tiles = tl.cdiv(RANK, BLOCK_K)
+    tiles_per_batch = tl.cdiv(output_dim, BLOCK_N) * rank_tiles
+    logical_id = program_start + tl.program_id(0)
+    batch_id = logical_id // tiles_per_batch
+    matrix_id = logical_id - batch_id * tiles_per_batch
+    output_tile = matrix_id // rank_tiles
+    rank_tile = matrix_id - output_tile * rank_tiles
+    output_offsets = output_tile * BLOCK_N + tl.arange(0, BLOCK_N)
+    rank_offsets = rank_tile * BLOCK_K + tl.arange(0, BLOCK_K)
+    mask = (output_offsets[:, None] < output_dim) & (
+        rank_offsets[None, :] < RANK
+    )
+    packed_offsets = (
+        batch_id * RANK + rank_offsets[None, :]
+    ) * output_dim + output_offsets[:, None]
+    tl.store(packed_weights_ptr + packed_offsets, 0.0, mask=mask)
+
+    segment_start = tl.load(seg_indptr_ptr + batch_id * seg_indptr_stride)
+    segment_end = tl.load(seg_indptr_ptr + (batch_id + 1) * seg_indptr_stride)
+    if segment_start == segment_end:
+        return
+    weight_index = tl.load(
+        weight_indices_ptr + batch_id * weight_indices_stride
+    )
+    if tl.load(lora_ranks_ptr + weight_index * lora_ranks_stride) == 0:
+        return
+
+    values = tl.load(
+        weights_ptr
+        + weight_index * weight_stride_lora
+        + output_offsets[:, None] * weight_stride_output
+        + rank_offsets[None, :] * weight_stride_rank,
+        mask=mask,
+        other=0.0,
+    )
+    tl.store(packed_weights_ptr + packed_offsets, values, mask=mask)
+
+
+@triton.jit
+def _regular_bmm_kernel(
+    packed_x_ptr,
+    packed_weights_ptr,
+    products_ptr,
+    max_len,
+    output_dim,
+    program_start,
+    RANK: tl.constexpr,
+    BLOCK_M: tl.constexpr,
+    BLOCK_N: tl.constexpr,
+    BLOCK_K: tl.constexpr,
+):
+    output_tiles = tl.cdiv(output_dim, BLOCK_N)
+    tiles_per_batch = tl.cdiv(max_len, BLOCK_M) * output_tiles
+    logical_id = program_start + tl.program_id(0)
+    batch_id = logical_id // tiles_per_batch
+    matrix_id = logical_id - batch_id * tiles_per_batch
+    token_tile = matrix_id // output_tiles
+    output_tile = matrix_id - token_tile * output_tiles
+    token_offsets = token_tile * BLOCK_M + tl.arange(0, BLOCK_M)
+    output_offsets = output_tile * BLOCK_N + tl.arange(0, BLOCK_N)
+    accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
+    rank_offsets = tl.arange(0, BLOCK_K)
+
+    for rank_start in range(0, RANK, BLOCK_K):
+        rank = rank_start + rank_offsets
+        packed_x = tl.load(
+            packed_x_ptr
+            + (batch_id * max_len + token_offsets[:, None]) * RANK
+            + rank[None, :],
+            mask=(token_offsets[:, None] < max_len) & (rank[None, :] < RANK),
+            other=0.0,
+        )
+        packed_weights = tl.load(
+            packed_weights_ptr
+            + (batch_id * RANK + rank[:, None]) * output_dim
+            + output_offsets[None, :],
+            mask=(output_offsets[None, :] < output_dim)
+            & (rank[:, None] < RANK),
+            other=0.0,
+        )
+        accumulator += tl.dot(packed_x, packed_weights, input_precision="ieee")
+
+    product_offsets = (
+        batch_id * max_len + token_offsets[:, None]
+    ) * output_dim + output_offsets[None, :]
+    tl.store(
+        products_ptr + product_offsets,
+        accumulator,
+        mask=(token_offsets[:, None] < max_len)
+        & (output_offsets[None, :] < output_dim),
+    )
+
+
+@triton.jit
+def _scatter_add_kernel(
+    products_ptr,
     output_ptr,
     seg_indptr_ptr,
     weight_indices_ptr,
     lora_ranks_ptr,
     scalings_ptr,
     permutation_ptr,
+    max_len,
     output_dim,
-    x_stride_token,
-    x_stride_rank,
-    weight_stride_lora,
-    weight_stride_output,
-    weight_stride_rank,
+    program_start,
     output_stride_token,
     output_stride_col,
     seg_indptr_stride,
@@ -39,129 +216,192 @@ def _sgemm_lora_b_kernel(
     lora_ranks_stride,
     scalings_stride,
     permutation_stride,
-    RANK: tl.constexpr,
-    BLOCK_S: tl.constexpr,
+    BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
-    BLOCK_K: tl.constexpr,
     HAS_PERMUTATION: tl.constexpr,
 ):
-    batch_id = tl.program_id(1)
+    output_stride_token = tl.cast(output_stride_token, tl.int64)
+    output_stride_col = tl.cast(output_stride_col, tl.int64)
+
+    output_tiles = tl.cdiv(output_dim, BLOCK_N)
+    tiles_per_batch = tl.cdiv(max_len, BLOCK_M) * output_tiles
+    logical_id = program_start + tl.program_id(0)
+    batch_id = logical_id // tiles_per_batch
+    matrix_id = logical_id - batch_id * tiles_per_batch
+    token_tile = matrix_id // output_tiles
+    output_tile = matrix_id - token_tile * output_tiles
+
     segment_start = tl.load(seg_indptr_ptr + batch_id * seg_indptr_stride)
     segment_end = tl.load(seg_indptr_ptr + (batch_id + 1) * seg_indptr_stride)
     segment_length = segment_end - segment_start
-    num_output_blocks = tl.cdiv(output_dim, BLOCK_N)
-    matrix_pid = tl.program_id(0)
-    token_block = matrix_pid // num_output_blocks
-    output_block = matrix_pid % num_output_blocks
-    if token_block * BLOCK_S >= segment_length:
+    token_offsets = token_tile * BLOCK_M + tl.arange(0, BLOCK_M)
+    if token_tile * BLOCK_M >= segment_length:
         return
-
     weight_index = tl.load(
         weight_indices_ptr + batch_id * weight_indices_stride
     )
-    rank = tl.load(lora_ranks_ptr + weight_index * lora_ranks_stride)
-    if rank == 0:
+    if tl.load(lora_ranks_ptr + weight_index * lora_ranks_stride) == 0:
         return
 
-    offsets_s = token_block * BLOCK_S + tl.arange(0, BLOCK_S)
-    offsets_n = output_block * BLOCK_N + tl.arange(0, BLOCK_N)
-    mask_s = offsets_s < segment_length
-    mask_n = offsets_n < output_dim
+    output_offsets = output_tile * BLOCK_N + tl.arange(0, BLOCK_N)
+    token_mask = token_offsets < segment_length
+    output_mask = output_offsets < output_dim
     if HAS_PERMUTATION:
         rows = tl.load(
-            permutation_ptr + (segment_start + offsets_s) * permutation_stride,
-            mask=mask_s,
+            permutation_ptr
+            + (segment_start + token_offsets) * permutation_stride,
+            mask=token_mask,
             other=0,
         )
     else:
-        rows = segment_start + offsets_s
+        rows = segment_start + token_offsets
 
-    accumulator = tl.zeros((BLOCK_S, BLOCK_N), dtype=tl.float32)
-    offsets_k = tl.arange(0, BLOCK_K)
-    for k_start in range(0, RANK, BLOCK_K):
-        k = k_start + offsets_k
-        mask_k = k < RANK
-        x = tl.load(
-            x_ptr
-            + rows[:, None] * x_stride_token
-            + k[None, :] * x_stride_rank,
-            mask=mask_s[:, None] & mask_k[None, :],
-            other=0.0,
-        )
-        weights = tl.load(
-            weights_ptr
-            + weight_index * weight_stride_lora
-            + offsets_n[None, :] * weight_stride_output
-            + k[:, None] * weight_stride_rank,
-            mask=mask_k[:, None] & mask_n[None, :],
-            other=0.0,
-        )
-        accumulator += tl.dot(x, weights, input_precision="ieee")
-
-    output_offsets = (
-        rows[:, None] * output_stride_token
-        + offsets_n[None, :] * output_stride_col
+    product_offsets = (
+        batch_id * max_len + token_offsets[:, None]
+    ) * output_dim + output_offsets[None, :]
+    products = tl.load(
+        products_ptr + product_offsets,
+        mask=token_mask[:, None] & output_mask[None, :],
+        other=0.0,
     )
-    output_mask = mask_s[:, None] & mask_n[None, :]
-    base = tl.load(
-        output_ptr + output_offsets, mask=output_mask, other=0.0
-    ).to(tl.float32)
+    output_ptrs = (
+        output_ptr
+        + rows[:, None] * output_stride_token
+        + output_offsets[None, :] * output_stride_col
+    )
+    mask = token_mask[:, None] & output_mask[None, :]
+    base = tl.load(output_ptrs, mask=mask, other=0.0).to(tl.float32)
     scaling = tl.load(scalings_ptr + weight_index * scalings_stride).to(
         tl.float32
     )
-    tl.store(
-        output_ptr + output_offsets,
-        base + accumulator * scaling,
-        mask=output_mask,
-    )
+    tl.store(output_ptrs, base + products * scaling, mask=mask)
 
 
 def sgemm_lora_b(x, weights, batch_info, base_output):
     output = base_output.clone()
-    if output.numel() == 0 or batch_info.bs == 0 or batch_info.max_len == 0:
+    if (
+        output.numel() == 0
+        or weights.shape[2] == 0
+        or batch_info.bs == 0
+        or batch_info.max_len == 0
+    ):
         return output
 
+    batch_size = batch_info.bs
+    max_len = batch_info.max_len
     output_dim = weights.shape[1]
     rank = weights.shape[2]
-    block_s = 32
-    block_n = 32
+    block_m = 32
+    block_n = 64
     block_k = 32
-    output_blocks = triton.cdiv(output_dim, block_n)
-    grid = (
-        triton.cdiv(batch_info.max_len, block_s) * output_blocks,
-        batch_info.bs,
+    packed_x = torch.empty(
+        (batch_size, max_len, rank), dtype=torch.float32, device=x.device
+    )
+    packed_weights = torch.empty(
+        (batch_size, rank, output_dim),
+        dtype=torch.float32,
+        device=weights.device,
+    )
+    products = torch.empty(
+        (batch_size, max_len, output_dim),
+        dtype=torch.float32,
+        device=x.device,
     )
     permutation = batch_info.permutation
-    _sgemm_lora_b_kernel[grid](
-        x,
-        weights,
-        output,
-        batch_info.seg_indptr,
-        batch_info.weight_indices,
-        batch_info.lora_ranks,
-        batch_info.scalings,
-        permutation if permutation is not None else batch_info.seg_indptr,
-        output_dim,
-        x.stride(0),
-        x.stride(1),
-        weights.stride(0),
-        weights.stride(1),
-        weights.stride(2),
-        output.stride(0),
-        output.stride(1),
-        batch_info.seg_indptr.stride(0),
-        batch_info.weight_indices.stride(0),
-        batch_info.lora_ranks.stride(0),
-        batch_info.scalings.stride(0),
-        permutation.stride(0) if permutation is not None else 0,
-        RANK=rank,
-        BLOCK_S=block_s,
-        BLOCK_N=block_n,
-        BLOCK_K=block_k,
-        HAS_PERMUTATION=permutation is not None,
-        num_warps=4,
-        num_stages=1,
+    permutation_arg = (
+        permutation if permutation is not None else batch_info.seg_indptr
     )
+
+    rank_tiles = triton.cdiv(rank, block_k)
+    pack_x_programs = batch_size * triton.cdiv(max_len, block_m) * rank_tiles
+    for program_start in range(0, pack_x_programs, _MAX_GRID_SIZE):
+        grid = (min(_MAX_GRID_SIZE, pack_x_programs - program_start),)
+        _pack_x_kernel[grid](
+            x,
+            packed_x,
+            batch_info.seg_indptr,
+            permutation_arg,
+            max_len,
+            program_start,
+            *x.stride(),
+            batch_info.seg_indptr.stride(0),
+            permutation.stride(0) if permutation is not None else 0,
+            RANK=rank,
+            BLOCK_M=block_m,
+            BLOCK_K=block_k,
+            HAS_PERMUTATION=permutation is not None,
+            num_warps=4,
+            num_stages=1,
+        )
+
+    pack_weight_programs = (
+        batch_size * triton.cdiv(output_dim, block_n) * rank_tiles
+    )
+    for program_start in range(0, pack_weight_programs, _MAX_GRID_SIZE):
+        grid = (min(_MAX_GRID_SIZE, pack_weight_programs - program_start),)
+        _pack_weights_kernel[grid](
+            weights,
+            packed_weights,
+            batch_info.seg_indptr,
+            batch_info.weight_indices,
+            batch_info.lora_ranks,
+            output_dim,
+            program_start,
+            *weights.stride(),
+            batch_info.seg_indptr.stride(0),
+            batch_info.weight_indices.stride(0),
+            batch_info.lora_ranks.stride(0),
+            RANK=rank,
+            BLOCK_N=block_n,
+            BLOCK_K=block_k,
+            num_warps=4,
+            num_stages=1,
+        )
+
+    bmm_programs = (
+        batch_size
+        * triton.cdiv(max_len, block_m)
+        * triton.cdiv(output_dim, block_n)
+    )
+    for program_start in range(0, bmm_programs, _MAX_GRID_SIZE):
+        grid = (min(_MAX_GRID_SIZE, bmm_programs - program_start),)
+        _regular_bmm_kernel[grid](
+            packed_x,
+            packed_weights,
+            products,
+            max_len,
+            output_dim,
+            program_start,
+            RANK=rank,
+            BLOCK_M=block_m,
+            BLOCK_N=block_n,
+            BLOCK_K=block_k,
+            num_warps=4,
+            num_stages=1,
+        )
+        _scatter_add_kernel[grid](
+            products,
+            output,
+            batch_info.seg_indptr,
+            batch_info.weight_indices,
+            batch_info.lora_ranks,
+            batch_info.scalings,
+            permutation_arg,
+            max_len,
+            output_dim,
+            program_start,
+            *output.stride(),
+            batch_info.seg_indptr.stride(0),
+            batch_info.weight_indices.stride(0),
+            batch_info.lora_ranks.stride(0),
+            batch_info.scalings.stride(0),
+            permutation.stride(0) if permutation is not None else 0,
+            BLOCK_M=block_m,
+            BLOCK_N=block_n,
+            HAS_PERMUTATION=permutation is not None,
+            num_warps=4,
+            num_stages=1,
+        )
     return output
 
 
