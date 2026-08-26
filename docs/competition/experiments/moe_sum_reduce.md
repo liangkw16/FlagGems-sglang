@@ -727,7 +727,7 @@ BLOCK/warps 为 `128/2`、`256/4`、`512/8`、`1024/8`，autotune key 为
 | source / verification commit | `a305b67646c1c587cbe7d23c4d10af6226b20b01` |
 | generic / Ascend SHA-256 | `52a2fc979784f2bd25e7e17b9822c23b4f438efdf062c70bfb09aba9ba732335` / `f740604cd4a0506a3e41776f3f9a001edffafef45f04aff78d1ee8a208f2132b` |
 | Kunlun / MetaX SHA-256 | `68b0abe07e3cf4f2b9cb86063e9ad1e18edd83d90341410cd281ec595c83406d` / `20db4f49aada2976723ab9dabd7013545a30a0998ee8fb21ad655375bd2cb794` |
-| AMD / test SHA-256 | `3b0de225dbf5ffc1004096055da871c919870cc0ba6e4a0297551c5c7537e399` / `19d8513c7b3acdc6dd9f1529ab996526a4f9073b14b80c9733b526b54220fa03` |
+| AMD / test SHA-256 | `3b0de225dbf5ffc1004096055da871c919870cc0ba6e4a0297551c5c7537e399` / `19d8513c8793916c64aa1ec83f1c2339b6ac6769373979995c670f359ab36a03` |
 | screening | `gpu:/tmp/flagos-moe-sum-reduce-amd-screen.0djeCb`；10/10；日志 SHA-256 `db093544aef468392f2cf55dd9e7bd2fb2c9f90072082ba05966257953013c8d` |
 | 交替 A/B | 同目录；18 点几何平均 `1.007808x`、最差中位 `0.969231x`；日志 SHA-256 `14f1bc0805c8e26d34f31c5ad62711aa27a65c01de0d286e398e712539dc6a11` |
 | release | `gpu:/tmp/flagos-moe-sum-reduce-amd-release.rbjscH`；10/10、`RELEASE_OK`；日志 SHA-256 `2876188ff26e49270da98da30e77dd56e695d17007d42d07cfe145b53fba525c` |
