@@ -291,7 +291,7 @@ source/test SHA 与 Git blob 相同。规范打包器创建后再以 `--verify-e
 
 ## E5：backend-native `tl.sum` + NVIDIA 已通过 vendor（晋升）
 
-状态：release 与不可变 ZIP 门禁通过；待实时 preflight
+状态：release 与不可变 ZIP 门禁通过；GitHub/跨芯审计拒绝，不提交
 
 验证时间：2026-08-26 16:34–16:38 CST
 
@@ -325,3 +325,18 @@ release 从最终 commit 导出；三文件 Git/远端 SHA 一致。py_compile�
 Black 26.5.1、unittest 6/6、规范构建和 `--verify-existing` 全部通过。E5 是对 E4
 失败根因的单变量平台实验；generic 是否复现各 vendor Torch bmm 只能由逐芯回调
 证实。
+
+### E5 停止结论
+
+E5 不进入 preflight。固定 SGLang 与 FlagGems 上游实现仍使用两处 `tl.sum`；没有
+公开实现证明 E4 的四路 FMA、交叉合并及 libdevice `exp` 舍入树可跨七个非 NVIDIA
+后端复现。更直接的门禁缺口是：E5 generic 只通过 `B=1,T=3,V=17` 的短契约测试，
+两个真实隐藏长形态仍只由 `_nvidia` 模块重放。把 E4 冻结到 NVIDIA vendor 最多
+保住已由平台证明的国际 A，不能证明其余七芯恢复，信息增益不足以消耗额度。
+
+一手证据为 SGLang 固定版本的
+[`tl.sum` 实现](https://github.com/sgl-project/sglang/blob/8014d9d062c3cc5d393596ecdf2f7009191965df/python/sglang/kernels/ops/attention/fla/fused_recurrent.py#L15-L121)、
+FlagGems 的
+[`tl.sum` generic](https://github.com/flagos-ai/FlagGems/blob/d1c970e0c9ccb3c26d9fc8de906a7e21a64cc0a1/src/flag_gems/fused/FLA/fused_recurrent.py#L263-L333)
+及其[长序列测试缺口](https://github.com/flagos-ai/FlagGems/blob/6474da8e201164fc2855898eb44b42d5019429bf/tests/test_FLA/test_fused_recurrent_gated_delta_rule.py#L127-L163)。
+后续只有取得至少一颗非 NVIDIA 真机在两个长形态上的零误差证据，才允许重开 Task 18。
