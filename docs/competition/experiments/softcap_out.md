@@ -444,7 +444,7 @@ Ascend tile 扩展。其余七芯使用冻结字节并全部过门槛。
 
 ## S5：Kunlun 原生 `tanh`
 
-状态：release 门禁通过，待平台一次性验证
+状态：平台 submission `5210` 评测中
 
 S5 只把 Kunlun vendor 的手写 `exp` 多项式 `tanh` 换成 XPU 官方
 `tl_extra_shim.tanh`；BLOCK 4096、grid、四 warps、单 stage、cap 分支及输出
@@ -475,3 +475,10 @@ CUDA libdevice 调用开销使非 control 几何平均为 `0.961117x`，只作�
 一次提交晋级门：8/8 valid、Kunlun 高于 S4 的 `0.86508333x`、平均高于
 `2.04696875x`；显著收益目标为 Kunlun 至少 `1.02508333x`（对应整题平均约
 `+0.02x`）。任一基础门不满足即保留 S4，并永久停止 native-`tanh` 轴。
+
+2026-08-27 00:29:27 CST 在账号 `15600308080`、团队 `SoulCoder` 下执行 S5
+唯一一次提交，submission `5210`、当日序号 `3`，额度预计由 `28/30` 变为
+`27/30`。`file_url_sha256` 为
+`d0f8f1e2aefcc568a24ed9345724e7b9388cf49e139ecdf77ceb15519399edd4`；对平台
+返回的匿名对象限长回读为 10,043 bytes，SHA-256 与 canonical ZIP 完全一致。
+平台选中了预期的 generic、Ascend、Enflame、Kunlun 四条路径；禁止重传。
