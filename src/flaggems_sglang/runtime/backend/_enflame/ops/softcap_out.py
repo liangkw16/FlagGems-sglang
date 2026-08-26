@@ -60,7 +60,7 @@ def softcap_out(x, softcap_const):
     n_elements = x.numel()
     if n_elements == 0:
         return output
-    grid = (min(triton.cdiv(n_elements, 4096), 12),)
+    grid = (min(triton.cdiv(n_elements, 4096), 65535),)
     _softcap_out_kernel[grid](
         x,
         output,
