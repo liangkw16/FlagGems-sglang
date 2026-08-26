@@ -5,7 +5,7 @@
 `2026-08-24T02:17:26+08:00`。
 
 当前覆盖：17/17 个算子都有已提交源码、远端 NVIDIA 代理验证和不可变 ZIP。
-Task 08、12、19、20、21 和 24 已经平台 8/8；其余 11 个尚无八芯平台结果，
+Task 08、09、12、17、19、20、21 和 24 已经平台 8/8；其余 9 个尚无八芯平台结果，
 代理加速比不能外推。
 
 产物路径统一为：
@@ -25,11 +25,11 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 10 | [`chunk_cumsum`](chunk_cumsum.md) | `s2b-63e7943` | `c822f75d719f8919269c7566b1210b6e31dc6ce3292229a838723f7945b15923` | S2b 平台 8/8 正确、invalid_threshold；华为 UB tile 上限修复生效；燧原 0.0375x/昆仑 0.012x 为 cumsum lowering 固有瓶颈 | 已按两次规则停止；重试需改写 cumsum 算法形式 |
 | 11 | [`chunk_local_cumsum_vector`](chunk_local_cumsum_vector.md) | `e1b-dddef74` | `cf4dcaf05640599fe5b50ee9633ba19d2a4f13f2b47f856e88259242e975bab9` | 两次提交均 7/8；昆仑 0.016x/华为 0.0255x 与折叠形态无关，cumsum 固有；燧原三形态编译失败 | 已按两次规则停止；同 Task 10 结论 |
 | 12 | [`chunk_state`](chunk_state.md) | `e7-294990c` | `583b55a2518091cd707ff6dbf1080a10bd1fe2fd690da2885d0bfd48daae04a8` | E7 平台 8/8、**4.0371875x team best**；官方 Ascend Cube 路线使华为 0.329→2.1185x（6.44 倍），其余七芯稳定 | Task 12 永久停止；保留 E7 |
-| 13 | [`chunk_state_varlen`](chunk_state_varlen.md) | `s1b-1975cf7` | `0319c0e26b7cd6fb12f33b43771572a058306e89ac5982234531552daa0203d1` | 两次提交均 6/8；天数 vendor 132x、华为 27.7x 生效；燧原/昆仑对该 varlen 结构编译失败（结构性） | 已按两次规则停止 |
+| 13 | [`chunk_state_varlen`](chunk_state_varlen.md) | `e3-d795ed3` | `8ea09900fe8995f59f63e649ca0b3a3fd97215e1ed09511d0a4b96a97424151c` | E2 六芯合计 1217.036x；新平台/官方证据支持燧原 i32 metadata 与昆仑全 padding 无 mask 访存，E3 release 12/12 通过 | 只允许一次 E3；门禁通过即提交，失败永久停止 |
 | 14 | [`context_attention`](context_attention.md) | `e1a-6246fa8` | `8bfc8843bb6951de12160d83dbd56428c3697262ad331a05183217b9aa2d7861` | E1a 终态 5/8：天数 vendor 1.99x、nvidia vendor 6.32x；燧原超时疑似死循环、昆仑评测器崩溃、华为 flash 边界 bug | 保留第 2 次额度；三芯失败互独立无单变量解 |
 | 15 | [`decode_attention`](decode_attention.md) | `e2a-5add38c` | `b2fdcbc98b098165c3defe61cb9b0a5f5e021dfe04dbb5798dfd684b0fac8751` | 两次提交 6–7/8；华为 case 8 整行重复指纹（Ascend flash 边界 bug）两种 grid 均现；昆仑评测超时崩溃 | 已按两次规则停止 |
 | 16 | [`decode_grouped_attention`](decode_grouped_attention.md) | `e1a-9801c56` | `c8dd889f7820f52e73bfc2ea1c88c007b2a969c3811e0970b260f911e25a5b2b` | E1a 平台 5/8；天数 vendor 生效；华为 case 7 与 Task 15 同型指纹，燧原段错误、昆仑评测崩溃 | 三芯失败互独立无单变量解，保留第 2 次额度，记 5/8 停止 |
-| 17 | [`embedding_lora_a`](embedding_lora_a.md) | `s1c-e12c7a9` | `a247a9dd500ae4b110248f8b9954c9c7e1ae429763115c0061344aee360f3a4f` | 3 次提交均 7/8；华为/昆仑 token 折叠 vendor 平台验证成功；燧原三种 kernel 形态均编译失败 | 已按三次规则停止；燧原标量载入嫌疑待 GCU 环境定位 |
+| 17 | [`embedding_lora_a`](embedding_lora_a.md) | `e2a-i32-fb1235d` | `eb4b40d4703f5c6ea8d9bc3e5c3b896310f5bfe7a9c0d40637dc0c746d126081` | E2a-i32 平台 8/8、13.8620625x、team best；消除 GCU 64-bit IR 使燧原从全 case 编译失败恢复至 0.3885x | 闭环完成，保留 E2a-i32 |
 | 18 | [`fused_recurrent_gdn`](fused_recurrent_gdn.md) | `e6-b528e9c` | `6093114cf384aa3fe81a5291b6a48bd64d0b72f2c4969fc6906062967cf97764` | E6 平台仅国际 A vendor 通过；官方 `[BK,BV]` 轴转置 E8 offline 的两组错误数与 E6 逐字相同，昆仑仍有系统性 1830s 超时 | 官方唯一新归约形态已离线否决，Task 18 永久停止 |
 | 19 | [`fused_rmsnorm`](fused_rmsnorm.md) | `e2-a5b2986` | `04e24fd06f26144bb6b5824b720678edd48a731f34ced48eab8600c30c65c124` | E2 平台 8/8、4.5467x、第 7；Kunlun vendor 被选中但仅 0.9308x，未过 1.05x 门禁 | 停止同一 multi-row 假设；转其他算子 |
 | 20 | [`mamba_layernorm_gated`](mamba_layernorm_gated.md) | `e3-374e06c` | `afe450702c551fc83395432733dd22e98840125a31247c5e43117983ee30bb3d` | E3 平台 8/8、4.2526x、第 6/6；华为由启动失败恢复至 1.8838x，团队当前最佳 | 保留 E3，转其他算子 |

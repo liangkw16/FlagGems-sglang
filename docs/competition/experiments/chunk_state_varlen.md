@@ -325,3 +325,68 @@ SHA-256
 误差 1.6992/181.7227/91.375/680.5234）。因此结果同时命中“两款均失败”和
 “非单一明确 pack 地址问题”停止门禁：Task 13 永久停止，不对 BLOCK、warps、
 stages 或相同两阶段结构继续试错，剩余额度转投 Task 17。
+
+## E3：GCU i32 metadata + XPU 全 padding 无 mask 访存（一次性重开）
+
+状态：Git-object release、规范 ZIP 与只读验签全部通过；待实时 preflight。
+
+E2 后出现了两条可归因、且分别命中两款失败芯片的新证据，因此只重开一次，
+不再调 BLOCK/warps/stages：
+
+- Task 17 `fb1235d` 已在平台证明，wrapper 将 int64 metadata 有界降为 int32、
+  并消除显式 i64 stride IR，可把燧原同型的全 case GCU Pipeline 编译失败恢复
+  为 0.3885x。E3 对 Enflame 只复用这项已验证变换；pack/BMM 结构不变。
+- E2 Kunlun 的失败只出现在 feature/output 尾块，并呈约一半元素错误、尾部精确
+  为零。官方 XPU lowering 证据表明 masked store 会经粗粒度 DMA 写回，mask-off
+  lane 仍可能影响邻行。E3 将 K/M/N 向 32 对齐，X/B 共享
+  `max(padded_headdim,padded_dstate)` 行宽；源地址先钳到合法元素、无 mask
+  load 后用 `tl.where` 清逻辑 padding，scratch、BMM 和 padded output 全部使用
+  完整 32 tile 的无 mask 访存，最终仅返回 `[..., :headdim, :dstate]` 视图。
+  all-empty 保留 K=0、零迭代 Triton BMM 写零，不引入 PyTorch fallback。
+
+source/verification commit 均为
+`d795ed3e958778a26399c521e9512a5581853453`。generic/Ascend/Iluvatar 字节冻结；
+generic、Ascend、Iluvatar、Enflame、Kunlun、test SHA-256 分别为：
+
+- `025ac23b0026a423e381f8fffe3715c4e21ce64558e79ad4841145351f11d4f1`
+- `a8bf24b42a1f7a73ab4f9635b928e0a28094b258a04cf4de4d39ae52f08c9e4b`
+- `86419a800ebf783d70f0392ae7c71ad06e755844197efe8ce23a6b7b394276e8`
+- `9c3f4fc80e362369c90e54519056f0e1189ea8d229bfb03107c866b4a5067d6c`
+- `acba578c0710438340bec62ad1d9665573d01152a51c89e307ecd0dc61611821`
+- `b5b5395eac71916d1e2ccd08969de98df9ef805cf0cd7f1eec27c8090df75248`
+
+最终 screening 位于
+`gpu:/tmp/flagos-chunk-state-varlen-e3-screening-r2.087D2z`，PID/PGID
+`155821`，wall 900s；`replay.sh`、`screening.log` SHA-256 分别为
+`6f2311b1382ec40bee28f6a5d33531ba1eb83b7c4ab3a45685a0513e79db152d`、
+`b60bbbeaf412b2c9055c28cc5aaa2f73fdb25c4a05cad8297a01c34f8c753f6f`。
+12/12 unittest 通过（2.657s），覆盖 H/D 为 16/8、32/16、64/128 的不等
+feature shape、静态无 masked-memory 回归、三 dtype、非连续输入、int32/int64
+metadata、mixed/all-empty 和数值边界；尾行为 `SCREENING_OK`。首次 screening
+只在 Black 静态门禁停止，未执行 runtime。
+
+同目录 wrapper-inclusive NVIDIA 代理基准脚本/日志 SHA-256 分别为
+`1abd7811186930e094392e31c272b02a0cf5aa1944028b7ff0865a7a841da212`、
+`c029af5849951ebd07a407e29aa9c3f4881511a5a1311d6e6b5c49af111a0f4f`，尾行为
+`BENCHMARK_OK`。相对 E2，候选在四个不等 feature shape 上为 1.025–1.502 倍
+延迟，最坏峰值显存约 128 MiB；全部输出在题面 3e-2 容差内。该基准只排除资源
+灾难，E3 的目标是恢复两个失败 backend，且六个已通过 backend 的字节不变。
+
+Git-object release 位于
+`gpu:/tmp/flagos-chunk-state-varlen-e3-release.JhuCwN`，PID/PGID `156132`，
+wall 900s；`replay.sh`、`release.log` SHA-256 分别为
+`9238a41f437458975e0cf213e1b4b7cab3780ce463903b86470af6bdd2a46f52`、
+`2c2ba18385d41744dd2984fd232f8ab6dbe911c998307dcc57e3938590bf756b`。
+12/12 unittest 通过（0.735s），格式、`py_compile`、Enflame 零 i64 静态门禁、
+前后 Git-object 哈希全部通过，尾行为 `RELEASE_OK`。
+
+canonical ZIP 为
+`artifacts/competition/chunk_state_varlen/e3-d795ed3/chunk_state_varlen.zip`，
+44,154B，SHA-256
+`8ea09900fe8995f59f63e649ca0b3a3fd97215e1ed09511d0a4b96a97424151c`；成员为
+generic + ascend/enflame/iluvatar/kunlunxin，`--verify-existing`、`unzip -t`、
+UTF-8、10 MB 和成员白名单全部通过。
+
+E3 只允许一次正式提交。六个冻结后端在 E2 合计 1217.036x；若两款失败芯片
+仅达到 0.1x，理论平均仍为 152.1545x。若任一失败，保留 traceback 后永久停止
+Task 13，不为相同结构生成 E4。
