@@ -250,6 +250,37 @@ class SoftcapOutTest(unittest.TestCase):
                         actual, expected, atol=tolerance, rtol=tolerance
                     )
 
+    def test_ascend_block_boundaries_and_maximum_platform_size(self):
+        module_path = VENDOR_MODULE_PATHS["ascend"]
+        spec = importlib.util.spec_from_file_location(
+            "softcap_out_ascend_boundary_module", module_path
+        )
+        if spec is None or spec.loader is None:
+            self.fail(f"cannot load {module_path}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        cases = [
+            (torch.float32, length)
+            for length in (255, 256, 257, 511, 512, 513)
+        ]
+        cases.append((torch.float16, 65_667_072))
+        for dtype, length in cases:
+            with self.subTest(dtype=dtype, length=length):
+                x = torch.linspace(
+                    -60.0, 60.0, length, device="cuda", dtype=dtype
+                )
+                actual = module.softcap_out(x, 30.0)
+                expected = torch.tanh(x.to(torch.float32) / 30.0) * 30.0
+                tolerance = 1e-2 if dtype == torch.float16 else 1e-4
+
+                self.assertEqual(
+                    (actual.shape, actual.dtype), (x.shape, torch.float32)
+                )
+                torch.testing.assert_close(
+                    actual, expected, atol=tolerance, rtol=tolerance
+                )
+
     def test_scalar_tensor_cap_matches_reference(self):
         x = torch.tensor([-10.0, 0.0, 10.0], device="cuda")
         cap = torch.tensor(5.0, device="cuda")
