@@ -489,3 +489,39 @@ E4 严格以 E2 team-best 成员为基线，只新增 NVIDIA vendor，并移除�
 结论：生产 heuristic 不等于本题隐藏 harness 的最优 launch，E4 明确 NO-GO。
 候选 commit 保留以复现实验，恢复 commit `9ca89c2` 删除 NVIDIA vendor，并把相关
 源码/测试恢复为 E2 字节；额度仍为 `9/30`。不再尝试 NVIDIA warp/autotune 轴。
+
+## E5：Enflame 官方 GCU300 默认 launch
+
+状态：release 门禁通过，规范 ZIP 就绪；待实时 preflight 后唯一一次提交
+
+E5 仍从 E2 team best 分叉，只新增 Enflame vendor；generic 与 Kunlun 字节继续
+冻结为 `02bed1a5...b964997` / `167c2371...0d5512`。vendor kernel 与 generic 的
+AST 完全一致，唯一差异是 launch 不再显式传 `num_warps=8, num_stages=1`，让
+Enflame backend 使用默认 `4 warps / 3 stages`。这不是已证伪的 fold-cap-64 轴：
+grid、BLOCK、stride、数学和输出均未改变。
+
+固定 FlagGems `ed2508b` 的
+[GCU300 RMSNorm](https://github.com/flagos-ai/FlagGems/blob/ed2508bcb5a03000e9774734201d840ba362cd11/src/flag_gems/runtime/backend/_enflame/gcu300/ops/rms_norm.py#L162-L180)
+对同类单行归约使用默认 launch；固定 FlagTree Enflame options 则把默认值定义为
+4 warps、3 stages。公开源码只能证明这是生产路径，不能证明本题隐藏 workload 的
+收益，因此 E5 只允许平台一次性验证。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `f70db6c8f742d27e23586f9753c0b92079665179` |
+| Enflame / test SHA-256 | `ae0016cab7876d59bc589f1af64d44fcace84dfed9b58e6b8299cd77e035b6cc` / `256c1e995de57801e685e66a13ce19eaba48b2ce312e0adbac5a80590c766deb` |
+| screening | `gpu:/tmp/flagos-fused-rmsnorm-e5-screen.jaoRbK`；4 个输入哈希一致，Black/isort/flake8、6/6 unittest、`SCREENING_OK` |
+| release | `gpu:/tmp/flagos-fused-rmsnorm-e5-release.UlhNk4`；03:14:24–03:14:31 CST；6/6 unittest、21/21 额外正确性点、`RELEASE_OK` |
+| release log / probe / script SHA-256 | `bd20978c16e2dc1810d50742e2644843508631537cf20b4708ee4eff296690fb` / `bd2e3580d5568b6c1bae5be24242a1942037d2c04fa173ca406ae27310019f2a` / `a63bbe827cb91d267d7e91eeb90c581bbf019f3b8d7caaa49aa9ff22ec5afbf4` |
+| canonical ZIP | `artifacts/competition/fused_rmsnorm/e5-f70db6c/fused_rmsnorm.zip`；8,846 bytes；SHA-256 `def37c370d7ffab821377122202eef3a103d574e182709a0989c8f679cb5b462` |
+| ZIP members | generic + `_enflame` + `_kunlunxin`；逐成员 SHA 与 source commit manifest 完全一致 |
+
+RTX 5070 Ti 上候选实际编译为 4 warps / 3 stages；21 个 dtype/shape 组合全部
+正确。大 hidden 的 CUDA 编译物出现最多 12 spills，性能也从 `0.7510x` 到
+`1.3975x` 不等；这些只记录为异构代理指纹，不拿 CUDA 结果否决 GCU 官方路径。
+
+2026-08-27 03:15 CST 实时状态为剩余 `9/30`，Task 19 当前第 15、team best
+`4.54668333x`；第 14 为 `4.63455x`。若其余七芯冻结，Enflame 必须从
+`1.50486667x` 严格提高到 `>2.20780003x` 才升一名。平台门禁为 8/8 valid、
+Enflame 选中 vendor、整题高于 team best；未超过升名阈值也保留有效观测，但 E5
+无论结果如何均停止，不做 4/8 warps 或 stages sweep。
