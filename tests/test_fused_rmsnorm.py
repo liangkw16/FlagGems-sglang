@@ -42,6 +42,15 @@ KUNLUN_MODULE_PATH = (
     / "fused_rmsnorm.py"
 )
 
+ENFLAME_MODULE_PATH = (
+    MODULE_PATH.parents[1]
+    / "runtime"
+    / "backend"
+    / "_enflame"
+    / "ops"
+    / "fused_rmsnorm.py"
+)
+
 
 def _reference(x, weight, eps):
     x32 = x.float()
@@ -74,6 +83,80 @@ class FusedRmsnormTest(unittest.TestCase):
                 (4095, 256, False),
                 (4096, 257, False),
                 (4096, 256, True),
+            ):
+                with self.subTest(
+                    dtype=dtype,
+                    rows=rows,
+                    hidden_size=hidden_size,
+                    noncontiguous=noncontiguous,
+                ):
+                    if noncontiguous:
+                        x = torch.randn(
+                            rows,
+                            hidden_size * 2,
+                            device="cuda",
+                            dtype=dtype,
+                            generator=generator,
+                        )[:, ::2]
+                        weight = torch.randn(
+                            hidden_size * 2,
+                            device="cuda",
+                            dtype=dtype,
+                            generator=generator,
+                        )[::2]
+                    else:
+                        x = torch.randn(
+                            rows,
+                            hidden_size,
+                            device="cuda",
+                            dtype=dtype,
+                            generator=generator,
+                        )
+                        weight = torch.randn(
+                            hidden_size,
+                            device="cuda",
+                            dtype=dtype,
+                            generator=generator,
+                        )
+                    x_before = x.clone()
+                    weight_before = weight.clone()
+
+                    actual = module.fused_rmsnorm(x, weight, 1e-6)
+                    expected = _reference(x, weight, 1e-6)
+
+                    self.assertEqual(actual.shape, x.shape)
+                    self.assertEqual(actual.dtype, x.dtype)
+                    torch.testing.assert_close(
+                        actual, expected, atol=tolerance, rtol=tolerance
+                    )
+                    torch.testing.assert_close(x, x_before, atol=0.0, rtol=0.0)
+                    torch.testing.assert_close(
+                        weight, weight_before, atol=0.0, rtol=0.0
+                    )
+
+    def test_enflame_fold_grid_matches_reference(self):
+        spec = importlib.util.spec_from_file_location(
+            "fused_rmsnorm_enflame_module", ENFLAME_MODULE_PATH
+        )
+        if spec is None or spec.loader is None:
+            self.fail(f"cannot load {ENFLAME_MODULE_PATH}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        tolerances = {
+            torch.float16: 1e-2,
+            torch.bfloat16: 1.5e-2,
+            torch.float32: 1e-4,
+        }
+        generator = torch.Generator(device="cuda").manual_seed(20260827)
+        for dtype, tolerance in tolerances.items():
+            for rows, hidden_size, noncontiguous in (
+                (64, 256, False),
+                (65, 256, False),
+                (129, 4096, False),
+                (10000, 256, False),
+                (8, 513, False),
+                (64, 5120, True),
             ):
                 with self.subTest(
                     dtype=dtype,
