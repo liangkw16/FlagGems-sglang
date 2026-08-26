@@ -386,3 +386,42 @@ vendor 且高于 E2 的 `0.7686x`、平均高于 `4.686925x`；任一不满足�
 不是 E3 代码回归。但用 E2 华为 `0.9646x` 补入本次其余七芯，估算平均仅
 `4.6828x`，仍略低于 E2 的 `4.686925x`，没有重试价值。保留 E2 为平台 team
 best；E3 one-shot 已用，不制造字节不同的伪新候选绕过规则。
+
+## E4：Ascend BLOCK 512
+
+状态：release 与不可变 ZIP 门禁通过，待 one-shot 平台验证
+
+E4 从 E2 team best 的提交字节分叉，只把 Ascend vendor 的 `block_size` 从
+256 改为 512；physical worker cap 48、grid-stride、位运算、四 warps、单 stage
+及 wrapper 不变。generic 与 Enflame 保持 E2 SHA-256，且不携带 E3 已停止的
+Kunlun vendor。该单变量未被 E2 的 Enflame stop gate 或 E3 的 Kunlun stop gate
+覆盖。
+
+固定平台先例：Task24 同构 pointwise/cap48 的 Ascend 256→512 使华为
+`0.73708333x→0.88375x`（+19.90%）；Task21 reduction 的相同 tile 变化使华为
+`0.5982x→0.8104x`（+35.47%）。因此本候选只验证 512，不扩展 1024 sweep。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `8479697bbfe0021818514872208a7c6ce43fdb7a` |
+| generic SHA-256 | `5da3d966936c919cd4b0fab2c32ecc66526eb375c3cdc20a2e3f2f37cddb697c`（=E2） |
+| Ascend SHA-256 | `68bcf76b2640fb03b2a60af1124aa9937ab2786b292b965927d4aebf36993da9` |
+| Enflame SHA-256 | `0aa6cd79e37408623eeded1d123b23b114b973f63c9b526f1fe3e1a56cb7b380`（=E2） |
+| 测试 SHA-256 | `8f559a0d1a0f3ccaea84b45de73a6f17bbf744f26eb094c4397e31278b2aefa2` |
+| screening | `gpu:/tmp/flagos-apply-token-bitmask-e4-screen.gsFoVv`；PID/PGID `161855`；8/8、0.815s；日志 SHA-256 `cc43b285d78cc73e9362a016cb1a394140cf66dd542cb8946eb885528d2439a7` |
+| 交替 A/B | 同目录；5 组 AB/BA、warmup 25/rep 100；日志 SHA-256 `7ba6d5a10f8137098e941f80ce39bd72c68f8e8128c274414a5eda077bb660c9` |
+| release | `gpu:/tmp/flagos-apply-token-bitmask-e4-release.gui625`；8/8、0.554s；日志 SHA-256 `1466c7c1f0f2d2d80782dd81f117896746447758aaf919b90ac43e0ead75ddf0` |
+| source Git archive SHA-256 | `4c7c45f39a6d5d58c887a9c60bcb4dec91e345a751bce08b3985a10fdd6fd94b` |
+| canonical ZIP | `artifacts/competition/apply_token_bitmask/e4-8479697/apply_token_bitmask.zip`，8383 bytes，SHA-256 `75d0ce48898f69e122b99b600d624c522cf2d3aa74c35cf4e04af427c7bd93d1` |
+
+新增回归直接覆盖 Ascend 511/512/513 与三 dtype；原有大 shape grid-stride、
+非连续 stride、bit31、空 shape 和 Enflame 4096 回归全部保留。RTX 5070 Ti 上
+E2 BLOCK256↔E4 BLOCK512 的大平台 shape `(512,152064)` 三 dtype 中位比分别为
+`1.813753/1.814421/1.678408x`，几何平均 `1.767684x`；control `(12,256)`
+与边界 `(2,513)` 几何平均分别为 `0.998012x`、`0.999246x`。这些结果只作资源
+和明显回退门禁，不外推为 Ascend 性能。
+
+one-shot 晋级门：8/8 valid、华为选中 Ascend vendor、实际平均至少
+`4.706925x`（E2 `4.686925x` + `0.02x`）。冻结其余七芯时，华为需从
+`0.9646x` 提升至至少 `1.1246x`（+16.59%）。若任一门不满足即保留 E2，停止
+Task08 Ascend tile 轴；平台 reference 若再次 OOM，也不重传相同字节。
