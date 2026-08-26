@@ -118,7 +118,7 @@ def _fused_recurrent_gdn_k64_kernel(
             ).to(tl.float32)
             prediction_0 = tl.fma(lane_0, key_0, prediction_0)
             prediction_1 = tl.fma(lane_1, key_1, prediction_1)
-        prediction = prediction_0
+        prediction = prediction_0 + prediction_1
 
         value_address = (
             batch * stride_v_batch
@@ -182,7 +182,7 @@ def _fused_recurrent_gdn_k64_kernel(
             )
             result_0 = tl.fma(lane_0, query_0, result_0)
             result_1 = tl.fma(lane_1, query_1, result_1)
-        result = result_0
+        result = result_0 + result_1
         output_address = (
             batch * stride_output_batch
             + timestep * stride_output_time
