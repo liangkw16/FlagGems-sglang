@@ -518,7 +518,7 @@ warps 或 grid 变体。若继续本题，只允许与 tile 无关且有独立�
 
 ## E6：Enflame 连续 word load / 2D bit 展开
 
-状态：release 与 IR 硬门通过，canonical ZIP 已冻结，待一次性平台提交
+状态：平台 6/8、`invalid_correctness`；word-layout 轴永久停止
 
 E6 从 E2 team best 的 BLOCK4096 分叉，不携带 E5 已证伪的 32K tile。唯一
 实现变化是把每个 token 的 `(token // 32)` 重复 bitmask 地址改为一次连续加载
@@ -553,3 +553,14 @@ logical-id 到 batch/block 映射仍各有一个 scalar 除余。索引 tensor �
 `cc1d3bfff5c5c664ee8a9069ffca511e9fb67607d3d1d48071945940611e314d`；匿名对象
 回读为 8519 bytes，SHA-256 与 canonical ZIP 完全一致，三个成员均通过
 `unzip -t`。平台选中预期的 generic、Ascend、Enflame 路径；禁止重传。
+
+01:49:10 CST 终态为 `completed` / `invalid_correctness`、6/8。Enflame 在最大
+case 7 出现 `85,916,160 / 622,854,144`（13.8%）元素不一致，首次差异位于
+`(3531,0)`；这证明 CUDA TTIR 中合法的 `[128,32]` 广播在目标 GCU 大 shape
+没有保持正确语义。Huawei 同一 case 在平台 reference 计算阶段申请 4.64 GiB 时
+OOM，与候选 kernel 无关，但本提交已因 Enflame 自身错误明确失败。其余芯片为
+天数 `10.1224x`、沐曦 `4.8424x`、海光 `4.9544x`、昆仑 `0.7750x`、国际 A
+`7.0198x`、国际 B `6.2250x`。
+
+结论：保留 E2 `4.686925x` 为 team best；按预设止损永久停止 word-layout 轴，
+不修 2D 布局变体、不扫 BLOCK/warps/grid，也不与 32K 组合。
