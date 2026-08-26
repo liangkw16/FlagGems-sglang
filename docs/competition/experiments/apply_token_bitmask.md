@@ -313,3 +313,47 @@ E2 平均 `4.686925x`，较 S1 提升 `0.299925x`（6.8367%）；燧原由 `0.42
 升至 `2.8510x`，为原来的 6.6426 倍，单变量门禁通过。官方 Task 08 leaderboard
 在 2026-08-24 19:56:01 CST 显示 `SoulCoder` 第 12/13 名，本次为团队当前最佳。
 保留 E2，不再继续同一燧原 BLOCK 假设；后续额度优先用于其他算子。
+
+## E3：昆仑 BLOCK 4096
+
+状态：release 通过，等待一次平台验证
+
+源码与验证 commit：`9186b096d588f8021da5677331a03d5ea7c310f0`
+
+E3 只新增昆仑 vendor，kernel 与 generic 逐字节相同，仅把 `block_size` 从
+256 改为 4096；generic、华为和燧原三个既有成员均保持 E2 的 SHA-256。
+固定平台先验来自 Task 24：同类一维 elementwise 的昆仑 BLOCK 曲线已连续验证
+`256 → 1024 → 4096` 对应 `0.4444x → 0.7645x → 0.8637x`，且 Task 21 证明
+BLOCK 是昆仑后端实际生效的调参轴。E3 不改变 grid 结构、warps、stages、公式或
+其他七芯路径。
+
+测试把昆仑加入既有 vendor 回归，覆盖三 dtype、非连续二维 stride、负 int32 的
+bit31、`V=12*4096+17` 的多 program/tail，以及旧 grid 上限回归。screening 和
+从 commit Git 对象独立展开的 release 均通过 py_compile、Black 79、isort、
+flake8 与 7/7 unittest。
+
+| 项目 | 值 |
+| --- | --- |
+| generic SHA-256 | `5da3d966936c919cd4b0fab2c32ecc66526eb375c3cdc20a2e3f2f37cddb697c` |
+| 华为 vendor SHA-256 | `7c4daf2fa5774dcbf0c9891b787c77d18d4d0766ae94292ed38347172ead3fd8` |
+| 燧原 vendor SHA-256 | `0aa6cd79e37408623eeded1d123b23b114b973f63c9b526f1fe3e1a56cb7b380` |
+| 昆仑 vendor SHA-256 | `0bf1a3384ee1e8e30f5e6c9c7c6349556d83cd014763b2d979359d050269dddc` |
+| 测试 SHA-256 | `2d27da9b4609c2c5f63af15f7d6fdda2b45adfabb75891446783a34bc3a4f6e9` |
+| screening | `gpu:/tmp/flagos-apply-token-bitmask-e3-screen.O57rBq`；PID/PGID `158843`；7/7、0.786s；脚本 SHA-256 `1f5bf7c78e641c4e5855acb261ecb38b6896489db15c62868b67b2226437c3c2`；日志 SHA-256 `f9429b96a48cc2c04a57eefdeadc8956128f1f4cdde56d7fcedcf4693f0dbb55` |
+| 交替 A/B | 同目录；PID/PGID `158932`；脚本 SHA-256 `223ccdbd569b8219efa67640d6f1b7e2942b3b01a4c8de1f21cd485bc47c98c5`；日志 SHA-256 `b4a10f9938f6e929a5ad3566c06defd0526607aa701801847b5b2b4165293d82` |
+| release | `gpu:/tmp/flagos-apply-token-bitmask-e3-release.NyMMiv`；PID/PGID `159048`；7/7、0.554s、`RELEASE_OK`；脚本 SHA-256 `9d8dae83c97aefd5818b5ff218b796bfec87cf492767cbcf475a0e1bcea75294`；日志 SHA-256 `1201adf722281bf9e8e2aea248d38a2cf662e1026a447e08d4676fb900c7a5e1` |
+| release Git archive SHA-256 | `b65feaf03227792624f03d31425c796e7ac6a475c8cf39e58d4db705fc33eb8d` |
+| ZIP | `artifacts/competition/apply_token_bitmask/e3-9186b09/apply_token_bitmask.zip`，10982 bytes |
+| ZIP SHA-256 | `038c1d5df120ae8c0aaee835525aa0abdd5aafff886bf6e16cd2e0295ed7c9c8` |
+
+NVIDIA 代理的 control 三 dtype 中位数均为 `1.0000x`；平台已知大 shape
+`(512,152064)` 三 dtype 几何平均为 `0.998646x`，仅 tail 小 shape 因 CUDA
+架构差异为 `0.6667x`。candidate 编译变体为 46–93 registers、0 spill、0
+shared、0 global scratch；93 registers 与 Task 24 已在昆仑平台通过的 BLOCK
+4096 档一致。代理速度不作为昆仑收益证明，只用于排除明显回退和资源异常。
+
+规范 ZIP 包含 generic、Ascend、Enflame、Kunlun 四个白名单成员，成员哈希与
+commit 完全一致；`dry-run`、`verified-existing`、`unzip -t` 和 canonical
+SHA-256 均通过。E3 只允许一次平台提交。晋级门为 8/8 valid、昆仑确实选中
+vendor 且高于 E2 的 `0.7686x`、平均高于 `4.686925x`；任一不满足即保留 E2
+为 team best 并永久停止此假设。
