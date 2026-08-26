@@ -30,8 +30,10 @@ def _pack_sequences_kernel(
     packed_B_ptr,
     headdim,
     dstate,
+    total_seqlen,
     chunk_size,
-    max_seq_len,
+    packed_seq_len,
+    packed_feature,
     nheads,
     head_group_ratio,
     feature_tiles,
@@ -66,7 +68,7 @@ def _pack_sequences_kernel(
     stride_dA_csize = tl.cast(stride_dA_csize, tl.int64)
     stride_cu = tl.cast(stride_cu, tl.int64)
 
-    k_tiles = tl.cdiv(max_seq_len, BLOCK_K)
+    k_tiles = tl.cdiv(packed_seq_len, BLOCK_K)
     tiles_per_head = k_tiles * feature_tiles
     logical_id = program_start + tl.program_id(0)
     batch_head = logical_id // tiles_per_head
@@ -101,61 +103,51 @@ def _pack_sequences_kernel(
     relative = slice_start + scale_k
     dA_base = head * stride_dA_head + chunk * stride_dA_chunk
     dA_last = tl.load(
-        dA_ptr + dA_base + (end_relative - 1) * stride_dA_csize,
-        mask=sequence_length > 0,
-        other=0.0,
+        dA_ptr + dA_base + (end_relative - 1) * stride_dA_csize
     ).to(tl.float32)
+    safe_relative = tl.minimum(relative, chunk_size - 1)
     dt = tl.load(
         dt_ptr
         + head * stride_dt_head
         + chunk * stride_dt_chunk
-        + relative * stride_dt_csize,
-        mask=scale_mask,
-        other=0.0,
+        + safe_relative * stride_dt_csize
     ).to(tl.float32)
-    dA = tl.load(
-        dA_ptr + dA_base + relative * stride_dA_csize,
-        mask=scale_mask,
-        other=0.0,
-    ).to(tl.float32)
+    dA = tl.load(dA_ptr + dA_base + safe_relative * stride_dA_csize).to(
+        tl.float32
+    )
     scale = tl.where(scale_mask, tl.exp(dA_last - dA) * dt, 0.0)
     token = start + offsets_k
+    safe_token = tl.minimum(token, total_seqlen - 1)
+    safe_x_d = tl.minimum(offsets_d, headdim - 1)
 
     x = tl.load(
         x_ptr
-        + token[:, None] * stride_x_seqlen
+        + safe_token[:, None] * stride_x_seqlen
         + head * stride_x_head
-        + offsets_d[None, :] * stride_x_headdim,
-        mask=token_mask[:, None] & (offsets_d[None, :] < headdim),
-        other=0.0,
+        + safe_x_d[None, :] * stride_x_headdim
     ).to(tl.float32)
+    x = tl.where(token_mask[:, None] & (offsets_d[None, :] < headdim), x, 0.0)
     packed_x_offsets = (
-        batch_head * max_seq_len + offsets_k[:, None]
-    ) * headdim + offsets_d[None, :]
-    tl.store(
-        packed_x_ptr + packed_x_offsets,
-        x,
-        mask=(offsets_k[:, None] < max_seq_len)
-        & (offsets_d[None, :] < headdim),
-    )
+        batch_head * packed_seq_len + offsets_k[:, None]
+    ) * packed_feature + offsets_d[None, :]
+    tl.store(packed_x_ptr + packed_x_offsets, x)
 
+    safe_B_d = tl.minimum(offsets_d, dstate - 1)
     B = tl.load(
         B_ptr
-        + token[:, None] * stride_B_seqlen
+        + safe_token[:, None] * stride_B_seqlen
         + group * stride_B_group
-        + offsets_d[None, :] * stride_B_dstate,
-        mask=token_mask[:, None] & (offsets_d[None, :] < dstate),
-        other=0.0,
+        + safe_B_d[None, :] * stride_B_dstate
     ).to(tl.float32)
-    packed_B_offsets = (
-        batch_head * max_seq_len + offsets_k[:, None]
-    ) * dstate + offsets_d[None, :]
-    tl.store(
-        packed_B_ptr + packed_B_offsets,
+    B = tl.where(
+        token_mask[:, None] & (offsets_d[None, :] < dstate),
         B * scale[:, None],
-        mask=(offsets_k[:, None] < max_seq_len)
-        & (offsets_d[None, :] < dstate),
+        0.0,
     )
+    packed_B_offsets = (
+        batch_head * packed_seq_len + offsets_k[:, None]
+    ) * packed_feature + offsets_d[None, :]
+    tl.store(packed_B_ptr + packed_B_offsets, B)
 
 
 @triton.jit
@@ -163,16 +155,17 @@ def _regular_bmm_kernel(
     packed_x_ptr,
     packed_B_ptr,
     output_ptr,
-    headdim,
-    dstate,
+    padded_headdim,
+    padded_dstate,
+    packed_feature,
     program_start,
-    MAX_SEQ_LEN: tl.constexpr,
+    PACKED_SEQ_LEN: tl.constexpr,
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
 ):
-    n_tiles = tl.cdiv(dstate, BLOCK_N)
-    tiles_per_head = tl.cdiv(headdim, BLOCK_M) * n_tiles
+    n_tiles = padded_dstate // BLOCK_N
+    tiles_per_head = (padded_headdim // BLOCK_M) * n_tiles
     logical_id = program_start + tl.program_id(0)
     batch_head = logical_id // tiles_per_head
     tile = logical_id - batch_head * tiles_per_head
@@ -183,36 +176,28 @@ def _regular_bmm_kernel(
     offsets_k = tl.arange(0, BLOCK_K)
     accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
 
-    for block_start in range(0, MAX_SEQ_LEN, BLOCK_K):
+    for block_start in range(0, PACKED_SEQ_LEN, BLOCK_K):
         current_k = block_start + offsets_k
         x = tl.load(
             packed_x_ptr
-            + (batch_head * MAX_SEQ_LEN + current_k[None, :]) * headdim
-            + offsets_m[:, None],
-            mask=(offsets_m[:, None] < headdim)
-            & (current_k[None, :] < MAX_SEQ_LEN),
-            other=0.0,
+            + (batch_head * PACKED_SEQ_LEN + current_k[None, :])
+            * packed_feature
+            + offsets_m[:, None]
         )
         B = tl.load(
             packed_B_ptr
-            + (batch_head * MAX_SEQ_LEN + current_k[:, None]) * dstate
-            + offsets_n[None, :],
-            mask=(current_k[:, None] < MAX_SEQ_LEN)
-            & (offsets_n[None, :] < dstate),
-            other=0.0,
+            + (batch_head * PACKED_SEQ_LEN + current_k[:, None])
+            * packed_feature
+            + offsets_n[None, :]
         )
         accumulator += tl.dot(x, B, input_precision="ieee")
 
     output_offsets = (
-        batch_head * headdim * dstate
-        + offsets_m[:, None] * dstate
+        batch_head * padded_headdim * padded_dstate
+        + offsets_m[:, None] * padded_dstate
         + offsets_n[None, :]
     )
-    tl.store(
-        output_ptr + output_offsets,
-        accumulator,
-        mask=(offsets_m[:, None] < headdim) & (offsets_n[None, :] < dstate),
-    )
+    tl.store(output_ptr + output_offsets, accumulator)
 
 
 def chunk_state_varlen(B, x, dt, dA_cumsum, cu_seqlens, chunk_states):
@@ -238,33 +223,42 @@ def chunk_state_varlen(B, x, dt, dA_cumsum, cu_seqlens, chunk_states):
         raise ValueError("dt does not contain enough chunks for packed tokens")
 
     batch = cu_seqlens.numel() - 1
-    output = torch.empty(
-        (batch, nheads, headdim, dstate),
-        dtype=chunk_states.dtype,
-        device=x.device,
-    )
-    if output.numel() == 0:
-        return output
+    output_shape = (batch, nheads, headdim, dstate)
+    if batch == 0 or nheads == 0 or headdim == 0 or dstate == 0:
+        return torch.empty(
+            output_shape, dtype=chunk_states.dtype, device=x.device
+        )
 
     block_m, block_n, block_k = 32, 32, 32
     pack_block_k = 16
     pack_block_d = 16
     batch_heads = batch * nheads
     max_seq_len = int((cu_seqlens[1:] - cu_seqlens[:-1]).max().item())
-    feature_tiles = triton.cdiv(max(headdim, dstate), pack_block_d)
+    packed_seq_len = triton.cdiv(max_seq_len, block_k) * block_k
+    packed_feature = triton.cdiv(max(headdim, dstate), block_m) * block_m
+    padded_headdim = triton.cdiv(headdim, block_m) * block_m
+    padded_dstate = triton.cdiv(dstate, block_n) * block_n
+    feature_tiles = packed_feature // pack_block_d
     packed_x = torch.empty(
-        (batch, nheads, max_seq_len, headdim),
+        (batch, nheads, packed_seq_len, packed_feature),
         dtype=torch.float32,
         device=x.device,
     )
     packed_B = torch.empty(
-        (batch, nheads, max_seq_len, dstate),
+        (batch, nheads, packed_seq_len, packed_feature),
         dtype=torch.float32,
+        device=x.device,
+    )
+    output_storage = torch.empty(
+        (batch, nheads, padded_headdim, padded_dstate),
+        dtype=chunk_states.dtype,
         device=x.device,
     )
 
     pack_programs = (
-        batch_heads * triton.cdiv(max_seq_len, pack_block_k) * feature_tiles
+        batch_heads * (packed_seq_len // pack_block_k) * feature_tiles
+        if total_seqlen > 0
+        else 0
     )
     for program_start in range(0, pack_programs, _MAX_GRID_SIZE):
         grid = (min(_MAX_GRID_SIZE, pack_programs - program_start),)
@@ -278,8 +272,10 @@ def chunk_state_varlen(B, x, dt, dA_cumsum, cu_seqlens, chunk_states):
             packed_B,
             headdim,
             dstate,
+            total_seqlen,
             chunk_size,
-            max_seq_len,
+            packed_seq_len,
+            packed_feature,
             nheads,
             nheads // ngroups,
             feature_tiles,
@@ -295,20 +291,19 @@ def chunk_state_varlen(B, x, dt, dA_cumsum, cu_seqlens, chunk_states):
             num_stages=1,
         )
 
-    tiles_per_head = triton.cdiv(headdim, block_m) * triton.cdiv(
-        dstate, block_n
-    )
+    tiles_per_head = (padded_headdim // block_m) * (padded_dstate // block_n)
     bmm_programs = batch_heads * tiles_per_head
     for program_start in range(0, bmm_programs, _MAX_GRID_SIZE):
         grid = (min(_MAX_GRID_SIZE, bmm_programs - program_start),)
         _regular_bmm_kernel[grid](
             packed_x,
             packed_B,
-            output,
-            headdim,
-            dstate,
+            output_storage,
+            padded_headdim,
+            padded_dstate,
+            packed_feature,
             program_start,
-            MAX_SEQ_LEN=max_seq_len,
+            PACKED_SEQ_LEN=packed_seq_len,
             BLOCK_M=block_m,
             BLOCK_N=block_n,
             BLOCK_K=block_k,
@@ -316,7 +311,7 @@ def chunk_state_varlen(B, x, dt, dA_cumsum, cu_seqlens, chunk_states):
             num_stages=1,
         )
 
-    return output
+    return output_storage[:, :, :headdim, :dstate]
 
 
 __all__ = ["chunk_state_varlen"]

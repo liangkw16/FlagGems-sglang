@@ -52,20 +52,6 @@ def _pack_sequences_kernel(
     BLOCK_K: tl.constexpr,
     BLOCK_D: tl.constexpr,
 ):
-    stride_B_seqlen = tl.cast(stride_B_seqlen, tl.int64)
-    stride_B_group = tl.cast(stride_B_group, tl.int64)
-    stride_B_dstate = tl.cast(stride_B_dstate, tl.int64)
-    stride_x_seqlen = tl.cast(stride_x_seqlen, tl.int64)
-    stride_x_head = tl.cast(stride_x_head, tl.int64)
-    stride_x_headdim = tl.cast(stride_x_headdim, tl.int64)
-    stride_dt_head = tl.cast(stride_dt_head, tl.int64)
-    stride_dt_chunk = tl.cast(stride_dt_chunk, tl.int64)
-    stride_dt_csize = tl.cast(stride_dt_csize, tl.int64)
-    stride_dA_head = tl.cast(stride_dA_head, tl.int64)
-    stride_dA_chunk = tl.cast(stride_dA_chunk, tl.int64)
-    stride_dA_csize = tl.cast(stride_dA_csize, tl.int64)
-    stride_cu = tl.cast(stride_cu, tl.int64)
-
     k_tiles = tl.cdiv(max_seq_len, BLOCK_K)
     tiles_per_head = k_tiles * feature_tiles
     logical_id = program_start + tl.program_id(0)
@@ -77,8 +63,8 @@ def _pack_sequences_kernel(
     feature_tile = tile - k_tile * feature_tiles
     group = head // head_group_ratio
 
-    start = tl.load(cu_seqlens_ptr + batch * stride_cu).to(tl.int64)
-    end = tl.load(cu_seqlens_ptr + (batch + 1) * stride_cu).to(tl.int64)
+    start = tl.load(cu_seqlens_ptr + batch * stride_cu)
+    end = tl.load(cu_seqlens_ptr + (batch + 1) * stride_cu)
     sequence_length = end - start
     safe_end = tl.maximum(end, 1)
     chunk = (safe_end - 1) // chunk_size
@@ -246,11 +232,19 @@ def chunk_state_varlen(B, x, dt, dA_cumsum, cu_seqlens, chunk_states):
     if output.numel() == 0:
         return output
 
+    routed_cu_seqlens = (
+        cu_seqlens.to(torch.int32)
+        if cu_seqlens.dtype == torch.int64
+        else cu_seqlens
+    )
+
     block_m, block_n, block_k = 32, 32, 32
     pack_block_k = 32
     pack_block_d = 32
     batch_heads = batch * nheads
-    max_seq_len = int((cu_seqlens[1:] - cu_seqlens[:-1]).max().item())
+    max_seq_len = int(
+        (routed_cu_seqlens[1:] - routed_cu_seqlens[:-1]).max().item()
+    )
     feature_tiles = triton.cdiv(max(headdim, dstate), pack_block_d)
     packed_x = torch.empty(
         (batch, nheads, max_seq_len, headdim),
@@ -273,7 +267,7 @@ def chunk_state_varlen(B, x, dt, dA_cumsum, cu_seqlens, chunk_states):
             x,
             dt,
             dA_cumsum,
-            cu_seqlens,
+            routed_cu_seqlens,
             packed_x,
             packed_B,
             headdim,
@@ -288,7 +282,7 @@ def chunk_state_varlen(B, x, dt, dA_cumsum, cu_seqlens, chunk_states):
             *x.stride(),
             *dt.stride(),
             *dA_cumsum.stride(),
-            cu_seqlens.stride(0),
+            routed_cu_seqlens.stride(0),
             BLOCK_K=pack_block_k,
             BLOCK_D=pack_block_d,
             num_warps=4,

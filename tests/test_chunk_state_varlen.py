@@ -96,10 +96,18 @@ def reference(B, x, dt, dA_cumsum, cu_seqlens, chunk_states):
     return states
 
 
-def make_case(lengths, dtype, output_dtype, index_dtype=torch.int64):
+def make_case(
+    lengths,
+    dtype,
+    output_dtype,
+    index_dtype=torch.int64,
+    *,
+    nheads=6,
+    ngroups=2,
+    headdim=19,
+    dstate=23,
+):
     chunk_size = 8
-    nheads, ngroups = 6, 2
-    headdim, dstate = 19, 23
     total_seqlen = sum(lengths)
     nchunks = max((total_seqlen + chunk_size - 1) // chunk_size, 1)
     generator = torch.Generator(device="cuda").manual_seed(
@@ -323,6 +331,39 @@ class ChunkStateVarlenTest(unittest.TestCase):
                 torch.testing.assert_close(
                     actual, expected, atol=3e-2, rtol=3e-2
                 )
+
+    def test_kunlun_padded_mismatched_feature_shapes(self):
+        shapes = (
+            (4, 2, 16, 8),
+            (8, 2, 32, 16),
+            (8, 2, 64, 128),
+        )
+        for nheads, ngroups, headdim, dstate in shapes:
+            with self.subTest(shape=(nheads, headdim, dstate)):
+                case = make_case(
+                    [3, 5],
+                    torch.bfloat16,
+                    torch.bfloat16,
+                    nheads=nheads,
+                    ngroups=ngroups,
+                    headdim=headdim,
+                    dstate=dstate,
+                )
+                actual = KUNLUN_MODULE.chunk_state_varlen(*case)
+                expected = reference(*case)
+
+                torch.testing.assert_close(
+                    actual, expected, atol=3e-2, rtol=3e-2
+                )
+
+    def test_kunlun_vendor_avoids_masked_memory(self):
+        source = (
+            BACKEND_ROOT / "_kunlunxin" / "ops" / "chunk_state_varlen.py"
+        ).read_text(encoding="utf-8")
+
+        self.assertNotIn("mask=", source)
+        self.assertNotIn("other=", source)
+        self.assertIn("return output_storage[:, :, :headdim, :dstate]", source)
 
     def test_leading_empty_sequence(self):
         x = torch.ones((1, 1, 1), device="cuda", dtype=torch.float32)
