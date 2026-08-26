@@ -376,3 +376,22 @@ canonical ZIP
 `unzip -t` 均通过。平台止损规则：E7 只提交一次；昆仑 ≥39x 即停止 T23，
 15–39x 才进入 E8 scatter/output 融合，valid 但 <15x 则直接切换 T13；若编译
 失败只允许一次无-dot FP32 multiply-sum fallback，不再调 tile/warps/stages。
+
+### E7 平台结果：7/8；昆仑 pack-W uni_sram 明确失败
+
+E7 于 2026-08-26 11:34:36 CST 单次提交（submission `4996`，当日序号
+`1`，额度 `30/30`→`29/30`，`file_url_sha256` 为
+`1d43fac66f49bafb0b75da0df618e9c507dba6a8ec74e763f9ef552bcf924c4d`）。
+七个既有通过芯片保持稳定：天数 33.9675x、沐曦 17.7750x、燧原 4.0945x、
+海光 43.0095x、华为 17.7485x、国际 A 44.6920x、国际 B 29.1200x。
+
+昆仑在 8.407s 内完成返回，不再出现 1830s 编译超时；5/5 correctness case 均在
+`_pack_weights_kernel` 首次编译处失败，错误一致为
+`OutOfResources: uni_sram PassManager::run failed`，平台建议缩小 block 或
+stages。traceback 落在提交文件第 342 行 pack-W launch，说明 regular BMM 尚未
+执行到；结构隔离方向有效，但 64×32 的 FP32 pack tile 单 program 资源过大。
+
+下一候选不重提 E7，也不改其他七芯：把 pack-W 改为 1D 256-element FP32 copy，
+并把尚未平台执行的 regular BMM/scatter 收敛到 Task 09/12 昆仑已验证的 32×32
+资源形态；现有 Python 分块启动继续保证总 program 超 65535 时拆成多次 launch。
+若该结构第二次仍失败，则按止损不把它复用到 T22。
