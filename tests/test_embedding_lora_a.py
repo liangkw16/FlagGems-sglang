@@ -366,6 +366,66 @@ class EmbeddingLoraATest(unittest.TestCase):
                     actual, expected, atol=0.0, rtol=0.0
                 )
 
+    def test_enflame_expands_routes_before_2d_gather(self):
+        def strided(values, dtype):
+            storage = torch.empty(len(values) * 2, device="cuda", dtype=dtype)
+            storage[::2] = torch.tensor(values, device="cuda", dtype=dtype)
+            return storage[::2]
+
+        vocab_size = 17
+        extra_vocab = 7
+        seg_indptr = [0, 0, 2, 4, 5]
+        info = SimpleNamespace(
+            bs=4,
+            max_len=2,
+            seg_lens=strided([0, 2, 2, 1], torch.int32),
+            seg_indptr=strided(seg_indptr, torch.int32),
+            weight_indices=strided([1 << 28, 0, 1, 2], torch.int64),
+            lora_ranks=strided([129, 0, 65], torch.int64),
+        )
+        total = seg_indptr[-1]
+        ids = torch.tensor(
+            [1, vocab_size + 1, 2, vocab_size + 3, vocab_size + 2],
+            device="cuda",
+            dtype=torch.int32,
+        )
+        input_storage = torch.empty(
+            total * 2, device="cuda", dtype=torch.int64
+        )
+        input_storage[::2] = ids.to(torch.int64)
+        input_ids = input_storage[::2]
+        weights = torch.arange(
+            3 * 129 * vocab_size * 2,
+            device="cuda",
+            dtype=torch.float16,
+        ).reshape(3, 129, vocab_size * 2)[:, :, ::2]
+        extra_embeddings = torch.arange(
+            3 * extra_vocab * 129 * 2,
+            device="cuda",
+            dtype=torch.float16,
+        ).reshape(3, extra_vocab, 129 * 2)[:, :, 1::2]
+        values = (
+            input_ids,
+            weights,
+            extra_embeddings,
+            info.seg_lens,
+            info.seg_indptr,
+            info.weight_indices,
+            info.lora_ranks,
+        )
+        before = tuple(value.clone() for value in values)
+
+        actual = ENFLAME_MODULE.embedding_lora_a(
+            input_ids, weights, info, vocab_size, extra_embeddings
+        )
+        expected = reference(
+            input_ids, weights, info, vocab_size, extra_embeddings
+        )
+
+        torch.testing.assert_close(actual, expected, atol=0.0, rtol=0.0)
+        for value, original in zip(values, before):
+            torch.testing.assert_close(value, original, atol=0.0, rtol=0.0)
+
 
 if __name__ == "__main__":
     unittest.main()
