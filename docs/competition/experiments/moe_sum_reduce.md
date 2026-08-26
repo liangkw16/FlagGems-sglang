@@ -1150,3 +1150,32 @@ BLOCK 边界与最大 shape。
 整题相对 E10 +0.79% 仅来自冻结芯波动，相对 E11 仍低 0.81%。永久停止 dense
 地址轴，不叠加无公开性能证据、且 `topk` constexpr 已可编译期展开的 top-k=2
 专核；保留 E11 team best，后续只考虑独立芯片机制。
+
+## K1：昆仑 BLOCK 2048 离线止损
+
+状态：correctness 通过、代理性能门失败；未 commit 候选、未打包、未提交
+
+K1 从 E11 team-best 字节出发，五个竞赛源码中只把昆仑 wrapper 的
+`block_size = 1024` 改为 `2048`；最大已知 shape 的 grid 由 `(4096,7)` 降至
+`(4096,4)`。Ascend 恢复 E11 exact，generic、AMD、MetaX 与数学均冻结；候选
+Kunlun / test SHA-256 为
+`26062fcfa76929a771abdca2dbc07b399224fae8466d2f4f0002cc192f28790d` /
+`9db2994a7efee3f831db8fdf62829045022dab6f585991b7c31989ddda08bbdb`。
+
+独立远端目录 `gpu:/tmp/flagos-moe-sum-reduce-kunlun2048-screen.LhN8cI` 的
+格式、静态检查和 16/16 unittest 全部通过，覆盖 launch 合约、三 dtype 的
+2047/2048/2049/4097 边界、非连续输入和最大 shape；screening 脚本/日志
+SHA-256 为 `9556e9c8f64f988e8ed6c2022de81e9871f13a0588e3ee03b6ea1ae0668cf379` /
+`e18d59a3a608b992a3c0c98b8d7d3477986175a7593583e4720113bd73a41a85`。
+
+但 E11 BLOCK1024 对 BLOCK2048 的三 dtype × 平台已知 token 规模 A/B 明确击穿
+预注册 `geomean>=0.95 / min>=0.90` 门：九点几何平均仅 `0.746657x`、最差
+`0.570649x`；tokens 1/32 的中位持续为 `0.57–0.75x`，最大
+`(4096,8,7168)` 也只有 `0.992696–0.998514x`。benchmark 脚本/日志 SHA-256
+为 `ce6657f8b2adfa391d55386b665bae85a509106051ac6387fccf8e942bcc11b2` /
+`7181e5fc21ae4515aec4c9ccca0e1088de59b72e80da3b4c6e29e8c142ebbc81`。
+
+正确性不能覆盖性能否决，而仅改昆仑若要跨第 9 仍需约 `0.1744x→0.8722x`
+（5.00 倍）。因此 K1 永久停止，不用平台额度赌架构反转，也不混入
+`buffer_size_limit` 第二变量。候选已用 `apply_patch` 恢复，commit `0354446`
+中的 Ascend、Kunlun 和测试与 E11 逐字节一致；额度保持 `6/30`。
