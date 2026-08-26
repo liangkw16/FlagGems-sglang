@@ -611,3 +611,28 @@ Enflame 由 S6 `1.38541667x` 降至 `1.04616667x`（-24.49%）。其余芯片为
 0.835x、国际 A 3.046x、国际 B 2.78066667x。结论：GCU 的 12-CTA 软件策略
 贴近实际硬件并行度；CUDA 的 4–5x full-grid 信号不可迁移。保留 S6，永久停止
 Enflame grid cap 轴。
+
+## S8：Enflame 32K tile
+
+状态：release 门禁通过，canonical ZIP 已冻结，待一次性平台提交
+
+S8 从 S6 team best 分叉，只把 Enflame `BLOCK_SIZE` 从 4096 提高到 32768；
+grid cap 仍为 12，native `tanh`、四 warps、grid-stride 和数值保护均不变。
+这与固定 FlagGems `a7620cc191a0b42e040194622c5758b22a7a25dc` 的 GCU300
+pointwise codegen 最大 tile 32K 对齐。S7 已否决的 full-grid 轴没有复用；generic、
+Ascend、Kunlun 与 S6 逐字节相同。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `b2a249b823f4b0301b63283d4b7b08c98ddb6897` |
+| generic / Ascend SHA-256 | `e6ab1c434aa793bc58357e3d45d2eec7fd2ec56bebb65538b2a6049ca9a37ddc` / `bb98a5fda924e09954ce5778a859d064daaa560ebc7d49f6dbd1229dadabb50b` |
+| Enflame / Kunlun SHA-256 | `7a1eee3c22be1df8cb5ac561152b981e45baaba8ccb3d677b6c47c07a9e7a2b6` / `f34b06168ec951453601f552d3b6aa7bef1dac954a592226d3ac76ec248066bb` |
+| 测试 SHA-256 | `c6292e22084e0302f4591ff9cbaf3fd06bacd2825f43d03985a87f63a612381e` |
+| release | `gpu:/tmp/flagos-softcap-out-s8-release.SzF7uL`；PID/PGID `163457`；14/14、10.561s、所有格式门禁及 `RELEASE_OK`；日志 SHA-256 `c98091d6e8698e6e6c238798b2a174197933cd52be15a02f21dfd97052829835` |
+| canonical ZIP | `artifacts/competition/softcap_out/s8-b2a249b/softcap_out.zip`，10,025 bytes，SHA-256 `9fd897ad5b1e167c8c0a49826c295b2387b160b2d378ffacec61d74a6e469899` |
+
+新增回归覆盖 `32767/32768/32769` 和 `12*32768+17`，远端 RTX 5070 Ti
+14/14 通过；该卡只验证正确性，不把 CUDA 时延外推到 GCU。一次提交基础晋级门为
+8/8 valid、Enflame 高于 S6 `1.38541667x` 且平均高于 `2.05411458x`；显著收益门
+为 Enflame 至少 `1.54541667x`。任一基础门失败即保留 S6，并永久停止 Enflame
+tile 轴，不尝试 64K、warps、grid 或数学变体。
