@@ -291,7 +291,7 @@ source/test SHA 与 Git blob 相同。规范打包器创建后再以 `--verify-e
 
 ## E5：backend-native `tl.sum` + NVIDIA 已通过 vendor（晋升）
 
-状态：release 与不可变 ZIP 门禁通过；GitHub/跨芯审计拒绝，不提交
+状态：release 与不可变 ZIP 门禁通过；submission `5083` 评测中
 
 验证时间：2026-08-26 16:34–16:38 CST
 
@@ -326,17 +326,50 @@ Black 26.5.1、unittest 6/6、规范构建和 `--verify-existing` 全部通过�
 失败根因的单变量平台实验；generic 是否复现各 vendor Torch bmm 只能由逐芯回调
 证实。
 
-### E5 停止结论
+### E5 平台三投：one-row topology 否决
 
-E5 不进入 preflight。固定 SGLang 与 FlagGems 上游实现仍使用两处 `tl.sum`；没有
-公开实现证明 E4 的四路 FMA、交叉合并及 libdevice `exp` 舍入树可跨七个非 NVIDIA
-后端复现。更直接的门禁缺口是：E5 generic 只通过 `B=1,T=3,V=17` 的短契约测试，
-两个真实隐藏长形态仍只由 `_nvidia` 模块重放。把 E4 冻结到 NVIDIA vendor 最多
-保住已由平台证明的国际 A，不能证明其余七芯恢复，信息增益不足以消耗额度。
+2026-08-26 16:41:35 CST，E5 通过实时 preflight 后执行一次性提交；submission
+`5083`，额度 22/30 → 21/30，平台确认国际 A 选择 NVIDIA vendor，其余芯选择
+generic。远端 ZIP 回读仍因未配置受信 hostname 为 `unavailable`，提交明确成功，
+未重试。
 
-一手证据为 SGLang 固定版本的
-[`tl.sum` 实现](https://github.com/sgl-project/sglang/blob/8014d9d062c3cc5d393596ecdf2f7009191965df/python/sglang/kernels/ops/attention/fla/fused_recurrent.py#L15-L121)、
-FlagGems 的
-[`tl.sum` generic](https://github.com/flagos-ai/FlagGems/blob/d1c970e0c9ccb3c26d9fc8de906a7e21a64cc0a1/src/flag_gems/fused/FLA/fused_recurrent.py#L263-L333)
-及其[长序列测试缺口](https://github.com/flagos-ai/FlagGems/blob/6474da8e201164fc2855898eb44b42d5019429bf/tests/test_FLA/test_fused_recurrent_gated_delta_rule.py#L127-L163)。
-后续只有取得至少一颗非 NVIDIA 真机在两个长形态上的零误差证据，才允许重开 Task 18。
+截至首轮 7/8 terminal，国际 A 继续以 5.477x 通过。天数、沐曦、燧原、海光、
+华为、国际 B 的 case 3/case 4 错误数分别为 `906/4`、`130868/9`、`583/3`、
+`614/21`、`532/9`、`873/33`；昆仑待回调。海光/华为逐字复现 E2 指纹，天数、
+沐曦、国际 B 未达到预设“不劣于 E2”门槛，因此 one-row/1-warp `tl.sum` topology
+被否决。燧原的 1D grid 已消除原 `grid.y` 硬失败，但数值仍未清零。
+
+## E6：恢复 `BV=8` / 4-warps reduction ownership（晋升）
+
+状态：release 与不可变 ZIP 门禁通过；待实时 preflight
+
+验证时间：2026-08-26 16:44–16:47 CST
+
+E6 只改变 E5 generic 的 reduction ownership：一个 program 处理 8 个 value
+rows，K64 `tl.sum(axis=1)` 使用 4 warps，恢复 E2 的 `[BV=8,K=64]` topology；
+program grid 仍展平为 1D，libdevice exp、FP32 state/outer scratch、外积舍入边界、
+wrapper 和 NVIDIA vendor 全部保持。尾部 V 使用 mask，scratch 按真实
+`[B,HV,V,K]` 连续寻址。
+
+RTX 上 generic 仍不是实际选中路径：8-seed 短/长累计错误 142/8469，代理
+speedup 9.8554x/37.9849x；generic contract/empty 均 `(0,0)`。NVIDIA vendor
+继续由 E4 的本地零误差和平台 5.39–5.477x 覆盖。最终 release unittest 6/6
+通过。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `b528e9cd02e200cd523ec76df85839229a0039b4` |
+| generic SHA-256 | `87d092112fe3f55747300df246fe4cb7f328576945f4ce3f47e38e999cd923e9` |
+| NVIDIA vendor SHA-256 | `c328d858139f446ee76f5e8f5be02776135b3ef6174d9dbc4a50b06601b98317` |
+| 测试 SHA-256 | `3da08936fc4aeb5dc0f328bc9a7a900ab64b456d06a3442f573671b74b567e05` |
+| release 目录 | `gpu:/tmp/flagos-fused-recurrent-gdn-release.Bs1Ahp`（mode 0700） |
+| release log SHA-256 | `c410620453beaf4d08226b05e2a8efee1386fd671fdd436906bda2cf572eb2fa` |
+| generic screening 目录 | `gpu:/tmp/flagos-fused-recurrent-gdn-e6.csbhTT` |
+| generic screening log SHA-256 | `2933ad475ae7189dfa1563c40c6e8d7efe4d1fb7d5d817ff896128c0cfd56126` |
+| ZIP | `artifacts/competition/fused_recurrent_gdn/e6-b528e9c/fused_recurrent_gdn.zip` |
+| ZIP SHA-256 | `6093114cf384aa3fe81a5291b6a48bd64d0b72f2c4969fc6906062967cf97764` |
+| ZIP 大小 / 成员 | 35,370 bytes；generic + `fused_recurrent_gdn_nvidia.py` |
+
+三文件 commit/远端 SHA 一致；py_compile、isort、flake8、Black 26.5.1、
+unittest、规范构建与 `--verify-existing` 全部通过。E6 用一轮平台结果判定
+layout/warp ownership 是否是 E2 数值指纹的必要条件。
