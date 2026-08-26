@@ -234,8 +234,7 @@ vendor）、国际 B 1.6697x。三失败芯：燧原 vendor（fp16 dot）验证�
 
 ## E2-b951safe：官方 PR #31 四路径证据迁移（唯一一次重开）
 
-状态：source/test、Git-object release 与不可变 ZIP 门禁通过，待实时 preflight；
-只允许正式提交一次。
+状态：submission `5081` 已提交并进入评测；只允许的正式提交已消耗，不重试。
 
 ### GitHub 一手证据与决策
 
@@ -305,3 +304,16 @@ canonical ZIP 为
 
 停止规则：E2 只提交一次；昆仑或华为任一失败/低于 `0.1x`，Task 14 永久停止，
 不再追加 tile/warps/dtype 猜测。
+
+### E2 平台提交
+
+2026-08-26 16:25:27 CST 的实时 preflight 确认账号/团队/Task/四成员、source
+commit、ZIP 路径与 SHA-256 全部匹配；Task 可提交、距上次提交超过 120 秒，额度
+`24/30`。一次性 nonce `266ca4b698e4d170a009535306d61886` 被消费后状态为
+`submitted`，submission `5081`、当日序号 `7`，八芯均进入队列；平台文件 URL
+指纹为 `f0e9bd2e6dd355acb60e982ce12b1770801ba4196d68d79a1eb6afe5f525be6e`。
+
+提交器因本机未预设可信下载 hostname，把内建远端验签标为 `unavailable`；未重试
+提交。随后对平台返回的 HTTPS 对象做独立只读下载验签，大小 32,808B、SHA-256
+`63e3e0ddccf1493dfb484ee4a7f1310f4f91dae677b874afa68fe43798cac774`，与本地
+canonical ZIP 完全一致。候选已提交，不得再次上传或正式提交。
