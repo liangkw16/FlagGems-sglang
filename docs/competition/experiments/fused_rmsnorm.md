@@ -444,3 +444,9 @@ E3 只允许一次提交。基础门为 8/8 valid、Hygon 选中 vendor 且高�
 `7.66766667x`（整题约 `+0.02x`）。当前第 14 名为 `4.63455x`，冻结其余七芯时
 Hygon 需严格超过 `8.21060003x` 才升一位。若 runtime 仍失败或基础门不满足，
 永久停止 Hygon autotune 轴。
+
+2026-08-27 01:38:02 CST 经实时门禁执行 E3 唯一一次提交，submission `5228`、
+当日序号 `15`，额度预计由 `16/30` 变为 `15/30`。`file_url_sha256` 为
+`8df5492594eae79a633e611792df2d4f518e3816199e664d91f8aebcf0e63547`；匿名对象
+回读为 9060 bytes，SHA-256 与 canonical ZIP 完全一致，三个成员均通过
+`unzip -t`。平台选中预期的 generic、Hygon、Kunlun 路径；禁止重传。
