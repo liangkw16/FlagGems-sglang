@@ -311,10 +311,7 @@ class SgemmLoraBTest(unittest.TestCase):
             bs * ((max_len + 31) // 32) * ((out_dim + 31) // 32),
             65536,
         )
-        self.assertEqual(
-            bs * ((max_len + 31) // 32) * ((out_dim + 63) // 64),
-            32768,
-        )
+        self.assertEqual((65536 + 65535 - 1) // 65535, 2)
         perm = torch.randperm(total).tolist()
 
         for dtype, tolerance in (

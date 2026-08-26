@@ -97,28 +97,22 @@ def _pack_weights_kernel(
     weight_indices_stride,
     lora_ranks_stride,
     RANK: tl.constexpr,
-    BLOCK_N: tl.constexpr,
-    BLOCK_K: tl.constexpr,
+    BLOCK_SIZE: tl.constexpr,
 ):
     weight_stride_lora = tl.cast(weight_stride_lora, tl.int64)
     weight_stride_output = tl.cast(weight_stride_output, tl.int64)
     weight_stride_rank = tl.cast(weight_stride_rank, tl.int64)
 
-    rank_tiles = tl.cdiv(RANK, BLOCK_K)
-    tiles_per_batch = tl.cdiv(output_dim, BLOCK_N) * rank_tiles
+    output_tiles = tl.cdiv(output_dim, BLOCK_SIZE)
+    tiles_per_batch = RANK * output_tiles
     logical_id = program_start + tl.program_id(0)
     batch_id = logical_id // tiles_per_batch
     matrix_id = logical_id - batch_id * tiles_per_batch
-    output_tile = matrix_id // rank_tiles
-    rank_tile = matrix_id - output_tile * rank_tiles
-    output_offsets = output_tile * BLOCK_N + tl.arange(0, BLOCK_N)
-    rank_offsets = rank_tile * BLOCK_K + tl.arange(0, BLOCK_K)
-    mask = (output_offsets[:, None] < output_dim) & (
-        rank_offsets[None, :] < RANK
-    )
-    packed_offsets = (
-        batch_id * RANK + rank_offsets[None, :]
-    ) * output_dim + output_offsets[:, None]
+    rank_id = matrix_id // output_tiles
+    output_tile = matrix_id - rank_id * output_tiles
+    output_offsets = output_tile * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+    mask = output_offsets < output_dim
+    packed_offsets = (batch_id * RANK + rank_id) * output_dim + output_offsets
     tl.store(packed_weights_ptr + packed_offsets, 0.0, mask=mask)
 
     segment_start = tl.load(seg_indptr_ptr + batch_id * seg_indptr_stride)
@@ -134,8 +128,8 @@ def _pack_weights_kernel(
     values = tl.load(
         weights_ptr
         + weight_index * weight_stride_lora
-        + output_offsets[:, None] * weight_stride_output
-        + rank_offsets[None, :] * weight_stride_rank,
+        + output_offsets * weight_stride_output
+        + rank_id * weight_stride_rank,
         mask=mask,
         other=0.0,
     )
@@ -292,8 +286,9 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
     output_dim = weights.shape[1]
     rank = weights.shape[2]
     block_m = 32
-    block_n = 64
+    block_n = 32
     block_k = 32
+    pack_weight_block = 256
     packed_x = torch.empty(
         (batch_size, max_len, rank), dtype=torch.float32, device=x.device
     )
@@ -335,7 +330,7 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
         )
 
     pack_weight_programs = (
-        batch_size * triton.cdiv(output_dim, block_n) * rank_tiles
+        batch_size * rank * triton.cdiv(output_dim, pack_weight_block)
     )
     for program_start in range(0, pack_weight_programs, _MAX_GRID_SIZE):
         grid = (min(_MAX_GRID_SIZE, pack_weight_programs - program_start),)
@@ -352,8 +347,7 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
             batch_info.weight_indices.stride(0),
             batch_info.lora_ranks.stride(0),
             RANK=rank,
-            BLOCK_N=block_n,
-            BLOCK_K=block_k,
+            BLOCK_SIZE=pack_weight_block,
             num_warps=4,
             num_stages=1,
         )
