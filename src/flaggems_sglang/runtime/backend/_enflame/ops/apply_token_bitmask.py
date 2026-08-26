@@ -38,7 +38,10 @@ def _apply_token_bitmask_kernel(
     for logical_id in range(program_id, total_blocks, grid_size):
         batch = logical_id // blocks_per_row
         block = logical_id % blocks_per_row
-        token = block * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+        word = block * (BLOCK_SIZE // 32) + tl.arange(0, BLOCK_SIZE // 32)
+        bit = tl.arange(0, 32)
+        token = word[:, None] * 32 + bit[None, :]
+        word_mask = word * 32 < vocab_size
         token_mask = token < vocab_size
 
         logits = tl.load(
@@ -51,11 +54,11 @@ def _apply_token_bitmask_kernel(
         packed = tl.load(
             bitmask_ptr
             + batch * bitmask_stride_batch
-            + (token // 32) * bitmask_stride_word,
-            mask=token_mask,
+            + word * bitmask_stride_word,
+            mask=word_mask,
             other=0,
         )
-        allowed = ((packed >> (token % 32)) & 1) != 0
+        allowed = ((packed[:, None] >> bit[None, :]) & 1) != 0
         tl.store(
             output_ptr
             + batch * output_stride_batch
@@ -71,7 +74,7 @@ def apply_token_bitmask(logits, bitmask):
         return output
 
     batch_size, vocab_size = logits.shape
-    block_size = 32768
+    block_size = 4096
     blocks_per_row = triton.cdiv(vocab_size, block_size)
     total_blocks = batch_size * blocks_per_row
     grid = (min(total_blocks, 12),)

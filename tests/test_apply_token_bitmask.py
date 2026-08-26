@@ -128,6 +128,9 @@ class ApplyTokenBitmaskTest(unittest.TestCase):
         torch.testing.assert_close(logits, logits_before, atol=0.0, rtol=0.0)
         torch.testing.assert_close(bitmask, bitmask_before, atol=0.0, rtol=0.0)
 
+        actual = VENDOR_MODULES["enflame"].apply_token_bitmask(logits, bitmask)
+        torch.testing.assert_close(actual, expected, atol=0.0, rtol=0.0)
+
     def test_supported_dtypes(self):
         bitmask = torch.tensor(
             [[-2147483648, 1]], device="cuda", dtype=torch.int32
