@@ -536,4 +536,49 @@ FP32 IEEE GEMM、scale 与 scatter 仍全部由 Triton kernel 执行，无 fallb
   pointwise Triton scatter；不改 BMM、tile、warps 或其余七芯。按本轮七芯合计，
   昆仑只需 0.1x 即约 24.403x 平均。
 
+## E9：昆仑 row-wise pointwise scatter
+
+状态：Git-object release 与不可变 ZIP 门禁通过，待实时 preflight。
+
+source/verification commit
+`ee892715ba0c9ded9ac0b5fac43c97d1c7a45ff6` 只改昆仑最终 scatter 与回归；
+E8 已在平台越过的 layout copy、safe-adapter、pack-X 和 regular BMM 均保持不变，
+其余七芯源码逐字节冻结。旧 32×32、1024-lane 二维 scatter 改为每个 program
+固定一个 `(batch, token, col_block)` 的 1×256 pointwise scatter；program-id 的
+除模保持标量，唯一向量是连续列。wrapper 先完成全部 BMM，再按最多 65535 个
+program 分块启动 scatter。空段、rank0、permutation 和尾列采用 staged mask，
+不在无效 metadata 上形成实际 load。
+
+- Kunlun vendor/test SHA-256 分别为
+  `3595148d5c4d1aea4d6eff102675b61d754b14cd4724e006affe074f9141b1f2`、
+  `f2318c963474fcb738092f759e555d2257aa2e0e7927789a44cc1fa6cd8d50d4`；
+  generic/ascend/enflame/iluvatar 仍为 E8 的
+  `9b1a9a6c98b2cb7f9647a51276fda261f39be1eda06a866e3e3ad561a68bb355`、
+  `41416a252cbf5aaa5bf57dcb6de3da20fd7cdc52e2a471d995c4c603f68fd2de`、
+  `34fa4c8def315c6277fd087f6c85692273b2bc5a13e46bc135c0a495f6db41e4`、
+  `34fa4c8def315c6277fd087f6c85692273b2bc5a13e46bc135c0a495f6db41e4`。
+- Git-object release 位于
+  `gpu:/tmp/flagos-sgemm-flat-release.MTOu37`，PID/PGID `154498`、wall 420s；
+  RTX 5070 Ti、Python 3.12.13、PyTorch 2.13.0+cu130、Triton 3.7.1、
+  CUDA 13.0。py_compile、Black、isort、flake8 与完整 unittest 10/10 通过；
+  `release.log` 尾行为 `RELEASE_OK`，SHA-256
+  `e053bc70e5593cfa72413390dcb3f77d9347a7484db3433ec37ef0e8450babd6`。
+- 定向脚本覆盖 N=33/64/255/256/257、permutation on/off 和三 dtype，共
+  30 个组合；scatter 编译资源为 20 registers、0 shared、0 global/profile
+  scratch，TTIR 无 vector div/rem 或 dot。脚本 SHA-256
+  `957585f09163cef7c1b0bacc4970ebbb481b580ffc10840193363cd126897d31`。
+- 最大回归 `B8/L2048/K64/N4096` 的 5 轮独占 E8/E9 代理中位分别为
+  1.6387/1.6307ms，E9/E8=0.9951，峰值增量 411,042,304 bytes；benchmark
+  脚本 SHA-256
+  `d412e155db37040e5b7ce311a66efcdd8f122af695b34166c0ae9002f2641841`。
+- canonical ZIP
+  `artifacts/competition/sgemm_lora_b/e9-ee89271/sgemm_lora_b.zip`，35,057B，
+  SHA-256
+  `feaddd39d9472fd1d260968ad7bd3f3b98495ce51123da6fe5b10f9720cae92a`；
+  五成员、`verified-existing`、`unzip -t` 与成员白名单全部通过。
+
+E9 只提交一次：晋级门为 8/8 且昆仑 ≥0.1x；按 E8 七芯合计 195.1245x，
+最低有效平均约 24.403x。若昆仑仍在该 scatter 编译/正确性失败，则永久停止
+Task 23 与 Task 22，不再用额度试 BLOCK/warps/grid。
+
 <!-- T23_E9_PLATFORM_RESULT_PENDING -->
