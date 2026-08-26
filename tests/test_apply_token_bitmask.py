@@ -47,12 +47,6 @@ VENDOR_MODULES = {
         / "src/flaggems_sglang/runtime/backend/_enflame/ops"
         / "apply_token_bitmask.py",
     ),
-    "kunlunxin": load_module(
-        "apply_token_bitmask_kunlunxin_module",
-        ROOT
-        / "src/flaggems_sglang/runtime/backend/_kunlunxin/ops"
-        / "apply_token_bitmask.py",
-    ),
 }
 
 
@@ -213,7 +207,7 @@ class ApplyTokenBitmaskTest(unittest.TestCase):
                     actual, expected, atol=0.0, rtol=0.0
                 )
 
-    def test_large_block_vendors_all_dtypes(self):
+    def test_enflame_large_block_all_dtypes(self):
         vocab_size = 12 * 4096 + 17
         generator = torch.Generator(device="cuda").manual_seed(20260824)
         bitmask = torch.randint(
@@ -224,23 +218,45 @@ class ApplyTokenBitmaskTest(unittest.TestCase):
             device="cuda",
             dtype=torch.int64,
         ).to(torch.int32)
-        for vendor in ("enflame", "kunlunxin"):
-            for dtype in (torch.float16, torch.bfloat16, torch.float32):
-                with self.subTest(vendor=vendor, dtype=dtype):
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            with self.subTest(dtype=dtype):
+                logits = torch.randn(
+                    (1, vocab_size),
+                    generator=generator,
+                    device="cuda",
+                    dtype=dtype,
+                )
+                actual = VENDOR_MODULES["enflame"].apply_token_bitmask(
+                    logits, bitmask
+                )
+                torch.testing.assert_close(
+                    actual, reference(logits, bitmask), atol=0.0, rtol=0.0
+                )
+
+    def test_ascend_block_boundaries_all_dtypes(self):
+        generator = torch.Generator(device="cuda").manual_seed(20260827)
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            for vocab_size in (511, 512, 513):
+                with self.subTest(dtype=dtype, vocab_size=vocab_size):
                     logits = torch.randn(
-                        (1, vocab_size),
+                        (2, vocab_size),
                         generator=generator,
                         device="cuda",
                         dtype=dtype,
                     )
-                    actual = VENDOR_MODULES[vendor].apply_token_bitmask(
+                    bitmask = torch.randint(
+                        0,
+                        2**32,
+                        (2, (vocab_size + 31) // 32),
+                        generator=generator,
+                        device="cuda",
+                        dtype=torch.int64,
+                    ).to(torch.int32)
+                    actual = VENDOR_MODULES["ascend"].apply_token_bitmask(
                         logits, bitmask
                     )
                     torch.testing.assert_close(
-                        actual,
-                        reference(logits, bitmask),
-                        atol=0.0,
-                        rtol=0.0,
+                        actual, reference(logits, bitmask), atol=0.0, rtol=0.0
                     )
 
 
