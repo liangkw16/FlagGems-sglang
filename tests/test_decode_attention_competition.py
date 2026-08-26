@@ -80,6 +80,33 @@ DECODE_GROUPED_ILUVATAR = _load_module(
     / "ops"
     / "decode_grouped_attention.py",
 )
+DECODE_GROUPED_ENFLAME = _load_module(
+    "decode_grouped_enflame",
+    OPS_PATH.parent
+    / "runtime"
+    / "backend"
+    / "_enflame"
+    / "ops"
+    / "decode_grouped_attention.py",
+)
+DECODE_GROUPED_ASCEND = _load_module(
+    "decode_grouped_ascend",
+    OPS_PATH.parent
+    / "runtime"
+    / "backend"
+    / "_ascend"
+    / "ops"
+    / "decode_grouped_attention.py",
+)
+DECODE_GROUPED_KUNLUN = _load_module(
+    "decode_grouped_kunlun",
+    OPS_PATH.parent
+    / "runtime"
+    / "backend"
+    / "_kunlunxin"
+    / "ops"
+    / "decode_grouped_attention.py",
+)
 MHA_FUNCTIONS = (
     DECODE_ATTENTION.decode_attention,
     DECODE_ATTENTION_NVIDIA.decode_attention,
@@ -88,6 +115,11 @@ PAGE_I32_FUNCTIONS = (
     DECODE_ATTENTION_ASCEND.decode_attention,
     DECODE_ATTENTION_ENFLAME.decode_attention,
     DECODE_ATTENTION_KUNLUN.decode_attention,
+)
+GROUPED_PAGE_I32_FUNCTIONS = (
+    DECODE_GROUPED_ASCEND.decode_grouped_attention,
+    DECODE_GROUPED_ENFLAME.decode_grouped_attention,
+    DECODE_GROUPED_KUNLUN.decode_grouped_attention,
 )
 
 
@@ -229,6 +261,102 @@ class DecodeAttentionLaunchTest(unittest.TestCase):
         self.assertEqual(fake_kernel.launches, expected)
         self.assertEqual(sum(count for _, count in expected), 131072)
 
+    def test_grouped_enflame_chunks_all_query_head_programs(self):
+        class FakeKernel:
+            def __init__(self):
+                self.launches = []
+
+            def __getitem__(self, grid):
+                def launch(*args, **kwargs):
+                    del kwargs
+                    self.launches.append((args[-1], grid[0]))
+
+                return launch
+
+        q = torch.empty((2048, 64, 1), dtype=torch.float16)
+        k_buffer = torch.empty((1, 16, 1), dtype=torch.float16)
+        v_buffer = torch.empty((1, 16, 1), dtype=torch.float16)
+        kv_indptr = torch.zeros(2049, dtype=torch.int32)
+        kv_indices = torch.empty(0, dtype=torch.int32)
+
+        fake_fallback = FakeKernel()
+        real_fallback = DECODE_GROUPED_ENFLAME._decode_grouped_attention_kernel
+        DECODE_GROUPED_ENFLAME._decode_grouped_attention_kernel = fake_fallback
+        try:
+            DECODE_GROUPED_ENFLAME.decode_grouped_attention(
+                q,
+                k_buffer,
+                v_buffer,
+                kv_indptr,
+                kv_indices,
+                1.0,
+            )
+        finally:
+            DECODE_GROUPED_ENFLAME._decode_grouped_attention_kernel = (
+                real_fallback
+            )
+        self.assertEqual(
+            fake_fallback.launches,
+            [(0, 65535), (65535, 65535), (131070, 2)],
+        )
+
+    def test_grouped_ascend_uses_physical_workers_for_all_query_heads(self):
+        class FakeKernel:
+            def __init__(self):
+                self.launches = []
+
+            def __getitem__(self, grid):
+                def launch(*args, **kwargs):
+                    del kwargs
+                    self.launches.append((args[-1], grid[0]))
+
+                return launch
+
+        q = torch.empty((2048, 64, 1), dtype=torch.float16)
+        k_buffer = torch.empty((1, 16, 1), dtype=torch.float16)
+        v_buffer = torch.empty((1, 16, 1), dtype=torch.float16)
+        kv_indptr = torch.zeros(2049, dtype=torch.int32)
+        kv_indices = torch.empty(0, dtype=torch.int32)
+
+        fake_kernel = FakeKernel()
+        real_kernel = DECODE_GROUPED_ASCEND._decode_grouped_attention_kernel
+        real_core_count = DECODE_GROUPED_ASCEND._get_num_vector_cores
+        DECODE_GROUPED_ASCEND._decode_grouped_attention_kernel = fake_kernel
+        DECODE_GROUPED_ASCEND._get_num_vector_cores = lambda _: 40
+        try:
+            DECODE_GROUPED_ASCEND.decode_grouped_attention(
+                q,
+                k_buffer,
+                v_buffer,
+                kv_indptr,
+                kv_indices,
+                1.0,
+            )
+        finally:
+            DECODE_GROUPED_ASCEND._decode_grouped_attention_kernel = (
+                real_kernel
+            )
+            DECODE_GROUPED_ASCEND._get_num_vector_cores = real_core_count
+        self.assertEqual(fake_kernel.launches, [(131072, 40)])
+
+    def test_grouped_kunlun_avoids_legacy_masked_tail_memory(self):
+        source_path = (
+            OPS_PATH.parent
+            / "runtime"
+            / "backend"
+            / "_kunlunxin"
+            / "ops"
+            / "decode_grouped_attention.py"
+        )
+        source = source_path.read_text(encoding="utf-8")
+
+        self.assertNotIn("mask=", source)
+        self.assertNotIn("other=", source)
+        self.assertNotIn("tl.dot", source)
+        self.assertIn("safe_dim", source)
+        self.assertIn("safe_value_offset", source)
+        self.assertIn("return output_storage[..., :value_dim]", source)
+
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class DecodeAttentionCompetitionTest(unittest.TestCase):
@@ -298,6 +426,26 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
         finally:
             DECODE_ATTENTION_ASCEND._get_num_vector_cores = real_core_count
 
+    def test_grouped_vendor_launch_schedules_preserve_gqa_mapping(self):
+        case = make_case(8, 2, 16, 96, [3, 5], torch.float16)
+        for module in (DECODE_GROUPED_ENFLAME, DECODE_GROUPED_KUNLUN):
+            real_cap = module._MAX_GRID_PROGRAMS
+            module._MAX_GRID_PROGRAMS = 5
+            try:
+                self.assert_matches(module.decode_grouped_attention, case)
+            finally:
+                module._MAX_GRID_PROGRAMS = real_cap
+
+        real_core_count = DECODE_GROUPED_ASCEND._get_num_vector_cores
+        DECODE_GROUPED_ASCEND._get_num_vector_cores = lambda _: 1
+        try:
+            self.assert_matches(
+                DECODE_GROUPED_ASCEND.decode_grouped_attention,
+                case,
+            )
+        finally:
+            DECODE_GROUPED_ASCEND._get_num_vector_cores = real_core_count
+
     def test_kunlun_scalar_gqa_value_tiles_and_repeated_pages(self):
         case = list(make_case(8, 2, 64, 257, [1, 31, 33], torch.bfloat16))
         case[3] = case[3].to(torch.int32)
@@ -306,14 +454,99 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
 
         self.assert_matches(DECODE_ATTENTION_KUNLUN.decode_attention, case)
 
+    def test_grouped_kunlun_safe_tail_does_not_pollute_adjacent_rows(self):
+        for qk_dim, value_dim, dtype in (
+            (80, 80, torch.float16),
+            (80, 96, torch.bfloat16),
+            (96, 80, torch.bfloat16),
+            (96, 96, torch.float16),
+        ):
+            with self.subTest(
+                qk_dim=qk_dim,
+                value_dim=value_dim,
+                dtype=dtype,
+            ):
+                case = list(make_case(8, 2, qk_dim, value_dim, [3, 33], dtype))
+                q, k_buffer, v_buffer = case[:3]
+
+                q_storage = torch.empty(
+                    (*q.shape[:-1], 128), device="cuda", dtype=dtype
+                )
+                k_storage = torch.empty(
+                    (*k_buffer.shape[:-1], 128), device="cuda", dtype=dtype
+                )
+                v_storage = torch.empty(
+                    (*v_buffer.shape[:-1], 128), device="cuda", dtype=dtype
+                )
+                q_storage[..., :qk_dim] = q
+                k_storage[..., :qk_dim] = k_buffer
+                v_storage[..., :value_dim] = v_buffer
+                q_storage[..., qk_dim:] = 127.0
+                page_sentinel = torch.arange(
+                    k_storage.shape[0], device="cuda", dtype=torch.float32
+                ).to(dtype)
+                k_storage[..., qk_dim:] = page_sentinel[:, None, None] + 64.0
+                v_storage[..., value_dim:] = -113.0
+                case[:3] = (
+                    q_storage[..., :qk_dim],
+                    k_storage[..., :qk_dim],
+                    v_storage[..., :value_dim],
+                )
+                case[3] = case[3].to(torch.int32)
+                case[4] = case[4].to(torch.int32)
+                case[4][1::3] = case[4][0]
+
+                self.assert_matches(
+                    DECODE_GROUPED_KUNLUN.decode_grouped_attention,
+                    tuple(case),
+                )
+
     def test_gqa_strides_variable_lengths_and_value_dim(self):
         case = list(make_case(8, 2, 40, 24, [3, 70], torch.bfloat16))
         case[3] = case[3].to(torch.int32)
         case[4] = case[4].to(torch.int32)
 
-        self.assert_matches(
-            DECODE_GROUPED_ATTENTION.decode_grouped_attention, tuple(case)
+        functions = (
+            DECODE_GROUPED_ATTENTION.decode_grouped_attention,
+            *GROUPED_PAGE_I32_FUNCTIONS,
         )
+        for function in functions:
+            with self.subTest(function=function.__module__):
+                self.assert_matches(function, tuple(case))
+
+    def test_grouped_vendor_page_routing_int32_no_copy_path(self):
+        def strided_int32(tensor):
+            storage = torch.empty(
+                tensor.numel() * 2, device="cuda", dtype=torch.int32
+            )
+            storage[::2] = tensor.to(torch.int32)
+            return storage[::2]
+
+        case = list(make_case(8, 2, 40, 24, [3, 70], torch.bfloat16))
+        case[3] = strided_int32(case[3])
+        case[4] = strided_int32(case[4])
+
+        for function in GROUPED_PAGE_I32_FUNCTIONS:
+            with self.subTest(function=function.__module__):
+                self.assert_matches(function, tuple(case))
+
+    def test_grouped_vendor_handles_fallback_group_sizes(self):
+        for query_heads, kv_heads in ((8, 4), (12, 4), (34, 2)):
+            with self.subTest(group_size=query_heads // kv_heads):
+                case = list(
+                    make_case(
+                        query_heads,
+                        kv_heads,
+                        16,
+                        9,
+                        [3, 5],
+                        torch.float16,
+                    )
+                )
+                case[3] = case[3].to(torch.int32)
+                case[4] = case[4].to(torch.int32)
+                for function in GROUPED_PAGE_I32_FUNCTIONS:
+                    self.assert_matches(function, tuple(case))
 
     def test_fp32_mha_and_gqa(self):
         mha_case = make_case(2, 2, 16, 9, [5], torch.float32)
@@ -324,6 +557,9 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
             DECODE_GROUPED_ATTENTION.decode_grouped_attention,
             make_case(4, 1, 16, 9, [5], torch.float32),
         )
+        gqa_case = make_case(4, 1, 16, 9, [5], torch.float32)
+        for function in GROUPED_PAGE_I32_FUNCTIONS:
+            self.assert_matches(function, gqa_case)
 
     def test_nvidia_tile_schedule_boundaries(self):
         for length, qk_dim, dtype, csr_dtype in (
@@ -367,6 +603,9 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
                 for module in (
                     DECODE_GROUPED_ATTENTION,
                     DECODE_GROUPED_ILUVATAR,
+                    DECODE_GROUPED_ASCEND,
+                    DECODE_GROUPED_ENFLAME,
+                    DECODE_GROUPED_KUNLUN,
                 ):
                     self.assert_matches(
                         module.decode_grouped_attention,
@@ -378,10 +617,14 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
         for function in MHA_FUNCTIONS:
             with self.subTest(function=function.__module__):
                 self.assert_matches(function, mha_case)
-        self.assert_matches(
+        gqa_case = make_case(8, 2, 64, 257, [33, 65], torch.float16)
+        functions = (
             DECODE_GROUPED_ATTENTION.decode_grouped_attention,
-            make_case(8, 2, 64, 257, [33, 65], torch.float16),
+            *GROUPED_PAGE_I32_FUNCTIONS,
         )
+        for function in functions:
+            with self.subTest(function=function.__module__):
+                self.assert_matches(function, gqa_case)
 
     def test_empty_batch(self):
         for function, query_heads, kv_heads in (
@@ -392,6 +635,9 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
                 8,
                 2,
             ),
+            (DECODE_GROUPED_ASCEND.decode_grouped_attention, 8, 2),
+            (DECODE_GROUPED_ENFLAME.decode_grouped_attention, 8, 2),
+            (DECODE_GROUPED_KUNLUN.decode_grouped_attention, 8, 2),
         ):
             with self.subTest(function=function.__name__):
                 q = torch.empty(
