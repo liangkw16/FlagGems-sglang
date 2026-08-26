@@ -503,3 +503,43 @@ team best；额度确认为 `27/30`。Kunlun 原生 `tanh` 把目标芯从
 结论：native `tanh` 的 Kunlun 单芯方向成立，但整题没有晋级且平台只认 8 芯
 均值。保留 S4 为 Task24 team best，按预注册规则永久停止该轴；不以相同字节
 赌测量波动，也不做 native-`tanh` 变体。
+
+## S6：Enflame GCU 原生 `tanh`
+
+状态：release 门禁通过，待平台一次性验证
+
+S5 的停止门限定于 Kunlun/XPU vendor：本候选由 2026-08-27 00:31 CST 新同步
+的同题逐芯榜单证据触发，是不同文件、compiler 和 libdevice 的 Enflame/GCU 新轴，
+不是 S5 重传或变体。公开榜单 Enflame 前三为 `451.84558333x`、`15.5915x`、
+`11.47741667x`，而 S4 仅 `1.18416667x`，显示手写 `exp` 路径之外存在数量级
+更高的 GCU 路径。
+
+S6 从 S4 best 分叉，只把 Enflame vendor 的分段 Taylor + `exp` 公式替换为
+`triton.language.extra.gcu.libdevice.tanh`；BLOCK 4096、grid cap 12、四 warps、
+cap 缩放和极小 cap 保护不变。generic、Ascend、Kunlun 与 S4 逐字节相同。
+固定 FlagTree `c1ea8285a06e97afad9dd2644bc71f2efca072f4` 的 GCU libdevice
+将 FP32 `tanh` 映射为 `__nv_tanhf`；固定 FlagGems `a7620cc191a0b42e040194622c5758b22a7a25dc`
+的 GCU300 production `tanh`/GELU 路径也直接调用该 shim。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `7c4ccc1ad6d52f00c24119806dd1c4a684a4f21f` |
+| generic / Ascend SHA-256 | `e6ab1c434aa793bc58357e3d45d2eec7fd2ec56bebb65538b2a6049ca9a37ddc` / `bb98a5fda924e09954ce5778a859d064daaa560ebc7d49f6dbd1229dadabb50b` |
+| Enflame / Kunlun SHA-256 | `84f553f2518f640a596f368d9eee6f49ace82c20eb7e61186fc3dead50d20bca` / `f34b06168ec951453601f552d3b6aa7bef1dac954a592226d3ac76ec248066bb` |
+| 测试 SHA-256 | `821ef8e1e681e7cdf6b47d1ae58a39b0a346777e049eb027357bb9c25d2b8024` |
+| screening | `gpu:/tmp/flagos-softcap-out-s6-enflame-tanh-screen.LZ7rLu`；PID/PGID `161284`；13/13、0.558s、`SCREENING_OK`；脚本/日志 SHA-256 `b47c1fc1a0422085446c66178782a10c71e00fd935451c3c40722fa9288c28a4` / `1495dde475dde12bce3f7be3c147a5a20e3152594b0163889d06c8cef893acb7` |
+| 交替 A/B | 同目录；PID/PGID `161381`；脚本/日志 SHA-256 `13ab69779e0207e7ada59a7f5cfd35c9bb71d03b099ef8f46a0d1d997ce392a2` / `70aa62a79f845470bf1b38e9066b2a7760477a34ed6a3d98103d901a8d402809` |
+| release | `gpu:/tmp/flagos-softcap-out-s6-enflame-tanh-release.lqSCXu`；PID/PGID `161544`；13/13、0.561s、`RELEASE_OK`；脚本/日志 SHA-256 `979e6048cf82bbea5b2e7e75f24127dddfb344f83e201709a466647a9faf6a30` / `fbac745f323994198ab14afa760241450f14ee61d2e0c597b5e284a2d3810b71` |
+| source Git archive SHA-256 | `7063907f73c1f71b1dacb01aa455bc5841b439672d203bd462ba071d17543685` |
+| canonical ZIP | `artifacts/competition/softcap_out/s6-7c4ccc1/softcap_out.zip`，10,023 bytes，SHA-256 `14de4b16762dffb63d14c99407d59d9dffce3707a4c6c4022b9b84a4a808df8d` |
+
+RTX 5070 Ti 上 CUDA libdevice 与 GCU lowering 不同，非 control 几何平均仅
+`0.739297x`、最差 `0.519232x`；该结果只说明不能把 CUDA 时延外推到 GCU。
+candidate 最大 77 registers（baseline 93）、zero spill/scratch，且所有输出均按
+题面容差对 PyTorch 参考通过。`dry-run`、`verified-existing` 与 `unzip -t` 全绿。
+
+一次提交基础晋级门：8/8 valid、Enflame 高于 S4 `1.18416667x`、平均高于 S4
+`2.04696875x`。显著收益门为 Enflame 至少 `1.34416667x` 且平均至少
+`2.06696875x`（整题 `+0.02x`）；若冻结其余芯，要超过当前第 12 名均值
+`2.18982292x`，Enflame 需约 `2.327x`。任一基础门不满足即保留 S4，并停止
+Enflame native-`tanh` 轴。
