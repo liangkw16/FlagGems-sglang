@@ -651,7 +651,7 @@ S3 平均增加 `0.05225x`（+1.93%），通过预注册晋级门；新日额度
 
 ## E6：MetaX 官方 Qwen launch policy
 
-状态：独立 release 与不可变 ZIP 门禁通过，等待一次平台验证
+状态：平台 8/8、`valid`、`2.795625x`，团队当前最佳
 
 E6 只新增 MetaX vendor。固定官方
 `FlagGems-vllm@43624463db77618b6d0e3f47fac990cea8c51a30` 的 MetaX
@@ -691,5 +691,23 @@ fallback 才传 1。generic、Ascend、Kunlun 三个已有成员与 E5 逐字节
 `28/30`。`file_url_sha256` 为
 `3642af4cd64d3ed41b8a62318148e6f3b0d789d65056e14c4d5d32fd39bb50f5`；从已核实
 对象存储地址无认证回读 12,410 bytes，SHA-256 与 canonical ZIP 完全一致。
-平台已选中预期的 MetaX、Ascend、Kunlun 与 generic 路径；当前八芯排队，
-禁止重传。
+平台已选中预期的 MetaX、Ascend、Kunlun 与 generic 路径；禁止重传。
+
+00:23:37 CST 终态为 `completed` / `valid`、8/8、平均 `2.795625x`，平台
+标记 team best。相对 E5 平均增加 `0.033775x`（+1.22%）；沐曦由
+`3.5040x` 提升到 `3.8630x`（+10.25%），超过显著收益目标：
+
+| 芯片 | E6 speedup | 相对 E5 | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 4.6986x | -1.37% | `moe_sum_reduce.py` |
+| 沐曦 | 3.8630x | +10.25% | `moe_sum_reduce_metax.py` |
+| 燧原 | 0.2090x | -50.36% | `moe_sum_reduce.py` |
+| 海光 | 6.5252x | +0.56% | `moe_sum_reduce.py` |
+| 昆仑芯 | 0.1754x | -0.34% | `moe_sum_reduce_kunlunxin.py` |
+| 华为 | 0.8548x | +5.48% | `moe_sum_reduce_ascend.py` |
+| 国际通用 A | 3.7792x | +0.35% | `moe_sum_reduce.py` |
+| 国际通用 B | 2.2598x | +4.42% | `moe_sum_reduce.py` |
+
+结论：官方 MetaX launch policy 被平台证实，保留 E6 为 Task21 team best，
+停止该轴。燧原同字节 generic 再次从 0.421x 波动到 0.209x，不能归因于
+MetaX-only 改动；若无新的官方单芯实现，不为平台波动重传。
