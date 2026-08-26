@@ -452,3 +452,40 @@ team best。华为由 E2 的 `0.9646x` 降至 `0.9576x`（-0.73%），未达到
 结论：T24/T21 的 Ascend BLOCK512 收益不能迁移到本题；保留 E2
 `4.686925x` 为 Task08 team best，按 one-shot 规则停止 Ascend tile 轴，不做
 1024 sweep。
+
+## E5：Enflame 32K tile
+
+状态：release 门禁通过，canonical ZIP 已冻结，待一次性平台提交
+
+E2 后曾停止 Enflame 4096 轴；本次只因出现新的目标芯一手证据而窄幅重开一次：
+Task24 S8 在同一 GCU300 上仅把 tile `4096→32768`，Enflame 即从
+`1.38541667x` 提升到 `2.97566667x`。固定 FlagGems
+`a7620cc191a0b42e040194622c5758b22a7a25dc` 的 GCU300 pointwise codegen 最大
+tile 也是 32K。实时 Task08 公榜的 Enflame 前四为 `5517.369x`、`58.405x`、
+`44.7574x`、`33.9818x`，本队仅 `2.851x`，因此该芯仍是本题最高上行空间。
+
+E5 从 E2 team best 分叉，只把 Enflame `block_size` 从 4096 改为 32768；
+grid cap 12、grid-stride、位运算、四 warps、单 stage、真实 stride 和输出语义
+全部冻结。generic 与 Ascend 恢复并冻结为 E2 字节，不携带 E3 Kunlun 或 E4
+Ascend512。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `af66557bf70e5d6f5100272c1008fc66373219dd` |
+| generic / Ascend SHA-256 | `5da3d966936c919cd4b0fab2c32ecc66526eb375c3cdc20a2e3f2f37cddb697c` / `7c4daf2fa5774dcbf0c9891b787c77d18d4d0766ae94292ed38347172ead3fd8` |
+| Enflame / test SHA-256 | `4a94e4ea2b252deb6967d13865c1648b8c60adb6722da97f1ae82b65bfc0d8fe` / `03541e52f02065ef2a5cc79b3e8c4afde3f54d09d969b1a32a30610b358d2779` |
+| screening | `gpu:/tmp/flagos-apply-token-bitmask-e5-screen.NkHnug`；PID/PGID `164478`；8/8、`SCREENING_OK`；重放/日志 SHA-256 `bc4b21dda86cbc22addbca5c906643c7c9402f374512b00ee92ea80487f347ee` / `c14c563d5dba297800a0559bbc7a4f9d36f80bbd2dd2997af8ad2bc00b67de9e` |
+| release | `gpu:/tmp/flagos-apply-token-bitmask-e5-release.A9DZte`；PID/PGID `164785`；8/8、`RELEASE_OK`；重放/日志 SHA-256 `37f20c4869729e1822c0ec794550bbd77656427642fe64a324e90b0f0f365c83` / `243d16f48f6e4faad30a12861cb74bc52548b86398d0de10a44e021ca7d64eb0` |
+| source Git archive SHA-256 | `d26c703fa7a67ab8ff8abaf293f4b14d17fc42430aef3e1d00e8502cc5973b3e` |
+| canonical ZIP | `artifacts/competition/apply_token_bitmask/e5-af66557/apply_token_bitmask.zip`，8384 bytes，SHA-256 `a14012a0afe370bb4a09eebd99176b95d6fa2e6fe4fba62719f5553f2aef11da` |
+
+回归覆盖 `32767/32768/32769/12*32768+17` × 三 dtype；release 从 Git objects
+独立展开，格式、哈希与 8/8 unittest 全绿。RTX 5070 Ti 最大平台 shape 的五组
+AB/BA 中位 speedup 为 FP16 `1.549121x`、BF16 `1.547599x`、FP32
+`0.631574x`，几何平均 `1.148302x`。FP32 代理回退是明确风险，但 Task24 S8 已
+一手证明 CUDA 对该 GCU tile 轴会反向误导，因此不据此否决目标芯候选。
+
+E5 只允许一次提交。基础门为 8/8 valid、Enflame 高于 E2 `2.851x` 且平均高于
+`4.686925x`；显著收益门为 Enflame 至少 `3.011x`（整题约 `+0.02x`）。当前
+第 14 名为 `5.021775x`，冻结其余七芯时 Enflame 必须严格超过 `5.5298x` 才升
+一位。若基础门失败，永久停止 Enflame tile 轴，不试 64K、warps 或 grid 变体。
