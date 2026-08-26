@@ -12,12 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""E6 fallback vendor for amd: fp32-ieee dot + 32x32 tile + stages1.
-E5 generic lowprec fp16-dot path causes correctness failure (kunlunxin)
-or perf regression (metax/amd) on this backend; this vendor reverts to
-the E2d-proven configuration.
-"""
-
 import torch
 import triton
 import triton.language as tl
@@ -124,7 +118,7 @@ def _chunk_state_kernel(
             + m_offsets[:, None] * stride_x_headdim,
             mask=(m_offsets[:, None] < headdim) & k_mask[None, :],
             other=0.0,
-        )
+        ).to(tl.float32)
         B = tl.load(
             B_ptr
             + B_base
@@ -132,7 +126,7 @@ def _chunk_state_kernel(
             + n_offsets[None, :] * stride_B_dstate,
             mask=k_mask[:, None] & (n_offsets[None, :] < dstate),
             other=0.0,
-        )
+        ).to(tl.float32)
         dt = tl.load(
             dt_ptr + dt_base + current_k * stride_dt_csize,
             mask=k_mask,
@@ -144,11 +138,8 @@ def _chunk_state_kernel(
             other=0.0,
         ).to(tl.float32)
         scale = tl.where(k_mask, tl.exp(dA_last - dA) * dt, 0.0)
-        accumulator += tl.dot(
-            x.to(tl.float32),
-            B.to(tl.float32) * scale[:, None],
-            input_precision="ieee",
-        )
+        B *= scale[:, None]
+        accumulator += tl.dot(x, B, input_precision="ieee")
 
     output_offsets = (
         batch_id * stride_output_batch
