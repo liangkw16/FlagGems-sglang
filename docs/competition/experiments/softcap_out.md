@@ -664,3 +664,39 @@ S8 已超过提交前公开第 12 名 `2.18982292x`。结论：GCU300 官方 32K
 
 01:23 CST 公开榜单刷新后，S8 为第 `11/14`；上邻第 10 名 `2.4094375x`，
 下邻第 12 名 `2.22059375x`。相较 S6 的第 13 名净升两位。
+
+## S9：Enflame softcap 编译期常量
+
+状态：commit-bound release 与 canonical ZIP 门禁通过，待唯一一次平台提交
+
+S8 的停止结论只覆盖 tile、warps、grid 和数学变体。S9 由随后发现的固定
+SGLang `8014d9d062c3cc5d393596ecdf2f7009191965df` 精确同题源码触发：其
+`softcap_out_kernel` 把 `softcap_const` 声明为 `tl.constexpr`。S9 从 S8 team
+best 分叉，只给 Enflame kernel 的同名参数增加该注解；32K tile、grid 12、
+四 warps、native `tanh`、公式与数值保护全冻，generic、Ascend、Kunlun 和测试
+逐字节保持 S8。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `a9cf947d2e98ded6cac28e5ab98b29cb7e1d44ea` |
+| generic / Ascend SHA-256 | `e6ab1c434aa793bc58357e3d45d2eec7fd2ec56bebb65538b2a6049ca9a37ddc` / `bb98a5fda924e09954ce5778a859d064daaa560ebc7d49f6dbd1229dadabb50b` |
+| Enflame / Kunlun SHA-256 | `b759b4dfe1c64c86b4edd15a659d4ea520f5858a25968d239f4f4a8cb05d829a` / `f34b06168ec951453601f552d3b6aa7bef1dac954a592226d3ac76ec248066bb` |
+| 测试 SHA-256 | `c6292e22084e0302f4591ff9cbaf3fd06bacd2825f43d03985a87f63a612381e`（=S8） |
+| source Git archive SHA-256 | `158995a9914f46c1dd8d41a7de146a79a281122561f8978691463b06f85b2a7b` |
+| screening | `gpu:/tmp/flagos-task24-constexpr-screen.RTHyBz`；14/14、格式门禁、A/B 与 `SCREENING_OK` |
+| release | `gpu:/tmp/flagos-task24-constexpr-release.UvEIO3`；14/14、0.575s、格式门禁、A/B 与 `RELEASE_OK`；日志 mode 0600、SHA-256 `e7b957b077d86da5ee2b94d744e3d3cd4df8739a48a9cb8666466b04135a564b` |
+| canonical ZIP | `artifacts/competition/softcap_out/s9-a9cf947/softcap_out.zip`，10,039 bytes，SHA-256 `453697383c8d4ee1e850a70f940f023c16205992e97ea003a445111247a2460d` |
+
+RTX 5070 Ti 上 S8↔S9 的 15 点交替 A/B（5 组、warmup 25、rep 100）全部先按
+题面 reference 验正；release 非 control 几何均值 `1.069032x`，最小点
+`0.920392x`，最大平台规模 FP16/BF16/FP32 分别 `1.046218x`、`1.052428x`、
+`1.173649x`。PTX 中 cap 从运行时 `ld.param.b32` 变为常量
+`mov.b32 0f41F00000`（30.0），kernel 参数少一个；已存在的 spill 集合不扩大，
+相同大 shape 的 FP32 spill 从 150 降至 144。该代理只证明常量专门化已生效，
+不把 CUDA 倍数直接外推至 GCU。
+
+2026-08-27 04:10 CST 实时榜单中 S8 为第 `11/14`、`2.24001042x`，第 10 名
+已升至 `2.429125x`。若其余七芯不变，Enflame 需从 `2.97566667x` 升至严格
+高于 `4.48858334x`（+50.85%）才升一名。一次提交基础门为 8/8 valid、Enflame
+高于 S8 且平均高于 `2.24001042x`；显著门为 Enflame 高于 `4.48858334x`。
+任一基础门失败即保留 S8，并永久停止 constexpr 轴；S9 字节只允许提交一次。
