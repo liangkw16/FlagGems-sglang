@@ -714,7 +714,7 @@ MetaX-only 改动；若无新的官方单芯实现，不为平台波动重传。
 
 ## E7：AMD 官方四档 BLOCK autotune
 
-状态：release 门禁通过，canonical ZIP 已冻结，待一次性平台提交
+状态：平台 8/8、`valid`、`2.92895x`，团队当前最佳
 
 E7 从 E6 team best 分叉，只新增 AMD vendor；generic、Ascend、Kunlun 与
 MetaX 四个已有成员逐字节冻结。AMD 路径采用官方 FlagGems 的四档配置：
@@ -746,3 +746,23 @@ BLOCK/warps 为 `128/2`、`256/4`、`512/8`、`1024/8`，autotune key 为
 对象存储地址无认证回读 15,584 bytes，SHA-256 与 canonical ZIP 完全一致，
 五个成员均通过 `unzip -t`。平台选中预期的 AMD、MetaX、Ascend、Kunlun 与
 generic 路径；禁止重传。
+
+01:42:29 CST 终态为 `completed` / `valid`、8/8、平均 `2.92895x`，平台
+标记 team best。相对 E6 平均增加 `0.133325x`（+4.77%）；国际 B 由
+`2.2598x` 提升到 `3.4598x`（+53.10%），超过显著收益门，但仍比预估升一名线
+`3.5344x` 低 `0.0746x`：
+
+| 芯片 | E7 speedup | 相对 E6 | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 4.7294x | +0.66% | `moe_sum_reduce.py` |
+| 沐曦 | 3.5246x | -8.76% | `moe_sum_reduce_metax.py` |
+| 燧原 | 0.2090x | 0.00% | `moe_sum_reduce.py` |
+| 海光 | 6.6482x | +1.88% | `moe_sum_reduce.py` |
+| 昆仑芯 | 0.1752x | -0.11% | `moe_sum_reduce_kunlunxin.py` |
+| 华为 | 0.8868x | +3.74% | `moe_sum_reduce_ascend.py` |
+| 国际通用 A | 3.7986x | +0.51% | `moe_sum_reduce.py` |
+| 国际通用 B | 3.4598x | +53.10% | `moe_sum_reduce_amd.py` |
+
+结论：官方 AMD autotune 被平台证实，保留 E7 为 Task21 team best，停止四档
+autotune 轴。其余四成员字节冻结，逐芯波动不能归因于 AMD-only 改动；只有找到
+新的 AMD 配置机制且离线门禁通过，才允许再做一个单变量候选。
