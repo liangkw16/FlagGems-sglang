@@ -190,7 +190,7 @@ Task 16 记 5/8 停止；未用额度转 Task 14。
 
 ## E2：三失败芯结构恢复（最终一次重开）
 
-状态：Git-object release 与不可变 ZIP 门禁通过；等待实时 preflight。
+状态：平台 submission `5186` 评测中；候选禁止重传。
 
 Task 15 E4 的平台结果为 Task 16 三个失败指纹提供了新的逐芯根因证据，因此只新增
 三个 vendor，generic 与 Iluvatar 分别冻结为
@@ -253,3 +253,13 @@ Git-object release 位于
 generic + Ascend/Enflame/Iluvatar/Kunlun 五个白名单文件，`verify-existing` 与
 `unzip -t` 通过。E2 只允许一次正式提交；任一芯错误或低于 `0.1x` 即停止，
 不重试同候选。
+
+### E2 平台提交
+
+2026-08-26 23:33:58 CST 实时 preflight 核对账号/团队、Task 16、
+`competing/submitting`、最小间隔、source commit、五成员与 ZIP SHA 全部一致，
+额度 `9/30`→`8/30`。one-shot 提交成功，submission `5186`、当日序号 `22`，
+`file_url_sha256` 为
+`175e61947af34101198f1f407ee6acc0639d50f8c1a5d3790b7f888822544c3d`。
+八芯均命中预期文件并进入 `waiting_callback`。对象存储 hostname 未预先加入信任
+白名单，因此远端 ZIP 验签为 `unavailable`；POST 已成功，按规则不得重传。
