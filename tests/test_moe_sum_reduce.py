@@ -150,21 +150,20 @@ class MetaxLaunchPolicyTest(unittest.TestCase):
                 self.assertEqual(kwargs.get("num_stages"), num_stages)
 
 
-class AutotuneLaunchPolicyTest(unittest.TestCase):
-    def test_vendors_use_official_configs_and_config_driven_grid(self):
-        for module in (AMD_MODULE, ENFLAME_MODULE):
-            configs = module._moe_sum_reduce_kernel.configs
-            self.assertEqual(
-                module._moe_sum_reduce_kernel.keys,
-                ["hidden_size", "topk"],
-            )
-            self.assertEqual(
-                [
-                    (config.kwargs["BLOCK_SIZE"], config.num_warps)
-                    for config in configs
-                ],
-                [(128, 2), (256, 4), (512, 8), (1024, 8)],
-            )
+class AmdLaunchPolicyTest(unittest.TestCase):
+    def test_amd_uses_official_configs_and_config_driven_grid(self):
+        configs = AMD_MODULE._moe_sum_reduce_kernel.configs
+        self.assertEqual(
+            AMD_MODULE._moe_sum_reduce_kernel.keys,
+            ["hidden_size", "topk"],
+        )
+        self.assertEqual(
+            [
+                (config.kwargs["BLOCK_SIZE"], config.num_warps)
+                for config in configs
+            ],
+            [(128, 2), (256, 4), (512, 8), (1024, 8)],
+        )
 
         class FakeKernel:
             def __init__(self):
@@ -182,26 +181,51 @@ class AutotuneLaunchPolicyTest(unittest.TestCase):
 
                 return launch
 
-        for module in (AMD_MODULE, ENFLAME_MODULE):
-            fake_kernel = FakeKernel()
-            with mock.patch.object(
-                module, "_moe_sum_reduce_kernel", fake_kernel
-            ):
-                module.moe_sum_reduce(torch.empty((2, 3, 1025)), 0.75)
+        fake_kernel = FakeKernel()
+        with mock.patch.object(
+            AMD_MODULE, "_moe_sum_reduce_kernel", fake_kernel
+        ):
+            AMD_MODULE.moe_sum_reduce(torch.empty((2, 3, 1025)), 0.75)
 
-            self.assertEqual(
-                fake_kernel.grids,
-                [(2, 9), (2, 5), (2, 3), (2, 2)],
-            )
-            self.assertNotIn("BLOCK_SIZE", fake_kernel.kwargs)
-            self.assertNotIn("num_warps", fake_kernel.kwargs)
-            self.assertNotIn("num_stages", fake_kernel.kwargs)
-            self.assertEqual(fake_kernel.kwargs["topk"], 3)
+        self.assertEqual(
+            fake_kernel.grids,
+            [(2, 9), (2, 5), (2, 3), (2, 2)],
+        )
+        self.assertNotIn("BLOCK_SIZE", fake_kernel.kwargs)
+        self.assertNotIn("num_warps", fake_kernel.kwargs)
+        self.assertNotIn("num_stages", fake_kernel.kwargs)
+        self.assertEqual(fake_kernel.kwargs["topk"], 3)
+
+
+class EnflameLaunchPolicyTest(unittest.TestCase):
+    def test_enflame_uses_effective_official_fixed_launch(self):
+        class FakeKernel:
+            def __init__(self):
+                self.calls = []
+
+            def __getitem__(self, grid):
+                def launch(*args, **kwargs):
+                    self.calls.append((grid, kwargs))
+
+                return launch
+
+        fake_kernel = FakeKernel()
+        with mock.patch.object(
+            ENFLAME_MODULE, "_moe_sum_reduce_kernel", fake_kernel
+        ):
+            ENFLAME_MODULE.moe_sum_reduce(torch.empty((2, 3, 4097)), 0.75)
+
+        grid, kwargs = fake_kernel.calls[-1]
+        self.assertEqual(grid, (2, 3))
+        self.assertEqual(kwargs["BLOCK_SIZE"], 2048)
+        self.assertEqual(kwargs["num_warps"], 8)
+        self.assertEqual(kwargs["num_stages"], 1)
+        self.assertEqual(kwargs["TOP_K"], 3)
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class MoeSumReduceTest(unittest.TestCase):
-    def test_autotune_vendors_all_dtypes_noncontiguous(self):
+    def test_vendor_paths_all_dtypes_noncontiguous(self):
         tolerances = {
             torch.float16: 1e-2,
             torch.bfloat16: 1.5e-2,
@@ -347,6 +371,7 @@ class MoeSumReduceTest(unittest.TestCase):
                     ("generic", MODULE),
                     ("kunlunxin", KUNLUN_MODULE),
                     ("ascend", ASCEND_MODULE),
+                    ("enflame", ENFLAME_MODULE),
                 ):
                     with self.subTest(module=name):
                         actual = module.moe_sum_reduce(input, 0.75)
