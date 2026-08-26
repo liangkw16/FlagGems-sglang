@@ -581,3 +581,43 @@ registers/8 KiB shared，且未发现 spill、global scratch 或 PTX local load/
 的 pointwise BLOCK 4096 收益不能外推到保活 4096-wide FP32 accumulator 的
 reduction；不做事后 shape 缩窗，不消耗平台额度。S3 继续作为 Task 21 唯一
 有效候选。
+
+## E5：华为 BLOCK 512
+
+状态：release 通过，等待一次平台验证
+
+source/verification commit：`f2e9fc90837dd5169186bdecbaba7869959c44a4`。
+E5 只把 Ascend vendor 的 `block_size` 从 256 改为 512；physical worker cap
+4096、grid-stride、4 warps、1 stage、TOP_K constexpr、FP32 累加和 stride
+均不变。generic 与昆仑 vendor 继续冻结为 S3 字节。历史 E1 的 512 是 generic
+NVIDIA 负实验，E4 是 Enflame4096；两者均未验证或否决 Ascend 的单芯 512。
+
+现有 `test_block_boundaries_all_dtypes` 复用于 generic 与 Ascend，覆盖三 dtype ×
+hidden `255/256/257/511/512/513`，并保留非连续 stride、空维/zero-top-k、昆仑
+1024 边界和平台最大 `(4096,8,7168)` 三 dtype 回归。screening 和独立
+Git-object release 均通过 py_compile、Black 79、isort、flake8 与 6/6 unittest。
+
+| 项目 | 值 |
+| --- | --- |
+| generic SHA-256 | `52a2fc979784f2bd25e7e17b9822c23b4f438efdf062c70bfb09aba9ba732335` |
+| Ascend vendor SHA-256 | `f740604cd4a0506a3e41776f3f9a001edffafef45f04aff78d1ee8a208f2132b` |
+| Kunlun vendor SHA-256 | `68b0abe07e3cf4f2b9cb86063e9ad1e18edd83d90341410cd281ec595c83406d` |
+| 测试 SHA-256 | `bd17ff77e569304df14f2cb563b5b64b2028db51b87d8b1689e46ceb000e3f6f` |
+| screening | `gpu:/tmp/flagos-moe-sum-reduce-e5-screen.uYr6hp`；PID/PGID `159234`；6/6、0.929s；脚本 SHA-256 `1124518e8e1c7b24bbb319950e09c0142921fdc0e2bddb6935838c4b6a81a462`；日志 SHA-256 `886173429837bff17ae4c9aab33a6c1f178ad6370056a78890f75b631ea4d94c` |
+| 交替 A/B | 同目录；PID/PGID `159332`；脚本 SHA-256 `8ffcbb21104086ece1c6f927dbe388046f1f14d63bbb3a0ab3387090fc345db7`；日志 SHA-256 `194f781de9b58ca7ef6f766872024c4b75bfadf19103d2f5ba6a9ed7c3ea8077` |
+| release | `gpu:/tmp/flagos-moe-sum-reduce-e5-release.q3YOwb`；PID/PGID `159467`；6/6、0.595s、`RELEASE_OK`；脚本 SHA-256 `dfe62f5ee8aaaac68acb4215528a38ed09231959accbf5a8d2cdfcca8af8075c`；日志 SHA-256 `2db8fc21d3516c287968707924ee354b10b8f08890a75ab8a575de91ae5896b7` |
+| release Git archive SHA-256 | `92ddfc2a9cf1de8015e9dbc58b529b7a74a437218d200d9b15d97eed54d78058` |
+| ZIP | `artifacts/competition/moe_sum_reduce/e5-f2e9fc9/moe_sum_reduce.zip`，9240 bytes |
+| ZIP SHA-256 | `9544a54ff611e69bd5c42fc3aba2d440d4bca431bd0b665a940a0e24f3d38035` |
+
+五组 AB/BA、三 dtype、control/boundary/mid/wide/max 共 15 点均与 BLOCK256
+baseline 精确一致。非 control 中位 speedup 几何平均 `1.000685x`，最差点
+`0.962818x`；平台最大 shape 的 FP16/BF16/FP32 分别为
+`1.019517/1.025810/0.993040x`。candidate 为 22–56 registers、0 spill、0
+shared、0 global scratch。NVIDIA 性能只作资源/明显回退门禁，不声称是 Ascend
+收益测量。
+
+canonical ZIP 仅含 generic、Ascend、Kunlun 三个白名单成员，成员哈希与 commit
+一致；`dry-run`、`verified-existing` 与 `unzip -t` 均通过。E5 只允许一次平台
+提交，晋级门为 8/8 valid、华为高于 S3 的 `0.5982x`、平均高于 `2.7096x`；
+任一不满足即保留 S3 team best 并停止 Ascend 大 tile 假设。
