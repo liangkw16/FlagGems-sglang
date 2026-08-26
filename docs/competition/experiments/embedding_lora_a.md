@@ -288,3 +288,66 @@ Task 22/23 的同构 batch_info kernel；(2) GCU 编译器拒绝该 family 的�
 kernel 形态（含分支、无分支、generic 同字节），后续遇燧原 gather 类 kernel
 失败时优先怀疑标量 masked load 与元数据标量载入，考虑把标量元数据改为
 向量化载入或地址钳制后无 mask 载入。
+
+## E2a：燧原 metadata route + 规整 rank gather（高倍数冲刺重开）
+
+状态：release 门禁与不可变 ZIP 验签通过，候选就绪，待实时 preflight。
+
+用户批准的高倍数冲刺重开 Task 17，但只允许一个结构性候选；generic、Ascend、
+Kunlun 字节全部冻结。E2a 把原单 kernel 拆成两个职责单一的 kernel：
+
+- route kernel 只读取 segment metadata，把每个 token 的 adapter/rank 展开为连续
+  int32 数组。空 segment 的非法 adapter 在间接读取 rank 前钳为 0；route 数组
+  零初始化，因此 segment 未覆盖 token 也保持 rank 0。
+- gather kernel 不再读取 segment metadata，没有 runtime rank loop、early return
+  或 masked scalar load；逻辑 grid 为 token × rank-block，物理 1D 展平并分批到
+  65535。每个 program 对一个 token 做 128-rank 向量 gather；extra constexpr
+  变体用两路安全地址 masked load + `tl.where`。
+
+最终 source/verification commit 为
+`c7c184b322a8cf683bdc2d3ba1c8082401431ea4`；Enflame/test SHA-256 分别为
+`746bc29d5d0fe5daee91a3428ff85c03462f887e86560a4c4bdf1071ca5805e6`、
+`5fc2a5ee86a1e877b9db0e439eec0a92489a4a87675a4e2dd3582b19bf7670da`。
+组合回归覆盖 leading-empty 的非法 adapter、rank 129/0/65、base/extra token、
+非连续 int64 input、int32/int64 非连续 metadata、非连续 weights/extra、输入不变
+与精确 reference 相等；原 vendor 回归继续覆盖无 extra、超 65535 gather 分批和
+大 segment route。
+
+最终 screening 位于
+`gpu:/tmp/flagos-embedding-lora-a-e2a-screening.qwCuS6`，base commit
+`99bf5f7`，PID/PGID `132463`；`replay.sh` SHA-256
+`91c60cff5c40d62026766cced6168065108eeb37de403d314088a0626f44877c`。
+8/8 unittest 通过（0.689s），尾行为 `SCREENING_OK`，`screening.log`
+SHA-256
+`768896f2a58406b667cca3a991b3998dbfbdda45be15f895cd58dce5b8127d9f`；
+输入前后 manifest SHA-256 均为
+`3b1bec0c76afa4dc2115489eb5af6c54e470b081ec1119fb630552e28f4373b1`。
+首次临时目录只因未携带项目 Black 79 列配置而在静态检查阶段停止，未执行候选；
+修正重放脚本后才产生上述唯一 runtime screening 证据。
+
+同目录 NVIDIA 代理基准脚本/日志 SHA-256 分别为
+`feb29192c64643e01c6948ad2e0772677495120fe1182197248b1b759dda3704`、
+`45637e890c97eea71bfec3dcdae7323f54a458ce82fbf1f4fde618c35b1d70c2`。
+三个代表 shape 的 wrapper-inclusive 候选延迟为 0.00970/0.02405/0.01669ms，
+相对旧 S1c 为 0.747/0.881/0.759x，但相对 reference 仍为
+65.01/52.36/13.22x；峰值显存增量 18,432/139,264/692,736B。该数据只用于
+排除代理侧阈值与资源灾难，不外推 GCU 性能。
+
+Git-object release 位于
+`gpu:/tmp/flagos-embedding-lora-a-e2a-release.BAhJEy`，PID/PGID `132975`；
+`replay.sh` SHA-256
+`89b3f8b7cab620ab454d872a9f4a747917f15e95f684252a6d3bd913b9eb6ced`。
+8/8 unittest 通过（0.558s），尾行为 `RELEASE_OK`，`release.log` SHA-256
+`9ed3064e91dac5d974deb490a8cad0d400895d60a24aba50867df1433b10637e`；
+release 前后 manifest SHA-256 与最终 screening 相同。
+
+canonical ZIP 为
+`artifacts/competition/embedding_lora_a/e2a-c7c184b/embedding_lora_a.zip`，
+22700B，SHA-256
+`05240e744ba2f6bcd52fec0505c747efcde4f65eb4dfa51f448be85ab5edee97`，
+成员为 generic + ascend/enflame/kunlunxin；`--verify-existing`、`unzip -t` 和
+成员白名单均通过。
+
+E2a 只提交一次：若 8/8 且燧原 ≥0.1x，立即停止 Task 17；若失败明确只落在
+route 地址结构，最多允许一个 safe-address route E2b；若 gather 编译失败、低于
+0.1x 或第二候选仍 invalid，则永久停止并转 Task 15，不调 BLOCK/warps/stages。
