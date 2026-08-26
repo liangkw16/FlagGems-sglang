@@ -22,8 +22,8 @@ except ImportError:
     from triton.language.extra import libdevice as tl_extra_shim
 
 
-# AMD E10 candidate: fixed serial accumulation order over k = 0..63 with
-# multiply and add rounded separately (rocBLAS-lineage bet shared with Hygon).
+# AMD E11 candidate: fixed serial FMA chain over k = 0..63 (Hygon-matching
+# ROCm-lineage probe).
 @triton.jit(do_not_specialize=["sequence_length"])
 def _fused_recurrent_gdn_k64_kernel(
     q_ptr,
@@ -103,16 +103,15 @@ def _fused_recurrent_gdn_k64_kernel(
             + query_head * stride_k_head
         )
 
-        accumulation = 0.0
-        for key_offset in tl.static_range(0, 64):
+        prediction_0 = 0.0
+        for key_offset in tl.static_range(0, 64, 1):
             lane_0 = tl.load(state_ptr + state_base + key_offset) * decay
             tl.store(state_ptr + state_base + key_offset, lane_0)
-            key_0 = tl.load(k_ptr + key_base + key_offset * stride_k_dim).to(
+            key_0 = tl.load(k_ptr + key_base + (key_offset) * stride_k_dim).to(
                 tl.float32
             )
-            product = lane_0 * key_0
-            accumulation = accumulation + product
-        prediction = accumulation
+            prediction_0 = tl.fma(lane_0, key_0, prediction_0)
+        prediction = prediction_0
 
         value_address = (
             batch * stride_v_batch
@@ -136,29 +135,28 @@ def _fused_recurrent_gdn_k64_kernel(
             + timestep * stride_q_time
             + query_head * stride_q_head
         )
-        for key_offset in tl.static_range(0, 64):
-            key_0 = tl.load(k_ptr + key_base + key_offset * stride_k_dim).to(
+        result_0 = 0.0
+        for key_offset in tl.static_range(0, 64, 1):
+            key_0 = tl.load(k_ptr + key_base + (key_offset) * stride_k_dim).to(
                 tl.float32
             )
             tl.store(
                 outer_ptr + state_base + key_offset,
                 correction * key_0,
             )
-        accumulation = 0.0
-        for key_offset in tl.static_range(0, 64):
+        for key_offset in tl.static_range(0, 64, 1):
             lane_0 = tl.load(state_ptr + state_base + key_offset) + tl.load(
                 outer_ptr + state_base + key_offset
             )
             tl.store(state_ptr + state_base + key_offset, lane_0)
             query_0 = (
-                tl.load(q_ptr + query_base + key_offset * stride_q_dim).to(
+                tl.load(q_ptr + query_base + (key_offset) * stride_q_dim).to(
                     tl.float32
                 )
                 * scale
             )
-            product = lane_0 * query_0
-            accumulation = accumulation + product
-        result = accumulation
+            result_0 = tl.fma(lane_0, query_0, result_0)
+        result = result_0
         output_address = (
             batch * stride_output_batch
             + timestep * stride_output_time

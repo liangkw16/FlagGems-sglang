@@ -22,8 +22,8 @@ except ImportError:
     from triton.language.extra import libdevice as tl_extra_shim
 
 
-# Ascend E9 candidate: fixed adjacent-pair reduction tree; elementwise products
-# are rounded before any addition.
+# Ascend E11 candidate: TF32 mantissa-truncated dot operands with serial FMA
+# chains (Cube quantization hypothesis).
 @triton.jit(do_not_specialize=["sequence_length"])
 def _fused_recurrent_gdn_k64_kernel(
     q_ptr,
@@ -103,265 +103,21 @@ def _fused_recurrent_gdn_k64_kernel(
             + query_head * stride_k_head
         )
 
+        accumulation = 0.0
         for key_offset in tl.static_range(0, 64):
-            decays = tl.load(state_ptr + state_base + key_offset) * decay
-            tl.store(state_ptr + state_base + key_offset, decays)
-        factor_0 = tl.load(state_ptr + state_base + 0) * tl.load(
-            k_ptr + key_base + 0 * stride_k_dim
-        ).to(tl.float32)
-        factor_1 = tl.load(state_ptr + state_base + 1) * tl.load(
-            k_ptr + key_base + 1 * stride_k_dim
-        ).to(tl.float32)
-        factor_2 = tl.load(state_ptr + state_base + 2) * tl.load(
-            k_ptr + key_base + 2 * stride_k_dim
-        ).to(tl.float32)
-        factor_3 = tl.load(state_ptr + state_base + 3) * tl.load(
-            k_ptr + key_base + 3 * stride_k_dim
-        ).to(tl.float32)
-        factor_4 = tl.load(state_ptr + state_base + 4) * tl.load(
-            k_ptr + key_base + 4 * stride_k_dim
-        ).to(tl.float32)
-        factor_5 = tl.load(state_ptr + state_base + 5) * tl.load(
-            k_ptr + key_base + 5 * stride_k_dim
-        ).to(tl.float32)
-        factor_6 = tl.load(state_ptr + state_base + 6) * tl.load(
-            k_ptr + key_base + 6 * stride_k_dim
-        ).to(tl.float32)
-        factor_7 = tl.load(state_ptr + state_base + 7) * tl.load(
-            k_ptr + key_base + 7 * stride_k_dim
-        ).to(tl.float32)
-        factor_8 = tl.load(state_ptr + state_base + 8) * tl.load(
-            k_ptr + key_base + 8 * stride_k_dim
-        ).to(tl.float32)
-        factor_9 = tl.load(state_ptr + state_base + 9) * tl.load(
-            k_ptr + key_base + 9 * stride_k_dim
-        ).to(tl.float32)
-        factor_10 = tl.load(state_ptr + state_base + 10) * tl.load(
-            k_ptr + key_base + 10 * stride_k_dim
-        ).to(tl.float32)
-        factor_11 = tl.load(state_ptr + state_base + 11) * tl.load(
-            k_ptr + key_base + 11 * stride_k_dim
-        ).to(tl.float32)
-        factor_12 = tl.load(state_ptr + state_base + 12) * tl.load(
-            k_ptr + key_base + 12 * stride_k_dim
-        ).to(tl.float32)
-        factor_13 = tl.load(state_ptr + state_base + 13) * tl.load(
-            k_ptr + key_base + 13 * stride_k_dim
-        ).to(tl.float32)
-        factor_14 = tl.load(state_ptr + state_base + 14) * tl.load(
-            k_ptr + key_base + 14 * stride_k_dim
-        ).to(tl.float32)
-        factor_15 = tl.load(state_ptr + state_base + 15) * tl.load(
-            k_ptr + key_base + 15 * stride_k_dim
-        ).to(tl.float32)
-        factor_16 = tl.load(state_ptr + state_base + 16) * tl.load(
-            k_ptr + key_base + 16 * stride_k_dim
-        ).to(tl.float32)
-        factor_17 = tl.load(state_ptr + state_base + 17) * tl.load(
-            k_ptr + key_base + 17 * stride_k_dim
-        ).to(tl.float32)
-        factor_18 = tl.load(state_ptr + state_base + 18) * tl.load(
-            k_ptr + key_base + 18 * stride_k_dim
-        ).to(tl.float32)
-        factor_19 = tl.load(state_ptr + state_base + 19) * tl.load(
-            k_ptr + key_base + 19 * stride_k_dim
-        ).to(tl.float32)
-        factor_20 = tl.load(state_ptr + state_base + 20) * tl.load(
-            k_ptr + key_base + 20 * stride_k_dim
-        ).to(tl.float32)
-        factor_21 = tl.load(state_ptr + state_base + 21) * tl.load(
-            k_ptr + key_base + 21 * stride_k_dim
-        ).to(tl.float32)
-        factor_22 = tl.load(state_ptr + state_base + 22) * tl.load(
-            k_ptr + key_base + 22 * stride_k_dim
-        ).to(tl.float32)
-        factor_23 = tl.load(state_ptr + state_base + 23) * tl.load(
-            k_ptr + key_base + 23 * stride_k_dim
-        ).to(tl.float32)
-        factor_24 = tl.load(state_ptr + state_base + 24) * tl.load(
-            k_ptr + key_base + 24 * stride_k_dim
-        ).to(tl.float32)
-        factor_25 = tl.load(state_ptr + state_base + 25) * tl.load(
-            k_ptr + key_base + 25 * stride_k_dim
-        ).to(tl.float32)
-        factor_26 = tl.load(state_ptr + state_base + 26) * tl.load(
-            k_ptr + key_base + 26 * stride_k_dim
-        ).to(tl.float32)
-        factor_27 = tl.load(state_ptr + state_base + 27) * tl.load(
-            k_ptr + key_base + 27 * stride_k_dim
-        ).to(tl.float32)
-        factor_28 = tl.load(state_ptr + state_base + 28) * tl.load(
-            k_ptr + key_base + 28 * stride_k_dim
-        ).to(tl.float32)
-        factor_29 = tl.load(state_ptr + state_base + 29) * tl.load(
-            k_ptr + key_base + 29 * stride_k_dim
-        ).to(tl.float32)
-        factor_30 = tl.load(state_ptr + state_base + 30) * tl.load(
-            k_ptr + key_base + 30 * stride_k_dim
-        ).to(tl.float32)
-        factor_31 = tl.load(state_ptr + state_base + 31) * tl.load(
-            k_ptr + key_base + 31 * stride_k_dim
-        ).to(tl.float32)
-        factor_32 = tl.load(state_ptr + state_base + 32) * tl.load(
-            k_ptr + key_base + 32 * stride_k_dim
-        ).to(tl.float32)
-        factor_33 = tl.load(state_ptr + state_base + 33) * tl.load(
-            k_ptr + key_base + 33 * stride_k_dim
-        ).to(tl.float32)
-        factor_34 = tl.load(state_ptr + state_base + 34) * tl.load(
-            k_ptr + key_base + 34 * stride_k_dim
-        ).to(tl.float32)
-        factor_35 = tl.load(state_ptr + state_base + 35) * tl.load(
-            k_ptr + key_base + 35 * stride_k_dim
-        ).to(tl.float32)
-        factor_36 = tl.load(state_ptr + state_base + 36) * tl.load(
-            k_ptr + key_base + 36 * stride_k_dim
-        ).to(tl.float32)
-        factor_37 = tl.load(state_ptr + state_base + 37) * tl.load(
-            k_ptr + key_base + 37 * stride_k_dim
-        ).to(tl.float32)
-        factor_38 = tl.load(state_ptr + state_base + 38) * tl.load(
-            k_ptr + key_base + 38 * stride_k_dim
-        ).to(tl.float32)
-        factor_39 = tl.load(state_ptr + state_base + 39) * tl.load(
-            k_ptr + key_base + 39 * stride_k_dim
-        ).to(tl.float32)
-        factor_40 = tl.load(state_ptr + state_base + 40) * tl.load(
-            k_ptr + key_base + 40 * stride_k_dim
-        ).to(tl.float32)
-        factor_41 = tl.load(state_ptr + state_base + 41) * tl.load(
-            k_ptr + key_base + 41 * stride_k_dim
-        ).to(tl.float32)
-        factor_42 = tl.load(state_ptr + state_base + 42) * tl.load(
-            k_ptr + key_base + 42 * stride_k_dim
-        ).to(tl.float32)
-        factor_43 = tl.load(state_ptr + state_base + 43) * tl.load(
-            k_ptr + key_base + 43 * stride_k_dim
-        ).to(tl.float32)
-        factor_44 = tl.load(state_ptr + state_base + 44) * tl.load(
-            k_ptr + key_base + 44 * stride_k_dim
-        ).to(tl.float32)
-        factor_45 = tl.load(state_ptr + state_base + 45) * tl.load(
-            k_ptr + key_base + 45 * stride_k_dim
-        ).to(tl.float32)
-        factor_46 = tl.load(state_ptr + state_base + 46) * tl.load(
-            k_ptr + key_base + 46 * stride_k_dim
-        ).to(tl.float32)
-        factor_47 = tl.load(state_ptr + state_base + 47) * tl.load(
-            k_ptr + key_base + 47 * stride_k_dim
-        ).to(tl.float32)
-        factor_48 = tl.load(state_ptr + state_base + 48) * tl.load(
-            k_ptr + key_base + 48 * stride_k_dim
-        ).to(tl.float32)
-        factor_49 = tl.load(state_ptr + state_base + 49) * tl.load(
-            k_ptr + key_base + 49 * stride_k_dim
-        ).to(tl.float32)
-        factor_50 = tl.load(state_ptr + state_base + 50) * tl.load(
-            k_ptr + key_base + 50 * stride_k_dim
-        ).to(tl.float32)
-        factor_51 = tl.load(state_ptr + state_base + 51) * tl.load(
-            k_ptr + key_base + 51 * stride_k_dim
-        ).to(tl.float32)
-        factor_52 = tl.load(state_ptr + state_base + 52) * tl.load(
-            k_ptr + key_base + 52 * stride_k_dim
-        ).to(tl.float32)
-        factor_53 = tl.load(state_ptr + state_base + 53) * tl.load(
-            k_ptr + key_base + 53 * stride_k_dim
-        ).to(tl.float32)
-        factor_54 = tl.load(state_ptr + state_base + 54) * tl.load(
-            k_ptr + key_base + 54 * stride_k_dim
-        ).to(tl.float32)
-        factor_55 = tl.load(state_ptr + state_base + 55) * tl.load(
-            k_ptr + key_base + 55 * stride_k_dim
-        ).to(tl.float32)
-        factor_56 = tl.load(state_ptr + state_base + 56) * tl.load(
-            k_ptr + key_base + 56 * stride_k_dim
-        ).to(tl.float32)
-        factor_57 = tl.load(state_ptr + state_base + 57) * tl.load(
-            k_ptr + key_base + 57 * stride_k_dim
-        ).to(tl.float32)
-        factor_58 = tl.load(state_ptr + state_base + 58) * tl.load(
-            k_ptr + key_base + 58 * stride_k_dim
-        ).to(tl.float32)
-        factor_59 = tl.load(state_ptr + state_base + 59) * tl.load(
-            k_ptr + key_base + 59 * stride_k_dim
-        ).to(tl.float32)
-        factor_60 = tl.load(state_ptr + state_base + 60) * tl.load(
-            k_ptr + key_base + 60 * stride_k_dim
-        ).to(tl.float32)
-        factor_61 = tl.load(state_ptr + state_base + 61) * tl.load(
-            k_ptr + key_base + 61 * stride_k_dim
-        ).to(tl.float32)
-        factor_62 = tl.load(state_ptr + state_base + 62) * tl.load(
-            k_ptr + key_base + 62 * stride_k_dim
-        ).to(tl.float32)
-        factor_63 = tl.load(state_ptr + state_base + 63) * tl.load(
-            k_ptr + key_base + 63 * stride_k_dim
-        ).to(tl.float32)
-        stage_0_0 = factor_0 + factor_1
-        stage_0_1 = factor_2 + factor_3
-        stage_0_2 = factor_4 + factor_5
-        stage_0_3 = factor_6 + factor_7
-        stage_0_4 = factor_8 + factor_9
-        stage_0_5 = factor_10 + factor_11
-        stage_0_6 = factor_12 + factor_13
-        stage_0_7 = factor_14 + factor_15
-        stage_0_8 = factor_16 + factor_17
-        stage_0_9 = factor_18 + factor_19
-        stage_0_10 = factor_20 + factor_21
-        stage_0_11 = factor_22 + factor_23
-        stage_0_12 = factor_24 + factor_25
-        stage_0_13 = factor_26 + factor_27
-        stage_0_14 = factor_28 + factor_29
-        stage_0_15 = factor_30 + factor_31
-        stage_0_16 = factor_32 + factor_33
-        stage_0_17 = factor_34 + factor_35
-        stage_0_18 = factor_36 + factor_37
-        stage_0_19 = factor_38 + factor_39
-        stage_0_20 = factor_40 + factor_41
-        stage_0_21 = factor_42 + factor_43
-        stage_0_22 = factor_44 + factor_45
-        stage_0_23 = factor_46 + factor_47
-        stage_0_24 = factor_48 + factor_49
-        stage_0_25 = factor_50 + factor_51
-        stage_0_26 = factor_52 + factor_53
-        stage_0_27 = factor_54 + factor_55
-        stage_0_28 = factor_56 + factor_57
-        stage_0_29 = factor_58 + factor_59
-        stage_0_30 = factor_60 + factor_61
-        stage_0_31 = factor_62 + factor_63
-        stage_1_0 = stage_0_0 + stage_0_1
-        stage_1_1 = stage_0_2 + stage_0_3
-        stage_1_2 = stage_0_4 + stage_0_5
-        stage_1_3 = stage_0_6 + stage_0_7
-        stage_1_4 = stage_0_8 + stage_0_9
-        stage_1_5 = stage_0_10 + stage_0_11
-        stage_1_6 = stage_0_12 + stage_0_13
-        stage_1_7 = stage_0_14 + stage_0_15
-        stage_1_8 = stage_0_16 + stage_0_17
-        stage_1_9 = stage_0_18 + stage_0_19
-        stage_1_10 = stage_0_20 + stage_0_21
-        stage_1_11 = stage_0_22 + stage_0_23
-        stage_1_12 = stage_0_24 + stage_0_25
-        stage_1_13 = stage_0_26 + stage_0_27
-        stage_1_14 = stage_0_28 + stage_0_29
-        stage_1_15 = stage_0_30 + stage_0_31
-        stage_2_0 = stage_1_0 + stage_1_1
-        stage_2_1 = stage_1_2 + stage_1_3
-        stage_2_2 = stage_1_4 + stage_1_5
-        stage_2_3 = stage_1_6 + stage_1_7
-        stage_2_4 = stage_1_8 + stage_1_9
-        stage_2_5 = stage_1_10 + stage_1_11
-        stage_2_6 = stage_1_12 + stage_1_13
-        stage_2_7 = stage_1_14 + stage_1_15
-        stage_3_0 = stage_2_0 + stage_2_1
-        stage_3_1 = stage_2_2 + stage_2_3
-        stage_3_2 = stage_2_4 + stage_2_5
-        stage_3_3 = stage_2_6 + stage_2_7
-        stage_4_0 = stage_3_0 + stage_3_1
-        stage_4_1 = stage_3_2 + stage_3_3
-        stage_5_0 = stage_4_0 + stage_4_1
-        prediction = stage_5_0
+            lane_0 = tl.load(state_ptr + state_base + key_offset) * decay
+            tl.store(state_ptr + state_base + key_offset, lane_0)
+            key_0 = tl.load(k_ptr + key_base + key_offset * stride_k_dim).to(
+                tl.float32
+            )
+            lane_0_tf32 = (lane_0.to(tl.int32, bitcast=True) & -8192).to(
+                tl.float32, bitcast=True
+            )
+            key_0_tf32 = (key_0.to(tl.int32, bitcast=True) & -8192).to(
+                tl.float32, bitcast=True
+            )
+            accumulation = tl.fma(lane_0_tf32, key_0_tf32, accumulation)
+        prediction = accumulation
 
         value_address = (
             batch * stride_v_batch
@@ -386,338 +142,33 @@ def _fused_recurrent_gdn_k64_kernel(
             + query_head * stride_q_head
         )
         for key_offset in tl.static_range(0, 64):
-            k_val = tl.load(k_ptr + key_base + key_offset * stride_k_dim).to(
+            key_0 = tl.load(k_ptr + key_base + key_offset * stride_k_dim).to(
                 tl.float32
             )
             tl.store(
                 outer_ptr + state_base + key_offset,
-                correction * k_val,
+                correction * key_0,
             )
+        accumulation = 0.0
         for key_offset in tl.static_range(0, 64):
-            merged = tl.load(state_ptr + state_base + key_offset) + tl.load(
+            lane_0 = tl.load(state_ptr + state_base + key_offset) + tl.load(
                 outer_ptr + state_base + key_offset
             )
-            tl.store(state_ptr + state_base + key_offset, merged)
-        factor_0 = tl.load(state_ptr + state_base + 0) * (
-            tl.load(q_ptr + query_base + 0 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_1 = tl.load(state_ptr + state_base + 1) * (
-            tl.load(q_ptr + query_base + 1 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_2 = tl.load(state_ptr + state_base + 2) * (
-            tl.load(q_ptr + query_base + 2 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_3 = tl.load(state_ptr + state_base + 3) * (
-            tl.load(q_ptr + query_base + 3 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_4 = tl.load(state_ptr + state_base + 4) * (
-            tl.load(q_ptr + query_base + 4 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_5 = tl.load(state_ptr + state_base + 5) * (
-            tl.load(q_ptr + query_base + 5 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_6 = tl.load(state_ptr + state_base + 6) * (
-            tl.load(q_ptr + query_base + 6 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_7 = tl.load(state_ptr + state_base + 7) * (
-            tl.load(q_ptr + query_base + 7 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_8 = tl.load(state_ptr + state_base + 8) * (
-            tl.load(q_ptr + query_base + 8 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_9 = tl.load(state_ptr + state_base + 9) * (
-            tl.load(q_ptr + query_base + 9 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_10 = tl.load(state_ptr + state_base + 10) * (
-            tl.load(q_ptr + query_base + 10 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_11 = tl.load(state_ptr + state_base + 11) * (
-            tl.load(q_ptr + query_base + 11 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_12 = tl.load(state_ptr + state_base + 12) * (
-            tl.load(q_ptr + query_base + 12 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_13 = tl.load(state_ptr + state_base + 13) * (
-            tl.load(q_ptr + query_base + 13 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_14 = tl.load(state_ptr + state_base + 14) * (
-            tl.load(q_ptr + query_base + 14 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_15 = tl.load(state_ptr + state_base + 15) * (
-            tl.load(q_ptr + query_base + 15 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_16 = tl.load(state_ptr + state_base + 16) * (
-            tl.load(q_ptr + query_base + 16 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_17 = tl.load(state_ptr + state_base + 17) * (
-            tl.load(q_ptr + query_base + 17 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_18 = tl.load(state_ptr + state_base + 18) * (
-            tl.load(q_ptr + query_base + 18 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_19 = tl.load(state_ptr + state_base + 19) * (
-            tl.load(q_ptr + query_base + 19 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_20 = tl.load(state_ptr + state_base + 20) * (
-            tl.load(q_ptr + query_base + 20 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_21 = tl.load(state_ptr + state_base + 21) * (
-            tl.load(q_ptr + query_base + 21 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_22 = tl.load(state_ptr + state_base + 22) * (
-            tl.load(q_ptr + query_base + 22 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_23 = tl.load(state_ptr + state_base + 23) * (
-            tl.load(q_ptr + query_base + 23 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_24 = tl.load(state_ptr + state_base + 24) * (
-            tl.load(q_ptr + query_base + 24 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_25 = tl.load(state_ptr + state_base + 25) * (
-            tl.load(q_ptr + query_base + 25 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_26 = tl.load(state_ptr + state_base + 26) * (
-            tl.load(q_ptr + query_base + 26 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_27 = tl.load(state_ptr + state_base + 27) * (
-            tl.load(q_ptr + query_base + 27 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_28 = tl.load(state_ptr + state_base + 28) * (
-            tl.load(q_ptr + query_base + 28 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_29 = tl.load(state_ptr + state_base + 29) * (
-            tl.load(q_ptr + query_base + 29 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_30 = tl.load(state_ptr + state_base + 30) * (
-            tl.load(q_ptr + query_base + 30 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_31 = tl.load(state_ptr + state_base + 31) * (
-            tl.load(q_ptr + query_base + 31 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_32 = tl.load(state_ptr + state_base + 32) * (
-            tl.load(q_ptr + query_base + 32 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_33 = tl.load(state_ptr + state_base + 33) * (
-            tl.load(q_ptr + query_base + 33 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_34 = tl.load(state_ptr + state_base + 34) * (
-            tl.load(q_ptr + query_base + 34 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_35 = tl.load(state_ptr + state_base + 35) * (
-            tl.load(q_ptr + query_base + 35 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_36 = tl.load(state_ptr + state_base + 36) * (
-            tl.load(q_ptr + query_base + 36 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_37 = tl.load(state_ptr + state_base + 37) * (
-            tl.load(q_ptr + query_base + 37 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_38 = tl.load(state_ptr + state_base + 38) * (
-            tl.load(q_ptr + query_base + 38 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_39 = tl.load(state_ptr + state_base + 39) * (
-            tl.load(q_ptr + query_base + 39 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_40 = tl.load(state_ptr + state_base + 40) * (
-            tl.load(q_ptr + query_base + 40 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_41 = tl.load(state_ptr + state_base + 41) * (
-            tl.load(q_ptr + query_base + 41 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_42 = tl.load(state_ptr + state_base + 42) * (
-            tl.load(q_ptr + query_base + 42 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_43 = tl.load(state_ptr + state_base + 43) * (
-            tl.load(q_ptr + query_base + 43 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_44 = tl.load(state_ptr + state_base + 44) * (
-            tl.load(q_ptr + query_base + 44 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_45 = tl.load(state_ptr + state_base + 45) * (
-            tl.load(q_ptr + query_base + 45 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_46 = tl.load(state_ptr + state_base + 46) * (
-            tl.load(q_ptr + query_base + 46 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_47 = tl.load(state_ptr + state_base + 47) * (
-            tl.load(q_ptr + query_base + 47 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_48 = tl.load(state_ptr + state_base + 48) * (
-            tl.load(q_ptr + query_base + 48 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_49 = tl.load(state_ptr + state_base + 49) * (
-            tl.load(q_ptr + query_base + 49 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_50 = tl.load(state_ptr + state_base + 50) * (
-            tl.load(q_ptr + query_base + 50 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_51 = tl.load(state_ptr + state_base + 51) * (
-            tl.load(q_ptr + query_base + 51 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_52 = tl.load(state_ptr + state_base + 52) * (
-            tl.load(q_ptr + query_base + 52 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_53 = tl.load(state_ptr + state_base + 53) * (
-            tl.load(q_ptr + query_base + 53 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_54 = tl.load(state_ptr + state_base + 54) * (
-            tl.load(q_ptr + query_base + 54 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_55 = tl.load(state_ptr + state_base + 55) * (
-            tl.load(q_ptr + query_base + 55 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_56 = tl.load(state_ptr + state_base + 56) * (
-            tl.load(q_ptr + query_base + 56 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_57 = tl.load(state_ptr + state_base + 57) * (
-            tl.load(q_ptr + query_base + 57 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_58 = tl.load(state_ptr + state_base + 58) * (
-            tl.load(q_ptr + query_base + 58 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_59 = tl.load(state_ptr + state_base + 59) * (
-            tl.load(q_ptr + query_base + 59 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_60 = tl.load(state_ptr + state_base + 60) * (
-            tl.load(q_ptr + query_base + 60 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_61 = tl.load(state_ptr + state_base + 61) * (
-            tl.load(q_ptr + query_base + 61 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_62 = tl.load(state_ptr + state_base + 62) * (
-            tl.load(q_ptr + query_base + 62 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        factor_63 = tl.load(state_ptr + state_base + 63) * (
-            tl.load(q_ptr + query_base + 63 * stride_q_dim).to(tl.float32)
-            * scale
-        )
-        stage_0_0 = factor_0 + factor_1
-        stage_0_1 = factor_2 + factor_3
-        stage_0_2 = factor_4 + factor_5
-        stage_0_3 = factor_6 + factor_7
-        stage_0_4 = factor_8 + factor_9
-        stage_0_5 = factor_10 + factor_11
-        stage_0_6 = factor_12 + factor_13
-        stage_0_7 = factor_14 + factor_15
-        stage_0_8 = factor_16 + factor_17
-        stage_0_9 = factor_18 + factor_19
-        stage_0_10 = factor_20 + factor_21
-        stage_0_11 = factor_22 + factor_23
-        stage_0_12 = factor_24 + factor_25
-        stage_0_13 = factor_26 + factor_27
-        stage_0_14 = factor_28 + factor_29
-        stage_0_15 = factor_30 + factor_31
-        stage_0_16 = factor_32 + factor_33
-        stage_0_17 = factor_34 + factor_35
-        stage_0_18 = factor_36 + factor_37
-        stage_0_19 = factor_38 + factor_39
-        stage_0_20 = factor_40 + factor_41
-        stage_0_21 = factor_42 + factor_43
-        stage_0_22 = factor_44 + factor_45
-        stage_0_23 = factor_46 + factor_47
-        stage_0_24 = factor_48 + factor_49
-        stage_0_25 = factor_50 + factor_51
-        stage_0_26 = factor_52 + factor_53
-        stage_0_27 = factor_54 + factor_55
-        stage_0_28 = factor_56 + factor_57
-        stage_0_29 = factor_58 + factor_59
-        stage_0_30 = factor_60 + factor_61
-        stage_0_31 = factor_62 + factor_63
-        stage_1_0 = stage_0_0 + stage_0_1
-        stage_1_1 = stage_0_2 + stage_0_3
-        stage_1_2 = stage_0_4 + stage_0_5
-        stage_1_3 = stage_0_6 + stage_0_7
-        stage_1_4 = stage_0_8 + stage_0_9
-        stage_1_5 = stage_0_10 + stage_0_11
-        stage_1_6 = stage_0_12 + stage_0_13
-        stage_1_7 = stage_0_14 + stage_0_15
-        stage_1_8 = stage_0_16 + stage_0_17
-        stage_1_9 = stage_0_18 + stage_0_19
-        stage_1_10 = stage_0_20 + stage_0_21
-        stage_1_11 = stage_0_22 + stage_0_23
-        stage_1_12 = stage_0_24 + stage_0_25
-        stage_1_13 = stage_0_26 + stage_0_27
-        stage_1_14 = stage_0_28 + stage_0_29
-        stage_1_15 = stage_0_30 + stage_0_31
-        stage_2_0 = stage_1_0 + stage_1_1
-        stage_2_1 = stage_1_2 + stage_1_3
-        stage_2_2 = stage_1_4 + stage_1_5
-        stage_2_3 = stage_1_6 + stage_1_7
-        stage_2_4 = stage_1_8 + stage_1_9
-        stage_2_5 = stage_1_10 + stage_1_11
-        stage_2_6 = stage_1_12 + stage_1_13
-        stage_2_7 = stage_1_14 + stage_1_15
-        stage_3_0 = stage_2_0 + stage_2_1
-        stage_3_1 = stage_2_2 + stage_2_3
-        stage_3_2 = stage_2_4 + stage_2_5
-        stage_3_3 = stage_2_6 + stage_2_7
-        stage_4_0 = stage_3_0 + stage_3_1
-        stage_4_1 = stage_3_2 + stage_3_3
-        stage_5_0 = stage_4_0 + stage_4_1
-        result = stage_5_0
+            tl.store(state_ptr + state_base + key_offset, lane_0)
+            query_0 = (
+                tl.load(q_ptr + query_base + key_offset * stride_q_dim).to(
+                    tl.float32
+                )
+                * scale
+            )
+            lane_0_tf32 = (lane_0.to(tl.int32, bitcast=True) & -8192).to(
+                tl.float32, bitcast=True
+            )
+            query_0_tf32 = (query_0.to(tl.int32, bitcast=True) & -8192).to(
+                tl.float32, bitcast=True
+            )
+            accumulation = tl.fma(lane_0_tf32, query_0_tf32, accumulation)
+        result = accumulation
         output_address = (
             batch * stride_output_batch
             + timestep * stride_output_time
