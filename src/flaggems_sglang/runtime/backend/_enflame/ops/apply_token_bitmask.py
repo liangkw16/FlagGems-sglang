@@ -71,7 +71,7 @@ def apply_token_bitmask(logits, bitmask):
         return output
 
     batch_size, vocab_size = logits.shape
-    block_size = 4096
+    block_size = 32768
     blocks_per_row = triton.cdiv(vocab_size, block_size)
     total_blocks = batch_size * blocks_per_row
     grid = (min(total_blocks, 12),)
