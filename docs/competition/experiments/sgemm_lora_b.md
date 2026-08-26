@@ -517,4 +517,23 @@ FP32 IEEE GEMM、scale 与 scatter 仍全部由 Triton kernel 执行，无 fallb
   合计 192.094x 推算，门槛即约 24.024x 平均。若仍编译/资源失败，或 valid
   但昆仑 <15x，永久停止，不再调 tile/warps/stages。
 
-<!-- T23_E8_PLATFORM_RESULT_PENDING -->
+### E8 平台结果：仍 7/8，但失败点推进到最终 scatter
+
+- 2026-08-26 20:37:27 CST 单次提交，submission `5130`、当日序号 `16`；
+  额度 `15/30`→`14/30`，平台回读 35,030 bytes 与 canonical SHA-256
+  `d0cabb0abca65e2d1db5cfbbe59e6a7621a4f6cb4e30116d24e45a05c9de0bb3`
+  完全一致；`file_url_sha256`
+  `e13a2fcbcb56184c02f96045b7d6c16810e285cfe8aeb279e81131824d9d8b1d`。
+- 七芯继续通过：天数 33.9385x、沐曦 17.8135x、燧原 3.9985x、海光
+  47.3020x、华为 17.2215x、国际 A 46.0895x、国际 B 28.7610x，合计
+  195.1245x。
+- 昆仑 case 0 已越过被删除的 pack-W，并将 regular BMM 编译/launch 推进到
+  后续 `_scatter_add_kernel`；该 kernel 在提交文件第 370 行首次编译时以
+  grid `(2,)` 报 `uni_sram PassManager::run failed`。case 1–4 的 illegal
+  memory/copy 错误均发生在首错污染设备之后，不作为独立根因。
+- 这不是 E7/E7b 的失败复现：已证明 layout prep 绕过 pack-W 且 regular BMM
+  不再是首个阻断点。下一且最后的结构候选仅把二维 ragged scatter 改成一维
+  pointwise Triton scatter；不改 BMM、tile、warps 或其余七芯。按本轮七芯合计，
+  昆仑只需 0.1x 即约 24.403x 平均。
+
+<!-- T23_E9_PLATFORM_RESULT_PENDING -->
