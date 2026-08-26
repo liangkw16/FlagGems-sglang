@@ -642,10 +642,9 @@ A/B 脚本 SHA-256
 反推出的国际 B 后缀加同型 vendor；预期 card_a 16.58 / 海光 4.54 保持，
 沐曦回到 2.75、国际 B 回到 1.92、昆仑回到 0.25，平均约 **3.6x**。
 
-## E6：三芯回退 vendor（候选就绪，待次日额度提交）
+## E6：三芯回退 vendor（已由 E6r 精确字节版替代，未提交）
 
-状态：源码 commit、push、不可变 ZIP 全部就绪；当日额度 30/30 已用完，
-待 2026-08-26 额度刷新后提交。
+状态：旧源码与 ZIP 保持不可变，未提交平台；不得再使用
 
 ### 构建身份
 
@@ -706,3 +705,41 @@ tensor core 特征，card_b 低精度 -56% 符合 AMD ROCm fp16 dot 回退）；
    低精度路径并回退 -56%，平均约 3.0x 而非 3.6x；下一轮修正后缀。
 2. 昆仑 fp32-ieee 回退在 E2d 已验证通过（0.251x），正确性风险低。
 3. 沐曦 fp32-ieee 回退在 E2d 已验证通过（2.7295x），正确性风险低。
+
+## E6r：E2d 精确字节回退 + 三 vendor 回归
+
+状态：release 与不可变 ZIP 门禁通过；候选就绪，只提交一次
+
+验证时间：2026-08-26 17:52–17:57 CST
+
+提交前静态审计发现 E6 三份 fallback 虽然数学等价，但把 `x/B` 的 FP32 cast
+从 load 后移到了 dot 参数，不能声称与 E2d 平台验证形态逐字节一致；原测试也没有
+导入三个新成员。E6r 把 `_kunlunxin/_metax/_amd` 全部替换为 E2d generic 的精确
+源码字节，并增加一个测试覆盖三模块、FP16/BF16 与 `chunk_size=64/256` 两条 K tile
+路径。generic、Ascend、Enflame、Iluvatar 均保持 E5/E4/E2d 已提交字节不变。
+
+### Release 与构建身份
+
+- source / verification commit：`cfbef9c9f96ae9f26d67f43d22f0e20d57d9c30b`。
+- 三个 fallback 的 SHA-256 均为 E2d generic
+  `c50cda381c48712e108e34578c9805e74422b6b7b81be9b6dd6b2972d3753c47`；测试
+  SHA-256 为 `cc5c27e243723b58936b5e5c166769d803fbe2785b99da7e460fa6b7a053fd6b`。
+- fresh Git-object release：`gpu:/tmp/flagos-task12-e6-release2.xJG6ZU`；新增专项
+  1/1、全套 12/12 unittest 通过。4 个 fallback dot 变体最大 94
+  registers/thread、1,024 bytes shared，stack/local 均为 0。
+- release log SHA-256
+  `00bbd779c3fac4e21c0f5c2d31fb251bb32ee3650e9dbe7284162ad02044983f`；release
+  script SHA-256
+  `a35b9d3c1bcd7e1fae8fa6db8df7e8c2835363926aa24c437b8fd1dd6c65fb2f`。
+- canonical ZIP：
+  `artifacts/competition/chunk_state/e6-cfbef9c/chunk_state.zip`，53,117 bytes，
+  SHA-256
+  `09e1f66998074ffecdae1fc88259c7ea403c941f56cbe03977e221ef500e729c`；7 个成员为
+  generic + amd/ascend/enflame/iluvatar/kunlunxin/metax，`unzip -t` 和第二次
+  `--verify-existing` 均通过。
+
+Task 18 submission `5087` 已实证国际 A 选择 `_nvidia`；因此 `_amd` 对国际 B
+是当前最小后缀推断，不得添加 `_nvidia` fallback 覆盖国际 A 的 `16.583x` generic
+路径。即使 `_amd` 未命中，按 E5 实测值回填其余回退，预计平均约 `3.524x`；若命中
+并恢复国际 B，则约 `3.658x`。平台门禁仍为 8/8 correctness、每芯 `>=0.1x`；无论
+结果如何 E6r 只提交一次，再根据实际 selected file 决定是否开发新的 Huawei 候选。
