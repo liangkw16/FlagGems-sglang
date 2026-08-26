@@ -47,6 +47,12 @@ VENDOR_MODULES = {
         / "src/flaggems_sglang/runtime/backend/_enflame/ops"
         / "apply_token_bitmask.py",
     ),
+    "kunlunxin": load_module(
+        "apply_token_bitmask_kunlunxin_module",
+        ROOT
+        / "src/flaggems_sglang/runtime/backend/_kunlunxin/ops"
+        / "apply_token_bitmask.py",
+    ),
 }
 
 
@@ -207,7 +213,7 @@ class ApplyTokenBitmaskTest(unittest.TestCase):
                     actual, expected, atol=0.0, rtol=0.0
                 )
 
-    def test_enflame_large_block_all_dtypes(self):
+    def test_large_block_vendors_all_dtypes(self):
         vocab_size = 12 * 4096 + 17
         generator = torch.Generator(device="cuda").manual_seed(20260824)
         bitmask = torch.randint(
@@ -218,20 +224,24 @@ class ApplyTokenBitmaskTest(unittest.TestCase):
             device="cuda",
             dtype=torch.int64,
         ).to(torch.int32)
-        for dtype in (torch.float16, torch.bfloat16, torch.float32):
-            with self.subTest(dtype=dtype):
-                logits = torch.randn(
-                    (1, vocab_size),
-                    generator=generator,
-                    device="cuda",
-                    dtype=dtype,
-                )
-                actual = VENDOR_MODULES["enflame"].apply_token_bitmask(
-                    logits, bitmask
-                )
-                torch.testing.assert_close(
-                    actual, reference(logits, bitmask), atol=0.0, rtol=0.0
-                )
+        for vendor in ("enflame", "kunlunxin"):
+            for dtype in (torch.float16, torch.bfloat16, torch.float32):
+                with self.subTest(vendor=vendor, dtype=dtype):
+                    logits = torch.randn(
+                        (1, vocab_size),
+                        generator=generator,
+                        device="cuda",
+                        dtype=dtype,
+                    )
+                    actual = VENDOR_MODULES[vendor].apply_token_bitmask(
+                        logits, bitmask
+                    )
+                    torch.testing.assert_close(
+                        actual,
+                        reference(logits, bitmask),
+                        atol=0.0,
+                        rtol=0.0,
+                    )
 
 
 if __name__ == "__main__":
