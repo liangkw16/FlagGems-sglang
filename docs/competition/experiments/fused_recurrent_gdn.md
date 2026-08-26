@@ -438,3 +438,32 @@ topology/ownership 改动没有改变这些 backend 实际执行的 FP32 运算�
 无法预测这些指纹（E3/E7）的情况下，16.52 CST 协调门禁仍然有效：没有新的
 非 NVIDIA 正信号或严格清零证明，不再消耗额度。剩余 14 次额度保留至
 2026-08-27 19:59:59 截止。
+
+## E8 offline：官方 `[BK,BV]` 寄存器轴（否决，不提交）
+
+FlagAttention commit `8225e615ffec19a5481779806a03b134ff4a3b28` 的 direct GDN
+使用 `[BK,BV]` state 和 `axis=0` K 归约；FlagGems-vllm commit
+`43624463db77618b6d0e3f47fac990cea8c51a30` 的短序列路径也采用该形态。其公开测试
+仅覆盖短序列且容差远宽于本题，因此只把寄存器轴作为一个离线变量，不复制 BV、warp、
+stage、连续输入限制、state 布局或 L2 公式。
+
+screening 基于 `b5f32dcf4cd027709ee15296ddedf94ab6e57771`，只把 K64 generic
+的寄存器 view 从 `[8,64]` 转为 `[64,8]`，同时把 prediction/readout 改成
+`axis=0`；物理 `[V,K]` scratch、BV8、4 warps、1 stage、libdevice exp、outer
+scratch、1D grid、wrapper 和 NVIDIA vendor 全部冻结。候选工作树源码 SHA-256 为
+`c3f71c17d62d8a26350c36e3f5e41705b1125f4aa9dbbf9b5e9506c50d6cdbcc`。
+
+- screening 目录：`gpu:/tmp/flagos-fused-recurrent-gdn-kv-layout.96GmOR`，mode
+  0700，PID/PGID `155369`，wall 上限 600s；py_compile、Black、isort、flake8、
+  SHA 复验和 unittest 6/6 通过。
+- 两个隐藏高置信形态各跑 8 seeds：`(32,32,4,8,64,64)` 累计错误 142，
+  `(8,128,4,8,64,64)` 累计错误 8469；与 E6 **逐字相同**。specialized contract
+  和 empty case 均为 `(0,0)`。
+- wrapper-inclusive 代理 speedup 为 9.8193x / 37.6525x，性能与 E6 同级；
+  screening log 与 harness SHA-256 分别为
+  `cd66068e867e62938d55b3bfc1f53bf4731908a7c963c3b8287118dcdeafdffc`、
+  `9b15b20bb6de8bb8345138b58fd2a4522e8c2fcdc848041f9d172301a4eebf6d`。
+
+该结果证明当前编译器把这次轴转置规范化为与 E6 相同的归约；没有形成新数值路径，
+也不能解决昆仑 1830s 超时。工作树已恢复 E6 字节，未新增测试、commit、ZIP、
+preflight 或平台提交；Task 18 永久停止。
