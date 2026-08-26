@@ -35,6 +35,16 @@ ASCEND_MODULE_PATH = (
     / "ops"
     / "mamba_layernorm_gated.py"
 )
+ENFLAME_MODULE_PATH = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+    / "_enflame"
+    / "ops"
+    / "mamba_layernorm_gated.py"
+)
 
 
 def _load_module(name, path):
@@ -50,6 +60,10 @@ MODULE = _load_module("mamba_layernorm_gated_module", GENERIC_MODULE_PATH)
 ASCEND_MODULE = _load_module(
     "mamba_layernorm_gated_ascend_module", ASCEND_MODULE_PATH
 )
+ENFLAME_MODULE = _load_module(
+    "mamba_layernorm_gated_enflame_module", ENFLAME_MODULE_PATH
+)
+MODULES = (MODULE, ASCEND_MODULE, ENFLAME_MODULE)
 
 
 def _reference(
@@ -153,7 +167,7 @@ class MambaLayernormGatedTest(unittest.TestCase):
                     )
 
                     self.assertFalse(x.is_contiguous())
-                    for module in (MODULE, ASCEND_MODULE):
+                    for module in MODULES:
                         with self.subTest(module=module.__name__):
                             actual = module.mamba_layernorm_gated(
                                 x,
@@ -193,7 +207,7 @@ class MambaLayernormGatedTest(unittest.TestCase):
         x = torch.empty((0, 259), device="cuda", dtype=torch.float16)
         weight = torch.ones(259, device="cuda", dtype=torch.float16)
 
-        for module in (MODULE, ASCEND_MODULE):
+        for module in MODULES:
             with self.subTest(module=module.__name__):
                 actual = module.mamba_layernorm_gated(
                     x, weight, None, 1e-6, group_size=37
@@ -235,7 +249,7 @@ class MambaLayernormGatedTest(unittest.TestCase):
                         is_rms_norm=False,
                     )
 
-                    for module in (MODULE, ASCEND_MODULE):
+                    for module in MODULES:
                         with self.subTest(module=module.__name__):
                             actual = module.mamba_layernorm_gated(
                                 x,
@@ -260,22 +274,16 @@ class MambaLayernormGatedTest(unittest.TestCase):
         rows, group_count, group_size = 64, 2048, 2
         hidden_size = group_count * group_size
         dtype = torch.bfloat16
-        x = torch.randn((rows, hidden_size), device="cuda", dtype=dtype)
-        weight = torch.randn(hidden_size, device="cuda", dtype=dtype)
-        bias = torch.randn(hidden_size, device="cuda", dtype=dtype)
-        z = torch.randn_like(x)
+        x = torch.randn((rows, hidden_size * 2), device="cuda", dtype=dtype)[
+            :, ::2
+        ]
+        weight = torch.randn(hidden_size * 2, device="cuda", dtype=dtype)[::2]
+        bias = torch.randn(hidden_size * 2, device="cuda", dtype=dtype)[1::2]
+        z = torch.randn((rows, hidden_size * 2), device="cuda", dtype=dtype)[
+            :, 1::2
+        ]
 
         self.assertEqual(rows * group_count, 131072)
-        actual = ASCEND_MODULE.mamba_layernorm_gated(
-            x,
-            weight,
-            bias,
-            1e-6,
-            z=z,
-            group_size=group_size,
-            norm_before_gate=True,
-            is_rms_norm=False,
-        )
         expected = _reference(
             x,
             weight,
@@ -287,7 +295,21 @@ class MambaLayernormGatedTest(unittest.TestCase):
             is_rms_norm=False,
         )
 
-        torch.testing.assert_close(actual, expected, atol=1.5e-2, rtol=1.5e-2)
+        for module in (ASCEND_MODULE, ENFLAME_MODULE):
+            with self.subTest(module=module.__name__):
+                actual = module.mamba_layernorm_gated(
+                    x,
+                    weight,
+                    bias,
+                    1e-6,
+                    z=z,
+                    group_size=group_size,
+                    norm_before_gate=True,
+                    is_rms_norm=False,
+                )
+                torch.testing.assert_close(
+                    actual, expected, atol=1.5e-2, rtol=1.5e-2
+                )
 
 
 if __name__ == "__main__":
