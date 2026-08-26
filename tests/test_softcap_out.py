@@ -268,8 +268,12 @@ class SoftcapOutTest(unittest.TestCase):
         for dtype, length in cases:
             with self.subTest(dtype=dtype, length=length):
                 x = torch.linspace(
-                    -60.0, 60.0, length, device="cuda", dtype=dtype
-                )
+                    -60.0,
+                    60.0,
+                    length,
+                    device="cuda",
+                    dtype=torch.float32,
+                ).to(dtype)
                 actual = module.softcap_out(x, 30.0)
                 expected = torch.tanh(x.to(torch.float32) / 30.0) * 30.0
                 tolerance = 1e-2 if dtype == torch.float16 else 1e-4
