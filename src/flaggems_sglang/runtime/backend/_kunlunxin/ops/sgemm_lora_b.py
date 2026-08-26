@@ -205,65 +205,67 @@ def _scatter_add_kernel(
     lora_ranks_stride,
     scalings_stride,
     permutation_stride,
-    BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
     HAS_PERMUTATION: tl.constexpr,
 ):
     output_stride_token = tl.cast(output_stride_token, tl.int64)
     output_stride_col = tl.cast(output_stride_col, tl.int64)
 
-    output_tiles = tl.cdiv(output_dim, BLOCK_N)
-    tiles_per_batch = tl.cdiv(max_len, BLOCK_M) * output_tiles
-    logical_id = program_start + tl.program_id(0)
-    batch_id = logical_id // tiles_per_batch
-    matrix_id = logical_id - batch_id * tiles_per_batch
-    token_tile = matrix_id // output_tiles
-    output_tile = matrix_id - token_tile * output_tiles
+    nblocks = tl.cdiv(output_dim, BLOCK_N)
+    logical_pid = program_start + tl.program_id(0)
+    row_pid = logical_pid // nblocks
+    col_block = logical_pid - row_pid * nblocks
+    batch_id = row_pid // max_len
+    token_offset = row_pid - batch_id * max_len
 
     segment_start = tl.load(seg_indptr_ptr + batch_id * seg_indptr_stride)
     segment_end = tl.load(seg_indptr_ptr + (batch_id + 1) * seg_indptr_stride)
     segment_length = segment_end - segment_start
-    token_offsets = token_tile * BLOCK_M + tl.arange(0, BLOCK_M)
-    if token_tile * BLOCK_M >= segment_length:
-        return
+    token_active = token_offset < segment_length
     weight_index = tl.load(
-        weight_indices_ptr + batch_id * weight_indices_stride
+        weight_indices_ptr + batch_id * weight_indices_stride,
+        mask=token_active,
+        other=0,
     )
-    if tl.load(lora_ranks_ptr + weight_index * lora_ranks_stride) == 0:
-        return
+    lora_rank = tl.load(
+        lora_ranks_ptr + weight_index * lora_ranks_stride,
+        mask=token_active,
+        other=0,
+    )
+    active = token_active & (lora_rank != 0)
 
-    output_offsets = output_tile * BLOCK_N + tl.arange(0, BLOCK_N)
-    token_mask = token_offsets < segment_length
-    output_mask = output_offsets < output_dim
     if HAS_PERMUTATION:
         rows = tl.load(
             permutation_ptr
-            + (segment_start + token_offsets) * permutation_stride,
-            mask=token_mask,
+            + (segment_start + token_offset) * permutation_stride,
+            mask=active,
             other=0,
         )
     else:
-        rows = segment_start + token_offsets
+        rows = segment_start + token_offset
 
-    product_offsets = (
-        batch_id * max_len + token_offsets[:, None]
-    ) * output_dim + output_offsets[None, :]
+    cols = col_block * BLOCK_N + tl.arange(0, BLOCK_N)
+    value_mask = active & (cols < output_dim)
+    product_offsets = (batch_id * max_len + token_offset) * output_dim + cols
     products = tl.load(
         products_ptr + product_offsets,
-        mask=token_mask[:, None] & output_mask[None, :],
+        mask=value_mask,
         other=0.0,
     )
     output_ptrs = (
-        output_ptr
-        + rows[:, None] * output_stride_token
-        + output_offsets[None, :] * output_stride_col
+        output_ptr + rows * output_stride_token + cols * output_stride_col
     )
-    mask = token_mask[:, None] & output_mask[None, :]
-    base = tl.load(output_ptrs, mask=mask, other=0.0).to(tl.float32)
-    scaling = tl.load(scalings_ptr + weight_index * scalings_stride).to(
-        tl.float32
+    base = tl.load(output_ptrs, mask=value_mask, other=0.0).to(tl.float32)
+    scaling = tl.load(
+        scalings_ptr + weight_index * scalings_stride,
+        mask=active,
+        other=0.0,
+    ).to(tl.float32)
+    tl.store(
+        output_ptrs,
+        base + products * scaling,
+        mask=value_mask,
     )
-    tl.store(output_ptrs, base + products * scaling, mask=mask)
 
 
 def sgemm_lora_b(x, weights, batch_info, base_output):
@@ -285,6 +287,7 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
     block_n = 32
     block_k = 32
     safe_adapter_block = 256
+    scatter_block_n = 256
     packed_x = torch.empty(
         (batch_size, max_len, rank), dtype=torch.float32, device=x.device
     )
@@ -367,6 +370,12 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
             num_warps=4,
             num_stages=1,
         )
+
+    scatter_programs = (
+        batch_size * max_len * triton.cdiv(output_dim, scatter_block_n)
+    )
+    for program_start in range(0, scatter_programs, _MAX_GRID_SIZE):
+        grid = (min(_MAX_GRID_SIZE, scatter_programs - program_start),)
         _scatter_add_kernel[grid](
             products,
             output,
@@ -384,8 +393,7 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
             batch_info.lora_ranks.stride(0),
             batch_info.scalings.stride(0),
             permutation.stride(0) if permutation is not None else 0,
-            BLOCK_M=block_m,
-            BLOCK_N=block_n,
+            BLOCK_N=scatter_block_n,
             HAS_PERMUTATION=permutation is not None,
             num_warps=4,
             num_stages=1,

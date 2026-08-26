@@ -132,10 +132,12 @@ class SgemmLoraBKunlunRoutingTest(unittest.TestCase):
             permutation=permutation,
         )
         x = torch.arange(2 * 6, dtype=torch.float32).reshape(2, 6)[:, ::2]
-        weights = torch.arange(2 * 10 * 6, dtype=torch.float32).reshape(
-            2, 10, 6
+        weights = torch.arange(2 * 140 * 6, dtype=torch.float32).reshape(
+            2, 140, 6
         )[:, ::2, ::2]
-        base = torch.arange(2 * 10, dtype=torch.float32).reshape(2, 10)[:, ::2]
+        base = torch.arange(2 * 140, dtype=torch.float32).reshape(2, 140)[
+            :, ::2
+        ]
         before = tuple(
             value.clone()
             for value in (
@@ -157,7 +159,15 @@ class SgemmLoraBKunlunRoutingTest(unittest.TestCase):
             patch.object(
                 KUNLUN_MODULE, "_scatter_add_kernel"
             ) as scatter_kernel,
+            patch.object(KUNLUN_MODULE, "_MAX_GRID_SIZE", 1),
         ):
+            launch_order = []
+            bmm_kernel.__getitem__.return_value.side_effect = (
+                lambda *args, **kwargs: launch_order.append("bmm")
+            )
+            scatter_kernel.__getitem__.return_value.side_effect = (
+                lambda *args, **kwargs: launch_order.append("scatter")
+            )
             actual = KUNLUN_MODULE.sgemm_lora_b(x, weights, info, base)
 
         safe_args = safe_kernel.__getitem__.return_value.call_args.args
@@ -173,13 +183,21 @@ class SgemmLoraBKunlunRoutingTest(unittest.TestCase):
         self.assertEqual(safe_adapters.dtype, torch.int32)
         self.assertEqual(safe_adapters.shape, (info.bs,))
         self.assertTrue(transposed_weights.is_contiguous())
-        self.assertEqual(transposed_weights.shape, (2, 3, 5))
-        self.assertEqual(transposed_weights.stride(), (15, 5, 1))
+        self.assertEqual(transposed_weights.shape, (2, 3, 70))
+        self.assertEqual(transposed_weights.stride(), (210, 70, 1))
         torch.testing.assert_close(transposed_weights, expected_weights)
         torch.testing.assert_close(actual, base)
         self.assertTrue(pack_x_kernel.__getitem__.return_value.called)
         self.assertTrue(bmm_kernel.__getitem__.return_value.called)
         self.assertTrue(scatter_kernel.__getitem__.return_value.called)
+        scatter_calls = scatter_kernel.__getitem__.return_value.call_args_list
+        self.assertEqual(launch_order, ["bmm"] * 6 + ["scatter"] * 4)
+        self.assertEqual(
+            [call.args[9] for call in scatter_calls], [0, 1, 2, 3]
+        )
+        self.assertEqual(
+            [call.kwargs["BLOCK_N"] for call in scatter_calls], [256] * 4
+        )
         for value, original in zip(
             (
                 x,
@@ -251,6 +269,62 @@ class SgemmLoraBKunlunRoutingTest(unittest.TestCase):
         )
         self.assertIn("def _safe_adapter_kernel", source)
         self.assertNotIn("def _pack_weights_kernel", source)
+
+        scatter = next(
+            node
+            for node in tree.body
+            if isinstance(node, ast.FunctionDef)
+            and node.name == "_scatter_add_kernel"
+        )
+        scatter_source = ast.get_source_segment(source, scatter)
+        self.assertIsNotNone(scatter_source)
+        self.assertFalse(
+            any(isinstance(node, ast.Return) for node in ast.walk(scatter))
+        )
+        self.assertIn(
+            "BLOCK_N", [argument.arg for argument in scatter.args.args]
+        )
+        self.assertNotIn("BLOCK_M", scatter_source)
+        self.assertNotIn("BLOCK_SIZE", scatter_source)
+        self.assertNotIn("logical_offsets", scatter_source)
+        self.assertNotIn("total_elements", scatter_source)
+        self.assertEqual(scatter_source.count("tl.arange"), 1)
+        self.assertIn(
+            "logical_pid = program_start + tl.program_id(0)", scatter_source
+        )
+        self.assertIn("row_pid = logical_pid // nblocks", scatter_source)
+        self.assertIn(
+            "cols = col_block * BLOCK_N + tl.arange(0, BLOCK_N)",
+            scatter_source,
+        )
+        self.assertLess(
+            scatter_source.index("token_active ="),
+            scatter_source.index("weight_index ="),
+        )
+        self.assertLess(
+            scatter_source.index("weight_index ="),
+            scatter_source.index("lora_rank ="),
+        )
+        self.assertGreaterEqual(scatter_source.count("mask=token_active"), 2)
+        self.assertGreaterEqual(scatter_source.count("mask=active"), 2)
+        self.assertGreaterEqual(scatter_source.count("mask=value_mask"), 3)
+
+        loops = [node for node in wrapper.body if isinstance(node, ast.For)]
+        loop_sources = [ast.get_source_segment(source, node) for node in loops]
+        bmm_loop = next(
+            node
+            for node, loop_source in zip(loops, loop_sources)
+            if "_regular_bmm_kernel" in loop_source
+        )
+        scatter_loop = next(
+            node
+            for node, loop_source in zip(loops, loop_sources)
+            if "_scatter_add_kernel" in loop_source
+        )
+        self.assertLess(bmm_loop.lineno, scatter_loop.lineno)
+        self.assertNotIn(
+            "_scatter_add_kernel", ast.get_source_segment(source, bmm_loop)
+        )
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
