@@ -773,7 +773,7 @@ autotune 轴。其余四成员字节冻结，逐芯波动不能归因于 AMD-onl
 
 ## E8：Enflame 上游有效固定 launch
 
-状态：submission `5238` 已唯一提交并完成对象回读，等待八芯终态
+状态：平台 8/8、`valid`、`2.9118x`，未超过 E7 team best
 
 E8 从 E7 已验证成员集合出发，只新增 Enflame vendor。SGLang FL 的同算子
 在 GCU 上采用 BLOCK 2048、16 warps、1 stage；FlagTree GCU300 编译器会把
@@ -809,3 +809,23 @@ MetaX、Ascend、Kunlun 与 generic 路径；`file_url_sha256` 为
 内置回读因可信主机环境变量未配置而返回 `unavailable`，随后从平台返回的同一对象
 存储地址无认证回读 18,511 bytes，SHA-256 与 canonical ZIP 完全一致，六个成员
 均通过 `unzip -t`。候选已提交，禁止重传。
+
+02:03:33 CST 终态为 `completed` / `valid`、8/8、平均 `2.9118x`，未标记
+team best。相对 E7 平均下降 `0.01715x`（-0.59%）；燧原由 `0.2090x`
+提升到 `0.3928x`（+87.94%），但没有达到预估升一名线 `0.4170x`，且冻结的
+其余七芯本轮合计下降 `0.3210x`：
+
+| 芯片 | E8 speedup | 相对 E7 | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 4.7392x | +0.21% | `moe_sum_reduce.py` |
+| 沐曦 | 3.5146x | -0.28% | `moe_sum_reduce_metax.py` |
+| 燧原 | 0.3928x | +87.94% | `moe_sum_reduce_enflame.py` |
+| 海光 | 6.5840x | -0.97% | `moe_sum_reduce.py` |
+| 昆仑芯 | 0.1760x | +0.46% | `moe_sum_reduce_kunlunxin.py` |
+| 华为 | 0.7596x | -14.34% | `moe_sum_reduce_ascend.py` |
+| 国际通用 A | 3.6592x | -3.67% | `moe_sum_reduce.py` |
+| 国际通用 B | 3.4690x | +0.27% | `moe_sum_reduce_amd.py` |
+
+结论：fixed launch 对燧原有明显单芯收益，但未满足预注册的整题 team-best 基础门，
+保留 E7 并停止该轴，不把 E8 Enflame 字节带入下一候选。下一步从 E7 分叉，只验证
+Hygon 官方同算子四档 autotune。
