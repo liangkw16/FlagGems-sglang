@@ -190,7 +190,7 @@ Task 16 记 5/8 停止；未用额度转 Task 14。
 
 ## E2：三失败芯结构恢复（最终一次重开）
 
-状态：平台 submission `5186` 评测中；候选禁止重传。
+状态：平台 8/8 正确但 `invalid_threshold`；E2 stop gate 已触发，永久停止。
 
 Task 15 E4 的平台结果为 Task 16 三个失败指纹提供了新的逐芯根因证据，因此只新增
 三个 vendor，generic 与 Iluvatar 分别冻结为
@@ -263,3 +263,21 @@ generic + Ascend/Enflame/Iluvatar/Kunlun 五个白名单文件，`verify-existin
 `175e61947af34101198f1f407ee6acc0639d50f8c1a5d3790b7f888822544c3d`。
 八芯均命中预期文件并进入 `waiting_callback`。对象存储 hostname 未预先加入信任
 白名单，因此远端 ZIP 验签为 `unavailable`；POST 已成功，按规则不得重传。
+
+最终八芯均通过正确性，但两个标量 vendor 低于 `0.1x` 门槛：
+
+| 芯片 | 结果 | speedup | 选中文件 |
+| --- | --- | ---: | --- |
+| 天数 | 通过 | 6.6398x | `decode_grouped_attention_iluvatar.py` |
+| 沐曦 | 通过 | 13.7422x | `decode_grouped_attention.py` |
+| 燧原 | 通过 | 0.0346x | `decode_grouped_attention_enflame.py` |
+| 海光 | 通过 | 24.2092x | `decode_grouped_attention.py` |
+| 昆仑芯 | 通过 | 0.0142x | `decode_grouped_attention_kunlunxin.py` |
+| 华为 | 通过 | 12.4686x | `decode_grouped_attention_ascend.py` |
+| 国际通用 A | 通过 | 31.0944x | `decode_grouped_attention.py` |
+| 国际通用 B | 通过 | 28.5348x | `decode_grouped_attention.py` |
+
+平台展示平均 `14.592225x`，但最终状态为 `invalid_threshold`、非 team best。
+E2 已把原来的三芯崩溃/数值失败全部恢复为正确，证明结构修复有效；同时真实 GCU/XPU
+性能分别比 NVIDIA 代理低两个数量级，否决以标量循环换正确性的路线。任一芯低于
+`0.1x` 的预设 stop gate 已触发，不再提交 Task 16。
