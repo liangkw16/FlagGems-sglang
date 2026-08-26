@@ -190,6 +190,13 @@ class SgemmLoraBKunlunRoutingTest(unittest.TestCase):
         self.assertTrue(pack_x_kernel.__getitem__.return_value.called)
         self.assertTrue(bmm_kernel.__getitem__.return_value.called)
         self.assertTrue(scatter_kernel.__getitem__.return_value.called)
+        for kernel in (safe_kernel, pack_x_kernel, scatter_kernel):
+            for call in kernel.__getitem__.return_value.call_args_list:
+                self.assertIs(call.kwargs["is_use_mask_zero"], True)
+        self.assertNotIn(
+            "is_use_mask_zero",
+            bmm_kernel.__getitem__.return_value.call_args.kwargs,
+        )
         scatter_calls = scatter_kernel.__getitem__.return_value.call_args_list
         self.assertEqual(launch_order, ["bmm"] * 6 + ["scatter"] * 4)
         self.assertEqual(

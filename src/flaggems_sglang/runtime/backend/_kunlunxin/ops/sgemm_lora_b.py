@@ -324,6 +324,7 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
             BLOCK_SIZE=safe_adapter_block,
             num_warps=4,
             num_stages=1,
+            is_use_mask_zero=True,
         )
 
     rank_tiles = triton.cdiv(rank, block_k)
@@ -346,6 +347,7 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
             HAS_PERMUTATION=permutation is not None,
             num_warps=4,
             num_stages=1,
+            is_use_mask_zero=True,
         )
 
     bmm_programs = (
@@ -397,6 +399,7 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
             HAS_PERMUTATION=permutation is not None,
             num_warps=4,
             num_stages=1,
+            is_use_mask_zero=True,
         )
     return output
 
