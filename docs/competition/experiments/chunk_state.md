@@ -839,3 +839,16 @@ amd/enflame/iluvatar/kunlunxin/metax 六个成员逐字节冻结。`unzip -t`、
 tile/stages 追投。新均值公式为
 `3.828875 + (Huawei_new - 0.329) / 8`；达到 4.0x 需要华为至少
 `1.698x`（当前的 5.16 倍）。
+
+### E7 平台提交：7/8 已通过，华为等待回调
+
+2026-08-26 19:42:04 CST 执行唯一一次正式提交（submission `5124`，当日
+序号 `13`，额度 `18/30`→`17/30`）。上传后对象存储回读 53,755 bytes，
+SHA-256 与本地规范 ZIP 完全一致；本次 `file_url_sha256` 为
+`eac0b58b07b97f39e9969a1c29ce62c1b0a646028ac0fc1a9e9650e2b468ce3a`。
+
+19:42:39 CST 状态为 `evaluating`：天数 `1.9810x`、沐曦 `2.7315x`、
+燧原 `0.9390x`、海光 `4.5410x`、昆仑 `0.2510x`、国际 A `17.8175x`、
+国际 B `1.9180x` 均 correctness 通过且选中文件与 E6r 一致；华为已选中
+`chunk_state_ascend.py`，状态 `waiting_callback`，尚无 speedup。提交 intent
+已是 `submitted`，不得重试；等待同一 submission 终态后再写回均值。
