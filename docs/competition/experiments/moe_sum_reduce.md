@@ -959,7 +959,7 @@ team best。相对 E7 平均增加 `0.01905x`（+0.65%）；华为由 `0.8868x`
 
 ## E11：Ascend 官方 65,535 physical-grid cap
 
-状态：已一次性提交，等待平台终态
+状态：平台 8/8、`valid`、`2.995375x`，团队当前最佳、公开第 10/11
 
 E11 从 E10 team-best 源码出发，只把 Ascend wrapper 的 physical-grid cap 从
 `4096` 提升到同后端同算子官方实现采用的 `65535`；kernel、八档 dual-level
@@ -1000,3 +1000,24 @@ MetaX、Kunlun 与 generic 路径；`file_url_sha256` 为
 内置回读因可信主机环境变量未配置而返回 `unavailable`，随后从平台返回的同一对象
 存储地址无认证回读 16,234 bytes，SHA-256 与 canonical ZIP 完全一致，五个成员
 均通过 `unzip -t`。候选已提交，禁止重传。
+
+02:47:43 CST 终态为 `completed` / `valid`、8/8、平均 `2.995375x`，平台标记
+team best；02:47:58 CST 公开榜刷新为第 `10/11`，超过原第 10 的 `2.95495x`
+共 `0.040425x`。相对 E10 平均增加 `0.047375x`（+1.61%）：
+
+| 芯片 | E11 speedup | 相对 E10 | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 4.7416x | +0.00% | `moe_sum_reduce.py` |
+| 沐曦 | 3.5292x | +0.90% | `moe_sum_reduce_metax.py` |
+| 燧原 | 0.2084x | +1.26% | `moe_sum_reduce.py` |
+| 海光 | 6.7736x | +5.80% | `moe_sum_reduce.py` |
+| 昆仑芯 | 0.1744x | -1.25% | `moe_sum_reduce_kunlunxin.py` |
+| 华为 | 1.1336x | -10.06% | `moe_sum_reduce_ascend.py` |
+| 国际通用 A | 3.9338x | +4.39% | `moe_sum_reduce.py` |
+| 国际通用 B | 3.4684x | -1.79% | `moe_sum_reduce_amd.py` |
+
+结论：保留平台自动选择的 E11 team best 和公开第 10 名，但华为从 `1.2604x`
+下降到 `1.1336x`，未满足预注册的 `>1.3160x` 单芯归因门；本轮跨榜来自冻结芯
+合计正向波动。永久停止 65,535 cap 轴，不重传，也不再扩展 cap 搜索。当前第 9 名
+为 `3.0826x`，仍差 `0.087225x` 平均（`0.6978` 总分）；后续必须有独立单芯直接
+证据，不能依赖再次波动。
