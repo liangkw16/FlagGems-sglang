@@ -231,3 +231,77 @@ vendor）、国际 B 1.6697x。三失败芯：燧原 vendor（fp16 dot）验证�
 `Aborted` 崩溃（当晚该评测器对多任务同型崩溃）；华为为 case 级异步错误
 （T15/T16 同族 Ascend flash 边界 bug）。Task 14 最终 5/8，保留第 2 次额度
 （无已知单变量修复，三芯失败互独立）。
+
+## E2-b951safe：官方 PR #31 四路径证据迁移（唯一一次重开）
+
+状态：source/test、Git-object release 与不可变 ZIP 门禁通过，待实时 preflight；
+只允许正式提交一次。
+
+### GitHub 一手证据与决策
+
+2026-08-26 对 `flagos-ai` 相关仓库的定向检索发现官方
+[FlagGems-sglang PR #31](https://github.com/flagos-ai/FlagGems-sglang/pull/31)。锁定
+作者有专项结果的 commit
+[`b951a115`](https://github.com/flagos-ai/FlagGems-sglang/commit/b951a115a8cbd7ed81a2ea762c8825f8d26b7836)，
+不采用 PR 当前可变 head。该证据组合为：
+
+- 同源平台 submission `3942` 的六颗通过分数：天数 `3.94533333x`、沐曦
+  `4.41016667x`、燧原 `0.574x`、海光 `7.10483333x`、国际 A
+  `13.49016667x`、国际 B `1.27716667x`，合计 `30.80166667x`；旧失败为
+  昆仑编译超时和华为 case 10 的 `blk=32774` grid 错误。
+- `b951a115` 作者披露的专项 KernelGen 为 Kunlun 12/12、Ascend 16/16，另含
+  Ascend 长序列 stress 1/1。它不是平台八芯官方结果，故只作迁移先验。
+- 即使昆仑和华为都只有最低 `0.1x`，六芯冻结分数给出的有效均值下界仍为
+  `3.87520833x`，略高于当时唯一有效榜首 `3.7924375x`。
+
+原始 `b951a115` 不能直接提交：MetaX vendor 跨包导入 generic，不满足竞赛
+self-contained 门禁；generic/MetaX/Ascend/Kunlun 又都在 `D=8` 令 `tl.dot`
+得到小于 16 的 K 维。E2 只作最小安全改版：generic/Ascend/Kunlun 各增加
+`BLOCK_D=max(16,next_power_of_2(D))`；MetaX 内联同一已修 generic，仅固定其
+`BLOCK_N=16,num_warps=4` policy。对历史 `D>=16` shape，传入 kernel 的
+constexpr 与证据字节完全相同。删除旧 Enflame/Iluvatar/NVIDIA vendor，让这三芯
+与国际卡回到有六芯平台证据的 generic 路径。由于有上述派生修复，本候选明确不标为
+exact-source evidence。
+
+### 验证与发布
+
+source/verification commit 为
+`fc81bb8fbd6204d789d0b50efc09a43d4aa6b703`。generic/MetaX/Ascend/Kunlun/
+test SHA-256 分别为
+`e3698164cd1ca36b22822e48eb561c4165c73ef480e71725c97f9571dc475b4b`、
+`58843e30a5c30f540591405953a58ae90cf34390048fb75a577fc5b4df17b69c`、
+`2b98d4b985e637db792ca739f72e7a75e9e2760b1acaa51c9a7d3c09871fa6b8`、
+`1cb2bac13e7e708bb3ee9ee8a31ac5754fab4df3ce2e0f353ba0569f80686eb4`、
+`c1e628365a6b8d3c3a7c17fe7ea7690d69c33f1a4dc864f2ea89a5a9f55b04aa`。
+
+- screening 位于 `gpu:/tmp/flagos-context-attention-ghscan.er90CC`，base commit
+  `5e17af69ecbf573967aa13ee149bc94da7e64844`，PID/PGID `141956`；传输前后
+  五文件哈希一致，静态门禁和 unittest 8/8 通过，`SCREENING_OK`；
+  `screening.log` SHA-256 为
+  `81fb1ce534c79466fe411b5171aa6928671b8e68cc44cafc6af318ad282fb76b`。
+- Git-object release 位于
+  `gpu:/tmp/flagos-context-attention-b951-release.mFgfh0`，PID/PGID `142872`；
+  Black/isort/flake8/py_compile、哈希复验和 unittest 8/8（0.629s）通过，尾行为
+  `RELEASE_OK`；`release.log` SHA-256 为
+  `c3a9b25ac7d608a60ff3020dc1267a88377f6ecf17246720e6e8861d7c4d51ff`。
+- 同目录 release benchmark PID/PGID `143278`；格式化后的独立 harness SHA-256
+  `1d6cc4bff9e4bb29f16bcc3da68953d35c6fb0780dc18ff6b8df6cb8ac770761`，
+  `benchmark.log` SHA-256
+  `124329e542597eb260df965fcc9a325de54ac88267215944e1bf4c1be8e90783`，
+  尾行为 `BENCHMARK_OK`。四个公开主 shape 的 wrapper-inclusive 代理 speedup 为
+  `13.5016/20.2057/4.5583/2.9578x`，最大绝对误差 `4.12e-4`；四模块代表 shape
+  延迟为 `0.02227/0.02699/0.03494/0.02752ms`。编译变体均为 0 global
+  scratch，最大 shared 40,960B。
+- 远端环境为 RTX 5070 Ti 16GB、Python 3.12.13、PyTorch 2.13.0+cu130、
+  Triton 3.7.1、CUDA 13.0。NVIDIA 只作代理；Ascend/Kunlun 的主要晋级依据仍是
+  上述固定 GitHub commit 的作者设备结果。
+
+canonical ZIP 为
+`artifacts/competition/context_attention/e2-b951safe-fc81bb8/context_attention.zip`，
+32,808B，SHA-256
+`63e3e0ddccf1493dfb484ee4a7f1310f4f91dae677b874afa68fe43798cac774`；
+唯一成员为 generic + ascend/kunlunxin/metax。确定性重建、`--verify-existing`、
+`unzip -t`、成员白名单和逐文件来源哈希全部通过。
+
+停止规则：E2 只提交一次；昆仑或华为任一失败/低于 `0.1x`，Task 14 永久停止，
+不再追加 tile/warps/dtype 猜测。
