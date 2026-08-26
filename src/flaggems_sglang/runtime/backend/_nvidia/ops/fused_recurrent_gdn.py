@@ -101,13 +101,39 @@ def _fused_recurrent_gdn_k64_kernel(
             + query_head * stride_k_head
         )
 
-        state = tl.load(state_ptr + state_base + key_offsets) * decay
-        tl.store(state_ptr + state_base + key_offsets, state)
-        state = tl.load(state_ptr + state_base + key_offsets)
-        key = tl.load(k_ptr + key_base + key_offsets * stride_k_dim).to(
-            tl.float32
+        prediction_0 = 0.0
+        prediction_1 = 0.0
+        prediction_2 = 0.0
+        prediction_3 = 0.0
+        for key_offset in tl.static_range(0, 64, 4):
+            state_0 = tl.load(state_ptr + state_base + key_offset) * decay
+            state_1 = tl.load(state_ptr + state_base + key_offset + 1) * decay
+            state_2 = tl.load(state_ptr + state_base + key_offset + 2) * decay
+            state_3 = tl.load(state_ptr + state_base + key_offset + 3) * decay
+            tl.store(state_ptr + state_base + key_offset, state_0)
+            tl.store(state_ptr + state_base + key_offset + 1, state_1)
+            tl.store(state_ptr + state_base + key_offset + 2, state_2)
+            tl.store(state_ptr + state_base + key_offset + 3, state_3)
+            key_0 = tl.load(k_ptr + key_base + key_offset * stride_k_dim).to(
+                tl.float32
+            )
+            key_1 = tl.load(
+                k_ptr + key_base + (key_offset + 1) * stride_k_dim
+            ).to(tl.float32)
+            key_2 = tl.load(
+                k_ptr + key_base + (key_offset + 2) * stride_k_dim
+            ).to(tl.float32)
+            key_3 = tl.load(
+                k_ptr + key_base + (key_offset + 3) * stride_k_dim
+            ).to(tl.float32)
+            prediction_0 = tl.fma(state_0, key_0, prediction_0)
+            prediction_1 = tl.fma(state_1, key_1, prediction_1)
+            prediction_2 = tl.fma(state_2, key_2, prediction_2)
+            prediction_3 = tl.fma(state_3, key_3, prediction_3)
+        # Preserve the FP32 reference GEMM's four-accumulator merge order.
+        prediction = (prediction_0 + prediction_2) + (
+            prediction_1 + prediction_3
         )
-        prediction = tl.sum(state * key, axis=0)
 
         value_address = (
             batch * stride_v_batch
@@ -131,18 +157,77 @@ def _fused_recurrent_gdn_k64_kernel(
             + timestep * stride_q_time
             + query_head * stride_q_head
         )
-        tl.store(outer_ptr + state_base + key_offsets, correction * key)
-        state = tl.load(state_ptr + state_base + key_offsets) + tl.load(
-            outer_ptr + state_base + key_offsets
-        )
-        tl.store(state_ptr + state_base + key_offsets, state)
-        query = (
-            tl.load(q_ptr + query_base + key_offsets * stride_q_dim).to(
+        result_0 = 0.0
+        result_1 = 0.0
+        result_2 = 0.0
+        result_3 = 0.0
+        for key_offset in tl.static_range(0, 64, 4):
+            key_0 = tl.load(k_ptr + key_base + key_offset * stride_k_dim).to(
                 tl.float32
             )
-            * scale
-        )
-        result = tl.sum(state * query, axis=0)
+            key_1 = tl.load(
+                k_ptr + key_base + (key_offset + 1) * stride_k_dim
+            ).to(tl.float32)
+            key_2 = tl.load(
+                k_ptr + key_base + (key_offset + 2) * stride_k_dim
+            ).to(tl.float32)
+            key_3 = tl.load(
+                k_ptr + key_base + (key_offset + 3) * stride_k_dim
+            ).to(tl.float32)
+            outer_0 = correction * key_0
+            outer_1 = correction * key_1
+            outer_2 = correction * key_2
+            outer_3 = correction * key_3
+            tl.store(outer_ptr + state_base + key_offset, outer_0)
+            tl.store(outer_ptr + state_base + key_offset + 1, outer_1)
+            tl.store(outer_ptr + state_base + key_offset + 2, outer_2)
+            tl.store(outer_ptr + state_base + key_offset + 3, outer_3)
+        for key_offset in tl.static_range(0, 64, 4):
+            state_0 = tl.load(state_ptr + state_base + key_offset) + tl.load(
+                outer_ptr + state_base + key_offset
+            )
+            state_1 = tl.load(
+                state_ptr + state_base + key_offset + 1
+            ) + tl.load(outer_ptr + state_base + key_offset + 1)
+            state_2 = tl.load(
+                state_ptr + state_base + key_offset + 2
+            ) + tl.load(outer_ptr + state_base + key_offset + 2)
+            state_3 = tl.load(
+                state_ptr + state_base + key_offset + 3
+            ) + tl.load(outer_ptr + state_base + key_offset + 3)
+            tl.store(state_ptr + state_base + key_offset, state_0)
+            tl.store(state_ptr + state_base + key_offset + 1, state_1)
+            tl.store(state_ptr + state_base + key_offset + 2, state_2)
+            tl.store(state_ptr + state_base + key_offset + 3, state_3)
+            query_0 = (
+                tl.load(q_ptr + query_base + key_offset * stride_q_dim).to(
+                    tl.float32
+                )
+                * scale
+            )
+            query_1 = (
+                tl.load(
+                    q_ptr + query_base + (key_offset + 1) * stride_q_dim
+                ).to(tl.float32)
+                * scale
+            )
+            query_2 = (
+                tl.load(
+                    q_ptr + query_base + (key_offset + 2) * stride_q_dim
+                ).to(tl.float32)
+                * scale
+            )
+            query_3 = (
+                tl.load(
+                    q_ptr + query_base + (key_offset + 3) * stride_q_dim
+                ).to(tl.float32)
+                * scale
+            )
+            result_0 = tl.fma(state_0, query_0, result_0)
+            result_1 = tl.fma(state_1, query_1, result_1)
+            result_2 = tl.fma(state_2, query_2, result_2)
+            result_3 = tl.fma(state_3, query_3, result_3)
+        result = (result_0 + result_2) + (result_1 + result_3)
         output_address = (
             batch * stride_output_batch
             + timestep * stride_output_time

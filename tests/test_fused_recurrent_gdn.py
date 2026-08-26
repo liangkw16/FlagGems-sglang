@@ -18,20 +18,38 @@ from pathlib import Path
 
 import torch
 
-MODULE_PATH = (
+GENERIC_MODULE_PATH = (
     Path(__file__).parents[1]
     / "src"
     / "flaggems_sglang"
     / "ops"
     / "fused_recurrent_gdn.py"
 )
-SPEC = importlib.util.spec_from_file_location(
-    "fused_recurrent_gdn_module", MODULE_PATH
+NVIDIA_MODULE_PATH = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+    / "_nvidia"
+    / "ops"
+    / "fused_recurrent_gdn.py"
 )
-if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"cannot load {MODULE_PATH}")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+
+
+def load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+GENERIC_MODULE = load_module(
+    "fused_recurrent_gdn_generic", GENERIC_MODULE_PATH
+)
+MODULE = load_module("fused_recurrent_gdn_nvidia", NVIDIA_MODULE_PATH)
 
 
 def reference(
@@ -195,6 +213,7 @@ class FusedRecurrentGdnTest(unittest.TestCase):
         atol=1e-2,
         rtol=1e-2,
         equal_nan=False,
+        module=MODULE,
     ):
         q, k, v, g, beta, initial_state = case
         scale = 0.37
@@ -205,7 +224,7 @@ class FusedRecurrentGdnTest(unittest.TestCase):
         )
         snapshots = tuple(tensor.clone() for tensor in tensors)
 
-        actual_output, actual_state = MODULE.fused_recurrent_gdn(
+        actual_output, actual_state = module.fused_recurrent_gdn(
             q,
             k,
             v,
@@ -351,6 +370,24 @@ class FusedRecurrentGdnTest(unittest.TestCase):
             ),
             output_final_state=True,
             use_qk_l2norm_in_kernel=False,
+        )
+
+    def test_generic_k64_bfloat16_contract(self):
+        self.assert_matches(
+            make_case(
+                torch.bfloat16,
+                batch=1,
+                sequence_length=3,
+                query_heads=2,
+                value_heads=4,
+                key_dim=64,
+                value_dim=17,
+                beta_is_vector=True,
+                use_initial_state=True,
+            ),
+            output_final_state=True,
+            use_qk_l2norm_in_kernel=False,
+            module=GENERIC_MODULE,
         )
 
     def test_long_bfloat16_recurrence(self):
