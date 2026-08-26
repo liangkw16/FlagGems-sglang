@@ -94,9 +94,7 @@ def _fused_recurrent_gdn_k64_kernel(
             + timestep * stride_g_time
             + value_head * stride_g_head
         )
-        decay = tl_extra_shim.exp(
-            tl.load(g_ptr + gate_offset).to(tl.float32)
-        )
+        decay = tl_extra_shim.exp(tl.load(g_ptr + gate_offset).to(tl.float32))
         key_base = (
             batch * stride_k_batch
             + timestep * stride_k_time
@@ -109,22 +107,16 @@ def _fused_recurrent_gdn_k64_kernel(
         prediction_3 = 0.0
         for key_offset in tl.static_range(0, 64, 4):
             state_0 = tl.load(state_ptr + state_base + key_offset) * decay
-            state_1 = (
-                tl.load(state_ptr + state_base + key_offset + 1) * decay
-            )
-            state_2 = (
-                tl.load(state_ptr + state_base + key_offset + 2) * decay
-            )
-            state_3 = (
-                tl.load(state_ptr + state_base + key_offset + 3) * decay
-            )
+            state_1 = tl.load(state_ptr + state_base + key_offset + 1) * decay
+            state_2 = tl.load(state_ptr + state_base + key_offset + 2) * decay
+            state_3 = tl.load(state_ptr + state_base + key_offset + 3) * decay
             tl.store(state_ptr + state_base + key_offset, state_0)
             tl.store(state_ptr + state_base + key_offset + 1, state_1)
             tl.store(state_ptr + state_base + key_offset + 2, state_2)
             tl.store(state_ptr + state_base + key_offset + 3, state_3)
-            key_0 = tl.load(
-                k_ptr + key_base + key_offset * stride_k_dim
-            ).to(tl.float32)
+            key_0 = tl.load(k_ptr + key_base + key_offset * stride_k_dim).to(
+                tl.float32
+            )
             key_1 = tl.load(
                 k_ptr + key_base + (key_offset + 1) * stride_k_dim
             ).to(tl.float32)
@@ -170,9 +162,9 @@ def _fused_recurrent_gdn_k64_kernel(
         result_2 = 0.0
         result_3 = 0.0
         for key_offset in tl.static_range(0, 64, 4):
-            key_0 = tl.load(
-                k_ptr + key_base + key_offset * stride_k_dim
-            ).to(tl.float32)
+            key_0 = tl.load(k_ptr + key_base + key_offset * stride_k_dim).to(
+                tl.float32
+            )
             key_1 = tl.load(
                 k_ptr + key_base + (key_offset + 1) * stride_k_dim
             ).to(tl.float32)
@@ -191,22 +183,18 @@ def _fused_recurrent_gdn_k64_kernel(
             tl.store(outer_ptr + state_base + key_offset + 2, outer_2)
             tl.store(outer_ptr + state_base + key_offset + 3, outer_3)
         for key_offset in tl.static_range(0, 64, 4):
-            state_0 = (
-                tl.load(state_ptr + state_base + key_offset)
-                + tl.load(outer_ptr + state_base + key_offset)
+            state_0 = tl.load(state_ptr + state_base + key_offset) + tl.load(
+                outer_ptr + state_base + key_offset
             )
-            state_1 = (
-                tl.load(state_ptr + state_base + key_offset + 1)
-                + tl.load(outer_ptr + state_base + key_offset + 1)
-            )
-            state_2 = (
-                tl.load(state_ptr + state_base + key_offset + 2)
-                + tl.load(outer_ptr + state_base + key_offset + 2)
-            )
-            state_3 = (
-                tl.load(state_ptr + state_base + key_offset + 3)
-                + tl.load(outer_ptr + state_base + key_offset + 3)
-            )
+            state_1 = tl.load(
+                state_ptr + state_base + key_offset + 1
+            ) + tl.load(outer_ptr + state_base + key_offset + 1)
+            state_2 = tl.load(
+                state_ptr + state_base + key_offset + 2
+            ) + tl.load(outer_ptr + state_base + key_offset + 2)
+            state_3 = tl.load(
+                state_ptr + state_base + key_offset + 3
+            ) + tl.load(outer_ptr + state_base + key_offset + 3)
             tl.store(state_ptr + state_base + key_offset, state_0)
             tl.store(state_ptr + state_base + key_offset + 1, state_1)
             tl.store(state_ptr + state_base + key_offset + 2, state_2)
@@ -497,9 +485,7 @@ def fused_recurrent_gdn(
                 device=q.device,
             )
         outer = torch.empty_like(state)
-        _fused_recurrent_gdn_k64_kernel[
-            (batch * value_heads * value_dim,)
-        ](
+        _fused_recurrent_gdn_k64_kernel[(batch * value_heads * value_dim,)](
             q,
             k,
             v,
