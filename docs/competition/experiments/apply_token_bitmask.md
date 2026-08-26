@@ -389,7 +389,7 @@ best；E3 one-shot 已用，不制造字节不同的伪新候选绕过规则。
 
 ## E4：Ascend BLOCK 512
 
-状态：release 与不可变 ZIP 门禁通过，待 one-shot 平台验证
+状态：平台 8/8、`valid`、`4.67295x`，非 team best；保留 E2
 
 E4 从 E2 team best 的提交字节分叉，只把 Ascend vendor 的 `block_size` 从
 256 改为 512；physical worker cap 48、grid-stride、位运算、四 warps、单 stage
@@ -433,3 +433,22 @@ Task08 Ascend tile 轴；平台 reference 若再次 OOM，也不重传相同字�
 未继承受信 hostname 把内置远端验签标记为 `unavailable`，随后从平台返回的已核实
 对象地址匿名回读 8383 bytes，SHA-256 与 canonical ZIP 完全一致。平台选中了
 预期的 generic、Ascend、Enflame 三条路径；禁止重传。
+
+00:54:57 CST 终态为 `completed` / `valid`、8/8，平均 `4.67295x`，非
+team best。华为由 E2 的 `0.9646x` 降至 `0.9576x`（-0.73%），未达到
+`1.1246x` 单芯目标；整题较 E2 下降 `0.013975x`，未过晋级门：
+
+| 芯片 | E4 speedup | 相对 E2 | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 9.8138x | -1.87% | `apply_token_bitmask.py` |
+| 沐曦 | 4.7980x | +0.49% | `apply_token_bitmask.py` |
+| 燧原 | 2.9530x | +3.58% | `apply_token_bitmask_enflame.py` |
+| 海光 | 5.0116x | +0.99% | `apply_token_bitmask.py` |
+| 昆仑芯 | 0.7990x | +3.96% | `apply_token_bitmask.py` |
+| 华为 | 0.9576x | -0.73% | `apply_token_bitmask_ascend.py` |
+| 国际通用 A | 6.8858x | -0.87% | `apply_token_bitmask.py` |
+| 国际通用 B | 6.1648x | -1.00% | `apply_token_bitmask.py` |
+
+结论：T24/T21 的 Ascend BLOCK512 收益不能迁移到本题；保留 E2
+`4.686925x` 为 Task08 team best，按 one-shot 规则停止 Ascend tile 轴，不做
+1024 sweep。
