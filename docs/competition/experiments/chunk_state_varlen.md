@@ -306,3 +306,22 @@ canonical ZIP
 E2 只提交一次；若 8/8 即停止 Task 13。若仅一款失败且 traceback 明确落在
 pack 的地址/资源结构，最多允许一个结构不同的 pack 修复；若 BMM 失败、两款
 均失败或第二候选仍 invalid，则立即转 Task 17，不再调 BLOCK/warps/stages。
+
+### E2 平台结果与 Task 13 停止
+
+E2 于 2026-08-26 14:26:08 CST 提交（submission `5041`，当日序号 `3`，
+额度 `28/30`→`27/30`）。平台远端对象与 canonical ZIP 验签一致：44399B、
+SHA-256
+`91ec55f502bcdb4156f422e2f61f10350d5177113b0d7eae9c23ebe389984330`；
+`file_url_sha256` 为
+`c9f04ed37fbe09238508c8c1a768b6bc4f0d781ae42eb9a7081cb1021d349172`。
+
+最终仍为 6/8、`invalid_correctness`。六个冻结后端均通过：海光
+462.0035x、国际 A 375.7370x、天数 139.3615x、国际 B 108.2535x、沐曦
+104.2905x、华为 27.3900x。燧原五个 case 均在
+`_pack_sequences_kernel` 编译期报
+`Pipeline run failed: PassManager execution failed`；昆仑 case 0/1/3/4
+进入执行但大面积数值不一致（分别约 49.1%/60.5%/49.9%/48.2%，最大绝对
+误差 1.6992/181.7227/91.375/680.5234）。因此结果同时命中“两款均失败”和
+“非单一明确 pack 地址问题”停止门禁：Task 13 永久停止，不对 BLOCK、warps、
+stages 或相同两阶段结构继续试错，剩余额度转投 Task 17。
