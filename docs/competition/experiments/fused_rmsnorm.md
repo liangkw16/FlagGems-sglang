@@ -354,3 +354,58 @@ multi-row 收益没有迁移到平台隐藏昆仑 workload，停止沿同一二�
 假设继续试参。平台将 E2 记为 team best，是因为平均值较 S0 高
 `0.01191666x`（约 0.263%）；保留该已提交产物作为平台最佳记录，但判定昆仑专项
 实验失败。下一轮转其他算子；若再改昆仑，先取得实际隐藏 shape 或编译器证据。
+
+## E1：燧原 fold-cap-64 vendor + 协作线海光 launch 档位 vendor（7/8 失败）
+
+状态：平台 `5219` 终态 7/8、`invalid_correctness`（海光 `_hygon` autotune
+缺陷）；保留 E2 4.54668333x team best
+
+T24 S7 的平台负结果（grid 放开使 GCU 反而 -24.5%）与 T09/T12 的 fold-cap-64
+正收益共同指向"GCU 偏好小有界物理 grid"。本任务燧原当前以无界
+`grid=(rows,)` 运行 generic，正是该反模式，因此新增
+`_enflame/ops/fused_rmsnorm.py`：kernel 数学与 generic 一致，行维按
+`min(rows, 64)` 折叠并以 `tl.num_programs(0)` 跨步，BLOCK/warps/stages 不变。
+同期协作线在 `ceb1a74` 新增 `_hygon/ops/fused_rmsnorm.py`
+（kernel 体经 AST 门禁与 generic 完全一致，仅 wrapper 以
+`@triton.autotune(key=["hidden_size"])` 在 warps 4/8/16 三档间选择）。两者都是
+单芯自包含 vendor，逐芯归因互不影响；因打包器按 commit 收集已有 vendor，
+最终 ZIP 同时包含两份新文件并一次性提交。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `16b7b38b86a5c50e44d216cf6db358d6b0224c18` |
+| generic SHA-256 | `02bed1a5cb28b583c343892569d9e25d1ef3d888e124fdd066d1155a0b964997`（=S0 冻结） |
+| Enflame / Kunlun SHA-256 | `81fd600b950aef76322e422cbf7633f6c3cc624bcc2e0e37ec80ecd16a20adf1` / `167c23715a11c459db2244c4ae05b18941f8ee2f0af6bfb6d6ed781b0a0d5512`（冻结） |
+| Hygon SHA-256 | `2142d2d57fe548094698b1d1a8a218b941ddff8b95adb4c6bf3578ebd748b614` |
+| 测试 SHA-256 | `4e9e8a79410813cbc2ad7de7e01d879eb16392289441d2343ad79e5f5546ac7b` / hygon 静态测试 `1475349dd8f6a3bfddd8dc6bed75c9a3a1051975a00647a9d619ee088580b6b2` |
+| screening | `gpu:/tmp/flagos-fused-rmsnorm-e1-enflame.Pw2xDq`；py_compile/Black/isort/flake8 与 5/5 unittest 通过、`SCREENING_OK`；A/B 受影响几何均值 `0.4858x`（CUDA 上 cap64 大 rows 必然慢 3–4x，属预期反指）、controls `0.9947x`、资源 0 spill |
+| release | `gpu:/tmp/flagos-fused-rmsnorm-e1-release.Kq5rTv`；静态门禁、5/5 CUDA unittest 与 2/2 Hygon AST 检查通过、`RELEASE_OK` |
+| canonical ZIP | `artifacts/competition/fused_rmsnorm/e1-16b7b38/fused_rmsnorm.zip`，11,733 bytes，SHA-256 `44ed2da0b060c5686f2b758d3f1f2c77912e0c063363af4e3366d128c11ba3d3` |
+
+2026-08-27 01:11:58 CST 经实时 preflight（额度 `22/30`）执行唯一一次提交，
+submission `5219`、当日序号 `9`。01:13:34 CST 只读终态为 7/8、
+`invalid_correctness`：
+
+| 芯片 | 结果 | speedup | 选中文件 |
+| --- | --- | ---: | --- |
+| 天数智芯 | 通过 | 7.7748x | `fused_rmsnorm.py` |
+| 沐曦 | 通过 | 5.05973333x | `fused_rmsnorm.py` |
+| 燧原 | 通过 | 1.45533333x | `fused_rmsnorm_enflame.py` |
+| 海光 | 失败 | N/A | `fused_rmsnorm_hygon.py` |
+| 昆仑芯 | 通过 | 0.93373333x | `fused_rmsnorm_kunlunxin.py` |
+| 华为 | 通过 | 1.67686667x | `fused_rmsnorm.py` |
+| 国际通用 A | 通过 | 5.87826667x | `fused_rmsnorm.py` |
+| 国际通用 B | 通过 | 5.6872x | `fused_rmsnorm.py` |
+
+海光 case 2 起全部失败：`TypeError: JITFunction.run() got multiple values for
+keyword argument 'BLOCK_SIZE'`——wrapper 向 kernel 显式传 `BLOCK_SIZE=` 的同时
+`@triton.autotune` 的 `Config({}, ...)` 再次注入同名 key。该缺陷在协作线的
+AST 等价门禁（不加载模块）与本任务的运行时套件之间漏检：后者只覆盖了燧原
+vendor 的模块加载路径。
+
+结论分三部分：其一，燧原 fold-cap-64 假设被平台证伪——`1.4553x` 相对 E2 的
+generic `1.5049x` 低约 3.3%，处于本轮冻结芯片 ±6% 波动带内，rmsnorm 行循环的
+瓶颈结构与 dot/dot-free pointwise 不同，fold 收益不可迁移；停止该轴。其二，
+海光 launch 档位轴归协作线所有，待其修复 autotune 重复 kwarg 缺陷后另行验证；
+任何后续候选必须先为每个 vendor 增加真实 `importlib` 加载加 reference 数值
+回归。其三，其余六枚芯片对冻结字节保持通过，E2 仍是 Task 19 平台最佳。
