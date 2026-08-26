@@ -291,7 +291,8 @@ kernel 形态（含分支、无分支、generic 同字节），后续遇燧原 g
 
 ## E2a：燧原 metadata route + 规整 rank gather（高倍数冲刺重开）
 
-状态：release 门禁与不可变 ZIP 验签通过，候选就绪，待实时 preflight。
+状态：原 `c7c184b` 产物在提交前经上游审计淘汰；后文 `E2a-i32` 已重新通过
+release 门禁与不可变 ZIP 验签，候选就绪，待实时 preflight。
 
 用户批准的高倍数冲刺重开 Task 17，但只允许一个结构性候选；generic、Ascend、
 Kunlun 字节全部冻结。E2a 把原单 kernel 拆成两个职责单一的 kernel：
@@ -351,3 +352,65 @@ canonical ZIP 为
 E2a 只提交一次：若 8/8 且燧原 ≥0.1x，立即停止 Task 17；若失败明确只落在
 route 地址结构，最多允许一个 safe-address route E2b；若 gather 编译失败、低于
 0.1x 或第二候选仍 invalid，则永久停止并转 Task 15，不调 BLOCK/warps/stages。
+
+### E2a-i32：提交前消除 GCU300 64-bit IR
+
+`c7c184b` 的 ZIP 尚未上传时，官方上游提供了可归因的新证据：FlagGems
+[GCU300 embedding](https://github.com/flagos-ai/FlagGems/blob/d1c970e0c9ccb3c26d9fc8de906a7e21a64cc0a1/src/flag_gems/runtime/backend/_enflame/gcu300/ops/embedding.py)
+会在 wrapper 将 int64 index 降为 int32；FlagGems
+[#5345](https://github.com/flagos-ai/FlagGems/pull/5345) 与
+libtriton_jit [#41](https://github.com/flagos-ai/libtriton_jit/issues/41)
+均记录 GCU300 遇到 64-bit scalar/派生 IR 时在编译阶段失败。当前 E2a 虽已把
+route 输出建为 int32，gather 内仍显式把九个 stride cast 为 `tl.int64`，因此旧
+release 不能支撑本轮“消除 64-bit IR”的假设。旧 ZIP 保持不可变但标记为
+superseded，未运行 preflight、未上传、未消耗额度。
+
+最小修正只改 Enflame vendor：int64 `input_ids/seg_indptr/weight_indices/lora_ranks`
+在 wrapper 有界降为 int32，并删除 gather 的九个显式 int64 stride cast；route、
+gather、BLOCK/grid/warps/stages 与其余三份源码完全不变。公开与代理最大地址远低于
+`2^31`；若隐藏 tensor 真需要超过该范围的元素偏移，GCU300 本身也不能用 i64
+表示，作为已知风险保留，不增加会拒绝隐藏 case 的 host assert。
+
+最终 source/verification commit 为
+`fb1235d78f54699405624155d634f2a63ad209f0`；generic/Ascend/Enflame/Kunlun/test
+SHA-256 分别为
+`fb29244a40cffdf0d585615cb1dc9f9272063c2028792ac914e57e7a562a5f92`、
+`1c4524e6f2c742d2d4950af8ecb53c6598a9a1f8eba0cb67ba79b309f6dee958`、
+`962b8db7ce6fa1e3d317c309e77ef6069f97f0fa69888b760892c774098a25ac`、
+`1c4524e6f2c742d2d4950af8ecb53c6598a9a1f8eba0cb67ba79b309f6dee958`、
+`5fc2a5ee86a1e877b9db0e439eec0a92489a4a87675a4e2dd3582b19bf7670da`；
+Enflame 源码中 `tl.int64`/`to(tl.int64)` 静态门禁为零命中。
+
+最终 screening 位于
+`gpu:/tmp/flagos-embedding-lora-a-e2a-i32-screening.Ry7zga`，base commit
+`769ea73`，PID/PGID `133476`；沿用的 `replay.sh` SHA-256 为
+`91c60cff5c40d62026766cced6168065108eeb37de403d314088a0626f44877c`。
+8/8 unittest 通过（0.664s），尾行为 `SCREENING_OK`，`screening.log`
+SHA-256 为
+`d13548e1ab57b5abad984dcdfd4fb00d168d3303c73cf4bb7638d10f41ab9e34`；
+输入前后 manifest SHA-256 均为
+`e5ffb42167c5c14cccb4ef5cba03994c10dfe559fc670584ead6189508d5af9a`。
+
+同目录 NVIDIA 代理基准脚本保持
+`feb29192c64643e01c6948ad2e0772677495120fe1182197248b1b759dda3704`；
+PID/PGID `133606`，日志 SHA-256
+`0b42f43cb070b5fd9f808b7d6ffd39339af3a2300dcf00ef2f13505509f41e77`，
+尾行为 `BENCHMARK_OK`。三个代表 shape 的 wrapper-inclusive 延迟为
+0.01106/0.02488/0.01767ms，相对旧 S1c 为 0.647/0.851/0.712x，相对 reference
+仍为 56.93/50.58/12.49x；峰值显存增量 19,456/143,360/703,488B。该数据只用于
+排除代理侧阈值与资源灾难，不外推 GCU 性能。
+
+Git-object release 位于
+`gpu:/tmp/flagos-embedding-lora-a-e2a-i32-release.n9gpTt`，PID/PGID
+`133729`；`replay.sh` SHA-256 为
+`89b3f8b7cab620ab454d872a9f4a747917f15e95f684252a6d3bd913b9eb6ced`。
+8/8 unittest 通过（0.554s），尾行为 `RELEASE_OK`，`release.log` SHA-256
+为 `552417dfdb600d3e522a7647da5c0867b85575c3e23e1f489edc55aa0edda72d`；
+release 前后 manifest SHA-256 与最终 screening 相同。
+
+canonical ZIP 为
+`artifacts/competition/embedding_lora_a/e2a-i32-fb1235d/embedding_lora_a.zip`，
+22,719B，SHA-256
+`eb4b40d4703f5c6ea8d9bc3e5c3b896310f5bfe7a9c0d40637dc0c746d126081`，
+成员仍为 generic + ascend/enflame/kunlunxin；`--verify-existing`、`unzip -t`
+与成员白名单全部通过。平台仍只允许这一个 E2a 正式提交，后续 stop gate 不变。
