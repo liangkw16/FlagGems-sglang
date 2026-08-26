@@ -106,7 +106,7 @@ def moe_sum_reduce(input, routed_scaling_factor):
     grid = lambda meta: (
         min(
             num_tokens * triton.cdiv(hidden_dim, meta["BLOCK_SIZE"]),
-            4096,
+            65535,
         ),
     )
     _moe_sum_reduce_kernel[grid](
