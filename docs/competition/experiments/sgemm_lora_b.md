@@ -581,4 +581,20 @@ E9 只提交一次：晋级门为 8/8 且昆仑 ≥0.1x；按 E8 七芯合计 19
 最低有效平均约 24.403x。若昆仑仍在该 scatter 编译/正确性失败，则永久停止
 Task 23 与 Task 22，不再用额度试 BLOCK/warps/grid。
 
-<!-- T23_E9_PLATFORM_RESULT_PENDING -->
+### E9 平台结果：7/8；scatter 越过编译但运行期非法内存
+
+- 2026-08-26 20:54:44 CST 单次提交，submission `5132`、当日序号 `17`，
+  额度 `14/30`→`13/30`；上传后无认证回读 35,057B、SHA-256
+  `feaddd39d9472fd1d260968ad7bd3f3b98495ce51123da6fe5b10f9720cae92a`，
+  与 canonical ZIP 完全一致。`file_url_sha256` 为
+  `a012a7351cde56eef4ec99428bb44d294c2e070be55c5f798b8ea58db71efff9`。
+- 七芯通过：天数 33.8060x、沐曦 18.0130x、燧原 4.1075x、海光
+  51.0625x、华为 18.5675x、国际 A 45.8985x、国际 B 28.9615x，合计
+  200.4165x；若昆仑仅过 0.1x，平均也会达到约 25.0646x。
+- 昆仑不再出现 `uni_sram` 编译失败。case 0 在 7.485s 后于
+  `assert_close` 的首次同步点报 error 700 illegal memory access；由于设备错误是
+  异步上报，traceback 不能定位到具体 launch。case 1–4 均在首错后于 reference
+  clone/copy 失败，只视为设备污染，不作为独立根因。
+- 按 E9 预设门禁，Task 23 与依赖同结构的 Task 22 停止，不用平台额度继续猜
+  BLOCK/warps/grid。后续只允许只读核对 FlagGems/FlagTree 一手实现；没有能锁定
+  新根因的源码证据，不重开候选。
