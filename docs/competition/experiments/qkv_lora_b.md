@@ -262,3 +262,75 @@ GCU 环境可复现定位。Task 22 两次预算用尽（S2、S2c），按规则
 昆仑 vendor（32/32/32/stages1 保守配置）最终同样未通过（评测长时间
 `waiting_callback` 后失败），Task 22 最终 6/8。两芯失败互独立：燧原为
 case 2 编译失败，昆仑为超时/评测异常。Task 22 维持停止结论。
+
+## E3-i32：Enflame metadata 全路径 32-bit（一次性证据重开）
+
+状态：Git-object release、代理 benchmark 与不可变 ZIP 门禁通过，待实时
+preflight。
+
+### 新根因证据与单变量
+
+Task 17 submission `5048` 已正式证明，同一 GCU300 后端在删除 kernel i64 IR
+并把整数 metadata 在 host 侧转为 int32 后，可从连续 `PassManager` 失败恢复为
+正确且 0.3885x。FlagTree 一手源码进一步显示，GCU300 默认
+[`enable_i64=False`](https://github.com/flagos-ai/FlagTree/blob/367dc5794f678a70ec57bb8a1b3d24bf9b855ca6/third_party/enflame/backend/compiler.py#L179-L205)，
+并安装会拒绝 64-bit scalar 的
+[`GCUSupportVerifier`](https://github.com/flagos-ai/FlagTree/blob/367dc5794f678a70ec57bb8a1b3d24bf9b855ca6/third_party/enflame/triton_gcu/triton_gcu300/lib/Transforms/GCUSupportVerifier.cpp#L51-L65)。
+旧 S2/S2c 对 cumsum/stages 的解释被源码证伪：当前 QKV kernel 没有 cumsum，
+却显式把 7 个主数据 stride 转为 `tl.int64`，且让五类整数 metadata 的 dtype
+直接进入 kernel。
+
+E3 因此只改变一个结构变量：Enflame wrapper 仅在 dtype 为 int64 时把
+`seg_indptr`、`weight_indices`、`lora_ranks`、可选 `permutation` 和
+`output_offset` 转为 int32，并把转换后 tensor 的真实 stride 传入 kernel；
+同时删除 7 个显式 stride i64 cast。scalings、grid、64×128×32 tile、4 warps、
+1 stage、dot 数学及 generic/Ascend/Ilúvatar/Kunlun 字节全部冻结。没有同时展平
+3D grid，因为历史失败是 case 2 PassManager，而不是明确的 grid 上限。
+
+六个已通过芯在 S2c 合计 328.264x；若燧原与昆仑仅各达到 0.1x，候选有效分
+下限为 41.058x。昆仑文件保持不变，其旧失败为长时间评测超时/异常，因此本轮是
+一次高赔率恢复实验，不把 8/8 当作已证事实。
+
+### Source、release 与代理结果
+
+source/verification commit 均为
+`d87749f0448c0971065ab0a10740417cf27a5402`。文件 SHA-256：
+
+- generic：`9fb15ce97ffaf0dfa16d0fda61fd7fa7dcc08e55bc055f808e8289ad29e6f68c`；
+- Ascend：`b458b25cad52d9ee91956dac84599947d7e1eb8be279058e9194465ad7b8f9a4`；
+- Enflame：`69d7b525d2cd3304ece1f0438b70d1d4f60e23274b95ada41a186d20df5c1457`；
+- Ilúvatar：`c5230eb53bffef2157c6522dbc2779153cd52753cb698b304079cee29167c4e0`；
+- Kunlun：`0270e3b489151eeb94d5edd57f5d4991a6f6a00d50677775b252659b2fbfe3e8`；
+- test：`8996adf898910d0af1c98f020e1053509bedf0782ac9a5f7d0528437ed4f68b9`。
+
+release 目录为 `gpu:/tmp/flagos-qkv-lora-b-e3-release.JjxRrt`。目录只由上述
+commit 的 Git 对象生成；release 前后六个文件逐项哈希一致。远端 RTX 5070 Ti、
+Python 3.12.13、PyTorch 2.13.0+cu130、Triton 3.7.1、CUDA 13.0 环境中，
+py_compile、Black 79、isort、flake8 和 5/5 unittest 通过。回归覆盖五类
+非连续 int64 metadata 的 int32 routing、非连续 int32 no-copy、转换后的内容与
+真实 stride、`permutation=None` fallback，以及三 dtype、空 segment、rank0、
+非等宽 slice、permutation、fold/split vendor 大 shape 和输入不变性。
+
+release replay/log SHA-256 分别为
+`d5decbc4bd240996e4b3bfcfb9e1c62693731ff50b9ce82ca50902e5352ca2e0`、
+`0ed10f18351295db73bccc9473a2e584f35f4b4add2e37dbacf300cff79552be`，
+尾行为 `RELEASE_OK`。代表 shape 为 FP16、batch 8、每段 128 token、rank 32、
+三个 slice `[128,64,64]`，且五类 metadata 均为非连续 int64：候选
+0.01835805ms、Torch reference 1.30975468ms，代理 speedup 71.344991x，
+正确性先验通过。benchmark script/log SHA-256 分别为
+`fce2ca2604a8591116ff53c097c6f3c02cffa8afb002fc3a386b6b3b37b86554`、
+`bd65bce1fc5b9f2b07effd717b20acb540a40038528980c828aafd3f9b7ee65c`。
+NVIDIA 只能作代理，不能证明 GCU/XPU 终态。
+
+### 不可变产物与停止门禁
+
+canonical ZIP 为
+`artifacts/competition/qkv_lora_b/e3-i32-d87749f/qkv_lora_b.zip`，33,551B，
+SHA-256
+`47f566315846e79bf4874ed5296595d5aed193e1d54e4ed430e79a22ecefc819`；成员为
+generic + ascend/enflame/iluvatar/kunlunxin 五文件。dry-run、正式构建、
+`--verify-existing`、`unzip -t`、成员白名单和 commit 逐字节门禁均通过。
+
+E3 只提交一次。若 8/8 即停止 Task 22；若 Enflame 恢复但昆仑仍失败，说明新
+根因成立但任务仍无效，永久停止；若 Enflame 仍失败，也不再调 tile/stages/grid，
+转投 Task 14。
