@@ -178,8 +178,9 @@ corrected harness 对长随机递推先按 `sqrt(K)` 缩放 q/k，并避免 FP32
 对 `pending_challenge` 的过时硬拒绝后，复验 E2 的 commit、ZIP、唯一成员和
 SHA-256，执行一次性提交。submission `4595`，额度 `7/30` → `6/30`；未重试。
 
-截至 12:14:11 CST 为 `evaluating`、7/8 terminal、0 通过，昆仑仍为
-`waiting_callback`。七芯均在隐藏长 BF16 递推失败：case 3 的错误数依次为沐曦
+截至 2026-08-26 16:21:25 CST 已为 `completed`、8/8 terminal、0 通过，整体
+结果 `invalid_correctness`，未重试。七芯均在隐藏长 BF16 递推失败：case 3 的
+错误数依次为沐曦
 130805、燧原 668、海光 614、华为 532、国际 A 644、国际 B 827；case 4 除燧原
 外分别仅错 2、7、21、9、4、17 个元素。燧原 case 4 另有确定的
 `grid.y=256 > 255` 启动上限。输出总元素均为 524288；日志高置信对应
@@ -202,3 +203,73 @@ seed、`atol=rtol=0.015`、`equal_nan=True` 重放两个隐藏形态。固定 1 
 日志 SHA-256
 `7ac1fd32d36e4267db9ece6ff8bd296e302fcbb28c59035c2efde14d62c68526`。所有候选均
 未通过本地正确性门禁，因此未构建 ZIP、未执行第二次提交，worktree 恢复 E2。
+
+## E4：复现 Torch 归约与 eager 舍入边界（晋升）
+
+状态：源码、测试、release 代理验证和不可变 ZIP 门禁通过；待实时 preflight
+
+验证时间：2026-08-26 16:23–16:26 CST
+
+### 根因与最小特化
+
+E3 的归约枚举没有复现 Torch `einsum -> bmm` 的真实 FP32 加法树。RTX 5070 Ti
+上的独立 K64 指纹探针表明，Torch 使用四个按 `k % 4` 分组的 FMA 累加器，最终按
+`(a0 + a2) + (a1 + a3)` 合并；该顺序在 20,480 个随机输出上与 Torch bitwise
+一致，串行、R1/R2、普通 R4 和 R8 顺序均产生大量 bit diff。另一个独立探针显示，
+Triton `tl.exp` 对 2^20 个 BF16 gate 约有 30% bit diff，而 vendor libdevice
+`exp` 及其后续 FP32 乘法与 Torch bitwise 一致。
+
+E4 因而只特化平台暴露的 `K=64`、BF16、kernel 内不做 q/k L2 norm 的路径：
+
+- 1D grid，每个 program 独占一个 `(B,HV,V)` 状态行，规避燧原 `grid.y<=255`；
+- vendor libdevice `exp` 通过项目已有跨芯 shim 调用；
+- 四路 `tl.fma` 和交叉合并复现 K64 bmm 归约；
+- FP32 state scratch 跨 timestep 保存状态，独立 FP32 outer scratch 显式物化 eager
+  外积乘法的舍入边界；
+- 其他 dtype、K、L2 路径仍走原 generic kernel，没有设备识别或 Torch fallback。
+
+outer scratch 版本移除了非标准 launch 参数 `enable_fp_fusion=False`；静态复核确认
+新增路径只使用标准 `tl.load/store/fma`，state/outer 寻址、非连续输入 stride、
+vector beta、initial/final state 和 `T=0` 契约均无硬阻塞。
+
+### Screening 与 release 证据
+
+最终源码 commit 为 `354952470e81db8234c85bc3f5364a110901f7fb`；其父提交
+`8dc6d2368f27ae50b703ab4728d7e5087a70f82a` 引入 outer scratch，最终提交仅按
+仓库 Black 79 规则机械排版。
+
+RTX 5070 Ti、PyTorch 2.13.0+cu130、Triton 3.7.1、CUDA 13.0 上，对两组平台
+高置信隐藏形态 `(B,T,H,HV,K,V)=(32,32,4,8,64,64)` 和
+`(8,128,4,8,64,64)` 各跑 seed `1/7/42/31337/65537/20260824/20260825/20260826`。
+按平台实际比较器 `atol=rtol=0.015, equal_nan=True`，16 次 output/final-state
+错误计数全部为 0；specialized contract 与 empty sequence 也均为 `(0,0)`。
+最终提交测试把长递推门槛进一步收紧为 `atol=rtol=0.01`，5/5 通过。
+
+wrapper-inclusive benchmark：
+
+| `B,T,H,HV,K,V` | E4 (ms) | Torch reference (ms) | 代理 speedup |
+| --- | ---: | ---: | ---: |
+| `32,32,4,8,64,64` | 6.1542 | 2.6276 | 0.4270x |
+| `8,128,4,8,64,64` | 6.5050 | 10.3575 | 1.5922x |
+
+两组均高于题面 `0.1x` 门槛。长递推 reference 确有 Inf/NaN，因此 screening
+沿用平台 `equal_nan=True`；有限的前段和全部有限元素仍参与逐元素比较。
+
+| 项目 | 值 |
+| --- | --- |
+| 源文件 SHA-256 | `c328d858139f446ee76f5e8f5be02776135b3ef6174d9dbc4a50b06601b98317` |
+| 测试 SHA-256 | `00eaff20252f6062ee9d1febda6a06624d189844049474a346b9101204523d82` |
+| release 目录 | `gpu:/tmp/flagos-fused-recurrent-gdn-release.NtCixc`（mode 0700） |
+| release log SHA-256 | `bb9d81a2f07fd37d79e09deb8f98313ea5633d433a6d4ecfc443fb3681a0ca6d` |
+| screening 目录 | `gpu:/tmp/flagos-fused-recurrent-gdn-bv32.gTcjCl` |
+| screening log SHA-256 | `71d742e2020ae9f663b9f92b4792e97939f516a48aa388d2be53264444f80321` |
+| screening harness SHA-256 | `822d85ead657f45a69dfeaa80e77a7d20f1320939dd47068dc41588a0a6817ff` |
+| ZIP | `artifacts/competition/fused_recurrent_gdn/e4-3549524/fused_recurrent_gdn.zip` |
+| ZIP SHA-256 | `1f4606bc083f4cd83046d5ae32f252dbc06becc8e03f41f5b60de06cb772d483` |
+| ZIP 大小 / 成员 | 19,137 bytes；仅顶层 `fused_recurrent_gdn.py`（18,995 bytes） |
+
+release 从最终 commit 直接 `git archive` 到全新目录；source/verification commit
+一致。py_compile、isort、flake8、Black 26.5.1 和 unittest 5/5 全部通过，远端
+source/test SHA 与 Git blob 相同。规范打包器创建后再以 `--verify-existing`
+只读复验，canonical ZIP SHA、唯一成员、UTF-8、10 MB、`unzip -t` 和成员逐字节
+来源门禁全部通过。
