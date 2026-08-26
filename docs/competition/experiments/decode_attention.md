@@ -303,7 +303,7 @@ program 起始偏移保持逐 program 数学不变；远端 10/10 回归通过�
 
 ## E4：三失败芯结构恢复（最终一次官方证据重开）
 
-状态：Git-object release 与不可变 ZIP 门禁通过，待实时 preflight。
+状态：平台 submission `5170` 终态 7/8 正确，`invalid_correctness`；停止。
 
 E3 后新增的固定一手证据同时覆盖了三个独立失败指纹，构成结构性重开依据，而非继续
 调 BLOCK/warps/stages：
@@ -370,3 +370,30 @@ canonical ZIP 为
 E4 最终只提交一次；五颗冻结芯按 E3 分数、三个失败芯仅按最低 `0.1x` 计算时，
 有效均值下界约 `38.54865x`。任一目标芯仍失败或低于门槛即停止 Task 15，不追加
 普通配置微调。
+
+### E4 平台结果：Ascend/Enflame 结构修复生效，Kunlun 数值失败
+
+2026-08-26 22:46:58 CST 的实时 preflight 绑定账号 `15600308080`、团队
+`SoulCoder`、Task 15、stage `e4`、source commit `96a0dfe` 与上述不可变 ZIP；
+额度为 10/30，nonce 为
+`575670b722f49aaff4aabe57a5512fc3`。一次性确认命令只执行一次，创建 submission
+`5170`（daily sequence 21），额度降至 9/30。平台返回的 file URL fingerprint
+为 `ba87d4e67f1dd6fb09120cb222858f95b42cc3e9081628ad9f5c74ad1331ec8d`；独立无
+认证、无重定向下载为 28,233B，内容 SHA-256 与 canonical ZIP 的
+`51ec3d98ca1da7e33bd1aaee93c398399855dfb7f60a6b4b8e73a3e6f0f9ca7a` 一致。
+
+| 芯片 | 结果 | speedup / 失败指纹 |
+| --- | --- | --- |
+| 天数 | 通过 | `14.6642x` |
+| 沐曦 | 通过 | `35.1890x` |
+| 燧原 | 正确但未过性能线 | `0.0928x`；65,535 host 分片修复了旧 case 8 launcher 上限 |
+| 海光 | 通过 | `82.3632x` |
+| 昆仑 | 失败 | 17.868s 完成编译与执行；case 2 为 301/640 mismatch，最大绝对误差 `3.331889` |
+| 华为 | 通过 | `43.1704x`；物理 worker grid-stride 修复旧 case 8 重复行 |
+| 国际 A | 通过 | `100.0106x` |
+| 国际 B | 通过 | `85.0110x` |
+
+本轮把昆仑从连续约 1833s compile-worker 中止恢复到 17.868s 终态，也分别验证了
+Enflame launch 分片和 Ascend 物理 worker grid 的根因判断；但昆仑仍不正确，且
+Enflame `0.0928x < 0.1x`。预先写定的 stop gate 同时被两项触发，因此不生成 E5、
+不重试相同 ZIP，Task 15 永久停止。
