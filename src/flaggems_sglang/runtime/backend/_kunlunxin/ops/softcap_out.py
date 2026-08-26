@@ -27,9 +27,7 @@ def _softcap_out_kernel(
     CAP_RECIPROCAL_OVERFLOWS: tl.constexpr,
 ):
     n_blocks = tl.cdiv(n_elements, BLOCK_SIZE)
-    program_offsets = (
-        tl.program_id(0) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
-    )
+    program_offsets = tl.program_id(0) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
     for block_round in range(0, tl.cdiv(n_blocks, 12)):
         offsets = block_round * (12 * BLOCK_SIZE) + program_offsets
         mask = offsets < n_elements
