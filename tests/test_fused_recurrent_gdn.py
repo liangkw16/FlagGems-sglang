@@ -368,8 +368,8 @@ class FusedRecurrentGdnTest(unittest.TestCase):
                     ),
                     output_final_state=False,
                     use_qk_l2norm_in_kernel=False,
-                    atol=1.5e-2,
-                    rtol=1.5e-2,
+                    atol=1e-2,
+                    rtol=1e-2,
                     equal_nan=True,
                 )
 

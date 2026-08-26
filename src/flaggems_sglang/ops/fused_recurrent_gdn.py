@@ -31,6 +31,7 @@ def _fused_recurrent_gdn_k64_kernel(
     beta_ptr,
     initial_state_ptr,
     state_ptr,
+    outer_ptr,
     output_ptr,
     scale,
     sequence_length,
@@ -185,17 +186,26 @@ def _fused_recurrent_gdn_k64_kernel(
             outer_1 = correction * key_1
             outer_2 = correction * key_2
             outer_3 = correction * key_3
+            tl.store(outer_ptr + state_base + key_offset, outer_0)
+            tl.store(outer_ptr + state_base + key_offset + 1, outer_1)
+            tl.store(outer_ptr + state_base + key_offset + 2, outer_2)
+            tl.store(outer_ptr + state_base + key_offset + 3, outer_3)
+        for key_offset in tl.static_range(0, 64, 4):
             state_0 = (
-                tl.load(state_ptr + state_base + key_offset) + outer_0
+                tl.load(state_ptr + state_base + key_offset)
+                + tl.load(outer_ptr + state_base + key_offset)
             )
             state_1 = (
-                tl.load(state_ptr + state_base + key_offset + 1) + outer_1
+                tl.load(state_ptr + state_base + key_offset + 1)
+                + tl.load(outer_ptr + state_base + key_offset + 1)
             )
             state_2 = (
-                tl.load(state_ptr + state_base + key_offset + 2) + outer_2
+                tl.load(state_ptr + state_base + key_offset + 2)
+                + tl.load(outer_ptr + state_base + key_offset + 2)
             )
             state_3 = (
-                tl.load(state_ptr + state_base + key_offset + 3) + outer_3
+                tl.load(state_ptr + state_base + key_offset + 3)
+                + tl.load(outer_ptr + state_base + key_offset + 3)
             )
             tl.store(state_ptr + state_base + key_offset, state_0)
             tl.store(state_ptr + state_base + key_offset + 1, state_1)
@@ -486,6 +496,7 @@ def fused_recurrent_gdn(
                 dtype=torch.float32,
                 device=q.device,
             )
+        outer = torch.empty_like(state)
         _fused_recurrent_gdn_k64_kernel[
             (batch * value_heads * value_dim,)
         ](
@@ -496,6 +507,7 @@ def fused_recurrent_gdn(
             beta,
             initial_state if initial_state is not None else q,
             state,
+            outer,
             output,
             float(scale),
             sequence_length,
@@ -513,7 +525,6 @@ def fused_recurrent_gdn(
             BETA_IS_VECTOR=beta_is_vector,
             num_warps=1,
             num_stages=1,
-            enable_fp_fusion=False,
         )
         return output, final_state
     block_k = triton.next_power_of_2(key_dim)
