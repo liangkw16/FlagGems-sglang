@@ -317,3 +317,19 @@ commit、ZIP 路径与 SHA-256 全部匹配；Task 可提交、距上次提交�
 提交。随后对平台返回的 HTTPS 对象做独立只读下载验签，大小 32,808B、SHA-256
 `63e3e0ddccf1493dfb484ee4a7f1310f4f91dae677b874afa68fe43798cac774`，与本地
 canonical ZIP 完全一致。候选已提交，不得再次上传或正式提交。
+
+### E2 平台终态：7/8，永久停止
+
+2026-08-26 17:15 CST 只读复查确认 submission `5081` 已终态
+`completed` / `invalid_correctness`。七芯均正确且通过 `0.1x` 门槛：天数
+`4.1215x`、沐曦 `3.89283333x`、燧原 `0.56716667x`、海光
+`7.12283333x`、华为 `1.1015x`、国际 A `13.6405x`、国际 B
+`1.27616667x`，通过芯合计 `31.7225x`。华为专项修复得到平台验证；若昆仑仅有
+最低 `0.1x`，整题本可达 `3.9778125x`，超过提交时榜首 `3.7924375x`。
+
+唯一失败为昆仑：`context_attention_kunlunxin.py` 在验证执行阶段运行
+`1,833,755ms` 后超时，子进程在结果回传前 `Fatal Python error: Aborted`，栈停在
+Torch Inductor compile worker 的 `_recv_msg`；没有 correctness case 结果或
+speedup。该故障与 PR 旧平台结果及 E1a 昆仑崩溃同型，作者 KernelGen 的 12/12
+不能替代平台完整 harness 证据。按本节预先声明的停止规则，Task 14 永久停止，不再
+为昆仑追加 tile/warps/dtype 猜测。17:15 实时全局额度为 `20/30`。
