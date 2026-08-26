@@ -572,3 +572,42 @@ Enflame native-`tanh` 轴。
 `2.18982292x`，差 `0.13570834x`。结论：GCU native `tanh` 的目标收益真实，
 但未复现榜首的数量级路径；保留 S6 为 Task24 team best，停止同一 native-`tanh`
 轴，不以相同字节或微调赌平台波动。
+
+## S7：Enflame full physical grid
+
+状态：平台 8/8、`valid`、`2.00559375x`，非 team best；保留 S6
+
+S7 从 S6 team best 分叉，只把 Enflame 物理 grid cap 从上游 pointwise 软件
+策略的 12 提高到平台 launcher 已实证的 `grid.x` 上限 65535；BLOCK4096、
+grid-stride、native `tanh`、四 warps、cap 缩放和极小 cap 保护不变。最大平台
+用例 `N=65,667,072` 只需 16,032 个 program，低于硬件上限；generic、Ascend、
+Kunlun 与 S6 逐字节相同。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `fcbf4906a6f870aeb363f20f86392faf61386c9a` |
+| generic / Ascend SHA-256 | `e6ab1c434aa793bc58357e3d45d2eec7fd2ec56bebb65538b2a6049ca9a37ddc` / `bb98a5fda924e09954ce5778a859d064daaa560ebc7d49f6dbd1229dadabb50b` |
+| Enflame / Kunlun SHA-256 | `d4c3fef38460d0e1451577e87ce666bdd15201a3ffe0566234ee509f66f11fb2` / `f34b06168ec951453601f552d3b6aa7bef1dac954a592226d3ac76ec248066bb` |
+| 测试 SHA-256 | `821ef8e1e681e7cdf6b47d1ae58a39b0a346777e049eb027357bb9c25d2b8024`（=S6） |
+| screening | `gpu:/tmp/flagos-softcap-out-s7-grid-screen.sHS1ie`；13/13、0.564s；日志 SHA-256 `ee7f8510df9916f65883a17ebd2f4db2f90702f8aa8a952d31ab9f016e48c04c` |
+| 交替 A/B | 同目录；5 组 AB/BA、warmup 25/rep 100；日志 SHA-256 `b8ab20e51157554832d6a94849567c5cadc496b90ce4baf5bb742e19b49f62d0` |
+| release | `gpu:/tmp/flagos-softcap-out-s7-grid-release.Ci4rVT`；13/13、0.564s；日志 SHA-256 `ee7f8510df9916f65883a17ebd2f4db2f90702f8aa8a952d31ab9f016e48c04c` |
+| source Git archive SHA-256 | `ec570b8c334b713cdc3fbbf1ce2ff9cac671177e511dc393e879ed1da9cb7381` |
+| canonical ZIP | `artifacts/competition/softcap_out/s7-fcbf490/softcap_out.zip`，10,026 bytes，SHA-256 `b3c71c5f0bd90f103ae187e43b7a36deb64762ea1d599b0c52463c622425b898` |
+
+RTX 5070 Ti 上 cap12↔full-grid 的 `(49,169)/(1,000,003)/(65,667,072)`
+三 dtype 几何平均分别为 `1.211329/4.876166/4.163021x`；每个候选输出也按题面
+容差逐元素通过参考。该结果只作为调度机制候选，不外推为 GCU 收益。
+
+2026-08-27 00:58:33 CST 经实时门禁执行 S7 唯一一次提交，submission `5217`、
+当日序号 `7`，额度由 `24/30` 变为 `23/30`。`file_url_sha256` 为
+`596f3d8b7b8adb74b642d8723eade971959ffb50ca79954f5102d0b59d4a79b0`；匿名回读
+10,026 bytes，SHA-256 与 canonical ZIP 完全一致。平台选中预期四条路径，
+禁止重传。
+
+00:59:06 CST 终态为 8/8、`valid`，平均 `2.00559375x`、非 team best；目标
+Enflame 由 S6 `1.38541667x` 降至 `1.04616667x`（-24.49%）。其余芯片为天数
+3.65741667x、沐曦 1.69733333x、海光 2.119x、昆仑 0.86316667x、华为
+0.835x、国际 A 3.046x、国际 B 2.78066667x。结论：GCU 的 12-CTA 软件策略
+贴近实际硬件并行度；CUDA 的 4–5x full-grid 信号不可迁移。保留 S6，永久停止
+Enflame grid cap 轴。

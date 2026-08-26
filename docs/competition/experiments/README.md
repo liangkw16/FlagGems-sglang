@@ -36,7 +36,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `e6-9d3c82a` | `cf5ccff1f3724f1f1561b1a174327a961ef44db037c0c1a15e8d2dc660e7782d` | E6 平台 8/8、2.795625x team best；沐曦 3.504→3.863x（+10.25%） | 保留 E6；MetaX launch 轴停止 |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s2c-7857dca` | `357e8a690cca68123aabebdbb5500a86ebd66fe328105a8b91f7c1afe489cb38` | S2c 终态 6/8；六芯高分（海光 82.6x、天数 47.8x）；燧原 case 2 编译失败、昆仑评测异常 | 已按两次规则停止 |
 | 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `e11-dd4632a` | `c23266792c400636b2a7a4aa418defa2eb15f19623e8419316133dceb4463ff7` | E11 官方 XPU legacy masked-memory 使昆仑五个 case 全部跑完，但均数值失败；燧原回调待定，其余六芯已通过 | 官方两种 masked-memory 路径均验证失败，Task 23/22 永久停止 |
-| 24 | [`softcap_out`](softcap_out.md) | `s6-7c4ccc1` | `14de4b16762dffb63d14c99407d59d9dffce3707a4c6c4022b9b84a4a808df8d` | S6 平台 8/8、**2.05411458x team best**；GCU 原生 `tanh` 使燧原 1.1842→1.3854x（+16.99%），整题净增 0.00715x | 保留 S6；native-`tanh` 轴停止 |
+| 24 | [`softcap_out`](softcap_out.md) | `s7-fcbf490` | `b3c71c5f0bd90f103ae187e43b7a36deb64762ea1d599b0c52463c622425b898` | S7 平台 8/8、2.00559x；full grid 使燧原 1.3854→1.0462x，否决 CUDA 4–5x 代理信号 | 保留 S6 2.05411458x team best；Enflame grid 轴停止 |
 
 ## 建议提交顺序
 
