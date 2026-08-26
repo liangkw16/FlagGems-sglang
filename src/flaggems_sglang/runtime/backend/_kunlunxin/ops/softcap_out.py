@@ -16,11 +16,6 @@ import torch
 import triton
 import triton.language as tl
 
-try:
-    from triton.language.extra.xpu import libdevice as tl_extra_shim
-except ImportError:
-    from triton.language.extra import libdevice as tl_extra_shim
-
 
 @triton.jit
 def _softcap_out_kernel(
@@ -35,7 +30,12 @@ def _softcap_out_kernel(
     mask = offsets < n_elements
     x = tl.load(x_ptr + offsets, mask=mask, other=0.0).to(tl.float32)
     scaled = x / softcap_const
-    output = tl_extra_shim.tanh(scaled)
+    scaled_sq = scaled * scaled
+    near_zero = scaled * (
+        1.0 + scaled_sq * (-1.0 / 3.0 + scaled_sq * (2.0 / 15.0))
+    )
+    saturated = 2.0 / (1.0 + tl.exp(-2.0 * scaled)) - 1.0
+    output = tl.where(tl.abs(scaled) < 0.25, near_zero, saturated)
     output *= softcap_const
     if CAP_RECIPROCAL_OVERFLOWS:
         output = tl.where(x == 0.0, x / (x - x), output)

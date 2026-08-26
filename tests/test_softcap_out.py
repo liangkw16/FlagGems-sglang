@@ -250,10 +250,10 @@ class SoftcapOutTest(unittest.TestCase):
                         actual, expected, atol=tolerance, rtol=tolerance
                     )
 
-    def test_kunlun_direct_tanh_boundaries_and_special_values(self):
-        module_path = VENDOR_MODULE_PATHS["kunlunxin"]
+    def test_enflame_direct_tanh_boundaries_and_special_values(self):
+        module_path = VENDOR_MODULE_PATHS["enflame"]
         spec = importlib.util.spec_from_file_location(
-            "softcap_out_kunlunxin_direct_tanh_module", module_path
+            "softcap_out_enflame_direct_tanh_module", module_path
         )
         if spec is None or spec.loader is None:
             self.fail(f"cannot load {module_path}")
