@@ -1024,7 +1024,7 @@ team best；02:47:58 CST 公开榜刷新为第 `10/11`，超过原第 10 的 `2.
 
 ## E12：Ascend masked-load `care_padding=False`
 
-状态：release 门禁通过，候选就绪，尚未提交
+状态：平台 8/8 valid、`2.9298x`，未刷新 team best；E12 停止
 
 E12 从 E10 `75be1f0` 的安全 `4096` physical-grid cap 分叉，只给 Ascend
 masked input load 增加 `care_padding=False`；八档 tile、autotune key、grid-stride、
@@ -1056,3 +1056,28 @@ NVIDIA 上运行 Ascend kernel。generic、AMD、Kunlun、MetaX 的 7 个 runtim
 `>1.8314x` 才跨榜；以 E10 同 cap 的 `1.2604x` 为直接机制基线，稳健目标为
 `>2.3372x`。平台门要求 8/8 valid、华为选中 `_ascend`、平均高于 team best；
 无论结果均只提交一次并停止 `care_padding` 单变量，后续 dense 地址分支另立候选。
+
+2026-08-27 03:26:45 CST 经实时门禁执行 E12 唯一一次提交，submission `5268`、
+当日序号 `23`，额度由 `8/30` 变为 `7/30`；`file_url_sha256` 为
+`cb0e6b82463b37bb1cd6da42de183d65291802fe5d515058615a82f143ab949d`。
+平台匿名回读为 16,349 bytes，SHA-256 与 canonical ZIP 完全一致；路由确认华为
+选中 `_ascend`，其余芯片选中冻结文件。候选已提交，禁止重传。
+
+03:29:10 CST 终态为 8/8 valid、平均 `2.9298x`，未刷新 E11 的
+`2.995375x` team best：
+
+| 芯片 | E12 speedup | 相对 E10 同 cap | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 4.7016x | -0.84% | `moe_sum_reduce.py` |
+| 沐曦 | 3.5274x | +0.85% | `moe_sum_reduce_metax.py` |
+| 燧原 | 0.2076x | +0.87% | `moe_sum_reduce.py` |
+| 海光 | 6.3748x | -0.42% | `moe_sum_reduce.py` |
+| 昆仑芯 | 0.1750x | -0.91% | `moe_sum_reduce_kunlunxin.py` |
+| 华为 | 1.2308x | **-2.35%** | `moe_sum_reduce_ascend.py` |
+| 国际通用 A | 3.7356x | -0.87% | `moe_sum_reduce.py` |
+| 国际通用 B | 3.4856x | -1.30% | `moe_sum_reduce_amd.py` |
+
+`care_padding=False` 在本题隐藏 workload 上未复现官方机制收益；华为虽比 E11
+grid-cap 结果高 8.57%，但比同一 4096 cap 的 E10 低 2.35%，属于无收益观测。
+整题相对 E10 低 0.62%、相对 E11 低 2.19%。永久停止 `care_padding` 轴，不做
+重复提交；保留 E11 team best，dense 地址分支必须作为不含该 hint 的独立候选。
