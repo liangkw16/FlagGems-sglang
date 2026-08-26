@@ -770,3 +770,34 @@ autotune 轴。其余四成员字节冻结，逐芯波动不能归因于 AMD-onl
 01:45 CST 公开榜单刷新后，E7 仍为第 `11/11`；上邻第 10 名为
 `2.95495x`，只差 `0.026x`。上邻国际 B 为 `3.4312x`，已经低于本队
 `3.4598x`，当前名次缺口来自其他芯片，故不再为 AMD 盲加配置。
+
+## E8：Enflame 上游有效固定 launch
+
+状态：release 与不可变 ZIP 门禁通过，待唯一一次平台提交
+
+E8 从 E7 已验证成员集合出发，只新增 Enflame vendor。SGLang FL 的同算子
+在 GCU 上采用 BLOCK 2048、16 warps、1 stage；FlagTree GCU300 编译器会把
+超过 8 的 warps 截为 8，因此平台实际生效配置为 `2048/8/1`。只迁移该 launch，
+保留本仓真实 input/output stride、FP32 累加、scaling 与空维语义；未迁移上游
+contiguous-only 地址假设。旧 commit `38582c5` 的 Enflame 四档 autotune 已在
+打包前废弃，禁止提交。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `3b1ec12e9c8338edfb00b405f4cbb161dcc50c09` |
+| generic / AMD SHA-256 | `52a2fc979784f2bd25e7e17b9822c23b4f438efdf062c70bfb09aba9ba732335` / `3b0de225dbf5ffc1004096055da871c919870cc0ba6e4a0297551c5c7537e399` |
+| Ascend / Kunlun SHA-256 | `f740604cd4a0506a3e41776f3f9a001edffafef45f04aff78d1ee8a208f2132b` / `68b0abe07e3cf4f2b9cb86063e9ad1e18edd83d90341410cd281ec595c83406d` |
+| MetaX / Enflame SHA-256 | `20db4f49aada2976723ab9dabd7013545a30a0998ee8fb21ad655375bd2cb794` / `39bb8f348c27d1f72b36336fa24347fbb2006a15d90c4ea8628f4a4cf7cb8d0b` |
+| test SHA-256 | `36e370fc5bda57c349926383af2df7b80f348007351cde429e494d44b70e2619` |
+| release | `gpu:/tmp/flagos-moe-sum-reduce-enflame-fixed-release.x1AqkF`；11/11、`RELEASE_OK`；脚本/日志 SHA-256 `56cdc38c7870f35861149315ec32dbf56bb6aea79b05dc52f911f2ebdcc8cf9e` / `d02fcb656917e67952b63e9b433d909db589fcb9791f9e049877044d0feed2bc` |
+| Git archive SHA-256 | `e9d85486fa28bbd7b42489ce6bb67bd1157594b6a536f12c97f6dc40ca729ee1` |
+| canonical ZIP | `artifacts/competition/moe_sum_reduce/e8-3b1ec12/moe_sum_reduce.zip`，18,511 bytes，SHA-256 `681747badcf6d837bfff102b46133dcdf85ea186cb6ced72ef13b1e609770a1e` |
+
+三 dtype、hidden `2047/2048/2049`、top-k `1/8/16`、非连续 stride、空维与
+最大 `(4096,8,7168)` 均通过。9 个实际编译变体为 30–56 registers、0 spill、
+0 shared、0 global scratch，8 warps、1 stage，PTX 无 local load/store。E7 其余
+五个成员 SHA 完全冻结。
+
+平台基础门为 8/8 valid、燧原选中 `_enflame`、平均高于 E7 的 `2.92895x`；
+当前公开第 10 名为 `2.95495x`，冻结 E7 其余七芯时燧原需高于约 `0.4170x`
+才升一位。任一基础门不满足即保留 E7，停止 fixed-launch 轴。
