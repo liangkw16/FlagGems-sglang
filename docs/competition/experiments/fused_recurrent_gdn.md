@@ -206,7 +206,8 @@ seed、`atol=rtol=0.015`、`equal_nan=True` 重放两个隐藏形态。固定 1 
 
 ## E4：复现 Torch 归约与 eager 舍入边界（晋升）
 
-状态：源码、测试、release 代理验证和不可变 ZIP 门禁通过；待实时 preflight
+状态：源码、测试、release 代理验证和不可变 ZIP 门禁通过；submission `5082`
+评测中
 
 验证时间：2026-08-26 16:23–16:26 CST
 
@@ -273,3 +274,54 @@ release 从最终 commit 直接 `git archive` 到全新目录；source/verificat
 source/test SHA 与 Git blob 相同。规范打包器创建后再以 `--verify-existing`
 只读复验，canonical ZIP SHA、唯一成员、UTF-8、10 MB、`unzip -t` 和成员逐字节
 来源门禁全部通过。
+
+### E4 平台二投：NVIDIA 路径通过，R4 归约不可泛化
+
+2026-08-26 16:29:15 CST，实时 preflight 核对 account `15600308080`、team
+`SoulCoder`、Task 18、commit/ZIP/hash、23/30 剩余额度、120 秒间隔和截止时间后，
+执行返回的一次性命令。submission `5082`，上传后额度 22/30；远端 ZIP 回读因未
+配置受信 hostname 为 `unavailable`，但平台明确返回 `submitted` 和新 submission，
+因此未重试。
+
+截至 16:38:56 CST 为 6/8 terminal、1 通过：国际 A 选择 generic E4 文件并
+5.39x 全过；天数、沐曦、海光、华为、国际 B 的 case 3/case 4 错误数分别为
+`893/4`、`130872/8`、`730/26`、`761/5`、`901/16`，燧原和昆仑仍待回调。
+相较 E2，R4 cross 在五个非国际 A 芯均未改善，而国际 A 从 `644/4` 清零，证明
+四累加器交叉合并是 NVIDIA/cuBLAS 指纹，不是跨 backend 通用归约树。
+
+## E5：backend-native `tl.sum` + NVIDIA 已通过 vendor（晋升）
+
+状态：release 与不可变 ZIP 门禁通过；待实时 preflight
+
+验证时间：2026-08-26 16:34–16:38 CST
+
+E5 冻结 E4 已在国际 A 平台通过的完整字节为
+`fused_recurrent_gdn_nvidia.py`。generic 保持 libdevice exp、1D/one-row grid、
+FP32 state/outer scratch 和 wrapper 契约，只把 prediction/readout 的 CUDA R4
+静态循环恢复为 backend-native 64 项 `tl.sum`。天数、沐曦 backend 的 wave/warp
+宽度为 64，该 one-row 形态至少不再硬编码 CUDA 加法树；其余芯片也由各自 Triton
+backend 选择归约 lowering。
+
+RTX 代理上 generic 不是实际 NVIDIA 选中路径：8 seeds 的短/长形态累计错误数为
+159/7322，但 wrapper-inclusive speedup 为 9.5380x/33.2830x，证明编译、资源和
+0.1x 性能无风险。NVIDIA vendor 继续沿用 E4 的 16-seed 零误差，以及平台国际 A
+5.39x 实证。最终测试显式加载两份模块：generic 短契约 + NVIDIA 全矩阵，6/6 通过。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `e3b9b4923cb1dc01fa67b3611e895231acf4bc76` |
+| generic SHA-256 | `4603af742e50ea6cf372f24030183455cb97b9284f5ef2e717b4334b9a8a9937` |
+| NVIDIA vendor SHA-256 | `c328d858139f446ee76f5e8f5be02776135b3ef6174d9dbc4a50b06601b98317` |
+| 测试 SHA-256 | `3da08936fc4aeb5dc0f328bc9a7a900ab64b456d06a3442f573671b74b567e05` |
+| release 目录 | `gpu:/tmp/flagos-fused-recurrent-gdn-release.CFaHOB`（mode 0700） |
+| release log SHA-256 | `e8c30ec87491d48e99cbf5217a3a55d2712ef9c9e2d2701160a707edd13f9931` |
+| generic screening 目录 | `gpu:/tmp/flagos-fused-recurrent-gdn-e5.N6UUEE` |
+| generic screening log SHA-256 | `deaf56aa952b8dddbb61d68a96ab4fb885ba3cb5b05eb350797f73d6ca5e6c74` |
+| ZIP | `artifacts/competition/fused_recurrent_gdn/e5-e3b9b49/fused_recurrent_gdn.zip` |
+| ZIP SHA-256 | `27c6e17f24146e32fc954baf1246eaeb223ae39e73c1670fe544d7585f3ab872` |
+| ZIP 大小 / 成员 | 34,331 bytes；generic + `fused_recurrent_gdn_nvidia.py` |
+
+release 从最终 commit 导出；三文件 Git/远端 SHA 一致。py_compile、isort、flake8、
+Black 26.5.1、unittest 6/6、规范构建和 `--verify-existing` 全部通过。E5 是对 E4
+失败根因的单变量平台实验；generic 是否复现各 vendor Torch bmm 只能由逐芯回调
+证实。
