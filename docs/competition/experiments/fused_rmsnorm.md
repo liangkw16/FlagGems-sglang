@@ -412,7 +412,7 @@ generic `1.5049x` 低约 3.3%，处于本轮冻结芯片 ±6% 波动带内，rms
 
 ## E3：Hygon autotune 位置参数修复
 
-状态：release 门禁通过，canonical ZIP 已冻结，待一次性平台提交
+状态：平台 8/8 valid，但未过基础收益门；永久停止 Hygon autotune 轴
 
 E3 从 E2 team best 分叉，只新增 Hygon vendor；generic 与 Kunlun 字节冻结，不
 携带 5219 已证伪的 Enflame fold-cap 文件。Hygon kernel 数学与 generic 逐字节
@@ -450,3 +450,10 @@ Hygon 需严格超过 `8.21060003x` 才升一位。若 runtime 仍失败或基�
 `8df5492594eae79a633e611792df2d4f518e3816199e664d91f8aebcf0e63547`；匿名对象
 回读为 9060 bytes，SHA-256 与 canonical ZIP 完全一致，三个成员均通过
 `unzip -t`。平台选中预期的 generic、Hygon、Kunlun 路径；禁止重传。
+
+终态为 8/8 valid、平均 `4.32675x`，逐芯为天数 `7.69466667x`、沐曦
+`4.5718x`、燧原 `1.5154x`、海光 `6.8742x`、昆仑 `0.9358x`、华为
+`1.7052x`、国际 A `5.6994x`、国际 B `5.61753333x`。Hygon vendor 已正确
+选中并消除 5219 的 runtime 错误，但低于 E2 的 `7.50766667x`，整题也低于
+E2 team best `4.54668333x`，未过基础门且不是 team best。保留 E2，按预设
+止损永久停止 Hygon autotune 轴。
