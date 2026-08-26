@@ -1081,3 +1081,46 @@ NVIDIA 上运行 Ascend kernel。generic、AMD、Kunlun、MetaX 的 7 个 runtim
 grid-cap 结果高 8.57%，但比同一 4096 cap 的 E10 低 2.35%，属于无收益观测。
 整题相对 E10 低 0.62%、相对 E11 低 2.19%。永久停止 `care_padding` 轴，不做
 重复提交；保留 E11 team best，dense 地址分支必须作为不含该 hint 的独立候选。
+
+## E13：Ascend guarded dense address
+
+状态：release 门禁通过，候选就绪，尚未提交
+
+E13 从 E10 `75be1f0` 的安全 4096 physical-grid cap 分叉，只给连续输入增加
+FlagGems `ed2508b` PR #2037（Apache-2.0）的 dense 地址生成；该路径以
+`IS_CONTIGUOUS` constexpr 编译期裁枝。为保留小 batch 的直接证据，wrapper 仅在
+`num_tokens >= 32` 且输入/输出连续时启用；`tokens < 32` 和非连续输入逐字节保留
+E10 的五个 int64 stride 地址。八档 tile、autotune key、grid-stride、缩放和其余
+四个提交成员均冻结；不携带 E11 cap、E12 `care_padding` 或 top-k=2 专核。
+
+未加 guard 的官方 dense 原型先通过 14/14 correctness，但 BF16
+`(tokens,hidden)=(2,4096)` 的 12 轮 A/B 中位仅 `0.843300x`；同一诊断里
+`tokens=32` 的 hidden 2048/4096/7168 分别为 `1.029686x`、`0.987529x`、
+`0.980187x`。因此按平台已知性能 token 形状 `1/32/4096` 预注册单行阈值，避免
+把已确认的小 batch 退化上传到 Ascend。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `151693e07b83dc0dd596e82a49a24e5202587142` |
+| generic / AMD SHA-256 | `52a2fc979784f2bd25e7e17b9822c23b4f438efdf062c70bfb09aba9ba732335` / `3b0de225dbf5ffc1004096055da871c919870cc0ba6e4a0297551c5c7537e399` |
+| Ascend SHA-256 | `3047a5a5ff17168c3f5c136259832ee8e3583f82ab1ae4bd87ae723c736b80fa` |
+| Kunlun / MetaX SHA-256 | `68b0abe07e3cf4f2b9cb86063e9ad1e18edd83d90341410cd281ec595c83406d` / `20db4f49aada2976723ab9dabd7013545a30a0998ee8fb21ad655375bd2cb794` |
+| test SHA-256 | `9e325abc3e54119b1665c65e3185f621ee1489f744d0560ddef9735d5252d1e9` |
+| 原型证据 | `gpu:/tmp/flagos-moe-sum-reduce-dense-screen.RvMS8o`；14/14；screen / broad A/B / 12 轮小形状日志 SHA-256 `f736e35aa95a92a8428723345ced8b16b0cfa59f5a28c41d745ee716e931e39b` / `b8b33b90433d1d2632c39c26d98fd58a216019e263bf4d34ce7b1e9876c0ccb6` / `fb0955c46a7c4641265354db4e0ff533cf9c65880898dd043ffa5b7cb74542f4` |
+| guarded screening | 首次 `gpu:/tmp/flagos-moe-sum-reduce-dense-guard-screen.JetSEm` 因 mock grid 仍断言旧 token 数停止，最终日志 SHA-256 `e19590bb0b63b76b41e34d16c26ea710467ca0019a156300a15baf98d7e303c7`；修正后的独立目录 `gpu:/tmp/flagos-moe-sum-reduce-dense-guard-screen.uMF6Q2` 为 14/14、`SCREENING_OK`，screen / A/B 日志 SHA-256 `1c73934f42226a4817267a0434c113fa576a22b8b75d96c5d6d0b1a8e4731316` / `f8205701727fc98140484ee7bea05dcc3ffc306d2608094b522581471e43f50f` |
+| release | `gpu:/tmp/flagos-moe-sum-reduce-dense-guard-release.pPfIJk`；14/14、`RELEASE_OK`；脚本/日志 SHA-256 `2b2daac262614fbb2b77830837f467c23c5713cec023b2f961dac3eb87408c39` / `acc8b34818312b59acfea1a75dbb6e546ab4c442cd5b7bbc7051ebd90a307e78` |
+| Git archive SHA-256 | `1443b3498bdbd1ef8db963797745c3ed728d8fe0b5584765499a69c5e67182a3` |
+| canonical ZIP | `artifacts/competition/moe_sum_reduce/e13-151693e/moe_sum_reduce.zip`，16,913 bytes，SHA-256 `0eafd8e39497e62892c344f86fa625b62d4a61d092556a3362d03f7e6a8df5cf` |
+
+最终 wrapper-inclusive A/B 覆盖三 dtype 与 `tokens=1/2/32/4096`：12 点几何
+平均 `1.014924x`、最差中位 `0.989153x`。`tokens=32, hidden=4096` 三 dtype
+分别为 `1.072889x / 1.067986x / 1.052760x`；最大已知
+`(4096,8,7168)` 为 `0.998815x / 0.999018x / 1.006594x`；小 batch 控制点恢复
+到约 1.0x。完整 release 还覆盖三 dtype、非连续 stride、空维/zero top-k、
+BLOCK 边界与最大 shape。
+
+03:43 CST 实时额度为 `7/30`；当前 team best E11 为 `2.995375x`、公开第 10，
+第 9 为 `3.0826x`。冻结 E11 其余七芯时，华为需由 `1.1336x` 提高到
+`>1.8314x` 才跨第 9；按 E10 同 cap 的直接机制基线，稳健跨榜目标为
+`>2.3372x`。平台门要求 8/8 valid、华为选中 `_ascend`、平均刷新 team best；
+无论结果均只提交一次，并据华为直接收益决定是否继续独立 top-k=2 机制。
