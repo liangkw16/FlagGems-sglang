@@ -414,3 +414,27 @@ canonical ZIP 为
 `eb4b40d4703f5c6ea8d9bc3e5c3b896310f5bfe7a9c0d40637dc0c746d126081`，
 成员仍为 generic + ascend/enflame/kunlunxin；`--verify-existing`、`unzip -t`
 与成员白名单全部通过。平台仍只允许这一个 E2a 正式提交，后续 stop gate 不变。
+
+### E2a-i32 平台结果：8/8，13.8620625x
+
+2026-08-26 15:03:33 CST 按一次性 preflight intent 提交，submission `5048`、
+当日序号 `4`，额度 `27/30` → `26/30`。上传后无认证下载复验为 22,719B，
+SHA-256 与本地 canonical ZIP 完全一致；本次 `file_url_sha256` 为
+`338d841bc9fa5b4ee5c9a055b0c383f8a18b9ea21457964b480664fb13837d63`。
+
+| 芯片 | selected file | 正确性 | 加速比 |
+| --- | --- | --- | ---: |
+| 天数 | generic | 通过 | 25.8475x |
+| 沐曦 | generic | 通过 | 7.4465x |
+| 燧原 | `_enflame` | 通过 | **0.3885x** |
+| 海光 | generic | 通过 | 26.8050x |
+| 昆仑 | `_kunlunxin` | 通过 | 0.3265x |
+| 华为 | `_ascend` | 通过 | 1.8665x |
+| 国际 A | generic | 通过 | 31.0115x |
+| 国际 B | generic | 通过 | 17.2045x |
+
+终态为 `valid`、8/8、平均 `13.8620625x`、`is_team_best=true`。燧原从此前
+三轮全 case `PassManager execution failed` 恢复为正确且超过 0.1x；本轮平台
+历史 traceback 也直接包含 `i64` loop/value IR，与公开 GCU300 verifier 证据吻合。
+因此“消除 Enflame 64-bit IR”假设被平台证实，E2a stop gate 触发：Task 17
+闭环完成，不再调 BLOCK/warps/stages 或追加提交。
