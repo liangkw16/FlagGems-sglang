@@ -711,3 +711,31 @@ fallback 才传 1。generic、Ascend、Kunlun 三个已有成员与 E5 逐字节
 结论：官方 MetaX launch policy 被平台证实，保留 E6 为 Task21 team best，
 停止该轴。燧原同字节 generic 再次从 0.421x 波动到 0.209x，不能归因于
 MetaX-only 改动；若无新的官方单芯实现，不为平台波动重传。
+
+## E7：AMD 官方四档 BLOCK autotune
+
+状态：release 门禁通过，canonical ZIP 已冻结，待一次性平台提交
+
+E7 从 E6 team best 分叉，只新增 AMD vendor；generic、Ascend、Kunlun 与
+MetaX 四个已有成员逐字节冻结。AMD 路径采用官方 FlagGems 的四档配置：
+BLOCK/warps 为 `128/2`、`256/4`、`512/8`、`1024/8`，autotune key 为
+`hidden_size,topk`，grid 从 selected config 的 meta 读取 BLOCK。launch 不显式
+传 BLOCK、warps 或 stages，避免 FlagTree autotuner 重复绑定。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `a305b67646c1c587cbe7d23c4d10af6226b20b01` |
+| generic / Ascend SHA-256 | `52a2fc979784f2bd25e7e17b9822c23b4f438efdf062c70bfb09aba9ba732335` / `f740604cd4a0506a3e41776f3f9a001edffafef45f04aff78d1ee8a208f2132b` |
+| Kunlun / MetaX SHA-256 | `68b0abe07e3cf4f2b9cb86063e9ad1e18edd83d90341410cd281ec595c83406d` / `20db4f49aada2976723ab9dabd7013545a30a0998ee8fb21ad655375bd2cb794` |
+| AMD / test SHA-256 | `3b0de225dbf5ffc1004096055da871c919870cc0ba6e4a0297551c5c7537e399` / `19d8513c7b3acdc6dd9f1529ab996526a4f9073b14b80c9733b526b54220fa03` |
+| screening | `gpu:/tmp/flagos-moe-sum-reduce-amd-screen.0djeCb`；10/10；日志 SHA-256 `db093544aef468392f2cf55dd9e7bd2fb2c9f90072082ba05966257953013c8d` |
+| 交替 A/B | 同目录；18 点几何平均 `1.007808x`、最差中位 `0.969231x`；日志 SHA-256 `14f1bc0805c8e26d34f31c5ad62711aa27a65c01de0d286e398e712539dc6a11` |
+| release | `gpu:/tmp/flagos-moe-sum-reduce-amd-release.rbjscH`；10/10、`RELEASE_OK`；日志 SHA-256 `2876188ff26e49270da98da30e77dd56e695d17007d42d07cfe145b53fba525c` |
+| canonical ZIP | `artifacts/competition/moe_sum_reduce/e7-a305b67/moe_sum_reduce.zip`，15,584 bytes，SHA-256 `6b981b19be0dd0496757c74bd959dbe682d2f28c0c5b48aafc06c52865db4b82` |
+
+四档均实际编译运行且都被选中过，候选为 0 spill/shared/scratch；代理只证明
+正确性、资源与无明显回退，不外推 AMD 收益。历史平台 selected-file 已确认
+`_amd` 只路由国际通用 B。one-shot 基础门为 8/8 valid、国际 B 选中 AMD 且
+高于 E6 的 `2.2598x`、平均高于 `2.795625x`；显著收益门为国际 B 至少
+`2.4198x`。当前第 10 名为 `2.95495x`，冻结其余七芯时国际 B 需严格超过
+`3.5344x` 才升一位。任一基础门不满足即保留 E6，停止 AMD autotune 轴。
