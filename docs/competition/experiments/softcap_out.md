@@ -332,32 +332,38 @@ Task 21 昆仑 vendor 同形）。
   团队昆仑 elementwise 最佳配置。今日额度用尽后停止，剩 1 次留作
   截止前回归储备。
 
-## S3：FlagTree XPU grid=12 interleave
+## S3c：FlagTree XPU grid=12 interleave
 
 FlagTree 固定提交 `367dc5794f678a70ec57bb8a1b3d24bf9b855ca6` 显示，XPU
 JIT 会把实际 launch grid 写入编译选项，而编译器仅在 grid 为 `(12, 1, 1)`
 时启用 interleave pass；该 pass 接受本题的 `pid * BLOCK + arange` 一维
-pointwise 形态。S3 因此保持 BLOCK 4096、四 warps、单 stage 和全部数学字节
-不变，只把昆仑物理 grid 上限固定为 12，并用步长 12 的持久化循环遍历逻辑块。
+pointwise 形态。初版 S3 `45267aa` 把 `pid` 放进 `range` 下界；独立审查发现
+循环 body 的 block argument 没有 defining op，无法被 `findDefOpBwd` 追溯，
+因此该版本未提交。S3b `e3c1fdf` 又被编译器元数据审查挡住：FlagTree 在
+compile 前严格比较 `(12, 1, 1)`，而一维 tuple 的补位发生在 launch 阶段。
+S3c 因此明确传入三维 grid，并保持 BLOCK 4096、四 warps、单 stage 和数学字节
+不变，将 `pid * BLOCK + arange` 显式保留在循环外，再按 12 个 program 一窗
+推进，使静态 matcher 链成立。
 
 - source/verification commit：
-  `45267aaadf41a9c18da2c7d806988098ddc3391c`；与 S2e 相比，仅
+  `89699c64134852d2dfbb94bbae6d46b8710422e0`；与 S2e 相比，仅
   `softcap_out_kunlunxin.py` 改变，其余三个 ZIP 成员 SHA-256 逐字节相同。
-- release：`gpu:/tmp/flagos-softcap-interleave-release.cGwsky`；远端从 Git
+- release：`gpu:/tmp/flagos-softcap-interleave2-release.ct5rpi`；远端从 Git
   对象归档，Python 3.12.13、Torch 2.13.0+cu130、Triton 3.7.1、RTX 5070 Ti。
   py_compile、Black、isort、flake8 及完整 unittest 11/11 通过；
-  `release.log` SHA-256
-  `7ef09083ca1174b746272c5c910d2b61e738ab0cefd645440c8f91ceef8b93ff`。
+  `release5.log` SHA-256
+  `1675d3c062e25af4c2d0833c2b936811057b189ecd63fe5fefad44f72ec2745f`。
 - 额外边界门：FP16/BF16/FP32 分别覆盖 `12*4096-1`、`12*4096+17`、
   `24*4096+123`、`1,000,003`，全部与 PyTorch 参考一致；CUDA 编译资源为
-  72 registers、4096-byte shared、zero scratch。脚本/日志 SHA-256 分别为
-  `96b292bc3ce8494b2e36764761e457f7d52be9aa6f78bb840a0ff8eed04a2676`、
-  `db82130949ec25d441d93c95889c5e1cbbe65d8c0f5883cfbf983eeb695bf99e`。
-- canonical ZIP：`artifacts/competition/softcap_out/s3-45267aa/softcap_out.zip`，
-  10,262 bytes，SHA-256
-  `5afe77f62dbb17493dc72ae562bc9ba539104d26331ebbfcfb349f40ab8af56f`；
+  55 registers、4096-byte shared、zero scratch；TTIR 明确保留
+  `get_program_id → muli 4096 → add make_range` 后再进入 `scf.for`。
+  额外脚本 SHA-256
+  `fc6dab5c5c7d01cb1ecbc797c72e3c20d1c25c3a03a4eb3f0353c36cc82ac555`。
+- canonical ZIP：`artifacts/competition/softcap_out/s3c-89699c6/softcap_out.zip`，
+  10,344 bytes，SHA-256
+  `452f54b0da15c698c6eae56790ed7979739c2668cacb2f71eba9553bf35c2807`；
   `verified-existing` 与 `unzip -t` 均通过。
 - 一次提交晋级门：8/8 valid、昆仑高于 S2e 的 0.8637x、平均高于
   2.0179x；任一不满足即保留 S2e 并停止此假设，不做 grid sweep。
 
-<!-- T24_S3_PLATFORM_RESULT_PENDING -->
+<!-- T24_S3C_PLATFORM_RESULT_PENDING -->
