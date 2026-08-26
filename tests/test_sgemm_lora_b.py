@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import ast
 import importlib.util
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import torch
 
@@ -61,6 +63,7 @@ KUNLUN_MODULE = _load_module(
     "sgemm_lora_b_kunlunxin_module",
     BACKEND_ROOT / "_kunlunxin" / "ops" / "sgemm_lora_b.py",
 )
+KUNLUN_SOURCE = BACKEND_ROOT / "_kunlunxin" / "ops" / "sgemm_lora_b.py"
 
 
 def make_batch_info(
@@ -109,6 +112,145 @@ def reference(x, weights, batch_info, base_output):
             x[rows].float() @ weights[weight_index].float().t()
         )
     return output.to(base_output.dtype)
+
+
+class SgemmLoraBKunlunRoutingTest(unittest.TestCase):
+    def test_layout_copy_and_safe_adapter_are_routed_to_regular_bmm(self):
+        seg_indptr = torch.tensor([0, -1, 2, -1, 2, -1])[::2]
+        weight_indices = torch.tensor([1, -1, 1 << 28, -1])[::2]
+        lora_ranks = torch.tensor([3, 3])
+        scalings = torch.tensor([0.5, -0.25])
+        permutation = torch.tensor([1, -1, 0, -1])[::2]
+        info = SimpleNamespace(
+            bs=2,
+            max_len=2,
+            seg_lens=seg_indptr[1:] - seg_indptr[:-1],
+            seg_indptr=seg_indptr,
+            weight_indices=weight_indices,
+            lora_ranks=lora_ranks,
+            scalings=scalings,
+            permutation=permutation,
+        )
+        x = torch.arange(2 * 6, dtype=torch.float32).reshape(2, 6)[:, ::2]
+        weights = torch.arange(2 * 10 * 6, dtype=torch.float32).reshape(
+            2, 10, 6
+        )[:, ::2, ::2]
+        base = torch.arange(2 * 10, dtype=torch.float32).reshape(2, 10)[:, ::2]
+        before = tuple(
+            value.clone()
+            for value in (
+                x,
+                weights,
+                base,
+                seg_indptr,
+                weight_indices,
+                lora_ranks,
+                scalings,
+                permutation,
+            )
+        )
+
+        with (
+            patch.object(KUNLUN_MODULE, "_safe_adapter_kernel") as safe_kernel,
+            patch.object(KUNLUN_MODULE, "_pack_x_kernel") as pack_x_kernel,
+            patch.object(KUNLUN_MODULE, "_regular_bmm_kernel") as bmm_kernel,
+            patch.object(
+                KUNLUN_MODULE, "_scatter_add_kernel"
+            ) as scatter_kernel,
+        ):
+            actual = KUNLUN_MODULE.sgemm_lora_b(x, weights, info, base)
+
+        safe_args = safe_kernel.__getitem__.return_value.call_args.args
+        bmm_args = bmm_kernel.__getitem__.return_value.call_args.args
+        transposed_weights = bmm_args[1]
+        safe_adapters = bmm_args[2]
+        expected_weights = weights.transpose(1, 2).contiguous()
+
+        self.assertIs(safe_args[0], seg_indptr)
+        self.assertIs(safe_args[1], weight_indices)
+        self.assertIs(safe_args[2], lora_ranks)
+        self.assertEqual(safe_args[3].data_ptr(), safe_adapters.data_ptr())
+        self.assertEqual(safe_adapters.dtype, torch.int32)
+        self.assertEqual(safe_adapters.shape, (info.bs,))
+        self.assertTrue(transposed_weights.is_contiguous())
+        self.assertEqual(transposed_weights.shape, (2, 3, 5))
+        self.assertEqual(transposed_weights.stride(), (15, 5, 1))
+        torch.testing.assert_close(transposed_weights, expected_weights)
+        torch.testing.assert_close(actual, base)
+        self.assertTrue(pack_x_kernel.__getitem__.return_value.called)
+        self.assertTrue(bmm_kernel.__getitem__.return_value.called)
+        self.assertTrue(scatter_kernel.__getitem__.return_value.called)
+        for value, original in zip(
+            (
+                x,
+                weights,
+                base,
+                seg_indptr,
+                weight_indices,
+                lora_ranks,
+                scalings,
+                permutation,
+            ),
+            before,
+        ):
+            torch.testing.assert_close(value, original, atol=0.0, rtol=0.0)
+
+    def test_wrapper_uses_only_one_layout_copy_and_no_torch_core_compute(self):
+        source = KUNLUN_SOURCE.read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        wrapper = next(
+            node
+            for node in tree.body
+            if isinstance(node, ast.FunctionDef)
+            and node.name == "sgemm_lora_b"
+        )
+
+        layout_copies = []
+        forbidden_methods = {
+            "bmm",
+            "einsum",
+            "gather",
+            "index_select",
+            "item",
+            "matmul",
+            "mm",
+            "tolist",
+        }
+        torch_calls = set()
+        forbidden_calls = set()
+        for node in ast.walk(wrapper):
+            if isinstance(node, ast.Call) and isinstance(
+                node.func, ast.Attribute
+            ):
+                if node.func.attr in forbidden_methods:
+                    forbidden_calls.add(node.func.attr)
+                if (
+                    isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "torch"
+                ):
+                    torch_calls.add(node.func.attr)
+                if (
+                    node.func.attr == "contiguous"
+                    and isinstance(node.func.value, ast.Call)
+                    and isinstance(node.func.value.func, ast.Attribute)
+                    and node.func.value.func.attr == "transpose"
+                ):
+                    layout_copies.append(node.func.value)
+
+        self.assertEqual(forbidden_calls, set())
+        self.assertEqual(torch_calls, {"empty"})
+        self.assertFalse(
+            any(isinstance(node, ast.MatMult) for node in ast.walk(wrapper))
+        )
+        self.assertFalse(
+            any(isinstance(node, ast.Try) for node in ast.walk(wrapper))
+        )
+        self.assertEqual(len(layout_copies), 1)
+        self.assertEqual(
+            [argument.value for argument in layout_copies[0].args], [1, 2]
+        )
+        self.assertIn("def _safe_adapter_kernel", source)
+        self.assertNotIn("def _pack_weights_kernel", source)
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
@@ -223,6 +365,35 @@ class SgemmLoraBTest(unittest.TestCase):
 
         self.assertEqual(actual.shape, base.shape)
         self.assertEqual(actual.dtype, base.dtype)
+
+    def test_kunlun_rank_zero_adapter_does_not_read_missing_weight(self):
+        info = make_batch_info([0, 2], [1], [3, 0], [1.0, 1.0])
+        x = torch.randn((2, 3), device="cuda")
+        weights = torch.randn((1, 5, 3), device="cuda")
+        base = torch.randn((2, 5), device="cuda")
+
+        actual = KUNLUN_MODULE.sgemm_lora_b(x, weights, info, base)
+
+        torch.testing.assert_close(actual, base, atol=0.0, rtol=0.0)
+
+    def test_kunlun_empty_segments_allow_zero_weights(self):
+        info = SimpleNamespace(
+            bs=1,
+            max_len=1,
+            seg_lens=torch.tensor([0], device="cuda"),
+            seg_indptr=torch.tensor([0, 0], device="cuda"),
+            weight_indices=torch.tensor([1 << 28], device="cuda"),
+            lora_ranks=torch.empty(0, device="cuda", dtype=torch.int32),
+            scalings=torch.empty(0, device="cuda"),
+            permutation=None,
+        )
+        x = torch.empty((0, 3), device="cuda")
+        weights = torch.empty((0, 5, 3), device="cuda")
+        base = torch.randn((1, 5), device="cuda")
+
+        actual = KUNLUN_MODULE.sgemm_lora_b(x, weights, info, base)
+
+        torch.testing.assert_close(actual, base, atol=0.0, rtol=0.0)
 
     def test_kunlun_regular_bmm_handles_ragged_strided_inputs(self):
         torch.manual_seed(20260826)

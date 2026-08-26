@@ -82,64 +82,56 @@ def _pack_x_kernel(
 
 
 @triton.jit
-def _pack_weights_kernel(
-    weights_ptr,
-    packed_weights_ptr,
+def _safe_adapter_kernel(
     seg_indptr_ptr,
     weight_indices_ptr,
     lora_ranks_ptr,
-    output_dim,
-    program_start,
-    weight_stride_lora,
-    weight_stride_output,
-    weight_stride_rank,
+    safe_adapter_ptr,
+    batch_size,
+    batch_start,
     seg_indptr_stride,
     weight_indices_stride,
     lora_ranks_stride,
-    RANK: tl.constexpr,
     BLOCK_SIZE: tl.constexpr,
 ):
-    weight_stride_lora = tl.cast(weight_stride_lora, tl.int64)
-    weight_stride_output = tl.cast(weight_stride_output, tl.int64)
-    weight_stride_rank = tl.cast(weight_stride_rank, tl.int64)
-
-    output_tiles = tl.cdiv(output_dim, BLOCK_SIZE)
-    tiles_per_batch = RANK * output_tiles
-    logical_id = program_start + tl.program_id(0)
-    batch_id = logical_id // tiles_per_batch
-    matrix_id = logical_id - batch_id * tiles_per_batch
-    rank_id = matrix_id // output_tiles
-    output_tile = matrix_id - rank_id * output_tiles
-    output_offsets = output_tile * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
-    mask = output_offsets < output_dim
-    packed_offsets = (batch_id * RANK + rank_id) * output_dim + output_offsets
-    tl.store(packed_weights_ptr + packed_offsets, 0.0, mask=mask)
-
-    segment_start = tl.load(seg_indptr_ptr + batch_id * seg_indptr_stride)
-    segment_end = tl.load(seg_indptr_ptr + (batch_id + 1) * seg_indptr_stride)
-    if segment_start == segment_end:
-        return
+    batch_ids = (
+        batch_start + tl.program_id(0) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+    )
+    batch_mask = batch_ids < batch_size
+    segment_start = tl.load(
+        seg_indptr_ptr + batch_ids * seg_indptr_stride,
+        mask=batch_mask,
+        other=0,
+    )
+    segment_end = tl.load(
+        seg_indptr_ptr + (batch_ids + 1) * seg_indptr_stride,
+        mask=batch_mask,
+        other=0,
+    )
+    nonempty_mask = batch_mask & (segment_start != segment_end)
     weight_index = tl.load(
-        weight_indices_ptr + batch_id * weight_indices_stride
+        weight_indices_ptr + batch_ids * weight_indices_stride,
+        mask=nonempty_mask,
+        other=0,
     )
-    if tl.load(lora_ranks_ptr + weight_index * lora_ranks_stride) == 0:
-        return
-
-    values = tl.load(
-        weights_ptr
-        + weight_index * weight_stride_lora
-        + output_offsets * weight_stride_output
-        + rank_id * weight_stride_rank,
-        mask=mask,
-        other=0.0,
+    lora_rank = tl.load(
+        lora_ranks_ptr + weight_index * lora_ranks_stride,
+        mask=nonempty_mask,
+        other=0,
     )
-    tl.store(packed_weights_ptr + packed_offsets, values, mask=mask)
+    safe_adapter = tl.where(nonempty_mask & (lora_rank != 0), weight_index, 0)
+    tl.store(
+        safe_adapter_ptr + batch_ids,
+        safe_adapter,
+        mask=batch_mask,
+    )
 
 
 @triton.jit
 def _regular_bmm_kernel(
     packed_x_ptr,
-    packed_weights_ptr,
+    transposed_weights_ptr,
+    safe_adapter_ptr,
     products_ptr,
     max_len,
     output_dim,
@@ -158,6 +150,7 @@ def _regular_bmm_kernel(
     output_tile = matrix_id - token_tile * output_tiles
     token_offsets = token_tile * BLOCK_M + tl.arange(0, BLOCK_M)
     output_offsets = output_tile * BLOCK_N + tl.arange(0, BLOCK_N)
+    weight_index = tl.load(safe_adapter_ptr + batch_id)
     accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
     rank_offsets = tl.arange(0, BLOCK_K)
 
@@ -170,15 +163,17 @@ def _regular_bmm_kernel(
             mask=(token_offsets[:, None] < max_len) & (rank[None, :] < RANK),
             other=0.0,
         )
-        packed_weights = tl.load(
-            packed_weights_ptr
-            + (batch_id * RANK + rank[:, None]) * output_dim
+        transposed_weights = tl.load(
+            transposed_weights_ptr
+            + (weight_index * RANK + rank[:, None]) * output_dim
             + output_offsets[None, :],
             mask=(output_offsets[None, :] < output_dim)
             & (rank[:, None] < RANK),
             other=0.0,
+        ).to(tl.float32)
+        accumulator += tl.dot(
+            packed_x, transposed_weights, input_precision="ieee"
         )
-        accumulator += tl.dot(packed_x, packed_weights, input_precision="ieee")
 
     product_offsets = (
         batch_id * max_len + token_offsets[:, None]
@@ -275,6 +270,7 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
     output = base_output.clone()
     if (
         output.numel() == 0
+        or weights.shape[0] == 0
         or weights.shape[2] == 0
         or batch_info.bs == 0
         or batch_info.max_len == 0
@@ -288,14 +284,15 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
     block_m = 32
     block_n = 32
     block_k = 32
-    pack_weight_block = 256
+    safe_adapter_block = 256
     packed_x = torch.empty(
         (batch_size, max_len, rank), dtype=torch.float32, device=x.device
     )
-    packed_weights = torch.empty(
-        (batch_size, rank, output_dim),
-        dtype=torch.float32,
-        device=weights.device,
+    transposed_weights = weights.transpose(1, 2).contiguous()
+    safe_adapters = torch.empty(
+        (batch_size,),
+        dtype=torch.int32,
+        device=batch_info.weight_indices.device,
     )
     products = torch.empty(
         (batch_size, max_len, output_dim),
@@ -306,6 +303,25 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
     permutation_arg = (
         permutation if permutation is not None else batch_info.seg_indptr
     )
+
+    safe_adapter_span = _MAX_GRID_SIZE * safe_adapter_block
+    for batch_start in range(0, batch_size, safe_adapter_span):
+        batch_count = min(safe_adapter_span, batch_size - batch_start)
+        grid = (triton.cdiv(batch_count, safe_adapter_block),)
+        _safe_adapter_kernel[grid](
+            batch_info.seg_indptr,
+            batch_info.weight_indices,
+            batch_info.lora_ranks,
+            safe_adapters,
+            batch_size,
+            batch_start,
+            batch_info.seg_indptr.stride(0),
+            batch_info.weight_indices.stride(0),
+            batch_info.lora_ranks.stride(0),
+            BLOCK_SIZE=safe_adapter_block,
+            num_warps=4,
+            num_stages=1,
+        )
 
     rank_tiles = triton.cdiv(rank, block_k)
     pack_x_programs = batch_size * triton.cdiv(max_len, block_m) * rank_tiles
@@ -329,29 +345,6 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
             num_stages=1,
         )
 
-    pack_weight_programs = (
-        batch_size * rank * triton.cdiv(output_dim, pack_weight_block)
-    )
-    for program_start in range(0, pack_weight_programs, _MAX_GRID_SIZE):
-        grid = (min(_MAX_GRID_SIZE, pack_weight_programs - program_start),)
-        _pack_weights_kernel[grid](
-            weights,
-            packed_weights,
-            batch_info.seg_indptr,
-            batch_info.weight_indices,
-            batch_info.lora_ranks,
-            output_dim,
-            program_start,
-            *weights.stride(),
-            batch_info.seg_indptr.stride(0),
-            batch_info.weight_indices.stride(0),
-            batch_info.lora_ranks.stride(0),
-            RANK=rank,
-            BLOCK_SIZE=pack_weight_block,
-            num_warps=4,
-            num_stages=1,
-        )
-
     bmm_programs = (
         batch_size
         * triton.cdiv(max_len, block_m)
@@ -361,7 +354,8 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
         grid = (min(_MAX_GRID_SIZE, bmm_programs - program_start),)
         _regular_bmm_kernel[grid](
             packed_x,
-            packed_weights,
+            transposed_weights,
+            safe_adapters,
             products,
             max_len,
             output_dim,
