@@ -492,7 +492,7 @@ E4 严格以 E2 team-best 成员为基线，只新增 NVIDIA vendor，并移除�
 
 ## E5：Enflame 官方 GCU300 默认 launch
 
-状态：submission `5263` 已唯一一次提交，八芯评测中
+状态：平台 8/8 valid、`4.55663333x` team best、第 15/18；E5 停止
 
 E5 仍从 E2 team best 分叉，只新增 Enflame vendor；generic 与 Kunlun 字节继续
 冻结为 `02bed1a5...b964997` / `167c2371...0d5512`。vendor kernel 与 generic 的
@@ -534,4 +534,22 @@ Enflame 选中 vendor、整题高于 team best；未超过升名阈值也保留�
 `673bb285f44c4c739b7a5ddb98cb56bfe6cbbc37f4baa23605184a2e666eacb0`；平台匿名
 回读为 8,846 bytes，SHA-256 与 canonical ZIP 完全一致。路由快照确认 Enflame
 选中 `fused_rmsnorm_enflame.py`，其余芯片继续使用冻结的 generic / Kunlun 文件；
-当前为 queued，不把入队视为通过，禁止重传。
+入队时为 queued，未把入队视为通过，且全程没有重传。
+
+03:18:02 CST 终态为 8/8 valid、平均 `4.55663333x`、team best，第 15/18：
+
+| 芯片 | speedup | 相对 E2 | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 7.77453333x | +0.06% | generic |
+| 沐曦 | 4.58466667x | -14.88% | generic |
+| 燧原 | 2.0768x | **+38.01%** | `_enflame` |
+| 海光 | 7.6622x | +2.06% | generic |
+| 昆仑 | 0.9334x | +0.28% | `_kunlunxin` |
+| 华为 | 1.76366667x | +5.37% | generic |
+| 国际 A | 5.98906667x | +0.67% | generic |
+| 国际 B | 5.66873333x | +0.31% | generic |
+
+官方 GCU 默认 launch 的方向被真实平台验证：燧原净增 `0.57193333x`，但仍低于
+升第 14 所需的 `>2.20780003x`。冻结字节的沐曦本轮下降 `14.88%`，抵消大部分
+燧原收益；整题仅比 E2 高 `0.00995x`，未越过第 14 的 `4.63455x`。保留 E5 为
+team best，按预注册规则停止该轴，不重传、不做 launch sweep；实时额度 `8/30`。
