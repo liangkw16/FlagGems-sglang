@@ -395,3 +395,53 @@ stages。traceback 落在提交文件第 342 行 pack-W launch，说明 regular 
 并把尚未平台执行的 regular BMM/scatter 收敛到 Task 09/12 昆仑已验证的 32×32
 资源形态；现有 Python 分块启动继续保证总 program 超 65535 时拆成多次 launch。
 若该结构第二次仍失败，则按止损不把它复用到 T22。
+
+## E7b：昆仑 pack-W 资源收口 + 32×32 regular BMM
+
+状态：screening/代理基准通过，release 待执行。
+
+候选 source commit
+`a5c5d0bd74d399716e1e614c9b0e897e30cda034` 只改昆仑 vendor 与对应回归：
+pack-W 从 64×32 的 FP32 tile 收敛为每个 program 拷贝一个 rank row 的连续
+N256，移除向量运行时除模；regular BMM/scatter 的 N tile 从 64 收敛到 32，
+保持 32×32×32、FP32 IEEE dot、stages 1。其他七芯实现不变。Kunlun vendor
+SHA-256 为
+`242bc191e6134fdf1c0ef201c8fb54dee644a74893cbb72d035ce27d6dffd834`，测试为
+`ee1e268bb4d6c6786ccd8fc2ca22f7050c3efac73d76390f3e897be02da72e2f`；
+generic/ascend/enflame/iluvatar 仍分别为
+`9b1a9a6c98b2cb7f9647a51276fda261f39be1eda06a866e3e3ad561a68bb355`、
+`41416a252cbf5aaa5bf57dcb6de3da20fd7cdc52e2a471d995c4c603f68fd2de`、
+`34fa4c8def315c6277fd087f6c85692273b2bc5a13e46bc135c0a495f6db41e4`、
+`34fa4c8def315c6277fd087f6c85692273b2bc5a13e46bc135c0a495f6db41e4`。
+
+最终 screening 位于
+`gpu:/tmp/flagos-sgemm-lora-b-e7b-final-screening.DS1Rie`，PID `130015`、
+runner PID `130016`、PGID `130015`，逐字重放脚本 `replay.sh` SHA-256
+`f2dd7d54074789f1d0119c241116d097c88ed95b337ddc6337ec65e0a9dbd232`；
+6/6 unittest 通过（0.851s），尾行为 `SCREENING_OK`，`screening.log` SHA-256
+`956de13d3d52dc49e9f5922b19031c87092bce44068e992a3c81d3624086f68e`。
+输入前后 manifest 文件 SHA-256 均为
+`09ce895aecc4eba9e4bb77cd25f4a42dce7311d711f0268f6dddfd9f6b0ebb47`。
+环境为 RTX 5070 Ti、Python 3.12.13、PyTorch 2.13.0+cu130、Triton
+3.7.1、CUDA 13.0。
+
+同目录最大回归的 5 轮 wrapper-inclusive 代理基准中，E7b 样本为
+1.6183/1.6145/1.6081/1.5995/1.6152ms，中位 1.6145ms；S2b 中位
+0.9035ms，E7b 峰值显存增量 415236096B，尾行为 `BENCHMARK_OK`。baseline、
+基准脚本、重放脚本、日志 SHA-256 分别为
+`bdfe676a86e5ac718d8f0565cb78374395af3ec614ea1f2407ff37a11e47ade3`、
+`33d06022c5045c763c801e723d49d067bd7b74366197e08fdfe1c48bff9e8b89`、
+`25ccf6f163d8e804ae584ff383b01420aeca4abda4d7741b7ec97a45a5e29771`、
+`62f8ef8bca7643296d3d1036eec4b73c29b2ae5df215c5ba4fa570da6bdb7372`；
+输入前后 manifest 文件 SHA-256 均为
+`f812db0a1b7568070a3740e8fae4635f436ed8f20479d7cba5e22e1e956e2d2c`。
+
+Git-object dry-run canonical ZIP 路径为
+`artifacts/competition/sgemm_lora_b/e7b-a5c5d0b/sgemm_lora_b.zip`，预期
+SHA-256
+`19a46d4041d4b4b5ac7ffb73a5b692c66ff72a8def122cc30c805dbb19256ed4`，
+成员为 generic + ascend/enflame/iluvatar/kunlunxin。该值仅作 release 前复现
+基准，正式提交仍须通过隔离 Git-object release、不可变 ZIP 验签和实时
+preflight。E7b 定位为一次 validity/结构诊断：若仍 invalid，立即停止 T23 并
+跳过 T22；若 valid 但昆仑 <15x，停止 T23；只有昆仑 >=15x 且总分达到实时榜首
+70% 才进入后续放大池。
