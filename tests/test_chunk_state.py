@@ -397,6 +397,48 @@ class ChunkStateTest(unittest.TestCase):
         tiles = (64 + 31) // 32 * ((64 + 31) // 32)
         self.assertGreater(tiles * 2 * 128 * 8, 4096)
 
+    def test_ascend_cube_path_precision(self):
+        torch.manual_seed(20260826)
+        batch, nchunks, nheads, ngroups = 1, 2, 8, 2
+
+        for dtype in (torch.float16, torch.bfloat16):
+            for chunk_size, headdim, dstate in (
+                (64, 128, 128),
+                (128, 64, 128),
+                (256, 64, 64),
+            ):
+                with self.subTest(
+                    dtype=dtype,
+                    chunk_size=chunk_size,
+                    headdim=headdim,
+                    dstate=dstate,
+                ):
+                    seqlen = nchunks * chunk_size
+                    B = torch.randn(
+                        (batch, seqlen, ngroups, dstate),
+                        device="cuda",
+                        dtype=dtype,
+                    )
+                    x = torch.randn(
+                        (batch, seqlen, nheads, headdim),
+                        device="cuda",
+                        dtype=dtype,
+                    )
+                    dt = torch.rand(
+                        (batch, nheads, nchunks, chunk_size),
+                        device="cuda",
+                        dtype=torch.float32,
+                    ).mul_(0.1)
+                    dA_cumsum = -(torch.rand_like(dt) * 0.01).cumsum(-1)
+
+                    actual = ASCEND_MODULE.chunk_state(B, x, dt, dA_cumsum)
+                    expected = _reference(B, x, dt, dA_cumsum)
+
+                    self.assertEqual(actual.dtype, torch.float32)
+                    torch.testing.assert_close(
+                        actual, expected, atol=3e-2, rtol=3e-2
+                    )
+
     def test_iluvatar_plain_dot_chunk_boundary_precision(self):
         torch.manual_seed(20260824)
         batch, nchunks = 1, 2
