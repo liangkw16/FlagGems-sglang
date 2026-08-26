@@ -852,3 +852,27 @@ SHA-256 与本地规范 ZIP 完全一致；本次 `file_url_sha256` 为
 国际 B `1.9180x` 均 correctness 通过且选中文件与 E6r 一致；华为已选中
 `chunk_state_ascend.py`，状态 `waiting_callback`，尚无 speedup。提交 intent
 已是 `submitted`，不得重试；等待同一 submission 终态后再写回均值。
+
+### E7 平台终态：8/8 valid，华为 6.44 倍，团队最佳 `4.0371875x`
+
+2026-08-26 19:48:20 CST 只读重查确认 submission `5124` 已终态
+`completed` / **valid** / `is_team_best=true`，八芯全部 correctness 通过：
+
+| 芯片 | E7 | 选中文件 |
+| --- | ---: | --- |
+| 天数 | `1.9810x` | `chunk_state_iluvatar.py` |
+| 沐曦 | `2.7315x` | `chunk_state_metax.py` |
+| 燧原 | `0.9390x` | `chunk_state_enflame.py` |
+| 海光 | `4.5410x` | `chunk_state.py` |
+| 昆仑 | `0.2510x` | `chunk_state_kunlunxin.py` |
+| 华为 | **`2.1185x`** | `chunk_state_ascend.py` |
+| 国际 A | `17.8175x` | `chunk_state.py` |
+| 国际 B | `1.9180x` | `chunk_state_amd.py` |
+| **平均** | **`4.0371875x`** | |
+
+华为由 E6r 的 `0.3290x` 提升至 `2.1185x`，为 **6.44 倍**；全题平均由
+`3.828875x` 提升 `0.2083125x` 至 `4.0371875x`（约 +5.44%）。结果证明
+FlagGems 官方 Ascend 低精度 dot / Cube 配置可迁移；64×64×64、stages1
+比筛选淘汰的 128×64 和 stages2 更符合本题资源边界。Task 12 达到预注册
+成功条件，永久停止，不再追投；额度保持 `17/30`，转 Task 09 官方 GCU300
+grid cap 方案。
