@@ -316,7 +316,7 @@ E2 平均 `4.686925x`，较 S1 提升 `0.299925x`（6.8367%）；燧原由 `0.42
 
 ## E3：昆仑 BLOCK 4096
 
-状态：release 通过，等待一次平台验证
+状态：平台昆仑提升但 7/8 `invalid_correctness`；保留 E2 team best，E3 停止。
 
 源码与验证 commit：`9186b096d588f8021da5677331a03d5ea7c310f0`
 
@@ -366,3 +366,23 @@ vendor 且高于 E2 的 `0.7686x`、平均高于 `4.686925x`；任一不满足�
 `flagos.ks3-cn-beijing.ksyuncs.com` 地址无认证下载，得到 10982 bytes，SHA-256
 与本地 canonical 值完全一致。平台已选择 generic、Ascend、Enflame、Kunlun 四条
 预期路由；当前等待八芯回调，禁止重传。
+
+最终结果为 7/8、`invalid_correctness`：
+
+| 芯片 | 结果 | speedup | 选中文件 |
+| --- | --- | ---: | --- |
+| 天数 | 通过 | 10.1048x | `apply_token_bitmask.py` |
+| 沐曦 | 通过 | 4.7350x | `apply_token_bitmask.py` |
+| 燧原 | 通过 | 2.8478x | `apply_token_bitmask_enflame.py` |
+| 海光 | 通过 | 4.8206x | `apply_token_bitmask.py` |
+| 昆仑芯 | 通过 | 0.8376x | `apply_token_bitmask_kunlunxin.py` |
+| 华为 | reference OOM | N/A | `apply_token_bitmask_ascend.py` |
+| 国际通用 A | 通过 | 6.9774x | `apply_token_bitmask.py` |
+| 国际通用 B | 通过 | 6.1746x | `apply_token_bitmask.py` |
+
+昆仑由 E2 的 `0.7686x` 提升到 `0.8376x`（+8.98%），证明 BLOCK4096 单变量
+有效。华为失败发生在平台 reference 计算、候选 kernel 调用之前：case 7 的
+`torch.floor_divide` 申请 4.64 GiB 时 NPU OOM；Ascend 成员与 E2 逐字节相同，
+不是 E3 代码回归。但用 E2 华为 `0.9646x` 补入本次其余七芯，估算平均仅
+`4.6828x`，仍略低于 E2 的 `4.686925x`，没有重试价值。保留 E2 为平台 team
+best；E3 one-shot 已用，不制造字节不同的伪新候选绕过规则。
