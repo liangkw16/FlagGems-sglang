@@ -341,7 +341,7 @@ Ascend grid-cap 假设试参；后续额度转其他算子。
 
 ## E4：Enflame 小 group 多行 tile
 
-状态：commit-bound release、canonical ZIP 与一次性提交门禁已完成
+状态：平台 8/8、`valid`、`4.37825x`，团队当前最佳
 
 2026-08-27 03:54 CST 实时榜单中，本队 E3 为第 `7/8`、`4.2526x`；第 6 名
 `5.84695x`。逐芯差距最大的燧原仅 `0.509x`，而榜首该芯为 `12.056x`。固定
@@ -380,3 +380,28 @@ ZIP 三个成员与 source commit 一致，`dry-run`、`verified-existing`、UTF
 10 MB 与 `unzip -t` 门禁全绿。E4 只允许一次平台提交；基础晋级门为 8/8 valid、
 Enflame 高于 E3 `0.509x` 且平均高于 `4.2526x`，显著目标为 Enflame 至少
 `1.018x`。任一基础门失败即保留 E3，不重传相同字节。
+
+2026-08-27 04:05:45 CST 经实时 preflight 执行 E4 唯一一次提交，submission
+`5293`、daily seq `25`，额度由 `6/30` 变为 `5/30`；`file_url_sha256` 为
+`88b291c20ef509f11536caab846485d714253301345b20beda5c1c8c325a1501`。平台对象
+匿名回读为 17410 bytes，SHA-256 与 canonical ZIP 完全一致，三个成员通过
+`unzip -t`，并选择预期的 generic、Ascend、Enflame 路径。
+
+04:06:41 CST 终态为 8/8、`valid`、平均 `4.37825x`、team best；相对 E3
+增加 `0.12565x`（+2.95%）。Enflame 由 `0.509x` 提升至 `0.5528x`
+（+8.60%），通过基础门但未达到 `1.018x` 显著目标：
+
+| 芯片 | E4 speedup | 相对 E3 | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | `9.4746x` | +1.82% | `mamba_layernorm_gated.py` |
+| 沐曦 | `4.0210x` | +17.67% | `mamba_layernorm_gated.py` |
+| 燧原 | `0.5528x` | +8.60% | `mamba_layernorm_gated_enflame.py` |
+| 海光 | `5.8336x` | -7.54% | `mamba_layernorm_gated.py` |
+| 昆仑芯 | `0.3292x` | -2.02% | `mamba_layernorm_gated.py` |
+| 华为 | `1.8662x` | -0.93% | `mamba_layernorm_gated_ascend.py` |
+| 国际 A | `7.3110x` | +8.70% | `mamba_layernorm_gated.py` |
+| 国际 B | `5.6376x` | +1.87% | `mamba_layernorm_gated.py` |
+
+未改字节的七芯存在明显测量波动，不能把整题净升全部归因于 Enflame；可归因目标芯
+只提升 8.60%。保留 E4 team best，但 CUDA case 8 的 7x 没有迁移为 GCU 高倍数，
+永久停止本题 multirow tile 大小与阈值 sweep，不以相同机制继续消耗额度。
