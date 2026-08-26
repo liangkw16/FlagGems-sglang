@@ -62,6 +62,27 @@ KUNLUN_MODULE = _load_module(
 )
 
 
+class KunlunHostResolvedStructureTest(unittest.TestCase):
+    def test_direct_kernel_replaces_pack_and_bmm(self):
+        source = (
+            BACKEND_ROOT / "_kunlunxin" / "ops" / "chunk_state_varlen.py"
+        ).read_text(encoding="utf-8")
+
+        self.assertEqual(
+            KUNLUN_MODULE._sequence_plan(0, 9, 8),
+            (9, 1, 0, 1),
+        )
+        self.assertEqual(
+            KUNLUN_MODULE._sequence_plan(3, 12, 8),
+            (9, 1, 3, 1),
+        )
+        self.assertNotIn("_pack_sequences_kernel", source)
+        self.assertNotIn("_regular_bmm_kernel", source)
+        self.assertNotIn("cu_seqlens_ptr", source)
+        self.assertIn("cu_seqlens.tolist()", source)
+        self.assertIn('input_precision="ieee"', source)
+
+
 def reference(B, x, dt, dA_cumsum, cu_seqlens, chunk_states):
     _, nheads, headdim = x.shape
     _, _, chunk_size = dt.shape
@@ -355,15 +376,6 @@ class ChunkStateVarlenTest(unittest.TestCase):
                 torch.testing.assert_close(
                     actual, expected, atol=3e-2, rtol=3e-2
                 )
-
-    def test_kunlun_vendor_avoids_masked_memory(self):
-        source = (
-            BACKEND_ROOT / "_kunlunxin" / "ops" / "chunk_state_varlen.py"
-        ).read_text(encoding="utf-8")
-
-        self.assertNotIn("mask=", source)
-        self.assertNotIn("other=", source)
-        self.assertIn("return output_storage[:, :, :headdim, :dstate]", source)
 
     def test_leading_empty_sequence(self):
         x = torch.ones((1, 1, 1), device="cuda", dtype=torch.float32)
