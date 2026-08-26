@@ -959,7 +959,7 @@ team best。相对 E7 平均增加 `0.01905x`（+0.65%）；华为由 `0.8868x`
 
 ## E11：Ascend 官方 65,535 physical-grid cap
 
-状态：release GO，canonical ZIP 已验签，等待一次性平台结果
+状态：已一次性提交，等待平台终态
 
 E11 从 E10 team-best 源码出发，只把 Ascend wrapper 的 physical-grid cap 从
 `4096` 提升到同后端同算子官方实现采用的 `65535`；kernel、八档 dual-level
@@ -992,3 +992,11 @@ local load/store。相对 E10 的五轮 wrapper-inclusive A/B：九点几何平�
 `1.2604x` 严格提高到 `>1.3160x`（约 +4.41%）且整题严格高于第 10；稳健目标
 为 `>1.6370x`，用于覆盖历史最坏冻结集合波动。平台门同时要求 8/8 valid、华为
 选中 `_ascend`、其余 selected-file 不变；候选只允许一次提交，未跨榜也停止该轴。
+
+2026-08-27 02:47:11 CST 经实时门禁执行 E11 唯一一次提交，submission `5251`、
+当日序号 `21`，额度由 `10/30` 变为 `9/30`。平台选中预期的 Ascend、AMD、
+MetaX、Kunlun 与 generic 路径；`file_url_sha256` 为
+`79eb6b1759b48eac5ddcfb60d95f9cf13c7dead5b5db13b9be42d76f33ded927`。
+内置回读因可信主机环境变量未配置而返回 `unavailable`，随后从平台返回的同一对象
+存储地址无认证回读 16,234 bytes，SHA-256 与 canonical ZIP 完全一致，五个成员
+均通过 `unzip -t`。候选已提交，禁止重传。
