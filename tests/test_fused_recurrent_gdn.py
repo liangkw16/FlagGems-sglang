@@ -117,7 +117,12 @@ def make_case(
         device="cuda",
         dtype=dtype,
     )
-    k_storage = torch.randn_like(q_storage)
+    k_storage = torch.randn(
+        q_storage.shape,
+        generator=generator,
+        device=q_storage.device,
+        dtype=q_storage.dtype,
+    )
     v_storage = torch.randn(
         (batch, sequence_length, value_heads, value_dim * 2),
         generator=generator,
@@ -133,7 +138,15 @@ def make_case(
     k = k_storage[..., 1::2]
     v = v_storage[..., ::2]
     g = g_storage[..., 1::2]
-    g.copy_(-torch.rand_like(g) * 0.2)
+    g.copy_(
+        -torch.rand(
+            g.shape,
+            generator=generator,
+            device=g.device,
+            dtype=g.dtype,
+        )
+        * 0.2
+    )
 
     if beta_is_vector:
         beta_storage = torch.empty(
@@ -148,7 +161,16 @@ def make_case(
             dtype=dtype,
         )
     beta = beta_storage[..., ::2]
-    beta.copy_(torch.rand_like(beta) * 0.6 + 0.2)
+    beta.copy_(
+        torch.rand(
+            beta.shape,
+            generator=generator,
+            device=beta.device,
+            dtype=beta.dtype,
+        )
+        * 0.6
+        + 0.2
+    )
 
     initial_state = None
     if use_initial_state:
@@ -170,6 +192,9 @@ class FusedRecurrentGdnTest(unittest.TestCase):
         *,
         output_final_state,
         use_qk_l2norm_in_kernel,
+        atol=1e-2,
+        rtol=1e-2,
+        equal_nan=False,
     ):
         q, k, v, g, beta, initial_state = case
         scale = 0.37
@@ -211,12 +236,20 @@ class FusedRecurrentGdnTest(unittest.TestCase):
             ),
         )
         torch.testing.assert_close(
-            actual_output, expected_output, atol=1e-2, rtol=1e-2
+            actual_output,
+            expected_output,
+            atol=atol,
+            rtol=rtol,
+            equal_nan=equal_nan,
         )
         if output_final_state:
             self.assertEqual(actual_state.dtype, torch.float32)
             torch.testing.assert_close(
-                actual_state, expected_state, atol=1e-2, rtol=1e-2
+                actual_state,
+                expected_state,
+                atol=atol,
+                rtol=rtol,
+                equal_nan=equal_nan,
             )
         else:
             self.assertIsNone(actual_state)
@@ -301,6 +334,43 @@ class FusedRecurrentGdnTest(unittest.TestCase):
                     ),
                     output_final_state=True,
                     use_qk_l2norm_in_kernel=False,
+                )
+
+    def test_k64_bfloat16_specialized_contract(self):
+        self.assert_matches(
+            make_case(
+                torch.bfloat16,
+                batch=2,
+                sequence_length=3,
+                query_heads=2,
+                value_heads=4,
+                key_dim=64,
+                value_dim=17,
+                beta_is_vector=True,
+                use_initial_state=True,
+            ),
+            output_final_state=True,
+            use_qk_l2norm_in_kernel=False,
+        )
+
+    def test_long_bfloat16_recurrence(self):
+        for batch, sequence_length in ((32, 32), (8, 128)):
+            with self.subTest(batch=batch, sequence_length=sequence_length):
+                self.assert_matches(
+                    make_case(
+                        torch.bfloat16,
+                        batch=batch,
+                        sequence_length=sequence_length,
+                        query_heads=4,
+                        value_heads=8,
+                        key_dim=64,
+                        value_dim=64,
+                    ),
+                    output_final_state=False,
+                    use_qk_l2norm_in_kernel=False,
+                    atol=1.5e-2,
+                    rtol=1.5e-2,
+                    equal_nan=True,
                 )
 
 

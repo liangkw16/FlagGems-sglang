@@ -16,6 +16,228 @@ import torch
 import triton
 import triton.language as tl
 
+try:
+    from flaggems_sglang.utils.triton_lang_helper import tl_extra_shim
+except ImportError:
+    from triton.language.extra import libdevice as tl_extra_shim
+
+
+@triton.jit(do_not_specialize=["sequence_length"])
+def _fused_recurrent_gdn_k64_kernel(
+    q_ptr,
+    k_ptr,
+    v_ptr,
+    g_ptr,
+    beta_ptr,
+    initial_state_ptr,
+    state_ptr,
+    output_ptr,
+    scale,
+    sequence_length,
+    value_heads,
+    value_dim,
+    head_group_ratio,
+    stride_q_batch,
+    stride_q_time,
+    stride_q_head,
+    stride_q_dim,
+    stride_k_batch,
+    stride_k_time,
+    stride_k_head,
+    stride_k_dim,
+    stride_v_batch,
+    stride_v_time,
+    stride_v_head,
+    stride_v_dim,
+    stride_g_batch,
+    stride_g_time,
+    stride_g_head,
+    stride_beta_batch,
+    stride_beta_time,
+    stride_beta_head,
+    stride_beta_value,
+    stride_initial_batch,
+    stride_initial_head,
+    stride_initial_value,
+    stride_initial_key,
+    stride_output_batch,
+    stride_output_time,
+    stride_output_head,
+    stride_output_value,
+    HAS_INITIAL_STATE: tl.constexpr,
+    BETA_IS_VECTOR: tl.constexpr,
+):
+    program = tl.program_id(0)
+    value_offset = program % value_dim
+    batch_head = program // value_dim
+    batch = batch_head // value_heads
+    value_head = batch_head % value_heads
+    query_head = value_head // head_group_ratio
+    state_base = program * 64
+
+    key_offsets = tl.arange(0, 64)
+    state = tl.zeros((64,), dtype=tl.float32)
+    if HAS_INITIAL_STATE:
+        initial_offsets = (
+            batch * stride_initial_batch
+            + value_head * stride_initial_head
+            + value_offset * stride_initial_value
+            + key_offsets * stride_initial_key
+        )
+        state += tl.load(initial_state_ptr + initial_offsets).to(tl.float32)
+    tl.store(state_ptr + state_base + key_offsets, state)
+
+    for timestep in range(0, sequence_length):
+        gate_offset = (
+            batch * stride_g_batch
+            + timestep * stride_g_time
+            + value_head * stride_g_head
+        )
+        decay = tl_extra_shim.exp(
+            tl.load(g_ptr + gate_offset).to(tl.float32)
+        )
+        key_base = (
+            batch * stride_k_batch
+            + timestep * stride_k_time
+            + query_head * stride_k_head
+        )
+
+        prediction_0 = 0.0
+        prediction_1 = 0.0
+        prediction_2 = 0.0
+        prediction_3 = 0.0
+        for key_offset in tl.static_range(0, 64, 4):
+            state_0 = tl.load(state_ptr + state_base + key_offset) * decay
+            state_1 = (
+                tl.load(state_ptr + state_base + key_offset + 1) * decay
+            )
+            state_2 = (
+                tl.load(state_ptr + state_base + key_offset + 2) * decay
+            )
+            state_3 = (
+                tl.load(state_ptr + state_base + key_offset + 3) * decay
+            )
+            tl.store(state_ptr + state_base + key_offset, state_0)
+            tl.store(state_ptr + state_base + key_offset + 1, state_1)
+            tl.store(state_ptr + state_base + key_offset + 2, state_2)
+            tl.store(state_ptr + state_base + key_offset + 3, state_3)
+            key_0 = tl.load(
+                k_ptr + key_base + key_offset * stride_k_dim
+            ).to(tl.float32)
+            key_1 = tl.load(
+                k_ptr + key_base + (key_offset + 1) * stride_k_dim
+            ).to(tl.float32)
+            key_2 = tl.load(
+                k_ptr + key_base + (key_offset + 2) * stride_k_dim
+            ).to(tl.float32)
+            key_3 = tl.load(
+                k_ptr + key_base + (key_offset + 3) * stride_k_dim
+            ).to(tl.float32)
+            prediction_0 = tl.fma(state_0, key_0, prediction_0)
+            prediction_1 = tl.fma(state_1, key_1, prediction_1)
+            prediction_2 = tl.fma(state_2, key_2, prediction_2)
+            prediction_3 = tl.fma(state_3, key_3, prediction_3)
+        # Preserve the FP32 reference GEMM's four-accumulator merge order.
+        prediction = (prediction_0 + prediction_2) + (
+            prediction_1 + prediction_3
+        )
+
+        value_address = (
+            batch * stride_v_batch
+            + timestep * stride_v_time
+            + value_head * stride_v_head
+            + value_offset * stride_v_dim
+        )
+        value = tl.load(v_ptr + value_address).to(tl.float32)
+        beta_address = (
+            batch * stride_beta_batch
+            + timestep * stride_beta_time
+            + value_head * stride_beta_head
+        )
+        if BETA_IS_VECTOR:
+            beta_address += value_offset * stride_beta_value
+        beta_value = tl.load(beta_ptr + beta_address).to(tl.float32)
+        correction = (value - prediction) * beta_value
+
+        query_base = (
+            batch * stride_q_batch
+            + timestep * stride_q_time
+            + query_head * stride_q_head
+        )
+        result_0 = 0.0
+        result_1 = 0.0
+        result_2 = 0.0
+        result_3 = 0.0
+        for key_offset in tl.static_range(0, 64, 4):
+            key_0 = tl.load(
+                k_ptr + key_base + key_offset * stride_k_dim
+            ).to(tl.float32)
+            key_1 = tl.load(
+                k_ptr + key_base + (key_offset + 1) * stride_k_dim
+            ).to(tl.float32)
+            key_2 = tl.load(
+                k_ptr + key_base + (key_offset + 2) * stride_k_dim
+            ).to(tl.float32)
+            key_3 = tl.load(
+                k_ptr + key_base + (key_offset + 3) * stride_k_dim
+            ).to(tl.float32)
+            outer_0 = correction * key_0
+            outer_1 = correction * key_1
+            outer_2 = correction * key_2
+            outer_3 = correction * key_3
+            state_0 = (
+                tl.load(state_ptr + state_base + key_offset) + outer_0
+            )
+            state_1 = (
+                tl.load(state_ptr + state_base + key_offset + 1) + outer_1
+            )
+            state_2 = (
+                tl.load(state_ptr + state_base + key_offset + 2) + outer_2
+            )
+            state_3 = (
+                tl.load(state_ptr + state_base + key_offset + 3) + outer_3
+            )
+            tl.store(state_ptr + state_base + key_offset, state_0)
+            tl.store(state_ptr + state_base + key_offset + 1, state_1)
+            tl.store(state_ptr + state_base + key_offset + 2, state_2)
+            tl.store(state_ptr + state_base + key_offset + 3, state_3)
+            query_0 = (
+                tl.load(q_ptr + query_base + key_offset * stride_q_dim).to(
+                    tl.float32
+                )
+                * scale
+            )
+            query_1 = (
+                tl.load(
+                    q_ptr + query_base + (key_offset + 1) * stride_q_dim
+                ).to(tl.float32)
+                * scale
+            )
+            query_2 = (
+                tl.load(
+                    q_ptr + query_base + (key_offset + 2) * stride_q_dim
+                ).to(tl.float32)
+                * scale
+            )
+            query_3 = (
+                tl.load(
+                    q_ptr + query_base + (key_offset + 3) * stride_q_dim
+                ).to(tl.float32)
+                * scale
+            )
+            result_0 = tl.fma(state_0, query_0, result_0)
+            result_1 = tl.fma(state_1, query_1, result_1)
+            result_2 = tl.fma(state_2, query_2, result_2)
+            result_3 = tl.fma(state_3, query_3, result_3)
+        result = (result_0 + result_2) + (result_1 + result_3)
+        output_address = (
+            batch * stride_output_batch
+            + timestep * stride_output_time
+            + value_head * stride_output_head
+            + value_offset * stride_output_value
+        )
+        tl.store(output_ptr + output_address, result)
+
 
 @triton.jit(do_not_specialize=["sequence_length"])
 def _fused_recurrent_gdn_kernel(
@@ -252,6 +474,48 @@ def fused_recurrent_gdn(
     final_stride = (
         final_state.stride() if final_state is not None else (0,) * 4
     )
+    if (
+        key_dim == 64
+        and q.dtype == torch.bfloat16
+        and not use_qk_l2norm_in_kernel
+    ):
+        state = final_state
+        if state is None:
+            state = torch.empty(
+                (batch, value_heads, value_dim, key_dim),
+                dtype=torch.float32,
+                device=q.device,
+            )
+        _fused_recurrent_gdn_k64_kernel[
+            (batch * value_heads * value_dim,)
+        ](
+            q,
+            k,
+            v,
+            g,
+            beta,
+            initial_state if initial_state is not None else q,
+            state,
+            output,
+            float(scale),
+            sequence_length,
+            value_heads,
+            value_dim,
+            value_heads // query_heads,
+            *q.stride(),
+            *k.stride(),
+            *v.stride(),
+            *g.stride(),
+            *beta_stride,
+            *initial_stride,
+            *output.stride(),
+            HAS_INITIAL_STATE=initial_state is not None,
+            BETA_IS_VECTOR=beta_is_vector,
+            num_warps=1,
+            num_stages=1,
+            enable_fp_fusion=False,
+        )
+        return output, final_state
     block_k = triton.next_power_of_2(key_dim)
     block_v = min(triton.next_power_of_2(value_dim), 8)
     _fused_recurrent_gdn_kernel[
