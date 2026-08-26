@@ -829,3 +829,33 @@ team best。相对 E7 平均下降 `0.01715x`（-0.59%）；燧原由 `0.2090x`
 结论：fixed launch 对燧原有明显单芯收益，但未满足预注册的整题 team-best 基础门，
 保留 E7 并停止该轴，不把 E8 Enflame 字节带入下一候选。下一步从 E7 分叉，只验证
 Hygon 官方同算子四档 autotune。
+
+## E9：Hygon 官方四档 BLOCK autotune
+
+状态：release 与不可变 ZIP 门禁通过，待唯一一次平台提交
+
+E9 从 E7 已验证成员集合分叉，只新增 Hygon vendor；E8 Enflame 文件不在候选
+Git tree 中。Hygon 与已验证 AMD 路径复用官方 FlagGems 同算子的四档配置：
+BLOCK/warps 为 `128/2`、`256/4`、`512/8`、`1024/8`，autotune key 为
+`hidden_size,topk`，grid 从 selected config 的 meta 读取 BLOCK，launch 不显式
+重复传 BLOCK、warps 或 stages。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `f1d8e97e16160d64eecb5b93e7807b2a18fe795f` |
+| generic / AMD SHA-256 | `52a2fc979784f2bd25e7e17b9822c23b4f438efdf062c70bfb09aba9ba732335` / `3b0de225dbf5ffc1004096055da871c919870cc0ba6e4a0297551c5c7537e399` |
+| Ascend / Hygon SHA-256 | `f740604cd4a0506a3e41776f3f9a001edffafef45f04aff78d1ee8a208f2132b` / `3b0de225dbf5ffc1004096055da871c919870cc0ba6e4a0297551c5c7537e399` |
+| Kunlun / MetaX SHA-256 | `68b0abe07e3cf4f2b9cb86063e9ad1e18edd83d90341410cd281ec595c83406d` / `20db4f49aada2976723ab9dabd7013545a30a0998ee8fb21ad655375bd2cb794` |
+| test SHA-256 | `2394d232a97fd68f1572b6165578cdcddddab8adbc8e8d98aa55b9120f3a501d` |
+| release | `gpu:/tmp/flagos-moe-sum-reduce-hygon-release.9o2fL6`；13/13、`RELEASE_OK`；脚本/日志 SHA-256 `ceb2aa6e4108bdeaa0206b22dcf14226ea48b6d0ea64ee9f4868d9a524b0458d` / `726052f3e2e2fecd63e33db1feaca1c8f45ee8f29f8bec91894b9c5bd9a1a03f` |
+| Git archive SHA-256 | `61b4dbf332a4a6e2d96ec2ee51bf177e638176421be367186eb7d876b9fa606c` |
+| canonical ZIP | `artifacts/competition/moe_sum_reduce/e9-f1d8e97/moe_sum_reduce.zip`，18,762 bytes，SHA-256 `283d8929a5db3be2172341812f7079264df2c6493f0532ac04ce2cd8186b8b11` |
+
+三 dtype、非连续 stride、空维/zero top-k、BLOCK 边界与最大
+`(4096,8,7168)` 均通过。五轮 A/B 的 18 点几何平均 `1.003289x`，最差中位
+`0.969231x`；四档均实际编译并被选中过，10–40 registers、0 spill/shared/global
+scratch。其余五个提交成员 SHA 与 E7 完全一致。
+
+当前公开第 10 名为 `2.95495x`。冻结 E7 其余七芯时，Hygon 必须严格高于
+`6.8562x` 且整题严格高于 `2.95495x` 才保留；同时要求 8/8 valid、海光选中
+`_hygon`、其余 selected-file 不变。任一门不满足即保留 E7，永久停止该轴。
