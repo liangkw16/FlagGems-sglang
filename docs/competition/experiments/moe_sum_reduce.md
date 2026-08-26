@@ -832,7 +832,7 @@ Hygon 官方同算子四档 autotune。
 
 ## E9：Hygon 官方四档 BLOCK autotune
 
-状态：submission `5243` 已唯一提交并完成对象回读，等待八芯终态
+状态：平台 8/8、`valid`、`2.685925x`，未超过 E7 team best
 
 E9 从 E7 已验证成员集合分叉，只新增 Hygon vendor；E8 Enflame 文件不在候选
 Git tree 中。Hygon 与已验证 AMD 路径复用官方 FlagGems 同算子的四档配置：
@@ -867,3 +867,21 @@ MetaX、Ascend、Kunlun 与 generic 路径；`file_url_sha256` 为
 内置回读因可信主机环境变量未配置而返回 `unavailable`，随后从平台返回的同一对象
 存储地址无认证回读 18,762 bytes，SHA-256 与 canonical ZIP 完全一致，六个成员
 均通过 `unzip -t`。候选已提交，禁止重传。
+
+02:14:21 CST 终态为 `completed` / `valid`、8/8、平均 `2.685925x`，未标记
+team best。相对 E7 平均下降 `0.243025x`（-8.30%）；Hygon 选中文件正确，但
+海光由 `6.6482x` 降到 `4.7288x`（-28.87%），远低于 `6.8562x` 止损线：
+
+| 芯片 | E9 speedup | 相对 E7 | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 4.8834x | +3.26% | `moe_sum_reduce.py` |
+| 沐曦 | 3.4736x | -1.45% | `moe_sum_reduce_metax.py` |
+| 燧原 | 0.2114x | +1.15% | `moe_sum_reduce.py` |
+| 海光 | 4.7288x | -28.87% | `moe_sum_reduce_hygon.py` |
+| 昆仑芯 | 0.1758x | +0.34% | `moe_sum_reduce_kunlunxin.py` |
+| 华为 | 0.8454x | -4.67% | `moe_sum_reduce_ascend.py` |
+| 国际通用 A | 3.7300x | -1.81% | `moe_sum_reduce.py` |
+| 国际通用 B | 3.4390x | -0.60% | `moe_sum_reduce_amd.py` |
+
+结论：官方四档在 Hygon 平台是明确反优化，保留 E7，永久停止 Hygon autotune
+轴；不重传、不扩展 tile 搜索。
