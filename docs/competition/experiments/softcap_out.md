@@ -506,7 +506,7 @@ team best；额度确认为 `27/30`。Kunlun 原生 `tanh` 把目标芯从
 
 ## S6：Enflame GCU 原生 `tanh`
 
-状态：平台 submission `5213` 评测中
+状态：平台 8/8、`valid`、`2.05411458x`，团队当前最佳、公开第 13/14
 
 S5 的停止门限定于 Kunlun/XPU vendor：本候选由 2026-08-27 00:31 CST 新同步
 的同题逐芯榜单证据触发，是不同文件、compiler 和 libdevice 的 Enflame/GCU 新轴，
@@ -550,3 +550,25 @@ Enflame native-`tanh` 轴。
 `4810f049fa6d82b99753d48d5275109838af35b6b739c938a336038e9ec55620`；对平台
 返回的匿名对象限长回读为 10,023 bytes，SHA-256 与 canonical ZIP 完全一致。
 平台选中了预期的 generic、Ascend、Enflame、Kunlun 四条路径；禁止重传。
+
+00:43:54 CST 终态为 `completed` / `valid`、8/8，平均 `2.05411458x`，
+平台标记 team best；额度确认为 `26/30`。Enflame 由 S4 的
+`1.18416667x` 提升至 `1.38541667x`（+16.99%），通过单芯显著收益门；
+整题较 S4 增加 `0.00714583x`，通过基础晋级门，但未达到预注册的
+`2.06696875x` 整题显著收益门：
+
+| 芯片 | S6 speedup | 相对 S4 | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 3.66100000x | +0.73% | `softcap_out.py` |
+| 沐曦 | 1.70966667x | +0.63% | `softcap_out.py` |
+| 燧原 | 1.38541667x | +16.99% | `softcap_out_enflame.py` |
+| 海光 | 2.04441667x | -5.55% | `softcap_out.py` |
+| 昆仑芯 | 0.86383333x | -0.14% | `softcap_out_kunlunxin.py` |
+| 华为 | 0.81816667x | -7.42% | `softcap_out_ascend.py` |
+| 国际通用 A | 3.14566667x | -0.20% | `softcap_out.py` |
+| 国际通用 B | 2.80475000x | +0.43% | `softcap_out.py` |
+
+2026-08-27 00:45:48 CST 公开榜单刷新后，S6 仍为第 13/14；第 12 名为
+`2.18982292x`，差 `0.13570834x`。结论：GCU native `tanh` 的目标收益真实，
+但未复现榜首的数量级路径；保留 S6 为 Task24 team best，停止同一 native-`tanh`
+轴，不以相同字节或微调赌平台波动。
