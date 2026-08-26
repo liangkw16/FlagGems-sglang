@@ -14,7 +14,9 @@
 
 import ast
 import importlib.util
+import os
 import unittest
+from functools import partial
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -151,8 +153,13 @@ class SgemmLoraBKunlunRoutingTest(unittest.TestCase):
                 permutation,
             )
         )
+        simulation_flags = (
+            "TRITONXPU_OTHER_SIM",
+            "TRITONXPU_STORE_MASK_SIM",
+        )
 
         with (
+            patch.dict(os.environ, dict.fromkeys(simulation_flags, "0")),
             patch.object(KUNLUN_MODULE, "_safe_adapter_kernel") as safe_kernel,
             patch.object(KUNLUN_MODULE, "_pack_x_kernel") as pack_x_kernel,
             patch.object(KUNLUN_MODULE, "_regular_bmm_kernel") as bmm_kernel,
@@ -162,13 +169,26 @@ class SgemmLoraBKunlunRoutingTest(unittest.TestCase):
             patch.object(KUNLUN_MODULE, "_MAX_GRID_SIZE", 1),
         ):
             launch_order = []
-            bmm_kernel.__getitem__.return_value.side_effect = (
-                lambda *args, **kwargs: launch_order.append("bmm")
-            )
-            scatter_kernel.__getitem__.return_value.side_effect = (
-                lambda *args, **kwargs: launch_order.append("scatter")
-            )
+
+            def record_launch(name, *args, **kwargs):
+                launch_order.append(
+                    (name,)
+                    + tuple(os.environ.get(key) for key in simulation_flags)
+                )
+
+            for kernel, name in (
+                (safe_kernel, "safe"),
+                (pack_x_kernel, "pack"),
+                (bmm_kernel, "bmm"),
+                (scatter_kernel, "scatter"),
+            ):
+                kernel.__getitem__.return_value.side_effect = partial(
+                    record_launch, name
+                )
             actual = KUNLUN_MODULE.sgemm_lora_b(x, weights, info, base)
+            self.assertTrue(
+                all(key not in os.environ for key in simulation_flags)
+            )
 
         safe_args = safe_kernel.__getitem__.return_value.call_args.args
         bmm_args = bmm_kernel.__getitem__.return_value.call_args.args
@@ -190,15 +210,22 @@ class SgemmLoraBKunlunRoutingTest(unittest.TestCase):
         self.assertTrue(pack_x_kernel.__getitem__.return_value.called)
         self.assertTrue(bmm_kernel.__getitem__.return_value.called)
         self.assertTrue(scatter_kernel.__getitem__.return_value.called)
-        for kernel in (safe_kernel, pack_x_kernel, scatter_kernel):
+        for kernel in (
+            safe_kernel,
+            pack_x_kernel,
+            bmm_kernel,
+            scatter_kernel,
+        ):
             for call in kernel.__getitem__.return_value.call_args_list:
-                self.assertIs(call.kwargs["is_use_mask_zero"], True)
-        self.assertNotIn(
-            "is_use_mask_zero",
-            bmm_kernel.__getitem__.return_value.call_args.kwargs,
-        )
+                self.assertNotIn("is_use_mask_zero", call.kwargs)
         scatter_calls = scatter_kernel.__getitem__.return_value.call_args_list
-        self.assertEqual(launch_order, ["bmm"] * 6 + ["scatter"] * 4)
+        self.assertEqual(
+            launch_order,
+            [("safe", "1", "1")]
+            + [("pack", "1", "1")] * 2
+            + [("bmm", None, None)] * 6
+            + [("scatter", "1", "1")] * 4,
+        )
         self.assertEqual(
             [call.args[9] for call in scatter_calls], [0, 1, 2, 3]
         )

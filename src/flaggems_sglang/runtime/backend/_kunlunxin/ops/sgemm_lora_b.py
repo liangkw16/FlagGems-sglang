@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 import torch
 import triton
 import triton.language as tl
@@ -307,6 +309,8 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
         permutation if permutation is not None else batch_info.seg_indptr
     )
 
+    os.environ["TRITONXPU_OTHER_SIM"] = "1"
+    os.environ["TRITONXPU_STORE_MASK_SIM"] = "1"
     safe_adapter_span = _MAX_GRID_SIZE * safe_adapter_block
     for batch_start in range(0, batch_size, safe_adapter_span):
         batch_count = min(safe_adapter_span, batch_size - batch_start)
@@ -324,7 +328,6 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
             BLOCK_SIZE=safe_adapter_block,
             num_warps=4,
             num_stages=1,
-            is_use_mask_zero=True,
         )
 
     rank_tiles = triton.cdiv(rank, block_k)
@@ -347,8 +350,9 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
             HAS_PERMUTATION=permutation is not None,
             num_warps=4,
             num_stages=1,
-            is_use_mask_zero=True,
         )
+    del os.environ["TRITONXPU_OTHER_SIM"]
+    del os.environ["TRITONXPU_STORE_MASK_SIM"]
 
     bmm_programs = (
         batch_size
@@ -373,6 +377,8 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
             num_stages=1,
         )
 
+    os.environ["TRITONXPU_OTHER_SIM"] = "1"
+    os.environ["TRITONXPU_STORE_MASK_SIM"] = "1"
     scatter_programs = (
         batch_size * max_len * triton.cdiv(output_dim, scatter_block_n)
     )
@@ -399,8 +405,9 @@ def sgemm_lora_b(x, weights, batch_info, base_output):
             HAS_PERMUTATION=permutation is not None,
             num_warps=4,
             num_stages=1,
-            is_use_mask_zero=True,
         )
+    del os.environ["TRITONXPU_OTHER_SIM"]
+    del os.environ["TRITONXPU_STORE_MASK_SIM"]
     return output
 
 
