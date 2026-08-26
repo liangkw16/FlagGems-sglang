@@ -444,7 +444,7 @@ Ascend tile 扩展。其余七芯使用冻结字节并全部过门槛。
 
 ## S5：Kunlun 原生 `tanh`
 
-状态：平台 submission `5210` 评测中
+状态：平台 8/8、`valid`、`2.02248958x`，非 team best；保留 S4
 
 S5 只把 Kunlun vendor 的手写 `exp` 多项式 `tanh` 换成 XPU 官方
 `tl_extra_shim.tanh`；BLOCK 4096、grid、四 warps、单 stage、cap 分支及输出
@@ -482,3 +482,24 @@ CUDA libdevice 调用开销使非 control 几何平均为 `0.961117x`，只作�
 `d0f8f1e2aefcc568a24ed9345724e7b9388cf49e139ecdf77ceb15519399edd4`；对平台
 返回的匿名对象限长回读为 10,043 bytes，SHA-256 与 canonical ZIP 完全一致。
 平台选中了预期的 generic、Ascend、Enflame、Kunlun 四条路径；禁止重传。
+
+00:30:03 CST 终态为 `completed` / `valid`、8/8、平均 `2.02248958x`，非
+team best；额度确认为 `27/30`。Kunlun 原生 `tanh` 把目标芯从
+`0.86508333x` 提升至 `0.97591667x`（+12.81%），但没有达到显著收益目标
+`1.02508333x`。未改字节的 Huawei 同轮由 `0.88375x` 波动至 `0.70366667x`，
+其余冻结芯片波动后使平均较 S4 下降 `0.02447917x`，未过基础晋级门：
+
+| 芯片 | S5 speedup | 相对 S4 | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 3.63900000x | +0.13% | `softcap_out.py` |
+| 沐曦 | 1.68775000x | -0.66% | `softcap_out.py` |
+| 燧原 | 1.18925000x | +0.43% | `softcap_out_enflame.py` |
+| 海光 | 2.11850000x | -2.13% | `softcap_out.py` |
+| 昆仑芯 | 0.97591667x | +12.81% | `softcap_out_kunlunxin.py` |
+| 华为 | 0.70366667x | -20.38% | `softcap_out_ascend.py` |
+| 国际通用 A | 3.07291667x | -2.51% | `softcap_out.py` |
+| 国际通用 B | 2.79291667x | +0.00% | `softcap_out.py` |
+
+结论：native `tanh` 的 Kunlun 单芯方向成立，但整题没有晋级且平台只认 8 芯
+均值。保留 S4 为 Task24 team best，按预注册规则永久停止该轴；不以相同字节
+赌测量波动，也不做 native-`tanh` 变体。
