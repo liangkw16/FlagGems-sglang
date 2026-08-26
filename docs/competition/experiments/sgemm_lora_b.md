@@ -373,7 +373,8 @@ canonical ZIP
 `artifacts/competition/sgemm_lora_b/e7-1953fde/sgemm_lora_b.zip`，SHA-256
 `f5ac39fba6b3c6f100b925fb7849174abbfbbeef1262451653ddb940052825da`，
 成员为 generic + ascend/enflame/iluvatar/kunlunxin，`--verify-existing` 与
-`unzip -t` 均通过。平台止损规则：E7 只提交一次；昆仑 ≥39x 即停止 T23，
+`unzip -t` 均通过。以下为 E7 提交时预设，已由后文 E7b 现行止损取代：E7
+只提交一次；昆仑 ≥39x 即停止 T23，
 15–39x 才进入 E8 scatter/output 融合，valid 但 <15x 则直接切换 T13；若编译
 失败只允许一次无-dot FP32 multiply-sum fallback，不再调 tile/warps/stages。
 
@@ -398,7 +399,7 @@ stages。traceback 落在提交文件第 342 行 pack-W launch，说明 regular 
 
 ## E7b：昆仑 pack-W 资源收口 + 32×32 regular BMM
 
-状态：screening/代理基准通过，release 待执行。
+状态：release 门禁与不可变 ZIP 验签通过，候选就绪，待实时 preflight。
 
 候选 source commit
 `a5c5d0bd74d399716e1e614c9b0e897e30cda034` 只改昆仑 vendor 与对应回归：
@@ -436,12 +437,22 @@ runner PID `130016`、PGID `130015`，逐字重放脚本 `replay.sh` SHA-256
 输入前后 manifest 文件 SHA-256 均为
 `f812db0a1b7568070a3740e8fae4635f436ed8f20479d7cba5e22e1e956e2d2c`。
 
-Git-object dry-run canonical ZIP 路径为
-`artifacts/competition/sgemm_lora_b/e7b-a5c5d0b/sgemm_lora_b.zip`，预期
-SHA-256
+source/verification commit 均为
+`a5c5d0bd74d399716e1e614c9b0e897e30cda034` 的 Git-object release 位于
+`gpu:/tmp/flagos-sgemm-lora-b-e7b-release.fTJ385`，PID/PGID `130757`，wall
+900s；`replay.sh` SHA-256
+`c319e0ee991c0f274f888dad7422651d266cc31c2ab1f78fcc4a26930a0be1cc`。
+6/6 unittest 通过（0.678s），尾行为 `RELEASE_OK`，`release.log` SHA-256
+`2807e911980342ec315847186c1961aae987ba4a0dc4e0fce1e1c690fb747d0c`；
+release 前后 manifest SHA-256 均为
+`b8aff5dfa5498d858d43638d3ea0589d36ba58dca8dcec878f1559ebfad62693`，
+逐字比较一致。
+
+canonical ZIP 路径为
+`artifacts/competition/sgemm_lora_b/e7b-a5c5d0b/sgemm_lora_b.zip`，大小
+35490B，SHA-256
 `19a46d4041d4b4b5ac7ffb73a5b692c66ff72a8def122cc30c805dbb19256ed4`，
-成员为 generic + ascend/enflame/iluvatar/kunlunxin。该值仅作 release 前复现
-基准，正式提交仍须通过隔离 Git-object release、不可变 ZIP 验签和实时
-preflight。E7b 定位为一次 validity/结构诊断：若仍 invalid，立即停止 T23 并
-跳过 T22；若 valid 但昆仑 <15x，停止 T23；只有昆仑 >=15x 且总分达到实时榜首
-70% 才进入后续放大池。
+成员为 generic + ascend/enflame/iluvatar/kunlunxin；`--verify-existing`、
+`unzip -t` 和成员白名单均通过。E7b 定位为一次 validity/结构诊断：若仍
+invalid，立即停止 T23 并跳过 T22；若 valid 但昆仑 <15x，停止 T23；只有昆仑
+>=15x 且总分达到实时榜首 70% 才进入后续放大池。
