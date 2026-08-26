@@ -334,3 +334,19 @@ generic + ascend/enflame/iluvatar/kunlunxin 五文件。dry-run、正式构建�
 E3 只提交一次。若 8/8 即停止 Task 22；若 Enflame 恢复但昆仑仍失败，说明新
 根因成立但任务仍无效，永久停止；若 Enflame 仍失败，也不再调 tile/stages/grid，
 转投 Task 14。
+
+### E3 平台提交与当前结果
+
+E3 于 2026-08-26 15:57:01 CST 正式提交一次（submission `5064`，当日序号
+`6`，额度 `25/30`→`24/30`）。上传后的远端对象为 33,551B，SHA-256 与
+canonical ZIP 的
+`47f566315846e79bf4874ed5296595d5aed193e1d54e4ed430e79a22ecefc819`
+完全一致；`file_url_sha256` 为
+`448bbfaf9f323d749f451e9ea1ccbd8cfb98f3810757ac0570c75321d09ccd8a`。
+
+15:57:40 的平台观测已达到 7/7 已回调芯全部通过：天数 47.3460x、沐曦
+32.7265x、燧原 **4.7495x**、海光 82.2330x、华为 21.7705x、国际 A
+77.1000x、国际 B 48.2245x，合计 314.1500x。燧原从 S2/S2c 稳定
+PassManager 失败恢复为全 case 正确，直接证实 E3 的 i64 根因；当前只剩昆仑
+`waiting_callback`。若昆仑达到最低 0.1x，最终平均分至少为 39.28125x。
+本候选已提交，不得重试；终态回调后补记 validity、平均分和排名。
