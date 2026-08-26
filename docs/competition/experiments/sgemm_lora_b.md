@@ -598,3 +598,54 @@ Task 23 与 Task 22，不再用额度试 BLOCK/warps/grid。
 - 按 E9 预设门禁，Task 23 与依赖同结构的 Task 22 停止，不用平台额度继续猜
   BLOCK/warps/grid。后续只允许只读核对 FlagGems/FlagTree 一手实现；没有能锁定
   新根因的源码证据，不重开候选。
+
+## E10：昆仑官方 mask-zero lowering（一次性重开）
+
+状态：Git-object release 与不可变 ZIP 门禁通过，待实时 preflight。
+
+E9 止损后的官方源码核对锁定了一个新根因。FlagTree XPU 后端默认关闭
+`is_use_mask_zero`；官方验证文档说明默认 masked load/store lowering 可能无法保持
+`other=0`，粗粒度 DMA 的被屏蔽尾 lane 还可能越界，而开启该选项会把真实 pointer
+与 mask 传入 GM2LM、offset、legalize、mask、unroll 和 LLVM lowering。FlagGems
+Kunlun 的 `nll_loss`、`nonzero`、sort 与 softmax 对同类尾 mask、间接地址和 masked
+scatter 均在 launch 显式启用该选项。
+
+E9 的四个 kernel 都在 `assert_close` 首次同步前异步启动，因此 error 700 不能只归因
+于 traceback 最近的 scatter。E10 把这个**单一后端内存语义变量**加到三个非-dot
+launch：safe-adapter、pack-X 与 scatter；regular BMM 的 `tl.dot`/SDNN 路径逐字节
+冻结。safe-adapter 的 `B<256` 尾块、pack-X 的 token/rank 尾块以及 scatter 的
+inactive row/N 尾块都因此使用官方 mask lowering。算法、BLOCK、grid、warps、
+stages、stride 和其他七芯源码均不变。
+
+- source/verification commit：
+  `31a6789f9fdca7e032f6a9294c5adcb1540204da`；相对 E9 的 Kunlun vendor 只有三行
+  `is_use_mask_zero=True`，vendor/test SHA-256 分别为
+  `9a02a1cbb311246c1f45c2d2b14041cf597ed570f05eadb3bd289f1eab3b02fd`、
+  `38f31fde3e7d354486a54230797a093ecb55eb5274a693aa66dd91ceb198287d`。
+- generic/ascend/enflame/iluvatar 继续冻结为
+  `9b1a9a6c98b2cb7f9647a51276fda261f39be1eda06a866e3e3ad561a68bb355`、
+  `41416a252cbf5aaa5bf57dcb6de3da20fd7cdc52e2a471d995c4c603f68fd2de`、
+  `34fa4c8def315c6277fd087f6c85692273b2bc5a13e46bc135c0a495f6db41e4`、
+  `34fa4c8def315c6277fd087f6c85692273b2bc5a13e46bc135c0a495f6db41e4`。
+- Git-object release：`gpu:/tmp/flagos-sgemm-maskzero-release.ll3Twr`，mode 0700，
+  PID/PGID `154817`，wall 180s；py_compile、isort、flake8、2/2 CPU mock routing
+  与独立 AST 门禁通过，尾行为 `RELEASE_OK`。`release.log`、`replay.sh`、输入 tar
+  SHA-256 分别为
+  `53b1e827b4d3bdba8b52fbefadead47c76ba32dc3d91c56651d775f80fcfeaa5`、
+  `e951d1e5ff1d614ed2f2214f823828a8d4e68a708d7696edb4778313e255e262`、
+  `b1fe643a495ce29e9518057bbc3eb7ff60f62e967644030058e09bd522b4afc8`；前后 manifest
+  SHA-256 同为
+  `a4e992b73ce30559452ebf6c15ffda51dfa33a98c76659826363a64e8b104613`。
+- Black 25.12.0 在本地对 source/test 精确字节通过。NVIDIA Triton 不接受 XPU 私有
+  launch option，因此 E10 vendor runtime 明确标为未验证；E9 已验证同字节 kernel
+  body 的 10/10 correctness/30 定向组合和资源，本轮不以删掉 option 的代理源码冒充
+  exact release。FlagTree 另要求足够新的 XRE 与 `dma_excp_mask`，只能由平台验证。
+- canonical ZIP：
+  `artifacts/competition/sgemm_lora_b/e10-31a6789/sgemm_lora_b.zip`，35,162B，
+  SHA-256
+  `505c73a8b6aab2e15ea7c3a40a35ea2ced7eb6b83ded58147dde586c44becfa5`；五成员、
+  `verified-existing`、UTF-8/语法/成员白名单均通过。
+
+E10 只提交一次：仅当 8/8 且昆仑 ≥0.1x 才恢复有效分；按 E9 七芯合计
+200.4165x，最低有效平均约 25.0646x。若仍 error 700、编译失败或昆仑低于门槛，
+Task 23/22 永久停止，不追加 BMM flag，也不再调 tile/grid。
