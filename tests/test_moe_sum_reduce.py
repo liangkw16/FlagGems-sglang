@@ -15,6 +15,7 @@
 import importlib.util
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import torch
 
@@ -45,6 +46,16 @@ ASCEND_MODULE_PATH = (
     / "ops"
     / "moe_sum_reduce.py"
 )
+METAX_MODULE_PATH = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+    / "_metax"
+    / "ops"
+    / "moe_sum_reduce.py"
+)
 
 
 def _load_module(name, path):
@@ -63,10 +74,56 @@ KUNLUN_MODULE = _load_module(
 ASCEND_MODULE = _load_module(
     "moe_sum_reduce_ascend_module", ASCEND_MODULE_PATH
 )
+METAX_MODULE = _load_module("moe_sum_reduce_metax_module", METAX_MODULE_PATH)
 
 
 def reference(input, routed_scaling_factor):
     return input.float().sum(dim=1).mul(routed_scaling_factor).to(input.dtype)
+
+
+class MetaxLaunchPolicyTest(unittest.TestCase):
+    def test_metax_routes_only_official_qwen_shapes_to_large_launch(self):
+        class FakeKernel:
+            def __init__(self):
+                self.calls = []
+
+            def __getitem__(self, grid):
+                def launch(*args, **kwargs):
+                    self.calls.append((grid, kwargs))
+
+                return launch
+
+        fake_kernel = FakeKernel()
+        cases = (
+            (torch.empty((2, 8, 2048)), (2, 2), 1024, 8, None),
+            (torch.empty((2, 8, 4096)), (2, 4), 1024, 8, None),
+            (torch.empty((2, 4, 2048)), (2, 8), 256, 4, 1),
+            (torch.empty((2, 8, 2049)), (2, 9), 256, 4, 1),
+            (
+                torch.empty((2, 8, 4096))[:, :, ::2],
+                (2, 8),
+                256,
+                4,
+                1,
+            ),
+        )
+
+        with mock.patch.object(
+            METAX_MODULE, "_moe_sum_reduce_kernel", fake_kernel
+        ):
+            for (
+                input,
+                expected_grid,
+                block_size,
+                num_warps,
+                num_stages,
+            ) in cases:
+                METAX_MODULE.moe_sum_reduce(input, 0.75)
+                grid, kwargs = fake_kernel.calls[-1]
+                self.assertEqual(grid, expected_grid)
+                self.assertEqual(kwargs["BLOCK_SIZE"], block_size)
+                self.assertEqual(kwargs["num_warps"], num_warps)
+                self.assertEqual(kwargs.get("num_stages"), num_stages)
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
@@ -222,6 +279,43 @@ class MoeSumReduceTest(unittest.TestCase):
 
                     self.assertEqual(actual.shape, (5, hidden_dim))
                     self.assertEqual(actual.dtype, dtype)
+                    torch.testing.assert_close(
+                        actual, expected, atol=tolerance, rtol=tolerance
+                    )
+
+    def test_metax_fast_and_fallback_routes_match_reference(self):
+        tolerances = {
+            torch.float16: 1e-2,
+            torch.bfloat16: 1.5e-2,
+            torch.float32: 1e-4,
+        }
+        generator = torch.Generator(device="cuda").manual_seed(20260827)
+
+        for dtype, tolerance in tolerances.items():
+            inputs = (
+                torch.randn(
+                    (2, 8, 2048),
+                    device="cuda",
+                    dtype=dtype,
+                    generator=generator,
+                ),
+                torch.randn(
+                    (2, 8, 4096),
+                    device="cuda",
+                    dtype=dtype,
+                    generator=generator,
+                ),
+                torch.randn(
+                    (2, 8, 4096),
+                    device="cuda",
+                    dtype=dtype,
+                    generator=generator,
+                )[:, :, ::2],
+            )
+            for input in inputs:
+                with self.subTest(dtype=dtype, strides=input.stride()):
+                    actual = METAX_MODULE.moe_sum_reduce(input, 0.75)
+                    expected = reference(input, 0.75)
                     torch.testing.assert_close(
                         actual, expected, atol=tolerance, rtol=tolerance
                     )
