@@ -472,3 +472,15 @@ Task 13，不对 tile、warps 或逐段 launch 再做微调。
 `bd112d1efa5098b8294c2b772ef2fa8ee99783e1b2b880521995eac76a770b1b`，与本地
 canonical ZIP 完全一致。八芯均已进入队列，平台选择的 generic 与四个 vendor
 文件符合 manifest；等待同一 submission 终态，不重试。
+
+### E4 平台结果：8/8，166.4583125x team best
+
+submission `5220` 于 01:18 CST 终态为 `completed` / `valid`，八芯全部通过：
+天数 131.3410x、沐曦 99.7670x、燧原 1.4575x、海光 524.9110x、昆仑
+55.3745x、华为 28.9180x、国际 A 370.7355x、国际 B 119.1620x；平均
+**166.4583125x**，成为团队本题最佳。
+
+关键目标昆仑从 E3 五个 case 全部数值失败恢复为五个 case 全过，且 55.3745x
+远高于 0.1x 门槛，验证问题确在 pack/scratch/BMM 布局路径，而非 direct-dot
+数学。公开达标队伍数由 5 增至 6。E4 已完成一次性闭环，Task 13 停止继续迭代，
+保留该 8/8 结果。
