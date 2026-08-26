@@ -36,7 +36,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s3-1ca7dd2` | `159911639601002f9be5e083309d9a5cac1d1d32617e1fe31207486cc267b2f8` | S3 平台 8/8、2.7096x、valid、team best；E4 燧原 BLOCK 4096 screening 仅 0.555x，已拒绝 | 保留 S3；停止同一大 tile 假设 |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s2c-7857dca` | `357e8a690cca68123aabebdbb5500a86ebd66fe328105a8b91f7c1afe489cb38` | S2c 终态 6/8；六芯高分（海光 82.6x、天数 47.8x）；燧原 case 2 编译失败、昆仑评测异常 | 已按两次规则停止 |
 | 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `s2b-4c184b6` | `3b022a2b66b170c99d3aa0f94c9f5f878489df1fad729bc43d94ba09af993db0` | 两次提交均 7/8；燧原 64/128+stages3 达 4.05x、天数 34x、华为 18x；昆仑 SDNN 对 ragged 结构编译爆炸 | 已按两次规则停止；昆仑需规整 batched-GEMM 改写 |
-| 24 | [`softcap_out`](softcap_out.md) | `s3c-89699c6` | `452f54b0da15c698c6eae56790ed7979739c2668cacb2f71eba9553bf35c2807` | S2e 平台 8/8、valid、2.0179x team best；S3c 仅昆仑改用 FlagTree 三维 grid=12 interleave，远端 11/11、跨 12/24 block 边界和 TTIR 形态门通过 | S3c release 已验签，待一次平台判定 |
+| 24 | [`softcap_out`](softcap_out.md) | `s2e-1a5ea26` | `8469beb23dbaa27fbfbd7f6f74b650ee899586f43bacfb7e3fdd40e8dd566ed0` | S2e 平台 8/8、valid、2.0179x team best；S3c grid=12 interleave 仍正确但昆仑仅 0.2418x、平均 1.9516x | 保留 S2e；永久停止 interleave 假设 |
 
 ## 建议提交顺序
 

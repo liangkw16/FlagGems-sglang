@@ -366,4 +366,18 @@ S3c 因此明确传入三维 grid，并保持 BLOCK 4096、四 warps、单 stage
 - 一次提交晋级门：8/8 valid、昆仑高于 S2e 的 0.8637x、平均高于
   2.0179x；任一不满足即保留 S2e 并停止此假设，不做 grid sweep。
 
-<!-- T24_S3C_PLATFORM_RESULT_PENDING -->
+### S3c 平台结果：正确但显著回退，永久停止 interleave 假设
+
+- 2026-08-26 20:23:41 CST 单次提交，submission `5128`、当日序号 `15`；
+  额度 `16/30`→`15/30`，上传对象 10,344 bytes 且回读 SHA-256 与本地
+  `452f54b0da15c698c6eae56790ed7979739c2668cacb2f71eba9553bf35c2807`
+  完全一致；`file_url_sha256`
+  `82d3eb70bbe31d72b8e6894c8dfcb7439ec16837ae3f70ce82091b7a8a9ff670`。
+- 终态 8/8、`valid`，但平均仅 `1.95161458x`、非 team best；昆仑
+  `0.86366667x`→`0.24175x`（-72.0%）。其余冻结芯片为天数 3.66075x、
+  沐曦 1.70716667x、燧原 1.182x、海光 2.13416667x、华为 0.74275x、
+  card_a 3.13075x、card_b 2.81358333x。
+- 未达到“昆仑 >0.8637x 且平均 >2.0179x”晋级门。保留 S2e 为平台
+  team best，源码已恢复到 S2e 的 Kunlun SHA-256
+  `f34b06168ec951453601f552d3b6aa7bef1dac954a592226d3ac76ec248066bb`；
+  永久停止 grid=12/interleave 假设，不做 grid 或 round sweep。
