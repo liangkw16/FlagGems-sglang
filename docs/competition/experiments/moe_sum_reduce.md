@@ -685,3 +685,11 @@ fallback 才传 1。generic、Ascend、Kunlun 三个已有成员与 E5 逐字节
 平台 one-shot 门：8/8 valid、沐曦选中 `_metax` 且高于 E5 的 `3.5040x`、
 平均高于 `2.76185x`；显著收益目标为沐曦至少 `3.6640x`（整题约 +0.02x）。
 任一基础门不满足即保留 E5，停止该 launch 假设。
+
+2026-08-27 00:23:05 CST 在账号 `15600308080`、团队 `SoulCoder` 下执行 E6
+唯一一次提交，submission `5209`、当日序号 `2`，额度由 `29/30` 变为
+`28/30`。`file_url_sha256` 为
+`3642af4cd64d3ed41b8a62318148e6f3b0d789d65056e14c4d5d32fd39bb50f5`；从已核实
+对象存储地址无认证回读 12,410 bytes，SHA-256 与 canonical ZIP 完全一致。
+平台已选中预期的 MetaX、Ascend、Kunlun 与 generic 路径；当前八芯排队，
+禁止重传。
