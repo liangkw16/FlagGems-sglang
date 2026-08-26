@@ -1084,7 +1084,7 @@ grid-cap 结果高 8.57%，但比同一 4096 cap 的 E10 低 2.35%，属于无�
 
 ## E13：Ascend guarded dense address
 
-状态：release 门禁通过，候选就绪，尚未提交
+状态：平台 8/8 valid、`2.971175x`，未刷新 team best；E13 停止
 
 E13 从 E10 `75be1f0` 的安全 4096 physical-grid cap 分叉，只给连续输入增加
 FlagGems `ed2508b` PR #2037（Apache-2.0）的 dense 地址生成；该路径以
@@ -1124,3 +1124,29 @@ BLOCK 边界与最大 shape。
 `>1.8314x` 才跨第 9；按 E10 同 cap 的直接机制基线，稳健跨榜目标为
 `>2.3372x`。平台门要求 8/8 valid、华为选中 `_ascend`、平均刷新 team best；
 无论结果均只提交一次，并据华为直接收益决定是否继续独立 top-k=2 机制。
+
+2026-08-27 03:44:13 CST 经实时门禁执行 E13 唯一一次提交，submission `5280`、
+当日序号 `24`，额度由 `7/30` 变为 `6/30`；`file_url_sha256` 为
+`1314633d30aa6817bea5b230f5ee8e02bd72139bf13a1fee21fb5fbe2a3c87b9`。
+平台匿名回读为 16,913 bytes，SHA-256 与 canonical ZIP 完全一致，五成员均通过
+`unzip -t`；路由确认华为选中 `_ascend`，其余芯片选中冻结文件。候选已提交，
+禁止重传。
+
+03:46:24 CST 终态为 8/8 valid、平均 `2.971175x`，未刷新 E11 的
+`2.995375x` team best：
+
+| 芯片 | E13 speedup | 相对 E10 同 cap | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 4.6708x | -1.49% | `moe_sum_reduce.py` |
+| 沐曦 | 3.5144x | +0.47% | `moe_sum_reduce_metax.py` |
+| 燧原 | 0.2074x | +0.78% | `moe_sum_reduce.py` |
+| 海光 | 6.5334x | +2.05% | `moe_sum_reduce.py` |
+| 昆仑芯 | 0.1746x | -1.13% | `moe_sum_reduce_kunlunxin.py` |
+| 华为 | 1.2104x | **-3.97%** | `moe_sum_reduce_ascend.py` |
+| 国际通用 A | 3.9620x | +5.14% | `moe_sum_reduce.py` |
+| 国际通用 B | 3.4964x | -1.00% | `moe_sum_reduce_amd.py` |
+
+官方 dense 地址在隐藏 workload 上未带来华为收益；相对同 cap E10 反降 3.97%，
+整题相对 E10 +0.79% 仅来自冻结芯波动，相对 E11 仍低 0.81%。永久停止 dense
+地址轴，不叠加无公开性能证据、且 `topk` constexpr 已可编译期展开的 top-k=2
+专核；保留 E11 team best，后续只考虑独立芯片机制。
