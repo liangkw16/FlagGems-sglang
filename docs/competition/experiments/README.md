@@ -36,7 +36,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `e11-b1a9927` | `5e3e6bac0aba5f16d6bae51cc4e63dd4955f95e863c19096c5f6b5d734e9db7f` | E11 平台 8/8、**2.995375x team best、第 10/11**；E13 dense 华为 -3.97%；Kunlun2048 代理仅 0.7467x | 保留 E11；Ascend 变体、top-k=2 与 Kunlun2048 均停止 |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s2c-7857dca` | `357e8a690cca68123aabebdbb5500a86ebd66fe328105a8b91f7c1afe489cb38` | S2c 终态 6/8；六芯高分（海光 82.6x、天数 47.8x）；燧原 case 2 编译失败、昆仑评测异常 | 已按两次规则停止 |
 | 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `e11-dd4632a` | `c23266792c400636b2a7a4aa418defa2eb15f19623e8419316133dceb4463ff7` | E11 官方 XPU legacy masked-memory 使昆仑五个 case 全部跑完，但均数值失败；燧原回调待定，其余六芯已通过 | 官方两种 masked-memory 路径均验证失败，Task 23/22 永久停止 |
-| 24 | [`softcap_out`](softcap_out.md) | `s9-a9cf947` | `453697383c8d4ee1e850a70f940f023c16205992e97ea003a445111247a2460d` | S9 Enflame 官方 `softcap_const: tl.constexpr` release 全绿；代理非 control 1.069x、最大规模 1.046–1.174x | canonical ZIP 已冻结，按门禁一次提交 |
+| 24 | [`softcap_out`](softcap_out.md) | `s8-b2a249b` | `9fd897ad5b1e167c8c0a49826c295b2387b160b2d378ffacec61d74a6e469899` | S8 平台 8/8、**2.24001042x team best**；S9 constexpr 仅使燧原 +0.21%、整题回退 | 保留 S8；constexpr 与既有 tile/grid/warps/math 轴全部停止 |
 
 ## 建议提交顺序
 

@@ -700,3 +700,28 @@ RTX 5070 Ti 上 S8↔S9 的 15 点交替 A/B（5 组、warmup 25、rep 100）全
 高于 `4.48858334x`（+50.85%）才升一名。一次提交基础门为 8/8 valid、Enflame
 高于 S8 且平均高于 `2.24001042x`；显著门为 Enflame 高于 `4.48858334x`。
 任一基础门失败即保留 S8，并永久停止 constexpr 轴；S9 字节只允许提交一次。
+
+2026-08-27 04:13:35 CST 经实时 preflight 执行 S9 唯一一次提交，submission
+`5299`、daily seq `26`，额度由 `5/30` 变为 `4/30`；`file_url_sha256` 为
+`0e69afb5261305d03afd7a60b54e3f87224bdedc3d302d10cfa6891a6a4e786f`。对象
+存储匿名回读为 10,039 bytes，SHA-256 与 canonical ZIP 完全一致，四个成员均
+通过 `unzip -t`，平台选中预期四条路径。
+
+04:14:23 CST 终态为 8/8、`valid`、平均 `2.22646875x`、非 team best；低于
+S8 `2.24001042x`。唯一改动芯片 Enflame 仅由 `2.97566667x` 增至
+`2.98191667x`（+0.21%），既未过基础平均门，也远低于升名所需
+`4.48858334x`：
+
+| 芯片 | S9 speedup | 选中文件 |
+| --- | ---: | --- |
+| 天数 | `3.58900000x` | `softcap_out.py` |
+| 沐曦 | `1.67816667x` | `softcap_out.py` |
+| 燧原 | `2.98191667x` | `softcap_out_enflame.py` |
+| 海光 | `2.11525000x` | `softcap_out.py` |
+| 昆仑芯 | `0.86450000x` | `softcap_out_kunlunxin.py` |
+| 华为 | `0.81225000x` | `softcap_out_ascend.py` |
+| 国际 A | `2.97800000x` | `softcap_out.py` |
+| 国际 B | `2.79266667x` | `softcap_out.py` |
+
+结论：编译期常量在 NVIDIA 代理的 6.9% 信号没有迁移到 GCU；保留 S8 team
+best，永久停止 constexpr 轴，不重传或继续同类常量特化。
