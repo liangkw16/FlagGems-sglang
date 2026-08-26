@@ -79,7 +79,7 @@ def moe_sum_reduce(input, routed_scaling_factor):
     if num_tokens == 0 or hidden_dim == 0:
         return output
 
-    block_size = 256
+    block_size = 512
     hidden_blocks = triton.cdiv(hidden_dim, block_size)
     total_programs = num_tokens * hidden_blocks
     grid = (min(total_programs, 4096),)

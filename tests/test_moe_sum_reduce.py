@@ -92,14 +92,15 @@ class MoeSumReduceTest(unittest.TestCase):
                     )
                     original = input.clone()
 
-                    actual = MODULE.moe_sum_reduce(input, 1.25)
                     expected = reference(input, 1.25)
 
+                    for module in (MODULE, ASCEND_MODULE):
+                        actual = module.moe_sum_reduce(input, 1.25)
+                        torch.testing.assert_close(
+                            actual, expected, atol=tolerance, rtol=tolerance
+                        )
                     torch.testing.assert_close(
                         input, original, atol=0.0, rtol=0.0
-                    )
-                    torch.testing.assert_close(
-                        actual, expected, atol=tolerance, rtol=tolerance
                     )
 
     def test_dtypes_and_hidden_tail_match_reference(self):
