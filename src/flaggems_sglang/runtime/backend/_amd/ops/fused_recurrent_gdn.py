@@ -22,8 +22,8 @@ except ImportError:
     from triton.language.extra import libdevice as tl_extra_shim
 
 
-# AMD E11 candidate: fixed serial FMA chain over k = 0..63 (Hygon-matching
-# ROCm-lineage probe).
+# AMD E12 candidate: even/odd interleaved FMA chains over k % 2 merged as even
+# + odd (last untried classical family).
 @triton.jit(do_not_specialize=["sequence_length"])
 def _fused_recurrent_gdn_k64_kernel(
     q_ptr,
@@ -104,13 +104,20 @@ def _fused_recurrent_gdn_k64_kernel(
         )
 
         prediction_0 = 0.0
-        for key_offset in tl.static_range(0, 64, 1):
+        prediction_1 = 0.0
+        for key_offset in tl.static_range(0, 64, 2):
             lane_0 = tl.load(state_ptr + state_base + key_offset) * decay
+            lane_1 = tl.load(state_ptr + state_base + key_offset + 1) * decay
             tl.store(state_ptr + state_base + key_offset, lane_0)
+            tl.store(state_ptr + state_base + key_offset + 1, lane_1)
             key_0 = tl.load(k_ptr + key_base + (key_offset) * stride_k_dim).to(
                 tl.float32
             )
+            key_1 = tl.load(
+                k_ptr + key_base + (key_offset + 1) * stride_k_dim
+            ).to(tl.float32)
             prediction_0 = tl.fma(lane_0, key_0, prediction_0)
+            prediction_1 = tl.fma(lane_1, key_1, prediction_1)
         prediction = prediction_0
 
         value_address = (
@@ -136,26 +143,45 @@ def _fused_recurrent_gdn_k64_kernel(
             + query_head * stride_q_head
         )
         result_0 = 0.0
-        for key_offset in tl.static_range(0, 64, 1):
+        result_1 = 0.0
+        for key_offset in tl.static_range(0, 64, 2):
             key_0 = tl.load(k_ptr + key_base + (key_offset) * stride_k_dim).to(
                 tl.float32
             )
+            key_1 = tl.load(
+                k_ptr + key_base + (key_offset + 1) * stride_k_dim
+            ).to(tl.float32)
             tl.store(
                 outer_ptr + state_base + key_offset,
                 correction * key_0,
             )
-        for key_offset in tl.static_range(0, 64, 1):
+            tl.store(
+                outer_ptr + state_base + key_offset + 1,
+                correction * key_1,
+            )
+        for key_offset in tl.static_range(0, 64, 2):
             lane_0 = tl.load(state_ptr + state_base + key_offset) + tl.load(
                 outer_ptr + state_base + key_offset
             )
+            lane_1 = tl.load(
+                state_ptr + state_base + key_offset + 1
+            ) + tl.load(outer_ptr + state_base + key_offset + 1)
             tl.store(state_ptr + state_base + key_offset, lane_0)
+            tl.store(state_ptr + state_base + key_offset + 1, lane_1)
             query_0 = (
                 tl.load(q_ptr + query_base + (key_offset) * stride_q_dim).to(
                     tl.float32
                 )
                 * scale
             )
+            query_1 = (
+                tl.load(
+                    q_ptr + query_base + (key_offset + 1) * stride_q_dim
+                ).to(tl.float32)
+                * scale
+            )
             result_0 = tl.fma(lane_0, query_0, result_0)
+            result_1 = tl.fma(lane_1, query_1, result_1)
         result = result_0
         output_address = (
             batch * stride_output_batch
