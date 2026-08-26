@@ -338,3 +338,45 @@ canonical ZIP 完全一致；`file_url_sha256` 为
 `as_of=2026-08-24T22:35:37.794558+08:00` 显示 SoulCoder 第 6/6，参与 8 队、
 达标上榜 6 队，榜首 EvokeAgent 为 `6.5554x`。保留 E3 作为团队最佳，不再沿同一
 Ascend grid-cap 假设试参；后续额度转其他算子。
+
+## E4：Enflame 小 group 多行 tile
+
+状态：commit-bound release、canonical ZIP 与一次性提交门禁已完成
+
+2026-08-27 03:54 CST 实时榜单中，本队 E3 为第 `7/8`、`4.2526x`；第 6 名
+`5.84695x`。逐芯差距最大的燧原仅 `0.509x`，而榜首该芯为 `12.056x`。固定
+FlagGems commit `ed2508bcb5a03000e9774734201d840ba362cd11` 的 GCU300/400
+LayerNorm 对 `N <= 128` 使用约 1024 元素预算的二维多行 persistent kernel；固定
+SGLang commit `8014d9d062c3cc5d393596ecdf2f7009191965df` 也保留多行 forward
+结构。E4 只新增 Enflame vendor，generic 与 E3 Ascend 文件逐字节不变。
+
+Enflame 在 `group_size <= 128` 且逻辑 group 总数至少 4096 时，取
+`TILE_M=min(next_power_of_2(rows), ceil(1024/BLOCK_SIZE))`，二维 grid 继续把
+group 作为独立轴，保证每组 weight/bias 切片正确；其他 shape 调用与 E3 generic
+逐行 kernel 相同。平台已知 case 8 为 `rows=64, group_count=2048,
+group_size=2`，因此物理 program 数从 131072 降到 2048。没有修改公式、dtype、
+stride、warps、stages 或其他芯片路径。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `98cb62bef14b0bb914e65e6ca5854366c2a3ceba` |
+| generic / Ascend SHA-256 | `b7b81a64a9abfa5a9cf3d69e0ad066ae7dc6c1ed3aa5a34c900d811fc1fbc346` / `07c87ed8f0e1a4f18ddcf2557c8b40d6c6829eca4279cf9a3c3bc561a4a9d4e6` |
+| Enflame / test SHA-256 | `8c469806538b6ae4d400120a35711692bdf91e85d3e0227aa88d1c07f91e80ff` / `09a8e3992fe0961b63ed2382d61397d951158fda28e023a7131106e40b7d60d9` |
+| release | `gpu:/tmp/flagos-task20-enflame-multirow-release.BsSPcJ`；PID/PGID `173029`；4/4、`RELEASE_OK` |
+| release script / log SHA-256 | `d3b23b531e22c9946f5769c9904021f1a7c32f854de22fff4fa8325a9102c8e3` / `b1f157240081c4074c6df1c0f1fcf0a06c50f97dfad9adbfc84e7179f1b9a0d8` |
+| source Git archive SHA-256 | `df4dda8dc639c38a232423fb2ee096c1e08025dd545bd1336a4c18787ed21805` |
+| canonical ZIP | `artifacts/competition/mamba_layernorm_gated/e4-98cb62b/mamba_layernorm_gated.zip`，17410 bytes，SHA-256 `40a80fcafc213f6bd4f84903f3b1f0b612e23efca18602b1e92b6d371a7f641b` |
+
+release 从 source commit 的 Git objects 独立展开；源码、测试和 archive 哈希与
+screening 使用字节一致。远端 RTX 5070 Ti 上通过 py_compile、Black 79、isort、
+flake8 与 4/4 unittest；覆盖三 dtype、RMS/LN、gate 前后、bias/z 可空、非连续
+stride、空输入和平台 case 8。五轮 AB/BA 的受影响集合几何平均为
+`3.052146x`、最差 `1.498438x`；case 8 的 FP16/BF16/FP32 分别为
+`7.0000/7.0000/7.4286x`，两个未命中 control 均为 `1.0000x`。candidate
+资源为 16–40 registers、最多 256 bytes shared、0 spill、0 global scratch。
+NVIDIA 只能证明结构与调度收益，不能外推真实 GCU 倍数。
+
+ZIP 三个成员与 source commit 一致，`dry-run`、`verified-existing`、UTF-8、
+10 MB 与 `unzip -t` 门禁全绿。E4 只允许一次平台提交；基础晋级门为 8/8 valid、
+Enflame 高于 E3 `0.509x` 且平均高于 `4.2526x`，显著目标为 Enflame 至少
+`1.018x`。任一基础门失败即保留 E3，不重传相同字节。
