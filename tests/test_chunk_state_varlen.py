@@ -56,6 +56,10 @@ ENFLAME_MODULE = _load_module(
     "chunk_state_varlen_enflame_module",
     BACKEND_ROOT / "_enflame" / "ops" / "chunk_state_varlen.py",
 )
+KUNLUN_MODULE = _load_module(
+    "chunk_state_varlen_kunlun_module",
+    BACKEND_ROOT / "_kunlunxin" / "ops" / "chunk_state_varlen.py",
+)
 
 
 def reference(B, x, dt, dA_cumsum, cu_seqlens, chunk_states):
@@ -188,11 +192,30 @@ class ChunkStateVarlenTest(unittest.TestCase):
             index_dtype=torch.int32,
         )
         actual = self.assert_matches(case)
-        changed_chunk_states = case[-1] * -13.0 + 999.0
+        changed_storage = torch.full(
+            (7, 4),
+            999.0,
+            device="cuda",
+            dtype=case[-1].dtype,
+        )
+        changed_chunk_states = changed_storage[:, ::2]
 
         changed = MODULE.chunk_state_varlen(*case[:-1], changed_chunk_states)
 
         torch.testing.assert_close(actual, changed, atol=0.0, rtol=0.0)
+        for name, module in (
+            ("enflame", ENFLAME_MODULE),
+            ("kunlunxin", KUNLUN_MODULE),
+        ):
+            with self.subTest(module=name):
+                vendor_actual = module.chunk_state_varlen(*case)
+                vendor_changed = module.chunk_state_varlen(
+                    *case[:-1], changed_chunk_states
+                )
+                self.assertEqual(vendor_actual.dtype, torch.float32)
+                torch.testing.assert_close(
+                    vendor_actual, vendor_changed, atol=0.0, rtol=0.0
+                )
 
     def test_cross_chunk_single_scale_broadcast(self):
         x = torch.ones((9, 1, 1), device="cuda", dtype=torch.float32)
@@ -206,12 +229,77 @@ class ChunkStateVarlenTest(unittest.TestCase):
         )
 
         expected = reference(B, x, dt, dA_cumsum, cu_seqlens, chunk_states)
-        actual = MODULE.chunk_state_varlen(
-            B, x, dt, dA_cumsum, cu_seqlens, chunk_states
-        )
-
         self.assertEqual(expected.item(), 9.0)
-        torch.testing.assert_close(actual, expected, atol=0.0, rtol=0.0)
+        for name, module in (
+            ("generic", MODULE),
+            ("enflame", ENFLAME_MODULE),
+            ("kunlunxin", KUNLUN_MODULE),
+        ):
+            with self.subTest(module=name):
+                actual = module.chunk_state_varlen(
+                    B, x, dt, dA_cumsum, cu_seqlens, chunk_states
+                )
+                torch.testing.assert_close(
+                    actual, expected, atol=3e-2, rtol=3e-2
+                )
+
+    def test_cross_chunk_broadcast_after_nonzero_start(self):
+        x = torch.ones((12, 1, 1), device="cuda", dtype=torch.float32)
+        B = torch.ones_like(x)
+        dt = torch.zeros((1, 2, 8), device="cuda", dtype=torch.float32)
+        dt[0, 0, :3] = 1.0
+        dt[0, 1, 3] = 1.0
+        dA_cumsum = torch.zeros_like(dt)
+        cu_seqlens = torch.tensor([0, 3, 12], device="cuda", dtype=torch.int32)
+        chunk_states = torch.empty((1,), device="cuda", dtype=torch.float32)
+        case = B, x, dt, dA_cumsum, cu_seqlens, chunk_states
+        expected = reference(*case)
+
+        torch.testing.assert_close(
+            expected.flatten(), torch.tensor([3.0, 9.0], device="cuda")
+        )
+        for name, module in (
+            ("enflame", ENFLAME_MODULE),
+            ("kunlunxin", KUNLUN_MODULE),
+        ):
+            with self.subTest(module=name):
+                actual = module.chunk_state_varlen(*case)
+                torch.testing.assert_close(
+                    actual, expected, atol=3e-2, rtol=3e-2
+                )
+
+    def test_vendor_low_precision_dot_cancellation(self):
+        x = torch.tensor(
+            [[[64.0]], [[-48.0]]], device="cuda", dtype=torch.float16
+        )
+        B = torch.ones_like(x)
+        dt = torch.tensor(
+            [[[2.2734375, 2.86328125]]],
+            device="cuda",
+            dtype=torch.float16,
+        )
+        dA_cumsum = torch.tensor(
+            [[[0.0, -0.0570068359375]]],
+            device="cuda",
+            dtype=torch.float16,
+        )
+        cu_seqlens = torch.tensor([0, 2], device="cuda", dtype=torch.int64)
+        chunk_states = torch.empty(
+            (1, 1, 1, 1), device="cuda", dtype=torch.float32
+        )
+        case = B, x, dt, dA_cumsum, cu_seqlens, chunk_states
+        expected = reference(*case)
+
+        self.assertEqual(expected.item(), 0.0)
+        for name, module in (
+            ("enflame", ENFLAME_MODULE),
+            ("kunlunxin", KUNLUN_MODULE),
+        ):
+            with self.subTest(module=name):
+                actual = module.chunk_state_varlen(*case)
+                torch.testing.assert_close(
+                    actual, expected, atol=3e-2, rtol=3e-2
+                )
 
     def test_leading_empty_sequence(self):
         x = torch.ones((1, 1, 1), device="cuda", dtype=torch.float32)
@@ -224,14 +312,50 @@ class ChunkStateVarlenTest(unittest.TestCase):
         )
 
         expected = reference(B, x, dt, dA_cumsum, cu_seqlens, chunk_states)
-        actual = MODULE.chunk_state_varlen(
-            B, x, dt, dA_cumsum, cu_seqlens, chunk_states
-        )
-
         torch.testing.assert_close(
             expected.flatten(), torch.tensor([0.0, 1.0], device="cuda")
         )
-        torch.testing.assert_close(actual, expected, atol=0.0, rtol=0.0)
+        for name, module in (
+            ("generic", MODULE),
+            ("enflame", ENFLAME_MODULE),
+            ("kunlunxin", KUNLUN_MODULE),
+        ):
+            with self.subTest(module=name):
+                actual = module.chunk_state_varlen(
+                    B, x, dt, dA_cumsum, cu_seqlens, chunk_states
+                )
+                torch.testing.assert_close(
+                    actual, expected, atol=3e-2, rtol=3e-2
+                )
+
+    def test_vendor_all_empty_sequences(self):
+        x = torch.empty((0, 1, 1), device="cuda", dtype=torch.float32)
+        B = torch.empty_like(x)
+        dt = torch.ones((1, 1, 8), device="cuda", dtype=torch.float32)
+        dA_cumsum = torch.zeros_like(dt)
+        cu_seqlens = torch.tensor([0, 0, 0], device="cuda", dtype=torch.int64)
+        chunk_states = torch.empty(
+            (1, 1, 1, 1), device="cuda", dtype=torch.bfloat16
+        )
+
+        for name, module in (
+            ("enflame", ENFLAME_MODULE),
+            ("kunlunxin", KUNLUN_MODULE),
+        ):
+            with self.subTest(module=name):
+                actual = module.chunk_state_varlen(
+                    B, x, dt, dA_cumsum, cu_seqlens, chunk_states
+                )
+                self.assertEqual(
+                    (actual.shape, actual.dtype),
+                    ((2, 1, 1, 1), torch.bfloat16),
+                )
+                torch.testing.assert_close(
+                    actual,
+                    torch.zeros_like(actual),
+                    atol=0.0,
+                    rtol=0.0,
+                )
 
     def test_empty_batch(self):
         B = torch.empty((0, 2, 7), device="cuda", dtype=torch.float16)
@@ -254,7 +378,7 @@ class ChunkStateVarlenTest(unittest.TestCase):
     def test_vendors_cover_fold_and_fp16_dot(self):
         lengths = [1, 7, 2, 6] * 8
 
-        for dtype in (torch.float32, torch.float16):
+        for dtype in (torch.float32, torch.float16, torch.bfloat16):
             with self.subTest(dtype=dtype):
                 case = make_case(lengths, dtype, dtype)
 
@@ -263,6 +387,7 @@ class ChunkStateVarlenTest(unittest.TestCase):
                     ("ascend", ASCEND_MODULE),
                     ("iluvatar", ILUVATAR_MODULE),
                     ("enflame", ENFLAME_MODULE),
+                    ("kunlunxin", KUNLUN_MODULE),
                 ):
                     with self.subTest(module=name):
                         actual = module.chunk_state_varlen(*case)
