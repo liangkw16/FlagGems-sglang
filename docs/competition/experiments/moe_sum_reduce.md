@@ -773,7 +773,7 @@ autotune 轴。其余四成员字节冻结，逐芯波动不能归因于 AMD-onl
 
 ## E8：Enflame 上游有效固定 launch
 
-状态：release 与不可变 ZIP 门禁通过，待唯一一次平台提交
+状态：submission `5238` 已唯一提交并完成对象回读，等待八芯终态
 
 E8 从 E7 已验证成员集合出发，只新增 Enflame vendor。SGLang FL 的同算子
 在 GCU 上采用 BLOCK 2048、16 warps、1 stage；FlagTree GCU300 编译器会把
@@ -801,3 +801,11 @@ contiguous-only 地址假设。旧 commit `38582c5` 的 Enflame 四档 autotune 
 平台基础门为 8/8 valid、燧原选中 `_enflame`、平均高于 E7 的 `2.92895x`；
 当前公开第 10 名为 `2.95495x`，冻结 E7 其余七芯时燧原需高于约 `0.4170x`
 才升一位。任一基础门不满足即保留 E7，停止 fixed-launch 轴。
+
+2026-08-27 02:02:56 CST 经实时门禁执行 E8 唯一一次提交，submission `5238`、
+当日序号 `18`，额度由 `13/30` 变为 `12/30`。平台选中预期的 Enflame、AMD、
+MetaX、Ascend、Kunlun 与 generic 路径；`file_url_sha256` 为
+`73906b81cee67868d78e536b62cfaefdfe4406cd7a822c0620f0b2f4fbfb60e9`。
+内置回读因可信主机环境变量未配置而返回 `unavailable`，随后从平台返回的同一对象
+存储地址无认证回读 18,511 bytes，SHA-256 与 canonical ZIP 完全一致，六个成员
+均通过 `unzip -t`。候选已提交，禁止重传。
