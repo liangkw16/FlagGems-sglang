@@ -598,3 +598,41 @@ release 由 commit `bd3f856` 经 `git archive` 建目录；九文件远端哈希
 wrapper-inclusive do_bench 显示 hygon/amd 变体 ≈3.2–3.4 ms，与前轮同级。
 规范打包器 dry-run 与正式构建 canonical SHA 一致，`unzip -t` 通过。
 E10 相对 E9 只有两个受控差异文件；额度窗口内剩余 ≥20 次满足成本约束。
+
+### E10 平台六投：乘加分离方向被否决，海光 3→15/16 反向恶化
+
+submission `5218`。海光从 E9 的单 case `3/1048576` 恶化为双 case
+`15,16`——**融合 FMA 的串行链显著优于分离乘加**，海光指纹族锁定为
+"k=0..63 串行 + FMA"。国际 B 继续收敛（567→402），串行族假设进一步增强。
+天数/沐曦/华为对照文件逐字未变，误差数完全复现（893/4、131052/16、531/6），
+同时再次证明平台判定对相同字节的确定性。
+
+## E11：hygon 串行 FMA 复原 + amd 同族探针（晋升提交）
+
+状态：release 与不可变 ZIP 门禁通过；提交中
+验证时间：2026-08-27 01:08–01:16 CST；source / verification commit
+`7da35e73b2bf7bd2d6f950e498b08bf8b1786cb3`
+
+- `_hygon`：恢复 E9 的串行 FMA 链（kernel 段与 E9 字节一致，仅头注释更新），
+  作为最优已知配置与平台确定性双重对照；
+- `_amd`：改用与 hygon 完全相同的串行 FMA 内容（rocBLAS 血统同族探针，
+  预期较 E10 的 402 继续大幅移动或直接清零）；
+- 其余六个文件（generic/nvidia/iluvatar/metax/enflame/ascend）与测试
+  保持上一轮字节不变。
+- TF32 截断探针已在本地代理上以 unittest 失败证伪其保真度并放弃（chop 式
+  mantissa 清零 ≠ 真 TF32 RNE 转换），故华为本轮不改变量。
+
+| 项目 | 值 |
+| --- | --- |
+| amd SHA-256 | `4409247f282d920cd44e1bfdb32f9458c73030051771990c43e759dca6ba6689` |
+| hygon SHA-256 | `6aa9eed7e812ac9e54aa1559ebd645e93c2017e1271fe8c35ce2febcb9b4dbf8` |
+| ascend | `286a3802d71e9bf5fd8e3b1d0b628138c2609aa0cf873825c5d44d33498a3367`（=E9） |
+| release 目录 | `gpu:/tmp/flagos-fused-recurrent-gdn-e11.f8VTYy`（mode 0700） |
+| release log SHA-256 | `c2cad3cf4486cf68d8d4d001dfde243bfedfa867d91e3806383bad0bfe24f992` |
+| ZIP | `artifacts/competition/fused_recurrent_gdn/e11-7da35e7/fused_recurrent_gdn.zip` |
+| ZIP SHA-256 | `4d8ab6270f6661d880cf64f4759baf5f117bff8ed38ac00c9329e559e38941dd` |
+| ZIP 大小 / 成员 | 167,172 bytes；generic + 7 vendor |
+
+远端九文件哈希与 commit blob 一致；py_compile/lint/unittest 8/8 全过；
+do_bench hygon/amd ≈3.20/3.43 ms 同级。dry-run 与正式构建 canonical SHA
+一致，`unzip -t` 通过。
