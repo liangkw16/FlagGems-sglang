@@ -670,7 +670,7 @@ Task 23/22 永久停止，不追加 BMM flag，也不再调 tile/grid。
 
 ## E11：昆仑 legacy masked-memory simulation（最终一次重开）
 
-状态：Git-object release 与不可变 ZIP 门禁通过，待实时 preflight。
+状态：平台 submission `5149` 已确认昆仑 correctness failure；Task 23/22 最终停止。
 
 E10 之后继续扫描官方仓发现，FlagTree 把 masked-memory 的两种配置明确列为等价
 二选一：E10 使用的 mask-zero 需要 XRE >5.0.21.37 与系统 `dma_excp_mask`；legacy
@@ -716,3 +716,21 @@ warps、stages 和其他七芯源码继续冻结。
 E11 是 Task 23/22 的最终一次提交：只有 8/8 且昆仑 ≥0.1x 才晋级；按 E10 七芯
 合计 191.816x，最低有效平均约 23.9895x。若仍失败或低于门槛，不再以任何新证据
 重开 Task 23/22。
+
+### E11 平台结果：legacy 模式消除 launch failure，但产生稳定数值错误
+
+- 2026-08-26 21:32:34 CST 单次提交，submission `5149`、当日序号 `19`，
+  额度 `12/30`→`11/30`；平台对象从历史可信 hostname 无认证回读 35,432B，
+  SHA-256
+  `c23266792c400636b2a7a4aa418defa2eb15f19623e8419316133dceb4463ff7`，
+  与 canonical ZIP 完全一致。`file_url_sha256` 为
+  `e909ebc4c176e9f95d1cbcf0055a1c8b1fdb8f0fa4da990a25a7ad60d71ad747`。
+- 2026-08-26 21:36:39 CST 只读状态为 7/8 terminal、6 芯通过，燧原仍为
+  `waiting_callback`；已完成六个通过芯片为天数 33.7865x、沐曦 17.7650x、
+  海光 43.7465x、华为 18.2165x、国际 A 45.0160x、国际 B 28.8455x。
+- 昆仑不再出现 error 700/719：五个 case 都执行到 `assert_close`，但错误元素分别为
+  319/320、2810/2816、178/3328、68160/2097152、75955/4194304，最大绝对误差
+  分别为 51.21875、108.44140625、11.7734375、13.9140625、5.671875。
+- 这证明 legacy masked-memory simulation 修复了异常 launch 路径，却不能保持本题
+  pack/scatter 数值语义。无论燧原最终回调为何，昆仑已使候选无法 8/8；按预设止损，
+  Task 23/22 不再重开。

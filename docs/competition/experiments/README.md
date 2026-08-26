@@ -35,7 +35,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 | 20 | [`mamba_layernorm_gated`](mamba_layernorm_gated.md) | `e3-374e06c` | `afe450702c551fc83395432733dd22e98840125a31247c5e43117983ee30bb3d` | E3 平台 8/8、4.2526x、第 6/6；华为由启动失败恢复至 1.8838x，团队当前最佳 | 保留 E3，转其他算子 |
 | 21 | [`moe_sum_reduce`](moe_sum_reduce.md) | `s3-1ca7dd2` | `159911639601002f9be5e083309d9a5cac1d1d32617e1fe31207486cc267b2f8` | S3 平台 8/8、2.7096x、valid、team best；E4 燧原 BLOCK 4096 screening 仅 0.555x，已拒绝 | 保留 S3；停止同一大 tile 假设 |
 | 22 | [`qkv_lora_b`](qkv_lora_b.md) | `s2c-7857dca` | `357e8a690cca68123aabebdbb5500a86ebd66fe328105a8b91f7c1afe489cb38` | S2c 终态 6/8；六芯高分（海光 82.6x、天数 47.8x）；燧原 case 2 编译失败、昆仑评测异常 | 已按两次规则停止 |
-| 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `e10-31a6789` | `505c73a8b6aab2e15ea7c3a40a35ea2ced7eb6b83ded58147dde586c44becfa5` | E10 仍 7/8；官方 XPU mask-zero 将昆仑 error 700 改为 719，但 case 0 仍在首次同步失败；其余七芯通过 | 官方仓库单变量已验证失败，Task 23/22 永久停止 |
+| 23 | [`sgemm_lora_b`](sgemm_lora_b.md) | `e11-dd4632a` | `c23266792c400636b2a7a4aa418defa2eb15f19623e8419316133dceb4463ff7` | E11 官方 XPU legacy masked-memory 使昆仑五个 case 全部跑完，但均数值失败；燧原回调待定，其余六芯已通过 | 官方两种 masked-memory 路径均验证失败，Task 23/22 永久停止 |
 | 24 | [`softcap_out`](softcap_out.md) | `s2e-1a5ea26` | `8469beb23dbaa27fbfbd7f6f74b650ee899586f43bacfb7e3fdd40e8dd566ed0` | S2e 平台 8/8、valid、2.0179x team best；S3c grid=12 interleave 仍正确但昆仑仅 0.2418x、平均 1.9516x | 保留 S2e；永久停止 interleave 假设 |
 
 ## 建议提交顺序
