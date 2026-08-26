@@ -57,6 +57,10 @@ ENFLAME_MODULE = _load_module(
     "embedding_lora_a_enflame_module",
     BACKEND_ROOT / "_enflame" / "ops" / "embedding_lora_a.py",
 )
+HYGON_MODULE = _load_module(
+    "embedding_lora_a_hygon_module",
+    BACKEND_ROOT / "_hygon" / "ops" / "embedding_lora_a.py",
+)
 
 
 def reference(
@@ -315,6 +319,7 @@ class EmbeddingLoraATest(unittest.TestCase):
             ("ascend", ASCEND_MODULE),
             ("kunlunxin", KUNLUN_MODULE),
             ("enflame", ENFLAME_MODULE),
+            ("hygon", HYGON_MODULE),
         ):
             with self.subTest(module=name):
                 actual = module.embedding_lora_a(
@@ -357,6 +362,7 @@ class EmbeddingLoraATest(unittest.TestCase):
             ("ascend", ASCEND_MODULE),
             ("kunlunxin", KUNLUN_MODULE),
             ("enflame", ENFLAME_MODULE),
+            ("hygon", HYGON_MODULE),
         ):
             with self.subTest(module=name):
                 actual = module.embedding_lora_a(
