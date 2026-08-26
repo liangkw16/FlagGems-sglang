@@ -480,3 +480,41 @@ canonical ZIP 完全一致，未重试提交。
 该 kernel 仍不能通过昆仑 SDNN 编译；继续缩 tile/warps/stages 不再具有结构新意。
 按 E7b 预设止损，Task 23 永久停止，不做 no-dot fallback；由于 regular BMM 从未
 在昆仑执行成功，Task 22 同步跳过。高倍数主线转入 Task 13 两阶段规整 BMM。
+
+## E8：移除失败 pack-W，framework layout prep + Triton GEMM
+
+FlagOS 官方仓库复扫发现 Kunlun 上游 matmul 已使用 host-side transpose/layout
+准备，而规整 batched GEMM 走直接 `[B,K,N]` 连续权重。E8 因而不是继续缩小两次
+失败的 pack-W tile，而是彻底删除该 kernel：对 weights 无条件执行一次
+`transpose(1, 2).contiguous()` 得到 `[A,K,N]`；pack-X、safe adapter、
+FP32 IEEE GEMM、scale 与 scatter 仍全部由 Triton kernel 执行，无 fallback、
+设备判断、异常捕获或 Torch GEMM。其余七芯字节冻结。
+
+- source/verification commit：
+  `e8cd539f6ec62c7fc1fcbd46aaceab1b5bdd669a`；Kunlun vendor/test SHA-256
+  分别为
+  `332a13ee7064d6ca8d58a586d07df4b41d7a6e1556e503d4ee5acad1ac2b11c6`、
+  `4c0867258140d315bd95ac7c876da25edbcf29e5e02c6e43b4213d4967adf77e`。
+- safe-adapter kernel 在读取 metadata 前先屏蔽空段，并把空段或 rank=0 映射
+  到合法 adapter 0；`weights.shape[0]==0` 在 layout copy 前返回。新增 rank0
+  adapter 超出 weights 和零 weights/全空段回归，消除隐藏 OOB。
+- Git-object release：`gpu:/tmp/flagos-sgemm-layout-release.fN0LT4`；py_compile、
+  Black、isort、flake8 与完整 unittest 10/10 通过，`release.log` SHA-256
+  `87f823cd239b8ef1a658ec409d107de2da3c5b57e83829cefd41d534bfbd26bf`。
+- K256/64 adapters 的 FP16、BF16、FP32 独立编译/数值门全部通过；regular
+  BMM 为 52 registers、8 KiB shared、zero scratch。脚本 SHA-256
+  `f13b2e2167781fa3fc1a5910bfc5ca42e5f61a45568d69e7d918c031d0f5cf9b`。
+- RTX 5070 Ti 最大回归 `B8/L2048/K64/N4096` 的五轮独占代理中位
+  1.6406ms，S2b 为 0.9025ms，峰值增量 411,042,304 bytes；比 E7b 的
+  1.6145ms 仅慢 1.6%，资源不恶化。benchmark/baseline SHA-256 分别为
+  `33d06022c5045c763c801e723d49d067bd7b74366197e08fdfe1c48bff9e8b89`、
+  `bdfe676a86e5ac718d8f0565cb78374395af3ec614ea1f2407ff37a11e47ade3`。
+- canonical ZIP：`artifacts/competition/sgemm_lora_b/e8-e8cd539/sgemm_lora_b.zip`，
+  35,030 bytes，SHA-256
+  `d0cabb0abca65e2d1db5cfbbe59e6a7621a4f6cb4e30116d24e45a05c9de0bb3`；
+  五成员、`verified-existing`、`unzip -t` 全部通过。
+- 一次提交止损：只有 8/8 且昆仑 ≥0.1x 才恢复 Task 23 有效分；按 E7b 七芯
+  合计 192.094x 推算，门槛即约 24.024x 平均。若仍编译/资源失败，或 valid
+  但昆仑 <15x，永久停止，不再调 tile/warps/stages。
+
+<!-- T23_E8_PLATFORM_RESULT_PENDING -->
