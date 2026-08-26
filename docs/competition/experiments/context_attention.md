@@ -333,3 +333,71 @@ Torch Inductor compile worker 的 `_recv_msg`；没有 correctness case 结果�
 speedup。该故障与 PR 旧平台结果及 E1a 昆仑崩溃同型，作者 KernelGen 的 12/12
 不能替代平台完整 harness 证据。按本节预先声明的停止规则，Task 14 永久停止，不再
 为昆仑追加 tile/warps/dtype 猜测。17:15 实时全局额度为 `20/30`。
+
+## E3：Kunlun mask-free scalar-key（代理性能拒绝，未提交）
+
+状态：11/11 代理正确，逐点性能门失败；未发布、未打包、未提交，候选源码已恢复。
+
+Task 15 E4 的新增平台证据把 scalar-key 从约 1833s compile-worker 中止恢复为
+17.868s 完成执行，但带 masked Q/K/V tail 和 masked output store 的实现仍在 case 2
+出现 301/640 mismatch。该指纹与固定 FlagTree Kunlun legacy masked-load `other`
+和 coarse-DMA masked-store 限制一致，因此 E3 只重开一个不同算法形态：route-map
+加 one-query/head scalar attention，并从 Kunlun vendor 完全移除 `tl.dot`、
+`mask=`、`other=` 和 kernel i64 load。
+
+- route `[total_tokens,2]` 为每个 packed token 写入 `(seq_start,seq_end)`；route 与
+  attention 两种 launch 都按 65,535 分片并显式传全局 base。
+- D 尾部先用 `safe_d=min(d,D-1)` 做合法地址的 unmasked load，再用 `tl.where`
+  清零；输出完整写入 `[T,H,next_power_of_2(D)]` FP32 buffer 后 slice 到 D。
+- int64 metadata 在 wrapper 转 int32；原 int32 非连续 view 保持对象和 stride。
+  online softmax、score、accumulator 均为 FP32，causal key count 为
+  `query_token-seq_start+1`，`max_input_len` 仍只作无效 hint。
+
+screening 基于 `e2b5847` 工作树，只改 Kunlun vendor 与测试；两者 SHA-256 为
+`c5929cb825a80b7718b52950f0a36f37d971a241341cc7411b0c6c025e897d77`、
+`e278d0e9effea90ec50123d3e7fd3b55a12eb38bc2e5b6ed453b88455fb39e2b`。
+generic/Ascend/MetaX 保持 E2 的
+`e3698164cd1ca36b22822e48eb561c4165c73ef480e71725c97f9571dc475b4b`、
+`2b98d4b985e637db792ca739f72e7a75e9e2760b1acaa51c9a7d3c09871fa6b8`、
+`58843e30a5c30f540591405953a58ae90cf34390048fb75a577fc5b4df17b69c`。
+
+远端目录为 `gpu:/tmp/flagos-context-attention-scalar-screening.v8h4F5`；screening
+PID/PGID `157577`，Black/isort/flake8/py_compile 和 11/11 unittest 全部通过，
+测试用时 9.141s。矩阵覆盖固定 PR 的 D96、GQA D128，额外覆盖 D8/37/64、
+FP16/BF16/FP32、causal/non-causal、空段、非连续 Q/K/V 与 metadata、int32/int64
+metadata，以及把 cap 降到 3/5 后 route/attention 的真实多分片。`screening.log`
+与输入 tar SHA-256 为
+`b6d0e469cd13ae6b50727aa10941ea8146d5c8f102a76fc417a528a6dd810f7b`、
+`844db14ec67b53d40583157e5d74c1b8f326f807b50583ddabe93026bb0db910`。
+
+独立 benchmark PID/PGID `157809`，脚本/日志 SHA-256 为
+`5d50a5f4a64a4dbf0a1e6a06eb8a98d672204a73fe5f43e152f097b0b9a70ee6`、
+`3308a0fb777a54d62e220c19cf643681589cb96decbdb774000523caf519e64d`。
+在无竞争的 RTX 5070 Ti 上，每点各做 6 轮 AB/BA、每次 20ms warmup/50ms rep；
+下表为 wrapper-inclusive median：
+
+| dtype | lengths / H / D | causal | candidate ms | reference ms | speedup |
+| --- | --- | ---: | ---: | ---: | ---: |
+| FP16 | `[128]x4 / 16 / 64` | false | 0.347639 | 0.283272 | 0.814846x |
+| FP16 | `[128]x4 / 16 / 64` | true | 0.190495 | 0.359289 | 1.886078x |
+| FP16 | `[512]x2 / 16 / 64` | false | 2.598986 | 0.324300 | 0.124779x |
+| FP16 | `[512]x2 / 16 / 64` | true | 1.331436 | 0.379063 | 0.284703x |
+| FP16 | `[2048] / 16 / 128` | false | 23.991296 | 4.361896 | 0.181812x |
+| FP16 | `[2048] / 16 / 128` | true | 12.013552 | 5.274298 | 0.439029x |
+| BF16 | `[128]x4 / 16 / 64` | false | 0.348232 | 0.280751 | 0.806217x |
+| BF16 | `[128]x4 / 16 / 64` | true | 0.190358 | 0.359541 | 1.888757x |
+| BF16 | `[512]x2 / 16 / 64` | false | 2.600000 | 0.323611 | **0.124466x** |
+| BF16 | `[512]x2 / 16 / 64` | true | 1.331253 | 0.379172 | 0.284823x |
+| BF16 | `[2048] / 16 / 128` | false | 23.995904 | 4.361936 | 0.181778x |
+| BF16 | `[2048] / 16 / 128` | true | 12.011032 | 5.266162 | 0.438444x |
+
+全部点最大绝对误差不超过 `1.47e-6`；两个 kernel 都是 0 global scratch，最大
+shared 8B，10 个 PTX 变体无 local load/store。峰值新增显存按三组 shape 为约
+2.10/4.20/16.79MB。资源与正确性不是瓶颈，non-causal dense prefill 重复读取 K/V
+才是算法上限；`[512]x2` 的 0.124466x 和 `[2048]` 的 0.181778x 均低于预注册的
+逐点 0.2x 门。
+
+2026-08-26 22:59 CST 公开 API 仍只有 1/26 队过线，榜首 3.7924375x；若昆仑仅
+0.1x，E2 七芯可得到约 3.9778125x。即便潜在收益足以登顶，也不推翻事前性能门：
+E3 不生成 ZIP、不消费当前 9/30 额度、不追普通 stages/warps 配置，Task 14 最终
+停止。
