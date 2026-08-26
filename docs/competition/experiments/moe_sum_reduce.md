@@ -888,7 +888,7 @@ team best。相对 E7 平均下降 `0.243025x`（-8.30%）；Hygon 选中文件�
 
 ## E10：Ascend 官方 dual-level tile autotune
 
-状态：submission `5246` 已唯一提交并完成对象回读，等待八芯终态
+状态：平台 8/8、`valid`、`2.948x`，团队当前最佳
 
 E10 从 E7 已验证成员集合分叉，只替换 Ascend vendor；候选 Git tree 无 E8
 Enflame 与 E9 Hygon。实现迁移官方 FlagGems `moe_sum` 的 outer BLOCK
@@ -935,3 +935,24 @@ MetaX、Kunlun 与 generic 路径；`file_url_sha256` 为
 内置回读因可信主机环境变量未配置而返回 `unavailable`，随后从平台返回的同一对象
 存储地址无认证回读 16,233 bytes，SHA-256 与 canonical ZIP 完全一致，五个成员
 均通过 `unzip -t`。候选已提交，禁止重传。
+
+02:36:52 CST 终态为 `completed` / `valid`、8/8、平均 `2.948x`，平台标记
+team best。相对 E7 平均增加 `0.01905x`（+0.65%）；华为由 `0.8868x`
+提升到 `1.2604x`（+42.13%），超过单芯基础门，但整题仍比实时第 10 名
+`2.95495x` 低 `0.00695x`（总分仅差 `0.0556`）：
+
+| 芯片 | E10 speedup | 相对 E7 | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 4.7414x | +0.25% | `moe_sum_reduce.py` |
+| 沐曦 | 3.4978x | -0.76% | `moe_sum_reduce_metax.py` |
+| 燧原 | 0.2058x | -1.53% | `moe_sum_reduce.py` |
+| 海光 | 6.4020x | -3.70% | `moe_sum_reduce.py` |
+| 昆仑芯 | 0.1766x | +0.80% | `moe_sum_reduce_kunlunxin.py` |
+| 华为 | 1.2604x | +42.13% | `moe_sum_reduce_ascend.py` |
+| 国际通用 A | 3.7684x | -0.80% | `moe_sum_reduce.py` |
+| 国际通用 B | 3.5316x | +2.08% | `moe_sum_reduce_amd.py` |
+
+结论：保留平台自动选出的 E10 team best，停止继续扩 dual-tile/stage 配置。E10
+最小 outer BLOCK 为 512，最大已知 shape 的逻辑 program 数由旧 BLOCK256 的
+114,688 降到 57,344，已经低于 Ascend 65,535 coreDim 上限；下一候选作为独立
+单变量，只验证把旧安全 cap 4096 提升到官方 cap 65,535，保留 grid-stride 兜底。
