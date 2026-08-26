@@ -48,8 +48,9 @@ def _decode_attention_kernel(
     BLOCK_D: tl.constexpr,
     BLOCK_DV: tl.constexpr,
 ):
-    batch = tl.program_id(0)
-    query_head = tl.program_id(1)
+    program_id = tl.program_id(0)
+    batch = program_id // query_heads
+    query_head = program_id % query_heads
     kv_head = query_head // (query_heads // kv_heads)
 
     start = tl.load(indptr_ptr + batch * indptr_stride).to(tl.int32)
@@ -147,7 +148,7 @@ def decode_attention(q, k_buffer, v_buffer, kv_indptr, kv_indices, sm_scale):
     block_d = triton.next_power_of_2(qk_dim)
     block_dv = triton.next_power_of_2(value_dim)
     block_length = max(8, min(32, 8192 // max(block_d, block_dv)))
-    _decode_attention_kernel[(batch_size, query_heads)](
+    _decode_attention_kernel[(batch_size * query_heads,)](
         q,
         k_buffer,
         v_buffer,

@@ -52,6 +52,24 @@ DECODE_ATTENTION_ASCEND = _load_module(
     / "ops"
     / "decode_attention.py",
 )
+DECODE_ATTENTION_ENFLAME = _load_module(
+    "decode_attention_enflame",
+    OPS_PATH.parent
+    / "runtime"
+    / "backend"
+    / "_enflame"
+    / "ops"
+    / "decode_attention.py",
+)
+DECODE_ATTENTION_KUNLUN = _load_module(
+    "decode_attention_kunlun",
+    OPS_PATH.parent
+    / "runtime"
+    / "backend"
+    / "_kunlunxin"
+    / "ops"
+    / "decode_attention.py",
+)
 DECODE_GROUPED_ATTENTION = _load_module("decode_grouped_attention")
 DECODE_GROUPED_ILUVATAR = _load_module(
     "decode_grouped_iluvatar",
@@ -65,6 +83,11 @@ DECODE_GROUPED_ILUVATAR = _load_module(
 MHA_FUNCTIONS = (
     DECODE_ATTENTION.decode_attention,
     DECODE_ATTENTION_NVIDIA.decode_attention,
+)
+PAGE_I32_FUNCTIONS = (
+    DECODE_ATTENTION_ASCEND.decode_attention,
+    DECODE_ATTENTION_ENFLAME.decode_attention,
+    DECODE_ATTENTION_KUNLUN.decode_attention,
 )
 
 
@@ -178,11 +201,25 @@ class DecodeAttentionCompetitionTest(unittest.TestCase):
     def test_mha_strides_variable_lengths_and_value_dim(self):
         case = make_case(4, 4, 33, 17, [1, 35, 65], torch.float16)
 
-        for function in MHA_FUNCTIONS + (
-            DECODE_ATTENTION_ASCEND.decode_attention,
-        ):
+        for function in MHA_FUNCTIONS + PAGE_I32_FUNCTIONS:
             with self.subTest(function=function.__module__):
                 self.assert_matches(function, case)
+
+    def test_page_routing_int32_no_copy_path(self):
+        def strided_int32(tensor):
+            storage = torch.empty(
+                tensor.numel() * 2, device="cuda", dtype=torch.int32
+            )
+            storage[::2] = tensor.to(torch.int32)
+            return storage[::2]
+
+        case = list(make_case(4, 4, 33, 17, [1, 35, 65], torch.float16))
+        case[3] = strided_int32(case[3])
+        case[4] = strided_int32(case[4])
+
+        for function in PAGE_I32_FUNCTIONS:
+            with self.subTest(function=function.__module__):
+                self.assert_matches(function, tuple(case))
 
     def test_gqa_strides_variable_lengths_and_value_dim(self):
         case = list(make_case(8, 2, 40, 24, [3, 70], torch.bfloat16))
