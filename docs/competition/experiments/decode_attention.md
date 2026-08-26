@@ -300,3 +300,73 @@ program 起始偏移保持逐 program 数学不变；远端 10/10 回归通过�
 规避 Enflame 的 launcher 上限，也可能规避 Ascend 的旧 32,774-block 报错，
 但无法改变昆仑连续多轮独立的 1830s 编译器崩溃。按 E3 预先写定的“一芯仍失败
 即永久停止”门禁，Task 15 到此停止，不为未闭环的两芯修复再消耗额度。
+
+## E4：三失败芯结构恢复（最终一次官方证据重开）
+
+状态：Git-object release 与不可变 ZIP 门禁通过，待实时 preflight。
+
+E3 后新增的固定一手证据同时覆盖了三个独立失败指纹，构成结构性重开依据，而非继续
+调 BLOCK/warps/stages：
+
+- Enflame 直接采用 `ee13599` 已准备的 65,535 host 分片；平台 case 8 的精确错误
+  就是 `grid.x Required 131072 > 65535`。
+- `libtriton_jit@acd8b52` 会把 Ascend 真实 launch block 数钳到物理 Vector Core
+  数，而原 grid 仍作为 system arg 传入 kernel；这解释了 E2/E3 case 8 的重复行。
+  E4 改成一次只启动 `num_vectorcore` 个真实 worker，并用
+  `tl.num_programs(0)` 在 kernel 内遍历全部 `B*H` logical program。core 数通过
+  FlagGems-Experimental 同源 Ascend cumsum 已使用的 driver property 接口读取。
+- 固定的 `FlagGems-Experimental@c73617a` Kunlun sparse attention 使用逐 key
+  标量循环、`tl.sum(q*key)`、FP32 online softmax 与 2 warps。E4 迁移该 lowering，
+  再把 value 维固定按 64 分片；`D_v=257` 时每个 program 只保留 64-lane FP32
+  accumulator，避免旧二维动态 tile 在 compile worker 卡死。
+
+五颗已通过芯继续使用逐字节冻结的 generic/NVIDIA，SHA-256 仍为
+`886332facce98b6fa3ab783de064e322ddbcabb3a66f9b17bad70914fc3212aa`、
+`0c52bfe006212dd7dab9ab88229d4ca7bdec158bbd95a3434a0a642521ca2a07`。
+source/verification commit 为
+`96a0dfef9a8ec5ab04516dea4d68934a856c92ce`；Ascend/Enflame/Kunlun/test
+SHA-256 分别为
+`ea88124951442445b8c63ef06b500a30372925e6fd51818ffc13ed647b0fcd6a`、
+`74b5532257f70084444d978874dce98d8d1f95f8e0af7fe185eaac9e5f5271ee`、
+`f36ecbf8a75eaba4021d069385c38f3b8dadf088ff824179a2dce0afe5d871a5`、
+`85e65c742cf861dd15e1bcf089007dcbe8e7e08579617758fa8afd84f931ff88`。
+
+最终 screening 位于
+`gpu:/tmp/flagos-decode-attention-e4-screening-r2.mVVzZl`，PID/PGID
+`156980`；11/11 unittest 在 0.643s 内通过，尾行为 `SCREENING_OK`。
+`replay.sh`、`screening.log`、输入 tar 和前后 manifest SHA-256 分别为
+`1225b3defe4972be1e263121987a0ffd3e5a3adac723e861a4fdd155a9d9c795`、
+`efa6d2e3772350c0d2125e29f641b5cece59ee6b712e8df2039c7e735d7593f9`、
+`198d24935ee299ba636aa7db4d85207f91b39b6e309ce646acae3fa92751af3f`、
+`bafd7d2f23325321096823b3daa3af8fbbb04895e48cb67d916a6a859d350d91`。
+
+同目录 benchmark PID/PGID `157115`；脚本/日志 SHA-256 为
+`25019e009beaf5eb9316b1651c12c5fd3306f97d7106f5dbf8e6e7461d388017`、
+`be2aaba491a4028dc111752ddbdaf525a403365e47ef4acd978478f70148665d`。
+四个代表 shape 经六轮交替测得 Kunlun 相对 reference 为
+`4.217/5.285/1.424/7.057x`，均超过预设 `0.2x` 门槛；相对 generic 为
+`0.373/0.334/0.328/0.492x`。峰值显存增量为
+2,048/37,376/20,992/26,112B；Triton metadata 均为 0 global scratch，PTX
+无 local load/store。Ascend 与 Enflame 的 `B*H=131072,L=1` 实跑均精确正确，
+最大绝对误差 0。NVIDIA 结果只排除语法、数值和资源灾难，不证明目标芯运行时。
+
+Git-object release 位于
+`gpu:/tmp/flagos-decode-attention-e4-release.0LKvLj`，PID/PGID `157279`；
+11/11 unittest 在 0.646s 内通过，尾行为 `RELEASE_OK`。`replay.sh`、
+`release.log`、Git archive 与前后 manifest SHA-256 分别为
+`46586c2693416ffa7c0d33b782371c1b4d38a9cb9012fc68bd3a9e281e21f3c7`、
+`ceffa6d28c10e409bec0de7fa0ccb9f512f1e2201acc699c743a3d954061abdc`、
+`9f07e89dcf724aa3179e2eb824c1e7ffce65ea91242d2f096c53c33ade8cde1a`、
+`bafd7d2f23325321096823b3daa3af8fbbb04895e48cb67d916a6a859d350d91`。
+
+canonical ZIP 为
+`artifacts/competition/decode_attention/e4-96a0dfe/decode_attention.zip`，
+28,233B，SHA-256
+`51ec3d98ca1da7e33bd1aaee93c398399855dfb7f60a6b4b8e73a3e6f0f9ca7a`；
+成员为 generic + ascend/enflame/kunlunxin/nvidia，规范构建、
+`--verify-existing`、`unzip -t` 与成员白名单全部通过。2026-08-26
+22:46:58 CST 只读平台状态为 `competing/can_submit`，额度 10/30。
+
+E4 最终只提交一次；五颗冻结芯按 E3 分数、三个失败芯仅按最低 `0.1x` 计算时，
+有效均值下界约 `38.54865x`。任一目标芯仍失败或低于门槛即停止 Task 15，不追加
+普通配置微调。
