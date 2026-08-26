@@ -20,7 +20,7 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 
 | Task | 算子账本 | 候选 | ZIP SHA-256 | 当前证据 | 建议 |
 | ---: | --- | --- | --- | --- | --- |
-| 08 | [`apply_token_bitmask`](apply_token_bitmask.md) | `e3-9186b09` | `038c1d5df120ae8c0aaee835525aa0abdd5aafff886bf6e16cd2e0295ed7c9c8` | E3 仅新增昆仑 BLOCK4096 vendor；release 7/7、零 spill/scratch；其余七芯字节冻结 | one-shot 候选，等待实时 preflight |
+| 08 | [`apply_token_bitmask`](apply_token_bitmask.md) | `e3-9186b09` | `038c1d5df120ae8c0aaee835525aa0abdd5aafff886bf6e16cd2e0295ed7c9c8` | E3 仅新增昆仑 BLOCK4096 vendor；release 7/7、零 spill/scratch；submission 5193 已提交 | one-shot 已用；等待终态，禁止重传 |
 | 09 | [`bmm_chunk`](bmm_chunk.md) | `e4-93035e4` | `a967742cbeee3053b8f2b9af261a30cf3bae7b9a745c8adaf15abc61cd434f85` | E4 平台 8/8、1.27375x；官方 GCU300 cap 6 使燧原 0.149→0.153x，但平均未超过 E3e 的 1.283x | 保留 E3e team best；Task 09 永久停止 |
 | 10 | [`chunk_cumsum`](chunk_cumsum.md) | `s2b-63e7943` | `c822f75d719f8919269c7566b1210b6e31dc6ce3292229a838723f7945b15923` | S2b 平台 8/8 正确、invalid_threshold；华为 UB tile 上限修复生效；燧原 0.0375x/昆仑 0.012x 为 cumsum lowering 固有瓶颈 | 已按两次规则停止；重试需改写 cumsum 算法形式 |
 | 11 | [`chunk_local_cumsum_vector`](chunk_local_cumsum_vector.md) | `e1b-dddef74` | `cf4dcaf05640599fe5b50ee9633ba19d2a4f13f2b47f856e88259242e975bab9` | 两次提交均 7/8；昆仑 0.016x/华为 0.0255x 与折叠形态无关，cumsum 固有；燧原三形态编译失败 | 已按两次规则停止；同 Task 10 结论 |

@@ -357,3 +357,12 @@ commit 完全一致；`dry-run`、`verified-existing`、`unzip -t` 和 canonical
 SHA-256 均通过。E3 只允许一次平台提交。晋级门为 8/8 valid、昆仑确实选中
 vendor 且高于 E2 的 `0.7686x`、平均高于 `4.686925x`；任一不满足即保留 E2
 为 team best 并永久停止此假设。
+
+2026-08-26 23:49:01 CST 在账号 `15600308080`、团队 `SoulCoder` 下执行 E3
+唯一一次提交，submission ID `5193`、daily seq `23`，实时额度由 `8/30`
+变为 `7/30`。`file_url_sha256` 为
+`8759934e691fdc946f3b99b63e9f8076f6942c336311ef4543978104f0ea47f5`；提交器未配置
+可信 hostname，内置远端验签为 `unavailable`，随后从返回的已核实
+`flagos.ks3-cn-beijing.ksyuncs.com` 地址无认证下载，得到 10982 bytes，SHA-256
+与本地 canonical 值完全一致。平台已选择 generic、Ascend、Enflame、Kunlun 四条
+预期路由；当前等待八芯回调，禁止重传。
