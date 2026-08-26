@@ -956,3 +956,39 @@ team best。相对 E7 平均增加 `0.01905x`（+0.65%）；华为由 `0.8868x`
 最小 outer BLOCK 为 512，最大已知 shape 的逻辑 program 数由旧 BLOCK256 的
 114,688 降到 57,344，已经低于 Ascend 65,535 coreDim 上限；下一候选作为独立
 单变量，只验证把旧安全 cap 4096 提升到官方 cap 65,535，保留 grid-stride 兜底。
+
+## E11：Ascend 官方 65,535 physical-grid cap
+
+状态：release GO，canonical ZIP 已验签，等待一次性平台结果
+
+E11 从 E10 team-best 源码出发，只把 Ascend wrapper 的 physical-grid cap 从
+`4096` 提升到同后端同算子官方实现采用的 `65535`；kernel、八档 dual-level
+tile、autotune key、其余四个提交成员均逐字节冻结，候选 tree 无 Enflame/Hygon。
+最大已知 `(4096,8,7168)` 在 outer BLOCK `512/1024/2048` 下分别启动
+`57344/28672/16384` 个 program，均低于 Ascend coreDim 硬上限；未知更大 shape
+仍由原 grid-stride 唯一覆盖。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `b1a9927e2dbf3e2b8b69a5d76eaf4405f78887a6` |
+| generic / AMD SHA-256 | `52a2fc979784f2bd25e7e17b9822c23b4f438efdf062c70bfb09aba9ba732335` / `3b0de225dbf5ffc1004096055da871c919870cc0ba6e4a0297551c5c7537e399` |
+| Ascend SHA-256 | `f1c1b76f4e1c9546cc808ae52e238d6c3d82438581356e91f28885bba448818e` |
+| Kunlun / MetaX SHA-256 | `68b0abe07e3cf4f2b9cb86063e9ad1e18edd83d90341410cd281ec595c83406d` / `20db4f49aada2976723ab9dabd7013545a30a0998ee8fb21ad655375bd2cb794` |
+| test SHA-256 | `d9b600d764023536ade90b5fa2212e77c7d56887fd5276780f5e2d2e009940b0` |
+| release | `gpu:/tmp/flagos-moe-sum-reduce-ascend-grid-cap-release.Qq2S3N`；15/15、`RELEASE_OK`；脚本/日志 SHA-256 `3ec4fea10ca9fbbae136125cce8c2a5bf46fa894aae75fb47e49431918ddc331` / `9bff15613f056d51fc2d1f88b33a850c43299d3391b1e09f32f77d6357001e43` |
+| verification harness SHA-256 | `97065be9f35c58798aae2e9079c67ac47f248e7cf0fe6c778180f36e3fd473c1` |
+| Git archive SHA-256 | `c5584e0d947a603025f5a20a396e902ab4c7215deee893909f54161f1091f367` |
+| canonical ZIP | `artifacts/competition/moe_sum_reduce/e11-b1a9927/moe_sum_reduce.zip`，16,234 bytes，SHA-256 `5e3e6bac0aba5f16d6bae51cc4e63dd4955f95e863c19096c5f6b5d734e9db7f` |
+
+八档 × logical total `65534/65535/65536` 与最大 shape 八档 × 三 dtype 均
+正确；`65536` 实际 grid 为 `65535`，最后一个 logical id 由 grid-stride 覆盖。
+32 个编译资源记录为 29–55 registers，0 spill/shared/global scratch，PTX 无
+local load/store。相对 E10 的五轮 wrapper-inclusive A/B：九点几何平均
+`1.003779x`、最差中位 `0.996208x`；受影响的最大已知 shape 三 dtype 几何平均
+`1.013052x`、最差 `1.010761x`。合成极小工作量边界 `(65536,1,17)` 为
+`0.891437x`，高于预注册 0.85 止损线，但记为未知 shape 风险。
+
+02:41 CST 实时公开榜第 10 名为 `2.95495x`。冻结 E10 其余七芯时，华为需从
+`1.2604x` 严格提高到 `>1.3160x`（约 +4.41%）且整题严格高于第 10；稳健目标
+为 `>1.6370x`，用于覆盖历史最坏冻结集合波动。平台门同时要求 8/8 valid、华为
+选中 `_ascend`、其余 selected-file 不变；候选只允许一次提交，未跨榜也停止该轴。
