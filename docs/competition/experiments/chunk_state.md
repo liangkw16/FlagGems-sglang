@@ -770,3 +770,72 @@ E6r 相比旧团队最佳 E3 `2.096625x` 提升 `1.73225x` 绝对均值、约 **
 generic 低精度路径在国际 A 由 E5 的 `16.583x` 进一步测得 `17.902x`。本候选按
 预注册规则停止，不再重投。下一步只评估官方 FlagGems Ascend 同构 state kernel
 能否单独提升当前最低但已过门槛的华为 `0.329x`，不得改动其余七个已验证成员。
+
+## E7：Ascend 低精度 Cube dot（候选就绪，只提交一次）
+
+状态：Git-object release 与规范 ZIP 门禁通过；等待实时 preflight
+
+E6r 已把 generic 与六个非华为 vendor 的选择和性能全部实证。本轮只改变
+`chunk_state_ascend.py`：FP16/BF16 且 `x/B` dtype 相同、`headdim` 与
+`dstate` 属于 `{64,128}`、`chunk_size` 属于 `{64,128,256}` 时，采用
+64×64×64 的低精度 `tl.dot`，FP32 scale、accumulator 和输出保持不变；其余
+shape 继续走 E6r 的 32×32 IEEE 路径。一维 `min(total,4096)` grid-stride、
+真实 strides、GQA 和所有索引均保持原结构。
+
+### 固定官方依据与淘汰过程
+
+- FlagGems `a7620cc191a0b42e040194622c5758b22a7a25dc` 的 Ascend FLA state
+  kernel 证明低精度操作数、FP32 state accumulator 与 4-warps dot lowering
+  可用；只借计算形态，不复制其双 accumulator、二维 grid、连续布局或递归语义：
+  <https://github.com/flagos-ai/FlagGems/blob/a7620cc191a0b42e040194622c5758b22a7a25dc/src/flag_gems/runtime/backend/_ascend/fla/chunk_delta_h.py#L73-L83>。
+- 同一固定 commit 的 Ascend BF16 matmul 明确包含 64×64×64 配置与 FP32
+  accumulator + dot 主循环：
+  <https://github.com/flagos-ai/FlagGems/blob/a7620cc191a0b42e040194622c5758b22a7a25dc/src/flag_gems/runtime/backend/_ascend/ops/matmul_bf16.py#L37-L42>、
+  <https://github.com/flagos-ai/FlagGems/blob/a7620cc191a0b42e040194622c5758b22a7a25dc/src/flag_gems/runtime/backend/_ascend/ops/matmul_bf16.py#L111-L121>。
+- 首版 128×64、stages2（源码 SHA-256 `1ceb5749…`）虽 13/13 与代理
+  GM `1.371x`，但为 254 registers，拒绝；64×64、stages2
+  (`47c71197…`) 为 177 registers，仍拒绝。最终只再减 stages 2→1，
+  不把失败形态带入 release。
+
+### Source、screening 与 release
+
+- source / verification commit：
+  `294990c2c0139c5be75e378ca8c872bb2645f607`。
+- Ascend 源码 SHA-256：
+  `d1f44f3bad114c79dd8e649118b24e6d336f610544521e0acc93d48137ae63d0`；
+  测试 SHA-256：
+  `22886b682896d945d2eff0c3ab0bb6b41e28c8882ce4cf4159ffb8c6313d4475`。
+  新增一个测试方法覆盖 FP16/BF16、chunk 64/128/256、M/N 64/128、GQA
+  与 FP32 输出。
+- exact-byte screening：
+  `gpu:/tmp/flagos-task12-e7-final-screening.6O1uCT`；13/13 unittest；7 个
+  affected 点含 `total_programs=4128>4096` 的低精度 grid-stride case，
+  GM `1.414147x`、最差 `1.253906x`。快路径为 121–123 registers、16 KiB
+  shared、0 spill/local/forbidden IR。两个 control 为 `1.0000/1.022364x`；
+  后者只是正向超出原对称噪声窗，未改路径没有回退。screening log / harness
+  SHA-256 分别为 `8536cf8e6b6141e436046e72ccb39449e57d0be2d9178ffd63175f4384b384f3` /
+  `a8c2b7e7bc0d6e9fdea5944d3b1ccbbd83d847b0ba30c0f5e0ed38b0b8cf4058`。
+- fresh Git-object release：`gpu:/tmp/flagos-task12-e7-release.cMf4Ug`
+  （mode 0700）；13/13 unittest，affected GM `1.412083x`、最差
+  `1.250000x`，123 registers、16 KiB shared、0 spill/local，control 无
+  回退，`SCREENING_RELEASE_GATE_OK`。release log / A/B harness / run script
+  SHA-256 分别为
+  `dfeba23b608fb1cbcaefd725fb58a96c7f8285099da38e92dc89033d10041b81`、
+  `8d18944fb31a6841f36d097d615fb5dca9d54409428f25f7ae8d1f13544de8d5`、
+  `61256fddf5c1c8e49f08f7d8b7ecf1873789d571414de26ffb743088fa764b2e`。
+
+### 不可变 ZIP 与平台止损
+
+canonical ZIP 为
+`artifacts/competition/chunk_state/e7-294990c/chunk_state.zip`，53,755 bytes，
+SHA-256
+`583b55a2518091cd707ff6dbf1080a10bd1fe2fd690da2885d0bfd48daae04a8`。
+7 个成员中只有 `chunk_state_ascend.py` 相对 E6r 改变；generic 与
+amd/enflame/iluvatar/kunlunxin/metax 六个成员逐字节冻结。`unzip -t`、
+二次 `--verify-existing` 和 Git blob 对照均通过。
+
+本候选只提交一次。华为 correctness 失败、低于 0.1x、未选中 Ascend 文件，
+或 valid 但不高于 E6r 的 `0.329x`，均立即停止 Task 12 并保留 E6r；不做
+tile/stages 追投。新均值公式为
+`3.828875 + (Huawei_new - 0.329) / 8`；达到 4.0x 需要华为至少
+`1.698x`（当前的 5.16 倍）。
