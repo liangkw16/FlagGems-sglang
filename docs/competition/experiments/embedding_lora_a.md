@@ -501,3 +501,27 @@ RTX 5070 Ti 上五个 shape × 三 dtype 的交替 A/B（5 组、warmup 25、rep
 `>29.4865x`（+10.0037%）才能升名；公开第 5 名的海光为 `31.3005x`。一次提交
 基础门为 8/8 valid、海光高于 26.805x 且平均高于 13.8620625x；升名门为海光
 高于 29.4865x。提交后无论升降都永久停止 Hygon warps 轴，不重传相同字节。
+
+2026-08-27 04:21:47 CST 经实时 preflight 执行 E4 唯一一次提交，submission
+`5300`、daily seq `27`，额度由 `4/30` 变为 `3/30`；`file_url_sha256` 为
+`bf71d63d5fdfbb9c8c408830bce4edca6de2c1fadc9359149a8c2d3945d03592`。对象
+存储匿名回读为 27,567B，SHA-256 与 canonical ZIP 完全一致，五个成员通过
+`unzip -t`；平台在海光选中预期 `_hygon` 文件。
+
+04:22:38 CST 终态为 8/8、`valid`、平均 `14.1618125x`、team best；相对
+E2a-i32 增加 `0.29975x`（+2.16%）。海光由 `26.805x` 提升至 `27.701x`
+（+3.34%），过基础门但未达到 `29.4865x` 升名门：
+
+| 芯片 | E4 speedup | 选中文件 |
+| --- | ---: | --- |
+| 天数 | `26.4850x` | `embedding_lora_a.py` |
+| 沐曦 | `7.3035x` | `embedding_lora_a.py` |
+| 燧原 | `0.3700x` | `embedding_lora_a_enflame.py` |
+| 海光 | `27.7010x` | `embedding_lora_a_hygon.py` |
+| 昆仑芯 | `0.3275x` | `embedding_lora_a_kunlunxin.py` |
+| 华为 | `1.7670x` | `embedding_lora_a_ascend.py` |
+| 国际 A | `32.0455x` | `embedding_lora_a.py` |
+| 国际 B | `17.2950x` | `embedding_lora_a.py` |
+
+未改字节的七芯存在测量波动；可归因目标芯只提升 3.34%。保留 E4 team best，
+但平均仍低于第 5 名 `14.19725x`，永久停止 Hygon warps 轴，不试 1/4/8 warps。
