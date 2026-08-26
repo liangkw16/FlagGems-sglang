@@ -311,6 +311,26 @@ class SoftcapOutTest(unittest.TestCase):
             actual, expected, atol=1e-4, rtol=1e-4, equal_nan=True
         )
 
+    def test_enflame_large_tile_boundaries(self):
+        module_path = VENDOR_MODULE_PATHS["enflame"]
+        spec = importlib.util.spec_from_file_location(
+            "softcap_out_enflame_large_tile_module", module_path
+        )
+        if spec is None or spec.loader is None:
+            self.fail(f"cannot load {module_path}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        for length in (32767, 32768, 32769, 12 * 32768 + 17):
+            with self.subTest(length=length):
+                x = torch.linspace(-60.0, 60.0, length, device="cuda")
+                actual = module.softcap_out(x, 30.0)
+                expected = torch.tanh(x / 30.0) * 30.0
+
+                torch.testing.assert_close(
+                    actual, expected, atol=1e-4, rtol=1e-4
+                )
+
     def test_ascend_block_boundaries_and_maximum_platform_size(self):
         module_path = VENDOR_MODULE_PATHS["ascend"]
         spec = importlib.util.spec_from_file_location(
