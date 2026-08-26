@@ -457,3 +457,35 @@ Hygon 需严格超过 `8.21060003x` 才升一位。若 runtime 仍失败或基�
 选中并消除 5219 的 runtime 错误，但低于 E2 的 `7.50766667x`，整题也低于
 E2 team best `4.54668333x`，未过基础门且不是 team best。保留 E2，按预设
 止损永久停止 Hygon autotune 轴。
+
+## E4：NVIDIA 官方动态 warps 负实验
+
+状态：离线性能门失败，未打 ZIP、未提交平台；该轴永久停止
+
+E4 严格以 E2 team-best 成员为基线，只新增 NVIDIA vendor，并移除当前 tree 中
+已停止的 Enflame/Hygon 文件。generic 与 Kunlun SHA-256 继续冻结为
+`02bed1a5cb28b583c343892569d9e25d1ef3d888e124fdd066d1155a0b964997` /
+`167c23715a11c459db2244c4ae05b18941f8ee2f0af6bfb6d6ed781b0a0d5512`。
+候选只迁移固定 SGLang `8014d9d` 的 CUDA launch 公式：hidden `<=1024`、
+`1025–2048`、`2049–4096`、`>=4097` 分别使用 `4/8/16/32` warps；kernel
+数学、真实 stride、BLOCK、stage 和 wrapper 契约与 generic 保持一致。
+
+| 项目 | 值 |
+| --- | --- |
+| candidate commit | `df12c3ecc93acea0f92de39fa9d29b9ed7cbcd89` |
+| NVIDIA / test SHA-256 | `ce9b2c95203a410acc858b4abb727866f0c708490e6037444b7bd9368bf67db3` / `ee74d9bcb4c4bd812ac3d0a17d59392c88fa1649908dbe293b8e65784450317e` |
+| release | `gpu:/tmp/flagos-fused-rmsnorm-nvidia-release.tDNOIE`；02:57:12–02:58:15 CST；静态门、5/5 unittest、27/27 correctness 全过 |
+| release log / manifest SHA-256 | `56b60e9523b581fcb0c01f01ecb7b92836011a10ee7e5dd07935e986ee6ea136` / `902b6e96712a7fffc7ae1033a0e2adf85e117bcdaf14372f09da79d185d0413d` |
+| worker / driver / release script SHA-256 | `bf8975f90a1936fffc0d2c38ab84bd9f77b9d162107b08bea73c8e14f4fd0f1a` / `b22d151f670314d3ba2ba8e47f7bfb16e28b4b3aab988af6c8d09da72c2e7f8e` / `3b9b639a5532281d7dd92cdead046c2da511700c9d930a8a5aafa5844071cbc0` |
+| candidate / E2 archive SHA-256 | `66514d5ad5ad5aa20e9c830896a18c94af00157982e76f0af6597515e7089eb3` / `97822bf85119a1eb33d1ac2e572669b0ad9df4f317f0927f67ce477d738ae1bf` |
+
+五轮独立 Triton cache 的 wrapper-inclusive AB/BA 中，四个 launch 桶中位分别为
+`1.002591/0.997423/1.010526/0.994872x`，等权几何平均仅 `1.001335x`
+（门 `1.15x`），五轮最差聚合 `0.995489x`（门 `1.12x`）。平台 correctness
+已暴露的 H=3072 三 dtype 几何平均为 `0.962454x`，BF16 最差 `0.899471x`。
+4/8/16/32 warps 全部 0 spill/scratch/PTX-local，寄存器最高 46、shared 最高
+32 KiB；资源安全但没有性能收益。
+
+结论：生产 heuristic 不等于本题隐藏 harness 的最优 launch，E4 明确 NO-GO。
+候选 commit 保留以复现实验，恢复 commit `9ca89c2` 删除 NVIDIA vendor，并把相关
+源码/测试恢复为 E2 字节；额度仍为 `9/30`。不再尝试 NVIDIA warp/autotune 轴。
