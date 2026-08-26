@@ -69,24 +69,34 @@ def _fused_recurrent_gdn_k64_kernel(
     BETA_IS_VECTOR: tl.constexpr,
 ):
     program = tl.program_id(0)
-    value_offset = program % value_dim
-    batch_head = program // value_dim
+    value_blocks = (value_dim + 7) // 8
+    value_block = program % value_blocks
+    batch_head = program // value_blocks
     batch = batch_head // value_heads
     value_head = batch_head % value_heads
     query_head = value_head // head_group_ratio
-    state_base = program * 64
 
+    value_offsets = value_block * 8 + tl.arange(0, 8)
     key_offsets = tl.arange(0, 64)
-    state = tl.zeros((64,), dtype=tl.float32)
+    value_mask = value_offsets < value_dim
+    state_mask = value_mask[:, None]
+    state_offsets = (
+        batch_head * value_dim + value_offsets[:, None]
+    ) * 64 + key_offsets[None, :]
+    state = tl.zeros((8, 64), dtype=tl.float32)
     if HAS_INITIAL_STATE:
         initial_offsets = (
             batch * stride_initial_batch
             + value_head * stride_initial_head
-            + value_offset * stride_initial_value
-            + key_offsets * stride_initial_key
+            + value_offsets[:, None] * stride_initial_value
+            + key_offsets[None, :] * stride_initial_key
         )
-        state += tl.load(initial_state_ptr + initial_offsets).to(tl.float32)
-    tl.store(state_ptr + state_base + key_offsets, state)
+        state += tl.load(
+            initial_state_ptr + initial_offsets,
+            mask=state_mask,
+            other=0.0,
+        ).to(tl.float32)
+    tl.store(state_ptr + state_offsets, state, mask=state_mask)
 
     for timestep in range(0, sequence_length):
         gate_offset = (
@@ -101,29 +111,49 @@ def _fused_recurrent_gdn_k64_kernel(
             + query_head * stride_k_head
         )
 
-        state = tl.load(state_ptr + state_base + key_offsets) * decay
-        tl.store(state_ptr + state_base + key_offsets, state)
-        state = tl.load(state_ptr + state_base + key_offsets)
+        state = (
+            tl.load(
+                state_ptr + state_offsets,
+                mask=state_mask,
+                other=0.0,
+            )
+            * decay
+        )
+        tl.store(state_ptr + state_offsets, state, mask=state_mask)
+        state = tl.load(
+            state_ptr + state_offsets,
+            mask=state_mask,
+            other=0.0,
+        )
         key = tl.load(k_ptr + key_base + key_offsets * stride_k_dim).to(
             tl.float32
         )
-        prediction = tl.sum(state * key, axis=0)
+        prediction = tl.sum(state * key[None, :], axis=1)
 
         value_address = (
             batch * stride_v_batch
             + timestep * stride_v_time
             + value_head * stride_v_head
-            + value_offset * stride_v_dim
+            + value_offsets * stride_v_dim
         )
-        value = tl.load(v_ptr + value_address).to(tl.float32)
+        value = tl.load(
+            v_ptr + value_address,
+            mask=value_mask,
+            other=0.0,
+        ).to(tl.float32)
         beta_address = (
             batch * stride_beta_batch
             + timestep * stride_beta_time
             + value_head * stride_beta_head
         )
         if BETA_IS_VECTOR:
-            beta_address += value_offset * stride_beta_value
-        beta_value = tl.load(beta_ptr + beta_address).to(tl.float32)
+            beta_value = tl.load(
+                beta_ptr + beta_address + value_offsets * stride_beta_value,
+                mask=value_mask,
+                other=0.0,
+            ).to(tl.float32)
+        else:
+            beta_value = tl.load(beta_ptr + beta_address).to(tl.float32)
         correction = (value - prediction) * beta_value
 
         query_base = (
@@ -131,25 +161,35 @@ def _fused_recurrent_gdn_k64_kernel(
             + timestep * stride_q_time
             + query_head * stride_q_head
         )
-        tl.store(outer_ptr + state_base + key_offsets, correction * key)
-        state = tl.load(state_ptr + state_base + key_offsets) + tl.load(
-            outer_ptr + state_base + key_offsets
+        tl.store(
+            outer_ptr + state_offsets,
+            correction[:, None] * key[None, :],
+            mask=state_mask,
         )
-        tl.store(state_ptr + state_base + key_offsets, state)
+        state = tl.load(
+            state_ptr + state_offsets,
+            mask=state_mask,
+            other=0.0,
+        ) + tl.load(
+            outer_ptr + state_offsets,
+            mask=state_mask,
+            other=0.0,
+        )
+        tl.store(state_ptr + state_offsets, state, mask=state_mask)
         query = (
             tl.load(q_ptr + query_base + key_offsets * stride_q_dim).to(
                 tl.float32
             )
             * scale
         )
-        result = tl.sum(state * query, axis=0)
+        result = tl.sum(state * query[None, :], axis=1)
         output_address = (
             batch * stride_output_batch
             + timestep * stride_output_time
             + value_head * stride_output_head
-            + value_offset * stride_output_value
+            + value_offsets * stride_output_value
         )
-        tl.store(output_ptr + output_address, result)
+        tl.store(output_ptr + output_address, result, mask=value_mask)
 
 
 @triton.jit(do_not_specialize=["sequence_length"])
@@ -400,7 +440,9 @@ def fused_recurrent_gdn(
                 device=q.device,
             )
         outer = torch.empty_like(state)
-        _fused_recurrent_gdn_k64_kernel[(batch * value_heads * value_dim,)](
+        _fused_recurrent_gdn_k64_kernel[
+            (batch * value_heads * triton.cdiv(value_dim, 8),)
+        ](
             q,
             k,
             v,
@@ -424,7 +466,7 @@ def fused_recurrent_gdn(
             *output.stride(),
             HAS_INITIAL_STATE=initial_state is not None,
             BETA_IS_VECTOR=beta_is_vector,
-            num_warps=1,
+            num_warps=4,
             num_stages=1,
         )
         return output, final_state
