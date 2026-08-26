@@ -490,4 +490,59 @@ remote_verification：`unavailable`（本次未设置 `FLAGOS_REMOTE_ZIP_HOST`�
 hostname `flagos.ks3-cn-beijing.ksyuncs.com` 与历史 status 输出一致，
 后续提交前导出该变量启用远端验签）。
 
+## E4：燧原官方 GCU300 物理 grid cap 6（候选就绪，只提交一次）
+
+状态：Git-object release 与规范 ZIP 门禁通过；等待实时 preflight
+
+E3e 已平台证明 64×64×128、4 warps、stages2 与一维 grid-stride 能使
+燧原从 `0.090x` 提升到 `0.149x`。FlagGems 固定 commit
+`a7620cc191a0b42e040194622c5758b22a7a25dc` 的 GCU300 BMM 采用相同逻辑
+grid-stride 循环，并把 `MAX_GRID_DIM=24` 除以 `num_warps=4`，即只启动
+6 个物理 program：
+
+- kernel 循环：
+  <https://github.com/flagos-ai/FlagGems/blob/a7620cc191a0b42e040194622c5758b22a7a25dc/src/flag_gems/runtime/backend/_enflame/gcu300/ops/bmm.py#L53-L63>；
+- config 与 wrapper grid：
+  <https://github.com/flagos-ai/FlagGems/blob/a7620cc191a0b42e040194622c5758b22a7a25dc/src/flag_gems/runtime/backend/_enflame/gcu300/ops/bmm.py#L77-L119>、
+  <https://github.com/flagos-ai/FlagGems/blob/a7620cc191a0b42e040194622c5758b22a7a25dc/src/flag_gems/runtime/backend/_enflame/gcu300/ops/bmm.py#L129-L163>。
+
+E4 因而只把 `_enflame/ops/bmm_chunk.py` 的
+`min(total_programs,64)` 改为 `min(total_programs,6)`；kernel、tile、dot、
+warps/stages、索引、strides 与其余三个 ZIP 成员全部冻结。现有
+`test_iluvatar_split_fp16_precision` 的 `chunk_size=257` case 对 Enflame
+三 dtype 产生 `total_programs=400>64>6`，已覆盖多轮逻辑 id，无需新增
+重复测试。
+
+### Screening、release 与不可变 ZIP
+
+- source / verification commit：
+  `93035e41a785b2920ce5dc7426ee5bfbf84183dd`；Enflame 源码 SHA-256
+  `f60f4657bae540786f4d607660557045bbc9dd19c4a9d8d842f512eee06a6891`；
+  测试保持 E3e 字节，SHA-256
+  `3ca69d721730eb3167203705192aa485e552c3d688690e26c882103cebe47caa`。
+- screening：`gpu:/tmp/flagos-task09-cap6-screening.kpYIyx`；9/9（含一个
+  后删除的冗余 total=8 测试）与四个 A/B correctness 点通过，total=4
+  control 为 `1.0000x`。NVIDIA 上 total 8/64/256 的 old/new 为
+  `0.75/0.333/0.190x`，只记录为“物理并行度不可跨架构外推”，不作为
+  GCU300 veto。screening log / harness SHA-256 为
+  `3984a9f2e700c9855fe93d9e25d8fe7c29a880333ed0723c4362ebb7bddec9a2` /
+  `4ddb0598c3b2f8d7dbef03f5a438041d02744093baab0eedbc7d68748a745ee1`。
+- fresh Git-object release：`gpu:/tmp/flagos-task09-cap6-release.DfU761`
+  （mode 0700）；精确 commit 字节 8/8 unittest、四点 correctness 与 control
+  通过，`SCREENING_RELEASE_GATE_OK`。release log / harness / run script
+  SHA-256 分别为
+  `65f83c9f67e3ca68c05d1fd52c726a06f5dd87f37ee6a0c584dbf955db18aa49`、
+  `4ddb0598c3b2f8d7dbef03f5a438041d02744093baab0eedbc7d68748a745ee1`、
+  `f5aa2db0317b548b294d97d8a17bbc009d8545a0519fb937b664c8e4c74f0852`。
+- canonical ZIP：
+  `artifacts/competition/bmm_chunk/e4-93035e4/bmm_chunk.zip`，23,306 bytes，
+  SHA-256
+  `a967742cbeee3053b8f2b9af261a30cf3bae7b9a745c8adaf15abc61cd434f85`；
+  4 个成员为 generic + ascend/enflame/iluvatar，`unzip -t` 与二次
+  `--verify-existing` 通过，只有 Enflame 成员相对 E3e 改变。
+
+平台只提交一次：8/8 且燧原明显高于 E3e 的 `0.149x` 才算成功；
+`0.1–0.149x` 保留旧 team best，低于 0.1x、编译失败或超时立即回退 E3e。
+无论结果如何均永久停止 Task 09，不扫 cap 3/12/24。新均值公式为
+`1.283 + (Enflame_new - 0.149) / 8`。
 
