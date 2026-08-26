@@ -832,7 +832,7 @@ Hygon 官方同算子四档 autotune。
 
 ## E9：Hygon 官方四档 BLOCK autotune
 
-状态：release 与不可变 ZIP 门禁通过，待唯一一次平台提交
+状态：submission `5243` 已唯一提交并完成对象回读，等待八芯终态
 
 E9 从 E7 已验证成员集合分叉，只新增 Hygon vendor；E8 Enflame 文件不在候选
 Git tree 中。Hygon 与已验证 AMD 路径复用官方 FlagGems 同算子的四档配置：
@@ -859,3 +859,11 @@ scratch。其余五个提交成员 SHA 与 E7 完全一致。
 当前公开第 10 名为 `2.95495x`。冻结 E7 其余七芯时，Hygon 必须严格高于
 `6.8562x` 且整题严格高于 `2.95495x` 才保留；同时要求 8/8 valid、海光选中
 `_hygon`、其余 selected-file 不变。任一门不满足即保留 E7，永久停止该轴。
+
+2026-08-27 02:13:45 CST 经实时门禁执行 E9 唯一一次提交，submission `5243`、
+当日序号 `19`，额度由 `12/30` 变为 `11/30`。平台选中预期的 Hygon、AMD、
+MetaX、Ascend、Kunlun 与 generic 路径；`file_url_sha256` 为
+`5734137165c02edb957c0557eb34f514a8b1b8ce9e575281a32450527918582a`。
+内置回读因可信主机环境变量未配置而返回 `unavailable`，随后从平台返回的同一对象
+存储地址无认证回读 18,762 bytes，SHA-256 与 canonical ZIP 完全一致，六个成员
+均通过 `unzip -t`。候选已提交，禁止重传。
