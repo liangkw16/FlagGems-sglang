@@ -547,3 +547,9 @@ logical-id 到 batch/block 映射仍各有一个 scalar 除余。索引 tensor �
 8/8 valid、Enflame 高于 E2 `2.851x` 且平均高于 `4.686925x`；当前第 14 名
 `5.021775x`，冻结其余七芯时 Enflame 需严格超过 `5.5298x` 才升一位。若 invalid
 或不增益即永久停止 word-layout 轴，不再扫 BLOCK、warps、grid 或与 32K 组合。
+
+2026-08-27 01:47:24 CST 经实时门禁执行 E6 唯一一次提交，submission `5231`、
+当日序号 `17`，额度由 `14/30` 变为 `13/30`。`file_url_sha256` 为
+`cc1d3bfff5c5c664ee8a9069ffca511e9fb67607d3d1d48071945940611e314d`；匿名对象
+回读为 8519 bytes，SHA-256 与 canonical ZIP 完全一致，三个成员均通过
+`unzip -t`。平台选中预期的 generic、Ascend、Enflame 路径；禁止重传。
