@@ -384,7 +384,7 @@ S3c 因此明确传入三维 grid，并保持 BLOCK 4096、四 warps、单 stage
 
 ## S4：Ascend BLOCK 512
 
-状态：独立 release 与不可变 ZIP 门禁通过，等待一次平台验证
+状态：平台 8/8、`valid`、`2.04696875x`，团队当前最佳
 
 S4 只把 Ascend vendor 的 capped grid-stride tile 从 256 改为 512；physical
 worker cap 48、数学、operand order 和 launch 其余参数不变。generic、Enflame、
@@ -422,5 +422,22 @@ canonical ZIP 四个成员均与 source commit 一致，`dry-run`、
 `29/30`。`file_url_sha256` 为
 `e8fad19f54654b50953dae5189cc17292417a96b187782c587305c0f1317139a`；从已核实
 对象存储地址无认证回读 10,099 bytes，SHA-256 与 canonical ZIP 完全一致。
-平台选中了预期的 generic、Ascend、Enflame、Kunlun 四条路径；当前八芯排队，
-禁止重传。
+平台选中了预期的 generic、Ascend、Enflame、Kunlun 四条路径；禁止重传。
+
+00:17:35 CST 终态为 `completed` / `valid`、8/8、平均 `2.04696875x`，平台
+标记 team best。相对 S2e 平均增加 `0.02903125x`（+1.44%），华为由
+`0.73708333x` 提升到 `0.88375x`（+19.90%），通过两项预注册门：
+
+| 芯片 | S4 speedup | 相对 S2e | 选中文件 |
+| --- | ---: | ---: | --- |
+| 天数 | 3.63441667x | +0.85% | `softcap_out.py` |
+| 沐曦 | 1.69900000x | +1.03% | `softcap_out.py` |
+| 燧原 | 1.18416667x | -0.33% | `softcap_out_enflame.py` |
+| 海光 | 2.16458333x | +0.74% | `softcap_out.py` |
+| 昆仑芯 | 0.86508333x | +0.16% | `softcap_out_kunlunxin.py` |
+| 华为 | 0.88375000x | +19.90% | `softcap_out_ascend.py` |
+| 国际通用 A | 3.15191667x | +0.48% | `softcap_out.py` |
+| 国际通用 B | 2.79283333x | +0.34% | `softcap_out.py` |
+
+结论：Ascend BLOCK512 单变量被平台证实；保留 S4 为 Task24 team best，停止
+Ascend tile 扩展。其余七芯使用冻结字节并全部过门槛。
