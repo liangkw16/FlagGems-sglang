@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import torch
 import triton
 import triton.language as tl
 
@@ -47,14 +48,6 @@ def _qkv_lora_b_kernel(
     BLOCK_K: tl.constexpr,
     HAS_PERMUTATION: tl.constexpr,
 ):
-    x_stride_token = tl.cast(x_stride_token, tl.int64)
-    x_stride_rank = tl.cast(x_stride_rank, tl.int64)
-    weight_stride_lora = tl.cast(weight_stride_lora, tl.int64)
-    weight_stride_output = tl.cast(weight_stride_output, tl.int64)
-    weight_stride_rank = tl.cast(weight_stride_rank, tl.int64)
-    output_stride_token = tl.cast(output_stride_token, tl.int64)
-    output_stride_col = tl.cast(output_stride_col, tl.int64)
-
     batch_id = tl.program_id(2)
     slice_id = tl.program_id(1)
     segment_start = tl.load(seg_indptr_ptr + batch_id * seg_indptr_stride)
@@ -161,6 +154,30 @@ def qkv_lora_b(
     ):
         return output
 
+    seg_indptr = (
+        batch_info.seg_indptr.to(torch.int32)
+        if batch_info.seg_indptr.dtype == torch.int64
+        else batch_info.seg_indptr
+    )
+    weight_indices = (
+        batch_info.weight_indices.to(torch.int32)
+        if batch_info.weight_indices.dtype == torch.int64
+        else batch_info.weight_indices
+    )
+    lora_ranks = (
+        batch_info.lora_ranks.to(torch.int32)
+        if batch_info.lora_ranks.dtype == torch.int64
+        else batch_info.lora_ranks
+    )
+    permutation = batch_info.permutation
+    if permutation is not None and permutation.dtype == torch.int64:
+        permutation = permutation.to(torch.int32)
+    output_offset = (
+        output_offset.to(torch.int32)
+        if output_offset.dtype == torch.int64
+        else output_offset
+    )
+
     block_s = 64
     block_n = 128
     block_k = 32
@@ -170,24 +187,23 @@ def qkv_lora_b(
         n_slices,
         batch_info.bs,
     )
-    permutation = batch_info.permutation
     _qkv_lora_b_kernel[grid](
         x,
         qkv_lora_b,
         output,
-        batch_info.seg_indptr,
-        batch_info.weight_indices,
-        batch_info.lora_ranks,
+        seg_indptr,
+        weight_indices,
+        lora_ranks,
         batch_info.scalings,
-        permutation if permutation is not None else batch_info.seg_indptr,
+        permutation if permutation is not None else seg_indptr,
         output_offset,
         max_qkv_out_dim,
         *x.stride(),
         *qkv_lora_b.stride(),
         *output.stride(),
-        batch_info.seg_indptr.stride(0),
-        batch_info.weight_indices.stride(0),
-        batch_info.lora_ranks.stride(0),
+        seg_indptr.stride(0),
+        weight_indices.stride(0),
+        lora_ranks.stride(0),
         batch_info.scalings.stride(0),
         permutation.stride(0) if permutation is not None else 0,
         output_offset.stride(0),

@@ -16,6 +16,7 @@ import importlib.util
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import torch
 
@@ -128,6 +129,75 @@ def reference(
                 x_slice @ weights.t()
             )
     return output.to(base_output.dtype)
+
+
+class QkvLoraBMetadataRoutingTest(unittest.TestCase):
+    def test_enflame_routes_integer_metadata_as_int32(self):
+        def strided(values, dtype):
+            return torch.tensor(values, dtype=dtype).repeat_interleave(2)[::2]
+
+        with patch.object(ENFLAME_MODULE, "_qkv_lora_b_kernel") as kernel:
+            for dtype in (torch.int64, torch.int32):
+                with self.subTest(dtype=dtype):
+                    seg_indptr = strided([0, 1, 2], dtype)
+                    weight_indices = strided([0, 1], dtype)
+                    lora_ranks = strided([1, 1], dtype)
+                    permutation = strided([1, 0], dtype)
+                    output_offset = strided([0, 1, 2], dtype)
+                    info = SimpleNamespace(
+                        bs=2,
+                        max_len=1,
+                        seg_lens=torch.ones(2),
+                        seg_indptr=seg_indptr,
+                        weight_indices=weight_indices,
+                        lora_ranks=lora_ranks,
+                        scalings=torch.ones(2),
+                        permutation=permutation,
+                    )
+                    x = torch.zeros((2, 2))
+                    weights = torch.zeros((2, 2, 1))
+                    base = torch.zeros((2, 2))
+
+                    actual = ENFLAME_MODULE.qkv_lora_b(
+                        x, weights, info, output_offset, 1, base
+                    )
+                    routed = kernel.__getitem__.return_value.call_args.args
+                    original_routed_and_stride = (
+                        (seg_indptr, routed[3], 17),
+                        (weight_indices, routed[4], 18),
+                        (lora_ranks, routed[5], 19),
+                        (permutation, routed[7], 21),
+                        (output_offset, routed[8], 22),
+                    )
+                    for (
+                        original,
+                        value,
+                        stride_index,
+                    ) in original_routed_and_stride:
+                        self.assertFalse(original.is_contiguous())
+                        self.assertEqual(value.dtype, torch.int32)
+                        torch.testing.assert_close(
+                            value, original.to(torch.int32)
+                        )
+                        self.assertEqual(routed[stride_index], value.stride(0))
+                        if dtype == torch.int32:
+                            self.assertIs(value, original)
+                        else:
+                            self.assertNotEqual(
+                                value.data_ptr(), original.data_ptr()
+                            )
+                    torch.testing.assert_close(actual, base)
+
+            info.seg_indptr = strided([0, 1, 2], torch.int64)
+            info.permutation = None
+            output_offset = strided([0, 1, 2], torch.int64)
+            ENFLAME_MODULE.qkv_lora_b(x, weights, info, output_offset, 1, base)
+            routed = kernel.__getitem__.return_value.call_args.args
+            kwargs = kernel.__getitem__.return_value.call_args.kwargs
+            self.assertIs(routed[7], routed[3])
+            self.assertEqual(routed[7].dtype, torch.int32)
+            self.assertEqual(routed[21], 0)
+            self.assertFalse(kwargs["HAS_PERMUTATION"])
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
