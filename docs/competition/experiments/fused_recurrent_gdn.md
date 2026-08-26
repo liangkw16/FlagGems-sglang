@@ -569,3 +569,32 @@ submission `5215`。平台逐芯 `selected_file` 首次完整实证了后缀映�
 （拆开 FMA 融合这一变量），其余六个文件与 generic/NVIDIA 字节冻结，作为同轮
 对照。预期海光 3→0；国际 B 若同为 ROCm 血统应大幅收敛，否则该信息同样定位
 其真实形态。
+
+## E10：hygon/amd 串行乘加分离（晋升提交）
+
+状态：release 与不可变 ZIP 门禁通过；提交中
+验证时间：2026-08-27 00:53–00:58 CST；source / verification commit
+`bd3f8569f15c61c81cd587ade27f80c5bbddd4b1`
+
+只变量：`_hygon`、`_amd` 两文件的 K64 归约从 `tl.fma` 链改为显式
+`product = a * b; acc = acc + product` 的纯串行链（先乘后加两次舍入），用于
+解释 E9 海光仅剩的 3 元素残差；`_amd` 采用同一内容作为 ROCm 血统假设的同族
+探针。generic、`_nvidia`（国际 A 已实证字节）、`_iluvatar`、`_metax`、
+`_ascend`、`_enflame` 及测试共七个文件与 E9 commit 逐字节相同。
+
+| 项目 | 值 |
+| --- | --- |
+| amd SHA-256 | `48c31ae8d642a886c05f49110ae658cb8d692c2cb6be88a99eca341a0f774589` |
+| hygon SHA-256 | `613e625e68f8ebe37f6f548d34f3290e00d28f284eefd1364c0d24734fd09920` |
+| 其余文件 | 与 E9 完全一致（generic/nvidia/ascend/enflame/iluvatar/metax/test） |
+| release 目录 | `gpu:/tmp/flagos-fused-recurrent-gdn-e10.peHwYq`（mode 0700） |
+| release log SHA-256 | `372c10283133328730cda4de51ea6a6014ecedc91548fcc9ec31bb7293f861aa` |
+| ZIP | `artifacts/competition/fused_recurrent_gdn/e10-bd3f856/fused_recurrent_gdn.zip` |
+| ZIP SHA-256 | `aa7afb3a35ac5a551f2322fca4c320f35472391fe572c37bd3fb6f092a568d14` |
+| ZIP 大小 / 成员 | 167,312 bytes；generic + 7 vendor |
+
+release 由 commit `bd3f856` 经 `git archive` 建目录；九文件远端哈希与 Git blob
+逐项一致；py_compile、black/isort/flake8（仓库配置）、unittest 8/8 通过；
+wrapper-inclusive do_bench 显示 hygon/amd 变体 ≈3.2–3.4 ms，与前轮同级。
+规范打包器 dry-run 与正式构建 canonical SHA 一致，`unzip -t` 通过。
+E10 相对 E9 只有两个受控差异文件；额度窗口内剩余 ≥20 次满足成本约束。
