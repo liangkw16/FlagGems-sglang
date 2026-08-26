@@ -409,3 +409,38 @@ generic `1.5049x` 低约 3.3%，处于本轮冻结芯片 ±6% 波动带内，rms
 海光 launch 档位轴归协作线所有，待其修复 autotune 重复 kwarg 缺陷后另行验证；
 任何后续候选必须先为每个 vendor 增加真实 `importlib` 加载加 reference 数值
 回归。其三，其余六枚芯片对冻结字节保持通过，E2 仍是 Task 19 平台最佳。
+
+## E3：Hygon autotune 位置参数修复
+
+状态：release 门禁通过，canonical ZIP 已冻结，待一次性平台提交
+
+E3 从 E2 team best 分叉，只新增 Hygon vendor；generic 与 Kunlun 字节冻结，不
+携带 5219 已证伪的 Enflame fold-cap 文件。Hygon kernel 数学与 generic 逐字节
+等价，仍只在 4/8/16 warps 三档 autotune。相对 5219 失败 vendor 的唯一代码变化
+是把 `BLOCK_SIZE=block_size` 改为 kernel 最后一个位置参数 `block_size`。
+
+根因已定位到固定 FlagTree `c1ea8285a06e97afad9dd2644bc71f2efca072f4`：
+AABS 会把 keyword `BLOCK_SIZE` 写回 selected config，Autotuner final run 再同时
+展开 caller kwargs 与 config kwargs，造成 5219 的重复绑定。位置参数不进入 AABS
+current kwargs，而 wrapper 已计算相同的 `next_power_of_2(hidden_size)`，因此只修复
+runtime 绑定，不改变 tile 或数学。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `272ec1bb099641b3965fe443811fa5cf8eb95100` |
+| generic / Kunlun SHA-256 | `02bed1a5cb28b583c343892569d9e25d1ef3d888e124fdd066d1155a0b964997` / `167c23715a11c459db2244c4ae05b18941f8ee2f0af6bfb6d6ed781b0a0d5512` |
+| Hygon / test SHA-256 | `d133e673bf68a3b8f870fdf887a02d2f448a0cc778e6bff94db9d3817f3018d2` / `901082a5d3b27bdcd271783240af0ab727ce32bafcd28499a0287441b5e9c2ae` |
+| release | `gpu:/tmp/flagos-fused-rmsnorm-release.vizuK2`；PID/PGID `165484`；4/4、`RELEASE_OK`；脚本/日志 SHA-256 `b6709c07350faf88bb9372bfc725349c3857d04b115b387e13114e9119bef8c3` / `e1bf426a1b3a172625ffb93fc87352ca56058ea0be9f3ceced51fd3ceaceae84` |
+| canonical ZIP | `artifacts/competition/fused_rmsnorm/e3-272ec1b/fused_rmsnorm.zip`，9060 bytes，SHA-256 `a83f71bdaf2af60dce4d8940831b90d07242ee4964532743e9946338d6d1ecef` |
+
+最小 mock 在旧写法精确复现 `got multiple values for keyword argument
+'BLOCK_SIZE'`，新写法通过。Git-object release 的 py_compile、Black、isort、
+flake8 和 4/4 unittest 全绿；RTX 5070 Ti 对平台失败 shape `(48,3072)` FP16
+真实运行正确，4/8/16 warps 均完成编译，8 warps 最快。代理只证明 runtime 修复
+和数值，不外推 Hygon 性能。
+
+E3 只允许一次提交。基础门为 8/8 valid、Hygon 选中 vendor 且高于 E2
+`7.50766667x`、平均高于 `4.54668333x`；显著收益门为 Hygon 至少
+`7.66766667x`（整题约 `+0.02x`）。当前第 14 名为 `4.63455x`，冻结其余七芯时
+Hygon 需严格超过 `8.21060003x` 才升一位。若 runtime 仍失败或基础门不满足，
+永久停止 Hygon autotune 轴。
