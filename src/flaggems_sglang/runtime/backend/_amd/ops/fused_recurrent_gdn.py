@@ -22,8 +22,8 @@ except ImportError:
     from triton.language.extra import libdevice as tl_extra_shim
 
 
-# AMD E9 candidate: fixed half-split order; two contiguous serial chains over k
-# = 0..31 and k = 32..63 merged as low + high.
+# AMD E10 candidate: fixed serial accumulation order over k = 0..63 with
+# multiply and add rounded separately (rocBLAS-lineage bet shared with Hygon).
 @triton.jit(do_not_specialize=["sequence_length"])
 def _fused_recurrent_gdn_k64_kernel(
     q_ptr,
@@ -103,24 +103,16 @@ def _fused_recurrent_gdn_k64_kernel(
             + query_head * stride_k_head
         )
 
-        lower_acc = 0.0
-        upper_acc = 0.0
-        for key_offset in tl.static_range(0, 32):
-            low_state = tl.load(state_ptr + state_base + key_offset) * decay
-            high_state = (
-                tl.load(state_ptr + state_base + key_offset + 32) * decay
-            )
-            tl.store(state_ptr + state_base + key_offset, low_state)
-            tl.store(state_ptr + state_base + key_offset + 32, high_state)
-            low_key = tl.load(k_ptr + key_base + key_offset * stride_k_dim).to(
+        accumulation = 0.0
+        for key_offset in tl.static_range(0, 64):
+            lane_0 = tl.load(state_ptr + state_base + key_offset) * decay
+            tl.store(state_ptr + state_base + key_offset, lane_0)
+            key_0 = tl.load(k_ptr + key_base + key_offset * stride_k_dim).to(
                 tl.float32
             )
-            high_key = tl.load(
-                k_ptr + key_base + (key_offset + 32) * stride_k_dim
-            ).to(tl.float32)
-            lower_acc = tl.fma(low_state, low_key, lower_acc)
-            upper_acc = tl.fma(high_state, high_key, upper_acc)
-        prediction = lower_acc + upper_acc
+            product = lane_0 * key_0
+            accumulation = accumulation + product
+        prediction = accumulation
 
         value_address = (
             batch * stride_v_batch
@@ -144,47 +136,29 @@ def _fused_recurrent_gdn_k64_kernel(
             + timestep * stride_q_time
             + query_head * stride_q_head
         )
-        for key_offset in tl.static_range(0, 32):
-            low_key = tl.load(k_ptr + key_base + key_offset * stride_k_dim).to(
+        for key_offset in tl.static_range(0, 64):
+            key_0 = tl.load(k_ptr + key_base + key_offset * stride_k_dim).to(
                 tl.float32
             )
-            high_key = tl.load(
-                k_ptr + key_base + (key_offset + 32) * stride_k_dim
-            ).to(tl.float32)
             tl.store(
                 outer_ptr + state_base + key_offset,
-                correction * low_key,
+                correction * key_0,
             )
-            tl.store(
-                outer_ptr + state_base + key_offset + 32,
-                correction * high_key,
-            )
-        lower_acc = 0.0
-        upper_acc = 0.0
-        for key_offset in tl.static_range(0, 32):
-            low_state = tl.load(state_ptr + state_base + key_offset) + tl.load(
+        accumulation = 0.0
+        for key_offset in tl.static_range(0, 64):
+            lane_0 = tl.load(state_ptr + state_base + key_offset) + tl.load(
                 outer_ptr + state_base + key_offset
             )
-            high_state = tl.load(
-                state_ptr + state_base + key_offset + 32
-            ) + tl.load(outer_ptr + state_base + key_offset + 32)
-            tl.store(state_ptr + state_base + key_offset, low_state)
-            tl.store(state_ptr + state_base + key_offset + 32, high_state)
-            low_query = (
+            tl.store(state_ptr + state_base + key_offset, lane_0)
+            query_0 = (
                 tl.load(q_ptr + query_base + key_offset * stride_q_dim).to(
                     tl.float32
                 )
                 * scale
             )
-            high_query = (
-                tl.load(
-                    q_ptr + query_base + (key_offset + 32) * stride_q_dim
-                ).to(tl.float32)
-                * scale
-            )
-            lower_acc = tl.fma(low_state, low_query, lower_acc)
-            upper_acc = tl.fma(high_state, high_query, upper_acc)
-        result = lower_acc + upper_acc
+            product = lane_0 * query_0
+            accumulation = accumulation + product
+        result = accumulation
         output_address = (
             batch * stride_output_batch
             + timestep * stride_output_time
