@@ -225,3 +225,65 @@ case `Pipeline run failed`——证明该 varlen kernel 结构本身在 GCU 编�
 不可编译（与 Task 22 qkv 同型结论），非 dot 精度或配置问题。昆仑维持
 `PassManager::run failed`。Task 13 两次预算用尽，最终 6/8
 （invalid_correctness）；两轮沉淀的天数/华为 vendor 形式已可复用。
+
+## E2：metadata pack + 规整 FP32 BMM（高倍数冲刺重开）
+
+状态：screening 与代理基准通过，release 待执行。
+
+2026-08-26 14:04 CST 实时状态为团队 `SoulCoder`、Task 13 `competing` 且可
+提交，当日剩余额度 `28/30`。S1b 已通过六芯合计 1301.519x；只要燧原与昆仑
+都达到 0.1x 门槛，同一提交的平均分即至少 162.714875x，因此本轮只解决两个
+结构性编译失败，不改已通过的 generic/ascend/iluvatar 字节。
+
+最终 source commit 为
+`fff9ea904d025a589cff2c4daf6cec057075dcac`（主体 commit `1863fd0`）：
+
+- pack kernel 独立读取 `cu_seqlens`、dt/dA、计算 FP32 scale，并把每条序列的
+  X 与 scaled-B 写成连续 `[batch,head,max_seq_len,*]`；BMM 不再接触任何
+  metadata、间接索引、runtime K 或 `tl.where`。
+- `max_seq_len` 只在 host 读取一次；这既保留公开 reference 的
+  `chunk_size=8, length=9` 单 scale 全序列广播，又避免按 total length 产生空
+  program。混合空段用合法 `safe_end` 构造地址；all-empty 由 K=0 的 Triton
+  BMM 写出全零。
+- 燧原采用 32×32×32、FP32 IEEE、4 warps、stages 1；昆仑同为
+  32×32×32 FP32 IEEE，pack tile 收敛为 16×16。所有逻辑 grid 均按 65535
+  分批，`chunk_states` 仍只读取 dtype。
+- 初始燧原 split-FP16 三点积草案虽通过常规回归，但代理大 scale 输出 NaN，
+  因而在 release/平台前拒绝；最终候选回退 Task 12 已验证的 FP32 IEEE 形态，
+  并新增 `exp(12)` 有限值永久回归。
+
+最终 screening 位于
+`gpu:/tmp/flagos-chunk-state-varlen-e2-fp32-screening.f7zuhX`，base commit
+`1863fd0`，PID/PGID `131793`，wall 900s；逐字重放脚本 SHA-256
+`ad63010b66dfbb20a831a8b187b67623cb20935478cb0f011c2bdaf7c6348524`。
+10/10 unittest 通过（0.854s），尾行为 `SCREENING_OK`，`screening.log`
+SHA-256
+`9f6ee11943a9444cbdb0cd4a49467ba033a3e323b611028e8507fa403a76f66e`；
+输入前后 manifest SHA-256 均为
+`3f2931b1a566c1b085af12b856123c009491c60dd7724dc925e44646ab383d0c`。
+环境为 RTX 5070 Ti、Python 3.12.13、PyTorch 2.13.0+cu130、Triton
+3.7.1、CUDA 13.0。回归覆盖三 dtype、非连续输入/int32/int64 metadata、
+leading/all-empty、`[0,9]` 与非零 start 的 `[3,9]` 广播、不同 shape/stride
+的 dtype-only `chunk_states`、低精度消去反例、大 scale 有限值和输入不变性。
+
+最终 Enflame/Kunlun/test SHA-256 分别为
+`d5d1d8b195fe1efad275dc30ffcf9707499c67575b117a78bd68c097b452db93`、
+`ec18415fdbb99787dbfcb5d4a3ceca126caa4cf330b03317879441c1b878bac5`、
+`769a6ee3c1d526c2d1322fac5233a65e9a33412c3590c531e4d1947e62a81e4b`；
+generic/ascend/iluvatar 保持
+`025ac23b0026a423e381f8fffe3715c4e21ce64558e79ad4841145351f11d4f1`、
+`a8bf24b42a1f7a73ab4f9635b928e0a28094b258a04cf4de4d39ae52f08c9e4b`、
+`86419a800ebf783d70f0392ae7c71ad06e755844197efe8ce23a6b7b394276e8`。
+
+同目录代表 shape（batch16、heads8、M=N128、K64、FP16 输入）的 7 轮
+wrapper-inclusive 代理中位：generic 0.04018ms、Enflame 0.06625ms、Kunlun
+0.06750ms；两候选峰值显存增量均 25165824B，三者输出最大绝对值相同且有限。
+基准脚本/日志 SHA-256 分别为
+`5b3184f09ad8e47cba492647b984c707bcaec936ce81c694878cd189b8e50e02`、
+`a4df7689bf02a90d68cd82c1b12476d0123ec8fa87ee9460a484dfba2896ab10`，
+尾行为 `BENCHMARK_OK`。该数据仅作 NVIDIA 资源代理；两款目标编译器仍以平台
+结果为准。
+
+E2 只提交一次；若 8/8 即停止 Task 13。若仅一款失败且 traceback 明确落在
+pack 的地址/资源结构，最多允许一个结构不同的 pack 修复；若 BMM 失败、两款
+均失败或第二候选仍 invalid，则立即转 Task 17，不再调 BLOCK/warps/stages。
