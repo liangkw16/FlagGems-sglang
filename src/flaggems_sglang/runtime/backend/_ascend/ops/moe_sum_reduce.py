@@ -45,16 +45,14 @@ def _moe_sum_reduce_kernel(
     hidden_size,
     ROUTED_SCALING_FACTOR: tl.constexpr,
     topk: tl.constexpr,
-    IS_CONTIGUOUS: tl.constexpr,
     BLOCK_SIZE: tl.constexpr,
     BLOCK_SIZE_SUB: tl.constexpr,
 ):
-    if not IS_CONTIGUOUS:
-        input_stride_token = tl.cast(input_stride_token, tl.int64)
-        input_stride_topk = tl.cast(input_stride_topk, tl.int64)
-        input_stride_hidden = tl.cast(input_stride_hidden, tl.int64)
-        output_stride_token = tl.cast(output_stride_token, tl.int64)
-        output_stride_hidden = tl.cast(output_stride_hidden, tl.int64)
+    input_stride_token = tl.cast(input_stride_token, tl.int64)
+    input_stride_topk = tl.cast(input_stride_topk, tl.int64)
+    input_stride_hidden = tl.cast(input_stride_hidden, tl.int64)
+    output_stride_token = tl.cast(output_stride_token, tl.int64)
+    output_stride_hidden = tl.cast(output_stride_hidden, tl.int64)
 
     program = tl.program_id(0)
     grid_size = tl.num_programs(0)
@@ -70,35 +68,26 @@ def _moe_sum_reduce_kernel(
                 hidden_base + sub_offset + tl.arange(0, BLOCK_SIZE_SUB)
             )
             hidden_mask = hidden_offsets < hidden_size
-            # Dense path adapted from FlagGems@ed2508b, PR #2037 (Apache-2.0).
-            if IS_CONTIGUOUS:
-                input_offsets = (
-                    token_offset * topk * hidden_size + hidden_offsets
-                )
-                expert_stride = hidden_size
-            else:
-                input_offsets = (
-                    token_offset * input_stride_token
-                    + hidden_offsets * input_stride_hidden
-                )
-                expert_stride = input_stride_topk
+            input_offsets = (
+                token_offset * input_stride_token
+                + hidden_offsets * input_stride_hidden
+            )
             accumulator = tl.zeros((BLOCK_SIZE_SUB,), dtype=tl.float32)
 
             for expert_offset in range(topk):
                 values = tl.load(
-                    input_ptr + input_offsets + expert_offset * expert_stride,
+                    input_ptr
+                    + input_offsets
+                    + expert_offset * input_stride_topk,
                     mask=hidden_mask,
                     other=0.0,
                 ).to(tl.float32)
                 accumulator += values
 
-            if IS_CONTIGUOUS:
-                output_offsets = token_offset * hidden_size + hidden_offsets
-            else:
-                output_offsets = (
-                    token_offset * output_stride_token
-                    + hidden_offsets * output_stride_hidden
-                )
+            output_offsets = (
+                token_offset * output_stride_token
+                + hidden_offsets * output_stride_hidden
+            )
             tl.store(
                 output_ptr + output_offsets,
                 accumulator * ROUTED_SCALING_FACTOR,
@@ -114,14 +103,10 @@ def moe_sum_reduce(input, routed_scaling_factor):
     if num_tokens == 0 or hidden_dim == 0:
         return output
 
-    is_contiguous = (
-        num_tokens >= 32 and input.is_contiguous() and output.is_contiguous()
-    )
-
     grid = lambda meta: (
         min(
             num_tokens * triton.cdiv(hidden_dim, meta["BLOCK_SIZE"]),
-            4096,
+            65535,
         ),
     )
     _moe_sum_reduce_kernel[grid](
@@ -133,7 +118,6 @@ def moe_sum_reduce(input, routed_scaling_factor):
         hidden_dim,
         ROUTED_SCALING_FACTOR=routed_scaling_factor,
         topk=top_k,
-        IS_CONTIGUOUS=is_contiguous,
     )
     return output
 
