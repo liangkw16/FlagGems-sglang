@@ -163,7 +163,7 @@ def bmm_chunk(a, b, chunk_size, causal=False):
         * batch
         * cg_count
     )
-    grid = (min(total_programs, 64),)
+    grid = (min(total_programs, 6),)
     _bmm_chunk_kernel[grid](
         a,
         b,
