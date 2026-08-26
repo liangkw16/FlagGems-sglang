@@ -17,6 +17,15 @@ import triton
 import triton.language as tl
 
 
+@triton.autotune(
+    configs=[
+        triton.Config({"BLOCK_SIZE": 128}, num_warps=2),
+        triton.Config({"BLOCK_SIZE": 256}, num_warps=4),
+        triton.Config({"BLOCK_SIZE": 512}, num_warps=8),
+        triton.Config({"BLOCK_SIZE": 1024}, num_warps=8),
+    ],
+    key=["hidden_size", "topk"],
+)
 @triton.jit
 def _moe_sum_reduce_kernel(
     input_ptr,
@@ -26,9 +35,9 @@ def _moe_sum_reduce_kernel(
     input_stride_hidden,
     output_stride_token,
     output_stride_hidden,
-    hidden_dim,
+    hidden_size,
     ROUTED_SCALING_FACTOR: tl.constexpr,
-    TOP_K: tl.constexpr,
+    topk: tl.constexpr,
     BLOCK_SIZE: tl.constexpr,
 ):
     input_stride_token = tl.cast(input_stride_token, tl.int64)
@@ -39,14 +48,14 @@ def _moe_sum_reduce_kernel(
 
     token_offset = tl.program_id(0)
     hidden_offsets = tl.program_id(1) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
-    hidden_mask = hidden_offsets < hidden_dim
+    hidden_mask = hidden_offsets < hidden_size
     input_offsets = (
         token_offset * input_stride_token
         + hidden_offsets * input_stride_hidden
     )
     accumulator = tl.zeros((BLOCK_SIZE,), dtype=tl.float32)
 
-    for expert_offset in range(TOP_K):
+    for expert_offset in range(topk):
         values = tl.load(
             input_ptr + input_offsets + expert_offset * input_stride_topk,
             mask=hidden_mask,
@@ -66,26 +75,25 @@ def _moe_sum_reduce_kernel(
 
 
 def moe_sum_reduce(input, routed_scaling_factor):
-    num_tokens, top_k, hidden_dim = input.shape
+    num_tokens, top_k, hidden_size = input.shape
     output = torch.empty(
-        (num_tokens, hidden_dim), dtype=input.dtype, device=input.device
+        (num_tokens, hidden_size), dtype=input.dtype, device=input.device
     )
-    if num_tokens == 0 or hidden_dim == 0:
+    if num_tokens == 0 or hidden_size == 0:
         return output
 
-    block_size = 2048
-    grid = (num_tokens, triton.cdiv(hidden_dim, block_size))
+    grid = lambda meta: (
+        num_tokens,
+        triton.cdiv(hidden_size, meta["BLOCK_SIZE"]),
+    )
     _moe_sum_reduce_kernel[grid](
         input,
         output,
         *input.stride(),
         *output.stride(),
-        hidden_dim,
+        hidden_size,
         ROUTED_SCALING_FACTOR=routed_scaling_factor,
-        TOP_K=top_k,
-        BLOCK_SIZE=block_size,
-        num_warps=8,
-        num_stages=1,
+        topk=top_k,
     )
     return output
 

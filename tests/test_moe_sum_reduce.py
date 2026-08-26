@@ -66,13 +66,13 @@ AMD_MODULE_PATH = (
     / "ops"
     / "moe_sum_reduce.py"
 )
-ENFLAME_MODULE_PATH = (
+HYGON_MODULE_PATH = (
     Path(__file__).parents[1]
     / "src"
     / "flaggems_sglang"
     / "runtime"
     / "backend"
-    / "_enflame"
+    / "_hygon"
     / "ops"
     / "moe_sum_reduce.py"
 )
@@ -96,9 +96,7 @@ ASCEND_MODULE = _load_module(
 )
 METAX_MODULE = _load_module("moe_sum_reduce_metax_module", METAX_MODULE_PATH)
 AMD_MODULE = _load_module("moe_sum_reduce_amd_module", AMD_MODULE_PATH)
-ENFLAME_MODULE = _load_module(
-    "moe_sum_reduce_enflame_module", ENFLAME_MODULE_PATH
-)
+HYGON_MODULE = _load_module("moe_sum_reduce_hygon_module", HYGON_MODULE_PATH)
 
 
 def reference(input, routed_scaling_factor):
@@ -197,35 +195,56 @@ class AmdLaunchPolicyTest(unittest.TestCase):
         self.assertEqual(fake_kernel.kwargs["topk"], 3)
 
 
-class EnflameLaunchPolicyTest(unittest.TestCase):
-    def test_enflame_uses_effective_official_fixed_launch(self):
+class HygonLaunchPolicyTest(unittest.TestCase):
+    def test_hygon_uses_official_configs_without_duplicate_block_kwarg(self):
+        configs = HYGON_MODULE._moe_sum_reduce_kernel.configs
+        self.assertEqual(
+            HYGON_MODULE._moe_sum_reduce_kernel.keys,
+            ["hidden_size", "topk"],
+        )
+        self.assertEqual(
+            [
+                (config.kwargs["BLOCK_SIZE"], config.num_warps)
+                for config in configs
+            ],
+            [(128, 2), (256, 4), (512, 8), (1024, 8)],
+        )
+
         class FakeKernel:
             def __init__(self):
-                self.calls = []
+                self.grids = []
+                self.kwargs = None
 
             def __getitem__(self, grid):
+                self.grids = [
+                    grid({"BLOCK_SIZE": block_size})
+                    for block_size in (128, 256, 512, 1024)
+                ]
+
                 def launch(*args, **kwargs):
-                    self.calls.append((grid, kwargs))
+                    self.kwargs = kwargs
 
                 return launch
 
         fake_kernel = FakeKernel()
         with mock.patch.object(
-            ENFLAME_MODULE, "_moe_sum_reduce_kernel", fake_kernel
+            HYGON_MODULE, "_moe_sum_reduce_kernel", fake_kernel
         ):
-            ENFLAME_MODULE.moe_sum_reduce(torch.empty((2, 3, 4097)), 0.75)
+            HYGON_MODULE.moe_sum_reduce(torch.empty((2, 3, 1025)), 0.75)
 
-        grid, kwargs = fake_kernel.calls[-1]
-        self.assertEqual(grid, (2, 3))
-        self.assertEqual(kwargs["BLOCK_SIZE"], 2048)
-        self.assertEqual(kwargs["num_warps"], 8)
-        self.assertEqual(kwargs["num_stages"], 1)
-        self.assertEqual(kwargs["TOP_K"], 3)
+        self.assertEqual(
+            fake_kernel.grids,
+            [(2, 9), (2, 5), (2, 3), (2, 2)],
+        )
+        self.assertNotIn("BLOCK_SIZE", fake_kernel.kwargs)
+        self.assertNotIn("num_warps", fake_kernel.kwargs)
+        self.assertNotIn("num_stages", fake_kernel.kwargs)
+        self.assertEqual(fake_kernel.kwargs["topk"], 3)
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class MoeSumReduceTest(unittest.TestCase):
-    def test_vendor_paths_all_dtypes_noncontiguous(self):
+    def test_amd_autotune_all_dtypes_noncontiguous(self):
         tolerances = {
             torch.float16: 1e-2,
             torch.bfloat16: 1.5e-2,
@@ -245,15 +264,44 @@ class MoeSumReduceTest(unittest.TestCase):
                 self.assertFalse(input.is_contiguous())
                 original = input.clone()
 
+                actual = AMD_MODULE.moe_sum_reduce(input, -0.125)
                 expected = reference(input, -0.125)
 
-                for module in (AMD_MODULE, ENFLAME_MODULE):
-                    actual = module.moe_sum_reduce(input, -0.125)
-                    self.assertEqual(actual.shape, (4, 1025))
-                    self.assertEqual(actual.dtype, dtype)
-                    torch.testing.assert_close(
-                        actual, expected, atol=tolerance, rtol=tolerance
-                    )
+                self.assertEqual(actual.shape, (4, 1025))
+                self.assertEqual(actual.dtype, dtype)
+                torch.testing.assert_close(
+                    actual, expected, atol=tolerance, rtol=tolerance
+                )
+                torch.testing.assert_close(input, original, atol=0.0, rtol=0.0)
+
+    def test_hygon_autotune_all_dtypes_noncontiguous(self):
+        tolerances = {
+            torch.float16: 1e-2,
+            torch.bfloat16: 1.5e-2,
+            torch.float32: 1e-4,
+        }
+        generator = torch.Generator(device="cuda").manual_seed(20260827)
+
+        for dtype, tolerance in tolerances.items():
+            with self.subTest(dtype=dtype):
+                base = torch.randn(
+                    (4, 3, 2050),
+                    device="cuda",
+                    dtype=dtype,
+                    generator=generator,
+                )
+                input = base[:, :, 1::2]
+                self.assertFalse(input.is_contiguous())
+                original = input.clone()
+
+                actual = HYGON_MODULE.moe_sum_reduce(input, -0.125)
+                expected = reference(input, -0.125)
+
+                self.assertEqual(actual.shape, (4, 1025))
+                self.assertEqual(actual.dtype, dtype)
+                torch.testing.assert_close(
+                    actual, expected, atol=tolerance, rtol=tolerance
+                )
                 torch.testing.assert_close(input, original, atol=0.0, rtol=0.0)
 
     def test_block_boundaries_all_dtypes(self):
@@ -335,15 +383,30 @@ class MoeSumReduceTest(unittest.TestCase):
             with self.subTest(shape=shape):
                 input = torch.empty(shape, device="cuda", dtype=torch.float16)
 
+                actual = MODULE.moe_sum_reduce(input, 2.0)
                 expected = reference(input, 2.0)
 
-                for module in (MODULE, ENFLAME_MODULE):
-                    actual = module.moe_sum_reduce(input, 2.0)
-                    self.assertEqual(actual.shape, (shape[0], shape[2]))
-                    self.assertEqual(actual.dtype, input.dtype)
-                    torch.testing.assert_close(
-                        actual, expected, atol=1e-2, rtol=1e-2
-                    )
+                self.assertEqual(actual.shape, (shape[0], shape[2]))
+                self.assertEqual(actual.dtype, input.dtype)
+                torch.testing.assert_close(
+                    actual, expected, atol=1e-2, rtol=1e-2
+                )
+
+    def test_hygon_empty_dimensions_and_zero_topk_match_reference(self):
+        shapes = ((0, 4, 17), (3, 4, 0), (2, 0, 17))
+
+        for shape in shapes:
+            with self.subTest(shape=shape):
+                input = torch.empty(shape, device="cuda", dtype=torch.float16)
+
+                actual = HYGON_MODULE.moe_sum_reduce(input, 2.0)
+                expected = reference(input, 2.0)
+
+                self.assertEqual(actual.shape, (shape[0], shape[2]))
+                self.assertEqual(actual.dtype, input.dtype)
+                torch.testing.assert_close(
+                    actual, expected, atol=1e-2, rtol=1e-2
+                )
 
     def test_vendors_cover_platform_failure_scale(self):
         num_tokens, top_k, hidden_dim = 4096, 8, 7168
@@ -371,7 +434,7 @@ class MoeSumReduceTest(unittest.TestCase):
                     ("generic", MODULE),
                     ("kunlunxin", KUNLUN_MODULE),
                     ("ascend", ASCEND_MODULE),
-                    ("enflame", ENFLAME_MODULE),
+                    ("hygon", HYGON_MODULE),
                 ):
                     with self.subTest(module=name):
                         actual = module.moe_sum_reduce(input, 0.75)
