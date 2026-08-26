@@ -17,14 +17,6 @@ import triton
 import triton.language as tl
 
 
-@triton.autotune(
-    configs=[
-        triton.Config({}, num_warps=4, num_stages=1),
-        triton.Config({}, num_warps=8, num_stages=1),
-        triton.Config({}, num_warps=16, num_stages=1),
-    ],
-    key=["hidden_size"],
-)
 @triton.jit
 def _fused_rmsnorm_kernel(
     x_ptr,
@@ -75,6 +67,9 @@ def fused_rmsnorm(x, weight, eps):
     weight_row = weight.reshape(-1)
     output_rows = output.reshape(-1, hidden_size)
     block_size = triton.next_power_of_2(hidden_size)
+    num_warps = max(
+        min(triton.next_power_of_2(triton.cdiv(hidden_size, 256)), 32), 4
+    )
 
     _fused_rmsnorm_kernel[(x_rows.shape[0],)](
         x_rows,
@@ -87,6 +82,8 @@ def fused_rmsnorm(x, weight, eps):
         hidden_size,
         eps,
         BLOCK_SIZE=block_size,
+        num_warps=num_warps,
+        num_stages=1,
     )
     return output
 

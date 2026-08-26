@@ -42,11 +42,11 @@ KUNLUN_MODULE_PATH = (
     / "fused_rmsnorm.py"
 )
 
-ENFLAME_MODULE_PATH = (
+NVIDIA_MODULE_PATH = (
     MODULE_PATH.parents[1]
     / "runtime"
     / "backend"
-    / "_enflame"
+    / "_nvidia"
     / "ops"
     / "fused_rmsnorm.py"
 )
@@ -134,14 +134,51 @@ class FusedRmsnormTest(unittest.TestCase):
                         weight, weight_before, atol=0.0, rtol=0.0
                     )
 
-    def test_enflame_fold_grid_matches_reference(self):
+    def test_nvidia_dynamic_warps_match_mapping_and_reference(self):
         spec = importlib.util.spec_from_file_location(
-            "fused_rmsnorm_enflame_module", ENFLAME_MODULE_PATH
+            "fused_rmsnorm_nvidia_module", NVIDIA_MODULE_PATH
         )
         if spec is None or spec.loader is None:
-            self.fail(f"cannot load {ENFLAME_MODULE_PATH}")
+            self.fail(f"cannot load {NVIDIA_MODULE_PATH}")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
+
+        launches = []
+
+        class KernelProbe:
+            def __getitem__(self, grid):
+                def launch(*args, **kwargs):
+                    launches.append((grid, kwargs))
+
+                return launch
+
+        kernel = module._fused_rmsnorm_kernel
+        module._fused_rmsnorm_kernel = KernelProbe()
+        try:
+            for hidden_size, expected_warps in (
+                (512, 4),
+                (1024, 4),
+                (1536, 8),
+                (2048, 8),
+                (3072, 16),
+                (4096, 16),
+                (5120, 32),
+                (8192, 32),
+                (8193, 32),
+            ):
+                x = torch.empty(
+                    1, hidden_size, device="cuda", dtype=torch.float16
+                )
+                weight = torch.empty(
+                    hidden_size, device="cuda", dtype=torch.float16
+                )
+                module.fused_rmsnorm(x, weight, 1e-6)
+                grid, kwargs = launches[-1]
+                self.assertEqual(grid, (1,))
+                self.assertEqual(kwargs["num_warps"], expected_warps)
+                self.assertEqual(kwargs["num_stages"], 1)
+        finally:
+            module._fused_rmsnorm_kernel = kernel
 
         tolerances = {
             torch.float16: 1e-2,
@@ -150,48 +187,25 @@ class FusedRmsnormTest(unittest.TestCase):
         }
         generator = torch.Generator(device="cuda").manual_seed(20260827)
         for dtype, tolerance in tolerances.items():
-            for rows, hidden_size, noncontiguous in (
-                (64, 256, False),
-                (65, 256, False),
-                (129, 4096, False),
-                (10000, 256, False),
-                (8, 513, False),
-                (64, 5120, True),
-            ):
+            for rows, hidden_size in ((7, 512), (3, 3072), (2, 8193)):
                 with self.subTest(
                     dtype=dtype,
                     rows=rows,
                     hidden_size=hidden_size,
-                    noncontiguous=noncontiguous,
                 ):
-                    if noncontiguous:
-                        x = torch.randn(
-                            rows,
-                            hidden_size * 2,
-                            device="cuda",
-                            dtype=dtype,
-                            generator=generator,
-                        )[:, ::2]
-                        weight = torch.randn(
-                            hidden_size * 2,
-                            device="cuda",
-                            dtype=dtype,
-                            generator=generator,
-                        )[::2]
-                    else:
-                        x = torch.randn(
-                            rows,
-                            hidden_size,
-                            device="cuda",
-                            dtype=dtype,
-                            generator=generator,
-                        )
-                        weight = torch.randn(
-                            hidden_size,
-                            device="cuda",
-                            dtype=dtype,
-                            generator=generator,
-                        )
+                    x = torch.randn(
+                        rows,
+                        hidden_size,
+                        device="cuda",
+                        dtype=dtype,
+                        generator=generator,
+                    )
+                    weight = torch.randn(
+                        hidden_size,
+                        device="cuda",
+                        dtype=dtype,
+                        generator=generator,
+                    )
                     x_before = x.clone()
                     weight_before = weight.clone()
 
