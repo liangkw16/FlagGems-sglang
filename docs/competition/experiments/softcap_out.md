@@ -642,3 +642,22 @@ tile 轴，不尝试 64K、warps、grid 或数学变体。
 `068ee11071f32b153e259693f637021533daa5bdf1fba15b24e7e5d78c04e151`；匿名对象
 回读为 10,025 bytes，SHA-256 与 canonical ZIP 完全一致，四个成员均通过
 `unzip -t`。平台已选中预期的 generic、Ascend、Enflame、Kunlun 路径；禁止重传。
+
+01:22:31 CST 终态为 8/8、`valid`，平均 `2.24001042x`、team best，额度确认为
+`18/30`。Enflame 从 S6 `1.38541667x` 提升至 `2.97566667x`（2.15 倍），整题
+增加 `0.18589584x`，基础门和显著收益门均通过：
+
+| 芯片 | S8 speedup | 选中文件 |
+| --- | ---: | --- |
+| 天数 | 3.59366667x | `softcap_out.py` |
+| 沐曦 | 1.67191667x | `softcap_out.py` |
+| 燧原 | 2.97566667x | `softcap_out_enflame.py` |
+| 海光 | 2.04100000x | `softcap_out.py` |
+| 昆仑芯 | 0.86433333x | `softcap_out_kunlunxin.py` |
+| 华为 | 0.88166667x | `softcap_out_ascend.py` |
+| 国际通用 A | 3.10975000x | `softcap_out.py` |
+| 国际通用 B | 2.78208333x | `softcap_out.py` |
+
+S8 已超过提交前公开第 12 名 `2.18982292x`。结论：GCU300 官方 32K 最大 tile
+先验可迁移且产生显著收益；保留 S8 为 Task24 最终版本，按预注册规则关闭本题，
+不再尝试 64K、warps、grid 或数学变体。
