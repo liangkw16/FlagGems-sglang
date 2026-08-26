@@ -492,7 +492,7 @@ E4 严格以 E2 team-best 成员为基线，只新增 NVIDIA vendor，并移除�
 
 ## E5：Enflame 官方 GCU300 默认 launch
 
-状态：release 门禁通过，规范 ZIP 就绪；待实时 preflight 后唯一一次提交
+状态：submission `5263` 已唯一一次提交，八芯评测中
 
 E5 仍从 E2 team best 分叉，只新增 Enflame vendor；generic 与 Kunlun 字节继续
 冻结为 `02bed1a5...b964997` / `167c2371...0d5512`。vendor kernel 与 generic 的
@@ -525,3 +525,13 @@ RTX 5070 Ti 上候选实际编译为 4 warps / 3 stages；21 个 dtype/shape 组
 `1.50486667x` 严格提高到 `>2.20780003x` 才升一名。平台门禁为 8/8 valid、
 Enflame 选中 vendor、整题高于 team best；未超过升名阈值也保留有效观测，但 E5
 无论结果如何均停止，不做 4/8 warps 或 stages sweep。
+
+### E5 平台提交
+
+2026-08-27 03:16:50 CST 经实时 preflight 执行唯一一次提交，submission
+`5263`、当日序号 `22`，额度预计由 `9/30` 降为 `8/30`。上传对象的
+`file_url_sha256` 为
+`673bb285f44c4c739b7a5ddb98cb56bfe6cbbc37f4baa23605184a2e666eacb0`；平台匿名
+回读为 8,846 bytes，SHA-256 与 canonical ZIP 完全一致。路由快照确认 Enflame
+选中 `fused_rmsnorm_enflame.py`，其余芯片继续使用冻结的 generic / Kunlun 文件；
+当前为 queued，不把入队视为通过，禁止重传。
