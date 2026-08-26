@@ -456,3 +456,27 @@ canonical ZIP 路径为
 `unzip -t` 和成员白名单均通过。E7b 定位为一次 validity/结构诊断：若仍
 invalid，立即停止 T23 并跳过 T22；若 valid 但昆仑 <15x，停止 T23；只有昆仑
 >=15x 且总分达到实时榜首 70% 才进入后续放大池。
+
+### E7b 平台结果：仍 7/8；最小 pack-W 仍触发 uni_sram → T23/T22 止损
+
+E7b 于 2026-08-26 14:01:22 CST 单次提交（submission `5038`，当日序号
+`2`，额度 `29/30`→`28/30`，`file_url_sha256` 为
+`281b8743c65e2489e7785d4774b123f391560309e9d6b4c6f72f8da8fa0b319b`）。
+确认命令未继承远端 hostname 环境，因此工具内 remote verification 显示
+unavailable；提交受理后从平台返回的可信 URL 只读下载验签，大小 35490B、
+SHA-256
+`19a46d4041d4b4b5ac7ffb73a5b692c66ff72a8def122cc30c805dbb19256ed4`，与本地
+canonical ZIP 完全一致，未重试提交。
+
+七个既有通过芯片仍稳定：天数 33.7595x、沐曦 18.0045x、燧原 3.9260x、
+海光 43.9490x、华为 17.6765x、国际 A 46.0085x、国际 B 28.7700x。昆仑在
+8.119s 内终态失败，5/5 correctness case 均在 `_pack_weights_kernel` 第一次
+编译处报相同
+`OutOfResources: uni_sram PassManager::run failed`；traceback 为提交文件第
+337 行，case 0 的 grid 为 16，最大 case 的 grid 为 4096，regular BMM 仍未
+执行到。
+
+结论：即使 pack-W 已降为每 program 单 rank row × N256 的连续 FP32 copy，
+该 kernel 仍不能通过昆仑 SDNN 编译；继续缩 tile/warps/stages 不再具有结构新意。
+按 E7b 预设止损，Task 23 永久停止，不做 no-dot fallback；由于 regular BMM 从未
+在昆仑执行成功，Task 22 同步跳过。高倍数主线转入 Task 13 两阶段规整 BMM。
