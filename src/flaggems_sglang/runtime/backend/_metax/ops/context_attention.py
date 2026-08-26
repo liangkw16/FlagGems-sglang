@@ -78,7 +78,6 @@ def _context_attention_kernel(
         offs_d = tl.arange(0, BLOCK_D)
         mask_m = offs_m < seq_len
         mask_d = offs_d < head_dim
-
         q_ptrs = (
             q
             + (seq_start + offs_m[:, None]) * stride_qt
@@ -107,7 +106,6 @@ def _context_attention_kernel(
             start_n = tl.multiple_of(start_n, BLOCK_N)
             key_pos = start_n + offs_n
             mask_n = key_pos < seq_len
-
             k_ptrs = (
                 k
                 + (seq_start + key_pos[None, :]) * stride_kt
@@ -261,16 +259,16 @@ def _run_context_attention(
 def context_attention(
     q, k, v, b_start_loc, b_seq_len, max_input_len, is_causal
 ):
-    """Compute packed variable-length scaled dot-product attention."""
     return _run_context_attention(
-        q, k, v, b_start_loc, b_seq_len, max_input_len, is_causal
-    )
-
-
-def reference(q, k, v, b_start_loc, b_seq_len, max_input_len, is_causal):
-    """Competition-compatible alias implemented as a real function."""
-    return _run_context_attention(
-        q, k, v, b_start_loc, b_seq_len, max_input_len, is_causal
+        q,
+        k,
+        v,
+        b_start_loc,
+        b_seq_len,
+        max_input_len,
+        is_causal,
+        block_n=16,
+        num_warps=4,
     )
 
 

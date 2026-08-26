@@ -16,11 +16,13 @@ import importlib.util
 import inspect
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import torch
 import torch.nn.functional as F
 
 OPS_PATH = Path(__file__).parents[1] / "src" / "flaggems_sglang" / "ops"
+BACKEND_PATH = OPS_PATH.parent / "runtime" / "backend"
 
 
 def _load_module(name, path=None):
@@ -35,39 +37,23 @@ def _load_module(name, path=None):
 
 
 CONTEXT_ATTENTION = _load_module("context_attention")
-CONTEXT_ATTENTION_NVIDIA = _load_module(
-    "context_attention_nvidia",
-    OPS_PATH.parent
-    / "runtime"
-    / "backend"
-    / "_nvidia"
-    / "ops"
-    / "context_attention.py",
+CONTEXT_ATTENTION_METAX = _load_module(
+    "context_attention_metax",
+    BACKEND_PATH / "_metax" / "ops" / "context_attention.py",
 )
-CONTEXT_ATTENTION_MODULES = (CONTEXT_ATTENTION, CONTEXT_ATTENTION_NVIDIA)
-CONTEXT_ATTENTION_ILUVATAR = _load_module(
-    "context_attention_iluvatar",
-    OPS_PATH.parent
-    / "runtime"
-    / "backend"
-    / "_iluvatar"
-    / "ops"
-    / "context_attention.py",
+CONTEXT_ATTENTION_ASCEND = _load_module(
+    "context_attention_ascend",
+    BACKEND_PATH / "_ascend" / "ops" / "context_attention.py",
 )
-CONTEXT_ATTENTION_ENFLAME = _load_module(
-    "context_attention_enflame",
-    OPS_PATH.parent
-    / "runtime"
-    / "backend"
-    / "_enflame"
-    / "ops"
-    / "context_attention.py",
+CONTEXT_ATTENTION_KUNLUNXIN = _load_module(
+    "context_attention_kunlunxin",
+    BACKEND_PATH / "_kunlunxin" / "ops" / "context_attention.py",
 )
 CONTEXT_ATTENTION_MODULES = (
     CONTEXT_ATTENTION,
-    CONTEXT_ATTENTION_NVIDIA,
-    CONTEXT_ATTENTION_ILUVATAR,
-    CONTEXT_ATTENTION_ENFLAME,
+    CONTEXT_ATTENTION_METAX,
+    CONTEXT_ATTENTION_ASCEND,
+    CONTEXT_ATTENTION_KUNLUNXIN,
 )
 
 
@@ -129,6 +115,91 @@ def make_case(
     starts_base[::2] = starts_values
     lengths_base[::2] = lengths_values
     return (*tensors, starts_base[::2], lengths_base[::2])
+
+
+class ContextAttentionHostTest(unittest.TestCase):
+    def test_small_head_dim_and_vendor_launch_policies(self):
+        modules = (
+            (CONTEXT_ATTENTION, "_context_attention_kernel", 64, 4),
+            (CONTEXT_ATTENTION_METAX, "_context_attention_kernel", 16, 4),
+            (CONTEXT_ATTENTION_ASCEND, "_context_attention_kernel", 32, 4),
+            (
+                CONTEXT_ATTENTION_KUNLUNXIN,
+                "_context_attention_static_q_kernel",
+                32,
+                4,
+            ),
+        )
+        q = torch.empty((3, 1, 8), dtype=torch.float16)
+        starts = torch.tensor([0], dtype=torch.int32)
+        lengths = torch.tensor([3], dtype=torch.int32)
+
+        for module, kernel_name, block_n, num_warps in modules:
+            for is_causal in (False, True):
+                launches = []
+
+                class FakeKernel:
+                    def __getitem__(self, grid):
+                        def launch(*args, **kwargs):
+                            launches.append((grid, kwargs))
+
+                        return launch
+
+                with mock.patch.object(module, kernel_name, FakeKernel()):
+                    module.context_attention(
+                        q, q, q, starts, lengths, 3, is_causal
+                    )
+
+                self.assertTrue(launches)
+                for grid, kwargs in launches:
+                    self.assertEqual(len(grid), 1)
+                    self.assertEqual(kwargs["BLOCK_D"], 16)
+                    self.assertEqual(kwargs["BLOCK_N"], block_n)
+                    self.assertEqual(kwargs["num_warps"], num_warps)
+
+    def test_ascend_and_kunlunxin_launch_caps(self):
+        launches = []
+
+        class FakeKernel:
+            def __getitem__(self, grid):
+                def launch(*args, **kwargs):
+                    launches.append(
+                        (
+                            grid[0],
+                            kwargs["q_block_start"],
+                            kwargs["q_programs"],
+                        )
+                    )
+
+                return launch
+
+        starts = torch.tensor([0], dtype=torch.int32)
+        with mock.patch.object(
+            CONTEXT_ATTENTION_ASCEND,
+            "_context_attention_kernel",
+            FakeKernel(),
+        ):
+            q = torch.empty((135168, 8, 1), dtype=torch.uint8)
+            lengths = torch.tensor([135168], dtype=torch.int32)
+            CONTEXT_ATTENTION_ASCEND.context_attention(
+                q, q, q, starts, lengths, 135168, False
+            )
+        self.assertEqual(launches, [(29568, 0, 4224), (4224, 0, 4224)])
+        self.assertLessEqual(max(grid for grid, _, _ in launches), 32768)
+
+        launches.clear()
+        with mock.patch.object(
+            CONTEXT_ATTENTION_KUNLUNXIN,
+            "_context_attention_static_q_kernel",
+            FakeKernel(),
+        ):
+            q = torch.empty((65536 * 64, 1, 1), dtype=torch.uint8)
+            lengths = torch.tensor([1], dtype=torch.int32)
+            CONTEXT_ATTENTION_KUNLUNXIN.context_attention(
+                q, q, q, starts, lengths, 1, False
+            )
+        self.assertEqual(launches, [(65535, 0, 65535), (1, 65535, 1)])
+        self.assertLessEqual(max(grid for grid, _, _ in launches), 65535)
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
@@ -222,27 +293,38 @@ class ContextAttentionTest(unittest.TestCase):
                         actual, expected, atol=1e-2, rtol=1e-2
                     )
 
-    def test_large_head_dim_uses_ieee_path(self):
-        q, k, v, starts, lengths = make_case(
-            torch.float16,
-            sequence_lengths=[17],
-            num_heads=1,
-            head_dim=257,
-        )
-        for module in CONTEXT_ATTENTION_MODULES:
-            with self.subTest(module=module.__name__):
-                actual = module.context_attention(
-                    q, k, v, starts, lengths, 17, False
-                )
-                expected = reference(q, k, v, starts, lengths, False)
-
-                self.assertEqual(
-                    (actual.shape, actual.dtype),
-                    (q.shape, torch.float32),
-                )
-                torch.testing.assert_close(
-                    actual, expected, atol=1e-2, rtol=1e-2
-                )
+    def test_head_dim_64_and_128_controls(self):
+        for head_dim in (64, 128):
+            q, k, v, starts, lengths = make_case(
+                torch.float16,
+                sequence_lengths=[17, 65],
+                num_heads=2,
+                head_dim=head_dim,
+            )
+            for is_causal in (False, True):
+                expected = reference(q, k, v, starts, lengths, is_causal)
+                for module in CONTEXT_ATTENTION_MODULES:
+                    with self.subTest(
+                        module=module.__name__,
+                        head_dim=head_dim,
+                        is_causal=is_causal,
+                    ):
+                        actual = module.context_attention(
+                            q,
+                            k,
+                            v,
+                            starts,
+                            lengths,
+                            65,
+                            is_causal,
+                        )
+                        self.assertEqual(
+                            (actual.shape, actual.dtype),
+                            (q.shape, torch.float32),
+                        )
+                        torch.testing.assert_close(
+                            actual, expected, atol=1e-2, rtol=1e-2
+                        )
 
     def test_short_sequences_large_batch_and_bounded_launch(self):
         q, k, v, starts, lengths = make_case(
