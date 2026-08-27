@@ -249,3 +249,55 @@ KernelGenBench(210 题 × 6 芯 × 150B token)的结论在直播回放中,待追
    本队 vendor 策略找差距。
 3. 非结构化访存的 FLIR 三条降级路径是昆仑 ragged 慢的官方级解释,cumsum
    两阶段重写方案设计时应避开 scatter/gather 形态。
+
+## 10. OPSEC 与痕迹管理教训(2026-08-27 事故复盘)
+
+**事故**:竞赛研究分支 `research/season2-batch2`(含全部 17 份账本、所有
+vendor 解法、跨芯策略)于 08-26 03:48 被推到**公开 fork**
+`liangkw16/FlagGems-sglang`,暴露约 1.5 天后才被发现并删除。同日确认
+Draft PR #32(S0 baseline)全程公开可见。
+
+**核查与清理结果**:fork 的 fork 数为 0(无持久副本);已删除两个分支与
+PR 留言;fork 现仅剩上游镜像分支。**不可清除**:PR 记录本身、上游
+`refs/pull/32/head` 提交引用(GitHub 在基仓库永久保留)、外部爬虫存档、
+commit 中的企业邮箱。
+
+**下一批起强制执行的三条规则**:
+
+1. **赛中零公开 push**:竞赛期间研究分支/账本只留本地,严禁 push 到任何
+   public remote(包括自己的 fork);远端验证一律走 SSH 主机。push 只发生在
+   PR 窗口期、且只推干净的单算子分支。
+2. **开赛前 remote 体检**:`git remote -v` 确认无 public fork 指向;fork 若
+   保留仅作 PR 跳板,开赛前清空非镜像分支。
+3. **提前开 PR = 提前泄题**:官方 PR 窗口(评审后)才提交;Early draft PR
+   会把解法公开给全部对手(#32 的教训)。
+
+## 11. PR 阶段作战手册(09-04~09-10 窗口)
+
+1. **命名必须合规**:`[FlagOS Competition-Track1] Add [Kernel Name] Triton
+   Kernel for sglang`(#32 未按此命名,已关闭,正式 PR 从新分支重开)。
+2. **字节一致性是评奖必要条件**:PR 内容必须与平台最终提交 ZIP 逐字节一致
+   ——以账本中的 source commit 为准(如 T24=S8 `b2a249b`)重建干净分支,
+   不夹带 docs/竞赛资料。
+3. **结构参考官方样例**:维护者 silu_and_mul 示例 PR #22/#26(competition
+   stubs 三层结构),以及 FlagGems 主仓库另一赛事的十几个
+   `[FlagGems Operator Development Competition]` PR。
+4. **CLA 先签**:CLAassistant 在 PR 上检查签署,提前完成避免阻塞。
+5. **09-04 当天侦察**:批量扫描 `[FlagOS Competition-Track1]` PR——第一、
+   二批全部获奖实现集中涌现,对照本队 vendor 策略找差距,直接反哺第三批。
+6. **fork 卫生**:正式 PR 从干净 fork/分支发出;赛前遗留的 fork 若不需要,
+   `gh auth refresh -s delete_repo && gh repo delete` 清除。
+
+## 12. 下一批(batch 3+)开赛日 checklist
+
+1. **读题分类**(半天内):每题按第 3 节形态矩阵归类,标出"参考实现含
+   Python 循环/`.item()` 同步"的机制 A 题——倍数天花板最高,优先。
+2. **模板直接上身**:按第 2 节知识库对号入座——燧原 i32 化+大 tile、昆仑
+   host 解析边界、华为 grid 折叠、天数 fp16 dot、card_a `_nvidia`/card_b
+   `_amd` 后缀,首轮 ZIP 即带预防性 vendor(T12/T13 先例证明可省 1-2 轮)。
+3. **额度纪律**:每题 2 次硬上限+全局 20% 留给"均值门失败但芯片信号为正"
+   的重开;每日 2 次截止回归储备;team-best 计分下激进单芯候选无下行风险。
+4. **门禁流水线就绪**:打包器/平台 CLI/token/远端 GPU 环境已建成;新算子
+   只需 30 分钟接入 screening 模板。
+5. **上海站三层法**(第 9.2 节)作为性能设计默认流程:Roofline 先行 →
+   shape 分层路由 → 最后才考虑数学专化。
