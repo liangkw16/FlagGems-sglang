@@ -105,3 +105,24 @@ S=0;8192×2048 大 case。
   `deccf49c29ad7aa8d418bd6da8f74ff55ae01646b65a41e0728c2a56d4c0482a`;state `submitted`、validity `pending`、评测入队。
 - 提交后团队当日额度剩余 24/30(6 投全记录)。
 
+
+### 八芯结果(S0 首投,sub 5740,截至 00:55,昆仑芯评测中)
+
+已出 7 芯:5 过 2 败:
+
+| 芯片 | speedup | 结果 |
+| --- | ---: | --- |
+| muxi | 16.582x | 通过 |
+| haiguang | 41.686x | 通过 |
+| huawei | 14.9635x | 通过(3D grid 在昇腾可用,与 T22 证据一致) |
+| card_a | 11.1705x | 通过 |
+| card_b | 2.8625x | 通过 |
+| tianshu | - | 数值失败:fp32-ieee dot 在天数静默算错(T12 已知镜像证据),与预期风险一致 |
+| enflame | - | 编译失败 `Pipeline run failed`(T22 家族指纹;64/64/64+stages2 未规避,疑 early-return 分支) |
+| kunlunxin | - | 评测中 |
+
+### E2 计划(预算剩 4 次)
+
+- `_tianshu`:split-fp16 三点积(T12 已验证配方);
+- `_enflame`:消除 rank==0/空段 early-return(改零贡献路径)或按 T12
+  燧原模板调整。

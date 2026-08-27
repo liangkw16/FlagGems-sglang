@@ -106,3 +106,19 @@ B=0;70000 行折叠。
   `a3d7e7a5fbc9f8085769fcd5a0bc1d491a9ab91302790b19c4a5506815d31521`;state `submitted`、validity `pending`、评测入队。
 - 提交后团队当日额度剩余 24/30(6 投全记录)。
 
+
+### 八芯结果(S0 首投,sub 5742,截至 00:55,昆仑芯评测中)
+
+已出 7 芯:5 过 2 败(与 T26 同指纹):
+
+- 通过:muxi、haiguang、huawei? 否——见下表(以平台为准):
+  tianshu 失败 `topk expert ids mismatch`(fp32-ieee dot 静默算错,
+  T12 镜像证据);huawei 失败 `MLIRCompilationError`(`input_precision=
+  "ieee"` 或 split-K 结构在昇腾不支持编译);其余 muxi/haiguang/card_a/
+  card_b 通过,kunlunxin 评测中。
+
+### E2 计划(预算剩 4 次)
+
+- `_tianshu`:split-fp16 三点积 dot;
+- `_huawei`:去掉 `input_precision="ieee"`(用默认精度需过 fp32 1e-4
+  容差评估,或 split-fp16)。

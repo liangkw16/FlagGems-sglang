@@ -101,3 +101,8 @@ screening(round2)与 release 两次均 8/8:dtype × (B,E,H)(含非 64 倍 H)
   `8ff7a761ef0b0614ee759264c75504e6f70f90171befaac2a2298e0896ecdb55`;state `submitted`、validity `pending`、评测入队。
 - 提交后团队当日额度剩余 24/30(6 投全记录)。
 
+
+### 八芯结果(S0 首投,sub 5743,截至 00:55,昆仑芯评测中)
+
+与 T27 同指纹:5 过 2 败(tianshu topk ids mismatch、huawei
+MLIRCompilationError),kunlunxin 评测中。E2 vendor 计划同 T27。

@@ -119,3 +119,8 @@ Triton 3.7.1)。lint:isort/flake8 远端通过,black 25.12.0 本地通过
   `546b18abb6250b32209660c2513d8ec2f427cdfc6ffddcbcb07e5fced4222186`;state `submitted`、validity `pending`、评测入队。
 - 提交后团队当日额度剩余 24/30(6 投全记录)。
 
+
+### 八芯结果(S0 首投,sub 5735,终态)
+
+**8/8 全过,valid,平均加速比 25.83534375x。** 纯选择 kernel 无跨芯
+风险面,一次通过;Task 30 闭环完成,保留 S0。

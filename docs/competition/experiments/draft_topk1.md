@@ -163,3 +163,26 @@ verification commit:test 沿用 `c4edba73be9e17375b83720f9d53187b1976e854` 中
   `db5f111ce4a50d28b6566ab803f8de380056a27ea6b176e7de62d0a076e7f9c8`;state `submitted`、validity `pending`、评测入队。
 - 提交后团队当日额度剩余 24/30(6 投全记录)。
 
+
+### 八芯结果(E1 首投,sub 5737,终态)
+
+5/8,`invalid_correctness`,三芯独立失败:
+
+| 芯片 | speedup | 结果 |
+| --- | ---: | --- |
+| tianshu | 3.987x | 通过 |
+| muxi | 0.94025x | 通过 |
+| haiguang | 0.75075x | 通过 |
+| card_a | 1.383x | 通过 |
+| card_b | 1.44075x | 通过 |
+| enflame | - | 编译失败:`Pipeline run failed: PassManager`,定位在 `_draft_topk1_finalize_kernel`(动态标量 load + pow2 跨 chunk 向量归约),已知燧原指纹 |
+| kunlunxin | - | `argmax index mismatch`:topk_index 精确失配;首索引假设与昆仑 torch.argmax 平局语义差异为一等假设 |
+| huawei | - | `draft_tokens mismatch`:argmax 正确、draft 列写入失配;`tl.where` int64/int32 混合后隐式 cast 在昇腾疑似错误 lowering |
+
+### E2 计划(单芯 vendor,预算剩 4 次)
+
+- `_enflame`:finalize 换行内串行 chunk 合并(消除 pow2 块归约与动态标量 load);
+- `_kunlunxin`:平局改取后索引(对齐昆仑 torch.argmax 行为)——先用最小
+  平局回归在代理复现假设再定;
+- `_huawei`:topk 载入后显式 cast 到 draft dtype 再 where,或拆成
+  copy + 列散布两个无 where 的 kernel。
