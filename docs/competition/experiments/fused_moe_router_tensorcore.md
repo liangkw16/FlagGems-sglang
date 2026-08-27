@@ -1,6 +1,6 @@
 # Task 27 `fused_moe_router_tensorcore` 实验记录
 
-状态:未开始(2026-08-27 第 3 批开闸)
+状态:S0 候选就绪,待额度重置后提交(排在 29→30→25(e1)→28 之后)
 
 ## 契约锁定
 
@@ -25,3 +25,75 @@
 - generic dot 策略(如涉及 `tl.dot`):fp32-ieee 操作数 generic + `_tianshu`
   split-fp16 vendor;昆仑保持 fp32-ieee(T12 镜像证据,昆仑 fp16-dot 数值失败
   有平台实证)。
+
+## S0:generic baseline(split-K + 向量化)
+
+状态:候选就绪,未提交(额度阻塞)
+时间:2026-08-27 22:30–23:55 CST
+source/verification commit(同一提交):`d44c85bad974cf2c920fc04cb145a9bc78b2f999`
+
+### 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| 源文件 | `src/flaggems_sglang/ops/fused_moe_router_tensorcore.py` |
+| 源文件 SHA-256 | `102d07d2d15dab579c04aff1f5f06c00cfb810f9bd3055bb08ac3474d8bbb56f` |
+| 测试 SHA-256 | `fbd727711e09b35a7a72a3e913edbc9867776d0810020b6876eca2e4573aa79a` |
+| ZIP | `artifacts/competition/fused_moe_router_tensorcore/s0-d44c85b/fused_moe_router_tensorcore.zip` |
+| ZIP SHA-256 | `a3d7e7a5fbc9f8085769fcd5a0bc1d491a9ab91302790b19c4a5506815d31521`(与 canonical 一致) |
+| screening 目录 | `gpu:/tmp/flagos-batch3-rest.oTBskH/fused_moe_router_tensorcore`(round2) |
+| release 目录 | `gpu:/tmp/flagos-rel3.Fp3vo7/fused_moe_router_tensorcore`,文件取自 Git 对象 |
+
+### 候选配置与演化
+
+- kernel A:split-K GEMM,fp32-ieee `tl.dot`,64/64/64 tile + `num_stages=2`
+  (燧原规则),K 按 512 分片、至多 8 片,partials `[SK,B,E]` fp32 工作区;
+  1D grid 65535 折叠。
+- kernel B:整行向量化归约(BLOCK_R=32 × E_pow2≤256,axis-1 max/exp-sum/
+  top2),softcap 用 T24 双形式 tanh(近零五阶奇多项式 + 稳定 exp;
+  Triton 3.7 无 `tl.tanh`,round1 实证),bias 后置;平局首索引。
+- 设计演化:初版两 kernel 串行 chunk 扫描 + 无 split-K,代理最差仅
+  0.124x(小 B 单 tile);split-K + 向量化后 0.518x(4.2 倍)。
+
+### 正确性
+
+screening(round2)与 release 两次均 8/8:fp32/fp16/bf16 × (B,E,H) 矩阵
+(H 含非 64 倍数 100/192/200/333 由 K mask 支持)× topk 1/2 × softcap/bias
+四组合;近平局次序断言;精确平局 torch.topk 顺序为设备实现细节,记为
+已知分歧风险(随机输入下概率≈0),不逐字断言;非连续;输入不变性;
+B=0;70000 行折叠。
+
+### 远端 NVIDIA 代理性能(五组 AB/BA p50 中位数)
+
+| dtype | B×E×H | op p50 (ms) | torch p50 (ms) | speedup |
+| --- | ---: | ---: | ---: | ---: |
+| float16 | 64×256×4096 | 0.051200 | 0.047136 | 0.9206x |
+| float16 | 1024×256×4096 | 0.258144 | 0.191520 | 0.7419x |
+| float16 | 4096×256×4096 | 0.935968 | 0.607232 | 0.6488x |
+| float16 | 4096×64×2048 | 0.133184 | 0.183296 | 1.3763x |
+| float16 | 16384×32×1024 | 0.255968 | 0.330816 | 1.2924x |
+| float32 | 64×256×4096 | 0.057408 | 0.037888 | 0.6600x |
+| float32 | 1024×256×4096 | 0.251968 | 0.155648 | 0.6177x |
+| float32 | 4096×256×4096 | 0.903232 | 0.468000 | 0.5181x |
+| float32 | 4096×64×2048 | 0.136256 | 0.130048 | 0.9544x |
+| float32 | 16384×32×1024 | 0.245824 | 0.224256 | 0.9123x |
+
+最差 0.5181x(E=256 fp32;fp32-ieee dot 对 cuBLAS SGEMM 的固有差距,
+门槛 0.1x 有 5 倍余量)。
+
+### 已知边界与 E1 假设
+
+- E ≤ 256(整行归约单 program 约束),超出即 assert 失败可见。
+- 若平台某芯 fp32-ieee dot 不下沉(天数静默失败风险),E1 = `_tianshu`
+  split-fp16 三点积 vendor(T12 已验证配方)。
+- 精确平局 topk_ids 与 torch 分歧风险同 T26,见上。
+
+### 提交计划
+
+- preflight tuple:season 2、race `782kzq4m`、account `15600308080`、
+  team `SoulCoder`、batch 3、task 27、operator
+  `fused_moe_router_tensorcore`、stage `s0`、commit
+  `d44c85bad974cf2c920fc04cb145a9bc78b2f999`、ZIP
+  `artifacts/competition/fused_moe_router_tensorcore/s0-d44c85b/fused_moe_router_tensorcore.zip`、
+  SHA-256 `a3d7e7a5fbc9f8085769fcd5a0bc1d491a9ab91302790b19c4a5506815d31521`、
+  member `fused_moe_router_tensorcore.py`。

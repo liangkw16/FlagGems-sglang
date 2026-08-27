@@ -1,7 +1,7 @@
 # Task 25 `draft_topk1` 实验记录
 
-状态:S0 候选就绪,待额度重置后提交(顺序 29 → 30 → 25;2026-08-27 团队
-当日 30/30 额度已耗尽,2026-08-28 00:00 重置)
+状态:E1 候选就绪(两阶段并行 argmax,取代 S0 成为拟提交版本);待额度
+重置后按 29 → 30 → 25(e1) 顺序提交
 
 ## 契约锁定
 
@@ -95,3 +95,62 @@ screening 与 release 两次均 10/10 通过,覆盖:三 dtype × (bs, vocab) 边
 - topk_index/out_draft 精确相等已由平局回归背书;torch 平局语义若在
   某芯的 torch 版本不同,以平台失败详情为准再修。
 - int32 索引上限 2^31 输出元素。
+
+## E1:两阶段并行 argmax
+
+状态:候选就绪,未提交(额度阻塞)
+时间:2026-08-27 23:00–23:55 CST
+source commit:`b24781fdbfb8b938e7461fb3bf3046cd6a541e25`
+verification commit:test 沿用 `c4edba73be9e17375b83720f9d53187b1976e854` 中
+已提交字节(SHA 未变:测试与 S0 相同)
+
+### 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| 源文件 | `src/flaggems_sglang/ops/draft_topk1.py` |
+| 源文件 SHA-256 | `4ad8c2418f891e61fd38cf0a023bf45536d9b920c1f3efdeed6c659c86575849` |
+| 测试 SHA-256 | `652c1f9cac23e6f994f9b7a4684b87492c895188c1ce1ea92136c3b71e27817f`(同 S0) |
+| ZIP | `artifacts/competition/draft_topk1/e1-b24781f/draft_topk1.zip` |
+| ZIP SHA-256 | `db5f111ce4a50d28b6566ab803f8de380056a27ea6b176e7de62d0a076e7f9c8`(与 canonical 一致) |
+| screening 目录 | `gpu:/tmp/flagos-batch3-rest.oTBskH/draft_topk1`(round2) |
+| release 目录 | `gpu:/tmp/flagos-rel3.Fp3vo7/draft_topk1`,文件取自 Git 对象 |
+
+### 单变量改动(相对 s0-c4edba7)
+
+- 仅 argmax 阶段:行内串行 chunk 扫描 → scan kernel 按 (行, V 块) 全并行
+  写 `[B, n_chunks]` (max, first-idx) 工作区 + finalize kernel 逐行向量化
+  归约 chunk(BLOCK_C=pow2(n_chunks) 单次 axis-0 归约)。
+- meta/draft kernel 与 wrapper 其余部分逐字节不变;测试不变
+  (10/10 两轮均过,含平局/折叠/非连续回归)。
+
+### 远端 NVIDIA 代理性能(五组 AB/BA p50 中位数)
+
+| dtype | B×V | op p50 (ms) | torch p50 (ms) | speedup | S0 speedup |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| float16 | 4×128256 | 0.010240 | 0.036864 | 3.6000x | 0.4502x |
+| float16 | 64×128256 | 0.030720 | 0.052368 | 1.7047x | 0.5441x |
+| float16 | 256×128256 | 0.098304 | 0.118784 | 1.2083x | 0.8992x |
+| float16 | 1024×32000 | 0.098304 | 0.103424 | 1.0521x | 0.9716x |
+| float16 | 4096×32000 | 0.344064 | 0.350208 | 1.0179x | 1.0212x |
+| float32 | 4×128256 | 0.012288 | 0.039936 | 3.2500x | 0.4148x |
+| float32 | 64×128256 | 0.053248 | 0.063488 | 1.1923x | 0.6080x |
+| float32 | 256×128256 | 0.182272 | 0.195584 | 1.0730x | 1.0981x |
+| float32 | 1024×32000 | 0.182304 | 0.187392 | 1.0279x | 1.0283x |
+| float32 | 4096×32000 | 0.660480 | 0.664608 | 1.0062x | 1.0094x |
+
+最差 1.0062x(S0 为 0.4148x);小 B 8 倍提升,大 B 不回归。
+
+### 已知边界
+
+- 同 S0:torch 平局语义设备相关;int32 索引 <2^31;V 极大(n_chunks>65536)
+  的 pow2 归约块未设防,超出合理词表规模。
+
+### 提交计划
+
+- preflight tuple:season 2、race `782kzq4m`、account `15600308080`、
+  team `SoulCoder`、batch 3、task 25、operator `draft_topk1`、
+  stage `e1`、commit `b24781fdbfb8b938e7461fb3bf3046cd6a541e25`、ZIP
+  `artifacts/competition/draft_topk1/e1-b24781f/draft_topk1.zip`、
+  SHA-256 `db5f111ce4a50d28b6566ab803f8de380056a27ea6b176e7de62d0a076e7f9c8`、
+  member `draft_topk1.py`。
