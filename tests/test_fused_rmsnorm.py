@@ -50,6 +50,14 @@ ENFLAME_MODULE_PATH = (
     / "ops"
     / "fused_rmsnorm.py"
 )
+METAX_MODULE_PATH = (
+    MODULE_PATH.parents[1]
+    / "runtime"
+    / "backend"
+    / "_metax"
+    / "ops"
+    / "fused_rmsnorm.py"
+)
 
 
 def _load_module(name, path):
@@ -64,6 +72,11 @@ def _load_module(name, path):
 ENFLAME_MODULE = _load_module(
     "fused_rmsnorm_enflame_module", ENFLAME_MODULE_PATH
 )
+METAX_MODULE = _load_module("fused_rmsnorm_metax_module", METAX_MODULE_PATH)
+DEFAULT_LAUNCH_MODULES = (
+    ("enflame", ENFLAME_MODULE),
+    ("metax", METAX_MODULE),
+)
 
 
 def _reference(x, weight, eps):
@@ -72,8 +85,8 @@ def _reference(x, weight, eps):
     return ((x32 / rms) * weight.float()).to(x.dtype)
 
 
-class EnflameLaunchPolicyTest(unittest.TestCase):
-    def test_enflame_uses_official_default_launch(self):
+class DefaultLaunchPolicyTest(unittest.TestCase):
+    def test_vendor_modules_use_official_default_launch(self):
         class FakeKernel:
             def __init__(self):
                 self.kwargs = None
@@ -86,36 +99,39 @@ class EnflameLaunchPolicyTest(unittest.TestCase):
 
                 return launch
 
-        fake_kernel = FakeKernel()
-        with mock.patch.object(
-            ENFLAME_MODULE, "_fused_rmsnorm_kernel", fake_kernel
-        ):
-            ENFLAME_MODULE.fused_rmsnorm(
-                torch.empty((2, 513)), torch.empty(513), 1e-6
-            )
+        for name, module in DEFAULT_LAUNCH_MODULES:
+            with self.subTest(vendor=name):
+                fake_kernel = FakeKernel()
+                with mock.patch.object(
+                    module, "_fused_rmsnorm_kernel", fake_kernel
+                ):
+                    module.fused_rmsnorm(
+                        torch.empty((2, 513)), torch.empty(513), 1e-6
+                    )
 
-        self.assertEqual(fake_kernel.grid, (2,))
-        self.assertEqual(fake_kernel.kwargs["BLOCK_SIZE"], 1024)
-        self.assertNotIn("num_warps", fake_kernel.kwargs)
-        self.assertNotIn("num_stages", fake_kernel.kwargs)
+                self.assertEqual(fake_kernel.grid, (2,))
+                self.assertEqual(fake_kernel.kwargs["BLOCK_SIZE"], 1024)
+                self.assertNotIn("num_warps", fake_kernel.kwargs)
+                self.assertNotIn("num_stages", fake_kernel.kwargs)
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class FusedRmsnormTest(unittest.TestCase):
-    def test_enflame_default_launch_matches_reference(self):
-        for dtype, tolerance in (
-            (torch.float16, 1e-2),
-            (torch.bfloat16, 1.5e-2),
-            (torch.float32, 1e-4),
-        ):
-            with self.subTest(dtype=dtype):
-                x = torch.randn((3, 8193), device="cuda", dtype=dtype)
-                weight = torch.randn(8193, device="cuda", dtype=dtype)
-                actual = ENFLAME_MODULE.fused_rmsnorm(x, weight, 1e-6)
-                expected = _reference(x, weight, 1e-6)
-                torch.testing.assert_close(
-                    actual, expected, atol=tolerance, rtol=tolerance
-                )
+    def test_default_launch_matches_reference(self):
+        for name, module in DEFAULT_LAUNCH_MODULES:
+            for dtype, tolerance in (
+                (torch.float16, 1e-2),
+                (torch.bfloat16, 1.5e-2),
+                (torch.float32, 1e-4),
+            ):
+                with self.subTest(vendor=name, dtype=dtype):
+                    x = torch.randn((3, 8193), device="cuda", dtype=dtype)
+                    weight = torch.randn(8193, device="cuda", dtype=dtype)
+                    actual = module.fused_rmsnorm(x, weight, 1e-6)
+                    expected = _reference(x, weight, 1e-6)
+                    torch.testing.assert_close(
+                        actual, expected, atol=tolerance, rtol=tolerance
+                    )
 
     def test_kunlun_multirow_and_boundaries_match_reference(self):
         spec = importlib.util.spec_from_file_location(
