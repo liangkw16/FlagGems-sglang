@@ -118,3 +118,15 @@ MLIRCompilationError),kunlunxin 评测中。E2 vendor 计划同 T27。
   取首索引)。
 - 提交后当日额度 20/30 剩余;评测中。
 
+## E2 第二轮 vendor(sub 5803,2026-08-28 03:0x CST)
+
+- E2/e2 结果回填:T28 天数+燧原已修(split-fp16 与 1D 无分支模板均有效);
+  T27/T26 天数已修;华为失败根因确认为 **UB overflow(2.89M/1.57M bits)**,
+  即 batch-2 已知昇腾 UB tile 上限,非 input_precision;T25 昆仑 actual 为
+  未初始化垃圾(标量访存静默失效),燧原编译失败落在 finalize i64 标量 store。
+- 本轮修复:router `_ascend` reduce BLOCK_R 32→8;draft `_ascend` 改纯拷贝
+  + finalize 融合列写入;draft `_enflame`/`_kunlunxin` 改行内串行 argmax,
+  lane 向量 store、无工作区、无标量访存(kunlunxin 回归首索引)。
+- vendor commit `e62a27eb7f41819461fb981c44adf397f25b8729`;远端代理 9/9 绿。
+- 评测中;额度 17/30。
+
