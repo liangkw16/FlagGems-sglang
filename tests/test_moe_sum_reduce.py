@@ -308,7 +308,7 @@ class AscendLaunchPolicyTest(unittest.TestCase):
 
 
 class EnflameLaunchPolicyTest(unittest.TestCase):
-    def test_enflame_uses_eightk_tile_fixed_launch(self):
+    def test_enflame_uses_sixteenk_tile_fixed_launch(self):
         class FakeKernel:
             def __init__(self):
                 self.calls = []
@@ -323,11 +323,11 @@ class EnflameLaunchPolicyTest(unittest.TestCase):
         with mock.patch.object(
             ENFLAME_MODULE, "_moe_sum_reduce_kernel", fake_kernel
         ):
-            ENFLAME_MODULE.moe_sum_reduce(torch.empty((2, 3, 8193)), 0.75)
+            ENFLAME_MODULE.moe_sum_reduce(torch.empty((2, 3, 16385)), 0.75)
 
         grid, kwargs = fake_kernel.calls[-1]
         self.assertEqual(grid, (2, 2))
-        self.assertEqual(kwargs["BLOCK_SIZE"], 8192)
+        self.assertEqual(kwargs["BLOCK_SIZE"], 16384)
         self.assertEqual(kwargs["num_warps"], 8)
         self.assertEqual(kwargs["num_stages"], 1)
         self.assertEqual(kwargs["TOP_K"], 3)
@@ -427,14 +427,14 @@ class MoeSumReduceTest(unittest.TestCase):
                         input, original, atol=0.0, rtol=0.0
                     )
 
-    def test_enflame_eightk_block_boundaries_all_dtypes(self):
+    def test_enflame_sixteenk_block_boundaries_all_dtypes(self):
         tolerances = {
             torch.float16: 1e-2,
             torch.bfloat16: 1.5e-2,
             torch.float32: 1e-4,
         }
         for dtype, tolerance in tolerances.items():
-            for hidden_dim in (8191, 8192, 8193):
+            for hidden_dim in (16383, 16384, 16385):
                 with self.subTest(dtype=dtype, hidden_dim=hidden_dim):
                     input = (
                         torch.linspace(

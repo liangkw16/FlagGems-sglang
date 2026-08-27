@@ -73,7 +73,7 @@ def moe_sum_reduce(input, routed_scaling_factor):
     if num_tokens == 0 or hidden_dim == 0:
         return output
 
-    block_size = 8192
+    block_size = 16384
     grid = (num_tokens, triton.cdiv(hidden_dim, block_size))
     _moe_sum_reduce_kernel[grid](
         input,
