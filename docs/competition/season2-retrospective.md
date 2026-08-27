@@ -180,3 +180,72 @@
    的重开(第 4.3 条);每日预留 2 次截止前回归。
 4. **需要在下一季前补的能力**:昆仑/燧原 cumsum 的两阶段分块扫描实现(本季
    四轮未解);GCU flash 类 kernel 的稳定性根因(平台侧线索已归档)。
+
+## 9. 外部资料与情报(2026-08-27 agent-reach 全网检索)
+
+### 9.1 官方赛制与规范(必读)
+
+- [FlagOS X SGLang 算子优化挑战赛官宣(SegmentFault)](https://segmentfault.com/a/1190000048185827):
+  完整赛制——200+ 题分 13 批次、每日 15→30 次额度、批次周期 7 天;
+  **PR 规范**:攻占团队须在窗口期提交 PR 至 FlagGems-sglang,命名
+  `[FlagOS Competition-Track1] Add [Kernel Name] Triton Kernel for sglang`,
+  签 CLA,平台提交与 PR 字节一致性是评奖必要条件。三大奖项:全域攻占/
+  攻克突破/单题极致性能(单题最高万元)。
+- 比赛页:<https://flagos.io/race-detail-season2?id=782kzq4m>;
+  KernelGen 上海站(历史赛):<https://kernelgen.flagos.io/challenge>。
+
+### 9.2 最值得精读的技术分享(与本队经验互证)
+
+- **[sinpeyw/flagos-kernel-challenge-shanghai-2026](https://github.com/sinpeyw/flagos-kernel-challenge-shanghai-2026)**:
+  上海站 72h 三题获奖方案全开源,含技术报告与获奖 PDF。方法论比我们高阶的
+  三点值得吸收:
+  1. **算法级 Roofline 先行**:Task01(融合 RMSNorm+量化,4.38x rank1)先算
+     AI=0.666 FLOP/Byte 对比 A100 ridge 12.54,推出"带宽主导→必须单遍四输出
+     直写,任何第二遍/scratch 都必然劣化"的设计约束。
+  2. **按 shape 分层路由**:小/中/大 M 分别走 launch 敏感/过渡/带宽路径,
+     不同芯片不同方案(Ascend 串行小 grid scan、GPGPU 并行 scan)。
+  3. **数学专化降复杂度**:Task03(MLA backward,54x rank2)用各向同性近似
+     +suffix scan 把 O(S²) 主路径降到 O(S)——这是"串改并行"之上的
+     "改数学"层,本季我们从未触及。
+  - 其"昇腾双 AIV 独立行映射"即本队 T15/T16 发现的 `num_vectorcore` 物理
+    worker 问题——我们的经验与冠军方案在这一点互证。
+- **[iamsuperfly/Flag-Operators](https://github.com/iamsuperfly/Flag-Operators)**
+  (第一季 Track1):static `@triton.jit` 替代 codegen、原生 `tl.atomic_*`、
+  5 档 autotune;`chunk_gated_delta_rule` 等新算子实现可参考。
+
+### 9.3 编译器/架构背景(理解跨芯行为的底层解释)
+
+- [FlagTree/FLIR 架构文(SegmentFault)](https://segmentfault.com/a/1190000047725977):
+  16 后端单仓库;GPGPU 走 TritonGPU IR→LLVM,NPU(AIPP/可重构)走
+  FLIR→硬件 IR;**非结构化访存(sgather/scatter)只能收敛到三条有限降级
+  路径**——这解释了我们 varlen/ragged 类 kernel 在昆仑的系统性困难;
+  多输出规约初值与离散 mask 是官方承认的难点。
+- [Triton-TLE 与 AscendNPU IR 适配](https://segmentfault.com/a/1190000047702113);
+  [FlagTree 官方文档](https://docs.flagos.io/projects/FlagTree/en/latest/user_guide/user-guide.html)
+  (目录级,兼容性细节需查子页/源码)。
+- [量子位:国产 GPU 开源局报道](https://www.qbitai.com/2026/05/417791.html)(生态背景)。
+
+### 9.4 官方仓库与工具
+
+- [flagos-ai/FlagGems](https://github.com/flagos-ai/FlagGems)(497 个 Triton 算子,
+  vendor 策略的事实标准)、[FlagGems-sglang](https://github.com/flagos-ai/FlagGems-sglang)
+  (本季 PR 目标;当前竞赛 PR 仅我队 #32 softcap 与官方 #31 context-attention,
+  **PR 窗口 09-04 开后才会有各队情报,届时应系统性扫描**)、
+  FlagGems-Experimental/vllm、[FlagTree](https://github.com/flagos-ai/FlagTree)。
+- [flagos-ai/skills](https://github.com/flagos-ai/skills):官方 kernel dev/
+  perf tuning skills,下一季前值得对照本队工作流查漏。
+
+### 9.5 AI 写 Kernel 官方验证(CSDN 预告)
+
+[FlagOS 210 算子验证预告](https://flagos.csdn.net/6a0d44c7662f9a54cb75d141.html):
+KernelGenBench(210 题 × 6 芯 × 150B token)的结论在直播回放中,待追。
+
+### 9.6 对下一阶段的直接启示
+
+1. 上海站报告的 Roofline→shape 路由→数学专化三层法,应并入第 8 节的下一季
+   前置能力清单;特别是"改数学"层,是超越 vendor 调参的下一级杠杆。
+2. PR 窗口(09-04~09-10)开启后第一时间扫描 FlagGems-sglang 的
+   `[FlagOS Competition-Track1]` PR——那是各队最强解的免费情报,直接对照
+   本队 vendor 策略找差距。
+3. 非结构化访存的 FLIR 三条降级路径是昆仑 ragged 慢的官方级解释,cumsum
+   两阶段重写方案设计时应避开 scatter/gather 形态。
