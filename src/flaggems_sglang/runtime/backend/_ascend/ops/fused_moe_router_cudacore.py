@@ -19,7 +19,7 @@ import triton.language as tl
 _BLOCK_B = 64
 _BLOCK_E = 64
 _BLOCK_K = 64
-_ROWS_REDUCE = 32
+_ROWS_REDUCE = 8
 _MAX_GRID = 65535
 
 

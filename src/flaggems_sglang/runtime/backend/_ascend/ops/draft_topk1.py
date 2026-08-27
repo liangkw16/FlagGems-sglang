@@ -61,6 +61,10 @@ def _draft_topk1_finalize_kernel(
     out_index_ptr,
     n_rows,
     n_chunks,
+    draft_ptr,
+    draft_width,
+    column,
+    HAS_DRAFT: tl.constexpr,
     BLOCK_C: tl.constexpr,
 ):
     n_programs = tl.num_programs(0)
@@ -77,6 +81,11 @@ def _draft_topk1_finalize_kernel(
         chunk_sel = tl.min(tl.where(values == best, offsets, n_chunks), axis=0)
         top_index = tl.load(chunk_indices_ptr + base + chunk_sel)
         tl.store(out_index_ptr + row, top_index.to(tl.int64))
+        if HAS_DRAFT:
+            tl.store(
+                draft_ptr + row * draft_width + column,
+                top_index.to(draft_ptr.dtype.element_ty),
+            )
 
 
 @triton.jit
@@ -112,20 +121,11 @@ def _draft_topk1_draft_kernel(
     for start in range(pid * BLOCK, n_elements, step):
         offsets = start + tl.arange(0, BLOCK)
         mask = offsets < n_elements
-        row = offsets // draft_width
-        col = offsets - row * draft_width
         value = tl.load(src_ptr + offsets, mask=mask, other=0)
         tl.store(
             dst_ptr + offsets,
             value.to(dst_ptr.dtype.element_ty),
             mask=mask,
-        )
-        topk = tl.load(topk_index_ptr + row, mask=mask, other=0)
-        selected = mask & (col == column)
-        tl.store(
-            dst_ptr + offsets,
-            topk.to(dst_ptr.dtype.element_ty),
-            mask=selected,
         )
 
 
@@ -168,14 +168,6 @@ def draft_topk1(
         block_c = 1
         while block_c < n_chunks:
             block_c *= 2
-        _draft_topk1_finalize_kernel[(min(n_rows, _MAX_GRID),)](
-            chunk_values,
-            chunk_indices,
-            topk_index,
-            n_rows,
-            n_chunks,
-            BLOCK_C=max(block_c, 1),
-        )
         grid_flat = (min(triton.cdiv(n_rows, _BLOCK_FLAT), _MAX_GRID),)
         _draft_topk1_meta_kernel[grid_flat](
             positions,
@@ -200,6 +192,19 @@ def draft_topk1(
                 draft.shape[-1],
                 int(draft_token_column),
                 BLOCK=_BLOCK_FLAT,
+            )
+        if n_rows > 0 and out_draft_tokens.shape[-1] > 0:
+            _draft_topk1_finalize_kernel[(min(n_rows, _MAX_GRID),)](
+                chunk_values,
+                chunk_indices,
+                topk_index,
+                n_rows,
+                n_chunks,
+                out_draft_tokens,
+                draft.shape[-1],
+                int(draft_token_column),
+                HAS_DRAFT=True,
+                BLOCK_C=max(block_c, 1),
             )
     return topk_p, topk_index, out_positions, out_draft_tokens
 
