@@ -126,3 +126,15 @@ S=0;8192×2048 大 case。
 - `_tianshu`:split-fp16 三点积(T12 已验证配方);
 - `_enflame`:消除 rank==0/空段 early-return(改零贡献路径)或按 T12
   燧原模板调整。
+
+## E1 vendor 轮提交(sub 5767,2026-08-28 01:4x CST)
+
+- 首轮逐芯失败指纹对应的 vendor 修复;vendor commit
+  `0e3d58715ec0c5b1d3b841e2cf6b277b48fd8f9c`;ZIP SHA-256 `3a2f6002b1f1dda88e59e7203b8ac35dc721518edba98e596b83df9c1899e7f4`。
+- 成员:generic + `gate_up_lora_b_iluvatar.py`(split-fp16 三点积)+
+  `gate_up_lora_b_enflame.py`(1D grid 折叠 + 无运行时分支,T12 燧燃模板)。
+- 远端 NVIDIA 代理:router/lora/enflame/ascend vendor 数值全对;
+  `_kunlunxin` last-index 在 NVIDIA 失配为设计内现象(NVIDIA torch 平局
+  取首索引)。
+- 提交后当日额度 20/30 剩余;评测中。
+

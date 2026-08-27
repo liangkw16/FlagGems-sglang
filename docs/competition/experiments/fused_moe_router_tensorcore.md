@@ -122,3 +122,15 @@ B=0;70000 行折叠。
 - `_tianshu`:split-fp16 三点积 dot;
 - `_huawei`:去掉 `input_precision="ieee"`(用默认精度需过 fp32 1e-4
   容差评估,或 split-fp16)。
+
+## E1 vendor 轮提交(sub 5765,2026-08-28 01:4x CST)
+
+- 首轮逐芯失败指纹对应的 vendor 修复;vendor commit
+  `0e3d58715ec0c5b1d3b841e2cf6b277b48fd8f9c`;ZIP SHA-256 `45fc5be6ab332db9cd825a3e2b0b1bd17a24769ab66bbb54cb74be50af2fc535`。
+- 成员:generic + `fused_moe_router_tensorcore_iluvatar.py` /
+  `_ascend.py`(均 split-fp16 三点积,兼顾天数数值与华为编译)。
+- 远端 NVIDIA 代理:router/lora/enflame/ascend vendor 数值全对;
+  `_kunlunxin` last-index 在 NVIDIA 失配为设计内现象(NVIDIA torch 平局
+  取首索引)。
+- 提交后当日额度 20/30 剩余;评测中。
+

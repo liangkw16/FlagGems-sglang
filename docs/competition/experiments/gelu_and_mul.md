@@ -149,3 +149,12 @@ metadata 未暴露。
 | kunlunxin | - | 评测中 |
 
 `tl.math.erf` 在已出七芯均可 lowering;风险假设未触发。
+
+### 昆仑芯终态补充(sub 5733)
+
+- 昆仑芯失败为**平台评测器崩溃**(1800s 超时 + torch inductor 编译子进程
+  Segmentation fault,发生在验证执行阶段),与 T22"昆仑评测异常"同族;
+  gelu_and_mul 纯 elementwise 不可能引发该崩溃,且同时段四题同指纹。
+- 判定:非本候选缺陷;待昆仑评测器恢复后投 e1(单变量:BLOCK 调优作为
+  新 ZIP 载体)关闭第 8 芯。当前 7/8、七芯全过。
+

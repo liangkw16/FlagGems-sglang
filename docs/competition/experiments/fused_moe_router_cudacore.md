@@ -106,3 +106,15 @@ screening(round2)与 release 两次均 8/8:dtype × (B,E,H)(含非 64 倍 H)
 
 与 T27 同指纹:5 过 2 败(tianshu topk ids mismatch、huawei
 MLIRCompilationError),kunlunxin 评测中。E2 vendor 计划同 T27。
+
+## E1 vendor 轮提交(sub 5766,2026-08-28 01:4x CST)
+
+- 首轮逐芯失败指纹对应的 vendor 修复;vendor commit
+  `0e3d58715ec0c5b1d3b841e2cf6b277b48fd8f9c`;ZIP SHA-256 `7a24b21933e659880ccaa5c987aedab0792b601effa011bdbfb5acaf84ee7199`。
+- 成员:generic + `fused_moe_router_cudacore_iluvatar.py` /
+  `_ascend.py`(split-fp16 三点积)。
+- 远端 NVIDIA 代理:router/lora/enflame/ascend vendor 数值全对;
+  `_kunlunxin` last-index 在 NVIDIA 失配为设计内现象(NVIDIA torch 平局
+  取首索引)。
+- 提交后当日额度 20/30 剩余;评测中。
+

@@ -186,3 +186,16 @@ verification commit:test 沿用 `c4edba73be9e17375b83720f9d53187b1976e854` 中
   平局回归在代理复现假设再定;
 - `_huawei`:topk 载入后显式 cast 到 draft dtype 再 where,或拆成
   copy + 列散布两个无 where 的 kernel。
+
+## E2 vendor 轮提交(sub 5769,2026-08-28 01:4x CST)
+
+- 首轮逐芯失败指纹对应的 vendor 修复;vendor commit
+  `0e3d58715ec0c5b1d3b841e2cf6b277b48fd8f9c`;ZIP SHA-256 `90f1001efe74c1dde11a0df22d8e4174eae902b94efe01509531bc91f5c6790e`。
+- 成员:generic + `draft_topk1_ascend.py`(双 store 散布)+
+  `draft_topk1_enflame.py`(finalize 串行合并)+
+  `draft_topk1_kunlunxin.py`(平局取后索引假设)。
+- 远端 NVIDIA 代理:router/lora/enflame/ascend vendor 数值全对;
+  `_kunlunxin` last-index 在 NVIDIA 失配为设计内现象(NVIDIA torch 平局
+  取首索引)。
+- 提交后当日额度 20/30 剩余;评测中。
+
