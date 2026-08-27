@@ -553,3 +553,47 @@ Enflame 选中 vendor、整题高于 team best；未超过升名阈值也保留�
 升第 14 所需的 `>2.20780003x`。冻结字节的沐曦本轮下降 `14.88%`，抵消大部分
 燧原收益；整题仅比 E2 高 `0.00995x`，未越过第 14 的 `4.63455x`。保留 E5 为
 team best，按预注册规则停止该轴，不重传、不做 launch sweep；实时额度 `8/30`。
+
+## E6：MetaX 官方默认 launch vendor
+
+状态：平台 `5343` 六芯完成且全部通过，燧原/海光评测器自 10:46:35 起停摆
+（`retry_wait`，与 T18 燧原同指纹）；`validity=pending`；该轴一次性关闭
+
+E5 在燧原平台验证了"kernel 与 generic 逐字一致、仅去掉显式
+`num_warps/num_stages`、让后端使用官方默认 launch"这一单变量（+38%）。E6 把
+同一变换以独立 vendor 文件应用到沐曦：`_metax/ops/fused_rmsnorm.py` 与 E5
+Enflame vendor 逐字节相同（`ae0016ca...35b6cc`），generic/Enflame/Kunlun 继续
+冻结 E5 字节。测试把 launch-policy mock 与运行时数值回归扩展到两个默认
+launch vendor（落实 E1 失败后"每个 vendor 必须真实加载+对 reference"的要求）。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `436f8a077fa8217d4ff50bd26ed7b4cfa43a4389` |
+| generic / Enflame / Kunlun SHA-256 | `02bed1a5...b964997` / `ae0016ca...35b6cc` / `167c2371...0d5512`（均 = E5 冻结） |
+| MetaX / test SHA-256 | `ae0016cab7876d59bc589f1af64d44fcace84dfed9b58e6b8299cd77e035b6cc` / `85d23039a1afc5dbe58739f1a4a39a7bdfd881804816fcb27ac1357a87157f35` |
+| screening | `gpu:/tmp/flagos-fused-rmsnorm-e6-metax.Qk7Wvz`；py_compile/Black/isort/flake8 与 6/6 unittest、`SCREENING_OK` |
+| release | 同目录 Git-object 字节；6/6 unittest、`RELEASE_OK` |
+| canonical ZIP | `artifacts/competition/fused_rmsnorm/e6-436f8a0/fused_rmsnorm.zip`，11,260 bytes，SHA-256 `f8bc9be873e6ddee448fafd9421c2a891c59f6bffa5bcca342253541a8b36a21`；成员 generic + `_enflame`/`_kunlunxin`/`_metax` |
+
+预注册门禁：8/8 valid、沐曦选中 `_metax`、平均高于 E5 `4.55663333x`；升第 14
+需 ≥`4.63455x`。无论结果该轴只此一次提交。
+
+2026-08-27 10:48:27 CST 经实时 preflight（额度 `3/30`）执行唯一一次提交，
+submission `5343`；额度变 `2/30`。`file_url_sha256` 为
+`fdf908c8f558b45690b0412c5f1234938adf08c3e156a13d43721fb57f277697`；路由快照
+确认沐曦选 `fused_rmsnorm_metax.py`、燧原选 `_enflame`、昆仑选 `_kunlunxin`、
+其余 generic，与 manifest 一致；禁止重传。
+
+11:20–11:23 CST 六芯完成且全部通过：天数 `7.70566667x`、沐曦
+`4.62866667x`（选中 `_metax`）、华为 `1.6214x`、昆仑 `0.9348x`、国际 A
+`5.96306667x`、国际 B `5.61286667x`。燧原与海光的 `last_progress_at` 停在
+`10:46:35`，经 90+ 分钟 `dispatching/retry_wait` 循环无任何进展，与 T18 燧原
+评测器停摆同指纹，判定为平台侧阻塞而非候选问题（两芯在 E5 使用相同冻结
+vendor/generic 字节正常通过）。
+
+中期结论：沐曦默认 launch 读数 `4.6287x` 落在其历史 `4.57–5.39x` 波动带内
+（E5 轮 4.5718、长期典型 5.39），无单变量收益；即使燧原/海光按 E5 值补全，
+预计平均约 `4.52x`，低于 E5 team best `4.55663333x`，也达不到第 14 名
+`4.63455x`。E5 保持 Task 19 team best；MetaX 默认 launch 轴按一次性规则关闭。
+若停摆评测器在截止前恢复并给出终态，由后续账本追加逐芯终值；E6 无重传或
+变体计划。
