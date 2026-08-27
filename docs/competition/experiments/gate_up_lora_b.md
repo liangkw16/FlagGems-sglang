@@ -96,3 +96,12 @@ S=0;8192×2048 大 case。
   `artifacts/competition/gate_up_lora_b/s0-f89f64e/gate_up_lora_b.zip`、
   SHA-256 `deccf49c29ad7aa8d418bd6da8f74ff55ae01646b65a41e0728c2a56d4c0482a`、
   member `gate_up_lora_b.py`。
+
+## 平台提交记录
+
+- 2026-08-28 00:07 CST 额度重置(30/30)后,按 29→30→25→28→27→26 顺序自动
+  preflight + 一次性提交;全部 tuple 与账本一致后执行 confirm。
+- 提交时间约 2026-08-28 00:18 CST;submission_id `5740`;ZIP SHA-256
+  `deccf49c29ad7aa8d418bd6da8f74ff55ae01646b65a41e0728c2a56d4c0482a`;state `submitted`、validity `pending`、评测入队。
+- 提交后团队当日额度剩余 24/30(6 投全记录)。
+

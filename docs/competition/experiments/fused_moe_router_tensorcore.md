@@ -97,3 +97,12 @@ B=0;70000 行折叠。
   `artifacts/competition/fused_moe_router_tensorcore/s0-d44c85b/fused_moe_router_tensorcore.zip`、
   SHA-256 `a3d7e7a5fbc9f8085769fcd5a0bc1d491a9ab91302790b19c4a5506815d31521`、
   member `fused_moe_router_tensorcore.py`。
+
+## 平台提交记录
+
+- 2026-08-28 00:07 CST 额度重置(30/30)后,按 29→30→25→28→27→26 顺序自动
+  preflight + 一次性提交;全部 tuple 与账本一致后执行 confirm。
+- 提交时间约 2026-08-28 00:29 CST;submission_id `5742`;ZIP SHA-256
+  `a3d7e7a5fbc9f8085769fcd5a0bc1d491a9ab91302790b19c4a5506815d31521`;state `submitted`、validity `pending`、评测入队。
+- 提交后团队当日额度剩余 24/30(6 投全记录)。
+

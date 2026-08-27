@@ -110,3 +110,12 @@ Triton 3.7.1)。lint:isort/flake8 远端通过,black 25.12.0 本地通过
   `artifacts/competition/interleaved_rope/s0-99c154e/interleaved_rope.zip`、
   SHA-256 `546b18abb6250b32209660c2513d8ec2f427cdfc6ffddcbcb07e5fced4222186`、
   member `interleaved_rope.py`。
+
+## 平台提交记录
+
+- 2026-08-28 00:07 CST 额度重置(30/30)后,按 29→30→25→28→27→26 顺序自动
+  preflight + 一次性提交;全部 tuple 与账本一致后执行 confirm。
+- 提交时间约 2026-08-28 00:10 CST;submission_id `5735`;ZIP SHA-256
+  `546b18abb6250b32209660c2513d8ec2f427cdfc6ffddcbcb07e5fced4222186`;state `submitted`、validity `pending`、评测入队。
+- 提交后团队当日额度剩余 24/30(6 投全记录)。
+

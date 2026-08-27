@@ -122,3 +122,13 @@ metadata 未暴露。
   `artifacts/competition/gelu_and_mul/s0-67364b3/gelu_and_mul.zip`、
   SHA-256 `b26205dbd5a6ca2230ef67377082d974a1167d79f825db546c655047a1733185`、
   member `gelu_and_mul.py`。门禁全过即自动执行 confirm 命令。
+
+## 平台提交记录
+
+- 2026-08-28 00:07 CST 额度重置(30/30)后,按 29→30→25→28→27→26 顺序自动
+  preflight + 一次性提交;全部 tuple 与账本一致后执行 confirm。
+- 提交时间约 2026-08-28 00:08 CST;submission_id `5733`;ZIP SHA-256
+  `b26205dbd5a6ca2230ef67377082d974a1167d79f825db546c655047a1733185`;state `submitted`、validity `pending`、评测入队
+- file_url_sha256 `3fcebcfa19210d3c65ac02ad6eb4811a7646cd6f342b0fd6bac810752775054b`。
+- 提交后团队当日额度剩余 24/30(6 投全记录)。
+

@@ -92,3 +92,12 @@ screening(round2)与 release 两次均 8/8:dtype × (B,E,H)(含非 64 倍 H)
   `artifacts/competition/fused_moe_router_cudacore/s0-3642a65/fused_moe_router_cudacore.zip`、
   SHA-256 `8ff7a761ef0b0614ee759264c75504e6f70f90171befaac2a2298e0896ecdb55`、
   member `fused_moe_router_cudacore.py`。
+
+## 平台提交记录
+
+- 2026-08-28 00:07 CST 额度重置(30/30)后,按 29→30→25→28→27→26 顺序自动
+  preflight + 一次性提交;全部 tuple 与账本一致后执行 confirm。
+- 提交时间约 2026-08-28 00:33 CST;submission_id `5743`;ZIP SHA-256
+  `8ff7a761ef0b0614ee759264c75504e6f70f90171befaac2a2298e0896ecdb55`;state `submitted`、validity `pending`、评测入队。
+- 提交后团队当日额度剩余 24/30(6 投全记录)。
+

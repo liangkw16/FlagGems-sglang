@@ -167,17 +167,25 @@ class HttpClient:
         except URLError as error:
             raise CliError(f"FlagOS network error: {error.reason}") from error
         if len(payload) > 2 * 1024 * 1024:
-            raise CliError("FlagOS response exceeded 2 MiB")
+            raise CliError(f"FlagOS response exceeded 2 MiB at {url}")
         if encoding == "gzip":
             try:
                 with gzip.GzipFile(fileobj=io.BytesIO(payload)) as stream:
-                    payload = stream.read(2 * 1024 * 1024 + 1)
+                    payload = stream.read(8 * 1024 * 1024 + 1)
             except (OSError, EOFError) as error:
                 raise CliError("FlagOS returned invalid gzip data") from error
-            if len(payload) > 2 * 1024 * 1024:
-                raise CliError("FlagOS response exceeded 2 MiB after gzip")
+            if len(payload) > 8 * 1024 * 1024:
+                raise CliError(
+                    f"FlagOS response exceeded 8 MiB after gzip at {url}"
+                )
         elif encoding:
             raise CliError(f"unsupported FlagOS content encoding: {encoding}")
+        if os.environ.get("FLAGOS_DEBUG"):
+            print(
+                f"[debug] {method} {url.split('?')[0]} -> "
+                f"{len(payload)} bytes",
+                file=sys.stderr,
+            )
         try:
             result = json.loads(payload)
         except (UnicodeDecodeError, json.JSONDecodeError) as error:

@@ -154,3 +154,12 @@ verification commit:test 沿用 `c4edba73be9e17375b83720f9d53187b1976e854` 中
   `artifacts/competition/draft_topk1/e1-b24781f/draft_topk1.zip`、
   SHA-256 `db5f111ce4a50d28b6566ab803f8de380056a27ea6b176e7de62d0a076e7f9c8`、
   member `draft_topk1.py`。
+
+## 平台提交记录
+
+- 2026-08-28 00:07 CST 额度重置(30/30)后,按 29→30→25→28→27→26 顺序自动
+  preflight + 一次性提交;全部 tuple 与账本一致后执行 confirm。
+- 提交时间约 2026-08-28 00:13 CST;submission_id `5737`;ZIP SHA-256
+  `db5f111ce4a50d28b6566ab803f8de380056a27ea6b176e7de62d0a076e7f9c8`;state `submitted`、validity `pending`、评测入队。
+- 提交后团队当日额度剩余 24/30(6 投全记录)。
+
