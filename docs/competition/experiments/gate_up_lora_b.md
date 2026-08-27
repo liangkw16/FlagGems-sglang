@@ -1,6 +1,6 @@
 # Task 28 `gate_up_lora_b` 实验记录
 
-状态:未开始(2026-08-27 第 3 批开闸)
+状态:S0 候选就绪,待额度重置后提交(排在 29→30→25 之后)
 
 ## 契约锁定
 
@@ -30,3 +30,69 @@
 - generic dot 策略(如涉及 `tl.dot`):fp32-ieee 操作数 generic + `_tianshu`
   split-fp16 vendor;昆仑保持 fp32-ieee(T12 镜像证据,昆仑 fp16-dot 数值失败
   有平台实证)。
+
+## S0:generic baseline
+
+状态:候选就绪,未提交(额度阻塞)
+时间:2026-08-27 22:00–22:20 CST
+source/verification commit(同一提交):`f89f64e9b38bdb336bcb8df7021e77c8ded7c239`
+
+### 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| 源文件 | `src/flaggems_sglang/ops/gate_up_lora_b.py` |
+| 源文件 SHA-256 | `3dc68f0b6eda1cdce4e3f9ad8e956af890b3523f4107e039d26bf5924c0ceb29` |
+| 测试 SHA-256 | `225ce1415a5b802fdf8a378ca846acacff4f6a4bf1ced5cd79a10320fb175b23` |
+| ZIP | `artifacts/competition/gate_up_lora_b/s0-f89f64e/gate_up_lora_b.zip` |
+| ZIP SHA-256 | `deccf49c29ad7aa8d418bd6da8f74ff55ae01646b65a41e0728c2a56d4c0482a`(与 canonical 一致) |
+| ZIP 内容 | 单个顶层文件 `gate_up_lora_b.py`,5895 bytes;ZIP 6027 bytes |
+| screening 目录 | `gpu:/tmp/flagos-batch3-rest.oTBskH/gate_up_lora_b`,mode 0700 |
+| release 目录 | `gpu:/tmp/flagos-gu-release.24UoN3`,mode 0700,文件取自 Git 对象 |
+
+### 唯一候选配置
+
+- `qkv_lora_b`(T22)骨架:3D grid(token 块 × 输出块, slice∈{gate,up},
+  segment),全部 stride 传入;`base_output.clone()` 起步,kernel 内
+  read-modify-write 加回(平台 6/8 先例,T22 失败与本路径无关)。
+- BLOCK 64/64/64 + `num_stages=2`(燧原 ≥64-tile dot 规则;T22 的
+  BLOCK_K=32 疑似其燧原编译失败根因,本 S0 已规避);fp32-ieee dot。
+- rank=0 adapter 与空段 early-return;`batch_info.max_len` 缺失时回退为
+  由 seg_indptr 推导(仅 grid 尺寸,host 级)。
+
+### 正确性
+
+screening 与 release 两次均 9/9 通过:fp32/fp16/bf16 × (r, od, 段结构)
+矩阵(r=16/32/64,od=64/65/96/127/128/129/256,段长 1–300 多段);
+rank-0 与空段;permutation 无/恒等/乱序;非连续 x/base;输入不变性;
+S=0;8192×2048 大 case。
+
+### 远端 NVIDIA 代理性能(五组 AB/BA p50 中位数)
+
+| dtype | S×seg×r×od | op p50 (ms) | torch p50 (ms) | speedup |
+| --- | ---: | ---: | ---: | ---: |
+| float16 | 1024×8×16×512 | 0.043008 | 0.760224 | 17.6763x |
+| float16 | 8192×32×16×1024 | 0.493568 | 3.460096 | 7.0100x |
+| float16 | 8192×32×64×1024 | 0.497664 | 3.118016 | 6.2653x |
+| float16 | 16384×16×64×2048 | 1.917792 | 4.030464 | 2.1016x |
+| float32 | 1024×8×16×512 | 0.053248 | 0.669824 | 12.5793x |
+| float32 | 8192×32×16×1024 | 0.641024 | 3.026912 | 4.7220x |
+| float32 | 8192×32×64×1024 | 0.649216 | 2.643200 | 4.0714x |
+| float32 | 16384×16×64×2048 | 2.483168 | 3.196416 | 1.2872x |
+
+最差 1.2872x(reference 逐段 python 循环天然慢)。
+
+### 已知边界与风险
+
+- 3D grid 于 T22 平台 6 芯通过(华为在内);燧原编译、昆仑评测仍为
+  家族风险面,tile 已按燧原规则规避。
+- E(num_lora)与 r 无上限约束;r>64 时 K 循环多轮,BLOCK_K=64 仍合法。
+
+### 提交计划
+
+- preflight tuple:season 2、race `782kzq4m`、account `15600308080`、
+  team `SoulCoder`、batch 3、task 28、operator `gate_up_lora_b`、
+  stage `s0`、commit `f89f64e9b38bdb336bcb8df7021e77c8ded7c239`、ZIP
+  `artifacts/competition/gate_up_lora_b/s0-f89f64e/gate_up_lora_b.zip`、
+  SHA-256 `deccf49c29ad7aa8d418bd6da8f74ff55ae01646b65a41e0728c2a56d4c0482a`、
+  member `gate_up_lora_b.py`。
