@@ -66,6 +66,16 @@ AMD_MODULE_PATH = (
     / "ops"
     / "moe_sum_reduce.py"
 )
+ENFLAME_MODULE_PATH = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+    / "_enflame"
+    / "ops"
+    / "moe_sum_reduce.py"
+)
 
 
 def _load_module(name, path):
@@ -86,6 +96,9 @@ ASCEND_MODULE = _load_module(
 )
 METAX_MODULE = _load_module("moe_sum_reduce_metax_module", METAX_MODULE_PATH)
 AMD_MODULE = _load_module("moe_sum_reduce_amd_module", AMD_MODULE_PATH)
+ENFLAME_MODULE = _load_module(
+    "moe_sum_reduce_enflame_module", ENFLAME_MODULE_PATH
+)
 
 
 def reference(input, routed_scaling_factor):
@@ -294,6 +307,32 @@ class AscendLaunchPolicyTest(unittest.TestCase):
         self.assertEqual(fake_kernel.grids, [(65535,), (65535,), (65535,)])
 
 
+class EnflameLaunchPolicyTest(unittest.TestCase):
+    def test_enflame_uses_eightk_tile_fixed_launch(self):
+        class FakeKernel:
+            def __init__(self):
+                self.calls = []
+
+            def __getitem__(self, grid):
+                def launch(*args, **kwargs):
+                    self.calls.append((grid, kwargs))
+
+                return launch
+
+        fake_kernel = FakeKernel()
+        with mock.patch.object(
+            ENFLAME_MODULE, "_moe_sum_reduce_kernel", fake_kernel
+        ):
+            ENFLAME_MODULE.moe_sum_reduce(torch.empty((2, 3, 8193)), 0.75)
+
+        grid, kwargs = fake_kernel.calls[-1]
+        self.assertEqual(grid, (2, 2))
+        self.assertEqual(kwargs["BLOCK_SIZE"], 8192)
+        self.assertEqual(kwargs["num_warps"], 8)
+        self.assertEqual(kwargs["num_stages"], 1)
+        self.assertEqual(kwargs["TOP_K"], 3)
+
+
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class MoeSumReduceTest(unittest.TestCase):
     def test_amd_autotune_all_dtypes_noncontiguous(self):
@@ -379,11 +418,44 @@ class MoeSumReduceTest(unittest.TestCase):
 
                     expected = reference(input, 1.25)
 
-                    for module in (MODULE, ASCEND_MODULE):
+                    for module in (MODULE, ASCEND_MODULE, ENFLAME_MODULE):
                         actual = module.moe_sum_reduce(input, 1.25)
                         torch.testing.assert_close(
                             actual, expected, atol=tolerance, rtol=tolerance
                         )
+                    torch.testing.assert_close(
+                        input, original, atol=0.0, rtol=0.0
+                    )
+
+    def test_enflame_eightk_block_boundaries_all_dtypes(self):
+        tolerances = {
+            torch.float16: 1e-2,
+            torch.bfloat16: 1.5e-2,
+            torch.float32: 1e-4,
+        }
+        for dtype, tolerance in tolerances.items():
+            for hidden_dim in (8191, 8192, 8193):
+                with self.subTest(dtype=dtype, hidden_dim=hidden_dim):
+                    input = (
+                        torch.linspace(
+                            -2,
+                            2,
+                            2 * 3 * hidden_dim,
+                            device="cuda",
+                        )
+                        .reshape(2, 3, hidden_dim)
+                        .to(dtype)
+                    )
+                    original = input.clone()
+
+                    expected = reference(input, 1.25)
+
+                    actual = ENFLAME_MODULE.moe_sum_reduce(input, 1.25)
+                    self.assertEqual(actual.shape, (2, hidden_dim))
+                    self.assertEqual(actual.dtype, dtype)
+                    torch.testing.assert_close(
+                        actual, expected, atol=tolerance, rtol=tolerance
+                    )
                     torch.testing.assert_close(
                         input, original, atol=0.0, rtol=0.0
                     )
@@ -466,7 +538,7 @@ class MoeSumReduceTest(unittest.TestCase):
 
                 expected = reference(input, 2.0)
 
-                for module in (MODULE, ASCEND_MODULE):
+                for module in (MODULE, ASCEND_MODULE, ENFLAME_MODULE):
                     actual = module.moe_sum_reduce(input, 2.0)
                     self.assertEqual(actual.shape, (shape[0], shape[2]))
                     self.assertEqual(actual.dtype, input.dtype)
@@ -498,6 +570,7 @@ class MoeSumReduceTest(unittest.TestCase):
 
                 for name, module in (
                     ("generic", MODULE),
+                    ("enflame", ENFLAME_MODULE),
                     ("kunlunxin", KUNLUN_MODULE),
                     ("ascend", ASCEND_MODULE),
                 ):
