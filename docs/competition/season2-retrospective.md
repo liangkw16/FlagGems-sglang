@@ -301,3 +301,71 @@ commit 中的企业邮箱。
    只需 30 分钟接入 screening 模板。
 5. **上海站三层法**(第 9.2 节)作为性能设计默认流程:Roofline 先行 →
    shape 分层路由 → 最后才考虑数学专化。
+
+## 13. 第二轮外部检索增量(2026-08-27 晚,agent-reach)
+
+### 13.1 昇腾官方 triton-ascend 迁移指南(对本队经验库的印证+增量)
+
+来源:[迁移指南](https://github.com/triton-lang/triton-ascend/blob/main/docs/zh/migration_guide/migrate_from_gpu.md)、
+[NPU 性能指南](https://ascend.github.io/docs/sources/_generated/sources/triton-ascend/migration_guide/performance_guidelines.html)、
+[编程指南](https://ascend.github.io/triton-ascend/sources/programming-guide/introduction.html)。
+
+**逐条印证本队平台发现**(经验从" empirically"升级为"官方文档背书"):
+
+- `coreDim ≤ 65535`(UINT16_MAX):与 T08/T20/T21 等七次平台验证一致;
+- UB 可用容量 1572864 bits:与 T10 `ub overflow, requires 2621696 bits` 报错吻合;
+- Vector-only 算子按 **Vector Core 数**组织并发、含 `tl.dot` 按 **AI Core 数**:
+  即 T15/T16 flash kernel 整行重复 bug 的官方解释(launcher 钳到物理核数)。
+
+**官方给出而本队未掌握的新武器**:
+
+1. `export TRITON_ALL_BLOCKS_PARALLEL=1`:coreDim 超限的替代解法(免手写
+   grid-stride);另一解法为 BLOCK ≥ ceil(N/65535) 取 2 的幂;
+2. **对齐要求**:Vector 算子 32 字节、cube-vector 融合算子 512 字节;非对齐
+   需最内轴补大小为 1 的轴;
+3. `tl.make_block_ptr` 显式 shape/stride/order 声明可改善离散访存(线程绑行、
+   单线程整行连续)——NPU 对 GPU 式 thread 绑最低维的写法天然不利;
+4. **BLOCK_SIZE_SUB 双层 tile** 是官方推荐模式(T21 E10 的 dual-level tile
+   与其同构:主块保 coreDim 合规、子块控 UB);
+5. 调试链路:`TRITON_DEBUG=1` 保存 ttadapter → `bishengir-compile
+   --enable-hivm-compile` 输出 IR → 检查 HIVM IR 是否存在"纯 scalar 搬运
+   未映射为 simd"的性能瓶颈指纹。
+
+### 13.2 FLA(Flash-Line​ar-Attention)kernel 工程(第三批同族题直接相关)
+
+来源:[DeepWiki: Triton Kernel Design](https://deepwiki.com/fla-org/flash-linear-attention/10.1-triton-kernel-design)、
+[Chunk Operations](https://deepwiki.com/fla-org/flash-linear-attention/4-chunk-operations)、
+[fla-org/flash-linear-attention](https://github.com/fla-org/flash-linear-attention)、
+[线性 RNN/xLSTM kernel 论文](https://arxiv.org/abs/2503.14376)。
+
+可直接搬的工程模式(上游 SGLang FLA 同源,第三批高概率再现):
+
+- **装饰器三件套**:`@triton.jit(do_not_specialize=['T'])` 防 T 变化引发
+  组合式重编译;`@triton.heuristics` 启动期注入布尔(IS_VARLEN 等)进
+  constexpr 裁枝;H/K/V/BT/BK/BV 全 constexpr;
+- varlen 的 program id→"序列号+chunk 序号"映射已在上游标准化
+  (chunk_indices),host 预解析思路与 T13 E4 同构——可作第三批 varlen 题
+  的上游对照实现;
+- `check_shared_mem()` 按设备查共享内存决定 tile 上限;autotune 结果按
+  序列长度/批大小持久化缓存。
+
+### 13.3 FlagGems issue 区的昆仑坑位清单(检索命中,第三批遇到直接对号)
+
+- **#5776(CLOSED)[XPU] `tl.store` 写标量写入过期寄存器值**:标量经
+  `tl.sum`+算术后穿插向量操作再 store,实际写旧值(rms_norm 存 inv_rms
+  却写入 var)——**与 T23 pack/scatter 数值失败、T13 E2/E3 昆仑约半数元素
+  错的指纹高度相关**,第三批遇"昆仑算出来的值像中间量"时先怀疑此 bug,
+  规避法:标量 store 前避免穿插向量操作,或把标量合成向量再 store;
+- xdnn 缺口家族:#4578/#4581 整数 `div` 不支持 rounding_mode、#4580/#4582
+  标量除以 fp16/bf16 tensor 失败、#4584 int→complex cast、#4583 complex
+  div——昆仑 wrapper 层规避 Python 侧这些 ATen 形态。
+
+### 13.4 通用 Triton/kernel 学习资源(进阶用)
+
+- [GPU MODE Lectures](https://github.com/gpu-mode/lectures)(Lecture 14
+  "A Practitioner's Guide to Triton" 等,配
+  [Christian Mills 笔记](https://christianjmills.com/series/notes/cuda-mode-notes.html));
+  [Stanford CS336 Lecture 6: Kernels/Triton](https://www.youtube.com/watch?v=E8Mju53VB00);
+  [Triton 官方 matmul tutorial](https://github.com/triton-lang/triton/blob/main/python/tutorials/03-matrix-multiplication.py)。
+- 昇腾社区实战文:[Triton 算子面向昇腾迁移的坑](https://hwcomputing.csdn.net/695f57910846ec2c4c5ad4eb.html)、
+  [昇腾 CANN 训练营 Triton 调优记录](https://hwcomputing.csdn.net/695f6d6c6554f1331aa095d8.html)。
