@@ -111,7 +111,7 @@ def main() -> None:
     tasks_by_batch: dict[int, list[dict]] = {}
     details: dict[str, dict] = {}
 
-    for batch_no in (1, 2):
+    for batch_no in (1, 2, 3):
         tasks = [
             public_task(item)
             for item in get_json(f"operator-tasks?batch_no={batch_no}")
@@ -124,10 +124,14 @@ def main() -> None:
             )
 
     all_tasks = [task for tasks in tasks_by_batch.values() for task in tasks]
-    assert len(tasks_by_batch[1]) == 7 and len(tasks_by_batch[2]) == 17
-    assert len({task["operator"] for task in all_tasks}) == len(all_tasks) == 24
+    assert (
+        len(tasks_by_batch[1]) == 7
+        and len(tasks_by_batch[2]) == 17
+        and len(tasks_by_batch[3]) == 6
+    )
+    assert len({task["operator"] for task in all_tasks}) == len(all_tasks) == 30
     assert all(re.fullmatch(r"[A-Za-z0-9_]+", task["operator"]) for task in all_tasks)
-    assert overview["current_batch"]["batch_no"] == 2
+    assert overview["current_batch"]["batch_no"] == 3
 
     for batch_no, tasks in tasks_by_batch.items():
         task_dir = OUT_DIR / "tasks" / f"batch-{batch_no}"

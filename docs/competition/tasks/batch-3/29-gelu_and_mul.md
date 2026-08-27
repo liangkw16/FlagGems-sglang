@@ -1,28 +1,29 @@
-<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/chunk_cumsum -->
+<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/gelu_and_mul -->
 <!-- synced_at: 2026-08-27T21:17:40+08:00 -->
 
-# chunk_cumsum (mamba/chunk_cumsum)
+# gelu_and_mul (activation_norm/gelu_and_mul)
 
 ## 任务描述
 
-Chunk-wise cumulative sum for Mamba SSM: computes `dt * A` cumsum within each chunk, returning processed dt and cumsum.
+门控 GELU 激活：将输入在最后一维对半分为 gate 和 up 两部分，对 gate 施加精确（erf-based）GELU 激活后与 up 逐元素相乘，输出维度为输入的一半。
 
 ## 接口签名
 
 ```python
-def reference(dt, A, chunk_size, dt_bias=None, dt_softplus=False)
+def reference(hidden_states)
 ```
 
 > 选手实现的函数签名需与上述 `reference(...)` 完全一致。
 
 ## 计算定义
 
-- `dt`: `[batch, seqlen, nheads]` — 时间步长
-- `A`: `[nheads]` — 衰减系数（负值）
-- 可选 `dt_bias` 加到 dt 上，可选 `dt_softplus` 对 dt 做 softplus
-- dt 经 clamp(min=0) 后，reshape 为 `[batch, nheads, nchunks, chunk_size]`
-- `dA = dt * A`，在 chunk_size 维上做 cumsum
-- 输出: `(dt_out, dA_cumsum)`，shape 均为 `[batch, nheads, nchunks, chunk_size]`
+- 输入 `hidden_states`: `[bs, 2*d]`，任意浮点 dtype
+- 输出：`[bs, d]`，与输入同 dtype
+- 令 `d = hidden_states.shape[-1] // 2`：
+  - `x1 = hidden_states[..., :d]`（gate 部分）
+  - `x3 = hidden_states[..., d:]`（up 部分）
+  - `out = gelu(x1.float(), approximate="none") * x3.float()`，转回输入 dtype
+- GELU 使用精确 erf 公式：`gelu(x) = x * Φ(x) = x * (1 + erf(x / sqrt(2))) / 2`，不使用 tanh 近似
 
 ## 正确性判别标准
 
@@ -31,31 +32,17 @@ Per-dtype tolerance:
 - bfloat16: `atol=1.5e-2, rtol=1.5e-2`
 - float16: `atol=1e-2, rtol=1e-2`
 
-
 ## 参考实现
 
 ```python
-import math
-
-import torch
 import torch.nn.functional as F
 
 
-def reference(dt, A, chunk_size, dt_bias=None, dt_softplus=False):
-    batch, seqlen, nheads = dt.shape
-    nchunks = math.ceil(seqlen / chunk_size)
-
-    dt_f = dt.float()
-    if dt_bias is not None:
-        dt_f = dt_f + dt_bias.float()
-    if dt_softplus:
-        dt_f = torch.where(dt_f <= 20.0, F.softplus(dt_f), dt_f)
-    dt_f = dt_f.clamp(min=0.0)
-
-    dt_out = dt_f.reshape(batch, nchunks, chunk_size, nheads).permute(0, 3, 1, 2).contiguous()
-    dA = dt_out * A.float().view(1, nheads, 1, 1)
-    dA_cumsum = dA.cumsum(dim=-1)
-    return dt_out, dA_cumsum
+def reference(hidden_states):
+    d = hidden_states.shape[-1] // 2
+    x1, x3 = hidden_states[..., :d], hidden_states[..., d:]
+    out = F.gelu(x1.float(), approximate="none") * x3.float()
+    return out.to(hidden_states.dtype)
 ```
 
 ## 评分标准

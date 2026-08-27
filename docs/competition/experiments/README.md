@@ -144,3 +144,16 @@ T08/T09/T17 按当时的 3 次规则执行）。终态：
 - 已 8/8 任务的性能冲刺：昆仑（多题 0.012–0.34x）与燧原（0.09–2.85x）
   提升空间最大，vendor 模板已全部入库。
 - T18 平台恢复后直接复用 `e2-2ba2813` 候选。
+
+## 第三批(Task 25–30)
+
+2026-08-27 20:00 开闸,提交窗口至 2026-09-03 19:59:59。六题账本:
+[`draft_topk1`](draft_topk1.md)、[`fused_moe_router_cudacore`](fused_moe_router_cudacore.md)、
+[`fused_moe_router_tensorcore`](fused_moe_router_tensorcore.md)、
+[`gate_up_lora_b`](gate_up_lora_b.md)、[`gelu_and_mul`](gelu_and_mul.md)、
+[`interleaved_rope`](interleaved_rope.md)。
+
+2026-08-27 定稿的作战方案:全 6 题;主攻顺序 `29 → 30 → 25 → 27 → 26 → 28`;
+每题 5 次提交预算,S0 探路 → 最多 3 次 vendor 单变量迭代 → 留 1 次截止前
+回归储备,同指纹失败连续 2 次提前停;dot 题型 generic 用 fp32-ieee 操作数 +
+`_tianshu` split-fp16 vendor(昆仑保持 fp32-ieee,T12 镜像证据)。
