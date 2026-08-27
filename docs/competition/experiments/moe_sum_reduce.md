@@ -1179,3 +1179,61 @@ SHA-256 为 `9556e9c8f64f988e8ed6c2022de81e9871f13a0588e3ee03b6ea1ae0668cf379` /
 （5.00 倍）。因此 K1 永久停止，不用平台额度赌架构反转，也不混入
 `buffer_size_limit` 第二变量。候选已用 `apply_patch` 恢复，commit `0354446`
 中的 Ascend、Kunlun 和测试与 E11 逐字节一致；额度保持 `6/30`。
+
+## E14：Enflame 8192 tile 回归 E11 成员集
+
+状态：平台 `5397` 终态 8/8、`valid`、**3.063725x team best**；燧原
+0.21→0.9866x；排名维持第 10（第 9 名 >3.0637）
+
+E11 team best（2.995375x）的成员集不含燧原 vendor：E9 起 fork 自 E7，燧原
+一直以 generic BLOCK256/4 运行（0.209x 振荡），而 E8 平台已证明的同 kernel
+2048/8 固定 launch（0.3928x，+87.94%）被留在历史提交 `3b1ec12` 中。E14 把
+E11 的五个成员逐字节冻结（generic/AMD/Ascend/Kunlun/MetaX），只新增燧原
+vendor：E8 文件单变量 `block_size` 2048→8192（8 warps、1 stage、2D grid、
+TOP_K constexpr、FP32 累加、stride 全不变）。重开依据：E8 的燧原单调 tile
+信号（其平均值未过门仅因冻结芯噪声 -0.32x）与 T24 S8 的 GCU 大 tile 平台
+先验；8192/8 与 E4 时代验证过的 4096/4 每线程累加器占用同级（32 元素）。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `e7663c8b43ca0068bfa968e6998f03bf786b9fb0` |
+| 冻结五成员 SHA-256 | generic `52a2fc97...` / AMD `3b0de225...` / Ascend `f1c1b76f...` / Kunlun `68b0abe0...` / MetaX `20db4f49...`（= E11） |
+| Enflame / test SHA-256 | `0d229d8dbbb457ce2f432a6669d91774d35aa4b7ec263626ac612d0189ee76d7` / `1e6996e9647310230a57f146224c318c15aabcac4c45b7f45e26a3a8d3cf584c` |
+| screening | `gpu:/tmp/flagos-moe-sum-reduce-e14.Rt9Kzw`；17/17 unittest、静态门禁、`SCREENING_OK`；8192/8 资源 52–104 registers、0 spill/scratch |
+| release | `gpu:/tmp/flagos-moe-sum-reduce-e14-release.Hy5TpD`；17/17、`RELEASE_OK` |
+| canonical ZIP | `artifacts/competition/moe_sum_reduce/e14-e7663c8/moe_sum_reduce.zip`，19,161 bytes，SHA-256 `1aaf7ef9286dafac313f1f5433356e90c3361c5b63c661afd73ea86ec336da3a`；六成员 |
+
+新增回归：燧原 8191/8192/8193 边界三 dtype、launch 断言（BLOCK 8192/8/1、
+grid=(tokens, cdiv(hidden,8192))），并把燧原并入既有边界/空维/平台最大 shape
+数值回路。2026-08-27 14:06:33 CST 经实时 preflight（额度 `2/30`）执行唯一一次
+提交，submission `5397`；额度变 `1/30`。
+
+14:11 CST 终态 8/8、`valid`、平均 **`3.063725x`**、team best（+0.06835x，
++2.28%）：天数 4.8714x、沐曦 3.5218x、燧原 **0.9866x**、海光 6.5774x、昆仑
+0.175x、华为 1.148x、国际 A 3.725x、国际 B 3.5046x（AMD）。燧原 tile 曲线
+256→0.209、2048→0.393、8192→0.9866 仍单调上升；平均增长未翻转第 9 名
+（第 9 名 >3.0637）。
+
+## E15：Enflame 16384 tile（曲线见顶）
+
+状态：平台 `5401` 终态 8/8、`valid`、`2.994925x`，非 team best；保留 E14；
+当日额度用尽（`0/30`）
+
+E15 从 E14 唯一变量 `block_size` 8192→16384（其余与 E14 逐字节相同，含六成员
+集合与测试结构）。screening 位于
+`gpu:/tmp/flagos-moe-sum-reduce-e15.Vb8QkM`（17/17、`SCREENING_OK`；16384/8
+资源 114–188 registers、0 spill）；release
+`gpu:/tmp/flagos-moe-sum-reduce-e15-release.Wq2VhN`（17/17、`RELEASE_OK`）。
+source/verification commit `660df4a839187a7bdac16d80042ec5101d3ffa71`；Enflame
+SHA-256 在 E15 树内为 16384 版本；canonical ZIP
+`artifacts/competition/moe_sum_reduce/e15-660df4a/moe_sum_reduce.zip`，19,162
+bytes，SHA-256
+`3efa24b88d6b4bc41d9041f4ab65c8e4f35db206627319af4cd913b7077c9251`。
+
+2026-08-27 14:28:23 CST 经实时 preflight（额度 `1/30`）执行当日最后一次提交，
+submission `5401`；额度变 `0/30`。14:31 CST 终态 8/8、`valid`、平均
+`2.994925x`：天数 4.7124x、沐曦 3.498x、燧原 **0.741x**（较 E14 的 0.9866
+回落 24.9%）、海光 6.4226x、昆仑 0.1756x、华为 1.0912x、国际 A 3.8606x、
+国际 B 3.458x。结论：燧原 reduction tile 曲线 256→0.209、2048→0.393、
+8192→**0.9866（峰值）**、16384→0.741，8192 为该 kernel+芯最优；E14
+3.063725x 为 Task21 最终 team best。Task21 至此关闭，不再有任何提交。
