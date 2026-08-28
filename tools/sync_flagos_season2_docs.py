@@ -127,9 +127,9 @@ def main() -> None:
     assert (
         len(tasks_by_batch[1]) == 7
         and len(tasks_by_batch[2]) == 17
-        and len(tasks_by_batch[3]) == 6
+        and len(tasks_by_batch[3]) == 12
     )
-    assert len({task["operator"] for task in all_tasks}) == len(all_tasks) == 30
+    assert len({task["operator"] for task in all_tasks}) == len(all_tasks) == 36
     assert all(re.fullmatch(r"[A-Za-z0-9_]+", task["operator"]) for task in all_tasks)
     assert overview["current_batch"]["batch_no"] == 3
 
