@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# e6 structure: int64-machine-op-free path. Prior enflame attempts (e1-e5)
+# e6 structure (e6b re-carrier; original upload went stale_after_upload
+# with no platform record and no quota consumption). int64-machine-op-free
+# path. Prior enflame attempts (e1-e5)
 # varied only the argmax kernels while the meta kernel (int64 load/add/store)
 # and draft kernel (mixed int64/int32 where) stayed byte-identical and every
 # attempt hit Pipeline run failed. This variant keeps all compute in
@@ -116,7 +118,9 @@ def _draft_topk1_meta_kernel(
         hi = tl.load(positions_i32_ptr + 2 * offsets + 1, mask=mask, other=0)
         carry = (lo == -1).to(tl.int32)
         tl.store(out_positions_i32_ptr + 2 * offsets, lo + 1, mask=mask)
-        tl.store(out_positions_i32_ptr + 2 * offsets + 1, hi + carry, mask=mask)
+        tl.store(
+            out_positions_i32_ptr + 2 * offsets + 1, hi + carry, mask=mask
+        )
         tl.store(ones_ptr + offsets, 1.0, mask=mask)
 
 
