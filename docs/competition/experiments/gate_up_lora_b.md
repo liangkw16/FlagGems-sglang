@@ -201,3 +201,37 @@ e2 单变量 generic BLOCK_N 64→128(qkv 昇腾先例,燧原 vendor 不动);
   打包器 verified-existing(canonical)。
 - 预期:昆仑正常 → 8/8 valid,七芯均值 ~15.5x > 榜首 11.50x 即登顶;
   若昆仑同指纹第五次崩溃 → 维持平台侧结论,工单升级。
+
+### E6 平台终态(2026-08-29 01:30,sub 6135)
+
+**7/8,invalid_correctness。**七芯第五次全过:天数 15.718、沐曦 17.061、
+燧原 1.222、海光 38.977、华为 20.899、card_a 12.745、card_b 2.215。
+昆仑 `waiting_callback` 30 分钟后超时终止,错误为**同一 inductor
+compile-worker 崩溃指纹**(`subproc_pool._recv_msg` 挂起 → Fatal
+Python error: Aborted)。
+
+- 关键新证据:同日 01:0x T29 gelu 昆仑正常完成(评测器健康),
+  而本题第 5 次撞同一指纹——故障不再是平台整体宕机,而是本题型
+  的 Kunlun 编译路径触发 inductor compile-worker 死锁。
+- 复盘五次昆仑尝试(3D grid generic、BLOCK_N 128 generic、1D fold、
+  host-resolved dot v1/v2):grid/结构/host-resolve 均变过,
+  `num_stages=2` 与 `tl.dot` 从未变过;而昆仑平台已证配置
+  (T13 chunk_state_varlen、T21、T24)均为 `num_stages=1`,
+  T21/T24 更是无 dot 的简单 kernel。
+
+## E7:净室 Kunlun vendor v3——FMA 无 dot + stages=1(2026-08-29)
+
+- 单变量改动(`_kunlunxin` vendor,其余成员与 e6 逐字节一致):
+  ①去掉 `tl.dot`,改显式 fp32 FMA K 循环(`tl.range(0,RANK)` 行列
+  广播乘加,消除整个 dot/ieee lowering 面);②`num_stages=1` +
+  `num_warps=4`(T13/T21/T24 昆仑已证约定);③全部 int32 索引
+  (去掉 int64 stride cast);④host-resolved 逐段 launch 保持 v2。
+- screening(gpu:/tmp/flagos-router-asc.6i1BpG,RTX 5070 Ti):
+  vendor driver 全绿(fp32/fp16/bf16 × r16/32/64 × od64/96/129/256 ×
+  perm/无 perm/rank0+空段/8192 大 case/非连续/空输入)。
+- source commit `dd6bb27`(blob SHA `41132e57…` 与 screening 一致);
+  ZIP `artifacts/competition/gate_up_lora_b/e7-dd6bb27/`,canonical
+  SHA-256 `1d14cb4288418f34ce119f198c80d80bac270501b6b5ba18e56895cb75010fd0`。
+- 判读:e7 昆仑通过 → 8/8 valid 且 ~15x 登顶(榜首 11.499x);
+  仍同指纹 → 与内容无关的最后疑点排除,工单证据升级为
+  "六结构两时代同指纹"。
