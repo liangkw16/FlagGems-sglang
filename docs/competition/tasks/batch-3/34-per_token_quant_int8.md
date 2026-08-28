@@ -1,28 +1,28 @@
-<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/chunk_cumsum -->
+<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/per_token_quant_int8 -->
 <!-- synced_at: 2026-08-29T00:54:30+08:00 -->
 
-# chunk_cumsum (mamba/chunk_cumsum)
+# per_token_quant_int8 (quantization/per_token_quant_int8)
 
 ## 任务描述
 
-Chunk-wise cumulative sum for Mamba SSM: computes `dt * A` cumsum within each chunk, returning processed dt and cumsum.
+逐 token（整行）INT8 量化：对输入矩阵的每一行计算一个基于绝对最大值的缩放因子，将该行量化为 int8 整数；输出量化后的整数矩阵和每行一个的 float32 缩放因子向量。
 
 ## 接口签名
 
 ```python
-def reference(dt, A, chunk_size, dt_bias=None, dt_softplus=False)
+def reference(x)
 ```
 
 > 选手实现的函数签名需与上述 `reference(...)` 完全一致。
 
 ## 计算定义
 
-- `dt`: `[batch, seqlen, nheads]` — 时间步长
-- `A`: `[nheads]` — 衰减系数（负值）
-- 可选 `dt_bias` 加到 dt 上，可选 `dt_softplus` 对 dt 做 softplus
-- dt 经 clamp(min=0) 后，reshape 为 `[batch, nheads, nchunks, chunk_size]`
-- `dA = dt * A`，在 chunk_size 维上做 cumsum
-- 输出: `(dt_out, dA_cumsum)`，shape 均为 `[batch, nheads, nchunks, chunk_size]`
+- 输入 `x`: `[M, N]`，任意浮点 dtype，连续存储
+- 输出：`(x_q: [M, N] int8, x_s: [M, 1] float32)`
+- 对每行 `row`：
+  - `scale = max(|x[row]|, 1e-10) / 127`
+  - `x_q[row] = clamp(round(x[row] / scale), -128, 127)`
+- 等价于以整行作为一个 group 调用 per-token-group 量化（`group_size = N`）
 
 ## 正确性判别标准
 
@@ -31,31 +31,14 @@ Per-dtype tolerance:
 - bfloat16: `atol=1.5e-2, rtol=1.5e-2`
 - float16: `atol=1e-2, rtol=1e-2`
 
-
 ## 参考实现
 
 ```python
-import math
-
-import torch
-import torch.nn.functional as F
+from flaggems_reference.per_token_group_quant_int8 import reference as _group_reference
 
 
-def reference(dt, A, chunk_size, dt_bias=None, dt_softplus=False):
-    batch, seqlen, nheads = dt.shape
-    nchunks = math.ceil(seqlen / chunk_size)
-
-    dt_f = dt.float()
-    if dt_bias is not None:
-        dt_f = dt_f + dt_bias.float()
-    if dt_softplus:
-        dt_f = torch.where(dt_f <= 20.0, F.softplus(dt_f), dt_f)
-    dt_f = dt_f.clamp(min=0.0)
-
-    dt_out = dt_f.reshape(batch, nchunks, chunk_size, nheads).permute(0, 3, 1, 2).contiguous()
-    dA = dt_out * A.float().view(1, nheads, 1, 1)
-    dA_cumsum = dA.cumsum(dim=-1)
-    return dt_out, dA_cumsum
+def reference(x):
+    return _group_reference(x, group_size=x.shape[-1])
 ```
 
 ## 评分标准

@@ -184,3 +184,20 @@ e2 单变量 generic BLOCK_N 64→128(qkv 昇腾先例,燧原 vendor 不动);
   9.65x。唯一剩余路径:赛方免费 rerun 昆仑或返还机会——工单证据链
   因"四结构同指纹"反而更强。
 
+
+## E6 昆仑恢复重投(2026-08-29 00:5x CST)
+
+- 昆仑健康信号确认:T29 gelu_and_mul e7(sub 6127,2026-08-29 00:48 终态)
+  昆仑 0.4847 正常完成、8/8 valid——08-28 全天 inductor 崩溃为平台评测器
+  故障而非候选内容;榜单 T28 达标队伍 1→2(HelloWorldTJU 11.499x 登顶),
+  昆仑可跑本题型。
+- 本投内容与 e5 逐字节等价(generic 仅注释标记行不同),四成员不变:
+  generic + `_enflame`(1D 无分支)+ `_iluvatar`(split-fp16)+
+  `_kunlunxin`(host-resolved v2);七芯已平台四连过(海光 41.95x、
+  沐曦 17.93x、天数 15.63x、华为 21.37x)。
+- source commit `c56f08e`(e6-retry-carrier 注释);ZIP
+  `artifacts/competition/gate_up_lora_b/e6-c56f08e/gate_up_lora_b.zip`,
+  SHA-256 `9856356773015c9de2eec576e342730874bcffb590243f0c923991068543f770`,
+  打包器 verified-existing(canonical)。
+- 预期:昆仑正常 → 8/8 valid,七芯均值 ~15.5x > 榜首 11.50x 即登顶;
+  若昆仑同指纹第五次崩溃 → 维持平台侧结论,工单升级。

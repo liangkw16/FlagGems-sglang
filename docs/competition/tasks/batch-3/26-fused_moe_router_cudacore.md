@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/fused_moe_router_cudacore -->
-<!-- synced_at: 2026-08-28T11:26:03+08:00 -->
+<!-- synced_at: 2026-08-29T00:54:30+08:00 -->
 
 # fused_moe_router_cudacore (moe/fused_moe_router_cudacore)
 

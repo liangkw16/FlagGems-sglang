@@ -1,6 +1,6 @@
 # 第二届 FlagOS 算子赛题索引
 
-> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-08-28T11:26:03+08:00`。
+> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-08-29T00:54:30+08:00`。
 > 状态和榜单会变化，运行 `python tools/sync_flagos_season2_docs.py` 更新。
 
 ## 第 1 批
@@ -41,9 +41,15 @@
 
 | 题号 | 算子 | 状态 | 提交/队伍 | 达标队伍 | 当前第一 | 平均加速比 |
 | ---: | --- | --- | ---: | ---: | --- | ---: |
-| 25 | [draft_topk1](tasks/batch-3/25-draft_topk1.md) | competing | 54/13 | 3 | c2flow | 1.5936x |
-| 26 | [fused_moe_router_cudacore](tasks/batch-3/26-fused_moe_router_cudacore.md) | competing | 66/14 | 3 | Skyspeed | 0.8065x |
-| 27 | [fused_moe_router_tensorcore](tasks/batch-3/27-fused_moe_router_tensorcore.md) | competing | 46/12 | 3 | hbmu9306 | 0.9924x |
-| 28 | [gate_up_lora_b](tasks/batch-3/28-gate_up_lora_b.md) | competing | 23/8 | 1 | c2flow | 9.6453x |
-| 29 | [gelu_and_mul](tasks/batch-3/29-gelu_and_mul.md) | competing | 24/9 | 5 | Fields | 2.8921x |
-| 30 | [interleaved_rope](tasks/batch-3/30-interleaved_rope.md) | competing | 13/6 | 6 | YY-L | 29.0765x |
+| 25 | [draft_topk1](tasks/batch-3/25-draft_topk1.md) | competing | 118/20 | 7 | autokernel | 1.7470x |
+| 26 | [fused_moe_router_cudacore](tasks/batch-3/26-fused_moe_router_cudacore.md) | competing | 101/19 | 4 | Skyspeed | 1.0013x |
+| 27 | [fused_moe_router_tensorcore](tasks/batch-3/27-fused_moe_router_tensorcore.md) | competing | 63/16 | 5 | autokernel | 1.4209x |
+| 28 | [gate_up_lora_b](tasks/batch-3/28-gate_up_lora_b.md) | competing | 35/13 | 2 | HelloWorldTJU | 11.4989x |
+| 29 | [gelu_and_mul](tasks/batch-3/29-gelu_and_mul.md) | competing | 73/17 | 9 | autokernel | 2.9626x |
+| 30 | [interleaved_rope](tasks/batch-3/30-interleaved_rope.md) | competing | 46/13 | 9 | HAiWORLD | 29.4492x |
+| 31 | [moe_fused_gate](tasks/batch-3/31-moe_fused_gate.md) | competing | 15/7 | 1 | hbmu9306 | 11.6199x |
+| 32 | [moe_fused_mul_sum](tasks/batch-3/32-moe_fused_mul_sum.md) | competing | 6/5 | 2 | HAiWORLD | 4.2575x |
+| 33 | [per_token_group_quant_int8](tasks/batch-3/33-per_token_group_quant_int8.md) | competing | 3/2 | 1 | c2flow | 3.5432x |
+| 34 | [per_token_quant_int8](tasks/batch-3/34-per_token_quant_int8.md) | competing | 5/4 | 2 | c2flow | 5.2281x |
+| 35 | [rotary_embedding](tasks/batch-3/35-rotary_embedding.md) | competing | 10/6 | 1 | c2flow | 3.3370x |
+| 36 | [selective_state_update](tasks/batch-3/36-selective_state_update.md) | pending_challenge | 46/7 | 0 | - | - |
