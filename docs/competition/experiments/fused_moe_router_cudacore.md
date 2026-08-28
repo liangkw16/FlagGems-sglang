@@ -207,3 +207,7 @@ MLIRCompilationError),kunlunxin 评测中。E2 vendor 计划同 T27。
   在 fp16 即 5.0);非平局全对。
 - source commit `5c510f5`;ZIP `e6-5c510f5`,SHA-256
   `7ede5e938356952b286831cb8b95024b39a95879d0af23b2dc5118573c612473`。
+
+### E6 平台结果(sub 6201,华为芯已完成)
+
+- **华为仍 ids 失配** → 平局取序假设排除。六芯通过,昆仑 waiting。

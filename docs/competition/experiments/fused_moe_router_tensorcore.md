@@ -209,3 +209,10 @@ B=0;70000 行折叠。
   (并行度下降,昇腾 perf 风险已知,correctness first)。
 - source commit `3e81a5b`;ZIP `e6-3e81a5b`,SHA-256
   `27f4c615f61c96a59fba688810465e16352f62b6dc9c47ca37d712c6efcf7cff`。
+
+### E6 平台结果(sub 6204,华为芯已完成,昆仑 waiting)
+
+- **华为 0.5404x 通过!** n_splits=1 顺序累加修复 ids 失配——
+  **根因锁定:split-K 部分和舍入与参考 matmul 顺序累加的差异翻转
+  边界 logit 对**(E1–E6 全程 weights 容差内、仅 ids 精确失配的
+  唯一自洽解释;平局取序对照(T26 e6)同轮排除)。
