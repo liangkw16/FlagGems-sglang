@@ -193,19 +193,20 @@ def draft_topk1(
                 int(draft_token_column),
                 BLOCK=_BLOCK_FLAT,
             )
-        if n_rows > 0 and out_draft_tokens.shape[-1] > 0:
-            _draft_topk1_finalize_kernel[(min(n_rows, _MAX_GRID),)](
-                chunk_values,
-                chunk_indices,
-                topk_index,
-                n_rows,
-                n_chunks,
-                out_draft_tokens,
-                draft.shape[-1],
-                int(draft_token_column),
-                HAS_DRAFT=True,
-                BLOCK_C=max(block_c, 1),
-            )
+    if n_rows > 0:
+        _draft_topk1_finalize_kernel[(min(n_rows, _MAX_GRID),)](
+            chunk_values,
+            chunk_indices,
+            topk_index,
+            n_rows,
+            n_chunks,
+            out_draft_tokens if out_draft_tokens is not None else topk_index,
+            out_draft_tokens.shape[-1] if out_draft_tokens is not None else 1,
+            int(draft_token_column),
+            HAS_DRAFT=out_draft_tokens is not None
+            and out_draft_tokens.shape[-1] > 0,
+            BLOCK_C=max(block_c, 1),
+        )
     return topk_p, topk_index, out_positions, out_draft_tokens
 
 

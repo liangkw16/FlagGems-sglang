@@ -67,13 +67,9 @@ def _router_gemm_splitk_kernel(
                 mask=expert_mask[:, None] & k_mask[None, :],
                 other=0.0,
             ).to(tl.float32)
-            x_hi = x_tile.to(tl.float16)
-            x_lo = (x_tile - x_hi.to(tl.float32)).to(tl.float16)
-            w_hi = w_tile.to(tl.float16)
-            w_lo = (w_tile - w_hi.to(tl.float32)).to(tl.float16)
-            acc += tl.dot(x_hi, tl.trans(w_hi))
-            acc += tl.dot(x_hi, tl.trans(w_lo))
-            acc += tl.dot(x_lo, tl.trans(w_hi))
+            acc += tl.dot(
+                x_tile, tl.trans(w_tile), input_precision="ieee"
+            )
 
         tl.store(
             partials_ptr

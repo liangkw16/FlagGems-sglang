@@ -30,28 +30,93 @@ def _draft_topk1_scan_kernel(
     vocab_size,
     BLOCK_V: tl.constexpr,
 ):
+    row = tl.program_id(0)
+    best_val = tl.full((1,), -float("inf"), tl.float32)
+    best_idx = tl.zeros((1,), dtype=tl.int32)
+    for v_start in tl.range(0, vocab_size, BLOCK_V):
+        offsets = v_start + tl.arange(0, BLOCK_V)
+        mask = offsets < vocab_size
+        values = tl.load(
+            logits_ptr + row * vocab_size + offsets,
+            mask=mask,
+            other=-float("inf"),
+        )
+        indices = offsets.to(tl.int32)
+        v_pair = tl.reshape(values, (512, 2))
+        i_pair = tl.reshape(indices, (512, 2))
+        va, vb = tl.split(v_pair)
+        ia, ib = tl.split(i_pair)
+        take = va >= vb
+        values = tl.where(take, va, vb)
+        indices = tl.where(take, ia, ib)
+        v_pair = tl.reshape(values, (256, 2))
+        i_pair = tl.reshape(indices, (256, 2))
+        va, vb = tl.split(v_pair)
+        ia, ib = tl.split(i_pair)
+        take = va >= vb
+        values = tl.where(take, va, vb)
+        indices = tl.where(take, ia, ib)
+        v_pair = tl.reshape(values, (128, 2))
+        i_pair = tl.reshape(indices, (128, 2))
+        va, vb = tl.split(v_pair)
+        ia, ib = tl.split(i_pair)
+        take = va >= vb
+        values = tl.where(take, va, vb)
+        indices = tl.where(take, ia, ib)
+        v_pair = tl.reshape(values, (64, 2))
+        i_pair = tl.reshape(indices, (64, 2))
+        va, vb = tl.split(v_pair)
+        ia, ib = tl.split(i_pair)
+        take = va >= vb
+        values = tl.where(take, va, vb)
+        indices = tl.where(take, ia, ib)
+        v_pair = tl.reshape(values, (32, 2))
+        i_pair = tl.reshape(indices, (32, 2))
+        va, vb = tl.split(v_pair)
+        ia, ib = tl.split(i_pair)
+        take = va >= vb
+        values = tl.where(take, va, vb)
+        indices = tl.where(take, ia, ib)
+        v_pair = tl.reshape(values, (16, 2))
+        i_pair = tl.reshape(indices, (16, 2))
+        va, vb = tl.split(v_pair)
+        ia, ib = tl.split(i_pair)
+        take = va >= vb
+        values = tl.where(take, va, vb)
+        indices = tl.where(take, ia, ib)
+        v_pair = tl.reshape(values, (8, 2))
+        i_pair = tl.reshape(indices, (8, 2))
+        va, vb = tl.split(v_pair)
+        ia, ib = tl.split(i_pair)
+        take = va >= vb
+        values = tl.where(take, va, vb)
+        indices = tl.where(take, ia, ib)
+        v_pair = tl.reshape(values, (4, 2))
+        i_pair = tl.reshape(indices, (4, 2))
+        va, vb = tl.split(v_pair)
+        ia, ib = tl.split(i_pair)
+        take = va >= vb
+        values = tl.where(take, va, vb)
+        indices = tl.where(take, ia, ib)
+        v_pair = tl.reshape(values, (2, 2))
+        i_pair = tl.reshape(indices, (2, 2))
+        va, vb = tl.split(v_pair)
+        ia, ib = tl.split(i_pair)
+        take = va >= vb
+        values = tl.where(take, va, vb)
+        indices = tl.where(take, ia, ib)
+        v_pair = tl.reshape(values, (1, 2))
+        i_pair = tl.reshape(indices, (1, 2))
+        va, vb = tl.split(v_pair)
+        ia, ib = tl.split(i_pair)
+        take = va >= vb
+        values = tl.where(take, va, vb)
+        indices = tl.where(take, ia, ib)
+        better = values > best_val
+        best_val = tl.where(better, values, best_val)
+        best_idx = tl.where(better, indices, best_idx)
     lane = tl.arange(0, 1)
-    n_programs = tl.num_programs(0)
-    for row in tl.range(tl.program_id(0), n_rows, n_programs):
-        best_value = -float("inf")
-        best_index = 0
-        for v_start in tl.range(0, vocab_size, BLOCK_V):
-            offsets = v_start + tl.arange(0, BLOCK_V)
-            mask = offsets < vocab_size
-            values = tl.load(
-                logits_ptr + row * vocab_size + offsets,
-                mask=mask,
-                other=-float("inf"),
-            )
-            chunk_max = tl.max(values, axis=0)
-            chunk_idx = tl.min(
-                tl.where(values == chunk_max, offsets, vocab_size), axis=0
-            )
-            take = chunk_max > best_value
-            best_value = tl.where(take, chunk_max, best_value)
-            best_index = tl.where(take, chunk_idx, best_index)
-        result = tl.where(lane == 0, best_index.to(tl.int64), 0)
-        tl.store(out_index_ptr + row + lane, result)
+    tl.store(out_index_ptr + row + lane, best_idx.to(tl.int64))
 
 
 @triton.jit
@@ -113,7 +178,8 @@ def draft_topk1(
     )
     out_positions = torch.empty_like(positions)
     if n_rows > 0:
-        _draft_topk1_scan_kernel[(min(n_rows, _MAX_GRID),)](
+        assert n_rows <= _MAX_GRID
+        _draft_topk1_scan_kernel[(n_rows,)](
             logits,
             topk_index,
             n_rows,
