@@ -302,3 +302,9 @@ team `SoulCoder`、batch 3、task 29、tid `s2t1op029`、operator
   SHA-256 `1fc0b5d4a414245e7a4136ac3d7162e31a0ab8881a64c8253b43b86828817891`,
   成员 `gelu_and_mul.py`(3134B)+ `gelu_and_mul_kunlunxin.py`(2616B),
   ZIP 与 commit blob 逐字节一致。
+
+### E6 提交记录(2026-08-28 23:59 CST)
+
+- preflight 全过(额度 2/30,本次消耗 1 → 剩 **1/30** 留作截止前回归
+  储备);submission 记录 created `2026-08-28T23:59:09`,八芯 queued,
+  validity pending。逐芯结果待回填。
