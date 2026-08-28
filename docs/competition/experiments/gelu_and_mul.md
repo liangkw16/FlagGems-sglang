@@ -331,3 +331,17 @@ team `SoulCoder`、batch 3、task 29、tid `s2t1op029`、operator
   华为 2 倍、昆仑 +65%(经 E6 修复)。
 - 额度剩 1/30(截止前回归储备);本轮停止,榜首 2.89x 差距
   需新一轮多芯证据再开。
+
+## E7:metax(沐曦)vendor 回退 e1 平铺(2026-08-29 01:0x CST)
+
+- 平台证据:E5/E6 后 muxi 2.079x,而 e1 投(平铺 BLOCK 2048 + libdevice
+  erf generic)muxi 为 **2.313x**;单变量假设:沐曦适配旧平铺骨架。
+- source commit `a8183b3`(首次误建 `_muxi` 目录被打包器拒绝,竞赛后缀
+  为 `metax`,改 `_metax/ops/`);新成员 `gelu_and_mul_metax.py`
+  = e1 generic 字节(SHA `0e21c2d8…`),generic/kunlunxin 不变。
+- release 验证(gpu:/tmp/flagos-gelu-e7-rel.4wkvth):py_compile ✓、
+  unittest 8/8 OK;代理 metax_e1flat 2.8089x / generic_e5 2.9148x
+  (代理上新结构更快,不影响沐曦端赌注)。
+- ZIP `e7-a8183b3/gelu_and_mul.zip`,SHA-256
+  `48e6e68156309ac5cbf0bf364b128e56d76d3a98aec721fe97bd046cc31cdc17`,
+  3 成员(generic + kunlunxin + metax),字节与 blob 一致。
