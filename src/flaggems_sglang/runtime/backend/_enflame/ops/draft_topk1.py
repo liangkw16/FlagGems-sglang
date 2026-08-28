@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# e6 structure (e6b re-carrier; original upload went stale_after_upload
-# with no platform record and no quota consumption). int64-machine-op-free
-# path. Prior enflame attempts (e1-e5)
+# e6c structure: int64-free meta/draft kept, argmax extraction swapped
+# to the where+min form that the enflame-passed router generic uses
+# (return_indices lowering was the last unproven op on this path after
+# six structure failures)
 # varied only the argmax kernels while the meta kernel (int64 load/add/store)
 # and draft kernel (mixed int64/int32 where) stayed byte-identical and every
 # attempt hit Pipeline run failed. This variant keeps all compute in
@@ -56,17 +57,12 @@ def _draft_topk1_scan_kernel(
             mask=mask,
             other=-float("inf"),
         )
-        chunk_max, chunk_idx = tl.max(
-            values,
-            axis=0,
-            return_indices=True,
-            return_indices_tie_break_left=True,
+        chunk_max = tl.max(values, axis=0)
+        chunk_idx = tl.min(
+            tl.where(values == chunk_max, offsets, vocab_size), axis=0
         )
         tl.store(chunk_values_ptr + tile, chunk_max)
-        tl.store(
-            chunk_indices_ptr + tile,
-            (chunk * BLOCK_V + chunk_idx).to(tl.int32),
-        )
+        tl.store(chunk_indices_ptr + tile, chunk_idx.to(tl.int32))
 
 
 @triton.jit
@@ -88,12 +84,8 @@ def _draft_topk1_finalize_kernel(
             mask=mask,
             other=-float("inf"),
         )
-        best, chunk_sel = tl.max(
-            values,
-            axis=0,
-            return_indices=True,
-            return_indices_tie_break_left=True,
-        )
+        best = tl.max(values, axis=0)
+        chunk_sel = tl.min(tl.where(values == best, offsets, n_chunks), axis=0)
         idxs = tl.load(chunk_indices_ptr + base + offsets, mask=mask, other=0)
         top_index = tl.sum(tl.where(offsets == chunk_sel, idxs, 0), axis=0)
         pair = tl.arange(0, 2)
