@@ -131,8 +131,8 @@ def _router_softmax_topk_kernel(
         for slot in tl.static_range(TOPK):
             cand = tl.where(selected, -float("inf"), logits)
             cand_value = tl.max(cand, axis=0)
-            cand_index = tl.max(
-                tl.where(cand == cand_value, experts, -1), axis=0
+            cand_index = tl.min(
+                tl.where(cand == cand_value, experts, n_experts), axis=0
             )
             selected = selected | (experts == cand_index)
             if slot == 0:
@@ -173,7 +173,9 @@ def fused_moe_router_cudacore(
     if n_rows == 0:
         return topk_weights, topk_ids
 
-    n_splits = max(1, min(triton.cdiv(hidden_dim, 512), 8))
+    n_splits = 1  # ascend e7: sequential K accumulation mirrors the
+    # reference matmul rounding; split-K partials flipped boundary
+    # pairs on huawei (T27 e6 platform-verified fix)
     k_chunk = triton.cdiv(hidden_dim, n_splits)
     partials = torch.empty(
         (n_splits, n_rows, n_experts), dtype=torch.float32, device=x.device
