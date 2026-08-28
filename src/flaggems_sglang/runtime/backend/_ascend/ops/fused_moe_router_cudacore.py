@@ -16,6 +16,9 @@ import torch
 import triton
 import triton.language as tl
 
+# e8: dot-free FMA GEMM (sequential K, one fp32 FMA per k) to probe
+# the huawei ids mismatch: either ieee-dot lowering numerics or
+# accumulation-order divergence vs the reference matmul.
 _BLOCK_B = 64
 _BLOCK_E = 64
 _BLOCK_K = 64
@@ -53,20 +56,18 @@ def _router_gemm_splitk_kernel(
         k_end = tl.minimum(k_begin + k_chunk, hidden_dim)
 
         acc = tl.zeros((BLOCK_B, BLOCK_E), dtype=tl.float32)
-        for k_start in tl.range(k_begin, k_end, BLOCK_K):
-            ks = k_start + tl.arange(0, BLOCK_K)
-            k_mask = ks < k_end
-            x_tile = tl.load(
-                x_ptr + rows[:, None] * hidden_dim + ks[None, :],
-                mask=row_mask[:, None] & k_mask[None, :],
+        for k in tl.range(k_begin, k_end):
+            x_col = tl.load(
+                x_ptr + rows[:, None] * hidden_dim + k,
+                mask=row_mask[:, None],
                 other=0.0,
             ).to(tl.float32)
-            w_tile = tl.load(
-                w_ptr + experts[:, None] * hidden_dim + ks[None, :],
-                mask=expert_mask[:, None] & k_mask[None, :],
+            w_row = tl.load(
+                w_ptr + experts[None, :] * hidden_dim + k,
+                mask=expert_mask[None, :],
                 other=0.0,
             ).to(tl.float32)
-            acc += tl.dot(x_tile, tl.trans(w_tile), input_precision="ieee")
+            acc += x_col * w_row
 
         tl.store(
             partials_ptr
