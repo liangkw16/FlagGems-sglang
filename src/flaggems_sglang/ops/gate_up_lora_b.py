@@ -141,7 +141,7 @@ def gate_up_lora_b(x, gate_up_lora_b, batch_info, output_dim, base_output):
         return output
 
     block_s = 64
-    block_n = 64
+    block_n = 128
     block_k = 64
     grid = (
         triton.cdiv(max_len, block_s) * triton.cdiv(output_dim, block_n),
