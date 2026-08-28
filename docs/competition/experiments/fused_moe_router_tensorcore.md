@@ -222,3 +222,20 @@ B=0;70000 行折叠。
 - e6 内容(n_splits=1)换注释载体重投,探昆仑评测窗口。
 - source commit `6f2ce2a`;ZIP SHA-256
   `427937028c84fb6b30ed4b36ba0c122ada3805da3975d39ed3014848988a3fd5`。
+
+## kernelgen MCP 轮负结果(2026-08-29 06:0x)
+
+- 用户指示 kernelgen mcp 优化第三批;目标选 T27 generic(华为/天数走
+  vendor,改动零正确性风险;muxi/海光/燧原/card_a/b 吃 generic)。
+  工具链:kernelgen-server JSON-RPC optimize_kernel,RTX 5070 Ti 代理,
+  12 shape 门控+AB/BA 基准(目录 log/kernelgen-round-t27/)。
+- HEAD 基线 geomean **0.8399x**(vs torch 参考,12 shape);
+  预注册提交信号 ≥1.08x。
+- 三轮 MCP 候选全部否决:iter1 融合 kernel smem 超限(278KB>101KB);
+  iter2 修复后 0.3857x(大 B 全面回退至 0.10–0.4x);iter3 按指令
+  "HEAD split-K 仅留大 B + 融合只留 n_rows≤32"仍 0.6090x(split 路径
+  仍回退)。唯一真实赢面:融合单 kernel 在 launch-bound 小 B
+  (7x64x192 2.01x vs 1.45x),不足以支撑整题提交。
+- 结论:fp32-ieee dot vs cuBLAS 的 GEMM 差距为结构性的;当前 HEAD
+  (e7 平台结构)即代理可见轴的局部最优。与 T30 轮先例一致,本轮
+  无候选、不消耗平台提交。报告 log/kernelgen-round-t27/final_report.md。
