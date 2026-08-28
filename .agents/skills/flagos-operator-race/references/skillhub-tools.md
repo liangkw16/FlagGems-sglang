@@ -9,26 +9,32 @@
 
 ### 启用前提
 
-所有生成必须走 `kernelgen-mcp` MCP 服务，配置写入 `.mcp.json`：
+所有生成必须走 `kernelgen-mcp` MCP 服务，配置写入 `.mcp.json`（已配置，
+Token 属个人凭据，`.mcp.json` 在 `.git/info/exclude` 本地排除，不入库）：
 
 ```json
 {
   "mcpServers": {
     "kernelgen-server": {
-      "type": "sse",
-      "url": "https://kernelgen.flagos.io/sse/",
+      "type": "http",
+      "url": "https://kernelgen.flagos.io/sse",
       "headers": {"Authorization": "Bearer <TOKEN>"}
     }
   }
 }
 ```
 
-未配置时按 `kernelgen-flagos/kernelgen-mcp-setup.md` 引导用户到
-https://kernelgen.flagos.io/mcp 注册取 Token；Token 未提供前不手写代码
-替代、不静默跳过。MCP 生成代码视为未验证草稿。注意本仓库布局是
-`src/flaggems_sglang/`，不是上游 `src/flag_gems/`，kernelgen 自动检测
-会按通用流程路由；其 FlagGems 专用子文档中的注册、测试布局不适用，
-落盘位置以本仓产物布局为准。
+端点以实测为准（2026-08-28）：`https://kernelgen.flagos.io/sse`（无尾斜杠，
+Streamable HTTP 传输，仅收 POST；skill 原文档的 `type: "sse"` 和尾斜杠写法
+会 307 跳转到网页导致连不上）。注册入口 https://kernelgen.flagos.io/mcp，
+手机号验证码登录，未注册号码自动注册并需填一次试用申请（姓名/单位/机构
+邮箱/用途）。Token 登录后存在页面 localStorage `userLoginInfo.mcp_token`。
+Token 未提供前不手写代码替代、不静默跳过。MCP 生成代码视为未验证草稿。
+注意本仓库布局是 `src/flaggems_sglang/`，不是上游 `src/flag_gems/`，
+kernelgen 自动检测会按通用流程路由；其 FlagGems 专用子文档中的注册、
+测试布局不适用，落盘位置以本仓产物布局为准。官网标称支持芯片为 CUDA +
+华为/天数/海光/沐曦/摩尔/曦望，不含昆仑芯和寒武纪，昆仑芯 vendor 优化
+用不上 MCP 通道。
 
 ### 闭环内用法
 
