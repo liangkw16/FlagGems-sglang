@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Kunlunxin vendor v3 (e7): compile-minimal clean-room structure. All five
+# Kunlunxin vendor v3 (e7; e8 re-carrier for the kunlun eval window).
+# All five
 # prior kunlun attempts (3D grid generic, BLOCK_N 128 generic, 1D fold,
 # host-resolved dot v1/v2) hit the same inductor compile-worker crash while
 # num_stages=2 and tl.dot stayed constant on this path. This variant removes
@@ -64,10 +65,7 @@ def _gate_up_lora_b_kernel(
     accumulator = tl.zeros((BLOCK_S, BLOCK_N), dtype=tl.float32)
     for k in tl.range(0, RANK):
         x_col = tl.load(
-            x_ptr
-            + rows[:, None] * (2 * RANK)
-            + slice_id * RANK
-            + k,
+            x_ptr + rows[:, None] * (2 * RANK) + slice_id * RANK + k,
             mask=token_mask[:, None],
             other=0.0,
         ).to(tl.float32)
