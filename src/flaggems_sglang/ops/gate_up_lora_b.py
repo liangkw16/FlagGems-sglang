@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# e3-retry-carrier: resubmit after kunlun service recovery (platform ticket 2026-08-28)
 import triton
 import triton.language as tl
 
