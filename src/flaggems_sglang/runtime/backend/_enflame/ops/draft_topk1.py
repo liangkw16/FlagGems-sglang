@@ -12,6 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# e6 structure: int64-machine-op-free path. Prior enflame attempts (e1-e5)
+# varied only the argmax kernels while the meta kernel (int64 load/add/store)
+# and draft kernel (mixed int64/int32 where) stayed byte-identical and every
+# attempt hit Pipeline run failed. This variant keeps all compute in
+# int32/fp: int64 outputs are written through torch int32 views as lo/hi
+# pairs, and the draft write is a pure copy plus an int32 column scatter
+# (no int64 ops, no mixed-dtype where, no int64 conversions).
+
 import torch
 import triton
 import triton.language as tl
@@ -19,6 +27,7 @@ import triton.language as tl
 _BLOCK_V = 1024
 _BLOCK_C = 1024
 _BLOCK_FLAT = 1024
+_BLOCK_R = 128
 _MAX_GRID = 65535
 
 
@@ -62,7 +71,7 @@ def _draft_topk1_scan_kernel(
 def _draft_topk1_finalize_kernel(
     chunk_values_ptr,
     chunk_indices_ptr,
-    out_index_ptr,
+    out_index_i32_ptr,
     n_rows,
     n_chunks,
     BLOCK_C: tl.constexpr,
@@ -85,13 +94,15 @@ def _draft_topk1_finalize_kernel(
         )
         idxs = tl.load(chunk_indices_ptr + base + offsets, mask=mask, other=0)
         top_index = tl.sum(tl.where(offsets == chunk_sel, idxs, 0), axis=0)
-        tl.store(out_index_ptr + row, top_index.to(tl.int64))
+        pair = tl.arange(0, 2)
+        lohi = tl.where(pair == 0, top_index, 0)
+        tl.store(out_index_i32_ptr + row * 2 + pair, lohi)
 
 
 @triton.jit
 def _draft_topk1_meta_kernel(
-    positions_ptr,
-    out_positions_ptr,
+    positions_i32_ptr,
+    out_positions_i32_ptr,
     ones_ptr,
     n_rows,
     BLOCK: tl.constexpr,
@@ -101,16 +112,65 @@ def _draft_topk1_meta_kernel(
     for start in range(pid * BLOCK, n_rows, step):
         offsets = start + tl.arange(0, BLOCK)
         mask = offsets < n_rows
-        pos = tl.load(positions_ptr + offsets, mask=mask, other=0)
-        tl.store(out_positions_ptr + offsets, pos + 1, mask=mask)
+        lo = tl.load(positions_i32_ptr + 2 * offsets, mask=mask, other=0)
+        hi = tl.load(positions_i32_ptr + 2 * offsets + 1, mask=mask, other=0)
+        carry = (lo == -1).to(tl.int32)
+        tl.store(out_positions_i32_ptr + 2 * offsets, lo + 1, mask=mask)
+        tl.store(out_positions_i32_ptr + 2 * offsets + 1, hi + carry, mask=mask)
         tl.store(ones_ptr + offsets, 1.0, mask=mask)
 
 
 @triton.jit
-def _draft_topk1_draft_kernel(
+def _draft_topk1_copy_kernel(
     src_ptr,
     dst_ptr,
-    topk_index_ptr,
+    n_elements,
+    BLOCK: tl.constexpr,
+):
+    pid = tl.program_id(0)
+    step = tl.num_programs(0) * BLOCK
+    for start in range(pid * BLOCK, n_elements, step):
+        offsets = start + tl.arange(0, BLOCK)
+        mask = offsets < n_elements
+        value = tl.load(src_ptr + offsets, mask=mask, other=0)
+        tl.store(dst_ptr + offsets, value, mask=mask)
+
+
+@triton.jit
+def _draft_topk1_scatter_kernel(
+    out_i32_ptr,
+    topk_index_i32_ptr,
+    n_rows,
+    draft_width,
+    column,
+    WIDE: tl.constexpr,
+    BLOCK: tl.constexpr,
+):
+    pid = tl.program_id(0)
+    step = tl.num_programs(0) * BLOCK
+    if WIDE == 1:
+        row_stride = 2 * draft_width
+        col0 = 2 * column
+        width = 2
+    else:
+        row_stride = draft_width
+        col0 = column
+        width = 1
+    for start in range(pid * BLOCK, n_rows, step):
+        rows = start + tl.arange(0, BLOCK)
+        mask = rows < n_rows
+        pair = tl.arange(0, 2)
+        idx = tl.load(topk_index_i32_ptr + 2 * rows, mask=mask, other=0)
+        dst = out_i32_ptr + rows[:, None] * row_stride + col0 + pair[None, :]
+        vals = tl.where(pair[None, :] == 0, idx[:, None], 0)
+        tl.store(dst, vals, mask=mask[:, None] & (pair[None, :] < width))
+
+
+@triton.jit
+def _draft_topk1_patch_kernel_fallback(
+    src_ptr,
+    dst_ptr,
+    topk_index_i32_ptr,
     n_elements,
     draft_width,
     column,
@@ -124,11 +184,10 @@ def _draft_topk1_draft_kernel(
         row = offsets // draft_width
         col = offsets - row * draft_width
         value = tl.load(src_ptr + offsets, mask=mask, other=0)
-        topk = tl.load(topk_index_ptr + row, mask=mask, other=0)
+        topk = tl.load(topk_index_i32_ptr + 2 * row, mask=mask, other=0)
+        topk = topk.to(dst_ptr.dtype.element_ty)
         value = tl.where(col == column, topk, value)
-        tl.store(
-            dst_ptr + offsets, value.to(dst_ptr.dtype.element_ty), mask=mask
-        )
+        tl.store(dst_ptr + offsets, value, mask=mask)
 
 
 def draft_topk1(
@@ -146,6 +205,9 @@ def draft_topk1(
         (n_rows, 1), dtype=torch.float32, device=logits.device
     )
     out_positions = torch.empty_like(positions)
+    topk_index_i32 = topk_index.view(torch.int32)
+    positions_i32 = positions.view(torch.int32)
+    out_positions_i32 = out_positions.view(torch.int32)
     if n_rows > 0:
         n_chunks = triton.cdiv(vocab_size, _BLOCK_V)
         chunk_values = torch.empty(
@@ -173,15 +235,15 @@ def draft_topk1(
         _draft_topk1_finalize_kernel[(min(n_rows, _MAX_GRID),)](
             chunk_values,
             chunk_indices,
-            topk_index,
+            topk_index_i32,
             n_rows,
             n_chunks,
             BLOCK_C=max(block_c, 1),
         )
         grid_flat = (min(triton.cdiv(n_rows, _BLOCK_FLAT), _MAX_GRID),)
         _draft_topk1_meta_kernel[grid_flat](
-            positions,
-            out_positions,
+            positions_i32,
+            out_positions_i32,
             topk_p,
             n_rows,
             BLOCK=_BLOCK_FLAT,
@@ -194,15 +256,34 @@ def draft_topk1(
         n_elements = draft.numel()
         if n_elements > 0:
             grid = (min(triton.cdiv(n_elements, _BLOCK_FLAT), _MAX_GRID),)
-            _draft_topk1_draft_kernel[grid](
+            _draft_topk1_copy_kernel[grid](
                 draft,
                 out_draft_tokens,
-                topk_index,
                 n_elements,
-                draft.shape[-1],
-                int(draft_token_column),
                 BLOCK=_BLOCK_FLAT,
             )
+            if draft.dtype in (torch.int32, torch.int64) and n_rows > 0:
+                wide = 1 if draft.dtype == torch.int64 else 0
+                grid_r = (min(triton.cdiv(n_rows, _BLOCK_R), _MAX_GRID),)
+                _draft_topk1_scatter_kernel[grid_r](
+                    out_draft_tokens.view(torch.int32),
+                    topk_index_i32,
+                    n_rows,
+                    draft.shape[-1],
+                    int(draft_token_column),
+                    WIDE=wide,
+                    BLOCK=_BLOCK_R,
+                )
+            elif draft.dtype not in (torch.int32, torch.int64):
+                _draft_topk1_patch_kernel_fallback[grid](
+                    draft,
+                    out_draft_tokens,
+                    topk_index_i32,
+                    n_elements,
+                    draft.shape[-1],
+                    int(draft_token_column),
+                    BLOCK=_BLOCK_FLAT,
+                )
     return topk_p, topk_index, out_positions, out_draft_tokens
 
 
