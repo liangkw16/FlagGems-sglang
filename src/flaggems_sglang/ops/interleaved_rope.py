@@ -25,7 +25,7 @@ def _interleaved_rope_kernel(
     x_ptr,
     output_ptr,
     n_elements,
-    dim,
+    dim: tl.constexpr,
     bound_height,
     bound_width,
     stream_stride,
