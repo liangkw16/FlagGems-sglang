@@ -155,3 +155,12 @@ grid-stride)是代理可见轴上的局部最优;与榜首 12.5% 差距不可由
 (+1%,低于 1.08 信号)维持不提交。本轮无候选、不消耗提交预算;
 筛选目录 `gpu:/tmp/flagos-kgen.QODZAG`(screening 模式,base
 `b03ea98`)。
+
+## autotune_kernel(华为实机)负结果(2026-08-29 01:2x)
+
+`autotune_kernel` device=huawei 5 轮任务完成:胜出代码为 TLE-DSA 形态
+(`tle.dsa.alloc` UB 缓冲 + `tle.dsa.copy` 逐行搬运 + `torch_npu` 依赖 +
+8 组 autotune 配置),其自测加速比仅 **1.79x**(我方 generic 在平台华为端
+7.26x,口径若可比则更慢)。集成风险(平台编译时长、torch_npu/tle.dsa
+在评测环境的可用性未证)高而收益证据不足,按止损纪律**不采纳**。
+筛选记录:log/kernelgen-round/out_t30_at_huawei.json(job 877a19c9)。

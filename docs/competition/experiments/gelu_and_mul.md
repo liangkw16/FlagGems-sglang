@@ -369,3 +369,11 @@ preflight 全过(额度 30/30 首投);单次 confirm 提交成功,评测入队;
 kernelgen 轮累计:2.436x → 2.7229x(**+11.8%**);与榜首差距 -15.8%
 → **-5.9%**。剩余单芯杠杆:华为 1.35→~2.7(autotune 探索中)、
 昆仑/燧原已封闭。额度剩 29/30。
+
+### autotune_kernel(华为实机)负结果(2026-08-29 01:2x)
+
+device=huawei 5 轮任务:attempt 1–3 通过但自测仅 0.037–0.058x(其
+torch 基准疑为 torch_npu 融合实现,口径不可比),attempt 4 验证失败,
+终版为 TLE + torch_npu 代码,无平台可比证据,**不采纳**。华为端
+1.35x 的进一步提升路径封闭(本轮内)。记录:
+log/kernelgen-round/out_t29_at_huawei.json(job c007b765)。
