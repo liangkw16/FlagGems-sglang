@@ -248,3 +248,26 @@ verification commit:test 沿用 `c4edba73be9e17375b83720f9d53187b1976e854` 中
 - 昆仑最终仍为 inductor 崩溃指纹;T25 终态 **6/8**,预算 5/5 用尽,
   全轴停止。本题为第三批唯一未达 8/8 可能的题(燧原硬性不支持)。
 
+
+## E6:燧原第六种结构——int64 机器运算全消除(2026-08-29)
+
+- 复盘:e1–e5 五种结构只换过 argmax kernel;meta kernel(int64
+  load/add/store)与 draft kernel(int64↔int32 混合 dtype where)五次
+  逐字节不变。e4 纯 where 树(零归约)仍编译失败,排除 argmax 归约
+  本身;E3 曾定位 "finalize i64 标量 store"。结合本战役燧原通过题
+  (T21/T24/T28/T29/T30 + 路由 generic)全部不含 int64 运算与混合
+  dtype where:假设毒点 = 从未被更换的 meta/draft kernel 的 int64
+  机器运算。
+- 单变量改动:`_enflame` 全路径 int32 化——`view(torch.int32)` 把
+  int64 输入输出重解释为 lo/hi 数对(meta:lo+1 进位加;finalize:
+  (idx,0) 2 宽向量 store;draft:纯拷贝 kernel(T30 已证形态)+
+  int32 散布 kernel 替代混合 where,任何 int64 值按位等价);
+  scan/finalize argmax 保持 e5 形态不动。非 int32/64 draft dtype
+  走同 dtype where 兜底 kernel(题面仅 32/64)。
+- screening(同轮同目录):unittest 10/10;`_enflame` vendor 全绿
+  (平局/非连续/int32+int64 draft × 列 0/中/尾/70k 折叠/空输入,
+  输出逐位相等)。
+- source commit `86be97a`(blob SHA `1c9aba6f…`);ZIP
+  `artifacts/competition/draft_topk1/e6-86be97a/`,canonical SHA-256
+  `6b7a947979cf9bf72887e1d208bb815e8d1f1ddeed47d067f93090da8f9252d3`;
+  成员 generic + `_ascend` + `_enflame` + `_kunlunxin`(4,与 E5 一致)。

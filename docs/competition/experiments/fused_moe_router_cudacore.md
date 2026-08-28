@@ -164,3 +164,28 @@ MLIRCompilationError),kunlunxin 评测中。E2 vendor 计划同 T27。
   路由 reduce kernel 在昇腾存在未定位的数值错误,后续若有他人通过证据
   可重启。
 
+
+## E5:ascend 归约 kernel 逐行 1D 重构(2026-08-29)
+
+- 复盘:E2–E4 四轮全部只动 GEMM 侧(精度/tiles/stages),softmax/topk
+  归约 kernel 自 S0 起逐字节未变。归约 kernel 中唯一无平台先例的操作是
+  2D (BLOCK_R, BLOCK_E) tile 上的 `tl.max/tl.min(axis=1)`;对照 T25
+  `_ascend` argmax(1D axis=0 max + where+min 首索引)在华为三次平台
+  通过,T21 `tl.sum` 亦 1D/2D 已证。假设:华为失败面 = 2D axis=1
+  归约在昇腾的执行,与 dot/stages 无关。
+- 单变量改动:`_ascend` 归约 kernel 改为逐行循环(`for row in
+  tl.range(pid, n_rows, n_programs)`),所有归约 1D axis=0
+  (T25 华为已证结构),软封顶 tanh 形式(T24 已证)与索引 where+min
+  (路由 generic 燧原已证)保持不变;GEMM kernel 与 launch
+  (ieee + stages=1)不动。
+- screening(2026-08-29 01:0x,gpu RTX 5070 Ti):
+  `gpu:/tmp/flagos-router-asc.6i1BpG`;unittest 8/8;
+  `_ascend` vendor 全矩阵(fp32/fp16/bf16 × 6 shape × topk ×
+  softcap/bias × 平局/非连续/70k 折叠)通过,仅 1 例 fp16 k8 精确平局
+  ids 翻转——与旧 kernel 同种子同 row 复现(fp32 logits slot8==slot9
+  完全相等),属 torch.topk 平局顺序设备细节,非本改动回归。
+- source commit `77c34c8`(blob SHA `6f5cf2cb…` 与 screening 逐字节一致);
+  ZIP `artifacts/competition/fused_moe_router_cudacore/e5-77c34c8/`,
+  canonical SHA-256 `a0d5f474a7ea08f4ab650548e77545dc034f182514b30be68c2fa1c7d601b3c7`;
+  成员 generic + `_ascend` + `_iluvatar`(3,与 E4 集合一致)。
+- release 验证:见文末 release 记录。

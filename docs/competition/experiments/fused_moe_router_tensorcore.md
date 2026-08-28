@@ -180,3 +180,16 @@ B=0;70000 行折叠。
   路由 reduce kernel 在昇腾存在未定位的数值错误,后续若有他人通过证据
   可重启。
 
+
+## E5:ascend 归约 kernel 逐行 1D 重构(2026-08-29)
+
+- 同 T26 e5 假设与改动:`_router_softmax_top2_kernel` 改逐行循环,
+  best/second 两轮均 1D axis=0 归约(T25 华为已证结构);GEMM
+  (ieee + stages=1)不动。
+- screening 同轮同目录:unittest 8/8;`_ascend` vendor 全矩阵通过
+  (近平局/非连续/70k 折叠含 topk≤2 分支);唯一 ids 翻转例同 T26,
+  为旧新共有的精确平局背景噪声。
+- source commit `2650ee1`(blob SHA `964ff259…`);ZIP
+  `artifacts/competition/fused_moe_router_tensorcore/e5-2650ee1/`,
+  canonical SHA-256 `3b9302b0a889616791bbd4c764674dcf13647779f9512a7641127d9c5093ff23`;
+  成员 generic + `_ascend` + `_iluvatar`(3)。
