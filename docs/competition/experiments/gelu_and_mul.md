@@ -192,3 +192,67 @@ e1 单变量 BLOCK 1024→2048;commit c866cf6;
 - **终态:团队最佳 = E2 的 2.436x 8/8 valid**;燧原 ~0.2x 短板未解,
   该芯对此 kernel 的有效调参轴(grid、BLOCK 12K/32K)已证伪。
 
+
+## E5:kernelgen MCP 结构轮(2026-08-28 晚)
+
+背景:用户指示用 kernelgen 优化第三批;T29 是仅有的两道 8/8 且有排名
+空间的题之一(榜首 2.8921x vs 我方 2.436x)。预算说明:E3/E4 后账面
+5/5 已尽,本轮为用户新指令重开的优化轮,单发提交。
+
+### kernelgen MCP 循环(端点 `https://kernelgen.flagos.io/sse`,
+Streamable HTTP,`optimize_kernel` 工具)
+
+- 迭代 1(device=huawei,完整跨芯上下文):(row, col-tile) 映射重构,
+  capped 1D grid + grid-stride,除法从逐元素降为每 512/1024 元素块一次,
+  gate/up 行内连续双载,A&S 7.1.26 erf 替代 `tl.math.erf`
+  (E2 已证 libdevice erf 使昆仑编译崩溃;A&S 昆仑 8/8 实证)。
+- 本地单变量 BLOCK_COL 扫描(NVIDIA 代理):256→2.9746x、512→3.0116x、
+  **1024→3.1817x**、2048→2.8712x(baseline HEAD 2.8132x)。
+- 迭代 2(ROWS_PER_PROG=2 + evict_last):2.8436/2.8457x,回退,否决。
+- c4(结构 + BLOCK_COL 1024)完整 unittest 8/8 绿(screening)。
+
+### T30 同轮负结果(详见 interleaved_rope.md)
+
+三轮 MCP 结构全部否决:2D+int64(14.77→5.14x)、行条带(→4.73x)、
+三元组(dim%3≠0 时 flat%3≠d%3 数学错误)。
+
+### E5 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| source/verification commit | `b899c40` |
+| generic `gelu_and_mul.py` SHA-256 | `fca5065829b8e64e110c2ab923d10f73de7ee727cdc9b5aa2face357acf21fb5` |
+| vendor `gelu_and_mul_kunlunxin.py` SHA-256 | `41f43bdcf97dc81748e5f898de301ff11bd4e4a01e8bbf8ae2266fba91ed7150` |
+| 测试 | 沿用 `tests/test_gelu_and_mul.py`(`9605dba6…`,契约未变) |
+| ZIP | `artifacts/competition/gelu_and_mul/e5-b899c40/gelu_and_mul.zip` |
+| ZIP SHA-256 | `7544263e11c2e0d983e6122c113af48dc3fbb3867a9c29636c09f5f32a7f145c` |
+| ZIP 内容 | `gelu_and_mul.py` + `gelu_and_mul_kunlunxin.py` 各 3134 字节,共 6522 字节 |
+| release 目录 | `gpu:/tmp/flagos-gelu-e5-rel.HlGwMi`,mode 0700,文件取自 Git 对象 |
+| screening 目录 | `gpu:/tmp/flagos-kgen.QODZAG` |
+
+配置:generic BLOCK_COL=1024;`_kunlunxin` vendor 同骨架 BLOCK_COL=2048
+(昆仑平台实证 BLOCK 峰值);删除 E3/E4 证伪的 `_ascend`/`_enflame`
+vendor(回归 E2 的 generic+kunlunxin 双文件形态)。
+
+### release 验证(取自 Git 对象)
+
+- py_compile ✓;isort/flake8 ✓;black 远端未装(工具漂移记录,本地
+  black 25.12.0 通过);unittest **8/8 OK**;lint 后哈希复核 ✓。
+- 基准(wrapper-inclusive,五组 AB/BA p50,同进程):E6 2.9096x vs
+  E2 2.8101x = **+3.5%**;头对头复测 E6 2.9175x vs E2 2.8146x(+3.6%),
+  c4 原字节 2.9154x(风格重排零代价)。
+- 逐 shape:小 shape +14~20%(16×96:2.26→2.58;64×128:2.02→2.44)、
+  fp32 +9~13%,大 shape 持平。screening 轮 3.18x 为会话级方差,
+  以 release 模式 +3.6% 为准。
+- 机制:除法逐元素→逐块、A&S erf 去 libdevice;代理(NVIDIA)只能
+  见小 shape/fp32 收益,**弱芯(华为 0.697x/昆仑 0.488x/燧原 0.194x)
+  的整数除法与 erf lowering 成本是本候选的真实赌注**,代理不可测。
+- 平台按团队最佳计分,追投无下行风险。
+
+### 提交计划
+
+preflight tuple:season 2、race `782kzq4m`、account `15600308080`、
+team `SoulCoder`、batch 3、task 29、tid `s2t1op029`、operator
+`gelu_and_mul`、stage `e5`、commit `b899c40`、ZIP SHA-256
+`7544263e11c2e0d983e6122c113af48dc3fbb3867a9c29636c09f5f32a7f145c`。
+门禁全过即按项目 Skill 自动单次提交。

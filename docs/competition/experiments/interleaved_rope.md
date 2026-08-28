@@ -132,3 +132,26 @@ Triton 3.7.1)。lint:isort/flake8 远端通过,black 25.12.0 本地通过
   内存成本掩盖,纯拷贝 kernel 已近带宽上限。不消耗提交预算,变更保留在
   工作区供后续批次参考。
 
+
+## kernelgen MCP 结构轮负结果(2026-08-28 晚)
+
+用户指示用 kernelgen 优化第三批;T30(8/8 valid、25.835x,榜首 29.077x)
+为一目标。三轮 `optimize_kernel`(device=nvidia,带完整跨芯约束上下文)
+全部否决,均为 NVIDIA 代理(RTX 5070 Ti)wrapper-inclusive 五组 AB/BA:
+
+1. **2D 网格 + int64 索引**(小 shape 走 (row-tile × col-tile) 2D、列流
+   摊销;大 shape flat):geomean 14.77x → **5.14x**。int64 逐元素乘加
+   拖垮大 shape;小 shape 无收益(20.6x vs 20.8x,纯 launch-bound)。
+2. **行条带 1D**(block 级除法 + 流向量按程序摊销,含 int64 清理版):
+   → **4.73x**。static_range 行循环与 next_pow2(dim) 缩小块一并拖垮;
+   清理版(纯 int32、无显式 launch 参数)同样回退。
+3. **三元组形式**(利用 bound=3k、d%3==0 恒流 0,消全部 %3///3):
+   数学错误——flat%3==d%3 仅当 dim%3==0;题面 D=512/2048/4096 均不
+   整除,直接否决未跑基准。
+
+结论:HEAD 平铺 kernel(BLOCK 1024、constexpr dim、1D capped
+grid-stride)是代理可见轴上的局部最优;与榜首 12.5% 差距不可由代理
+可见结构/参数轴解释(疑在逐芯差异或 wrapper 之外)。E1 constexpr
+(+1%,低于 1.08 信号)维持不提交。本轮无候选、不消耗提交预算;
+筛选目录 `gpu:/tmp/flagos-kgen.QODZAG`(screening 模式,base
+`b03ea98`)。

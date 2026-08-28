@@ -153,6 +153,8 @@ T08/T09/T17 按当时的 3 次规则执行）。终态：
 [`gate_up_lora_b`](gate_up_lora_b.md)、[`gelu_and_mul`](gelu_and_mul.md)、
 [`interleaved_rope`](interleaved_rope.md)。
 
+2026-08-28 晚 kernelgen 轮:T29 追加 e5(commit `b899c40`,结构重构
++3.6% 代理、弱芯赌注),T30 三轮结构尝试全部负结果(详见各自账本)。
 2026-08-27 定稿的作战方案:全 6 题;主攻顺序 `29 → 30 → 25 → 27 → 26 → 28`;
 每题 5 次提交预算,S0 探路 → 最多 3 次 vendor 单变量迭代 → 留 1 次截止前
 回归储备,同指纹失败连续 2 次提前停;dot 题型 generic 用 fp32-ieee 操作数 +
