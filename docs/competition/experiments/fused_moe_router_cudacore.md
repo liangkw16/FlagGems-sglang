@@ -189,3 +189,21 @@ MLIRCompilationError),kunlunxin 评测中。E2 vendor 计划同 T27。
   canonical SHA-256 `a0d5f474a7ea08f4ab650548e77545dc034f182514b30be68c2fa1c7d601b3c7`;
   成员 generic + `_ascend` + `_iluvatar`(3,与 E4 集合一致)。
 - release 验证:见文末 release 记录。
+
+## E5 平台结果(sub 6187,2026-08-29 02:2x 终态前)
+
+- 华为仍 topk ids 失配 → 1D/2D 归约结构假设证伪;其余六芯通过
+  (天数 0.9234、沐曦 1.0924、燧原 0.1924、海光 0.9392、
+  card_a 0.5008、card_b 1.0216);昆仑 waiting_callback。
+- 失败面再收窄:归约 axes 不是根因;weights 全过仅 ids 失配,
+  指向边界 logit 对的**排序差异**(精确平局取序或 split-K 舍入翻转)。
+
+## E6:平局取后索引对照实验(sub 待填,2026-08-29 02:4x)
+
+- 单变量:`_ascend` 归约 tie-break 首索引 → 末索引
+  (`tl.max(where(cand==cand_value, experts, -1))`),与 T27 e6 的
+  n_splits=1 变体构成同指纹 A/B 对照。
+- 代理:unittest 8/8;仅 fp16 精确平局例翻转(设计内,5.0-0.001
+  在 fp16 即 5.0);非平局全对。
+- source commit `5c510f5`;ZIP `e6-5c510f5`,SHA-256
+  `7ede5e938356952b286831cb8b95024b39a95879d0af23b2dc5118573c612473`。

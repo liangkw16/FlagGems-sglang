@@ -193,3 +193,19 @@ B=0;70000 行折叠。
   `artifacts/competition/fused_moe_router_tensorcore/e5-2650ee1/`,
   canonical SHA-256 `3b9302b0a889616791bbd4c764674dcf13647779f9512a7641127d9c5093ff23`;
   成员 generic + `_ascend` + `_iluvatar`(3)。
+
+## E5 平台结果(sub 6190,2026-08-29 02:2x 终态前)
+
+- 同 T26:华为仍 ids 失配,1D 归约假设证伪;六芯通过(天数 1.1926、
+  沐曦 1.4372、燧原 0.1972、海光 1.7986、card_a 0.755、card_b 1.287);
+  昆仑 waiting_callback。
+
+## E6:顺序 K 累加对照实验(sub 待填,2026-08-29 02:4x)
+
+- 单变量:`_ascend` wrapper `n_splits=1`(去掉 split-K 部分和,
+  累加顺序贴近参考 matmul 的顺序舍入)。与 T26 e6 后索引平局变体
+  构成 A/B 对照:谁修复华为,根因即谁。
+- 代理:unittest 8/8 全对(平局规则未变);64x256x4096 代理 0.129x
+  (并行度下降,昇腾 perf 风险已知,correctness first)。
+- source commit `3e81a5b`;ZIP `e6-3e81a5b`,SHA-256
+  `27f4c615f61c96a59fba688810465e16352f62b6dc9c47ca37d712c6efcf7cff`。
