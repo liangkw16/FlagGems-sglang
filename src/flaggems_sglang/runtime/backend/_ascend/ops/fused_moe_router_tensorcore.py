@@ -179,8 +179,9 @@ def fused_moe_router_tensorcore(
     if n_rows == 0:
         return topk_weights, topk_ids
 
-    n_splits = 1  # ascend e6: sequential K accumulation to mirror the
-    # reference matmul rounding (split-K partials flipped boundary pairs)
+    n_splits = 1  # ascend e6/e7: sequential K accumulation mirrors the
+    # reference matmul rounding (split-K partials flipped boundary pairs
+    # on huawei; e7 = re-carrier for the kunlun eval window)
     k_chunk = triton.cdiv(hidden_dim, n_splits)
     partials = torch.empty(
         (n_splits, n_rows, n_experts), dtype=torch.float32, device=x.device
