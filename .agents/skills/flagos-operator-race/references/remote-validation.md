@@ -60,3 +60,9 @@ release，不能只重打包后沿用旧证据。
 代理只验证实际可执行的 generic/NVIDIA 路径；其他 vendor 路径若不能在该环境执行，
 只做静态检查并明确标记 runtime 未验证。日志和临时目录至少保留到对应实验账本
 commit 完成；若要删除，先确认账本已包含复现实验所需的命令、版本、哈希和结果。
+
+需要新增非 NVIDIA 远端验证环境时，先按
+[SkillHub 工具集成](skillhub-tools.md)的 gpu-container-setup 小节做 vendor
+检测、镜像选型和挂载（昇腾/海光/Metax/天数的设备与坑见该文档），容器内
+跑 `validate_pytorch.py` 通过后再套用本文件的目录、哈希和超时纪律；昆仑芯
+不适用该 skill，沿用现有流程。
