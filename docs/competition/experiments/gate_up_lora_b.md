@@ -235,3 +235,14 @@ Python error: Aborted)。
 - 判读:e7 昆仑通过 → 8/8 valid 且 ~15x 登顶(榜首 11.499x);
   仍同指纹 → 与内容无关的最后疑点排除,工单证据升级为
   "六结构两时代同指纹"。
+
+### E7 平台终态(sub 6194,2026-08-29 03:0x)与 E8 重投(sub 6223)
+
+- E7:七芯第六次全过(华为 22.389x);**昆仑同一 inductor compile-worker
+  崩溃指纹**——净室 FMA 无 dot + stages=1 + int32 也崩,"编译复杂度/
+  dot/stages"假设全部排除;同日 T29 gelu 昆仑正常通过,且 T28 榜首
+  (HelloWorldTJU 11.499x)为近期 8/8 达标 → 昆仑评测窗口对该题型
+  为概率性故障,非内容阻断。
+- E8:e7 内容(v3 FMA)换载体重投,探昆仑窗口。
+  source commit `01895cf`;ZIP SHA-256
+  `e17d6e1cc0feb6e47dfbed1914e4ebd06d11079bdcfb5c3744f99bcfc4b332f9`。

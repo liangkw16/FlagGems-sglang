@@ -211,3 +211,23 @@ MLIRCompilationError),kunlunxin 评测中。E2 vendor 计划同 T27。
 ### E6 平台结果(sub 6201,华为芯已完成)
 
 - **华为仍 ids 失配** → 平局取序假设排除。六芯通过,昆仑 waiting。
+
+### E7 平台结果(sub 6212)
+
+- 华为仍 ids 失配(case_idx=7,E=256/topk=8)→ n_splits=1 在 cudacore
+  上不充分;T27 同修复却通过 → T26 存在 T27 没有的额外失败面。
+  GEMM kernel 两题逐字节相同 → 剩余差异:topk 8 轮选 vs ≤2、
+  非 64 倍 H 的 k-mask 路径(仅 T27 合同排除)、或 case7 恰好踩
+  dot 累加与参考 matmul 的舍入差。
+- 昆仑 waiting_callback。
+
+### E8:dot-free FMA GEMM 探针(sub 6228,2026-08-29 03:4x)
+
+- 单变量:`_ascend` GEMM 内 `tl.dot(ieee)` → 逐 k 顺序 FMA
+  (`tl.range(k_begin,k_end)`,(B,1)×(1,E) 广播乘加),一次覆盖
+  "dot lowering 数值 bug" 与 "累加顺序 vs 参考 matmul 舍入" 两个
+  剩余假设。
+- 代理:全矩阵对(唯一失败为已知 fp16 精确平局信息性);
+  代理 perf 0.055–0.58x,华为 0.1x 阈值有风险,correctness first。
+- source commit `04b97cb`;ZIP `e8-04b97cb`,SHA-256
+  `6bbbd6376b5ce5e56b25b7e8e4557b9fb99762036fed3cc69a83f5a3aef55877`。
