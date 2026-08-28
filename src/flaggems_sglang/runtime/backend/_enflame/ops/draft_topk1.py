@@ -25,98 +25,67 @@ _MAX_GRID = 65535
 @triton.jit
 def _draft_topk1_scan_kernel(
     logits_ptr,
-    out_index_ptr,
+    chunk_values_ptr,
+    chunk_indices_ptr,
     n_rows,
     vocab_size,
+    n_chunks,
     BLOCK_V: tl.constexpr,
+    BLOCK_C: tl.constexpr,
 ):
-    row = tl.program_id(0)
-    best_val = tl.full((1,), -float("inf"), tl.float32)
-    best_idx = tl.zeros((1,), dtype=tl.int32)
-    for v_start in tl.range(0, vocab_size, BLOCK_V):
-        offsets = v_start + tl.arange(0, BLOCK_V)
+    n_tiles = n_rows * n_chunks
+    n_programs = tl.num_programs(0)
+    for tile in tl.range(tl.program_id(0), n_tiles, n_programs):
+        row = tile // n_chunks
+        chunk = tile - row * n_chunks
+        offsets = chunk * BLOCK_V + tl.arange(0, BLOCK_V)
         mask = offsets < vocab_size
         values = tl.load(
             logits_ptr + row * vocab_size + offsets,
             mask=mask,
             other=-float("inf"),
         )
-        indices = offsets.to(tl.int32)
-        v_pair = tl.reshape(values, (512, 2))
-        i_pair = tl.reshape(indices, (512, 2))
-        va, vb = tl.split(v_pair)
-        ia, ib = tl.split(i_pair)
-        take = va >= vb
-        values = tl.where(take, va, vb)
-        indices = tl.where(take, ia, ib)
-        v_pair = tl.reshape(values, (256, 2))
-        i_pair = tl.reshape(indices, (256, 2))
-        va, vb = tl.split(v_pair)
-        ia, ib = tl.split(i_pair)
-        take = va >= vb
-        values = tl.where(take, va, vb)
-        indices = tl.where(take, ia, ib)
-        v_pair = tl.reshape(values, (128, 2))
-        i_pair = tl.reshape(indices, (128, 2))
-        va, vb = tl.split(v_pair)
-        ia, ib = tl.split(i_pair)
-        take = va >= vb
-        values = tl.where(take, va, vb)
-        indices = tl.where(take, ia, ib)
-        v_pair = tl.reshape(values, (64, 2))
-        i_pair = tl.reshape(indices, (64, 2))
-        va, vb = tl.split(v_pair)
-        ia, ib = tl.split(i_pair)
-        take = va >= vb
-        values = tl.where(take, va, vb)
-        indices = tl.where(take, ia, ib)
-        v_pair = tl.reshape(values, (32, 2))
-        i_pair = tl.reshape(indices, (32, 2))
-        va, vb = tl.split(v_pair)
-        ia, ib = tl.split(i_pair)
-        take = va >= vb
-        values = tl.where(take, va, vb)
-        indices = tl.where(take, ia, ib)
-        v_pair = tl.reshape(values, (16, 2))
-        i_pair = tl.reshape(indices, (16, 2))
-        va, vb = tl.split(v_pair)
-        ia, ib = tl.split(i_pair)
-        take = va >= vb
-        values = tl.where(take, va, vb)
-        indices = tl.where(take, ia, ib)
-        v_pair = tl.reshape(values, (8, 2))
-        i_pair = tl.reshape(indices, (8, 2))
-        va, vb = tl.split(v_pair)
-        ia, ib = tl.split(i_pair)
-        take = va >= vb
-        values = tl.where(take, va, vb)
-        indices = tl.where(take, ia, ib)
-        v_pair = tl.reshape(values, (4, 2))
-        i_pair = tl.reshape(indices, (4, 2))
-        va, vb = tl.split(v_pair)
-        ia, ib = tl.split(i_pair)
-        take = va >= vb
-        values = tl.where(take, va, vb)
-        indices = tl.where(take, ia, ib)
-        v_pair = tl.reshape(values, (2, 2))
-        i_pair = tl.reshape(indices, (2, 2))
-        va, vb = tl.split(v_pair)
-        ia, ib = tl.split(i_pair)
-        take = va >= vb
-        values = tl.where(take, va, vb)
-        indices = tl.where(take, ia, ib)
-        v_pair = tl.reshape(values, (1, 2))
-        i_pair = tl.reshape(indices, (1, 2))
-        va, vb = tl.split(v_pair)
-        ia, ib = tl.split(i_pair)
-        take = va >= vb
-        values = tl.where(take, va, vb)
-        indices = tl.where(take, ia, ib)
-        better = values > best_val
-        best_val = tl.where(better, values, best_val)
-        best_idx = tl.where(better, indices, best_idx)
-    lane = tl.arange(0, 1)
-    tl.store(out_index_ptr + row + lane, best_idx.to(tl.int64))
+        chunk_max, chunk_idx = tl.max(
+            values,
+            axis=0,
+            return_indices=True,
+            return_indices_tie_break_left=True,
+        )
+        tl.store(chunk_values_ptr + tile, chunk_max)
+        tl.store(
+            chunk_indices_ptr + tile,
+            (chunk * BLOCK_V + chunk_idx).to(tl.int32),
+        )
+
+
+@triton.jit
+def _draft_topk1_finalize_kernel(
+    chunk_values_ptr,
+    chunk_indices_ptr,
+    out_index_ptr,
+    n_rows,
+    n_chunks,
+    BLOCK_C: tl.constexpr,
+):
+    n_programs = tl.num_programs(0)
+    for row in tl.range(tl.program_id(0), n_rows, n_programs):
+        base = row * n_chunks
+        offsets = tl.arange(0, BLOCK_C)
+        mask = offsets < n_chunks
+        values = tl.load(
+            chunk_values_ptr + base + offsets,
+            mask=mask,
+            other=-float("inf"),
+        )
+        best, chunk_sel = tl.max(
+            values,
+            axis=0,
+            return_indices=True,
+            return_indices_tie_break_left=True,
+        )
+        idxs = tl.load(chunk_indices_ptr + base + offsets, mask=mask, other=0)
+        top_index = tl.sum(tl.where(offsets == chunk_sel, idxs, 0), axis=0)
+        tl.store(out_index_ptr + row, top_index.to(tl.int64))
 
 
 @triton.jit
@@ -178,13 +147,36 @@ def draft_topk1(
     )
     out_positions = torch.empty_like(positions)
     if n_rows > 0:
-        assert n_rows <= _MAX_GRID
-        _draft_topk1_scan_kernel[(n_rows,)](
+        n_chunks = triton.cdiv(vocab_size, _BLOCK_V)
+        chunk_values = torch.empty(
+            (n_rows, n_chunks),
+            dtype=torch.float32,
+            device=logits.device,
+        )
+        chunk_indices = torch.empty(
+            (n_rows, n_chunks), dtype=torch.int32, device=logits.device
+        )
+        n_tiles = n_rows * n_chunks
+        _draft_topk1_scan_kernel[(min(n_tiles, _MAX_GRID),)](
             logits,
-            topk_index,
+            chunk_values,
+            chunk_indices,
             n_rows,
             vocab_size,
+            n_chunks,
             BLOCK_V=_BLOCK_V,
+            BLOCK_C=_BLOCK_C,
+        )
+        block_c = 1
+        while block_c < n_chunks:
+            block_c *= 2
+        _draft_topk1_finalize_kernel[(min(n_rows, _MAX_GRID),)](
+            chunk_values,
+            chunk_indices,
+            topk_index,
+            n_rows,
+            n_chunks,
+            BLOCK_C=max(block_c, 1),
         )
         grid_flat = (min(triton.cdiv(n_rows, _BLOCK_FLAT), _MAX_GRID),)
         _draft_topk1_meta_kernel[grid_flat](
