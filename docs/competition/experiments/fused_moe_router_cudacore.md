@@ -142,3 +142,13 @@ MLIRCompilationError),kunlunxin 评测中。E2 vendor 计划同 T27。
 - vendor commit `91838b855b3691e220f5bb03eeac48b1cdf4b6f2`;远端代理 9/9 绿;
   额度 14/30;T27/T26/T25 均剩最后 1 次预算。
 
+## E4 终投(sub 5809,2026-08-28 04:5x CST)
+
+- E4 结果:华为 fp32-ieee 仍 topk ids 失配 → 剩余唯一假设为 stages=2
+  流水化数值 bug;终投镜像 batch-2 平台已证的 `chunk_state_ascend`
+  配置(ieee dot + `num_stages=1`),vendor commit
+  `7001c8156d098a130cfc9a238c943008661f5760`。本题预算 5/5 用尽。
+- E4 伴随记录:T25 华为 0.322x 修复(wrapper 顺序 bug);T25 燧原第 4 种
+  结构(纯 where 树)仍编译失败 → 按同指纹 4 连败止损,T25 燧原轴永久
+  停止,T25 封顶 7/8、无法 valid,保留最后 1 次额度不投。
+

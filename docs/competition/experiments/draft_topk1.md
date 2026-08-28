@@ -223,3 +223,12 @@ verification commit:test 沿用 `c4edba73be9e17375b83720f9d53187b1976e854` 中
 - vendor commit `91838b855b3691e220f5bb03eeac48b1cdf4b6f2`;远端代理 9/9 绿;
   额度 14/30;T27/T26/T25 均剩最后 1 次预算。
 
+## 止损决定(2026-08-28)
+
+- 燧原:draft_topk1 四种结构(向量 pow2 归约 / 串行标量 / 行内串行 +
+  lane store / 纯 where 树)全部 `Pipeline run failed`,唯一未排除的
+  公共元素是逐元素 argmax 语义本身在燧原的 lowering;按规则永久停止,
+  若后续有他人通过的证据可重启。
+- 最终最好成绩:6/8(天数 4.0x、沐曦、海光、华为 0.322x、card_a/b),
+  昆仑评测器恢复后理论上限 7/8;无 8/8 可能,停止投入,保留 1 次额度。
+
