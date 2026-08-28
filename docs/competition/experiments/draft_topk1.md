@@ -271,3 +271,14 @@ verification commit:test 沿用 `c4edba73be9e17375b83720f9d53187b1976e854` 中
   `artifacts/competition/draft_topk1/e6-86be97a/`,canonical SHA-256
   `6b7a947979cf9bf72887e1d208bb815e8d1f1ddeed47d067f93090da8f9252d3`;
   成员 generic + `_ascend` + `_enflame` + `_kunlunxin`(4,与 E5 一致)。
+
+### E6 平台状态与 E6b 重投(2026-08-29 04:0x)
+
+- E6(stale 载体)上传后正式提交 POST 未确认,intent
+  `stale_after_upload`;只读核对平台无该 ZIP 的提交记录、当日额度
+  未扣减,按"stale 不自动重试"规则原候选封存。
+- E6b:e6 内容(燧原 int64-free 结构)换注释载体重投——燧原评测器
+  正常,本投可独立获得燧原对第六种结构的裁决;昆仑为当前平台
+  已知故障面(见 gate_up_lora_b E7 记录),随缘。
+- source commit `3b63452`;ZIP `e6b-3b63452`,SHA-256
+  `494c4746840ff414c9284904f7bbb47466509069bf33ea4994deba2d35bea4b3`。
