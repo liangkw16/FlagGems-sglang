@@ -67,9 +67,7 @@ def _router_gemm_splitk_kernel(
                 mask=expert_mask[:, None] & k_mask[None, :],
                 other=0.0,
             ).to(tl.float32)
-            acc += tl.dot(
-                x_tile, tl.trans(w_tile), input_precision="ieee"
-            )
+            acc += tl.dot(x_tile, tl.trans(w_tile), input_precision="ieee")
 
         tl.store(
             partials_ptr
@@ -205,7 +203,7 @@ def fused_moe_router_cudacore(
         BLOCK_B=_BLOCK_B,
         BLOCK_E=_BLOCK_E,
         BLOCK_K=_BLOCK_K,
-        num_stages=2,
+        num_stages=1,
     )
 
     block_e = _next_pow2(n_experts)
