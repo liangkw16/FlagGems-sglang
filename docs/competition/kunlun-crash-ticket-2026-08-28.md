@@ -65,3 +65,33 @@ exec_ms 恒约 1833–1835s
      00:14 前则支持服务事故,若按 pod 分组则可直接锁定坏 worker。
 4. T25(sub 5852)与 T26/T27 同指纹失败仅作附证,不请求 rerun。
 
+
+## 后续实证更新(2026-08-29 04:30)
+
+ overnight 至今日的 8 笔 batch-3 提交中,昆仑 **7 崩 1 过**,且通过例
+ 是轻量算子、崩溃例覆盖四种截然不同的 kernel 结构:
+
+| 时间 CST | Task | sub | 昆仑 | 选中文件/结构 |
+| --- | --- | --- | --- | --- |
+| 00:48 | 29 gelu_and_mul | 6127 | **通过 0.485x** | 平铺 elementwise(A&S,无 erf) |
+| 00:58 | 28 gate_up_lora_b | 6135 | 崩(1833s Aborted) | host-resolved ieee dot v2 |
+| 02:01 | 26 router_cudacore | 6187 | 崩(同指纹) | generic split-K ieee dot |
+| 02:04 | 27 router_tensorcore | 6190 | 崩(同指纹) | generic split-K ieee dot |
+| 02:5x | 28 gate_up_lora_b | 6194 | 崩(同指纹) | **无 dot FMA + stages=1 + int32 净室结构** |
+| 03:2x | 26/27 | 6204/6212 | 崩(同指纹) | generic(6204 华为已通过、七芯仅剩昆仑) |
+
+ 结论更新:
+
+ 1. erf/超越函数假设已被 T29 反例双重排除(规避后通过);
+ 2. dot/stages/编译复杂度假设被 T28 6194 排除(FMA 无 dot 仍崩);
+ 3. 结构假设被排除:同日同 Task 六种结构、跨 Task 四类结构同指纹;
+ 4. 唯一通过例(gelu)为单 kernel 单 launch 轻量评测;崩溃例均为
+    多 kernel 或多 launch 的较重评测——支持"worker 资源/池化在
+    较重评测下进入死锁"的负载相关假说;
+ 5. T28 榜首 HelloWorldTJU 11.499x 为近期 8/8 达标,说明该题型在
+    某 worker/时间窗上可正常评测,请求按提交时间对齐其他队伍的
+    成功记录以定位健康窗口/pod。
+
+ 核心请求不变:对 sub 6223(T28 e8,七芯全过、华为 22.76x)与
+ sub 6220(T27 e7,七芯全过、华为 0.515x)在健康 worker 上免费
+ rerun 昆仑芯;或返还对应的基础设施错误消耗额度。
