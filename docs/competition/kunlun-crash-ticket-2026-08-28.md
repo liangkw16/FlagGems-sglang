@@ -49,8 +49,19 @@ exec_ms 恒约 1833–1835s
 1. **T29 崩溃根因已定位为我方内容**:`tl.math.erf` 编译触发昆仑 worker
    崩溃(替换为 A&S 有理逼近后 sub 5840 昆仑 0.488x 通过、8/8 valid)。
    该类崩溃不再请求 rerun。
-2. 仍请求协助的部分:T28 sub 5845 昆仑返回"服务线程卡死自动恢复,请
-   重新提交"——这是服务端执行问题;因每题提交次数有限,请求对该笔
-   **免费重跑昆仑芯**,或确认服务已恢复(我们将消耗最后一次提交重投)。
-3. T25 sub 5852 昆仑仍在队列(仅影响该提交 7/8 与 6/8 之差,优先级低)。
+2. **核心请求(T28)**:sub 5845 与 sub 5861 选中的
+   `gate_up_lora_b_kunlunxin.py` 字节完全相同,其余七芯全部通过;昆仑
+   分别返回"服务线程卡死自动恢复"与 1833s compile-worker Aborted。
+   请求:**在健康 worker 上仅对 sub 5861 重跑昆仑芯**(不耗团队额度、
+   保留既有七芯结果);若无法重跑,请**返还一次因基础设施错误消耗的
+   Task 28 提交机会**。
+3. **请求提供的诊断字段**(任一即可大幅定位):
+   - 崩溃时正在编译的 JIT kernel 名称与 specialization/case_idx;
+   - 崩溃发生的编译 pass(TTIR/TTGIR/SDNN/LLVM/runtime);
+   - 子进程退出信号与时间(先 SIGABRT 后 1800s,还是 watchdog 杀);
+   - 完整 stderr 末 200 行 / native backtrace;
+   - worker/pod/镜像标识、compiler cache key(hit/miss);
+   - 其他队伍 T28 昆仑成功记录的时间分布(匿名即可):若均发生在
+     00:14 前则支持服务事故,若按 pod 分组则可直接锁定坏 worker。
+4. T25(sub 5852)与 T26/T27 同指纹失败仅作附证,不请求 rerun。
 
