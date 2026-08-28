@@ -293,3 +293,15 @@ verification commit:test 沿用 `c4edba73be9e17375b83720f9d53187b1976e854` 中
   抓到绝对/相对索引重定基 bug(保留 return_indices 时代的
   chunk*BLOCK_V 偏移)已修复,修复后代理全绿。
 - source commit 见 git log(e6c);ZIP `e6c-*`,SHA-256 `$SH`。
+
+### E6c 平台终态(sub 6236,2026-08-29 05:2x)
+
+- 燧原**第 7 种结构仍 `Pipeline run failed`**——where+min 归约 ×
+  int64-free base(全部为本战役燧原已证算子组合)也无法编译。
+  七种结构(e1 向量归约 / e2 串行 / e3 行内串行 / e4 纯 where 树 /
+  e5 return_indices / e6 int64-free+return_indices / e6c
+  where+min+int64-free)全部失败,结构性探索到此为止:
+  燧原对本题的阻断无法用已知算子集差异解释,需要外部证据
+  (他人通过样例/平台澄清)才能重启。
+- 华为 0.2805x 保持通过;昆仑等待中(平台已知故障)。终态维持
+  6/8 封顶判断,剩余额度不再投入本题。

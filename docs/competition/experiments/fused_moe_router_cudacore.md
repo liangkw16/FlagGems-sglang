@@ -231,3 +231,13 @@ MLIRCompilationError),kunlunxin 评测中。E2 vendor 计划同 T27。
   代理 perf 0.055–0.58x,华为 0.1x 阈值有风险,correctness first。
 - source commit `04b97cb`;ZIP `e8-04b97cb`,SHA-256
   `6bbbd6376b5ce5e56b25b7e8e4557b9fb99762036fed3cc69a83f5a3aef55877`。
+
+### E8 平台终态(sub 6228,2026-08-29 05:1x)
+
+- 华为 ids 失配不变——**无 dot 顺序 FMA GEMM 也不修复,GEMM 侧假设
+  (dot lowering/split-K 舍入/累加顺序)全部排除**。失败面唯一收敛:
+  case_idx=7 的参考 matmul 在华为上的内部实现顺序,任何独立 Triton
+  GEMM 都难以逐位复现。该轴暂停(4 发探针:e5 结构/e6 平局/e7
+  split-K/e8 FMA);燧原 0.1898x、其余芯通过;昆仑随平台故障。
+- 今日最好成绩:6/8(e5–e8 等价);T26 重启条件:case7 数据特征
+  澄清(平台 Q&A)或他人华为通过方案公开。
