@@ -16,8 +16,8 @@ import torch
 import triton
 import triton.language as tl
 
-_BLOCK_SIZE = 4096
-_MAX_GRID = 65535
+_BLOCK_SIZE = 2048
+_MAX_GRID = 12
 
 
 @triton.jit
@@ -40,20 +40,7 @@ def _gelu_and_mul_kernel(
         up = tl.load(x_ptr + base + half_width, mask=mask, other=0.0).to(
             tl.float32
         )
-        scaled = gate * 0.7071067811865476
-        abs_scaled = tl.abs(scaled)
-        t = 1.0 / (1.0 + 0.3275911 * abs_scaled)
-        poly = t * (
-            0.254829592
-            + t
-            * (
-                -0.284496736
-                + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))
-            )
-        )
-        erf_abs = 1.0 - poly * tl.exp(-abs_scaled * abs_scaled)
-        erf_scaled = tl.where(scaled < 0.0, -erf_abs, erf_abs)
-        gelu = gate * 0.5 * (1.0 + erf_scaled)
+        gelu = gate * 0.5 * (1.0 + tl.math.erf(gate * 0.7071067811865476))
         tl.store(
             output_ptr + offsets,
             (gelu * up).to(output_ptr.dtype.element_ty),
