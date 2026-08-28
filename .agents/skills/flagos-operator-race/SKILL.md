@@ -85,6 +85,36 @@ SHA-256、成员列表和平台结果，才能重新定位实际上传字节。
 commit` 是最新测试和验证证据的提交；`ledger commit` 是写回产物与结果的提交。
 三者可以不同，但账本必须写清关系，产物目录使用 `source commit` 短哈希。
 
+## SkillHub 辅助 skill
+
+`.agents/skills/` 下装有 FlagOS SkillHub 的配套 skill，按以下边界融入闭环；
+它们服从本 skill 的请求边界、只读规则和提交纪律，不改变任何门禁：
+
+- `kernelgen-flagos`：算子生成/优化/跨芯特化的统一入口，所有内核生成必须走
+  `kernelgen-mcp`（需在 `.mcp.json` 配置 Token，未配置时先按
+  `kernelgen-mcp-setup.md` 引导用户注册，不要手写代码替代）。用途：
+  新算子起手（generate）、卡瓶颈的第二轮迭代（optimize，基于 MCP 反馈循环）、
+  某芯 Triton 支持差时的 specialize 备选。产出仍必须过本 skill 的契约锁定、
+  代理验证、不可变 ZIP 门禁，MCP 生成不等于验证证据。
+- `gpu-container-setup-flagos`：远端 GPU 容器自动选型（NVIDIA/昇腾/Metax/
+  天数/AMD，按 vendor hub → BAAI Harbor → 搜索的优先级选镜像）。仓库内脚本
+  路径是 `.agents/skills/gpu-container-setup-flagos/scripts/`（skill 文档中的
+  `.claude/skills/...` 路径不适用）。不覆盖昆仑芯和摩尔线程，这两家沿用现有
+  远端验证流程。
+- `tle-developer-flagos`：走 Triton-TLE 路线时的开发工作流（源码真相在
+  `references/tle-sources.md`，含 marker block 等护栏）。仅当赛题实现选 TLE
+  或需要改 TLE 层时使用。
+- `flaggems-pr-review-flagos` / `flaggems-pr-submit-flagos`：面向上游 FlagGems
+  仓库的 PR 审查与提交（含算子注册表与门禁脚本）。比赛平台提交不走它们；
+  仅当用户要求向 FlagGems 上游提 PR 时使用，且仍遵守本 skill 的 push 授权规则。
+- `perf-test-flagos` / `model-migrate-flagos` / `model-verify-flagos` /
+  `flagrelease-entrance-flagos` / `install-stack-flagos` /
+  `vllm-plugin-fl-setup-flagos`：模型部署与推理服务流水线，与算子赛无关，
+  默认不使用。
+
+这些是第三方 skill，脚本运行拥有完整 agent 权限；首次调用某个 skill 前先
+快速审阅其脚本再执行。
+
 ## 阶段 A：从题面到 S0
 
 ### 1. 锁定契约
