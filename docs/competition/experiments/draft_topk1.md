@@ -282,3 +282,14 @@ verification commit:test 沿用 `c4edba73be9e17375b83720f9d53187b1976e854` 中
   已知故障面(见 gate_up_lora_b E7 记录),随缘。
 - source commit `3b63452`;ZIP `e6b-3b63452`,SHA-256
   `494c4746840ff414c9284904f7bbb47466509069bf33ea4994deba2d35bea4b3`。
+
+### E6b 平台结果与 E6c 第 7 种结构(sub 6233 → 623x,2026-08-29 04:5x)
+
+- E6b(sub 6233)燧原**仍编译失败**——int64-free meta/draft 假设单独
+  不充分;复盘发现未测象限:e6b 保留了 `tl.max(..., return_indices)`
+  归约(6 种结构中从未换成燧原已证形态)。
+- E6c 单变量:scan/finalize 归约换 `tl.max + tl.min(where(==))`
+  (路由 generic 燧原已证),meta/draft int64-free 保持;首版代理
+  抓到绝对/相对索引重定基 bug(保留 return_indices 时代的
+  chunk*BLOCK_V 偏移)已修复,修复后代理全绿。
+- source commit 见 git log(e6c);ZIP `e6c-*`,SHA-256 `$SH`。
