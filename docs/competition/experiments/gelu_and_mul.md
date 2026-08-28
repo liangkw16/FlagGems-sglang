@@ -256,3 +256,13 @@ team `SoulCoder`、batch 3、task 29、tid `s2t1op029`、operator
 `gelu_and_mul`、stage `e5`、commit `b899c40`、ZIP SHA-256
 `7544263e11c2e0d983e6122c113af48dc3fbb3867a9c29636c09f5f32a7f145c`。
 门禁全过即按项目 Skill 自动单次提交。
+
+### E5 提交记录(sub 6084,2026-08-28 23:5x CST)
+
+- preflight 一次性 tuple 全过(task competing、窗口内、最小间隔满足、
+  额度 3/30,本次消耗 1 → 剩 2/30);confirm 单次执行成功。
+- submission_id `6084`;ZIP SHA-256
+  `7544263e11c2e0d983e6122c113af48dc3fbb3867a9c29636c09f5f32a7f145c`;
+  state `submitted`、validity `pending`、评测入队;
+  file_url_sha256 `4335b6b75caf1a1647628ac45b450574dbcf1947d7ed669e75e59407a4b30cae`。
+- 逐芯结果待出,见后续回填。
