@@ -12,10 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Kunlunxin vendor v2: host-resolved segment metadata (T13-proven
-# pattern). The dot compilation unit contains no dynamic scalar loads
-# of seg_indptr/weight_indices/lora_ranks/scalings; permutation gather,
-# fp32-ieee dot, tiles and RMW are byte-identical to the generic.
+# Kunlunxin vendor v3 (e7): compile-minimal clean-room structure. All five
+# prior kunlun attempts (3D grid generic, BLOCK_N 128 generic, 1D fold,
+# host-resolved dot v1/v2) hit the same inductor compile-worker crash while
+# num_stages=2 and tl.dot stayed constant on this path. This variant removes
+# the entire dot lowering surface: explicit fp32 FMA K-loop, num_stages=1 /
+# num_warps=4 (the kunlun-proven softcap/moe_sum_reduce convention), int32
+# offsets only, host-resolved segment metadata kept from v2. Other seven
+# chips keep the generic/vendors unchanged.
 
 import triton
 import triton.language as tl
@@ -32,17 +36,11 @@ def _gate_up_lora_b_kernel(
     weight_index,
     scaling,
     output_dim,
-    matrix_blocks,
     RANK: tl.constexpr,
     BLOCK_S: tl.constexpr,
     BLOCK_N: tl.constexpr,
-    BLOCK_K: tl.constexpr,
     HAS_PERMUTATION: tl.constexpr,
 ):
-    weight_stride_lora = tl.cast(2 * output_dim * RANK, tl.int64)
-    weight_stride_output = tl.cast(RANK, tl.int64)
-    weight_stride_rank = tl.cast(1, tl.int64)
-
     slice_id = tl.program_id(1)
     matrix_pid = tl.program_id(0)
 
@@ -64,32 +62,30 @@ def _gate_up_lora_b_kernel(
         rows = segment_start + token_offsets
 
     accumulator = tl.zeros((BLOCK_S, BLOCK_N), dtype=tl.float32)
-    k_offsets = tl.arange(0, BLOCK_K)
-    for k_start in range(0, RANK, BLOCK_K):
-        k = k_start + k_offsets
-        k_mask = k < RANK
-        x_tile = tl.load(
+    for k in tl.range(0, RANK):
+        x_col = tl.load(
             x_ptr
             + rows[:, None] * (2 * RANK)
-            + (slice_id * RANK + k[None, :]),
-            mask=token_mask[:, None] & k_mask[None, :],
+            + slice_id * RANK
+            + k,
+            mask=token_mask[:, None],
             other=0.0,
         ).to(tl.float32)
-        w_tile = tl.load(
+        w_row = tl.load(
             weights_ptr
-            + weight_index * weight_stride_lora
-            + (slice_id * output_dim + output_offsets[None, :])
-            * weight_stride_output
-            + k[:, None] * weight_stride_rank,
-            mask=k_mask[:, None] & output_mask[None, :],
+            + weight_index * (2 * output_dim * RANK)
+            + (slice_id * output_dim + output_offsets[None, :]) * RANK
+            + k,
+            mask=output_mask[None, :],
             other=0.0,
         ).to(tl.float32)
-        accumulator += tl.dot(x_tile, w_tile, input_precision="ieee")
+        accumulator += x_col * w_row
 
     output_ptrs = (
         output_ptr
-        + rows[:, None] * tl.cast(2 * output_dim, tl.int64)
-        + (slice_id * output_dim + output_offsets[None, :])
+        + rows[:, None] * (2 * output_dim)
+        + slice_id * output_dim
+        + output_offsets[None, :]
     )
     mask = token_mask[:, None] & output_mask[None, :]
     base = tl.load(output_ptrs, mask=mask, other=0.0).to(tl.float32)
@@ -115,9 +111,6 @@ def gate_up_lora_b(x, gate_up_lora_b, batch_info, output_dim, base_output):
     permutation = batch_info.permutation
     block_s = 64
     block_n = 64
-    block_k = 64
-    matrix_blocks = triton.cdiv(1, block_s) * triton.cdiv(output_dim, block_n)
-    max_len = 0
     for b in range(bs):
         start = int(indptr[b])
         length = int(indptr[b + 1]) - start
@@ -126,21 +119,9 @@ def gate_up_lora_b(x, gate_up_lora_b, batch_info, output_dim, base_output):
         wi = int(weight_indices[b])
         if int(lora_ranks[wi]) == 0:
             continue
-        max_len = max(max_len, length)
-    if max_len == 0:
-        return output
-    matrix_blocks = triton.cdiv(max_len, block_s) * triton.cdiv(
-        output_dim, block_n
-    )
-
-    for b in range(bs):
-        start = int(indptr[b])
-        length = int(indptr[b + 1]) - start
-        if length <= 0:
-            continue
-        wi = int(weight_indices[b])
-        if int(lora_ranks[wi]) == 0:
-            continue
+        matrix_blocks = triton.cdiv(length, block_s) * triton.cdiv(
+            output_dim, block_n
+        )
         grid = (matrix_blocks, 2)
         _gate_up_lora_b_kernel[grid](
             x,
@@ -152,14 +133,12 @@ def gate_up_lora_b(x, gate_up_lora_b, batch_info, output_dim, base_output):
             wi,
             float(scalings[wi]),
             output_dim,
-            matrix_blocks,
             RANK=rank,
             BLOCK_S=block_s,
             BLOCK_N=block_n,
-            BLOCK_K=block_k,
             HAS_PERMUTATION=permutation is not None,
             num_warps=4,
-            num_stages=2,
+            num_stages=1,
         )
     return output
 
