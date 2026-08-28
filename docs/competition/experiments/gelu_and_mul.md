@@ -345,3 +345,8 @@ team `SoulCoder`、batch 3、task 29、tid `s2t1op029`、operator
 - ZIP `e7-a8183b3/gelu_and_mul.zip`,SHA-256
   `48e6e68156309ac5cbf0bf364b128e56d76d3a98aec721fe97bd046cc31cdc17`,
   3 成员(generic + kunlunxin + metax),字节与 blob 一致。
+
+### E7 提交记录(2026-08-29 01:1x CST)
+
+preflight 全过(额度 30/30 首投);单次 confirm 提交成功,评测入队;
+逐芯结果待回填。
