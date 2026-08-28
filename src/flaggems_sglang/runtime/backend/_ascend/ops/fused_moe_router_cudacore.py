@@ -131,8 +131,8 @@ def _router_softmax_topk_kernel(
         for slot in tl.static_range(TOPK):
             cand = tl.where(selected, -float("inf"), logits)
             cand_value = tl.max(cand, axis=0)
-            cand_index = tl.min(
-                tl.where(cand == cand_value, experts, n_experts), axis=0
+            cand_index = tl.max(
+                tl.where(cand == cand_value, experts, -1), axis=0
             )
             selected = selected | (experts == cand_index)
             if slot == 0:
