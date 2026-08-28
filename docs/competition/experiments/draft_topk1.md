@@ -232,3 +232,14 @@ verification commit:test 沿用 `c4edba73be9e17375b83720f9d53187b1976e854` 中
 - 最终最好成绩:6/8(天数 4.0x、沐曦、海光、华为 0.322x、card_a/b),
   昆仑评测器恢复后理论上限 7/8;无 8/8 可能,停止投入,保留 1 次额度。
 
+## E5 终投(sub 5852,2026-08-28 11:5x CST)
+
+- 燧原第 5 种结构:`tl.max(..., return_indices=True, tie_break_left)`
+  成对归约(scan+finalize,无手工 min-where 链、无标量访存、无展开树)
+  ——**仍编译失败**。代理端曾抓到真实 bug(tl.max 返回块内 lane 而非
+  offset 值,956==8124 mod 1024)并修复,但平台燧原依旧 Pipeline 失败。
+- 预算 5/5 用尽;燧原对 draft_topk1 的 argmax 语义五种结构全部无法编译,
+  判定为该 backend 对此模式的硬性不支持,永久停止。
+- 华为 0.26x 通过(E4 顺序修复保持有效);天数 3.86x、沐曦、海光、
+  card_a/b 通过;昆仑待出(如通过为 7/8 上限,仍 invalid)。
+
