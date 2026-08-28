@@ -167,3 +167,17 @@ e1 单变量 BLOCK 1024→2048;commit c866cf6;
   评测器崩溃(T25 曾返回"服务线程卡死自动恢复"),非候选内容问题;
   本投兼作昆仑恢复探针。若昆仑通过即 8/8 valid。
 
+## E2 终态:8/8 valid(sub 5840,2026-08-28 10:2x CST)
+
+- `_kunlunxin` vendor 用 A&S 7.1.26 有理逼近替换 `tl.math.erf`(其余
+  芯片继续用 generic),commit `01e8113`,ZIP SHA
+  `42d36c1a…`;昆仑 **0.488x 通过**。
+- **昆仑崩溃根因实证:`tl.math.erf` 的编译触发昆仑评测 worker 崩溃**
+  (torch inductor 子进程 Segfault/Aborted,1833s 指纹)。T30(无超越函数)
+  通过 vs T29(erf)失败的对照 + 本次替换后通过,因果链闭合。
+- 逐芯:天数 5.179x、沐曦 2.203x、燧原 0.194x、海光 3.988x、昆仑
+  0.488x、华为 0.697x、card_a 3.573x、card_b 3.165x,平均约 2.81x。
+  **Task 29 闭环完成**;跨芯知识:昆仑对 libdevice erf 不可用,A&S
+  有理逼近是安全替代(所有含 erf 的后续题直接采用)。
+- 预算已用 3/5。
+
