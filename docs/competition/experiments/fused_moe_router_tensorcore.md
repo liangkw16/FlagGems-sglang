@@ -146,3 +146,15 @@ B=0;70000 行折叠。
 - vendor commit `e62a27eb7f41819461fb981c44adf397f25b8729`;远端代理 9/9 绿。
 - 评测中;额度 17/30。
 
+## E3 第三轮 vendor(sub 5805,2026-08-28 04:0x CST)
+
+- E3 结果:华为 UB 溢出已修(可编译)但 split-fp16 在昇腾数值错误(昆仑
+  fp16-dot 的镜像);T25 华为失败为 E3 wrapper 顺序 bug(draft=None 时
+  finalize 未执行→topk_index 垃圾);T25 燧原三轮不同结构均挂在
+  tl.max/tl.min 轴归约(对照 T21 tl.sum、T28 无归约均过)。
+- 本轮:router `_ascend` 回归 fp32-ieee(保留 BLOCK_R=8);draft `_ascend`
+  finalize 提升到函数级;draft `_enflame` 改全展开 reshape/split 两两树
+  (纯 where 元素运算,零 max/min 归约)。
+- vendor commit `91838b855b3691e220f5bb03eeac48b1cdf4b6f2`;远端代理 9/9 绿;
+  额度 14/30;T27/T26/T25 均剩最后 1 次预算。
+
