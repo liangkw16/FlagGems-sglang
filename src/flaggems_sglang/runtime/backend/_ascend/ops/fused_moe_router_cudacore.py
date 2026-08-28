@@ -19,7 +19,6 @@ import triton.language as tl
 _BLOCK_B = 64
 _BLOCK_E = 64
 _BLOCK_K = 64
-_ROWS_REDUCE = 8
 _MAX_GRID = 65535
 
 
@@ -92,28 +91,24 @@ def _router_softmax_topk_kernel(
     HAS_BIAS: tl.constexpr,
     TOPK: tl.constexpr,
     BLOCK_E: tl.constexpr,
-    BLOCK_R: tl.constexpr,
 ):
-    n_tiles = tl.cdiv(n_rows, BLOCK_R)
     n_programs = tl.num_programs(0)
-    for tile in tl.range(tl.program_id(0), n_tiles, n_programs):
-        rows = tile * BLOCK_R + tl.arange(0, BLOCK_R)
+    for row in tl.range(tl.program_id(0), n_rows, n_programs):
         experts = tl.arange(0, BLOCK_E)
-        row_mask = rows < n_rows
         expert_mask = experts < n_experts
 
-        logits = tl.zeros((BLOCK_R, BLOCK_E), dtype=tl.float32)
+        logits = tl.zeros((BLOCK_E,), dtype=tl.float32)
         for split_id in tl.range(0, n_splits, 1):
             part = tl.load(
                 partials_ptr
                 + split_id * n_rows * n_experts
-                + rows[:, None] * n_experts
-                + experts[None, :],
-                mask=row_mask[:, None] & expert_mask[None, :],
+                + row * n_experts
+                + experts,
+                mask=expert_mask,
                 other=0.0,
             )
             logits += part
-        logits = tl.where(expert_mask[None, :], logits, -float("inf"))
+        logits = tl.where(expert_mask, logits, -float("inf"))
 
         scaled = logits / softcap
         scaled_sq = scaled * scaled
@@ -127,30 +122,25 @@ def _router_softmax_topk_kernel(
             bias = tl.load(bias_ptr + experts, mask=expert_mask, other=0.0).to(
                 tl.float32
             )
-            logits += bias[None, :]
+            logits += bias
 
-        best_value = tl.max(logits, axis=1)
-        denom = tl.sum(tl.exp(logits - best_value[:, None]), axis=1)
+        best_value = tl.max(logits, axis=0)
+        denom = tl.sum(tl.exp(logits - best_value), axis=0)
 
-        selected = expert_mask[None, :] & (logits == -float("inf"))
+        selected = expert_mask & (logits == -float("inf"))
         for slot in tl.static_range(TOPK):
             cand = tl.where(selected, -float("inf"), logits)
-            cand_value = tl.max(cand, axis=1)
+            cand_value = tl.max(cand, axis=0)
             cand_index = tl.min(
-                tl.where(cand == cand_value[:, None], experts, n_experts),
-                axis=1,
+                tl.where(cand == cand_value, experts, n_experts), axis=0
             )
-            selected = selected | (experts[None, :] == cand_index[:, None])
+            selected = selected | (experts == cand_index)
             if slot == 0:
                 weight = 1.0 / denom
             else:
                 weight = tl.exp(cand_value - best_value) / denom
-            tl.store(weights_ptr + rows * TOPK + slot, weight, mask=row_mask)
-            tl.store(
-                ids_ptr + rows * TOPK + slot,
-                cand_index.to(tl.int32),
-                mask=row_mask,
-            )
+            tl.store(weights_ptr + row * TOPK + slot, weight)
+            tl.store(ids_ptr + row * TOPK + slot, cand_index.to(tl.int32))
 
 
 def _next_pow2(value):
@@ -208,7 +198,7 @@ def fused_moe_router_cudacore(
 
     block_e = _next_pow2(n_experts)
     bias_arg = bias if bias is not None else x
-    grid_reduce = (min(triton.cdiv(n_rows, _ROWS_REDUCE), _MAX_GRID),)
+    grid_reduce = (min(n_rows, _MAX_GRID),)
     _router_softmax_topk_kernel[grid_reduce](
         partials,
         bias_arg,
@@ -221,7 +211,6 @@ def fused_moe_router_cudacore(
         HAS_BIAS=bias is not None,
         TOPK=topk,
         BLOCK_E=block_e,
-        BLOCK_R=_ROWS_REDUCE,
     )
     return topk_weights, topk_ids
 
