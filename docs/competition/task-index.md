@@ -1,19 +1,19 @@
 # 第二届 FlagOS 算子赛题索引
 
-> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-08-27T21:17:40+08:00`。
+> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-08-28T11:26:03+08:00`。
 > 状态和榜单会变化，运行 `python tools/sync_flagos_season2_docs.py` 更新。
 
 ## 第 1 批
 
 | 题号 | 算子 | 状态 | 提交/队伍 | 达标队伍 | 当前第一 | 平均加速比 |
 | ---: | --- | --- | ---: | ---: | --- | ---: |
-| 1 | [causal_conv1d_fn](tasks/batch-1/01-causal_conv1d_fn.md) | reviewing | 114/21 | 1 | EvokeAgent | 13.6331x |
-| 2 | [chunk_local_cumsum_scalar](tasks/batch-1/02-chunk_local_cumsum_scalar.md) | reviewing | 111/18 | 6 | xuanzhengdu | 2.3866x |
-| 3 | [fused_moe_gemm](tasks/batch-1/03-fused_moe_gemm.md) | reviewing | 104/21 | 1 | c2flow | 13.2849x |
-| 4 | [merge_state](tasks/batch-1/04-merge_state.md) | reviewing | 41/13 | 8 | xuanzhengdu | 7.3011x |
-| 5 | [mrope_fused](tasks/batch-1/05-mrope_fused.md) | reviewing | 48/13 | 2 | c2flow | 24.9050x |
-| 6 | [per_group_transpose](tasks/batch-1/06-per_group_transpose.md) | reviewing | 33/14 | 8 | c2flow | 631.8800x |
-| 7 | [silu_and_mul](tasks/batch-1/07-silu_and_mul.md) | reviewing | 75/18 | 12 | EvokeAgent | 4.8633x |
+| 1 | [causal_conv1d_fn](tasks/batch-1/01-causal_conv1d_fn.md) | occupied | 114/21 | 1 | EvokeAgent | 13.6331x |
+| 2 | [chunk_local_cumsum_scalar](tasks/batch-1/02-chunk_local_cumsum_scalar.md) | occupied | 111/18 | 6 | xuanzhengdu | 2.3866x |
+| 3 | [fused_moe_gemm](tasks/batch-1/03-fused_moe_gemm.md) | occupied | 104/21 | 1 | c2flow | 13.2849x |
+| 4 | [merge_state](tasks/batch-1/04-merge_state.md) | occupied | 41/13 | 8 | xuanzhengdu | 7.3011x |
+| 5 | [mrope_fused](tasks/batch-1/05-mrope_fused.md) | occupied | 48/13 | 2 | c2flow | 24.9050x |
+| 6 | [per_group_transpose](tasks/batch-1/06-per_group_transpose.md) | occupied | 33/14 | 8 | c2flow | 631.8800x |
+| 7 | [silu_and_mul](tasks/batch-1/07-silu_and_mul.md) | occupied | 75/18 | 12 | EvokeAgent | 4.8633x |
 
 ## 第 2 批
 
@@ -41,9 +41,9 @@
 
 | 题号 | 算子 | 状态 | 提交/队伍 | 达标队伍 | 当前第一 | 平均加速比 |
 | ---: | --- | --- | ---: | ---: | --- | ---: |
-| 25 | [draft_topk1](tasks/batch-3/25-draft_topk1.md) | pending_challenge | 9/3 | 0 | - | - |
-| 26 | [fused_moe_router_cudacore](tasks/batch-3/26-fused_moe_router_cudacore.md) | pending_challenge | 3/2 | 0 | - | - |
-| 27 | [fused_moe_router_tensorcore](tasks/batch-3/27-fused_moe_router_tensorcore.md) | pending_challenge | 14/4 | 0 | - | - |
-| 28 | [gate_up_lora_b](tasks/batch-3/28-gate_up_lora_b.md) | competing | 5/4 | 1 | c2flow | 9.6453x |
-| 29 | [gelu_and_mul](tasks/batch-3/29-gelu_and_mul.md) | competing | 7/4 | 3 | Fields | 2.8921x |
-| 30 | [interleaved_rope](tasks/batch-3/30-interleaved_rope.md) | competing | 4/3 | 2 | Fields | 28.5683x |
+| 25 | [draft_topk1](tasks/batch-3/25-draft_topk1.md) | competing | 54/13 | 3 | c2flow | 1.5936x |
+| 26 | [fused_moe_router_cudacore](tasks/batch-3/26-fused_moe_router_cudacore.md) | competing | 66/14 | 3 | Skyspeed | 0.8065x |
+| 27 | [fused_moe_router_tensorcore](tasks/batch-3/27-fused_moe_router_tensorcore.md) | competing | 46/12 | 3 | hbmu9306 | 0.9924x |
+| 28 | [gate_up_lora_b](tasks/batch-3/28-gate_up_lora_b.md) | competing | 23/8 | 1 | c2flow | 9.6453x |
+| 29 | [gelu_and_mul](tasks/batch-3/29-gelu_and_mul.md) | competing | 24/9 | 5 | Fields | 2.8921x |
+| 30 | [interleaved_rope](tasks/batch-3/30-interleaved_rope.md) | competing | 13/6 | 6 | YY-L | 29.0765x |

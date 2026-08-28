@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/softcap_out -->
-<!-- synced_at: 2026-08-27T21:17:40+08:00 -->
+<!-- synced_at: 2026-08-28T11:26:03+08:00 -->
 
 # softcap_out (activation_norm/softcap_out)
 
