@@ -288,3 +288,17 @@ team `SoulCoder`、batch 3、task 29、tid `s2t1op029`、operator
   0.488 实证)。E6 单变量假设:kunlunxin vendor 回退 E2 字节
   (旧平铺 + A&S),generic 保持新结构。
 - 额度:提交后剩 2/30;E6 消耗 1 发,保留 1 发截止前回归储备。
+
+## E6:昆仑 vendor 回退单变量(2026-08-29 00:3x CST)
+
+- 假设:E5 昆仑回退(0.488→0.293)源于新骨架;vendor 回退 E2 平台实证
+  字节(旧平铺 + A&S,BLOCK 2048),generic 保持 E5 结构。
+- source/verification commit `4d69062`;vendor SHA-256 `4192872a…`
+  (与 E2 逐字节一致),generic `fca50658…`(与 E5 一致)。
+- release 验证(gpu:/tmp/flagos-gelu-e6-rel.aQQMqh,Git 对象):
+  py_compile ✓、lint ✓、unittest 8/8 OK;代理基准 kv_e2flat 2.8215x /
+  generic_e5 2.9156x(代理上旧结构略慢,符合预期,不影响昆仑赌注)。
+- ZIP `artifacts/competition/gelu_and_mul/e6-4d69062/gelu_and_mul.zip`,
+  SHA-256 `1fc0b5d4a414245e7a4136ac3d7162e31a0ab8881a64c8253b43b86828817891`,
+  成员 `gelu_and_mul.py`(3134B)+ `gelu_and_mul_kunlunxin.py`(2616B),
+  ZIP 与 commit blob 逐字节一致。
