@@ -16,7 +16,7 @@ import torch
 import triton
 import triton.language as tl
 
-_BLOCK_SIZE = 2048
+_BLOCK_COL = 1024
 _MAX_GRID = 65535
 
 
@@ -24,27 +24,51 @@ _MAX_GRID = 65535
 def _gelu_and_mul_kernel(
     x_ptr,
     output_ptr,
-    n_elements,
+    rows,
     half_width,
-    BLOCK_SIZE: tl.constexpr,
+    BLOCK_COL: tl.constexpr,
 ):
     pid = tl.program_id(0)
-    step = tl.num_programs(0) * BLOCK_SIZE
-    for start in range(pid * BLOCK_SIZE, n_elements, step):
-        offsets = start + tl.arange(0, BLOCK_SIZE)
-        mask = offsets < n_elements
-        row = offsets // half_width
-        col = offsets - row * half_width
-        base = row * (2 * half_width) + col
-        gate = tl.load(x_ptr + base, mask=mask, other=0.0).to(tl.float32)
-        up = tl.load(x_ptr + base + half_width, mask=mask, other=0.0).to(
-            tl.float32
-        )
-        gelu = gate * 0.5 * (1.0 + tl.math.erf(gate * 0.7071067811865476))
+    num_col_blocks = tl.cdiv(half_width, BLOCK_COL)
+    total_blocks = rows * num_col_blocks
+    grid_size = tl.num_programs(0)
+    for block_id in range(pid, total_blocks, grid_size):
+        row_id = block_id // num_col_blocks
+        col_block = block_id - row_id * num_col_blocks
+        col_offsets = col_block * BLOCK_COL + tl.arange(0, BLOCK_COL)
+        col_mask = col_offsets < half_width
+        row_base = row_id.to(tl.int64) * (2 * half_width)
+        gate = tl.load(
+            x_ptr + row_base + col_offsets,
+            mask=col_mask,
+            other=0.0,
+        ).to(tl.float32)
+        up = tl.load(
+            x_ptr + row_base + half_width + col_offsets,
+            mask=col_mask,
+            other=0.0,
+        ).to(tl.float32)
+        # Abramowitz-Stegun 7.1.26 rational erf approximation,
+        # max abs error < 1.5e-7 (fp32 tolerance 1e-4); avoids
+        # tl.math.erf which crashes the kunlunxin compiler.
+        scaled = gate * 0.7071067811865476
+        abs_scaled = tl.abs(scaled)
+        t = 1.0 / (1.0 + 0.3275911 * abs_scaled)
+        poly = (
+            (
+                ((1.061405429 * t - 1.453152027) * t + 1.421413741) * t
+                - 0.284496736
+            )
+            * t
+            + 0.254829592
+        ) * t
+        erf_abs = 1.0 - poly * tl.exp(-abs_scaled * abs_scaled)
+        erf_scaled = tl.where(scaled < 0.0, -erf_abs, erf_abs)
+        gelu = gate * 0.5 * (1.0 + erf_scaled)
         tl.store(
-            output_ptr + offsets,
+            output_ptr + row_id.to(tl.int64) * half_width + col_offsets,
             (gelu * up).to(output_ptr.dtype.element_ty),
-            mask=mask,
+            mask=col_mask,
         )
 
 
@@ -58,16 +82,17 @@ def gelu_and_mul(hidden_states):
     if last_dim == 0:
         return output
     rows = x.numel() // last_dim
-    n_elements = rows * half_width
-    if n_elements == 0:
+    if rows * half_width == 0:
         return output
-    grid = (min(triton.cdiv(n_elements, _BLOCK_SIZE), _MAX_GRID),)
+    num_col_blocks = triton.cdiv(half_width, _BLOCK_COL)
+    total_blocks = rows * num_col_blocks
+    grid = (min(total_blocks, _MAX_GRID),)
     _gelu_and_mul_kernel[grid](
         x,
         output,
-        n_elements,
+        rows,
         half_width,
-        BLOCK_SIZE=_BLOCK_SIZE,
+        BLOCK_COL=_BLOCK_COL,
     )
     return output
 
