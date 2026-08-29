@@ -116,7 +116,7 @@ unittest 5/5、末尾哈希复核全过。BLOCK 1024 的 release speedup p50 为
 
 ## E1：昆仑去 metadata gating 单变量修复
 
-状态：screening 通过，待 commit 后 release。
+状态：release 与不可变 ZIP 通过，待平台 preflight。
 
 `tl.fdiv` 候选在 commit 前否决：固定 FlagTree commit `c1ea8285` 的
 `tensor.__truediv__` 和 `tl.fdiv` 对 FP32 最终都调用
@@ -287,3 +287,18 @@ SiLU 公式和地址逻辑；launch 不显式重复绑定 BLOCK/warps。
   `1.0338x`；日志 SHA-256
   `daf0bd77b92f08df6d0780a704b21268fe5ba0b7378aae0c86b2927221504056`。
   该代理只排除明显回退，AMD 平台仍是必要证伪步骤。
+
+### E3 release 与不可变 ZIP
+
+| 项目 | 值 |
+| --- | --- |
+| source/verification commit | `9cee390cce4fc17582c77278857f1442585ec99f` |
+| release 目录 | `gpu:/tmp/flagos-silu-amd-e3-release.08TwCx`，mode 0700 |
+| release 日志 SHA-256 | `2bff6418bc820849e24334a07d2334742de894724b13abfc634aef17ce0c1fa2` |
+| ZIP | `artifacts/competition/silu_and_mul_masked/e3-9cee390/silu_and_mul_masked.zip` |
+| ZIP SHA-256 | `520232a36872ccd82b554666a0075bf3d22ff577b1c7ebfe76907c0de0806649` |
+| ZIP 内容 | 顶层 generic 2708 bytes + AMD 3050 bytes + Kunlun 2276 bytes；ZIP 8444 bytes |
+
+release 四文件由 commit 的 Git 对象生成，前后哈希与 screening 一致；
+py_compile、unittest 5/5 和 `RELEASE_OK` 全过。canonical ZIP create 与
+`--verify-existing` 一致，新 AMD vendor 已确认进入三成员归档。
