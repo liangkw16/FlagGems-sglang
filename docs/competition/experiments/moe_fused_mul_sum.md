@@ -99,3 +99,15 @@
   outage 多次（与 T33 记录同型），日志轮询带退避。
 
 （release 重验、benchmark 与 ZIP 打包待补；未提交平台）
+
+## S0 定稿(2026-08-29 18:2x CST,接续会话记录)
+
+- benchmark 假象澄清:本会话首轮 bench 的 AB/BA 标签反转,导致
+  "0.11–0.55x" 假读数;修正后 kernel 实为 **2.56–8.75x**。
+- 采用重写版(commit `63e2550`):flat 1D capped grid + 块级除法 + int32,
+  消除原 2D grid 超华为 65535 上限、int64 逐元素、显式 launch 参数
+  三处跨芯风险;K 循环权重/掩码全寄存器。
+- unittest 8/8(gpu:/tmp/t32.qa34FX);bench 修正后:
+  4096×8×7168 **8.75x**、65536×4×1024 8.50x、256×8×4096 5.96x、
+  1024×16×512 5.61x、16×4×2048 2.56x、128×8×7168 fp32 1.85x。
+- ZIP `s0-63e2550/moe_fused_mul_sum.zip`,SHA `0706e14647c36c26c785812bd79281a6e68b969efd56e7387d66f8e3124a915e`。
