@@ -478,7 +478,7 @@ AMD/Kunlun 也保持专用路径。永久停止 uniform-if 轴，后续从 E3 �
 
 ## E6：Ascend BLOCK 512
 
-状态：release 与不可变 ZIP 通过，待平台 preflight。
+状态：平台 8/8、`valid`、`15.41654167x`，非 team best；保留 E3。
 
 E6 从 E3 team best 分叉，generic、AMD 与 Kunlun 逐字节恢复 E3，并移除
 E5 Enflame 保险成员。只新增 Ascend vendor；它与 generic 的完整计算 diff
@@ -523,3 +523,26 @@ release 五文件由 commit Git 对象生成，前后哈希一致；py_compile�
 unittest 5/5 和 `RELEASE_OK` 全过。canonical ZIP create 与
 `--verify-existing` 一致，E5 Enflame 成员已移除，Ascend 单变量成员已进入
 四成员归档。
+
+### E6 平台终态（sub 6597，2026-08-30 01:49 CST）
+
+实时 preflight tuple 全匹配，单次 confirm 成功；file URL SHA-256
+`ecbef711659c8a9e13c286ee72e477c70acf9abfbf0b9e457e240cb65af70eba`，
+提交后额度 21/30。远端对象验签为 `unavailable`，提交 state 已为
+`submitted`，未重试。
+
+终态 8/8、`valid`，但平均 `15.41654167x`，比 E3 低 `0.743875x`，非
+team best。Ascend 路由正确命中华为，但华为从 `7.39933333x` 降至
+`4.28666667x`（`-42.07%`），直接违反 stop gate。永久停止 Ascend 512
+轴；其余芯片保持 E3 字节，分数变化视为平台波动：
+
+| 芯片 | E6 speedup | 相对 E3 | 选中文件 |
+| --- | ---: | ---: | --- |
+| tianshu | 24.3687x | -1.77% | generic |
+| muxi | 16.2993x | -1.15% | generic |
+| enflame | 0.4783x | +4.67% | generic |
+| haiguang | 34.5043x | -1.99% | generic |
+| kunlunxin | 0.2440x | +1.39% | Kunlun |
+| huawei | 4.2867x | -42.07% | Ascend |
+| card_a | 32.2233x | -4.50% | generic |
+| card_b | 10.9277x | -0.14% | AMD |
