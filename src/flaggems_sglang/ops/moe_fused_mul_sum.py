@@ -16,77 +16,57 @@ import torch
 import triton
 import triton.language as tl
 
+_MAX_GRID = 65535
+_BLOCK = 512
+
 
 @triton.jit
 def _moe_fused_mul_sum_kernel(
     inputs_ptr,
-    topk_weights_ptr,
-    topk_ids_ptr,
-    expert_map_ptr,
+    weights_ptr,
+    ids_ptr,
+    map_ptr,
     output_ptr,
-    input_stride_token,
-    input_stride_topk,
-    input_stride_hidden,
-    weight_stride_token,
-    weight_stride_topk,
-    ids_stride_token,
-    ids_stride_topk,
+    total_blocks,
+    num_col_blocks,
     hidden_dim,
     scale,
-    HAS_EXPERT_MAP: tl.constexpr,
+    HAS_MAP: tl.constexpr,
     IS_EP: tl.constexpr,
     TOP_K: tl.constexpr,
-    BLOCK_SIZE: tl.constexpr,
+    BLOCK: tl.constexpr,
 ):
-    input_stride_token = tl.cast(input_stride_token, tl.int64)
-    input_stride_topk = tl.cast(input_stride_topk, tl.int64)
-    input_stride_hidden = tl.cast(input_stride_hidden, tl.int64)
-
-    token_offset = tl.program_id(0)
-    hidden_offsets = tl.program_id(1) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
-    hidden_mask = hidden_offsets < hidden_dim
-    input_row = (
-        token_offset * input_stride_token
-        + hidden_offsets * input_stride_hidden
-    )
-
-    accumulator = tl.zeros((BLOCK_SIZE,), dtype=tl.float32)
-
-    for expert_offset in range(TOP_K):
-        weight = (
-            tl.load(
-                topk_weights_ptr
-                + token_offset * weight_stride_token
-                + expert_offset * weight_stride_topk
+    # flat 1D grid over (token, hidden-block) tiles: one integer division
+    # per block; int32 addressing throughout (shapes < 2^31)
+    pid = tl.program_id(0)
+    grid_stride = tl.num_programs(0)
+    offs = tl.arange(0, BLOCK)
+    out_ty = output_ptr.dtype.element_ty
+    for block_id in range(pid, total_blocks, grid_stride):
+        token = block_id // num_col_blocks
+        col_block = block_id - token * num_col_blocks
+        h = col_block * BLOCK + offs
+        hmask = h < hidden_dim
+        acc = tl.zeros((BLOCK,), dtype=tl.float32)
+        row_base = token * TOP_K
+        for k in tl.static_range(TOP_K):
+            weight = tl.load(weights_ptr + row_base + k).to(tl.float32) * scale
+            if HAS_MAP or IS_EP:
+                expert_id = tl.load(ids_ptr + row_base + k)
+                if HAS_MAP:
+                    mapped = tl.load(map_ptr + expert_id)
+                    weight = tl.where(mapped >= 0, weight, 0.0)
+                else:
+                    weight = tl.where(expert_id >= 0, weight, 0.0)
+            values = tl.load(
+                inputs_ptr + (row_base + k) * hidden_dim + h,
+                mask=hmask,
+                other=0.0,
             ).to(tl.float32)
-            * scale
+            acc += values * weight
+        tl.store(
+            output_ptr + token * hidden_dim + h, acc.to(out_ty), mask=hmask
         )
-
-        if HAS_EXPERT_MAP:
-            expert_id = tl.load(
-                topk_ids_ptr
-                + token_offset * ids_stride_token
-                + expert_offset * ids_stride_topk
-            )
-            mapped = tl.load(expert_map_ptr + expert_id)
-            weight = tl.where(mapped >= 0, weight, 0.0)
-        elif IS_EP:
-            expert_id = tl.load(
-                topk_ids_ptr
-                + token_offset * ids_stride_token
-                + expert_offset * ids_stride_topk
-            )
-            weight = tl.where(expert_id >= 0, weight, 0.0)
-
-        values = tl.load(
-            inputs_ptr + input_row + expert_offset * input_stride_topk,
-            mask=hidden_mask,
-            other=0.0,
-        ).to(tl.float32)
-        accumulator += values * weight
-
-    output_offsets = token_offset.to(tl.int64) * hidden_dim + hidden_offsets
-    tl.store(output_ptr + output_offsets, accumulator, mask=hidden_mask)
 
 
 def moe_fused_mul_sum(
@@ -97,49 +77,40 @@ def moe_fused_mul_sum(
     routed_scaling_factor=None,
     is_ep=False,
 ):
+    inputs = inputs.contiguous()
+    topk_weights = topk_weights.contiguous()
+    if topk_ids is not None:
+        topk_ids = topk_ids.contiguous()
     num_tokens, top_k, hidden_dim = inputs.shape
     output = torch.empty(
         (num_tokens, hidden_dim), dtype=inputs.dtype, device=inputs.device
     )
-    if num_tokens == 0 or hidden_dim == 0:
+    if num_tokens == 0 or hidden_dim == 0 or top_k == 0:
         return output
 
     scale = (
         1.0 if routed_scaling_factor is None else float(routed_scaling_factor)
     )
-    has_expert_map = expert_map is not None
+    has_map = expert_map is not None
+    use_ep = is_ep and topk_ids is not None and not has_map
 
-    if topk_ids is not None:
-        topk_ids_arg = topk_ids
-        ids_stride_token, ids_stride_topk = topk_ids.stride(
-            0
-        ), topk_ids.stride(1)
-    else:
-        topk_ids_arg = torch.empty(0, dtype=torch.int32, device=inputs.device)
-        ids_stride_token, ids_stride_topk = 0, 0
-    if not has_expert_map:
-        expert_map = torch.empty(0, dtype=torch.int32, device=inputs.device)
-
-    block_size = 256
-    grid = (num_tokens, triton.cdiv(hidden_dim, block_size))
+    num_col_blocks = triton.cdiv(hidden_dim, _BLOCK)
+    total_blocks = num_tokens * num_col_blocks
+    grid = (min(total_blocks, _MAX_GRID),)
     _moe_fused_mul_sum_kernel[grid](
         inputs,
         topk_weights,
-        topk_ids_arg,
-        expert_map,
+        topk_ids if topk_ids is not None else inputs,
+        expert_map if has_map else inputs,
         output,
-        *inputs.stride(),
-        *topk_weights.stride(),
-        ids_stride_token,
-        ids_stride_topk,
+        total_blocks,
+        num_col_blocks,
         hidden_dim,
         scale,
-        HAS_EXPERT_MAP=has_expert_map,
-        IS_EP=is_ep and topk_ids is not None and not has_expert_map,
+        HAS_MAP=has_map,
+        IS_EP=use_ep,
         TOP_K=top_k,
-        BLOCK_SIZE=block_size,
-        num_warps=4,
-        num_stages=1,
+        BLOCK=_BLOCK,
     )
     return output
 
