@@ -99,3 +99,15 @@ failed_cases=0),排队 ~55 分钟后返回。T31 三投同指纹,恢复窗口
   修复模式。
 - 下一步(若再投):kunlunxin vendor 用多项式 log1p 替代 tl.log
   (精度 1e-7,容差 1e-4 内),一发验证假设。优先级让位于 T39/T40。
+
+### E4 定向假设投(sub 6xxx,2026-08-30 17:4x CST)
+
+- 窗口:T26 达标 6→7(第三个 crash 族新增信号);
+- 假设:`tl.log` 是崩溃族共享嫌疑算子(T31/T36 均含,所有昆仑通过
+  的 kernel 均无);kunlunxin vendor 用 atanh z 级数多项式 log1p
+  替代(误差 <5e-9,容差 1e-4 内),其余字节同 e3(T29 erf→A&S
+  同款修复模式);
+- 代理:vendor 过完整 5/5 unittest(设备参照、索引精确匹配);
+- commit `70c14a5`,ZIP SHA `5415c2ed…`,2 成员;额度 15/30。
+  若过 → log 假设成立 + 第 7 题 valid;若再崩 → 嫌疑转移至
+  sqrt 或 topk 机器,题内止损。
