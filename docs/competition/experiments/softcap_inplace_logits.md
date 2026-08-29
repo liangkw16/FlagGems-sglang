@@ -213,3 +213,52 @@ RTX 5070 Ti 上的非目标代理将 E2 与同 `BLOCK/grid` 的 E1 Ascend 手写
 七芯合计测量波动盖过了该回退，不能把平均升分归因于 native `tanh`。
 保留 E2 作为平台 team best，但永久停止 Ascend native-`tanh` 轴；后续候选
 恢复 E1 已验证的 Ascend 手写字节，新实验只改 Kunlun 的一个 BLOCK 参数。
+
+## E3：Kunlun 连续输入 direct fast path
+
+状态：commit-bound release 与 canonical ZIP 门禁通过，待一次性平台提交。
+
+E2 终态后对 T24 全曲线做了更强的机制对照，因此在任何 E3 候选建立前
+替换了原先的 BLOCK1024 计划：T24 direct BLOCK1024→4096 为
+`0.7645→0.8637x`，同 BLOCK4096 改成 grid-loop 后突降至 `0.24175x`，恢复
+direct 并使用 native `tanh` 后为 `0.97591667x`。T40 E0–E2 的 Kunlun
+`0.2438–0.2457x` 与 T24 loop 指纹几乎一致，说明更高置信根因是动态
+loop/control，不是 BLOCK 或 native `tanh` 本身。
+
+E3 只在 `_kunlunxin` 为 contiguous 且 logical blocks `<=65535` 的输入新增
+一程序一 BLOCK4096 的无循环 direct kernel；非连续二维 row-stride 和超大
+grid 继续走 E2 原 loop fallback。已知 T24 最大 `65,667,072` 元素只需
+`16,032/65,535` programs；T40 代理最大 `9,723,904` 元素只需
+`2,374` programs。E2 被否决的 Ascend native 先在独立 restore commit
+`b40c21d5af8fa85734250888fc2813fb2278a8a2` 恢复为 E1 手写字节；这不是
+E3 新假设。generic、Ascend、Enflame 和测试均为已验证字节，E3 新变量
+仅为 Kunlun direct dispatch。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `248be7f9c3484667e884c5731023de9332b5f558` |
+| generic SHA-256 | `8740e8e9f6332046bbfc04a8f0f3f69e3e1067a3447dd520889a499cbe9a99c0`（=E1/E2） |
+| Ascend SHA-256 | `46faecf8f5ef853b798a072f56c03487cac37179201ecdfbfe5d756460cf907f`（=E1） |
+| Enflame SHA-256 | `b5d049fd12a3d90388884e393fc4f052aa7817640fb9b6c39b857e003836a7dc`（=E1/E2） |
+| Kunlun SHA-256 | `56f5350374104216da658f207bf624681bc9a4c6ba774f3e49714bb5595e1ba1` |
+| test SHA-256 | `1bb5ec58c81999ad2a0a925889d2ca47b8382c8f298c35abe6d1572a48a73ec6`（=E1/E2） |
+| screening | `gpu:/tmp/flagos-softcap-inplace-e3-screen.HBbBVL`；5/5、`SCREENING_OK`；日志 SHA-256 `0bf26c2abf505182ea5a570fcba3247a8e8f0b9f0be1471728bcdfa7d21ec530` |
+| release | `gpu:/tmp/flagos-softcap-inplace-e3-release.NZaKIQ`；5/5、commit 字节哈希一致、`RELEASE_OK`；日志 SHA-256 `6f448407e7d1ae8f2ac213de8c5027ef544ac2f86981ce3abc22abcfe044c0fc` |
+| canonical ZIP | `artifacts/competition/softcap_inplace_logits/e3-248be7f/softcap_inplace_logits.zip`，`14016` bytes，SHA-256 `13be219e67dd7c2b8ecec223bd75265e9124596cb0c5a4cb1f99f9e995464af9` |
+
+RTX 5070 Ti 上 direct/loop 四个代表 shape 为 `1.010–1.095x`；direct 相对上游
+原生布局为 `0.739–1.001x`，相对 Torch 为 `1.121–1.819x`。candidate/control
+日志 SHA-256 分别为
+`58fa59e28e02f3e671c28a20523f51f8ff41ebb42fe02804068f1d400cb59574` 与
+`7d6283f4b46c6c33732adfffc8d55cfc88f7d4020ed5b7ab59aba70cdf24508a`。九份实际
+TTIR 均为 `scf.for=0`，代表编译元数据为 4 warps、1 stage、0 shared、0 global
+scratch；TTIR 证据日志 SHA-256
+`f4d3c134ed408cb8050730d8a640262063b41012169d6cd6be00779b4c85b82d`。CUDA 收益仍不
+外推至 XPU，关键正证据是 T24 同数学、同 BLOCK 的平台路径对照。
+
+2026-08-30 02:43 CST 实时榜首仍为 `1.71430208x`，SoulCoder 为
+`1.66054167x`。E3 基础门为 8/8 valid；单轴晋级门为 Kunlun 严格高于
+E2 `0.24566667x` 且平均严格高于 `1.66054167x`；机制确认门为
+Kunlun `>=0.76x`，冲榜门为平均严格高于 `1.71430208x`。若 valid
+但 Kunlun `<0.76x`，则 T24 direct 机制未迁移，停止 Kunlun BLOCK/direct 扫描；
+若登顶，冻结 E3 字节并转新题。E3 ZIP 只允许提交一次。
