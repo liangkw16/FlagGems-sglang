@@ -89,8 +89,12 @@ class MoeFusedMulSumTest(unittest.TestCase):
                 )
                 original = inputs.clone()
 
-                actual = MODULE.moe_fused_mul_sum(inputs, topk_weights, 0.75)
-                expected = reference(inputs, topk_weights, 0.75)
+                actual = MODULE.moe_fused_mul_sum(
+                    inputs, topk_weights, routed_scaling_factor=0.75
+                )
+                expected = reference(
+                    inputs, topk_weights, routed_scaling_factor=0.75
+                )
 
                 self.assertEqual(actual.shape, (3, 257))
                 self.assertEqual(actual.dtype, dtype)
@@ -167,8 +171,12 @@ class MoeFusedMulSumTest(unittest.TestCase):
         topk_weights = torch.rand((2, 4), device="cuda")
         self.assertFalse(inputs.is_contiguous())
 
-        actual = MODULE.moe_fused_mul_sum(inputs, topk_weights, -0.125)
-        expected = reference(inputs, topk_weights, -0.125)
+        actual = MODULE.moe_fused_mul_sum(
+            inputs, topk_weights, routed_scaling_factor=-0.125
+        )
+        expected = reference(
+            inputs, topk_weights, routed_scaling_factor=-0.125
+        )
 
         torch.testing.assert_close(actual, expected, atol=1e-4, rtol=1e-4)
 
@@ -184,10 +192,12 @@ class MoeFusedMulSumTest(unittest.TestCase):
                         .to(dtype)
                     )
                     topk_weights = torch.rand((2, 3), device="cuda")
-                    expected = reference(inputs, topk_weights, 1.25)
+                    expected = reference(
+                        inputs, topk_weights, routed_scaling_factor=1.25
+                    )
 
                     actual = MODULE.moe_fused_mul_sum(
-                        inputs, topk_weights, 1.25
+                        inputs, topk_weights, routed_scaling_factor=1.25
                     )
                     torch.testing.assert_close(
                         actual, expected, atol=tolerance, rtol=tolerance
@@ -201,9 +211,13 @@ class MoeFusedMulSumTest(unittest.TestCase):
                 inputs = torch.empty(shape, device="cuda", dtype=torch.float16)
                 topk_weights = torch.rand((shape[0], shape[1]), device="cuda")
 
-                expected = reference(inputs, topk_weights, 2.0)
+                expected = reference(
+                    inputs, topk_weights, routed_scaling_factor=2.0
+                )
 
-                actual = MODULE.moe_fused_mul_sum(inputs, topk_weights, 2.0)
+                actual = MODULE.moe_fused_mul_sum(
+                    inputs, topk_weights, routed_scaling_factor=2.0
+                )
                 self.assertEqual(actual.shape, (shape[0], shape[2]))
                 self.assertEqual(actual.dtype, inputs.dtype)
                 torch.testing.assert_close(
@@ -226,9 +240,13 @@ class MoeFusedMulSumTest(unittest.TestCase):
                     (num_tokens, top_k), device="cuda", generator=generator
                 )
                 original = inputs.clone()
-                expected = reference(inputs, topk_weights, 0.75)
+                expected = reference(
+                    inputs, topk_weights, routed_scaling_factor=0.75
+                )
 
-                actual = MODULE.moe_fused_mul_sum(inputs, topk_weights, 0.75)
+                actual = MODULE.moe_fused_mul_sum(
+                    inputs, topk_weights, routed_scaling_factor=0.75
+                )
 
                 self.assertEqual(actual.shape, (num_tokens, hidden_dim))
                 self.assertEqual(actual.dtype, dtype)

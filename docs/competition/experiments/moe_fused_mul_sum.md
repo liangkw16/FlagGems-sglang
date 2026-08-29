@@ -72,15 +72,30 @@
   is_ep 负 id 掩码、非连续输入、块边界（255/256/257/511/512/513）、
   空维（T=0/D=0/top_k=0）、平台规模 (4096,8,7168)。
 
-### Screening 结果（第一轮，未通过）
+### Screening 结果（第一轮，未通过 → 已定位）
 
-- 远端 job 于 09:35 完成：`Ran 8 tests, FAILED (errors=26)`；
-  静态门禁 isort/flake8 通过，black 需重排（已在本地修为合规字节）。
-  可见通过的方法：expert_map 掩码、is_ep 掩码、scale=None、非连续输入。
-  26 个 subTest 错误集中在 dtype 参数化与块边界/平台规模用例，具体
-  traceback 尚未取回：GPU host（192.168.5.204）自 09:40 起不可达，
-  与 T33 账本记录的 host outage 同型；已设后台守望，恢复后取回
-  `$RD/run.log` 的 ERROR 段定位修复。
-- 修正后须重跑完整 screening；本轮结果不得为任何 ZIP 背书。
+- 远端 job 于 09:35 完成：`Ran 8 tests, FAILED (errors=26)`。
+- 错误数完全吻合的根因：**测试 harness 传参 bug，非 kernel 缺陷**。
+  5 个用例把 scale 写成第 3 个位置参数（该位是 `topk_ids`），
+  wrapper 里 `topk_ids.stride(0)` 抛 AttributeError。错误分布
+  3(dtype)+1(非连续)+18(块边界)+1(空维仅 (2,0,17) 到达 stride,
+  另两 shape 被空维早退拦住)+3(平台规模)=26，与日志完全一致。
+  修复：全部改为 `routed_scaling_factor=` 关键字传参。
 
-（screening 修复重跑、benchmark 与后续 ZIP 打包待补）
+### Screening 结果（第二轮，通过）
+
+- 测试修复后同目录重跑（远端字节 = 本地字节）：
+  - 源码 `f586b45b68172075ef2bbf12a215df1a8c789bb9d829b366c5cebc95a54ca238`
+    （与 ff09392 commit 相同，未改动）；
+  - 测试 `7895539ed8de370098fa1128046af178e5e5554a9e6eed74afee91093546c798`；
+  - `python -m unittest -v`：**8/8 全部通过（UT=0）**；
+  - isort/flake8 通过。
+- black 口径澄清：远端临时目录无 `pyproject.toml`，black 回退默认
+  line-length 88 才报 BLACK=1；仓库 `[tool.black] line-length = 79`
+  下两文件均合规（本地 black 26.5.1 + py3.12 验证 unchanged）。
+  远端证据命令应显式 `-l 79` 或携带 pyproject，已在 run3/run4 采用。
+- 远端环境：NVIDIA CUDA（gpu:/tmp/flagos-moe_fused_mul_sum.9hfSsb，
+  mode 0700），torch 2.13.0+cu130，triton 3.7.1；GPU host 间歇性
+  outage 多次（与 T33 记录同型），日志轮询带退避。
+
+（release 重验、benchmark 与 ZIP 打包待补；未提交平台）
