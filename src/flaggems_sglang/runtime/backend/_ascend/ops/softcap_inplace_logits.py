@@ -16,6 +16,11 @@ import torch
 import triton
 import triton.language as tl
 
+try:
+    from flaggems_sglang.utils.triton_lang_helper import tl_extra_shim
+except ImportError:
+    from triton.language.extra import libdevice as tl_extra_shim
+
 
 @triton.jit
 def _softcap_inplace_logits_kernel(
@@ -39,14 +44,7 @@ def _softcap_inplace_logits_kernel(
         pointers = logits_ptr + row.to(tl.int64) * row_stride + cols
         logits = tl.load(pointers, mask=mask, other=0.0).to(tl.float32)
         scaled = logits / softcap_const
-        scaled_sq = scaled * scaled
-        near_zero = scaled * (
-            1.0 + scaled_sq * (-1.0 / 3.0 + scaled_sq * (2.0 / 15.0))
-        )
-        saturated = 2.0 / (1.0 + tl.exp(-2.0 * scaled)) - 1.0
-        output = softcap_const * tl.where(
-            tl.abs(scaled) < 0.25, near_zero, saturated
-        )
+        output = softcap_const * tl_extra_shim.tanh(scaled)
         if CAP_RECIPROCAL_OVERFLOWS:
             output = tl.where(
                 logits == 0.0, logits / (logits - logits), output
