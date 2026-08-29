@@ -42,3 +42,60 @@
   (SHA `48cf7cf3…`)。
 - 下一步:取回 `/tmp/flagos-t33.BIOvd1/{fail_list,diag_out}.txt` →
   修复 → 重跑 screening → 走 commit/ZIP/preflight/提交链。
+
+## S0 定稿与提交(2026-08-29 13:5x CST)
+
+### 根因与修复(远端网络故障窗口期间完成)
+
+- 首轮 screening 17 失败的根因(诊断数据实证):**Triton 的普通 `/`
+  除法 lowering 为近似除,而 torch 是 IEEE 舍入除**;在每组 amax 边界
+  元素(x/scale 数学上恰为 ±127)上差 1 ulp → 截断后 ±1。
+  `diag2` 三变体实验:`tl.math.div_rn` 6/6 配置逐位匹配,
+  普通 `/` 与显式倒数均失配。
+- 次生问题:测试初版用 CPU 参照,CPU torch 的除法舍入与设备端不同,
+  修正为**设备端参照**(平台语义)。
+- autotune_kernel 实机参照(其 verify 计数存疑,total_tests=0)只作
+  结构参考;wrapper `.to(torch.float32)` 方案弃用,保留 in-kernel
+  `.to(tl.float32)`(T29 平台八芯先例)。
+
+### 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| source/verification commit | `a89a9ad` |
+| `per_token_group_quant_int8.py` SHA-256 | `017f993a5bb0c9e79f7365152266067ba150a968632b14b1e4819b9e7ecd02dc` |
+| 测试 SHA-256 | `23941f2c3358335440883ecbb3484a1ee50cde8ee01402a48ec7de6f889a16d4` |
+| ZIP | `artifacts/competition/per_token_group_quant_int8/s0-a89a9ad/per_token_group_quant_int8.zip` |
+| ZIP SHA-256 | `f4705c6adf9f6ab56b1c74254a6c62434bed088282779f727efbb234a77eaf81` |
+| 成员 | 单文件 `per_token_group_quant_int8.py` |
+| screening 目录 | `gpu:/tmp/flagos-t33.BIOvd1` |
+| release 目录 | `gpu:/tmp/flagos-t33-rel.abjliD`(Git 对象,哈希逐项一致) |
+
+### 唯一候选配置
+
+每 program 一组(grid = min(total_groups, 65535) + 组内 grid-stride
+for 循环);BLOCK = next_pow2(group_size) + 尾 mask;组内 amax 归约
+(fp32)→ scale = max(amax, 1e-10)/127 → **`tl.math.div_rn` IEEE 除**
+→ clamp ±128/127 → float→int8 截断向零;in-kernel fp32 转换。
+
+### 验证
+
+- release(Git 对象):py_compile ✓、unittest **7/7 OK**、bench 7/7
+  正确性(设备端参照精确相等);
+- 代理加速比(wrapper-inclusive p50):fp16 3.0–3.9x、bf16 1.8–2.6x、
+  fp32 4.96x;大 shape 65536×256 3.31x。
+
+### 提交计划
+
+preflight tuple:season 2、race `782kzq4m`、account `15600308080`、
+team `SoulCoder`、batch 3、task 33、tid 待 preflight 确认(按序号推断
+`s2t1op033`)、operator `per_token_group_quant_int8`、stage `s0`、
+commit `a89a9ad`、ZIP SHA 见上。门禁全过即自动单次提交。
+
+### 跨芯风险
+
+- `tl.math.div_rn` 属 libdevice 调用(昆仑曾对 libdevice erf 崩溃;
+  但 div.rn 是基础运算,预期可用;若昆仑失败,备选:fp64 提升除法或
+  __fdivrn 语义替换);
+- tl.max 轴归约:燧原在 T25 对 argmax 归约失败,但 T26/T27 的
+  axis-1 max 归约通过,纯 max 无索引归约风险较低。
