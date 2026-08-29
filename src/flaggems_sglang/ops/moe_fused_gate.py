@@ -17,8 +17,8 @@ import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
-# e2 re-carrier: kunlun evaluator recovery window detected (T25 pass-team
-# 7->8 on 2026-08-29 21:20); prior e1 hit the platform inductor crash
+# e3 re-carrier: double-confirmed recovery window 2026-08-30 ~10:45
+# (T26 pass-team 5->6 AND T28 2->3 simultaneously); bytes = e2 otherwise
 # (1830s/compile_worker abort, same family as T25-T28); bytes otherwise
 # identical to s0-1b32d9a
 
