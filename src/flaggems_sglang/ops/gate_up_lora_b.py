@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# e9 re-carrier: kunlun recovery window detected 2026-08-29 21:20
-# (T25 pass-team 7->8); bytes otherwise identical to e8-01895cf
+# e10 re-carrier: double-confirmed recovery window 2026-08-30 ~10:45
+# (T26 pass-team 5->6 AND T28 2->3); bytes = e9 otherwise
 import triton
 import triton.language as tl
 
