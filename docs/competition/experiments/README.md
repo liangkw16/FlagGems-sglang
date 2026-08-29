@@ -156,7 +156,10 @@ T08/T09/T17 按当时的 3 次规则执行）。终态：
 2026-08-28/29 kernelgen 轮:**T29 e5–e7 三投 8/8 valid,团队最佳
 2.436x → 2.7229x(+11.8%)**,燧原 5 倍/华为 2 倍/昆仑 +65%/沐曦 +11%;
 T30 结构三轮 + autotune 华为实机全部负结果(详见各自账本)。
-2026-08-29:T33 per_token_group_quant_int8 S0 8/8 valid、3.5385x
+2026-08-29 新题三连:T33 3.5385x、T35 rotary_embedding 4.6673x、
+T34 per_token_quant_int8 4.7074x,全部首投 8/8 valid(T34 距榜首
+-9.9%);T33 E1 摊销证伪、T35 E1 连续读证伪(负结果入账)。
+T33 per_token_group_quant_int8 S0 8/8 valid、3.5385x
 (榜首 4.0170x,-11.9%);E1 燧原/华为多组摊销 vendor 证伪(团队最佳
 保持 S0);根因知识:Triton 普通 `/` 是近似除,需 `tl.math.div_rn`
 才与 torch 逐位一致(amax 边界 ±1 陷阱)。
