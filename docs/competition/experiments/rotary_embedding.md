@@ -36,3 +36,22 @@
 screening 字节与 commit blob 逐项一致(晋级验签 ✓);preflight 全过
 (tid `s2t1op035`,额度 15/30 消耗 1 → 14/30);单次 confirm 提交,
 评测入队。
+
+### S0 平台终态(sub 6341,2026-08-29 17:2x CST)
+
+**8/8 全过,valid,平均 4.66725x**(榜首 MakeYUNAGreatAgain 5.8830x,
+-20.6%,首投即达标)。
+
+| 芯片 | speedup |
+| --- | ---: |
+| tianshu | 9.986 |
+| card_b | 8.987 |
+| card_a | 8.354 |
+| haiguang | 4.936 |
+| muxi | 3.793 |
+| huawei | 0.715 |
+| kunlunxin | 0.298 |
+| enflame | 0.269 |
+
+短板三芯与 T29/T33 同画像;E1 假设:stride-2 偶奇双读在弱芯代价高,
+改整行连续读 + 寄存器 `tl.reshape/tl.split/tl.join` 解交错。
