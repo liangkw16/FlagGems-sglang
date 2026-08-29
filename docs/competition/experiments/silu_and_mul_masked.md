@@ -328,3 +328,32 @@ py_compile、unittest 5/5 和 `RELEASE_OK` 全过。canonical ZIP create 与
 
 E3 是当前 team best，后续 vendor 从该 commit 分叉并冻结已有 AMD/Kunlun
 成员；不再继续同一 AMD 四档轴，下一轮优先高基数芯片的直接 vendor 证据。
+
+## E4：NVIDIA 四档列 tile autotune
+
+状态：screening 通过，待 commit 后 release。
+
+E4 从 E3 team best 分叉，只新增 NVIDIA vendor；generic、AMD 与 Kunlun
+逐字节冻结。NVIDIA 文件与 E3 已平台验证的 AMD 文件逐字节相同，复用
+`128/2w`、`256/4w`、`512/8w`、`1024/8w` 四档和
+`key=["half_width"]`。T18 已完整实证竞赛后缀路由为国际 A=`_nvidia`、
+国际 B=`_amd`；本轮因此只改变国际 A。
+
+- screening：`gpu:/tmp/flagos-silu-nvidia-e4.VOLP0J`，mode 0700；generic
+  SHA-256
+  `bdafd313c6bb841a3334eca33e7bd1637c110d5edbf2c0180c00b127820c9cad`，
+  Kunlun SHA-256
+  `2698072998829ead430005697c2262bd2dc8712e9ee4d221d833541b01a72462`，
+  AMD/NVIDIA SHA-256 均为
+  `a662c81024ad41eb9cf6bbbdf55c83bebdd681da3d27e219609856ae5074429f`，
+  test SHA-256
+  `86b9cb782754a4faa845d6c8b009dc276dde55b1b9d2b6f080cad7aa2b622ea8`，
+  日志 SHA-256
+  `3eadcdd9181603777bd8c753c0c200bec61675b9f81658257abab312e14514d6`。
+- 本地 py_compile、Black、isort、flake8、diff-check 与 AMD/NVIDIA
+  byte-identity 断言全过；远端 unittest 5/5，四条 runtime 路径均覆盖。
+- 因 NVIDIA 与 AMD 源码完全相同，直接复用 E3 的 RTX 五轮交替 A/B：三形态
+  中位比 `1.0006x`、`0.9972x`、`1.1073x`，几何平均 `1.0338x`；
+  E3 平台又在国际 B 实证 `+3.83%`。两项都不保证国际 A 收益，平台仍是必要
+  证伪步骤；stop gate 为 8/8 valid、国际 A 选中 NVIDIA 且国际 A 与平均均
+  高于 E3。
