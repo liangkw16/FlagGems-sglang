@@ -25,6 +25,25 @@ _MAX_GRID = 65535
 
 
 @triton.jit
+def _softcap_inplace_logits_contiguous_kernel(
+    logits_ptr,
+    n_elements,
+    softcap_const,
+    BLOCK_SIZE: tl.constexpr,
+    CAP_RECIPROCAL_OVERFLOWS: tl.constexpr,
+):
+    offsets = tl.program_id(0) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+    mask = offsets < n_elements
+    logits = tl.load(logits_ptr + offsets, mask=mask, other=0.0).to(tl.float32)
+    scaled = logits / softcap_const
+    output = tl_extra_shim.tanh(scaled)
+    output *= softcap_const
+    if CAP_RECIPROCAL_OVERFLOWS:
+        output = tl.where(logits == 0.0, logits / (logits - logits), output)
+    tl.store(logits_ptr + offsets, output, mask=mask)
+
+
+@triton.jit
 def _softcap_inplace_logits_kernel(
     logits_ptr,
     ncols,
@@ -61,7 +80,8 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
             raise ValueError("final_logit_softcapping must contain one value")
         final_logit_softcapping = final_logit_softcapping.item()
     final_logit_softcapping = float(final_logit_softcapping)
-    if full_logits.is_contiguous():
+    is_contiguous = full_logits.is_contiguous()
+    if is_contiguous:
         nrows, ncols = 1, full_logits.numel()
         row_stride = ncols
     else:
@@ -76,6 +96,17 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
     )
     num_col_blocks = triton.cdiv(ncols, 4096)
     total_blocks = nrows * num_col_blocks
+    if is_contiguous and total_blocks <= _MAX_GRID:
+        _softcap_inplace_logits_contiguous_kernel[(total_blocks,)](
+            full_logits,
+            ncols,
+            final_logit_softcapping,
+            BLOCK_SIZE=4096,
+            CAP_RECIPROCAL_OVERFLOWS=cap_reciprocal_overflows,
+            num_warps=4,
+            num_stages=1,
+        )
+        return full_logits
     _softcap_inplace_logits_kernel[(min(total_blocks, _MAX_GRID),)](
         full_logits,
         ncols,
