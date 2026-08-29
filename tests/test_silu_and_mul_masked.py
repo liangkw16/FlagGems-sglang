@@ -69,23 +69,23 @@ if AMD_SPEC is None or AMD_SPEC.loader is None:
 AMD_MODULE = importlib.util.module_from_spec(AMD_SPEC)
 AMD_SPEC.loader.exec_module(AMD_MODULE)
 
-NVIDIA_MODULE_PATH = (
+ENFLAME_MODULE_PATH = (
     Path(__file__).parents[1]
     / "src"
     / "flaggems_sglang"
     / "runtime"
     / "backend"
-    / "_nvidia"
+    / "_enflame"
     / "ops"
     / "silu_and_mul_masked.py"
 )
-NVIDIA_SPEC = importlib.util.spec_from_file_location(
-    "silu_and_mul_masked_nvidia_module", NVIDIA_MODULE_PATH
+ENFLAME_SPEC = importlib.util.spec_from_file_location(
+    "silu_and_mul_masked_enflame_module", ENFLAME_MODULE_PATH
 )
-if NVIDIA_SPEC is None or NVIDIA_SPEC.loader is None:
-    raise RuntimeError(f"cannot load {NVIDIA_MODULE_PATH}")
-NVIDIA_MODULE = importlib.util.module_from_spec(NVIDIA_SPEC)
-NVIDIA_SPEC.loader.exec_module(NVIDIA_MODULE)
+if ENFLAME_SPEC is None or ENFLAME_SPEC.loader is None:
+    raise RuntimeError(f"cannot load {ENFLAME_MODULE_PATH}")
+ENFLAME_MODULE = importlib.util.module_from_spec(ENFLAME_SPEC)
+ENFLAME_SPEC.loader.exec_module(ENFLAME_MODULE)
 
 
 def reference(input, masked_m):
@@ -132,18 +132,28 @@ class SiluAndMulMaskedTest(unittest.TestCase):
         torch.testing.assert_close(masked_m, mask_snapshot, atol=0, rtol=0)
 
     def test_masks_and_column_tails(self):
-        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, NVIDIA_MODULE):
+        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, ENFLAME_MODULE):
             for integer_dtype in (torch.int32, torch.int64):
-                with self.subTest(
-                    module=module.__name__, integer_dtype=integer_dtype
-                ):
-                    input = torch.randn(
-                        4, 7, 2050, device="cuda", dtype=torch.bfloat16
-                    )
-                    masked_m = torch.tensor(
-                        [0, 1, 6, 7], device="cuda", dtype=integer_dtype
-                    )
-                    self._check(input, masked_m, module)
+                for tokens, width in ((3, 16), (64, 256), (7, 2050)):
+                    with self.subTest(
+                        module=module.__name__,
+                        integer_dtype=integer_dtype,
+                        tokens=tokens,
+                        width=width,
+                    ):
+                        input = torch.randn(
+                            4,
+                            tokens,
+                            width,
+                            device="cuda",
+                            dtype=torch.bfloat16,
+                        )
+                        masked_m = torch.tensor(
+                            [0, 1, tokens - 1, tokens],
+                            device="cuda",
+                            dtype=integer_dtype,
+                        )
+                        self._check(input, masked_m, module)
 
     def test_non_contiguous_input_and_mask(self):
         base = torch.randn(6, 10, 516, device="cuda", dtype=torch.bfloat16)
@@ -154,7 +164,7 @@ class SiluAndMulMaskedTest(unittest.TestCase):
         masked_m = mask_base[::2]
         self.assertFalse(input.is_contiguous())
         self.assertFalse(masked_m.is_contiguous())
-        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, NVIDIA_MODULE):
+        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, ENFLAME_MODULE):
             with self.subTest(module=module.__name__):
                 self._check(input, masked_m, module)
 
@@ -169,7 +179,12 @@ class SiluAndMulMaskedTest(unittest.TestCase):
             dtype=torch.int32,
         )
         self.assertGreater(experts * tokens, 2 * 65535)
-        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, NVIDIA_MODULE):
+        self.assertEqual(255 * tokens, 65535)
+        self.assertEqual(
+            (masked_m[0].item(), masked_m[255].item()),
+            (0, tokens),
+        )
+        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, ENFLAME_MODULE):
             with self.subTest(module=module.__name__):
                 self._check(input, masked_m, module)
 
@@ -213,7 +228,7 @@ class SiluAndMulMaskedTest(unittest.TestCase):
         )
         input = torch.cat((gate, up)).reshape(1, 1, -1)
         masked_m = torch.ones(1, device="cuda", dtype=torch.int32)
-        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, NVIDIA_MODULE):
+        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, ENFLAME_MODULE):
             with self.subTest(module=module.__name__):
                 self._check(input, masked_m, module)
 

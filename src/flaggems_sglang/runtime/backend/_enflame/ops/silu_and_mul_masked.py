@@ -16,32 +16,23 @@ import torch
 import triton
 import triton.language as tl
 
+_BLOCK_COL = 1024
 _MAX_GRID = 65535
 
 
-@triton.autotune(
-    configs=[
-        triton.Config({"BLOCK_COL": 128}, num_warps=2),
-        triton.Config({"BLOCK_COL": 256}, num_warps=4),
-        triton.Config({"BLOCK_COL": 512}, num_warps=8),
-        triton.Config({"BLOCK_COL": 1024}, num_warps=8),
-    ],
-    key=["half_width"],
-)
 @triton.jit
 def _silu_and_mul_masked_kernel(
     input_ptr,
     masked_m_ptr,
     output_ptr,
-    num_rows,
+    total_blocks,
     tokens,
     half_width,
+    num_col_blocks,
     BLOCK_COL: tl.constexpr,
 ):
     pid = tl.program_id(0)
     grid_stride = tl.num_programs(0)
-    num_col_blocks = tl.cdiv(half_width, BLOCK_COL)
-    total_blocks = num_rows * num_col_blocks
     offsets = tl.arange(0, BLOCK_COL)
     for block_id in range(pid, total_blocks, grid_stride):
         row_id = block_id // num_col_blocks
@@ -81,20 +72,17 @@ def silu_and_mul_masked(input, masked_m):
     if experts == 0 or tokens == 0 or half_width == 0:
         return output
 
-    num_rows = experts * tokens
-    grid = lambda meta: (  # noqa: E731
-        min(
-            num_rows * triton.cdiv(half_width, meta["BLOCK_COL"]),
-            _MAX_GRID,
-        ),
-    )
-    _silu_and_mul_masked_kernel[grid](
+    num_col_blocks = triton.cdiv(half_width, _BLOCK_COL)
+    total_blocks = experts * tokens * num_col_blocks
+    _silu_and_mul_masked_kernel[(min(total_blocks, _MAX_GRID),)](
         input,
         masked_m,
         output,
-        num_rows,
+        total_blocks,
         tokens,
         half_width,
+        num_col_blocks,
+        BLOCK_COL=_BLOCK_COL,
     )
     return output
 

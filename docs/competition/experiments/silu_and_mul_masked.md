@@ -395,3 +395,43 @@ team best。国际 A 正确选中 NVIDIA，但从 E3 generic 的 `33.74233333x`
 | huawei | 6.3463x | -14.23% | generic |
 | card_a | 33.1780x | -1.67% | NVIDIA |
 | card_b | 10.4070x | -4.90% | AMD |
+
+## E5：program-uniform padding row skip
+
+状态：screening 通过，待 commit 后 release。
+
+E5 从 E3 team best 分叉，删除 E4 已证伪的 NVIDIA vendor；AMD 与 Kunlun
+逐字节回到 E3。generic 只把原本合入每个 lane mask 的
+`token_id < valid_rows` 提升为 program-uniform `if`，把 loads、exp/div、
+cast 和 store 包在有效行分支内；BLOCK 1024、row/col 映射、grid cap、
+grid-stride、公式与地址全部不变。不能对无效行 `return`，因为同一 physical
+PID 跨 grid stride 后可能继续处理有效行。
+
+S0 昆仑失败分母与代理 shape 共同锁定前两 shape 均为 50% 有效密度：
+`4x3xhalf8` 比较 48/96 元素，`4x64xhalf128` 比较 16384/32768 元素。
+旧 mask 只阻止无效行内存事务，仍执行 1024 lanes 的 exp/div；uniform `if`
+直接跳过这半数 row program。为隔离 GCU 动态 loop 分支兼容风险，新增
+Enflame vendor，内容与 E3 generic 逐字节相同；因此候选只改变天数、沐曦、
+海光、华为和国际 A 五芯。
+
+- screening：`gpu:/tmp/flagos-silu-row-skip-e5.y15eYt`，mode 0700；generic
+  SHA-256
+  `d5a85a335c5701e2fe03f62295180075272cdc1a20a56c37dc3c2eaf17073fb5`，
+  Enflame SHA-256
+  `bdafd313c6bb841a3334eca33e7bd1637c110d5edbf2c0180c00b127820c9cad`
+  （=E3 generic），AMD/Kunlun SHA-256 仍为
+  `a662c81024ad41eb9cf6bbbdf55c83bebdd681da3d27e219609856ae5074429f` /
+  `2698072998829ead430005697c2262bd2dc8712e9ee4d221d833541b01a72462`；
+  test SHA-256
+  `6daba54aaed95ca014204d9cc113ae0aeba837e98d7b3404a920f147fddc5969`，
+  unittest 日志 SHA-256
+  `8171a83c7b05d26a5376a40a4a20be17787fcfe1fdb292e3ded69def58e5f867`。
+- 本地 py_compile、Black、isort、flake8、diff-check 全过；远端 unittest
+  5/5。回归新增实际 h=8/128 的 int32/int64 50% 密度；grid-fold 显式断言
+  PID 0 先处理 invalid block 0，再处理 valid block 65535，防止误用 return。
+- RTX 五轮交替 wrapper A/B 在 50% 密度三形态的中位比为 `1.0196x`、
+  `0.9912x`、`1.5527x`，几何平均 `1.1621x`；all-valid controls 为
+  `0.9999x`、`0.9747x`、`0.9758x`，几何平均 `0.9834x`。日志 SHA-256
+  `e33502d81238a637f6e3bc106061a214d9560925682b35e564eedbe7da83cdff`。
+  候选通过 affected `>=1.05x`、control `>=0.98x`、control 单点
+  `>=0.96x` 门；小 shape 收益仍接近噪声，平台五芯是必要证伪步骤。
