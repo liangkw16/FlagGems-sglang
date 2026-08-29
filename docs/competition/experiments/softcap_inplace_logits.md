@@ -89,3 +89,35 @@ S0 的 Enflame 为公开四队最高；两个国际芯与榜首贴近。下一�
 五芯榜首合计比 S0 高 `0.97083334x`，理论均分空间 `+0.12135417x`，足以覆盖
 当前 `0.10794791x` 榜首差距。若 E1 未提升平均则永久停止 generic-native 轴，
 转向 Kunlun/Huawei vendor。
+
+## E1：generic 上游 native `tanh`
+
+状态：commit-bound release 与 canonical ZIP 门禁通过，待一次性平台提交。
+
+E1 从 S0 分叉，只把 generic 的 Taylor/`exp` lowering 换成 SGLang 上游
+`triton.language.extra.libdevice.tanh`；BLOCK1024、grid-stride、row-stride、
+cap 缩放与极小 cap 保护不变。Ascend、Enflame、Kunlun 与 S0 逐字节冻结。
+该 generic 预期命中天数、沐曦、海光、国际 A/B；S0 已证明国际 A/B 仅落后
+榜首 `0.0242/0.0646x`，主要收益目标是前三芯。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `f3d135212b126ba705898d6a6fbe5c456681fd92` |
+| generic SHA-256 | `8740e8e9f6332046bbfc04a8f0f3f69e3e1067a3447dd520889a499cbe9a99c0` |
+| Ascend SHA-256 | `46faecf8f5ef853b798a072f56c03487cac37179201ecdfbfe5d756460cf907f`（=S0） |
+| Enflame SHA-256 | `b5d049fd12a3d90388884e393fc4f052aa7817640fb9b6c39b857e003836a7dc`（=S0） |
+| Kunlun SHA-256 | `7aaf803413bc64bc3115204cf83daa4a8779f88d6f641500e1b6dd519a7d6dfd`（=S0） |
+| test SHA-256 | `1bb5ec58c81999ad2a0a925889d2ca47b8382c8f298c35abe6d1572a48a73ec6` |
+| screening | `gpu:/tmp/flagos-t40-screen.JZS4ay`；5/5、`SCREENING_OK`；日志 SHA-256 `05f61d9cd571186074c1c9c80c55934873662a10ce804cc86eabd28c663095f3` |
+| release | `gpu:/tmp/flagos-t40-e1-release.W2gK20`；5/5、前后哈希一致、`RELEASE_OK`；日志 SHA-256 `ddaf2bff5b665f24018d3ba13f899520870d19d21c590ab4b69ec0acbe0d99d9` |
+| canonical ZIP | `artifacts/competition/softcap_inplace_logits/e1-f3d1352/softcap_inplace_logits.zip`，`12961` bytes，SHA-256 `a4aeef579774d54db3f019e243ffc7e2b0718cd29a41c4c9dab292eae0acc0e1` |
+
+RTX 5070 Ti 四个代表 shape 上 E1 相对上游同字节数学为 `0.9822–1.0120x`，
+相对 Torch 为 `1.4658–1.8200x`；日志 SHA-256
+`95ea88955bdd78538d10d025d521652fb632f36341d4d07e1940d04e05036cfd`。
+代理未见结构回退，但不外推 native lowering 在其他芯片的收益。
+
+E1 基础门为 8/8 valid、平均严格高于 S0 `1.60635417x`；冲榜门为严格高于
+实时榜首 `1.71430208x`。若平均不升，保留 S0 并永久停止 generic-native；若
+提升但未登顶，冻结新的 generic best，再单独测试 Kunlun 或 Ascend 一个 vendor
+轴。E1 ZIP 只允许提交一次。
