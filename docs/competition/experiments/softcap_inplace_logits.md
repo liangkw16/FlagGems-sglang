@@ -148,3 +148,42 @@ E1 证明 native generic 对海光有大幅正收益，但天数、沐曦和国�
 math-lowering 轴。华为当前距榜首 `0.60566666x`；若其他七芯不变且追平该单芯，
 理论平均为 `1.71658333x`，足以超过当前榜首，因此 E2 优先 Ascend native
 `tanh`，保持 `BLOCK=512/grid=48` 不变。
+
+## E2：Ascend 官方 native `tanh`
+
+状态：commit-bound release 与 canonical ZIP 门禁通过，待一次性平台提交。
+
+E2 从 E1 分叉，只把 `_ascend` 的 Taylor/`exp` lowering 替换为项目
+`tl_extra_shim.tanh`。该 shim 由 Ascend backend 按 Triton 版本动态选择
+`triton.language.extra.ascend` 或 `triton.language.extra.cann`；保留已由 T24 S4
+平台证明的 `softcap_const * tanh(...)` scalar 左乘、`BLOCK=512`、
+physical grid cap 48、grid-stride、row-stride 和极小 cap 保护。generic、
+Enflame、Kunlun 和测试与 E1 逐字节冻结。T18 已实证华为 worker 能导入
+该 shim 并编译执行 `exp`，但 `tanh` symbol 仍是本轮待平台验证假设。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `1f1903c83d415e7d051fa0aa34ccc0cc842d0ffe` |
+| generic SHA-256 | `8740e8e9f6332046bbfc04a8f0f3f69e3e1067a3447dd520889a499cbe9a99c0`（=E1） |
+| Ascend SHA-256 | `7cd35d10f63241217f3c4f2116e421db7a27da363a9a116d7a44a4702088a101` |
+| Enflame SHA-256 | `b5d049fd12a3d90388884e393fc4f052aa7817640fb9b6c39b857e003836a7dc`（=E1） |
+| Kunlun SHA-256 | `7aaf803413bc64bc3115204cf83daa4a8779f88d6f641500e1b6dd519a7d6dfd`（=E1） |
+| test SHA-256 | `1bb5ec58c81999ad2a0a925889d2ca47b8382c8f298c35abe6d1572a48a73ec6`（=E1） |
+| screening | `gpu:/tmp/flagos-softcap-inplace-e2-screen.FVh7Ul`；5/5、`SCREENING_OK`；日志 SHA-256 `0e85275d290ad2f06c99c48a1e9e34ffa68cf056d7387a3a7435348e9a67c023` |
+| release | `gpu:/tmp/flagos-softcap-inplace-e2-release.5qfCIn`；5/5、commit 字节哈希一致、`RELEASE_OK`；日志 SHA-256 `d9af6a930c911464b4e69de0cbe23944448e4a8e1326776f0c95243c4a92d7db` |
+| canonical ZIP | `artifacts/competition/softcap_inplace_logits/e2-1f1903c/softcap_inplace_logits.zip`，`12865` bytes，SHA-256 `a2c0097854c07581125c982c7b606f6caeff19e485b96ff68385754ee5f01ceb` |
+
+RTX 5070 Ti 上的非目标代理将 E2 与同 `BLOCK/grid` 的 E1 Ascend 手写数学
+逐项对照；四个代表 shape 上 native/manual 为 `0.8637–0.9616x`，即 CUDA
+上慢约 4%–16%。candidate 与 control 日志 SHA-256 分别为
+`461b199ede43002f37a051c85ce9ce958c207be16bfb5d010e157f5cbe757556` 和
+`c0f31312a404dce666c9aca74ae3c3eb20babf17c01f59b1c0b22019012932ad`。这只是数值、
+编译和资源负代理证据；CUDA libdevice 与 48-worker cap 时延不外推为 Ascend
+收益。
+
+2026-08-30 02:35 CST 公开实时榜首仍为 Warmhearted
+`1.71430208x`，SoulCoder E1 为 `1.64087500x`。E2 基础门为 8/8 valid；
+单轴晋级门为华为严格高于 E1 `0.71291667x` 且平均严格高于
+`1.64087500x`；冲榜门为平均严格高于 `1.71430208x`。若华为编译失败或
+不升，永久停止 Ascend native-`tanh` 轴；若升分但未登顶，冻结 E2 Ascend
+字节并转向 Kunlun 的单一 BLOCK 轴。E2 ZIP 只允许提交一次。
