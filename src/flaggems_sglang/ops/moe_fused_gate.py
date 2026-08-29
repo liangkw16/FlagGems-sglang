@@ -17,6 +17,9 @@ import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
+# e1 re-carrier: s0 kunlun hit the platform-side inductor crash
+# (1830s/compile_worker abort, same family as T25-T28); bytes otherwise
+# identical to s0-1b32d9a
 
 
 @triton.jit
