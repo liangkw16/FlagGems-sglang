@@ -398,7 +398,7 @@ team best。国际 A 正确选中 NVIDIA，但从 E3 generic 的 `33.74233333x`
 
 ## E5：program-uniform padding row skip
 
-状态：release 与不可变 ZIP 通过，待平台 preflight。
+状态：平台 8/8、`valid`、`15.672x`，非 team best；保留 E3。
 
 E5 从 E3 team best 分叉，删除 E4 已证伪的 NVIDIA vendor；AMD 与 Kunlun
 逐字节回到 E3。generic 只把原本合入每个 lane mask 的
@@ -451,3 +451,27 @@ release 五文件由 commit Git 对象生成，前后哈希一致；py_compile�
 unittest 5/5 和 `RELEASE_OK` 全过。canonical ZIP create 与
 `--verify-existing` 一致，E4 NVIDIA 成员已移除，Enflame 保险成员已进入
 四成员归档。
+
+### E5 平台终态（sub 6596，2026-08-30 01:42 CST）
+
+实时 preflight tuple 全匹配，单次 confirm 成功；file URL SHA-256
+`bd45b186c51d2c616fe235cca6fca36fbcd4fd3517bb604402e7603c3e2b763d`，
+提交后额度 22/30。远端对象验签为 `unavailable`，提交 state 已为
+`submitted`，未重试。
+
+终态 8/8、`valid`，但平均 `15.672x`，比 E3 低 `0.48841667x`，非
+team best。五颗受影响芯片全部未超过 E3；平台短 row/高 launch-overhead
+形态中 runtime branch 税高于跳过 padding ALU 的收益。Enflame 保险路由正确，
+AMD/Kunlun 也保持专用路径。永久停止 uniform-if 轴，后续从 E3 原 generic
+分叉：
+
+| 芯片 | E5 speedup | 相对 E3 | 选中文件 |
+| --- | ---: | ---: | --- |
+| tianshu | 23.3353x | -5.94% | generic-if |
+| muxi | 16.4313x | -0.35% | generic-if |
+| enflame | 0.4547x | -0.51% | Enflame E3 byte |
+| haiguang | 34.1330x | -3.04% | generic-if |
+| kunlunxin | 0.2413x | +0.28% | Kunlun |
+| huawei | 7.1050x | -3.98% | generic-if |
+| card_a | 32.8997x | -2.50% | generic-if |
+| card_b | 10.7757x | -1.53% | AMD |
