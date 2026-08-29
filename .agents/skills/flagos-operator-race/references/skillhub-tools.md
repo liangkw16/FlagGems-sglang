@@ -147,3 +147,13 @@ kernelgen 自动检测会按通用流程路由；其 FlagGems 专用子文档中
 仅当用户要求向 FlagGems 上游提 PR 时使用，push 授权仍守本 skill 规则。
 可复用的基准纪律：dtype 用 `consts.FLOAT_DTYPES` 参数化；backward 算子
 对比必须用 `torch.ops.aten.<op>_backward` 做参照，否则 speedup 虚高。
+
+### kernel-skills 快照(tensormux/kernel-skills,MIT,2026-08-29 引入)
+
+`references/kernel-skills-snapshot/` 内置 13 个与本赛高度相关的
+SKILL.md(rope/silu-mul/int8 量化/块参数调优/tile 选择/数值稳定/
+跨芯无关计划等),来源 github.com/tensormux/kernel-skills(浅克隆,
+只读参考,不经 MCP)。按题用法:T35/T30→rope;T29→silu-mul;
+T33/T34→int8 量化与精度调试;通用→block-parameters/tile-size/
+numerically-stable/backend-agnostic。第三批按题上游打法速查见
+docs/competition/batch3-upstream-playbook.md。
