@@ -331,7 +331,7 @@ E3 是当前 team best，后续 vendor 从该 commit 分叉并冻结已有 AMD/K
 
 ## E4：NVIDIA 四档列 tile autotune
 
-状态：release 与不可变 ZIP 通过，待平台 preflight。
+状态：平台 8/8、`valid`、`15.76016667x`，非 team best；保留 E3。
 
 E4 从 E3 team best 分叉，只新增 NVIDIA vendor；generic、AMD 与 Kunlun
 逐字节冻结。NVIDIA 文件与 E3 已平台验证的 AMD 文件逐字节相同，复用
@@ -372,3 +372,26 @@ E4 从 E3 team best 分叉，只新增 NVIDIA vendor；generic、AMD 与 Kunlun
 release 五文件由 commit 的 Git 对象生成，前后哈希一致；py_compile、
 unittest 5/5、AMD/NVIDIA `cmp` 和 `RELEASE_OK` 全过。canonical ZIP create
 与 `--verify-existing` 一致，NVIDIA 新成员已进入四成员归档。
+
+### E4 平台终态（sub 6594，2026-08-30 01:37 CST）
+
+实时 preflight tuple 全匹配，单次 confirm 成功；file URL SHA-256
+`501937baafbd9688b4648017aa509f453a9c31925fc5f19c121cdd0623f560a3`，
+提交后额度 23/30。远端对象验签为 `unavailable`，提交 state 已为
+`submitted`，未重试。
+
+终态 8/8、`valid`，但平均 `15.76016667x`，比 E3 低 `0.40025x`，非
+team best。国际 A 正确选中 NVIDIA，但从 E3 generic 的 `33.74233333x`
+降至 `33.178x`（-1.67%），未过单芯与整题 stop gate；永久停止 NVIDIA
+四档轴，后续候选从 E3 分叉且不携带 `_nvidia`：
+
+| 芯片 | E4 speedup | 相对 E3 | 选中文件 |
+| --- | ---: | ---: | --- |
+| tianshu | 24.3433x | -1.87% | generic |
+| muxi | 16.5140x | +0.16% | generic |
+| enflame | 0.4683x | +2.48% | generic |
+| haiguang | 34.5873x | -1.75% | generic |
+| kunlunxin | 0.2370x | -1.52% | Kunlun |
+| huawei | 6.3463x | -14.23% | generic |
+| card_a | 33.1780x | -1.67% | NVIDIA |
+| card_b | 10.4070x | -4.90% | AMD |
