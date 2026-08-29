@@ -546,3 +546,60 @@ team best。Ascend 路由正确命中华为，但华为从 `7.39933333x` 降至
 | huawei | 4.2867x | -42.07% | Ascend |
 | card_a | 32.2233x | -4.50% | generic |
 | card_b | 10.9277x | -0.14% | AMD |
+
+## E7：MetaX flat-full BLOCK 2048
+
+状态：release 与不可变 ZIP 通过，待平台 preflight。
+
+E7 从 E3 team best 精确分叉，generic、AMD、Kunlun 三成员逐字节冻结，删除
+E6 已证伪的 Ascend。只新增 MetaX vendor；它复制已在 T39 平台 8/8 的
+Kunlun flat-full scaffold，完整源码唯一差异为 `_BLOCK_SIZE = 1024` 改为
+`2048`，继续写满题面不检验的 padding，不读 `masked_m`。
+
+方向由三条直接证据触发：T29 MetaX 旧 flat/BLOCK2048 使沐曦
+`2.079x → 2.310x`（`+11.11%`）；同题早期 flat1024 到 flat2048 的平台读数
+约为 `+4.24%`；固定 FlagGems MetaX pointwise policy 的最大 tile 为 2048。
+按 E3 沐曦 `16.48833333x` 估算，保守/乐观平均分别约为
+`16.248x` / `16.389x`。
+
+- screening：`gpu:/tmp/flagos-silu-metax-e7.59nC9O`，mode 0700；generic、
+  AMD、Kunlun SHA-256 仍为
+  `bdafd313c6bb841a3334eca33e7bd1637c110d5edbf2c0180c00b127820c9cad`、
+  `a662c81024ad41eb9cf6bbbdf55c83bebdd681da3d27e219609856ae5074429f`、
+  `2698072998829ead430005697c2262bd2dc8712e9ee4d221d833541b01a72462`；
+  MetaX / test SHA-256 为
+  `dc6e0d1ca5c0cee612b755cdb8d267e718f971a98b4b54967bbb80491cb80a0a` /
+  `dd23116961ca2411af61e1fd745eba805e7c6167553596d75143c79b936a3760`。
+  本地 py_compile、Black、isort、flake8、diff-check 全过；远端 unittest
+  6/6，screening 日志 SHA-256
+  `7fe536a3dd95e7a39f0b72496abad856318d4dd2cf39c771a3e4d3969321bff0`。
+  新回归覆盖 2047/2048/2049 元素边界，并临时设 `_MAX_GRID=3` 强制
+  MetaX flat kernel 执行三轮以上 grid-stride。
+- RTX 五轮交替 wrapper A/B：两种平台形状 `4x3xhalf8`、
+  `4x64xhalf128` 的中位比均为 `1.0000x`，2048 边界为 `1.0079x`；
+  `288x768xhalf256`、50% padding 大代理为 `0.5624x`，符合写满 padding
+  多做一倍 ALU 的预期风险。候选 40 regs、4 warps、3 stages，零
+  spill/shared/scratch。脚本 / 日志 SHA-256 为
+  `46960b5c4f6413c9a93bbc80f63da1ba8da1b24a7dee18788c09ea161a5958f6` /
+  `135eb70f0c5cc418a91c2b943262c6bc25998271301d1b42f31f35d5bffd7e15`。
+  NVIDIA 只验证已暴露形状无灾难，MetaX 平台仍是必要证伪步骤。
+
+平台 stop gate：8/8 valid、沐曦选中 `_metax`、沐曦严格高于 E3
+`16.48833333x` 且平均严格高于 `16.16041667x`；显著门为沐曦至少
+`17.1877x`。任一基础门失败即保留 E3，永久停止 MetaX flat2048 轴。
+
+### E7 release 与不可变 ZIP
+
+| 项目 | 值 |
+| --- | --- |
+| source/verification commit | `fd089feecd45302fb5a0257b4d3302e8893ac0df` |
+| release 目录 | `gpu:/tmp/flagos-silu-metax-e7-release.oTV4rA`，mode 0700 |
+| release 日志 SHA-256 | `20d3a142b00c6779cd531daf3b0563b389e30a2fcc906b7af9d14cd615289cd5` |
+| ZIP | `artifacts/competition/silu_and_mul_masked/e7-fd089fe/silu_and_mul_masked.zip` |
+| ZIP SHA-256 | `906ed79d5fc3272697b5c17a244a2e9c15d32c257795e591634487e493d4d107` |
+| ZIP 内容 | generic 2708 bytes + AMD 3050 bytes + Kunlun 2276 bytes + MetaX 2276 bytes；ZIP 10852 bytes |
+
+release 五文件由 commit Git 对象生成，前后哈希一致；py_compile、
+unittest 6/6 和 `RELEASE_OK` 全过。canonical ZIP create 与
+`--verify-existing` 一致，E6 Ascend 成员已移除，MetaX 单变量成员已进入
+四成员归档。
