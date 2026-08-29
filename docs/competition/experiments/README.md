@@ -158,7 +158,9 @@ T08/T09/T17 按当时的 3 次规则执行）。终态：
 T30 结构三轮 + autotune 华为实机全部负结果(详见各自账本)。
 2026-08-29 新题四连:T33 3.5385x、T35 rotary_embedding 4.6673x、
 T34 per_token_quant_int8 4.7074x(-9.9%)、**T32 moe_fused_mul_sum
-4.4829x(超快照榜首 +5.3%)**,全部首投 8/8 valid;T33 E1 摊销证伪、T35 E1 连续读证伪(负结果入账)。
+4.4829x(超快照榜首 +5.3%)**,全部首投 8/8 valid;T36
+selective_state_update 两投同指纹数值失败(真实 reference 语义
+未定位,止损,详见账本);T33 E1 摊销证伪、T35 E1 连续读证伪(负结果入账)。
 T33 per_token_group_quant_int8 S0 8/8 valid、3.5385x
 (榜首 4.0170x,-11.9%);E1 燧原/华为多组摊销 vendor 证伪(团队最佳
 保持 S0);根因知识:Triton 普通 `/` 是近似除,需 `tl.math.div_rn`
