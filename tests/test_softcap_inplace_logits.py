@@ -57,8 +57,7 @@ MODULES = {
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class SoftcapInplaceLogitsTest(unittest.TestCase):
     def _check(self, module, source, cap=30.0):
-        expected = torch.tanh(source.float() / cap) * cap
-        expected = expected.to(source.dtype)
+        expected = torch.tanh(source / cap) * cap
         pointer = source.data_ptr()
 
         actual = module.softcap_inplace_logits(source, cap)
@@ -100,7 +99,7 @@ class SoftcapInplaceLogitsTest(unittest.TestCase):
 
     def test_tile_boundaries_and_grid_stride(self):
         cases = {
-            "generic": (255, 256, 257),
+            "generic": (1023, 1024, 1025),
             "ascend": (511, 512, 513, 48 * 512 + 17),
             "enflame": (32767, 32768, 32769, 12 * 32768 + 17),
             "kunlunxin": (4095, 4096, 4097),
@@ -142,6 +141,16 @@ class SoftcapInplaceLogitsTest(unittest.TestCase):
                     device="cuda",
                 )
                 self._check(module, source)
+
+    def test_cap_boundaries(self):
+        caps = (0.0, float.fromhex("0x1p-128"), float("inf"), float("nan"))
+        for name, module in MODULES.items():
+            for cap in caps:
+                with self.subTest(name=name, cap=cap):
+                    source = torch.tensor(
+                        [-1.0, -0.0, 0.0, 1.0], device="cuda"
+                    )
+                    self._check(module, source, cap)
 
 
 if __name__ == "__main__":
