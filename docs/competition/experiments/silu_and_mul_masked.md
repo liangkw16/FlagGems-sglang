@@ -11,7 +11,7 @@
 
 ## S0：KernelGen 基线
 
-状态：release 通过，canonical ZIP 已验签，待实时 preflight。
+状态：已提交，终态 `invalid_correctness`，7/8 通过，仅昆仑失败。
 
 - 2026-08-30 通过 `kernelgen-server.generate_kernel` 生成两轮：首轮报告
   `41.188x` 但 65535 grid cap 后无步进，静态否决；第二轮补齐步进但嵌套
@@ -91,10 +91,55 @@ unittest 5/5、末尾哈希复核全过。BLOCK 1024 的 release speedup p50 为
 
 ## 平台记录
 
-尚未提交。preflight tuple：season 2、race `782kzq4m`、account
-`15600308080`、team `SoulCoder`、batch 3、task 39、tid `s2t1op039`、
-operator `silu_and_mul_masked`、stage `s0`、commit
-`bd5bf8b040b934797a7686bddef06b0093dc3481`、member
-`silu_and_mul_masked.py`、ZIP SHA-256
-`cc9da72e2ad6c551aeba2eac74dbe2d7882d3f489b285601223b926f2f9815e0`。
-实时门禁全部匹配即按项目授权执行一次性 submit。
+### S0 首投（sub 6584，2026-08-30 00:53 CST）
+
+- 实时 preflight tuple 全部匹配；当时额度 28/30，单次 confirm 成功，
+  提交后剩 27/30。file URL SHA-256
+  `8c9524d870052214bce8f264290a6baa438467a8388be0522932ba69b3151576`。
+- state `submitted`，远端 ZIP 验签因未配置已信任对象存储 hostname 为
+  `unavailable`；不改变已提交事实，按门禁未重试。
+- 终态 `invalid_correctness`，**7/8 通过，仅昆仑数值失败**：
+
+| 芯片 | speedup | 状态 |
+| --- | ---: | --- |
+| tianshu | 24.5783x | 通过 |
+| muxi | 16.4183x | 通过 |
+| enflame | 0.4620x | 通过 |
+| haiguang | 34.2437x | 通过 |
+| kunlunxin | - | 正确性失败 |
+| huawei | 6.8197x | 通过 |
+| card_a | 31.7577x | 通过 |
+| card_b | 10.2353x | 通过 |
+
+昆仑 case 0 为 45/48 元素错（最大绝对差 6.1074），case 1 为
+13150/16384 元素错（最大绝对差 7.03125）；不是门槛或编译失败。
+
+## E1：昆仑去 metadata gating 单变量修复
+
+状态：screening 通过，待 commit 后 release。
+
+`tl.fdiv` 候选在 commit 前否决：固定 FlagTree commit `c1ea8285` 的
+`tensor.__truediv__` 和 `tl.fdiv` 对 FP32 最终都调用
+`builder.create_fdiv`。RTX 5070 Ti 的 Triton 3.7.1 实编译也证明 int32、
+int64 mask 两组 generic/vendor TTIR 去除源码定位后逐字相同，均只有
+`arith.divf`；IR 目录 `gpu:/tmp/flagos-silu-ir.vlH2Pf`。该改写不产生
+不同程序，故没有消耗平台额度。
+
+E1 保持 generic S0 字节不变；Kunlun vendor 与 generic 的完整计算 diff
+只有删除 `expert_id/token_id/masked_m` gating，并把 store mask 收窄为
+`cols < half_width`。BLOCK 1024、capped grid-stride、row/col 地址、SiLU
+公式、类型和 launch 参数全部不变。题面不检验 padding 输出，写满全部行
+合法；同时直接排除标量 metadata load/broadcast 或谓词误判造成有效行未写。
+T29 E5 已在昆仑实证同一 row/col-block 骨架正确，因此不先改 flat 结构。
+
+- screening：`gpu:/tmp/flagos-silu-kunlun-gating-e1.w6kQOE`，mode 0700；
+  generic SHA-256 `bdafd313c6bb841a3334eca33e7bd1637c110d5edbf2c0180c00b127820c9cad`，
+  vendor SHA-256 `c8ba71d893d07a2380ab8c9ab79b09b03d0f6d6c65634bc80fd9060cee754d59`，
+  test SHA-256 `776debdf846d79f04c14c58e195c4c36f98bfc86a2867a5122a764a646fec89a`；
+  最终日志 SHA-256
+  `cc9f3c2a1d3b629a2e1470fa5674657ce43071410179a1358361ca8de8866c13`。
+- RTX 5070 Ti 上 py_compile、Black 79、isort 80、flake8 全过，unittest
+  5/5。grid-fold 回归改为约 0.5 MiB 的 `512x257x2`，generic/vendor 都覆盖
+  `131584 > 2 * 65535` 的三轮折叠；另覆盖 int32/int64、尾列、非连续输入、
+  特殊值和输入不变性。NVIDIA 只能验证字节可编译及语义，昆仑平台是必要
+  证伪步骤。
