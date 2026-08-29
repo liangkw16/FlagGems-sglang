@@ -124,3 +124,17 @@ confirm 提交成功,评测入队;逐芯结果待回填。
   (2 队达标 → 我方第 3 家 valid)。
 - 后续单变量轴:燧原/昆仑 vendor(T29 已证两芯偏好差异)、BLOCK
   调优、多组并行(每 program 多组摊销归约)。
+
+## E1:燧原/华为多组摊销 vendor(2026-08-29 16:0x CST)
+
+- 假设:S0 燧原 0.448x/华为 1.316x 的短板是海量小 program
+  (total_groups 可达 26 万,每 program 仅 ≤256 元素)的调度开销;
+  两芯对结构摊销响应好(T29 E5 先例)。
+- vendor = 每 program 8 组 static_range 摊销、无分支 mask 尾
+  (commit `447a3f8`,两 vendor 字节一致,SHA `e58cfbc0…`);
+  generic/kunlunxin 等六芯维持 S0。
+- 代理(NVIDIA)上 E1b:bf16 中 shape +7%、小 shape -46% → 不换
+  generic,仅 vendor;release 验证(gpu:/tmp/flagos-t33-e1.vIC17W,
+  Git 对象):py_compile ✓、unittest 7/7 OK、vendor 代理基准正常。
+- ZIP `e1-447a3f8`,SHA `00158207d7e269286fe21bc5344499ce206c257822348d3bb57fb556a0293a5a`,3 成员
+  (generic + enflame + ascend vendor)。
