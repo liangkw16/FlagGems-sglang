@@ -116,7 +116,7 @@ unittest 5/5、末尾哈希复核全过。BLOCK 1024 的 release speedup p50 为
 
 ## E1：昆仑去 metadata gating 单变量修复
 
-状态：release 与不可变 ZIP 通过，待平台 preflight。
+状态：平台 8/8、`valid`、`16.16041667x`，团队当前最佳。
 
 `tl.fdiv` 候选在 commit 前否决：固定 FlagTree commit `c1ea8285` 的
 `tensor.__truediv__` 和 `tl.fdiv` 对 FP32 最终都调用
@@ -302,3 +302,29 @@ SiLU 公式和地址逻辑；launch 不显式重复绑定 BLOCK/warps。
 release 四文件由 commit 的 Git 对象生成，前后哈希与 screening 一致；
 py_compile、unittest 5/5 和 `RELEASE_OK` 全过。canonical ZIP create 与
 `--verify-existing` 一致，新 AMD vendor 已确认进入三成员归档。
+
+### E3 平台终态（sub 6591，2026-08-30 01:27 CST）
+
+实时 preflight tuple 全匹配，单次 confirm 成功；file URL SHA-256
+`95421daf1bdfe72b4aaa483983b35a7444ba88717c5c46762129d3ef4ed5f600`，
+提交后额度 24/30。远端对象存储验签仍因未配置可信 hostname 为
+`unavailable`，state 已为 `submitted`，未重试。
+
+终态 **valid、8/8、团队新最佳**，平均 `16.16041667x`，比 E2 提高
+`0.24095834x`。AMD 路由确认只作用于国际 B，得分从 `10.53966667x`
+提高到 `10.94333333x`（`+3.83%`）；四档方向有效，但没有外推 T21 的
+53.1% 收益。其余七芯字节冻结，分数变化视为平台波动：
+
+| 芯片 | speedup | 相对 E2 | 选中文件 |
+| --- | ---: | ---: | --- |
+| tianshu | 24.8080x | +1.09% | generic |
+| muxi | 16.4883x | -0.98% | generic |
+| enflame | 0.4570x | +0.44% | generic |
+| haiguang | 35.2043x | +1.60% | generic |
+| kunlunxin | 0.2407x | -0.14% | Kunlun |
+| huawei | 7.3993x | -6.48% | generic |
+| card_a | 33.7423x | +4.25% | generic |
+| card_b | 10.9433x | +3.83% | AMD |
+
+E3 是当前 team best，后续 vendor 从该 commit 分叉并冻结已有 AMD/Kunlun
+成员；不再继续同一 AMD 四档轴，下一轮优先高基数芯片的直接 vendor 证据。
