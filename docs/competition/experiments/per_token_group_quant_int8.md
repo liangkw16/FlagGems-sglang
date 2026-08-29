@@ -104,3 +104,23 @@ commit `a89a9ad`、ZIP SHA 见上。门禁全过即自动单次提交。
 
 preflight 全过(tid `s2t1op033`、额度 17/30,本次消耗 1);单次
 confirm 提交成功,评测入队;逐芯结果待回填。
+
+### S0 平台终态(sub 6333,2026-08-29 14:1x CST)
+
+**8/8 全过,valid,平均 3.53853333x —— 一次通过。**
+
+| 芯片 | speedup | 备注 |
+| --- | ---: | --- |
+| tianshu | 6.796 | |
+| card_b | 6.825 | |
+| haiguang | 5.759 | |
+| card_a | 4.646 | |
+| muxi | 2.285 | |
+| huawei | 1.316 | T29 同款中等 |
+| enflame | 0.448 | 弱芯(过 0.1x 门槛) |
+| kunlunxin | 0.233 | `tl.math.div_rn` 通过(未触发昆仑 libdevice 崩溃) |
+
+- 距榜首(MakeYUNAGreatAgain 4.0170x)**-11.9%**,首投即第 3 档
+  (2 队达标 → 我方第 3 家 valid)。
+- 后续单变量轴:燧原/昆仑 vendor(T29 已证两芯偏好差异)、BLOCK
+  调优、多组并行(每 program 多组摊销归约)。
