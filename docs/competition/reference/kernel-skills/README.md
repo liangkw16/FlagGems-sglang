@@ -1,9 +1,12 @@
 # 外部 Kernel 优化 Skills（参考文档）
 
 来源：[tensormux/kernel-skills](https://github.com/tensormux/kernel-skills)（MIT，见 `LICENSE`），
-2026-08-29 引入，浅克隆 commit 为 main@HEAD。仅作为第三批算子开发的最佳实践
-参考资料，不注册为 SkillHub skill；具体取舍仍服从
+2026-08-29 引入，浅克隆 commit 为 main@HEAD。仅作为第三批算子开发的最佳实践参考资料，
+不注册为 SkillHub skill；具体取舍仍服从
 `.agents/skills/flagos-operator-race/SKILL.md` 的契约锁定与门禁流程。
+
+> 逐题最佳实践、跨芯适配清单与完整来源列表见同目录
+> [../batch3-kernel-best-practices.md](../batch3-kernel-best-practices.md)。
 
 ## 精选清单与批次对应
 
