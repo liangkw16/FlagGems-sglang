@@ -211,3 +211,18 @@ row/col-block 快 65%。按该实证模板使用 int32 flat 索引，避免每 t
   `288x768x256` 上相对 E1 分别为 1.010x、0.991x、1.016x；该后端没有
   Kunlun 的尾 lane 执行成本，结果中性，不作为否决依据。E2 不同时改
   BLOCK 2048；若平台仅差少量，再单独调常量。
+
+### E2 release 与不可变 ZIP
+
+| 项目 | 值 |
+| --- | --- |
+| source/verification commit | `f87989599fe621ac03f8e8d46600ba207802b2c7` |
+| release 目录 | `gpu:/tmp/flagos-silu-kunlun-e2-release.qnH9CU`，mode 0700 |
+| release 日志 SHA-256 | `27201b39f405aef24cc840fdfacfc08f98d4e5999e42f029df432357dfa49049` |
+| ZIP | `artifacts/competition/silu_and_mul_masked/e2-f879895/silu_and_mul_masked.zip` |
+| ZIP SHA-256 | `43c3e08dfd2795132bb095775031b603ee48bb686a35b4cdff0ccc7656cc657b` |
+| ZIP 内容 | 顶层 generic 2708 bytes + `kunlunxin` 2276 bytes；ZIP 5266 bytes |
+
+release 文件由 commit 的 Git 对象生成；三文件哈希与 screening 相同，
+py_compile、lint、unittest 5/5 与末尾哈希复核全过。canonical ZIP create
+和 `--verify-existing` 均通过。
