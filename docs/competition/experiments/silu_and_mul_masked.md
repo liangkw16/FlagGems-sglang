@@ -398,7 +398,7 @@ team best。国际 A 正确选中 NVIDIA，但从 E3 generic 的 `33.74233333x`
 
 ## E5：program-uniform padding row skip
 
-状态：screening 通过，待 commit 后 release。
+状态：release 与不可变 ZIP 通过，待平台 preflight。
 
 E5 从 E3 team best 分叉，删除 E4 已证伪的 NVIDIA vendor；AMD 与 Kunlun
 逐字节回到 E3。generic 只把原本合入每个 lane mask 的
@@ -435,3 +435,19 @@ Enflame vendor，内容与 E3 generic 逐字节相同；因此候选只改变天
   `e33502d81238a637f6e3bc106061a214d9560925682b35e564eedbe7da83cdff`。
   候选通过 affected `>=1.05x`、control `>=0.98x`、control 单点
   `>=0.96x` 门；小 shape 收益仍接近噪声，平台五芯是必要证伪步骤。
+
+### E5 release 与不可变 ZIP
+
+| 项目 | 值 |
+| --- | --- |
+| source/verification commit | `85def8d1e8902ffd2bdadbe39b03292a0616a62b` |
+| release 目录 | `gpu:/tmp/flagos-silu-row-skip-e5-release.vOqrsb`，mode 0700 |
+| release 日志 SHA-256 | `d7006fc70de150ca52e5acdb693311d9e8482b3dab27ae2a4501dac82af8d15a` |
+| ZIP | `artifacts/competition/silu_and_mul_masked/e5-85def8d/silu_and_mul_masked.zip` |
+| ZIP SHA-256 | `fd95c9f3a21ed7d2df7a88157785ad660c2b0796051bcac0ffd9e7456afa9e7e` |
+| ZIP 内容 | generic 2782 bytes + AMD 3050 bytes + Enflame 2708 bytes + Kunlun 2276 bytes；ZIP 11362 bytes |
+
+release 五文件由 commit Git 对象生成，前后哈希一致；py_compile、
+unittest 5/5 和 `RELEASE_OK` 全过。canonical ZIP create 与
+`--verify-existing` 一致，E4 NVIDIA 成员已移除，Enflame 保险成员已进入
+四成员归档。
