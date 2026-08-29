@@ -16,41 +16,37 @@ import torch
 import triton
 import triton.language as tl
 
-_BLOCK_COL = 1024
+_BLOCK_SIZE = 1024
 _MAX_GRID = 65535
 
 
 @triton.jit
 def _silu_and_mul_masked_kernel(
     input_ptr,
-    masked_m_ptr,
     output_ptr,
-    total_blocks,
-    tokens,
+    n_elements,
     half_width,
-    num_col_blocks,
-    BLOCK_COL: tl.constexpr,
+    BLOCK_SIZE: tl.constexpr,
 ):
     pid = tl.program_id(0)
-    grid_stride = tl.num_programs(0)
-    offsets = tl.arange(0, BLOCK_COL)
-    for block_id in range(pid, total_blocks, grid_stride):
-        row_id = block_id // num_col_blocks
-        col_block = block_id - row_id * num_col_blocks
-        cols = col_block * BLOCK_COL + offsets
-        mask = cols < half_width
-        input_base = row_id.to(tl.int64) * (2 * half_width)
-        gate = tl.load(input_ptr + input_base + cols, mask=mask, other=0.0).to(
+    step = tl.num_programs(0) * BLOCK_SIZE
+    for start in range(pid * BLOCK_SIZE, n_elements, step):
+        offsets = start + tl.arange(0, BLOCK_SIZE)
+        mask = offsets < n_elements
+        rows = offsets // half_width
+        cols = offsets - rows * half_width
+        input_base = rows * (2 * half_width) + cols
+        gate = tl.load(input_ptr + input_base, mask=mask, other=0.0).to(
             tl.float32
         )
         up = tl.load(
-            input_ptr + input_base + half_width + cols,
+            input_ptr + input_base + half_width,
             mask=mask,
             other=0.0,
         ).to(tl.float32)
         output = (gate / (1.0 + tl.exp(-gate))) * up
         tl.store(
-            output_ptr + row_id.to(tl.int64) * half_width + cols,
+            output_ptr + offsets,
             output.to(output_ptr.dtype.element_ty),
             mask=mask,
         )
@@ -58,7 +54,6 @@ def _silu_and_mul_masked_kernel(
 
 def silu_and_mul_masked(input, masked_m):
     input = input.contiguous()
-    masked_m = masked_m.contiguous()
     experts, tokens, width = input.shape
     half_width = width // 2
     output = torch.empty(
@@ -69,17 +64,14 @@ def silu_and_mul_masked(input, masked_m):
     if experts == 0 or tokens == 0 or half_width == 0:
         return output
 
-    num_col_blocks = triton.cdiv(half_width, _BLOCK_COL)
-    total_blocks = experts * tokens * num_col_blocks
-    _silu_and_mul_masked_kernel[(min(total_blocks, _MAX_GRID),)](
+    n_elements = experts * tokens * half_width
+    grid = (min(triton.cdiv(n_elements, _BLOCK_SIZE), _MAX_GRID),)
+    _silu_and_mul_masked_kernel[grid](
         input,
-        masked_m,
         output,
-        total_blocks,
-        tokens,
+        n_elements,
         half_width,
-        num_col_blocks,
-        BLOCK_COL=_BLOCK_COL,
+        BLOCK_SIZE=_BLOCK_SIZE,
     )
     return output
 

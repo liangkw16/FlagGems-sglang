@@ -183,3 +183,31 @@ py_compile、lint、unittest 5/5 和末尾哈希复核全过。打包器 create 
 下一候选只改 Kunlun 性能轴；generic 与其余七芯继续冻结。优先在不恢复已证伪
 scalar gating 的前提下减少写满 padding 的额外工作，先保持 BLOCK 不变验证
 flat/调度结构，达到 0.1x 后再做逐芯冲榜。
+
+## E2：昆仑 flat-full BLOCK 1024
+
+状态：screening 通过，待 commit 后 release。
+
+E2 保持 E1 已验证的 mask-free、写满 padding、SiLU 公式、BLOCK 1024 和
+65535 grid cap，只把“一行一个 1024-lane tile”改为 flat output-element
+grid-stride。对 `half_width=128` 的形态，E1 仍在每行执行 1024 lanes 的
+exp/div，flat 理论可把约 8 行装进一个 tile；恢复门槛只需
+`0.1 / 0.052 = 1.923x`。T29 已在昆仑平台证明同一 flat scaffold 正确并比
+row/col-block 快 65%。按该实证模板使用 int32 flat 索引，避免每 tile 的
+1024-lane int64 地址乘法；已知题面规模远低于 int32 元素上限。
+
+- 最终 screening：`gpu:/tmp/flagos-silu-kunlun-flat-e2-final.QEwAQv`，
+  mode 0700；generic SHA-256
+  `bdafd313c6bb841a3334eca33e7bd1637c110d5edbf2c0180c00b127820c9cad`，
+  vendor SHA-256
+  `2698072998829ead430005697c2262bd2dc8712e9ee4d221d833541b01a72462`，
+  test SHA-256
+  `776debdf846d79f04c14c58e195c4c36f98bfc86a2867a5122a764a646fec89a`，
+  日志 SHA-256
+  `322ac62661b6243a5291f0c3a17bf9583288e75f56ccea302f44242b0a9dcde3`。
+- py_compile、Black 79、isort 80、flake8 和 unittest 5/5 全过；三轮
+  grid-fold、尾块、非连续、特殊值和输入不变性均覆盖 flat vendor。
+- NVIDIA wrapper-inclusive 代理在 `4x3x16`、`4x64x256`、
+  `288x768x256` 上相对 E1 分别为 1.010x、0.991x、1.016x；该后端没有
+  Kunlun 的尾 lane 执行成本，结果中性，不作为否决依据。E2 不同时改
+  BLOCK 2048；若平台仅差少量，再单独调常量。
