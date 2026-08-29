@@ -15,6 +15,7 @@
 import torch
 import triton
 import triton.language as tl
+from triton.language.extra import libdevice as tl_extra_shim
 
 _BLOCK_SIZE = 1024
 _MAX_GRID = 65535
@@ -42,12 +43,7 @@ def _softcap_inplace_logits_kernel(
         pointers = logits_ptr + row.to(tl.int64) * row_stride + cols
         logits = tl.load(pointers, mask=mask, other=0.0).to(tl.float32)
         scaled = logits / softcap_const
-        scaled_sq = scaled * scaled
-        near_zero = scaled * (
-            1.0 + scaled_sq * (-1.0 / 3.0 + scaled_sq * (2.0 / 15.0))
-        )
-        saturated = 2.0 / (1.0 + tl.exp(-2.0 * scaled)) - 1.0
-        output = tl.where(tl.abs(scaled) < 0.25, near_zero, saturated)
+        output = tl_extra_shim.tanh(scaled)
         output *= softcap_const
         if CAP_RECIPROCAL_OVERFLOWS:
             output = tl.where(
