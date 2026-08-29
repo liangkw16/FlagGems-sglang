@@ -1,6 +1,6 @@
 # 第二届 FlagOS 算子赛题索引
 
-> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-08-29T00:54:30+08:00`。
+> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-08-30T00:06:15+08:00`。
 > 状态和榜单会变化，运行 `python tools/sync_flagos_season2_docs.py` 更新。
 
 ## 第 1 批
@@ -41,15 +41,20 @@
 
 | 题号 | 算子 | 状态 | 提交/队伍 | 达标队伍 | 当前第一 | 平均加速比 |
 | ---: | --- | --- | ---: | ---: | --- | ---: |
-| 25 | [draft_topk1](tasks/batch-3/25-draft_topk1.md) | competing | 118/20 | 7 | autokernel | 1.7470x |
-| 26 | [fused_moe_router_cudacore](tasks/batch-3/26-fused_moe_router_cudacore.md) | competing | 101/19 | 4 | Skyspeed | 1.0013x |
-| 27 | [fused_moe_router_tensorcore](tasks/batch-3/27-fused_moe_router_tensorcore.md) | competing | 63/16 | 5 | autokernel | 1.4209x |
-| 28 | [gate_up_lora_b](tasks/batch-3/28-gate_up_lora_b.md) | competing | 35/13 | 2 | HelloWorldTJU | 11.4989x |
-| 29 | [gelu_and_mul](tasks/batch-3/29-gelu_and_mul.md) | competing | 73/17 | 9 | autokernel | 2.9626x |
-| 30 | [interleaved_rope](tasks/batch-3/30-interleaved_rope.md) | competing | 46/13 | 9 | HAiWORLD | 29.4492x |
-| 31 | [moe_fused_gate](tasks/batch-3/31-moe_fused_gate.md) | competing | 15/7 | 1 | hbmu9306 | 11.6199x |
-| 32 | [moe_fused_mul_sum](tasks/batch-3/32-moe_fused_mul_sum.md) | competing | 6/5 | 2 | HAiWORLD | 4.2575x |
-| 33 | [per_token_group_quant_int8](tasks/batch-3/33-per_token_group_quant_int8.md) | competing | 3/2 | 1 | c2flow | 3.5432x |
-| 34 | [per_token_quant_int8](tasks/batch-3/34-per_token_quant_int8.md) | competing | 5/4 | 2 | c2flow | 5.2281x |
-| 35 | [rotary_embedding](tasks/batch-3/35-rotary_embedding.md) | competing | 10/6 | 1 | c2flow | 3.3370x |
-| 36 | [selective_state_update](tasks/batch-3/36-selective_state_update.md) | pending_challenge | 46/7 | 0 | - | - |
+| 25 | [draft_topk1](tasks/batch-3/25-draft_topk1.md) | competing | 140/21 | 8 | c2flow | 2.2311x |
+| 26 | [fused_moe_router_cudacore](tasks/batch-3/26-fused_moe_router_cudacore.md) | competing | 122/20 | 5 | EvokeAgent | 1.0682x |
+| 27 | [fused_moe_router_tensorcore](tasks/batch-3/27-fused_moe_router_tensorcore.md) | competing | 69/17 | 5 | autokernel | 1.4209x |
+| 28 | [gate_up_lora_b](tasks/batch-3/28-gate_up_lora_b.md) | competing | 54/17 | 2 | c2flow | 34.9801x |
+| 29 | [gelu_and_mul](tasks/batch-3/29-gelu_and_mul.md) | competing | 106/18 | 10 | xuanzhengdu | 3.3595x |
+| 30 | [interleaved_rope](tasks/batch-3/30-interleaved_rope.md) | competing | 82/16 | 11 | xuanzhengdu | 33.1992x |
+| 31 | [moe_fused_gate](tasks/batch-3/31-moe_fused_gate.md) | competing | 42/16 | 1 | hbmu9306 | 11.6199x |
+| 32 | [moe_fused_mul_sum](tasks/batch-3/32-moe_fused_mul_sum.md) | competing | 27/9 | 5 | HelloWorldTJU | 4.5430x |
+| 33 | [per_token_group_quant_int8](tasks/batch-3/33-per_token_group_quant_int8.md) | competing | 20/9 | 3 | c2flow | 5.9924x |
+| 34 | [per_token_quant_int8](tasks/batch-3/34-per_token_quant_int8.md) | competing | 25/9 | 5 | YY-L | 5.2743x |
+| 35 | [rotary_embedding](tasks/batch-3/35-rotary_embedding.md) | competing | 27/11 | 4 | MakeYUNAGreatAgain | 5.8830x |
+| 36 | [selective_state_update](tasks/batch-3/36-selective_state_update.md) | competing | 114/14 | 2 | c2flow | 8.4960x |
+| 37 | [sgemm_lora_a](tasks/batch-3/37-sgemm_lora_a.md) | competing | 17/7 | 1 | c2flow | 5.8723x |
+| 38 | [sigmoid_gate_topk_renorm](tasks/batch-3/38-sigmoid_gate_topk_renorm.md) | competing | 57/13 | 1 | hbmu9306 | 6.3266x |
+| 39 | [silu_and_mul_masked](tasks/batch-3/39-silu_and_mul_masked.md) | competing | 17/6 | 2 | Fields | 19.2431x |
+| 40 | [softcap_inplace_logits](tasks/batch-3/40-softcap_inplace_logits.md) | competing | 7/3 | 1 | hbmu9306 | 1.6913x |
+| 41 | [state_passing](tasks/batch-3/41-state_passing.md) | competing | 34/11 | 1 | c2flow | 5.4806x |

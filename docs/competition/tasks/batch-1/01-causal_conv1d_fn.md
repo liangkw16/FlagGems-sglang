@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/causal_conv1d_fn -->
-<!-- synced_at: 2026-08-29T00:54:30+08:00 -->
+<!-- synced_at: 2026-08-30T00:06:15+08:00 -->
 
 # causal_conv1d_fn (mamba/causal_conv1d_fn)
 

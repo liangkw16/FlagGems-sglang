@@ -1,29 +1,29 @@
-<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/gelu_and_mul -->
+<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/softcap_inplace_logits -->
 <!-- synced_at: 2026-08-30T00:06:15+08:00 -->
 
-# gelu_and_mul (activation_norm/gelu_and_mul)
+# softcap_inplace_logits (activation_norm/softcap_inplace_logits)
 
 ## 任务描述
 
-门控 GELU 激活：将输入在最后一维对半分为 gate 和 up 两部分，对 gate 施加精确（erf-based）GELU 激活后与 up 逐元素相乘，输出维度为输入的一半。
+对 logits 进行原地软截断（soft-capping）：对输入张量最后一行连续维度的每个元素应用 `tanh(x / cap) * cap`，输出与输入同 shape 同 dtype。实际算子会原地修改输入缓冲区，此处参考实现先克隆输入以保持纯函数式签名。
 
 ## 接口签名
 
 ```python
-def reference(hidden_states)
+def reference(full_logits, final_logit_softcapping)
 ```
 
 > 选手实现的函数签名需与上述 `reference(...)` 完全一致。
 
 ## 计算定义
 
-- 输入 `hidden_states`: `[bs, 2*d]`，任意浮点 dtype
-- 输出：`[bs, d]`，与输入同 dtype
-- 令 `d = hidden_states.shape[-1] // 2`：
-  - `x1 = hidden_states[..., :d]`（gate 部分）
-  - `x3 = hidden_states[..., d:]`（up 部分）
-  - `out = gelu(x1.float(), approximate="none") * x3.float()`，转回输入 dtype
-- GELU 使用精确 erf 公式：`gelu(x) = x * Φ(x) = x * (1 + erf(x / sqrt(2))) / 2`，不使用 tanh 近似
+- 输入 `full_logits`: `[..., N]`，任意浮点 dtype；`final_logit_softcapping`: 标量 float
+- 输出：与输入同 shape 同 dtype
+- 逐元素计算：
+
+  $$	ext{out}[i] = 	anh!left(frac{	ext{full\_logits}[i]}{	ext{final\_logit\_softcapping}}ight) 	imes 	ext{final\_logit\_softcapping}$$
+
+- 该变换将输出值软限制在 `(-final_logit_softcapping, +final_logit_softcapping)` 区间内
 
 ## 正确性判别标准
 
@@ -35,14 +35,8 @@ Per-dtype tolerance:
 ## 参考实现
 
 ```python
-import torch.nn.functional as F
-
-
-def reference(hidden_states):
-    d = hidden_states.shape[-1] // 2
-    x1, x3 = hidden_states[..., :d], hidden_states[..., d:]
-    out = F.gelu(x1.float(), approximate="none") * x3.float()
-    return out.to(hidden_states.dtype)
+def reference(full_logits, final_logit_softcapping):
+    return (full_logits / final_logit_softcapping).tanh() * final_logit_softcapping
 ```
 
 ## 评分标准
