@@ -549,7 +549,7 @@ team best。Ascend 路由正确命中华为，但华为从 `7.39933333x` 降至
 
 ## E7：MetaX flat-full BLOCK 2048
 
-状态：release 与不可变 ZIP 通过，待平台 preflight。
+状态：平台 sub 6601 已单次提交，评测中。
 
 E7 从 E3 team best 精确分叉，generic、AMD、Kunlun 三成员逐字节冻结，删除
 E6 已证伪的 Ascend。只新增 MetaX vendor；它复制已在 T39 平台 8/8 的
@@ -603,3 +603,12 @@ release 五文件由 commit Git 对象生成，前后哈希一致；py_compile�
 unittest 6/6 和 `RELEASE_OK` 全过。canonical ZIP create 与
 `--verify-existing` 一致，E6 Ascend 成员已移除，MetaX 单变量成员已进入
 四成员归档。
+
+### E7 平台提交（sub 6601，2026-08-30 01:59 CST）
+
+实时 preflight tuple 全匹配，额度 21/30，单次 confirm 成功；提交后预计
+20/30。file URL SHA-256
+`2a7864ec31926ee3d88ba61902c9d0c68d50c5f4a0032f84ecd4c77e328ac476`。
+远端对象验签为 `unavailable`，state 已为 `submitted`，禁止重试。平台初始
+路由符合预期：沐曦选中 `_metax`，昆仑选中 `_kunlunxin`，国际 B 选中
+`_amd`，其余五芯选中 E3 generic；八芯当前 queued，终态待回填。
