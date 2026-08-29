@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# e6-retry-carrier: resubmit after kunlun evaluator recovery (task29 kunlun completed 2026-08-29)
+# e9 re-carrier: kunlun recovery window detected 2026-08-29 21:20
+# (T25 pass-team 7->8); bytes otherwise identical to e8-01895cf
 import triton
 import triton.language as tl
 
