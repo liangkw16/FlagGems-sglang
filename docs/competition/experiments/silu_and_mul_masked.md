@@ -143,3 +143,18 @@ T29 E5 已在昆仑实证同一 row/col-block 骨架正确，因此不先改 fla
   `131584 > 2 * 65535` 的三轮折叠；另覆盖 int32/int64、尾列、非连续输入、
   特殊值和输入不变性。NVIDIA 只能验证字节可编译及语义，昆仑平台是必要
   证伪步骤。
+
+### E1 release 与不可变 ZIP
+
+| 项目 | 值 |
+| --- | --- |
+| source/verification commit | `e126063be7a6295c540e02f526f8de0599f9c3d5` |
+| release 目录 | `gpu:/tmp/flagos-silu-kunlun-e1-release.ommhz0`，mode 0700 |
+| release 日志 SHA-256 | `277d3d8977403fd0612c1ab2a1fd24a85d04bcc9f4b29488e88091367292e1ed` |
+| ZIP | `artifacts/competition/silu_and_mul_masked/e1-e126063/silu_and_mul_masked.zip` |
+| ZIP SHA-256 | `886f04d53dc2fa2958d89767c11ec73bd9e006b8e339c91caf1af911bcd1558f` |
+| ZIP 内容 | 顶层 generic 2708 bytes + `kunlunxin` 2541 bytes；ZIP 5531 bytes |
+
+release 文件由 commit 的 Git 对象生成，三文件哈希与 screening 完全一致；
+py_compile、lint、unittest 5/5 和末尾哈希复核全过。打包器 create 后
+`--verify-existing` 通过，actual 与 canonical ZIP SHA-256 一致。
