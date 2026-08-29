@@ -116,7 +116,7 @@ unittest 5/5、末尾哈希复核全过。BLOCK 1024 的 release speedup p50 为
 
 ## E1：昆仑去 metadata gating 单变量修复
 
-状态：平台 8/8、`valid`、`16.16041667x`，团队当前最佳。
+状态：平台 8/8 correctness，`invalid_threshold`、`15.66275x`。
 
 `tl.fdiv` 候选在 commit 前否决：固定 FlagTree commit `c1ea8285` 的
 `tensor.__truediv__` 和 `tl.fdiv` 对 FP32 最终都调用
@@ -186,7 +186,7 @@ flat/调度结构，达到 0.1x 后再做逐芯冲榜。
 
 ## E2：昆仑 flat-full BLOCK 1024
 
-状态：screening 通过，待 commit 后 release。
+状态：平台 8/8、`valid`、`15.91945833x`。
 
 E2 保持 E1 已验证的 mask-free、写满 padding、SiLU 公式、BLOCK 1024 和
 65535 grid cap，只把“一行一个 1024-lane tile”改为 flat output-element
@@ -255,7 +255,7 @@ kernel 只处理 `sum(masked_m)` 有效行，避免重新引入 device-side gati
 
 ## E3：AMD 四档列 tile autotune
 
-状态：screening 通过，待 commit 后 release。
+状态：平台 8/8、`valid`、`16.16041667x`，团队当前最佳。
 
 E3 从 E2 team best 分叉，只新增 AMD vendor；generic 和 Kunlun source
 逐字节冻结。AMD 默认 elementwise 路径的固定 `1024/8w` 被保留为保底，
@@ -331,7 +331,7 @@ E3 是当前 team best，后续 vendor 从该 commit 分叉并冻结已有 AMD/K
 
 ## E4：NVIDIA 四档列 tile autotune
 
-状态：screening 通过，待 commit 后 release。
+状态：release 与不可变 ZIP 通过，待平台 preflight。
 
 E4 从 E3 team best 分叉，只新增 NVIDIA vendor；generic、AMD 与 Kunlun
 逐字节冻结。NVIDIA 文件与 E3 已平台验证的 AMD 文件逐字节相同，复用
@@ -357,3 +357,18 @@ E4 从 E3 team best 分叉，只新增 NVIDIA vendor；generic、AMD 与 Kunlun
   E3 平台又在国际 B 实证 `+3.83%`。两项都不保证国际 A 收益，平台仍是必要
   证伪步骤；stop gate 为 8/8 valid、国际 A 选中 NVIDIA 且国际 A 与平均均
   高于 E3。
+
+### E4 release 与不可变 ZIP
+
+| 项目 | 值 |
+| --- | --- |
+| source/verification commit | `e2153fa4d666d4bb4ec151e1e8f27a7f8387ce3c` |
+| release 目录 | `gpu:/tmp/flagos-silu-nvidia-e4-release.kax5gk`，mode 0700 |
+| release 日志 SHA-256 | `a93a3c14663a62f286de1308c5748e28e8d5479ed91eed5cc579ae8cab0d9b3a` |
+| ZIP | `artifacts/competition/silu_and_mul_masked/e4-e2153fa/silu_and_mul_masked.zip` |
+| ZIP SHA-256 | `f55d676416af5a158c9d091c00b853020aac8e6f3204c1b8bf6661611e48fac2` |
+| ZIP 内容 | generic 2708 bytes + AMD/NVIDIA 各 3050 bytes + Kunlun 2276 bytes；ZIP 11628 bytes |
+
+release 五文件由 commit 的 Git 对象生成，前后哈希一致；py_compile、
+unittest 5/5、AMD/NVIDIA `cmp` 和 `RELEASE_OK` 全过。canonical ZIP create
+与 `--verify-existing` 一致，NVIDIA 新成员已进入四成员归档。
