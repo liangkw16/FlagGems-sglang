@@ -478,7 +478,7 @@ AMD/Kunlun 也保持专用路径。永久停止 uniform-if 轴，后续从 E3 �
 
 ## E6：Ascend BLOCK 512
 
-状态：screening 通过，待 commit 后 release。
+状态：release 与不可变 ZIP 通过，待平台 preflight。
 
 E6 从 E3 team best 分叉，generic、AMD 与 Kunlun 逐字节恢复 E3，并移除
 E5 Enflame 保险成员。只新增 Ascend vendor；它与 generic 的完整计算 diff
@@ -507,3 +507,19 @@ Ascend 256→512 使华为 `+19.90%`，T21 reduction 为 `+35.47%`；反例 T08
   `d386964c49847aec836c1e04932e2c6a1c147491aad93702622f73f98cc43121`。
   NVIDIA 结果只排除明显回退；平台 stop gate 为 8/8 valid、华为选中 Ascend、
   华为高于 E3 `7.39933333x` 且平均高于 `16.16041667x`。
+
+### E6 release 与不可变 ZIP
+
+| 项目 | 值 |
+| --- | --- |
+| source/verification commit | `e94fb94b8afdb2efe956c93217dc722e9579ad71` |
+| release 目录 | `gpu:/tmp/flagos-silu-ascend-e6-release.CBcKsV`，mode 0700 |
+| release 日志 SHA-256 | `ef22ae7f8d78d9804fe0a28e9a8a265945453db4584af62bd1cdcc1c3bc47315` |
+| ZIP | `artifacts/competition/silu_and_mul_masked/e6-e94fb94/silu_and_mul_masked.zip` |
+| ZIP SHA-256 | `649baa96b1e3cfc64419227a3e67eaf8672fbc66ab82678b27d863fadcc85707` |
+| ZIP 内容 | generic 2708 bytes + AMD 3050 bytes + Ascend 2707 bytes + Kunlun 2276 bytes；ZIP 11285 bytes |
+
+release 五文件由 commit Git 对象生成，前后哈希一致；py_compile、
+unittest 5/5 和 `RELEASE_OK` 全过。canonical ZIP create 与
+`--verify-existing` 一致，E5 Enflame 成员已移除，Ascend 单变量成员已进入
+四成员归档。
