@@ -226,3 +226,29 @@ row/col-block 快 65%。按该实证模板使用 int32 flat 索引，避免每 t
 release 文件由 commit 的 Git 对象生成；三文件哈希与 screening 相同，
 py_compile、lint、unittest 5/5 与末尾哈希复核全过。canonical ZIP create
 和 `--verify-existing` 均通过。
+
+### E2 平台终态（sub 6588，2026-08-30 01:15 CST）
+
+实时 preflight tuple 全匹配，单次 confirm 成功；file URL SHA-256
+`8390b7af5e4bf31bd1bd30a78bbd3fbdc3c1a27e90008aa618b8b113888e008f`，
+提交后额度 25/30。远端对象存储验签仍为 `unavailable`，state 已是
+`submitted`，未重试。
+
+终态 **valid、8/8、当前团队最佳**，平均 `15.91945833x`。昆仑由 E1 的
+`0.052x` 提至 `0.241x`（4.63 倍），flat packing 假设兑现并越过 0.1x
+门槛：
+
+| 芯片 | speedup | 状态 |
+| --- | ---: | --- |
+| tianshu | 24.5400x | 通过 |
+| muxi | 16.6513x | 通过 |
+| enflame | 0.4550x | 通过 |
+| haiguang | 34.6500x | 通过 |
+| kunlunxin | 0.2410x | 通过 |
+| huawei | 7.9120x | 通过 |
+| card_a | 32.3667x | 通过 |
+| card_b | 10.5397x | 通过 |
+
+相对当时榜首 `19.2431x` 仍差约 `3.324x` 平均。E2 已建立有效锚点；后续
+每轮冻结 generic 和其余 vendor，优先以 host-resolved mask + 同一 flat
+kernel 只处理 `sum(masked_m)` 有效行，避免重新引入 device-side gating。
