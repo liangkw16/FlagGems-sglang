@@ -139,3 +139,65 @@
 
 - 额度 12/30。后续轴:昆仑 vendor(0.21x 是唯一大短板)、huawei
   结构轴;榜首位置由后续榜单快照确认。
+
+## E1：Kunlun 无动态 loop direct fast path
+
+状态：commit-bound release 与 canonical ZIP 门禁通过，待一次性平台提交。
+
+### 假设与单变量
+
+2026-08-30 02:54 CST 官方实时榜首为 HelloWorldTJU `4.542975x`
+（28 次提交、9 支队伍）；SoulCoder S0 为 `4.482900x`，只差
+`0.060075x`。S0 唯一大短板是 Kunlun `0.210000x`；冻结其余七芯时，
+Kunlun 只需严格超过 `0.690600x` 即可登顶。
+
+T40 同芯、同 flat capped grid-stride 结构刚由单变量平台对照证明：移除动态
+outer loop 后，Kunlun 从 `0.24566667x` 提至 `0.94450000x`，达到原来的
+`3.8446x`。按该倍率机械外推，T32 Kunlun 约为 `0.8074x`，平均约
+`4.5576x`；该数字只用于阈值规划，不替代平台证据。反证是 T32 每 tile 还有
+静态 TOP_K 累加，loop control 占比可能比 T40 更低，且 T21 同族 reduction
+即使没有动态 outer loop，Kunlun 仍只有约 `0.175x`。
+
+E1 因此只新增 `_kunlunxin` vendor：保持 S0 的 BLOCK512、flat
+`block_id -> token/col_block`、静态 TOP_K、FP32 累加、mask、地址和 launch
+默认值不变；`total_blocks <= 65535` 时走一 program 一 tile 的独立 direct
+kernel，超限仍走 S0 原 grid-stride fallback。已知主 shape
+`(4096, 8, 7168)` 为 `57,344` programs，命中 direct；六个代理 shape 中
+五个命中，`(65536, 4, 1024)` 的 `131,072` blocks 保持 fallback。本轮不混入
+BLOCK、2D grid 或 host chunk。
+
+### 构建身份与验证
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `fd970acfd630ffe97f944dfc0ce3786b8968481f` |
+| generic SHA-256 | `ffb4440c7f62097b39a60c78be4a9416f452c40328d752b2ec8eddabbef22cd8`（=S0） |
+| Kunlun SHA-256 | `48f7b5aac0349b7097ab462c97adf71e5b2e47e4b9b54c11651efbdfffd0e7db` |
+| test SHA-256 | `7895539ed8de370098fa1128046af178e5e5554a9e6eed74afee91093546c798`（=S0） |
+| screening | `gpu:/tmp/flagos-t32-direct-screen.IRCPwu`；vendor 作为 generic 装载，8/8、静态门禁全过；日志 SHA-256 `767e1a8f3a69dd7f7ebdf2c9e9db902d2f26db844c30d074535a07fe331e4484` |
+| release | `gpu:/tmp/flagos-t32-direct-release.jSEZn8`；从 commit Git 对象构建，generic/vendor 各 8/8，前后哈希一致、`RELEASE_OK`；日志 SHA-256 `af4cd3bc8268a10726bb924884309e74cef5c3496c787fb742b5e61df2528dd9` |
+| canonical ZIP | `artifacts/competition/moe_fused_mul_sum/e1-fd970ac/moe_fused_mul_sum.zip`，`9059` bytes，SHA-256 `33ce51a2044692e0ddea8d1049234689752ee697901384da71d47d831ec36415` |
+
+RTX 5070 Ti 六形态五轮 AB/BA 中，direct/control 为 `0.999–1.019x`，含
+`131,072` blocks fallback；只证明数值、launch 与性能未明显回退，不外推
+Kunlun 收益。benchmark 日志 SHA-256
+`19f74b67e207cd007278758228d9cae898fbe07b6dbddb51d16ec5647565e94b`。
+同一 scale-none 编译变体中，S0 TTIR 含 `1` 个 `scf.for`，E1 direct TTIR
+为 `0`；两份证据日志 SHA-256 分别为
+`d50a7ae69f592c0dad32803607060d693660406511db547b6b6184d7c00a8b6b` 与
+`a439be90162c4cda4927f6cc2ffb96e482bb5ebd2ddf8a086094fc2c81a0edb6`。
+
+### 提交预注册
+
+02:54 CST 实时只读状态精确匹配账号 `15600308080`、团队 `SoulCoder`、
+race `782kzq4m`、batch 3、Task 32、tid `s2t1op032`、operator
+`moe_fused_mul_sum`、`competing/submitting`、`can_submit=true`，额度
+`16/30`，最小间隔已满足。
+
+E1 ZIP 只允许提交一次。基础门为 8/8 `valid` 且 Kunlun 选择
+`moe_fused_mul_sum_kunlunxin.py`；单轴晋级门为 Kunlun 严格高于
+`0.210000x` 且平均严格高于 `4.482900x`；direct 机制确认门为 Kunlun
+`>=0.400000x`；冲榜门为 Kunlun 严格高于 `0.690600x` 且平均严格高于实时
+榜首 `4.542975x`。若 Kunlun `<0.400000x`，停止 direct 轴；若机制确认但未
+登顶，只基于新的逐芯证据决定是否重开 2D/grid 轴；若登顶，冻结 E1 字节并转
+下一题。其余七芯使用 S0 generic，分数变化只视为平台波动。
