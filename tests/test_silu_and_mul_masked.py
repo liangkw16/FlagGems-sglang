@@ -69,23 +69,23 @@ if AMD_SPEC is None or AMD_SPEC.loader is None:
 AMD_MODULE = importlib.util.module_from_spec(AMD_SPEC)
 AMD_SPEC.loader.exec_module(AMD_MODULE)
 
-ASCEND_MODULE_PATH = (
+METAX_MODULE_PATH = (
     Path(__file__).parents[1]
     / "src"
     / "flaggems_sglang"
     / "runtime"
     / "backend"
-    / "_ascend"
+    / "_metax"
     / "ops"
     / "silu_and_mul_masked.py"
 )
-ASCEND_SPEC = importlib.util.spec_from_file_location(
-    "silu_and_mul_masked_ascend_module", ASCEND_MODULE_PATH
+METAX_SPEC = importlib.util.spec_from_file_location(
+    "silu_and_mul_masked_metax_module", METAX_MODULE_PATH
 )
-if ASCEND_SPEC is None or ASCEND_SPEC.loader is None:
-    raise RuntimeError(f"cannot load {ASCEND_MODULE_PATH}")
-ASCEND_MODULE = importlib.util.module_from_spec(ASCEND_SPEC)
-ASCEND_SPEC.loader.exec_module(ASCEND_MODULE)
+if METAX_SPEC is None or METAX_SPEC.loader is None:
+    raise RuntimeError(f"cannot load {METAX_MODULE_PATH}")
+METAX_MODULE = importlib.util.module_from_spec(METAX_SPEC)
+METAX_SPEC.loader.exec_module(METAX_MODULE)
 
 
 def reference(input, masked_m):
@@ -132,7 +132,7 @@ class SiluAndMulMaskedTest(unittest.TestCase):
         torch.testing.assert_close(masked_m, mask_snapshot, atol=0, rtol=0)
 
     def test_masks_and_column_tails(self):
-        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, ASCEND_MODULE):
+        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, METAX_MODULE):
             for integer_dtype in (torch.int32, torch.int64):
                 for tokens, width in ((3, 16), (64, 256), (7, 2050)):
                     with self.subTest(
@@ -164,9 +164,36 @@ class SiluAndMulMaskedTest(unittest.TestCase):
         masked_m = mask_base[::2]
         self.assertFalse(input.is_contiguous())
         self.assertFalse(masked_m.is_contiguous())
-        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, ASCEND_MODULE):
+        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, METAX_MODULE):
             with self.subTest(module=module.__name__):
                 self._check(input, masked_m, module)
+
+    def test_metax_flat_boundaries_and_grid_stride(self):
+        for half_width in (2047, 2048, 2049):
+            input = torch.randn(
+                1,
+                1,
+                2 * half_width,
+                device="cuda",
+                dtype=torch.bfloat16,
+            )
+            for integer_dtype in (torch.int32, torch.int64):
+                masked_m = torch.ones(1, device="cuda", dtype=integer_dtype)
+                self._check(input, masked_m, METAX_MODULE)
+
+        old_max_grid = METAX_MODULE._MAX_GRID
+        METAX_MODULE._MAX_GRID = 3
+        try:
+            input = torch.randn(
+                4, 64, 256, device="cuda", dtype=torch.bfloat16
+            )
+            masked_m = torch.tensor(
+                [0, 1, 63, 64], device="cuda", dtype=torch.int32
+            )
+            self.assertGreater(4 * 64 * 128, 2 * 3 * 2048)
+            self._check(input, masked_m, METAX_MODULE)
+        finally:
+            METAX_MODULE._MAX_GRID = old_max_grid
 
     def test_grid_stride_fold_path(self):
         experts, tokens = 512, 257
@@ -184,7 +211,7 @@ class SiluAndMulMaskedTest(unittest.TestCase):
             (masked_m[0].item(), masked_m[255].item()),
             (0, tokens),
         )
-        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, ASCEND_MODULE):
+        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, METAX_MODULE):
             with self.subTest(module=module.__name__):
                 self._check(input, masked_m, module)
 
@@ -228,7 +255,7 @@ class SiluAndMulMaskedTest(unittest.TestCase):
         )
         input = torch.cat((gate, up)).reshape(1, 1, -1)
         masked_m = torch.ones(1, device="cuda", dtype=torch.int32)
-        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, ASCEND_MODULE):
+        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, METAX_MODULE):
             with self.subTest(module=module.__name__):
                 self._check(input, masked_m, module)
 
