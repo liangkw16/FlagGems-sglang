@@ -86,3 +86,16 @@ failed_cases=0),排队 ~55 分钟后返回。T31 三投同指纹,恢复窗口
 
 同窗口(T26 5→6 + T28 2→3)。e3 = e2 + 注释载体(commit
 `da06494`);七芯结果与昆仑终态待回填。
+
+### E3 终态(sub 6581,2026-08-30 12:0x CST)
+
+昆仑同指纹崩溃(第 11 次)。**解读反转**:T26 已 6 队、T28 已 3 队
+八芯通过——纯平台 reference 侧理论不成立,触发面疑在我们 kernel
+的实现惯用法(经 torch.compile/inductor 编译 Triton 的昆仑路径):
+- 崩溃组共性:T31/T36 均含 `tl.log`(softplus),T31 另有 `tl.sqrt`,
+  T25-28 共享迭代 argmax+mask topk;
+- 通过组(T29-E6 exp/T33 div_rn/T32/T35 纯算术)从未用过 log/sqrt;
+- T29 先例:erf 崩 → A&S 多项式替换即过,libdevice 替换是已验证
+  修复模式。
+- 下一步(若再投):kunlunxin vendor 用多项式 log1p 替代 tl.log
+  (精度 1e-7,容差 1e-4 内),一发验证假设。优先级让位于 T39/T40。

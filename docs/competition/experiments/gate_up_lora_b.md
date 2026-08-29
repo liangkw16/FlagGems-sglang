@@ -266,3 +266,10 @@ Python error: Aborted)。
   的 T25 单题信号强得多,且含本题);
 - e10 = e9 + 注释载体(commit `68fa28d`,ZIP SHA `ff1755ec…`),
   preflight 全过(额度 30/30 消耗 1),单次提交;昆仑终态待回填。
+
+### E10 终态(sub 6583,2026-08-30 12:0x CST)
+
+昆仑同指纹崩溃(第 12 次,T28 七投)。同 moe_fused_gate E3 终态
+节的解读反转:他队可过 → 疑我方 kernel 惯用法(topk/分段 GEMM
+结构)触发昆仑 inductor-triton 路径不稳定。工单表述需按此修正,
+不能纯归因平台。
