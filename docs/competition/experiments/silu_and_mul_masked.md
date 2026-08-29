@@ -252,3 +252,38 @@ py_compile、lint、unittest 5/5 与末尾哈希复核全过。canonical ZIP cre
 相对当时榜首 `19.2431x` 仍差约 `3.324x` 平均。E2 已建立有效锚点；后续
 每轮冻结 generic 和其余 vendor，优先以 host-resolved mask + 同一 flat
 kernel 只处理 `sum(masked_m)` 有效行，避免重新引入 device-side gating。
+
+## E3：AMD 四档列 tile autotune
+
+状态：screening 通过，待 commit 后 release。
+
+E3 从 E2 team best 分叉，只新增 AMD vendor；generic 和 Kunlun source
+逐字节冻结。AMD 默认 elementwise 路径的固定 `1024/8w` 被保留为保底，
+另加入 `128/2w`、`256/4w`、`512/8w`，autotune key 仅为
+`half_width`。四档来源是 T21 `moe_sum_reduce` 的 AMD 平台实证族，不把
+该算子的 `+53.1%` 外推成本题保证；这里只复用已验证的 launch policy，
+减少隐藏 `half_width=8/128` 时固定 1024 lanes 的尾浪费。
+
+grid 从所选 config 的 `BLOCK_COL` 动态计算，kernel 内同步重算
+`num_col_blocks/total_blocks`，保留 capped grid-stride、metadata gating、
+SiLU 公式和地址逻辑；launch 不显式重复绑定 BLOCK/warps。
+
+- screening：`gpu:/tmp/flagos-silu-amd-e3.YfVVNq`，mode 0700；generic
+  SHA-256
+  `bdafd313c6bb841a3334eca33e7bd1637c110d5edbf2c0180c00b127820c9cad`，
+  Kunlun SHA-256
+  `2698072998829ead430005697c2262bd2dc8712e9ee4d221d833541b01a72462`，
+  AMD SHA-256
+  `a662c81024ad41eb9cf6bbbdf55c83bebdd681da3d27e219609856ae5074429f`，
+  test SHA-256
+  `2a15893c25da97a5c5a27d3ac6b83f76f1c0e47a2a31cd1d640206624155ae81`，
+  unittest 日志 SHA-256
+  `b1df0b57a41ba4896d7e5bbb6f3be1c14cc7bb4538d1d47bd0cd5301eaaf5754`。
+- 本地 py_compile、Black、isort、flake8、diff-check 全过；远端 unittest
+  5/5，AMD 覆盖 h=8/128、h=129/1025、int32/int64、非连续输入、特殊值和
+  `> 2 * 65535` grid-fold。
+- RTX 5070 Ti 五轮交替 A/B 在 `4x3x16`、`4x64x256`、
+  `288x768x256` 的中位比为 `1.0006x`、`0.9972x`、`1.1073x`，几何平均
+  `1.0338x`；日志 SHA-256
+  `daf0bd77b92f08df6d0780a704b21268fe5ba0b7378aae0c86b2927221504056`。
+  该代理只排除明显回退，AMD 平台仍是必要证伪步骤。

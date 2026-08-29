@@ -51,6 +51,24 @@ if KUNLUN_SPEC is None or KUNLUN_SPEC.loader is None:
 KUNLUN_MODULE = importlib.util.module_from_spec(KUNLUN_SPEC)
 KUNLUN_SPEC.loader.exec_module(KUNLUN_MODULE)
 
+AMD_MODULE_PATH = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+    / "_amd"
+    / "ops"
+    / "silu_and_mul_masked.py"
+)
+AMD_SPEC = importlib.util.spec_from_file_location(
+    "silu_and_mul_masked_amd_module", AMD_MODULE_PATH
+)
+if AMD_SPEC is None or AMD_SPEC.loader is None:
+    raise RuntimeError(f"cannot load {AMD_MODULE_PATH}")
+AMD_MODULE = importlib.util.module_from_spec(AMD_SPEC)
+AMD_SPEC.loader.exec_module(AMD_MODULE)
+
 
 def reference(input, masked_m):
     experts, tokens, width = input.shape
@@ -96,7 +114,7 @@ class SiluAndMulMaskedTest(unittest.TestCase):
         torch.testing.assert_close(masked_m, mask_snapshot, atol=0, rtol=0)
 
     def test_masks_and_column_tails(self):
-        for module in (MODULE, KUNLUN_MODULE):
+        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE):
             for integer_dtype in (torch.int32, torch.int64):
                 with self.subTest(
                     module=module.__name__, integer_dtype=integer_dtype
@@ -118,7 +136,7 @@ class SiluAndMulMaskedTest(unittest.TestCase):
         masked_m = mask_base[::2]
         self.assertFalse(input.is_contiguous())
         self.assertFalse(masked_m.is_contiguous())
-        for module in (MODULE, KUNLUN_MODULE):
+        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE):
             with self.subTest(module=module.__name__):
                 self._check(input, masked_m, module)
 
@@ -133,7 +151,7 @@ class SiluAndMulMaskedTest(unittest.TestCase):
             dtype=torch.int32,
         )
         self.assertGreater(experts * tokens, 2 * 65535)
-        for module in (MODULE, KUNLUN_MODULE):
+        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE):
             with self.subTest(module=module.__name__):
                 self._check(input, masked_m, module)
 
@@ -177,7 +195,7 @@ class SiluAndMulMaskedTest(unittest.TestCase):
         )
         input = torch.cat((gate, up)).reshape(1, 1, -1)
         masked_m = torch.ones(1, device="cuda", dtype=torch.int32)
-        for module in (MODULE, KUNLUN_MODULE):
+        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE):
             with self.subTest(module=module.__name__):
                 self._check(input, masked_m, module)
 
