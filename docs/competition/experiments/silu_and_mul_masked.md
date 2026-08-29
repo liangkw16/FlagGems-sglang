@@ -11,7 +11,7 @@
 
 ## S0：KernelGen 基线
 
-状态：screening 通过，待 commit 后 release 验证。
+状态：release 通过，canonical ZIP 已验签，待实时 preflight。
 
 - 2026-08-30 通过 `kernelgen-server.generate_kernel` 生成两轮：首轮报告
   `41.188x` 但 65535 grid cap 后无步进，静态否决；第二轮补齐步进但嵌套
@@ -65,6 +65,23 @@ SHA-256 `854c4df1ad3764c1367ab9ab744c86307cfb163fe4c6244f6a78c81d465e76b5`，
 持平，且同骨架已有 T29 八芯实证。2048 只作为平台逐芯结果后的单变量候选。
 NVIDIA 结果仅为代理证据，不外推八芯。
 
+### Release 与不可变 ZIP
+
+| 项目 | 值 |
+| --- | --- |
+| source/verification commit | `bd5bf8b040b934797a7686bddef06b0093dc3481` |
+| release 目录 | `gpu:/tmp/flagos-silu-release.K5JLHZ`，mode 0700 |
+| release 日志 SHA-256 | `fd37e5cc7d057a68f73d2b44a5c8418f86e22c5402134d45e9f70d3e7e0d85f0` |
+| ZIP | `artifacts/competition/silu_and_mul_masked/s0-bd5bf8b/silu_and_mul_masked.zip` |
+| ZIP SHA-256 | `cc9da72e2ad6c551aeba2eac74dbe2d7882d3f489b285601223b926f2f9815e0` |
+| ZIP 内容 | 顶层 `silu_and_mul_masked.py`，2708 bytes；ZIP 2850 bytes |
+
+release 文件全部由 Git 对象生成；source/test 与 screening 哈希一致。lint、
+unittest 5/5、末尾哈希复核全过。BLOCK 1024 的 release speedup p50 为
+25.88x / 61.31x / 32.28x，与 screening 一致。打包器 create 后
+`--verify-existing` 通过，actual 与 canonical ZIP SHA-256 一致，单成员、
+普通 UTF-8 Python 文件、远低于 10 MB。
+
 ### 已知边界
 
 - 题面参考隐含 `H` 为偶数；奇数宽度时参考自身 gate/up 维度不匹配。
@@ -74,4 +91,10 @@ NVIDIA 结果仅为代理证据，不外推八芯。
 
 ## 平台记录
 
-尚未提交；source/test commit、release 验证和不可变 ZIP 待生成。
+尚未提交。preflight tuple：season 2、race `782kzq4m`、account
+`15600308080`、team `SoulCoder`、batch 3、task 39、tid `s2t1op039`、
+operator `silu_and_mul_masked`、stage `s0`、commit
+`bd5bf8b040b934797a7686bddef06b0093dc3481`、member
+`silu_and_mul_masked.py`、ZIP SHA-256
+`cc9da72e2ad6c551aeba2eac74dbe2d7882d3f489b285601223b926f2f9815e0`。
+实时门禁全部匹配即按项目授权执行一次性 submit。
