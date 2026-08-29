@@ -40,6 +40,12 @@ def reference(
     batch, nheads, dim, dstate = state.shape
     ngroups = B.shape[1]
     ratio = nheads // ngroups
+    if A.dim() == 1:
+        A = A.unsqueeze(1).expand(nheads, dstate)
+    if D is not None and D.dim() == 1:
+        D = D.unsqueeze(1).expand(nheads, dim)
+    if dt_bias is not None and dt_bias.dim() == 1:
+        dt_bias = dt_bias.unsqueeze(1).expand(nheads, dim)
 
     dt_f = dt.float()
     if dt_bias is not None:
@@ -161,6 +167,24 @@ class TestSelectiveStateUpdate(unittest.TestCase):
         )
         torch.testing.assert_close(y, ry, rtol=1e-4, atol=1e-4)
         torch.testing.assert_close(ns, rns, rtol=1e-4, atol=1e-4)
+
+    def test_vllm_1d_variants(self):
+        # the platform harness may pass vllm-style 1-D [nheads] A/D/dt_bias
+        dtype = torch.bfloat16
+        state, x, dt, A, Bm, C = make_inputs(2, 8, 64, 128, 2, dtype, 42)
+        A1 = A[:, 0].contiguous()  # [H]
+        D1 = torch.randn(8, device="cuda").to(dtype)  # [H]
+        dtb1 = torch.randn(8, device="cuda").to(dtype)  # [H]
+        y, ns = MOD.selective_state_update(
+            state, x, dt, A1, Bm, C, D1, None, dtb1, True
+        )
+        ry, rns = reference(state, x, dt, A1, Bm, C, D1, None, dtb1, True)
+        torch.testing.assert_close(
+            y.float(), ry.float(), rtol=1.5e-2, atol=1.5e-2
+        )
+        torch.testing.assert_close(
+            ns.float(), rns.float(), rtol=1.5e-2, atol=1.5e-2
+        )
 
     def test_softplus_extremes(self):
         dt = torch.full((1, 2, 4), 30.0, dtype=torch.float32, device="cuda")

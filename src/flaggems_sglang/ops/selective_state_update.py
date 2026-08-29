@@ -149,6 +149,14 @@ def selective_state_update(
 
     batch, nheads, dim, dstate = state.shape
     num_groups = B.shape[1]
+    # the platform harness may pass vllm-style 1-D [nheads] variants of
+    # A / D / dt_bias; normalize to the 2-D layouts the kernel indexes
+    if A.dim() == 1:
+        A = A.unsqueeze(1).expand(nheads, dstate).contiguous()
+    if D is not None and D.dim() == 1:
+        D = D.unsqueeze(1).expand(nheads, dim).contiguous()
+    if dt_bias is not None and dt_bias.dim() == 1:
+        dt_bias = dt_bias.unsqueeze(1).expand(nheads, dim).contiguous()
     y = torch.empty_like(x)
     new_state = state.clone()
     if batch * nheads * dim == 0 or dstate == 0:
