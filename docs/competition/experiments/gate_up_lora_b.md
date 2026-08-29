@@ -246,3 +246,11 @@ Python error: Aborted)。
 - E8:e7 内容(v3 FMA)换载体重投,探昆仑窗口。
   source commit `01895cf`;ZIP SHA-256
   `e17d6e1cc0feb6e47dfbed1914e4ebd06d11079bdcfb5c3744f99bcfc4b332f9`。
+
+### E9 恢复窗口重投(2026-08-29 21:2x CST)
+
+- 健康信号:21:20 快照 T25 达标 7→8(crash 族首例新增 8/8);
+  同步脚本断言已软化适配平台新 API(41 任务)。
+- e9 = e8 树 + 注释载体(commit `54444fc`,ZIP SHA
+  `f07dc111…`);preflight 全过(额度 7/30),单次提交,昆仑终态
+  待回填。T31 e2(sub 6477)同窗口已投。
