@@ -138,3 +138,8 @@ confirm 提交成功,评测入队;逐芯结果待回填。
   Git 对象):py_compile ✓、unittest 7/7 OK、vendor 代理基准正常。
 - ZIP `e1-447a3f8`,SHA `00158207d7e269286fe21bc5344499ce206c257822348d3bb57fb556a0293a5a`,3 成员
   (generic + enflame + ascend vendor)。
+
+### E1 提交记录(2026-08-29 16:1x CST)
+
+preflight 全过(额度 16/30,消耗 1 → 15/30);单次 confirm 提交,
+评测入队,逐芯结果待回填。
