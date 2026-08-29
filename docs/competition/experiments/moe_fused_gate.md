@@ -42,3 +42,14 @@
 - **昆仑 waiting_callback**(评测器不稳,等待中);若过即 8/8,
   七芯均值 ~7.9x 已超榜首 11.62x 之外的竞争带。
 - 后台观察器轮询昆仑终态。
+
+### S0 昆仑终态 + E1 重载(sub 6368 终态 7/8)
+
+- 昆仑 completed passed=False:**平台侧 inductor 崩溃指纹**
+  (执行超时 1830s/1800s + torch inductor compile_worker
+  Fatal Aborted,failed_cases=0)——与 T25–T28 同族服务端问题,
+  非本 kernel 缺陷;当日 T33/T34 昆仑正常完成,评测器间歇病发。
+- **七芯证据完整**:海光 13.36/card_a 12.78/card_b 11.47/天数
+  7.01/华为 4.05/沐曦 3.58/燧原 0.89。
+- E1 = 重载载体(commit `9e3d10c`,除注释外与 s0 逐字节一致),单发
+  重投昆仑窗口;额度 9→8/30。
