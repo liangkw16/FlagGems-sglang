@@ -549,7 +549,7 @@ team best。Ascend 路由正确命中华为，但华为从 `7.39933333x` 降至
 
 ## E7：MetaX flat-full BLOCK 2048
 
-状态：平台 sub 6601 已单次提交，评测中。
+状态：平台 8/8、`valid`、**`19.86983333x`，团队与公开榜单当前第一**。
 
 E7 从 E3 team best 精确分叉，generic、AMD、Kunlun 三成员逐字节冻结，删除
 E6 已证伪的 Ascend。只新增 MetaX vendor；它复制已在 T39 平台 8/8 的
@@ -612,3 +612,29 @@ unittest 6/6 和 `RELEASE_OK` 全过。canonical ZIP create 与
 远端对象验签为 `unavailable`，state 已为 `submitted`，禁止重试。平台初始
 路由符合预期：沐曦选中 `_metax`，昆仑选中 `_kunlunxin`，国际 B 选中
 `_amd`，其余五芯选中 E3 generic；八芯当前 queued，终态待回填。
+
+### E7 平台终态（2026-08-30 02:00 CST）
+
+终态 8/8、`valid`、`is_team_best=true`，平均 **`19.86983333x`**，比 E3
+提高 `3.70941666x`。官方只读榜单已刷新为 SoulCoder 第一，领先此前 Fields
+的 `19.24308333x` 共 `0.62675x`（`+3.26%`）。
+
+MetaX 单变量假设显著兑现：沐曦从 E3 的 `16.48833333x` 提至
+`27.31833333x`（`+65.68%`），远过显著门。generic 字节未变，但本轮海光
+从 `35.20433333x` 升至 `56.42766667x`（`+60.29%`）；因源码完全冻结，
+只记录为平台运行环境/测量变化，不归因给 MetaX 源码。其余芯片也按冻结字节
+处理波动：
+
+| 芯片 | E7 speedup | 相对 E3 | 选中文件 |
+| --- | ---: | ---: | --- |
+| tianshu | 24.8417x | +0.14% | generic |
+| muxi | 27.3183x | +65.68% | MetaX |
+| enflame | 0.4400x | -3.72% | generic |
+| haiguang | 56.4277x | +60.29% | generic |
+| kunlunxin | 0.2383x | -0.97% | Kunlun |
+| huawei | 7.4947x | +1.29% | generic |
+| card_a | 31.9877x | -5.20% | generic |
+| card_b | 10.2103x | -6.70% | AMD |
+
+E7 成为新冻结锚点；MetaX flat2048 轴已成功关闭，不重传相同字节。后续若继续
+冲榜，只允许新增单芯 vendor，并冻结 generic、AMD、Kunlun、MetaX 四成员。
