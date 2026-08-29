@@ -475,3 +475,35 @@ AMD/Kunlun 也保持专用路径。永久停止 uniform-if 轴，后续从 E3 �
 | huawei | 7.1050x | -3.98% | generic-if |
 | card_a | 32.8997x | -2.50% | generic-if |
 | card_b | 10.7757x | -1.53% | AMD |
+
+## E6：Ascend BLOCK 512
+
+状态：screening 通过，待 commit 后 release。
+
+E6 从 E3 team best 分叉，generic、AMD 与 Kunlun 逐字节恢复 E3，并移除
+E5 Enflame 保险成员。只新增 Ascend vendor；它与 generic 的完整计算 diff
+只有 `_BLOCK_COL = 1024` 改为 `512`，其余 capped grid-stride、metadata
+gating、公式、地址和默认 launch 全部相同。平台固定先例为 T24 同类 pointwise
+Ascend 256→512 使华为 `+19.90%`，T21 reduction 为 `+35.47%`；反例 T08
+为 `-0.73%`，因此只验证 512，不扩 sweep。
+
+- screening：`gpu:/tmp/flagos-silu-ascend-e6.EfOZUO`，mode 0700；generic
+  SHA-256
+  `bdafd313c6bb841a3334eca33e7bd1637c110d5edbf2c0180c00b127820c9cad`，
+  Ascend SHA-256
+  `5129f38abe9ce1b6eadd669da1f905ddc1a8bc17e5ec057263e9c1150f9603e4`，
+  AMD/Kunlun SHA-256 仍为
+  `a662c81024ad41eb9cf6bbbdf55c83bebdd681da3d27e219609856ae5074429f` /
+  `2698072998829ead430005697c2262bd2dc8712e9ee4d221d833541b01a72462`；
+  test SHA-256
+  `8c680d08c079aa1f17805e04a7bd34301bfb051736a9ed16b6c5c86787d47578`，
+  unittest 日志 SHA-256
+  `ccadf2d37d27f52ee9393ffafd1f8ff95db7b1a0537502667ec12fb6dab8a652`。
+- 本地 py_compile、Black、isort、flake8、diff-check 和单行 source diff
+  断言全过；远端 unittest 5/5，覆盖 h=8/128、`2*512+1` 跨块尾、两种
+  mask dtype 与三轮 grid-fold。
+- RTX 五轮交替 wrapper A/B 三形态中位比为 `0.9943x`、`1.0165x`、
+  `1.4693x`，几何平均 `1.1409x`；日志 SHA-256
+  `d386964c49847aec836c1e04932e2c6a1c147491aad93702622f73f98cc43121`。
+  NVIDIA 结果只排除明显回退；平台 stop gate 为 8/8 valid、华为选中 Ascend、
+  华为高于 E3 `7.39933333x` 且平均高于 `16.16041667x`。

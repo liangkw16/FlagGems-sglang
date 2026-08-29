@@ -39,25 +39,24 @@ def _silu_and_mul_masked_kernel(
         col_block = block_id - row_id * num_col_blocks
         expert_id = row_id // tokens
         token_id = row_id - expert_id * tokens
+        cols = col_block * BLOCK_COL + offsets
         valid_rows = tl.load(masked_m_ptr + expert_id)
-        if token_id < valid_rows:
-            cols = col_block * BLOCK_COL + offsets
-            mask = cols < half_width
-            input_base = row_id.to(tl.int64) * (2 * half_width)
-            gate = tl.load(
-                input_ptr + input_base + cols, mask=mask, other=0.0
-            ).to(tl.float32)
-            up = tl.load(
-                input_ptr + input_base + half_width + cols,
-                mask=mask,
-                other=0.0,
-            ).to(tl.float32)
-            output = (gate / (1.0 + tl.exp(-gate))) * up
-            tl.store(
-                output_ptr + row_id.to(tl.int64) * half_width + cols,
-                output.to(output_ptr.dtype.element_ty),
-                mask=mask,
-            )
+        mask = (token_id < valid_rows) & (cols < half_width)
+        input_base = row_id.to(tl.int64) * (2 * half_width)
+        gate = tl.load(input_ptr + input_base + cols, mask=mask, other=0.0).to(
+            tl.float32
+        )
+        up = tl.load(
+            input_ptr + input_base + half_width + cols,
+            mask=mask,
+            other=0.0,
+        ).to(tl.float32)
+        output = (gate / (1.0 + tl.exp(-gate))) * up
+        tl.store(
+            output_ptr + row_id.to(tl.int64) * half_width + cols,
+            output.to(output_ptr.dtype.element_ty),
+            mask=mask,
+        )
 
 
 def silu_and_mul_masked(input, masked_m):
