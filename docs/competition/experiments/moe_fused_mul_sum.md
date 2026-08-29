@@ -1,0 +1,86 @@
+# Task 32 `moe_fused_mul_sum` 实验记录
+
+## S0：generic baseline
+
+状态：screening 进行中（远端 NVIDIA 代理）
+
+生成时间：2026-08-29
+
+### 契约
+
+- 接口：`moe_fused_mul_sum(inputs, topk_weights, topk_ids=None,
+  expert_map=None, routed_scaling_factor=None, is_ep=False)`，与题面
+  reference 完全一致。
+- `inputs` `[T, top_k, D]`（fp16/bf16/fp32）；`topk_weights` `[T, top_k]`；
+  `topk_ids` `[T, top_k]` int32 或 None；`expert_map` `[num_experts]` int32
+  或 None；`routed_scaling_factor` float 或 None；`is_ep` bool。
+- 语义：`w = topk_weights.float() * (scale or 1.0)`；有 `expert_map` 时
+  `w *= (expert_map[topk_ids] >= 0)`，否则 `is_ep` 时 `w *= (topk_ids >= 0)`；
+  `out[t,d] = Σ_k inputs[t,k,d] * w[t,k]`，FP32 累加，输出 `[T, D]` 与
+  inputs 同 dtype。
+- 容差：FP32 `1e-4/1e-4`，BF16 `1.5e-2/1.5e-2`，FP16 `1e-2/1e-2`。
+- 支持芯片：天数、沐曦、燧原、海光、昆仑芯、华为、国际通用 A/B（八芯）。
+- 核心计算只走 Triton；无 try/except、无 PyTorch fallback、无设备分支。
+
+### 生成路径
+
+- 按仓库规则走 `kernelgen-mcp generate_kernel`（服务端 KernelGen 2.0.0，
+  streamable HTTP JSON-RPC）；生成后由服务端验证：
+  `passed=true`，`speedup=2.35x`（服务端 shape (64,8,7168) 口径）。
+- 服务端生成版两处已知问题，整理进仓库时修正：
+  1. 输出先建 FP32 tensor 再 `.to(dtype)`，多一轮全量读写 —— 改为直接
+     以 inputs dtype 分配输出，`tl.store` 自动 cast；
+  2. expert_map 索引用 `.to(tl.int64)` —— 改为 int32（num_experts 小，
+     国产后端 int64 惩罚更重，与 T21 经验一致）。
+
+### 唯一候选配置
+
+- 2D grid `(num_tokens, ceil(D/256))`，BLOCK 256，`TOP_K` constexpr 展开。
+- 每个 program 处理一个 token 的一个 hidden block：先逐 k load 标量权重
+  （乘 scale 并按 expert_map/is_ep `tl.where` 置零），再 load 输入块 FP32
+  累加；单次读 inputs、单次写 output。
+- inputs 三个 stride 与 weights/ids stride 显式传入；input stride 在 kernel
+  内 cast int64（大 shape 地址溢出保护），token/hidden 偏移 int32 起算。
+- `HAS_EXPERT_MAP`/`IS_EP` 为 constexpr 分支；topk_ids 为 None 时传空
+  int32 tensor 占位，两个分支均为编译期消除。
+- 空 T/D 直接返回合法空输出；top_k=0 时循环体为空、输出为零，语义与
+  reference 的空维求和一致。
+- 显式 4 warps、1 stage；无 autotune、无 vendor 文件。
+
+### 上游参考
+
+- vLLM `fused_moe.py` 的 `moe_sum` 与 Fused MoE Modular Kernel 的
+  TopKWeightAndReduce（mul+reduce 融合 epilogue 思想）。
+- SGLang fused_moe_triton_kernels（一 token 一 hidden tile、FP32 累加）。
+- 本仓库 T21 `moe_sum_reduce` 的地址公式与 launch 纪律。
+- 引入的外部最佳实践参考：
+  `docs/competition/reference/kernel-skills/patterns-fuse-elementwise-ops`。
+
+### Screening（进行中）
+
+- 模式：screening（未提交候选快速筛选）。
+- base commit：`9714d53`（工作树另含用户未提交改动，未触碰）。
+- 本地/远端 SHA-256 一致：
+  - `src/flaggems_sglang/ops/moe_fused_mul_sum.py`
+    `097009c6771e74bb2c67418f16e7d78bcea22d28b69f84be7b677c6c6c2c537e`
+  - `tests/test_moe_fused_mul_sum.py`
+    `5f3cabe245d20322b8965d994d2a8f540063d890585d202eb1f52576a3cb68e0`
+- 远端证据目录：`gpu:/tmp/flagos-moe_fused_mul_sum.9hfSsb`（mode 0700，
+  PID 191334，日志 `run.log`）。
+- 远端环境：NVIDIA CUDA，torch 2.13.0+cu130，triton 3.7.1。
+- 测试矩阵：三 dtype 主 shape、scale None、expert_map 掩码（含 -1 槽位）、
+  is_ep 负 id 掩码、非连续输入、块边界（255/256/257/511/512/513）、
+  空维（T=0/D=0/top_k=0）、平台规模 (4096,8,7168)。
+
+### Screening 结果（第一轮，未通过）
+
+- 远端 job 于 09:35 完成：`Ran 8 tests, FAILED (errors=26)`；
+  静态门禁 isort/flake8 通过，black 需重排（已在本地修为合规字节）。
+  可见通过的方法：expert_map 掩码、is_ep 掩码、scale=None、非连续输入。
+  26 个 subTest 错误集中在 dtype 参数化与块边界/平台规模用例，具体
+  traceback 尚未取回：GPU host（192.168.5.204）自 09:40 起不可达，
+  与 T33 账本记录的 host outage 同型；已设后台守望，恢复后取回
+  `$RD/run.log` 的 ERROR 段定位修复。
+- 修正后须重跑完整 screening；本轮结果不得为任何 ZIP 背书。
+
+（screening 修复重跑、benchmark 与后续 ZIP 打包待补）
