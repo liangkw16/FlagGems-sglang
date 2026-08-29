@@ -158,3 +158,28 @@ T29 E5 已在昆仑实证同一 row/col-block 骨架正确，因此不先改 fla
 release 文件由 commit 的 Git 对象生成，三文件哈希与 screening 完全一致；
 py_compile、lint、unittest 5/5 和末尾哈希复核全过。打包器 create 后
 `--verify-existing` 通过，actual 与 canonical ZIP SHA-256 一致。
+
+### E1 平台终态（sub 6587，2026-08-30 01:07 CST）
+
+实时 preflight tuple 全匹配，单次 confirm 成功；file URL SHA-256
+`f4d817745bd9a12001bbd6fe00f9061de7917a5d60ba82abfb99d91ea31677d6`，
+提交后额度 26/30。远端 ZIP 验签仍因未配置可信对象存储 hostname 为
+`unavailable`，提交 state 已为 `submitted`，未重试。
+
+**八芯 correctness 全过**，证明 S0 昆仑失败来自 metadata gating；但昆仑
+`0.052x < 0.1x`，终态 `invalid_threshold`，展示平均 `15.66275x`：
+
+| 芯片 | speedup | 状态 |
+| --- | ---: | --- |
+| tianshu | 24.3957x | 通过 |
+| muxi | 16.6023x | 通过 |
+| enflame | 0.4657x | 通过 |
+| haiguang | 34.6750x | 通过 |
+| kunlunxin | 0.0520x | 正确，未过 0.1x 门槛 |
+| huawei | 6.5243x | 通过 |
+| card_a | 32.4377x | 通过 |
+| card_b | 10.1493x | 通过 |
+
+下一候选只改 Kunlun 性能轴；generic 与其余七芯继续冻结。优先在不恢复已证伪
+scalar gating 的前提下减少写满 padding 的额外工作，先保持 BLOCK 不变验证
+flat/调度结构，达到 0.1x 后再做逐芯冲榜。
