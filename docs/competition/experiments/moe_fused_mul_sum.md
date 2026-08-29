@@ -142,7 +142,7 @@
 
 ## E1：Kunlun 无动态 loop direct fast path
 
-状态：commit-bound release 与 canonical ZIP 门禁通过，待一次性平台提交。
+状态：平台 8/8、`valid`、非 team best；保留 S0。
 
 ### 假设与单变量
 
@@ -201,3 +201,30 @@ E1 ZIP 只允许提交一次。基础门为 8/8 `valid` 且 Kunlun 选择
 榜首 `4.542975x`。若 Kunlun `<0.400000x`，停止 direct 轴；若机制确认但未
 登顶，只基于新的逐芯证据决定是否重开 2D/grid 轴；若登顶，冻结 E1 字节并转
 下一题。其余七芯使用 S0 generic，分数变化只视为平台波动。
+
+### E1 平台终态（sub 6615，2026-08-30 02:56 CST）
+
+实时 preflight tuple 全匹配，额度 `16/30`；E1 只提交一次，提交后额度
+`15/30`。对象存储匿名回读 `9059` bytes，SHA-256 与 canonical ZIP 完全
+一致，remote verification=`verified`；
+`file_url_sha256=d0bfe771a3f8af8a12bd64eb5e1fe123ff00d8e5dd1b4b38721206fd57ccd091`。
+
+终态 **8/8、valid、平均 `4.298675x`、非 team best**；团队最佳仍为 S0
+`4.482900x`，公开榜首仍为 `4.542975x`：
+
+| 芯片 | E1 | 相对 S0 | 文件 |
+| --- | ---: | ---: | --- |
+| 天数 | `7.731800x` | `+0.132400x` | generic |
+| 沐曦 | `4.067200x` | `-0.011800x` | generic |
+| 燧原 | `0.356800x` | `-1.653800x` | generic |
+| 海光 | `10.290000x` | `-0.008000x` | generic |
+| 昆仑 | `0.211600x` | `+0.001600x` | `_kunlunxin` |
+| 华为 | `1.171000x` | `+0.071400x` | generic |
+| 国际 A | `5.312200x` | `-0.016400x` | generic |
+| 国际 B | `5.248800x` | `+0.010800x` | generic |
+
+唯一新变量所在的 Kunlun 只提升 `0.76%`，远低于预注册 `0.400000x` 机制门，
+证明 T32 的 TOP_K 载入与 FP32 累加主导耗时，T40 的动态-loop 病理不能迁移到
+本题。未改字节的 Enflame 从 `2.010600x` 波动到 `0.356800x`，是本次平均下降
+的主要来源，不能归因于 Kunlun vendor。按预注册永久停止 T32 direct 轴，不做
+事后 BLOCK/2D-grid 扫描或重传；冻结并保留 S0 team best，转下一题。
