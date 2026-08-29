@@ -99,3 +99,8 @@ commit `a89a9ad`、ZIP SHA 见上。门禁全过即自动单次提交。
   __fdivrn 语义替换);
 - tl.max 轴归约:燧原在 T25 对 argmax 归约失败,但 T26/T27 的
   axis-1 max 归约通过,纯 max 无索引归约风险较低。
+
+### S0 提交记录(2026-08-29 14:0x CST)
+
+preflight 全过(tid `s2t1op033`、额度 17/30,本次消耗 1);单次
+confirm 提交成功,评测入队;逐芯结果待回填。
