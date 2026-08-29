@@ -58,3 +58,14 @@
 
 preflight 全过(额度 9/30 消耗 1 → 8/30);单次 confirm 提交,评测
 入队,昆仑终态待回填。
+
+### E1 终态(sub 6374,2026-08-29 18:2x CST)
+
+- 七芯第二次全过(华为 4.92/card_a 13.03/海光 12.71/card_b 11.48/
+  天数 6.86/沐曦 3.56/燧原 0.88);
+- 昆仑 completed passed=False:**同一 inductor 崩溃指纹**
+  (1830s + compile_worker Aborted,failed_cases=0)——与 S0 完全
+  同指纹,重载无效,符合"reference 含 topk → 昆仑验证侧必崩"的
+  6v6 相关性结论(见 kunlun-crash-ticket 文档)。
+- **T31 终态 7/8,工单路径**;两投同指纹,止损。额度 8/30。
+  保留候选:评测器修复后 e1 可直接复用(七芯证据完整)。
