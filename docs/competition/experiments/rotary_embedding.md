@@ -30,3 +30,9 @@
 
 - 无超越函数、无归约、无 dot;strided 读写是常规模式;风险面小。
 - 小 shape launch 主导(代理 ~4x 与 T30 平铺同水位)。
+
+### S0 提交记录(2026-08-29 17:1x CST)
+
+screening 字节与 commit blob 逐项一致(晋级验签 ✓);preflight 全过
+(tid `s2t1op035`,额度 15/30 消耗 1 → 14/30);单次 confirm 提交,
+评测入队。
