@@ -95,3 +95,19 @@ exec_ms 恒约 1833–1835s
  核心请求不变:对 sub 6223(T28 e8,七芯全过、华为 22.76x)与
  sub 6220(T27 e7,七芯全过、华为 0.515x)在健康 worker 上免费
  rerun 昆仑芯;或返还对应的基础设施错误消耗额度。
+
+## 2026-08-29 补充:崩溃与 reference 算子的相关性(六题对照)
+
+跨第三批 12 题的对照实验(同日、同账号、同指纹 1830s/compile_worker
+Aborted):
+
+- **崩(6 题)**:T25(argsort)、T26/T27(argsort+GEMM)、T28(分段
+  matmul)、T31(topk×3)、T36(einsum)——reference 全部含
+  `torch.topk/argsort` 或 `matmul/einsum`;
+- **过(6 题)**:T29/T30/T32/T33/T34/T35——reference 均不含上述
+  算子(kernel 侧含 tl.exp/tl.math.div_rn 均不影响)。
+
+相关性 6/6 vs 6/6,指向**平台昆仑验证侧 torch inductor 对 topk/
+argsort/matmul/einsum 的编译崩溃**,与选手代码无关。T31(sub
+6368/6374)七芯全过、仅昆仑死于该指纹,附此证据申请免费重跑或
+修复;T28(sub 5845/5861)同。
