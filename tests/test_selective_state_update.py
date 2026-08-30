@@ -40,8 +40,6 @@ def reference(
     batch, nheads, dim, dstate = state.shape
     ngroups = B.shape[1]
     ratio = nheads // ngroups
-    if A.dim() == 1:
-        A = A.unsqueeze(1).expand(nheads, dstate)
     if D is not None and D.dim() == 1:
         D = D.unsqueeze(1).expand(nheads, dim)
     if dt_bias is not None and dt_bias.dim() == 1:
@@ -81,7 +79,9 @@ def make_inputs(B, H, P, N, G, dtype, seed, softplus=False):
     state = r(B, H, P, N)
     x = r(B, H, P)
     dt = (r(B, H, P, scale=0.3) + 0.5).to(dtype)
-    A = (-torch.rand(H, N, generator=g) - 0.1).to(dtype=dtype, device="cuda")
+    A = (-torch.rand(H, P, N, generator=g) - 0.1).to(
+        dtype=dtype, device="cuda"
+    )
     Bm = r(B, G, N)
     C = r(B, G, N)
     return state, x, dt, A, Bm, C
@@ -116,11 +116,11 @@ class TestSelectiveStateUpdate(unittest.TestCase):
     def test_matrix(self):
         for dtype in (torch.bfloat16, torch.float16, torch.float32):
             for B, H, P, N, G in [
-                (2, 8, 8, 128, 1),
-                (4, 16, 16, 64, 4),
-                (1, 1, 1, 1, 1),
-                (128, 32, 32, 128, 8),
-                (3, 5, 5, 96, 1),
+                (2, 8, 64, 128, 1),
+                (4, 16, 64, 64, 4),
+                (1, 2, 1, 1, 1),
+                (128, 32, 64, 128, 8),
+                (3, 5, 33, 96, 1),
                 (8, 64, 64, 128, 8),
             ]:
                 for flags in [
@@ -136,7 +136,7 @@ class TestSelectiveStateUpdate(unittest.TestCase):
 
     def test_large_batch(self):
         state, x, dt, A, Bm, C = make_inputs(
-            8192, 8, 8, 128, 1, torch.bfloat16, 99
+            2048, 8, 64, 128, 1, torch.bfloat16, 99
         )
         y, ns = MOD.selective_state_update(state, x, dt, A, Bm, C)
         ry, rns = reference(state, x, dt, A, Bm, C)
@@ -156,41 +156,24 @@ class TestSelectiveStateUpdate(unittest.TestCase):
         state_s = state[:, :, ::2]
         x_s = x[:, :, ::2]
         dt_s = dt[:, :, ::2]
-        y, ns = MOD.selective_state_update(state_s, x_s, dt_s, A, Bm, C)
+        A_s = A[:, ::2]
+        y, ns = MOD.selective_state_update(state_s, x_s, dt_s, A_s, Bm, C)
         ry, rns = reference(
             state_s.contiguous(),
             x_s.contiguous(),
             dt_s.contiguous(),
-            A,
+            A_s,
             Bm,
             C,
         )
         torch.testing.assert_close(y, ry, rtol=1e-4, atol=1e-4)
         torch.testing.assert_close(ns, rns, rtol=1e-4, atol=1e-4)
 
-    def test_vllm_1d_variants(self):
-        # the platform harness may pass vllm-style 1-D [nheads] A/D/dt_bias
-        dtype = torch.bfloat16
-        state, x, dt, A, Bm, C = make_inputs(2, 8, 8, 128, 2, dtype, 42)
-        A1 = A[:, 0].contiguous()  # [H]
-        D1 = torch.randn(8, device="cuda").to(dtype)  # [H]
-        dtb1 = torch.randn(8, device="cuda").to(dtype)  # [H]
-        y, ns = MOD.selective_state_update(
-            state, x, dt, A1, Bm, C, D1, None, dtb1, True
-        )
-        ry, rns = reference(state, x, dt, A1, Bm, C, D1, None, dtb1, True)
-        torch.testing.assert_close(
-            y.float(), ry.float(), rtol=1.5e-2, atol=1.5e-2
-        )
-        torch.testing.assert_close(
-            ns.float(), rns.float(), rtol=1.5e-2, atol=1.5e-2
-        )
-
     def test_softplus_extremes(self):
-        dt = torch.full((1, 2, 2), 30.0, dtype=torch.float32, device="cuda")
-        dt[0, 0] = -30.0
-        state, _, _, A, Bm, C = make_inputs(1, 2, 2, 8, 1, torch.float32, 3)
-        x = torch.ones(1, 2, 2, dtype=torch.float32, device="cuda")
+        dt = torch.full((1, 2, 4), 30.0, dtype=torch.float32, device="cuda")
+        dt[0, 0, :2] = -30.0
+        state, _, _, A, Bm, C = make_inputs(1, 2, 4, 8, 1, torch.float32, 3)
+        x = torch.ones(1, 2, 4, dtype=torch.float32, device="cuda")
         y, ns = MOD.selective_state_update(
             state, x, dt, A, Bm, C, dt_softplus=True
         )

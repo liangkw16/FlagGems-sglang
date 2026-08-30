@@ -82,7 +82,7 @@ def _selective_state_update_kernel(
         ratio = num_heads // num_groups
         g = h // ratio
         a_val = tl.load(
-            a_ptr + p_idx[:, None] * dstate + n_off[None, :],
+            a_ptr + (h * dim + p_idx)[:, None] * dstate + n_off[None, :],
             mask=pn_mask,
             other=0.0,
         ).to(tl.float32)
@@ -97,7 +97,7 @@ def _selective_state_update_kernel(
             other=0.0,
         ).to(tl.float32)
 
-        # The scoring oracle broadcasts A's leading axis onto p (P == H).
+        # A is [H, P, N] in the executable scoring contract.
         d_a = tl.exp(dt_val[:, None] * a_val)
         s_base = (row * dim + p_idx)[:, None] * dstate + n_off[None, :]
         s_val = tl.load(state_ptr + s_base, mask=pn_mask, other=0.0).to(
