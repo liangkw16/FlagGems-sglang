@@ -250,3 +250,11 @@ preflight 全过(额度 3/30 消耗 1 → 2/30);单次 confirm 提交,
 - 伴生观察:燧原 generic 字节未变却 2.011→0.353(平台方差极大),
   佐证跨题比较需谨慎。
 - 额度 2/30。
+
+### E2:燧原 [TOP_K,BLOCK] 2D 加权归约 vendor(2026-08-31 00:4x CST)
+
+- codex 派生项:T33 E1→E2 结构类(顺序 static_range → 并行矩阵)
+  应用到 K 循环;K 维 pad 2 次幂 + 双 mask(非 2 次幂 top_k 曾使
+  tl.arange 崩溃,已修);
+- commit `b428879`,ZIP `bddf52e3…`,3 成员(generic+enflame+
+  kunlunxin[e1 字节,已证中性]);unittest 8/8;额度 28/30。
