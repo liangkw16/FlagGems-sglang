@@ -17,52 +17,13 @@ import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
-_BLOCK = 512
+_BLOCK = 1024
+# kunlunxin vendor: BLOCK is the only effective kunlun axis (T21
+# platform evidence: reduction BLOCK 1024); structure identical
 
 
 @triton.jit
-def _moe_fused_mul_sum_direct_kernel(
-    inputs_ptr,
-    weights_ptr,
-    ids_ptr,
-    map_ptr,
-    output_ptr,
-    num_col_blocks,
-    hidden_dim,
-    scale,
-    HAS_MAP: tl.constexpr,
-    IS_EP: tl.constexpr,
-    TOP_K: tl.constexpr,
-    BLOCK: tl.constexpr,
-):
-    block_id = tl.program_id(0)
-    out_ty = output_ptr.dtype.element_ty
-    token = block_id // num_col_blocks
-    col_block = block_id - token * num_col_blocks
-    h = col_block * BLOCK + tl.arange(0, BLOCK)
-    hmask = h < hidden_dim
-    acc = tl.zeros((BLOCK,), dtype=tl.float32)
-    row_base = token * TOP_K
-    for k in tl.static_range(TOP_K):
-        weight = tl.load(weights_ptr + row_base + k).to(tl.float32) * scale
-        if HAS_MAP or IS_EP:
-            expert_id = tl.load(ids_ptr + row_base + k)
-            if HAS_MAP:
-                mapped = tl.load(map_ptr + expert_id)
-                weight = tl.where(mapped >= 0, weight, 0.0)
-            else:
-                weight = tl.where(expert_id >= 0, weight, 0.0)
-        values = tl.load(
-            inputs_ptr + (row_base + k) * hidden_dim + h,
-            mask=hmask,
-            other=0.0,
-        ).to(tl.float32)
-        acc += values * weight
-    tl.store(output_ptr + token * hidden_dim + h, acc.to(out_ty), mask=hmask)
-
-
-@triton.jit
-def _moe_fused_mul_sum_loop_kernel(
+def _moe_fused_mul_sum_kernel(
     inputs_ptr,
     weights_ptr,
     ids_ptr,
@@ -77,6 +38,8 @@ def _moe_fused_mul_sum_loop_kernel(
     TOP_K: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
+    # flat 1D grid over (token, hidden-block) tiles: one integer division
+    # per block; int32 addressing throughout (shapes < 2^31)
     pid = tl.program_id(0)
     grid_stride = tl.num_programs(0)
     offs = tl.arange(0, BLOCK)
@@ -104,9 +67,7 @@ def _moe_fused_mul_sum_loop_kernel(
             ).to(tl.float32)
             acc += values * weight
         tl.store(
-            output_ptr + token * hidden_dim + h,
-            acc.to(out_ty),
-            mask=hmask,
+            output_ptr + token * hidden_dim + h, acc.to(out_ty), mask=hmask
         )
 
 
@@ -134,33 +95,15 @@ def moe_fused_mul_sum(
     )
     has_map = expert_map is not None
     use_ep = is_ep and topk_ids is not None and not has_map
-    ids = topk_ids if topk_ids is not None else inputs
-    expert_map = expert_map if has_map else inputs
 
     num_col_blocks = triton.cdiv(hidden_dim, _BLOCK)
     total_blocks = num_tokens * num_col_blocks
-    if total_blocks <= _MAX_GRID:
-        _moe_fused_mul_sum_direct_kernel[(total_blocks,)](
-            inputs,
-            topk_weights,
-            ids,
-            expert_map,
-            output,
-            num_col_blocks,
-            hidden_dim,
-            scale,
-            HAS_MAP=has_map,
-            IS_EP=use_ep,
-            TOP_K=top_k,
-            BLOCK=_BLOCK,
-        )
-        return output
-
-    _moe_fused_mul_sum_loop_kernel[(_MAX_GRID,)](
+    grid = (min(total_blocks, _MAX_GRID),)
+    _moe_fused_mul_sum_kernel[grid](
         inputs,
         topk_weights,
-        ids,
-        expert_map,
+        topk_ids if topk_ids is not None else inputs,
+        expert_map if has_map else inputs,
         output,
         total_blocks,
         num_col_blocks,
