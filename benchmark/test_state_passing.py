@@ -20,11 +20,7 @@ import torch
 import triton
 
 MODULE_PATH = (
-    Path(__file__).parents[1]
-    / "src"
-    / "flaggems_sglang"
-    / "ops"
-    / "state_passing.py"
+    Path(__file__).parents[1] / "src" / "flaggems_sglang" / "ops" / "state_passing.py"
 )
 
 
@@ -52,8 +48,7 @@ def reference(states, dA_cumsum, initial_states):
     for chunk in range(nchunks):
         out[:, chunk] = current.to(states.dtype)
         current = (
-            current * torch.exp(dA_last[:, chunk]).unsqueeze(-1)
-            + states_f[:, chunk]
+            current * torch.exp(dA_last[:, chunk]).unsqueeze(-1) + states_f[:, chunk]
         )
     return out, current
 
@@ -65,11 +60,14 @@ def make_inputs(shape, dtype):
         device="cuda",
         dtype=dtype,
     )
-    dA_cumsum = -torch.rand(
-        (batch, nheads, nchunks, length),
-        device="cuda",
-        dtype=dtype,
-    ) * 0.2
+    dA_cumsum = (
+        -torch.rand(
+            (batch, nheads, nchunks, length),
+            device="cuda",
+            dtype=dtype,
+        )
+        * 0.2
+    )
     initial_states = torch.randn(
         (batch, nheads, dim),
         device="cuda",

@@ -90,9 +90,7 @@ def _state_passing_kernel(
         if HAS_INITIAL_STATES:
             initial_base = batch * init_stride_b + head * init_stride_h
             current = tl.load(
-                initial_states_ptr
-                + initial_base
-                + dim_indices * init_stride_d,
+                initial_states_ptr + initial_base + dim_indices * init_stride_d,
                 mask=dim_mask,
                 other=0.0,
             ).to(tl.float32)
@@ -100,11 +98,7 @@ def _state_passing_kernel(
             current = tl.zeros([BLOCK_SIZE], dtype=tl.float32)
 
         for chunk in range(0, nchunks):
-            out_base = (
-                batch * out_stride_b
-                + chunk * out_stride_c
-                + head * out_stride_h
-            )
+            out_base = batch * out_stride_b + chunk * out_stride_c + head * out_stride_h
             out_dtype = out_ptr.dtype.element_ty
             tl.store(
                 out_ptr + out_base + dim_indices * out_stride_d,
@@ -118,9 +112,7 @@ def _state_passing_kernel(
                 + chunk * dA_stride_c
                 + (length - 1) * dA_stride_l
             )
-            decay = tl.exp(
-                tl.load(dA_cumsum_ptr + dA_offset).to(tl.float32)
-            )
+            decay = tl.exp(tl.load(dA_cumsum_ptr + dA_offset).to(tl.float32))
 
             states_base = (
                 batch * states_stride_b
@@ -128,9 +120,7 @@ def _state_passing_kernel(
                 + head * states_stride_h
             )
             state = tl.load(
-                states_ptr
-                + states_base
-                + dim_indices * states_stride_d,
+                states_ptr + states_base + dim_indices * states_stride_d,
                 mask=dim_mask,
                 other=0.0,
             ).to(tl.float32)
@@ -138,9 +128,7 @@ def _state_passing_kernel(
 
         final_base = batch * final_stride_b + head * final_stride_h
         tl.store(
-            final_states_ptr
-            + final_base
-            + dim_indices * final_stride_d,
+            final_states_ptr + final_base + dim_indices * final_stride_d,
             current,
             mask=dim_mask,
         )

@@ -19,11 +19,7 @@ from pathlib import Path
 import torch
 
 MODULE_PATH = (
-    Path(__file__).parents[1]
-    / "src"
-    / "flaggems_sglang"
-    / "ops"
-    / "state_passing.py"
+    Path(__file__).parents[1] / "src" / "flaggems_sglang" / "ops" / "state_passing.py"
 )
 
 
