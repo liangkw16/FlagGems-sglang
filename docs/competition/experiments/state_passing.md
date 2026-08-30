@@ -2,7 +2,8 @@
 
 ## S0：KernelGen generic 基线
 
-状态：commit-bound release 与 canonical ZIP 门禁通过，待一次性平台提交。
+状态：已唯一一次提交；7 个已终止芯片均被同一 BF16 initial dtype 断言拦截，
+昆仑回调待终态；S0 不得重试。
 
 ### 契约与生成
 
@@ -93,3 +94,58 @@ S0 只允许上述 ZIP 上传和正式提交各一次，八芯均只选择 gener
 `5.4805625x`。若单芯编译或正确性失败，只为该芯新增一个自包含 vendor；若
 8/8 valid 但未登顶，先按逐芯差距选择唯一一个 BLOCK/grid/control-flow 轴，
 冻结其余已通过字节，不重复上传 S0。
+
+### S0 平台记录（sub 6674，2026-08-30 08:33:56 CST）
+
+- 实时 preflight tuple 全匹配，额度 `14/30`；唯一一次上传和正式提交成功后
+  额度为 `13/30`。八芯都选择 `state_passing.py`，intent 状态为
+  `submitted`；`file_url_sha256` 为
+  `329f3cc34caefcabd74a685f293791d0a6e9db90a81b494515377645e7cd36eb`。
+- 远端对象存储 hostname 未配置为可信值，匿名回读状态为 `unavailable`；这不
+  改变已提交事实，也不得据此重试。
+- 截至 08:35，天数、沐曦、燧原、海光、华为、国际 A/B 共 7 芯均在 hidden
+  case 1 进入 wrapper 后触发同一行
+  `assert initial_states.dtype == torch.float32`。平台实际输入的 states 与
+  initial_states 都是 BF16，dA_cumsum 为 FP32；失败发生在 Triton launch 前，
+  没有数值差异证据。昆仑仍为 `waiting_callback`，无论其后续结果如何，S0
+  的共同根因和不可重试状态不变。
+
+## E1：接受低精度 initial state
+
+状态：commit-bound release 与 canonical ZIP 门禁通过，待一次性平台提交。
+
+E1 是一次 targeted wrapper 修复：只删除 S0 的 initial dtype 断言；shape 断言、
+kernel、BLOCK/grid/warps、递推、输出 dtype 和全部地址逻辑逐字节语义不变。测试把
+BF16 case 的非连续 initial 改为 BF16，同时保留 FP32 initial case。kernel 原本就会
+在 `tl.load` 后转 FP32，完全匹配题面 reference 的 `initial_states.float().clone()`。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `64b1eadd0fac3429db09725634b898f9a8ff1d9a` |
+| generic SHA-256 | `af0e622458f7ab89fadc45273c60f209bad5477fc8374de5e996d8193447c034` |
+| test SHA-256 | `e7acd4e2cc60f16b0df1d916215fee0e3631fc1aa71e727b6ebc6e8f9f7a5eac` |
+| benchmark SHA-256 | `d5dec07565eaab4c7a59ddb60f0966ae8cb6e58e1457e586f1ddd684c3ee9f12`（=S0） |
+| canonical ZIP | `artifacts/competition/state_passing/e1-64b1ead/state_passing.zip` |
+| ZIP size / SHA-256 | `6441` bytes / `052a0e1240977adeb79616d843b7ed771781fd89aea4766b4b4a6629d3365fbf` |
+| ZIP members | 顶层 `state_passing.py`，唯一普通 UTF-8 `.py` 成员 |
+
+- screening：`gpu-et:/tmp/flagos-state-passing-screen3.zD9gFs`，base commit
+  `7304abccdfaf52122cf92e9f4adc81baadc91692`；runner SHA-256
+  `1716e76c11733fb011c958124aa6bd2af7b1e0a90a93000d114336cdb3ccb35f`，
+  manifest SHA-256
+  `404f29fbe38bed3af7984525b04b997d7b584238df11d7b13c18c7fae4ec0b3b`，
+  日志 SHA-256
+  `37816ede7b26119751390bd073d2e2515b7fdfa2368e7f95dfb15d08cbe0df6c`。
+- release：`gpu-et:/tmp/flagos-state-passing-e1-release.MTG4vX`，三份文件全部
+  从 verification commit Git 对象生成，哈希与 screening 一致；release 日志
+  SHA-256
+  `2f7fde19b208c89c5db8a9f72c106a068b3bd53ea43f834e2480a4b1e5aca14b`。
+- 两轮的 py_compile、Black、isort、flake8、末尾哈希复核和 unittest 4/4
+  全过；BF16 non-contiguous initial 现已实际执行 kernel 并匹配 FP32 reference。
+  release 四组 wrapper-inclusive 中位加速为 `3.263597x / 6.780337x /
+  3.586362x / 19.461507x`，平均 `8.272951x`，与 S0 代理一致。
+- 规范打包器 dry-run/create/`--verify-existing`、`unzip -t`、唯一成员、UTF-8、
+  10 MB 和 commit 逐字节门禁全过。E1 只允许该 ZIP 上传和正式提交各一次；
+  基础门为 8/8 correctness 且每芯 `>=0.1x`，冲榜门仍为平均严格高于实时榜首
+  `5.4805625x`。若出现数值 mismatch，按 KernelGen Category B 回到 MCP
+  重新生成，不手改递推。
