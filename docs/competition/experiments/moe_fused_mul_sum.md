@@ -236,3 +236,8 @@ E1 ZIP 只允许提交一次。基础门为 8/8 `valid` 且 Kunlun 选择
 - vendor = generic + `_BLOCK 512→1024`(commit `aa2c0af`,其余逐字节
   一致);代理中性(±2%);unittest 8/8(gpu:/tmp/t32k.ol4dab)。
 - ZIP `e1-aa2c0af`,SHA `7d40dab2ec43548a28b5a60099117119f61586ca4c234267364ee51d3270eb24`,2 成员。
+
+### E1 提交记录(2026-08-31 16:1x CST)
+
+preflight 全过(额度 3/30 消耗 1 → 2/30);单次 confirm 提交,
+昆仑终态待回填。
