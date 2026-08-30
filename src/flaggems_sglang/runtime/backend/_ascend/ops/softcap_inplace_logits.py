@@ -16,6 +16,33 @@ import torch
 import triton
 import triton.language as tl
 
+from triton.language.extra import libdevice as tl_extra_shim
+
+_MAX_GRID = 65535
+# ascend vendor (e4): the kunlun-proven direct pattern generalized -
+# contiguous input + grid fits -> loop-free direct kernel (BLOCK 4096),
+# else strided-loop fallback
+_DIRECT_BLOCK = 4096
+
+
+@triton.jit
+def _softcap_inplace_logits_contiguous_kernel(
+    logits_ptr,
+    n_elements,
+    softcap_const,
+    BLOCK_SIZE: tl.constexpr,
+    CAP_RECIPROCAL_OVERFLOWS: tl.constexpr,
+):
+    offsets = tl.program_id(0) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+    mask = offsets < n_elements
+    logits = tl.load(logits_ptr + offsets, mask=mask, other=0.0).to(tl.float32)
+    scaled = logits / softcap_const
+    output = tl_extra_shim.tanh(scaled)
+    output *= softcap_const
+    if CAP_RECIPROCAL_OVERFLOWS:
+        output = tl.where(logits == 0.0, logits / (logits - logits), output)
+    tl.store(logits_ptr + offsets, output, mask=mask)
+
 
 @triton.jit
 def _softcap_inplace_logits_kernel(
@@ -39,14 +66,8 @@ def _softcap_inplace_logits_kernel(
         pointers = logits_ptr + row.to(tl.int64) * row_stride + cols
         logits = tl.load(pointers, mask=mask, other=0.0).to(tl.float32)
         scaled = logits / softcap_const
-        scaled_sq = scaled * scaled
-        near_zero = scaled * (
-            1.0 + scaled_sq * (-1.0 / 3.0 + scaled_sq * (2.0 / 15.0))
-        )
-        saturated = 2.0 / (1.0 + tl.exp(-2.0 * scaled)) - 1.0
-        output = softcap_const * tl.where(
-            tl.abs(scaled) < 0.25, near_zero, saturated
-        )
+        output = tl_extra_shim.tanh(scaled)
+        output *= softcap_const
         if CAP_RECIPROCAL_OVERFLOWS:
             output = tl.where(
                 logits == 0.0, logits / (logits - logits), output
@@ -60,7 +81,8 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
             raise ValueError("final_logit_softcapping must contain one value")
         final_logit_softcapping = final_logit_softcapping.item()
     final_logit_softcapping = float(final_logit_softcapping)
-    if full_logits.is_contiguous():
+    is_contiguous = full_logits.is_contiguous()
+    if is_contiguous:
         nrows, ncols = 1, full_logits.numel()
         row_stride = ncols
     else:
@@ -73,17 +95,30 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
     cap_reciprocal_overflows = (
         0.0 < abs(final_logit_softcapping) <= float.fromhex("0x1p-128")
     )
-    num_col_blocks = triton.cdiv(ncols, 512)
+    num_col_blocks = triton.cdiv(ncols, _DIRECT_BLOCK)
     total_blocks = nrows * num_col_blocks
-    _softcap_inplace_logits_kernel[(min(total_blocks, 48),)](
+    if is_contiguous and total_blocks <= _MAX_GRID:
+        _softcap_inplace_logits_contiguous_kernel[(total_blocks,)](
+            full_logits,
+            ncols,
+            final_logit_softcapping,
+            BLOCK_SIZE=_DIRECT_BLOCK,
+            CAP_RECIPROCAL_OVERFLOWS=cap_reciprocal_overflows,
+            num_warps=4,
+            num_stages=1,
+        )
+        return full_logits
+    _softcap_inplace_logits_kernel[(min(total_blocks, _MAX_GRID),)](
         full_logits,
         ncols,
         row_stride,
         num_col_blocks,
         total_blocks,
         final_logit_softcapping,
-        BLOCK_SIZE=512,
+        BLOCK_SIZE=4096,
         CAP_RECIPROCAL_OVERFLOWS=cap_reciprocal_overflows,
+        num_warps=4,
+        num_stages=1,
     )
     return full_logits
 
