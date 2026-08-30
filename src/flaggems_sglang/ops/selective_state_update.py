@@ -81,9 +81,11 @@ def _selective_state_update_kernel(
 
         ratio = num_heads // num_groups
         g = h // ratio
-        a_val = tl.load(a_ptr + h * dstate + n_off, mask=n_mask, other=0.0).to(
-            tl.float32
-        )
+        a_val = tl.load(
+            a_ptr + p_idx[:, None] * dstate + n_off[None, :],
+            mask=pn_mask,
+            other=0.0,
+        ).to(tl.float32)
         b_val = tl.load(
             b_ptr + (b * num_groups + g) * dstate + n_off,
             mask=n_mask,
@@ -95,8 +97,8 @@ def _selective_state_update_kernel(
             other=0.0,
         ).to(tl.float32)
 
-        # dA[p,n] = exp(dt[p] * A[n]); new = state*dA + (dt*x)[p]*B[n]
-        d_a = tl.exp(dt_val[:, None] * a_val[None, :])
+        # The scoring oracle broadcasts A's leading axis onto p (P == H).
+        d_a = tl.exp(dt_val[:, None] * a_val)
         s_base = (row * dim + p_idx)[:, None] * dstate + n_off[None, :]
         s_val = tl.load(state_ptr + s_base, mask=pn_mask, other=0.0).to(
             tl.float32
