@@ -35,3 +35,17 @@ confirm 提交,评测入队,逐芯结果待回填。
   batch_info 附加字段),代理无法复现(本地参照恒绿)。
 - **按 T36 教训立即止损**(1 发即停),额度 4/30;恢复条件:
   赛方公开真实 reference 或他队结构证据。
+
+### E1:尾块 mask 越界修复(2026-08-31 21:3x CST)
+
+- **根因(用户侧代码审查定位)**:`mask_n = offs_n < output_dim`
+  基于 0..BLOCK_N-1 的 arange,而寻址用 `offsets_n = n_block*BLOCK_N
+  + offs_n`——R 非 BLOCK_N 倍数(R=65/80…)时 n_block>0 的瓦片
+  越界写相邻行 → 平台 99% 失配;本地测试 R 恰为 64 倍数或 <64,
+  完美漏检。
+- 修复:mask 用绝对列号;测试补 R=65/80/129,fp32 容差收紧至
+  平台口径 1e-4;bench 不变(1.70–5.86x)。
+- commit `421c6d9`,ZIP `e1-421c6d9`,SHA `a078a07e932f696dd8d7bb14b83e661cee1d217ab7b1f96c6645602357a1b029`,单成员;unittest 3/3
+  (gpu:/tmp/t37f.aq79yf)。**S0 的"语义黑盒"结论撤销**——是我方
+  mask bug。
+- 今日额度 0/30,已备好 00:05 额度重置后自动 preflight+提交。
