@@ -638,3 +638,12 @@ MetaX 单变量假设显著兑现：沐曦从 E3 的 `16.48833333x` 提至
 
 E7 成为新冻结锚点；MetaX flat2048 轴已成功关闭，不重传相同字节。后续若继续
 冲榜，只允许新增单芯 vendor，并冻结 generic、AMD、Kunlun、MetaX 四成员。
+
+### E8:燧原 BLOCK 4096 vendor(今日最后一发,2026-08-31 18:4x CST)
+
+- 依据:T24 平台实证燧原对双读 elementwise 的 BLOCK 4096 最优;
+  T33 e2 燧原 2D 瓦片 +14 倍刚验证同族假设;
+- e8 = E7 冻结四成员 + 新增 `_enflame` vendor(仅 BLOCK_COL 1024→
+  4096,commit `7921ae2`,ZIP SHA `d3eb3c04…`,5 成员);
+  等价性按契约只验有效行(torch.empty 掩码区未定义),4 形状全过;
+- preflight 全过(额度 1/30 消耗后 0/30),单次提交,终态待回填。
