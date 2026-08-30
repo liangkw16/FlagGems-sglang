@@ -192,3 +192,9 @@ preflight 全过(额度 16/30,消耗 1 → 15/30);单次 confirm 提交,
 - 跨题知识第三证:燧原"宽 2D 瓦片并行归约">>>顺序 static_range
   摊销(T33 E1 -14% vs E2 +14 倍);与 T34 整行大组互证。
 - 距榜首(xuanzhengdu 6.2386)收窄至 -31.8%。
+
+### E3:华为 [4,G] 2D 瓦片独立候选(2026-08-31 02:0x CST)
+
+- 燧原 e2 同款结构([4, GROUP_SIZE] 并行 axis-1 amax,~4KB 足迹
+  远低于昇腾 UB 预算);commit `d6b1c4f`,ZIP `8ea4f63e…`,
+  3 成员(generic+enflame[e2]+ascend[e3]);unittest 7/7;额度 25/30。
