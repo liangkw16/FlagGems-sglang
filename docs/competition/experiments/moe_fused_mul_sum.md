@@ -228,3 +228,11 @@ E1 ZIP 只允许提交一次。基础门为 8/8 `valid` 且 Kunlun 选择
 本题。未改字节的 Enflame 从 `2.010600x` 波动到 `0.356800x`，是本次平均下降
 的主要来源，不能归因于 Kunlun vendor。按预注册永久停止 T32 direct 轴，不做
 事后 BLOCK/2D-grid 扫描或重传；冻结并保留 S0 team best，转下一题。
+
+### E1:昆仑 BLOCK 1024 vendor(2026-08-31 16:0x CST)
+
+- 平台证据:S0 昆仑 0.210x 是唯一短板(valid 已锁定,纯排名上行);
+  T21 平台实证昆仑 BLOCK 唯一有效(1024)。
+- vendor = generic + `_BLOCK 512→1024`(commit `aa2c0af`,其余逐字节
+  一致);代理中性(±2%);unittest 8/8(gpu:/tmp/t32k.ol4dab)。
+- ZIP `e1-aa2c0af`,SHA `7d40dab2ec43548a28b5a60099117119f61586ca4c234267364ee51d3270eb24`,2 成员。
