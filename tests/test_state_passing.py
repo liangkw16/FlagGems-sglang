@@ -21,13 +21,13 @@ import torch
 MODULE_PATH = (
     Path(__file__).parents[1] / "src" / "flaggems_sglang" / "ops" / "state_passing.py"
 )
-ENFLAME_MODULE_PATH = (
+KUNLUN_MODULE_PATH = (
     Path(__file__).parents[1]
     / "src"
     / "flaggems_sglang"
     / "runtime"
     / "backend"
-    / "_enflame"
+    / "_kunlunxin"
     / "ops"
     / "state_passing.py"
 )
@@ -43,7 +43,7 @@ def load_module(name, path):
 
 
 MODULE = load_module("state_passing", MODULE_PATH)
-ENFLAME_MODULE = load_module("state_passing_enflame", ENFLAME_MODULE_PATH)
+KUNLUN_MODULE = load_module("state_passing_kunlunxin", KUNLUN_MODULE_PATH)
 
 
 def reference(states, dA_cumsum, initial_states=None):
@@ -126,7 +126,7 @@ def make_case(
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class StatePassingTest(unittest.TestCase):
-    def assert_matches(self, case):
+    def assert_matches(self, case, module=MODULE):
         states, dA_cumsum, initial_states = case
         tensors = tuple(
             tensor
@@ -135,7 +135,7 @@ class StatePassingTest(unittest.TestCase):
         )
         snapshots = tuple(tensor.clone() for tensor in tensors)
 
-        actual_out, actual_final = MODULE.state_passing(
+        actual_out, actual_final = module.state_passing(
             states,
             dA_cumsum,
             initial_states,
@@ -195,13 +195,18 @@ class StatePassingTest(unittest.TestCase):
                 use_initial_states=True,
             ),
         )
-        for case in cases:
-            with self.subTest(
-                dtype=case[0].dtype,
-                shape=tuple(case[0].shape),
-                initial_states=case[2] is not None,
-            ):
-                self.assert_matches(case)
+        for name, module in (
+            ("generic", MODULE),
+            ("kunlunxin", KUNLUN_MODULE),
+        ):
+            for case in cases:
+                with self.subTest(
+                    module=name,
+                    dtype=case[0].dtype,
+                    shape=tuple(case[0].shape),
+                    initial_states=case[2] is not None,
+                ):
+                    self.assert_matches(case, module)
 
     def test_pre_update_snapshot_and_last_dA_lane(self):
         states = torch.tensor(
@@ -276,42 +281,21 @@ class StatePassingTest(unittest.TestCase):
             3.0,
             device="cuda",
         )
-        out, final_states = MODULE.state_passing(
-            states,
-            dA_cumsum,
-            initial_states,
-        )
-        torch.testing.assert_close(out, torch.full_like(out, 3.0))
-        torch.testing.assert_close(
-            final_states,
-            torch.full_like(final_states, 7.0),
-        )
-
-    def test_enflame_capped_grid_covers_more_than_twelve_tiles(self):
-        states = torch.full(
-            (13, 1, 1, 1),
-            4.0,
-            device="cuda",
-        )
-        dA_cumsum = torch.zeros(
-            (13, 1, 1, 1),
-            device="cuda",
-        )
-        initial_states = torch.full(
-            (13, 1, 1),
-            3.0,
-            device="cuda",
-        )
-        out, final_states = ENFLAME_MODULE.state_passing(
-            states,
-            dA_cumsum,
-            initial_states,
-        )
-        torch.testing.assert_close(out, torch.full_like(out, 3.0))
-        torch.testing.assert_close(
-            final_states,
-            torch.full_like(final_states, 7.0),
-        )
+        for name, module in (
+            ("generic", MODULE),
+            ("kunlunxin", KUNLUN_MODULE),
+        ):
+            with self.subTest(module=name):
+                out, final_states = module.state_passing(
+                    states,
+                    dA_cumsum,
+                    initial_states,
+                )
+                torch.testing.assert_close(out, torch.full_like(out, 3.0))
+                torch.testing.assert_close(
+                    final_states,
+                    torch.full_like(final_states, 7.0),
+                )
 
 
 if __name__ == "__main__":
