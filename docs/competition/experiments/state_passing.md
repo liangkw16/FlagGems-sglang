@@ -2,8 +2,8 @@
 
 ## S0：KernelGen generic 基线
 
-状态：已唯一一次提交；7 个已终止芯片均被同一 BF16 initial dtype 断言拦截，
-昆仑回调待终态；S0 不得重试。
+状态：已唯一一次提交；7 芯被同一 BF16 initial dtype 断言拦截，昆仑在
+compile worker 崩溃；0/8，通过状态为 `invalid_correctness`，S0 不得重试。
 
 ### 契约与生成
 
@@ -103,16 +103,18 @@ S0 只允许上述 ZIP 上传和正式提交各一次，八芯均只选择 gener
   `329f3cc34caefcabd74a685f293791d0a6e9db90a81b494515377645e7cd36eb`。
 - 远端对象存储 hostname 未配置为可信值，匿名回读状态为 `unavailable`；这不
   改变已提交事实，也不得据此重试。
-- 截至 08:35，天数、沐曦、燧原、海光、华为、国际 A/B 共 7 芯均在 hidden
+- 天数、沐曦、燧原、海光、华为、国际 A/B 共 7 芯均在 hidden
   case 1 进入 wrapper 后触发同一行
   `assert initial_states.dtype == torch.float32`。平台实际输入的 states 与
   initial_states 都是 BF16，dA_cumsum 为 FP32；失败发生在 Triton launch 前，
-  没有数值差异证据。昆仑仍为 `waiting_callback`，无论其后续结果如何，S0
-  的共同根因和不可重试状态不变。
+  没有数值差异证据。昆仑在 1830 秒后以空 `failed_cases` 崩于
+  `torch/_inductor/compile_worker/subproc_pool.py::_recv_msg`。截至 09:41，
+  S0 已 8/8 终态、0 芯通过；两类失败相互独立，S0 不得重试。
 
 ## E1：接受低精度 initial state
 
-状态：已唯一一次提交；7/8 芯正确性通过，昆仑回调待终态；E1 不得重试。
+状态：已唯一一次提交；7/8 芯正确性通过，昆仑 compile worker 崩溃；
+`invalid_correctness`，E1 不得重试。
 
 E1 是一次 targeted wrapper 修复：只删除 S0 的 initial dtype 断言；shape 断言、
 kernel、BLOCK/grid/warps、递推、输出 dtype 和全部地址逻辑逐字节语义不变。测试把
@@ -158,8 +160,9 @@ BF16 case 的非连续 initial 改为 BF16，同时保留 FP32 initial case。ke
   `37274576c31d3853034a82856f1433913f03e8e6cf33cd0f013710a4108b5d22`。
 - 远端对象存储 hostname 未配置为可信值，匿名回读状态为 `unavailable`；已提交
   事实不受影响，E1 不得重试。
-- 截至 08:53，7 个已终止芯片全部通过正确性；昆仑为
-  `waiting_callback`，平台下次主动查询时间为 10:37:43。已返回逐芯结果如下：
+- 2026-08-30 09:41:40 CST 只读终态：8/8 芯完成，7 芯通过正确性；昆仑
+  1830 秒后崩于 Inductor compile worker，`failed_cases=[]`，没有数值或用户
+  kernel traceback。逐芯结果如下：
 
 | 芯片 | speedup | 门槛 | 文件 |
 | --- | ---: | --- | --- |
@@ -167,19 +170,19 @@ BF16 case 的非连续 initial 改为 BF16，同时保留 FP32 initial case。ke
 | 沐曦 | `4.3290x` | 通过 | generic |
 | 燧原 | `0.0605x` | **低于 0.1x** | generic |
 | 海光 | `10.1765x` | 通过 | generic |
-| 昆仑 | - | 等待回调 | generic |
+| 昆仑 | - | compile-worker segmentation fault | generic |
 | 华为 | `1.0905x` | 通过 | generic |
 | 国际 A | `8.4275x` | 通过 | generic |
 | 国际 B | `4.5500x` | 通过 | generic |
 
-已知 7 芯简单平均为 `5.181571x`，仅作为排障观察；平台平均、validity 和排名仍
-待昆仑终态。E1 已证明递推和低精度 initial 修复对 7 芯正确，当前唯一已知门槛
-失败是燧原。
+E1 最终为 7/8、`invalid_correctness`，平台不计算平均或排名；7 个速度的简单平均
+`5.181571x` 仅作排障观察。E1 已证明递推和低精度 initial 修复对 7 芯正确；已知
+失败轴是昆仑编译崩溃，另有燧原 `0.0605x < 0.1x` 性能门槛失败。
 
 ## E2：Enflame physical grid cap 12
 
-状态：commit-bound release 与 canonical ZIP 门禁通过；等待 E1 昆仑终态，尚未
-preflight、上传或提交。
+状态：commit-bound release 与 canonical ZIP 门禁通过；因 E1 昆仑失败，已按
+预注册停止，未 preflight、未上传、未提交。产物保留用于后续组合，不得单独提交。
 
 E2 冻结 E1 generic 字节，只新增自包含 `_enflame`。该 vendor 与 generic 的
 完整源码 diff 只有 `_MAX_GRID = 65535` 改为 `12`；BLOCK256、4 warps、1 stage、
@@ -228,13 +231,83 @@ grid、`num_stages=2`、两个 eviction hint 和地址 hoist，不能隔离单�
 
 ### 提交预注册
 
-E2 只允许上述 ZIP 上传和正式提交各一次；平台应仅为燧原选择
-`state_passing_enflame.py`，其余七芯继续选择冻结 generic。由于 E2 未改变昆仑，
-必须先等 E1 昆仑终态：只有其正确且 `>=0.1x` 时才进入实时 preflight。若昆仑
-失败或低于门槛，停止 E2 提交并先建立该芯的独立候选，避免已知无效包消耗额度。
+E2 原计划只允许上述 ZIP 上传和正式提交各一次，平台仅为燧原选择
+`state_passing_enflame.py`。E1 昆仑已终态失败，因此前置门不满足；E2 的 upload、
+submit 计数均为 0，永久停止其独立提交。Enflame 字节仍由 commit `2c2bb3a` 和
+canonical ZIP `416c1852...3bcc3bc` 固定，只有昆仑独立轴通过后才可原样组合。
 
 E2 基础门为 8/8 correctness 且每芯 `>=0.1x`；单轴晋级门为燧原严格高于 E1
-`0.0605x` 且达到 `0.1x`；冲榜门为平均严格高于实时榜首。08:53 平台仍
-`can_submit=true`，实时额度为 `11/30`；该额度变化不归因于尚未提交的 E2。
+`0.0605x` 且达到 `0.1x`；冲榜门为平均严格高于实时榜首。09:41 平台仍
+`can_submit=true`，实时额度为 `11/30`；该额度变化不归因于从未提交的 E2。
 若 cap12 不升，永久停止 Enflame grid-cap 轴，不在同轮追加 BLOCK、warps、math
 或 MCP 的多变量候选。
+
+## E3：Kunlun host-segmented direct tile ownership
+
+状态：Kunlun-only 单变量候选已通过 screening、commit-bound release、规范打包
+和不可变 ZIP 验签；等待实时 preflight 与唯一一次平台提交。
+
+E1 generic 在 kernel 内把 capped grid 的每个 program 再放入 logical-tile
+grid-stride 外循环，外层 loop 与 `nchunks` 顺序递推形成两层 runtime loop。昆仑
+backend 自身还会注入 LoopGrid pass；E1 的 1830 秒空 case compile-worker crash、
+T40 同芯去动态 grid-loop 后 `0.2457x -> 0.9445x`，以及现有 Kunlun
+`decode_attention` 的 host 65,535 分段模式，共同支持只测试 tile ownership。
+
+按 `kernelgen-flagos` 流程把 E1 崩溃作为 `check_result` 调用
+`kernelgen-server.optimize_kernel`。首个结果引入第二 kernel 和 helper；第二个结果
+保留无用 `total_tiles` 参数并加入两个 eviction hint，均在写文件前被 usability
+gate 拒绝。第三个结果收敛为一个 kernel：`tile_id = tile_start + program_id(0)`，
+wrapper 每次最多启动 65,535 tiles；只按 Black 26.5.1 合并一行换行后落盘。
+`nchunks` 递推、BLOCK256、4 warps、1 stage、数学、地址、dtype 和空输入行为均冻结。
+
+E3 以 E1 平台字节为基线，仅新增 `_kunlunxin`，不携带从未上平台验证的 Enflame
+E2。当前分支删除 Enflame vendor 只为保证规范打包器不会夹带第三成员；其字节仍由
+E2 commit 与 canonical ZIP 完整保存。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `248693bfe210408dfefb0dbfbf687f195b797825` |
+| generic SHA-256 | `af0e622458f7ab89fadc45273c60f209bad5477fc8374de5e996d8193447c034`（=E1） |
+| Kunlun SHA-256 | `755f5b47029c7878e358db746757bfeb954e1ad3e81880ac7de7b14e4ccc4075` |
+| test SHA-256 | `756f60731938baae6b0f02a91a68aaacecf3bd8e561143672e57782f4e1a5747` |
+| benchmark SHA-256 | `d5dec07565eaab4c7a59ddb60f0966ae8cb6e58e1457e586f1ddd684c3ee9f12`（=E1） |
+| canonical ZIP | `artifacts/competition/state_passing/e3-248693b/state_passing.zip` |
+| ZIP size / SHA-256 | `12838` bytes / `a8fa080d5d80dd92d679dd89162e9ec8a990681d4163768098ba7b896e36c4e2` |
+| ZIP members | `state_passing.py`、`state_passing_kunlunxin.py` |
+
+### 验证证据
+
+- screening：`gpu-et:/tmp/flagos-state-passing-e3-screen2.htJBk6`，base commit
+  `632dd5e`，四份工作树候选字节显式传入；runner SHA-256
+  `39296e4023dad47cccacf1e1c83cc6e4d9ff9e35964a0a5a8ba27a9f249021b1`，
+  manifest SHA-256
+  `a4a3f3936908fdbc3521fdc7e5ec2116f189a952065f97c84d60b1f1d86e319f`，
+  日志 SHA-256
+  `7c8152af4ac3f8121de83e6614372482ad4227a560c48b42faed6cac9c652193`。
+- release：`gpu-et:/tmp/flagos-state-passing-e3-release.fN18o0`，四份文件全部由
+  verification commit 的 Git 对象生成，哈希与 screening 完全一致；runner 与
+  manifest 同上，release 日志 SHA-256
+  `e0ff68d6d6e244b9f3755a1d6219fd85e4eb7b86b333c84e53b6012c86321de5`。
+- 两轮均通过 py_compile、Black 26.5.1、末尾 SHA-256 复核和 unittest **4/4**。
+  三 dtype/非连续 stride/BF16 initial/dim tail 同时执行 generic 与 Kunlun；
+  `131072 > 65535` logical tiles 同时验证 generic grid-stride 与 Kunlun 三次 host
+  launch 全覆盖。NVIDIA 只能证明 JIT、数值与索引覆盖，不外推 XPU crash 修复。
+- release 冻结 generic 的四组 wrapper-inclusive 中位加速为
+  `3.295136x / 6.892384x / 3.592256x / 19.296081x`，平均 `8.268964x`；
+  benchmark 字节与 E1 完全一致。
+- 规范打包器 dry-run/create/`--verify-existing` 均给出同一 ZIP SHA-256；
+  `unzip -t/-Z1`、两成员 basename、UTF-8、10 MB 上限及成员与 commit 逐字节
+  核对全过。
+
+### 提交预注册
+
+E3 是昆仑独立诊断候选，只允许上述 ZIP 上传和正式提交各一次；预期仅昆仑选择
+`state_passing_kunlunxin.py`，其他 7 芯继续选择冻结 generic。09:41 平台 tuple 为
+race `782kzq4m`、season 2、Task 41/`s2t1op041`、batch 3、
+`competing/submitting`、`can_submit=true`，额度 `11/30`，120 秒间隔已满足。
+
+E3 的单轴晋级门为昆仑完成正确性且 `>=0.1x`。已知 Enflame 仍用 generic，故 E3
+本身预期仍因其 `0.0605x` 低于门槛而无效；本次额度只用于隔离昆仑 crash，不据此
+重测其他 7 芯。若昆仑通过，下一候选把 E2 Enflame 字节与 E3 Kunlun 字节原样组合；
+若仍复现约 1830 秒、空 `failed_cases` compile-worker crash，永久停止 direct 轴，
+不盲扫 BLOCK、warps 或数学。
