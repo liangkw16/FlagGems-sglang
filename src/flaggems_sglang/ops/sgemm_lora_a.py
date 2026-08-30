@@ -58,7 +58,6 @@ def _sgemm_lora_a_kernel(
     offs_s = tl.arange(0, BLOCK_S)
     offs_n = tl.arange(0, BLOCK_N)
     offs_k = tl.arange(0, BLOCK_K)
-    mask_n = offs_n < output_dim
     for tile in range(pid, total_tiles, grid_stride):
         n_block = tile % N_BLOCKS
         rest = tile // N_BLOCKS
@@ -87,6 +86,10 @@ def _sgemm_lora_a_kernel(
                 rows = segment_start + offsets_s
 
             offsets_n = n_block * BLOCK_N + offs_n
+            # mask against the ABSOLUTE column index: a per-block arange
+            # mask lets n_block>0 tiles write past output_dim when R is
+            # not a BLOCK_N multiple (R=65 etc corrupted neighbour rows)
+            mask_n = offsets_n < output_dim
             accumulator = tl.zeros((BLOCK_S, BLOCK_N), dtype=tl.float32)
             for k_start in range(0, input_dim, BLOCK_K):
                 k = k_start + offs_k

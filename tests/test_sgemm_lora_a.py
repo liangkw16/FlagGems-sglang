@@ -89,7 +89,7 @@ def make_case(S, K, R, num_lora, num_segs, dtype, seed, with_perm):
 
 class TestSgemmLoraA(unittest.TestCase):
     TOL = {
-        torch.float32: dict(rtol=1e-3, atol=1e-3),
+        torch.float32: dict(rtol=1e-4, atol=1e-4),
         torch.float16: dict(rtol=1e-2, atol=1e-2),
         torch.bfloat16: dict(rtol=1.5e-2, atol=1.5e-2),
     }
@@ -113,6 +113,9 @@ class TestSgemmLoraA(unittest.TestCase):
                 (17, 33, 16, 2, 2, False),
                 (1, 64, 32, 1, 1, False),
                 (512, 128, 8, 4, 5, True),
+                (256, 512, 65, 4, 5, True),
+                (128, 320, 80, 3, 4, False),
+                (64, 96, 129, 2, 3, True),
             ]:
                 with self.subTest(dtype=dtype, S=S, K=K, R=R, perm=perm):
                     x, w, info = make_case(
