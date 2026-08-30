@@ -207,7 +207,7 @@ T33 per_token_group_quant_int8 S0 8/8 valid、3.5385x
   T34 -10.7%、T29 -19.0%(榜首 3.36)、T35 -20.7%、T30 -22.2%、
   **T33 -40.9%(榜首 c2flow 4.02→5.99 跳涨,存在未发现的大优化面)**。
   c2flow 霸榜 T25/28/33/36/37。
-- **未打新题**:T37 sgemm_lora_a(1 队达标 5.87x)、T38
+- T37 sgemm_lora_a 语义黑盒止损(七芯 ~99% 失配,题面 reference 与平台不符疑);T38
   sigmoid_gate_topk_renorm(1 队 6.33x,topk 族昆仑风险)、T39
   silu_and_mul_masked / T40 softcap_inplace_logits / T41
   state_passing(达标数待出)。
