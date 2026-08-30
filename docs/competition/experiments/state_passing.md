@@ -244,8 +244,8 @@ E2 基础门为 8/8 correctness 且每芯 `>=0.1x`；单轴晋级门为燧原严
 
 ## E3：Kunlun host-segmented direct tile ownership
 
-状态：Kunlun-only 单变量候选已唯一一次提交；7 个非昆仑芯片均通过正确性，
-昆仑等待回调；E3 不得重试。
+状态：Kunlun-only 单变量候选已唯一一次提交；7/8 芯正确性通过，昆仑复现
+compile-worker crash；`invalid_correctness`，E3 不得重试，direct 轴停止。
 
 E1 generic 在 kernel 内把 capped grid 的每个 program 再放入 logical-tile
 grid-stride 外循环，外层 loop 与 `nchunks` 顺序递推形成两层 runtime loop。昆仑
@@ -332,10 +332,17 @@ E3 的单轴晋级门为昆仑完成正确性且 `>=0.1x`。已知 Enflame 仍�
 | 沐曦 | `4.3090x` | 通过 | generic |
 | 燧原 | `0.0610x` | **低于 0.1x，符合已知基线** | generic |
 | 海光 | `10.1800x` | 通过 | generic |
-| 昆仑 | - | 等待回调 | Kunlun vendor |
+| 昆仑 | - | compile-worker segmentation fault | Kunlun vendor |
 | 华为 | `1.0295x` | 通过 | generic |
 | 国际 A | `8.4260x` | 通过 | generic |
 | 国际 B | `4.5855x` | 通过 | generic |
 
-7 个已返回速度的简单平均为 `5.197929x`，仅作排障观察；平台 validity 与平均仍待
-昆仑终态。heartbeat 已绑定本次 file URL hash；等待期间不改候选、不发起新提交。
+7 个已返回速度的简单平均为 `5.197929x`，仅作排障观察。10:23:08 CST 只读终态：
+昆仑在 `1833502 ms` 后再次以空 `failed_cases` 崩于
+`torch/_inductor/compile_worker/subproc_pool.py::_recv_msg`，与 E1 的错误类型、
+阶段和约 1830 秒时长完全一致；host-segmented direct 未改变故障。
+
+E3 最终为 8/8 terminal、7/8 passed、`invalid_correctness`，平台不计算平均或排名；
+额度剩余 `10/30`。按预注册永久停止 direct tile-ownership 轴，不盲扫 BLOCK、warps
+或数学，也不构建 E4；E2 Enflame vendor 继续保留为已验签但从未提交的独立产物。
+Task 41 到此止损闭环，heartbeat 暂停。
