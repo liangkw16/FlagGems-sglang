@@ -198,3 +198,10 @@ preflight 全过(额度 16/30,消耗 1 → 15/30);单次 confirm 提交,
 - 燧原 e2 同款结构([4, GROUP_SIZE] 并行 axis-1 amax,~4KB 足迹
   远低于昇腾 UB 预算);commit `d6b1c4f`,ZIP `8ea4f63e…`,
   3 成员(generic+enflame[e2]+ascend[e3]);unittest 7/7;额度 25/30。
+
+### E3 终态(sub 6997)
+
+8/8 valid,avg 3.589(< e2 团队最佳 4.258,保留 e2)。华为
+1.296→**1.484(+14%,瓦片假设在昇腾小幅兑现)**;燧原 vendor 字节
+未变却 6.284→0.879——平台方差再现,e2 最佳按团队计分保留。
+额度 24/30。
