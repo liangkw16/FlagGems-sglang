@@ -107,7 +107,7 @@ def make_case(
             (batch, nheads, dim * 2),
             generator=generator,
             device="cuda",
-            dtype=torch.float32,
+            dtype=dtype,
         )
         initial_states = initial_storage[..., 1::2]
     return states, dA_cumsum, initial_states

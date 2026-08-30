@@ -145,7 +145,6 @@ def state_passing(
     assert length >= 1
     if initial_states is not None:
         assert initial_states.shape == (batch, nheads, dim)
-        assert initial_states.dtype == torch.float32
 
     out = torch.empty(
         states.shape,
