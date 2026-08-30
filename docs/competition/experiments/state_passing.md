@@ -244,8 +244,8 @@ E2 基础门为 8/8 correctness 且每芯 `>=0.1x`；单轴晋级门为燧原严
 
 ## E3：Kunlun host-segmented direct tile ownership
 
-状态：Kunlun-only 单变量候选已通过 screening、commit-bound release、规范打包
-和不可变 ZIP 验签；等待实时 preflight 与唯一一次平台提交。
+状态：Kunlun-only 单变量候选已唯一一次提交；7 个非昆仑芯片均通过正确性，
+昆仑等待回调；E3 不得重试。
 
 E1 generic 在 kernel 内把 capped grid 的每个 program 再放入 logical-tile
 grid-stride 外循环，外层 loop 与 `nchunks` 顺序递推形成两层 runtime loop。昆仑
@@ -311,3 +311,31 @@ E3 的单轴晋级门为昆仑完成正确性且 `>=0.1x`。已知 Enflame 仍�
 重测其他 7 芯。若昆仑通过，下一候选把 E2 Enflame 字节与 E3 Kunlun 字节原样组合；
 若仍复现约 1830 秒、空 `failed_cases` compile-worker crash，永久停止 direct 轴，
 不盲扫 BLOCK、warps 或数学。
+
+### E3 平台进度（sub 6693，2026-08-30 09:48:53 CST）
+
+- 实时 preflight 的 race/season/account/team/batch/Task/tid/operator、source commit、
+  stage、ZIP 绝对路径、SHA-256、两成员、提交窗口、120 秒间隔和 `can_submit=true`
+  全匹配，额度为 `11/30`。只执行返回的一次性 confirm 命令；提交后额度 `10/30`，
+  intent 状态为 `submitted`，E3 不得重试。
+- `file_url_sha256` 为
+  `7621487d9adacbfe8aca36df9b239226a7f87b38d9e779cffc458e732552c781`。
+  远端对象存储 hostname 未配置为可信值，匿名回读为 `unavailable`；这不改变已提交
+  事实。昆仑选择 `state_passing_kunlunxin.py`，其他 7 芯均选择 generic，完全符合
+  预注册。
+- 09:50:27 CST，7 个非昆仑芯片全部完成并通过正确性；昆仑 validation
+  `b80ee32ab974` 为 `waiting_callback`。当前逐芯结果：
+
+| 芯片 | speedup | 门槛 | 文件 |
+| --- | ---: | --- | --- |
+| 天数 | `7.7945x` | 通过 | generic |
+| 沐曦 | `4.3090x` | 通过 | generic |
+| 燧原 | `0.0610x` | **低于 0.1x，符合已知基线** | generic |
+| 海光 | `10.1800x` | 通过 | generic |
+| 昆仑 | - | 等待回调 | Kunlun vendor |
+| 华为 | `1.0295x` | 通过 | generic |
+| 国际 A | `8.4260x` | 通过 | generic |
+| 国际 B | `4.5855x` | 通过 | generic |
+
+7 个已返回速度的简单平均为 `5.197929x`，仅作排障观察；平台 validity 与平均仍待
+昆仑终态。heartbeat 已绑定本次 file URL hash；等待期间不改候选、不发起新提交。
