@@ -377,3 +377,10 @@ torch 基准疑为 torch_npu 融合实现,口径不可比),attempt 4 验证失�
 终版为 TLE + torch_npu 代码,无平台可比证据,**不采纳**。华为端
 1.35x 的进一步提升路径封闭(本轮内)。记录:
 log/kernelgen-round/out_t29_at_huawei.json(job c007b765)。
+
+### E8:燧原整行 BLOCK 4096 vendor(2026-08-31 02:3x CST)
+
+- codex 修正方向:一行×4096(非四行瓦片);T39 e8 燧原 +90% 平台
+  证据迁移到本题最弱芯(燧原 0.96x);
+- commit `d7a8f79`,ZIP `c8fa64a3…`,4 成员(E7 全家 + enflame);
+  unittest 8/8;额度 24/30。
