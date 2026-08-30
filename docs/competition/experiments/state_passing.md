@@ -112,7 +112,7 @@ S0 只允许上述 ZIP 上传和正式提交各一次，八芯均只选择 gener
 
 ## E1：接受低精度 initial state
 
-状态：commit-bound release 与 canonical ZIP 门禁通过，待一次性平台提交。
+状态：已唯一一次提交；7/8 芯正确性通过，昆仑回调待终态；E1 不得重试。
 
 E1 是一次 targeted wrapper 修复：只删除 S0 的 initial dtype 断言；shape 断言、
 kernel、BLOCK/grid/warps、递推、输出 dtype 和全部地址逻辑逐字节语义不变。测试把
@@ -149,3 +149,92 @@ BF16 case 的非连续 initial 改为 BF16，同时保留 FP32 initial case。ke
   基础门为 8/8 correctness 且每芯 `>=0.1x`，冲榜门仍为平均严格高于实时榜首
   `5.4805625x`。若出现数值 mismatch，按 KernelGen Category B 回到 MCP
   重新生成，不手改递推。
+
+### E1 平台进度（sub 6675，2026-08-30 08:37:41 CST）
+
+- 实时 preflight tuple 全匹配，额度 `13/30`；唯一一次上传和正式提交成功后
+  额度为 `12/30`。八芯均选择 `state_passing.py`，intent 状态为
+  `submitted`；`file_url_sha256` 为
+  `37274576c31d3853034a82856f1433913f03e8e6cf33cd0f013710a4108b5d22`。
+- 远端对象存储 hostname 未配置为可信值，匿名回读状态为 `unavailable`；已提交
+  事实不受影响，E1 不得重试。
+- 截至 08:53，7 个已终止芯片全部通过正确性；昆仑为
+  `waiting_callback`，平台下次主动查询时间为 10:37:43。已返回逐芯结果如下：
+
+| 芯片 | speedup | 门槛 | 文件 |
+| --- | ---: | --- | --- |
+| 天数 | `7.6365x` | 通过 | generic |
+| 沐曦 | `4.3290x` | 通过 | generic |
+| 燧原 | `0.0605x` | **低于 0.1x** | generic |
+| 海光 | `10.1765x` | 通过 | generic |
+| 昆仑 | - | 等待回调 | generic |
+| 华为 | `1.0905x` | 通过 | generic |
+| 国际 A | `8.4275x` | 通过 | generic |
+| 国际 B | `4.5500x` | 通过 | generic |
+
+已知 7 芯简单平均为 `5.181571x`，仅作为排障观察；平台平均、validity 和排名仍
+待昆仑终态。E1 已证明递推和低精度 initial 修复对 7 芯正确，当前唯一已知门槛
+失败是燧原。
+
+## E2：Enflame physical grid cap 12
+
+状态：commit-bound release 与 canonical ZIP 门禁通过；等待 E1 昆仑终态，尚未
+preflight、上传或提交。
+
+E2 冻结 E1 generic 字节，只新增自包含 `_enflame`。该 vendor 与 generic 的
+完整源码 diff 只有 `_MAX_GRID = 65535` 改为 `12`；BLOCK256、4 warps、1 stage、
+1D grid-stride、FP32 递推、地址、wrapper 和全部 dtype 语义不变。T24 同芯单变量
+A/B 曾证明 full-grid 65535 相对 cap12 使燧原下降 `24.49%`，T40 的 cap12 vendor
+四轮稳定在 `2.3212–2.3312x`，因此先验证这条目标芯已有正证据的最小轴。
+
+按 KernelGen 低性能流程调用 `optimize_kernel` 一次。服务返回的候选同时引入 2D
+grid、`num_stages=2`、两个 eviction hint 和地址 hoist，不能隔离单变量，且目标芯
+没有对应正证据；在写文件前按 usability gate 拒绝，未覆盖任何已验证源码。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `2c2bb3a9227ad039bf27c5b927e96ae1f7926cef` |
+| generic SHA-256 | `af0e622458f7ab89fadc45273c60f209bad5477fc8374de5e996d8193447c034`（=E1） |
+| Enflame SHA-256 | `1e24ec0b2e3d92ee8a9f9d4f8a7a8f6451a31f9e29b953d01d9663dd7b92b218` |
+| test SHA-256 | `a8c08b8d1da26e24629a50cef9ce041c1659384b3415965a69ac525cff6ffc8f` |
+| benchmark SHA-256 | `d5dec07565eaab4c7a59ddb60f0966ae8cb6e58e1457e586f1ddd684c3ee9f12`（=E1） |
+| canonical ZIP | `artifacts/competition/state_passing/e2-2c2bb3a/state_passing.zip` |
+| ZIP size / SHA-256 | `12873` bytes / `416c1852df7673dc8bc2f2ae8f6aef6c2308d93f9df16fcda6e2a05303bcc3bc` |
+| ZIP members | `state_passing.py`、`state_passing_enflame.py` |
+
+### 验证证据
+
+- screening：`gpu-et:/tmp/flagos-state-passing-e2-screen.CHrXKu`，base commit
+  `2f3bc84`，四份候选字节显式传入；runner SHA-256
+  `2c42fb8b966432c7c46deb69aeb32ac13ee58bb7b01e5e9919fa1a4466872690`，
+  manifest SHA-256
+  `881ba7a3dd5415198fa3c65b29a002c97f7bd01f7c2ed96537e102f1f1aaa597`，
+  日志 SHA-256
+  `9124007c94ac6961ef07965c678158fa40665343dae4911310e3b30ae5754311`。
+- release：`gpu-et:/tmp/flagos-state-passing-e2-release.OqoiC4`，四份文件全部从
+  verification commit 的 Git 对象生成，哈希与 screening 完全一致；runner 与
+  manifest 同上，release 日志 SHA-256
+  `9f42898485d12e2d7b3acb413d6e89bc4e97e40bb60e1040eb50477c1cfd8a2e`。
+- 两轮都通过 py_compile、Black、isort、flake8、末尾哈希复核和 unittest
+  **5/5**。新增 `(13,1,1,1)` case 实际覆盖 `13 > cap12` 时的第二轮
+  grid-stride；原 `131072 > 65535` generic 完整覆盖回归保留。
+- 环境仍为 Python 3.12.13、PyTorch 2.13.0+cu130、Triton 3.7.1、CUDA
+  13.0、RTX 5070 Ti。release 的冻结 generic 四组 wrapper-inclusive 中位加速为
+  `3.241357x / 6.875155x / 3.572753x / 19.867773x`，平均 `8.389259x`。
+  NVIDIA 结果只证明语法、数值和 generic 未漂移，不外推 cap12 在 GCU 的收益。
+- 规范打包器 dry-run/create/`--verify-existing` 均给出同一 ZIP SHA-256；
+  `unzip -t/-Z1`、两成员 basename、UTF-8、10 MB 上限及成员与 commit 逐字节
+  核对全过。
+
+### 提交预注册
+
+E2 只允许上述 ZIP 上传和正式提交各一次；平台应仅为燧原选择
+`state_passing_enflame.py`，其余七芯继续选择冻结 generic。由于 E2 未改变昆仑，
+必须先等 E1 昆仑终态：只有其正确且 `>=0.1x` 时才进入实时 preflight。若昆仑
+失败或低于门槛，停止 E2 提交并先建立该芯的独立候选，避免已知无效包消耗额度。
+
+E2 基础门为 8/8 correctness 且每芯 `>=0.1x`；单轴晋级门为燧原严格高于 E1
+`0.0605x` 且达到 `0.1x`；冲榜门为平均严格高于实时榜首。08:53 平台仍
+`can_submit=true`，实时额度为 `11/30`；该额度变化不归因于尚未提交的 E2。
+若 cap12 不升，永久停止 Enflame grid-cap 轴，不在同轮追加 BLOCK、warps、math
+或 MCP 的多变量候选。
