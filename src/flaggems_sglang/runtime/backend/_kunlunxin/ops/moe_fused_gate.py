@@ -62,7 +62,8 @@ def _moe_fused_gate_kernel(
             activated = tl.sigmoid(scores)
             biased = activated + bias
         elif SCORING == 1:  # sqrtsoftplus
-            # e5 re-carrier: e4 kunlun returned service-thread deadlock
+            # e6 re-carrier: FIRST T31-specific pass signal (pass-team 1->2,
+# 2026-08-30 ~21:15). e5 re-carrier: e4 kunlun returned service-thread deadlock
 # (platform invites resubmit; NOT the inductor fingerprint). poly log1p
 # kunlunxin: polynomial log1p (atanh z-series, err < 5e-9 on
             # u in [0,1]) replacing tl.log - the shared suspect op of the
