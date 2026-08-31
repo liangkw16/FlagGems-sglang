@@ -9,7 +9,7 @@ platform: 8/8
 team_best_stage: e1
 team_best_speedup: 4.7131
 sealed: yes
-next: 收盘 e1 4.7131;e3 row-pack 平台中性+夹带 e2 昆仑坏字节致 invalid,树已回滚
+next: e4 persistent cap与SGLang launch参数均不过5%全矩阵门;已知轴尽
 updated: 2026-09-01
 ```
 
@@ -162,3 +162,49 @@ preflight intent `f42fbb20…` 单次 confirm(sub 7467;额度跨 00:00
    -17.2%);已知轴尽:两趟列分块(e1/e2)、row-pack(e3)、华为
    autotune(前科);流程教训入账:提交前对 ZIP 内每个 vendor 成员
    做字节级核对,不只对 generic。
+
+## E4:persistent cap 与官方 launch 参数(2026-09-01 07:3x CST,负结果)
+
+实时榜首 `7.2513x`，e1 `4.7131x` 需 **+53.85%**。只读上游复核显示
+[SGLang 当前实现](https://github.com/sgl-project/sglang/blob/main/python/sglang/kernels/ops/quantization/int8_kernel.py)
+仍是一行一个 program、`BLOCK=next_power_of_2(N)`，但显式使用
+`num_warps=min(max(BLOCK//256,1),8),num_stages=1`；其数学为 round，
+不能迁移到本题 exact trunc，仅 launch 配置可独立复用。两条旧实验未覆盖轴
+均以 base SHA-256
+`9fcaaf88f67fa2e30ecf45655fe48673b507d19289b2e2cd2cf7f68b0af4c455`
+离线筛选，不改仓库、不提交平台。
+
+### E4a:persistent grid cap
+
+- 只把 `_MAX_GRID=65535` 扫为 512/1024/2048/4096/8192/16384；数学、
+  kernel loop 与输出不变。remote `gpu:/tmp/flagos-t34cap.HlPqY6`；
+  6 cap×11 shape×3 dtype **198/198** candidate/base 的 q/scale 逐位一致；
+- cap1024 affected-shape geomean `0.8402`(-16.0%，最差 0.8056)，
+  cap2048 `0.9473`(-5.3%，最差 0.9085)，均远低 +10% 门，自动停止
+  其余 cap 性能扫描；资源与 base 相同、0 spill；
+- cap1024/cap2048 SHA-256 分别为
+  `1d1acf9991d91cc53be717909b7db69af0fb686b709e508243925451f6f3b9ef` /
+  `d60b69a6333254e02daa7b0445c2f2f6395c77ba5c8eaffe704c941f77c1f456`；
+  bench/run/log SHA-256 分别为
+  `b3323465f37a43e4ec26c1abb6b9e1c011dee61ac683ca5e462b30fba5957732` /
+  `50c77e96192e54c19083e4aba5772e355bdffdd216372c6d58f43c09698f4044` /
+  `7428802664be6bdee3710dd155961468595c6c1665aebab508bb1ebecf978a46`。
+
+### E4b:SGLang launch heuristic
+
+- 保持原 grid/exact kernel，只显式设置官方 stages/warps。remote
+  `gpu:/tmp/flagos-t34launch.A821Sd`；官方 unittest 5/5，33/33
+  q/scale 逐位一致；完整 7 shape×3 dtype AB/BA geomean **`1.02743`**，
+  低于 +5% 门且最差 `0.89987`；
+- 逐 shape geomean：256×512 `0.9639`、1024×2560 `0.9310`、
+  8192×512 `1.10136`、65536×256 `1.31022`、129×1025 `0.9780`、
+  1×128 `0.9884`、64×96 `0.9655`。收益只存在大 M/小 N，而 E3
+  平台已证明隐藏 shape 未命中该区间；
+- 最大 regs 71→47，均 0 spill；候选/bench/run/log SHA-256 分别为
+  `51fe5e169612bb90da8b75070ce5afd9a7f9151d9a0d5a71fbebfc1cc898d0e8` /
+  `b609f3647f11774e181b203c726563ddd320c1da43416d4779a03195c8c80b7e` /
+  `dd86d5046be6ab3ec24b81c8ac1030f4851f7c32d2cd4293c030c235f274e581` /
+  `9b6b49b769fc1b9a8995845a567ce1e74d735ed82cbab3a9e59f2d89f93bb931`。
+
+结论:两条候选都不能跨越全矩阵门，更无法解释 53.85% 榜差；T34 参数、
+结构与上游 launch 轴均已覆盖，保持 e1 封存。
