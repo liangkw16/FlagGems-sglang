@@ -8,9 +8,9 @@ validity: invalid
 platform: 7/8
 team_best_stage: S0
 team_best_commit: 311570f
-blockers: 昆仑 topk 族 Segfault(崩溃族第15例)
-sealed: no
-next: e2 device global_scale 去同步候选已过 release;一次结构改写平台门
+blockers: 昆仑 topk 族 E2 再现1833.8s Segfault(compile-worker同指纹)
+sealed: yes
+next: E2 七芯均值4.9415x(+4.17倍)但昆仑同族崩溃;仅平台runtime修复后重开
 updated: 2026-09-01
 ```
 
@@ -58,10 +58,8 @@ Segmentation fault**(崩溃族第 15 例,与 Aborted 同族不同信号量)。
 
 ## E2:global_scale 保持设备侧(2026-09-01 06:4x CST)
 
-状态:结构改写候选 release/不可变 ZIP 就绪,待实时 preflight。该候选
-不是 S0/E1 同字节或注释载体重载:kernel ABI 与可执行路径均改变,属于
-崩溃族协议允许的 topk 结构改写;若昆仑仍复现同族崩溃,立即重新封存,
-不得自动重载。
+状态:结构改写候选已完成单次平台评测；七芯性能机制兑现，但昆仑再现
+同族崩溃，按 stop gate 重新封存，不得自动重载。
 
 ### 假设与单变量
 
@@ -109,3 +107,31 @@ Segmentation fault**(崩溃族第 15 例,与 Aborted 同族不同信号量)。
 - 登顶门:平均严格高于实时榜首 Fields `7.60535x`。
 - stop gate:昆仑再现 1830s/Segfault/compile-worker 同族指纹,或任一既过芯
   因 E2 失败,立即恢复封存,只留结构算法重写/工单路径,不做同字节或载体重投。
+
+### E2 平台提交与终态(sub 7518,2026-09-01 06:44–07:15 CST)
+
+- preflight 全过后单次 confirm，daily_seq 4，额度 27→**26/30**；远端
+  对象回读与 canonical ZIP SHA-256
+  `5dc0316b2f10bc07342405506a70a86f0e5a772ac497f16430eac83e86685c80`
+  一致；该 submission/ZIP 不得重试；
+- 终态 **7/8、invalid_correctness**。七个已过芯全部继续通过，七芯均值
+  `1.1842x → 4.9415x`，合计 **4.17 倍**，去同步机制跨芯兑现：
+
+| 芯片 | S0 | E2 | 倍率 |
+| --- | ---: | ---: | ---: |
+| 天数 | 0.8192 | **6.1470** | 7.50x |
+| 沐曦 | 1.5804 | **2.9262** | 1.85x |
+| 燧原 | 0.4208 | **0.8620** | 2.05x |
+| 海光 | 1.2148 | **7.7342** | 6.37x |
+| 华为 | 1.2546 | **2.7362** | 2.18x |
+| 国际 A | 1.1462 | **5.9922** | 5.23x |
+| 国际 B | 1.8536 | **8.1926** | 4.42x |
+
+- **昆仑 1,833,762ms 验证段超时，子进程先退出且结果未送达，Fatal
+  Python `Segmentation fault`；栈仍在
+  `torch/_inductor/compile_worker/subproc_pool.py::_recv_msg`。** 与 S0
+  1830s 崩溃是同一指纹，证明 device scalar pointer 改写没有改变 topk
+  族在该平台的 runtime/compiler 墙；
+- stop gate 已触发：不重投同包、不做注释/载体重载、不再消耗额度。
+  E2 作为七芯机制证据保留；Task 38 只在昆仑平台 runtime 修复，或出现
+  不含当前 topk lowering 的全新算法结构时重开。
