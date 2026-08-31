@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/mamba_layernorm_gated -->
-<!-- synced_at: 2026-08-30T00:06:15+08:00 -->
+<!-- synced_at: 2026-08-31T12:37:00+08:00 -->
 
 # mamba_layernorm_gated (mamba/layernorm_gated)
 

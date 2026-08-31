@@ -1,6 +1,6 @@
 # 第二届 FlagOS 算子赛题索引
 
-> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-08-30T00:06:15+08:00`。
+> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-08-31T12:37:00+08:00`。
 > 状态和榜单会变化，运行 `python tools/sync_flagos_season2_docs.py` 更新。
 
 ## 第 1 批
@@ -41,20 +41,20 @@
 
 | 题号 | 算子 | 状态 | 提交/队伍 | 达标队伍 | 当前第一 | 平均加速比 |
 | ---: | --- | --- | ---: | ---: | --- | ---: |
-| 25 | [draft_topk1](tasks/batch-3/25-draft_topk1.md) | competing | 140/21 | 8 | c2flow | 2.2311x |
-| 26 | [fused_moe_router_cudacore](tasks/batch-3/26-fused_moe_router_cudacore.md) | competing | 122/20 | 5 | EvokeAgent | 1.0682x |
-| 27 | [fused_moe_router_tensorcore](tasks/batch-3/27-fused_moe_router_tensorcore.md) | competing | 69/17 | 5 | autokernel | 1.4209x |
-| 28 | [gate_up_lora_b](tasks/batch-3/28-gate_up_lora_b.md) | competing | 54/17 | 2 | c2flow | 34.9801x |
-| 29 | [gelu_and_mul](tasks/batch-3/29-gelu_and_mul.md) | competing | 106/18 | 10 | xuanzhengdu | 3.3595x |
-| 30 | [interleaved_rope](tasks/batch-3/30-interleaved_rope.md) | competing | 82/16 | 11 | xuanzhengdu | 33.1992x |
-| 31 | [moe_fused_gate](tasks/batch-3/31-moe_fused_gate.md) | competing | 42/16 | 1 | hbmu9306 | 11.6199x |
-| 32 | [moe_fused_mul_sum](tasks/batch-3/32-moe_fused_mul_sum.md) | competing | 27/9 | 5 | HelloWorldTJU | 4.5430x |
-| 33 | [per_token_group_quant_int8](tasks/batch-3/33-per_token_group_quant_int8.md) | competing | 20/9 | 3 | c2flow | 5.9924x |
-| 34 | [per_token_quant_int8](tasks/batch-3/34-per_token_quant_int8.md) | competing | 25/9 | 5 | YY-L | 5.2743x |
-| 35 | [rotary_embedding](tasks/batch-3/35-rotary_embedding.md) | competing | 27/11 | 4 | MakeYUNAGreatAgain | 5.8830x |
-| 36 | [selective_state_update](tasks/batch-3/36-selective_state_update.md) | competing | 114/14 | 2 | c2flow | 8.4960x |
-| 37 | [sgemm_lora_a](tasks/batch-3/37-sgemm_lora_a.md) | competing | 17/7 | 1 | c2flow | 5.8723x |
-| 38 | [sigmoid_gate_topk_renorm](tasks/batch-3/38-sigmoid_gate_topk_renorm.md) | competing | 57/13 | 1 | hbmu9306 | 6.3266x |
-| 39 | [silu_and_mul_masked](tasks/batch-3/39-silu_and_mul_masked.md) | competing | 17/6 | 2 | Fields | 19.2431x |
-| 40 | [softcap_inplace_logits](tasks/batch-3/40-softcap_inplace_logits.md) | competing | 7/3 | 1 | hbmu9306 | 1.6913x |
-| 41 | [state_passing](tasks/batch-3/41-state_passing.md) | competing | 34/11 | 1 | c2flow | 5.4806x |
+| 25 | [draft_topk1](tasks/batch-3/25-draft_topk1.md) | competing | 169/21 | 8 | c2flow | 2.2311x |
+| 26 | [fused_moe_router_cudacore](tasks/batch-3/26-fused_moe_router_cudacore.md) | competing | 152/21 | 8 | c2flow | 1.7641x |
+| 27 | [fused_moe_router_tensorcore](tasks/batch-3/27-fused_moe_router_tensorcore.md) | competing | 83/20 | 5 | c2flow | 1.7541x |
+| 28 | [gate_up_lora_b](tasks/batch-3/28-gate_up_lora_b.md) | competing | 91/19 | 3 | xuanzhengdu | 41.2561x |
+| 29 | [gelu_and_mul](tasks/batch-3/29-gelu_and_mul.md) | competing | 165/21 | 13 | c2flow | 3.4374x |
+| 30 | [interleaved_rope](tasks/batch-3/30-interleaved_rope.md) | competing | 102/18 | 11 | xuanzhengdu | 36.3652x |
+| 31 | [moe_fused_gate](tasks/batch-3/31-moe_fused_gate.md) | competing | 60/20 | 2 | xuanzhengdu | 15.6457x |
+| 32 | [moe_fused_mul_sum](tasks/batch-3/32-moe_fused_mul_sum.md) | competing | 76/11 | 9 | YY-L | 23.9013x |
+| 33 | [per_token_group_quant_int8](tasks/batch-3/33-per_token_group_quant_int8.md) | competing | 68/15 | 5 | starwing | 6.3983x |
+| 34 | [per_token_quant_int8](tasks/batch-3/34-per_token_quant_int8.md) | competing | 50/12 | 8 | starwing | 5.6939x |
+| 35 | [rotary_embedding](tasks/batch-3/35-rotary_embedding.md) | competing | 54/16 | 8 | EvokeAgent | 8.4884x |
+| 36 | [selective_state_update](tasks/batch-3/36-selective_state_update.md) | competing | 127/16 | 2 | c2flow | 8.4960x |
+| 37 | [sgemm_lora_a](tasks/batch-3/37-sgemm_lora_a.md) | competing | 76/18 | 4 | xuanzhengdu | 34.7946x |
+| 38 | [sigmoid_gate_topk_renorm](tasks/batch-3/38-sigmoid_gate_topk_renorm.md) | competing | 90/22 | 4 | Fields | 7.6053x |
+| 39 | [silu_and_mul_masked](tasks/batch-3/39-silu_and_mul_masked.md) | competing | 47/14 | 6 | EvokeAgent | 23.8497x |
+| 40 | [softcap_inplace_logits](tasks/batch-3/40-softcap_inplace_logits.md) | competing | 57/11 | 10 | EvokeAgent | 2.0232x |
+| 41 | [state_passing](tasks/batch-3/41-state_passing.md) | competing | 87/19 | 4 | starwing | 7.2589x |

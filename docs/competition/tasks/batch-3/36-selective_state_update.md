@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/selective_state_update -->
-<!-- synced_at: 2026-08-30T00:06:15+08:00 -->
+<!-- synced_at: 2026-08-31T12:37:00+08:00 -->
 
 # selective_state_update (mamba/selective_state_update)
 
