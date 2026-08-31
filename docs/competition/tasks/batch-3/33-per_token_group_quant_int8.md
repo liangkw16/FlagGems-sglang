@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/per_token_group_quant_int8 -->
-<!-- synced_at: 2026-08-31T12:37:00+08:00 -->
+<!-- synced_at: 2026-09-01T06:22:57+08:00 -->
 
 # per_token_group_quant_int8 (quantization/per_token_group_quant_int8)
 

@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/silu_and_mul_masked -->
-<!-- synced_at: 2026-08-31T12:37:00+08:00 -->
+<!-- synced_at: 2026-09-01T06:22:57+08:00 -->
 
 # silu_and_mul_masked (moe/silu_and_mul_masked)
 

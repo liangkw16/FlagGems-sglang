@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/chunk_local_cumsum_scalar -->
-<!-- synced_at: 2026-08-31T12:37:00+08:00 -->
+<!-- synced_at: 2026-09-01T06:22:57+08:00 -->
 
 # chunk_local_cumsum_scalar (fla/chunk_local_cumsum_scalar)
 
