@@ -8,9 +8,9 @@ validity: valid
 platform: 8/8
 team_best_stage: e1
 team_best_speedup: 4.7131
-sealed: no
-next: e3 大行数 row-pack 已提交待评测(代理 2.67x@65536x128,ZIP 4c770895)
-updated: 2026-08-31
+sealed: yes
+next: 收盘 e1 4.7131;e3 row-pack 平台中性+夹带 e2 昆仑坏字节致 invalid,树已回滚
+updated: 2026-09-01
 ```
 
 状态:S0 候选就绪
@@ -139,3 +139,26 @@ screening 修正为"仅大行数打包"。
   则应显著兑现,参照 T33 e8 的代理→平台传导)。
 - stop gate:平均回落 >3% 且无单芯 ≥ e1 → 打包分派证伪,回滚 S0;
   华为/昆仑 vendor 字节未变,读数按噪声/水位处理不归因。
+
+### E3 平台终态(sub 7467,2026-08-31 23:59 CST):双失败,收盘
+
+preflight intent `f42fbb20…` 单次 confirm(sub 7467;额度跨 00:00
+重置后读数 30/30);远端回读 11058 bytes 与 canonical ZIP 一致。
+
+终态 **invalid_correctness:昆仑芯失败**,其余七芯通过且读数与 e1
+持平(天数 7.462/沐曦 4.116/燧原 3.749/海光 7.775/华为 1.877/
+国际 A 5.630/国际 B 6.312):
+
+1. **打包审计失误(本人)**:e3 ZIP 的 `_kunlunxin` 成员实为 e2
+   两趟列分块字节(commit `a9a860f`,e2 已平台证伪的正确性失败
+   版本)——e2 失败后树未回滚,打包器自动收集夹带;账本表写
+   "S0 钉死"而未逐字节核对,违反"实际成员清单必须与账本一致,
+   不能夹带"的既有规则。树已回滚:generic 恢复 e1 字节
+   (`9fcaaf88…`),`_kunlunxin` vendor 删除(kunlun 回落 generic,
+   S0 单成员时代昆仑 0.607 通过);
+2. **row-pack 机制未兑现**:七芯全部与 e1 持平(±2%),+5% 机制门
+   未触发——隐藏性能 shape 不在大行数区间,轴关闭;
+3. **T34 收盘于 e1 `4.71314167x`**(距 12:37 榜首 starwing 5.6939
+   -17.2%);已知轴尽:两趟列分块(e1/e2)、row-pack(e3)、华为
+   autotune(前科);流程教训入账:提交前对 ZIP 内每个 vendor 成员
+   做字节级核对,不只对 generic。
