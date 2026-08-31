@@ -319,3 +319,31 @@ preflight 全过(额度 22/30),单次提交;终态待回填。
   T40 收盘于 E3 团队最佳 1.7266x;跨芯知识:昆仑 direct 模式
   不可迁移到昇腾(昇腾编译器拒收无循环 flat kernel)。
 - 额度 21/30。
+
+### E6:metax 平铺 BLOCK 2048 vendor(sub 7230,2026-08-31 16:1x CST)
+
+- 单变量:E3 包 + 新 `_metax` vendor(generic 唯一差异
+  `_BLOCK_SIZE 1024→2048`,T39 沐曦 +65%/T29 +11% 的直接迁移);
+  commit `7612231`,ZIP `46cbab15…`,5 成员;
+- screening(gpu:/tmp/flagos-t40.0EAQUA,t40b.log):metax 字节置
+  generic 位 5/5(全 vendor 树),代理与 generic 持平 ±2%(预期,
+  纯沐曦赌注);lint 未改写字节。
+
+### E6 终态(sub 7230)
+
+**8/8 valid,平均 1.76791667x —— team best(E3 1.7266 → +2.4%)。**
+
+| 芯片 | E3 | E6 | 变化 | 文件 |
+| --- | ---: | ---: | ---: | --- |
+| muxi | 1.461 | **1.548** | **+6%(假设兑现)** | metax |
+| huawei | 0.557 | 0.743 | +33%(E1 字节未变,噪声) | ascend |
+| tianshu | 2.067 | 2.096 | 持平 | generic |
+| enflame | 2.329 | 2.324 | 持平 | enflame |
+| haiguang | 2.294 | 2.294 | 持平 | generic |
+| kunlunxin | 0.945 | 0.943 | 持平 | kunlunxin |
+| card_a | 2.027 | 2.061 | 持平 | generic |
+| card_b | 2.135 | 2.134 | 持平 | generic |
+
+- BLOCK 2048 在本题只兑现 +6%(T39 的 +65% 依赖写满 padding 的
+  flat-full 形态,不可全迁移);距榜首(EvokeAgent 2.0232)
+  -12.6%;metax 轴按预注册(+11%~+65% 预期)偏低但正向,不扩扫。
