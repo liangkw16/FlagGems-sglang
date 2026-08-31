@@ -10,7 +10,7 @@ team_best_stage: E7
 team_best_commit: fd089fe
 team_best_speedup: 19.8698
 sealed: yes
-next: 收盘 E7 19.8698;e10 块跳过华为+246%(结构 16.7→18.0,均值输 E7 异常锚点,树留 e10 字节);e11 amd/metax 路由双芯证伪已回滚
+next: 收盘 E7 19.8698;树留 e10;E12 上游 persistent 条带仅+3.3%、设备 prefix 两核慢66.5%，均离线关闭
 updated: 2026-09-01
 ```
 
@@ -846,3 +846,48 @@ preflight intent `297cc2d1…` 单次 confirm(sub 7484,额度 29→28/30);
   重载(E9 两滚)、宽瓦片/launch(T24 家族);跨芯知识:**块跳过
   结构的收益是芯相关的——昇腾 +246% vs 沐曦/AMD 负收益,vendor
   分派不可省**。
+
+## E12：上游 persistent 调度两案离线关闭（2026-09-01 06:5x CST）
+
+状态：两案均 7/7 正确，但未过离线晋级门；源码已逐字节恢复 E10，未打包、
+未提交、未消耗额度。
+
+联网核查发现 SGLang 同源实现以每专家固定 worker 数和设备端
+`masked_m[e]` 作为动态 `tl.range` 上界；vLLM dense SiLU 则采用有界
+persistent grid + grid-stride。KernelGen `optimize_kernel` 收到包含 E10/E11
+反证与上述上游结构的完整上下文，但服务在 65 秒后返回
+`offline/fetch failed`，没有产生可用代码或验证证据，按 MCP 失败门禁停止重试。
+
+### A：单 kernel 每专家条带化
+
+- 仅改 generic：按专家把有效 token 分配给最多 64 个 program，设备端动态
+  `tl.range`；无临时张量、额外 kernel、host sync 或 `.item()`。保留
+  BLOCK 1024、FP32 SiLU、int64 地址与 65535 grid-fold。
+- 远端 `gpu:/tmp/flagos-t39e12.Zz01Y7`，RTX 5070 Ti；候选 SHA-256
+  `b712d9ba258186a9332e159bb1c60e030730aee5658e2ca08854b7ab147ab4a3`，
+  最终日志 SHA-256
+  `b3739148db749f6594796f34a0e7b5c5dd2e1ba0f2179f75d4604050264409ed`。
+- unittest 7/7（MetaX vendor 专项按预期跳过）；9 组 wrapper-inclusive
+  candidate/E10 时间比为 `0.972/0.879/1.003/0.993/0.904/1.007/1.007/
+  0.966/0.995`，几何平均 `0.9683`，即只快 **3.3%**。参数扫描覆盖
+  rows/program `{4,8,16}`、program cap `{8,16,32,64}`、stages `{1..4}`、
+  warps `{2,4,8}`，没有达到预注册综合 `>=1.08x` 收益。
+
+### B：串行 prefix + 256 CTA persistent compute
+
+- 单 CTA 在设备端生成 int32 row-block prefix，第二 kernel 读取 device total、
+  二分连续零专家并用固定最多 256 CTA 遍历 compact work；无 host sync、
+  scan 或 atomic。该案是对已否决 `.item()` 版本的根因修复，而非同字节重试。
+- 候选 SHA-256
+  `4496d1fb2b91668ff453b79c9957f985db55b94f08f9e26c0752039545e5ccee`，
+  日志 SHA-256
+  `8a48b1e998397abafe8c5f93e5417bd3cdc5f3fcdcdc0bc22835a85077b165a7`；
+  7/7 正确且 E=257/grid-fold 通过。
+- 相同 9 组 candidate/E10 时间比为
+  `1.438/1.765/1.949/1.223/1.691/1.040/1.496/3.211/1.922`，几何平均
+  **`1.665x` 更慢**。prefix allocation、额外 launch 与逐块二分的固定税远高于
+  省下的 padding CTA，heavy/sparse 也未受益，明确关闭两 kernel 压缩轴。
+
+裁决：A 距登顶所需 `+20.03%` 太远，B 明显回退；两案都不得使用平台额度。
+T39 保持 E7 team best 与 E10 树字节，后续除出现新平台/编译器证据外不再开启
+prefix、persistent grid、普通 BLOCK 或 vendor 路由轴。
