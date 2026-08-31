@@ -6,10 +6,10 @@ operator: per_token_group_quant_int8
 batch: 3
 validity: valid
 platform: 8/8
-team_best_stage: e9
-team_best_speedup: 5.5150
-sealed: no
-next: e10 华为 tile16 已提交待评测(ZIP 76cec783);昆仑 0.23 固有水位
+team_best_stage: e10
+team_best_speedup: 5.5720
+sealed: yes
+next: 收盘 e10 5.5720(-12.9%);tile16 七芯兑现 +21.9%/日,昆仑固有 0.23,已知轴尽
 updated: 2026-08-31
 ```
 
@@ -490,3 +490,31 @@ starwing 6.3983 收窄至 **-13.8%**。
 - 平台预注册:基础门 8/8;晋级门平均 > e9 `5.51501667x`;单轴门
   华为 > e9 读数 `1.47273333x`;stop gate 华为编译失败或回退 →
   ascend vendor 回滚 e3 tile4 字节,瓦片轴对昇腾关闭。
+
+### E10 平台终态(sub 7332,2026-08-31 20:1x CST):华为兑现,T33 收盘
+
+preflight intent `f6bfa434…` 单次 confirm(sub 7332,额度 5→**4/30**);
+远端回读一致(`verified`)。终态 **8/8、valid、平均 `5.57195x`、
+is_team_best=true**(e9 → +1.0%):
+
+| 芯片 | e9 | E10 | 变化 | 文件 |
+| --- | ---: | ---: | ---: | --- |
+| **华为** | 1.473 | **1.898** | **+28.8%(单变量兑现)** | ascend(16) |
+| 天数 | 10.804 | 10.834 | 持平(冻结) | generic |
+| 海光 | 11.964 | 11.981 | 持平(冻结) | generic |
+| 沐曦 | 4.313 | 4.328 | 持平(冻结) | generic |
+| 燧原 | 1.488 | 1.490 | 持平(冻结) | enflame |
+| 国际 A | 6.066 | 5.970 | 噪声 | generic |
+| 国际 B | 7.782 | 7.842 | 噪声 | generic |
+| 昆仑 | 0.231 | 0.233 | 固有水位 | kunlunxin |
+
+**T33 收盘于 e10 `5.57195x`**(e5 4.5707 → 今日 +21.9%,距榜首
+starwing 6.3983 **-12.9%**):
+
+- tile-16 单变量在 generic(五芯)+ 燧原 + 华为共七芯兑现
+  (+20~54%);昆仑为 XPU 固有水位(0.23,e7 反证);
+- 剩余差距分解:昆仑 -0.7(固有)、沐曦 4.33 与国际 A 5.97 为
+  各自家族水位(card_a 与 card_b 无法用 vendor 后缀区分路由);
+- 已知轴全部关闭:GROUPS_TILE(16 最优,t32/t64 反证)、昆仑瓦片
+  (e7 反证)、div/reciprocal(div_rn 逐位必需)、两阶段(T34 反证);
+  后续若重开需新证据(metax 专属 tile 或榜首结构面破译)。
