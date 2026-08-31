@@ -9,9 +9,9 @@ platform: 8/8
 team_best_stage: e8
 team_best_commit: d7a8f79
 team_best_speedup: 2.7394
-sealed: partial
-next: 燧原 +42% 已兑现;华为轴 autotune 负结果,无已验证新杠杆
-updated: 2026-08-31
+sealed: yes
+next: exact-erf 官方实现与 minimax 数值边界复核;预期收益远不足66.68%榜差,封存
+updated: 2026-09-01
 ```
 
 状态:S0 候选就绪,待额度重置后首投。2026-08-27 团队当日额度 30/30 已耗尽
@@ -406,3 +406,27 @@ log/kernelgen-round/out_t29_at_huawei.json(job c007b765)。
 - 燧原 0.963→**1.365(+42%)**:整行 BLOCK 4096 模型第四证
   (T24/T33/T39/T29);其余七芯持平(字节未变,±2% 噪声)。
 - 额度 23/30。
+
+## E9:exact-erf 替代路线复核(2026-09-01 07:0x CST,离线否决)
+
+- 实时榜首 Nectar `4.5662x`，e8 `2.7394x` 需 **+66.68%**；官方
+  [SGLang exact GELU](https://github.com/sgl-project/sglang/blob/0674be736ceb138a2f4982c6d612754d2b319807/python/sglang/kernels/ops/elementwise/elementwise.py#L1666-L1717)
+  直接用 `tl.erf`，[vLLM CUDA](https://github.com/vllm-project/vllm/blob/main/csrc/libtorch_stable/activation_kernels.cu#L2511-L2571)
+  与 [CUTLASS](https://github.com/NVIDIA/cutlass/blob/main/include/cutlass/epilogue/thread/activation.h#L2995-L3139)
+  也分别以 `::erf`/`erff` 为 exact 路径，标准 tanh 明确属于近似语义；
+- 标准 tanh GELU 在 fp32 模拟中最大激活绝对误差约
+  `4.732e-4`(`x≈-2.699`)，高于本题约 `1.009e-4` 允许值，直接否决。
+  正尾 `G=x` 仅 `x≥3.719` 才满足相对 `1e-4`；负尾置零对任意有限
+  负 x 均无法在无界 `up` 下保证相对误差；
+- 复核一条 7 阶 tanh-minimax seed：300 万点 float32 模拟对 erf oracle
+  最大激活差约 `9.54e-7`，但统一安全范围仅约 `|up|≤207`；题面未给
+  `up` 上界，仍可构造失败。且其成本为 1 次 full-accuracy tanh + 7 次
+  Horner FMA，不低于现有 A&S 的 1 exp + 1 reciprocal + 5 FMA；
+- [Triton `where`](https://triton-lang.org/main/python-api/generated/triton.language.where.html)
+  两支都会求值，lane-wise 尾段选择不能跳过超越函数；混合随机 1024-lane
+  program 的 all-tail 分支命中概率近零。仓内 T24/T40 的 native tanh
+  平台实证仅约 +13%/+17% 于昆仑/燧原、华为 -5.9%，即使理想化八芯
+  全部 +20%，也只有约 `3.287x`，远低于榜首；
+- 因此不为一个无全域精度证书、且理论收益不足榜差三分之一的候选跑平台；
+  不改源码、不消耗额度。只有题面未来明确 `up` 有界，或出现八芯可移植的
+  exact-erf 原语，才重开该轴。
