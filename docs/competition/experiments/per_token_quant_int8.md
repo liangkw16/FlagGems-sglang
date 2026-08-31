@@ -8,8 +8,8 @@ validity: valid
 platform: 8/8
 team_best_stage: e1
 team_best_speedup: 4.7131
-sealed: yes
-next: e2 昆仑两趟列分块正确性失败,轴关闭;华为轴关闭
+sealed: no
+next: e3 大行数 row-pack 已提交待评测(代理 2.67x@65536x128,ZIP 4c770895)
 updated: 2026-08-31
 ```
 
@@ -92,3 +92,50 @@ updated: 2026-08-31
 - 跨芯知识:**昆仑对"两趟列分块 + static_range + 分块 running max"
   结构正确性失败**(单趟全行 S0 在昆仑正确)——非尺寸问题,
   kunlun 两趟轴关闭;team best 保持 e1 4.7131。
+
+## E3:大行数 row-pack 静态分派(2026-08-31 23:5x CST)
+
+状态:候选就绪待单次提交。41 算子核验建议的"小行多 row"轴,经两轮
+screening 修正为"仅大行数打包"。
+
+### 假设与修正过程
+
+- 单遍行级 amax 要求整行进同一 program → 唯一单遍泛化是 [ROWS, N]
+  行打包;分派为 host 静态选择(规避 T32 e4 动态谓词学费);
+- 第一版按"每 program ~2048 元素"打包,小行数形状下溢填充
+  (1024 行 ÷16 = 64 个 program 喂不满 GPU,回退 5-12%)——
+  **打包只在行数巨大时有利**(少而肥的 program 赢调度开销);
+- 终版规则:total_rows ≥ 16384 才启用,ROWS = min(2048//pow2(N), 16),
+  其余形状逐字节走 S0 kernel。
+
+### screening 证据(RTX 5070 Ti,gpu:/tmp/flagos-t34e3b.92fS64)
+
+- 日志 SHA-256 `0219e116396648bb44eb767a569797b7f35cf3dca3d9dd8ab375c8c1062d368d`;
+  第一版(含下溢填充教训)目录 gpu:/tmp/flagos-t34e3.2Zd3Un,日志
+  SHA-256 `e75be02285346a8ab779562f59419440fff02c1688f8f40bca05c783c484cd29`;
+- py_compile/isort/flake8/unittest **5/5**;数值 **NUMERIC_FAILS=0**
+  (16 形状 × 3 dtype 全部与 HEAD 对照逐位一致);
+- 性能(五轮 AB/BA median,新/旧):**65536×128 `0.375`(2.67x)**、
+  65536×256 `0.488/0.479`(2.05x)、32768×512 `0.671/0.704`(1.5x)、
+  16384×64 `0.619/0.602`(1.65x);65536×1024/×4096 与全部小形状
+  ~1.0(S0 路径,纯噪声);分派边界 16383×128 = 1.01 正确回落。
+
+### 构建身份与 release
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `969a34cf1bbd44f78207bd2dcf17131a19a0d50b` |
+| generic SHA-256 | `9ed3eb8ddad614c5fce18bb82a51622516ddc3688c19855d6b0414c651b6f05a` |
+| test SHA-256 | `cd52f72f8316f268ffbeff86e4d60a65109394e5b509db34f5737c8167ea6f23` |
+| canonical ZIP | `e3-969a34c/per_token_quant_int8.zip`,11058 bytes,SHA-256 `4c77089517be3b9727adcbb107a63a6fcaf876de9a6e3931398c87c25a270d52` |
+| ZIP 成员 | generic + `_ascend`(e1) + `_kunlunxin`(S0 钉死);`unzip -t` 无错,成员哈希与 blob 逐项一致 |
+| release | gpu:/tmp/flagos-t34e3-rel.cv5rpG,unittest OK、py_compile OK,release.log SHA-256 `3c8d0f575dfbb8424396b55ee9c6ebae569bf83428743081b252ba110d9ba2c2` |
+
+### 平台预注册门
+
+- 基础门:8/8 valid。
+- 晋级门(team best):平均严格高于 e1 `4.71314167x`。
+- 机制门:generic 路由五芯合计较 e1 读数均值 +5%(大行数 shape 存在
+  则应显著兑现,参照 T33 e8 的代理→平台传导)。
+- stop gate:平均回落 >3% 且无单芯 ≥ e1 → 打包分派证伪,回滚 S0;
+  华为/昆仑 vendor 字节未变,读数按噪声/水位处理不归因。
