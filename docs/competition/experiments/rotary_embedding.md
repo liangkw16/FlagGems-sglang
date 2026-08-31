@@ -9,8 +9,8 @@ platform: 8/8
 team_best_stage: e3
 team_best_speedup: 5.8458
 sealed: yes
-next: e4 燧原宽瓦片证伪(宽瓦片族首反例),收盘
-updated: 2026-08-31
+next: e5 generic heads_tile 1/2/8/16 全部低于5%门;tile4局部最优,收盘
+updated: 2026-09-01
 ```
 
 状态:S0 候选就绪(首 screening 全绿)
@@ -151,3 +151,35 @@ NVIDIA 上 stride-2 访存硬件合并良好;且 T30 的逐元素 gather 在
   不在瓦片尺寸,疑在 stride-2 偶奇访存(与 T30 燧原 8.7x 的
   gather 反例互证);燧原轴关闭,T35 收盘于 e3 5.8458x;
 - 其余七芯与 e3 读数一致(±2% 噪声,华为 0.72/昆仑 0.29 钉字节)。
+
+## E5:generic head 复用宽度扫描(2026-09-01 07:1x CST,负结果)
+
+- 官方结构先验：[Liger RoPE](https://github.com/linkedin/Liger-Kernel/blob/main/src/liger_kernel/ops/rope.py)
+  与 [vLLM MRoPE](https://github.com/vllm-project/vllm/blob/main/vllm/model_executor/layers/rotary_embedding/mrope.py)
+  均按 token 在一个 program 内覆盖全部 heads、只载一次 cos/sin；E4 只
+  证伪燧原 vendor 宽瓦片，未覆盖 generic。因此以 e3 `HEADS_TILE=4`
+  为 base，补扫固定 1/2/8/16，只有固定扫描出现清晰 crossover 才允许
+  增加自适应分派；
+- 远端 `gpu:/tmp/flagos-t35-tile.tp5CHs`，RTX 5070 Ti、PyTorch
+  `2.13.0+cu130`、Triton `3.7.1`；wrapper-inclusive 六 shape，每候选
+  每 shape 7 组真 AB/BA，整轮正反序各一次。candidate/base 时间比
+  geomean：t1 `1.2143`(-17.65%)、t2 `1.0320`(-3.10%)、
+  **t8 `1.0097`(-0.96%)**、t16 `1.0748`(-6.96%)；
+- t8 最接近 base，但 H32 仅 +0.39~0.77%，`1024x16x128` 回退
+  4.38%；t16 在 `16x32x128` 回退 16.40%。没有候选达到综合 +5%，
+  也没有可构造自适应的清晰 crossover，故不扩扫 t32/full-head；
+- base 与 t1/t2/t4/t8/t16 官方 unittest 全部 5/5 OK。D128/H32
+  t1/t2/t4/t8/t16 为 30/33/39/40/40 regs，D192/H4 的 t16 升至
+  72 regs；全候选均 0 spill、shared=0、4 warps、3 stages；
+- base/t8/t16 SHA-256 分别为
+  `a99d4b85adea252a738d3a38f1e7c8493604a9538afd08dde936cf7e92754d78`、
+  `b286cf0afebdc70aab38497a5760a6fdbedc462ba8d50cc1a539fa89adf3b370`、
+  `aaab519274f50d6f03b110c2cce8329539d3f670838e7ba0aec9c04a064ed0ee`；
+  correctness/bench/resources 日志 SHA-256 分别为
+  `b88a9484ed9e1def663503e8e10eedeb2288138913572c8f0a9624992f389369`、
+  `0c2417ca27a61dd78a9f2d7385b0dfaa18a5f1161567874ab6639775d34d61e7`、
+  `d0928b9bf8e32acfcc610676dc6a4c93d4932e0e985a82e894d3c8b5e34597d6`。
+
+结论:官方全-head 复用结构在本题 shape/布局上不能迁移；`HEADS_TILE=4`
+仍是代理局部最优。实时榜首 `8.8534x` 对 e3 `5.8458x` 的 51.45%
+差距无法由该参数轴解释，不改源码、不消耗额度，保持封存。
