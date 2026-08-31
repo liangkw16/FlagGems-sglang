@@ -9,7 +9,7 @@ platform: 8/8
 team_best_stage: e8
 team_best_speedup: 5.4430
 sealed: no
-next: e8 tile16 兑现 +19.1%(距榜首 -14.9%);下一轴=t32 离线扫描/燧原路由
+next: e9 燧原 tile16 已提交待评测(ZIP 4bf87eee);t32/t64 扫描关轴,16 为最优
 updated: 2026-08-31
 ```
 
@@ -430,3 +430,28 @@ SHA-256 与 canonical ZIP 完全一致(`verified`)。
   e5 瓦片轮的芯片谱一致,放大同一机制;
 - 下一单变量:离线扫 GROUPS_TILE=32(寄存器 0-spill 前提)与
   燧原 vendor 路由换 tile-16 generic 的可行性。
+
+## E9:燧原 vendor tile 4 → 16(2026-08-31 19:5x CST)
+
+- t32/t64 离线扫描(gpu:/tmp/flagos-t33e9.uTJGmz):t32 多数形状
+  ≥1.0(最差 1024×2560 bf16 `1.115`)仅 65536×256 微降 0.90-0.94,
+  t64 更差且寄存器升至 106——**tile=16 判定为该轴最优,轴关闭**;
+- e9 = 燧原 vendor `_GROUPS_TILE 4→16`(与 e8 generic 同一变量的
+  单芯延展,kernel body 与 generic 逐字节同构;宽瓦片家族证据
+  T24/T33-e2/T39/T29);其余四成员冻结;
+- screening(gpu:/tmp/flagos-t33e9b.VxXJZq):unittest 8/8、
+  `SCREENING_OK`,日志 SHA-256
+  `c7bb3373ed2bd3e0b876898c7ebffb5d34e8e0d263741f4ccadebf128d3ed214`;
+- release(gpu:/tmp/flagos-t33e9-rel.RUVvIv):8/8、`RELEASE_OK`,
+  日志 SHA-256
+  `a89e3e1fda7ea433025c0a6b00b3942ec119fc854028f7aa6ef3cafd261a1571`;
+- 构建身份:source/verification commit
+  `cf188a0fae1832c232f3b89048daecd1a8e49b65`;enflame SHA-256
+  `5531d052c32976b0696444b690e04899a77d462a9041688d00c511059a94d9ef`;
+  generic/ascend/kunlunxin/test = e8 同值;canonical ZIP
+  `artifacts/competition/per_token_group_quant_int8/e9-cf188a0/`
+  `per_token_group_quant_int8.zip`,12284 bytes,SHA-256
+  `4bf87eee472f05b167c1eeb8f7f7edd309b62c7ce11ea4f39e2c5ee10505dfb2`;
+- 平台预注册:基础门 8/8;晋级门平均 > e8 `5.44295833x`;单轴门
+  燧原 > e8 读数 `1.02773333x`;水位注记:燧原同字节历史读数
+  0.35-6.28 波动,终态判读以结构面为准。

@@ -13,7 +13,7 @@
 | 30 | interleaved_rope | valid | 8/8 | S0 25.8353x | yes | 代理可见轴局部最优;榜首 36.4 未解释 | 2026-08-31 | [interleaved_rope](interleaved_rope.md) |
 | 31 | moe_fused_gate | invalid | 7/8 | e7(=e6字节载体) 七芯~7.73x | yes | 仅工单或结构改写(topk 形态) | 2026-08-31 | [moe_fused_gate](moe_fused_gate.md) |
 | 32 | moe_fused_mul_sum | valid | 8/8 | S0 4.4829x | yes | 收盘 S0 4.4829;e4 零权重跳过证伪(drop 面不存在+谓词代价),榜首 23.9 判定高水位产物 | 2026-08-31 | [moe_fused_mul_sum](moe_fused_mul_sum.md) |
-| 33 | per_token_group_quant_int8 | valid | 8/8 | e8 5.4430x | no | e8 tile16 兑现 +19.1%(距榜首 -14.9%);下一轴=t32 离线扫描/燧原路由 | 2026-08-31 | [per_token_group_quant_int8](per_token_group_quant_int8.md) |
+| 33 | per_token_group_quant_int8 | valid | 8/8 | e8 5.4430x | no | e9 燧原 tile16 已提交待评测(ZIP 4bf87eee);t32/t64 扫描关轴,16 为最优 | 2026-08-31 | [per_token_group_quant_int8](per_token_group_quant_int8.md) |
 | 34 | per_token_quant_int8 | valid | 8/8 | e1 4.7131x | yes | e2 昆仑两趟列分块正确性失败,轴关闭;华为轴关闭 | 2026-08-31 | [per_token_quant_int8](per_token_quant_int8.md) |
 | 35 | rotary_embedding | valid | 8/8 | e3 5.8458x | yes | e4 燧原宽瓦片证伪(宽瓦片族首反例),收盘 | 2026-08-31 | [rotary_embedding](rotary_embedding.md) |
 | 36 | selective_state_update | invalid | 7/8 | e8 七芯~5.8x | yes | 平台修复后一发转正(候选已封存) | 2026-08-31 | [selective_state_update](selective_state_update.md) |
