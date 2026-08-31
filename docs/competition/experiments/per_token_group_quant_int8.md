@@ -8,8 +8,8 @@ validity: valid
 platform: 8/8
 team_best_stage: e5
 team_best_speedup: 4.5707
-sealed: partial
-next: e6 方差重掷两连低滚关轴;剩燧原水位(不可控)与榜首结构面(未破译)
+sealed: no
+next: e7 昆仑瓦片已提交待评测(单变量,ZIP 0e05f32b);后续轴=1/4/8-group 按形分桶
 updated: 2026-08-31
 ```
 
@@ -268,3 +268,56 @@ preflight 全过(额度 16/30,消耗 1 → 15/30);单次 confirm 提交,
 - T33 今日收盘:**e5 = 团队最佳 4.5707x**(距榜首 -28.6%);
   剩余可见杠杆:燧原平台水位恢复(不可控)、starwing 6.40 的
   结构面(未破译)。
+
+## E7:昆仑钉死字节换 e5 瓦片(2026-08-31 19:1x CST)
+
+状态:候选就绪待单次提交(接续 41 算子源码核验结论:本批唯一
+"已验证结构从未路由到未试芯片"的缺口)。
+
+### 假设
+
+- kunlunxin 自 S0 起钉死在单组/program 循环(每 program 128 元素),
+  全轮 0.231-0.233x;e5 `[GROUPS_TILE=4, GROUP_SIZE]` 瓦片在其余
+  六芯兑现(haiguang +66%/muxi +37%),却从未路由昆仑;
+- 2D 瓦片在昆仑有编译先例(T12 fp32-ieee dot、T13 direct dot),
+  1D capped grid-stride、无 num_warps/num_stages、div_rn 全部符合
+  T21 昆仑规则;唯一平台待证假设是瓦片 lowering 在 XPU 的收益。
+
+### 变更集(单变量:kunlun 路由 S0 旧结构 → e5 瓦片)
+
+- `_kunlunxin` vendor := generic 瓦片 kernel 逐结构一致(仅注释
+  不同);generic(e6 载体)、`_ascend`(e3)、`_enflame`(e2)冻结;
+- 测试矩阵升级:全部 vendor 文件接入 `_check`(逐位对照 reference),
+  新增 `test_vendor_matrix_matches_generic_semantics`。
+
+### 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `918bf0603596c244fa4d4209b192fab23ba12c95` |
+| generic SHA-256 | `39691ff4e3efe9a427cdb5896a53cfda613d9e7066c8e7fffff27228d918d30d`(=e5/e6) |
+| Ascend SHA-256 | `fa7a1a46573f0e0179573ec8a8ebec10463dba42c942f68da308b62e9c0fd670`(=e3) |
+| Enflame SHA-256 | `c6ff5fc03dea9f52c40eeb7dd19c6600e2962814dfb5771ddea7e1a168e3b6b0`(=e2) |
+| Kunlun SHA-256 | `fbc2da64dc28a151605e6de6da533ce6362b204e407ada3700bb93657679cfba`(新) |
+| test SHA-256 | `2ec5b35b226c88865a5ea62133aa6639ab7ce50c1ded4416bd8526399d1d13d5` |
+| canonical ZIP | `artifacts/competition/per_token_group_quant_int8/e7-918bf06/per_token_group_quant_int8.zip`,12326 bytes,SHA-256 `0e05f32b89821c51e72c8ad728d649d8c3bce35906b7f6990d0e5ef20d3f7adc` |
+| ZIP 成员 | generic + `_ascend` + `_enflame` + `_kunlunxin`,4 个 UTF-8 `.py`;`unzip -t` 无错;成员哈希与 commit blob 逐项一致 |
+
+### 验证证据
+
+- screening(gpu:/tmp/flagos-t33e7.fF5rQC):py_compile、isort、
+  flake8、unittest **8/8**(含 vendor 矩阵)、`SCREENING_OK`;日志
+  SHA-256 `ed7c0b825a81e2de467ab8503f6b3e0a8959dbf36bbe81663d2a3cc8895f6caa`;
+  前后哈希一致。瓦片字节=generic(已在六芯平台验证),CUDA 侧无
+  新性能面,免跑代理基准。
+- release(git 对象,gpu:/tmp/flagos-t33e7-rel.TMerlW):同套门禁 +
+  unittest 8/8、`RELEASE_OK`;日志 SHA-256
+  `446104c622e9d0ea0e93e156191d6c18b3c1268d9360d60497df60b02c387c4d`。
+
+### 平台预注册门
+
+- 基础门:8/8 valid(昆仑 XPU 对 2D 瓦片的编译是唯一风险面)。
+- 单轴晋级门:昆仑严格高于 `0.231x` 且平均严格高于 e5 `4.57069167x`。
+- 机制确认门:昆仑 ≥ `0.5x`(瓦片在 XPU 兑现)。
+- stop gate:昆仑编译失败或 <0.231 → 回滚钉死字节,瓦片轴对昆仑
+  关闭;燧原读数仍按水位处理,不归因。
