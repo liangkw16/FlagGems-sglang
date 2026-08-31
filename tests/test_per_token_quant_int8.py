@@ -72,6 +72,13 @@ class TestPerTokenQuantInt8(unittest.TestCase):
                 (129, 1025),
                 (1, 128),
                 (64, 96),
+                # e3 row-pack tail boundaries: rows not divisible by the
+                # packed ROWS_TILE (16/8/4/2 for these N) and the 1024/2048
+                # dispatch boundary
+                (1023, 256),
+                (77, 100),
+                (33, 1024),
+                (5, 2048),
             ]:
                 torch.manual_seed(rows + n)
                 x = torch.randn(rows, n, dtype=dtype, device="cuda") * 3
