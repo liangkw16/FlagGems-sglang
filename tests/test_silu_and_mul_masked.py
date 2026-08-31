@@ -131,6 +131,69 @@ class SiluAndMulMaskedTest(unittest.TestCase):
         )
         torch.testing.assert_close(masked_m, mask_snapshot, atol=0, rtol=0)
 
+    def test_compressed_grid_padding_profiles(self):
+        # e10 valid-row compression: heavy padding, empty experts, full
+        # experts and a non-power-of-two expert count (binary-search
+        # bounds) must all reproduce the reference on valid rows
+        generator = torch.Generator(device="cuda").manual_seed(20260901)
+        profiles = [
+            (64, 128, 1280, "uniform"),
+            (64, 128, 1280, "heavy"),
+            (64, 128, 1280, "zeros"),
+            (64, 128, 1280, "full"),
+            (1, 256, 2048, "mixed"),
+            (257, 64, 512, "mixed"),
+        ]
+        for experts, tokens, width, profile in profiles:
+            input = (
+                torch.randn(
+                    experts,
+                    tokens,
+                    width,
+                    dtype=torch.bfloat16,
+                    device="cuda",
+                    generator=generator,
+                )
+                * 3
+            )
+            if profile == "uniform":
+                masked_m = torch.randint(
+                    0,
+                    tokens + 1,
+                    (experts,),
+                    device="cuda",
+                    generator=generator,
+                    dtype=torch.int32,
+                )
+            elif profile == "heavy":
+                masked_m = torch.randint(
+                    0,
+                    max(2, tokens // 16),
+                    (experts,),
+                    device="cuda",
+                    generator=generator,
+                    dtype=torch.int32,
+                )
+            elif profile == "zeros":
+                masked_m = torch.zeros(
+                    experts, device="cuda", dtype=torch.int32
+                )
+            elif profile == "full":
+                masked_m = torch.full(
+                    (experts,), tokens, device="cuda", dtype=torch.int32
+                )
+            else:
+                masked_m = torch.randint(
+                    0,
+                    tokens + 1,
+                    (experts,),
+                    device="cuda",
+                    generator=generator,
+                    dtype=torch.int32,
+                )
+            with self.subTest(profile=profile, experts=experts):
+                self._check(input, masked_m)
+
     def test_masks_and_column_tails(self):
         for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, METAX_MODULE):
             for integer_dtype in (torch.int32, torch.int64):
