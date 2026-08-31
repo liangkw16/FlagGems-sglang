@@ -770,3 +770,46 @@ preflight intent `0ce1c3f4…` 单次 confirm(sub 7480,额度 30→29/30);
   最佳锁定不动;方差重载按既有冻结协议执行(无信号不盲发);
   压缩轴判定为**已兑现而非证伪**——若燧原/海光水位恢复且有榜首
   逼近压力,同字节重载或燧原/沐曦 vendor 升级为潜在后续。
+
+## E11:amd/metax 路由换 e10 generic(2026-09-01 00:5x CST)
+
+状态:候选就绪待单次提交。依据 = e10 平台反馈(目标流程:根据平台
+返回信息再优化):generic 块跳过使华为 +246%,而 card_b(amd vendor)
+10.7 vs card_a(generic)30.2 同职责芯 3 倍差距、沐曦 flat-full vendor
+做满 padding 无用功。
+
+### 变更与成员决策(经 codex-review 修正)
+
+- **移除 `_amd`/`_metax` vendor** → 两芯改走 e10 generic 块跳过;
+- **保留 `_enflame`(E8 字节)**:codex-review P1"路由变更缺目标芯
+  验证"触发跨芯知识核查——燧原对含运行期分支的结构编译失败
+  (T09/T23 平台实证),`if row_lo < valid_rows` 正是运行期分支;
+- **保留 `_kunlunxin`(钉死字节)**:XPU 编译脆弱性,防整包连坐;
+- codex-review 裁定记录:P1#1 采纳(如上);其余发现(agent/skills
+  引用、sglang-learning-materials iframe、.codex-tmp PII、嵌套
+  git 仓库、skill frontmatter、大文件)均属其他会话未跟踪文件,
+  不在本提交通径,记为仓库已知项不阻塞。
+
+### 构建身份与验证
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `4f683217225053c5d03433039a33ab508533be4a` |
+| generic SHA-256 | `c005537c37b7b6b84d1a3229f3c4e2f19ecdb4cd2f5dc687b5d5cad4cdb8a250`(=e10,已平台 8/8) |
+| Enflame SHA-256 | `2741c29c2513039df63d70aa729b53776cef388828056defde96d37d154587a2`(=E8/E9) |
+| Kunlun SHA-256 | `2698072998829ead430005697c2262bd2dc8712e9ee4d221d833541b01a72462`(=钉死) |
+| test SHA-256 | `af9c3ffb7f54ea8d0bc935ed2f124ff23b8567e005558d54afb6ba0baad0fb61` |
+| canonical ZIP | `e11-4f68321/silu_and_mul_masked.zip`,9766 bytes,SHA-256 `24850015dc3a9af96df1bbcbfed22b08b785301d9936b7cb31c41df31ad42dcd`,3 成员逐项字节核对 |
+| GPU 验证 | screening(gpu:/tmp/flagos-t39e11.*):unittest 7 过 1 跳过(metax 结构测试正确跳过);release(gpu:/tmp/flagos-t39e11-rel.YFmHhf):同套 + py_compile,release.log SHA-256 `dcd7002602feb94df64e8ab159ae552989eb88140e021408d2def779fb34bfa4` |
+| MCP 验证 | generic 字节与 e10 逐字节相同 → e10 的 specialize+注入昇腾差分预检(diff 仅 `+import torch_npu`)继续有效;amd/metax 不在 MCP 覆盖集,以 NVIDIA 代理数值矩阵 + 平台为验证通道(适用性边界如实记录) |
+| codex-review | `gpt-5.6-sol` xhigh,--uncommitted 全量;P1#1 部分采纳(触发燧原约束拦截),其余判定为未跟踪文件噪音 |
+
+### 平台预注册门
+
+- 基础门:8/8 valid(amd/metax 对 scf.if 的编译接受为唯一新风险面)。
+- 晋级门(team best):平均严格高于 E7 `19.86983333x`。
+- 单轴门:card_b > e10 读数 `10.71633333x` 且 muxi > `22.935x`。
+- 机制参照:card_b → 20+(对齐 card_a 30.2 的 2/3)即 AMD vendor
+  结构性落后坐实。
+- stop gate:任一芯编译失败或双芯合计回退 → 恢复对应 vendor,
+  路由轴关闭;enflame/kunlun 字节未变,读数按水位处理。
