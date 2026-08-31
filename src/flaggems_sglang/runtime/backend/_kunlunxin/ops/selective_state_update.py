@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# e8 re-carrier: e7 kunlun returned service-thread deadlock ("please
+# resubmit") - NOT the uni_sram compile failure, so the two-stage
+# structure likely compiled; bytes identical to e7.
 # kunlunxin two-stage vendor (E7): the fused [BLOCK_P, DSTATE] tile
 # triggers the platform compiler's `uni_sram PassManager::run failed`
 # at every BLOCK/direct-grid shape tried (E4/E5). Stage 1 shrinks the
