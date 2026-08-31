@@ -66,14 +66,18 @@ BLOCK 4096、E5 BLOCK 512 各烧一发额度才确认与 BLOCK 无关）。对�
   需在已加载 `kernelgen-mcp` 工具的会话中调用。
 - 验收门（全部满足才继续 build_submission/打包）：
   1. 目标芯实机编译通过（无 CompilationError、无 PassManager 失败）；
-  2. 题面 dtype × 代表 shape 数值在题面容差内，NaN/Inf 零容忍；
+  2. 数值信号按 MCP 实际能力取用：任务可注入并执行题面 dtype × 代表
+     shape 时验证容差与 NaN/Inf 零容忍；首次在某芯使用该协议时先确认
+     任务能否执行自定义 correctness case，不能时只采编译与其自带校验
+     信号，不把数值验证虚记为已完成；
   3. job 输出按惯例存 `log/kernelgen-round/out_<task>_<chip>.json`，
      文件 SHA-256 与调用参数写入该算子账本。
 - 明确不采纳：MCP 自测加速比作为晋级或关轴依据。T29/T30 华为实机自测
   0.037–1.79x 对平台同源 7.26x，口径不可比（其 torch 基准疑为 torch_npu
   融合实现）；性能结论一律以平台为准，账本中不得引用 MCP 自测 speedup。
 - 定位与记录：初筛通过只降低发射风险，不替代远端 NVIDIA screening、
-  release 门禁和平台八芯评测。账本对该芯证据标注 `mcp-device-screened`；
+  release 门禁和平台八芯评测。账本按验收门第 2 条的实际覆盖标注
+  `mcp-device-screened`（数值+编译）或 `mcp-compile-screened`（仅编译）；
   未初筛且未平台验证的芯仍标 `static-unverified`。初筛失败不消耗平台
   额度，按错误二分协议带完整错误上下文重新生成或换结构，再走初筛。
 

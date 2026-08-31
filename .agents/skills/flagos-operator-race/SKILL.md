@@ -85,6 +85,11 @@ SHA-256、成员列表和平台结果，才能重新定位实际上传字节。
 commit` 是最新测试和验证证据的提交；`ledger commit` 是写回产物与结果的提交。
 三者可以不同，但账本必须写清关系，产物目录使用 `source commit` 短哈希。
 
+本仓常有多会话并行推进不同算子。写账本或实验 README 前，先用
+`git log -1 -- <路径>` 核对该文件最新 commit 并重读最新字节，不基于本次
+会话早先读到的旧内容直接编辑；算子账本更新时同步刷新实验 README 的
+候选行，避免两个真相源分叉。
+
 ## SkillHub 辅助 skill
 
 `.agents/skills/` 下装有 FlagOS SkillHub 的配套 skill，按以下边界融入闭环；
