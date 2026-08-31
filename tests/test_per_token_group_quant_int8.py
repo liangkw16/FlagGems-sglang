@@ -57,7 +57,7 @@ VENDOR_MODULES = {
     name: module
     for name, module in (
         (vendor, _load_vendor(vendor))
-        for vendor in ("ascend", "enflame", "kunlunxin")
+        for vendor in ("ascend", "enflame", "kunlunxin", "metax")
     )
     if module is not None
 }
