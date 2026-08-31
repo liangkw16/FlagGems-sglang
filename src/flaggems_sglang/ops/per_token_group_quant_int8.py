@@ -17,7 +17,13 @@ import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
-_GROUPS_TILE = 4
+# e8: proxy sweep (t1/t2/t4/t8/t16 over 8 shapes x 3 dtypes) shows tile=16
+# up to 1.85x faster than 4 on high-group-count shapes (65536x256 G64:
+# 0.555x time; 8192x512: 0.76-0.80; 1024x2560: 0.84-0.89) and neutral
+# on small shapes (<=+9% on ~0.015ms launch-bound cases); tile=8 is
+# dominated everywhere that matters. kunlunxin stays pinned to the old
+# one-group loop (e7 disproved the tile on XPU).
+_GROUPS_TILE = 16
 
 
 @triton.jit
