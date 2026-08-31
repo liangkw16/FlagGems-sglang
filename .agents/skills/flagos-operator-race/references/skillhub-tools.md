@@ -90,6 +90,33 @@ BLOCK 4096、E5 BLOCK 512 各烧一发额度才确认与 BLOCK 无关）。对�
   未初筛且未平台验证的芯仍标 `static-unverified`。初筛失败不消耗平台
   额度，按错误二分协议带完整错误上下文重新生成或换结构，再走初筛。
 
+### 2026-08-31 实测校准与 specialize+注入差分预检
+
+对四个工具做了一次带字节比对的实测（curl 直连 streamable HTTP
+JSON-RPC，请求/响应留存 `/tmp/kg-*`；当日有效）：
+
+- 工具真实行为与名义标签有出入：`specialize_kernel` 与
+  `optimize_kernel` 均为**同步纯改写路径**（响应只含 LLM token 用量，
+  无 job_id/verify_result，不上设备）；上设备的 autotune/generate 路径
+  中 `autotune_kernel` 入参只有 `pytorch_code`，**我方 Triton 字节
+  无法进入任何设备执行管线**——上文"字节绑定"对 autotune 实际约束
+  的是工具自产代码，不是候选字节。设备侧对我方字节的判据仍只有
+  vendor 容器与平台。
+- **提示词注入协议（新增预检通道）**：`func_desc`/`context` 是喂给
+  改写 LLM 的自由文本。注入"禁止改写、原样部署"契约后实测：
+  `specialize_kernel` 守约（返回代码与输入的 diff 仅一行
+  `import torch_npu` 设备引导，kernel 逻辑零改动）；`optimize_kernel`
+  无视契约（强加 `@triton.autotune` 包装，且该形态跨芯非法）。
+- **用法**：新结构候选上昇腾（或未来扩展的目标平台）前，先跑
+  `specialize_kernel + 注入`，把返回 `triton_code` 与候选做逐字节
+  diff——最小 diff（仅设备引导）= 无平台适配需求信号；diff 出现
+  TLE 重构/瓦片拆分/UB 规避 = 明确的编译或 lowering 风险信号
+  （T40 direct 两发额度学费那类坑）。该预检零额度、只出"适配差分"，
+  **不出编译/运行判据**，不替代任何既有门禁。
+- 记录：调用参数、注入文本、返回代码 SHA-256 与 diff 摘要写入算子
+  账本；示例：T33 tile-16 注入版返回 diff 仅 `+import torch_npu`，
+  与 e10 华为平台 +28.8% 互证（无需昇腾结构适配）。
+
 ### 多芯验证通道矩阵
 
 发射前按受影响芯选择最强可用通道。"数学代理"指在 NVIDIA 上跑通该
