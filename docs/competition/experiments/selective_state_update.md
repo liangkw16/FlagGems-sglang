@@ -168,3 +168,15 @@
   E6d 工作区改动已 stash 保全。
 - 状态:候选不完整,**未提交未耗额度**;恢复条件=链路恢复后
   修 bug + 全量门禁。额度 20/30。
+
+### E7:两阶段 vendor 破案与发射(2026-08-31 07:0x CST)
+
+- **根因破案**:前日 63 失配的真凶是 **A 契约**——真实布局为
+  `[nheads, dim, dstate]` 三维(E3/f143f65 夜间会话已改契约),我方
+  vendor 仍按旧 `[H,N]` 索引;诊断脚本两侧同错导致假绿;
+- 修复后两阶段 vendor(stage1 [16,16] 切片 + partial_y 工作区 /
+  stage2 归约 + D/z)unittest **4/4 全绿**;screening 字节与 commit
+  blob 逐项一致(gpu:/tmp/t36e7.S5CWNR);
+- commit `7f7f2c1`,ZIP `9eeda4cb…`,2 成员;preflight 全过
+  (额度 20/30),单次提交——**uni_sram 最小活跃矩阵假设的最终
+  验证**。
