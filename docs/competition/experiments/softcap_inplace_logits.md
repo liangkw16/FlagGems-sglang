@@ -299,3 +299,10 @@ native-`tanh` 轴。按预注册冻结 E3 全部字节，停止 Task 40，转入
 - commit `fbb95a0`,ZIP `3b901379…`,4 成员;unittest 5/5(全 vendor
   矩阵);额度 23/30。华为需 0.557→≥1.69 才单芯追平榜首——低概率
   高回报,失败即关轴。
+
+### E4 终态(sub 7054)与 E5 机械修复
+
+- E4:7/8,**华为 direct kernel 编译失败**(BLOCK 4096 超昇腾 UB,
+  CompilationError)——15 case 全 compile error,其余七芯正常;
+- E5:direct BLOCK 降为 512(T24 softcap_out 昇腾平台已证尺寸),
+  属编译错误机械修复类;unittest 5/5。

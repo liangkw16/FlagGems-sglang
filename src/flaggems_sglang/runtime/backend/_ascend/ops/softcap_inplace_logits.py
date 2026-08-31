@@ -22,7 +22,9 @@ _MAX_GRID = 65535
 # ascend vendor (e4): the kunlun-proven direct pattern generalized -
 # contiguous input + grid fits -> loop-free direct kernel (BLOCK 4096),
 # else strided-loop fallback
-_DIRECT_BLOCK = 4096
+_DIRECT_BLOCK = 512
+# e5: BLOCK 4096 exceeded the ascend UB budget (compile error);
+# 512 is the T24 softcap_out ascend platform-proven size
 
 
 @triton.jit
