@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# e9 re-carrier (held for a kunlun health window): e8 hit the inductor
+# compile-worker crash while e7 hit the service-thread deadlock - both
+# platform-side service failures, so the compile hypothesis is still
+# untested; fire only on a threshold-team-count rise signal.
 # e8 re-carrier: e7 kunlun returned service-thread deadlock ("please
 # resubmit") - NOT the uni_sram compile failure, so the two-stage
 # structure likely compiled; bytes identical to e7.
