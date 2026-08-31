@@ -155,6 +155,12 @@ failed_cases=0),排队 ~55 分钟后返回。T31 三投同指纹,恢复窗口
 - **昆仑终态:第 15 次同指纹 inductor 崩溃**(1830s 超时 + Fatal
   Python error: Aborted + subproc_pool.py,空 failed_cases,
   validation 9a82040f)。
+- 身份补录(2026-08-31 17:4x 回填自本地 intent `7192cca7`):source
+  commit `f093ae8`,ZIP SHA-256
+  `3f5e5cdce7d1e10677bc8c08540fd47e3bb0770a9f46ddc7512ad3c97d3d5ba1`
+  (16890 字节,成员 `moe_fused_gate.py` + `moe_fused_gate_kunlunxin.py`,
+  与 e6 载体相同,已经 `unzip -Z1` 复核);sub 7227 = 当日 daily_seq 18,
+  提交 `2026-08-31T16:03:55+08:00`,提交后剩余 12/30(按 30−18 推得)。
 
 ### E7 判定:T31 永久封存
 
