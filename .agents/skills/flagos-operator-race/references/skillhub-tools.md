@@ -46,6 +46,37 @@ kernelgen 自动检测会按通用流程路由；其 FlagGems 专用子文档中
 - 单芯特化（specialize）：`specialize_kernel` 的 `target_platform` 当前
   只支持 `huawei`；产出按本仓 vendor 文件规范放置并走远端验证。
 
+### 发射前 MCP 实机初筛（vendor/泛芯候选）
+
+远端 NVIDIA 代理只能证明数学与 JIT，看不见目标芯自身的 lowering 与
+编译器风险。已付学费的平台实证：T35 e1 华为 2D 广播瓦片代理全绿、平台
+99.6% NaN；T40 华为"无循环直通 kernel"结构被昇腾编译器两连拒收（E4
+BLOCK 4096、E5 BLOCK 512 各烧一发额度才确认与 BLOCK 无关）。对受影响
+芯在 MCP 覆盖集内的候选，发射前先实机初筛，用零额度换掉这类盲发：
+
+- 触发条件（任一命中即做）：
+  1. vendor 候选的目标芯在账本中有风险指纹（NaN、编译失败、数值前科）；
+  2. 候选结构（新 tile 形态、新数学 lowering、去循环化）在该芯从未平台
+     验证过；
+  3. 昆仑重载/守榜重掷以外的昂贵弹药首投。
+  同字节方差重掷不需要初筛（字节未变，初筛无新信息）。
+- 工具与覆盖：`autotune_kernel(device=<chip>)` 实机跑；华为另可用
+  `specialize_kernel(target_platform="huawei")`。覆盖集 = 华为/天数/
+  海光/沐曦 + CUDA（国际芯片 NVIDIA 侧）；燧原、昆仑、AMD 不在内。
+  需在已加载 `kernelgen-mcp` 工具的会话中调用。
+- 验收门（全部满足才继续 build_submission/打包）：
+  1. 目标芯实机编译通过（无 CompilationError、无 PassManager 失败）；
+  2. 题面 dtype × 代表 shape 数值在题面容差内，NaN/Inf 零容忍；
+  3. job 输出按惯例存 `log/kernelgen-round/out_<task>_<chip>.json`，
+     文件 SHA-256 与调用参数写入该算子账本。
+- 明确不采纳：MCP 自测加速比作为晋级或关轴依据。T29/T30 华为实机自测
+  0.037–1.79x 对平台同源 7.26x，口径不可比（其 torch 基准疑为 torch_npu
+  融合实现）；性能结论一律以平台为准，账本中不得引用 MCP 自测 speedup。
+- 定位与记录：初筛通过只降低发射风险，不替代远端 NVIDIA screening、
+  release 门禁和平台八芯评测。账本对该芯证据标注 `mcp-device-screened`；
+  未初筛且未平台验证的芯仍标 `static-unverified`。初筛失败不消耗平台
+  额度，按错误二分协议带完整错误上下文重新生成或换结构，再走初筛。
+
 ### 可复用协议（不用 MCP 也照做）
 
 - 错误二分：编译/导入类（ImportError、SyntaxError、TritonCompilationError、

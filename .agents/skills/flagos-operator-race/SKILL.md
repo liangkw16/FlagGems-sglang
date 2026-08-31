@@ -94,7 +94,9 @@ commit` 是最新测试和验证证据的提交；`ledger commit` 是写回产�
   `kernelgen-mcp`（需在 `.mcp.json` 配置 Token，未配置时先按
   `kernelgen-mcp-setup.md` 引导用户注册，不要手写代码替代）。用途：
   新算子起手（generate）、卡瓶颈的第二轮迭代（optimize，基于 MCP 反馈循环）、
-  某芯 Triton 支持差时的 specialize 备选。产出仍必须过本 skill 的契约锁定、
+  某芯 Triton 支持差时的 specialize 备选、以及发射前对 MCP 覆盖芯的实机
+  初筛（autotune/specialize 的 device 实机跑，只取编译与数值信号，见集成
+  文档的触发条件和验收门）。产出仍必须过本 skill 的契约锁定、
   代理验证、不可变 ZIP 门禁，MCP 生成不等于验证证据。本仓库布局是
   `src/flaggems_sglang/` 而非上游 `src/flag_gems/`，其 FlagGems 专用注册与
   测试布局不适用；错误二分协议（编译类最多自查一次、数值类不盲目自改）与
@@ -186,6 +188,12 @@ S0 只追求全部支持芯片正确且每芯达到题面最低门槛：
 3. 最小 unittest；
 4. 主要 shape 的正确性；
 5. wrapper-inclusive benchmark 与编译产物检查。
+
+NVIDIA 代理看不见目标芯自身的 lowering/编译器风险。vendor 候选或改动
+涉及某芯专属路径时，若该芯在 kernelgen-mcp 覆盖集内（华为/天数/海光/
+沐曦、国际芯片 NVIDIA 侧），按[SkillHub 工具集成](references/skillhub-tools.md)
+的"发射前 MCP 实机初筛"协议先在实机验证编译与数值，再进入打包和平台
+提交；燧原/昆仑/AMD 不在覆盖内，维持远端代理或账本明确标注静态未验证。
 
 未提交候选可用于快速筛选，但不能作为 ZIP 的最终验证证据。候选通过初筛后，
 先将本次 source 和 test 按明确路径 commit，再用该 commit 的逐字节内容重跑
