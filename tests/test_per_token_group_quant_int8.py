@@ -31,6 +31,37 @@ SPEC = importlib.util.spec_from_file_location(
 MOD = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MOD)
 
+
+def _load_vendor(name):
+    path = (
+        Path(__file__).parents[1]
+        / "src"
+        / "flaggems_sglang"
+        / "runtime"
+        / "backend"
+        / f"_{name}"
+        / "ops"
+        / "per_token_group_quant_int8.py"
+    )
+    if not path.exists():
+        return None
+    spec = importlib.util.spec_from_file_location(
+        f"per_token_group_quant_int8_{name}", path
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+VENDOR_MODULES = {
+    name: module
+    for name, module in (
+        (vendor, _load_vendor(vendor))
+        for vendor in ("ascend", "enflame", "kunlunxin")
+    )
+    if module is not None
+}
+
 _EPS = 1e-10
 
 
@@ -49,8 +80,8 @@ def reference(x, group_size, dtype=torch.int8):
 
 
 class TestPerTokenGroupQuantInt8(unittest.TestCase):
-    def _check(self, x, group_size):
-        x_q, x_s = MOD.per_token_group_quant_int8(x, group_size)
+    def _check(self, x, group_size, module=MOD):
+        x_q, x_s = module.per_token_group_quant_int8(x, group_size)
         # platform semantics: the reference runs on the same device; CPU
         # torch rounds fp division differently at boundary ulps than
         # device torch, so device-side comparison is the contract
@@ -129,6 +160,23 @@ class TestPerTokenGroupQuantInt8(unittest.TestCase):
         x_q, x_s = MOD.per_token_group_quant_int8(x, 128)
         self.assertEqual(x_q.shape, (0, 128))
         self.assertEqual(x_s.shape, (0, 1))
+
+    def test_vendor_matrix_matches_generic_semantics(self):
+        # every shipped kernel variant (e7 kunlunxin tile included) must
+        # reproduce the reference bit-for-bit on the same coverage
+        for name, module in VENDOR_MODULES.items():
+            for dtype in (torch.float16, torch.bfloat16, torch.float32):
+                for rows, k, gs in [
+                    (256, 512, 64),
+                    (129, 1025, 32),
+                    (64, 96, 96),
+                ]:
+                    if k % gs != 0:
+                        continue
+                    torch.manual_seed(rows + k)
+                    x = torch.randn(rows, k, dtype=dtype, device="cuda") * 3
+                    with self.subTest(name=name, dtype=dtype, gs=gs):
+                        self._check(x, gs, module=module)
 
 
 if __name__ == "__main__":

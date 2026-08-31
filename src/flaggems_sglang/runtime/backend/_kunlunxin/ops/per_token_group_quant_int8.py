@@ -17,6 +17,7 @@ import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
+_GROUPS_TILE = 4
 
 
 @triton.jit
@@ -27,24 +28,31 @@ def _per_token_group_quant_int8_kernel(
     total_groups,
     group_size,
     GROUP_SIZE: tl.constexpr,
+    GROUPS_TILE: tl.constexpr,
 ):
+    # kunlunxin vendor (e7): the [GROUPS_TILE, GROUP_SIZE] 2D tile that
+    # e5 verified on six chips (haiguang +66%, muxi +37%) replaces the
+    # pinned S0 one-group-per-program loop that held kunlun at 0.231x;
+    # 1D capped grid-stride and absence of num_warps/num_stages follow
+    # the kunlun rules (T21), div_rn keeps torch bit-exactness
     pid = tl.program_id(0)
     grid_stride = tl.num_programs(0)
+    g_offs = tl.arange(0, GROUPS_TILE)
     offs = tl.arange(0, GROUP_SIZE)
     mask = offs < group_size
-    for group_id in range(pid, total_groups, grid_stride):
-        base = group_id * group_size
-        x = tl.load(x_ptr + base + offs, mask=mask, other=0.0).to(tl.float32)
-        abs_max = tl.max(tl.abs(x), axis=0)
+    total_tiles = tl.cdiv(total_groups, GROUPS_TILE)
+    for tile in range(pid, total_tiles, grid_stride):
+        group_ids = tile * GROUPS_TILE + g_offs
+        gmask = group_ids < total_groups
+        base = group_ids[:, None] * group_size + offs[None, :]
+        pmask = gmask[:, None] & mask[None, :]
+        x = tl.load(x_ptr + base, mask=pmask, other=0.0).to(tl.float32)
+        abs_max = tl.max(tl.where(pmask, tl.abs(x), 0.0), axis=1)
         scale = tl.maximum(abs_max, 1e-10) / 127.0
-        # IEEE round-to-nearest division: triton's plain `/` lowers to an
-        # approximate divide and misses torch bit-exactness at the group
-        # amax boundary (verified: div_rn matches, `/` and reciprocal off
-        # by 1); truncation toward zero matches torch .to(torch.int8)
-        x_div = tl.math.div_rn(x, scale)
+        x_div = tl.math.div_rn(x, scale[:, None])
         x_clamped = tl.minimum(tl.maximum(x_div, -128.0), 127.0)
-        tl.store(x_q_ptr + base + offs, x_clamped.to(tl.int8), mask=mask)
-        tl.store(x_s_ptr + group_id, scale)
+        tl.store(x_q_ptr + base, x_clamped.to(tl.int8), mask=pmask)
+        tl.store(x_s_ptr + group_ids, scale, mask=gmask)
 
 
 def per_token_group_quant_int8(x, group_size, dtype=torch.int8):
@@ -61,7 +69,7 @@ def per_token_group_quant_int8(x, group_size, dtype=torch.int8):
     if total_groups == 0:
         return x_q, x_s
     group_size_pow2 = triton.next_power_of_2(group_size)
-    grid = (min(total_groups, _MAX_GRID),)
+    grid = (min(triton.cdiv(total_groups, _GROUPS_TILE), _MAX_GRID),)
     _per_token_group_quant_int8_kernel[grid](
         x,
         x_q,
@@ -69,6 +77,7 @@ def per_token_group_quant_int8(x, group_size, dtype=torch.int8):
         total_groups,
         group_size,
         GROUP_SIZE=group_size_pow2,
+        GROUPS_TILE=_GROUPS_TILE,
     )
     return x_q, x_s
 
