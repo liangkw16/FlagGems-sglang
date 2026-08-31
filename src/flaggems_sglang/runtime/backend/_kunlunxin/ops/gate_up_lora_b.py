@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# e9 re-carrier (held for a kunlun health window): e8 hit the crash family
+# again; seven chips stay green at ~18.5x avg (huawei 22.76x). Fire only on
+# a T28 threshold-team-count rise. Bytes otherwise identical to e7/e8.
 # Kunlunxin vendor v3 (e7; e8 re-carrier for the kunlun eval window).
 # All five
 # prior kunlun attempts (3D grid generic, BLOCK_N 128 generic, 1D fold,
