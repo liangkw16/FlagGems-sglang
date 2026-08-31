@@ -16,7 +16,10 @@ import torch
 import triton
 import triton.language as tl
 
-# enflame vendor (e8): BLOCK_COL 4096 - T24 platform-proven enflame
+# e9 re-carrier of the e8 enflame vendor (BLOCK 4096, +90% on that chip
+# in e8): crown defense vs starwing 21.601; the frozen four members are
+# byte-identical to the E7 anchor - this roll re-rolls platform variance
+# enflame vendor: BLOCK_COL 4096 - T24 platform-proven enflame
 # optimum for double-read elementwise; structure otherwise identical
 _BLOCK_COL = 4096
 _MAX_GRID = 65535
