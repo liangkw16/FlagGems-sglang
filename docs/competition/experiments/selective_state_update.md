@@ -154,3 +154,17 @@
 诊断；它没有 source commit、release、ZIP、preflight 或平台提交，不消耗额度。
 平台快照：`used=25/30`、`remaining=5`。下一候选必须改用能避免 loop-carried
 状态的资源收缩方式(优先两阶段 FP32 partial workspace)，并重新走完整门禁。
+
+### E7 两阶段 vendor:开发中受阻(2026-08-31 05:3x CST)
+
+- 设计已落盘(kunlunxin vendor,commit 未提交):stage1 [16,16] 切片
+  写 state + FP32 partial_y 工作区,stage2 归约 + D/z;目标为
+  uni_sram 编译失败的最小活跃矩阵假设;
+- 本地代理:unittest 63 失败(softplus 极值 1/8 元素 0.108 abs
+  差 + 全矩阵系统性失配)——**存在正确性 bug 待修**,初步排查
+  非求和顺序(9e-4 相对差过大),嫌疑 partial 布局或 softplus
+  下溢路径;
+- GPU 代理主机失联(ping 100%,VPN 链路旧疾复发),迭代受阻;
+  E6d 工作区改动已 stash 保全。
+- 状态:候选不完整,**未提交未耗额度**;恢复条件=链路恢复后
+  修 bug + 全量门禁。额度 20/30。
