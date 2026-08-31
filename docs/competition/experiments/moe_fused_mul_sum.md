@@ -9,7 +9,7 @@ platform: 8/8
 team_best_stage: S0
 team_best_speedup: 4.4829
 sealed: no
-next: E3 宽瓦片证伪;昆仑 0.21x 与榜首 23.9 的领先面未解释
+next: e4 零权重槽跳过已提交待评测(EP drop 结构假设,单成员 ZIP 2c520a37)
 updated: 2026-08-31
 ```
 
@@ -290,3 +290,69 @@ preflight 全过(额度 3/30 消耗 1 → 2/30);单次 confirm 提交,
 - 结论:宽瓦片结构在 NVIDIA 代理上不优于 S0 的窄条 K 循环,
   YY-L 23.9x 的领先面仍未被该轴解释;树已回滚 S0 字节,
   候选字节保留于 screening 载荷;本题继续持有 S0 4.4829x。
+
+## E4:零权重槽跳过——EP drop 流量结构假设(2026-08-31 18:1x CST)
+
+### 假设(结构性,针对未解释的榜首面)
+
+- 带宽模型核算:reference 物化 `[T,K,D]` FP32 中间量,理论比 ~5.5x,
+  我方 4.48x 已贴模型;YY-L 23.9x(5.3 倍于我方)不可能来自同流量下
+  的 kernel 提速——唯一物理解释是**隐藏性能 shape 携带高 EP drop
+  比例**(expert_map/is_ep 把大量槽位置零;8 卡 EP 场景 drop ≈ 7/8)。
+- S0 对每个 k 槽**无条件加载**输入块再乘 0;把加载 mask 加上
+  `weight != 0`,被丢弃槽的整块输入**不再取数**,流量按 drop 比例
+  下降。论题为假时掩码本就必算,纯中性;为真时单芯可放大数倍
+  (drop 87.5% → 理论 ~4-8x)。
+- 语义:有限输入逐位等价(被跳过贡献本是精确 ±0);**已知偏差**:
+  丢弃槽内的 NaN/Inf 不再传播(reference `x·0=NaN`)——moe 合并在
+  垃圾槽放 NaN 属病态用例,风险接受并记录。
+
+### 变更与成员决策
+
+- generic:每 k 输入加载 `mask=hmask & (weight != 0.0)`(commit
+  `c82687c`);screening 期同构 skip 也施加于 enflame 2D 瓦片与
+  kunlunxin 分叉,但 **ZIP 只带 generic 单成员**:代理显示 2D 瓦片
+  掩不净整行(87.5% drop 仅 0.63x vs generic 0.24x),kunlunxin
+  BLOCK 1024 已平台证伪(0.210→0.203)。八芯全部读同一个带 skip
+  的 generic,逐芯 delta 即 skip 直接归因。
+- 测试矩阵补 vendor 路径(存在才加载)与重度 drop 回归
+  (is_ep 87.5%、expert_map 15/16 无效、无 drop 平价,fp16/bf16/fp32)。
+
+### 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `c82687cea9428180cc2dea39b78c6c65a84ca686` |
+| generic SHA-256 | `72ee6acdd7b9707d11d99a923ef85110a48ede7c494e82eb506b14b91e22e935` |
+| test SHA-256 | `1325d0b726798d15250168da2428109a7986ead33a2e83e794f1512122f8f528` |
+| canonical ZIP | `artifacts/competition/moe_fused_mul_sum/e4-c82687c/moe_fused_mul_sum.zip`,4039 bytes,SHA-256 `2c520a3730540ad4a58e4c59e93a2bb6f382bea7b4f1c8bc231c38ba2b42aa42` |
+| ZIP 成员 | 仅 `moe_fused_mul_sum.py`(generic);`unzip -t` 无错;成员哈希=commit blob=screening 字节 |
+
+### screening 证据(RTX 5070 Ti,gpu:/tmp/flagos-t32e4.I46Gtu)
+
+- 日志 SHA-256 `617e6651dea5af02e7673bafb7ce3c64c76755b63394d92bd53049f370b95e91`;
+  bench 脚本 SHA-256 `d5da7df5e2fc1dfbba23df573d98001055fe3a4310bf9f712acbf1de1f22a901`;
+  前后哈希一致,lint 未改写字节;py_compile/isort/flake8 过
+  (远端 black 26.5.1 工具漂移,本地 25.12.0 过)。
+- unittest **9/9**(含新矩阵回归);数值门 NUMERIC_OK(generic/enflame
+  × drop 0/0.5/0.875 × 三 dtype 对照 torch 公式)。
+- 机制基准(五轮 AB/BA median,new/old):
+  - generic (4096,8,7168) fp16:无 drop `0.9958`;drop 50% `0.5450`;
+    **drop 87.5% `0.2388`(4.2x)**;
+  - generic (65536,4,1024) bf16:`0.9913 / 0.6112 / 0.3344`;
+  - enflame 2D 瓦片:`0.9995 / 0.6628~0.9849 / 0.6265~0.9747`
+    (掩不净,佐证单成员决策)。
+- release(git 对象,gpu:/tmp/flagos-t32e4-rel.Gjd9Zy):py_compile、
+  isort、flake8、unittest **9/9**、`RELEASE_OK`;日志 SHA-256
+  `0f530280cf4f06340d8e0458c748a1ce8d6bbe5abd215b57dd9354a2fc4aa801`。
+
+### 平台预注册门
+
+- 基础门:8/8 valid。
+- 晋级门(team best):平均严格高于 `4.482900x`。
+- 机制确认门:平均 ≥ `8.0` 或任一芯 ≥ 其 S0 值 2 倍 → 隐藏 shape
+  携带 drop 坐实,继续按 drop 面迭代。
+- 论题证伪门:平均落在 S0 ±5% 内 → drop 论题对隐藏 shape 为假,
+  榜首面判定为高水位时代产物,T32 永久收盘。
+- 正确性止损:任一芯 invalid → 回滚树到 S0 字节并记录 NaN 传播
+  偏差假设。冲榜参照 12:37 快照 YY-L `23.9013x`(提交时以实时为准)。
