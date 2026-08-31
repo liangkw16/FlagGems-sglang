@@ -306,3 +306,7 @@ native-`tanh` 轴。按预注册冻结 E3 全部字节，停止 Task 40，转入
   CompilationError)——15 case 全 compile error,其余七芯正常;
 - E5:direct BLOCK 降为 512(T24 softcap_out 昇腾平台已证尺寸),
   属编译错误机械修复类;unittest 5/5。
+
+### E5 提交(2026-08-31 03:5x CST)
+
+preflight 全过(额度 22/30),单次提交;终态待回填。
