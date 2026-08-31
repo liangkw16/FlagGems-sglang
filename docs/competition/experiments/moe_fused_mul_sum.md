@@ -9,8 +9,8 @@ platform: 8/8
 team_best_stage: S0
 team_best_speedup: 4.4829
 sealed: yes
-next: 收盘 S0 4.4829;e4 零权重跳过证伪(drop 面不存在+谓词代价),榜首 23.9 判定高水位产物
-updated: 2026-08-31
+next: e5 三框架独立reduce同构;流量理想上限仅+22.7%,无法解释433%榜差
+updated: 2026-09-01
 ```
 
 ## S0：generic baseline
@@ -389,3 +389,32 @@ SHA-256 与 canonical ZIP 完全一致(`verified`)。
   是高水位时代产物,本题**永久收盘**;树已回滚 S0 字节
   (generic `ffb4440c…`,black/lint 复核过)。
 - 额度 8/30;测试矩阵与重度 drop 回归保留(语义级,S0 字节全过)。
+
+## E5:三框架最佳实现与物理上限复核(2026-09-01 07:3x CST,只读止损)
+
+- 实时榜首 YY-L `23.9013x`，S0 `4.4829x`，需 **5.3317 倍**
+  (`+433.17%`)；本轮只接受旧实验未覆盖且理论可 >2x 的数据流重写；
+- [SGLang standalone JIT](https://github.com/sgl-project/sglang/blob/ef9e58fd6d0140f9d2bade6a31dbab779013d038/python/sglang/kernels/jit/csrc/moe/topk_sum.cuh#L20-L100)
+  为每线程 16B hidden vector、顺序 top-k；其
+  [Triton reduce](https://github.com/sgl-project/sglang/blob/ef9e58fd6d0140f9d2bade6a31dbab779013d038/python/sglang/kernels/ops/moe/fused_moe_triton_kernels.py#L1180-L1272)
+  是 `BLOCK_M=1/BLOCK_DIM=2048`、FP32 runtime-K loop，均与 S0 的
+  tile ownership/必需流量同构。真正删除 `[T,K,D]` 中间量的
+  [GEMM2 epilogue weight+atomic reduce](https://github.com/sgl-project/sglang/blob/ef9e58fd6d0140f9d2bade6a31dbab779013d038/python/sglang/kernels/ops/moe/fused_moe_triton_kernels.py#L617-L702)
+  越过本题已接收 materialized `inputs` 的函数契约；
+- [vLLM TopKWeightAndReduce](https://github.com/vllm-project/vllm/blob/91752b7a3e0cd20ba2a41a65069ece1b29825ee5/vllm/model_executor/layers/fused_moe/topk_weight_and_reduce.py#L80-L121)
+  仍先 `mul_` 再单独 `moe_sum`，不如 S0 的单 kernel mul+sum fusion；其
+  [CUDA vector reduce](https://github.com/vllm-project/vllm/blob/91752b7a3e0cd20ba2a41a65069ece1b29825ee5/csrc/libtorch_stable/moe/moe_align_sum_kernels.cu#L352-L493)
+  同样为 hidden 16B vector + common-K 顺序累加，pad-aware skip 已由 E4
+  平台证伪；
+- [FlashInfer TopkReduce](https://github.com/flashinfer-ai/flashinfer/blob/85c364393b8d4d492fc6e00104cca02dfc291219/flashinfer/moe_ep/kernel_src/cutedsl_megamoe/src/moe_nvfp4_swapab/topk_reduce.py#L150-L305)
+  也是 worker=(token,hidden16B)、score 寄存器预取、顺序 FP32 FMA；
+  persistent/finalize 只存在 GEMM producer epilogue，不能独立迁移；
+- S0 已恰好一次读取 `T*K*D`、一次写 `T*D`。账本 reference 流量模型
+  理想 ceiling 约 `5.5x`，对 S0 的剩余理论空间仅
+  `5.5/4.4829 = 1.2269x`；即便不顾物理约束硬翻倍也只有 `8.9658x`，
+  仍仅为榜首 37.5%。
+
+旧轴也已覆盖：Kunlun direct +0.76%、BLOCK1024 负；二维 K 归约已实现；
+多 token 宽瓦片代理 -4%；唯一可理论 4–8x 的 EP-drop skip 已在 E4 平台
+决定性证伪并导致多芯回退。不存在合规 >2x 新结构，本轮不连 GPU、不改源码、
+不消耗额度；`23.9013x` 继续判定为不可复现的历史高水位产物。

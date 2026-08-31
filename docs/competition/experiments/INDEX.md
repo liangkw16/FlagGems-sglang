@@ -12,7 +12,7 @@
 | 29 | gelu_and_mul | valid | 8/8 | e8 2.7394x | yes | exact-erf 官方实现与 minimax 数值边界复核;预期收益远不足66.68%榜差,封存 | 2026-09-01 | [gelu_and_mul](gelu_and_mul.md) |
 | 30 | interleaved_rope | valid | 8/8 | S0 25.8353x | yes | 实时榜首37.7641;一读一写下界已达,MCP/官方实现复核无可信46.17%路径 | 2026-09-01 | [interleaved_rope](interleaved_rope.md) |
 | 31 | moe_fused_gate | invalid | 7/8 | e7(=e6字节载体) 七芯~7.73x | yes | 仅工单或结构改写(topk 形态) | 2026-08-31 | [moe_fused_gate](moe_fused_gate.md) |
-| 32 | moe_fused_mul_sum | valid | 8/8 | S0 4.4829x | yes | 收盘 S0 4.4829;e4 零权重跳过证伪(drop 面不存在+谓词代价),榜首 23.9 判定高水位产物 | 2026-08-31 | [moe_fused_mul_sum](moe_fused_mul_sum.md) |
+| 32 | moe_fused_mul_sum | valid | 8/8 | S0 4.4829x | yes | e5 三框架独立reduce同构;流量理想上限仅+22.7%,无法解释433%榜差 | 2026-09-01 | [moe_fused_mul_sum](moe_fused_mul_sum.md) |
 | 33 | per_token_group_quant_int8 | valid | 8/8 | e10 5.5720x | yes | 重新封存 e10 5.5720;e12 去 contiguous/warps 2,4,8 全部低于5%门,已知参数轴尽 | 2026-09-01 | [per_token_group_quant_int8](per_token_group_quant_int8.md) |
 | 34 | per_token_quant_int8 | valid | 8/8 | e1 4.7131x | yes | e4 persistent cap与SGLang launch参数均不过5%全矩阵门;已知轴尽 | 2026-09-01 | [per_token_quant_int8](per_token_quant_int8.md) |
 | 35 | rotary_embedding | valid | 8/8 | e3 5.8458x | yes | e5 generic heads_tile 1/2/8/16 全部低于5%门;tile4局部最优,收盘 | 2026-09-01 | [rotary_embedding](rotary_embedding.md) |
