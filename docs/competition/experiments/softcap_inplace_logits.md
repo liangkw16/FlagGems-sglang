@@ -9,8 +9,8 @@ platform: 8/8
 team_best_stage: e6
 team_best_speedup: 1.7679
 sealed: yes
-next: 收盘 e6 1.7679(-12.6%);e7 generic2048/metax4096 双证伪,全部已知轴关闭,I/O 已贴下界
-updated: 2026-08-31
+next: e9 generic direct仅+1.63~3.40%;需+32.25%才登顶,官方可迁移轴已尽
+updated: 2026-09-01
 ```
 
 ## S0：T24 跨芯 winner 复用
@@ -494,3 +494,38 @@ E6 `1.76791667x`:
   4096x2048 fp16、65536x1024 fp32),全部落在 ±1% 噪声内,远低于
   预注册的 `>=3%` 代理晋级门。说明当前编译器已把标量除法降到等价
   倒数路径;候选已回滚,未提交、未消耗额度,T40 继续封存于 E6。
+
+## E9:generic 连续 direct fast path(2026-09-01 07:2x CST,负结果)
+
+- 完整去重 E0–E8/T24 S0–S9 后，仅剩
+  [SGLang 当前同题实现](https://github.com/sgl-project/sglang/blob/ef9e58fd6d0140f9d2bade6a31dbab779013d038/python/sglang/kernels/ops/activation/softcap.py#L71-L120)
+  的每 tile 一 program、无 grid-stride loop 的 direct 结构未在 generic
+  严格测试。候选只对连续且 `total_blocks<=65535` 的 generic 增加
+  BLOCK1024 1D direct path；数学、mask、cap、fallback 与全部 vendor 冻结；
+- [vLLM](https://github.com/vllm-project/vllm/blob/d6d665854314f0aa90ad6ef32a3382136c71314c/vllm/model_executor/layers/logits_processor.py#L105-L120)
+  仍用 Torch `/=cap;tanh;*=cap`；其 attention-score 融合不适合本题必须
+  原地写回的已有 logits。[FlashInfer attention variant](https://github.com/flashinfer-ai/flashinfer/blob/85c364393b8d4d492fc6e00104cca02dfc291219/include/flashinfer/attention/variants.cuh#L31-L75)
+  的 reciprocal 已被 E8 证伪；`tanh.approx.f32` 最大相对误差约
+  `2^-11`，也宽于题面 fp32 `1e-4`，静态否决；
+- remote `gpu:/tmp/flagos-t40-direct.HchJbu`，RTX 5070 Ti、PyTorch
+  `2.13.0+cu130`、Triton `3.7.1`；base/direct 官方 unittest 均 5/5。
+  候选/base SHA-256 分别为
+  `0e28121fa8f05e86e6d352d6ec073f40da1418cfe2efa63d8d4714eeee8e542d` /
+  `8740e8e9f6332046bbfc04a8f0f3f69e3e1067a3447dd520889a499cbe9a99c0`；
+  screen log SHA-256
+  `7a7b35cfe9f0719e486bcbf50fea3d73aed5607a707a23492c7db4c762d60b2e`；
+- 7 组 AB/BA×正反两轮，既有 clone-inclusive 协议三条 affected shape
+  收益 `+0.91/+2.91/+1.08%`，geomean **+1.63%**；只计 wrapper 的
+  补充协议为 `+5.02/+4.71/+0.53%`，geomean **+3.40%**。65536-block
+  fallback control 为 -0.04/+0.10%；bench script/log SHA-256 分别为
+  `b13acaf26588784cbd7f80cf276c4ce545b3cbb93d58b9748ae278dbead28fbe` /
+  `27ef1278022cd498ad224ac855fb57caf99d02b289a60d06e775e5a88faebd4e`；
+- 资源确实改善：fp16/bf16/fp32 regs 33/31/37→24/24/26，均 0 spill，
+  TTIR `scf.for` 1→0；resource script/log SHA-256 分别为
+  `e66dbf2bb332872d335cbca2a972d14c9ba7a67168bf84eab412493d7073d7ed` /
+  `265418415c6df186f266de51dd19ebfe126004fea2aa01b116640c727a0f4aec`。
+
+实时榜首 Nectar `2.11394792x`，E6 `1.76791667x`；四个 generic 芯合计
+需 **+32.25%** 才能登顶，连整题 +5% 也要求四芯 +8.24%。本轮最高
++3.40% 不过门，候选回滚、不提交。至此官方 SGLang/vLLM/FlashInfer
+可迁移结构、数学与参数轴均已覆盖，T40 继续封存于 E6。

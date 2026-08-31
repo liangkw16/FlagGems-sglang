@@ -20,7 +20,7 @@
 | 37 | sgemm_lora_a | invalid | 6/8(上限 7/8) | e2 | yes | 封存;候选可复用 | 2026-08-31 | [sgemm_lora_a](sgemm_lora_a.md) |
 | 38 | sigmoid_gate_topk_renorm | invalid | 7/8 | S0 | yes | E2 七芯均值4.9415x(+4.17倍)但昆仑同族崩溃;仅平台runtime修复后重开 | 2026-09-01 | [sigmoid_gate_topk_renorm](sigmoid_gate_topk_renorm.md) |
 | 39 | silu_and_mul_masked | valid | 8/8 | E7 19.8698x | yes | 收盘 E7 19.8698;树留 e10;E12 上游 persistent 条带仅+3.3%、设备 prefix 两核慢66.5%，均离线关闭 | 2026-09-01 | [silu_and_mul_masked](silu_and_mul_masked.md) |
-| 40 | softcap_inplace_logits | valid | 8/8 | e6 1.7679x | yes | 收盘 e6 1.7679(-12.6%);e7 generic2048/metax4096 双证伪,全部已知轴关闭,I/O 已贴下界 | 2026-08-31 | [softcap_inplace_logits](softcap_inplace_logits.md) |
+| 40 | softcap_inplace_logits | valid | 8/8 | e6 1.7679x | yes | e9 generic direct仅+1.63~3.40%;需+32.25%才登顶,官方可迁移轴已尽 | 2026-09-01 | [softcap_inplace_logits](softcap_inplace_logits.md) |
 | 41 | state_passing | invalid | 7/8(8/8 terminal) | E3 | yes | e4 组合候选(fc6dd4f)已 staged;重载需用户逐发授权 | 2026-08-31 | [state_passing](state_passing.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md
