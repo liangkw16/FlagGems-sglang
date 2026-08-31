@@ -8,8 +8,8 @@ validity: valid
 platform: 8/8
 team_best_stage: e10
 team_best_speedup: 5.5720
-sealed: no
-next: e11 metax tile32 已提交待评测(ZIP 8f9ec1b3);单轴门沐曦 > 4.328
+sealed: yes
+next: 重新封存 e10 5.5720;e11 metax tile32 中性证伪,沐曦 4.33=水位,轴尽
 updated: 2026-08-31
 ```
 
@@ -541,3 +541,19 @@ T33 延伸;沐曦 4.33 仅为天数 10.8 的 40%)。
 - 平台预注册:基础门 8/8;晋级门平均 > e10 `5.57195x`;单轴门
   沐曦 > e10 读数 `4.32813333x`;stop gate 沐曦 < 4.33 → 恢复
   generic 路由(删 metax vendor),tile32 对 metax 关闭。
+
+### E11 平台终态(sub 7487,2026-09-01 01:1x CST)
+
+preflight intent `bf57e536…` 单次 confirm(sub 7487,额度 28→27/30);
+远端回读一致(`verified`)。终态 **8/8、valid、平均 `5.57151667x`、
+非 team best**(距 e10 `5.57195` 仅 0.0004):
+
+- **沐曦 tile32 = 4.3362 vs tile16 的 4.3281(+0.2%,噪声)**——
+  tile 轴对 metax 中性,16 与 32 等价;沐曦 4.33 判定为本题 metax
+  水位(天数 10.8 的 40%,结构已无差别);
+- 其余七芯冻结字节读数全部持平(tianshu 10.82/haiguang 12.06/
+  huawei 1.85/card_a 6.08/card_b 7.73/enflame 1.46/kunlun 0.232);
+- 树已移除 `_metax` vendor(恢复 e10 团队最佳成员集);
+  **T33 重新封存于 e10 `5.57195x`**(距榜首 starwing 6.3983
+  -12.9%);已知轴尽:GROUPS_TILE(16 最优,32 对 metax 中性)、
+  昆仑瓦片、metax tile;剩余差距 = 昆仑 0.23 固有 + 沐曦/燧原水位。
