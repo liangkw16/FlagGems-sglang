@@ -678,3 +678,59 @@ E7 成为新冻结锚点；MetaX flat2048 轴已成功关闭，不重传相同�
   剩余真实杠杆(燧原 0.88/华为 6.7)合计不足以到 21.6。
 - T39 收盘:valid 保持 19.870(E7),榜位让与 starwing;
   额度 20/30。
+
+## E10:token 块跳过——无同步有效行压缩(2026-09-01 00:2x CST)
+
+状态:候选就绪待单次提交(研究报告钦点轴:"在 load 前跳过无效 token")。
+
+### 假设与两版设计
+
+- E7 平铺 kernel 对每个 padding 块付出完整迭代(整除链 +
+  masked_m 标量读 + 掩码求值),重度 padding 形状实为**发射吞吐
+  瓶颈**;reference 只切有效行,分母被 padding 拖垮可解释榜首面;
+- 第一版(前缀核 + 二分 + `.item()` 压缩 grid):screening 数值全过
+  但 **`.item()` 同步每次 ~25us**,均匀 50% padding 反而 +35~41%、
+  全满 +16%,仅极度 padding(2.7%)兑现 -27%——同步税吃掉全部
+  机制收益,弃置(gpu:/tmp/flagos-t39e10.PwbpgK 首轮日志含前缀核
+  int64 提升 bug 的修复记录);
+- 终版(无同步):每 program 拥有 [ROWS=8, 1024] 行块,块首行越过
+  `masked_m[e]` 即一载退出;行守卫为**统一标量分支**(非逐元素
+  谓词,T32 e4 学费);CTA 数 ÷8。
+
+### 离线扫描与 screening(RTX 5070 Ti)
+
+- ROWS ∈ {2,4,8,16} × 7 形状 × padding 谱(gpu:/tmp/flagos-t39sw.
+  QaxGdv):r8 为甜点——重度 padding 0.298、1024×64 均匀 0.537、
+  7168 宽行 0.882、全满 +3.3%(r16 全满 +4.9%/64×256 +7% 弃);
+- 终版 screening(gpu:/tmp/flagos-t39e10c.uCfeR5,日志 SHA-256
+  `e85cd47cce7b0dd7115bac68ff4dffc0d04d5bf95398a49738e0617f98e0ea0a`):
+  py_compile/isort/flake8/unittest **7/7**、NUMERIC_FAILS=0;
+  **重度 0.300/0.249(3.3-4x)、sparse 0.240-0.249(4x)、
+  1024×64 均匀 0.535(1.87x)、7168 宽 0.909**;最差全满 +9.8%
+  (无 padding 场景付行块开销)。
+
+### 构建身份与验证
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `b9a48a2e7f1ee3db8c2968c21522018e6cbc473a` |
+| generic SHA-256 | `c005537c37b7b6b84d1a3229f3c4e2f19ecdb4cd2f5dc687b5d5cad4cdb8a250` |
+| Ascend(无)/AMD | `a662c81024ad41eb9cf6bbbdf55c83bebdd681da3d27e219609856ae5074429f`(=E7) |
+| Enflame | `2741c29c2513039df63d70aa729b53776cef388828056defde96d37d154587a2`(=E8/E9) |
+| Kunlun | `2698072998829ead430005697c2262bd2dc8712e9ee4d221d833541b01a72462`(=E7) |
+| MetaX | `dc6e0d1ca5c0cee612b755cdb8d267e718f971a98b4b54967bbb80491cb80a0a`(=E7) |
+| test SHA-256 | 与 E7 同矩阵 + 压缩路径边界 profile(heavy/zeros/full/257 专家) |
+| canonical ZIP | `e10-b9a48a2/silu_and_mul_masked.zip`,15352 bytes,SHA-256 `8f6be390db2b26f9853054c3d418f2bc5481857a32ad28fe891d12d9c9b2ac50` |
+| ZIP 成员 | generic + `_amd` + `_enflame` + `_kunlunxin` + `_metax`,5 个;**逐成员字节核对**=平台已证来源(T34 教训执行) |
+| release | gpu:/tmp/flagos-t39e10-rel.xG7SbT:py_compile、unittest 7/7,release.log SHA-256 `cf63c2ab83843b529b75b2041bcc3c9d83ab0efdfab8610da6b154894d6631b1` |
+| specialize+注入预检 | 昇腾差分仅 `+import torch_npu`(协议首次实用)——新结构无平台适配需求信号,请求/响应 SHA 见 /tmp/kg-t39-*,响应 `c9a955c4…` vs 候选 `c005537c…` |
+
+### 平台预注册门
+
+- 基础门:8/8 valid。
+- 晋级门(team best):平均严格高于 E7 `19.86983333x`。
+- 机制门:华为/燧原(generic 路由弱芯)任一较 E7 读数(7.4947/
+  0.4400)+20% 以上,或平均 ≥ 21。
+- stop gate:平均 < E7 的 95%(即 <18.87,全满 shape 占比过高情形)
+  → 回滚 E7 字节,压缩轴关闭;vendor 四成员字节未变,读数按噪声
+  /水位处理不归因。冲榜参照 starwing 21.6(实时为准)。
