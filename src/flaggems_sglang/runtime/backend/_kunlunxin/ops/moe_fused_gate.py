@@ -17,6 +17,10 @@ import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
+# e7 re-carrier (held for a kunlun health window): e6 fired on the first
+# T31-specific 8/8 pass signal but still hit the inductor crash; the log
+# hypothesis stays untestable while the worker pool is unhealthy. Fire
+# only on a fresh T31 threshold-team-count rise.
 # e3 re-carrier: double-confirmed recovery window 2026-08-30 ~10:45
 # (T26 pass-team 5->6 AND T28 2->3 simultaneously); bytes = e2 otherwise
 # (1830s/compile_worker abort, same family as T25-T28); bytes otherwise
