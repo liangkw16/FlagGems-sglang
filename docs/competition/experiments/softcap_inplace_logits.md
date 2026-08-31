@@ -475,3 +475,22 @@ E6 `1.76791667x`:
   native tanh(E1 已为最优)、generic/metax BLOCK(本轮)、昆仑
   8192 未试但预期 <+0.1 单芯不足以登顶。本题单遍 in-place
   elementwise 已贴算法 I/O 下界,剩余差距属平台侧,结构性改写无空间。
+
+## E8:host 倒数乘法离线证伪(2026-09-01 06:3x CST)
+
+- 实时榜首已升至 Nectar `2.11394792x`,我方 E6 `1.76791667x`,
+  登顶需相对提升 `19.57%`;KernelGen MCP 在完整负结果约束下只提出
+  一个未试单变量:常规 cap 由 host 预计算倒数,将 kernel 内逐元素
+  `logits / cap` 改为 `logits * reciprocal`,零值/极小 cap 仍走原除法;
+- screening base `a1dbe21591bd`,候选 SHA-256
+  `c061e64e7c9b11a4712eb3cfa7cd2109f8ad68ba7c57ec53b1928398fd06fe42`;
+  远端 `gpu:/tmp/flagos-softcap-recip.sUMVzQ`,RTX 5070 Ti,
+  PyTorch `2.13.0+cu130` / Triton `3.7.1`;py_compile、Black、isort、
+  flake8、unittest **5/5** 全过(含 NaN/Inf/0/tiny cap、非连续行和
+  全 vendor),screen.log SHA-256
+  `8eb11ebf31cef93b77db707702305141599159e4c6785bf2f76a49b2cdcef2ec`;
+- 五轮交替 wrapper-inclusive AB/BA 的 candidate/base kernel 时间比为
+  `0.998/0.991/1.004/1.000`(131072 fp16、256x4096 bf16、
+  4096x2048 fp16、65536x1024 fp32),全部落在 ±1% 噪声内,远低于
+  预注册的 `>=3%` 代理晋级门。说明当前编译器已把标量除法降到等价
+  倒数路径;候选已回滚,未提交、未消耗额度,T40 继续封存于 E6。
