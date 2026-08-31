@@ -195,10 +195,12 @@ S0 只追求全部支持芯片正确且每芯达到题面最低门槛：
 5. wrapper-inclusive benchmark 与编译产物检查。
 
 NVIDIA 代理看不见目标芯自身的 lowering/编译器风险。vendor 候选或改动
-涉及某芯专属路径时，若该芯在 kernelgen-mcp 覆盖集内（华为/天数/海光/
-沐曦、国际芯片 NVIDIA 侧），按[SkillHub 工具集成](references/skillhub-tools.md)
-的"发射前 MCP 实机初筛"协议先在实机验证编译与数值，再进入打包和平台
-提交；燧原/昆仑/AMD 不在覆盖内，维持远端代理或账本明确标注静态未验证。
+涉及某芯专属路径时，按[SkillHub 工具集成](references/skillhub-tools.md)
+的"多芯验证通道矩阵"为受影响芯选最强通道：MCP 覆盖芯（华为/天数/海光/
+沐曦、NVIDIA 侧）先走"发射前 MCP 实机初筛"（字节绑定 + 编译 + 数值），
+需要完整题面矩阵或计时时起 vendor 容器实机；燧原/昆仑/AMD 不在 MCP
+覆盖内，维持远端代理或账本明确标注静态未验证。新增 vendor 文件必须
+接进该算子 unittest 矩阵（`tests/_op_variants.py`，T35 为样板）。
 
 未提交候选可用于快速筛选，但不能作为 ZIP 的最终验证证据。候选通过初筛后，
 先将本次 source 和 test 按明确路径 commit，再用该 commit 的逐字节内容重跑

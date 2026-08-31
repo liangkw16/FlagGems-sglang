@@ -33,3 +33,6 @@ tests/*.json
 # information for Eclipse / Flash Builder.
 
 .DS_Store
+
+# Runtime logs referenced by SHA-256 in competition ledgers
+log/
