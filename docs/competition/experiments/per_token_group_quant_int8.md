@@ -9,7 +9,7 @@ platform: 8/8
 team_best_stage: e7
 team_best_speedup: 4.5716
 sealed: no
-next: e8 轴=GROUPS_TILE 1/4/8 按形分桶(41 算子核验建议);昆仑瓦片证伪已回滚
+next: e8 GROUPS_TILE=16 已提交待评测(代理 1.6x@大形状,geomean 0.923,ZIP bf400ccf)
 updated: 2026-08-31
 ```
 
@@ -353,3 +353,50 @@ SHA-256 与 canonical ZIP 完全一致(`verified`)。
 - 跨芯知识:**`[4,G]` 瓦片的收益不迁移到昆仑**——六芯兑现的结构
   在 XPU lowering 下与单组循环打平略负,昆仑对每 program 工作量
   不敏感(0.22-0.23 恒定),瓶颈在别处(疑 store int8/除法 lowering)。
+
+## E8:generic GROUPS_TILE 4 → 16(2026-08-31 19:3x CST)
+
+状态:候选就绪待单次提交。41 算子核验建议的"1/4/8-group 按形分桶"
+轴,先做离线扫描再收敛为平铺单变量。
+
+### 离线扫描与确认基准(RTX 5070 Ti,零额度)
+
+- 扫描(gpu:/tmp/flagos-t33e8.a5rugW,sweep_tile.py):8 形状 × 3
+  dtype × t1/t2/t4/t8/t16 对 t4 基线——**t16 在高组数形状最高
+  1.85×**(65536×256 G64 fp16 0.555、8192×512 0.76-0.80、
+  1024×2560 0.84-0.89),小形状 ≤+9%(绝对 ~0.015ms,launch 噪声),
+  fp32 大形状持平;t8 全面被 t16 支配 → 选平铺 16,不做分派。
+- 确认基准(gpu:/tmp/flagos-t33e8b.H1nQI4,bench_e8.py 对 t4 对照):
+  **全部契约合法形状逐位一致**;geomean `0.9231`,65536×256
+  fp16/bf16 `0.605/0.617`、8192×512 ~`0.75`;
+  **tile16 = 40 regs / 0 spills / 64B shared**(t4:29/0/16)——
+  无溢出,跨芯寄存器风险可控。首轮一处 `129x1025 G32` "失配"
+  定性为越契约形状(K 不整除 group_size,题面禁止):两 kernel
+  均不覆盖余数元素,`torch.empty` 尾部垃圾位导致 `torch.equal`
+  误报;改合法 `129x1024 G32` 后全绿,unittest 8/8 从未失败。
+
+### 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `ef912999b001f98258bfd16e829ad97a26aed3d2` |
+| generic SHA-256 | `265716528d49099a8c788bdff91ba8190b83a074421c0de210552fb5a9e4a2a6`(=screening 字节) |
+| Ascend SHA-256 | `fa7a1a46573f0e0179573ec8a8ebec10463dba42c942f68da308b62e9c0fd670`(=e3,冻结) |
+| Enflame SHA-256 | `c6ff5fc03dea9f52c40eeb7dd19c6600e2962814dfb5771ddea7e1a168e3b6b0`(=e2,冻结) |
+| Kunlun SHA-256 | `017f993a5bb0c9e79f7365152266067ba150a968632b14b1e4819b9e7ecd02dc`(=钉死 S0) |
+| test SHA-256 | `2ec5b35b226c88865a5ea62133aa6639ab7ce50c1ded4416bd8526399d1d13d5`(=e7) |
+| canonical ZIP | `artifacts/competition/per_token_group_quant_int8/e8-ef91299/per_token_group_quant_int8.zip`,12284 bytes,SHA-256 `bf400ccf1ab3c261decda9fd7a2d8a91d2908fac456e826c18ed4fa1301b6a39` |
+| ZIP 成员 | generic + `_ascend` + `_enflame` + `_kunlunxin`;`unzip -t` 无错;成员哈希与 commit blob 逐项一致 |
+
+### 验证与门
+
+- screening(同上目录):py_compile/isort/flake8/unittest 8/8 全过,
+  screen.log SHA-256 `698b43bf86b6885f84044699c6eec519d0cf5ad3eb84bfd60cbc9bab345350a6`;
+- release(git 对象,gpu:/tmp/flagos-t33e8-rel.fvdSY9):同套 +
+  `RELEASE_OK`,日志 SHA-256
+  `7b30926b91dd5efe54cb946797319846a8f86412fab38ca0b168724f724670ad`;
+- 平台预注册:基础门 8/8 valid;晋级门平均 > e7 `4.57156667x`;
+  机制门 = generic 路由五芯(天数/海光/沐曦/国际 A/B)合计较 e7
+  读数(7.052/9.143/3.439/6.208/8.121)均值 +5% 以上;stop gate =
+  五芯中 ≥3 芯回退 >5% → GROUPS_TILE 扩展轴关闭回滚 4;
+  昆仑/燧原/华为字节未变,读数按水位/噪声处理不归因。
