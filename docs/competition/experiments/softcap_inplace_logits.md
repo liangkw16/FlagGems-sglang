@@ -415,6 +415,14 @@ HTTP 401),认证恢复后先实时 preflight 再单次提交;额度按 16:5x 只
   paired `1.0117`,fp16 转为 `1.0354/1.0515`——判定为噪声边界,
   无结构性回退;CUDA 代理本就无权裁决非 CUDA 芯的 BLOCK 赌注。
 
+### release 验证(取自 Git 对象)
+
+- `gpu:/tmp/flagos-t40e7-rel.pbXYkm`,mode 0700,六文件均由
+  `cbaa716` Git 对象生成,前后哈希与上表逐项一致;
+- py_compile、isort、flake8、unittest **5/5** 全过,`RELEASE_OK`;
+  日志 SHA-256
+  `83842342b757a8e9bcb7a4284b6a9e6118ed4c6402d0a148792dacb6eb3ddea5`。
+
 ### 平台预注册门(提交前登记)
 
 - 基础门:8/8 valid。
