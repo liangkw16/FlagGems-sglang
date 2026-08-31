@@ -17,7 +17,10 @@ import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
-_GROUPS_TILE = 4
+# e10: 4 -> 16 mirrors the e8/e9 tile bump (platform: five chips
+# +20~54%, enflame +45%); [16,128] fp32 tile ~8KB stays far under
+# the Ascend UB budget that e3 measured at 4KB-well-under
+_GROUPS_TILE = 16
 
 
 @triton.jit
