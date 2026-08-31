@@ -6,10 +6,10 @@ operator: per_token_group_quant_int8
 batch: 3
 validity: valid
 platform: 8/8
-team_best_stage: e7
-team_best_speedup: 4.5716
+team_best_stage: e8
+team_best_speedup: 5.4430
 sealed: no
-next: e8 GROUPS_TILE=16 已提交待评测(代理 1.6x@大形状,geomean 0.923,ZIP bf400ccf)
+next: e8 tile16 兑现 +19.1%(距榜首 -14.9%);下一轴=t32 离线扫描/燧原路由
 updated: 2026-08-31
 ```
 
@@ -400,3 +400,33 @@ SHA-256 与 canonical ZIP 完全一致(`verified`)。
   读数(7.052/9.143/3.439/6.208/8.121)均值 +5% 以上;stop gate =
   五芯中 ≥3 芯回退 >5% → GROUPS_TILE 扩展轴关闭回滚 4;
   昆仑/燧原/华为字节未变,读数按水位/噪声处理不归因。
+
+### E8 平台提交与终态(sub 7327,2026-08-31 19:4x CST)
+
+preflight intent `caaf0a9e…` 全匹配后单次 confirm(sub 7327,
+daily_seq 24,额度 7→**6/30**);对象存储匿名回读 12284 bytes,
+SHA-256 与 canonical ZIP 完全一致(`verified`)。
+
+终态 **8/8、valid、平均 `5.44295833x`、is_team_best=true**
+(e7 `4.57156667` → **+19.1%**;距榜首 starwing 6.3983 收窄至
+**-14.9%**):
+
+| 芯片 | e7 | E8 | 变化 | 文件 |
+| --- | ---: | ---: | ---: | --- |
+| 天数 | 7.052 | **10.822** | **+53.5%** | generic(16) |
+| 海光 | 9.143 | **11.875** | **+29.9%** | generic(16) |
+| 沐曦 | 3.439 | **4.320** | **+25.6%** | generic(16) |
+| 国际 A | 6.208 | 5.989 | -3.5% | generic(16) |
+| 国际 B | 8.121 | 7.716 | -5.0% | generic(16) |
+| 燧原 | 0.854 | 1.028 | 水位(冻结字节) | enflame |
+| 昆仑 | 0.2197 | 0.2324 | 钉死字节复位 | kunlunxin |
+| 华为 | 1.535 | 1.562 | 噪声(冻结字节) | ascend |
+
+- 机制门:五芯均值 6.793 → 8.144(**+19.9%**,远超 +5% 门)——
+  代理扫描的方向与幅度在平台精确兑现(代理 t16/t4 大形状
+  0.61x ↔ 天数/海光 +30~54%);
+- stop gate 未触发(仅国际 A/B 各 -3.5%/-5.0%,2 芯且临界);
+  跨芯谱:天数/海光/沐曦大幅受益,国际 A/B 轻微回退——与
+  e5 瓦片轮的芯片谱一致,放大同一机制;
+- 下一单变量:离线扫 GROUPS_TILE=32(寄存器 0-spill 前提)与
+  燧原 vendor 路由换 tile-16 generic 的可行性。
