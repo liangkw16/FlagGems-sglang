@@ -121,3 +121,20 @@ NVIDIA 上 stride-2 访存硬件合并良好;且 T30 的逐元素 gather 在
 燧原 0.399(新 generic 字节未变,稳定低值);昆仑钉死 0.289 持平。
 **知识:昇腾 2D 广播 NaN 的修法 = 机制保留、访存全 1D 化。**
 距榜首(EvokeAgent 8.4884)-31.2%,结构性差距不变。
+
+### E4:燧原宽头瓦片 vendor(sub 7251,2026-08-31 16:4x CST)
+
+- 假设:E2 generic 的 [4, HALF_DIM] 瓦片仅 ~2KB,低于燧原偏好的
+  每 program 工作量(T33 +14 倍/T39 BLOCK 4096 家族);vendor =
+  头瓦片自适应放宽到 16(min(next_pow2(H), 16)),kernel 体不变,
+  commit `50dc5a0`;
+- screening(gpu:/tmp/flagos-t35e4.C2YCvf):unittest 5/5,lint 三项
+  过(修正一处 black 折行);代理 gen4 持平(±15% 记录用)。
+
+### E4 终态(sub 7251):燧原宽瓦片证伪
+
+- 8/8 valid,avg 5.8231(< e3 锚点 5.8458,team best 保持 e3);
+- **燧原 0.399→0.401 持平——宽瓦片模型族首个反例**:本题瓶颈
+  不在瓦片尺寸,疑在 stride-2 偶奇访存(与 T30 燧原 8.7x 的
+  gather 反例互证);燧原轴关闭,T35 收盘于 e3 5.8458x;
+- 其余七芯与 e3 读数一致(±2% 噪声,华为 0.72/昆仑 0.29 钉字节)。
