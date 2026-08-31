@@ -99,11 +99,11 @@ class SoftcapInplaceLogitsTest(unittest.TestCase):
 
     def test_tile_boundaries_and_grid_stride(self):
         cases = {
-            "generic": (2047, 2048, 2049),
+            "generic": (1023, 1024, 1025),
             "ascend": (511, 512, 513, 48 * 512 + 17),
             "enflame": (32767, 32768, 32769, 12 * 32768 + 17),
             "kunlunxin": (4095, 4096, 4097),
-            "metax": (4095, 4096, 4097),
+            "metax": (2047, 2048, 2049),
         }
         for name, lengths in cases.items():
             for length in lengths:

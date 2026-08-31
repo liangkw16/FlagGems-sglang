@@ -17,7 +17,7 @@ import triton
 import triton.language as tl
 from triton.language.extra import libdevice as tl_extra_shim
 
-_BLOCK_SIZE = 2048
+_BLOCK_SIZE = 1024
 _MAX_GRID = 65535
 
 

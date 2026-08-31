@@ -8,8 +8,8 @@ validity: valid
 platform: 8/8
 team_best_stage: e6
 team_best_speedup: 1.7679
-sealed: no
-next: e7 候选就绪(generic 2048+metax 4096,ZIP a315ae5a);平台 token 过期,认证恢复后 preflight+单次提交
+sealed: yes
+next: 收盘 e6 1.7679(-12.6%);e7 generic2048/metax4096 双证伪,全部已知轴关闭,I/O 已贴下界
 updated: 2026-08-31
 ```
 
@@ -433,3 +433,45 @@ HTTP 401),认证恢复后先实时 preflight 再单次提交;额度按 16:5x 只
   关闭(回退 1024);沐曦 <1.548 则 metax 回退 2048 并关 4096 扩展。
   冲榜需平均 > 实时榜首(12:37 快照 EvokeAgent `2.0232x`,提交时
   以实时读数为准)。
+
+### E7 平台提交(sub 7280,2026-08-31 17:54:58 CST)
+
+认证恢复后 17:53 实时 status 核对 tuple(competing/submitting、
+can_submit、额度 10/30、窗口与间隔满足);preflight intent
+`62e76724…`(spec 与账本逐项一致)单次 confirm 成功,daily_seq 21,
+提交后额度 **9/30**。CLI 内建远端验签因 shell 未设
+`FLAGOS_REMOTE_ZIP_HOST` 报 unavailable;按规则取本题既有 status
+输出中已核实 hostname `flagos.ks3-cn-beijing.ksyuncs.com` 匿名 GET
+回读:17445 bytes,SHA-256 与 canonical ZIP 完全一致(`verified`)。
+watch 绑定 `file_url_sha256=b641847a…`。
+
+### E7 平台终态(sub 7280):两轴证伪,T40 收盘
+
+终态 **8/8、valid、平均 `1.72373958x`、非 team best**;团队最佳保持
+E6 `1.76791667x`:
+
+| 芯片 | E6 | E7 | 变化 | 文件 |
+| --- | ---: | ---: | ---: | --- |
+| 天数 | 2.096 | 2.033 | `-3.0%` | generic(2048) |
+| 沐曦 | 1.548 | 1.554 | `+0.3%` | metax(4096) |
+| 燧原 | 2.324 | 2.328 | 持平(冻结) | enflame |
+| 海光 | 2.294 | 2.206 | `-3.8%` | generic(2048) |
+| 昆仑 | 0.943 | 0.943 | 持平(冻结) | kunlunxin |
+| 华为 | 0.743 | 0.716 | `-3.6%`(冻结字节,噪声标尺) | ascend |
+| 国际 A | 2.061 | 1.944 | `-5.7%` | generic(2048) |
+| 国际 B | 2.134 | 2.066 | `-3.2%` | generic(2048) |
+
+- **generic-2048 证伪**:四个受影响芯全部负向(-3.0~-5.7%),方向
+  一致;冻结字节的华为同轮 -3.6% 给出平台噪声标尺 ~3-4%,card_a 的
+  -5.7% 超出噪声。字面 stop gate(≥3 芯 >5%)未触发,但晋级门失败
+  + 四芯一致负向,按实质关闭 generic BLOCK 扩展轴。
+- **metax-4096 证伪**:+0.3% 持平,无增益,4096 扩展关闭(2048 为
+  沐曦本题峰值,e6 已冻结)。
+- 树已回滚 E6 字节(generic `8740e8e9…`、metax `e2a67a91…`,远端
+  unittest 5/5);测试矩阵保留 metax 覆盖(边界随 2048 调整)。
+- **T40 收盘**:team best E6 `1.76791667x`,距 12:37 快照榜首
+  EvokeAgent `2.0232x` -12.6%。全部已知轴关闭:华为 direct(E4/E5
+  编译拒绝)、华为 native tanh(E2)、华为 BLOCK(T24 反证)、generic
+  native tanh(E1 已为最优)、generic/metax BLOCK(本轮)、昆仑
+  8192 未试但预期 <+0.1 单芯不足以登顶。本题单遍 in-place
+  elementwise 已贴算法 I/O 下界,剩余差距属平台侧,结构性改写无空间。

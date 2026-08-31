@@ -17,7 +17,7 @@ import triton
 import triton.language as tl
 from triton.language.extra import libdevice as tl_extra_shim
 
-_BLOCK_SIZE = 4096
+_BLOCK_SIZE = 2048
 _MAX_GRID = 65535
 
 
@@ -32,10 +32,9 @@ def _softcap_inplace_logits_kernel(
     BLOCK_SIZE: tl.constexpr,
     CAP_RECIPROCAL_OVERFLOWS: tl.constexpr,
 ):
-    # metax vendor (e7): the only change vs the generic is
-    # _BLOCK_SIZE 2048 -> 4096 - the e6 step 1024 -> 2048 won +6% on
-    # muxi here, and the sibling BLOCK curve (T24 softcap_out,
-    # 256 -> 1024 -> 4096 monotonic up) is not saturated at 2048
+    # metax vendor (e6): the only change vs the generic is
+    # _BLOCK_SIZE 1024 -> 2048 - the exact single variable that won
+    # +65% on muxi for T39 (flat BLOCK 2048) and +11% on T29
     pid = tl.program_id(0)
     grid_size = tl.num_programs(0)
     offsets = tl.arange(0, BLOCK_SIZE)
