@@ -10,7 +10,7 @@
 | 27 | fused_moe_router_tensorcore | invalid | 7/8(七芯过,仅昆仑) | e7 | yes | 平台工单;README 早期 6/8 口径已过期 | 2026-08-31 | [fused_moe_router_tensorcore](fused_moe_router_tensorcore.md) |
 | 28 | gate_up_lora_b | invalid | 7/8 | e9 七芯~18.5x | yes | 工单 rerun 或用户授权注释载体重载 | 2026-08-31 | [gate_up_lora_b](gate_up_lora_b.md) |
 | 29 | gelu_and_mul | valid | 8/8 | e8 2.7394x | yes | exact-erf 官方实现与 minimax 数值边界复核;预期收益远不足66.68%榜差,封存 | 2026-09-01 | [gelu_and_mul](gelu_and_mul.md) |
-| 30 | interleaved_rope | valid | 8/8 | S0 25.8353x | yes | 代理可见轴局部最优;榜首 36.4 未解释 | 2026-08-31 | [interleaved_rope](interleaved_rope.md) |
+| 30 | interleaved_rope | valid | 8/8 | S0 25.8353x | yes | 实时榜首37.7641;一读一写下界已达,MCP/官方实现复核无可信46.17%路径 | 2026-09-01 | [interleaved_rope](interleaved_rope.md) |
 | 31 | moe_fused_gate | invalid | 7/8 | e7(=e6字节载体) 七芯~7.73x | yes | 仅工单或结构改写(topk 形态) | 2026-08-31 | [moe_fused_gate](moe_fused_gate.md) |
 | 32 | moe_fused_mul_sum | valid | 8/8 | S0 4.4829x | yes | 收盘 S0 4.4829;e4 零权重跳过证伪(drop 面不存在+谓词代价),榜首 23.9 判定高水位产物 | 2026-08-31 | [moe_fused_mul_sum](moe_fused_mul_sum.md) |
 | 33 | per_token_group_quant_int8 | valid | 8/8 | e10 5.5720x | yes | 重新封存 e10 5.5720;e12 去 contiguous/warps 2,4,8 全部低于5%门,已知参数轴尽 | 2026-09-01 | [per_token_group_quant_int8](per_token_group_quant_int8.md) |

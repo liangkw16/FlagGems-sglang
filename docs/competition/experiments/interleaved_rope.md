@@ -9,8 +9,8 @@ platform: 8/8
 team_best_stage: S0
 team_best_speedup: 25.8353
 sealed: yes
-next: 代理可见轴局部最优;榜首 36.4 未解释
-updated: 2026-08-31
+next: 实时榜首37.7641;一读一写下界已达,MCP/官方实现复核无可信46.17%路径
+updated: 2026-09-01
 ```
 
 状态:S0 候选就绪,待额度重置后首投(与 T29 同因:2026-08-27 团队当日
@@ -177,3 +177,19 @@ grid-stride)是代理可见轴上的局部最优;与榜首 12.5% 差距不可由
 7.26x,口径若可比则更慢)。集成风险(平台编译时长、torch_npu/tle.dsa
 在评测环境的可用性未证)高而收益证据不足,按止损纪律**不采纳**。
 筛选记录:log/kernelgen-round/out_t30_at_huawei.json(job 877a19c9)。
+
+## 2026-09-01 登顶复核(只读止损)
+
+- 实时榜首升至 `37.7641x`，S0 `25.8353x` 需 **+46.17%**；逐芯为
+  天数 71.864、海光 42.540、card_a 27.100、card_b 25.400、沐曦
+  17.960、燧原 8.734、华为 7.255、昆仑 5.831x；
+- 当前 fused kernel 每个输出元素恰好一次全局读、一次全局写且仅一次
+  launch，已达到题面数据流下界。[vLLM 当前官方实现](https://github.com/vllm-project/vllm/blob/main/vllm/model_executor/layers/rotary_embedding/mrope.py)
+  仍是 `x[0].clone()` 加两次 stride-3 slice 赋值，不能提供低于一读一写的
+  可迁移结构；SGLang 也未发现该独立重排算子的更低数据流实现；
+- 已跑 MCP 的 2D、行条带、三元组三条结构分别显著回退或数学不成立；
+  `dim constexpr` 仅 +1%，华为 autotune 也低于现有实现。现阶段继续扫
+  BLOCK/warps 只能调内存 kernel 的个位数噪声，无法覆盖 46.17% 榜差；
+- 因无新单变量且旧证据已覆盖结构、参数、单芯 autotune 三层，本轮不改
+  源码、不消耗额度。重开条件仅限新 vendor 原语或榜首逐芯谱显示单芯可
+  贡献至少 95.43 总分增量。
