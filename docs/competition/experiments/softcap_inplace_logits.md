@@ -9,7 +9,7 @@ platform: 8/8
 team_best_stage: e6
 team_best_speedup: 1.7679
 sealed: no
-next: 华为 0.557 单芯缺口是登顶最大杠杆(direct 轴已关)
+next: e7 候选就绪(generic 2048+metax 4096,ZIP a315ae5a);平台 token 过期,认证恢复后 preflight+单次提交
 updated: 2026-08-31
 ```
 
@@ -360,3 +360,68 @@ preflight 全过(额度 22/30),单次提交;终态待回填。
 - BLOCK 2048 在本题只兑现 +6%(T39 的 +65% 依赖写满 padding 的
   flat-full 形态,不可全迁移);距榜首(EvokeAgent 2.0232)
   -12.6%;metax 轴按预注册(+11%~+65% 预期)偏低但正向,不扩扫。
+
+## E7:generic 2048 + metax 4096 双不相交 BLOCK 步进(2026-08-31 17:5x CST)
+
+状态:**候选就绪,未提交**——平台 token 过期(17:2x CST `status` 返回
+HTTP 401),认证恢复后先实时 preflight 再单次提交;额度按 16:5x 只读
+口径 10/30 推算,提交时以实时读数为准。
+
+### 假设与依据
+
+- S0 期榜首同芯数据指出我方两大缺口:天数 2.09 vs 2.61、华为 0.74 vs
+  1.32;华为 BLOCK 扩展在姐妹题 T24 已平台证伪、direct 两连编译失败,
+  华为字节冻结。唯一能碰到天数缺口的已证轴是 BLOCK:本题 e6 同变
+  (1024→2048)在沐曦 +6%,T24 家族曲线 256→1024→4096 单调上行。
+- 两步进路由不相交(generic→天数/海光/国际 A/B,`_metax`→沐曦),
+  逐芯归因保留;昆仑 8192 未捆绑(XPU 编译未证,失败会连坐整包,
+  预期收益仅 ~+0.1 单芯)。
+
+### 变更集(单变量家族,逐芯可归因)
+
+- generic `_BLOCK_SIZE 1024 → 2048`;metax vendor `2048 → 4096`;
+  ascend/enflame/kunlunxin 与 E6 逐字节一致(哈希见下)。
+- 测试矩阵补齐 metax(此前 E6 未接入),generic/metax tile 边界 case
+  同步为 2047/2048/2049 与 4095/4096/4097。
+
+### 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `cbaa71617d435168de9d60ae1d139cc6bf5ad18b` |
+| generic SHA-256 | `df16530ed8d3812013f3a9b5d2dd2e8e341cea0274132d7b07912432a9d45016` |
+| Ascend SHA-256 | `46faecf8f5ef853b798a072f56c03487cac37179201ecdfbfe5d756460cf907f`（=E1/E3/E6) |
+| Enflame SHA-256 | `b5d049fd12a3d90388884e394fc4f055aa7817640fb9b6c39b857e003836a7dc`（=E1/E3/E6) |
+| Kunlun SHA-256 | `56f5350374104216da658f207bf624681bc9a4c6ba774f3e49714bb5595e1ba1`（=E3/E6) |
+| MetaX SHA-256 | `6ece7151f16cfdf78d0bd47f8f673235a4e488c4febd6a9e6501f3f140d76820` |
+| test SHA-256 | `467384be33ff836e5746a7ca7acc85fb1e592ec6604f0c6facf3324674c09d5b` |
+| canonical ZIP | `artifacts/competition/softcap_inplace_logits/e7-cbaa716/softcap_inplace_logits.zip`,17445 bytes,SHA-256 `a315ae5a6d590dc1d1ccd84496ba626371f70dee0e81645ef91fd0eb4afc76a0` |
+| ZIP 成员 | generic + `_ascend` + `_enflame` + `_kunlunxin` + `_metax`,5 个 UTF-8 `.py`;`unzip -t` 无错;成员哈希与 commit blob 逐项一致 |
+
+### screening 证据(RTX 5070 Ti 代理,gpu:/tmp/flagos-t40e7.dFlj8R)
+
+- 日志 SHA-256 `f5d6412da0166109745c8eb3c5bcb1c886bcce10a03178a56510bf65fa9f3f75`;
+  bench 脚本 SHA-256 `3d157e4dbbdbe1ab64536eb1e7cb1198b5449b1e14761fca7e41514ed2917d9e`;
+  运行前后文件哈希一致,lint 未改写字节。
+- py_compile、isort、flake8 过;远端 black 26.5.1 对冻结字节同样报
+  reformat(工具漂移),本地 black 25.12.0 四文件全过。
+- unittest **5/5 OK**(全 vendor 矩阵含 metax);bench 内置 oracle
+  数值复核 NUMERIC_OK(首轮 FAIL 为脚本 oracle 漏乘 cap 的自误,
+  kernel 无关,已修并重跑)。
+- 编译资源:generic 40 regs / metax 46 regs,0 spill、0 shared。
+- 五轮交替 AB/BA(5 代理 shape):generic2048/1024 geomean `0.9956`
+  (最差 0.9784);metax4096/2048 geomean `1.0133`(最差 0.9481,
+  fp32 单 shape 压线)。11 轮复测该 fp32 shape:median `0.9507` 但
+  paired `1.0117`,fp16 转为 `1.0354/1.0515`——判定为噪声边界,
+  无结构性回退;CUDA 代理本就无权裁决非 CUDA 芯的 BLOCK 赌注。
+
+### 平台预注册门(提交前登记)
+
+- 基础门:8/8 valid。
+- 晋级门(team best):平均严格高于 `1.76791667x`。
+- 归因门:天数/海光/国际 A/B 各自与 E6(2.096/2.294/2.061/2.134)
+  对比读出 generic-2048 单变效果;沐曦与 1.548 对比读出 metax-4096。
+- stop gate:generic 四芯中 ≥3 芯回退 >5% 则 generic BLOCK 轴永久
+  关闭(回退 1024);沐曦 <1.548 则 metax 回退 2048 并关 4096 扩展。
+  冲榜需平均 > 实时榜首(12:37 快照 EvokeAgent `2.0232x`,提交时
+  以实时读数为准)。
