@@ -258,3 +258,22 @@ preflight 全过(额度 3/30 消耗 1 → 2/30);单次 confirm 提交,
   tl.arange 崩溃,已修);
 - commit `b428879`,ZIP `bddf52e3…`,3 成员(generic+enflame+
   kunlunxin[e1 字节,已证中性]);unittest 8/8;额度 28/30。
+
+### E3:kernelgen 二轮宽瓦片(2026-08-31,未提交,双重否决)
+
+- kernelgen `optimize_kernel` iter1 产出 [ROWS×COLS] 宽瓦片
+  (weights 2D 瓦片 + K 静态展开);入库前三处自修:TOP_K 非 2 次幂
+  `tl.arange` 崩溃雷(T33 前科)、显式 `num_stages` 昆仑 invalid 参数、
+  权重改 per-k 一维载入;
+- 候选 commit 未产生:screening(gpu:/tmp/flagos-catchup.NOF9kN,
+  `t32_candidate` SHA `0192e158…`)双重失败:
+  1. **代理门失败**:六 shape AB/BA 对 S0 geomean ≈ **-4%**
+     (16×4×2048 2.60→2.07x、256×8×4096 5.83→5.45x,
+      65536×4×1024 8.51→8.50x,1024×16×512 +1.9%,fp32 +3.1%)
+     ——远低于预注册 +30% 门;
+  2. **unittest 1 失败**:65/7175 元素失配(最大 abs 7.84),
+     根因 = 列掩码误用 tile 内偏移(`col_offs < hidden_dim` 应为
+     `(col_tile*COLS + col_offs) < hidden_dim`,尾瓦片越界);
+- 结论:宽瓦片结构在 NVIDIA 代理上不优于 S0 的窄条 K 循环,
+  YY-L 23.9x 的领先面仍未被该轴解释;树已回滚 S0 字节,
+  候选字节保留于 screening 载荷;本题继续持有 S0 4.4829x。
