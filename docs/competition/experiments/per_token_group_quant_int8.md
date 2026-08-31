@@ -6,10 +6,10 @@ operator: per_token_group_quant_int8
 batch: 3
 validity: valid
 platform: 8/8
-team_best_stage: e8
-team_best_speedup: 5.4430
+team_best_stage: e9
+team_best_speedup: 5.5150
 sealed: no
-next: e9 燧原 tile16 已提交待评测(ZIP 4bf87eee);t32/t64 扫描关轴,16 为最优
+next: e10 华为 tile16 已提交待评测(ZIP 76cec783);昆仑 0.23 固有水位
 updated: 2026-08-31
 ```
 
@@ -452,6 +452,41 @@ SHA-256 与 canonical ZIP 完全一致(`verified`)。
   `artifacts/competition/per_token_group_quant_int8/e9-cf188a0/`
   `per_token_group_quant_int8.zip`,12284 bytes,SHA-256
   `4bf87eee472f05b167c1eeb8f7f7edd309b62c7ce11ea4f39e2c5ee10505dfb2`;
-- 平台预注册:基础门 8/8;晋级门平均 > e8 `5.44295833x`;单轴门
-  燧原 > e8 读数 `1.02773333x`;水位注记:燧原同字节历史读数
-  0.35-6.28 波动,终态判读以结构面为准。
+### E9 平台终态(sub 7331,2026-08-31 19:5x CST)
+
+preflight intent `e0407471…` 单次 confirm(sub 7331,daily_seq 25,
+额度 6→**5/30**);远端回读一致(`verified`)。终态 **8/8、valid、
+平均 `5.51501667x`、is_team_best=true**(e8 → +1.3%):
+
+| 芯片 | e8 | E9 | 变化 | 文件 |
+| --- | ---: | ---: | ---: | --- |
+| **燧原** | 1.028 | **1.488** | **+44.8%(单变量兑现)** | enflame(16) |
+| 天数 | 10.822 | 10.804 | 持平(冻结) | generic |
+| 海光 | 11.875 | 11.964 | 持平(冻结) | generic |
+| 沐曦 | 4.320 | 4.313 | 持平(冻结) | generic |
+| 国际 A | 5.989 | 6.066 | 噪声 | generic |
+| 国际 B | 7.716 | 7.782 | 噪声 | generic |
+| 华为 | 1.562 | 1.473 | 噪声(冻结) | ascend |
+| 昆仑 | 0.232 | 0.231 | 持平(冻结) | kunlunxin |
+
+燧原 +44.8% 远过单轴门(>1.028),tile-16 结构在第七芯兑现;距榜首
+starwing 6.3983 收窄至 **-13.8%**。
+
+## E10:华为 vendor tile 4 → 16(2026-08-31 20:0x CST)
+
+- 同一单变量的最后一芯延展:华为 1.47 是剩余唯一低于家族水位的芯;
+  [16,128] fp32 瓦片 ~8KB vs e3 期 4KB"远低于 UB 预算"的实测,
+  昇腾对宽瓦片的编译接受是平台假设(T40 direct 两连拒收前科,
+  但那是无循环直通结构,非瓦片);
+- screening(gpu:/tmp/flagos-t33e10.*):unittest 8/8;release
+  (git 对象,gpu:/tmp/flagos-t33e10-rel.pI7KFe):unittest OK,
+  rel.log SHA-256 `ddd16b8e2d858b89451d1c37541c1671d5a0b0febda5e4559556f3e1e7a9ac40`;
+- 构建身份:source/verification commit
+  `8e344b49d1326ddf21357f2218196b5d92cbf532`;ascend SHA-256
+  `9a8a7468bc9bf721bbb79ed2d424ef25773625d746ec51275147bee4e5c6fe14`;
+  其余成员 = e9 同值;canonical ZIP
+  `e10-8e344b4/per_token_group_quant_int8.zip`,SHA-256
+  `76cec783f7ec857561d6d6ff05c3b24850f61a6dc000947cca2f69aff5521d9b`;
+- 平台预注册:基础门 8/8;晋级门平均 > e9 `5.51501667x`;单轴门
+  华为 > e9 读数 `1.47273333x`;stop gate 华为编译失败或回退 →
+  ascend vendor 回滚 e3 tile4 字节,瓦片轴对昇腾关闭。
