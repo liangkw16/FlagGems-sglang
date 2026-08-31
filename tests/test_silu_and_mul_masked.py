@@ -33,59 +33,44 @@ if SPEC is None or SPEC.loader is None:
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
-KUNLUN_MODULE_PATH = (
-    Path(__file__).parents[1]
-    / "src"
-    / "flaggems_sglang"
-    / "runtime"
-    / "backend"
-    / "_kunlunxin"
-    / "ops"
-    / "silu_and_mul_masked.py"
-)
-KUNLUN_SPEC = importlib.util.spec_from_file_location(
-    "silu_and_mul_masked_kunlunxin_module", KUNLUN_MODULE_PATH
-)
-if KUNLUN_SPEC is None or KUNLUN_SPEC.loader is None:
-    raise RuntimeError(f"cannot load {KUNLUN_MODULE_PATH}")
-KUNLUN_MODULE = importlib.util.module_from_spec(KUNLUN_SPEC)
-KUNLUN_SPEC.loader.exec_module(KUNLUN_MODULE)
 
-AMD_MODULE_PATH = (
-    Path(__file__).parents[1]
-    / "src"
-    / "flaggems_sglang"
-    / "runtime"
-    / "backend"
-    / "_amd"
-    / "ops"
-    / "silu_and_mul_masked.py"
-)
-AMD_SPEC = importlib.util.spec_from_file_location(
-    "silu_and_mul_masked_amd_module", AMD_MODULE_PATH
-)
-if AMD_SPEC is None or AMD_SPEC.loader is None:
-    raise RuntimeError(f"cannot load {AMD_MODULE_PATH}")
-AMD_MODULE = importlib.util.module_from_spec(AMD_SPEC)
-AMD_SPEC.loader.exec_module(AMD_MODULE)
+def _load_optional(vendor):
+    path = (
+        Path(__file__).parents[1]
+        / "src"
+        / "flaggems_sglang"
+        / "runtime"
+        / "backend"
+        / f"_{vendor}"
+        / "ops"
+        / "silu_and_mul_masked.py"
+    )
+    if not path.exists():
+        return None
+    spec = importlib.util.spec_from_file_location(
+        f"silu_and_mul_masked_{vendor}_module", path
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
-METAX_MODULE_PATH = (
-    Path(__file__).parents[1]
-    / "src"
-    / "flaggems_sglang"
-    / "runtime"
-    / "backend"
-    / "_metax"
-    / "ops"
-    / "silu_and_mul_masked.py"
-)
-METAX_SPEC = importlib.util.spec_from_file_location(
-    "silu_and_mul_masked_metax_module", METAX_MODULE_PATH
-)
-if METAX_SPEC is None or METAX_SPEC.loader is None:
-    raise RuntimeError(f"cannot load {METAX_MODULE_PATH}")
-METAX_MODULE = importlib.util.module_from_spec(METAX_SPEC)
-METAX_SPEC.loader.exec_module(METAX_MODULE)
+
+KUNLUN_MODULE = _load_optional("kunlunxin")
+AMD_MODULE = _load_optional("amd")
+METAX_MODULE = _load_optional("metax")
+# e11 routes amd/enflame/metax through the generic token-block-skip
+# kernel; only vendors that still exist stay in the matrix
+VENDOR_MODULES = {
+    name: module
+    for name, module in (
+        ("kunlunxin", KUNLUN_MODULE),
+        ("amd", AMD_MODULE),
+        ("metax", METAX_MODULE),
+    )
+    if module is not None
+}
 
 
 def reference(input, masked_m):
@@ -195,7 +180,7 @@ class SiluAndMulMaskedTest(unittest.TestCase):
                 self._check(input, masked_m)
 
     def test_masks_and_column_tails(self):
-        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, METAX_MODULE):
+        for module in [MODULE, *VENDOR_MODULES.values()]:
             for integer_dtype in (torch.int32, torch.int64):
                 for tokens, width in ((3, 16), (64, 256), (7, 2050)):
                     with self.subTest(
@@ -227,11 +212,13 @@ class SiluAndMulMaskedTest(unittest.TestCase):
         masked_m = mask_base[::2]
         self.assertFalse(input.is_contiguous())
         self.assertFalse(masked_m.is_contiguous())
-        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, METAX_MODULE):
+        for module in [MODULE, *VENDOR_MODULES.values()]:
             with self.subTest(module=module.__name__):
                 self._check(input, masked_m, module)
 
     def test_metax_flat_boundaries_and_grid_stride(self):
+        if METAX_MODULE is None:
+            self.skipTest("metax vendor removed (e11 routes it to generic)")
         for half_width in (2047, 2048, 2049):
             input = torch.randn(
                 1,
@@ -274,7 +261,7 @@ class SiluAndMulMaskedTest(unittest.TestCase):
             (masked_m[0].item(), masked_m[255].item()),
             (0, tokens),
         )
-        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, METAX_MODULE):
+        for module in [MODULE, *VENDOR_MODULES.values()]:
             with self.subTest(module=module.__name__):
                 self._check(input, masked_m, module)
 
@@ -318,7 +305,7 @@ class SiluAndMulMaskedTest(unittest.TestCase):
         )
         input = torch.cat((gate, up)).reshape(1, 1, -1)
         masked_m = torch.ones(1, device="cuda", dtype=torch.int32)
-        for module in (MODULE, KUNLUN_MODULE, AMD_MODULE, METAX_MODULE):
+        for module in [MODULE, *VENDOR_MODULES.values()]:
             with self.subTest(module=module.__name__):
                 self._check(input, masked_m, module)
 
