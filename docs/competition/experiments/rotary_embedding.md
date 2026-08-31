@@ -102,3 +102,22 @@ NVIDIA 上 stride-2 访存硬件合并良好;且 T30 的逐元素 gather 在
 - cos/sin 复用 + 四头瓦片模型六芯兑现;剩余短板燧原 0.40/昆仑 0.30
   /华为 0.68(后两者为钉死的 S0 兜底字节)。
 - 距榜首 EvokeAgent 8.488 收窄至 **-31.4%**;额度 26/30。
+
+### E3:华为 1D cos/sin 复用 vendor(sub 7220,2026-08-31)
+
+- 假设:E1 四头瓦片的 2D 广播触发昇腾 NaN;保留 cos/sin 复用机制
+  (每 4 头载一次,六芯 +48~89% 的来源)但全部 1D 化——per-head
+  static_range(T33 e1 证据:昇腾对 static_range 摊销中性),
+  无任何 2D 广播;commit `5fd1a58`;
+- screening(gpu:/tmp/flagos-catchup.NOF9kN):unittest 5/5;
+  代理上 vs S0 钉字节互有胜负(±20%,NVIDIA L2 掩盖复用收益,
+  华为专属赌注不阻断);release(gpu:/tmp/flagos-rel2.bskkJw)5/5;
+- ZIP `e3-5fd1a58`,SHA `c7436dd9…`,3 成员;preflight 15/30。
+
+### E3 终态(sub 7220)
+
+**8/8 valid,平均 5.84575x —— team best(E2 5.82525 → +0.35%)。**
+华为 0.679→**0.7746(+14%,假设兑现:NaN 规避且复用生效)**;
+燧原 0.399(新 generic 字节未变,稳定低值);昆仑钉死 0.289 持平。
+**知识:昇腾 2D 广播 NaN 的修法 = 机制保留、访存全 1D 化。**
+距榜首(EvokeAgent 8.4884)-31.2%,结构性差距不变。
