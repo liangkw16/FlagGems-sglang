@@ -94,13 +94,17 @@ class PlatformCliTest(unittest.TestCase):
             zip=str(self.archive),
             sha256=self.sha,
             member=["demo.py"],
+            verification_commit="b" * 40,
+            test_sha256="c" * 64,
+            release_log_sha256=None,
         )
 
     def tearDown(self):
         self.temporary.cleanup()
 
     def preflight(self, client):
-        with mock.patch.object(PLATFORM, "_verify_artifact", return_value={}):
+        with mock.patch.object(PLATFORM, "_verify_artifact", return_value={}), \
+                mock.patch.object(PLATFORM, "_verify_test_evidence"):
             return PLATFORM._preflight(self.args, client, self.root / "state")
 
     def submit(self, nonce, client):
@@ -335,6 +339,81 @@ class PlatformCliTest(unittest.TestCase):
         self.assertEqual(
             self.intent(prepared["nonce"])["state"], "stale_after_upload"
         )
+
+    def test_stale_after_upload_blocks_repreflight(self):
+        client = FakeClient()
+        prepared = self.preflight(client)
+        client.change_quota_on_upload = True
+        with self.assertRaisesRegex(PLATFORM.CliError, "final POST skipped"):
+            self.submit(prepared["nonce"], client)
+        self.assertEqual(
+            self.intent(prepared["nonce"])["state"], "stale_after_upload"
+        )
+
+        with self.assertRaisesRegex(
+            PLATFORM.CliError, "stale_after_upload intent exists"
+        ):
+            self.preflight(client)
+        self.assertEqual(len(client.posts), 1)
+        self.assertEqual(
+            self.intent(prepared["nonce"])["state"], "stale_after_upload"
+        )
+
+        client.records = [
+            {
+                "batch_no": 2,
+                "task_no": 12,
+                "operator": "demo",
+                "file_url": "https://upload/demo.zip",
+                "status": "queued",
+            }
+        ]
+        with self.assertRaisesRegex(PLATFORM.CliError, "refusing duplicate"):
+            self.preflight(client)
+        self.assertEqual(
+            self.intent(prepared["nonce"])["state"],
+            "reconciled_submitted",
+        )
+
+    def test_preflight_binds_test_evidence(self):
+        import subprocess
+
+        repo = self.root / "repo"
+        repo.mkdir()
+        (repo / "tests").mkdir()
+        (repo / "tests" / "test_demo.py").write_bytes(b"# demo tests\n")
+
+        def git(*args):
+            return subprocess.run(
+                ["git", "-C", str(repo), *args],
+                capture_output=True,
+                timeout=30,
+            )
+
+        self.assertEqual(git("init", "-q").returncode, 0)
+        self.assertEqual(git("config", "user.email", "t@t").returncode, 0)
+        self.assertEqual(git("config", "user.name", "t").returncode, 0)
+        self.assertEqual(git("add", "-A").returncode, 0)
+        self.assertEqual(git("commit", "-q", "-m", "init").returncode, 0)
+        commit = git("rev-parse", "HEAD").stdout.decode().strip()
+        sha = hashlib.sha256(b"# demo tests\n").hexdigest()
+
+        good = {
+            "operator": "demo",
+            "verification_commit": commit,
+            "test_sha256": sha,
+        }
+        PLATFORM._verify_test_evidence(good, repo)
+
+        bad = dict(good, test_sha256="0" * 64)
+        with self.assertRaisesRegex(PLATFORM.CliError, "does not match"):
+            PLATFORM._verify_test_evidence(bad, repo)
+
+        missing = dict(good, verification_commit="f" * 40)
+        with self.assertRaisesRegex(
+            PLATFORM.CliError, "verification commit not found"
+        ):
+            PLATFORM._verify_test_evidence(missing, repo)
 
     def test_http_client_decodes_gzip_and_rejects_redirects(self):
         class Response:

@@ -494,7 +494,7 @@ def _guard_existing_intents(
             raise CliError("an unexpired intent already exists for this tuple")
         if state in {"submitted", "reconciled_submitted"}:
             raise CliError("this exact tuple is already submitted")
-        if state not in {"sending", "uncertain"}:
+        if state not in {"sending", "uncertain", "stale_after_upload"}:
             continue
         upload_url = (intent.get("upload") or {}).get("url")
         if upload_url and any(
@@ -505,8 +505,14 @@ def _guard_existing_intents(
             intent["reconciled_at"] = now
             _write_intent(path, intent)
             raise CliError(
-                "previous uncertain intent is already submitted; "
-                "refusing duplicate"
+                "previous intent is already submitted; refusing duplicate"
+            )
+        if state == "stale_after_upload":
+            raise CliError(
+                "a stale_after_upload intent exists for this tuple; "
+                "auto-retry is forbidden - verify the submission record "
+                "with status, then archive the intent only with explicit "
+                "user authorization"
             )
         raise CliError(
             "an unresolved sending/uncertain intent exists for this tuple"
@@ -732,6 +738,48 @@ def _read_intent(path: Path) -> dict[str, Any]:
     return value
 
 
+def _verify_test_evidence(
+    spec: dict[str, Any], repo_root: Path | None = None
+) -> None:
+    """Bind the preflight to committed test bytes (verification receipt).
+
+    The source commit alone says nothing about which tests were run; T37
+    shipped a tail-block bug because nothing forced the submitter to surface
+    test evidence. Require the verification commit plus the exact test blob
+    SHA-256 it carries, and optionally the release log SHA-256 as the
+    human-attested receipt.
+    """
+    if repo_root is None:
+        repo_root = Path(__file__).resolve().parents[4]
+    commit = spec["verification_commit"]
+    test_path = f"tests/test_{spec['operator']}.py"
+
+    def git(*args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            ["git", "-C", str(repo_root), *args],
+            capture_output=True,
+            timeout=30,
+        )
+
+    if git("rev-parse", "--git-dir").returncode:
+        raise CliError(
+            "cannot locate the competition repository from the script path"
+        )
+    if git("cat-file", "-e", f"{commit}^{{commit}}").returncode:
+        raise CliError(f"verification commit not found in git: {commit}")
+    show = git("show", f"{commit}:{test_path}")
+    if show.returncode:
+        raise CliError(
+            f"{test_path} missing at verification commit {commit}"
+        )
+    actual = hashlib.sha256(show.stdout).hexdigest()
+    if actual != spec["test_sha256"]:
+        raise CliError(
+            f"test blob SHA-256 at {commit} does not match --test-sha256; "
+            "commit the current test bytes before preflight"
+        )
+
+
 def _preflight(
     args: argparse.Namespace, client: Any, state_dir: Path
 ) -> dict[str, Any]:
@@ -748,8 +796,12 @@ def _preflight(
         "zip_path": args.zip,
         "zip_sha256": args.sha256,
         "members": args.member,
+        "verification_commit": args.verification_commit,
+        "test_sha256": args.test_sha256,
+        "release_log_sha256": getattr(args, "release_log_sha256", None),
     }
     _verify_artifact(spec)
+    _verify_test_evidence(spec)
     with _state_lock(state_dir):
         live = _live_state(
             client, args.race, args.batch, args.task, args.operator
@@ -1141,6 +1193,20 @@ def _parser() -> argparse.ArgumentParser:
     preflight.add_argument("--zip", required=True)
     preflight.add_argument("--sha256", required=True)
     preflight.add_argument("--member", action="append", required=True)
+    preflight.add_argument(
+        "--verification-commit",
+        required=True,
+        help="commit whose tests/test_<operator>.py bytes back this submit",
+    )
+    preflight.add_argument(
+        "--test-sha256",
+        required=True,
+        help="SHA-256 of tests/test_<operator>.py at --verification-commit",
+    )
+    preflight.add_argument(
+        "--release-log-sha256",
+        help="SHA-256 of the release/screening log cited as the receipt",
+    )
 
     submit = commands.add_parser("submit", help="consume one prepared intent")
     submit.add_argument("--confirm", required=True)
