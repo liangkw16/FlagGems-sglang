@@ -18,7 +18,7 @@
 | 35 | rotary_embedding | valid | 8/8 | e3 5.8458x | yes | e4 燧原宽瓦片证伪(宽瓦片族首反例),收盘 | 2026-08-31 | [rotary_embedding](rotary_embedding.md) |
 | 36 | selective_state_update | invalid | 7/8 | e8 七芯~5.8x | yes | 平台修复后一发转正(候选已封存) | 2026-08-31 | [selective_state_update](selective_state_update.md) |
 | 37 | sgemm_lora_a | invalid | 6/8(上限 7/8) | e2 | yes | 封存;候选可复用 | 2026-08-31 | [sgemm_lora_a](sgemm_lora_a.md) |
-| 38 | sigmoid_gate_topk_renorm | invalid | 7/8 | S0 | yes | 平台工单;候选封存可复用 | 2026-08-31 | [sigmoid_gate_topk_renorm](sigmoid_gate_topk_renorm.md) |
+| 38 | sigmoid_gate_topk_renorm | invalid | 7/8 | S0 | no | e2 device global_scale 去同步候选已过 release;一次结构改写平台门 | 2026-09-01 | [sigmoid_gate_topk_renorm](sigmoid_gate_topk_renorm.md) |
 | 39 | silu_and_mul_masked | valid | 8/8 | E7 19.8698x | yes | 收盘 E7 19.8698;e10 块跳过华为+246%(结构 16.7→18.0,均值输 E7 异常锚点,树留 e10 字节);e11 amd/metax 路由双芯证伪已回滚 | 2026-09-01 | [silu_and_mul_masked](silu_and_mul_masked.md) |
 | 40 | softcap_inplace_logits | valid | 8/8 | e6 1.7679x | yes | 收盘 e6 1.7679(-12.6%);e7 generic2048/metax4096 双证伪,全部已知轴关闭,I/O 已贴下界 | 2026-08-31 | [softcap_inplace_logits](softcap_inplace_logits.md) |
 | 41 | state_passing | invalid | 7/8(8/8 terminal) | E3 | yes | e4 组合候选(fc6dd4f)已 staged;重载需用户逐发授权 | 2026-08-31 | [state_passing](state_passing.md) |
