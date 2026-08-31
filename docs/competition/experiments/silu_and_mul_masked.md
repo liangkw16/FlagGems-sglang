@@ -10,8 +10,8 @@ team_best_stage: E7
 team_best_commit: fd089fe
 team_best_speedup: 19.8698
 sealed: yes
-next: 守榜(对 Fields);重载两滚低分关轴,榜首 23.85 结构性差距
-updated: 2026-08-31
+next: 收盘 E7 19.8698;e10 块跳过华为+246%(结构 16.7→18.0,均值输 E7 异常锚点,树留 e10 字节);e11 amd/metax 路由双芯证伪已回滚
+updated: 2026-09-01
 ```
 
 ## 契约
