@@ -81,8 +81,17 @@ python .agents/skills/flagos-operator-race/scripts/platform_cli.py preflight \
   --season 2 --race 782kzq4m --account '<账号>' --team '<团队>' \
   --batch 2 --task 12 --operator chunk_state --stage e2 \
   --commit '<40位commit>' --zip '<ZIP绝对路径>' --sha256 '<64位SHA-256>' \
-  --member chunk_state.py
+  --member chunk_state.py \
+  --verification-commit '<40位测试证据commit>' \
+  --test-sha256 '<该commit下tests/test_<operator>.py的SHA-256>' \
+  --release-log-sha256 '<release/screening日志SHA-256，可省略>'
 ```
+
+`--verification-commit` 与 `--test-sha256` 是硬门：preflight 会用 git
+核验该 commit 存在、`tests/test_<operator>.py` 在该 commit 的 blob
+SHA-256 与给出值逐字节一致（T37 尾块缺陷上平台的教训——source commit
+本身不说明哪些测试被跑过）。`--release-log-sha256` 作为人证 receipt
+一并写入 intent 供审计。
 
 每个 vendor 文件再增加一个 `--member chunk_state_<vendor>.py`。预检不发 POST；它在
 Git 内部目录 `.git/flagos-platform/` 创建权限为 `0600`、十分钟有效的一次性 intent，
@@ -92,6 +101,8 @@ Git 内部目录 `.git/flagos-platform/` 创建权限为 `0600`、十分钟有�
 
 - race ID/赛季、登录账号、登录团队、batch、Task 编号、tid 和 operator 精确匹配；
 - source commit、stage、成员集合、ZIP 绝对路径与完整 SHA-256 匹配账本和本地证据；
+- verification commit 与其 `tests/test_<operator>.py` blob SHA-256 匹配
+  （preflight 强制校验），release log SHA（如有）与账本一致；
 - Task 为 `competing`；或为等待首个有效解的 `pending_challenge`，且平台同时明确返回
   `status=submitting`、`can_submit=true` 和 `challenge_operator`。此外必须处于提交
   时间窗、最小间隔已满足且当前剩余额度至少为 1。
@@ -129,15 +140,16 @@ intent、未决发送或成功记录时不生成第二个 nonce；新候选必�
 不修改账本。
 
 脚本因验证码、新风险提示、认证协议或 API schema 漂移无法执行时，才回退到
-`chrome:control-chrome`。先只读核对登录账号、团队、Task、剩余额度和既有提交；同一
-完整 tuple 的门禁全部通过后，点击页面可见上传按钮触发 `filechooser`，无需再向用户
-询问。点击前为 `waitForEvent("filechooser")` 立即挂成功与 rejection handler，再用
-chooser 设置 ZIP 绝对路径；不要依赖点击隐藏 `input[type=file]`。提交按钮只点击一次；
-chooser 超时、页面重载或结果不确定都转 `status` 只读核对，绝不再次点击。
+`chrome:control-chrome`，且浏览器**只做只读操作**：核对登录账号、团队、Task、
+剩余额度、既有提交和逐芯结果。上传与提交一律不在浏览器里自动点击——CLI 的
+intent/锁/幂等键状态机不覆盖网页路径，脚本状态不确定时重复点击等于绕过
+单发纪律。需要网页提交时明确告知用户并交人工执行，在账本记录跳过 CLI 的
+原因；CLI 恢复后回到脚本路径。
 
-浏览器 fallback 提交后，平台一旦返回 HTTPS `file_url`，下载远端 ZIP，核对实际字节数
-和 SHA-256 与本次 intent 值完全一致；页面展示的文件大小不作为验签证据。下载失败或哈希
-不一致时保留“提交已发送”事实，记录远端验签未确认/失败，并停止重试提交 POST。
+用户人工在网页完成提交后，若平台返回 HTTPS `file_url`，仍按同一标准下载远端
+ZIP，核对实际字节数和 SHA-256 与本次候选 ZIP 完全一致；页面展示的文件大小
+不作为验签证据。下载失败或哈希不一致时保留“提交已发送”事实，记录远端验签
+未确认/失败，并停止重试提交 POST。
 
 ## 逐芯结果与最小迭代
 
@@ -170,13 +182,15 @@ inductor `subproc_pool`、Segfault、服务线程卡死自动恢复）时：
 2. 该类失败不计入代码止损 stop gate；候选 ZIP 封存并在账本标注
    "平台修复即转正"。止损纪律中"两次同指纹失败关轴"仅指代码侧指纹，
    与本条冲突时以本条优先；
-3. 重载只允许新 ZIP SHA 的注释载体：新 commit → 新 tuple → 新的一次性
-   preflight/submit。同字节重投不可执行——CLI 对相同
-   race/account/team/Task/operator/ZIP SHA tuple 直接拒绝；也不得借
-   改注释无限追投绕过单发纪律；
-4. 重载触发条件（缺一不发）：对应题公开达标数较基线快照上升，且平台
-   工单有回应或明确修复公告；每题探针总量硬上限 2 发，除非用户当次
-   明示追加；
+3. 崩溃族重载**不属于常规自动提交授权**：每一发（含注释载体）都必须
+   先获得用户当次明示授权。首选路径是平台工单的健康 worker rerun
+   （不耗我方额度、不产生新提交记录）；注释载体改注释会产生新 ZIP
+   SHA、让相同执行代码绕过候选去重，只作为用户明示授权下的最后
+   手段，且每发都在账本累计探测计数。同字节重投不可执行——CLI 对
+   相同 race/account/team/Task/operator/ZIP SHA tuple 直接拒绝；
+4. 重载触发条件（授权之外还需同时满足，缺一不发）：对应题公开达标数
+   较基线快照上升，且平台工单有回应或明确修复公告；同题探针连续
+   2 发仍崩即回到封存，只保留工单路径；
 5. 判定性对照（T31 E7 实证）：他队同窗口在该题八芯通过、而我方重载
    即崩——崩溃由我方 kernel 惯用法触发的假设坐实，立即停止探针，只剩
    结构改写（换 topk/索引/超越函数形态）或工单两条路。

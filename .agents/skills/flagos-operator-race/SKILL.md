@@ -95,9 +95,11 @@ commit` 是最新测试和验证证据的提交；`ledger commit` 是写回产�
 `.agents/skills/` 下装有 FlagOS SkillHub 的配套 skill，按以下边界融入闭环；
 它们服从本 skill 的请求边界、只读规则和提交纪律，不改变任何门禁：
 
-- `kernelgen-flagos`：算子生成/优化/跨芯特化的统一入口，所有内核生成必须走
-  `kernelgen-mcp`（需在 `.mcp.json` 配置 Token，未配置时先按
-  `kernelgen-mcp-setup.md` 引导用户注册，不要手写代码替代）。用途：
+- `kernelgen-flagos`：算子生成/优化/跨芯特化的统一入口，新增 kernel 生成与
+  结构性重写必须走 `kernelgen-mcp`（需在 `.mcp.json` 配置 Token，未配置时先按
+  `kernelgen-mcp-setup.md` 引导用户注册，不要手写代码替代）；明确的单行根因
+  修复（命名、off-by-one、import、格式等）可直接修改，不被外部 MCP 阻塞。
+  用途：
   新算子起手（generate）、卡瓶颈的第二轮迭代（optimize，基于 MCP 反馈循环）、
   某芯 Triton 支持差时的 specialize 备选、以及发射前对 MCP 覆盖芯的实机
   初筛（autotune/specialize 的 device 实机跑，只取编译与数值信号，见集成
@@ -267,7 +269,8 @@ basename 和提交源码内容做只读验签；结果会标记 `verified-existi
 - 平均加速比、排名、逐芯结果和失败/回退历史已写入账本；
 - 代码、测试和账本已本地 commit，工作树无本任务遗留修改；GitHub push 不是完成条件，
   除非用户在当前请求中明确要求；
-- 浏览器结果页保留为可交付页面。
+- 提交与逐芯结果以 `status`/`watch` 的 JSON 输出为准入账；浏览器结果页仅在
+  用户明确要求时另存为可交付页面。
 
 最终回复优先给出：通过芯片数/支持芯片数、平均加速比、排名、剩余额度、ZIP/账本路径、
 commit、GitHub 未推送状态，以及下一条单变量优化假设。尚在排队就明确写“评测中”，
