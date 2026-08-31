@@ -303,3 +303,34 @@ T33 per_token_group_quant_int8 S0 8/8 valid、3.5385x
 5. A 类隐藏三维契约(T36);平台方差 ±50%(同字节 6.28→0.88);
 6. 昆仑:崩溃族 6v6 相关性(topk/argsort/matmul/einsum
    reference)+ 服务线程卡死交替,15+ 指纹,候选封存待修。
+
+## 2026-08-31 下午:赶超轮——昆仑重载弹药库 + 四候选开发
+
+**昆仑健康窗口重载弹药(全部已 commit + 不可变 ZIP,待信号发射;**
+触发条件:对应题达标数较 12:37 基线上升,或 cron 监控报告窗口开启;
+
+| Task | 载体 | commit | ZIP SHA-256(前 16) |
+| ---: | --- | --- | --- |
+| 28 | `e10-6494691`(e7/e8 字节+注释) | `6494691` | `de09c091…` |
+| 31 | `e7-f093ae8`(e6 字节+注释) | `f093ae8` | `3f5e5cdc…` |
+| 36 | `e9-592c624`(e8 字节+注释) | `592c624` | `3c22152b…` |
+| 38 | `e1-7e4a807`(S0 字节+注释) | `7e4a807` | `63fe27d3…` |
+| 41 | `e4-fc6dd4f`(E3 包+E2 燧原 vendor) | `fc6dd4f` | `c800161b…` |
+
+T41 e4 是组合包:单新变量 = 燧原 E2 vendor(S0 燧原 0.0605x 低于
+0.1x 门槛,昆仑恢复后也需此成员才 valid)。基线(12:37 快照):
+T25=8/T26=8/T27=5/T28=3/T31=2/T36=2/T38=4/T41=4。
+
+**四候选(已开发,远端 screening 被 GPU 链路中断阻塞;**
+载荷 `log/screen-batch3-catchup/`,链路恢复即跑):
+
+- T34 e1 `_ascend` 两趟列分块 BLOCK 512(T24 已证尺寸);
+- T34 e2 `_kunlunxin` 同构 BLOCK 1024(T21 唯一成功轴);
+- T32 E3 宽瓦片 generic(kernelgen iter1 + 自修:TOP_K 非 2 次幂
+  tl.arange 雷、num_stages 昆仑 invalid 参数、权重改 per-k 一维载入;
+  昆仑钉死 S0 字节 vendor,燧原沿用 E2 vendor);预注册代理门
+  geomean ≥ +30% 才提交;
+- T35 e3 `_ascend` cos/sin 复用 + 全 1D(规避 2D 广播 NaN);
+- T33 e4 `_metax` [4,G] 瓦片(e2 燧原 14x 结构迁移)+ 组合重掷。
+
+监控:automation `9515cac5` 每 30 分钟只读查 8 题达标数(报告制)。
