@@ -26,6 +26,28 @@ MODULE_PATH = (
     / "moe_fused_mul_sum.py"
 )
 
+VENDOR_PATHS = {
+    vendor: Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "runtime"
+    / "backend"
+    / f"_{vendor}"
+    / "ops"
+    / "moe_fused_mul_sum.py"
+    for vendor in ("kunlunxin", "enflame")
+    if (
+        Path(__file__).parents[1]
+        / "src"
+        / "flaggems_sglang"
+        / "runtime"
+        / "backend"
+        / f"_{vendor}"
+        / "ops"
+        / "moe_fused_mul_sum.py"
+    ).exists()
+}
+
 
 def _load_module(name, path):
     spec = importlib.util.spec_from_file_location(name, path)
@@ -37,6 +59,11 @@ def _load_module(name, path):
 
 
 MODULE = _load_module("moe_fused_mul_sum_module", MODULE_PATH)
+
+VENDOR_MODULES = {
+    name: _load_module(f"moe_fused_mul_sum_{name}", path)
+    for name, path in VENDOR_PATHS.items()
+}
 
 TOLERANCES = {
     torch.float16: 1e-2,
@@ -162,6 +189,88 @@ class MoeFusedMulSumTest(unittest.TestCase):
         expected = reference(inputs, topk_weights, topk_ids, None, None, True)
 
         torch.testing.assert_close(actual, expected, atol=1.5e-2, rtol=1.5e-2)
+
+    def test_vendor_matrix_heavy_ep_drop_and_plain_parity(self):
+        # e4 zero-weight slot skip: dropped slots contribute exactly nothing,
+        # so results stay bit-compatible with the reference while their input
+        # slabs are never fetched; covers all shipped kernel variants
+        generator = torch.Generator(device="cuda").manual_seed(20260831)
+        modules = {"generic": MODULE, **VENDOR_MODULES}
+        for name, module in modules.items():
+            for dtype, atol in TOLERANCES.items():
+                with self.subTest(name=name, dtype=dtype):
+                    inputs = torch.randn(
+                        (33, 8, 2048),
+                        device="cuda",
+                        dtype=dtype,
+                        generator=generator,
+                    )
+                    topk_weights = torch.rand(
+                        (33, 8), device="cuda", generator=generator
+                    )
+                    drop = (
+                        torch.rand((33, 8), device="cuda", generator=generator)
+                        < 0.875
+                    )
+                    ids = torch.randint(
+                        0,
+                        16,
+                        (33, 8),
+                        device="cuda",
+                        generator=generator,
+                        dtype=torch.int32,
+                    )
+                    topk_ids = torch.where(
+                        drop,
+                        torch.tensor(-1, device="cuda", dtype=torch.int32),
+                        ids,
+                    )
+                    actual = module.moe_fused_mul_sum(
+                        inputs, topk_weights, topk_ids, None, 2.5, True
+                    )
+                    expected = reference(
+                        inputs, topk_weights, topk_ids, None, 2.5, True
+                    )
+                    torch.testing.assert_close(
+                        actual, expected, atol=atol, rtol=atol
+                    )
+                    actual_plain = module.moe_fused_mul_sum(
+                        inputs, topk_weights
+                    )
+                    expected_plain = reference(inputs, topk_weights)
+                    torch.testing.assert_close(
+                        actual_plain, expected_plain, atol=atol, rtol=atol
+                    )
+            with self.subTest(name=name, case="expert_map_heavy_drop"):
+                expert_map = torch.tensor(
+                    [0] + [-1] * 15, device="cuda", dtype=torch.int32
+                )
+                inputs = torch.randn(
+                    (17, 8, 1024),
+                    device="cuda",
+                    dtype=torch.float16,
+                    generator=generator,
+                )
+                topk_weights = torch.rand(
+                    (17, 8), device="cuda", generator=generator
+                )
+                topk_ids = torch.randint(
+                    0,
+                    16,
+                    (17, 8),
+                    device="cuda",
+                    generator=generator,
+                    dtype=torch.int32,
+                )
+                actual = module.moe_fused_mul_sum(
+                    inputs, topk_weights, topk_ids, expert_map, 2.5
+                )
+                expected = reference(
+                    inputs, topk_weights, topk_ids, expert_map, 2.5
+                )
+                torch.testing.assert_close(
+                    actual, expected, atol=1e-2, rtol=1e-2
+                )
 
     def test_noncontiguous_input_uses_all_strides(self):
         base = torch.arange(
