@@ -17,7 +17,10 @@ import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
-_GROUPS_TILE = 4
+# e9: 4 -> 16 mirrors the generic tile bump that won +20~54% on five
+# chips (sub 7327); enflame wide-tile family evidence (T24/T33-e2/T39/T29)
+# and the same kernel body make this the same single variable per chip
+_GROUPS_TILE = 16
 
 
 @triton.jit
