@@ -310,3 +310,12 @@ native-`tanh` 轴。按预注册冻结 E3 全部字节，停止 Task 40，转入
 ### E5 提交(2026-08-31 03:5x CST)
 
 preflight 全过(额度 22/30),单次提交;终态待回填。
+
+### E5 终态(sub 7057):T40 华为 direct 轴关闭
+
+- BLOCK 512 仍 CompilationError——**昇腾对直通 kernel 结构本身不
+  编译**(与 BLOCK 无关),两连败按预注册关轴;
+- 华为 vendor 恢复 E1 手写 tanh 字节(commit `b40c21d` 版),
+  T40 收盘于 E3 团队最佳 1.7266x;跨芯知识:昆仑 direct 模式
+  不可迁移到昇腾(昇腾编译器拒收无循环 flat kernel)。
+- 额度 21/30。
