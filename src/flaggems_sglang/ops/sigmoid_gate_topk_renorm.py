@@ -17,6 +17,11 @@ import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
+# e1 re-carrier (held for a kunlun health window): S0 hit the 1830s
+# validation-stage Segmentation fault (crash-family case 15) with the
+# cleanest possible kernel (no dot, no libdevice transcendentals);
+# bytes identical to 311570f otherwise. Fire on a T38 threshold-team
+# count rise.
 
 
 @triton.jit
