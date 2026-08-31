@@ -1,5 +1,18 @@
 # Task 26 `fused_moe_router_cudacore` 实验记录
 
+```current
+task: 26
+operator: fused_moe_router_cudacore
+batch: 3
+validity: invalid
+platform: 6/8
+team_best_stage: e5-e8(等价)
+blockers: 华为 case7 参考 matmul 舍入;昆仑崩溃族
+sealed: yes
+next: 平台 Q&A 澄清或他人华为方案公开
+updated: 2026-08-31
+```
+
 状态:S0 候选就绪,待额度重置后提交(排在 29→30→25(e1)→28→27 之后)
 
 ## 契约锁定

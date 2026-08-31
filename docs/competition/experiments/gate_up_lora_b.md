@@ -1,5 +1,20 @@
 # Task 28 `gate_up_lora_b` 实验记录
 
+```current
+task: 28
+operator: gate_up_lora_b
+batch: 3
+validity: invalid
+platform: 7/8
+team_best_stage: e9
+team_best_commit: 6494691
+team_best_speedup: 七芯~18.5
+blockers: 昆仑崩溃族(第12次)
+sealed: yes
+next: 工单 rerun 或用户授权注释载体重载
+updated: 2026-08-31
+```
+
 状态:S0 候选就绪,待额度重置后提交(排在 29→30→25 之后)
 
 ## 契约锁定

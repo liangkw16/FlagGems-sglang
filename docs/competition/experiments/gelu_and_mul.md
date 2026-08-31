@@ -1,5 +1,19 @@
 # Task 29 `gelu_and_mul` 实验记录
 
+```current
+task: 29
+operator: gelu_and_mul
+batch: 3
+validity: valid
+platform: 8/8
+team_best_stage: e8
+team_best_commit: d7a8f79
+team_best_speedup: 2.7394
+sealed: partial
+next: 燧原 +42% 已兑现;华为轴 autotune 负结果,无已验证新杠杆
+updated: 2026-08-31
+```
+
 状态:S0 候选就绪,待额度重置后首投。2026-08-27 团队当日额度 30/30 已耗尽
 (最近一次提交 14:15:01 CST,非本会话所为);计划 2026-08-28 00:00 额度
 重置后立即 preflight + 一次性提交。

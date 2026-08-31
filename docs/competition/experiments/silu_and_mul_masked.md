@@ -1,5 +1,19 @@
 # Task 39 `silu_and_mul_masked` 实验记录
 
+```current
+task: 39
+operator: silu_and_mul_masked
+batch: 3
+validity: valid
+platform: 8/8
+team_best_stage: E7
+team_best_commit: fd089fe
+team_best_speedup: 19.8698
+sealed: yes
+next: 守榜(对 Fields);重载两滚低分关轴,榜首 23.85 结构性差距
+updated: 2026-08-31
+```
+
 ## 契约
 
 - 签名：`reference(input, masked_m)`。

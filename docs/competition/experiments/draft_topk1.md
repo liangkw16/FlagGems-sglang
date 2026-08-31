@@ -1,5 +1,18 @@
 # Task 25 `draft_topk1` 实验记录
 
+```current
+task: 25
+operator: draft_topk1
+batch: 3
+validity: invalid
+platform: 6/8
+team_best_stage: e6c
+blockers: 燧原硬限;昆仑崩溃族
+sealed: yes
+next: 需外部证据(他人通过样例/平台澄清)才可重启
+updated: 2026-08-31
+```
+
 状态:E1 候选就绪(两阶段并行 argmax,取代 S0 成为拟提交版本);待额度
 重置后按 29 → 30 → 25(e1) 顺序提交
 

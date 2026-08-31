@@ -1,5 +1,18 @@
 # Task 32 `moe_fused_mul_sum` 实验记录
 
+```current
+task: 32
+operator: moe_fused_mul_sum
+batch: 3
+validity: valid
+platform: 8/8
+team_best_stage: S0
+team_best_speedup: 4.4829
+sealed: no
+next: E3 宽瓦片证伪;昆仑 0.21x 与榜首 23.9 的领先面未解释
+updated: 2026-08-31
+```
+
 ## S0：generic baseline
 
 状态：screening 进行中（远端 NVIDIA 代理）

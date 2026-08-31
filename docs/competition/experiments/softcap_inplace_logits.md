@@ -1,5 +1,18 @@
 # Task 40 `softcap_inplace_logits` 实验记录
 
+```current
+task: 40
+operator: softcap_inplace_logits
+batch: 3
+validity: valid
+platform: 8/8
+team_best_stage: e6
+team_best_speedup: 1.7679
+sealed: no
+next: 华为 0.557 单芯缺口是登顶最大杠杆(direct 轴已关)
+updated: 2026-08-31
+```
+
 ## S0：T24 跨芯 winner 复用
 
 状态：commit-bound release 与 canonical ZIP 门禁通过，待一次性平台提交。

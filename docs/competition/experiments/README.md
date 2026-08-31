@@ -16,6 +16,12 @@ artifacts/competition/<operator>/<stage>-<commit>/<operator>.zip
 
 ## 候选清单
 
+> **状态真相源（2026-08-31 起）**：当前状态以各算子账本顶部的
+> ` ```current ` 块为唯一人工维护真相，索引由
+> `python tools/gen_experiment_index.py` 生成到 [INDEX.md](INDEX.md)。
+> 下表为第二批时期的历史人工表，第三批任务以 INDEX.md 为准
+> （例如 T27 早期 6/8 口径已过期，实为 7/8 仅差昆仑）。
+
 下方建议提交顺序只覆盖尚无 8 芯结果的任务；已完成任务保留当前结论。
 
 | Task | 算子账本 | 候选 | ZIP SHA-256 | 当前证据 | 建议 |

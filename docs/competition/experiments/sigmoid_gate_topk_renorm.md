@@ -1,5 +1,19 @@
 # Task 38 `sigmoid_gate_topk_renorm` 实验记录
 
+```current
+task: 38
+operator: sigmoid_gate_topk_renorm
+batch: 3
+validity: invalid
+platform: 7/8
+team_best_stage: S0
+team_best_commit: 311570f
+blockers: 昆仑 topk 族 Segfault(崩溃族第15例)
+sealed: yes
+next: 平台工单;候选封存可复用
+updated: 2026-08-31
+```
+
 状态:S0 候选就绪
 
 ## 契约锁定

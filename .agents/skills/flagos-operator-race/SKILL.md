@@ -90,6 +90,12 @@ commit` 是最新测试和验证证据的提交；`ledger commit` 是写回产�
 会话早先读到的旧内容直接编辑；算子账本更新时同步刷新实验 README 的
 候选行，避免两个真相源分叉。
 
+账本顶部维护机器可读的 ` ```current ` 块（task/operator/validity/
+platform/team_best/sealed/next/updated），是该任务唯一的人工状态真相；
+每次账本终态更新都改 CURRENT 块，并运行
+`python tools/gen_experiment_index.py` 刷新生成的
+`docs/competition/experiments/INDEX.md`。手写汇总表不再承载当前状态。
+
 ## SkillHub 辅助 skill
 
 `.agents/skills/` 下装有 FlagOS SkillHub 的配套 skill，按以下边界融入闭环；

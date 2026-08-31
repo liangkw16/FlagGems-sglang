@@ -1,5 +1,18 @@
 # Task 30 `interleaved_rope` 实验记录
 
+```current
+task: 30
+operator: interleaved_rope
+batch: 3
+validity: valid
+platform: 8/8
+team_best_stage: S0
+team_best_speedup: 25.8353
+sealed: yes
+next: 代理可见轴局部最优;榜首 36.4 未解释
+updated: 2026-08-31
+```
+
 状态:S0 候选就绪,待额度重置后首投(与 T29 同因:2026-08-27 团队当日
 30/30 额度已耗尽;2026-08-28 00:00 重置后按 29 → 30 顺序提交)
 

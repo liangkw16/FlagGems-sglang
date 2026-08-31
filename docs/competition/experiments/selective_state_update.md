@@ -1,5 +1,20 @@
 # Task 36 `selective_state_update` 实验记录
 
+```current
+task: 36
+operator: selective_state_update
+batch: 3
+validity: invalid
+platform: 7/8
+team_best_stage: e8
+team_best_commit: 7414c69
+team_best_speedup: 七芯~5.8
+blockers: 昆仑 einsum-reference 崩溃族
+sealed: yes
+next: 平台修复后一发转正(候选已封存)
+updated: 2026-08-31
+```
+
 状态:E5 平台 7/8；E6 本地筛选否决，未提交
 
 ## 契约锁定

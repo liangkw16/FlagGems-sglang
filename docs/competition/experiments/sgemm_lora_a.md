@@ -1,6 +1,20 @@
 # Task 37 `sgemm_lora_a` 实验记录
 
-状态:S0 候选就绪
+```current
+task: 37
+operator: sgemm_lora_a
+batch: 3
+validity: invalid
+platform: 6/8(上限 7/8)
+team_best_stage: e2
+team_best_commit: 58aab90
+blockers: 燧原行错位;昆仑 matmul-reference 崩溃族
+sealed: yes
+next: 封存;候选可复用
+updated: 2026-08-31
+```
+
+状态:6/8(昆仑崩溃族,上限 7/8),候选 58aab90 封存。机器可读状态见顶部 CURRENT 块
 
 ## 契约锁定
 

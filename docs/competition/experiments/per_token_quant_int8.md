@@ -1,5 +1,18 @@
 # Task 34 `per_token_quant_int8` 实验记录
 
+```current
+task: 34
+operator: per_token_quant_int8
+batch: 3
+validity: valid
+platform: 8/8
+team_best_stage: e1
+team_best_speedup: 4.7131
+sealed: yes
+next: e2 昆仑两趟列分块正确性失败,轴关闭;华为轴关闭
+updated: 2026-08-31
+```
+
 状态:S0 候选就绪
 
 ## 契约锁定

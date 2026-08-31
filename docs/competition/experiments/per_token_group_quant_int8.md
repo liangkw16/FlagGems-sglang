@@ -1,6 +1,19 @@
 # Task 33 `per_token_group_quant_int8` 实验记录
 
-状态:S0 首次 screening **失败(17 个 subtest)**;失败明细已随诊断脚本
+```current
+task: 33
+operator: per_token_group_quant_int8
+batch: 3
+validity: valid
+platform: 8/8
+team_best_stage: e5
+team_best_speedup: 4.5707
+sealed: partial
+next: e6 方差重掷两连低滚关轴;剩燧原水位(不可控)与榜首结构面(未破译)
+updated: 2026-08-31
+```
+
+状态:e5 = 团队最佳 4.5707x(8/8 valid);e6 方差重掷两连低滚关轴。机器可读状态见顶部 CURRENT 块
 在远端执行,结果文件待 SSH 恢复后取回。远端 GPU 代理(kkgpu,
 192.168.5.204)自 2026-08-29 05:0x CST 起 VPN 链路故障(握手挂起/
 会话中断,双路由直连与 mini 跳板均不可用),阻塞修复迭代。

@@ -1,5 +1,18 @@
 # Task 35 `rotary_embedding` 实验记录
 
+```current
+task: 35
+operator: rotary_embedding
+batch: 3
+validity: valid
+platform: 8/8
+team_best_stage: e3
+team_best_speedup: 5.8458
+sealed: yes
+next: e4 燧原宽瓦片证伪(宽瓦片族首反例),收盘
+updated: 2026-08-31
+```
+
 状态:S0 候选就绪(首 screening 全绿)
 
 ## 契约锁定

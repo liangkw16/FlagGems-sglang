@@ -1,5 +1,20 @@
 # Task 31 `moe_fused_gate` 实验记录
 
+```current
+task: 31
+operator: moe_fused_gate
+batch: 3
+validity: invalid
+platform: 7/8
+team_best_stage: e7(=e6字节载体)
+team_best_commit: f093ae8
+team_best_speedup: 七芯~7.73
+blockers: 昆仑 15 次同指纹崩溃;惯用法触发坐实
+sealed: yes
+next: 仅工单或结构改写(topk 形态)
+updated: 2026-08-31
+```
+
 状态:S0 候选就绪
 
 ## 契约锁定

@@ -1,5 +1,18 @@
 # Task 27 `fused_moe_router_tensorcore` 实验记录
 
+```current
+task: 27
+operator: fused_moe_router_tensorcore
+batch: 3
+validity: invalid
+platform: 7/8(七芯过,仅昆仑)
+team_best_stage: e7
+blockers: 昆仑崩溃族
+sealed: yes
+next: 平台工单;README 早期 6/8 口径已过期
+updated: 2026-08-31
+```
+
 状态:S0 候选就绪,待额度重置后提交(排在 29→30→25(e1)→28 之后)
 
 ## 契约锁定

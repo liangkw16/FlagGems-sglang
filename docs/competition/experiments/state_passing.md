@@ -1,5 +1,19 @@
 # Task 41 `state_passing` 实验记录
 
+```current
+task: 41
+operator: state_passing
+batch: 3
+validity: invalid
+platform: 7/8(8/8 terminal)
+team_best_stage: E3
+team_best_commit: 248693b
+blockers: 燧原 0.0605 低于门槛;昆仑崩溃族
+sealed: yes
+next: e4 组合候选(fc6dd4f)已 staged;重载需用户逐发授权
+updated: 2026-08-31
+```
+
 ## S0：KernelGen generic 基线
 
 状态：已唯一一次提交；7 芯被同一 BF16 initial dtype 断言拦截，昆仑在
