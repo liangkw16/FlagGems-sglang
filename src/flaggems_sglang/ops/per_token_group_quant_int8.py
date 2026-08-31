@@ -30,10 +30,12 @@ def _per_token_group_quant_int8_kernel(
     GROUP_SIZE: tl.constexpr,
     GROUPS_TILE: tl.constexpr,
 ):
-    # e5: the [GROUPS_TILE, GROUP_SIZE] 2D tile promoted from vendor to
-    # generic - platform-proven on enflame (14x, e2) and huawei (+14%,
-    # e3), proxy +46~103% on 5/7 shapes with no regression; kunlunxin
-    # stays pinned to the old one-group generic bytes (bottom guarantee)
+    # e6 re-carrier: e5 made team best 4.5707 with six chips up
+    # (haiguang +66%, muxi +37%) but enflame rolled its known variance
+    # low AGAIN (same bytes: 6.28 / 0.88 / 0.88) - this re-roll chases a
+    # high enflame roll (~6.3 structural -> avg ~5.4); bytes identical
+    # to e5 otherwise. e5 note: [GROUPS_TILE, GROUP_SIZE] 2D tile
+    # promoted from vendor to generic; kunlunxin pinned to old bytes.
     pid = tl.program_id(0)
     grid_stride = tl.num_programs(0)
     g_offs = tl.arange(0, GROUPS_TILE)
