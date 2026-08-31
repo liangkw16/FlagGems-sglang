@@ -8,8 +8,8 @@ validity: valid
 platform: 8/8
 team_best_stage: e10
 team_best_speedup: 5.5720
-sealed: yes
-next: 收盘 e10 5.5720(-12.9%);tile16 七芯兑现 +21.9%/日,昆仑固有 0.23,已知轴尽
+sealed: no
+next: e11 metax tile32 已提交待评测(ZIP 8f9ec1b3);单轴门沐曦 > 4.328
 updated: 2026-08-31
 ```
 
@@ -518,3 +518,26 @@ starwing 6.3983 **-12.9%**):
 - 已知轴全部关闭:GROUPS_TILE(16 最优,t32/t64 反证)、昆仑瓦片
   (e7 反证)、div/reciprocal(div_rn 逐位必需)、两阶段(T34 反证);
   后续若重开需新证据(metax 专属 tile 或榜首结构面破译)。
+
+## E11:metax vendor tile 32(2026-09-01 01:0x CST)
+
+状态:候选就绪待单次提交(T39 e11 复证"metax 偏好自有形态"后的
+T33 延伸;沐曦 4.33 仅为天数 10.8 的 40%)。
+
+- 变更:新增 `_metax` vendor = generic tile16 同构、`_GROUPS_TILE=32`
+  (commit `4ae358b`);generic/ascend/enflame/kunlunxin 字节冻结
+  (2657/9a8a/5531/017f,逐项核对);测试矩阵补 metax 与 tile32
+  尾块 case(33×64×64,total_groups%32=1,codex-review 发现);
+- GPU 验证:unittest 8/8(gpu:/tmp/flagos-t33e11.*);tile32 与
+  generic 逐位一致(4 形状 × 3 dtype);CUDA 代理参照:t32 中性
+  (0.90-1.03,前期扫描)——纯 metax 侧赌注;
+- release(gpu:/tmp/flagos-t33e11-rel.*,**显式退出码门**):RELEASE_RC=0,
+  日志 SHA-256 `f989c57481d5e8a61caaa8fe67d478a59765235baaebbe69cead8ffc0d25d0c`;
+- MCP 适用性:metax 不在 specialize 覆盖集(仅 huawei),以 NVIDIA
+  代理 + 平台为通道,如实记录;codex-review 已跑(P3 尾块缺口已修,
+  P1 pipe-to-tail 流程教训已采纳,其余为未跟踪文件噪音);
+- canonical ZIP `e11-4ae358b`,16142 bytes,SHA-256
+  `8f9ec1b3cd2a9486282abd02901a49f251f9d045a3a6fa3d3d27397aa6627263`;
+- 平台预注册:基础门 8/8;晋级门平均 > e10 `5.57195x`;单轴门
+  沐曦 > e10 读数 `4.32813333x`;stop gate 沐曦 < 4.33 → 恢复
+  generic 路由(删 metax vendor),tile32 对 metax 关闭。
