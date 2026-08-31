@@ -97,7 +97,19 @@ class TestSigmoidGateTopkRenorm(unittest.TestCase):
         logits = torch.randn(32, 66, device="cuda").to(torch.float32)
         bias = torch.randn(64, device="cuda")
         lc = logits.clone()
-        MOD.sigmoid_gate_topk_renorm(logits, 4, 2, 1.0, 2.0, bias)
+        scalar = MOD.sigmoid_gate_topk_renorm(logits, 4, 2, 1.0, 2.0, bias)
+        tensor = MOD.sigmoid_gate_topk_renorm(
+            logits,
+            4,
+            2,
+            1.0,
+            torch.tensor([2.0], device="cuda"),
+            bias,
+        )
+        for scalar_output, tensor_output in zip(scalar, tensor):
+            torch.testing.assert_close(
+                scalar_output, tensor_output, rtol=0.0, atol=0.0
+            )
         self.assertTrue(torch.equal(logits, lc))
 
     def test_empty(self):

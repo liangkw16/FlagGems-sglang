@@ -17,11 +17,8 @@ import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
-# e1 re-carrier (held for a kunlun health window): S0 hit the 1830s
-# validation-stage Segmentation fault (crash-family case 15) with the
-# cleanest possible kernel (no dot, no libdevice transcendentals);
-# bytes identical to 311570f otherwise. Fire on a T38 threshold-team
-# count rise.
+# e2 keeps global_scale on device. S0 performed host scalar extraction,
+# adding a synchronization before every short top-k kernel launch.
 
 
 @triton.jit
@@ -35,7 +32,9 @@ def _sigmoid_gate_topk_renorm_kernel(
     n_routed,
     n_shared,
     route_scale,
-    global_scale,
+    global_scale_ptr,
+    global_scale_scalar,
+    GLOBAL_SCALE_IS_TENSOR: tl.constexpr,
     TOPK: tl.constexpr,
     BLOCK_E: tl.constexpr,
 ):
@@ -49,6 +48,10 @@ def _sigmoid_gate_topk_renorm_kernel(
     routed_mask = offs < n_routed
     shared_mask = row_mask & (offs >= n_routed)
     out_ty = routed_w_ptr.dtype.element_ty
+    if GLOBAL_SCALE_IS_TENSOR:
+        global_scale = tl.load(global_scale_ptr).to(tl.float32)
+    else:
+        global_scale = global_scale_scalar
     scale = route_scale * global_scale
     for row in range(pid, n_tokens, grid_stride):
         raw = tl.load(
@@ -118,8 +121,13 @@ def sigmoid_gate_topk_renorm(
     )
     if n_tokens == 0 or k == 0:
         return routed_weights, indices, shared_weights
-    if torch.is_tensor(global_scale):
-        global_scale = float(global_scale.reshape(-1)[0].item())
+    global_scale_is_tensor = torch.is_tensor(global_scale)
+    if global_scale_is_tensor:
+        global_scale_ptr = global_scale
+        global_scale_scalar = 0.0
+    else:
+        global_scale_ptr = logits
+        global_scale_scalar = float(global_scale)
     grid = (min(n_tokens, _MAX_GRID),)
     _sigmoid_gate_topk_renorm_kernel[grid](
         logits,
@@ -131,7 +139,9 @@ def sigmoid_gate_topk_renorm(
         n_routed,
         n_shared_experts,
         float(route_scale),
-        float(global_scale),
+        global_scale_ptr,
+        global_scale_scalar,
+        GLOBAL_SCALE_IS_TENSOR=global_scale_is_tensor,
         TOPK=k,
         BLOCK_E=triton.next_power_of_2(max(total_experts, 2)),
     )
