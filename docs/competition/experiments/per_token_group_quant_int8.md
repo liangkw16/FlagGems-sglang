@@ -9,14 +9,12 @@ platform: 8/8
 team_best_stage: e10
 team_best_speedup: 5.5720
 sealed: yes
-next: 重新封存 e10 5.5720;e11 metax tile32 中性证伪,沐曦 4.33=水位,轴尽
-updated: 2026-08-31
+next: 重新封存 e10 5.5720;e12 去 contiguous/warps 2,4,8 全部低于5%门,已知参数轴尽
+updated: 2026-09-01
 ```
 
-状态:e5 = 团队最佳 4.5707x(8/8 valid);e6 方差重掷两连低滚关轴。机器可读状态见顶部 CURRENT 块
-在远端执行,结果文件待 SSH 恢复后取回。远端 GPU 代理(kkgpu,
-192.168.5.204)自 2026-08-29 05:0x CST 起 VPN 链路故障(握手挂起/
-会话中断,双路由直连与 mini 跳板均不可用),阻塞修复迭代。
+状态:e10 = 团队最佳 5.5720x(8/8 valid)；E11 metax tile32 与 E12
+wrapper/warps 扫描均判负，机器可读状态见顶部 CURRENT 块。
 
 ## 契约锁定
 
@@ -557,3 +555,26 @@ preflight intent `bf57e536…` 单次 confirm(sub 7487,额度 28→27/30);
   **T33 重新封存于 e10 `5.57195x`**(距榜首 starwing 6.3983
   -12.9%);已知轴尽:GROUPS_TILE(16 最优,32 对 metax 中性)、
   昆仑瓦片、metax tile;剩余差距 = 昆仑 0.23 固有 + 沐曦/燧原水位。
+
+## E12:wrapper 与 launch 参数穷举(2026-09-01 07:0x CST,负结果)
+
+- 单变量扫描:删除题面连续输入下冗余 `x.contiguous()`(`nc`)；显式
+  `num_warps=2/4/8`；以及 `nc` 与三档 warps 的组合。base commit
+  `0b9dea4151800d4e0cbdd4446fdf4e863791a102`，本地源码未改、平台未提交；
+- 远端 `gpu:/tmp/flagos-t33-offline.YJDLBX`，RTX 5070 Ti、PyTorch
+  `2.13.0+cu130`、Triton `3.7.1`；base unittest 8/8，八份候选题面内
+  correctness 矩阵全绿。wrapper-inclusive 7 shape、每 shape 7 组 AB/BA、
+  正逆序两遍共 14 组；`nc/w2/w4/w8/nc+w2/nc+w4/nc+w8` 综合收益依次为
+  **`-0.115/-2.519/+0.095/+0.286/-2.682/+0.217/-0.126%`**；
+- 最优 `w8` 仅 +0.286%，且 `1024x2560,group_size=128,fp16` 回退
+  5.85%(两遍汇总最大回退 6.21%)，触发 >5% stop gate；`w2` 小形状
+  回退 7–8%。全部低于 +5% 晋级门，判负封轴；
+- 资源:base/w4 在 group size 32/64/128 为 29/33/40 regs；w2
+  33/40/63 regs；w8 27/28/33 regs；均 0 spill、64B shared、3 stages。
+  correctness/bench/resource 日志 SHA-256 分别为
+  `a42f4fffec9a39cdb59371bc4091bcfad06b5483b64dfbb4bcdf0685f7635eed`、
+  `b8fe0fe2c9b50961030b8e13a6eef3b2de2fdf63146d3d7d94ed3870effa1f83`、
+  `4ad6bba300d93cdd833348a2605346a19212fc58a9974192c0bead1890e08baf`。
+
+结论:T33 的 wrapper 与 launch 参数轴也已穷尽；继续消耗额度不能解释实时
+榜首 `7.238625x` 对 e10 `5.57195x` 的 29.91% 差距，保持封存。
