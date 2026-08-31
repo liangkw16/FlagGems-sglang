@@ -58,13 +58,9 @@ def _moe_fused_mul_sum_kernel(
                     weight = tl.where(mapped >= 0, weight, 0.0)
                 else:
                     weight = tl.where(expert_id >= 0, weight, 0.0)
-            # zero-weight slots (EP-dropped experts) contribute exactly
-            # nothing: masking the load skips their whole input slab instead
-            # of reading it and multiplying by 0.0 - traffic drops with the
-            # drop fraction, bit-identical for finite inputs
             values = tl.load(
                 inputs_ptr + (row_base + k) * hidden_dim + h,
-                mask=hmask & (weight != 0.0),
+                mask=hmask,
                 other=0.0,
             ).to(tl.float32)
             acc += values * weight
