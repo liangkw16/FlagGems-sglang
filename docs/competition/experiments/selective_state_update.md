@@ -9,9 +9,9 @@ platform: 8/8
 team_best_stage: e22(correctness)
 team_best_commit: f1a12f7
 team_best_speedup: 5.1200625x;昆仑0.0025x
-blockers: e22八芯正确但昆仑低于0.1x门槛
+blockers: e23无mask快路导致昆仑state数值破坏;e22仍为正确基线
 sealed: no
-next: e23候选就绪;实时preflight
+next: e24恢复mask并单独验证direct grid
 updated: 2026-09-01
 ```
 
@@ -923,3 +923,20 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   11035 bytes,SHA-256
   `0bed9c681d675767184274a1cc392c0e096feaacb7ebcd64ddf8d44e3b6eb1b0`;
   actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+
+### E23 平台结果(sub 7672,2026-09-01 13:46 CST):无 mask 快路数值破坏
+
+- preflight 全过后一次性提交;平台 file URL SHA-256
+  `fb3b0ff0802cfbacf51c395ff9eba649156465b7d4fd946ca291a5f874c52262`;
+  提交后额度 `11/30`,远端 ZIP 回读 `unavailable`,未重试。
+- 七芯 generic 全过:天数 `3.8825x`、沐曦 `9.114x`、燧原 `0.514x`、
+  海光 `8.4925x`、华为 `3.637x`、card_a `6.405x`、card_b `8.2685x`。
+  昆仑 10402ms 后在 pytest 的前三例上停止,终态 `invalid_correctness`。
+- 三例都只报 state:case 0 `360/512`(70.3%,含 `inf`),case 1
+  `25621/40960`(62.6%,含 `inf`),case 2 `104548/196608`(53.2%,最大绝对差
+  `4.673e34`)。E22 同三例全过;case 0/1 的 logical grid 本就低于旧 65535
+  host cap,因此超大 grid 不是这些失败的必要条件,首要嫌疑是新加的 power-of-two
+  N 无 mask load/store。
+- E24 做最小二分:恢复 E22 已平台验真的恒真 `n_mask` load/store,只保留 direct
+  logical grid。若八芯恢复正确,再评估单 grid 收益;在此之前不叠加 P_TILE,避免把
+  compiler 数值问题和多输出结构混在同一候选。
