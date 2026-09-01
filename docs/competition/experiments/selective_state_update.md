@@ -11,7 +11,7 @@ team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
 blockers: e18昆仑case2-4同E13数值指纹
 sealed: no
-next: e19拆分stage1多store DAG
+next: e19候选就绪;实时preflight
 updated: 2026-09-01
 ```
 
@@ -680,3 +680,35 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   两核,严格先 partial 后 state。前者从 `s_old` 生成 FP32 partial 且不写 state;
   后者仍从 `s_old` 重算并仅写降精度 state。无新 buffer;反序会 double-update,
   因而禁止。
+
+## E19:拆分 stage1 partial/state 特化(commit `6be54f6`)
+
+- 唯一执行变量:保留 E18 flat stage2、P8×N16 与所有 lowering flag;stage1
+  同一源码新增 `WRITE_STATE` constexpr,每个 slice/batch 按 `(False,True)`
+  双 launch。False 从 `s_old` 计算 FP32 `new_s` 后只做 C-reduce/partial store;
+  True 仍从同一 `s_old` 重算,只做降精度 state store。由此切断同一 DAG 的
+  二维 state store 与 reduction-derived store,不新增 buffer。
+- 顺序是数学硬约束:若 True 先执行,False 会从已更新 state 再递推一次而
+  double-update。vLLM 上游同样先用 FP32 update 计算输出、再降精度写 state
+  ([FP32 update/output](https://github.com/vllm-project/vllm/blob/ce2e343be1f757a92b3c990023f87bdd87a579ac/vllm/model_executor/layers/mamba/ops/mamba_ssm.py#L385-L455),
+  [state store](https://github.com/vllm-project/vllm/blob/ce2e343be1f757a92b3c990023f87bdd87a579ac/vllm/model_executor/layers/mamba/ops/mamba_ssm.py#L465-L494))。
+- source/verification commit
+  `6be54f6e43fd5f89c9ab17ea4b1a779a2ed234c7`;Kunlun SHA-256
+  `57e0c2990682030b38238fcc67e44c1b96d50c7156143656ab2c0faad1ecd6b6`;
+  generic/test 仍为 `c1e180...` / `a6cc8...`。
+- screening:`gpu-et:/tmp/flagos-selective_state_update-e19-screening.plFAA9`,
+  PID/PGID/SID `241741`;False state 不变/partial 正确、True state 正确/partial
+  哨兵不变、False→True→flat 完整数值链和 offset probes 全过;variants
+  **5/5 PASS**,9.910s;large/grid-fold 覆盖 stage1 48/4 launches 与 stage2
+  17/2 chunks;log SHA-256
+  `1f3029c6d2211e06d18b6fc44c3e47705b57af763e3756080e6e443be0c49679`。
+- commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e19-release.KOoiG8`,PID/PGID/SID
+  `242242`;Git-object manifest 前后一致,同组语义 probes + variants **5/5 PASS**;
+  release log SHA-256
+  `77f854229819df32f9d0a6070443f1bb1dfb65a17e347ceed2aef9fadf0a8053`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e19-6be54f6/selective_state_update.zip`,
+  13874 bytes,SHA-256
+  `c640f4af73fc75e229d2fa5d00a1415ac19c7d58a42df3084952d4befb53b90e`;
+  actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
