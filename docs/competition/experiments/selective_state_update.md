@@ -11,7 +11,7 @@ team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
 blockers: e19昆仑case2-4同E13数值指纹
 sealed: no
-next: e20将stage1 partial降为1D
+next: e20候选就绪;实时preflight
 updated: 2026-09-01
 ```
 
@@ -729,3 +729,34 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   是同构安全路径;官方 [mean 注释](https://github.com/flagos-ai/FlagGems/blob/a7620cc191a0b42e040194622c5758b22a7a25dc/src/flag_gems/runtime/backend/_kunlunxin/ops/mean.py#L124-L141)
   还记录 converted BF16 二维 axis-1 reduction 可产生约 97% mismatch,与本题
   `95%-96%` 指纹高度一致。
+
+## E20:stage1 partial 改为 1D dot(commit `8b295a3`)
+
+- 唯一执行变量:保留 E18 flat stage2;E19 state-only 语义不变并去掉 dead
+  partial 参数;partial 改为每个全局 `(b,h,p,slice)` 一个 program,从 immutable
+  原 state 重算 FP32 update,沿 N_SLICE=16 做 1D `new_s*C` reduction 后标量
+  store。每个 slice 先按 65535 输出分块跑完 partial,再运行旧 state-only;
+  无新 buffer,避免从已降 BF16 state 回读产生额外误差。
+- 首次 screening 仅在 Black79 decorator 换行失败即停止,未跑 JIT/数值,
+  log SHA-256 `75f6083a...`;按格式修正产生新字节后从头筛选,失败证据未复用。
+- source/verification commit
+  `8b295a3254c80764687d819a2753e9ea65ac90c3`;Kunlun SHA-256
+  `63be0e3c80be853b5b387f7f9ca0e22ff26f79077bc4c3fe5d2350c422724705`;
+  generic/test 仍为 `c1e180...` / `a6cc8...`。
+- corrected screening:
+  `gpu-et:/tmp/flagos-selective_state_update-e20-screening-corrected.T6Xf6Q`,
+  PID/PGID/SID `242739`;1D partial 非零 offset + N21 尾片 + immutable state、
+  state-only、组合 flat stage2 probes 全过;variants **5/5 PASS**,9.083s;
+  large 几何为 partial/state/stage2 `136/24/17`,grid-fold 为 `2/2/2`;
+  log SHA-256
+  `69916216ea9ec3dae9087e3f3b3e3717c95086b3e5dd90e0dee938f472e50bb8`。
+- commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e20-release.fmYpaD`,PID/PGID/SID
+  `243252`;Git-object manifest 前后一致,同组语义/几何 probes + variants
+  **5/5 PASS**;release log SHA-256
+  `b52778dbef7052137a0809def126f0d474282e1f2929d280d1e4f77abec2c9c7`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e20-8b295a3/selective_state_update.zip`,
+  15717 bytes,SHA-256
+  `8dd9aeef873afa1ea7c2d838248b1fa88ef006647113797d0c2af0c996b0e279`;
+  actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
