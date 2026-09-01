@@ -16,10 +16,8 @@ import torch
 import triton
 import triton.language as tl
 
-_MAX_GRID = 65535
 
-
-@triton.jit(do_not_specialize=["output_start"])
+@triton.jit
 def _ssu_fused_kernel(
     state_ptr,
     new_state_ptr,
@@ -32,7 +30,6 @@ def _ssu_fused_kernel(
     z_ptr,
     dt_bias_ptr,
     y_ptr,
-    output_start,
     num_heads,
     dim,
     dstate,
@@ -42,11 +39,12 @@ def _ssu_fused_kernel(
     HAS_DT_BIAS: tl.constexpr,
     DT_SOFTPLUS: tl.constexpr,
     N_BLOCK: tl.constexpr,
+    NEED_N_MASK: tl.constexpr,
     isCloseCoreTiling: tl.constexpr,
     isCloseVectorization: tl.constexpr,
     isCloseUnrollControl: tl.constexpr,
 ):
-    out_idx = output_start + tl.program_id(0)
+    out_idx = tl.program_id(0)
     p_idx = out_idx % dim
     row = out_idx // dim
     h = row % num_heads
@@ -68,28 +66,42 @@ def _ssu_fused_kernel(
     state_base = out_idx * dstate
     a_base = (h * dim + p_idx) * dstate
     bc_base = (b * num_groups + g) * dstate
-    state_val = tl.load(
-        state_ptr + state_base + n_off, mask=n_mask, other=0.0
-    ).to(tl.float32)
-    a_val = tl.load(a_ptr + a_base + n_off, mask=n_mask, other=0.0).to(
-        tl.float32
-    )
+    if NEED_N_MASK:
+        state_val = tl.load(
+            state_ptr + state_base + n_off, mask=n_mask, other=0.0
+        ).to(tl.float32)
+        a_val = tl.load(a_ptr + a_base + n_off, mask=n_mask, other=0.0).to(
+            tl.float32
+        )
+    else:
+        state_val = tl.load(state_ptr + state_base + n_off).to(tl.float32)
+        a_val = tl.load(a_ptr + a_base + n_off).to(tl.float32)
     new_s = state_val * tl.exp(dt_val * a_val)
-    b_val = tl.load(b_ptr + bc_base + n_off, mask=n_mask, other=0.0).to(
-        tl.float32
-    )
+    if NEED_N_MASK:
+        b_val = tl.load(b_ptr + bc_base + n_off, mask=n_mask, other=0.0).to(
+            tl.float32
+        )
+    else:
+        b_val = tl.load(b_ptr + bc_base + n_off).to(tl.float32)
     new_s += (dt_val * x_val) * b_val
-    c_val = tl.load(c_ptr + bc_base + n_off, mask=n_mask, other=0.0).to(
-        tl.float32
-    )
-    y_val = tl.sum(new_s * c_val, axis=0)
+    if NEED_N_MASK:
+        c_val = tl.load(c_ptr + bc_base + n_off, mask=n_mask, other=0.0).to(
+            tl.float32
+        )
+        y_val = tl.sum(tl.where(n_mask, new_s * c_val, 0.0), axis=0)
+    else:
+        c_val = tl.load(c_ptr + bc_base + n_off).to(tl.float32)
+        y_val = tl.sum(new_s * c_val, axis=0)
 
     state_ty = new_state_ptr.dtype.element_ty
-    tl.store(
-        new_state_ptr + state_base + n_off,
-        new_s.to(state_ty),
-        mask=n_mask,
-    )
+    if NEED_N_MASK:
+        tl.store(
+            new_state_ptr + state_base + n_off,
+            new_s.to(state_ty),
+            mask=n_mask,
+        )
+    else:
+        tl.store(new_state_ptr + state_base + n_off, new_s.to(state_ty))
     if HAS_D:
         d_val = tl.load(d_ptr + h * dim + p_idx).to(tl.float32)
         y_val += d_val * x_val
@@ -133,34 +145,33 @@ def selective_state_update(
     if total_outputs == 0 or dstate == 0:
         return y, new_state
 
-    for output_start in range(0, total_outputs, _MAX_GRID):
-        output_count = min(_MAX_GRID, total_outputs - output_start)
-        _ssu_fused_kernel[(output_count,)](
-            state,
-            new_state,
-            x,
-            dt,
-            A,
-            B,
-            C,
-            D if D is not None else x,
-            z if z is not None else x,
-            dt_bias if dt_bias is not None else x,
-            y,
-            output_start,
-            nheads,
-            dim,
-            dstate,
-            num_groups,
-            HAS_D=D is not None,
-            HAS_Z=z is not None,
-            HAS_DT_BIAS=dt_bias is not None,
-            DT_SOFTPLUS=bool(dt_softplus),
-            N_BLOCK=triton.next_power_of_2(dstate),
-            isCloseCoreTiling=True,
-            isCloseVectorization=True,
-            isCloseUnrollControl=True,
-        )
+    n_block = triton.next_power_of_2(dstate)
+    _ssu_fused_kernel[(total_outputs,)](
+        state,
+        new_state,
+        x,
+        dt,
+        A,
+        B,
+        C,
+        D if D is not None else x,
+        z if z is not None else x,
+        dt_bias if dt_bias is not None else x,
+        y,
+        nheads,
+        dim,
+        dstate,
+        num_groups,
+        HAS_D=D is not None,
+        HAS_Z=z is not None,
+        HAS_DT_BIAS=dt_bias is not None,
+        DT_SOFTPLUS=bool(dt_softplus),
+        N_BLOCK=n_block,
+        NEED_N_MASK=dstate != n_block,
+        isCloseCoreTiling=True,
+        isCloseVectorization=True,
+        isCloseUnrollControl=True,
+    )
     return y, new_state
 
 
