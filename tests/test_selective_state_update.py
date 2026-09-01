@@ -12,25 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import importlib.util
 import unittest
-from pathlib import Path
 
 import torch
 import torch.nn.functional as F
 
-MODULE_PATH = (
-    Path(__file__).parents[1]
-    / "src"
-    / "flaggems_sglang"
-    / "ops"
-    / "selective_state_update.py"
-)
-SPEC = importlib.util.spec_from_file_location(
-    "selective_state_update_module", MODULE_PATH
-)
-MOD = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MOD)
+from tests._op_variants import load_operator_modules
+
+MODULES = load_operator_modules("selective_state_update")
 
 
 def reference(
@@ -94,8 +83,9 @@ class TestSelectiveStateUpdate(unittest.TestCase):
         torch.bfloat16: dict(rtol=1.5e-2, atol=1.5e-2),
     }
 
-    def _check(self, dtype, B, H, P, N, G, use_D, use_z, use_bias, sp):
+    def _check(self, module, dtype, B, H, P, N, G, use_D, use_z, use_bias, sp):
         state, x, dt, A, Bm, C = make_inputs(B, H, P, N, G, dtype, B * 7 + H)
+        torch.manual_seed(B * 7 + H)
         D = torch.randn(H, P, device="cuda").to(dtype) if use_D else None
         z = torch.randn(B, H, P, device="cuda").to(dtype) if use_z else None
         dt_bias = (
@@ -104,7 +94,7 @@ class TestSelectiveStateUpdate(unittest.TestCase):
             else None
         )
         state_in = state.clone()
-        y, ns = MOD.selective_state_update(
+        y, ns = module.selective_state_update(
             state, x, dt, A, Bm, C, D, z, dt_bias, sp
         )
         ry, rns = reference(state, x, dt, A, Bm, C, D, z, dt_bias, sp)
@@ -114,38 +104,48 @@ class TestSelectiveStateUpdate(unittest.TestCase):
         self.assertTrue(torch.equal(state, state_in))
 
     def test_matrix(self):
-        for dtype in (torch.bfloat16, torch.float16, torch.float32):
-            for B, H, P, N, G in [
-                (2, 8, 64, 128, 1),
-                (4, 16, 64, 64, 4),
-                (1, 2, 1, 1, 1),
-                (128, 32, 64, 128, 8),
-                (3, 5, 33, 96, 1),
-                (8, 64, 64, 128, 8),
-            ]:
-                for flags in [
-                    (False, False, False, False),
-                    (True, True, True, True),
-                    (True, False, True, False),
-                    (False, True, False, True),
+        for name, module in MODULES:
+            for dtype in (torch.bfloat16, torch.float16, torch.float32):
+                for B, H, P, N, G in [
+                    (2, 8, 64, 128, 1),
+                    (4, 16, 64, 64, 4),
+                    (1, 2, 1, 1, 1),
+                    (128, 32, 64, 128, 8),
+                    (3, 5, 33, 65, 1),
+                    (8, 64, 64, 128, 8),
                 ]:
-                    with self.subTest(
-                        dtype=dtype, B=B, H=H, P=P, N=N, G=G, flags=flags
-                    ):
-                        self._check(dtype, B, H, P, N, G, *flags)
+                    for flags in [
+                        (False, False, False, False),
+                        (True, True, True, True),
+                        (True, False, True, False),
+                        (False, True, False, True),
+                    ]:
+                        with self.subTest(
+                            module=name,
+                            dtype=dtype,
+                            B=B,
+                            H=H,
+                            P=P,
+                            N=N,
+                            G=G,
+                            flags=flags,
+                        ):
+                            self._check(module, dtype, B, H, P, N, G, *flags)
 
     def test_large_batch(self):
         state, x, dt, A, Bm, C = make_inputs(
             2048, 8, 64, 128, 1, torch.bfloat16, 99
         )
-        y, ns = MOD.selective_state_update(state, x, dt, A, Bm, C)
         ry, rns = reference(state, x, dt, A, Bm, C)
-        torch.testing.assert_close(
-            y.float(), ry.float(), rtol=1.5e-2, atol=1.5e-2
-        )
-        torch.testing.assert_close(
-            ns.float(), rns.float(), rtol=1.5e-2, atol=1.5e-2
-        )
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                y, ns = module.selective_state_update(state, x, dt, A, Bm, C)
+                torch.testing.assert_close(
+                    y.float(), ry.float(), rtol=1.5e-2, atol=1.5e-2
+                )
+                torch.testing.assert_close(
+                    ns.float(), rns.float(), rtol=1.5e-2, atol=1.5e-2
+                )
         del state, x, dt, A, Bm, C, y, ns, ry, rns
         torch.cuda.empty_cache()
 
@@ -157,7 +157,6 @@ class TestSelectiveStateUpdate(unittest.TestCase):
         x_s = x[:, :, ::2]
         dt_s = dt[:, :, ::2]
         A_s = A[:, ::2]
-        y, ns = MOD.selective_state_update(state_s, x_s, dt_s, A_s, Bm, C)
         ry, rns = reference(
             state_s.contiguous(),
             x_s.contiguous(),
@@ -166,20 +165,44 @@ class TestSelectiveStateUpdate(unittest.TestCase):
             Bm,
             C,
         )
-        torch.testing.assert_close(y, ry, rtol=1e-4, atol=1e-4)
-        torch.testing.assert_close(ns, rns, rtol=1e-4, atol=1e-4)
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                y, ns = module.selective_state_update(
+                    state_s, x_s, dt_s, A_s, Bm, C
+                )
+                torch.testing.assert_close(y, ry, rtol=1e-4, atol=1e-4)
+                torch.testing.assert_close(ns, rns, rtol=1e-4, atol=1e-4)
 
     def test_softplus_extremes(self):
         dt = torch.full((1, 2, 4), 30.0, dtype=torch.float32, device="cuda")
         dt[0, 0, :2] = -30.0
         state, _, _, A, Bm, C = make_inputs(1, 2, 4, 8, 1, torch.float32, 3)
         x = torch.ones(1, 2, 4, dtype=torch.float32, device="cuda")
-        y, ns = MOD.selective_state_update(
-            state, x, dt, A, Bm, C, dt_softplus=True
-        )
         ry, rns = reference(state, x, dt, A, Bm, C, dt_softplus=True)
-        torch.testing.assert_close(y, ry, rtol=1e-4, atol=1e-4)
-        torch.testing.assert_close(ns, rns, rtol=1e-4, atol=1e-4)
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                y, ns = module.selective_state_update(
+                    state, x, dt, A, Bm, C, dt_softplus=True
+                )
+                torch.testing.assert_close(y, ry, rtol=1e-4, atol=1e-4)
+                torch.testing.assert_close(ns, rns, rtol=1e-4, atol=1e-4)
+
+    def test_batch_grid_fold_path(self):
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                self._check(
+                    module,
+                    torch.float16,
+                    70000,
+                    1,
+                    1,
+                    1,
+                    1,
+                    False,
+                    False,
+                    False,
+                    False,
+                )
 
 
 if __name__ == "__main__":
