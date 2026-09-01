@@ -46,6 +46,7 @@ def _ssu_stage1_kernel(
     num_slices,
     HAS_DT_BIAS: tl.constexpr,
     DT_SOFTPLUS: tl.constexpr,
+    WRITE_STATE: tl.constexpr,
     BLOCK_P: tl.constexpr,
     N_SLICE: tl.constexpr,
     isCloseCoreTiling: tl.constexpr,
@@ -90,25 +91,27 @@ def _ssu_stage1_kernel(
         mask=n_mask,
         other=0.0,
     ).to(tl.float32)
-    c_val = tl.load(
-        c_ptr + (b * num_groups + g) * dstate + n_idx,
-        mask=n_mask,
-        other=0.0,
-    ).to(tl.float32)
     s_base = (row * dim + p_idx)[:, None] * dstate + n_idx[None, :]
     s_val = tl.load(state_ptr + s_base, mask=pn_mask, other=0.0).to(tl.float32)
     d_a = tl.exp(dt_val[:, None] * a_val)
     new_s = s_val * d_a + (dt_val * x_val)[:, None] * b_val[None, :]
-    state_ty = state_ptr.dtype.element_ty
-    tl.store(state_ptr + s_base, new_s.to(state_ty), mask=pn_mask)
-    part = tl.sum(
-        tl.where(n_mask[None, :], new_s, 0.0) * c_val[None, :], axis=1
-    )
-    tl.store(
-        partial_y_ptr + (row * dim + p_idx) * num_slices + slice_index,
-        part,
-        mask=p_mask,
-    )
+    if WRITE_STATE:
+        state_ty = state_ptr.dtype.element_ty
+        tl.store(state_ptr + s_base, new_s.to(state_ty), mask=pn_mask)
+    else:
+        c_val = tl.load(
+            c_ptr + (b * num_groups + g) * dstate + n_idx,
+            mask=n_mask,
+            other=0.0,
+        ).to(tl.float32)
+        part = tl.sum(
+            tl.where(n_mask[None, :], new_s, 0.0) * c_val[None, :], axis=1
+        )
+        tl.store(
+            partial_y_ptr + (row * dim + p_idx) * num_slices + slice_index,
+            part,
+            mask=p_mask,
+        )
 
 
 @triton.jit(do_not_specialize=["output_start"])
@@ -200,31 +203,33 @@ def selective_state_update(
         slice_index = slice_start // _N_SLICE
         for batch_start in range(0, batch, batch_chunk):
             batch_count = min(batch_chunk, batch - batch_start)
-            _ssu_stage1_kernel[(tiles_per_head, batch_count, nheads)](
-                new_state,
-                x,
-                dt,
-                A,
-                B,
-                C,
-                dt_bias if dt_bias is not None else x,
-                partial_y,
-                batch_start,
-                slice_index,
-                slice_start,
-                nheads,
-                dim,
-                dstate,
-                num_groups,
-                num_slices,
-                HAS_DT_BIAS=dt_bias is not None,
-                DT_SOFTPLUS=bool(dt_softplus),
-                BLOCK_P=_BLOCK_P,
-                N_SLICE=_N_SLICE,
-                isCloseCoreTiling=True,
-                isCloseVectorization=True,
-                isCloseUnrollControl=True,
-            )
+            for write_state in (False, True):
+                _ssu_stage1_kernel[(tiles_per_head, batch_count, nheads)](
+                    new_state,
+                    x,
+                    dt,
+                    A,
+                    B,
+                    C,
+                    dt_bias if dt_bias is not None else x,
+                    partial_y,
+                    batch_start,
+                    slice_index,
+                    slice_start,
+                    nheads,
+                    dim,
+                    dstate,
+                    num_groups,
+                    num_slices,
+                    HAS_DT_BIAS=dt_bias is not None,
+                    DT_SOFTPLUS=bool(dt_softplus),
+                    WRITE_STATE=write_state,
+                    BLOCK_P=_BLOCK_P,
+                    N_SLICE=_N_SLICE,
+                    isCloseCoreTiling=True,
+                    isCloseVectorization=True,
+                    isCloseUnrollControl=True,
+                )
     total_outputs = total_rows * dim
     for output_start in range(0, total_outputs, _MAX_GRID):
         output_count = min(_MAX_GRID, total_outputs - output_start)
