@@ -11,12 +11,12 @@ team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
 blockers: e11昆仑stage1 8x16 uni_sram
 sealed: no
-next: e12仅N_SLICE 16→8
+next: e12关闭stage1 vectorization后平台实测
 updated: 2026-09-01
 ```
 
 状态:E11 昆仑 7.219s 明确落到 stage1 `8×16` uni_sram;
-E12 保留 P=8,仅缩 `N_SLICE 16→8`。
+E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
 
 ## 契约锁定
 
@@ -338,4 +338,64 @@ E12 保留 P=8,仅缩 `N_SLICE 16→8`。
 - 七芯 generic 全过;昆仑执行 **7219ms**,五例均在 stage1、grid
   `(2,1,4)`,`num_stages=1` 返回相同 `uni_sram PassManager::run failed`。
 - `BLOCK_P 16→8` 未跨过编译阈值;下一候选只改 `N_SLICE 16→8`,形成
-  stage1 8×8 活跃矩阵。若仍同指纹,再独立试官方 Mamba 基线 P=4。
+  stage1 8×8 活跃矩阵。在线源码复核后撤销该计划:官方已记录 8×8/16×16
+  方块 tile 的 Legalize verifier 失败,不能把 8×8 当作可靠的降 SRAM 手段。
+
+## `uni_sram` 在线根因校正(2026-09-01 12:0x CST)
+
+- FlagTree XPU backend 将 `make_ttxir` 的整条非 SDNN pass pipeline 包在同一个
+  `try/except` 中,任意 pass 异常都被重写成
+  `OutOfResources(0,0,"uni_sram ...")`;因此 E10/E11 的
+  `required=0/limit=0` **不是 SRAM 容量测量值**。官方源码见
+  [compiler.py L271-L367](https://github.com/flagos-ai/FlagTree/blob/2e6258114a79f14440e6f1134e5daca67d332925/third_party/xpu/backend/compiler.py#L271-L367)。
+- 当前 stage1 同时含二维 masked load/broadcast、`exp`/可选 `log` 和 axis-1
+  reduce。官方验证报告记录同一 `TritonXPUVectorize` pass 会令复杂 masked
+  kernel 编译失败,关闭 vectorization 后可编译运行;见
+  [validation L239-L247](https://github.com/flagos-ai/FlagTree/blob/2e6258114a79f14440e6f1134e5daca67d332925/third_party/xpu/docs/triton-3.6-validation.md#L239-L247)。
+  FlagGems 的 Kunlun `exp`、`log1p`、`sigmoid`、`logsumexp` 也使用
+  `isCloseVectorization=True`;其中
+  [logsumexp](https://github.com/flagos-ai/FlagGems/blob/2822a8067ca3f1f6278a58599fd1c4b88bb5bac5/src/flag_gems/runtime/backend/_kunlunxin/ops/logsumexp.py#L107-L133)
+  与本题同为超越函数 + reduction。
+- 默认 `buffer_size_limit=512` bytes,FP32 折算为 128 elements,恰好等于当前
+  `8×16`;它只说明 buffer 边界,不能定位是哪一个 pass 失败。官方计算见
+  [triton_xpu.cc L513-L543](https://github.com/flagos-ai/FlagTree/blob/2e6258114a79f14440e6f1134e5daca67d332925/third_party/xpu/triton_xpu.cc#L513-L543)。
+- 预注册后续单变量顺序:E12 只关 Vectorize;若仍同指纹则关闭该轴,依次试
+  `isCloseCoreTiling=True`、`buffer_size_limit=2048`、
+  `isCloseUnrollControl=True`;全部失败才拆分 state update 与 C-reduce。
+  不再扫描无效的 `num_warps/num_ctas/num_stages`,也不提交方块 8×8。
+
+## E12:关闭 stage1 Vectorize pass(commit `370ca66`)
+
+- 唯一执行变量:保持 E11 的 `_BLOCK_P=8`、`_N_SLICE=16` 和全部数学/布局,
+  仅给 stage1 launch 传 `isCloseVectorization=True`。为让同一 vendor 在 CUDA
+  代理可执行,沿用官方
+  [mv.py constexpr 模式](https://github.com/flagos-ai/FlagGems/blob/2822a8067ca3f1f6278a58599fd1c4b88bb5bac5/src/flag_gems/runtime/backend/_kunlunxin/ops/mv.py#L54-L110):
+  同名 unused `tl.constexpr` 既是 XPU backend option,也是其他 backend 的合法
+  kernel 参数,无设备判断或 fallback。
+- source/verification commit
+  `370ca66cfb0319f4eca3f999113d07272269735d`;generic SHA-256
+  `c1e1801200a3f56c7827714d86932defdd19ee40dab34d1300b4a29d1f7eac4c`;
+  Kunlun SHA-256
+  `fde957889fa2e889fb06c3934568efd0071967a821d1105d681679b7c52719ea`;
+  test SHA-256
+  `a6cc8c509960f82c69e4124eef8c6b927879ebc789c044ec0fd75fbde638aaf0`。
+- screening:`gpu-et:/tmp/flagos-selective_state_update-e12-screening.FB9Upc`;
+  PID/PGID/SID `237166`;static + 完整 generic/Kunlun variants **5/5 PASS**,
+  23.279s;gate log SHA-256
+  `c6d634707717c8fa7e27980f61babdd009b026a3d2e3a32c77b05e339e5edf5e`。
+  CUDA JIT/执行确认同名 kwarg 不会报 unknown parameter;因变量仅影响 XPU
+  lowering,不重复无区分力的 CUDA benchmark。
+- commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e12-release.qE8m0Y`;PID/PGID/SID
+  `237638`;Git-object 五文件前后 manifest 完全一致,static + variants
+  **5/5 PASS**,23.227s;release log SHA-256
+  `b8735bc66d05663977b2bc57feee91263a8c2916966a2fe064c7a873bcf430ce`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e12-370ca66/selective_state_update.zip`,
+  13625 bytes,SHA-256
+  `09e2080f1295134689cc86a044deb3d56a6353b228c17357e5ad0291451067df`;
+  `created`/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+- 2026-09-01 12:05:07 CST 只读状态:Task competing/can_submit,额度
+  `23/30`,最小间隔已满足。晋级门为昆仑五例全过;其余七芯成员逐字节冻结。
+  若仍为 stage1 `uni_sram PassManager::run failed`,不重投 E12,直接转
+  CoreTiling 单变量。
