@@ -5,12 +5,12 @@ task: 41
 operator: state_passing
 batch: 3
 validity: invalid
-platform: E5 sub8034 7/8(8/8 terminal);invalid_correctness
+platform: E6 ready;baseline E5 sub8034 7/8 invalid_correctness
 team_best_stage: E5 diagnostic
 team_best_commit: d980b8d
-blockers: 昆仑uni_sram OutOfResources;燧原0.070x<0.1x
+blockers: E6昆仑CoreTiling与燧原3D owner待目标芯裁决
 sealed: no
-next: 封存E5原字节;仅评估昆仑降BLOCK与燧原新结构的E6证据门
+next: E6单次提交;两目标芯均正确且>=0.1x才转正
 updated: 2026-09-02
 ```
 
@@ -541,7 +541,95 @@ E5 最终为 `7/8`、`invalid_correctness`，平台不计算平均或排名；�
 `my_rank=null`。
 
 按预注册永久封存 Enflame cap12+i32 轴及 E5 三份原字节。Kunlun 没有命中“再次
-1830 秒崩溃”的封存条件；`num_stages` 已是最低的 1，而错误消息直接指向降低 block
-size，因此只允许把单次 BLOCK 下调作为根因候选，不做参数扫表或私有 XPU flag。
+1830 秒崩溃”的封存条件。后续固定 XPU backend 复核确认 `required=0/limit=0` 是
+整条 pass manager 异常的统一包装，不能按错误文案直接认定 BLOCK 超限；T36 已有
+“缩小活跃 tile 仍失败、只关 CoreTiling 后越过编译墙”的平台正证据。因此先只验证
+CoreTiling metadata，失败后才允许依据新 traceback 评估唯一 BLOCK128，不扫表。
 任何 E6 还必须为 Enflame 提供不同于已封存 cap12+i32 的独立结构证据，并重新走
 commit-bound release、canonical ZIP、实时 preflight 与一次性提交门禁。
+
+## E6：Enflame direct 3D owner + Kunlun close CoreTiling（2026-09-02）
+
+状态：source/verification commit、exact Git-object release 与 canonical ZIP 门禁
+通过；已预注册为一次性 validity-first 候选，尚未上传或提交。
+
+E6 继续冻结 E1 generic 平台已证字节，只给 E5 的两个失败芯片各引入一个独立轴：
+
+- Enflame 永久停止 E5 cap12 persistent 结构。E6 保持相同递推、i32 地址路径、
+  BLOCK256、4 warps 与 1 stage，只把 flat tile id、12-CTA grid-stride、每 tile
+  除余改成固定 SGLang 同算子的自然 `(dim_tile,batch,head)` 三维 ownership。
+  GCU grid y/z 上限均为 255，wrapper 因此只在 B/H 超限时按 255 分段；普通 shape
+  仍为单 launch，现有 `B=257,H=256` 回归会实际走四段并覆盖边界。
+- Kunlun 保持 E5 chunk-major 物化、host-stepped 四指针 kernel、BLOCK256、grid、
+  数学和全部 launch 参数，只新增同名 unused constexpr 并传
+  `isCloseCoreTiling=True`。平台 `required=0/limit=0` 是 XPU 对整条 `pm.run`
+  异常的统一包装，不是 SRAM 容量测量；T36 E11 降低活跃 tile 后仍同指纹，而 E13
+  只关闭 CoreTiling 即越过编译墙，构成本轴的直接平台先例。
+
+### KernelGen 复核与构建身份
+
+以 sub 8034 的真实回执分别调用 `kernelgen-server.optimize_kernel(device=kunlun)`
+和 `optimize_kernel(device=sunrise)`，两次均 `mcp_isError=false`。Kunlun 返回仅在
+launch 增加 `isCloseCoreTiling=True`；为让同一 vendor 在 CUDA 代理合法执行，按
+仓内已证模式补同名 unused constexpr。Enflame 返回分段 3D owner；落库只删除
+两个无证据 eviction hint、一个未使用参数与说明注释，结构和数学不变。该工具不执行
+目标芯验证，Kunlun `generate_kernel` verifier 的最小 `x+y` 三次 HTTP 502 基线
+仍未恢复。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `5f038651131d3926219f528df1206da1a7068d8b` |
+| generic SHA-256 | `af0e622458f7ab89fadc45273c60f209bad5477fc8374de5e996d8193447c034`（=E1/E5） |
+| Enflame SHA-256 | `a0b425adc22dafb583bf40121e5df913b765e8a9876dfd88ca5510403ade5c07` |
+| Kunlun SHA-256 | `3a8ab6a6a808e0df88ea446d60664c27e4e7e3375509c4b124b9ccbbcffdeb55` |
+| test SHA-256 | `e8eb6f67d27e6215bb8db2450e17114482f242c87f3b84a80b00ae69f628d2b7`（=E5） |
+| benchmark SHA-256 | `d5dec07565eaab4c7a59ddb60f0966ae8cb6e58e1457e586f1ddd684c3ee9f12`（=E5） |
+| canonical ZIP | `artifacts/competition/state_passing/e6-5f03865/state_passing.zip` |
+| ZIP size / SHA-256 | `15827` bytes / `c7be4dc2be3b9b2c9f7390f9277abdc9722b09dd3fb7fa5e500bd38e276e0344` |
+| ZIP members | `state_passing.py`、`state_passing_enflame.py`、`state_passing_kunlunxin.py` |
+
+打包器 dry-run/create/`--verify-existing` 三次身份一致；`unzip -t/-Z1`、唯一顶层
+UTF-8 `.py` 成员、10 MB 上限和成员与 source commit 逐字节核对全部通过。
+
+### 代理验证
+
+- screening：`gpu-et:/tmp/flagos-state-passing-e6-screen.mVN3nu`，显式传入候选，
+  manifest / log SHA-256 为
+  `7488d88ee857c2742e8e519c11d3b9ae99d9cb227bd29907d4e1537e933f57f1` /
+  `057347aa0d91d3388fc47c3d6f963fce39e46894aa30a8dece784dcc06d84602`；
+  静态门与三 vendor unittest **5/5** 通过。
+- release：`gpu-et:/tmp/flagos-state-passing-e6-release.7QsLm3`，七份输入全部由
+  commit `5f03865` Git 对象生成。runner / manifest / release log SHA-256 为
+  `e5e61138540fcdf9b3bcc528ab8d96bb1ded5a1cc30f2120aa60db17eb7f49d1` /
+  `7488d88ee857c2742e8e519c11d3b9ae99d9cb227bd29907d4e1537e933f57f1` /
+  `24fbf8bf7c72f2bfaf07817d99e405854fc614c3d5c6e952cedea51698b37dc2`。
+  py_compile、Black、isort、flake8、末尾哈希与 unittest **5/5** 全过；vendor
+  Black log SHA-256 为
+  `b9cf511501d306d2bd8355ccb165c8ddc0a6fdd62d7c72c4a7b1795cf8934c8c`。
+- release generic 四档 NVIDIA 代理均值 `8.236864x`。exact Enflame 四档为
+  `3.324756x / 6.841086x / 3.390930x / 19.529182x`，均值 `8.271488x`，
+  相对 E5 vendor `1.834851x` 提升约 **4.51 倍**，最差档也由 `0.213619x`
+  升至 `3.390930x`；log SHA-256 为
+  `9f9a292dd7eb5240bc074aa8e53a1f59f8e8756e28e4868d78db8fc84746c604`。
+  exact Kunlun 四档为 `2.137044x / 2.962706x / 1.736707x / 2.471712x`，
+  均值 `2.327042x`，符合 CUDA 上 dummy constexpr 不改 kernel body；log SHA-256
+  `2256cbc02d0b359547c3c2d8c21a8effd58fcb23ea9acb0a324aac1c8dd390be`。
+  这些结果只证明实际字节可 JIT、数值正确与结构代理，不外推 GCU/XPU。
+
+### 单次提交预注册
+
+2026-09-02 00:40:15 CST 实时状态：race `782kzq4m`、账号 `15600308080`、
+团队 `SoulCoder`、batch 3、Task 41/`s2t1op041`、`competing/submitting`、
+`can_submit=true`，额度 `29/30`，距 E5 超过 120 秒。题目详情为 168 submissions /
+27 teams / 6 个达标队，榜首 `wwwwww` 仍为 `7.8095x`；本队无有效分数或排名。
+
+E6 只允许上述 ZIP 上传和正式提交各一次；Enflame/Kunlun 选择各自新 vendor，其余
+六芯选择冻结 generic。基础门为 8/8 correctness 且每芯 `>=0.1x`；机制门为
+Kunlun 不再出现 `uni_sram` 并通过五例、Enflame 至少达到 `0.1x`。若 Kunlun
+保持同指纹，永久停止 CoreTiling-only 轴；仅当 Enflame 已过门且新 traceback 对
+BLOCK 边界给出直接证据时，才评估唯一 BLOCK128 结构，不扫 128/64/16。若 Enflame
+仍 `<0.1x`，永久停止 direct-3D 轴，不退到 host-step 或 BLOCK 扫描。
+
+本发仍是 validity-first：冻结六芯按 E5 实测合计 `36.1745x`，严格超过榜首所需
+八芯总和 `62.476x`，所以两目标芯仍需合计 `>26.3015x`；即使 8/8 转正也不预宣称
+登顶。

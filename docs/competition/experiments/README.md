@@ -624,3 +624,8 @@ T32 E3 代理门未过未发射。
   cap12+i32 轴封存；只保留“昆仑降 BLOCK + 燧原不同结构”的 E6 证据门。
 - 00:25 实时榜单为 167 submissions / 27 teams / 6 个达标队，榜首 `wwwwww`
   `7.8095x`；本队仍无有效分数或排名，今日额度 `29/30`。
+- E6 只做两个新根因轴：Enflame 换为按 y/z=255 分段的自然 3D owner，Kunlun
+  保持四指针 host-step 仅关闭 CoreTiling。commit `5f03865` exact release 5/5；
+  Enflame NVIDIA 代理从 `1.834851x` 升到 `8.271488x`，Kunlun body 代理保持
+  `2.327042x`。canonical ZIP `e6-5f03865` SHA-256 `c7be4dc2…e0344`
+  已验签，预注册为唯一一次 8/8 validity-first 提交。
