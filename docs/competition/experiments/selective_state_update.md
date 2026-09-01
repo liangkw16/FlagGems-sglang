@@ -4,14 +4,14 @@
 task: 36
 operator: selective_state_update
 batch: 3
-validity: candidate_ready(e27)
-platform: 8/8(e26);e27待提交
+validity: invalid_threshold
+platform: 8/8
 team_best_stage: e22(correctness)
 team_best_commit: f1a12f7
 team_best_speedup: 5.1200625x;昆仑0.0025x
-blockers: e27仅NVIDIA代理通过;目标昆仑strided DMA与runtime-N未实测
+blockers: e27昆仑0.0135x虽提升4.5倍,距0.1x仍差7.41倍
 sealed: no
-next: e27实时preflight后单次提交
+next: P-major单变量二分XPU Vectorize与N-loop局部展开
 updated: 2026-09-01
 ```
 
@@ -1214,3 +1214,21 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   `y[64]` 分类,不得回改已验 fallback 或 N mask。若正确但昆仑 `<0.01x`,说明
   strided P-major 仍被 DMA/loop 控制吞噬,关闭该轴,下一单变量只测占 99.8583%
   工作量的 N128 N-major 无 mask 快路;E23 从未独立执行到 N128,故该边界尚未证伪。
+
+### E27 平台结果(sub 7708,2026-09-01 14:57 CST):昆仑提升 4.5 倍
+
+- preflight tuple 全部匹配后一次性提交;平台 file URL SHA-256
+  `ea53b729a33afcdc5e606f632ef7822e79ded8bcb1d4f93453a5cbb2a81b7f28`;
+  远端 ZIP 回读 `unavailable`,未重试。14:57:09 CST 终态额度 `7/30`,
+  submission `7708`/daily seq `23`。
+- 八芯全部正确:天数 `3.9935x`、沐曦 `9.1005x`、燧原 `0.505x`、海光
+  `8.4435x`、昆仑 `0.0135x`、华为 `3.66x`、card_a `6.4225x`、card_b
+  `8.286x`;均值 `5.0530625x`,终态 `invalid_threshold`。
+- 昆仑 validation `17636ms`,相较 E26 的 48495ms 降 63.63%;speedup
+  `0.003→0.0135x`,提升 **4.5 倍**。这同时排除了“strided P-major 必然更慢”并
+  证明删除 Q 次跨核 reduce/把 P 映射到 64 cores 是当前首个数量级有效结构。
+- 仍距最低门 `0.1x` 差 `7.4074x`,未达到有效门,但超过预注册的 `0.01x`
+  机制继续线。剩余主路径每 core 对 N128 仍执行 128 次 scalar loop,且 E27 延续
+  旧正确路径关闭 XPU Vectorize/UnrollControl;下一轮只选择一个编译器变量,
+  优先判断官方同构 kernel 默认开启的 Vectorize 能否合并每 core 的连续 N 访存,
+  不同时改 P_BLOCK、mask 或 fallback。
