@@ -4,14 +4,14 @@
 task: 36
 operator: selective_state_update
 batch: 3
-validity: candidate_ready(e26)
-platform: 8/8(e25);e26待提交
+validity: invalid_threshold
+platform: 8/8
 team_best_stage: e22(correctness)
 team_best_commit: f1a12f7
 team_best_speedup: 5.1200625x;昆仑0.0025x
-blockers: e26仅NVIDIA代理通过;昆仑需从0.003x升至至少0.1x
+blockers: e26复用B/C及grid16384仍仅0.003x;48.5s需区分编译与执行
 sealed: no
-next: e26实时preflight后单次提交
+next: 分解昆仑validation编译/runtime并寻找数量级结构改写
 updated: 2026-09-01
 ```
 
@@ -1136,3 +1136,21 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   只允许用“B/C 放回 loop”作单变量归因,不得动 N mask 或三个 close flag。若八芯
   正确但昆仑 `<0.01x`,说明 row-owner+B/C 复用仍不足一个数量级,关闭该轴,不再做
   `(batch,group)` 合并;后者只再省 `H/G` 份 B/C,理论收益不足以跨 `0.1x` 门。
+
+### E26 平台结果(sub 7696,2026-09-01 14:38 CST):8/8,复用轴无收益
+
+- preflight tuple 全部匹配后一次性提交;平台 file URL SHA-256
+  `e0fcf9fed7378717a2ba2ea3bc91aaccbad3088e4976807049cb43d6f1e073b6`;
+  远端 ZIP 回读因可信 host 未配置为 `unavailable`,提交已成功且未重试。14:37:47
+  CST 终态额度 `8/30`,submission `7696`/daily seq `22`。
+- 八芯全部正确:天数 `3.886x`、沐曦 `9.104x`、燧原 `0.5055x`、海光
+  `8.4715x`、昆仑 `0.003x`、华为 `3.6615x`、card_a `6.4185x`、card_b
+  `8.281x`;均值 `5.041375x`,终态 `invalid_threshold`。
+- 昆仑 validation `48495ms`,仅比 E25 的 50348ms 少 3.68%,展示 speedup 完全相同。
+  因而 `P_TILE4→row-owner`、grid `262144→16384` 与 B/C load 16–128 倍下降
+  都未改变主瓶颈;E26 未过预注册 `<0.01x` 机制门,该轴关闭。
+- `(batch,group)` 再合并只会额外省 `H/G` 份 B/C。按每输出约三条不可共享主向量
+  与两条 B/C 向量估算,相对 E26 的乐观上限为
+  `(3P+2)/(3P+2/(H/G))`,P16/64/128 分别不超过约 1.0417/1.0104/1.0052x,
+  且会降低并行度;远不足 `0.003→0.1x`,不提交该猜测。下一步必须把 48.5s 拆成
+  specialization/JIT 编译与实际 kernel 执行,只尝试能消除数量级开销的结构。
