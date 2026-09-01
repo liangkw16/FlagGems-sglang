@@ -11,7 +11,7 @@ team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
 blockers: e11昆仑stage1 8x16 uni_sram
 sealed: no
-next: e13关闭stage1 CoreTiling后平台实测
+next: e13已编译;定位P=128数值lowering
 updated: 2026-09-01
 ```
 
@@ -447,3 +447,20 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
 - 晋级门仍为昆仑五例全过;若相同 stage1 pass 指纹失败,关闭 CoreTiling 轴,
   下一独立变量为 `isCloseUnrollControl=True`,不叠加 buffer。
+
+### E13 平台结果(sub 7627,2026-09-01 12:21 CST):编译墙已破
+
+- preflight 全过后一次性提交;平台文件 URL SHA-256
+  `7df7cdf7f801189aa36633a04429d8c0566c4f2d20b8fa2972f83c4bc8a9e585`;
+  提交后额度 `21/30`,远端 ZIP 回读 `unavailable`,未重试。
+- 七芯 generic 全过:天数 `3.8835x`、沐曦 `9.107x`、燧原 `0.5165x`、
+  海光 `8.473x`、华为 `3.656x`、card_a `6.775x`、card_b `8.192x`。
+- **关键进展**:昆仑不再出现 `uni_sram`。vendor 完成编译和执行(18818ms),
+  case 0/1 通过;仅 case 2/3/4 数值失败。由输出元素数和最大索引可锁定三者
+  `y` shape 为 `[3,16,128]`、`[64,32,128]`、`[256,32,128]`,超差比例
+  `95.0%/95.9%/96.0%`;前两例 P<=64 已过。CoreTiling 是编译阻塞 pass,
+  关闭后暴露 P=128/grid.x=16 相关 lowering 错误。
+- stop gate 修正:不撤销已证明必要的 CoreTiling flag,也不按旧计划直接替换成
+  UnrollControl(会重新引入编译失败)。下一候选以 E13 为基线,只改变一个
+  P/grid 或后置 pass 变量;先用源码证据区分 grid.x=16、双 store 和 reduce
+  live-range,不盲叠 flags。
