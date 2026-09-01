@@ -618,3 +618,9 @@ T32 E3 代理门未过未发射。
   代理最差分别 `1.733660x` / `0.213619x`。canonical ZIP
   `e5-d980b8d` SHA-256 `0e6bb8e5…f492` 已验签，预注册为一次性 8/8
   validity-first 提交。
+- E5 已唯一提交为 sub `8034`：7/8 正确、`invalid_correctness`。六个冻结 generic
+  继续稳定通过；燧原 vendor 正确但仅 `0.070x < 0.1x`，昆仑从 1830 秒 worker
+  崩溃收敛为 7.1 秒内五例一致的 `uni_sram OutOfResources`。E5 原字节及燧原
+  cap12+i32 轴封存；只保留“昆仑降 BLOCK + 燧原不同结构”的 E6 证据门。
+- 00:25 实时榜单为 167 submissions / 27 teams / 6 个达标队，榜首 `wwwwww`
+  `7.8095x`；本队仍无有效分数或排名，今日额度 `29/30`。

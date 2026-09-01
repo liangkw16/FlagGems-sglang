@@ -5,12 +5,12 @@ task: 41
 operator: state_passing
 batch: 3
 validity: invalid
-platform: E5 ready;baseline E3 7/8(8/8 terminal)
-team_best_stage: E3
-team_best_commit: 248693b
-blockers: E5燧原i32与昆仑host-step均待目标芯裁决;KernelGen昆仑验证器HTTP502
+platform: E5 sub8034 7/8(8/8 terminal);invalid_correctness
+team_best_stage: E5 diagnostic
+team_best_commit: d980b8d
+blockers: 昆仑uni_sram OutOfResources;燧原0.070x<0.1x
 sealed: no
-next: E5单次提交;两目标芯均>=0.1且8/8才转正
+next: 封存E5原字节;仅评估昆仑降BLOCK与燧原新结构的E6证据门
 updated: 2026-09-02
 ```
 
@@ -508,3 +508,40 @@ mismatch 只按明确 case 判断是否允许一次根因修复，不扫 BLOCK/f
 
 六个稳定芯片 E3 合计 `36.3245x`。严格超过当前榜首所需八芯总和 `62.476x`，因此
 Enflame+Kunlun 需合计 `>26.1515x`；本发定位为恢复有效性而非宣称登顶。
+
+### E5 平台终态（sub 8034，2026-09-02 00:25:51 CST）
+
+- 实时 preflight 的 race/account/team/batch/Task/tid/operator、source commit、stage、
+  ZIP 绝对路径与 SHA-256、三成员、提交窗口、120 秒间隔和 `can_submit=true` 全匹配；
+  nonce `5cc6bd69c29ffa8d153f10809980e63a` 仅消费一次。00:23:58 唯一一次上传和正式
+  提交成功，额度由 `30/30` 变为 `29/30`，E5 原字节不得重试。
+- `file_url_sha256` 为
+  `6e00bd7c7bbd505b238533453e2110bdd9b1842ad0d9695d31f56fb9f087b094`；远端对象
+  存储 hostname 未配置为可信值，回读状态为 `unavailable`，不改变已提交事实。
+  平台按预注册为 Enflame/Kunlun 选择各自 vendor，其余六芯选择冻结 generic。
+- 8/8 芯在约 52 秒内全部终态，7/8 通过正确性；Kunlun 五个 hidden case 均在
+  编译 pass 触发 `uni_sram OutOfResources`，首例即失败，耗时 `7139 ms`。这已把
+  E1/E3 的 1830 秒 compile-worker 崩溃收敛为稳定、可定位的资源错误，但仍无任何
+  Kunlun 正确性或性能证据。
+
+| 芯片 | speedup | 结果 | 文件 |
+| --- | ---: | --- | --- |
+| 天数 | `7.6350x` | 通过 | generic |
+| 沐曦 | `4.3160x` | 通过 | generic |
+| 燧原 | `0.0700x` | 正确性通过，**低于 0.1x** | Enflame vendor |
+| 海光 | `10.1630x` | 通过 | generic |
+| 昆仑 | - | **5/5 `uni_sram OutOfResources`** | Kunlun vendor |
+| 华为 | `1.0890x` | 通过 | generic |
+| 国际 A | `8.4880x` | 通过 | generic |
+| 国际 B | `4.4835x` | 通过 | generic |
+
+E5 最终为 `7/8`、`invalid_correctness`，平台不计算平均或排名；七个已通过芯片的
+简单平均 `5.177786x` 只作排障观察。题目详情同步为 167 submissions / 27 teams /
+6 个达标队，榜首 `wwwwww` 为 `7.8095x`、8/8；本队 `my_best_speedup=null`、
+`my_rank=null`。
+
+按预注册永久封存 Enflame cap12+i32 轴及 E5 三份原字节。Kunlun 没有命中“再次
+1830 秒崩溃”的封存条件；`num_stages` 已是最低的 1，而错误消息直接指向降低 block
+size，因此只允许把单次 BLOCK 下调作为根因候选，不做参数扫表或私有 XPU flag。
+任何 E6 还必须为 Enflame 提供不同于已封存 cap12+i32 的独立结构证据，并重新走
+commit-bound release、canonical ZIP、实时 preflight 与一次性提交门禁。
