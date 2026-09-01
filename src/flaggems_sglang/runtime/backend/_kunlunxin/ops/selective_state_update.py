@@ -111,56 +111,44 @@ def _ssu_stage1_kernel(
     )
 
 
-@triton.jit(do_not_specialize=["batch_start"])
+@triton.jit(do_not_specialize=["output_start"])
 def _ssu_stage2_kernel(
     partial_y_ptr,
     x_ptr,
     d_ptr,
     z_ptr,
     y_ptr,
-    batch_start,
+    output_start,
     num_heads,
     dim,
     num_slices,
     HAS_D: tl.constexpr,
     HAS_Z: tl.constexpr,
-    BLOCK_P: tl.constexpr,
     N_SLICE_POW2: tl.constexpr,
     isCloseCoreTiling: tl.constexpr,
     isCloseVectorization: tl.constexpr,
 ):
-    p_tile = tl.program_id(0)
-    b = batch_start + tl.program_id(1)
-    h = tl.program_id(2)
-    p_off = tl.arange(0, BLOCK_P)
+    out_idx = output_start + tl.program_id(0)
+    p_idx = out_idx % dim
+    row = out_idx // dim
+    h = row % num_heads
     sl_off = tl.arange(0, N_SLICE_POW2)
     sl_mask = sl_off < num_slices
     y_ty = y_ptr.dtype.element_ty
-    row = b * num_heads + h
-    p_idx = p_tile * BLOCK_P + p_off
-    p_mask = p_idx < dim
     parts = tl.load(
-        partial_y_ptr
-        + (row * dim + p_idx)[:, None] * num_slices
-        + sl_off[None, :],
-        mask=p_mask[:, None] & sl_mask[None, :],
+        partial_y_ptr + out_idx * num_slices + sl_off,
+        mask=sl_mask,
         other=0.0,
     )
-    y_val = tl.sum(parts, axis=1)
+    y_val = tl.sum(parts, axis=0)
     if HAS_D:
-        d_val = tl.load(d_ptr + h * dim + p_idx, mask=p_mask, other=0.0).to(
-            tl.float32
-        )
-        x_val = tl.load(x_ptr + row * dim + p_idx, mask=p_mask, other=0.0).to(
-            tl.float32
-        )
+        d_val = tl.load(d_ptr + h * dim + p_idx).to(tl.float32)
+        x_val = tl.load(x_ptr + out_idx).to(tl.float32)
         y_val += d_val * x_val
     if HAS_Z:
-        z_val = tl.load(z_ptr + row * dim + p_idx, mask=p_mask, other=0.0).to(
-            tl.float32
-        )
+        z_val = tl.load(z_ptr + out_idx).to(tl.float32)
         y_val *= z_val * tl.sigmoid(z_val)
-    tl.store(y_ptr + row * dim + p_idx, y_val.to(y_ty), mask=p_mask)
+    tl.store(y_ptr + out_idx, y_val.to(y_ty))
 
 
 def selective_state_update(
@@ -237,21 +225,21 @@ def selective_state_update(
                 isCloseVectorization=True,
                 isCloseUnrollControl=True,
             )
-    for batch_start in range(0, batch, batch_chunk):
-        batch_count = min(batch_chunk, batch - batch_start)
-        _ssu_stage2_kernel[(tiles_per_head, batch_count, nheads)](
+    total_outputs = total_rows * dim
+    for output_start in range(0, total_outputs, _MAX_GRID):
+        output_count = min(_MAX_GRID, total_outputs - output_start)
+        _ssu_stage2_kernel[(output_count,)](
             partial_y,
             x,
             D if D is not None else x,
             z if z is not None else x,
             y,
-            batch_start,
+            output_start,
             nheads,
             dim,
             num_slices,
             HAS_D=D is not None,
             HAS_Z=z is not None,
-            BLOCK_P=_BLOCK_P,
             N_SLICE_POW2=triton.next_power_of_2(max(num_slices, 2)),
             isCloseCoreTiling=True,
             isCloseVectorization=True,
