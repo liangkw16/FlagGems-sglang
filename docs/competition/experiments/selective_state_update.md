@@ -4,14 +4,14 @@
 task: 36
 operator: selective_state_update
 batch: 3
-validity: invalid
-platform: 7/8
-team_best_stage: e8
-team_best_commit: 7414c69
-team_best_speedup: 七芯~5.8
-blockers: e20已修复昆仑y;case2-4仅state写回错误
+validity: invalid_threshold
+platform: 8/8
+team_best_stage: e21(correctness)
+team_best_commit: 1313907
+team_best_speedup: 5.0885x;昆仑0.001x
+blockers: e21八芯正确但昆仑低于0.1x门槛
 sealed: no
-next: e21候选就绪;实时preflight
+next: e22合并N slices并融合state/y,先恢复0.1x门槛
 updated: 2026-09-01
 ```
 
@@ -807,3 +807,22 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   15097 bytes,SHA-256
   `fad579e5d6794fab3208a3f5d3e6d7e60efd3f2d9b118de4237d91c56497298c`;
   actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+
+### E21 平台结果(sub 7664,2026-09-01 13:24 CST):首次 8/8,性能门槛未过
+
+- preflight 全过后一次性提交;平台文件 URL SHA-256
+  `ea54b85739cd9504e8786ef137348800ef3b5f7ddafca7ed5ecc1e15d0bf48c8`;
+  提交后额度 `13/30`,远端 ZIP 回读 `unavailable`,未重试。
+- **八芯正确性全部通过**:天数 `3.9915x`、沐曦 `9.0935x`、燧原
+  `0.514x`、海光 `8.4405x`、昆仑 `0.001x`、华为 `3.6465x`、
+  card_a `6.7635x`、card_b `8.2575x`;八芯均值 `5.0885x`。平台终态为
+  `invalid_threshold`,唯一原因是昆仑低于逐芯 `0.1x` 门槛,数值失败为零。
+- 昆仑 validation 用时 `144366ms`,符合保守结构在最大例上产生
+  partial/state/stage2 `136/136/17`、合计 289 次 launch 的代价。E20/E21 已将
+  1D N16 reduction 和 vector store 分别平台验真,后续不再调正确性 pass。
+- 对照 12:31 已验实时榜首快照 c2flow `8.4960x`:当前均值绝对差
+  `3.4075x`(-40.1%)。冻结七芯 `40.707x` 总和时,恢复有效只需昆仑
+  `>=0.1x`;若要单靠昆仑追平榜首则需 `27.261x`,故先恢复门槛再逐层合并。
+- E22 优先删除 workspace 和 slice 级 host launch:每个 `(b,h,p)` program
+  直接处理完整 N32/N128,同一 1D DAG 计算 FP32 new_state、C reduction、D/z,
+  并一次写 state/y。保留 E21 的 flat grid、immutable source 和三个 close flag。
