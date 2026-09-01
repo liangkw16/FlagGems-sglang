@@ -9,7 +9,7 @@ platform: 8/8
 team_best_stage: e10
 team_best_speedup: 5.5720
 sealed: yes
-next: 重新封存 e10 5.5720;e12 去 contiguous/warps 2,4,8 全部低于5%门,已知参数轴尽
+next: e13 官方 constexpr/direct/subwarp/M8 家族全未过门;仅新 vendor subgroup 证据可重开
 updated: 2026-09-01
 ```
 
@@ -578,3 +578,84 @@ preflight intent `bf57e536…` 单次 confirm(sub 7487,额度 28→27/30);
 
 结论:T33 的 wrapper 与 launch 参数轴也已穷尽；继续消耗额度不能解释实时
 榜首 `7.238625x` 对 e10 `5.57195x` 的 29.91% 差距，保持封存。
+
+## E13：官方 constexpr / direct / subwarp 结构族离线关闭（2026-09-01 18:0x CST）
+
+状态：联网一手源码去重与 13 个候选筛选已完成；其中 11 个正确候选完成
+RTX 5070 Ti A/B，最佳仅 `1.012434x` 几何收益，未过预注册 `1.10x` 门。
+全部候选撤回，未打包、未提交、未消耗平台额度，源码精确恢复 E10。
+
+### 实时差距与一手结构依据
+
+- 17:34 CST 官方只读 API：公开榜首 `7.75286667x`，E10 团队最佳
+  `5.57195x`，登顶需 `+39.14%`。T40 虽数值差距更小，但已贴单读单写
+  下界；排除 T39 后，T33 是唯一仍有上游全新结构可做零额度证伪的题。
+- [SGLang 当前 JIT CUDA kernel](https://github.com/sgl-project/sglang/blob/c16a8fc89995a93f683c71f4aa7eb49b1000d104/python/sglang/kernels/jit/csrc/gemm/per_token_group_quant.cuh#L214-L417)
+  将真实 group size 做模板参数，以 subwarp 归约并 exact-grid launch；
+  [vLLM 当前 kernel](https://github.com/vllm-project/vllm/blob/504bb8b0c39dbde713a7344772bdb7005adbb214/csrc/libtorch_stable/quantization/w8a8/fp8/per_token_group_quant.cu#L42-L180)
+  同样按 16/8/4/2/1 groups 打包直接发射。
+- [FlagGems-vLLM M8](https://github.com/flagos-ai/FlagGems-vllm/blob/3780fe7e3b8c923f4051d9dcc3397214487a2cd0/src/flaggems_vllm/ops/per_token_group_quant_fp8.py#L429-L568)
+  显式展开八组独立 load/reduction/store，`num_warps=1,num_stages=1`；
+  [Hygon vendor](https://github.com/flagos-ai/FlagGems-vllm/blob/3780fe7e3b8c923f4051d9dcc3397214487a2cd0/src/flaggems_vllm/runtime/backend/_hygon/ops/per_token_group_quant_fp8.py#L92-L315)
+  则采用 constexpr、mask-free 和约 1024 元素/CTA 的分桶。
+- 上述 FP8/CUDA 代码使用 reciprocal multiply 或原生转换语义；T33 的 int8
+  输出要求与 reference 截断逐位一致，因此本轮所有正确候选继续保留
+  `tl.math.div_rn(x, scale)`。快速倒数只作为单独算法探针，不能直接照搬。
+
+### 预注册门与验证环境
+
+- base commit / source SHA-256：`dc63de1` /
+  `265716528d49099a8c788bdff91ba8190b83a074421c0de210552fb5a9e4a2a6`
+  （与 E10 generic 精确一致）；测试 SHA-256
+  `68237df401539095d70b5ebe6c790836d089c1cf17064d6039653e0c98cd3c5f`。
+- remote：`gpu-et:/tmp/flagos-t33-fastdiv.KJypWC`，mode 0700；Python
+  3.12.13、PyTorch 2.13.0+cu130、Triton 3.7.1、RTX 5070 Ti。
+- wrapper-inclusive 7 shape，逐候选交替 reference/op；主结构用 14 组，
+  批量参数探针用 5–7 组。所有表内正确候选先逐位比较 `x_q`，并以
+  `rtol=1e-6,atol=1e-8` 比较 scale；fast16、1024 分桶与 M8 另跑完整
+  unittest 8/8，覆盖 G=96、尾组、零组、极值、非连续输入和截断边界。
+- 晋级门：正确性全绿，7 shape 几何 `base_time/candidate_time >=1.10x`、
+  单点 `>=0.95x`，至少三个大 shape `>=1.10x`；当前 39.14% 榜差下，
+  只过 5% 噪声门也不足以合理消耗最后 4 次额度。
+
+### 代理结果
+
+表中几何与最差均为 `base_time/candidate_time`，大于 1 才是候选更快。
+
+| 候选 | source SHA-256 | 7-shape 几何 | 最差 | 裁决 |
+| --- | --- | ---: | ---: | --- |
+| reciprocal + amax 修正 | `76d7ffa4c51c3f2f0c0ec0f3f3411648253fe3781e0f96197987db844dee8265` | - | - | 17 个测试子项逐位失败 |
+| reciprocal + 整数邻界双修正 | `185c3f4b94283b20323275c78b20964a079f3fe0b5049cdda35ad01d6f6c02d8` | - | - | 仍有代表矩阵约 0.2% int8 相差 1 |
+| 真实 G constexpr | `dff26c893bd104302a2ad0ed1aed3556aa59a071fa78b55313dcf6af876ad9c4` | `0.989171x` | `0.873651x` | 回退 |
+| constexpr + 1 warp | `d385cf177afedaece5e8f19592dff09885d1fa39825a741c47a8baff18bce8c2` | `0.911777x` | `0.704600x` | 大幅回退 |
+| constexpr + tile8 + 1 warp | `fae7f74a6941bd11cec08a5cdc5490c02b63a63f0e1e03830ad91e43994f588d` | `0.969782x` | `0.885773x` | 回退 |
+| constexpr + exact direct | `1b13c1b24bef22783a59d198a00bd198058f30ce8a6d64ffa605a3ad18c24c8e` | **`1.012434x`** | **`0.999706x`** | 最佳但仅 +1.24% |
+| direct + constexpr + 1 warp | `967a13a11ec4fbb70a8cc2fc0c6991200d2a77afc128df2e04a641e482f6db67` | `0.917329x` | `0.705854x` | 大幅回退 |
+| mask-free 固定 tile16 | `1c8abab48553300fc3534f0ccb0a35a87038e9061dff63498a62929d5f768e24` | `0.986241x` | `0.884060x` | G128 中形状回退 11.6% |
+| mask-free 约 1024 元素/CTA | `5d9f856c40cc19677b3233510268c869edcbf42b543cf52c63876c669345b31a` | `0.983061x` | `0.867304x` | G128 中形状回退 13.3% |
+| 官方式显式 M8/w1/s1 | `71958e1df2df9d39fbaa350888f621947c39dd2bd65bb20e7edae28f29e773f5` | `0.900495x` | `0.802848x` | 小中形状全面回退 |
+| 仅 `num_stages=1` | `c2f1470f2bfce174bc588bbc396ac43631640815ba9ca8bfaf44c109ad0cccf1` | `0.991270x` | `0.888683x` | 回退 |
+| 删除冗余 masked `where` | `f36d64095c547113fdfe58c18889207508c4c5204ca98b4b889a81270c6d1be5` | `1.004509x` | `0.983003x` | 噪声级 |
+| 删除 `where` + stage1 | `0b9bd2c99dea50662084e001d996ef4653d37890aa3cbd4906a4fe842d7f2c11` | `0.988208x` | `0.887436x` | 回退 |
+
+关键原始日志 SHA-256：reciprocal 修正
+`9a1098aecdd664d08a11a00ff02aa4bff62f1dc1bda9d4c738d0b8a6c091b4af`；
+constexpr/direct 批量
+`2f3d5e37560e16c18a15746dad02ff86d24f7a311b7e1adf3205a133d04518c1`；
+fast16 `a225d2e8b18c7eb5ee4fdc14167c3dae30469967e78388ef964a003f7757c4ba`；
+1024 分桶 `0529f4ee75b67f964a46b9616b13e185baf3e94a7fe1d08689f88a86f4b11cd2`；
+M8 `4a13934c2271d5edbb4378e506f46d5f17db6c100a97890ec0a9349ba58afb3c`；
+minor axes `9c85187f88228bc0c22123fb72fca87b32a6f9c5124e6202a7305f459e7ccbfa`。
+首轮静态检查被远端 Black 对冻结测试文件的版本漂移拦住；后续只缩小到候选
+源码并重跑同一假设，未把格式工具失败混入 kernel 裁决。
+
+### 裁决
+
+- 官方 native CUDA 的 subwarp/向量化优势不能由当前 Triton 二维 tile 仅靠
+  constexpr、exact-grid 或显式 M8 复现；M8 的 1 warp 反而使 launch-bound
+  形状下降 15%–20%。
+- reciprocal 的误差不只发生在 amax 元素，整数邻界修正也不能复现设备端
+  round-to-nearest division 后再截断的全部边界；`div_rn` 继续钉死。
+- 唯一全矩阵不回退的 direct+constexpr 只有 `+1.24%` 几何收益，远低于
+  10% 离线门和 39.14% 榜差。T33 继续封存 E10，不提交平台；只有出现目标
+  vendor 的真实 subgroup primitive/编译器证据，或榜首源码级结构公开时重开。
