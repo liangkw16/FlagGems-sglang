@@ -609,3 +609,12 @@ T32 E3 代理门未过未发射。
   **8/8、5.3471x**。三发完成 T28 8/8、T37 7/8 定位、T37 8/8 闭环。
 - 23:51 实时榜单：T28 14.3795x 排第 3/4(榜首 RSI 48.0314x)；
   T37 5.3471x 排第 6/6(榜首 EvokeAgent 42.1385x)，踩住最后达标位。
+
+## 2026-09-02 T41 E5 新结构候选
+
+- 冻结 generic；Enflame 在 cap12 上仅去除 18 个显式 i64 cast，Kunlun 改为
+  chunk-major 物化 + host-stepped 四指针 Triton recurrence，不复用 E3 崩溃字节。
+- commit `d980b8d` exact Git-object release 5/5；Kunlun/Enflame NVIDIA vendor
+  代理最差分别 `1.733660x` / `0.213619x`。canonical ZIP
+  `e5-d980b8d` SHA-256 `0e6bb8e5…f492` 已验签，预注册为一次性 8/8
+  validity-first 提交。
