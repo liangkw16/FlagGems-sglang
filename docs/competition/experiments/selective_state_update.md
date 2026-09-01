@@ -9,9 +9,9 @@ platform: 8/8
 team_best_stage: e22(correctness)
 team_best_commit: f1a12f7
 team_best_speedup: 5.1200625x;昆仑0.0025x
-blockers: e28 exact-N128已release,待目标昆仑验证是否跨过0.1x
+blockers: e28昆仑回退至0.008x,exact-2D轴关闭;有效门仍差7.41倍
 sealed: no
-next: e28不可变ZIP实时preflight后单次提交
+next: 从e27分叉P-major源码级N-unroll8单变量
 updated: 2026-09-01
 ```
 
@@ -1299,3 +1299,21 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   metadata flags;转源码级 N-unroll8。若正确但昆仑 `<0.027x`,说明 block-DMA
   未兑现,停止 exact tile 参数扫;`0.027-0.04x` 没有安全单变量跨门;
   `0.04-0.1x` 才允许一次 exact-2D Vectorize-on 高风险验证;`>=0.1x` 达标即停。
+
+### E28 平台结果(sub 7727,2026-09-01 15:23 CST):正确但回退
+
+- preflight tuple 全部匹配后一次性提交;平台 file URL SHA-256
+  `e277f87264f8e52ad9b968fe98c46e4ba0d0f58276d6c0d79746276852c25465`;
+  远端 ZIP 回读 `unavailable`,未重试。终态额度 `6/30`,submission `7727` /
+  daily seq `24`。
+- 八芯全部正确:天数 `3.9915x`、沐曦 `9.0855x`、燧原 `0.5125x`、海光
+  `8.4705x`、昆仑 `0.008x`、华为 `3.6605x`、card_a `6.4165x`、card_b
+  `8.2615x`;均值 `5.0508125x`,终态 `invalid_threshold`。
+- 昆仑 validation `24288ms`,相较 E27 的 `17636ms` 增加 **37.72%**,
+  speedup `0.0135→0.008x` 回退 **40.74%**。目标 XPU 证明 exact-N block DMA
+  与一核一行归约能正确 lowering,但本题 exp/多 FP32 live tensor/axis-1 reduce 的
+  代价超过删除 128 次 scalar SCF 的收益;官方 RMSNorm 的同构结构不能外推到本算子。
+- 结果低于预注册 `<0.027x` stop gate,exact-2D 轴正式关闭:不试 P32、N64
+  分块、Vectorize-on 或 metadata 重扫。E29 从 E27 的已验 P-major 1D 结构分叉,
+  只把 N-loop 主体源码静态展开 8 次并保留精确 tail;若编译失败不降 U4,后者
+  理论上限 `4x` 无法从 `0.0135x` 跨过 `0.1x`。
