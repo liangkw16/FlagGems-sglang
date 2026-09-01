@@ -11,7 +11,7 @@ team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
 blockers: e11昆仑stage1 8x16 uni_sram
 sealed: no
-next: e12关闭stage1 vectorization后平台实测
+next: 复核旧Triton metadata绑定;确认后转CoreTiling
 updated: 2026-09-01
 ```
 
@@ -399,3 +399,19 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   `23/30`,最小间隔已满足。晋级门为昆仑五例全过;其余七芯成员逐字节冻结。
   若仍为 stage1 `uni_sram PassManager::run failed`,不重投 E12,直接转
   CoreTiling 单变量。
+
+### E12 平台结果(sub 7618,2026-09-01 12:11 CST)
+
+- preflight 精确绑定 source/test/release/two members/ZIP SHA,额度 `23/30`;
+  一次性提交成功后为 `22/30`。平台文件 URL SHA-256
+  `0bb00c9d5643b8f9735d77bf85e40150480089c79dcb78e0468443c65a8109e6`;
+  远端 ZIP 回读因未配置可信 hostname 为 `unavailable`,未重试。
+- 终态仍 **7/8 invalid_correctness**:天数 `3.885x`、沐曦 `9.104x`、
+  燧原 `0.5115x`、海光 `8.4725x`、华为 `3.649x`、card_a `6.416x`、
+  card_b `8.269x`;七芯 generic 均通过。
+- 昆仑选择 `_kunlunxin`,执行 **7319ms**,五例仍在 stage1、grid
+  `(2,1,4)` 返回同一 `uni_sram PassManager::run failed`。Vectorize workaround
+  没有跨过失败点,不重投同候选。
+- 下一步先核对平台旧版 `default_run` 对“同名 constexpr + backend option”的绑定:
+  若 E12 flag 未进入 XPUOptions,改为真实 launch metadata 重新归因;若已进入,按
+  预注册顺序转 `isCloseCoreTiling=True`。不同时叠加 buffer/unroll。
