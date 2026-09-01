@@ -8,14 +8,14 @@ validity: valid
 platform: 8/8(E5,5.3471x)
 team_best_stage: e5
 team_best_commit: 6ce280b
-blockers: E6燧原32³性能候选待平台验签
-sealed: no
-next: 按用户授权提交E6燧原32³性能合包
+blockers: none
+sealed: yes
+next: 封存E5燧原64³团队最佳字节
 updated: 2026-09-01
 ```
 
-状态:E5 平台终态 8/8 valid、5.3471x；E6 仅把燧原规则 GEMM 从 64³
-改为代理稳定快约 1.75–2.08 倍的 32³，已完成 exact release 与规范 ZIP。
+状态:E5 平台终态 8/8 valid、5.3471x 并保持团队最佳；E6 仍为 8/8，
+但燧原 32³ 仅 0.565x，已恢复 E5 64³ 实机最佳字节并封存。
 
 ## 契约锁定
 
@@ -303,3 +303,20 @@ confirm 提交,评测入队,逐芯结果待回填。
   Kunlun `776237b87d6fd074f5146cbca76cafa3c9631176c7c741234f47410e07bbcbf6`。
 - 晋级门：维持 8/8，并使燧原 speedup 相对 E5 提升；任何 correctness
   回归均判失败，不再追加候选。
+
+## E6 平台终态(sub 7998,2026-09-01 23:51 CST)与封存
+
+- 对象存储回读内容 SHA-256 与 canonical ZIP 同为
+  `0445fd848fe61476511f1644cff25b4dcf3128a33a28227d5db893751c51a83f`；
+  平台 file-url selector SHA-256
+  `4ec664f8b3efe3b0badd349230f2d54f709b715ae9d7632328685c2a8f8c996d`。
+- **8/8 valid、平均 5.279375x，非团队最佳**：天数 4.7605x、沐曦
+  3.663x、燧原 0.565x、海光 11.294x、昆仑 3.4395x、华为
+  15.657x、card_a 1.539x、card_b 1.317x。
+- 关键反证：32³ 在 NVIDIA wrapper 代理上比 64³ 快 1.75–2.08 倍，
+  在真实燧原却把 1.362x 降到 0.565x(-58.5%)；GCU300 对此规则 GEMM
+  明确偏好 64³，代理只能验证语义/JIT，不能代替目标芯 tile 决策。
+- 今日额度 30/30 全部用完。树已在 commit `f9a8c7c` 恢复 E5 Enflame
+  source SHA-256
+  `ffdb47e2a4e6ad63d867cd867b2a3a90e215badb5b8b4bb1695890be60a440a3`，
+  与 sub 7992 的实机团队最佳字节逐字节一致；T37 封存于 E5。
