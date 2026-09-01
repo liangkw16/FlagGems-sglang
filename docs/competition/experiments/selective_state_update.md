@@ -9,9 +9,9 @@ platform: 7/8
 team_best_stage: e8
 team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
-blockers: e15昆仑case2-4同E13数值指纹
+blockers: e16昆仑case2-4同E13数值指纹
 sealed: no
-next: e16候选就绪;实时preflight
+next: e17关闭stage2 CoreTiling
 updated: 2026-09-01
 ```
 
@@ -579,3 +579,16 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   13864 bytes,SHA-256
   `ab59679823740df8196b105f88267fa3af3d0d4d818c8de2cac78ed8aa276b47`;
   actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+
+### E16 平台结果(sub 7647,2026-09-01 12:46 CST):仍与 E13 同指纹
+
+- preflight 全过后一次性提交;平台文件 URL SHA-256
+  `10032b10a804117833bfbd8437ec0c03444c408315c338df4250eb395c53034f`;
+  提交后额度 `18/30`,远端 ZIP 回读 `unavailable`,未重试。
+- 七芯 generic 全过:天数 `3.884x`、沐曦 `9.126x`、燧原 `0.517x`、
+  海光 `8.4705x`、华为 `3.6575x`、card_a `6.403x`、card_b `8.315x`。
+- 昆仑编译执行完成(17594ms),case 0/1 通过;case 2/3/4 的失配数、最大
+  绝对误差和索引仍与 E13-E15 完全相同。单独关闭 stage2 Vectorize 被证伪。
+- E17 保留该关闭项,只新增 stage2 `isCloseCoreTiling=True`;CoreTiling 在
+  Vectorize 之前处理 reduction/broadcast 编码,且已在 stage1 证明能实质改变
+  编译行为。若仍同指纹,再比较 stage2 Unroll 与 1D per-output reduction。
