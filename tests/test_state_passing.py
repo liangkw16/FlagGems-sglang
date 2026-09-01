@@ -12,38 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import importlib.util
 import unittest
-from pathlib import Path
 
 import torch
 
-MODULE_PATH = (
-    Path(__file__).parents[1] / "src" / "flaggems_sglang" / "ops" / "state_passing.py"
-)
-KUNLUN_MODULE_PATH = (
-    Path(__file__).parents[1]
-    / "src"
-    / "flaggems_sglang"
-    / "runtime"
-    / "backend"
-    / "_kunlunxin"
-    / "ops"
-    / "state_passing.py"
-)
+from tests._op_variants import load_operator_modules
 
-
-def load_module(name, path):
-    spec = importlib.util.spec_from_file_location(name, path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"cannot load {path}")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-MODULE = load_module("state_passing", MODULE_PATH)
-KUNLUN_MODULE = load_module("state_passing_kunlunxin", KUNLUN_MODULE_PATH)
+MODULES = load_operator_modules("state_passing")
 
 
 def reference(states, dA_cumsum, initial_states=None):
@@ -126,7 +101,7 @@ def make_case(
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class StatePassingTest(unittest.TestCase):
-    def assert_matches(self, case, module=MODULE):
+    def assert_matches(self, case, module):
         states, dA_cumsum, initial_states = case
         tensors = tuple(
             tensor
@@ -195,10 +170,7 @@ class StatePassingTest(unittest.TestCase):
                 use_initial_states=True,
             ),
         )
-        for name, module in (
-            ("generic", MODULE),
-            ("kunlunxin", KUNLUN_MODULE),
-        ):
+        for name, module in MODULES:
             for case in cases:
                 with self.subTest(
                     module=name,
@@ -224,47 +196,65 @@ class StatePassingTest(unittest.TestCase):
         dA_b = dA_a.clone()
         dA_b[..., :-1] = -dA_b[..., :-1]
 
-        out_a, final_a = MODULE.state_passing(
-            states,
-            dA_a,
-            initial_states,
-        )
-        out_b, final_b = MODULE.state_passing(
-            states,
-            dA_b,
-            initial_states,
-        )
-        torch.testing.assert_close(out_a[:, 0], initial_states)
-        torch.testing.assert_close(out_a, out_b)
-        torch.testing.assert_close(final_a, final_b)
         expected_out, expected_final = reference(
             states,
             dA_a,
             initial_states,
         )
-        torch.testing.assert_close(out_a, expected_out, atol=1e-4, rtol=1e-4)
-        torch.testing.assert_close(
-            final_a,
-            expected_final,
-            atol=1e-4,
-            rtol=1e-4,
-        )
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                out_a, final_a = module.state_passing(
+                    states,
+                    dA_a,
+                    initial_states,
+                )
+                out_b, final_b = module.state_passing(
+                    states,
+                    dA_b,
+                    initial_states,
+                )
+                torch.testing.assert_close(out_a[:, 0], initial_states)
+                torch.testing.assert_close(out_a, out_b)
+                torch.testing.assert_close(final_a, final_b)
+                torch.testing.assert_close(
+                    out_a, expected_out, atol=1e-4, rtol=1e-4
+                )
+                torch.testing.assert_close(
+                    final_a,
+                    expected_final,
+                    atol=1e-4,
+                    rtol=1e-4,
+                )
 
     def test_empty_chunks(self):
-        for use_initial_states in (False, True):
-            with self.subTest(initial_states=use_initial_states):
-                case = make_case(
-                    torch.float16,
-                    nchunks=0,
-                    use_initial_states=use_initial_states,
-                )
-                self.assert_matches(case)
-                if case[2] is not None:
-                    _, final_states = MODULE.state_passing(*case)
-                    self.assertNotEqual(
-                        final_states.data_ptr(),
-                        case[2].data_ptr(),
+        for name, module in MODULES:
+            for use_initial_states in (False, True):
+                with self.subTest(
+                    module=name, initial_states=use_initial_states
+                ):
+                    case = make_case(
+                        torch.float16,
+                        nchunks=0,
+                        use_initial_states=use_initial_states,
                     )
+                    self.assert_matches(case, module)
+                    if case[2] is not None:
+                        _, final_states = module.state_passing(*case)
+                        self.assertNotEqual(
+                            final_states.data_ptr(),
+                            case[2].data_ptr(),
+                        )
+
+    def test_zero_dimensions(self):
+        cases = (
+            make_case(torch.float16, batch=0),
+            make_case(torch.float16, nheads=0),
+            make_case(torch.float16, dim=0, use_initial_states=True),
+        )
+        for name, module in MODULES:
+            for case in cases:
+                with self.subTest(module=name, shape=tuple(case[0].shape)):
+                    self.assert_matches(case, module)
 
     def test_capped_grid_covers_every_tile(self):
         states = torch.full(
@@ -281,10 +271,7 @@ class StatePassingTest(unittest.TestCase):
             3.0,
             device="cuda",
         )
-        for name, module in (
-            ("generic", MODULE),
-            ("kunlunxin", KUNLUN_MODULE),
-        ):
+        for name, module in MODULES:
             with self.subTest(module=name):
                 out, final_states = module.state_passing(
                     states,

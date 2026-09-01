@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# e4 re-carrier (held for a kunlun health window): E2 bytes (verified but
-# never submitted) now ride along with the E3 kunlun vendor - the S0
-# enflame 0.0605x is below the 0.1x threshold, so this member is required
-# for validity even when kunlun recovers; single new variable vs E3.
-
 from typing import Optional, Tuple
 
 import torch
