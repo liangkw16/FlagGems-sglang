@@ -10,7 +10,7 @@ team_best_stage: E7
 team_best_commit: fd089fe
 team_best_speedup: 19.8698
 sealed: yes
-next: E13华为27.823x机制兑现但avg19.2655低于E7;组合轴关闭且不重投
+next: E14海光packing六轴八格均未过5%门;不提交,转向其它高登顶概率任务
 updated: 2026-09-01
 ```
 
@@ -969,3 +969,70 @@ prefix、persistent grid、普通 BLOCK 或 vendor 路由轴。
 - E13 组合轴关闭且不重投。候选 source/ZIP 由 `494e7eb` 永久留证；工作树已由
   commit `b80e786` 恢复到 E10 generic + E7/E9 vendor 冻结状态。T39 继续保留
   E7 team best `19.86983333x`，仅有全新算法或新平台证据时重开。
+
+## E14：Hygon packing / wave64 六轴八格离线关闭（2026-09-01 17:0x CST）
+
+状态：联网一手源码调研、7/7 CUDA 代理正确性和六轴八格 A/B 已完成；最佳候选
+未过预注册的已知 shape 几何 `>=1.05x` 门，全部撤回，不打包、不提交、不消耗
+平台额度。工作树恢复 E10 generic 与原四 vendor 精确字节。
+
+### 假设、官方证据与平台门槛
+
+- E13 再次把海光测到稳定水位 `35.2697x`。E7 generic 精确字节除 E7 外九次
+  海光读数仅 `34.2437-35.4957x`，均值 `34.7733x`、样本标准差 `0.4167`；
+  E7 的 `56.4277x` 约为 52 个标准差孤点，不能当结构收益。
+- 冻结 E13 其它七芯时，海光须 `>40.1040x`（较 E13 `+13.70%`）才超过团队
+  E7；须 `>74.3793x`（`+110.89%`）才超过 16:53 实时榜首
+  `24.15420833x`。因此代理预注册门为两组已暴露题型
+  `(4,3,half=8)` / `(4,64,half=128)` 几何至少 `1.05x`、单点至少
+  `0.80x`；不到门不发平台。
+- Hygon/FlagTree 固定后端对 gfx928/gfx936 使用 wave64，默认 4 warps；
+  FlagGems Hygon pointwise 的 tile 上限为 2048，`<=1024→4w`、
+  `<=2048→8w`，Triton 3 路径使用多维 block pointer。ROCm AITER 当前
+  fused SiLU+mul 也采用跨行 `(BLOCK_M,BLOCK_N)`：
+  [FlagTree wave64](https://github.com/flagos-ai/FlagTree/blob/c1ea8285a06e97afad9dd2644bc71f2efca072f4/third_party/hcu/backend/compiler_hcu.py#L93-L111)、
+  [FlagGems Hygon policy](https://github.com/flagos-ai/FlagGems/blob/32f445ae665fdd62fe6143c5ad1ec55b09fc26cb/src/flag_gems/utils/codegen_config_utils.py#L29-L35)、
+  [Hygon block-pointer pointwise](https://github.com/flagos-ai/FlagGems/blob/5941cd2225798bdfa611626f34e459c42cdf2904/src/flag_gems/runtime/backend/_hygon/utils/pointwise_dynamic.py#L449-L531)、
+  [AITER kernel](https://github.com/ROCm/aiter/blob/e583a77c6fbd936264e3f634fd34cb495c0b0a1e/aiter/ops/triton/_triton_kernels/activation.py#L18-L57)。
+  全部候选保持题面 FP32 `x/(1+exp(-x))*up`，不搬 AITER 的 exp2 或中途
+  BF16 cast；用户已允许绕过 KernelGen，本轮采用这些固定一手实现直接研究。
+
+### RTX 5070 Ti 代理矩阵
+
+远端 Python 3.12.13、PyTorch 2.13.0+cu130、Triton 3.7.1；wrapper-inclusive
+六轮 AB/BA，每点 warmup 25 / rep 100，表内为 `E7 generic time / candidate
+time`。前两列决定晋级，后三列只作题型外灾难审查。
+
+| 候选（Hygon vendor） | source SHA-256 | 4×3×8 | 4×64×128 | 两点几何 | 8×64×512 / 64×128×2048 / 256×64×3584 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| AITER masked 2D，2w | `f074a6651c989c1620b102c5b3e16eda6d9d118871cd22f8293f3d237e8d8788` | 0.9959x | 0.7213x | 0.8475x | 0.9867 / 0.8935 / 0.9611 |
+| flat-full 1024/4w | `2698072998829ead430005697c2262bd2dc8712e9ee4d221d833541b01a72462` | 0.9990x | 1.0651x | 1.0316x | 0.9938 / 0.5703 / 0.5211 |
+| flat-full 2048/4w | `dc6e0d1ca5c0cee612b755cdb8d267e718f971a98b4b54967bbb80491cb80a0a` | 0.9901x | 1.0578x | 1.0234x | 0.9941 / 0.5743 / 0.5216 |
+| masked-flat 1024/4w | `b2ad79ee6d479ec049c7e93d823ac97433072acb4bbb84abd21c879c9025ca49` | 0.9882x | 0.9980x | 0.9931x | 1.0000 / 1.0009 / 1.0004 |
+| Hygon 2048-tile masked 2D，4/8w | `2b0ea959b24db707677c9440e8afe4f2a9762ff741808e0b34203aa481ded255` | 1.0105x | 0.9962x | 1.0034x | 0.9996 / 1.0015 / 0.9780 |
+| full 2D manual offsets，4/8w | `73bc58fc7e3666dbe7efa12c8f0ce3570ab0f1e0691ba2d89cf57a4a51e6072b` | 0.9947x | 1.0428x | 1.0185x | 0.9949 / 0.5701 / 0.5109 |
+| full 2D block pointer，4/8w | `ea54a02b9dd55bb7c68827b5be197ff86292e62b3310fae27ee019db73e04045` | **1.0072x** | **1.0770x** | **1.0415x** | 0.9859 / 0.5695 / 0.5107 |
+| 同上，小 tile 2w | `61d810e2b329e30e546050aa6728cadc700f8714f10b00f5b098b2eaec948700` | 1.0032x | 1.0630x | 1.0327x | 0.9961 / 0.5697 / 0.5111 |
+
+这里“六案”按结构轴计数：AITER masked 2D、flat-full（两档）、masked-flat、
+Hygon-native masked 2D、full 2D（manual/block-pointer 与小 tile warp 作为单变量
+子格）。所有最终源码都通过 py_compile、Black/isort/flake8 与 unittest 7/7；
+首个 AITER 目录因 macOS tar 附带 `._*` 元数据导致静态命令告警，后续独立目录用
+无元数据归档重跑并全部通过，不能把首轮尾部误写的 `SCREENING_OK` 当门禁结果。
+
+### 可复验证据与裁决
+
+| 目录 / 日志 | SHA-256 |
+| --- | --- |
+| `gpu-et:/tmp/flagos-t39-hygon.l09P0N/screening.log` | `10ac668ea428c870525e3c29129190c7d375eb7d51a8842bdad634fa6d7376cb` |
+| 同目录 `flat_bench.log` | `6f9ee2dd42fe735d34cd28878e32b1dba5a9792f57cbcf194e508497bdfde5a9` |
+| `gpu-et:/tmp/flagos-t39-hygon-flatmask.Pp3eO5/screening.log` | `d038716805d1a0653c2cdaaba6f29de49927fdb3be2458466133100d74c79874` |
+| `gpu-et:/tmp/flagos-t39-hygon-native2d.LElzH2/screening.log` | `9519ec0c5ba218b470eb3edeb3cab6ac2ba06f9c143181d0a6ded2396a93a6bf` |
+| `gpu-et:/tmp/flagos-t39-hygon-full2d.C6L0Jw/screening.log` | `4633f21d7c9abd968c923c5241146cd8066c1a0624c3b177595949aa18bfd030` |
+| `gpu-et:/tmp/flagos-t39-hygon-bptr.lzHzry/screening.log` | `43cf1d51ecab7503147c8e2b58330ea338d207da4648f21805245e385a53c3df` |
+| `gpu-et:/tmp/flagos-t39-hygon-bptr2w.hXuqPt/{screening,benchmark}.log` | `79e3ae5a2b76921b75f572ca4de338f4bc18cffd7c70a9dbf6f98381874dbd96` / `a57a16df77bbf726ff1dd2935c05161abd5d5d28ae2bd297fc49c7612e1a67e8` |
+
+最佳 block-pointer 案离 `1.05x` 门仍差 `0.85` 个百分点，且宽题型约慢一倍；
+即便把 NVIDIA 已知大例 `+7.70%` 全量外推到海光，也只能把 E13 海光约推到
+`37.99x`，仍低于超过 E7 所需 `40.104x`，更不接近登顶所需 `74.379x`。
+因此 Hygon packing、tile 与小 tile warps 轴全部离线关闭；不使用剩余 4 次额度。

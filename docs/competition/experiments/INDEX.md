@@ -19,7 +19,7 @@
 | 36 | selective_state_update | invalid_correctness | 7/8(e29;昆仑compile-worker崩溃) | e22(correctness) 5.1200625x | no | persisted-slice轴已关闭;仅有全新源码级结构证据时重开 | 2026-09-01 | [selective_state_update](selective_state_update.md) |
 | 37 | sgemm_lora_a | invalid | 6/8(上限 7/8) | e2 | yes | 封存;候选可复用 | 2026-08-31 | [sgemm_lora_a](sgemm_lora_a.md) |
 | 38 | sigmoid_gate_topk_renorm | invalid | 7/8 | S0 | yes | E2 七芯均值4.9415x(+4.17倍)但昆仑同族崩溃;仅平台runtime修复后重开 | 2026-09-01 | [sigmoid_gate_topk_renorm](sigmoid_gate_topk_renorm.md) |
-| 39 | silu_and_mul_masked | valid | 8/8 | E7 19.8698x | yes | E13华为27.823x机制兑现但avg19.2655低于E7;组合轴关闭且不重投 | 2026-09-01 | [silu_and_mul_masked](silu_and_mul_masked.md) |
+| 39 | silu_and_mul_masked | valid | 8/8 | E7 19.8698x | yes | E14海光packing六轴八格均未过5%门;不提交,转向其它高登顶概率任务 | 2026-09-01 | [silu_and_mul_masked](silu_and_mul_masked.md) |
 | 40 | softcap_inplace_logits | valid | 8/8 | e6 1.7679x | yes | e9 generic direct仅+1.63~3.40%;需+32.25%才登顶,官方可迁移轴已尽 | 2026-09-01 | [softcap_inplace_logits](softcap_inplace_logits.md) |
 | 41 | state_passing | invalid | 7/8(8/8 terminal) | E3 | yes | e4 组合候选(fc6dd4f)已 staged;重载需用户逐发授权 | 2026-08-31 | [state_passing](state_passing.md) |
 
