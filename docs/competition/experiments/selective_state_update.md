@@ -11,7 +11,7 @@ team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
 blockers: e16昆仑case2-4同E13数值指纹
 sealed: no
-next: e17关闭stage2 CoreTiling
+next: e17候选就绪;实时preflight
 updated: 2026-09-01
 ```
 
@@ -589,6 +589,35 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   海光 `8.4705x`、华为 `3.6575x`、card_a `6.403x`、card_b `8.315x`。
 - 昆仑编译执行完成(17594ms),case 0/1 通过;case 2/3/4 的失配数、最大
   绝对误差和索引仍与 E13-E15 完全相同。单独关闭 stage2 Vectorize 被证伪。
+- E12 编译 metadata 与后续输出共同锁定五例均为 BF16,`y` shape/grid 依次为
+  `[1,4,16]/(2,1,4)`、`[5,8,64]/(8,5,8)`、
+  `[3,16,128]/(16,3,16)`、`[64,32,128]/(16,64,32)`、
+  `[256,64,64]/(8,127,64)+batch chunks`。case 1/4 同为 P64/grid.x=8
+  却一过一败,因此 P128/grid.x=16 假设正式否定;更可能与 B×H、总 program
+  数、dstate/num_slices 或多行归约 specialization 相关。
 - E17 保留该关闭项,只新增 stage2 `isCloseCoreTiling=True`;CoreTiling 在
   Vectorize 之前处理 reduction/broadcast 编码,且已在 stage1 证明能实质改变
   编译行为。若仍同指纹,再比较 stage2 Unroll 与 1D per-output reduction。
+
+## E17:再关闭 stage2 CoreTiling(commit `4f21397`)
+
+- 唯一执行变量:保留 E16 的 stage2 Vectorize 关闭项,只新增
+  `isCloseCoreTiling=True`;stage1、P8×N16 均不变。
+- source/verification commit
+  `4f21397987fc8bddc8aadaffa930a9b92b330a25`;Kunlun SHA-256
+  `8e51ceec2f0009dffac5ab31aaf6ffe1faa4c163a5706c80f70b0f78d8df94e9`;
+  generic/test 仍为 `c1e180...` / `a6cc8...`。
+- screening:`gpu-et:/tmp/flagos-selective_state_update-e17-screening.t62RhI`,
+  PID/PGID/SID `240538`;static + stage1/stage2 独立 constexpr JIT + variants
+  **5/5 PASS**,5.731s;log SHA-256
+  `fd8c7c2e1d5f92d4aaa53dbd24718cb7bd3a4abba19662c467cb15a02152f9f3`。
+- commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e17-release.QN1R4n`,PID/PGID/SID
+  `240856`;Git-object manifest 前后一致,static + 双 JIT probe + variants
+  **5/5 PASS**;release log SHA-256
+  `064cb9e8edaa8b51e286196a39ca921016eb8cf50e3e3e31bb007970fc0f6d8a`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e17-4f21397/selective_state_update.zip`,
+  13937 bytes,SHA-256
+  `c87aace83674c1fecf1ce93659b2ece3a290d6fd85ece04d69496e32ad780c64`;
+  actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
