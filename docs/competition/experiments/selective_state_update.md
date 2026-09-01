@@ -9,9 +9,9 @@ platform: 7/8
 team_best_stage: e8
 team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
-blockers: e18昆仑case2-4同E13数值指纹
+blockers: e19昆仑case2-4同E13数值指纹
 sealed: no
-next: e19候选就绪;实时preflight
+next: e20将stage1 partial降为1D
 updated: 2026-09-01
 ```
 
@@ -712,3 +712,20 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   13874 bytes,SHA-256
   `c640f4af73fc75e229d2fa5d00a1415ac19c7d58a42df3084952d4befb53b90e`;
   actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+
+### E19 平台结果(sub 7660,2026-09-01 13:06 CST):二维 partial 归约仍错
+
+- preflight 全过后一次性提交;平台文件 URL SHA-256
+  `3c23087d68ccab46667a42d3386a749f0badbb6eaf6175b526a4d87d40919093`;
+  提交后额度 `15/30`,远端 ZIP 回读 `unavailable`,未重试。
+- 七芯 generic 全过:天数 `3.9945x`、沐曦 `9.079x`、燧原 `0.513x`、
+  海光 `8.472x`、华为 `3.635x`、card_a `6.786x`、card_b `8.2505x`。
+- 昆仑编译执行完成(14050ms),case 0/1 通过;case 2/3/4 指纹仍与 E13-E18
+  完全相同。多 store/reduce 同 DAG 被证伪,但拆分改变了执行时间,说明候选
+  确实改变生成代码而非 cache 假象。
+- E20 保留 flat stage2 和独立 state 写回,把 partial 计算改成每个
+  `(b,h,p,slice)` 一个 program、沿 N_SLICE=16 的真正 1D update+C dot 和标量
+  store。官方 [Kunlun dot direct kernel](https://github.com/flagos-ai/FlagGems/blob/a7620cc191a0b42e040194622c5758b22a7a25dc/src/flag_gems/runtime/backend/_kunlunxin/ops/dot.py#L27-L47)
+  是同构安全路径;官方 [mean 注释](https://github.com/flagos-ai/FlagGems/blob/a7620cc191a0b42e040194622c5758b22a7a25dc/src/flag_gems/runtime/backend/_kunlunxin/ops/mean.py#L124-L141)
+  还记录 converted BF16 二维 axis-1 reduction 可产生约 97% mismatch,与本题
+  `95%-96%` 指纹高度一致。
