@@ -992,3 +992,25 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   grid 缩小 4 倍;每个 lane 内仍只形成独立 1D N 向量、axis-0 reduction 和立即
   state/y store,禁止重新形成 E13-E19 已证伪的 `[4,N]` tensor。N load/store
   继续无条件使用 E24 mask。
+
+### E23/E24 数值根因:逻辑恒真 mask 是物理 idle-core guard
+
+- 平台 FlagTree 默认 XPU `core_num=64`;关闭 CoreTiling 后,无 encoding 的 N
+  向量仍按 64 cores 建 ClusterLayout,N8/N16/N32 分别产生 56/48/32 个 idle
+  cores。官方 [layout 定义与 idle-core 示例](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/include/triton/Dialect/TritonXPU/IR/TritonXPUAttrDefs.td#L75-L186)
+  和 [make_range lowering](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/lib/Conversion/TritonXPUToLLVM/MakeRangeOpToLLVM.cpp#L141-L180)
+  证明这些 cores 会得到 `n_off>=N`,并不存在隐式 bounds guard。
+- E22/E24 的 runtime `n_off < dstate` 被
+  [Mask pass](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/lib/Dialect/TritonXPU/Transforms/Mask.cpp#L537-L817)
+  降成每核 GM2LM/LM2GM 的 DMA length 与 `scf.if`;idle core 得到 length 0 并
+  跳过。E23 删除 mask 后,unmasked LM2GM 使用完整 buffer length,越过当前 row
+  写入后续 state 并与其他 program 竞态,解释 `inf`/巨大值与非确定性损坏。
+- y 先保持正确而 state 损坏也与官方
+  [StoreControl](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/lib/Dialect/TritonXPU/Transforms/StoreControl.cpp#L103-L176)
+  一致:它只为定义链包含 ReduceOp 的 scalar store 加 used-core/core0 guard;
+  `new_s` state store 不在保护范围。故这不是 Vectorize/Unroll 参数或真实 SRAM
+  容量问题。
+- 结论:本核的 runtime N mask 不得因“逻辑 N 等于 N_BLOCK”删除。理论上只有
+  `N_BLOCK>=64` 才没有物理 idle core,但 E23 在前三例失败后停止,N128 未形成独立
+  平台证据,当前不启用该猜测快路;普通 tensor-of-pointers 的 `boundary_check` 也
+  不是合法替代。
