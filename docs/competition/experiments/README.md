@@ -574,5 +574,6 @@ T32 E3 代理门未过未发射。
 - KernelGen `optimize_kernel` 两轮已用于生成与修正；随后两次真实
   `generate_kernel(device=kunlun)` 共触发六次后端 verify，全部为
   `HTTP 502`，故不能记为昆仑通过或候选失败。
-- T28 平台终态仍为 7/8、team best 仍为 e9 七芯约 18.5x；E11 未打包、
-  未上传、未提交，待昆仑真机或平台单次验证。
+- T28 平台终态仍为 7/8、team best 仍为 e9 七芯约 18.5x；E11 canonical
+  ZIP `e11-b40e5aa` 已验签(SHA-256 `9845aab1…cffc`)，按用户本轮授权进入
+  单次平台验证，其他三次额度保留。

@@ -9,14 +9,14 @@ platform: 7/8
 team_best_stage: e9
 team_best_commit: 6494691
 team_best_speedup: 七芯~18.5
-blockers: E11昆仑MCP验证两轮均后端HTTP502；平台未验证
+blockers: E11昆仑MCP验证两轮均后端HTTP502；平台待单次验证
 sealed: no
-next: 保留E11 b40e5aa；待昆仑真机或平台单次验证，本轮未提交
+next: E11规范ZIP已验签；按用户授权执行单次平台验证
 updated: 2026-09-01
 ```
 
-状态:E11 已本地提交并通过 exact-commit release；昆仑云端验证受服务
-HTTP 502 阻塞，未打包、未提交平台。
+状态:E11 已本地提交、通过 exact-commit release，规范 ZIP 已生成并验签；
+昆仑云端验证受服务 HTTP 502 阻塞，待本轮单次平台验证。
 
 ## 契约锁定
 
@@ -360,3 +360,30 @@ E11 在 NVIDIA 上比旧 vendor 慢，仅作为 validity-first 昆仑结构候�
   因此 E11 两轮 502 现归为 `generate_kernel -> Kunlun verifier/worker`
   服务基线故障或无健康 worker，不再作为 E11 kernel 失败证据；同样不能反推
   E11 已通过目标芯验证。
+
+### E11 规范 ZIP 与平台预注册(2026-09-01 23:06 CST)
+
+- 用户在“先 T28，保留另外三发”的方案后明确回复 `go`，授权本候选完成
+  实时 preflight、单次提交与结果回填；其他三次额度继续保留。
+- source/verification commit:
+  `b40e5aa9dc0f6e66a20372ea43e9f67f335c1c27`；test SHA-256:
+  `d17227cf3cfdde4ddb7e37eb26fa826f4eb9d9b7a94a943f388ee7d99da82f90`；
+  release log SHA-256:
+  `df11cba0801ce179eeb0c98499fb73646e02b1c71114ff0e5d31169c9d577bcd`。
+- canonical ZIP:
+  `artifacts/competition/gate_up_lora_b/e11-b40e5aa/gate_up_lora_b.zip`，
+  25,962 bytes，SHA-256
+  `9845aab125c2d32990b511de90e16bece3e4a7040038b630bfeece0eb2dccffc`；
+  `build_submission.py --verify-existing`、`unzip -t` 与 canonical 哈希
+  复核均通过。
+- 成员与 SHA-256：`gate_up_lora_b.py`
+  `9029a079b6c48a45c4f52ac65fe64a212d9cf381ea94591643e0140a28e458b2`；
+  `_enflame.py`
+  `b7579e58b984f0e89b702a47e0962bc349c659500bcd03394674b27050a0c2e0`；
+  `_iluvatar.py`
+  `8e05f2eb51d6423dbd133e9b8a35ae57109a7a9ca5332cc88fa45a0377a1738f`；
+  `_kunlunxin.py`
+  `b3bb46552012462e131f4e3ce43f760dd6afae6c13decc2e4a61f64b87f75d5a`。
+- 晋级门：昆仑正确且 speedup >= 0.1x，使整题达到 8/8 valid；七芯保持
+  既有通过。stop gate：若仍为约 1830 秒 compile-worker/空
+  `failed_cases` 崩溃，不重投同结构；只有明确代码侧错误才进入新候选迭代。
