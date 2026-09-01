@@ -9,9 +9,9 @@ platform: 8/8
 team_best_stage: e22(correctness)
 team_best_commit: f1a12f7
 team_best_speedup: 5.1200625x;昆仑0.0025x
-blockers: e28昆仑回退至0.008x,exact-2D轴关闭;有效门仍差7.41倍
+blockers: e29已过release待平台;有效门仍差7.41倍
 sealed: no
-next: 从e27分叉P-major源码级N-unroll8单变量
+next: e29构建不可变ZIP并执行实时preflight
 updated: 2026-09-01
 ```
 
@@ -1317,3 +1317,67 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   分块、Vectorize-on 或 metadata 重扫。E29 从 E27 的已验 P-major 1D 结构分叉,
   只把 N-loop 主体源码静态展开 8 次并保留精确 tail;若编译失败不降 U4,后者
   理论上限 `4x` 无法从 `0.0135x` 跨过 `0.1x`。
+
+## E29:P64×N16 分片与持久 FP32 累加(commit `ee69307`)
+
+- E28 证伪的是 `8192` 元素整块常驻,不是所有二维微块。固定 Kunlun
+  [mean_dim_kernel](https://github.com/flagos-ai/FlagGems/blob/5d281c8f9073bf9547351b0e4c835465586d327f/src/flag_gems/runtime/backend/_kunlunxin/ops/mean.py#L124-L141)
+  明确采用“二维 FP32 accumulator 跨 runtime loop 持久化、循环外唯一 axis-1
+  reduce”,并记录 converted FP16/BF16 tile 若在循环内 reduce 会产生 97% 错误。
+  因此本轮以新官方证据取代 E28 结果后的 static-unroll8 预案。
+- 主路径 host gate 仍严格为 `P>=64 && P%64==0 && N==128`;每个 program
+  owner 为 `(batch,head,p_tile64)`,每轮直接构造 `[64,16]` exact offsets,
+  连续 load state/A、广播 B/C、写独立 new_state,并累加到 `[64,16]` FP32
+  `y_acc`;8 轮后只做一次 axis-1 sum。无 P/N mask、tail、reshape 或 workspace;
+  P64 让 CoreTiling 保持 `64 groups × 1 core`,Vectorize/UnrollControl 关闭。
+  N16/N32 与非 P64 倍数完整回退 E27 已验路径。
+- 最初冻结 U8 source commit `cfa25ae`;screening
+  `gpu-et:/tmp/flagos-selective_state_update-e29-screening.4mZtTq` 将 U8 主路径
+  12/12、回退 30/30 与直接 U16 三精度 3/3 全部验真,variants **5/5 PASS**。
+  gate/probe/log SHA-256 为
+  `6b708aba2947a502e5b895eb6063c3a9a43c2d441c6fe75e27549fbced6717e7` /
+  `9ade78d5ad43e12ec043e663a56ba80a7dd613801f32dcd033e0164c3e960835` /
+  `ad18ac4a849930636754ab24114d2b26d01b6f4278ba5d6fcb159fd8fb68a390`。
+- 小 grid U16/U8 只差约 2%,故继续用平台主形状做不占额度的参数对照。第一次
+  `...-e29-tune.t7UAMO` 在计时前因错误要求两个合法 BF16 lowering bitwise equal
+  而停止;仅 `386/33,554,432` 个 state 元素相差 1 ULP,最大差 `0.001953125`,
+  远低于 `0.015` 容差。helper/log SHA-256 为
+  `1a06cd3d02cfd68386ad1d0005e478335b40ddd0b49bc3c3159d2e0ebf173f84` /
+  `8372c7cc86be0b283d6673cb4d731c88f3826c96739fe6d824003a3e15f09516`;
+  该错误断言不作性能证据。
+- corrected tune `gpu-et:/tmp/flagos-selective_state_update-e29-tune-corrected.uQY37t`
+  在完整 BF16 主形状校验 state/y 容差后交替计时:`[64,32,128,128]` 上 U8
+  `0.236017ms`、U16 `0.186921ms`(U16 快 **20.80%**);`[256,64,64,128]`
+  上 U8 `0.926693ms`、U16 `0.759818ms`(快 **18.01%**)；故正式候选固定 U16。
+  helper/log SHA-256 为
+  `7d66412aedca0ea83c025659e08157842bac81cbd14ef89ee8d4ffe09fc4973e` /
+  `65f20e440f4691266ea92a06b9c444f902e7153e8dd1d73bf5260c4d5750a6c4`。
+- source/verification commit
+  `ee693071651f32e48429d4b752d62e685a5c0806`;Kunlun Git blob
+  `aa3ad33eaeb5f2afb5468195aff058b647817f83`,SHA-256
+  `9851756cec29920a5b43ea8e7d6ecaa5e5e87b3499eb1f5e2744dab871db3a17`;
+  generic/test 仍为 `c1e180...ac4c` / `a6cc8c...aaf0`。
+- commit-bound screening
+  `gpu-et:/tmp/flagos-selective_state_update-e29-u16-screening.oaZW0O`,mode 0700,
+  PID/PGID/SID `251281`;U16 主路径 12/12、回退 30/30、辅助 U8 3/3 共
+  **45/45 PASS**,geometry 与 variants **5/5 PASS**,三次 manifest 一致。
+  gate/probe/log SHA-256 为
+  `1d2519cabd286c92463f199e6e488aadb7cc6ee0da9647ceda350201c275c679` /
+  `ce345af5207ac83b04cad8e126a6dc3472ac87e0411babba697d38a02be6613c` /
+  `7420b76b01cd9d0991c5403e634c77be8e77575fa6f914093c9140667996e0a1`。
+- 独立 release
+  `gpu-et:/tmp/flagos-selective_state_update-e29-release.xl65BE`,mode 0700,
+  PID/PGID/SID `251551`;从同一 Git objects 重建,同组 **45/45 + 5/5 PASS**,
+  无 compile/`uni_sram`/timeout 指纹且 manifest 不变。gate/probe/log SHA-256 为
+  `1d2519cabd286c92463f199e6e488aadb7cc6ee0da9647ceda350201c275c679` /
+  `ce345af5207ac83b04cad8e126a6dc3472ac87e0411babba697d38a02be6613c` /
+  `d401015e50fdad61e12405ff8443eeb5c0f8b001987f3de4347069f4aced56c5`。
+
+### E29 平台预注册门
+
+- 基础门:8/8 正确且每芯 `>=0.1x`;机制门:昆仑高于 E27 `0.0135x` 且
+  validation 低于 `17636ms`;有效门为昆仑 `>=0.1x`。候选只上传和提交一次。
+- 任一 compile/`uni_sram`/state/y 数值失败即关闭 persisted-slice 轴。若正确但
+  昆仑 `<0.027x`,说明分片 block-DMA 仍不足两个数量级,关闭该轴;`0.027-0.05x`
+  先重新画像而不盲扫;`0.05-0.1x` 只允许 N32 在远端主形状明确胜出后再占一次
+  配额;`>=0.1x` 达标即停。
