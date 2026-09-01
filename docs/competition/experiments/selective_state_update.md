@@ -11,7 +11,7 @@ team_best_commit: f1a12f7
 team_best_speedup: 5.1200625x;昆仑0.0025x
 blockers: e23无mask快路导致昆仑state数值破坏;e22仍为正确基线
 sealed: no
-next: e24恢复mask并单独验证direct grid
+next: e24候选就绪;实时preflight
 updated: 2026-09-01
 ```
 
@@ -940,3 +940,38 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
 - E24 做最小二分:恢复 E22 已平台验真的恒真 `n_mask` load/store,只保留 direct
   logical grid。若八芯恢复正确,再评估单 grid 收益;在此之前不叠加 P_TILE,避免把
   compiler 数值问题和多输出结构混在同一候选。
+
+## E24:恢复恒真 mask,单独验证 direct grid(commit `895e4e1`)
+
+- 唯一执行变量:从 E23 删除 `NEED_N_MASK` 及全部 unmasked load/store 分支,
+  恢复 E22 已八芯验真的 4 个 masked load + 1 个 masked state store;继续保留
+  `grid=(total_outputs,)`、`out_idx=tl.program_id(0)` 和单 host launch。相对 E22
+  的源码差异仅为删除 `_MAX_GRID/output_start/host chunk loop`,数学 IR 不变。
+- source/verification commit
+  `895e4e1f2d92fd1a70f7aa93ab53fa5bfb8a68e2`;Kunlun SHA-256
+  `83bfbb8edbe274ba2b83fa2809d5d4264e76cfc21ba8b6ca6298638aa0422dc4`;
+  generic/test 仍为 `c1e180...` / `a6cc8...`。
+- screening:
+  `gpu-et:/tmp/flagos-selective_state_update-e24-screening.vo9mAK`,mode 0700,
+  PID/PGID/SID `246216`;Black79/isort/flake8/static audit 全过;N21 尾部、N32/N128
+  恒真 mask、跨 batch/head、state immutable 和最大 `1,048,576`/fold `70,000`
+  direct grids 全过;variants **5/5 PASS**,6.440s;log SHA-256
+  `be34dfaba685fb8110d4e8465b23e92ebf9b319d6db0193a1f0c2574c0ace812`,
+  gate SHA-256
+  `1c88f5c745b77a5f47ba817249a5c015d24be57a6d666e152062d343742973f0`。
+- commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e24-release.5Z3dH0`,mode 0700,
+  PID/PGID/SID `246520`;Git-object 五文件 manifest 三次一致,同组门禁 + variants
+  **5/5 PASS**,3.932s;release log SHA-256
+  `b293b76d4e773c61721ac7326da59f874839f58128439e2ea5d92e2fb21e45f9`,
+  gate SHA-256
+  `83f8e38dd5b172e4b8133aa5e2ef4d406b0a0ae9ff5d7d5d2a7408c07dd10e8e`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e24-895e4e1/selective_state_update.zip`,
+  10343 bytes,SHA-256
+  `fdb4b213ff2003043ea0514f78d29ceeefb1eaf041c3c09ecd8f1bbf8cad2341`;
+  dry-run/created/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+- 13:47 CST 实时榜单:162 投/20 队,仅 c2flow `8.4960x` 与 Fields
+  `6.4056875x` 有效;c2flow/Fields 的昆仑分别为 `0.7145x/0.113x`。SoulCoder
+  当前仍以 E22 的昆仑 `0.0025x` 为正确基线;E24 首门是恢复 8/8 并判断 direct
+  grid 能否逼近 `0.1x`,而不是凭代理耗时预测名次。
