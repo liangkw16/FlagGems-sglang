@@ -4,18 +4,18 @@
 task: 37
 operator: sgemm_lora_a
 batch: 3
-validity: invalid
-platform: 7/8(E4;昆仑已修复，燧原行映射失败)
-team_best_stage: e4
-team_best_commit: 4efff42
-blockers: E5燧原route/materialize目标芯待验签
+validity: valid
+platform: 8/8(E5,5.3471x)
+team_best_stage: e5
+team_best_commit: 6ce280b
+blockers: E6燧原32³性能候选待平台验签
 sealed: no
-next: 按用户授权提交E5燧原结构修复合包
+next: 按用户授权提交E6燧原32³性能合包
 updated: 2026-09-01
 ```
 
-状态:E4 平台终态 7/8，昆仑规则 GEMM 修复兑现；E5 将同一已通过结构
-隔离到燧原，已通过 exact-commit NVIDIA release 并生成规范 ZIP。
+状态:E5 平台终态 8/8 valid、5.3471x；E6 仅把燧原规则 GEMM 从 64³
+改为代理稳定快约 1.75–2.08 倍的 32³，已完成 exact release 与规范 ZIP。
 
 ## 契约锁定
 
@@ -260,3 +260,46 @@ confirm 提交,评测入队,逐芯结果待回填。
   Kunlun `776237b87d6fd074f5146cbca76cafa3c9631176c7c741234f47410e07bbcbf6`。
 - 晋级门：燧原正确且 speedup >=0.1x、其余七芯不回归，达到 8/8；
   若失败，只接受平台返回的新明确代码侧错误进入 E6，不重投相同字节。
+
+## E5 平台终态(sub 7992,2026-09-01 23:43 CST)
+
+- 对象存储回读内容 SHA-256 与 canonical ZIP 同为
+  `588f87083d71823b64e652963a79ab749c0738c1f035249df97e85b86c4c1c56`；
+  平台 file-url selector SHA-256
+  `47619bef2cf35b3c7e97977780d864df5d91080ecca26a7e0741fbe8bd44cd8f`。
+- **8/8 valid、平均 5.3470625x**：天数 4.7785x、沐曦 3.7825x、
+  燧原 1.362x、海光 11.3935x、昆仑 3.484x、华为 15.0325x、
+  card_a 1.6195x、card_b 1.324x。route/materialize + regular GEMM
+  同时修复两类异构芯片的间接行访问问题，E5 成为团队首个 T37 有效解。
+
+## E6:燧原规则 GEMM 32³ retile 与平台预注册
+
+- 首个性能假设“保留原 dtype 权重、tile load 后转 fp32”在同进程 A/B
+  中使 bf16 慢约 2.1–2.3 倍且两档跌破 0.1x，未提交并立即撤回。
+- 随后只扫描仓内已有的 32/64 与 stages1/2 三点：32³/stages2 在五档
+  全胜；最终相对 E5 64³/stages2 的 wrapper-inclusive 时间为
+  5.853/10.222、1.202/2.493、0.184/0.339、10.774/20.070、
+  0.689/1.269 ms，即约 **1.75–2.08 倍**。改动仅为 Enflame 三个
+  BLOCK 常量，stages2、结构和其他七芯字节全部冻结。
+- source/verification commit
+  `3b60649b8b51e03aecf41344d3cdb9fad94d273b`；Enflame source SHA-256
+  `1de1e797f79ee7af898d7e4571ffa380174b5ac35f987a128cbec7008c89b48b`；
+  test SHA-256
+  `9adf18680a0c9cb8f639dafb064ea44a035bebabcc4a49b2f0c3a3f808e34b5c`。
+- exact Git-object release
+  `gpu-et:/tmp/flagos-sgemm-lora-a-e6-release.XzJBqc`：四变体
+  py_compile/Black/isort/flake8/hash 与 5 unittest 全过；release log
+  SHA-256 `4836cdb7f755acc44d7bd2fa3e5e84f5b541061c68b074bb955ed6771d78a3b1`，
+  A/B benchmark log SHA-256
+  `7f250f8c05fe70bfd2b1483c9fc2721723fe369878a06dda81f6f88734023339`。
+- canonical ZIP
+  `artifacts/competition/sgemm_lora_a/e6-3b60649/sgemm_lora_a.zip`，
+  23,321 bytes，SHA-256
+  `0445fd848fe61476511f1644cff25b4dcf3128a33a28227d5db893751c51a83f`；
+  canonical 验签、`unzip -t` 与远端独立回读均通过。成员 SHA-256：
+  generic `090d22c1d1ad20c9162c1764f33d1ef60ca58304a9ebaf48d4a2448442c5bd34`；
+  Enflame `1de1e797f79ee7af898d7e4571ffa380174b5ac35f987a128cbec7008c89b48b`；
+  Iluvatar `c10bfa4f80180770a933068914fabb02e64970cb94ffd0710548150fc74d4cb0`；
+  Kunlun `776237b87d6fd074f5146cbca76cafa3c9631176c7c741234f47410e07bbcbf6`。
+- 晋级门：维持 8/8，并使燧原 speedup 相对 E5 提升；任何 correctness
+  回归均判失败，不再追加候选。

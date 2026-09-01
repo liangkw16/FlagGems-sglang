@@ -593,3 +593,10 @@ T32 E3 代理门未过未发射。
 - E5 仅把燧原替换为同类 route/materialize + regular GEMM，其他芯字节
   冻结；commit `6ce280b` exact-release 5/5，canonical ZIP
   `588f8708…1c56` 已通过本地与远端双重验签，待单次平台裁决。
+
+## 2026-09-01 T37 E5 有效解与 E6 最后一发
+
+- E5(sub 7992)终态 **8/8 valid、5.3471x**；燧原结构修复兑现为
+  1.362x，昆仑保持 3.484x，T37 从 6/8→7/8→8/8 闭环。
+- E6 仅把燧原规则 GEMM 64³ 改为 32³；exact A/B 五档快 1.75–2.08x，
+  commit `3b60649` release 5/5，canonical ZIP `0445fd84…a83f` 已验签。
