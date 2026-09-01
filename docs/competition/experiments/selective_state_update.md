@@ -6,12 +6,12 @@ operator: selective_state_update
 batch: 3
 validity: invalid_threshold
 platform: 8/8
-team_best_stage: e21(correctness)
-team_best_commit: 1313907
-team_best_speedup: 5.0885x;昆仑0.001x
-blockers: e21八芯正确但昆仑低于0.1x门槛
+team_best_stage: e22(correctness)
+team_best_commit: f1a12f7
+team_best_speedup: 5.1200625x;昆仑0.0025x
+blockers: e22八芯正确但昆仑低于0.1x门槛
 sealed: no
-next: e22候选就绪;实时preflight
+next: e23单launch+power2 N无mask快路
 updated: 2026-09-01
 ```
 
@@ -869,3 +869,20 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   10684 bytes,SHA-256
   `9bc4981215c14bc90263c1383b4ee0a047e1777a0367e5fa47383a84590d6fc1`;
   actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+
+### E22 平台结果(sub 7669,2026-09-01 13:37 CST):8/8,仍低于门槛
+
+- preflight 全过后一次性提交;平台文件 URL SHA-256
+  `538ed1a42fb58463b1072a94889a95b7eb95476e6c1a9214c640b3115aaed6c3`;
+  提交后额度 `12/30`,远端 ZIP 回读 `unavailable`,未重试。
+- 八芯全部正确:天数 `3.999x`、沐曦 `9.1005x`、燧原 `0.7655x`、
+  海光 `8.467x`、昆仑 `0.0025x`、华为 `3.649x`、card_a `6.768x`、
+  card_b `8.209x`;均值 `5.1200625x`,终态仍 `invalid_threshold`。
+- 昆仑 validation `52428ms`,相较 E21 `144366ms` 缩短 63.7%,speedup
+  提升 2.5 倍;full-N 融合方向被平台实证,但逻辑 program 数仍为 1,048,576。
+- E23 删除 65535 host chunk,直接 `grid=(total_outputs,)`;FlagTree
+  [LoopGrid](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/lib/Dialect/TritonXPU/Transforms/LoopGrid.cpp#L35-L102)
+  会在 12 clusters 上重建完整逻辑 pid,本题最大 grid 仍在 i32 范围。并为
+  power-of-two N32/N128 增加 constexpr 无 mask 快路;官方 Kunlun
+  [fused RMSNorm](https://github.com/flagos-ai/FlagGems/blob/5d281c8f9073bf9547351b0e4c835465586d327f/src/flag_gems/runtime/backend/_kunlunxin/fused/fused_add_rms_norm.py#L81-L108)
+  记录恒真 mask 可带来接近 2 倍损失。
