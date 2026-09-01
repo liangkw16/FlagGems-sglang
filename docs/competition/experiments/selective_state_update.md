@@ -9,9 +9,9 @@ platform: 7/8
 team_best_stage: e8
 team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
-blockers: e17昆仑case2-4同E13数值指纹
+blockers: e18昆仑case2-4同E13数值指纹
 sealed: no
-next: e18候选就绪;实时preflight
+next: e19拆分stage1多store DAG
 updated: 2026-09-01
 ```
 
@@ -665,3 +665,18 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   13562 bytes,SHA-256
   `093ed90ceaf6c7e694f03e52c9a6ca1cfc33b5636d8ec322d838ae2e13381b50`;
   actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+
+### E18 平台结果(sub 7657,2026-09-01 12:59 CST):坏值来自 stage1
+
+- preflight 全过后一次性提交;平台文件 URL SHA-256
+  `f456eeb21039992c5fcf3712a09d045606c8509e27d917cce1d8a6ec6ae2eaff`;
+  提交后额度 `16/30`,远端 ZIP 回读 `unavailable`,未重试。
+- 七芯 generic 全过:天数 `3.885x`、沐曦 `9.1145x`、燧原 `0.5155x`、
+  海光 `8.4695x`、华为 `3.674x`、card_a `6.422x`、card_b `8.203x`。
+- 昆仑编译执行完成(19648ms),case 0/1 通过;case 2/3/4 的失配数、最大
+  绝对误差和索引仍与 E13-E17 完全相同。旧二维 stage2 已完全被一维标量
+  reduction 替代仍读到相同坏值,强证据指向 stage1 `partial_y` 生成。
+- E19 保留 E18 stage2,把 stage1 同一计算体静态特化为 `WRITE_STATE=False/True`
+  两核,严格先 partial 后 state。前者从 `s_old` 生成 FP32 partial 且不写 state;
+  后者仍从 `s_old` 重算并仅写降精度 state。无新 buffer;反序会 double-update,
+  因而禁止。
