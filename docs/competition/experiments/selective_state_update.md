@@ -9,14 +9,14 @@ platform: 7/8
 team_best_stage: e8
 team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
-blockers: e10昆仑direct-grid平台结果待实测
+blockers: e10昆仑stage1 16x16 uni_sram
 sealed: no
-next: e10实时preflight后单次提交
+next: e11仅BLOCK_P 16→8
 updated: 2026-09-01
 ```
 
-状态:E10 split-matrix + direct-grid 的 screening、commit-bound release
-与 canonical ZIP 均通过,待实时 preflight 与单次平台提交。
+状态:E10 direct-grid 消除 1830s crash,昆仑 7.274s 明确落到 stage1
+`16×16` uni_sram;E11 仅缩 `_BLOCK_P 16→8`。
 
 ## 契约锁定
 
@@ -287,3 +287,20 @@ updated: 2026-09-01
 - 第一门是昆仑转正;若仅过 0.1x,投影均值约 5.063x、成为第 3。若七芯
   冻结,登顶需昆仑 `>27.5645x`;转正后按收益优先优化 card_a、沐曦、
   燧原、华为、card_b、天数,保护已领先榜首的海光路径。
+
+### E10 平台结果(sub 7584,2026-09-01 11:36 CST)
+
+- preflight 精确绑定 commit/test/release/two members/ZIP SHA,实时额度
+  25/30、时间窗和最小间隔均通过;一次性提交后额度 24/30。平台文件 URL
+  SHA-256 `cd210a1c8b17a459a0baace2280a812c1a30d238de0aec1886291479241f588f`;
+  远端 ZIP 回读因未配置受信主机为 `unavailable`,未重试。
+- 七芯 generic 全过:天数 3.995x、沐曦 9.104x、燧原 0.5095x、海光
+  8.469x、华为 3.668x、card_a 6.4185x、card_b 8.248x;七芯和
+  `40.412x`。
+- 昆仑选择 `_kunlunxin`,执行 **7274ms** 后五例全部明确失败:
+  `_ssu_stage1_kernel`,grid `(1,1,4)`,`num_stages=1`,错误为
+  `uni_sram PassManager::run failed`;不再出现服务卡死或 1830s
+  compile-worker crash。
+- 根因收敛:direct grid/device-loop removal 已修复崩溃族,但 stage1
+  `[BLOCK_P,N_SLICE]=[16,16]` 活跃矩阵仍超过 XPU lowering 能力。
+  下一候选只改 `_BLOCK_P 16→8`;若同指纹,再只改 `N_SLICE 16→8`。
