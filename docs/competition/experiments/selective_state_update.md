@@ -4,14 +4,14 @@
 task: 36
 operator: selective_state_update
 batch: 3
-validity: invalid_threshold
-platform: 8/8
+validity: invalid_correctness
+platform: 7/8(e29;昆仑compile-worker崩溃)
 team_best_stage: e22(correctness)
 team_best_commit: f1a12f7
-team_best_speedup: 5.1200625x;昆仑0.0025x
-blockers: e29已过release待平台;有效门仍差7.41倍
+team_best_speedup: 5.1200625
+blockers: e29 persisted-slice触发昆仑1830s compile-worker崩溃
 sealed: no
-next: e29执行实时preflight并一次性提交
+next: persisted-slice轴已关闭;仅有全新源码级结构证据时重开
 updated: 2026-09-01
 ```
 
@@ -1386,3 +1386,22 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   昆仑 `<0.027x`,说明分片 block-DMA 仍不足两个数量级,关闭该轴;`0.027-0.05x`
   先重新画像而不盲扫;`0.05-0.1x` 只允许 N32 在远端主形状明确胜出后再占一次
   配额;`>=0.1x` 达标即停。
+
+### E29 平台结果(sub 7732,2026-09-01 16:22 CST):昆仑 compile-worker 崩溃
+
+- preflight tuple 全部匹配后一次性提交,未重投;平台 file URL SHA-256
+  `28061d53abef0154dae808d6a6311f6df57b3fd886b515f4fee95fba8f1e6f2e`。
+  只读终态观测时间 `2026-09-01T16:22:31.114669+08:00`,submission `7732` /
+  daily seq `25`,额度 `5/30`。
+- 七芯正确:天数 `3.9965x`、沐曦 `9.088x`、燧原 `0.517x`、海光
+  `8.4695x`、华为 `3.6645x`、card_a `6.422x`、card_b `8.2625x`。
+  昆仑选择 `selective_state_update_kunlunxin.py`,validation
+  `d4d47fee314f`,在验证执行阶段运行 `1833722ms` 后触发
+  `1830s/1800s` 超时；子进程已退出且结果未送达,报
+  `Fatal Python error: Aborted`,栈停在 Torch Inductor
+  `compile_worker/subproc_pool.py::_read_thread`,无 `failed_cases`、无 speedup。
+- 平台终态 `completed`、`7/8`、`invalid_correctness`,不计算平均且
+  `is_team_best=false`。其余七芯仍选 generic,与冻结锚点一致。
+- 按 E29 预注册门,compile 失败即关闭 persisted-slice 轴：不扫描 N32、U8、
+  P_BLOCK、Vectorize 或同字节重投。该结果同时属于昆仑 compile-worker 崩溃族,
+  保留平台故障证据；除非出现不同源码级结构和独立编译证据,本轴不再消耗额度。
