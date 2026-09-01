@@ -9,9 +9,9 @@ platform: 8/8(e11,14.3795x,rank3/4)
 team_best_stage: e11
 team_best_commit: b40e5aa
 team_best_speedup: 14.3795
-blockers: 榜首41.7015625x，差27.3220625x；无已验证追榜候选
+blockers: 榜首48.031375x，差33.651875x；无已验证追榜候选
 sealed: yes
-next: 保留E11；T28停止提交，剩余3次转下一候选决策
+next: 保留E11；今日额度已用完，T28停止提交
 updated: 2026-09-01
 ```
 

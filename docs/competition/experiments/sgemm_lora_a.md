@@ -5,16 +5,17 @@ task: 37
 operator: sgemm_lora_a
 batch: 3
 validity: valid
-platform: 8/8(E5,5.3471x)
+platform: 8/8(E5,5.3471x,rank6/6)
 team_best_stage: e5
 team_best_commit: 6ce280b
-blockers: none
+team_best_speedup: 5.3470625
+blockers: 榜首42.1385x，差36.7914375x；已达第6/6截止位
 sealed: yes
 next: 封存E5燧原64³团队最佳字节
 updated: 2026-09-01
 ```
 
-状态:E5 平台终态 8/8 valid、5.3471x 并保持团队最佳；E6 仍为 8/8，
+状态:E5 平台终态 8/8 valid、5.3471x、实时第 6/6 并保持团队最佳；E6 仍为 8/8，
 但燧原 32³ 仅 0.565x，已恢复 E5 64³ 实机最佳字节并封存。
 
 ## 契约锁定
@@ -320,3 +321,6 @@ confirm 提交,评测入队,逐芯结果待回填。
   source SHA-256
   `ffdb47e2a4e6ad63d867cd867b2a3a90e215badb5b8b4bb1695890be60a440a3`，
   与 sub 7992 的实机团队最佳字节逐字节一致；T37 封存于 E5。
+- 23:51 CST 实时榜单：97 submissions/22 teams、6 个达标队；SoulCoder
+  5.3470625x 位列第 6/6，榜首 EvokeAgent 42.1385x，绝对差
+  36.7914375x。
