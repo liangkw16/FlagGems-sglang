@@ -4,17 +4,17 @@
 task: 27
 operator: fused_moe_router_tensorcore
 batch: 3
-validity: invalid
-platform: 7/8(e7;e8候选待提交)
-team_best_stage: e7
-blockers: e8平台昆仑结果待实测
-sealed: no
-next: e8实时preflight后单次提交
+validity: valid
+platform: 8/8(e8,1.016425x,rank3)
+team_best_stage: e8 1.016425x
+blockers: 榜首1.754125x;差0.7377
+sealed: yes
+next: 昆仑需约6.5772x才登顶,无可信路径;转T36
 updated: 2026-09-01
 ```
 
-状态:E8 昆仑 direct vendor 的 screening、commit-bound release 与
-canonical ZIP 均已通过,待实时 preflight 与单次平台提交。
+状态:E8 昆仑 direct vendor 平台 8/8 valid,彻底消除旧结构 1830s 超时;
+当前第 3,按登顶可能性转 T36。
 
 ## 契约锁定
 
@@ -256,8 +256,8 @@ B=0;70000 行折叠。
 
 ## E8:昆仑 direct 两阶段 vendor(2026-09-01 10:4x–11:0x CST)
 
-状态:screening、source/test commit、commit-bound release 与 canonical ZIP
-均通过;平台提交待实时 preflight。
+状态:screening、source/test commit、commit-bound release、canonical ZIP
+和平台 8/8 均通过。
 
 ### 根因假设与单变量
 
@@ -331,7 +331,33 @@ B=0;70000 行折叠。
 
 ### 平台门禁
 
-- 2026-09-01 10:42 CST 快照:E7 七芯分数和约 `7.334x`,榜首平均
-  `1.754125x`;若其余七芯近似不变,登顶要求昆仑约 `6.699x`。
-- 首要成功门仍是昆仑完成评测且整题 8/8 valid;preflight intent、实时额度、
-  submission_id、八芯结果、平均分与排名待本轮平台实测回填。
+- 2026-09-01 11:03 CST preflight 精确绑定 race `782kzq4m`、season 2、
+  account `15600308080`、team `SoulCoder`、batch 3、Task 27、stage e8、
+  source/verification commit `140a632`、四成员、test/release/ZIP 完整 SHA;
+  实时额度 26/30、时间窗和最小间隔均通过。
+- 一次性 intent 正式提交成功:submission_id `7571`,daily_seq 5;
+  提交后额度 25/30。平台文件 URL SHA-256
+  `bd3957db45e8fcec23441b6b72f80780c9e593ac28e6f36f900615844916844d`;
+  因未配置 `FLAGOS_REMOTE_ZIP_HOST`,上传后远端 ZIP 回读状态为
+  `unavailable`,已按一次性规则停止,未重试。
+
+### E8 平台结果(sub 7571,2026-09-01 11:04 CST)
+
+| 芯片 | selected file | speedup | execution ms | 结果 |
+| --- | --- | ---: | ---: | --- |
+| tianshu | `_iluvatar` | 1.1516x | 25445 | pass |
+| muxi | generic | 1.4440x | 26311 | pass |
+| enflame | generic | 0.1964x | 8014 | pass |
+| haiguang | generic | 2.0464x | 15074 | pass |
+| kunlunxin | `_kunlunxin` | **0.6756x** | **12604** | **pass** |
+| huawei | `_ascend` | 0.5796x | 37688 | pass |
+| card_a | generic | 0.7502x | 15450 | pass |
+| card_b | generic | 1.2876x | 13665 | pass |
+
+- 终态:`completed`、8/8、`valid`,平均 **1.016425x**,团队 best,实时第 3;
+  榜首 c2flow `1.754125x`,绝对差 `0.7377`。
+- 根因结论:旧昆仑 generic 的 split-K + partials + device persistent 组合
+  触发编译/执行灾难;direct 两阶段 vendor 将昆仑从 1830s timeout 降至
+  12.604s 并正确通过,平台本身并非不可用。
+- 若其余七芯保持本轮分数,登顶要求昆仑约 `6.5772x`,即本轮的 9.74 倍;
+  当前无足够代理或公开实现证据支持该跃迁,按登顶概率将优化资源转向 T36。
