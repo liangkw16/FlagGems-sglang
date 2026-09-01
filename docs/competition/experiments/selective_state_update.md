@@ -9,14 +9,14 @@ platform: 7/8
 team_best_stage: e8
 team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
-blockers: e11昆仑stage1 8x16平台结果待实测
+blockers: e11昆仑stage1 8x16 uni_sram
 sealed: no
-next: e11实时preflight后单次提交
+next: e12仅N_SLICE 16→8
 updated: 2026-09-01
 ```
 
-状态:E11 仅缩 `_BLOCK_P 16→8`,screening、commit-bound release 与
-canonical ZIP 均通过,待实时 preflight。
+状态:E11 昆仑 7.219s 明确落到 stage1 `8×16` uni_sram;
+E12 保留 P=8,仅缩 `N_SLICE 16→8`。
 
 ## 契约锁定
 
@@ -329,3 +329,13 @@ canonical ZIP 均通过,待实时 preflight。
   13542 bytes,SHA-256
   `e70ec56985d01a006076063faa249594e72873117893440908293e5ffea19d81`;
   actual/`--verify-existing` 一致,成员 generic + `_kunlunxin`。
+
+### E11 平台结果(sub 7600,2026-09-01 11:47 CST)
+
+- preflight 全过后一次性提交;平台文件 URL SHA-256
+  `5a66ecc738432ffe657947b7d7ee7f5f6621a9aac0b3010965de2beb796c2218`;
+  提交后额度 23/30,远端 ZIP 回读 `unavailable`,未重试。
+- 七芯 generic 全过;昆仑执行 **7219ms**,五例均在 stage1、grid
+  `(2,1,4)`,`num_stages=1` 返回相同 `uni_sram PassManager::run failed`。
+- `BLOCK_P 16→8` 未跨过编译阈值;下一候选只改 `N_SLICE 16→8`,形成
+  stage1 8×8 活跃矩阵。若仍同指纹,再独立试官方 Mamba 基线 P=4。
