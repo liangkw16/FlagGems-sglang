@@ -59,14 +59,16 @@ def _load_optional(vendor):
 
 KUNLUN_MODULE = _load_optional("kunlunxin")
 AMD_MODULE = _load_optional("amd")
+ASCEND_MODULE = _load_optional("ascend")
+ENFLAME_MODULE = _load_optional("enflame")
 METAX_MODULE = _load_optional("metax")
-# e11 routes amd/enflame/metax through the generic token-block-skip
-# kernel; only vendors that still exist stay in the matrix
 VENDOR_MODULES = {
     name: module
     for name, module in (
         ("kunlunxin", KUNLUN_MODULE),
         ("amd", AMD_MODULE),
+        ("ascend", ASCEND_MODULE),
+        ("enflame", ENFLAME_MODULE),
         ("metax", METAX_MODULE),
     )
     if module is not None
@@ -117,9 +119,8 @@ class SiluAndMulMaskedTest(unittest.TestCase):
         torch.testing.assert_close(masked_m, mask_snapshot, atol=0, rtol=0)
 
     def test_compressed_grid_padding_profiles(self):
-        # e10 valid-row compression: heavy padding, empty experts, full
-        # experts and a non-power-of-two expert count (binary-search
-        # bounds) must all reproduce the reference on valid rows
+        if ASCEND_MODULE is None:
+            self.skipTest("ascend token-block-skip vendor is unavailable")
         generator = torch.Generator(device="cuda").manual_seed(20260901)
         profiles = [
             (64, 128, 1280, "uniform"),
@@ -177,7 +178,7 @@ class SiluAndMulMaskedTest(unittest.TestCase):
                     dtype=torch.int32,
                 )
             with self.subTest(profile=profile, experts=experts):
-                self._check(input, masked_m)
+                self._check(input, masked_m, ASCEND_MODULE)
 
     def test_masks_and_column_tails(self):
         for module in [MODULE, *VENDOR_MODULES.values()]:
