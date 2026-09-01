@@ -5,12 +5,12 @@ task: 41
 operator: state_passing
 batch: 3
 validity: invalid
-platform: E7 sub8079 pending;7 pass,Kunlun 0.0065x,Enflame retry_wait
+platform: E7 sub8079 system_failed;7 pass,Kunlun 0.0065x,Enflame unrun
 team_best_stage: E5 diagnostic
 team_best_commit: d980b8d
-blockers: E7昆仑0.0065x低于门槛;燧原待worker调度
-sealed: no
-next: 等E7燧原终态后收盘;不再提交
+blockers: 昆仑需单kernel chunk递推新结构;燧原worker需平台恢复
+sealed: yes
+next: 本轮收盘;只保留平台工单与全新结构研究
 updated: 2026-09-02
 ```
 
@@ -657,8 +657,8 @@ E7 冻结 E6 Enflame 字节，只执行预留的唯一 Kunlun BLOCK128 + row-maj
 ## E7：Kunlun BLOCK128 row-major 二维分段（2026-09-02）
 
 状态：source/verification commit、exact Git-object release 与 canonical ZIP 门禁
-通过；已完成今日第三个且最后一个候选的唯一上传和正式提交，sub `8079` 等待
-Enflame worker 终态。
+通过；已完成今日第三个且最后一个候选的唯一上传和正式提交，sub `8079` 因
+Enflame 调度失败收口为 `system_failed`。
 
 E7 逐字节冻结 E6 generic 与 Enflame，只改 Kunlun：删除已被 sub 8053 证伪的
 CoreTiling flag，BLOCK256 降为 128，并把二维 ownership 从
@@ -721,7 +721,7 @@ generic/Enflame 选择冻结字节，Kunlun 选择新 vendor。基础门仍为 8
 不创建第四个载体；若其数值失败或 `<0.1x`，封存 direct-3D。若 Kunlun 仍为
 `uni_sram`，封存 BLOCK128/row-major 分段；不扫描 BLOCK64/16，不重试 E7 字节。
 
-### 平台进行中（sub 8079）
+### 平台终态（sub 8079，2026-09-02 01:38:29 CST）
 
 实时 preflight tuple 全匹配，nonce `e4f303c0c1c0ba82f9cca82f6eab75b5` 仅消费
 一次；唯一上传和正式提交成功，额度由 `28/30` 变为 `27/30`。平台文件 URL
@@ -729,9 +729,17 @@ SHA-256 为 `cfee9c68156929659bca2f088719e7a5f3e5d55f641f7ca71a234c4984f978db`�
 对象存储远端验签因 trusted host 未配置为 `unavailable`，不影响已发送事实且不得
 重试。
 
-2026-09-02 01:18:15 CST 快照为 7 芯正确性通过、7 芯终态：天数 `7.6375x`、
+最终为 7 芯正确性通过：天数 `7.6375x`、
 沐曦 `4.3255x`、海光 `10.1680x`、华为 `1.0765x`、card_a `8.3545x`、
 card_b `4.5775x`；Kunlun 五例首次全部正确并从 `uni_sram` 编译墙转为
 `0.0065x`，但显著低于 `0.1x`，因此 E7 即使 Enflame 通过也不能转为有效提交。
-Enflame 仍无 validation id，在服务端 `retry_wait`。第三次额度已按要求使用，等待
-整单终态后封存，不创建 E8。
+Enflame 始终无 validation id、执行时间或芯片回执，最终错误仍为“评测任务提交
+失败，已停止重试”；这只证明同一 GCU worker 调度故障，不能评价 direct-3D。
+整单 `system_failed`，不计平均或排名。
+
+2026-09-02 01:39:10 CST 额度为 `27/30`，三次机会全部完成。题目详情同步为
+172 submissions / 6 个达标队，榜首 `wwwwww 7.8095x`；本队仍无有效分数或排名。
+E7 证明 row-major + BLOCK128 能让 Kunlun 编译和正确性通过，也证明逐 chunk host
+发射与 program 放大不可用。按预注册封存 E7 和 BLOCK64/16 扫描，不创建 E8。
+未来只有“保留 row-major 编译形态、把 chunk 递推放回单 kernel”的全新结构，以及
+平台恢复 Enflame worker 后的工单 rerun 值得重开；均不属于本轮继续提交范围。

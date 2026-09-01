@@ -638,6 +638,7 @@ T32 E3 代理门未过未发射。
   三段。exact release 5/5，Kunlun/Enflame CUDA 代理均值 `2.411059x` / `8.338189x`；
   canonical ZIP `e7-c60d277` SHA-256 `0a82be12…d91ef` 已验签，预注册为第三次且
   最后一次候选。
-- E7 已唯一提交为 sub `8079`，额度 `27/30`。七芯已通过；Kunlun 首次 5/5 正确，
-  但仅 `0.0065x < 0.1x`，BLOCK128 二维分段性能门失败。Enflame 仍无 validation
-  id、处于 `retry_wait`；等待终态后收盘，不再提交。
+- E7 已唯一提交为 sub `8079`，最终 `system_failed`、额度 `27/30`。七芯正确；
+  Kunlun 首次 5/5 通过但仅 `0.0065x < 0.1x`，BLOCK128 二维分段性能门失败；
+  Enflame 再次无 validation id，以服务端调度失败收口。三次机会全部完成，不建 E8。
+  01:39 榜单仍为 6 个达标队，榜首 `wwwwww 7.8095x`，本队无有效分数或排名。
