@@ -1,6 +1,6 @@
 # 第二届 FlagOS 算子赛题索引
 
-> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-09-01T06:22:57+08:00`。
+> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-09-01T13:44:50+08:00`。
 > 状态和榜单会变化，运行 `python tools/sync_flagos_season2_docs.py` 更新。
 
 ## 第 1 批
@@ -41,20 +41,20 @@
 
 | 题号 | 算子 | 状态 | 提交/队伍 | 达标队伍 | 当前第一 | 平均加速比 |
 | ---: | --- | --- | ---: | ---: | --- | ---: |
-| 25 | [draft_topk1](tasks/batch-3/25-draft_topk1.md) | competing | 177/22 | 8 | c2flow | 2.2311x |
-| 26 | [fused_moe_router_cudacore](tasks/batch-3/26-fused_moe_router_cudacore.md) | competing | 163/23 | 8 | c2flow | 1.7641x |
-| 27 | [fused_moe_router_tensorcore](tasks/batch-3/27-fused_moe_router_tensorcore.md) | competing | 85/21 | 5 | c2flow | 1.7541x |
-| 28 | [gate_up_lora_b](tasks/batch-3/28-gate_up_lora_b.md) | competing | 111/20 | 3 | c2flow | 41.7016x |
-| 29 | [gelu_and_mul](tasks/batch-3/29-gelu_and_mul.md) | competing | 204/23 | 14 | Nectar | 4.5662x |
-| 30 | [interleaved_rope](tasks/batch-3/30-interleaved_rope.md) | competing | 136/22 | 11 | c2flow | 37.7641x |
-| 31 | [moe_fused_gate](tasks/batch-3/31-moe_fused_gate.md) | competing | 101/25 | 5 | c2flow | 15.7314x |
+| 25 | [draft_topk1](tasks/batch-3/25-draft_topk1.md) | competing | 180/22 | 8 | c2flow | 2.2311x |
+| 26 | [fused_moe_router_cudacore](tasks/batch-3/26-fused_moe_router_cudacore.md) | competing | 185/27 | 8 | c2flow | 1.9150x |
+| 27 | [fused_moe_router_tensorcore](tasks/batch-3/27-fused_moe_router_tensorcore.md) | competing | 90/22 | 6 | c2flow | 1.7541x |
+| 28 | [gate_up_lora_b](tasks/batch-3/28-gate_up_lora_b.md) | competing | 112/21 | 3 | c2flow | 41.7016x |
+| 29 | [gelu_and_mul](tasks/batch-3/29-gelu_and_mul.md) | competing | 216/24 | 15 | Nectar | 4.5662x |
+| 30 | [interleaved_rope](tasks/batch-3/30-interleaved_rope.md) | competing | 138/23 | 13 | c2flow | 37.7641x |
+| 31 | [moe_fused_gate](tasks/batch-3/31-moe_fused_gate.md) | competing | 113/26 | 7 | EvokeAgent | 16.9583x |
 | 32 | [moe_fused_mul_sum](tasks/batch-3/32-moe_fused_mul_sum.md) | competing | 78/11 | 9 | YY-L | 23.9013x |
-| 33 | [per_token_group_quant_int8](tasks/batch-3/33-per_token_group_quant_int8.md) | competing | 81/16 | 6 | EvokeAgent | 7.2386x |
-| 34 | [per_token_quant_int8](tasks/batch-3/34-per_token_quant_int8.md) | competing | 60/13 | 9 | EvokeAgent | 7.2513x |
-| 35 | [rotary_embedding](tasks/batch-3/35-rotary_embedding.md) | competing | 74/19 | 10 | wwwwww | 8.8534x |
-| 36 | [selective_state_update](tasks/batch-3/36-selective_state_update.md) | competing | 147/19 | 2 | c2flow | 8.4960x |
-| 37 | [sgemm_lora_a](tasks/batch-3/37-sgemm_lora_a.md) | competing | 82/19 | 5 | EvokeAgent | 42.1385x |
-| 38 | [sigmoid_gate_topk_renorm](tasks/batch-3/38-sigmoid_gate_topk_renorm.md) | competing | 104/22 | 4 | Fields | 7.6053x |
-| 39 | [silu_and_mul_masked](tasks/batch-3/39-silu_and_mul_masked.md) | competing | 57/15 | 6 | EvokeAgent | 23.8497x |
-| 40 | [softcap_inplace_logits](tasks/batch-3/40-softcap_inplace_logits.md) | competing | 110/19 | 13 | Nectar | 2.1139x |
-| 41 | [state_passing](tasks/batch-3/41-state_passing.md) | competing | 137/23 | 5 | EvokeAgent | 7.6239x |
+| 33 | [per_token_group_quant_int8](tasks/batch-3/33-per_token_group_quant_int8.md) | competing | 89/17 | 7 | wwwwww | 7.7529x |
+| 34 | [per_token_quant_int8](tasks/batch-3/34-per_token_quant_int8.md) | competing | 62/14 | 9 | EvokeAgent | 7.2513x |
+| 35 | [rotary_embedding](tasks/batch-3/35-rotary_embedding.md) | competing | 76/20 | 10 | wwwwww | 8.8534x |
+| 36 | [selective_state_update](tasks/batch-3/36-selective_state_update.md) | competing | 162/20 | 2 | c2flow | 8.4960x |
+| 37 | [sgemm_lora_a](tasks/batch-3/37-sgemm_lora_a.md) | competing | 86/20 | 5 | EvokeAgent | 42.1385x |
+| 38 | [sigmoid_gate_topk_renorm](tasks/batch-3/38-sigmoid_gate_topk_renorm.md) | competing | 113/23 | 4 | sitraliqui | 7.6378x |
+| 39 | [silu_and_mul_masked](tasks/batch-3/39-silu_and_mul_masked.md) | competing | 82/19 | 8 | wwwwww | 24.1542x |
+| 40 | [softcap_inplace_logits](tasks/batch-3/40-softcap_inplace_logits.md) | competing | 133/19 | 13 | Nectar | 2.1139x |
+| 41 | [state_passing](tasks/batch-3/41-state_passing.md) | competing | 147/25 | 6 | EvokeAgent | 7.6239x |
