@@ -4,14 +4,14 @@
 task: 36
 operator: selective_state_update
 batch: 3
-validity: invalid_threshold
-platform: 8/8
+validity: candidate_ready(e26)
+platform: 8/8(e25);e26待提交
 team_best_stage: e22(correctness)
 team_best_commit: f1a12f7
 team_best_speedup: 5.1200625x;昆仑0.0025x
-blockers: e25八芯正确但昆仑仅0.003x;P_TILE4只提升20%
+blockers: e26仅NVIDIA代理通过;昆仑需从0.003x升至至少0.1x
 sealed: no
-next: e26每batch-head循环P并复用B/C
+next: e26实时preflight后单次提交
 updated: 2026-09-01
 ```
 
@@ -1079,3 +1079,60 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   state/A 的 1D masked update、axis-0 reduce 和立即 store。最大 grid 降至
   `B*H=16384`,同时主形状 B/C global load 降 16–128 倍;代价是两条 FP32 N
   向量跨 loop 常驻,需先过 XPU 编译资源门。
+
+## E26:每 batch-head 循环 P 并复用 B/C(commit `5e731b1`)
+
+- 唯一性能变量:删除 E25 的 `P_TILE=4`/`static_range`,每个 `(batch,head)` 由一个
+  program 独占,用 `for p_idx in range(0,dim)` 精确覆盖 P;同一 `(batch,group)` 的
+  B/C 各在循环外 masked load 一次。grid 从 E25 最大 `262144` 降到 `16384`,B/C
+  global load 按 P 降 16–128 倍;state/A/update/reduce/store 仍是逐 P 的唯一 1D N
+  tensor。E23 已证明必要的 runtime `n_mask` 覆盖 B/C、state/A load 和 state
+  store,输入 state 与输出 new_state 分离。
+- 固定 FlagTree 源码审计确认 runtime `range` 保留为 SCF loop,不是静态展开;
+  [SCF conversion](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/lib/Conversion/TritonToTritonXPU/TritonToTritonXPUPass.cpp#L386-L430)、
+  [LoopGrid](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/lib/Dialect/TritonXPU/Transforms/LoopGrid.cpp#L35-L102)、
+  [Mask](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/lib/Dialect/TritonXPU/Transforms/Mask.cpp#L537-L817)
+  与 [StoreControl](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/lib/Dialect/TritonXPU/Transforms/StoreControl.cpp#L103-L176)
+  均能处理嵌套 loop。三项 close flag 原样保留,避免同时打开额外 XPU DAG
+  unroll/vectorize 变量。该证据只证明结构合法,不能替代目标昆仑最终 lowering。
+- source/verification commit
+  `5e731b1bb63c75ec424b2a81ed7045f572e85d65`;Kunlun Git blob
+  `77be342f7e817d9253df842c452915129ccde1bc`,SHA-256
+  `0d11c87734cf10cb7c439567f4a7f813af763c97250be71da3492dc724c97689`;
+  generic/test SHA-256 仍为 `c1e180...ac4c` / `a6cc8c...aaf0`。
+- 首次 screening fresh dir
+  `gpu-et:/tmp/flagos-selective_state_update-e26-screening.WsqlWn` 在任何 JIT 前因
+  gate 自身把 `torch.full` size 写成 int 而非 tuple fail-fast;gate/log SHA-256
+  为 `efb090e123f4dd7b964677eacb331cc6dfc476c16286a68d204d827313081879` /
+  `27fd34acf17a4bd14e72bf020343fbb78e21bc9faad3166d81f2d8aac5a05111`。
+  该失效证据不复用;只修 gate 后在新目录从 Git objects 重新冻结并全量重跑。
+- corrected screening
+  `gpu-et:/tmp/flagos-selective_state_update-e26-screening.8bNiXy`,mode 0700,
+  PID/PGID/SID `248026`;Black79 首门、源码审计、三次 manifest 全过;最小真实
+  JIT P1/N21 为 0.250577s,P={1,5,16,33,64,128}×N={21,32,65,128}×
+  {no/all flags} 共 **48/48 PASS**,覆盖 state immutable、redzone、跨 batch/head;
+  最大/fold grid `16384/70000` single launch;variants **5/5 PASS**,6.652s。
+  gate/log SHA-256 为
+  `665c68c7991fe3b7b95b874d650fe89a4cfd2fcbaa0ad610594dd37d51d04707` /
+  `d7dd72203d380de1c65318bb4035483a408ced399f5cf813082b8cb8fcea93dd`。
+- 独立 commit-bound release
+  `gpu-et:/tmp/flagos-selective_state_update-e26-release.mvuojh`,mode 0700,
+  PID/PGID/SID `248451`;重新冻结五文件,48/48 + geometry + variants
+  **5/5 PASS**,三次 manifest 一致,无 compile/`uni_sram`/timeout 错误特征;
+  release gate/log SHA-256 为
+  `817ab53b841c4684ce44d6425876878bda80bd04da4a7c6a331db04be940fb25` /
+  `c06eae6726f5d43f968f2741ae222f8506919246670859b8a45b4dbb9a43dd27`。
+- canonical ZIP
+  `artifacts/competition/selective_state_update/e26-5e731b1/selective_state_update.zip`,
+  10511 bytes,SHA-256
+  `39a25f6173f43df5689294fbf517942317e3de8180c70ca8e4d5c5bf8f5f6b43`;
+  dry-run/created/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+
+### E26 平台预注册门
+
+- 基础门:8/8 正确且每芯 `>=0.1x`;机制门:昆仑高于 E25 `0.003x` 且 validation
+  低于 50348ms;有效门即昆仑 `>=0.1x`。本候选只上传和正式提交一次,不重掷方差。
+- 若目标昆仑出现 compile/`uni_sram` 或数值失败,关闭当前跨 loop live-in 形态,
+  只允许用“B/C 放回 loop”作单变量归因,不得动 N mask 或三个 close flag。若八芯
+  正确但昆仑 `<0.01x`,说明 row-owner+B/C 复用仍不足一个数量级,关闭该轴,不再做
+  `(batch,group)` 合并;后者只再省 `H/G` 份 B/C,理论收益不足以跨 `0.1x` 门。
