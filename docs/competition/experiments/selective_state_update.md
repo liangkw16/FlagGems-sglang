@@ -4,14 +4,14 @@
 task: 36
 operator: selective_state_update
 batch: 3
-validity: invalid_threshold
-platform: 8/8
+validity: candidate_ready(e27)
+platform: 8/8(e26);e27待提交
 team_best_stage: e22(correctness)
 team_best_commit: f1a12f7
 team_best_speedup: 5.1200625x;昆仑0.0025x
-blockers: e26复用B/C及grid16384仍仅0.003x;48.5s需区分编译与执行
+blockers: e27仅NVIDIA代理通过;目标昆仑strided DMA与runtime-N未实测
 sealed: no
-next: 分解昆仑validation编译/runtime并寻找数量级结构改写
+next: e27实时preflight后单次提交
 updated: 2026-09-01
 ```
 
@@ -1154,3 +1154,63 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   `(3P+2)/(3P+2/(H/G))`,P16/64/128 分别不超过约 1.0417/1.0104/1.0052x,
   且会降低并行度;远不足 `0.003→0.1x`,不提交该猜测。下一步必须把 48.5s 拆成
   specialization/JIT 编译与实际 kernel 执行,只尝试能消除数量级开销的结构。
+
+## E27:P-major 64 cores,N 串行融合(commit `5e3d802`)
+
+- E22 的 17 host launches 与 E24 的 1 launch 分别为 52428/52510ms;E25 logical
+  programs 降 4 倍只到 50348ms。五个已锁定平台例共有 `Q=1,319,488` 个输出、
+  `QN=168,010,240` 个状态元素,case 3/4 占 QN **99.8583%**。E26 虽把逻辑主流量
+  从约 1.680GB 降到 1.018GB(-39.44%),理论带宽上限也只有 1.65x,平台无收益符合
+  预期;约 48s 主因不是 JIT/host launch,而是每输出的小向量 DMA、exp 与跨核 reduce。
+- E27 对 `P>=64 && P%64==0` 新增 P-major 路径:每 program owner 为
+  `(batch,head,p_tile64)`,`tl.arange(0,64)` 让 64 XPU cores 各持一个 p,沿 runtime
+  N loop 顺序加载 strided state/A,B/C 标量广播,立即写 new_state 并在每 core 的
+  FP32 `y_acc` 累加;循环后一次写 64 个 y。全程只有 1D P tensor,没有 E13–E19
+  证伪的 `[P,N]` tensor,也没有 `tl.sum`/跨核归约。P16/非 64 倍数继续走 E26
+  的 masked N-major 正确路径。
+- 主路径 64 lanes 恰好覆盖固定 XPU 64 cores,无 idle core,且 runtime N loop 精确
+  覆盖 `[0,dstate)`,因此不需要 P/N mask,不会复现 E23 的 idle-core LM2GM 越界。
+  `new_s` 在降精度写 state 前参与 FP32 y 累加;输入 state 只读、new_state 独立。
+  固定 FlagTree 的
+  [ClusterLayout](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/include/triton/Dialect/TritonXPU/IR/TritonXPUAttrDefs.td#L75-L186)、
+  [SCF conversion](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/lib/Conversion/TritonToTritonXPU/TritonToTritonXPUPass.cpp#L386-L430)
+  与 [LoopGrid](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/lib/Dialect/TritonXPU/Transforms/LoopGrid.cpp#L35-L102)
+  支持该结构;无 reduce 后 StoreControl 不介入。官方 Kunlun
+  [cumsum](https://github.com/flagos-ai/FlagGems/blob/5d281c8f9073bf9547351b0e4c835465586d327f/src/flag_gems/runtime/backend/_kunlunxin/ops/cumsum.py#L360-L402)
+  已有 runtime loop + scalar broadcast + vector store 的同构先例。三 close flags 保留。
+- source/verification commit
+  `5e3d802a10a538f850b73b433b468492d4be6177`;Kunlun Git blob
+  `b126b601b133b8ee6ae50a8da2c832ceb08c404d`,SHA-256
+  `0b7e148e51ba2eee2d51f67e083465da8ef04c6118e27d21d398d92e6c222e24`;
+  generic/test SHA-256 仍为 `c1e180...ac4c` / `a6cc8c...aaf0`。
+- screening
+  `gpu-et:/tmp/flagos-selective_state_update-e27-screening.b3Q0Co`,mode 0700,
+  PID/PGID/SID `248802`;Black79 首门、双路径源码审计、三次 manifest 全过;
+  P64/N21 no flags 与 P128/N128 all flags 最小 JIT **2/2 PASS**;三 dtype
+  fast/fallback 矩阵 **144/144 PASS**,覆盖 D/z/bias/softplus、state immutable、
+  redzone、跨 batch/head/group;平台几何 fast grid `40/96/4096/16384`、fallback
+  `4`,最大/fold `16384/70000` single launch;variants **5/5 PASS**。gate/log
+  SHA-256 为
+  `9161c8ce689d579e525a04fabc6bbf3ec8ad6751223ca4ee5874be78d7adf571` /
+  `d145699a934e203aca3a839ce7c9dd54e590981a31df8ca7b9562e29787e6b84`。
+- 独立 commit-bound release
+  `gpu-et:/tmp/flagos-selective_state_update-e27-release.sVnawa`,mode 0700,
+  PID/PGID/SID `249273`;重新冻结五文件,同组 2/2 + 144/144 + geometry +
+  variants **5/5 PASS**,三次 manifest 一致,无 compile/`uni_sram`/timeout 指纹;
+  release gate/log SHA-256 为
+  `084d0c643c790618cd96f2293d02e88fbeb4aaf3e6447880257dd814d17a6f80` /
+  `3027719fddddbd095198e48b4933259cab88518f33ce57e92d4df8ed7bce3ed3`。
+- canonical ZIP
+  `artifacts/competition/selective_state_update/e27-5e3d802/selective_state_update.zip`,
+  13626 bytes,SHA-256
+  `003daecf2ae2ab5c34edc763314d43c383250840130d5a4307d778a9c23b3611`;
+  dry-run/created/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+
+### E27 平台预注册门
+
+- 基础门:8/8 正确且每芯 `>=0.1x`;机制门:昆仑明显高于 E26 `0.003x` 且
+  validation 低于 48495ms;有效门为昆仑 `>=0.1x`。候选只提交一次,不重掷方差。
+- 若主路径 compile/`uni_sram` 或数值失败,先按 strided load/store、loop-carried
+  `y[64]` 分类,不得回改已验 fallback 或 N mask。若正确但昆仑 `<0.01x`,说明
+  strided P-major 仍被 DMA/loop 控制吞噬,关闭该轴,下一单变量只测占 99.8583%
+  工作量的 N128 N-major 无 mask 快路;E23 从未独立执行到 N128,故该边界尚未证伪。
