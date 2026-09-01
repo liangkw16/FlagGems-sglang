@@ -11,7 +11,7 @@ team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
 blockers: e15昆仑case2-4同E13数值指纹
 sealed: no
-next: e16关闭stage2 Vectorize
+next: e16候选就绪;实时preflight
 updated: 2026-09-01
 ```
 
@@ -456,10 +456,11 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
 - 七芯 generic 全过:天数 `3.8835x`、沐曦 `9.107x`、燧原 `0.5165x`、
   海光 `8.473x`、华为 `3.656x`、card_a `6.775x`、card_b `8.192x`。
 - **关键进展**:昆仑不再出现 `uni_sram`。vendor 完成编译和执行(18818ms),
-  case 0/1 通过;仅 case 2/3/4 数值失败。由输出元素数和最大索引可锁定三者
-  `y` shape 为 `[3,16,128]`、`[64,32,128]`、`[256,32,128]`,超差比例
-  `95.0%/95.9%/96.0%`;前两例 P<=64 已过。CoreTiling 是编译阻塞 pass,
-  关闭后暴露 P=128/grid.x=16 相关 lowering 错误。
+  case 0/1 通过;仅 case 2/3/4 数值失败,超差比例 `95.0%/95.9%/96.0%`。
+  CoreTiling 是编译阻塞 pass,关闭后暴露后置 lowering 错误。旧版曾把三例
+  `y` shape 锁定为 `[3,16,128]`、`[64,32,128]`、`[256,32,128]`;该结论撤销:
+  case 4 最大误差索引 `(151,51,28)` 与第二维 32 矛盾。元素数和索引只能给
+  shape 约束,不能证明错误仅与 P=128/grid.x=16 有关。
 - stop gate 修正:不撤销已证明必要的 CoreTiling flag,也不按旧计划直接替换成
   UnrollControl(会重新引入编译失败)。下一候选以 E13 为基线,只改变一个
   P/grid 或后置 pass 变量;先用源码证据区分 grid.x=16、双 store 和 reduce
@@ -552,3 +553,29 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   的所有关闭项只传给 stage1。stage2 仍是 `[8,8]` axis-1 reduce + P 向量 store,
   未带任何 XPU workaround。因此 E16 只关闭 stage2 Vectorize;若仍同指纹再拆分
   state update 与 y reduction。
+
+## E16:关闭 stage2 Vectorize(commit `b280817`)
+
+- 唯一执行变量:stage1、P8×N16 和三关闭项完全不变;只给 stage2 的 `[8,8]`
+  axis-1 reduce + 行向量 store 传 `isCloseVectorization=True`。官方 Kunlun
+  [logsumexp kernel](https://github.com/flagos-ai/FlagGems/blob/d8b500b368343ac5f5ff4e01b508d9e8e03ad5c5/src/flag_gems/runtime/backend/_kunlunxin/ops/logsumexp.py#L43-L69)
+  是同构路径,其 [launch](https://github.com/flagos-ai/FlagGems/blob/d8b500b368343ac5f5ff4e01b508d9e8e03ad5c5/src/flag_gems/runtime/backend/_kunlunxin/ops/logsumexp.py#L107-L121)
+  明确关闭 Vectorize。
+- source/verification commit
+  `b2808170a3d4e9684646f554d9b1ff5bb2b1671c`;Kunlun SHA-256
+  `9355d2af3701ca060bae92d036696d51246706938920ca9faf04d5a4857af7a7`;
+  generic/test 仍为 `c1e180...` / `a6cc8...`。
+- screening:`gpu-et:/tmp/flagos-selective_state_update-e16-screening.SkkBrZ`,
+  PID/PGID/SID `239963`;static + stage1/stage2 独立 constexpr JIT + variants
+  **5/5 PASS**,5.730s;log SHA-256
+  `fe11997bb2bab2e8185253b7fb31f39c1ae60bc31673feb9e245f132f80c808d`。
+- commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e16-release.wXYeRh`,PID/PGID/SID
+  `240277`;Git-object manifest 前后一致,static + 双 JIT probe + variants
+  **5/5 PASS**;release log SHA-256
+  `feb8d87dea338f2301d25c9fd9ddee0c6c4b54b0099b1aef47756f2f0bdc5515`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e16-b280817/selective_state_update.zip`,
+  13864 bytes,SHA-256
+  `ab59679823740df8196b105f88267fa3af3d0d4d818c8de2cac78ed8aa276b47`;
+  actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
