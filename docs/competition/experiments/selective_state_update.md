@@ -11,7 +11,7 @@ team_best_commit: f1a12f7
 team_best_speedup: 5.1200625x;昆仑0.0025x
 blockers: e24八芯正确但昆仑仍0.0025x;百万logical programs为主瓶颈
 sealed: no
-next: e25每program顺序处理4个p
+next: e25候选就绪;实时preflight
 updated: 2026-09-01
 ```
 
@@ -1014,3 +1014,50 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   `N_BLOCK>=64` 才没有物理 idle core,但 E23 在前三例失败后停止,N128 未形成独立
   平台证据,当前不启用该猜测快路;普通 tensor-of-pointers 的 `boundary_check` 也
   不是合法替代。
+
+## E25:每 program 顺序处理 4 个 scalar p(commit `6ffc75d`)
+
+- 唯一性能变量:每个 logical program 从一个 `(b,h,p)` 改为一个
+  `(b,h,p_tile)` owner,通过 `tl.static_range(P_TILE=4)` 顺序完成四次独立的
+  scalar-p + 1D-N update/reduce/store;最大 grid `1,048,576→262,144`。每次
+  lane 内立即写 state/y,B/C 不跨 lane hoist,源码只有唯一 N `tl.arange`,没有
+  P arange、`[:,None]`、axis-1 reduction 或 `[4,N]` tensor。
+- P 尾块用 constexpr `NEED_P_MASK`;tile 解码按
+  `row=pid//ceil(P/4), p_tile=pid%ceil(P/4)`,因此尾 lane 不会跨 head/batch。
+  N load/store 延续 E24 的 runtime `n_mask`,包括 power-of-two 主形状;输入 state
+  与 `new_state` 继续分离。官方 Kunlun
+  [fused RMSNorm](https://github.com/flagos-ai/FlagGems/blob/5d281c8f9073bf9547351b0e4c835465586d327f/src/flag_gems/runtime/backend/_kunlunxin/fused/fused_add_rms_norm.py#L28-L59)
+  同样把 small-N/many-row 归因为 per-program launch latency,但其二维 multirow
+  路径与 E13-E19 的平台反例冲突,故本候选保持顺序 1D DAG。
+- 首次 source commit `7c3e7ec8aa948231ee1c9e711e485b2679e421cc`,Kunlun
+  SHA `1b058bda...`;screening
+  `gpu-et:/tmp/flagos-selective_state_update-e25-screening.9BvWgJ` 在 Black79
+  格式门禁即停止,未运行 JIT/数值;gate/log SHA-256 分别为
+  `2ee4106854202e7420c02079454db36e8806a21bb3d3b31169516976d9abcbd7` /
+  `a7f71fc3247e3ea50460bbab0c7944013733d63820f8ccd8c6cad8fccb85b874`,
+  不作候选证据。按冻结副本 Black diff 修正后产生新 commit/字节并从头筛选。
+- source/verification commit
+  `6ffc75d4a00ee652ca2f3f58fbd53947ad51fb45`;Kunlun SHA-256
+  `774347e4f17dbad17e522d2fd7921d568bebe06cb74d400308e3a234e5aca9fe`;
+  generic/test 仍为 `c1e180...` / `a6cc8...`。
+- corrected screening:
+  `gpu-et:/tmp/flagos-selective_state_update-e25-screening-corrected.PFbwjQ`,
+  mode 0700,PID/PGID/SID `247163`;P1/P5/P33 × N21/N32/N65/N128 共
+  **12/12** direct probes 全过,覆盖 P/N tail、redzone、跨 head/batch、all-flags/
+  no-flags 与 state immutable;最大/fold grid `262144/70000`,single launch;
+  variants **5/5 PASS**,8.781s;log SHA-256
+  `fd297c59b54c07024699e589c85ccb24077563a431dee08f4aa414ae68b2af9c`,
+  gate SHA-256
+  `2edd1f417a7df5efb26883b7d5b5d14b4ad4d75e2d161d738986c46d0b10c648`。
+- commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e25-release.EaIbz9`,mode 0700,
+  PID/PGID/SID `247511`;Git-object manifest 三次一致,同组 12 probes + geometry +
+  variants **5/5 PASS**,3.916s;release log SHA-256
+  `799721ebc718d219838ef37adcfb123b6d5e19ffaffc909d6136defe9c2d85de`,
+  gate SHA-256
+  `06bffb716893bb63b30becfe096eb28c0be71833f052c5ba6411705280ca57a2`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e25-6ffc75d/selective_state_update.zip`,
+  12070 bytes,SHA-256
+  `8c1426e0bc48a9de8f13df66652dbadb6b4fdb3d6d926dcd42c5e8cf07a2943a`;
+  dry-run/created/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
