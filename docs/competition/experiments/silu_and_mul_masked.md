@@ -9,8 +9,8 @@ platform: 8/8
 team_best_stage: E7
 team_best_commit: fd089fe
 team_best_speedup: 19.8698
-sealed: yes
-next: 收盘 E7 19.8698;树留 e10;E12 上游 persistent 条带仅+3.3%、设备 prefix 两核慢66.5%，均离线关闭
+sealed: no
+next: E13已过release;执行实时preflight并一次性提交华为隔离组合
 updated: 2026-09-01
 ```
 
@@ -891,3 +891,50 @@ persistent grid + grid-stride。KernelGen `optimize_kernel` 收到包含 E10/E11
 裁决：A 距登顶所需 `+20.03%` 太远，B 明显回退；两案都不得使用平台额度。
 T39 保持 E7 team best 与 E10 树字节，后续除出现新平台/编译器证据外不再开启
 prefix、persistent grid、普通 BLOCK 或 vendor 路由轴。
+
+## E13：华为独占 E10 块跳过，恢复 E7 generic（2026-09-01 16:3x CST）
+
+状态：六成员候选已完成 commit-bound release；待实时 preflight 后只提交一次。
+
+### 组合依据与实时差距
+
+- 2026-09-01 16:28:38 CST 官方只读榜首为 wwwwww `24.15420833x`；我方
+  E7 `19.86983333x`，登顶需 `+21.5622%`。E10/E11 已证明块跳过在华为分别
+  为 `25.90933333x` / `26.96633333x`，相对 E7 华为 `7.49466667x` 为
+  `+246%` 量级；同时 E11 证明该结构不适合沐曦和国际 B。
+- 本轮不生成新 kernel，而是重组已被平台验证的精确字节：generic 恢复 E7，
+  新 `_ascend` 逐字节复制 E10 generic；AMD、Kunlun、MetaX 保持 E7 字节，
+  Enflame 保持 E9-E11 已验证的 E8 同算法字节。天数、海光和国际 A 因无 vendor
+  回到 E7 generic；华为独占块跳过，避免 E10 对其它 generic 路由芯的代价。
+- 这是已验证字节重组，不是新算法单变量。按 E7 其余读数只替换华为，反事实均值
+  为 `22.17166667x`；再计入 E10/E11 Enflame 读数约为 `22.22-22.36x`，仍距
+  实时榜首约 `8.0-8.9%`。若其它七芯精确复现 E7，华为需
+  `>=41.76966664x` 才追平；而 E7 海光 `56.4277x` 已由 E9-E11 证明是异常
+  高滚。全历史逐芯 oracle 也仅 `22.6770x`，因此本轮是有实证的最后组合验证，
+  不是高置信登顶承诺。
+- 用户已明确允许绕过 kernelgen；且 Ascend 候选字节已在 sub 7480/7484 的华为
+  路径两次 8/8 平台验证，直接证据强于重新生成或改写，故本轮不调用 MCP。
+
+### 构建身份与验证
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `494e7ebf47e444e876f664196b33c43f500a831b` |
+| generic / Ascend SHA-256 | `bdafd313c6bb841a3334eca33e7bd1637c110d5edbf2c0180c00b127820c9cad` / `c005537c37b7b6b84d1a3229f3c4e2f19ecdb4cd2f5dc687b5d5cad4cdb8a250` |
+| AMD / Enflame SHA-256 | `a662c81024ad41eb9cf6bbbdf55c83bebdd681da3d27e219609856ae5074429f` / `2741c29c2513039df63d70aa729b53776cef388828056defde96d37d154587a2` |
+| Kunlun / MetaX SHA-256 | `2698072998829ead430005697c2262bd2dc8712e9ee4d221d833541b01a72462` / `dc6e0d1ca5c0cee612b755cdb8d267e718f971a98b4b54967bbb80491cb80a0a` |
+| test SHA-256 | `ca6814cbf49052636901be89e8dcea71f20c45df512ab57e0c5307591d28eeda`；Ascend 与 Enflame 均纳入 vendor 数值矩阵 |
+| screening | `gpu-et:/tmp/flagos-silu-and-mul-masked-e13-screening.sdbaWy`；py_compile/Black/isort/flake8、unittest `7/7`；日志 SHA-256 `5b9e6fd0f5ab7a4dddab0ef96dda40099da4956a131b9a6cd85ce8dd3105aed7` |
+| release | `gpu-et:/tmp/flagos-silu-and-mul-masked-e13-release.z4CIPJ`；从 commit Git objects 重建，unittest `7/7` 且前后 manifest 一致；日志 SHA-256 `e05e3faf247fb54690890a902d8737a07ca91fa3d9b9cae1e636bde42f008e0a` |
+| canonical ZIP | `artifacts/competition/silu_and_mul_masked/e13-494e7eb/silu_and_mul_masked.zip`，18194 bytes，SHA-256 `3a7d05d8a7497ef4307b8d73af2a4990ad266841d6cfe83d92df4ba20bb93ff5` |
+| ZIP 成员 | generic + `_amd` + `_ascend` + `_enflame` + `_kunlunxin` + `_metax`，六成员；create/`--verify-existing` 一致 |
+
+### E13 平台预注册门
+
+- 基础门：8/8 valid、每芯 `>=0.1x`，且华为必须命中 `_ascend`；其余芯严格命中
+  上述冻结 generic/vendor 集合。
+- 机制门：华为 `>=24.5x`（E10 首次实证的 94.6%），Enflame `>=0.75x`；
+  team-best 门为平均严格高于 E7 `19.86983333x`，结构目标为平均 `>=22x`。
+- 登顶门：平均严格高于 preflight 时实时榜首；当前参照为 `24.15420833x`。
+- 任一芯失败、华为 `<23.3x` 或平均不高于 E7 即关闭组合轴；若 valid 且改善但未
+  登顶，也只记录新 team best 后封存，不做同字节方差重掷。候选只上传和提交一次。
