@@ -12,136 +12,218 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# e9 re-carrier (held for a kunlun health window): e8 hit the crash family
-# again; seven chips stay green at ~18.5x avg (huawei 22.76x). Fire only on
-# a T28 threshold-team-count rise. Bytes otherwise identical to e7/e8.
-# Kunlunxin vendor v3 (e7; e8 re-carrier for the kunlun eval window).
-# All five
-# prior kunlun attempts (3D grid generic, BLOCK_N 128 generic, 1D fold,
-# host-resolved dot v1/v2) hit the same inductor compile-worker crash while
-# num_stages=2 and tl.dot stayed constant on this path. This variant removes
-# the entire dot lowering surface: explicit fp32 FMA K-loop, num_stages=1 /
-# num_warps=4 (the kunlun-proven softcap/moe_sum_reduce convention), int32
-# offsets only, host-resolved segment metadata kept from v2. Other seven
-# chips keep the generic/vendors unchanged.
+# Kunlunxin Task 28 — layout-materialization approach (PR41 pattern).
+# Stage 1: framework layout — route/pack x and base into contiguous fp32,
+#           transpose weights to [num_lora, r, 2*output_dim] (KN layout).
+# Stage 2: pure regular [M,K]x[K,N] Triton GEMM per segment per gate/up.
+# Stage 3: framework inverse — index_select to restore original row order.
 
+import torch
 import triton
 import triton.language as tl
 
 
-@triton.jit
-def _gate_up_lora_b_kernel(
-    x_ptr,
-    weights_ptr,
-    output_ptr,
-    permutation_ptr,
-    segment_start,
-    segment_length,
-    weight_index,
+# ---------------------------------------------------------------------------
+# Regular [M,K]x[K,N] GEMM kernel — Kunlun-proven conservative shape.
+# K=rank and N=output_dim are constexpr; M is runtime (do_not_specialize).
+# No permutation, no seg_indptr, no indirect loads.
+# ---------------------------------------------------------------------------
+@triton.jit(do_not_specialize=["M"])
+def _regular_gemm_kernel(
+    a_ptr,
+    b_ptr,
+    c_ptr,
+    M,
+    stride_am,
+    stride_ak,
+    stride_bk,
+    stride_bn,
+    stride_cm,
+    stride_cn,
     scaling,
-    output_dim,
-    RANK: tl.constexpr,
-    BLOCK_S: tl.constexpr,
+    N: tl.constexpr,
+    K: tl.constexpr,
+    BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
-    HAS_PERMUTATION: tl.constexpr,
+    BLOCK_K: tl.constexpr,
+    GROUP_M: tl.constexpr,
 ):
-    slice_id = tl.program_id(1)
-    matrix_pid = tl.program_id(0)
+    pid = tl.program_id(0)
+    num_pid_m = tl.cdiv(M, BLOCK_M)
+    num_pid_n = tl.cdiv(N, BLOCK_N)
+    num_pid_in_group = GROUP_M * num_pid_n
+    group_id = pid // num_pid_in_group
+    first_pid_m = group_id * GROUP_M
+    group_size_m = tl.minimum(num_pid_m - first_pid_m, GROUP_M)
+    pid_m = first_pid_m + (pid % group_size_m)
+    pid_n = (pid % num_pid_in_group) // group_size_m
 
-    num_output_blocks = tl.cdiv(output_dim, BLOCK_N)
-    token_block = matrix_pid // num_output_blocks
-    output_block = matrix_pid - token_block * num_output_blocks
+    offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+    offs_n = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+    offs_k = tl.arange(0, BLOCK_K)
 
-    token_offsets = token_block * BLOCK_S + tl.arange(0, BLOCK_S)
-    output_offsets = output_block * BLOCK_N + tl.arange(0, BLOCK_N)
-    token_mask = token_offsets < segment_length
-    output_mask = output_offsets < output_dim
-    if HAS_PERMUTATION:
-        rows = tl.load(
-            permutation_ptr + segment_start + token_offsets,
-            mask=token_mask,
-            other=0,
-        )
-    else:
-        rows = segment_start + token_offsets
+    a_ptrs = a_ptr + offs_m[:, None] * stride_am + offs_k[None, :] * stride_ak
+    b_ptrs = b_ptr + offs_k[:, None] * stride_bk + offs_n[None, :] * stride_bn
 
-    accumulator = tl.zeros((BLOCK_S, BLOCK_N), dtype=tl.float32)
-    for k in tl.range(0, RANK):
-        x_col = tl.load(
-            x_ptr + rows[:, None] * (2 * RANK) + slice_id * RANK + k,
-            mask=token_mask[:, None],
-            other=0.0,
-        ).to(tl.float32)
-        w_row = tl.load(
-            weights_ptr
-            + weight_index * (2 * output_dim * RANK)
-            + (slice_id * output_dim + output_offsets[None, :]) * RANK
-            + k,
-            mask=output_mask[None, :],
-            other=0.0,
-        ).to(tl.float32)
-        accumulator += x_col * w_row
+    acc = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
 
-    output_ptrs = (
-        output_ptr
-        + rows[:, None] * (2 * output_dim)
-        + slice_id * output_dim
-        + output_offsets[None, :]
+    for k in range(0, K, BLOCK_K):
+        k_remaining = K - k
+        mask_k = offs_k < k_remaining
+        mask_a = (offs_m[:, None] < M) & mask_k[None, :]
+        mask_b = mask_k[:, None] & (offs_n[None, :] < N)
+
+        a = tl.load(a_ptrs, mask=mask_a, other=0.0).to(tl.float32)
+        b = tl.load(b_ptrs, mask=mask_b, other=0.0).to(tl.float32)
+        acc = tl.dot(a, b, acc=acc, input_precision="ieee")
+
+        a_ptrs += BLOCK_K * stride_ak
+        b_ptrs += BLOCK_K * stride_bk
+
+    offs_cm = offs_m
+    offs_cn = offs_n
+    c_ptrs = (
+        c_ptr + offs_cm[:, None] * stride_cm + offs_cn[None, :] * stride_cn
     )
-    mask = token_mask[:, None] & output_mask[None, :]
-    base = tl.load(output_ptrs, mask=mask, other=0.0).to(tl.float32)
-    tl.store(output_ptrs, base + accumulator * scaling, mask=mask)
+    mask_c = (offs_cm[:, None] < M) & (offs_cn[None, :] < N)
+
+    base = tl.load(c_ptrs, mask=mask_c, other=0.0).to(tl.float32)
+    result = base + acc * scaling
+    tl.store(c_ptrs, result, mask=mask_c)
+
+
+_BLOCK_M = 32
+_BLOCK_N = 32
+_BLOCK_K = 32
+_GROUP_M = 8
+_NUM_WARPS = 4
+_NUM_STAGES = 1
+
+
+def _launch_gemm(a, b, c, scaling, rank, output_dim):
+    M, K = a.shape
+    assert K == rank
+
+    if M == 0:
+        return
+
+    grid = (triton.cdiv(M, _BLOCK_M) * triton.cdiv(output_dim, _BLOCK_N),)
+    _regular_gemm_kernel[grid](
+        a,
+        b,
+        c,
+        M,
+        a.stride(0),
+        a.stride(1),
+        b.stride(0),
+        b.stride(1),
+        c.stride(0),
+        c.stride(1),
+        float(scaling),
+        N=output_dim,
+        K=rank,
+        BLOCK_M=_BLOCK_M,
+        BLOCK_N=_BLOCK_N,
+        BLOCK_K=_BLOCK_K,
+        GROUP_M=_GROUP_M,
+        num_warps=_NUM_WARPS,
+        num_stages=_NUM_STAGES,
+    )
 
 
 def gate_up_lora_b(x, gate_up_lora_b, batch_info, output_dim, base_output):
-    x = x.contiguous()
-    gate_up_lora_b = gate_up_lora_b.contiguous()
-    output = base_output.contiguous().clone()
-    rank = gate_up_lora_b.shape[-1]
+    rank = gate_up_lora_b.shape[-1]  # weights: [num_lora, 2*output_dim, r]
+
     if x.shape[1] != 2 * rank:
         raise ValueError("x width must equal 2 * rank")
-    bs = batch_info.bs
-    if output.numel() == 0 or bs == 0 or output_dim <= 0 or rank == 0:
-        return output
 
+    bs = batch_info.bs
+    S = base_output.shape[0]
+
+    if S == 0 or bs == 0 or output_dim <= 0 or rank == 0:
+        return base_output.contiguous().clone()
+
+    # ------------------------------------------------------------------
+    # Stage 1 — Layout materialization (framework ops only, done once)
+    # ------------------------------------------------------------------
+    permutation = batch_info.permutation
+
+    if permutation is not None:
+        route = permutation.to(dtype=torch.int64, device=x.device)
+
+        route_cpu = route.cpu()
+        inv_cpu = torch.empty_like(route_cpu)
+        inv_cpu[route_cpu] = torch.arange(S, dtype=torch.int64)
+        inverse_route = inv_cpu.to(device=x.device)
+
+        x_packed = x.index_select(0, route).contiguous().float()
+        base_packed = base_output.index_select(0, route).contiguous().float()
+    else:
+        route = None
+        inverse_route = None
+        x_packed = x.contiguous().float()
+        base_packed = base_output.contiguous().clone().float()
+
+    # Materialize gate/up input views once globally: [S, r] each, contiguous fp32
+    x_gate = x_packed[:, :rank].contiguous()  # [S, r]
+    x_up = x_packed[:, rank:].contiguous()  # [S, r]
+
+    # Transpose weights once: [num_lora, 2*output_dim, r] -> [num_lora, r, 2*output_dim]
+    weights_kn = gate_up_lora_b.transpose(1, 2).contiguous().float()
+
+    # Materialize gate/up weight views once globally: [num_lora, r, output_dim] each
+    weights_gate_kn = weights_kn[:, :, :output_dim].contiguous()
+    weights_up_kn = weights_kn[:, :, output_dim:].contiguous()
+
+    # ------------------------------------------------------------------
+    # Host-resolved segment metadata
+    # ------------------------------------------------------------------
     indptr = batch_info.seg_indptr.tolist()
     weight_indices = batch_info.weight_indices.tolist()
     lora_ranks = batch_info.lora_ranks.tolist()
     scalings = batch_info.scalings.tolist()
 
-    permutation = batch_info.permutation
-    block_s = 64
-    block_n = 64
+    # ------------------------------------------------------------------
+    # Stage 2 — Pure regular Triton GEMM per segment, gate and up separate
+    # ------------------------------------------------------------------
     for b in range(bs):
         start = int(indptr[b])
-        length = int(indptr[b + 1]) - start
+        end = int(indptr[b + 1])
+        length = end - start
         if length <= 0:
             continue
+
         wi = int(weight_indices[b])
         if int(lora_ranks[wi]) == 0:
             continue
-        matrix_blocks = triton.cdiv(length, block_s) * triton.cdiv(
-            output_dim, block_n
-        )
-        grid = (matrix_blocks, 2)
-        _gate_up_lora_b_kernel[grid](
-            x,
-            gate_up_lora_b,
-            output,
-            permutation if permutation is not None else batch_info.seg_indptr,
-            start,
-            length,
-            wi,
-            float(scalings[wi]),
-            output_dim,
-            RANK=rank,
-            BLOCK_S=block_s,
-            BLOCK_N=block_n,
-            HAS_PERMUTATION=permutation is not None,
-            num_warps=4,
-            num_stages=1,
-        )
-    return output
+
+        sc = float(scalings[wi])
+
+        # Narrow views into the globally-materialized contiguous tensors
+        a_gate = x_gate[
+            start:end
+        ]  # [length, r], stride from contiguous parent
+        a_up = x_up[start:end]  # [length, r], stride from contiguous parent
+
+        b_gate = weights_gate_kn[wi]  # [r, output_dim], contiguous
+        b_up = weights_up_kn[wi]  # [r, output_dim], contiguous
+
+        # C slices: row stride is 2*output_dim (base_packed is [S, 2*output_dim])
+        c_gate = base_packed[start:end, :output_dim]
+        c_up = base_packed[start:end, output_dim:]
+
+        _launch_gemm(a_gate, b_gate, c_gate, sc, rank, output_dim)
+        _launch_gemm(a_up, b_up, c_up, sc, rank, output_dim)
+
+    # ------------------------------------------------------------------
+    # Stage 3 — Inverse restore + dtype cast
+    # ------------------------------------------------------------------
+    if inverse_route is not None:
+        result_fp32 = base_packed.index_select(0, inverse_route)
+    else:
+        result_fp32 = base_packed
+
+    return result_fp32.to(base_output.dtype)
 
 
 __all__ = ["gate_up_lora_b"]

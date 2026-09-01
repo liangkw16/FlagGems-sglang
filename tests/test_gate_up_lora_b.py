@@ -12,27 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import importlib.util
 import unittest
-from pathlib import Path
 from types import SimpleNamespace
 
 import torch
 
-MODULE_PATH = (
-    Path(__file__).parents[1]
-    / "src"
-    / "flaggems_sglang"
-    / "ops"
-    / "gate_up_lora_b.py"
-)
-SPEC = importlib.util.spec_from_file_location(
-    "gate_up_lora_b_module", MODULE_PATH
-)
-if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"cannot load {MODULE_PATH}")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+from tests._op_variants import load_operator_modules
+
+MODULES = load_operator_modules("gate_up_lora_b")
 
 
 def reference(x, gate_up_lora_b, batch_info, output_dim, base_output):
@@ -101,13 +88,16 @@ TOLERANCES = {
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class GateUpLoraBTest(unittest.TestCase):
     def _check(self, x, w, info, od, base):
-        actual = MODULE.gate_up_lora_b(x, w, info, od, base)
         expected = reference(x, w, info, od, base)
-        self.assertEqual(actual.shape, expected.shape)
-        self.assertEqual(actual.dtype, expected.dtype)
         atol, rtol = TOLERANCES[base.dtype]
-        torch.testing.assert_close(actual, expected, atol=atol, rtol=rtol)
-        return actual
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                actual = module.gate_up_lora_b(x, w, info, od, base)
+                self.assertEqual(actual.shape, expected.shape)
+                self.assertEqual(actual.dtype, expected.dtype)
+                torch.testing.assert_close(
+                    actual, expected, atol=atol, rtol=rtol
+                )
 
     def test_dtype_and_shape_matrix(self):
         for dtype in (torch.float32, torch.float16, torch.bfloat16):
@@ -188,6 +178,24 @@ class GateUpLoraBTest(unittest.TestCase):
         )
         self._check(x, w, info, od, base)
 
+    def test_repeated_adapter_rank_zero_and_odd_output(self):
+        rank, od = 16, 65
+        lengths = [5, 0, 7, 4]
+        s = sum(lengths)
+        permutation = torch.randperm(s).tolist()
+        x = torch.randn(s, 2 * rank, device="cuda", dtype=torch.float16)
+        w = torch.randn(3, 2 * od, rank, device="cuda", dtype=torch.float16)
+        base = torch.randn(s, 2 * od, device="cuda", dtype=torch.float16)
+        info = make_batch_info(
+            "cuda",
+            lengths,
+            [1, 0, 1, 2],
+            [rank, rank, 0],
+            [0.5, 1.25, 2.0],
+            perm=permutation,
+        )
+        self._check(x, w, info, od, base)
+
     def test_non_contiguous_inputs(self):
         rank, od = 16, 64
         s = 100
@@ -200,6 +208,42 @@ class GateUpLoraBTest(unittest.TestCase):
             "cuda", [s], [0], [rank], [1.0], perm=list(range(s))
         )
         self._check(x, w, info, od, base)
+
+    def test_degenerate_shapes_and_non_contiguous_weights(self):
+        od = 32
+        self._check(
+            torch.randn(3, 0, device="cuda"),
+            torch.randn(1, 2 * od, 0, device="cuda"),
+            make_batch_info("cuda", [3], [0], [0], [1.0]),
+            od,
+            torch.randn(3, 2 * od, device="cuda"),
+        )
+
+        rank = 16
+        self._check(
+            torch.randn(3, 2 * rank, device="cuda"),
+            torch.randn(1, 2 * od, rank, device="cuda"),
+            make_batch_info("cuda", [], [], [rank], [1.0]),
+            od,
+            torch.randn(3, 2 * od, device="cuda"),
+        )
+        self._check(
+            torch.randn(3, 2 * rank, device="cuda"),
+            torch.randn(1, 0, rank, device="cuda"),
+            make_batch_info("cuda", [3], [0], [rank], [1.0]),
+            0,
+            torch.randn(3, 0, device="cuda"),
+        )
+
+        weights = torch.randn(1, 2 * od, 2 * rank, device="cuda")[..., ::2]
+        self.assertFalse(weights.is_contiguous())
+        self._check(
+            torch.randn(3, 2 * rank, device="cuda"),
+            weights,
+            make_batch_info("cuda", [3], [0], [rank], [1.0]),
+            od,
+            torch.randn(3, 2 * od, device="cuda"),
+        )
 
     def test_inputs_not_modified(self):
         rank, od = 16, 64
@@ -222,8 +266,10 @@ class GateUpLoraBTest(unittest.TestCase):
         w = torch.randn(2, 2 * od, rank, device="cuda")
         base = torch.randn(0, 2 * od, device="cuda")
         info = make_batch_info("cuda", [0], [0], [rank, rank], [1.0, 1.0])
-        out = MODULE.gate_up_lora_b(x, w, info, od, base)
-        self.assertEqual(out.shape, (0, 2 * od))
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                out = module.gate_up_lora_b(x, w, info, od, base)
+                self.assertEqual(out.shape, (0, 2 * od))
 
     def test_large_case(self):
         rank, od = 64, 1024
