@@ -11,7 +11,7 @@ team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
 blockers: e17昆仑case2-4同E13数值指纹
 sealed: no
-next: e18一输出一program筛选
+next: e18候选就绪;实时preflight
 updated: 2026-09-01
 ```
 
@@ -636,3 +636,32 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   连续载入最多 8 个 FP32 partial、1D reduce、标量 epilogue/store。全局输出按
   65535 分块;若 y 转正则旧二维 stage2 lowering 为根因,若仍同指纹则强指向
   stage1 partial 生成。
+
+## E18:stage2 改为 1D 一输出一 program(commit `35ce353`)
+
+- 唯一执行变量:stage1 及 `partial_y[(row*P+p)*num_slices+s]` 布局逐字节
+  不变;stage2 从 `[8,num_slices]` 二维 tile 改为每个 program 处理一个全局
+  `(b,h,p)` 输出。连续载入最多 8 个 FP32 partial,做 1D reduction 与标量
+  D/z epilogue/store;host 按 65535 个输出切 launch,无 device loop 和额外内存。
+- 官方 Kunlun [logsumexp 1D per-row kernel](https://github.com/flagos-ai/FlagGems/blob/d8b500b368343ac5f5ff4e01b508d9e8e03ad5c5/src/flag_gems/runtime/backend/_kunlunxin/ops/logsumexp.py#L72-L104)
+  和 [sum 1D reduction](https://github.com/flagos-ai/FlagGems/blob/d8b500b368343ac5f5ff4e01b508d9e8e03ad5c5/src/flag_gems/runtime/backend/_kunlunxin/ops/sum.py#L32-L73)
+  均采用同类一维归约/标量 store;本题向量长度远低于其已验证上限。
+- source/verification commit
+  `35ce3536bd021b7f46e6f84875686ac48686517c`;Kunlun SHA-256
+  `463ac58517046614e3a1131f4408fcb4510b0e9f7a8adde0d927ba51521cbfdf`;
+  generic/test 仍为 `c1e180...` / `a6cc8...`。
+- screening:`gpu-et:/tmp/flagos-selective_state_update-e18-screening.T28kj7`,
+  PID/PGID/SID `241122`;static + stage1 probe + 非零 output offset probe + variants
+  **5/5 PASS**,5.189s;large-batch/grid-fold 实际覆盖 17/2 个 stage2 chunk;
+  log SHA-256
+  `0489df61514923464543764325763fdb39cb8265918ad10bb9a66ad7fd67f6f5`。
+- commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e18-release.N0NJRR`,PID/PGID/SID
+  `241458`;Git-object manifest 前后一致,同组 probes + variants **5/5 PASS**;
+  release log SHA-256
+  `11c0609945304eea1f1790659b1d3e454f57477446fbbacb3e0da019ea082dee`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e18-35ce353/selective_state_update.zip`,
+  13562 bytes,SHA-256
+  `093ed90ceaf6c7e694f03e52c9a6ca1cfc33b5636d8ec322d838ae2e13381b50`;
+  actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
