@@ -11,7 +11,7 @@ team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
 blockers: e14昆仑case2-4同E13数值指纹
 sealed: no
-next: e15关闭UnrollControl
+next: e15候选就绪;实时preflight
 updated: 2026-09-01
 ```
 
@@ -514,3 +514,27 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
 - 结论:在平台当前编译器上,额外关闭 Vectorize 未改变错误路径。E15 保留
   CoreTiling + Vectorize 关闭,只新增官方 norm kernel 同用的
   `isCloseUnrollControl=True`;若仍同指纹,停止继续扫描 metadata flag。
+
+## E15:再关闭 stage1 UnrollControl(commit `4d8f796`)
+
+- 唯一执行变量:保留 P8×N16 及 CoreTiling/Vectorize 两关闭项,只新增
+  `isCloseUnrollControl=True`;这是官方 LayerNorm/InstanceNorm 对二维归约和
+  多 store 使用的完整三开关组合。若平台仍为 E13 指纹,metadata flag 轴封存。
+- source/verification commit
+  `4d8f796ae229e79e7d350c5eae4eb612eb3e8699`;Kunlun SHA-256
+  `cb23962e1180feafd796d673636fb28b76bc39d3cd25e4625c3f2cb2e5ebbe04`;
+  generic/test 仍为 `c1e180...` / `a6cc8...`。
+- screening:`gpu-et:/tmp/flagos-selective_state_update-e15-screening.UqsrA6`,
+  PID/PGID/SID `239390`;static + 三 constexpr CUDA JIT + variants **5/5 PASS**,
+  8.313s;log SHA-256
+  `6aa33d6392982fa7596fc6e53b91131c6e2b869aa073be78dc176283d318cd2b`。
+- commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e15-release.eWYVJg`,PID/PGID/SID
+  `239731`;Git-object manifest 前后一致,static + 三 constexpr JIT + variants
+  **5/5 PASS**;release log SHA-256
+  `759f4b50e3aec1d5c924ab4cb7df5aac9d46d071aca621c283490e379f1f6460`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e15-4d8f796/selective_state_update.zip`,
+  13785 bytes,SHA-256
+  `3668676581cb45dbf15c24e43e3f24b43bd865b5894f84a5e161a876a6f509b8`;
+  actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
