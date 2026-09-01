@@ -9,9 +9,9 @@ platform: 7/8
 team_best_stage: e8
 team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
-blockers: e11昆仑stage1 8x16 uni_sram
+blockers: e14昆仑case2-4同E13数值指纹
 sealed: no
-next: e14候选就绪;实时preflight
+next: e15关闭UnrollControl
 updated: 2026-09-01
 ```
 
@@ -500,3 +500,17 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   `>=0.1x`,形成首个有效八芯成绩。若 E14 仍为相同数值指纹,E15 只新增
   `isCloseUnrollControl=True`;再失败则停止扫 flag,拆分二维 state store 与
   C-reduce/partial store。
+
+### E14 平台结果(sub 7635,2026-09-01 12:35 CST):与 E13 同指纹
+
+- preflight 全过后一次性提交;平台文件 URL SHA-256
+  `35281ddae31139a0f1d1bf942d6c7656a6abad8cfac1b952be6c9970b321a1cd`;
+  提交后额度 `20/30`,远端 ZIP 回读 `unavailable`,未重试。
+- 七芯 generic 全过:天数 `3.886x`、沐曦 `9.1095x`、燧原 `0.5165x`、
+  海光 `8.466x`、华为 `3.67x`、card_a `6.521x`、card_b `8.301x`。
+- 昆仑编译执行完成(18468ms),case 0/1 通过,case 2/3/4 失败。三例失配数
+  `5834/251361/1006386`、最大绝对误差 `44332/340/278` 及最大误差索引
+  `(1,12,126)/(22,30,84)/(151,51,28)` 均与 E13 完全相同。
+- 结论:在平台当前编译器上,额外关闭 Vectorize 未改变错误路径。E15 保留
+  CoreTiling + Vectorize 关闭,只新增官方 norm kernel 同用的
+  `isCloseUnrollControl=True`;若仍同指纹,停止继续扫描 metadata flag。
