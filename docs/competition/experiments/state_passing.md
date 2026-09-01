@@ -8,10 +8,10 @@ validity: invalid
 platform: 7/8(8/8 terminal)
 team_best_stage: E3
 team_best_commit: 248693b
-blockers: 燧原 0.0605 低于门槛;昆仑崩溃族
+blockers: 燧原cap12未获目标芯验签;昆仑平台compile-worker崩溃;KernelGen目标验证器不可用
 sealed: yes
-next: e4 组合候选(fc6dd4f)已 staged;重载需用户逐发授权
-updated: 2026-08-31
+next: E4仅作健康窗口载体;等待燧原/昆仑有效目标芯验证;不提交
+updated: 2026-09-01
 ```
 
 ## S0：KernelGen generic 基线
@@ -358,5 +358,59 @@ E3 的单轴晋级门为昆仑完成正确性且 `>=0.1x`。已知 Enflame 仍�
 
 E3 最终为 8/8 terminal、7/8 passed、`invalid_correctness`，平台不计算平均或排名；
 额度剩余 `10/30`。按预注册永久停止 direct tile-ownership 轴，不盲扫 BLOCK、warps
-或数学，也不构建 E4；E2 Enflame vendor 继续保留为已验签但从未提交的独立产物。
-Task 41 到此止损闭环，heartbeat 暂停。
+或数学。当时不构建提交候选；后续只把 E2 Enflame 与 E3 Kunlun 原样组合成健康窗口
+载体，不把它记作 direct 轴修复或平台进展。
+
+## E4：三 vendor 健康窗口载体收口（2026-09-01）
+
+E4 不再改 kernel。generic 保持 E1 平台已证字节，Enflame 恢复 E2 的精确字节，
+Kunlun 保持已被 E3 平台证伪的 direct-tile 字节。`fc6dd4f` 曾为 carrier 加过五行
+说明注释；本轮仅删除这些注释，使 Enflame SHA-256 精确回到 E2 的
+`1e24ec0b2e3d92ee8a9f9d4f8a7a8f6451a31f9e29b953d01d9663dd7b92b218`，并把现有
+unittest 从 generic+Kunlun 扩为 generic+Enflame+Kunlun 矩阵，补 B/H/D 为零。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `eb5adcb73a9d4963be0a3662edc4b4d2949fe098` |
+| generic SHA-256 | `af0e622458f7ab89fadc45273c60f209bad5477fc8374de5e996d8193447c034`（=E1） |
+| Enflame SHA-256 | `1e24ec0b2e3d92ee8a9f9d4f8a7a8f6451a31f9e29b953d01d9663dd7b92b218`（=E2） |
+| Kunlun SHA-256 | `755f5b47029c7878e358db746757bfeb954e1ad3e81880ac7de7b14e4ccc4075`（=E3） |
+| test SHA-256 | `0bd11f2626cabd57121e9f706a1e7ed62e64f3e90d1d0c64632e2ff5493cc454` |
+| benchmark SHA-256 | `d5dec07565eaab4c7a59ddb60f0966ae8cb6e58e1457e586f1ddd684c3ee9f12`（=E1） |
+
+- screening 为
+  `gpu-et:/tmp/flagos-state-passing-e4-screen-final.OGBprF`，显式传入待提交字节；
+  log SHA-256 为
+  `b166c3acc253ef7dce5bb606ae4615e4dabe303699b30de4fba0cd301f51135d`。
+- exact Git-object release 为
+  `gpu-et:/tmp/flagos-state-passing-e4-release.T2Couk`；runner/manifest/release log
+  SHA-256 分别为 `e5e61138540fcdf9b3bcc528ab8d96bb1ded5a1cc30f2120aa60db17eb7f49d1` /
+  `06e9fb61bb8627823e084d3437919a9cbfeb9155865172953bdb5fe74e1571dd` /
+  `8f378c1c842414aa393b676da1b8c8617136ca37eaa7416b9dcb8fa5004a9ec3`。
+- 两轮均通过 py_compile、格式/静态检查、逐文件 SHA-256 复核和 unittest
+  **5/5**。三 vendor 共同覆盖 dtype/非连续 stride、pre-update、只读 dA 最后一
+  lane、空 C、B/H/D=0 和 `131072 > 65535` logical tiles。release 的冻结 generic
+  四组 NVIDIA 代理 speedup 为 `3.286442x / 6.833279x / 3.563873x /
+  19.538204x`，平均 `8.305449x`；不外推 GCU/XPU。
+
+### KernelGen 与 Kunlun 服务边界
+
+- 实际调用 `generate_kernel(device=sunrise)`；request SHA-256 为
+  `a360ff697be146b17a629a4d912e5b4c8249149557d928f0eacdcb0d057001fe`，生成
+  Torch/Triton/test/benchmark 成功，但所有用例都在创建 `gcu` tensor 时因当前
+  PyTorch 未注册该 device 而失败，最终 `total_tests=passed_tests=failed_tests=0`。
+  派生审计摘要 SHA-256 为
+  `b53b42f7ef9ae9898466bbe797b11da3f87d92c8f73f8138925ccce1fef051fa`；按门禁
+  拒绝零测试结果，不构成燧原正确性或性能证据，生成代码也未落库。
+- 用户补充的最小 `x+y` Kunlun 对照耗时 293 秒：MCP 入口正常、
+  `mcp_isError=false`，Triton/测试/benchmark 均生成，但 Kunlun verifier 三次均
+  HTTP 502。该对照与算子复杂度无关，因而把 T28/T37/T41 的同类 502 定性为
+  `generate_kernel -> Kunlun verifier/worker` 服务基线故障或无健康 worker；它不
+  能证明候选通过，但足以停止本地脚本和 kernel 结构上的盲改。
+
+E4 没有重建 canonical ZIP、没有 preflight、上传或提交。平台事实仍是 E3 的
+7/8 correctness、Enflame generic `0.0610x < 0.1x`、Kunlun compile-worker crash；
+本地榜单快照为 147 submissions / 25 teams / 6 个达标队，榜首 EvokeAgent
+`7.6239375x`。六个稳定过门槛芯片合计 `36.3245x`；若要严格超过榜首总和
+`60.9915x`，Enflame+Kunlun 还需合计 `>24.667x`，所以 E4 只是 validity-first
+载体，不是可宣称登顶的候选。

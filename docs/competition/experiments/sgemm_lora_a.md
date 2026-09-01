@@ -169,6 +169,10 @@ confirm 提交,评测入队,逐芯结果待回填。
   `passed=false: HTTP 502`。返回的未验代码结构方向相同,但仍含
   tl.int64 地址、额外 transpose/segment allocation/scatter,且函数名
   不符合契约,故未落地;**502 也不代表本地候选失败**。
+- 用户补充的最小 `x+y` Kunlun 对照在 293 秒后同样表现为 MCP 入口/代码
+  生成正常、`mcp_isError=false`，但 verifier 三次 HTTP 502。由此把本题
+  502 进一步锁定为 `generate_kernel -> Kunlun verifier/worker` 服务基线
+  故障或无健康 worker，而非 E4 复杂度或本地 MCP 脚本；仍不构成目标芯通过证据。
 - final exact Git-object release
   `gpu-et:/tmp/flagos-sgemm-lora-a-e4-release.EWL4Nk`(commit `4efff42`):
   四变体 py_compile/Black/isort/flake8/hash 与 5 unittest 全过;release

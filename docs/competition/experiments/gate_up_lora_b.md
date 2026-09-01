@@ -355,3 +355,8 @@ E11 在 NVIDIA 上比旧 vendor 慢，仅作为 validity-first 昆仑结构候�
   `allow_tf32=False`/错误 rank 取值等回归风险，均未落库。当前 7/8 平台
   终态与 e9 team best 保持不变；本轮未获平台提交指令，未打包、未上传、
   未提交。
+- 用户随后给出与候选复杂度无关的最小 `x+y` Kunlun 对照：293 秒后 MCP
+  入口与代码生成正常、`mcp_isError=false`，但 verifier 三次均 HTTP 502。
+  因此 E11 两轮 502 现归为 `generate_kernel -> Kunlun verifier/worker`
+  服务基线故障或无健康 worker，不再作为 E11 kernel 失败证据；同样不能反推
+  E11 已通过目标芯验证。
