@@ -565,3 +565,14 @@ T32 E3 代理门未过未发射。
 3. 昆仑崩溃族工单回应 → 5 发封存弹药(T28/T36/T38/T41 + T31);
 4. T29 Nectar 榜首夜涨 +33% 的结构面未解释(与 T33/T34 同属量化/激活族,
    疑同一结构红利)。
+
+## 2026-09-01 T28 E11 结构重开
+
+- 公开 PR41 启发的“框架 route/物化 → 规则 Triton GEMM → inverse route”
+  Kunlun 候选已提交到 `b40e5aa`，exact-commit RTX release 10/10 通过；
+  三组代理相对 Torch reference 为 2.18–2.65x，但慢于旧 NVIDIA vendor。
+- KernelGen `optimize_kernel` 两轮已用于生成与修正；随后两次真实
+  `generate_kernel(device=kunlun)` 共触发六次后端 verify，全部为
+  `HTTP 502`，故不能记为昆仑通过或候选失败。
+- T28 平台终态仍为 7/8、team best 仍为 e9 七芯约 18.5x；E11 未打包、
+  未上传、未提交，待昆仑真机或平台单次验证。

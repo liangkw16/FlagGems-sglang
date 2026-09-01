@@ -9,13 +9,14 @@ platform: 7/8
 team_best_stage: e9
 team_best_commit: 6494691
 team_best_speedup: 七芯~18.5
-blockers: 昆仑崩溃族(第12次)
-sealed: yes
-next: 工单 rerun 或用户授权注释载体重载
-updated: 2026-08-31
+blockers: E11昆仑MCP验证两轮均后端HTTP502；平台未验证
+sealed: no
+next: 保留E11 b40e5aa；待昆仑真机或平台单次验证，本轮未提交
+updated: 2026-09-01
 ```
 
-状态:S0 候选就绪,待额度重置后提交(排在 29→30→25 之后)
+状态:E11 已本地提交并通过 exact-commit release；昆仑云端验证受服务
+HTTP 502 阻塞，未打包、未提交平台。
 
 ## 契约锁定
 
@@ -288,3 +289,69 @@ Python error: Aborted)。
 节的解读反转:他队可过 → 疑我方 kernel 惯用法(topk/分段 GEMM
 结构)触发昆仑 inductor-triton 路径不稳定。工单表述需按此修正,
 不能纯归因平台。
+
+## E11:PR41 布局物化 + 规则 GEMM 候选(2026-09-01)
+
+### 结构与 MCP 迭代
+
+- 启发来自公开 PR41 的 XPU 路由思路，并结合 T23 已证明 Triton
+  pack/scatter 在昆仑失败的历史：框架层只做 `index_select` 路由、全局
+  fp32 gate/up 与 KN 权重物化；每段 gate/up 分别发射不含 permutation、
+  segment metadata 或间接访存的规则 1D Triton GEMM；最后反向
+  `index_select` 还原行序。
+- MCP `optimize_kernel` 第一轮 request/output SHA-256 分别为
+  `8ec350c50b994b3be8e3dcfe162ec08167c1cf6e411d60a90683d1ff166f44e3` /
+  `ba3c7f372f722e5862951fec886d87053fd0a8b5fa1a676c2cedb4b78c61cc13`；
+  因 int64 lane offset、`allow_tf32=False`、动态 K/N 与段内重复
+  `contiguous()` 被写入前门禁拒绝。
+- 第二轮 request/output SHA-256 为
+  `a8bb83b456847dbd20f11f81a9de7a9984a11113bf78fc69c574b71d7f2e4b92` /
+  `5bf8c14b5eea2452df91437d659dd79b0fe1c90f675251d8919670735bc9d8d5`；
+  修为 int32 lane、fp32 IEEE、constexpr K/N、全局物化，并在审查后给
+  runtime M 增加 `do_not_specialize`。
+
+### 构建身份与 exact-commit 验证
+
+| 项目 | 值 |
+| --- | --- |
+| source/verification commit | `b40e5aa9dc0f6e66a20372ea43e9f67f335c1c27` |
+| Kunlun source SHA-256 | `b3bb46552012462e131f4e3ce43f760dd6afae6c13decc2e4a61f64b87f75d5a` |
+| test SHA-256 | `d17227cf3cfdde4ddb7e37eb26fa826f4eb9d9b7a94a943f388ee7d99da82f90` |
+| release manifest SHA-256 | `a370c5c5d9dc0d9076caba63adbcd511d0c9541c783c5c7bbf118f5409efab0b` |
+| release 目录 | `gpu-et:/tmp/flagos-gate-up-lora-b-e11-release.rC0PVK`，文件取自 Git 对象 |
+| release log SHA-256 | `df11cba0801ce179eeb0c98499fb73646e02b1c71114ff0e5d31169c9d577bcd` |
+| release benchmark log SHA-256 | `3656a0ac0e9b06b04ea2110cb8b58b60eb7ec370412a31e445943e9ad7399d4a` |
+
+- RTX 5070 Ti、torch 2.13.0+cu130、Triton 3.7.1、CUDA 13.0；从
+  `b40e5aa` Git 对象进入独立 release 目录，py_compile、格式、逐文件
+  SHA 复验均通过，10/10 unittest 通过。测试覆盖 generic、Enflame、
+  Iluvatar、Kunlun 四实现，以及真实 stored-rank=0、bs=0、od=0、
+  非连续权重等边界。
+
+### NVIDIA 代理性能(同一 release Git 对象，wrapper-inclusive p50)
+
+| S×seg×r×od | E11 (ms) | 旧 Kunlun vendor (ms) | Torch ref (ms) | E11/ref |
+| --- | ---: | ---: | ---: | ---: |
+| 1024×8×16×512 | 0.298727 | 0.096290 | 0.750241 | 2.511459x |
+| 8192×32×16×1024 | 1.283666 | 0.326189 | 3.407501 | 2.654507x |
+| 8192×32×64×1024 | 1.398701 | 0.783332 | 3.043040 | 2.175619x |
+
+E11 在 NVIDIA 上比旧 vendor 慢，仅作为 validity-first 昆仑结构候选；
+三组仍均高于竞赛 0.1x 门槛，且相对 Torch reference 为 2.18–2.65x。
+
+### KernelGen Kunlun 云端验证边界
+
+- `generate_kernel(device=kunlun)` 首轮 request/output SHA-256 为
+  `628aedc7b962e50fd443da46341d930910be25041570ce2d713667f09cb2a678` /
+  `11ef79d72bd2ad3e5eae471b302c0190f2377bfa357c85b35f5fe91a39723e22`；
+  服务内三次 verify 全为 `HTTP 502`。
+- 按 MCP 重试规则去掉 wiki 后，request/output SHA-256 为
+  `4d707837fc24396eca3ca82a8d32335cecf99e608fe8d6400115c14c61d2fc16` /
+  `6b7a0b4d0eca4bddc7fd1b6e95c51f9a462d692015705028f363ea221c37eafb`；
+  服务内三次 verify 仍全为 `HTTP 502`。
+- 因此结论是“Kunlun 云端验证已实际调用两轮、共六次后端尝试，但服务未
+  完成”，不是 kernel 编译/数值失败，也不是 Kunlun 通过。两轮返回的未验证
+  生成代码仍是 E11 同类结构，且缺 `do_not_specialize`、出现
+  `allow_tf32=False`/错误 rank 取值等回归风险，均未落库。当前 7/8 平台
+  终态与 e9 team best 保持不变；本轮未获平台提交指令，未打包、未上传、
+  未提交。

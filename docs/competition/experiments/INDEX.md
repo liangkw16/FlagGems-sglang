@@ -8,7 +8,7 @@
 | 25 | draft_topk1 | invalid | 6/8 | e6c | yes | 需外部证据(他人通过样例/平台澄清)才可重启 | 2026-08-31 | [draft_topk1](draft_topk1.md) |
 | 26 | fused_moe_router_cudacore | invalid | 6/8 | e5-e8(等价) | yes | 平台 Q&A 澄清或他人华为方案公开 | 2026-08-31 | [fused_moe_router_cudacore](fused_moe_router_cudacore.md) |
 | 27 | fused_moe_router_tensorcore | valid | 8/8(e8,1.016425x,rank3) | e8 1.016425x | yes | 昆仑需约6.5772x才登顶,无可信路径;转T36 | 2026-09-01 | [fused_moe_router_tensorcore](fused_moe_router_tensorcore.md) |
-| 28 | gate_up_lora_b | invalid | 7/8 | e9 七芯~18.5x | yes | 工单 rerun 或用户授权注释载体重载 | 2026-08-31 | [gate_up_lora_b](gate_up_lora_b.md) |
+| 28 | gate_up_lora_b | invalid | 7/8 | e9 七芯~18.5x | no | 保留E11 b40e5aa；待昆仑真机或平台单次验证，本轮未提交 | 2026-09-01 | [gate_up_lora_b](gate_up_lora_b.md) |
 | 29 | gelu_and_mul | valid | 8/8 | e8 2.7394x | yes | exact-erf 官方实现与 minimax 数值边界复核;预期收益远不足66.68%榜差,封存 | 2026-09-01 | [gelu_and_mul](gelu_and_mul.md) |
 | 30 | interleaved_rope | valid | 8/8 | S0 25.8353x | yes | 实时榜首37.7641;一读一写下界已达,MCP/官方实现复核无可信46.17%路径 | 2026-09-01 | [interleaved_rope](interleaved_rope.md) |
 | 31 | moe_fused_gate | invalid | 7/8 | e7(=e6字节载体) 七芯~7.73x | yes | 仅工单或结构改写(topk 形态) | 2026-08-31 | [moe_fused_gate](moe_fused_gate.md) |
