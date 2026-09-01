@@ -9,9 +9,9 @@ platform: 8/8
 team_best_stage: e22(correctness)
 team_best_commit: f1a12f7
 team_best_speedup: 5.1200625x;昆仑0.0025x
-blockers: e23无mask快路导致昆仑state数值破坏;e22仍为正确基线
+blockers: e24八芯正确但昆仑仍0.0025x;百万logical programs为主瓶颈
 sealed: no
-next: e24候选就绪;实时preflight
+next: e25每program顺序处理4个p
 updated: 2026-09-01
 ```
 
@@ -975,3 +975,20 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   `6.4056875x` 有效;c2flow/Fields 的昆仑分别为 `0.7145x/0.113x`。SoulCoder
   当前仍以 E22 的昆仑 `0.0025x` 为正确基线;E24 首门是恢复 8/8 并判断 direct
   grid 能否逼近 `0.1x`,而不是凭代理耗时预测名次。
+
+### E24 平台结果(sub 7678,2026-09-01 13:56 CST):8/8,单 grid 无收益
+
+- preflight 全过后一次性提交;平台 file URL SHA-256
+  `ed654c0e6178c5f1b84617f966c789a9a01cf90c3a7707ceadac59dbae89a40b`;
+  提交后额度 `10/30`,远端 ZIP 回读 `unavailable`,未重试。
+- 八芯全部正确:天数 `3.883x`、沐曦 `9.1075x`、燧原 `0.5165x`、海光
+  `8.4685x`、昆仑 `0.0025x`、华为 `3.642x`、card_a `6.7745x`、card_b
+  `8.2755x`;均值 `5.08375x`,终态 `invalid_threshold`。
+- 昆仑 validation `52510ms`,与 E22 的 `52428ms/0.0025x` 等价。E23 的
+  silent corruption 因恢复恒真 mask 完全消失,证明旧 XPU 对本核不能使用官方
+  RMSNorm 的 unmasked memory 快路;但 17→1 host launch 没有可测收益,说明
+  LoopGrid 最终仍执行同样的 `1,048,576` logical programs。
+- E25 才改变主瓶颈:每个 program 在同一 `(b,h)` 内顺序处理 4 个 scalar p,
+  grid 缩小 4 倍;每个 lane 内仍只形成独立 1D N 向量、axis-0 reduction 和立即
+  state/y store,禁止重新形成 E13-E19 已证伪的 `[4,N]` tensor。N load/store
+  继续无条件使用 E24 mask。

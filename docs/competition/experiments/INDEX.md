@@ -16,7 +16,7 @@
 | 33 | per_token_group_quant_int8 | valid | 8/8 | e10 5.5720x | yes | 重新封存 e10 5.5720;e12 去 contiguous/warps 2,4,8 全部低于5%门,已知参数轴尽 | 2026-09-01 | [per_token_group_quant_int8](per_token_group_quant_int8.md) |
 | 34 | per_token_quant_int8 | valid | 8/8 | e1 4.7131x | yes | e4 persistent cap与SGLang launch参数均不过5%全矩阵门;已知轴尽 | 2026-09-01 | [per_token_quant_int8](per_token_quant_int8.md) |
 | 35 | rotary_embedding | valid | 8/8 | e3 5.8458x | yes | e5 generic heads_tile 1/2/8/16 全部低于5%门;tile4局部最优,收盘 | 2026-09-01 | [rotary_embedding](rotary_embedding.md) |
-| 36 | selective_state_update | invalid_threshold | 8/8 | e22(correctness) 5.1200625x;昆仑0.0025xx | no | e24候选就绪;实时preflight | 2026-09-01 | [selective_state_update](selective_state_update.md) |
+| 36 | selective_state_update | invalid_threshold | 8/8 | e22(correctness) 5.1200625x;昆仑0.0025xx | no | e25每program顺序处理4个p | 2026-09-01 | [selective_state_update](selective_state_update.md) |
 | 37 | sgemm_lora_a | invalid | 6/8(上限 7/8) | e2 | yes | 封存;候选可复用 | 2026-08-31 | [sgemm_lora_a](sgemm_lora_a.md) |
 | 38 | sigmoid_gate_topk_renorm | invalid | 7/8 | S0 | yes | E2 七芯均值4.9415x(+4.17倍)但昆仑同族崩溃;仅平台runtime修复后重开 | 2026-09-01 | [sigmoid_gate_topk_renorm](sigmoid_gate_topk_renorm.md) |
 | 39 | silu_and_mul_masked | valid | 8/8 | E7 19.8698x | yes | 收盘 E7 19.8698;树留 e10;E12 上游 persistent 条带仅+3.3%、设备 prefix 两核慢66.5%，均离线关闭 | 2026-09-01 | [silu_and_mul_masked](silu_and_mul_masked.md) |
