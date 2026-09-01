@@ -5,12 +5,12 @@ task: 41
 operator: state_passing
 batch: 3
 validity: invalid
-platform: E6 sub8053 system_failed;6 pass,Kunlun failed,Enflame unrun
+platform: E7 ready;baseline E6 sub8053 system_failed
 team_best_stage: E5 diagnostic
 team_best_commit: d980b8d
-blockers: E7昆仑BLOCK128二维分段与燧原3D owner待平台裁决
+blockers: E7昆仑BLOCK128二维分段与燧原3D owner待目标芯裁决
 sealed: no
-next: E7冻结燧原字节;唯一提交Kunlun BLOCK128二维分段
+next: E7单次提交;8/8且每芯>=0.1x才转正
 updated: 2026-09-02
 ```
 
@@ -653,3 +653,69 @@ E6 没有命中 Enflame“数值失败或 `<0.1x`”封存条件。按用户明�
 E7 冻结 E6 Enflame 字节，只执行预留的唯一 Kunlun BLOCK128 + row-major 二维
 总-program 分段；该候选仍须独立通过 source commit、remote release、canonical ZIP
 与实时 preflight，且只允许上传和正式提交各一次。E7 后不再扫描 BLOCK64/16。
+
+## E7：Kunlun BLOCK128 row-major 二维分段（2026-09-02）
+
+状态：source/verification commit、exact Git-object release 与 canonical ZIP 门禁
+通过；已预注册为今日第三个且最后一个一次性候选，尚未上传或提交。
+
+E7 逐字节冻结 E6 generic 与 Enflame，只改 Kunlun：删除已被 sub 8053 证伪的
+CoreTiling flag，BLOCK256 降为 128，并把二维 ownership 从
+`pid0=dim_tile,pid1=row` 交换为 `pid0=row,pid1=dim_tile`。wrapper 按
+`max_rows=floor(65535/dim_tiles)` 分段，确保每次 launch 总 program 不超过 65535；
+chunk-major 物化、四指针递推、数学、4 warps 与 1 stage 全部冻结。
+
+该结构来自 sub 8053 五例真实 `uni_sram` 回执后的 KernelGen
+`optimize_kernel(device=kunlun)`，MCP 返回 `mcp_isError=false`；工具不执行 XPU
+实机验证。原 capped-grid 回归仅换一个 shape 为 `B=256,C=1,H=256,D=129`：
+Enflame 实际走 B/H 的四段，Kunlun 在 BLOCK128 下把 131072 个逻辑 program 拆为
+`(32767,2)+(32767,2)+(2,2)`，用同一个测试覆盖两种边界。
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `c60d277dc3f5d04dcfbd6d3216f515d91d59965c` |
+| generic SHA-256 | `af0e622458f7ab89fadc45273c60f209bad5477fc8374de5e996d8193447c034`（=E1/E6） |
+| Enflame SHA-256 | `a0b425adc22dafb583bf40121e5df913b765e8a9876dfd88ca5510403ade5c07`（=E6） |
+| Kunlun SHA-256 | `c14cfa61e3a74f591357a7e88f3efe59c39fee03a43c5b5f6e5484e5d3d30741` |
+| test SHA-256 | `74cc3fe6abb0425138cb3cac4180575ca4e9adfb5831d37093b0e430fbf8155b` |
+| benchmark SHA-256 | `d5dec07565eaab4c7a59ddb60f0966ae8cb6e58e1457e586f1ddd684c3ee9f12`（=E6） |
+| canonical ZIP | `artifacts/competition/state_passing/e7-c60d277/state_passing.zip` |
+| ZIP size / SHA-256 | `15851` bytes / `0a82be1220ebf0910566d22eaa6e6756a6490717852c00bb0ade32c3414d91ef` |
+| ZIP members | `state_passing.py`、`state_passing_enflame.py`、`state_passing_kunlunxin.py` |
+
+打包器 dry-run/create/`--verify-existing` 身份一致，`unzip -t/-Z1`、唯一顶层
+UTF-8 `.py` 成员、10 MB 上限及成员与 commit 逐字节核对全部通过。
+
+### 代理验证
+
+- screening：`gpu-et:/tmp/flagos-state-passing-e7-screen.3E8mZT`，base commit
+  `b1b112d`，manifest / log SHA-256 为
+  `0c7ecb84648e50ce96b5929e4a2351cf5f80fdaeef09291f20f94e2dc8f9dc1d` /
+  `81b782a05e56dacaad2fd54bf556ea04589cc28a37a8c0a63e691f3322283941`；
+  candidate 哈希随后与 commit blob 完全一致，unittest **5/5** 通过。
+- release：`gpu-et:/tmp/flagos-state-passing-e7-release.tJWip1`，七份输入全部来自
+  commit `c60d277`。runner / manifest / release log SHA-256 为
+  `e5e61138540fcdf9b3bcc528ab8d96bb1ded5a1cc30f2120aa60db17eb7f49d1` /
+  `0c7ecb84648e50ce96b5929e4a2351cf5f80fdaeef09291f20f94e2dc8f9dc1d` /
+  `a23bbc66b65a20d5b5fe57568c6451806aec46827eaf6858982804ba46f0dcc6`；
+  py_compile、Black/isort/flake8、哈希复验及 unittest **5/5** 全过。
+- release generic 四档 NVIDIA 代理均值 `8.222938x`。冻结 Enflame 四档为
+  `3.280263x / 6.826514x / 3.399271x / 19.846706x`，均值 `8.338189x`，log
+  SHA-256 `68a51d58366660fc24fd6df729129bd37782c7392c73972ec20c2b3a20bd6fc1`。
+  E7 Kunlun 四档为 `2.185372x / 2.989087x / 1.670486x / 2.799291x`，均值
+  `2.411059x`，log SHA-256
+  `5cd0d4f3d180e83a477b8da6fb3b34e9da125edcd2bf80dee03024b52a7f9980`。
+  这些只证明实际字节在 CUDA 上可 JIT、数值正确与结构代理，不外推 GCU/XPU。
+
+### 单次提交预注册
+
+2026-09-02 01:16:03 CST 实时状态：race `782kzq4m`、账号 `15600308080`、
+团队 `SoulCoder`、batch 3、Task 41/`s2t1op041`、`competing/submitting`、
+`can_submit=true`，额度 `28/30`，距 sub 8053 已超过 120 秒。题目详情为 170
+submissions / 6 个达标队，榜首 `wwwwww` 仍为 `7.8095x`；本队无有效分数或排名。
+
+E7 只允许上述 ZIP 上传和正式提交各一次，作为用户要求三次机会中的第三次；
+generic/Enflame 选择冻结字节，Kunlun 选择新 vendor。基础门仍为 8/8 correctness
+且每芯 `>=0.1x`。若 Enflame 再次在 validation id 前 `system_failed`，只记平台故障，
+不创建第四个载体；若其数值失败或 `<0.1x`，封存 direct-3D。若 Kunlun 仍为
+`uni_sram`，封存 BLOCK128/row-major 分段；不扫描 BLOCK64/16，不重试 E7 字节。

@@ -633,3 +633,8 @@ T32 E3 代理门未过未发射。
   Kunlun 五例仍为 `uni_sram OutOfResources`，CoreTiling-only 轴封存；Enflame
   始终无 validation id，最终为服务端调度失败，不能评价 3D owner。按三次机会授权，
   E7 冻结该 Enflame 字节，仅做唯一 Kunlun BLOCK128 二维分段，E6 不得重试。
+- E7 commit `c60d277` 将 Kunlun 改为 BLOCK128、row-major 二维 ownership 与
+  总 program `<=65535` 分段；原一个大 grid 测试同时覆盖 Enflame 四段和 Kunlun
+  三段。exact release 5/5，Kunlun/Enflame CUDA 代理均值 `2.411059x` / `8.338189x`；
+  canonical ZIP `e7-c60d277` SHA-256 `0a82be12…d91ef` 已验签，预注册为第三次且
+  最后一次候选。
