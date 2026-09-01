@@ -11,7 +11,7 @@ team_best_commit: 1313907
 team_best_speedup: 5.0885x;昆仑0.001x
 blockers: e21八芯正确但昆仑低于0.1x门槛
 sealed: no
-next: e22合并N slices并融合state/y,先恢复0.1x门槛
+next: e22候选就绪;实时preflight
 updated: 2026-09-01
 ```
 
@@ -826,3 +826,46 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
 - E22 优先删除 workspace 和 slice 级 host launch:每个 `(b,h,p)` program
   直接处理完整 N32/N128,同一 1D DAG 计算 FP32 new_state、C reduction、D/z,
   并一次写 state/y。保留 E21 的 flat grid、immutable source 和三个 close flag。
+
+## E22:full-N 1D state/y 融合(commit `f1a12f7`)
+
+- 删除 E21 的 partial workspace、N-slice host loop 和 state/partial/stage2 三核;
+  每个全局 `(b,h,p)` program 以 `N_BLOCK=next_power_of_2(dstate)` 一次处理
+  完整 N32/N128,FP32 `new_s` 同时供 C reduction 与 state store,再融合 D/z 和
+  y store。max case 从 `136+136+17=289` launches 降为 17,且 new_s/exp 不再
+  重算,删除约 32 MiB partial workspace。
+- 延续 E21 的 immutable `state`→独立 `new_state`、flat 65535 chunk 和三个
+  close flags;输出改为 `empty_like` 后由所有 program 唯一覆盖,省去最大约
+  256 MiB clone。load 按 state/A→B→C 依赖顺序排列,先完成 C reduction 再
+  vector store,缩短活跃向量周期。FlagTree 的
+  [XPUOptions](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/backend/compiler.py#L83-L114)
+  和 [pass 顺序](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/backend/compiler.py#L303-L320)
+  证明不存在可伪造的 StoreControl close flag,故不再增加无效参数。
+- 首次 screening 使用 source SHA
+  `eb22b9660db38f65268475783418e845561d7535697d25e62a7e7eff905a0e4b`,
+  static/probe/variants 5/5
+  全过,目录 `gpu-et:/tmp/flagos-selective_state_update-e22-screening.cfLzao`,
+  log SHA
+  `0af210c7b6d0cb2a9c205349f8857084fc7ff99d83db1b13159bb06b7bdfeba1`;
+  随后删除全 state clone并收缩 live range,源码字节改变,
+  此结果仅作诊断,没有升级为 release 证据。
+- source/verification commit
+  `f1a12f7588b9e23937df66a54bb4a142263187c9`;Kunlun SHA-256
+  `9237a91f04b1fcb5573822bc92b6aeda14a673b5229df8fb9621cbc8b84fb619`;
+  generic/test 仍为 `c1e180...` / `a6cc8...`。
+- corrected screening:
+  `gpu-et:/tmp/flagos-selective_state_update-e22-screening-corrected.xzOwh3`,
+  PID/PGID/SID `244881`;full-N direct probe 覆盖非零 offset、跨 batch、N21
+  尾片和 D/z/bias/softplus 全分支;large/grid-fold 实际 17/2 launches;
+  variants **5/5 PASS**,6.457s;log SHA-256
+  `009bbf3e54a6d483369abd8cab59e441ce83bc483cb8e82006cb9e2bfb76d08c`。
+- commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e22-release.NNPaxO`,PID/PGID/SID
+  `245194`;Git-object 五文件 manifest 前后完全一致,同组门禁 + variants
+  **5/5 PASS**,3.996s;release log SHA-256
+  `c2bba216b5f9e3b3d4a81307bfea6cd6480b7e1b3e28c6ecaf6dccf74af5c479`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e22-f1a12f7/selective_state_update.zip`,
+  10684 bytes,SHA-256
+  `9bc4981215c14bc90263c1383b4ee0a047e1777a0367e5fa47383a84590d6fc1`;
+  actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
