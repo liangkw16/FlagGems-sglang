@@ -16,60 +16,58 @@
 
 # KernelGen MCP Configuration Check & Auto-Setup
 
-This file is responsible for checking whether the `kernelgen-mcp` MCP service is configured,
-and guiding the user through automatic configuration if it is not.
-Before any sub-skill (generate / optimize / specialize) executes, `SKILL.md` dispatches to
-this file to ensure MCP is ready before proceeding to subsequent workflows.
+This file ensures the kernelgen MCP service is reachable before any sub-skill
+(generate / optimize / specialize) executes.
+
+**Transport reality per agent host** (verified 2026-09-01):
+
+| Host | Project `.mcp.json` auto-mounted? | Working transport |
+|---|---|---|
+| Claude Code | yes (after restart) | native `mcp__kernelgen-server__*` tools |
+| ZCode | **no** (never reads it) | `scripts/kernelgen_mcp.py` via Bash |
+
+The bundled script client works on every host, so it is the default transport
+in ZCode and the fallback everywhere else.
 
 ---
 
-## Step 1: Check Whether MCP Is Already Configured
+## Step 1: Verify Connectivity
 
-Use the Read tool to check the following files in order (only check project-local paths — do not read the user's home directory):
+Run from any directory inside the repository:
 
-1. `.mcp.json`
-2. `.claude/settings.json`
+```bash
+python3 <this skill's directory>/scripts/kernelgen_mcp.py list
+```
 
-For each file:
-- If the file does not exist, skip it
-- If the file exists, parse the JSON and check whether `mcpServers` contains a key that includes `kernelgen` (case-insensitive)
-
-**Decision rules**:
-- Found in any file → **MCP is configured**, return immediately and continue the workflow
-- Not found in either file → **MCP is not configured**, proceed to Step 2
-
----
+- Prints `4 tools at https://kernelgen.flagos.io/sse` → **configured**, return
+  and continue the workflow.
+- Exits with a token error or HTTP error → continue to Step 2.
 
 ## Step 2: Guide the User to Obtain a Token
 
-Output the following message to the user:
+Output the following message:
 
 ```
 The KernelGen MCP toolset is not yet configured.
 
-Please follow these steps:
 1. Visit https://kernelgen.flagos.io/mcp to register and obtain your KernelGen Token
+   (trial application required; state the purpose, e.g. "Kernel Challenge")
 2. Paste the KernelGen Token here, and I will complete the configuration automatically
-
-(You only need to provide the KernelGen Token — the MCP service URL is built-in and does not need to be entered separately)
 ```
 
-Wait for the user to provide the Token.
+Wait for the user to provide the token.
 
----
+## Step 3: Write the Configuration
 
-## Step 3: Auto-Write Configuration
-
-After the user provides the Token, write the configuration using the following logic:
-
-**Target configuration format** (written to `.mcp.json`):
+Write (or merge into) `.mcp.json` at the **repository root** — do not delete
+other MCP entries if the file exists:
 
 ```json
 {
   "mcpServers": {
     "kernelgen-server": {
-      "type": "sse",
-      "url": "https://kernelgen.flagos.io/sse/",
+      "type": "http",
+      "url": "https://kernelgen.flagos.io/sse",
       "headers": {
         "Authorization": "Bearer <USER_TOKEN>"
       }
@@ -78,30 +76,26 @@ After the user provides the Token, write the configuration using the following l
 }
 ```
 
-**Write logic**:
+**Endpoint notes**:
+- URL must be `https://kernelgen.flagos.io/sse` with **no trailing slash**.
+  The `/sse/` form 307-redirects to the SPA and every request fails.
+- Keep `.mcp.json` out of git (`.git/info/exclude` or `.gitignore`) — it holds
+  a bearer token.
+- Token lifetime ≈ through 2026-12; if calls suddenly return 401, re-register.
 
-1. Use the Read tool to check whether `.mcp.json` already exists
-2. **If the file already exists**:
-   - Read and parse the JSON
-   - If the `mcpServers` key already exists, merge `"kernelgen-server": {...}` into it — **do not delete any other existing MCP service entries**
-   - If the `mcpServers` key does not exist, create it and add the `kernelgen-server` entry
-   - Use the Edit tool to update the file
-3. **If the file does not exist**:
-   - Use the Write tool to create the file with the complete JSON above
+## Step 4: Re-verify and Continue
 
-**Important notes**:
-- The MCP service URL is fixed as `https://kernelgen.flagos.io/sse/` — the user does not need to provide it
-- The key name uses `kernelgen-server` (consistent with the MCP tool names `mcp__kernelgen-server__*`)
-- Never overwrite other configuration entries in the file
+Re-run the Step 1 command; on success the workflow continues immediately —
+**no restart is needed** for the script transport (a restart is only required
+for Claude Code to mount native MCP tools).
 
 ---
 
-## Step 4: Prompt the User to Restart
+## Troubleshooting
 
-After the configuration is written, output the following to the user:
-
-```
-MCP configuration has been written to .mcp.json. Please restart Claude Code for the configuration to take effect, then re-run the command.
-```
-
-**Stop here** — do not continue executing subsequent sub-skill workflows. When the user restarts and re-triggers the skill, Step 1 will detect that the configuration already exists and pass through directly.
+- `HTTP 401` → token wrong/expired, or `Authorization` header not in
+  `headers` of the `kernelgen-server` entry.
+- `no JSON-RPC reply with id 1` → wrong URL form (trailing slash) or SPA
+  redirect; print the endpoint exactly as in Step 3.
+- Timeouts on `call` → server occupies real chips; default timeout is 900 s,
+  raise with `--timeout`, and keep at most 2 concurrent jobs server-wide.

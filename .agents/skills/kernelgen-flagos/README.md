@@ -38,6 +38,11 @@ Perform all of the following steps except for obtaining the KernelGen Token in y
 
    **Note**: You may need to restart your agent to let the settings take effect. Check this in the documentation of the relevant AI agent.
 
+   **ZCode note**: ZCode does not auto-mount project `.mcp.json`. This skill bundles a
+   script client instead — after the token is in `.mcp.json`, verify with
+   `python3 <skill dir>/scripts/kernelgen_mcp.py list` (no restart needed). See
+   `kernelgen-mcp-setup.md` for details.
+
 3. Verify KernelGen Operator Development MCP Toolkit connection, send a prompt:
 
    ```{code-block} shell

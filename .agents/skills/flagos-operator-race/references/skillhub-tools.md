@@ -63,7 +63,10 @@ BLOCK 4096、E5 BLOCK 512 各烧一发额度才确认与 BLOCK 无关）。对�
 - 工具与覆盖：`autotune_kernel(device=<chip>)` 实机跑；华为另可用
   `specialize_kernel(target_platform="huawei")`。覆盖集 = 华为/天数/
   海光/沐曦 + CUDA（国际芯片 NVIDIA 侧）；燧原、昆仑、AMD 不在内。
-  需在已加载 `kernelgen-mcp` 工具的会话中调用。
+  调用通道：`mcp__kernelgen-server__*` 原生工具（若已挂载），否则用
+  kernelgen-flagos skill 自带脚本客户端
+  `python3 .agents/skills/kernelgen-flagos/scripts/kernelgen_mcp.py call <tool> '<json>'`
+  （ZCode 不挂载项目 `.mcp.json`，脚本为默认通道，2026-09-01 实测可用）。
 - 字节绑定（先于一切验收）：MCP 任务实际执行的源码必须就是候选字节。
   调用时显式传入候选源码，把任务输入源码 SHA-256 与候选 Git blob 的
   SHA-256 一并写入账本，逐项相等后才可采信结果。autotune 返回的

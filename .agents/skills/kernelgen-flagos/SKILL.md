@@ -74,22 +74,41 @@ All sub-skill files are located in the **same directory** as this `SKILL.md` fil
 
 ## Routing Protocol — Follow This BEFORE Doing Anything Else
 
-### Phase 0: MCP Configuration Check
+### Phase 0: MCP Transport Check
 
-Before anything else, ensure the `kernelgen-server` MCP service is configured and ready.
+The kernelgen MCP service lives at `https://kernelgen.flagos.io/sse`
+(Streamable HTTP, **no trailing slash** — with a trailing slash it 307-redirects
+to the SPA and fails). Two transports are supported; pick whichever works:
 
-Use the Glob tool to find `kernelgen-mcp-setup.md` in this skill's directory:
+1. **Native MCP tools**: if `mcp__kernelgen-server__*` tools
+   (generate_kernel / optimize_kernel / specialize_kernel / autotune_kernel)
+   appear in the current tool list, use them directly → proceed to Phase 1.
+2. **Bundled script client** (the normal case in ZCode — it does NOT auto-mount
+   project `.mcp.json`): call via Bash and verify connectivity first:
 
+   ```bash
+   python3 <this skill's directory>/scripts/kernelgen_mcp.py list
+   # expect: "4 tools at https://kernelgen.flagos.io/sse"
+   ```
+
+   Token resolution is automatic: env `KERNELGEN_MCP_TOKEN`, else the
+   `kernelgen-server` entry in the repo root `.mcp.json`. If the token is
+   missing or `list` fails, follow `kernelgen-mcp-setup.md` in this directory.
+
+**Transport substitution rule (applies to ALL sub-skills)**: wherever a
+sub-skill instructs to call `mcp__kernelgen-mcp__<tool>` or
+`mcp__kernelgen-server__<tool>` and that native tool is not mounted, call
+instead:
+
+```bash
+python3 <this skill's directory>/scripts/kernelgen_mcp.py call <tool> '<json-args>'
 ```
-Glob: **/skills/kernelgen-flagos/kernelgen-mcp-setup.md
-```
 
-Then use the Read tool to read the matched file and **follow its instructions exactly**.
-
-- If MCP is already configured → proceed to Phase 1.
-- If MCP is not configured → the setup skill will guide the user through configuration.
-  Once configuration is written and the user is prompted to restart, **stop here** — do not
-  continue to Phase 1.
+The request arguments and the JSON-RPC result are identical to the native tool.
+For `autotune_kernel`, poll by re-calling with
+`{"job_id": ..., "last_seen_attempt": N, "last_seen_version": M, "device": ...}`
+until status is `completed`/`failed` (~2 min on real chips; keep at most 2
+concurrent jobs server-wide).
 
 ### Phase 1: Detect Repository Type
 
@@ -170,12 +189,11 @@ Then use the Read tool to read the matched path.
 5. If the user explicitly requests a specific sub-skill (e.g., "use the FlagGems version"),
    honor that request regardless of auto-detection results.
 6. **CRITICAL — MCP is mandatory**: ALL operator code generation MUST go through the
-   `mcp__kernelgen-mcp__generate_kernel` MCP tool. Optimization uses
-   `mcp__kernelgen-mcp__optimize_kernel`, and platform specialization uses
-   `mcp__kernelgen-mcp__specialize_kernel`. NEVER generate Triton kernels, PyTorch
-   wrappers, or operator implementations yourself. If MCP is not configured, not reachable,
-   or fails after all retries, STOP and report the issue — do NOT fall back to writing code
-   manually.
+   kernelgen MCP service — either the native `mcp__kernelgen-server__*` tools or the
+   bundled `scripts/kernelgen_mcp.py` client (see Phase 0). NEVER generate Triton
+   kernels, PyTorch wrappers, or operator implementations yourself. If the MCP service
+   is not reachable via either transport after retries, STOP and report the issue — do
+   NOT fall back to writing code manually.
 
 ### Phase 3: Feedback Handling
 

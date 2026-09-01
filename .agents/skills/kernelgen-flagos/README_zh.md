@@ -54,6 +54,11 @@ KernelGen `kernelgen-flagos` 技能（Skills）是 FlagOS 推出的统一 AI 编
 
    **注意**：您可能需要重启 AI 智能体以使设置生效。请参阅相关 AI 智能体的文档进行确认。
 
+   **ZCode 说明**：ZCode 不会自动挂载项目 `.mcp.json`。本技能内置了脚本客户端——
+   token 写入 `.mcp.json` 后，执行
+   `python3 <技能目录>/scripts/kernelgen_mcp.py list` 即可验证（无需重启）。
+   详见 `kernelgen-mcp-setup.md`。
+
 3. 验证 KernelGen 算子开发 MCP 工具集连接，发送提示词：
 
    ```{code-block} shell
