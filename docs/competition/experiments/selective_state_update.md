@@ -9,9 +9,9 @@ platform: 7/8
 team_best_stage: e8
 team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
-blockers: e19昆仑case2-4同E13数值指纹
+blockers: e20已修复昆仑y;case2-4仅state写回错误
 sealed: no
-next: e20候选就绪;实时preflight
+next: e21将state-only改为1D单向量写回
 updated: 2026-09-01
 ```
 
@@ -760,3 +760,19 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   15717 bytes,SHA-256
   `8dd9aeef873afa1ea7c2d838248b1fa88ef006647113797d0c2af0c996b0e279`;
   actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+
+### E20 平台结果(sub 7661,2026-09-01 13:15 CST):y 全部修复,仅 state 错
+
+- preflight 全过后一次性提交;平台文件 URL SHA-256
+  `f4ef89e607c9abcd24759c6a1413dc5fbccc5d19b407e7e043d4d49057d5fef4`;
+  提交后额度 `14/30`,远端 ZIP 回读 `unavailable`,未重试。
+- 七芯 generic 全过:天数 `3.887x`、沐曦 `9.0965x`、燧原 `0.512x`、
+  海光 `8.444x`、华为 `3.643x`、card_a `6.418x`、card_b `8.2925x`。
+- 昆仑编译执行完成(14839ms),case 0/1 全过。case 2/3/4 不再出现
+  `y` 的 `[B,H,P]` 失配,唯一失败分母分别为 state 的 `[B,H,P,N]`
+  元素数:`90991/196608`(46.3%,最大绝对差 31275)、
+  `27822035/33554432`(82.9%,54)、`111235478/134217728`(82.9%,51.5)。
+  因此 E20 的 1D partial + 1D stage2 已完整修复输出路径,剩余根因被隔离到
+  旧 `[8,16]` state-only tile/store。
+- E21 仅把 state-only 改为每个 `(b,h,p,slice)` 一个 program、沿 N=16
+  单向量计算和写回;复用 E20 已通过的全局输出分块,冻结 partial/stage2。
