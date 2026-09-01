@@ -11,7 +11,7 @@ team_best_commit: f1a12f7
 team_best_speedup: 5.1200625x;昆仑0.0025x
 blockers: e22八芯正确但昆仑低于0.1x门槛
 sealed: no
-next: e23单launch+power2 N无mask快路
+next: e23候选就绪;实时preflight
 updated: 2026-09-01
 ```
 
@@ -886,3 +886,40 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   power-of-two N32/N128 增加 constexpr 无 mask 快路;官方 Kunlun
   [fused RMSNorm](https://github.com/flagos-ai/FlagGems/blob/5d281c8f9073bf9547351b0e4c835465586d327f/src/flag_gems/runtime/backend/_kunlunxin/fused/fused_add_rms_norm.py#L81-L108)
   记录恒真 mask 可带来接近 2 倍损失。
+
+## E23:单 logical grid + power-of-two N 无 mask(commit `b3dc8bd`)
+
+- 唯一性能变量:冻结 E22 已经八芯验证的 full-N fused 数学、immutable source、
+  独立 destination 和三个 close flag;删除 `_MAX_GRID`、`output_start` 与最大
+  17 次 host chunk launch,改为直接 `grid=(total_outputs,)`。kernel 内
+  `out_idx=tl.program_id(0)`,由 FlagTree LoopGrid 在 12 clusters 上重建逻辑
+  program id。
+- `N_BLOCK=next_power_of_2(dstate)`,增加 constexpr `NEED_N_MASK`;平台主形状
+  N32/N128 走完全无 mask 的 load/store/reduction 快路,N21/N65 等代理尾部继续走
+  masked 路径。没有引入二维 tensor、workspace 或额外 kernel。
+- 首次 screening 在 Black79 格式门禁即失败并停止,没有执行 JIT/数值;目录
+  `gpu-et:/tmp/flagos-selective_state_update-e23-screening.ngAV4d`,该结果不作候选
+  证据。格式修正改变源码字节后按完整门禁重新执行。
+- source/verification commit
+  `b3dc8bdb4f39c7cecbcb69193419c475594d08bb`;Kunlun SHA-256
+  `b1872e5fcef57ba975ca63ae7e20adc22153948f8dfe2b6f4dc918484fd89595`;
+  generic/test 仍为 `c1e180...` / `a6cc8...`。
+- corrected screening:
+  `gpu-et:/tmp/flagos-selective_state_update-e23-screening-corrected.lc6Fcg`,
+  PID/PGID/SID `245615`;static、direct N21 all-flags probe、最大/折叠 logical
+  grid 和 variants **5/5 PASS**,6.397s;log SHA-256
+  `343ecb5b1dc7b5ff3e0c22e7058226673f0610971de7e773a03c4ac8cc5d316a`,
+  gate SHA-256
+  `22fa41ff5c1cd8bb42d80b4799cbaee90ee74570bb8e617e1114083178ce90db`。
+- commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e23-release.bNL4G4`,PID/PGID/SID
+  `245904`;Git-object 五文件 manifest 前后一致,同组门禁 + variants
+  **5/5 PASS**,3.938s;release log SHA-256
+  `7eaa3a0ac4998dd52726b4caf8bc5c5922895d640b1c9db45dc06def5c31bdd5`,
+  gate SHA-256
+  `a3d100ff5c59d78dd384e452c386dc36f9f3425188b4f5d4719790938fa13cbb`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e23-b3dc8bd/selective_state_update.zip`,
+  11035 bytes,SHA-256
+  `0bed9c681d675767184274a1cc392c0e096feaacb7ebcd64ddf8d44e3b6eb1b0`;
+  actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
