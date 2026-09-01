@@ -9,14 +9,14 @@ platform: 7/8
 team_best_stage: e8
 team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
-blockers: e10昆仑stage1 16x16 uni_sram
+blockers: e11昆仑stage1 8x16平台结果待实测
 sealed: no
-next: e11仅BLOCK_P 16→8
+next: e11实时preflight后单次提交
 updated: 2026-09-01
 ```
 
-状态:E10 direct-grid 消除 1830s crash,昆仑 7.274s 明确落到 stage1
-`16×16` uni_sram;E11 仅缩 `_BLOCK_P 16→8`。
+状态:E11 仅缩 `_BLOCK_P 16→8`,screening、commit-bound release 与
+canonical ZIP 均通过,待实时 preflight。
 
 ## 契约锁定
 
@@ -304,3 +304,28 @@ updated: 2026-09-01
 - 根因收敛:direct grid/device-loop removal 已修复崩溃族,但 stage1
   `[BLOCK_P,N_SLICE]=[16,16]` 活跃矩阵仍超过 XPU lowering 能力。
   下一候选只改 `_BLOCK_P 16→8`;若同指纹,再只改 `N_SLICE 16→8`。
+
+## E11:`BLOCK_P 16→8`(2026-09-01 11:3x–11:4x CST)
+
+- 唯一源码变量:`_BLOCK_P=16→8`;direct 3D、`N_SLICE=16`、workspace、
+  数学、归约、generic 与 tests 全冻结。source/verification commit
+  `6e0bc65f8601b011110a6ed20ea4f7847c09cb20`;Kunlun SHA-256
+  `279f4bfc76201ec28584636a84ccfba24be593fc5a07d1c98fb32d93c1b59c7d`,
+  test SHA 仍为 `a6cc8c509960f82c69e4124eef8c6b927879ebc789c044ec0fd75fbde638aaf0`。
+- screening:`gpu-et:/tmp/flagos-selective_state_update-e11-screening.b53hUf`;
+  payload SHA `4540cdaf9d59a0378d3ddd002ba10962e7d6580b8ce1f3465b895989d32021d8`;
+  static + variants unittest **5/5**,22.579s;gate log SHA
+  `3932da89c68266f24a47daf70f5a9164ca9f09495aa09d756dd927eb8684ae59`。
+- vendor 代理 fp16 full / bf16 large / fp32 tail 为 **1.4065x / 5.5724x /
+  1.18395x**;相对 E10 分别约 +0.12% / +10.11% / -0.94%,无 >1%
+  回退;benchmark log SHA
+  `58dba502a7b00d95d6a4aaa6a3581c491f4f4e127458c427aa7de5ce2ef75b15`。
+- commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e11-release.QANOf5`;PID/PGID/SID
+  `236406`;static + variants unittest 5/5,23.276s;manifest 前后一致;release log
+  SHA `5eaece03ffc89a5fef38a7da44de665c72f667fa7b10ba59dd9a41df713c3da0`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e11-6e0bc65/selective_state_update.zip`,
+  13542 bytes,SHA-256
+  `e70ec56985d01a006076063faa249594e72873117893440908293e5ffea19d81`;
+  actual/`--verify-existing` 一致,成员 generic + `_kunlunxin`。
