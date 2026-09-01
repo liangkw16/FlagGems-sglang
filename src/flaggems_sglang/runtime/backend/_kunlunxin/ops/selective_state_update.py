@@ -48,6 +48,7 @@ def _ssu_stage1_kernel(
     DT_SOFTPLUS: tl.constexpr,
     BLOCK_P: tl.constexpr,
     N_SLICE: tl.constexpr,
+    isCloseVectorization: tl.constexpr,
 ):
     p_tile = tl.program_id(0)
     b = batch_start + tl.program_id(1)
@@ -228,6 +229,7 @@ def selective_state_update(
                 DT_SOFTPLUS=bool(dt_softplus),
                 BLOCK_P=_BLOCK_P,
                 N_SLICE=_N_SLICE,
+                isCloseVectorization=True,
             )
     for batch_start in range(0, batch, batch_chunk):
         batch_count = min(batch_chunk, batch - batch_start)
