@@ -9,9 +9,9 @@ platform: 7/8
 team_best_stage: e8
 team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
-blockers: e16昆仑case2-4同E13数值指纹
+blockers: e17昆仑case2-4同E13数值指纹
 sealed: no
-next: e17候选就绪;实时preflight
+next: e18一输出一program筛选
 updated: 2026-09-01
 ```
 
@@ -621,3 +621,18 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   13937 bytes,SHA-256
   `c87aace83674c1fecf1ce93659b2ece3a290d6fd85ece04d69496e32ad780c64`;
   actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+
+### E17 平台结果(sub 7654,2026-09-01 12:54 CST):仍与 E13 同指纹
+
+- preflight 全过后一次性提交;平台文件 URL SHA-256
+  `594c67539edf164d1329b4a3dd861d64bebd46c3b7b38f998161dc5b561c1f93`;
+  提交后额度 `17/30`,远端 ZIP 回读 `unavailable`,未重试;首次 watch 遇网络
+  timeout,随后只读 status 取得终态。
+- 七芯 generic 全过:天数 `3.8835x`、沐曦 `9.1155x`、燧原 `0.5155x`、
+  海光 `8.4605x`、华为 `3.6295x`、card_a `6.772x`、card_b `8.3145x`。
+- 昆仑编译执行完成(18005ms),case 0/1 通过;case 2/3/4 指纹继续与 E13
+  完全相同。stage2 CoreTiling/Vectorize metadata 轴封存。
+- E18 冻结 stage1 和 `partial_y` 布局,只把 stage2 改为每个输出一个 program:
+  连续载入最多 8 个 FP32 partial、1D reduce、标量 epilogue/store。全局输出按
+  65535 分块;若 y 转正则旧二维 stage2 lowering 为根因,若仍同指纹则强指向
+  stage1 partial 生成。
