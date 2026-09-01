@@ -9,13 +9,14 @@ platform: 7/8
 team_best_stage: e8
 team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
-blockers: 昆仑 einsum-reference 崩溃族
-sealed: yes
-next: 平台修复后一发转正(候选已封存)
-updated: 2026-08-31
+blockers: e10昆仑direct-grid平台结果待实测
+sealed: no
+next: e10实时preflight后单次提交
+updated: 2026-09-01
 ```
 
-状态:E5 平台 7/8；E6 本地筛选否决，未提交
+状态:E10 split-matrix + direct-grid 的 screening、commit-bound release
+与 canonical ZIP 均通过,待实时 preflight 与单次平台提交。
 
 ## 契约锁定
 
@@ -216,3 +217,73 @@ updated: 2026-08-31
   `7414c69` 封存**;额度 18/30。
 - 本题破案收获:A 三维契约 + 两阶段可编译结构,若平台修复即可
   一发转正。
+
+## E10:split-matrix + direct 3D(2026-09-01 11:1x–11:3x CST)
+
+状态:screening、source/test commit、commit-bound release 与 canonical ZIP
+均通过;平台结果待实测。
+
+### 根因矩阵与单变量
+
+历史四象限中,full `[4,128]` + flat loop(E4)和 full + direct 3D(E5)
+均报 `uni_sram`;split `[16,16]` + 多层 device loop(E7–E9)则落入服务线程
+卡死/compile-worker 1830s crash。唯一未试组合是 **split `[16,16]` + direct
+3D**。
+
+- 冻结 E7 的 `_BLOCK_P=16`、`_N_SLICE=16`、FP32 partial workspace、
+  softplus、状态更新数学和 stage2 归约顺序。
+- stage1 的 N slice 改为 host 展开;每次 launch 只处理一个 slice,
+  direct grid 为 `(P tile,batch,head)`,kernel 内无 tile/slice 循环。
+- stage2 同样改为 direct `(P tile,batch,head)`,删除 row/P 两层循环。
+- host 按 `tiles_per_head * nheads` 计算 batch chunk,保证每次 3D launch
+  总 workgroups 不超过 65535;host offsets 标记 `do_not_specialize`,避免
+  Triton 3.7 编译扇出。
+- 测试从固定 generic 改为 `load_operator_modules`,首次把 Kunlun vendor
+  纳入正式全矩阵;新增 N=65 尾 slice 与 B=70000 grid-fold。
+
+### 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `e3e40d7c785793d6042d9fbd441c32d7fb480c02` |
+| generic SHA-256 | `c1e1801200a3f56c7827714d86932defdd19ee40dab34d1300b4a29d1f7eac4c` |
+| Kunlun SHA-256 | `14e8c23e198409416bc0dc734172934feef8fbe6e9ef1ed4bc5ace944f73112a` |
+| test SHA-256 | `a6cc8c509960f82c69e4124eef8c6b927879ebc789c044ec0fd75fbde638aaf0` |
+| `_op_variants.py` SHA-256 | `cdc5fe3e4cb5a85976f0a3414cd194bb53c79f6f2830be01f685f996b97ca0d7` |
+
+### Screening 与代理性能
+
+- 目录:`gpu-et:/tmp/flagos-selective_state_update-e10-final-screening.WhuCWb`;
+  冻结 payload SHA-256
+  `b403911d9d6338194535e039624ed749805186ff7d3c664f70d271f0b97eeb72`。
+- pycompile、Black79、isort80、flake8、前后哈希均通过;完整 generic +
+  Kunlun variants unittest **5/5**,22.791s;gate log SHA-256
+  `b2a2b55cd08d204cc2df32be2ba960a653b092a85b4194fc9746e917efad50f2`。
+- 覆盖三 dtype、flags 全组合、N=1/64/65/128、P 尾块、softplus 极值、
+  noncontiguous、B=2048 大 batch、B=70000 grid-fold 和输入 state 不变性。
+- 五轮 AB/BA 代理中,Kunlun vendor 的 fp16 full / bf16 large / fp32 tail
+  speedup 分别为 **1.4340x / 5.0208x / 1.1986x**;五轮最小值仍为
+  1.3860x / 4.9718x / 1.1419x。benchmark log SHA-256
+  `c37105b9dd91b9f92d171d4a9e4f4101e29f5ca79d6340991fef81e9a0d6e1a1`;
+  peak allocated/reserved 1,043,333,120 / 1,218,445,312 bytes,无 OOM/竞争进程。
+
+### Commit-bound release 与不可变 ZIP
+
+- release 目录:`gpu-et:/tmp/flagos-selective_state_update-e10-release.wEEoGe`
+  (0700,保留);PID/PGID/SID `235437`;五文件均从 commit Git objects 导出。
+- 完整 variants unittest 5/5,22.884s;静态门禁及前后哈希全过;release log
+  SHA-256 `963397d7b6f447968abfc060de25c81fc675e927683705677b1b218af6967ae3`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e10-e3e40d7/selective_state_update.zip`,
+  13543 bytes,SHA-256
+  `9ae684ffe320f30b7ecb146d319374125506f16e1349c55b9cb8266dcbee8cb7`;
+  实际构建与 `--verify-existing` 一致。成员为 generic + `_kunlunxin`,
+  member SHA 与上述 commit blob 一致。
+
+### 实时登顶账(提交前)
+
+- 19 队/147 投中仅 2 队有效;榜首 c2flow `8.4960x`,第二 Fields
+  `6.4056875x`;SoulCoder 因 7/8 尚未排名。E8 七芯和 `40.4035`。
+- 第一门是昆仑转正;若仅过 0.1x,投影均值约 5.063x、成为第 3。若七芯
+  冻结,登顶需昆仑 `>27.5645x`;转正后按收益优先优化 card_a、沐曦、
+  燧原、华为、card_b、天数,保护已领先榜首的海光路径。
