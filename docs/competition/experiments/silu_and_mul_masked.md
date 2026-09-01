@@ -9,8 +9,8 @@ platform: 8/8
 team_best_stage: E7
 team_best_commit: fd089fe
 team_best_speedup: 19.8698
-sealed: no
-next: E13已过release;执行实时preflight并一次性提交华为隔离组合
+sealed: yes
+next: E13华为27.823x机制兑现但avg19.2655低于E7;组合轴关闭且不重投
 updated: 2026-09-01
 ```
 
@@ -938,3 +938,34 @@ prefix、persistent grid、普通 BLOCK 或 vendor 路由轴。
 - 登顶门：平均严格高于 preflight 时实时榜首；当前参照为 `24.15420833x`。
 - 任一芯失败、华为 `<23.3x` 或平均不高于 E7 即关闭组合轴；若 valid 且改善但未
   登顶，也只记录新 team best 后封存，不做同字节方差重掷。候选只上传和提交一次。
+
+### E13 平台终态（sub 7770，2026-09-01 16:39 CST）：机制过、总分失败
+
+- preflight tuple 全部匹配后一次性提交；submission `7770` / daily seq `26`，
+  file URL SHA-256
+  `bc09512a2dfb70bbb13f05f83e41ccf745198f8f14a1aec126f2f79047686da1`。
+  远端 ZIP 回读因可信 hostname 未配置为 `unavailable`；提交事实已确定，未重试。
+  只读终态观测时间 `2026-09-01T16:39:31.957689+08:00`，额度 `4/30`。
+- 八芯全部正确且路由精确命中预注册成员：
+
+| 芯片 | speedup | selected file |
+| --- | ---: | --- |
+| 天数 | 24.5640x | generic |
+| 沐曦 | 22.4490x | `_metax` |
+| 燧原 | 0.83833333x | `_enflame` |
+| 海光 | 35.26966667x | generic |
+| 昆仑 | 0.2400x | `_kunlunxin` |
+| 华为 | **27.8230x** | `_ascend` |
+| 国际 A | 32.21833333x | generic |
+| 国际 B | 10.7220x | `_amd` |
+
+- 终态 `8/8 valid`，平均 **`19.26554167x`**，`is_team_best=false`。
+  华为超过 `24.5x` 机制门且刷新该结构读数，燧原也超过 `0.75x`，证明隔离路由
+  本身完全生效；但平均比 E7 `19.86983333x` 低 `3.0413%`，触发 stop gate，
+  距榜首 `24.15420833x` 仍需 `+25.3752%`。
+- 损失并非华为结构：海光回到 `35.27x`，再次确认 E7 `56.43x` 是异常高滚；
+  沐曦同一冻结字节也从 E7 `27.32x` 回到 `22.45x`。因此历史拼接的
+  `22.22-22.36x` 不是可复现单轮水位，继续方差重掷违反 E9 与 E13 双重门禁。
+- E13 组合轴关闭且不重投。候选 source/ZIP 由 `494e7eb` 永久留证；工作树已由
+  commit `b80e786` 恢复到 E10 generic + E7/E9 vendor 冻结状态。T39 继续保留
+  E7 team best `19.86983333x`，仅有全新算法或新平台证据时重开。
