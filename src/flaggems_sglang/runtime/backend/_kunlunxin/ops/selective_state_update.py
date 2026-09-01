@@ -22,19 +22,19 @@ import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
-_BLOCK_P = 8
 _N_SLICE = 16
 
 
-@triton.jit(do_not_specialize=["batch_start", "slice_start"])
+@triton.jit(do_not_specialize=["output_start", "slice_start"])
 def _ssu_state_kernel(
     state_ptr,
+    new_state_ptr,
     x_ptr,
     dt_ptr,
     a_ptr,
     b_ptr,
     dt_bias_ptr,
-    batch_start,
+    output_start,
     slice_start,
     num_heads,
     dim,
@@ -42,43 +42,33 @@ def _ssu_state_kernel(
     num_groups,
     HAS_DT_BIAS: tl.constexpr,
     DT_SOFTPLUS: tl.constexpr,
-    BLOCK_P: tl.constexpr,
     N_SLICE: tl.constexpr,
     isCloseCoreTiling: tl.constexpr,
     isCloseVectorization: tl.constexpr,
     isCloseUnrollControl: tl.constexpr,
 ):
-    p_tile = tl.program_id(0)
-    b = batch_start + tl.program_id(1)
-    h = tl.program_id(2)
-    p_off = tl.arange(0, BLOCK_P)
+    out_idx = output_start + tl.program_id(0)
+    p_idx = out_idx % dim
+    row = out_idx // dim
+    h = row % num_heads
+    b = row // num_heads
     n_off = tl.arange(0, N_SLICE)
-    p_idx = p_tile * BLOCK_P + p_off
     n_idx = slice_start + n_off
-    p_mask = p_idx < dim
     n_mask = n_idx < dstate
-    pn_mask = p_mask[:, None] & n_mask[None, :]
-    row = b * num_heads + h
     ratio = num_heads // num_groups
     g = h // ratio
-    dt_val = tl.load(dt_ptr + row * dim + p_idx, mask=p_mask, other=0.0).to(
-        tl.float32
-    )
+    dt_val = tl.load(dt_ptr + out_idx).to(tl.float32)
     if HAS_DT_BIAS:
-        dt_val += tl.load(
-            dt_bias_ptr + h * dim + p_idx, mask=p_mask, other=0.0
-        ).to(tl.float32)
+        dt_val += tl.load(dt_bias_ptr + h * dim + p_idx).to(tl.float32)
     if DT_SOFTPLUS:
         dt_val = tl.maximum(dt_val, 0.0) + tl.log(
             1.0 + tl.exp(-tl.abs(dt_val))
         )
-    x_val = tl.load(x_ptr + row * dim + p_idx, mask=p_mask, other=0.0).to(
-        tl.float32
-    )
+    x_val = tl.load(x_ptr + out_idx).to(tl.float32)
     # A is [nheads, dim, dstate] (full layout, E3 contract).
     a_val = tl.load(
-        a_ptr + (h * dim + p_idx)[:, None] * dstate + n_idx[None, :],
-        mask=pn_mask,
+        a_ptr + (h * dim + p_idx) * dstate + n_idx,
+        mask=n_mask,
         other=0.0,
     ).to(tl.float32)
     b_val = tl.load(
@@ -86,12 +76,12 @@ def _ssu_state_kernel(
         mask=n_mask,
         other=0.0,
     ).to(tl.float32)
-    s_base = (row * dim + p_idx)[:, None] * dstate + n_idx[None, :]
-    s_val = tl.load(state_ptr + s_base, mask=pn_mask, other=0.0).to(tl.float32)
-    d_a = tl.exp(dt_val[:, None] * a_val)
-    new_s = s_val * d_a + (dt_val * x_val)[:, None] * b_val[None, :]
-    state_ty = state_ptr.dtype.element_ty
-    tl.store(state_ptr + s_base, new_s.to(state_ty), mask=pn_mask)
+    s_base = out_idx * dstate + n_idx
+    s_val = tl.load(state_ptr + s_base, mask=n_mask, other=0.0).to(tl.float32)
+    d_a = tl.exp(dt_val * a_val)
+    new_s = s_val * d_a + (dt_val * x_val) * b_val
+    state_ty = new_state_ptr.dtype.element_ty
+    tl.store(new_state_ptr + s_base, new_s.to(state_ty), mask=n_mask)
 
 
 @triton.jit(do_not_specialize=["output_start", "slice_index", "slice_start"])
@@ -234,12 +224,6 @@ def selective_state_update(
         dtype=torch.float32,
         device=x.device,
     )
-    tiles_per_head = triton.cdiv(dim, _BLOCK_P)
-    programs_per_batch = tiles_per_head * nheads
-    assert (
-        programs_per_batch <= _MAX_GRID
-    ), "sample exceeds physical grid limit"
-    batch_chunk = max(1, _MAX_GRID // programs_per_batch)
     total_outputs = total_rows * dim
     for slice_start in range(0, dstate, _N_SLICE):
         slice_index = slice_start // _N_SLICE
@@ -269,16 +253,17 @@ def selective_state_update(
                 isCloseVectorization=True,
                 isCloseUnrollControl=True,
             )
-        for batch_start in range(0, batch, batch_chunk):
-            batch_count = min(batch_chunk, batch - batch_start)
-            _ssu_state_kernel[(tiles_per_head, batch_count, nheads)](
+        for output_start in range(0, total_outputs, _MAX_GRID):
+            output_count = min(_MAX_GRID, total_outputs - output_start)
+            _ssu_state_kernel[(output_count,)](
+                state,
                 new_state,
                 x,
                 dt,
                 A,
                 B,
                 dt_bias if dt_bias is not None else x,
-                batch_start,
+                output_start,
                 slice_start,
                 nheads,
                 dim,
@@ -286,7 +271,6 @@ def selective_state_update(
                 num_groups,
                 HAS_DT_BIAS=dt_bias is not None,
                 DT_SOFTPLUS=bool(dt_softplus),
-                BLOCK_P=_BLOCK_P,
                 N_SLICE=_N_SLICE,
                 isCloseCoreTiling=True,
                 isCloseVectorization=True,
