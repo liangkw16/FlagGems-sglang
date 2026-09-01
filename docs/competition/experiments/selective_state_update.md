@@ -11,7 +11,7 @@ team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
 blockers: e11昆仑stage1 8x16 uni_sram
 sealed: no
-next: 复核旧Triton metadata绑定;确认后转CoreTiling
+next: e13关闭stage1 CoreTiling后平台实测
 updated: 2026-09-01
 ```
 
@@ -415,3 +415,35 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
 - 下一步先核对平台旧版 `default_run` 对“同名 constexpr + backend option”的绑定:
   若 E12 flag 未进入 XPUOptions,改为真实 launch metadata 重新归因;若已进入,按
   预注册顺序转 `isCloseCoreTiling=True`。不同时叠加 buffer/unroll。
+
+## E13:关闭 stage1 CoreTiling pass(commit `1443966`)
+
+- 平台 traceback 三处行号精确匹配 FlagTree
+  [`7b0370a4`](https://github.com/flagos-ai/FlagTree/commit/7b0370a4976c6fcdbab89420bf53728472d75a9e):
+  该版 `default_run` 对完整 launch kwargs 调 `backend.parse_options`,再按
+  `XPUOptions` 字段展开 metadata。因此 E12 flag 已真实关闭 Vectorize,失败点在
+  其他 pass,不是 dummy constexpr 被吞或旧 cache 命中。
+- 唯一执行变量:从 E11 P8×N16 精确分叉,不携带 E12 flag,只把 stage1 metadata
+  设为 `isCloseCoreTiling=True`。官方 `min_dim` 对同一
+  `uni_sram / PassManager::run failed` 用该选项解决全部 shape/dtype;
+  [CoreTiling 源码](https://github.com/flagos-ai/FlagTree/blob/2e6258114a79f14440e6f1134e5daca67d332925/third_party/xpu/lib/Dialect/TritonXPU/Transforms/CoreTiling.cpp#L144-L204)
+  也直接处理本题的 rank-2 axis-1 reduce、broadcast/expand-dims/store 编码。
+- source/verification commit
+  `1443966a146ad3c8f6d2682ade9fd407195b70b9`;Kunlun SHA-256
+  `4653494410faf0b7d4060429a15079d7e2177c77795a27d5cae64198144733f3`;
+  generic/test 仍为 `c1e180...` / `a6cc8...`。
+- screening:`gpu-et:/tmp/flagos-selective_state_update-e13.fTmoFH`,PID/PGID/SID
+  `238150`;static + variants **5/5 PASS**,15.813s;log SHA-256
+  `88d4fd0d56aad742e5fb748afae8e9da867df26218421aa5cb9fa2d07dfe3e1d`。
+- commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e13-release.bGlc8Y`,PID/PGID/SID
+  `238485`;Git-object manifest 前后一致,static + variants **5/5 PASS**;
+  release log SHA-256
+  `7bb33975fd9e931dfef98fabf32623026aff82e7e36c2974d89dc0194a6f1aa1`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e13-1443966/selective_state_update.zip`,
+  13619 bytes,SHA-256
+  `f9596117d09650c1200d38f6c3f7cf5c9cd189a7189edbb48500006372151502`;
+  actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+- 晋级门仍为昆仑五例全过;若相同 stage1 pass 指纹失败,关闭 CoreTiling 轴,
+  下一独立变量为 `isCloseUnrollControl=True`,不叠加 buffer。
