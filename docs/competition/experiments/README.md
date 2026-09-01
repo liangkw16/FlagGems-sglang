@@ -629,7 +629,7 @@ T32 E3 代理门未过未发射。
   Enflame NVIDIA 代理从 `1.834851x` 升到 `8.271488x`，Kunlun body 代理保持
   `2.327042x`。canonical ZIP `e6-5f03865` SHA-256 `c7be4dc2…e0344`
   已验签，预注册为唯一一次 8/8 validity-first 提交。
-- E6 已唯一提交为 sub `8053`，额度 `28/30`。当前六芯通过，Kunlun 五例仍为
-  `uni_sram OutOfResources`，CoreTiling-only 轴封存；Enflame 尚未取得 validation
-  id，服务端在 `dispatching/retry_wait` 重试。只在其正确且 `>=0.1x` 后评估唯一
-  Kunlun BLOCK128 E7，E6 原字节不得重试。
+- E6 已唯一提交为 sub `8053`，最终 `system_failed`、额度 `28/30`。六芯通过，
+  Kunlun 五例仍为 `uni_sram OutOfResources`，CoreTiling-only 轴封存；Enflame
+  始终无 validation id，最终为服务端调度失败，不能评价 3D owner。按三次机会授权，
+  E7 冻结该 Enflame 字节，仅做唯一 Kunlun BLOCK128 二维分段，E6 不得重试。

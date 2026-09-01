@@ -5,12 +5,12 @@ task: 41
 operator: state_passing
 batch: 3
 validity: invalid
-platform: E6 sub8053 pending;6 pass,Kunlun failed,Enflame retry_wait
+platform: E6 sub8053 system_failed;6 pass,Kunlun failed,Enflame unrun
 team_best_stage: E5 diagnostic
 team_best_commit: d980b8d
-blockers: E6昆仑CoreTiling同指纹失败;燧原3D owner待worker调度
+blockers: E7昆仑BLOCK128二维分段与燧原3D owner待平台裁决
 sealed: no
-next: 等E6燧原终态;过0.1x才评估唯一Kunlun BLOCK128 E7
+next: E7冻结燧原字节;唯一提交Kunlun BLOCK128二维分段
 updated: 2026-09-02
 ```
 
@@ -551,7 +551,8 @@ commit-bound release、canonical ZIP、实时 preflight 与一次性提交门禁
 ## E6：Enflame direct 3D owner + Kunlun close CoreTiling（2026-09-02）
 
 状态：source/verification commit、exact Git-object release 与 canonical ZIP 门禁
-通过；已完成唯一一次上传和正式提交，sub `8053` 等待 Enflame worker 终态。
+通过；已完成唯一一次上传和正式提交，sub `8053` 因 Enflame 调度失败收口为
+`system_failed`。
 
 E6 继续冻结 E1 generic 平台已证字节，只给 E5 的两个失败芯片各引入一个独立轴：
 
@@ -634,16 +635,21 @@ BLOCK 边界给出直接证据时，才评估唯一 BLOCK128 结构，不扫 128
 八芯总和 `62.476x`，所以两目标芯仍需合计 `>26.3015x`；即使 8/8 转正也不预宣称
 登顶。
 
-### 平台进行中（sub 8053）
+### 平台终态（sub 8053，2026-09-02 01:11:57 CST）
 
 实时 preflight tuple 全匹配后，nonce 仅消费一次；唯一一次上传和正式提交成功，
 额度由 `29/30` 变为 `28/30`。平台文件 URL SHA-256 为
 `67f576a05b2c4c941884d6f2ad8973f54d197d8be3fdfc5ad20b8b3e98aa4450`，E6 原字节
 不得重试。
 
-2026-09-02 01:00 CST 快照为 6 芯正确性通过、7 芯终态：天数 `7.6500x`、
+最终为 6 芯正确性通过：天数 `7.6500x`、
 沐曦 `4.3080x`、海光 `10.1910x`、华为 `1.1435x`、card_a `8.4690x`、
 card_b `4.4585x`；Kunlun 五例仍全部为相同 `uni_sram OutOfResources`，因此永久
-停止 CoreTiling-only 轴。Enflame 尚无 validation id，在服务端
-`dispatching/retry_wait` 间重试，不属于代码失败回执。仅当其正确且 `>=0.1x` 才按
-预注册评估唯一 BLOCK128 + row-major 二维分段 E7；否则停止，不盲耗第三次。
+停止 CoreTiling-only 轴。Enflame 始终没有 validation id、执行时间或芯片回执，
+最终错误为“评测任务提交失败，已停止重试”；因此 `system_failed` 只证明服务端调度
+截断，不能判断 direct-3D 的正确性或性能，整单也不计平均与排名。
+
+E6 没有命中 Enflame“数值失败或 `<0.1x`”封存条件。按用户明确的三次机会授权，
+E7 冻结 E6 Enflame 字节，只执行预留的唯一 Kunlun BLOCK128 + row-major 二维
+总-program 分段；该候选仍须独立通过 source commit、remote release、canonical ZIP
+与实时 preflight，且只允许上传和正式提交各一次。E7 后不再扫描 BLOCK64/16。
