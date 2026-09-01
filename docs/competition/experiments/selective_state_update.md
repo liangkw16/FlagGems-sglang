@@ -11,7 +11,7 @@ team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
 blockers: e20已修复昆仑y;case2-4仅state写回错误
 sealed: no
-next: e21将state-only改为1D单向量写回
+next: e21候选就绪;实时preflight
 updated: 2026-09-01
 ```
 
@@ -776,3 +776,34 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   旧 `[8,16]` state-only tile/store。
 - E21 仅把 state-only 改为每个 `(b,h,p,slice)` 一个 program、沿 N=16
   单向量计算和写回;复用 E20 已通过的全局输出分块,冻结 partial/stage2。
+
+## E21:state 改为 1D 单向量写回(commit `1313907`)
+
+- 唯一执行路径变量:冻结 E20 已由平台证明正确的 partial/stage2;state-only
+  从 `[P=8,N=16]` 二维 tile 改成每个全局 `(b,h,p,slice)` 一个 program,
+  只保留 N=16 连续向量。删除二维 broadcast/mask/store 和旧 3D batch grid,
+  复用 E20 已通过的 `output_start + program_id(0)` 解码与 65535 host 分块。
+- state source/destination 显式分离:始终从 immutable 原 `state` 读、向
+  `new_state` clone 写,消除原地 load/store RAW alias;数学、FP32 更新、尾片 mask
+  和最终 dtype 不变。E20 失败比例在 N32/N128 上接近后续 slice 损坏,因此这比
+  继续调 pass 参数更直接。
+- source/verification commit
+  `1313907126acb1f32b66a656989e338a299cace6`;Kunlun SHA-256
+  `ca02c06095a31cf8caab2328cbf25ae86672c9cd6f2e8671f6b5821f28e050aa`;
+  generic/test 仍为 `c1e180...` / `a6cc8...`。
+- screening:`gpu-et:/tmp/flagos-selective_state_update-e21-screening.O9h2vb`,
+  PID/PGID/SID `243671`;static + partial/state/stage2 独立 probes + 完整组合链
+  + variants **5/5 PASS**,8.807s;state probe 覆盖非零 output offset、N21 尾片、
+  destination sentinel 和 source bitwise immutable;large/grid-fold 几何为
+  partial/state/stage2 `136/136/17` 与 `2/2/2`;log SHA-256
+  `dc65a2e6d9110739e56267900daf478dde664ad55719131c8bcafd4c457b51c6`。
+- commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e21-release.NZV8GV`,PID/PGID/SID
+  `244191`;Git-object 五文件 manifest 前后完全一致,同组门禁 + variants
+  **5/5 PASS**,4.064s;release log SHA-256
+  `7c3911b552000876b01f805803c123de4e27c525f9c92d5c01f032f378a3ac99`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e21-1313907/selective_state_update.zip`,
+  15097 bytes,SHA-256
+  `fad579e5d6794fab3208a3f5d3e6d7e60efd3f2d9b118de4237d91c56497298c`;
+  actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
