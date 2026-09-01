@@ -126,6 +126,7 @@ def _ssu_stage2_kernel(
     HAS_Z: tl.constexpr,
     BLOCK_P: tl.constexpr,
     N_SLICE_POW2: tl.constexpr,
+    isCloseCoreTiling: tl.constexpr,
     isCloseVectorization: tl.constexpr,
 ):
     p_tile = tl.program_id(0)
@@ -252,6 +253,7 @@ def selective_state_update(
             HAS_Z=z is not None,
             BLOCK_P=_BLOCK_P,
             N_SLICE_POW2=triton.next_power_of_2(max(num_slices, 2)),
+            isCloseCoreTiling=True,
             isCloseVectorization=True,
         )
     return y, new_state
