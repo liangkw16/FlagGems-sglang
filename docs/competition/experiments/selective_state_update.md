@@ -9,9 +9,9 @@ platform: 8/8
 team_best_stage: e22(correctness)
 team_best_commit: f1a12f7
 team_best_speedup: 5.1200625x;昆仑0.0025x
-blockers: e24八芯正确但昆仑仍0.0025x;百万logical programs为主瓶颈
+blockers: e25八芯正确但昆仑仅0.003x;P_TILE4只提升20%
 sealed: no
-next: e25候选就绪;实时preflight
+next: e26每batch-head循环P并复用B/C
 updated: 2026-09-01
 ```
 
@@ -1061,3 +1061,21 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   12070 bytes,SHA-256
   `8c1426e0bc48a9de8f13df66652dbadb6b4fdb3d6d926dcd42c5e8cf07a2943a`;
   dry-run/created/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+
+### E25 平台结果(sub 7691,2026-09-01 14:19 CST):8/8,仅小幅收益
+
+- preflight 全过后一次性提交;平台 file URL SHA-256
+  `66f997d4b3cb4711de8435e7a1367138412d917f76ebedcdc64fb5ed65f932b2`;
+  提交后额度 `9/30`,远端 ZIP 回读 `unavailable`,未重试。
+- 八芯全部正确:天数 `3.9895x`、沐曦 `9.1025x`、燧原 `0.516x`、海光
+  `8.4715x`、昆仑 `0.003x`、华为 `3.632x`、card_a `6.422x`、card_b
+  `8.237x`;均值 `5.0466875x`,终态 `invalid_threshold`。
+- 昆仑 validation `50348ms`,相较 E24 `52510ms/0.0025x` 仅缩短 4.1%,平台
+  speedup 量化为 +20%,远低于 grid 数 4 倍缩减。static_range 只是把四份相同
+  DAG 放进一个 logical program,总 state/A/B/C 流量和 exp/reduce 次数完全未减,
+  因而 launch/LoopGrid 迭代不是唯一主瓶颈。
+- E26 停止继续扫 P_TILE,改为每个 `(b,h)` 一个 program、运行时 loop 精确遍历
+  P16/P64/P128;把同一 `(b,g)` 的 1D B/C 在循环外各加载一次,loop 内仍保持
+  state/A 的 1D masked update、axis-0 reduce 和立即 store。最大 grid 降至
+  `B*H=16384`,同时主形状 B/C global load 降 16–128 倍;代价是两条 FP32 N
+  向量跨 loop 常驻,需先过 XPU 编译资源门。
