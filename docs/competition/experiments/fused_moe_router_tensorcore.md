@@ -5,15 +5,16 @@ task: 27
 operator: fused_moe_router_tensorcore
 batch: 3
 validity: invalid
-platform: 7/8(七芯过,仅昆仑)
+platform: 7/8(e7;e8候选待提交)
 team_best_stage: e7
-blockers: 昆仑崩溃族
-sealed: yes
-next: 平台工单;README 早期 6/8 口径已过期
-updated: 2026-08-31
+blockers: e8平台昆仑结果待实测
+sealed: no
+next: e8实时preflight后单次提交
+updated: 2026-09-01
 ```
 
-状态:S0 候选就绪,待额度重置后提交(排在 29→30→25(e1)→28 之后)
+状态:E8 昆仑 direct vendor 的 screening、commit-bound release 与
+canonical ZIP 均已通过,待实时 preflight 与单次平台提交。
 
 ## 契约锁定
 
@@ -252,3 +253,85 @@ B=0;70000 行折叠。
 - 结论:fp32-ieee dot vs cuBLAS 的 GEMM 差距为结构性的;当前 HEAD
   (e7 平台结构)即代理可见轴的局部最优。与 T30 轮先例一致,本轮
   无候选、不消耗平台提交。报告 log/kernelgen-round-t27/final_report.md。
+
+## E8:昆仑 direct 两阶段 vendor(2026-09-01 10:4x–11:0x CST)
+
+状态:screening、source/test commit、commit-bound release 与 canonical ZIP
+均通过;平台提交待实时 preflight。
+
+### 根因假设与单变量
+
+- E7 在昆仑选择 generic:64×64×64 split-K GEMM、至多 8 片、
+  `partials[n_splits,B,E]` 工作区、device-side grid-stride 循环,再由
+  32×E 二维归约 kernel 汇总。平台记录为 validation execution 约
+  1830s、超过 1800s,compile worker 随后 abort。
+- E8 不再把该现象归为不可处理的平台故障,而以编译结构复杂度为首要根因:
+  只新增 `_kunlunxin` vendor;generic、Ascend、Iluvatar 字节冻结。
+- GEMM 改为 32×32×64、`num_stages=1` 的 direct program,K 维按
+  compile-time `HIDDEN_DIM` 顺序累加;无 split-K、partials 工作区或
+  device-side persistent 循环。host 将物理 grid 分段至每次不超过 65535。
+- GEMM 直接写 `[B,E]` fp32 logits;第二个 kernel 每行一个 program 完成
+  softcap、bias、全局 softmax 与 top-2。softcap/bias 后重新 mask padding
+  experts,修复 `-inf` 经 softcap 变成有限值后可能进入 top-k 的根因。
+- top-2 使用 max + `min(where(...))`,保证 expert 不重复;精确平局只锁定
+  两个并列 expert 的集合,不依赖 torch 未保证的先后顺序。
+
+### 构建身份
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `140a632f80f03e2a093c0e82788f7b67920807ef` |
+| generic SHA-256 | `102d07d2d15dab579c04aff1f5f06c00cfb810f9bd3055bb08ac3474d8bbb56f` |
+| Ascend SHA-256 | `c49b2448ad1791773e97737e0d23885f6156f9a139179a62b03a0b935997c643` |
+| Iluvatar SHA-256 | `0c10544de3a1747b1964220ebf12e5ecff68f52b0c3b4b374bebf2bf0c5842e6` |
+| Kunlun SHA-256 | `1809af5cb6bd3832496ab2b876062e84ee825493e659b053bb09bd7f23fd2088` |
+| test SHA-256 | `6200ac64c2775bb1cacd25a85076a9fb2fea2fe7ff5593a830d57babfaee9e74` |
+| `_op_variants.py` SHA-256 | `cdc5fe3e4cb5a85976f0a3414cd194bb53c79f6f2830be01f685f996b97ca0d7` |
+| screening payload SHA-256 | `15f3a8197183edaa610f96bae1992b8aa5fdf216f3264d7064b243ad061f9cc9` |
+
+### Screening 与代理性能
+
+- 目录:`gpu-et:/tmp/flagos-fused-moe-router-t27-screen2.Q78rXm`;环境 RTX
+  5070 Ti、Python 3.12.13、PyTorch `2.13.0+cu130`、Triton `3.7.1`、
+  CUDA 13.0。
+- 完整 unittest **12/12**,耗时 `24.934s`;日志 SHA-256
+  `d31dceaa6f6644c7ee4e91968dfc12d990ffe770eaafb0d3e08177aa2a2ab6d7`。
+- 覆盖 generic、Ascend、Iluvatar、Kunlun 四份实现;包含三 dtype、H=576/
+  E=65 尾块、平台 case 7、topk 1/2、softcap/bias 四组合、单 expert、
+  平局集合、全局 softmax、padding remask、非连续输入、输入不变性、空行及
+  70000 行 grid fold。
+- benchmark 为五轮 AB/BA、warmup 25、repeat 100;harness SHA-256
+  `0804f5a1b1ff2b2cb49551cbf36442cfd40aae2884788c85e887e2c19b14e4d7`,
+  日志 SHA-256
+  `0a2d8a2d25f64d9dc182ae83e24a3594c220423769388ae2f53f5be4ed288bdf`。
+
+| dtype / B×E×H / 配置 | 候选 ms | torch ms | speedup | peak bytes |
+| --- | ---: | ---: | ---: | ---: |
+| fp16 / 64×256×4096 / cap=0+bias | 0.1380675 | 0.0321901 | 0.233104x | 41487360 |
+| fp16 / 1000×128×4096 / cap=30+bias | 0.2565482 | 0.0953802 | 0.371846x | 62214656 |
+| fp32 / 64×256×4096 / cap=0+bias | 0.1474794 | 0.0248682 | 0.168604x | 38934016 |
+
+三点均超过题面 `0.1x` 代理门;此结果只证明 NVIDIA 上的编译、正确性和最低
+性能余量,不外推昆仑正确性或实际分数。
+
+### Commit-bound release 与不可变 ZIP
+
+- release 目录:`gpu-et:/tmp/flagos-fused_moe_router_tensorcore-release.d1pQoQ`
+  (0700,保留);PID/PGID/SID `234420`;从 commit `140a632` Git 对象导出。
+- pycompile、Black 79、isort 80、flake8、逐文件前后哈希和完整 unittest
+  均通过;12/12 PASS;release 日志 SHA-256
+  `46a971fbda4bc69d4104129557a236bf625ebaf69ca21a8f82302c1eb887abd1`。
+- canonical ZIP:
+  `artifacts/competition/fused_moe_router_tensorcore/e8-140a632/fused_moe_router_tensorcore.zip`,
+  28733 bytes,SHA-256
+  `279065a663b2d321be66292f0674d0039d3a6d2afb9af4bf048edcd0bd63c3e5`;
+  dry-run、实际构建与 `--verify-existing` 三者一致。
+- ZIP 成员:generic、`_ascend`、`_iluvatar`、`_kunlunxin` 四文件;各 member
+  SHA 与上述 commit blob 完全一致。
+
+### 平台门禁
+
+- 2026-09-01 10:42 CST 快照:E7 七芯分数和约 `7.334x`,榜首平均
+  `1.754125x`;若其余七芯近似不变,登顶要求昆仑约 `6.699x`。
+- 首要成功门仍是昆仑完成评测且整题 8/8 valid;preflight intent、实时额度、
+  submission_id、八芯结果、平均分与排名待本轮平台实测回填。
