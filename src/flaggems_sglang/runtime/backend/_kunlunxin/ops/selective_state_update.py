@@ -81,9 +81,7 @@ def _ssu_fused_kernel(
                     other=0.0,
                 ).to(tl.float32)
             else:
-                dt_val += tl.load(dt_bias_ptr + h * dim + p_idx).to(
-                    tl.float32
-                )
+                dt_val += tl.load(dt_bias_ptr + h * dim + p_idx).to(tl.float32)
         if DT_SOFTPLUS:
             dt_val = tl.maximum(dt_val, 0.0) + tl.log(
                 1.0 + tl.exp(-tl.abs(dt_val))
@@ -104,17 +102,17 @@ def _ssu_fused_kernel(
         state_val = tl.load(
             state_ptr + state_base + n_off, mask=vec_mask, other=0.0
         ).to(tl.float32)
-        a_val = tl.load(
-            a_ptr + a_base + n_off, mask=vec_mask, other=0.0
-        ).to(tl.float32)
+        a_val = tl.load(a_ptr + a_base + n_off, mask=vec_mask, other=0.0).to(
+            tl.float32
+        )
         new_s = state_val * tl.exp(dt_val * a_val)
-        b_val = tl.load(
-            b_ptr + bc_base + n_off, mask=vec_mask, other=0.0
-        ).to(tl.float32)
+        b_val = tl.load(b_ptr + bc_base + n_off, mask=vec_mask, other=0.0).to(
+            tl.float32
+        )
         new_s += (dt_val * x_val) * b_val
-        c_val = tl.load(
-            c_ptr + bc_base + n_off, mask=vec_mask, other=0.0
-        ).to(tl.float32)
+        c_val = tl.load(c_ptr + bc_base + n_off, mask=vec_mask, other=0.0).to(
+            tl.float32
+        )
         y_val = tl.sum(new_s * c_val, axis=0)
 
         tl.store(
@@ -132,9 +130,9 @@ def _ssu_fused_kernel(
             y_val += d_val * x_val
         if HAS_Z:
             if NEED_P_MASK:
-                z_val = tl.load(
-                    z_ptr + out_idx, mask=p_mask, other=0.0
-                ).to(tl.float32)
+                z_val = tl.load(z_ptr + out_idx, mask=p_mask, other=0.0).to(
+                    tl.float32
+                )
             else:
                 z_val = tl.load(z_ptr + out_idx).to(tl.float32)
             y_val *= z_val * tl.sigmoid(z_val)
