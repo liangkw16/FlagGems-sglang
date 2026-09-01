@@ -14,7 +14,7 @@
 
 # Enflame GCU300: materialize routed rows once, run regular Triton GEMMs,
 # then restore the original row order. This removes indirect row addressing
-# from the dot kernel while retaining the backend-safe stages=2 launch.
+# from the dot kernel while retaining the backend-safe 64-wide/stages=2 launch.
 
 import torch
 import triton
@@ -81,9 +81,9 @@ def _regular_gemm_kernel(
     )
 
 
-_BLOCK_M = 32
-_BLOCK_N = 32
-_BLOCK_K = 32
+_BLOCK_M = 64
+_BLOCK_N = 64
+_BLOCK_K = 64
 _GROUP_M = 8
 
 
