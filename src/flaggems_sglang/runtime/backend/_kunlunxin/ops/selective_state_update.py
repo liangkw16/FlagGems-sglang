@@ -20,7 +20,7 @@ _P_BLOCK = 64
 
 
 @triton.jit
-def _ssu_multirow_kernel(
+def _ssu_pslice_kernel(
     state_ptr,
     new_state_ptr,
     x_ptr,
@@ -34,6 +34,7 @@ def _ssu_multirow_kernel(
     y_ptr,
     num_heads,
     dim,
+    dstate,
     num_groups,
     tiles_per_head,
     HAS_D: tl.constexpr,
@@ -41,7 +42,7 @@ def _ssu_multirow_kernel(
     HAS_DT_BIAS: tl.constexpr,
     DT_SOFTPLUS: tl.constexpr,
     P_BLOCK: tl.constexpr,
-    N: tl.constexpr,
+    N_SLICE: tl.constexpr,
     isCloseVectorization: tl.constexpr,
     isCloseUnrollControl: tl.constexpr,
 ):
@@ -54,7 +55,6 @@ def _ssu_multirow_kernel(
     g = h // ratio
 
     p_idx = p_tile * P_BLOCK + tl.arange(0, P_BLOCK)
-    n_idx = tl.arange(0, N)
     out_idx = row * dim + p_idx
     dt_val = tl.load(dt_ptr + out_idx).to(tl.float32)
     if HAS_DT_BIAS:
@@ -65,18 +65,24 @@ def _ssu_multirow_kernel(
         )
     x_val = tl.load(x_ptr + out_idx).to(tl.float32)
 
-    state_offset = out_idx[:, None] * N + n_idx[None, :]
-    a_offset = (h * dim + p_idx)[:, None] * N + n_idx[None, :]
-    state_val = tl.load(state_ptr + state_offset).to(tl.float32)
-    a_val = tl.load(a_ptr + a_offset).to(tl.float32)
-    bc_base = (b * num_groups + g) * N
-    b_val = tl.load(b_ptr + bc_base + n_idx).to(tl.float32)
-    new_s = state_val * tl.exp(dt_val[:, None] * a_val)
-    new_s += (dt_val * x_val)[:, None] * b_val[None, :]
+    y_acc = tl.zeros([P_BLOCK, N_SLICE], dtype=tl.float32)
+    bc_base = (b * num_groups + g) * dstate
     state_ty = new_state_ptr.dtype.element_ty
-    tl.store(new_state_ptr + state_offset, new_s.to(state_ty))
-    c_val = tl.load(c_ptr + bc_base + n_idx).to(tl.float32)
-    y_val = tl.sum(new_s * c_val[None, :], axis=1)
+
+    for n_start in range(0, dstate, N_SLICE):
+        n_idx = n_start + tl.arange(0, N_SLICE)
+        state_offset = out_idx[:, None] * dstate + n_idx[None, :]
+        a_offset = (h * dim + p_idx)[:, None] * dstate + n_idx[None, :]
+        state_val = tl.load(state_ptr + state_offset).to(tl.float32)
+        a_val = tl.load(a_ptr + a_offset).to(tl.float32)
+        b_val = tl.load(b_ptr + bc_base + n_idx).to(tl.float32)
+        new_s = state_val * tl.exp(dt_val[:, None] * a_val)
+        new_s += (dt_val * x_val)[:, None] * b_val[None, :]
+        tl.store(new_state_ptr + state_offset, new_s.to(state_ty))
+        c_val = tl.load(c_ptr + bc_base + n_idx).to(tl.float32)
+        y_acc += new_s * c_val[None, :]
+
+    y_val = tl.sum(y_acc, axis=1)
 
     if HAS_D:
         d_val = tl.load(d_ptr + h * dim + p_idx).to(tl.float32)
@@ -276,7 +282,7 @@ def selective_state_update(
 
     if dim >= _P_BLOCK and dim % _P_BLOCK == 0 and dstate == 128:
         tiles_per_head = dim // _P_BLOCK
-        _ssu_multirow_kernel[(batch * nheads * tiles_per_head,)](
+        _ssu_pslice_kernel[(batch * nheads * tiles_per_head,)](
             state,
             new_state,
             x,
@@ -290,6 +296,7 @@ def selective_state_update(
             y,
             nheads,
             dim,
+            dstate,
             num_groups,
             tiles_per_head,
             HAS_D=D is not None,
@@ -297,7 +304,7 @@ def selective_state_update(
             HAS_DT_BIAS=dt_bias is not None,
             DT_SOFTPLUS=bool(dt_softplus),
             P_BLOCK=_P_BLOCK,
-            N=128,
+            N_SLICE=8,
             isCloseVectorization=True,
             isCloseUnrollControl=True,
         )
