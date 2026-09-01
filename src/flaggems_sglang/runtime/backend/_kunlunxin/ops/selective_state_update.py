@@ -22,7 +22,7 @@ import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
-_BLOCK_P = 16
+_BLOCK_P = 8
 _N_SLICE = 16
 
 
