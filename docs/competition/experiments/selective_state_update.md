@@ -11,7 +11,7 @@ team_best_commit: f1a12f7
 team_best_speedup: 5.1200625x;昆仑0.0025x
 blockers: e29已过release待平台;有效门仍差7.41倍
 sealed: no
-next: e29构建不可变ZIP并执行实时preflight
+next: e29执行实时preflight并一次性提交
 updated: 2026-09-01
 ```
 
@@ -1372,6 +1372,11 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   `1d2519cabd286c92463f199e6e488aadb7cc6ee0da9647ceda350201c275c679` /
   `ce345af5207ac83b04cad8e126a6dc3472ac87e0411babba697d38a02be6613c` /
   `d401015e50fdad61e12405ff8443eeb5c0f8b001987f3de4347069f4aced56c5`。
+- canonical ZIP
+  `artifacts/competition/selective_state_update/e29-ee69307/selective_state_update.zip`,
+  16786 bytes,SHA-256
+  `1dd4e8e895b8432b03d72cf7ec14ed06be9c617a7503e750c01d43a95497e9aa`;
+  dry-run/created/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
 
 ### E29 平台预注册门
 
