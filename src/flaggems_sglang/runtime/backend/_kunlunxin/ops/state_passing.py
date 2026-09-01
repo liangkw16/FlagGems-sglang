@@ -19,115 +19,32 @@ import triton
 import triton.language as tl
 
 _BLOCK_SIZE = 256
-_MAX_GRID = 65535
+_MAX_ROWS = 65535
 
 
-@triton.jit(do_not_specialize=["nchunks", "tile_start"])
-def _state_passing_kernel(
+@triton.jit
+def _state_passing_step_kernel(
     states_ptr,
-    dA_cumsum_ptr,
-    initial_states_ptr,
+    dA_ptr,
+    current_ptr,
     out_ptr,
-    final_states_ptr,
-    nchunks,
-    nheads,
-    dim,
-    tiles_per_head,
-    states_stride_b,
-    states_stride_c,
-    states_stride_h,
-    states_stride_d,
-    dA_stride_b,
-    dA_stride_h,
-    dA_stride_c,
-    dA_stride_l,
-    init_stride_b,
-    init_stride_h,
-    init_stride_d,
-    out_stride_b,
-    out_stride_c,
-    out_stride_h,
-    out_stride_d,
-    final_stride_b,
-    final_stride_h,
-    final_stride_d,
-    length,
-    tile_start,
-    HAS_INITIAL_STATES: tl.constexpr,
+    DIM: tl.constexpr,
     BLOCK_SIZE: tl.constexpr,
 ):
-    states_stride_b = tl.cast(states_stride_b, tl.int64)
-    states_stride_c = tl.cast(states_stride_c, tl.int64)
-    states_stride_h = tl.cast(states_stride_h, tl.int64)
-    states_stride_d = tl.cast(states_stride_d, tl.int64)
-    dA_stride_b = tl.cast(dA_stride_b, tl.int64)
-    dA_stride_h = tl.cast(dA_stride_h, tl.int64)
-    dA_stride_c = tl.cast(dA_stride_c, tl.int64)
-    dA_stride_l = tl.cast(dA_stride_l, tl.int64)
-    init_stride_b = tl.cast(init_stride_b, tl.int64)
-    init_stride_h = tl.cast(init_stride_h, tl.int64)
-    init_stride_d = tl.cast(init_stride_d, tl.int64)
-    out_stride_b = tl.cast(out_stride_b, tl.int64)
-    out_stride_c = tl.cast(out_stride_c, tl.int64)
-    out_stride_h = tl.cast(out_stride_h, tl.int64)
-    out_stride_d = tl.cast(out_stride_d, tl.int64)
-    final_stride_b = tl.cast(final_stride_b, tl.int64)
-    final_stride_h = tl.cast(final_stride_h, tl.int64)
-    final_stride_d = tl.cast(final_stride_d, tl.int64)
+    dim_offsets = tl.program_id(0) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+    row = tl.program_id(1)
+    mask = dim_offsets < DIM
+    offsets = row * DIM + dim_offsets
 
-    tile_id = tile_start + tl.program_id(0)
-    dim_offsets = tl.arange(0, BLOCK_SIZE)
-
-    dim_tile = tile_id % tiles_per_head
-    batch_head = tile_id // tiles_per_head
-    head = batch_head % nheads
-    batch = batch_head // nheads
-    dim_indices = dim_tile * BLOCK_SIZE + dim_offsets
-    dim_mask = dim_indices < dim
-
-    if HAS_INITIAL_STATES:
-        initial_base = batch * init_stride_b + head * init_stride_h
-        current = tl.load(
-            initial_states_ptr + initial_base + dim_indices * init_stride_d,
-            mask=dim_mask,
-            other=0.0,
-        ).to(tl.float32)
-    else:
-        current = tl.zeros([BLOCK_SIZE], dtype=tl.float32)
-
-    for chunk in range(0, nchunks):
-        out_base = batch * out_stride_b + chunk * out_stride_c + head * out_stride_h
-        out_dtype = out_ptr.dtype.element_ty
-        tl.store(
-            out_ptr + out_base + dim_indices * out_stride_d,
-            current.to(out_dtype),
-            mask=dim_mask,
-        )
-
-        dA_offset = (
-            batch * dA_stride_b
-            + head * dA_stride_h
-            + chunk * dA_stride_c
-            + (length - 1) * dA_stride_l
-        )
-        decay = tl.exp(tl.load(dA_cumsum_ptr + dA_offset).to(tl.float32))
-
-        states_base = (
-            batch * states_stride_b + chunk * states_stride_c + head * states_stride_h
-        )
-        state = tl.load(
-            states_ptr + states_base + dim_indices * states_stride_d,
-            mask=dim_mask,
-            other=0.0,
-        ).to(tl.float32)
-        current = current * decay + state
-
-    final_base = batch * final_stride_b + head * final_stride_h
+    current = tl.load(current_ptr + offsets, mask=mask, other=0.0)
     tl.store(
-        final_states_ptr + final_base + dim_indices * final_stride_d,
-        current,
-        mask=dim_mask,
+        out_ptr + offsets,
+        current.to(out_ptr.dtype.element_ty),
+        mask=mask,
     )
+    decay = tl.exp(tl.load(dA_ptr + row).to(tl.float32))
+    state = tl.load(states_ptr + offsets, mask=mask, other=0.0).to(tl.float32)
+    tl.store(current_ptr + offsets, current * decay + state, mask=mask)
 
 
 def state_passing(
@@ -142,12 +59,8 @@ def state_passing(
     if initial_states is not None:
         assert initial_states.shape == (batch, nheads, dim)
 
-    out = torch.empty(
-        states.shape,
-        dtype=states.dtype,
-        device=states.device,
-    )
     if nchunks == 0 or batch == 0 or nheads == 0 or dim == 0:
+        out = torch.empty_like(states)
         if initial_states is not None:
             final_states = initial_states.float().clone()
         else:
@@ -158,50 +71,44 @@ def state_passing(
             )
         return out, final_states
 
-    final_states = torch.empty(
-        (batch, nheads, dim),
-        dtype=torch.float32,
-        device=states.device,
+    rows = batch * nheads
+    states_chunks = (
+        states.permute(1, 0, 2, 3).contiguous().view(nchunks, rows, dim)
     )
-    tiles_per_head = triton.cdiv(dim, _BLOCK_SIZE)
-    total_tiles = batch * nheads * tiles_per_head
-
+    dA_chunks = (
+        dA_cumsum[..., -1].permute(2, 0, 1).contiguous().view(nchunks, rows)
+    )
+    out_chunks = torch.empty_like(states_chunks)
     if initial_states is None:
-        initial_ptr = states
-        initial_strides = (0, 0, 0)
-    else:
-        initial_ptr = initial_states
-        initial_strides = initial_states.stride()
-
-    tile_start = 0
-    while tile_start < total_tiles:
-        segment_tiles = min(total_tiles - tile_start, _MAX_GRID)
-        grid = (segment_tiles,)
-        _state_passing_kernel[grid](
-            states,
-            dA_cumsum,
-            initial_ptr,
-            out,
-            final_states,
-            nchunks,
-            nheads,
-            dim,
-            tiles_per_head,
-            *states.stride(),
-            *dA_cumsum.stride(),
-            *initial_strides,
-            *out.stride(),
-            *final_states.stride(),
-            length,
-            tile_start,
-            HAS_INITIAL_STATES=initial_states is not None,
-            BLOCK_SIZE=_BLOCK_SIZE,
-            num_warps=4,
-            num_stages=1,
+        current = torch.zeros(
+            (rows, dim), dtype=torch.float32, device=states.device
         )
-        tile_start += segment_tiles
+    else:
+        current = initial_states.float().clone(
+            memory_format=torch.contiguous_format
+        )
+        current = current.view(rows, dim)
 
-    return out, final_states
+    for chunk in range(nchunks):
+        row_start = 0
+        while row_start < rows:
+            row_stop = min(row_start + _MAX_ROWS, rows)
+            grid = (triton.cdiv(dim, _BLOCK_SIZE), row_stop - row_start)
+            _state_passing_step_kernel[grid](
+                states_chunks[chunk, row_start:row_stop],
+                dA_chunks[chunk, row_start:row_stop],
+                current[row_start:row_stop],
+                out_chunks[chunk, row_start:row_stop],
+                DIM=dim,
+                BLOCK_SIZE=_BLOCK_SIZE,
+                num_warps=4,
+                num_stages=1,
+            )
+            row_start = row_stop
+
+    out = out_chunks.view(nchunks, batch, nheads, dim)
+    out = out.permute(1, 0, 2, 3).contiguous()
+    return out, current.view(batch, nheads, dim)
 
 
 __all__ = ["state_passing"]

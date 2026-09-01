@@ -56,25 +56,6 @@ def _state_passing_kernel(
     HAS_INITIAL_STATES: tl.constexpr,
     BLOCK_SIZE: tl.constexpr,
 ):
-    states_stride_b = tl.cast(states_stride_b, tl.int64)
-    states_stride_c = tl.cast(states_stride_c, tl.int64)
-    states_stride_h = tl.cast(states_stride_h, tl.int64)
-    states_stride_d = tl.cast(states_stride_d, tl.int64)
-    dA_stride_b = tl.cast(dA_stride_b, tl.int64)
-    dA_stride_h = tl.cast(dA_stride_h, tl.int64)
-    dA_stride_c = tl.cast(dA_stride_c, tl.int64)
-    dA_stride_l = tl.cast(dA_stride_l, tl.int64)
-    init_stride_b = tl.cast(init_stride_b, tl.int64)
-    init_stride_h = tl.cast(init_stride_h, tl.int64)
-    init_stride_d = tl.cast(init_stride_d, tl.int64)
-    out_stride_b = tl.cast(out_stride_b, tl.int64)
-    out_stride_c = tl.cast(out_stride_c, tl.int64)
-    out_stride_h = tl.cast(out_stride_h, tl.int64)
-    out_stride_d = tl.cast(out_stride_d, tl.int64)
-    final_stride_b = tl.cast(final_stride_b, tl.int64)
-    final_stride_h = tl.cast(final_stride_h, tl.int64)
-    final_stride_d = tl.cast(final_stride_d, tl.int64)
-
     pid = tl.program_id(0)
     grid_stride = tl.num_programs(0)
     dim_offsets = tl.arange(0, BLOCK_SIZE)
@@ -90,7 +71,9 @@ def _state_passing_kernel(
         if HAS_INITIAL_STATES:
             initial_base = batch * init_stride_b + head * init_stride_h
             current = tl.load(
-                initial_states_ptr + initial_base + dim_indices * init_stride_d,
+                initial_states_ptr
+                + initial_base
+                + dim_indices * init_stride_d,
                 mask=dim_mask,
                 other=0.0,
             ).to(tl.float32)
@@ -98,7 +81,11 @@ def _state_passing_kernel(
             current = tl.zeros([BLOCK_SIZE], dtype=tl.float32)
 
         for chunk in range(0, nchunks):
-            out_base = batch * out_stride_b + chunk * out_stride_c + head * out_stride_h
+            out_base = (
+                batch * out_stride_b
+                + chunk * out_stride_c
+                + head * out_stride_h
+            )
             out_dtype = out_ptr.dtype.element_ty
             tl.store(
                 out_ptr + out_base + dim_indices * out_stride_d,
