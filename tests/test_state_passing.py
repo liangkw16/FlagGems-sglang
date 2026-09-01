@@ -258,16 +258,17 @@ class StatePassingTest(unittest.TestCase):
 
     def test_capped_grid_covers_every_tile(self):
         states = torch.full(
-            (257, 2, 256, 1),
+            (256, 1, 256, 129),
             4.0,
+            dtype=torch.float16,
             device="cuda",
         )
         dA_cumsum = torch.zeros(
-            (257, 256, 2, 1),
+            (256, 256, 1, 1),
             device="cuda",
         )
         initial_states = torch.full(
-            (257, 256, 1),
+            (256, 256, 129),
             3.0,
             device="cuda",
         )
@@ -282,11 +283,8 @@ class StatePassingTest(unittest.TestCase):
                     out[:, 0], torch.full_like(out[:, 0], 3.0)
                 )
                 torch.testing.assert_close(
-                    out[:, 1], torch.full_like(out[:, 1], 7.0)
-                )
-                torch.testing.assert_close(
                     final_states,
-                    torch.full_like(final_states, 11.0),
+                    torch.full_like(final_states, 7.0),
                 )
 
 

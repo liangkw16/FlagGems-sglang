@@ -18,8 +18,8 @@ import torch
 import triton
 import triton.language as tl
 
-_BLOCK_SIZE = 256
-_MAX_ROWS = 65535
+_BLOCK_SIZE = 128
+_MAX_PROGRAMS = 65535
 
 
 @triton.jit
@@ -30,10 +30,9 @@ def _state_passing_step_kernel(
     out_ptr,
     DIM: tl.constexpr,
     BLOCK_SIZE: tl.constexpr,
-    isCloseCoreTiling: tl.constexpr,
 ):
-    dim_offsets = tl.program_id(0) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
-    row = tl.program_id(1)
+    row = tl.program_id(0)
+    dim_offsets = tl.program_id(1) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
     mask = dim_offsets < DIM
     offsets = row * DIM + dim_offsets
 
@@ -73,6 +72,8 @@ def state_passing(
         return out, final_states
 
     rows = batch * nheads
+    dim_tiles = triton.cdiv(dim, _BLOCK_SIZE)
+    max_rows_per_launch = max(1, _MAX_PROGRAMS // dim_tiles)
     states_chunks = (
         states.permute(1, 0, 2, 3).contiguous().view(nchunks, rows, dim)
     )
@@ -93,8 +94,8 @@ def state_passing(
     for chunk in range(nchunks):
         row_start = 0
         while row_start < rows:
-            row_stop = min(row_start + _MAX_ROWS, rows)
-            grid = (triton.cdiv(dim, _BLOCK_SIZE), row_stop - row_start)
+            row_stop = min(row_start + max_rows_per_launch, rows)
+            grid = (row_stop - row_start, dim_tiles)
             _state_passing_step_kernel[grid](
                 states_chunks[chunk, row_start:row_stop],
                 dA_chunks[chunk, row_start:row_stop],
@@ -104,7 +105,6 @@ def state_passing(
                 BLOCK_SIZE=_BLOCK_SIZE,
                 num_warps=4,
                 num_stages=1,
-                isCloseCoreTiling=True,
             )
             row_start = row_stop
 
