@@ -585,3 +585,11 @@ T32 E3 代理门未过未发射。
   GEMM；exact-release 5/5，canonical ZIP `e4-4efff42` SHA-256
   `9031f758…43f6f` 已验签。T28 同结构昆仑 4.4045x 通过后，按用户授权
   进入单次平台验证；晋级门为两目标芯均 >=0.1x 且整题 8/8。
+
+## 2026-09-01 T37 E4 终态与 E5 燧原结构修复
+
+- E4(sub 7977)终态 **7/8**：昆仑 route/materialize 首次以 3.4715x
+  通过；燧原仍为 15.4% 行错位，i32-route 假设被证伪。
+- E5 仅把燧原替换为同类 route/materialize + regular GEMM，其他芯字节
+  冻结；commit `6ce280b` exact-release 5/5，canonical ZIP
+  `588f8708…1c56` 已通过本地与远端双重验签，待单次平台裁决。

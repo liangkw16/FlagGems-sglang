@@ -5,17 +5,17 @@ task: 37
 operator: sgemm_lora_a
 batch: 3
 validity: invalid
-platform: 6/8(E2 历史平台;公开榜单已证明可达 8/8)
-team_best_stage: e2
-team_best_commit: 58aab90
-blockers: E4目标芯未验签；已生成规范ZIP，待单次平台验证
+platform: 7/8(E4;昆仑已修复，燧原行映射失败)
+team_best_stage: e4
+team_best_commit: 4efff42
+blockers: E5燧原route/materialize目标芯待验签
 sealed: no
-next: 按用户授权提交E4 Enflame+Kunlun合包
+next: 按用户授权提交E5燧原结构修复合包
 updated: 2026-09-01
 ```
 
-状态:历史平台仍为 6/8；E4 合并燧原 i32-route 与昆仑规则 GEMM，
-已通过 exact-commit NVIDIA release、生成规范 ZIP，待本轮单次平台验证。
+状态:E4 平台终态 7/8，昆仑规则 GEMM 修复兑现；E5 将同一已通过结构
+隔离到燧原，已通过 exact-commit NVIDIA release 并生成规范 ZIP。
 
 ## 契约锁定
 
@@ -212,3 +212,51 @@ confirm 提交,评测入队,逐芯结果待回填。
 - 晋级门：燧原与昆仑均正确且 speedup >= 0.1x，历史六芯不回归，达到
   8/8 valid。stop gate：明确代码侧错误才进入下一候选；若仍为空
   `failed_cases` 的 compile-worker 崩溃，不重投相同结构。
+
+## E4 平台终态(sub 7977,2026-09-01 23:29 CST)
+
+- 上传后平台侧 ZIP 仍为 24,503 bytes、SHA-256
+  `9031f7580d5c3a7317df6f4e2e28748e84bc38500320d28869eaff500c243f6f`；
+  文件 URL 独立下载 SHA-256
+  `795643a5869326b1c0c7908bf17fae36d6009504b9e77450a68b05f0ab5402c8`。
+- **7/8**：天数 4.661x、沐曦 3.681x、海光 12.4985x、昆仑
+  3.4715x、华为 16.02x、card_a 1.5845x、card_b 1.318x 均通过。
+  昆仑 route/materialize + regular GEMM 首次通过，证明 E4 结构修复成立。
+- 唯一失败为燧原 case2：192/1248 元素失配(15.4%)，最大绝对误差
+  59.375；与 E2 相同行错位指纹。i32 metadata 单变量被证伪，错误面收敛
+  到 GEMM 内 permutation 间接行读取/不规则写回。
+
+## E5:燧原 route/materialize 结构修复与平台预注册
+
+- 复用 E4 已在昆仑平台通过的最小结构：wrapper 一次物化 routed rows，
+  每个非空 segment 发规则 Triton GEMM，再 inverse restore；仅保留燧原
+  已验证的 64/64/64、4 warps/stages2 参数。其余三个 ZIP 成员字节冻结。
+- 按 `kernelgen-flagos` 调用 `optimize_kernel`；request/output SHA-256
+  `096bb25cae944eb6d7f0e17ae7d4d605fddaec45d9d1f9f4c80a4043aff04cea`/
+  `8b015713de18664dfb27bd92eb43898743e843161faaa182d5e6681b4dbee0f0`。
+  生成物含冗余 kernel、CPU route 后索引 GPU 等不可用路径，按 usability
+  gate 拒绝；最终复用仓内已实机通过结构，未引入新抽象。
+- source/verification commit
+  `6ce280b2c8b445d3e7037f06f147ee36bc3c83ef`；Enflame source SHA-256
+  `ffdb47e2a4e6ad63d867cd867b2a3a90e215badb5b8b4bb1695890be60a440a3`；
+  test SHA-256
+  `9adf18680a0c9cb8f639dafb064ea44a035bebabcc4a49b2f0c3a3f808e34b5c`。
+- exact Git-object release
+  `gpu-et:/tmp/flagos-sgemm-lora-a-e5-release.tyEfv0`：四变体
+  py_compile/Black/isort/flake8/hash 与 5 unittest 全过；release log
+  SHA-256 `d0b6113a322c1000752d3537c7d5f052f9b6c8cac1aaf46d312ba277244b0473`。
+  wrapper-inclusive Enflame NVIDIA proxy 五档为
+  0.2105x/0.3226x/1.1056x/0.1694x/0.4886x，均超过预锁定 0.1x 门；
+  benchmark log SHA-256
+  `8f0ae07e86583f7b734f3d823ca1c205026553052c38c3e1e2b8aed4123c8f85`。
+- canonical ZIP
+  `artifacts/competition/sgemm_lora_a/e5-6ce280b/sgemm_lora_a.zip`，
+  23,329 bytes，SHA-256
+  `588f87083d71823b64e652963a79ab749c0738c1f035249df97e85b86c4c1c56`；
+  打包器 canonical 验签、`unzip -t` 与远端独立 SHA 均通过。
+- 成员 SHA-256：generic `090d22c1d1ad20c9162c1764f33d1ef60ca58304a9ebaf48d4a2448442c5bd34`；
+  Enflame `ffdb47e2a4e6ad63d867cd867b2a3a90e215badb5b8b4bb1695890be60a440a3`；
+  Iluvatar `c10bfa4f80180770a933068914fabb02e64970cb94ffd0710548150fc74d4cb0`；
+  Kunlun `776237b87d6fd074f5146cbca76cafa3c9631176c7c741234f47410e07bbcbf6`。
+- 晋级门：燧原正确且 speedup >=0.1x、其余七芯不回归，达到 8/8；
+  若失败，只接受平台返回的新明确代码侧错误进入 E6，不重投相同字节。
