@@ -9,9 +9,9 @@ platform: 7/8
 team_best_stage: e8
 team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
-blockers: e14昆仑case2-4同E13数值指纹
+blockers: e15昆仑case2-4同E13数值指纹
 sealed: no
-next: e15候选就绪;实时preflight
+next: e16关闭stage2 Vectorize
 updated: 2026-09-01
 ```
 
@@ -538,3 +538,17 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   13785 bytes,SHA-256
   `3668676581cb45dbf15c24e43e3f24b43bd865b5894f84a5e161a876a6f509b8`;
   actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+
+### E15 平台结果(sub 7642,2026-09-01 12:40 CST):仍与 E13 同指纹
+
+- preflight 全过后一次性提交;平台文件 URL SHA-256
+  `d1b78bfa1460db92ca9997095661ec89cc3dc94168f45db438aadf4c63678a78`;
+  提交后额度 `19/30`,远端 ZIP 回读 `unavailable`,未重试。
+- 七芯 generic 全过:天数 `3.8825x`、沐曦 `9.0875x`、燧原 `0.516x`、
+  海光 `8.462x`、华为 `3.6855x`、card_a `6.412x`、card_b `8.2005x`。
+- 昆仑编译执行完成(18494ms),case 0/1 通过;case 2/3/4 的失配数、最大
+  绝对误差和索引继续与 E13/E14 完全相同。stage1 metadata flag 轴封存。
+- 新证据修正后续顺序:平台先断言 `y`,不能证明 `new_state` 同时错误;而 E13-E15
+  的所有关闭项只传给 stage1。stage2 仍是 `[8,8]` axis-1 reduce + P 向量 store,
+  未带任何 XPU workaround。因此 E16 只关闭 stage2 Vectorize;若仍同指纹再拆分
+  state update 与 y reduction。
