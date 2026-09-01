@@ -30,6 +30,7 @@ def _state_passing_step_kernel(
     out_ptr,
     DIM: tl.constexpr,
     BLOCK_SIZE: tl.constexpr,
+    isCloseCoreTiling: tl.constexpr,
 ):
     dim_offsets = tl.program_id(0) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
     row = tl.program_id(1)
@@ -103,6 +104,7 @@ def state_passing(
                 BLOCK_SIZE=_BLOCK_SIZE,
                 num_warps=4,
                 num_stages=1,
+                isCloseCoreTiling=True,
             )
             row_start = row_stop
 

@@ -19,7 +19,7 @@ import triton
 import triton.language as tl
 
 _BLOCK_SIZE = 256
-_MAX_GRID = 12
+_MAX_GRID_DIM = 255
 
 
 @triton.jit(do_not_specialize=["nchunks"])
@@ -29,11 +29,8 @@ def _state_passing_kernel(
     initial_states_ptr,
     out_ptr,
     final_states_ptr,
-    total_tiles,
     nchunks,
-    nheads,
     dim,
-    tiles_per_head,
     states_stride_b,
     states_stride_c,
     states_stride_h,
@@ -53,72 +50,65 @@ def _state_passing_kernel(
     final_stride_h,
     final_stride_d,
     length,
+    batch_start,
+    head_start,
     HAS_INITIAL_STATES: tl.constexpr,
     BLOCK_SIZE: tl.constexpr,
 ):
-    pid = tl.program_id(0)
-    grid_stride = tl.num_programs(0)
+    dim_tile = tl.program_id(0)
+    batch = batch_start + tl.program_id(1)
+    head = head_start + tl.program_id(2)
     dim_offsets = tl.arange(0, BLOCK_SIZE)
+    dim_indices = dim_tile * BLOCK_SIZE + dim_offsets
+    dim_mask = dim_indices < dim
 
-    for tile_id in range(pid, total_tiles, grid_stride):
-        dim_tile = tile_id % tiles_per_head
-        batch_head = tile_id // tiles_per_head
-        head = batch_head % nheads
-        batch = batch_head // nheads
-        dim_indices = dim_tile * BLOCK_SIZE + dim_offsets
-        dim_mask = dim_indices < dim
+    if HAS_INITIAL_STATES:
+        initial_base = batch * init_stride_b + head * init_stride_h
+        current = tl.load(
+            initial_states_ptr + initial_base + dim_indices * init_stride_d,
+            mask=dim_mask,
+            other=0.0,
+        ).to(tl.float32)
+    else:
+        current = tl.zeros([BLOCK_SIZE], dtype=tl.float32)
 
-        if HAS_INITIAL_STATES:
-            initial_base = batch * init_stride_b + head * init_stride_h
-            current = tl.load(
-                initial_states_ptr
-                + initial_base
-                + dim_indices * init_stride_d,
-                mask=dim_mask,
-                other=0.0,
-            ).to(tl.float32)
-        else:
-            current = tl.zeros([BLOCK_SIZE], dtype=tl.float32)
-
-        for chunk in range(0, nchunks):
-            out_base = (
-                batch * out_stride_b
-                + chunk * out_stride_c
-                + head * out_stride_h
-            )
-            out_dtype = out_ptr.dtype.element_ty
-            tl.store(
-                out_ptr + out_base + dim_indices * out_stride_d,
-                current.to(out_dtype),
-                mask=dim_mask,
-            )
-
-            dA_offset = (
-                batch * dA_stride_b
-                + head * dA_stride_h
-                + chunk * dA_stride_c
-                + (length - 1) * dA_stride_l
-            )
-            decay = tl.exp(tl.load(dA_cumsum_ptr + dA_offset).to(tl.float32))
-
-            states_base = (
-                batch * states_stride_b
-                + chunk * states_stride_c
-                + head * states_stride_h
-            )
-            state = tl.load(
-                states_ptr + states_base + dim_indices * states_stride_d,
-                mask=dim_mask,
-                other=0.0,
-            ).to(tl.float32)
-            current = current * decay + state
-
-        final_base = batch * final_stride_b + head * final_stride_h
+    for chunk in range(0, nchunks):
+        out_base = (
+            batch * out_stride_b + chunk * out_stride_c + head * out_stride_h
+        )
+        out_dtype = out_ptr.dtype.element_ty
         tl.store(
-            final_states_ptr + final_base + dim_indices * final_stride_d,
-            current,
+            out_ptr + out_base + dim_indices * out_stride_d,
+            current.to(out_dtype),
             mask=dim_mask,
         )
+
+        dA_offset = (
+            batch * dA_stride_b
+            + head * dA_stride_h
+            + chunk * dA_stride_c
+            + (length - 1) * dA_stride_l
+        )
+        decay = tl.exp(tl.load(dA_cumsum_ptr + dA_offset).to(tl.float32))
+
+        states_base = (
+            batch * states_stride_b
+            + chunk * states_stride_c
+            + head * states_stride_h
+        )
+        state = tl.load(
+            states_ptr + states_base + dim_indices * states_stride_d,
+            mask=dim_mask,
+            other=0.0,
+        ).to(tl.float32)
+        current = current * decay + state
+
+    final_base = batch * final_stride_b + head * final_stride_h
+    tl.store(
+        final_states_ptr + final_base + dim_indices * final_stride_d,
+        current,
+        mask=dim_mask,
+    )
 
 
 def state_passing(
@@ -155,8 +145,6 @@ def state_passing(
         device=states.device,
     )
     tiles_per_head = triton.cdiv(dim, _BLOCK_SIZE)
-    total_tiles = batch * nheads * tiles_per_head
-    grid = (min(total_tiles, _MAX_GRID),)
 
     if initial_states is None:
         initial_ptr = states
@@ -165,28 +153,32 @@ def state_passing(
         initial_ptr = initial_states
         initial_strides = initial_states.stride()
 
-    _state_passing_kernel[grid](
-        states,
-        dA_cumsum,
-        initial_ptr,
-        out,
-        final_states,
-        total_tiles,
-        nchunks,
-        nheads,
-        dim,
-        tiles_per_head,
-        *states.stride(),
-        *dA_cumsum.stride(),
-        *initial_strides,
-        *out.stride(),
-        *final_states.stride(),
-        length,
-        HAS_INITIAL_STATES=initial_states is not None,
-        BLOCK_SIZE=_BLOCK_SIZE,
-        num_warps=4,
-        num_stages=1,
-    )
+    for batch_start in range(0, batch, _MAX_GRID_DIM):
+        batch_count = min(_MAX_GRID_DIM, batch - batch_start)
+        for head_start in range(0, nheads, _MAX_GRID_DIM):
+            head_count = min(_MAX_GRID_DIM, nheads - head_start)
+            grid = (tiles_per_head, batch_count, head_count)
+            _state_passing_kernel[grid](
+                states,
+                dA_cumsum,
+                initial_ptr,
+                out,
+                final_states,
+                nchunks,
+                dim,
+                *states.stride(),
+                *dA_cumsum.stride(),
+                *initial_strides,
+                *out.stride(),
+                *final_states.stride(),
+                length,
+                batch_start,
+                head_start,
+                HAS_INITIAL_STATES=initial_states is not None,
+                BLOCK_SIZE=_BLOCK_SIZE,
+                num_warps=4,
+                num_stages=1,
+            )
     return out, final_states
 
 
