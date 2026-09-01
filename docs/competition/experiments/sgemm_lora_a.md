@@ -8,15 +8,14 @@ validity: invalid
 platform: 6/8(E2 历史平台;公开榜单已证明可达 8/8)
 team_best_stage: e2
 team_best_commit: 58aab90
-blockers: E3/E4 均未获目标芯有效验签;Sunrise verifier 零测试伪阳性;Kunlun MCP 502
+blockers: E4目标芯未验签；已生成规范ZIP，待单次平台验证
 sealed: no
-next: 等燧原/昆仑有效目标芯验证;未授权不提交
+next: 按用户授权提交E4 Enflame+Kunlun合包
 updated: 2026-09-01
 ```
 
-状态:历史平台仍为 6/8;E3 燧原 i32-route 与 E4 昆仑规则 GEMM
-候选已通过 exact-commit NVIDIA release,但未获目标芯有效验签。机器可读
-状态见顶部 CURRENT 块
+状态:历史平台仍为 6/8；E4 合并燧原 i32-route 与昆仑规则 GEMM，
+已通过 exact-commit NVIDIA release、生成规范 ZIP，待本轮单次平台验证。
 
 ## 契约锁定
 
@@ -189,3 +188,27 @@ confirm 提交,评测入队,逐芯结果待回填。
 - 本轮不打 ZIP、不上传、不提交。保留两个相互隔离的 source
   candidate;下一步只接受有效燧原/昆仑 runner 或平台闭环,不再做
   generic tile/stages/grid 猜测。
+
+## E4 规范 ZIP 与平台预注册(2026-09-01 23:27 CST)
+
+- 用户在 T28 E11 8/8 后明确授权用完剩余 3 次；本发为第一发。T28 同类
+  route/materialize + regular GEMM Kunlun 结构刚在 sub 7959 从历史
+  1830 秒崩溃恢复为 4.4045x/14.472 秒通过，为 E4 提供目标芯结构证据；
+  `_enflame` 仍是独立的 i32-route 假设。
+- source/verification commit:
+  `4efff424c2fa48b55e56df4352cc5dee4901d372`；test SHA-256:
+  `9adf18680a0c9cb8f639dafb064ea44a035bebabcc4a49b2f0c3a3f808e34b5c`；
+  release log SHA-256:
+  `9e234a55d680e9d1fa052d4f0afcd3a785be57ed4396fc198a3c36090c021a29`。
+- canonical ZIP `artifacts/competition/sgemm_lora_a/e4-4efff42/sgemm_lora_a.zip`，
+  24,503 bytes，SHA-256
+  `9031f7580d5c3a7317df6f4e2e28748e84bc38500320d28869eaff500c243f6f`；
+  打包器 canonical 验签与 `unzip -t` 均通过。
+- 四成员 SHA-256：generic
+  `090d22c1d1ad20c9162c1764f33d1ef60ca58304a9ebaf48d4a2448442c5bd34`；
+  Enflame `9a390b19a7bcac80a771da467f41b52bc3fc941a7f83fd0a2502d010994998fe`；
+  Iluvatar `c10bfa4f80180770a933068914fabb02e64970cb94ffd0710548150fc74d4cb0`；
+  Kunlun `776237b87d6fd074f5146cbca76cafa3c9631176c7c741234f47410e07bbcbf6`。
+- 晋级门：燧原与昆仑均正确且 speedup >= 0.1x，历史六芯不回归，达到
+  8/8 valid。stop gate：明确代码侧错误才进入下一候选；若仍为空
+  `failed_cases` 的 compile-worker 崩溃，不重投相同结构。

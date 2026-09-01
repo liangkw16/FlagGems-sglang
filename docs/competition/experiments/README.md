@@ -578,3 +578,10 @@ T32 E3 代理门未过未发射。
   `7959` 终态 **8/8 valid、14.3795x、实时第 3/4**；昆仑由历史 1830 秒
   compile-worker 崩溃恢复为 4.4045x/14.472 秒通过，证明布局物化 + 规则
   GEMM 是有效芯片专属结构。T28 封存，额度剩余 3/30。
+
+## 2026-09-01 T37 E4 合包发射
+
+- `4efff42` 合并 Enflame i32-route 与 Kunlun route/materialize + regular
+  GEMM；exact-release 5/5，canonical ZIP `e4-4efff42` SHA-256
+  `9031f758…43f6f` 已验签。T28 同结构昆仑 4.4045x 通过后，按用户授权
+  进入单次平台验证；晋级门为两目标芯均 >=0.1x 且整题 8/8。

@@ -17,7 +17,7 @@
 | 34 | per_token_quant_int8 | valid | 8/8 | e1 4.7131x | yes | e4 persistent cap与SGLang launch参数均不过5%全矩阵门;已知轴尽 | 2026-09-01 | [per_token_quant_int8](per_token_quant_int8.md) |
 | 35 | rotary_embedding | valid | 8/8 | e3 5.8458x | yes | e5 generic heads_tile 1/2/8/16 全部低于5%门;tile4局部最优,收盘 | 2026-09-01 | [rotary_embedding](rotary_embedding.md) |
 | 36 | selective_state_update | invalid_correctness | 7/8(e29;昆仑compile-worker崩溃) | e22(correctness) 5.1200625x | no | persisted-slice轴已关闭;仅有全新源码级结构证据时重开 | 2026-09-01 | [selective_state_update](selective_state_update.md) |
-| 37 | sgemm_lora_a | invalid | 6/8(E2 历史平台;公开榜单已证明可达 8/8) | e2 | no | 等燧原/昆仑有效目标芯验证;未授权不提交 | 2026-09-01 | [sgemm_lora_a](sgemm_lora_a.md) |
+| 37 | sgemm_lora_a | invalid | 6/8(E2 历史平台;公开榜单已证明可达 8/8) | e2 | no | 按用户授权提交E4 Enflame+Kunlun合包 | 2026-09-01 | [sgemm_lora_a](sgemm_lora_a.md) |
 | 38 | sigmoid_gate_topk_renorm | invalid | 7/8 | S0 | yes | E2 七芯均值4.9415x(+4.17倍)但昆仑同族崩溃;仅平台runtime修复后重开 | 2026-09-01 | [sigmoid_gate_topk_renorm](sigmoid_gate_topk_renorm.md) |
 | 39 | silu_and_mul_masked | valid | 8/8 | E7 19.8698x | yes | E14海光packing六轴八格均未过5%门;不提交,转向其它高登顶概率任务 | 2026-09-01 | [silu_and_mul_masked](silu_and_mul_masked.md) |
 | 40 | softcap_inplace_logits | valid | 8/8 | e6 1.7679x | yes | e9 generic direct仅+1.63~3.40%;需+32.25%才登顶,官方可迁移轴已尽 | 2026-09-01 | [softcap_inplace_logits](softcap_inplace_logits.md) |
