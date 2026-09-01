@@ -11,7 +11,7 @@ team_best_commit: 7414c69
 team_best_speedup: 七芯~5.8
 blockers: e11昆仑stage1 8x16 uni_sram
 sealed: no
-next: e13已编译;定位P=128数值lowering
+next: e14候选就绪;实时preflight
 updated: 2026-09-01
 ```
 
@@ -464,3 +464,39 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   UnrollControl(会重新引入编译失败)。下一候选以 E13 为基线,只改变一个
   P/grid 或后置 pass 变量;先用源码证据区分 grid.x=16、双 store 和 reduce
   live-range,不盲叠 flags。
+
+## E14:同时关闭 stage1 CoreTiling 与 Vectorize(commit `bdbb868`)
+
+- 唯一执行变量:保留 E13 的 P8×N16 和已证明必要的
+  `isCloseCoreTiling=True`,只新增 `isCloseVectorization=True`。E12 在更早的
+  CoreTiling pass 即失败,没有执行到 Vectorize,因此不能证伪双关闭组合。
+- 官方 `rwkv_ka_fusion` 与本题 stage1 同为二维 tile、axis-1 reduce、broadcast
+  和多 store;其注释明确记录默认 XPU store vectorizer 会丢 lane,关闭后恢复
+  正确且几乎无性能损失([kernel](https://github.com/flagos-ai/FlagGems/blob/d8b500b368343ac5f5ff4e01b508d9e8e03ad5c5/src/flag_gems/runtime/backend/_kunlunxin/fused/rwkv_ka_fusion.py#L61-L71),
+  [workaround](https://github.com/flagos-ai/FlagGems/blob/d8b500b368343ac5f5ff4e01b508d9e8e03ad5c5/src/flag_gems/runtime/backend/_kunlunxin/fused/rwkv_ka_fusion.py#L98-L118))。
+  官方 [LayerNorm](https://github.com/flagos-ai/FlagGems/blob/d8b500b368343ac5f5ff4e01b508d9e8e03ad5c5/src/flag_gems/runtime/backend/_kunlunxin/ops/layernorm.py#L566-L582)
+  与 [InstanceNorm](https://github.com/flagos-ai/FlagGems/blob/d8b500b368343ac5f5ff4e01b508d9e8e03ad5c5/src/flag_gems/runtime/backend/_kunlunxin/ops/instance_norm.py#L625-L644)
+  也组合使用这些关闭项。
+- source/verification commit
+  `bdbb868186fef47c387a4dc026af5ed188810f89`;Kunlun SHA-256
+  `816448b987a7c38e0a72e635690f9fd1c864a56c9b0f06bd2201c915d14b468f`;
+  generic/test 仍为 `c1e180...` / `a6cc8...`。
+- screening:`gpu-et:/tmp/flagos-selective_state_update-e14-screening.y7eH67`,
+  PID/PGID/SID `238807`;static + 双 constexpr CUDA JIT + variants **5/5 PASS**,
+  8.356s;log SHA-256
+  `dce5e4d5d86192d08c04c18cf2b3e15483a394407010fcf62f58d57a543de2e9`。
+- commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e14-release.GozStj`,PID/PGID/SID
+  `239156`;Git-object manifest 前后一致,static + 双 constexpr JIT + variants
+  **5/5 PASS**;release log SHA-256
+  `389928e9a685ecfc2f897f36de68f94dd00570bb2bf0b1f46ec7986296a6d917`。
+- canonical ZIP:
+  `artifacts/competition/selective_state_update/e14-bdbb868/selective_state_update.zip`,
+  13702 bytes,SHA-256
+  `70392da68c79a1c3c65d1b0f41496f729d45b02e4030dec5a573c03d53e62b90`;
+  actual/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+- 2026-09-01 12:31 CST 实时榜单:团队仍为 7/8、无有效排名;榜首 `c2flow`
+  八芯均值 `8.4960x`。当前七芯均值 `5.8004x`;本轮门槛先让昆仑正确且
+  `>=0.1x`,形成首个有效八芯成绩。若 E14 仍为相同数值指纹,E15 只新增
+  `isCloseUnrollControl=True`;再失败则停止扫 flag,拆分二维 state store 与
+  C-reduce/partial store。
