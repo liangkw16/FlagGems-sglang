@@ -50,6 +50,7 @@ def _ssu_stage1_kernel(
     N_SLICE: tl.constexpr,
     isCloseCoreTiling: tl.constexpr,
     isCloseVectorization: tl.constexpr,
+    isCloseUnrollControl: tl.constexpr,
 ):
     p_tile = tl.program_id(0)
     b = batch_start + tl.program_id(1)
@@ -232,6 +233,7 @@ def selective_state_update(
                 N_SLICE=_N_SLICE,
                 isCloseCoreTiling=True,
                 isCloseVectorization=True,
+                isCloseUnrollControl=True,
             )
     for batch_start in range(0, batch, batch_chunk):
         batch_count = min(batch_chunk, batch - batch_start)
