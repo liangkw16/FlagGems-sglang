@@ -574,6 +574,7 @@ T32 E3 代理门未过未发射。
 - KernelGen `optimize_kernel` 两轮已用于生成与修正；随后两次真实
   `generate_kernel(device=kunlun)` 共触发六次后端 verify，全部为
   `HTTP 502`，故不能记为昆仑通过或候选失败。
-- T28 平台终态仍为 7/8、team best 仍为 e9 七芯约 18.5x；E11 canonical
-  ZIP `e11-b40e5aa` 已验签(SHA-256 `9845aab1…cffc`)，按用户本轮授权进入
-  单次平台验证，其他三次额度保留。
+- E11 canonical ZIP `e11-b40e5aa`(SHA-256 `9845aab1…cffc`)单次提交
+  `7959` 终态 **8/8 valid、14.3795x、实时第 3/4**；昆仑由历史 1830 秒
+  compile-worker 崩溃恢复为 4.4045x/14.472 秒通过，证明布局物化 + 规则
+  GEMM 是有效芯片专属结构。T28 封存，额度剩余 3/30。

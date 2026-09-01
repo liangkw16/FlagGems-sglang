@@ -4,19 +4,19 @@
 task: 28
 operator: gate_up_lora_b
 batch: 3
-validity: invalid
-platform: 7/8
-team_best_stage: e9
-team_best_commit: 6494691
-team_best_speedup: 七芯~18.5
-blockers: E11昆仑MCP验证两轮均后端HTTP502；平台待单次验证
-sealed: no
-next: E11规范ZIP已验签；按用户授权执行单次平台验证
+validity: valid
+platform: 8/8(e11,14.3795x,rank3/4)
+team_best_stage: e11
+team_best_commit: b40e5aa
+team_best_speedup: 14.3795
+blockers: 榜首41.7015625x，差27.3220625x；无已验证追榜候选
+sealed: yes
+next: 保留E11；T28停止提交，剩余3次转下一候选决策
 updated: 2026-09-01
 ```
 
-状态:E11 已本地提交、通过 exact-commit release，规范 ZIP 已生成并验签；
-昆仑云端验证受服务 HTTP 502 阻塞，待本轮单次平台验证。
+状态:E11 平台 8/8 valid、14.3795x、实时第 3/4；PR41 启发的布局物化
+结构使昆仑由历史 1830 秒崩溃恢复为 4.4045x 通过，候选封存。
 
 ## 契约锁定
 
@@ -387,3 +387,39 @@ E11 在 NVIDIA 上比旧 vendor 慢，仅作为 validity-first 昆仑结构候�
 - 晋级门：昆仑正确且 speedup >= 0.1x，使整题达到 8/8 valid；七芯保持
   既有通过。stop gate：若仍为约 1830 秒 compile-worker/空
   `failed_cases` 崩溃，不重投同结构；只有明确代码侧错误才进入新候选迭代。
+
+### E11 平台终态(sub 7959，2026-09-01 23:10–23:16 CST)
+
+- preflight 实时 tuple：账号 `15600308080`、团队 `SoulCoder`、batch 3、
+  Task 28、tid `s2t1op028`、`competing/submitting/can_submit=true`、
+  提交前额度 4/30；与上节 source/verification/ZIP/成员逐项一致后执行
+  一次性 confirm。平台返回 daily_seq 27、file URL SHA-256
+  `8e19935358e9a7262d34a8886125fd3fd725402d6c39c61c73b60db2ef175216`。
+- submit 内置远端验签因进程未预设可信对象存储域名而为 `unavailable`；
+  随后以平台既有状态已核实的精确域名
+  `flagos.ks3-cn-beijing.ksyuncs.com` 做无认证、禁止重定向的只读下载，
+  得到 25,962 bytes、SHA-256
+  `9845aab125c2d32990b511de90e16bece3e4a7040038b630bfeece0eb2dccffc`，
+  与本地不可变 ZIP 完全一致。未重发上传或提交 POST。
+
+| 芯片 | 选中文件 | speedup | 执行时间 | 结果 |
+| --- | --- | ---: | ---: | --- |
+| 天数 | `_iluvatar.py` | 15.0265x | 25,286 ms | 通过 |
+| 沐曦 | generic | 17.2590x | 25,497 ms | 通过 |
+| 燧原 | `_enflame.py` | 1.2680x | 7,360 ms | 通过 |
+| 海光 | generic | 38.5480x | 11,518 ms | 通过；仅 pytest 配置 warning |
+| 昆仑 | `_kunlunxin.py` | 4.4045x | 14,472 ms | 通过 |
+| 华为 | generic | 23.4050x | 34,161 ms | 通过 |
+| 国际 A | generic | 12.9130x | 23,954 ms | 通过 |
+| 国际 B | generic | 2.2120x | 12,981 ms | 通过 |
+
+- 终态：8/8、`valid`、平均 14.3795x、`is_team_best=true`；终态只读状态
+  observed_at `2026-09-01T23:16:34.372179+08:00`，额度剩余 3/30。
+  随后认证榜单返回达标 4 队、我方第 3、榜首 `c2flow` 41.7015625x，
+  gap 27.3220625x。
+- 供七个非昆仑芯使用的 generic/Enflame/Iluvatar 三个 ZIP 成员与旧载体
+  逐字节不变，七芯全部再通过；唯一变量
+  `_kunlunxin` 从历史约 1830 秒 compile-worker 崩溃变为 14.472 秒通过。
+  因此“route/物化 -> 规则 GEMM -> inverse restore”是有效的芯片专属
+  结构修复，而 MCP HTTP 502 确认为验证服务不可用证据，不是 kernel 失败。
+  本题不再消耗额度。
