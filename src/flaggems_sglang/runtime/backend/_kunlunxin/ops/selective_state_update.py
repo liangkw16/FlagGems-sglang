@@ -304,7 +304,7 @@ def selective_state_update(
             HAS_DT_BIAS=dt_bias is not None,
             DT_SOFTPLUS=bool(dt_softplus),
             P_BLOCK=_P_BLOCK,
-            N_SLICE=8,
+            N_SLICE=16,
             isCloseVectorization=True,
             isCloseUnrollControl=True,
         )
