@@ -9,9 +9,9 @@ platform: 8/8
 team_best_stage: e22(correctness)
 team_best_commit: f1a12f7
 team_best_speedup: 5.1200625x;昆仑0.0025x
-blockers: e27昆仑0.0135x虽提升4.5倍,距0.1x仍差7.41倍
+blockers: e28 exact-N128已release,待目标昆仑验证是否跨过0.1x
 sealed: no
-next: P-major单变量二分XPU Vectorize与N-loop局部展开
+next: e28不可变ZIP实时preflight后单次提交
 updated: 2026-09-01
 ```
 
@@ -1232,3 +1232,70 @@ E12 保留 P=8/N=16,仅关闭 XPU stage1 vectorization pass。
   旧正确路径关闭 XPU Vectorize/UnrollControl;下一轮只选择一个编译器变量,
   优先判断官方同构 kernel 默认开启的 Vectorize 能否合并每 core 的连续 N 访存,
   不同时改 P_BLOCK、mask 或 fallback。
+
+## E28:exact N128 × P64 二维 block-DMA(commit `d614385`)
+
+- 固定 FlagTree 源码审计否定了 E27 上直接开 Vectorize:其 rank-1 P64 被默认
+  64-core layout 分成每核 1 个 FP32 元素,低于 Vectorize 的 512-bit/16-FP32
+  门槛,且该 pass 不会跨 SCF N-loop 合并迭代([Vectorize](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/lib/Dialect/TritonXPU/Transforms/Vectorize.cpp#L526-L540),
+  [门槛](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/lib/Dialect/TritonXPU/Transforms/Vectorize.cpp#L960-L998))。
+  static-unroll8 也只复制八份 scalar DAG,理想上限 `8x` 几乎刚好等于所需
+  `7.407x`,现实仍含四次 load、exp 与 store;unroll4 理论上限不足过门。因此两者
+  不消耗 E28 配额。
+- 唯一结构变量:仅 `P>=64 && P%64==0 && N==128` 改走 exact constexpr-N
+  `[64,128]` 二维 tile;state/A 是整块连续地址,B/C 沿 N 广播,new state 从独立
+  输入以 FP32 计算并写独立输出,y 在降精度前做 axis-1 sum。没有 P/N mask、
+  runtime N loop、N slice 或 workspace;N16/N32 和所有非主形状逐字节保留 E27
+  两级 fallback。case3/4 占全部 QN **99.8583%**,因此该 gate 已覆盖主瓶颈而把
+  风险限制在单一 specialization。
+- 该 tile 恰为官方 Kunlun
+  [fused RMSNorm multirow](https://github.com/flagos-ai/FlagGems/blob/5d281c8f9073bf9547351b0e4c835465586d327f/src/flag_gems/runtime/backend/_kunlunxin/fused/fused_add_rms_norm.py#L172-L240)
+  的 8192-element SRAM 上限;launch 同样只关闭 Vectorize/UnrollControl,不传
+  `isCloseCoreTiling`,故 CoreTiling 保持开启。固定
+  [CoreTiling 公式](https://github.com/flagos-ai/FlagTree/blob/7b0370a4976c6fcdbab89420bf53728472d75a9e/third_party/xpu/lib/Dialect/TritonXPU/Transforms/CoreTiling.cpp#L136-L196)
+  对 `[64,128]` 得到 `64 groups × 1 core`,每核独占一条连续 N128 行并做本核
+  reduction。E13-E19 是 P8×N16 sliced、mask 且关闭 CoreTiling 的跨核路径,
+  不构成本候选反例;P32 会退成 32 groups×2 cores,故不扫描更小 P tile。
+- source/verification commit
+  `d6143859a4244dab99f380179c0e8cafa5577a0b`;Kunlun Git blob
+  `a4fc405d8d6e4ffb31c65fdf38e87126d8684fa3`,SHA-256
+  `b4347ee826cd38f3238a286cd077bb2ca6f7d337f811a52b3abe1566e2fcee9f`;
+  generic/test 仍为 `c1e180...ac4c` / `a6cc8c...aaf0`。
+- 前两份辅助 gate 在任何 JIT 前因 `probe.py` 单文件/多文件 isort 分类相反而
+  fail-fast:`gpu-et:/tmp/flagos-selective_state_update-e28-screening.TyyFLu` 与
+  `...-corrected.tjPa2B`,日志 SHA-256 分别为
+  `cd69dbab2099402308af7d1ce4efa7dd063dea94c8de88120e4edb02786c0706` /
+  `023b5594cf7fc25eb1f1755b8e2e09e80c7efa87fe4c28e6155ae22032085869`;
+  两者不作候选证据。按远端规范只让五个目标仓库文件进入 isort 后,从新目录重跑。
+- 最终 screening:
+  `gpu-et:/tmp/flagos-selective_state_update-e28-screening-final.SDPfPV`,mode 0700,
+  PID/PGID/SID `249995`;Black79/静态审计/三次 manifest 全过;exact N128
+  P64/P128 × 3 dtype × no/all flags **12/12**,连同 P-major/fused 回退共
+  **42/42 PASS**,覆盖 state immutable、redzone、跨 batch/head/group;
+  平台路径/grids 为 `pmajor,pmajor,exact,exact` / `40,96,4096,16384`,variants
+  **5/5 PASS**。gate/probe/log SHA-256 为
+  `787c6efb58bf376f06c31e8200707b083df2fd3ae87ae5dd02e1e31ca3dade60` /
+  `0a055b2a562174f099cb4a5685a23c268c2ad276004dca431ed4adc1b5ea6849` /
+  `5a273edcb021c4e1686ad802e96e36f327d68328939a2e1484e830e15b86a90a`。
+- 独立 commit-bound release:
+  `gpu-et:/tmp/flagos-selective_state_update-e28-release.UcTFSw`,mode 0700,
+  PID/PGID/SID `250352`;重新从 Git objects 冻结五文件,同组 42/42 + geometry +
+  variants **5/5 PASS**,三次 manifest 一致。gate/probe/log SHA-256 为
+  `787c6efb58bf376f06c31e8200707b083df2fd3ae87ae5dd02e1e31ca3dade60` /
+  `0a055b2a562174f099cb4a5685a23c268c2ad276004dca431ed4adc1b5ea6849` /
+  `842351253c17df3627760ae74b1b7fc3bd254ae011efb4e9926ef3fb4d688202`。
+- canonical ZIP
+  `artifacts/competition/selective_state_update/e28-d614385/selective_state_update.zip`,
+  16546 bytes,SHA-256
+  `a3769a6e02fa85fda866d4bdde4696ba23b7a982d73b42601f4cb4d820c69a0a`;
+  dry-run/created/`--verify-existing` 一致,仅 generic + `_kunlunxin` 两成员。
+
+### E28 平台预注册门
+
+- 基础门:8/8 正确且每芯 `>=0.1x`;机制门:昆仑高于 E27 `0.0135x` 且
+  validation 低于 17636ms;有效门为昆仑 `>=0.1x`。候选只上传和提交一次,
+  不重掷方差。
+- 若出现 `uni_sram` 或任一 state/y 数值失败,关闭 exact-2D 轴,不扫描 P32 或
+  metadata flags;转源码级 N-unroll8。若正确但昆仑 `<0.027x`,说明 block-DMA
+  未兑现,停止 exact tile 参数扫;`0.027-0.04x` 没有安全单变量跨门;
+  `0.04-0.1x` 才允许一次 exact-2D Vectorize-on 高风险验证;`>=0.1x` 达标即停。
