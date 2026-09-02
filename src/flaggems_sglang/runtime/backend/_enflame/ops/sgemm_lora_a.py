@@ -171,3 +171,4 @@ def sgemm_lora_a(x, weights, batch_info, stack_num=1):
 __all__ = ["sgemm_lora_a"]
 
 # water-sample carrier r1 (2026-09-02): bytes identical to e5-6ce280b team best
+# water-sample carrier r2 (2026-09-03)
