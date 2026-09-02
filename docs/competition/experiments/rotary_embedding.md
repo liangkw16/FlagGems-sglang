@@ -265,3 +265,14 @@ card_a 9.92 / card_b 9.15 / 华为 0.77 / 燧原 0.40 / 昆仑 0.29——与榜�
 - 预注册门:8/8 valid、平均 > 5.8458 即新团队最佳;stop gate:昆仑
   若以 e3 字节再现崩溃族指纹(排除结构因素)→ 纯平台故障,计工单
   不重投;七芯任一非噪声回退 → 该芯字节回滚并复盘。
+
+### E7 平台提交(sub 8253,2026-09-02 14:5x CST)
+
+- preflight 核对 source=verification commit `c54de18`、stage e7、4 成员
+  (generic `a99d4b85`、ascend `b188103d`、enflame `1957dd66`、kunlun
+  `ceca925b`)、ZIP SHA-256
+  `7fe3f45207afecc3f7914bb0c6b0ec07e14db830685cf1b399319ec9f3525756`;
+  nonce `3a4cd0b0a8adce324ae37568c55706f1` 一次性消费,submission
+  `8253`(daily seq 9),额度 22→21/30;
+- release 证据:git 对象目录 `gpu:/tmp/flagos-rel-t35e7.XXXXXX`,
+  unittest 5/5,远端成员 SHA 与 ZIP 逐项一致。
