@@ -11,7 +11,7 @@
 | 28 | gate_up_lora_b | valid | 8/8(e11,14.3795x,rank3/4) | e11 14.3795x | yes | 保留E11；今日额度已用完，T28停止提交 | 2026-09-01 | [gate_up_lora_b](gate_up_lora_b.md) |
 | 29 | gelu_and_mul | valid | 8/8 | e8 2.7394x | yes | exact-erf 官方实现与 minimax 数值边界复核;预期收益远不足66.68%榜差,封存 | 2026-09-01 | [gelu_and_mul](gelu_and_mul.md) |
 | 30 | interleaved_rope | valid | 8/8 | S0 25.8353x | yes | 实时榜首37.7641;一读一写下界已达,MCP/官方实现复核无可信46.17%路径 | 2026-09-01 | [interleaved_rope](interleaved_rope.md) |
-| 31 | moe_fused_gate | candidate | E7 7/8;E8 待提交 | e7(=e6字节载体) 七芯~7.73x | no | E8 canonical ZIP/实时 preflight/单次提交 | 2026-09-02 | [moe_fused_gate](moe_fused_gate.md) |
+| 31 | moe_fused_gate | candidate | E7 7/8;E8 待提交 | e7(=e6字节载体) 七芯~7.73x | no | E8 实时 preflight/单次提交 | 2026-09-02 | [moe_fused_gate](moe_fused_gate.md) |
 | 32 | moe_fused_mul_sum | valid | 8/8 | S0 4.4829x | yes | e5 三框架独立reduce同构;流量理想上限仅+22.7%,无法解释433%榜差 | 2026-09-01 | [moe_fused_mul_sum](moe_fused_mul_sum.md) |
 | 33 | per_token_group_quant_int8 | valid | 8/8 | e10 5.5720x | yes | e13 官方 constexpr/direct/subwarp/M8 家族全未过门;仅新 vendor subgroup 证据可重开 | 2026-09-01 | [per_token_group_quant_int8](per_token_group_quant_int8.md) |
 | 34 | per_token_quant_int8 | valid | 8/8 | e1 4.7131x | yes | e4 persistent cap与SGLang launch参数均不过5%全矩阵门;已知轴尽 | 2026-09-01 | [per_token_quant_int8](per_token_quant_int8.md) |

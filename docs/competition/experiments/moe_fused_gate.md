@@ -9,9 +9,9 @@ platform: E7 7/8;E8 待提交
 team_best_stage: e7(=e6字节载体)
 team_best_commit: f093ae8
 team_best_speedup: 七芯~7.73
-blockers: E8 KernelGen Kunlun cloud verify 运行中;目标芯尚无实机证据
+blockers: KernelGen Kunlun verifier 单次请求60分钟无终态;目标芯尚无实机证据
 sealed: no
-next: E8 canonical ZIP/实时 preflight/单次提交
+next: E8 实时 preflight/单次提交
 updated: 2026-09-02
 ```
 
@@ -187,8 +187,8 @@ failed_cases=0),排队 ~55 分钟后返回。T31 三投同指纹,恢复窗口
 
 ## E8:昆仑三阶段结构改写(2026-09-02)
 
-状态:screening、source/test commit 与 commit-bound release 已通过；等待
-KernelGen Kunlun cloud verify 后生成 canonical ZIP。
+状态:screening、source/test commit、commit-bound release 与 canonical ZIP
+验签已通过；待实时 preflight 与单次提交。
 
 ### 决策与预注册门
 
@@ -220,6 +220,11 @@ KernelGen Kunlun cloud verify 后生成 canonical ZIP。
   明确单行修复:stage2 store 指针改为 `+ slots`，使 vector value/mask 与
   pointer shape 一致。生成请求约束保存于
   `log/kernelgen-round/req_t31_e8_opt_desc.txt`(ignored evidence)。
+- 随后只发起一次 `generate_kernel(device="kunlun")` clean-room
+  对照；MCP 入口已进入 chunked SSE 响应，但约 60 分钟内无任何
+  JSON-RPC 终态/错误/验证结果，客户端终止于 `resp.read()`。按预注册
+  规则记为 KernelGen Kunlun verifier 不可用，不重试、不冒充芯片通过；
+  目标芯证据交由平台本次唯一提交。
 - 新 vendor 还修复了旧实现的契约边界:组内两个并列最大值只排除一个确定
   index，再取第二大；group/expert 均用 max + min-id 精确选择。softmax 的
   grouped/top-k 严格使用 reference 的 pre-softmax biased logits，只有输出
@@ -260,6 +265,10 @@ KernelGen Kunlun cloud verify 后生成 canonical ZIP。
   `24f9d7ca2d5b0e87361ae3736b309d871a0d89fbeac5094bc7205753c171fa35`；
   release benchmark log SHA-256
   `450a53350b91bf2fb3a4ef4ab03793d08b77c428213adae4c7058929687c5eef`。
-- 打包器 dry-run 仅含 `moe_fused_gate.py` 与
-  `moe_fused_gate_kunlunxin.py`；预计 canonical ZIP 18755 bytes，SHA-256
-  `f7ec5b4fab04ceb1fa78ad7df9931f7fc74beff82d48563445674e1d15c19820`。
+- canonical ZIP 已由 source commit `9b6911d` 创建，并通过
+  `--verify-existing`/`unzip -t`。路径
+  `artifacts/competition/moe_fused_gate/e8-9b6911d/moe_fused_gate.zip`，
+  18755 bytes，SHA-256
+  `f7ec5b4fab04ceb1fa78ad7df9931f7fc74beff82d48563445674e1d15c19820`；
+  根目录仅含 `moe_fused_gate.py` 与
+  `moe_fused_gate_kunlunxin.py`。
