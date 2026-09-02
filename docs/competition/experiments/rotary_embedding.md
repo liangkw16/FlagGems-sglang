@@ -10,7 +10,7 @@ team_best_stage: e8
 team_best_commit: e066a9e
 team_best_speedup: 5.961875
 sealed: no
-next: E9 tile16 探针提交中
+next: E9 sub8258 评测中(tile16 终态后决定封存或再迭代)
 updated: 2026-09-02
 ```
 
@@ -332,3 +332,15 @@ card_a 9.92 / card_b 9.15 / 华为 0.77 / 燧原 0.40 / 昆仑 0.29——与榜�
 - 预注册门:8/8 valid 且平均 > 5.961875;同窗归因华为/燧原任一芯
   相对 E8 回退 >3% 即该芯回滚 E8 字节;stop gate:数值/编译失败即
   回滚,同指纹不重投。目标:冲击 #8 ChipVoyager 6.173(需 +3.5%)。
+
+### E9 平台提交(sub 8258,2026-09-02 15:14:38 CST)
+
+- preflight 核对 source=verification commit `dc66469`、stage e9、4 成员
+  (generic `a99d4b85`、ascend t16 `26a3f916`、enflame t16 `34ac29b0`、
+  kunlun e3 `ceca925b`)、ZIP SHA-256
+  `219e8b393883430f653a17df13488ca66d5ea53a324b44d7b73323cb15de7358`;
+  nonce `8a17e833ab22c66c0913829d63ef4139` 一次性消费,submission
+  `8258`(daily seq 11),额度 20→19/30(重复 confirm 经核验为幂等读,
+  未产生第二个提交);
+- release 证据:git 对象目录 `gpu:/tmp/flagos-rel-t35e9.XXXXXX`,
+  unittest 5/5,release log SHA-256 `29ae8f9d…ba27`。
