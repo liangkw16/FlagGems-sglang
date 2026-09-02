@@ -5,12 +5,12 @@ task: 38
 operator: sigmoid_gate_topk_renorm
 batch: 3
 validity: candidate
-platform: E2 7/8; E3 upload HTTP 503,未形成提交
+platform: E2 7/8; E3 upload uncertain; E4 release-ready
 team_best_stage: S0
 team_best_commit: 311570f
-blockers: E3 submit intent=uncertain(upload HTTP 503);禁止自动重试
+blockers: E3 exact tuple禁止重试;E4 Kunlun待一次性实机验证
 sealed: no
-next: 只读查新记录/平台支持;uncertain 未消解前不得重试
+next: E4 新结构/新SHA完成preflight后单次提交
 updated: 2026-09-02
 ```
 
@@ -230,3 +230,53 @@ Kunlun verifier 为基础设施 502，目标芯待 commit-bound release 后单�
   额度仍为 `27/30`、`latest_submission_at=2026-09-02T01:17:22+08:00`，T38
   最新仍是旧 submission `7518`/daily seq 4；没有 E3 新记录。因此 E3 尚未进入
   八芯评测，候选门禁本身已通过，但发送状态未消解前不得自动 preflight/submit。
+
+## E4:物化 selector + host-stepped 单次选点(2026-09-02 11:1x CST)
+
+状态:新算法、新 commit、新 ZIP SHA 的独立候选已完成 commit-bound release；E3
+的 `uncertain` tuple 继续冻结，绝不重试。
+
+### 历史证据与结构
+
+- 昆仑实机成功样本 T27/T28/T37/T39/T40 的共同点是把 persistent、复杂循环、
+  间接读写拆成规则的小 kernel；T38 E3 仍把 `TOPK<=16` 完整展开在一个 kernel，
+  与 T31 E8 一样继续命中 1830s compile-worker 崩溃。
+- E4 只改昆仑路径：先物化 chunk-local FP32 selector；Python 按 rank 重复发射同一个
+  `_select_one_kernel`，每次 kernel 仅含一次 max/min 并把已选 lane 写为 `-inf`；最后
+  单独 gather 原始 logits、联合 shared experts 归一化。三个 kernel 均固定
+  `4 warps/1 stage`，`row_start/rank` 禁止特化，无 kernel 内循环、Torch compute、
+  host sync、persistent grid-stride、atomics 或输入修改。
+- 公开有效 shape 与既有平台证据均为 `1<=k<=16`；`k=0,S>0` 仍沿用 generic/E3 的
+  既有早退语义，不作为本轮新增变量。NVIDIA `torch.topk` 对精确平局的次序不稳定；
+  诊断中 E3/E4 对同一平局逐位一致，候选没有改变既有最低 index tie 规则。
+
+### Screening 与 release
+
+- screening `gpu-et:/tmp/flagos-sigmoid-gate-topk-renorm.IorLFZ`；base
+  `49b8c08c4bbd116c7a30edd97117a55e572b2f15`；vendor/test/helper SHA-256 为
+  `5f2c6dec4d782859aefd47145a1a4c70f8c4c1804444fa95b85082512f29996e` /
+  `883446df2662c53200fe8c18f723e64d077d14e6d93e1146f4c9653f4fcc3263` /
+  `5fd7de19ccad6cc0294dac09e300199ac317292f29eb320c6fa7bfcfe00df5f1`；
+  unittest **4/4 PASS**，E3/E4 indices 全 shape 逐位一致；E4 八 shape 相对 reference
+  `3.5810/3.0445/3.3230/3.5976/3.8432/3.6694/0.7286/1.5986x`，最大
+  23 registers、0 spill、0 scratch。日志 SHA-256
+  `aa3cf922a0836e8b79a03ee341dc86ea5f24cdd78fedea798c0001cd38a2f8b3`。
+- source/verification commit
+  `901c880507070beff781d746c1f95815ad7c3916`；release
+  `gpu-et:/tmp/flagos-sigmoid-gate-topk-renorm-release.ud5RSX` 从 Git objects 导出，
+  unittest **4/4 PASS**，八 shape/资源与 screening 一致；release log SHA-256
+  `35a2e7d8e59781097fb05a67d7e0cd6623bf978836fd7c7b6b2374709ea8df27`。
+- canonical ZIP
+  `artifacts/competition/sigmoid_gate_topk_renorm/e4-901c880/sigmoid_gate_topk_renorm.zip`，
+  12603 bytes，SHA-256
+  `d3e8bd9baf9ebfb2d5cd76484bc5584266e7bec14b9bfe59184a6d3bfcbde5f4`；成员仅
+  generic `e4840878...2e03` 与 Kunlun vendor `5f2c6dec...996e`，dry-run、created、
+  `--verify-existing` 与 `unzip -t` 全部一致。
+
+### 平台门
+
+- 基础门:8/8 correctness、每芯 `>=0.1x`；七个已过芯仍使用冻结 generic，唯一
+  受影响芯为 Kunlun。最低有效投影仍约 `(34.5904+0.1)/8=4.3363x`。
+- 机制门:Kunlun 必须返回真实 validation id，且不得再出现 1830s compile-worker
+  crash/空 `failed_cases`。stop gate:任一数值失败、Kunlun `<0.1x` 或同族 1830s
+  指纹即封存 E4，不做同包、参数或载体重投。
