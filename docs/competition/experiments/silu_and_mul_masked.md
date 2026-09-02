@@ -10,8 +10,8 @@ team_best_stage: E7
 team_best_commit: fd089fe
 team_best_speedup: 19.8698
 sealed: yes
-next: E14海光packing六轴八格均未过5%门;不提交,转向其它高登顶概率任务
-updated: 2026-09-01
+E17燧原块跳过system_failed轴关闭;oracle 22.7<24.3 登顶无路径,转纯采样守位(r2 样本)
+updated: 2026-09-03
 ```
 
 ## 契约
