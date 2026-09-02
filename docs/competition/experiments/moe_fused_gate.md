@@ -303,3 +303,62 @@ compile-worker 崩溃。三阶段同候选封存，禁止重试。
   仅作次级未隔离风险。若继续 T31，只接受把 group score/
   group select 与 expert select 再分核的新结构，不再扫
   BLOCK/warps/stages 或重投三阶段字节。
+
+## E9:四微核全拆结构(2026-09-02)
+
+状态:E9 已单次提交;平台终态待回填。
+
+### 决策与预注册门
+
+- E8 终态后唯一被接受的轴:把 group score / group select 与 expert
+  select 再分核。E9 落地为**四微核全拆**——stage1 selector 与
+  stage3 finalize 保留 E8 字节(已核与 `9b6911d` 逐字节一致),
+  stage2 整体替换为:
+  1. `_group_score`(每行,runtime `range(n_groups)` 循环):top-2
+     和用 max + count(max)>=2 + 严格小于 max 三件套,零整数归约、
+     零 static_range;
+  2. `_group_select`(每行):rank 法(BLOCK_G 广播比较 + sum,
+     (值降序、id 升序)全序)选 TOPK_GROUP,零循环;
+  3. `_apply_group_mask`(每行):gather `eg[]`(host torch 预计算
+     组 id,clamp 防 N%G 余数越界)物化 selw,零循环;
+  4. `_pick_slot`(每行,host 每 slot 一发,共 K_ROUTED 发):单次
+     masked argmax + min-id 平局,写 indices 并置 selected=1。
+- 与 E8 的对照:E8 stage2 单核携带 NUM_GROUPS 两轮 static 处理 ×
+  TOPK_GROUP 循环 × K_ROUTED 循环的巨型 AST;E9 每核只剩**单次
+  max(+至多一次 min-id)或一个 runtime 小循环**,static_range 全部
+  消除,循环只剩 GEMM 已两证昆仑可过的 runtime `range` 形态
+  (T28/T37 规则 GEMM 范式);host-stepped 多发射是 T41 四指针同款。
+- KernelGen MCP:`.mcp.json` 已配置 kernelgen-server,但本会话工具面
+  未暴露 kernelgen 工具;按 E8/T28 先例(基础设施故障不阻塞,E8 模块
+  本身即 MCP optimize 产物)在 E8 字节上直接分核实现,请求约束存档
+  `log/kernelgen-round/req_t31_e9_split_desc.txt`。
+- 晋级门:generic 字节冻结(`7bf2a6f4` 复核一致);generic+vendor
+  unittest 全过(6 法含 grouped/ties/N=65 G=5/M=70000);flake8/isort
+  通过 + black 25.12.0(79 列)格式化;release 与 ZIP 验签一致。
+  平台 success gate:**8/8 valid 且昆仑 >=0.1x**;七芯维持 E8 映射
+  (~53.9 和),昆仑过 0.1x 时期望均值约 6.77x,定位为恢复上榜,非
+  夺冠候选(实时榜首 59.19x)。
+- stop gate:昆仑再现同型 1830s compile-worker 崩溃 → 本分核轴关闭,
+  **T31 永久封存**(E8 预注册的最后一类结构已用,无后续轴);
+  任一芯数值失败 → 需新 commit 修复,不得重投同字节。
+
+### Release(commit `9b0c1bc`,2026-09-02 16:1x CST)
+
+- 首轮 release(`8abc266`)被 unittest 门禁拦截:host 侧 `Tensor.div_`
+  对 int32 走浮点除(`result type Float can't be cast to Int`,5 法
+  全体 error)——release 先行的价值实证;修复为
+  `torch.div(rounding_mode="floor")`,新 commit `9b0c1bc`,旧 ZIP 删除
+  重建。
+- release 目录 `gpu:/tmp/flagos-rel-t31e9b.8IsJhm`(0700,源/测试全由
+  commit `9b0c1bc` Git 对象导出):py_compile/isort/flake8 通过;远端
+  black 26.5.1 漂移照录(本地 25.12.0 79 列格式化 + 裸检通过);
+  远端 SHA 复验 5/5 逐字节一致;**unittest 6/6 OK**(matrix 15 组合 +
+  grouped 3 + ties + kunlun_grouped_edges + N=96/4096/70000/N=65G5 +
+  empty);
+- 资源探针:6 微核全部编译,最大 `_group_score`/`_pick_slot` 20
+  registers,**全核 0 spill/0 scratch**;release log SHA-256
+  `1c9398bea6322525120f1b60e00ce169b14e116da7b65e8c77bac53b5ada09af`;
+- canonical ZIP `e9-9b0c1bc/moe_fused_gate.zip`(2 成员:generic
+  `7bf2a6f4` 冻结、kunlunxin `240f1f75`),SHA-256
+  `8eeca0ef34bb06fa2b478f44b540d2343c979dbb57af6be6a91f2e81e4e7a8d4`,
+  `--verify-existing`/`unzip -t` 通过。
