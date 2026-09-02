@@ -10,7 +10,7 @@ team_best_stage: S0
 team_best_commit: 311570f
 blockers: KernelGen Kunlun verifier 3/3 HTTP 502;目标芯只能由平台验证
 sealed: no
-next: E3 两阶段 Kunlun vendor 已过代理门;commit-bound release 后单次提交
+next: E3 release/ZIP 已过门;实时 preflight 后单次提交
 updated: 2026-09-02
 ```
 
@@ -199,3 +199,18 @@ Kunlun verifier 为基础设施 502，目标芯待 commit-bound release 后单�
   最低有效投影平均约 `4.3363x`。本轮目标是新增有效排名，不把代理速度外推为登顶。
 - stop gate:任一数值失败、同族 1830s 崩溃或 Kunlun `<0.1x` 即关闭本两阶段
   候选，不做同字节、注释载体或参数重投；只有平台给出新的源码级根因证据才重开。
+
+### Commit-bound release 与不可变 ZIP
+
+- source commit `2750268c469eff85cddfb435049a97ffc6fa3eeb`；独立 release
+  `gpu-et:/tmp/flagos-sigmoid-gate-topk-renorm-release.T3Tudh`，mode `0700`，
+  PID/PGID `265067`。从该 commit 的 Git objects 导出 generic/vendor/test/helper，
+  静态门、unittest **4/4**、相同八 shape 性能/资源矩阵和前后 SHA 全过；release
+  log SHA-256
+  `1c44db4b354d17d97716961eff18ad6548ad2e85d97e6841bc8037307b9280d6`。
+- canonical ZIP
+  `artifacts/competition/sigmoid_gate_topk_renorm/e3-2750268/sigmoid_gate_topk_renorm.zip`，
+  11887 bytes，SHA-256
+  `c23e9dc368f48c34cd699c8956e6cbf9c24c797e38109ec4c2df536b5c334a0c`；
+  dry-run/created/`--verify-existing` 一致，`unzip -t` 通过。成员仅 generic
+  `e4840878...2e03` 与 `_kunlunxin` `1be1c7f7...a87`。
