@@ -229,3 +229,4 @@ def gate_up_lora_b(x, gate_up_lora_b, batch_info, output_dim, base_output):
 __all__ = ["gate_up_lora_b"]
 
 # water-sample carrier r1 (2026-09-02): bytes identical to e11-b40e5aa team best
+# carrier re-issued as e13 after stale_after_upload guard (upload produced no submission, quota unchanged)
