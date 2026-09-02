@@ -5,11 +5,11 @@ task: 35
 operator: rotary_embedding
 batch: 3
 validity: valid
-platform: 8/8
+platform: 8/8(e3);E6 7/8 昆仑1834s崩溃
 team_best_stage: e3
 team_best_speedup: 5.8458
 sealed: no
-next: E6 vendor 解交错(华为/燧原/昆仑)已提交待八芯终态
+next: E7 应急包(昆仑回e3字节+华为/燧原新字节)提交中
 updated: 2026-09-02
 ```
 
@@ -243,3 +243,25 @@ card_a 9.92 / card_b 9.15 / 华为 0.77 / 燧原 0.40 / 昆仑 0.29——与榜�
 - release 证据:git 对象临时目录 `gpu:/tmp/flagos-rel-t35e6.vcms6f`,
   远端六文件 SHA-256 与本地/ZIP 成员逐项一致,unittest 5/5
   (`release.log`);screening 证据 `gpu:/tmp/flagos-rotary-e6.aHPpxC`。
+
+### E6 终态(sub 8226):昆仑 compile-worker 崩溃,7/8 invalid
+
+- 七芯全过:天数 10.523 / 沐曦 6.364 / 燧原 **0.8744(+119%)** /
+  海光 9.4984 / 华为 **1.663(+116%)** / card_a 9.9988 / card_b 9.1364;
+- **昆仑 execution 1833537ms 后 FAIL(空 error)**——与 1830s
+  compile-worker 崩溃族指纹一致(第 16+ 例),触发载体为昆仑 vendor 的
+  `tl.reshape/tl.split/tl.join` 结构:XPU 编译器无法 lowering 该形态,
+  计入崩溃族证据;
+- 预注册 stop gate 触发:昆仑 vendor 回滚 e3 已验证字节(SHA
+  `ceca925b…fd8`,平台 0.29 通过前科),华为/燧原新字节与 generic
+  冻结字节保持——组 E7 应急包落袋七芯增益。
+
+## E7:应急包——昆仑回滚 e3 + 华为/燧原解交错保持(2026-09-02)
+
+- 单一变化:E6 包中的 `_kunlunxin` 换回 e3 字节(平台已验证
+  通过),其余三成员与 E6 逐字节相同;
+- 预期:七芯读数复现 E6(±2% 噪声),昆仑回到 0.29 附近,平均
+  ≈ 6.04(+3.4% vs e3 5.8458);
+- 预注册门:8/8 valid、平均 > 5.8458 即新团队最佳;stop gate:昆仑
+  若以 e3 字节再现崩溃族指纹(排除结构因素)→ 纯平台故障,计工单
+  不重投;七芯任一非噪声回退 → 该芯字节回滚并复盘。
