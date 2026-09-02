@@ -10,7 +10,7 @@ team_best_stage: e8
 team_best_commit: e066a9e
 team_best_speedup: 5.961875
 sealed: no
-next: E9 sub8258 评测中(tile16 终态后决定封存或再迭代)
+next: E10 tile32 提交中(最后一发)
 updated: 2026-09-02
 ```
 
@@ -344,3 +344,27 @@ card_a 9.92 / card_b 9.15 / 华为 0.77 / 燧原 0.40 / 昆仑 0.29——与榜�
   未产生第二个提交);
 - release 证据:git 对象目录 `gpu:/tmp/flagos-rel-t35e9.XXXXXX`,
   unittest 5/5,release log SHA-256 `29ae8f9d…ba27`。
+
+### E9 终态(sub 8258):tile16 目标芯续涨,平均被 generic 方差吃掉
+
+- 8/8 valid,平均 5.8877,**未超 E8 5.961875**(is_team_best=false);
+  E8 保持团队最佳,额度 19/30;
+- 同窗归因(E8→E9):华为 1.7554→1.8802(**tile16 +7.1%**)、燧原
+  1.0088→1.147(**+13.7%**)、昆仑冻结字节 0.296→0.327(+10%,纯方差);
+  generic 冻结字节读数漂移:天数 10.426→9.901(-5.0%)、海光 9.535→
+  9.248(-3.0%)、card_a -1.6%、muxi/card_b +0.5~0.7%——**同字节跨提交
+  方差 ±0.3~0.5 平均量级,超过 vendor 芯单轮增益**;
+- 判定:tile 曲线在两目标芯仍上升(4→8:+13~15%;8→16:+7~14%),
+  E9 平均失利属 generic 方差主导,机制未证伪;按方差追击预算再发
+  一发 tile32(e10),若仍未超 5.9619 则 T35 封存(连续两次方差失利
+  即关轴)。
+
+## E10:tile32 最后一发(2026-09-02)
+
+- tile 曲线同窗证据:4→8 +13~15%、8→16 +7~14%,两目标芯未饱和;
+  单变量推进 `_enflame`/`_ascend` HEADS_TILE 16→32,generic/kunlun 冻结;
+- screening:3 dtype × 12 shape 各 36/36 数值全过;ascend t32 MCP
+  specialize+注入差分 MINIMAL_DIFF(/tmp/kg-t35e10-ascend-t32.json);
+- 预注册门:8/8 valid 且平均 > 5.961875(E8)才保留字节;**未超即
+  T35 封存**(连续两次 generic 方差失利关轴),树回滚 E8 团队最佳字节;
+  stop gate:任一 vendor 芯数值/编译失败回滚该芯,同指纹不重投。

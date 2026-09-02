@@ -17,7 +17,7 @@ import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
-_HEADS_TILE = 16
+_HEADS_TILE = 32
 
 
 @triton.jit
