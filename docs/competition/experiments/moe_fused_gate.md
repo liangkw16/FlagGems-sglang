@@ -4,14 +4,14 @@
 task: 31
 operator: moe_fused_gate
 batch: 3
-validity: candidate
-platform: E8 sub8148 evaluating;7/8通过,Kunlun待回调
+validity: invalid_correctness
+platform: E8 sub8148 7/8;Kunlun 1833425ms compile-worker crash
 team_best_stage: e7(=e6字节载体)
 team_best_commit: f093ae8
 team_best_speedup: 七芯~7.73
-blockers: E8 Kunlun waiting_callback;目标芯尚无终态
+blockers: 三阶段仍触发 Kunlun compile-worker Fatal Aborted
 sealed: no
-next: 只读等待 E8 平台终态;不重试
+next: 仅评估再拆 group-score/group-select/expert-select 的新结构;不扫参数
 updated: 2026-09-02
 ```
 
@@ -187,8 +187,8 @@ failed_cases=0),排队 ~55 分钟后返回。T31 三投同指纹,恢复窗口
 
 ## E8:昆仑三阶段结构改写(2026-09-02)
 
-状态:screening、source/test commit、commit-bound release 与 canonical ZIP
-验签已通过；待实时 preflight 与单次提交。
+状态:E8 已单次提交；平台 7/8，Kunlun 再次于约 1830 秒
+compile-worker 崩溃。三阶段同候选封存，禁止重试。
 
 ### 决策与预注册门
 
@@ -273,7 +273,7 @@ failed_cases=0),排队 ~55 分钟后返回。T31 三投同指纹,恢复窗口
   根目录仅含 `moe_fused_gate.py` 与
   `moe_fused_gate_kunlunxin.py`。
 
-### E8 平台提交与中间态(sub 8148)
+### E8 平台结果(sub 8148)
 
 - `2026-09-02 10:36 CST` 实时 preflight 重验 race/season/账号/
   团队、batch 3/Task 31/tid `s2t1op031`、source/verification commit、
@@ -286,8 +286,20 @@ failed_cases=0),排队 ~55 分钟后返回。T31 三投同指纹,恢复窗口
   禁止重定向的独立回读，得到 18755 bytes、SHA-256
   `f7ec5b4fab04ceb1fa78ad7df9931f7fc74beff82d48563445674e1d15c19820`，
   与本地 canonical ZIP 完全一致。
-- `10:48:46 CST` 中间态为 7/8：天数 `6.827x`、沐曦
+- 七个非 Kunlun 芯片全部通过：天数 `6.827x`、沐曦
   `3.6706x`、燧原 `0.886x`、海光 `12.924x`、华为
   `4.9838x`、国际 A `13.1628x`、国际 B `11.464x` 均通过；
-  Kunlun 仍为 `waiting_callback`，无 error/failed_cases。只读等待
-  同一 submission 终态。
+  七芯和 `53.9182`。
+- `11:07:03 CST` 终态:`completed/invalid_correctness`、7/8。Kunlun
+  执行 `1833425ms`后 `passed=false`，无数值 case 失败，
+  `failed_cases=[]`；错误仍为验证阶段超时、子进程先退出，
+  `Fatal Python error: Aborted` 于
+  `torch/_inductor/compile_worker/subproc_pool.py::_recv_msg`。该读数与
+  E1/E2/E3/E5/E6/E7 的 1830s 指纹同型；不重试。
+- 结构归因:拆除 `tl.log`、device persistent loop、split/partials 与
+  大部分复合职责后仍同型崩溃，将主要未隔离因子收窄到
+  stage2 内 `NUM_GROUPS` 两轮静态处理叠加 `TOPK_GROUP`/
+  `K_ROUTED` 多轮 max/min/sum 的巨型 grouped-route AST；`tl.sqrt`
+  仅作次级未隔离风险。若继续 T31，只接受把 group score/
+  group select 与 expert select 再分核的新结构，不再扫
+  BLOCK/warps/stages 或重投三阶段字节。
