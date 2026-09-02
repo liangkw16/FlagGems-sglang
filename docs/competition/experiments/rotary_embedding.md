@@ -10,7 +10,7 @@ team_best_stage: e8
 team_best_commit: e066a9e
 team_best_speedup: 5.961875
 sealed: no
-next: tile16 探针评估中(4→8 已+13~15%)
+next: E9 tile16 探针提交中
 updated: 2026-09-02
 ```
 
@@ -320,3 +320,15 @@ card_a 9.92 / card_b 9.15 / 华为 0.77 / 燧原 0.40 / 昆仑 0.29——与榜�
   -7%(华为 1.663→1.5472),跨提交比较必须用同窗成对;
 - 累计:华为 0.77→1.7554(+128%)、燧原 0.40→1.0088(+152%),
   题目平均 5.8458→5.9619(+2.0%),rank 10→9。
+
+## E9:tile16 探针(2026-09-02)
+
+- tile 曲线仍在上升段(4→8 同窗 +13.4%/+14.5%),单变量推进
+  `_enflame`/`_ascend` HEADS_TILE 8→16;generic 与 `_kunlunxin`(e3)
+  冻结;
+- screening:3 dtype × 12 shape(含 H=9/33 非整瓦片)各 36/36 数值
+  全过;ascend t16 MCP specialize+注入差分 MINIMAL_DIFF
+  (/tmp/kg-t35e9-ascend-t16.json);
+- 预注册门:8/8 valid 且平均 > 5.961875;同窗归因华为/燧原任一芯
+  相对 E8 回退 >3% 即该芯回滚 E8 字节;stop gate:数值/编译失败即
+  回滚,同指纹不重投。目标:冲击 #8 ChipVoyager 6.173(需 +3.5%)。
