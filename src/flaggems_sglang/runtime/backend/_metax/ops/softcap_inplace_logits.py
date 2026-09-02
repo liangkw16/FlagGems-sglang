@@ -90,3 +90,5 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
 
 
 __all__ = ["softcap_inplace_logits"]
+
+# water-sample carrier r1 (2026-09-02): bytes identical to e6-7612231 team best
