@@ -4,13 +4,13 @@
 task: 38
 operator: sigmoid_gate_topk_renorm
 batch: 3
-validity: candidate
-platform: E2 7/8; E3 upload uncertain; E4 sub 8160 evaluating
+validity: invalid_correctness
+platform: E4 sub 8160 7/8;Kunlun快速执行但9/9数值失败
 team_best_stage: S0
 team_best_commit: 311570f
-blockers: E3 exact tuple禁止重试;E4 sub 8160评测中
+blockers: E3 exact tuple禁止重试;E4 exact tuple禁止重试
 sealed: no
-next: 只读跟踪sub 8160八芯终态
+next: 仅评估移除dynamic rank写槽的新E5;无强证据则封存
 updated: 2026-09-02
 ```
 
@@ -294,3 +294,21 @@ Kunlun verifier 为基础设施 502，目标芯待 commit-bound release 后单�
   12603 bytes 与 ZIP SHA-256
   `d3e8bd9baf9ebfb2d5cd76484bc5584266e7bec14b9bfe59184a6d3bfcbde5f4`，
   `unzip -t` 通过。当前只读等待逐芯终态。
+
+### E4 平台终态(sub 8160,2026-09-02 11:29 CST)
+
+- 终态 **7/8、invalid_correctness**。七个 generic 芯全部通过：天数
+  `6.2856x`、沐曦 `2.9332x`、燧原 `0.8738x`、海光 `7.1736x`、华为
+  `2.8448x`、国际 A `6.2540x`、国际 B `8.1724x`，合计 `34.5374x`。
+- Kunlun validation id `aafbe7184104`，仅 **10634ms** 即完成编译和执行，彻底
+  避开 E2/E3 的 1830s compile-worker crash；但 **9/9 cases 数值失败**，routed
+  weights 约 80–94% 元素错误，多处出现 `1e28–1e38` 未初始化量级。
+- 失败比例与 `k` 个槽仅一个被有效写入高度吻合；CUDA 上 E3/E4 indices 逐位一致，
+  公式和 selector workspace 主路径已通过。当前最窄根因是 Kunlun 对
+  `do_not_specialize=["rank"]` 动态标量参与输出地址的错误 lowering：连续 rank
+  launch 可能反复写同一列，随后 normalize 从未写槽读取垃圾 index。跨 launch
+  workspace 可见性是次要备选根因。
+- stop gate 已执行：E4 intent/ZIP 永不重试。只有移除动态 rank 地址、让每次 launch
+  直接接收已偏移的 `indices[:, rank]` view，并保持其余 E4 字节结构不变，才构成可评估
+  的 E5 单变量；若无 MCP/静态/代理证据支持，或 E5 仍数值失败/超时/低于 `0.1x`，
+  立即永久封存 T38 host-stepped 轴。
