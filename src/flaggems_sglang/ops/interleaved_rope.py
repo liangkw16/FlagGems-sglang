@@ -77,3 +77,4 @@ __all__ = ["interleaved_rope"]
 # water-sample carrier r2 (2026-09-03)
 # non-enflame sampling carrier (2026-09-03, enflame service outage)
 # recovery probe 0118 (2026-09-03)
+# recovery probe 0129 (2026-09-03)
