@@ -5,13 +5,13 @@ task: 37
 operator: sgemm_lora_a
 batch: 3
 validity: valid
-platform: 8/8(E5,5.3471x,rank6/6)
+platform: 8/8(E5,5.3471x,rank6/6;E7 5.168非TB)
 team_best_stage: e5
 team_best_commit: 6ce280b
 team_best_speedup: 5.3470625
-blockers: 榜首42.1385x，差36.7914375x；已达第6/6截止位
-sealed: no
-next: E7 generic num_stages 2→3 防守候选,提交中
+blockers: 榜首42.1385x；已达第6/6截止位
+sealed: yes
+next: E7 stages轴平台证伪(沐曦-20%/card_b-10%,代理+11%不迁移);树回滚E5字节,收盘
 updated: 2026-09-02
 ```
 
@@ -340,7 +340,7 @@ confirm 提交,评测入队,逐芯结果待回填。
 - stop gate:任一 generic 芯数值失败或平均低于 E5 → 回滚 stages=2,
   同指纹不重投。
 
-### E7 平台提交(sub 8230,2026-09-02 14:4x CST)
+### E7 平台提交(sub 8230,2026-09-02 13:49:50 CST)
 
 - preflight 核对 source=verification commit `0050bc6`、stage e7、4 成员
   (generic `599ccf0e…`、enflame `ffdb47e2…`、iluvatar `c10bfa4f…`、
@@ -351,3 +351,15 @@ confirm 提交,评测入队,逐芯结果待回填。
 - release 证据:git 对象目录 `gpu:/tmp/flagos-rel-t37e7.XXXXXX`,
   unittest 5/5,release log SHA-256 `f089360f829c8919c281ad7b70868ff3
   d9b34719685bf2ae1e8fcede8a8e4539`。
+
+### E7 终态(sub 8230)
+
+- **8/8 valid,平均 5.16825,非团队最佳**(E5 5.3471 保持锁定);额度
+  22/30。逐芯:天数 4.5205 / 沐曦 3.011 / 燧原 1.4235(冻结字节 +4.5%,
+  平台方差)/ 海光 11.597 / 昆仑 3.453 / 华为 14.5355 / card_a
+  1.6185 / card_b 1.187;
+- **stages 轴平台证伪**:NVIDIA 代理 geomean +11.4% 在六 generic 芯
+  反转为沐曦 -20%、card_b -10%、天数 -5%、华为 -3%,仅海光 +2%——
+  GEMM 流水线深度是典型的代理不迁移轴,负结果入账;
+- 预注册 stop gate 触发(平均低于 E5),树已回滚 `6ce280b` 的 E5
+  stages=2 字节;T37 收盘。
