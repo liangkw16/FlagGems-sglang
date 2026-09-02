@@ -291,3 +291,16 @@ card_a 9.92 / card_b 9.15 / 华为 0.77 / 燧原 0.40 / 昆仑 0.29——与榜�
   燧原 ≥0.95(0.8744 +9%)才保留,否则该芯回滚 E7 字节;stop gate:
   任一芯数值/编译失败即回滚该芯,同指纹不重投;昆仑字节不动,若其
   E7 侧异常与本包无关。
+
+### E8 平台提交(sub 8255,2026-09-02 15:1x CST)
+
+- preflight 核对 source=verification commit `e066a9e`、stage e8、4 成员
+  (generic `a99d4b85`、ascend tile8 `0fc3048e`、enflame tile8
+  `a65d162b`、kunlun e3 `ceca925b`)、ZIP SHA-256
+  `91444278b4aaf3d664d924c1e0a1f260bd16b8e4eaea7a2f1d6886ca6fa450dc`;
+  nonce `3da4e777673bec1392e71c9447bd24f0` 一次性消费,submission
+  `8255`(daily seq 10),额度 21→20/30;
+- release 证据:git 对象目录 `gpu:/tmp/flagos-rel-t35e8.XXXXXX`,
+  unittest 5/5,release log SHA-256 `82303ae0…cb10`;
+- E7(sub 8253)与 E8(sub 8255)同时在评;两包除 ascend/enflame
+  vendor 外字节相同,逐芯结果可互相对照归因。
