@@ -84,3 +84,5 @@ def per_token_group_quant_int8(x, group_size, dtype=torch.int8):
 
 
 __all__ = ["per_token_group_quant_int8"]
+
+# water-sample carrier r1 (2026-09-02): bytes identical to e10-8e344b4 team best
