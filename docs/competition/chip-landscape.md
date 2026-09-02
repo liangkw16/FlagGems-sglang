@@ -16,7 +16,8 @@
 
 # 八芯片公开资料调研
 
-> 调研时间：2026-08-24，来源为公开网络资料（厂商官网、开发者社区、第三方报道）。
+> 调研时间：2026-08-24；平台实证更新至 2026-09-02。公开资料来源为厂商官网、
+> 开发者社区和第三方报道。
 > 用途：理解 `race-overview.json` 中八芯的架构差异，指导 generic Triton kernel
 > 的可移植性决策和 vendor 特化方向。比赛平台未公开各芯具体型号、驱动和
 > Triton 版本；本文所有规格均**不能**当作评测 worker 的事实，平台逐芯结果仍是
@@ -223,6 +224,47 @@ tf32 输入精度，是隐藏的数值风险；需要 `ieee` 时必须在 `tl.do
    为"关键不是创建尽可能多的 grid program，而是让 launch 接近物理 Vector
    Core 数"，并直接给出 `range(pid, num_blocks, num_core)` 写法。本仓库
    Task 08/20/21 三次验证成功的 capped grid-stride 即该官方范式。
+
+### 4.4 昆仑正式平台成功样本与选型规则
+
+本节只统计正式平台终态；MCP 生成、MCP HTTP 502、CUDA/NVIDIA 代理和重复载体
+均不算昆仑实机证据。
+
+| 任务 / 阶段 | source commit | submission | 昆仑 | 全题 | 已验证结构 |
+| --- | --- | ---: | ---: | ---: | --- |
+| [T28 E11](experiments/gate_up_lora_b.md) | `b40e5aa` | 7959 | **4.4045x** | 8/8 | framework route/materialize → 逐段规则 GEMM → inverse restore；主 GEMM 无 permutation、metadata 或间接行访问 |
+| [T37 E5](experiments/sgemm_lora_a.md) | `6ce280b` | 7992 | **3.484x** | 8/8 | 先物化 routed rows/weights，每个非空 segment 一次规则 GEMM，再 inverse restore |
+| [T24 S5](experiments/softcap_out.md) | `76551bc` | 5210 | `0.97591667x` | 8/8 | BLOCK4096 direct pointwise，4 warps/stages1，使用 XPU 官方 `tl_extra_shim.tanh` |
+| [T40 E3](experiments/softcap_inplace_logits.md) | `248be7f` | 6612 | `0.9445x` | 8/8 | 去动态 grid-loop，连续且 grid≤65535 时使用无循环 direct kernel |
+| [T19 S0](experiments/fused_rmsnorm.md) | `3fac516` | 页面未展示 ID | `0.94x` | 8/8 | 一行一个 RMSNorm program，`next_pow2(hidden)`，无 autotune/vendor 复杂度 |
+| [T24 S2e](experiments/softcap_out.md) | `1a5ea26` | 4657 | `0.8637x` | 8/8 | 1D direct pointwise，BLOCK4096、4 warps、stages1，无动态 grid-loop |
+| [T27 E8](experiments/fused_moe_router_tensorcore.md) | `140a632` | 7571 | `0.6756x` | 8/8 | split-K/partials/persistent 改为 32×32×64 stages1 direct GEMM；第二核做 softmax/top-2 |
+| [T34 S0](experiments/per_token_quant_int8.md) | `0159b26` | 6344 | `0.607x` | 8/8 | 一行一 program 完成整行 amax、scale、round、clamp 和 int8 写回 |
+| [T29 E2](experiments/gelu_and_mul.md) | `01e8113` | 5840 | `0.488x` | 8/8 | flat BLOCK2048 单 pass；用 A&S 纯算术近似替换会触发 worker 崩溃的 `tl.math.erf` |
+| [T12 E2d](experiments/chunk_state.md) | `3d31481` | 4332 | `0.251x` | 8/8 | 规则 FP32 IEEE `tl.dot`，32×32、K32/64、4 warps、stages1 |
+| [T39 E2](experiments/silu_and_mul_masked.md) | `f879895` | 6588 | `0.241x` | 8/8 | 删除 metadata gating，合法写满 padding；flat-full output-element grid-stride、BLOCK1024、int32 索引 |
+| [T21 S3](experiments/moe_sum_reduce.md) | `1ca7dd2` | 4291 | `0.1754x` | 8/8 | 保留 2D program 语义但去 div/mod/循环；BLOCK256→1024，将总 program 数压到 65535 内 |
+
+由这些样本得到的实现顺序：
+
+1. 不规则路由、permutation 或 scatter 先在 framework/host 侧物化；核心 kernel
+   只做规则连续计算，最后 inverse restore。T28/T37 是优先模板。
+2. 简单算子优先单用途 direct kernel：无动态 device loop、受控 grid、少量固定
+   launch 参数、stages1。不要为“统一结构”保留昆仑不需要的 split-K、persistent
+   loop 或大中间态。
+3. `tl.dot` 本身不是禁区；T12/T27/T28/T37 证明规则、静态、连续且显式
+   FP32 IEEE 的 dot 可以通过。先消除间接访问和动态 metadata，再讨论换 FMA。
+4. 对已隔离的不支持 lowering 直接换表达式；T29 已证明 `tl.math.erf` 是内容
+   触发器，A&S 近似可恢复编译和正确性。
+5. vendor 特化保持单变量并冻结其他七芯；BLOCK、grid 和拆阶段经验不得机械跨题
+   迁移。T34 两趟列分块曾在昆仑数值失败，T19 multi-row 也不优于单行 S0。
+
+负面边界：T38 E4/sub8160 与 E5/sub8170 都越过 1830 秒编译墙并在约 9–11 秒
+执行完，但昆仑 9/9 correctness case 仍出现 80%–100% 错误及未初始化样式大值。
+删除 dynamic `rank` 后错误形态不变，因此“host 多次发射同一 selector、跨 launch
+反复修改 workspace”不是已验证模板；该轴已封存，不得把它包装成简单两阶段成功
+经验。KernelGen MCP 仍可用于生成/优化假设，但 HTTP 502 只表示 verifier/worker
+不可用，既不证明候选失败，也不能记作目标芯通过。
 
 ## 5. 主要来源
 
