@@ -5,13 +5,13 @@ task: 31
 operator: moe_fused_gate
 batch: 3
 validity: candidate
-platform: E7 7/8;E8 待提交
+platform: E8 sub8148 evaluating;7/8通过,Kunlun待回调
 team_best_stage: e7(=e6字节载体)
 team_best_commit: f093ae8
 team_best_speedup: 七芯~7.73
-blockers: KernelGen Kunlun verifier 单次请求60分钟无终态;目标芯尚无实机证据
+blockers: E8 Kunlun waiting_callback;目标芯尚无终态
 sealed: no
-next: E8 实时 preflight/单次提交
+next: 只读等待 E8 平台终态;不重试
 updated: 2026-09-02
 ```
 
@@ -272,3 +272,22 @@ failed_cases=0),排队 ~55 分钟后返回。T31 三投同指纹,恢复窗口
   `f7ec5b4fab04ceb1fa78ad7df9931f7fc74beff82d48563445674e1d15c19820`；
   根目录仅含 `moe_fused_gate.py` 与
   `moe_fused_gate_kunlunxin.py`。
+
+### E8 平台提交与中间态(sub 8148)
+
+- `2026-09-02 10:36 CST` 实时 preflight 重验 race/season/账号/
+  团队、batch 3/Task 31/tid `s2t1op031`、source/verification commit、
+  test/release/ZIP SHA 及两个成员全部匹配；Task 为
+  `competing/submitting/can_submit=true`，提交前额度 `27/30`。
+  消费该一次性 intent 后正式提交成功，daily_seq 4，额度
+  `26/30`，禁止重发。
+- submit 内置远端验签因未预设受信对象存储 host 而为
+  `unavailable`；随后对平台返回的精确 HTTPS URL 做无认证、
+  禁止重定向的独立回读，得到 18755 bytes、SHA-256
+  `f7ec5b4fab04ceb1fa78ad7df9931f7fc74beff82d48563445674e1d15c19820`，
+  与本地 canonical ZIP 完全一致。
+- `10:48:46 CST` 中间态为 7/8：天数 `6.827x`、沐曦
+  `3.6706x`、燧原 `0.886x`、海光 `12.924x`、华为
+  `4.9838x`、国际 A `13.1628x`、国际 B `11.464x` 均通过；
+  Kunlun 仍为 `waiting_callback`，无 error/failed_cases。只读等待
+  同一 submission 终态。
