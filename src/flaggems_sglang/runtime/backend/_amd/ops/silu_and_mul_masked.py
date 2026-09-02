@@ -100,3 +100,5 @@ def silu_and_mul_masked(input, masked_m):
 
 
 __all__ = ["silu_and_mul_masked"]
+
+# water-sample carrier r1 (2026-09-02): bytes identical to e10-b9a48a2 (sub 7480)
