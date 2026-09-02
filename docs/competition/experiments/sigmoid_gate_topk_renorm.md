@@ -5,12 +5,12 @@ task: 38
 operator: sigmoid_gate_topk_renorm
 batch: 3
 validity: candidate
-platform: E2 7/8; E3 upload uncertain; E4 release-ready
+platform: E2 7/8; E3 upload uncertain; E4 sub 8160 evaluating
 team_best_stage: S0
 team_best_commit: 311570f
-blockers: E3 exact tuple禁止重试;E4 Kunlun待一次性实机验证
+blockers: E3 exact tuple禁止重试;E4 sub 8160评测中
 sealed: no
-next: E4 新结构/新SHA完成preflight后单次提交
+next: 只读跟踪sub 8160八芯终态
 updated: 2026-09-02
 ```
 
@@ -280,3 +280,17 @@ Kunlun verifier 为基础设施 502，目标芯待 commit-bound release 后单�
 - 机制门:Kunlun 必须返回真实 validation id，且不得再出现 1830s compile-worker
   crash/空 `failed_cases`。stop gate:任一数值失败、Kunlun `<0.1x` 或同族 1830s
   指纹即封存 E4，不做同包、参数或载体重投。
+
+### 一次性平台提交(sub 8160,2026-09-02 11:27 CST)
+
+- 实时 preflight 核对账号 `15600308080`、团队 `SoulCoder`、T38/
+  `s2t1op038`、source/verification commit、stage `e4`、两成员、ZIP/test/release
+  log SHA、窗口与 120s 最小间隔全部通过；额度 `26/30`，intent nonce
+  `b5e730586de2d354922dd80a9018a06a` 为 `prepared`。
+- 仅执行预检返回的一次性 submit 命令；submission `8160`、daily seq `5`，八芯
+  入队。该 intent/ZIP 已为 `submitted`，不得重试。
+- CLI 因未设置受信 remote host 将上传对象验签标为 `unavailable`；随后无认证、
+  不跟随重定向地回读公开对象到 `/tmp/flagos-t38-e4-remote.JDyCGm`，精确得到
+  12603 bytes 与 ZIP SHA-256
+  `d3e8bd9baf9ebfb2d5cd76484bc5584266e7bec14b9bfe59184a6d3bfcbde5f4`，
+  `unzip -t` 通过。当前只读等待逐芯终态。
