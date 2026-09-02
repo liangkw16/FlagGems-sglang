@@ -4,14 +4,14 @@
 task: 38
 operator: sigmoid_gate_topk_renorm
 batch: 3
-validity: invalid
-platform: 7/8
+validity: candidate
+platform: E2 7/8; E3 待提交
 team_best_stage: S0
 team_best_commit: 311570f
-blockers: 昆仑 topk 族 E2 再现1833.8s Segfault(compile-worker同指纹)
-sealed: yes
-next: E2 七芯均值4.9415x(+4.17倍)但昆仑同族崩溃;仅平台runtime修复后重开
-updated: 2026-09-01
+blockers: KernelGen Kunlun verifier 3/3 HTTP 502;目标芯只能由平台验证
+sealed: no
+next: E3 两阶段 Kunlun vendor 已过代理门;commit-bound release 后单次提交
+updated: 2026-09-02
 ```
 
 状态:S0 候选就绪
@@ -135,3 +135,67 @@ Segmentation fault**(崩溃族第 15 例,与 Aborted 同族不同信号量)。
 - stop gate 已触发：不重投同包、不做注释/载体重载、不再消耗额度。
   E2 作为七芯机制证据保留；Task 38 只在昆仑平台 runtime 修复，或出现
   不含当前 topk lowering 的全新算法结构时重开。
+
+## E3:Kunlun 选点/归一化两阶段(2026-09-02 08:4x–09:0x CST)
+
+状态:新源码结构已通过 NVIDIA 代理 correctness、性能和资源门；KernelGen
+Kunlun verifier 为基础设施 502，目标芯待 commit-bound release 后单次平台验证。
+
+### 重开证据与单变量
+
+- E2 之后的 T27 E8 已证明 Kunlun 上 direct 两阶段 router 可将同族
+  `1830s` compile-worker timeout 降至 `12604ms`，并以 `0.6756x` 正确通过。
+  T38 E2 的单 kernel 为规避同 program store→load 可见性，完整静态 TOPK
+  选点执行两遍；隐藏 `k` 最大为 16。该后续跨题实证满足 E2 的“全新算法结构”
+  重开条件。
+- generic E2 SHA-256 继续冻结为
+  `e4840878c98e2d2a061a60a5438b069f70af2868c0d10322963e38b823a82e03`，
+  七个已过芯不改。只新增 `_kunlunxin` vendor：stage1 每行只做一次迭代
+  top-k 并写 `int32` ids；stage2 跨 launch 读取 ids、gather 原始 routed
+  logits，与 shared logits 的 sigmoid 一起做 FP32 联合归一化和最终写回。
+- 非 2 次幂 `k=5/6` 用 `BLOCK_K=next_power_of_2(k)` + mask；`T>65535`
+  用 host `row_start` 分段，不使用 device persistent loop。固定
+  `num_warps=4,num_stages=1`，不含 Torch compute fallback、host scalar
+  extraction、atomics、`tl.sort` 或输入修改。
+
+### KernelGen MCP
+
+- `optimize_kernel` 第一版因非 2 次幂 `tl.arange(0, TOPK)` 与 `T>65535`
+  漏行在写盘前被 usability gate 拒绝；第二版按 `BLOCK_K` mask + host chunk
+  修复后进入 screening。flake8 随后只检出一个未使用局部变量，MCP fix
+  返回逐字节等价的单行删除，未手改算法。
+- 独立 `generate_kernel(device="kunlun")` 以 T27 E8 和本候选为参考，生成了
+  同一两阶段结构及 20 shapes × 3 dtype 测试矩阵；但目标验证
+  `attempt 1/2/3` 均返回 **HTTP 502**，终态
+  `verify_result.passed=false`。这与 T28 最小 `x+y` 对照相同，只能判定
+  `generate_kernel → Kunlun verifier/worker` 不健康，不能作为候选失败或通过。
+
+### Screening 与性能门
+
+- base `7040b0e5ed178a1150446f14fa88031a6af92cd9`；目录
+  `gpu-et:/tmp/flagos-sigmoid-gate-topk-renorm.KuByqj`，mode `0700`；
+  correctness PID/PGID `264777`，benchmark PID/PGID `264912`。环境 RTX
+  5070 Ti、PyTorch `2.13.0+cu130`、Triton `3.7.1`、CUDA `13.0`。
+- vendor/test/helper SHA-256 分别为
+  `1be1c7f7fbe6cbcfcfe57632a0c9fad592ac625f763bbbf080699a093a24ca87` /
+  `883446df2662c53200fe8c18f723e64d077d14e6d93e1146f4c9653f4fcc3263` /
+  `cdc5fe3e4cb5a85976f0a3414cd194bb53c79f6f2830be01f685f996b97ca0d7`。
+  py_compile、Black、isort、flake8 与 generic+vendor unittest **4/4 PASS**，
+  覆盖三 dtype、七组 shape、`k=1/4/5/6/8/16`、`N=33/512`、`S=0`、
+  empty 和 `T=70000` fold；screening log SHA-256
+  `bdd6f0adec10032b0006775ff401f1028bdbf22ec06398719b8e912d4bd90614`。
+- 修正旧 helper 的 AB/BA 记账后，五轮 wrapper-inclusive 八 shape 候选相对
+  reference 为 `4.3206/4.9466/5.0028/4.9786/6.7337/5.9686/0.8637/3.2410x`；
+  每点均高于 `0.1x` 代理门。最大资源为 48 registers、0 spill、0 scratch、
+  `num_stages=1`；generic control 最大 122 registers。benchmark log SHA-256
+  `d5200b5829be1425d61b61472a59ac499758e2a2daac62963230f0038ed0d882`。
+
+### 平台预注册门
+
+- 基础门:八芯全部正确、每芯 `>=0.1x`；唯一受影响芯为 Kunlun，七芯继续选择
+  字节冻结的 E2 generic。机制门:Kunlun 必须返回真实 validation id，且不再出现
+  `1830s` compile-worker/Segfault/空 `failed_cases` 指纹。
+- 晋级门:Kunlun `>=0.1x` 即恢复有效成绩；七芯合计按 E2 为 `34.5904x`，故
+  最低有效投影平均约 `4.3363x`。本轮目标是新增有效排名，不把代理速度外推为登顶。
+- stop gate:任一数值失败、同族 1830s 崩溃或 Kunlun `<0.1x` 即关闭本两阶段
+  候选，不做同字节、注释载体或参数重投；只有平台给出新的源码级根因证据才重开。
