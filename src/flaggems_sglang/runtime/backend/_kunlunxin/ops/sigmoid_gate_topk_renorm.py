@@ -61,13 +61,12 @@ def _materialize_kernel(
     )
 
 
-@triton.jit(do_not_specialize=["row_start", "rank"])
+@triton.jit(do_not_specialize=["row_start"])
 def _select_one_kernel(
     workspace_ptr,
-    ids_ptr,
+    ids_slot_ptr,
     row_start,
     n_routed,
-    rank,
     TOPK: tl.constexpr,
     BLOCK_N: tl.constexpr,
 ):
@@ -91,7 +90,7 @@ def _select_one_kernel(
     )
 
     tl.store(
-        ids_ptr + row_global.to(tl.int64) * TOPK + rank,
+        ids_slot_ptr + row_global.to(tl.int64) * TOPK,
         best_index,
     )
     tl.store(
@@ -242,12 +241,12 @@ def sigmoid_gate_topk_renorm(
         )
 
         for rank in range(k):
+            ids_slot_ptr = indices[:, rank]
             _select_one_kernel[grid](
                 selector,
-                indices,
+                ids_slot_ptr,
                 row_start,
                 n_routed,
-                rank,
                 TOPK=k,
                 BLOCK_N=BLOCK_N,
                 num_warps=4,
