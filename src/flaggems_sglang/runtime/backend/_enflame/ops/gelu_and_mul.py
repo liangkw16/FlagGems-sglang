@@ -103,3 +103,4 @@ __all__ = ["gelu_and_mul"]
 
 # water-sample carrier r1 (2026-09-02): bytes identical to e8-d7a8f79 team best
 # water-sample carrier r2 (2026-09-02)
+# water-sample carrier r3 (2026-09-03)
