@@ -93,3 +93,4 @@ __all__ = ["softcap_inplace_logits"]
 
 # water-sample carrier r1 (2026-09-02): bytes identical to e6-7612231 team best
 # water-sample carrier r3 (2026-09-03)
+# water-sample carrier r4 (2026-09-03 night)
