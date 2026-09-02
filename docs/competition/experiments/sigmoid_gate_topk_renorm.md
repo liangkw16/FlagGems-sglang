@@ -5,12 +5,12 @@ task: 38
 operator: sigmoid_gate_topk_renorm
 batch: 3
 validity: candidate
-platform: E2 7/8; E3 待提交
+platform: E2 7/8; E3 upload HTTP 503,未形成提交
 team_best_stage: S0
 team_best_commit: 311570f
-blockers: KernelGen Kunlun verifier 3/3 HTTP 502;目标芯只能由平台验证
+blockers: E3 submit intent=uncertain(upload HTTP 503);禁止自动重试
 sealed: no
-next: E3 release/ZIP 已过门;实时 preflight 后单次提交
+next: 只读查新记录/平台支持;uncertain 未消解前不得重试
 updated: 2026-09-02
 ```
 
@@ -214,3 +214,19 @@ Kunlun verifier 为基础设施 502，目标芯待 commit-bound release 后单�
   `c23e9dc368f48c34cd699c8956e6cbf9c24c797e38109ec4c2df536b5c334a0c`；
   dry-run/created/`--verify-existing` 一致，`unzip -t` 通过。成员仅 generic
   `e4840878...2e03` 与 `_kunlunxin` `1be1c7f7...a87`。
+
+### Preflight 与上传失败(2026-09-02 09:07–09:08 CST)
+
+- verification commit `98631f1869283bf6833f1fbb7330633507210b7a`，test SHA-256
+  `883446df2662c53200fe8c18f723e64d077d14e6d93e1146f4c9653f4fcc3263`。
+  实时 preflight 精确匹配账号 `15600308080`、团队 `SoulCoder`、T38/
+  `s2t1op038`、source/verification commit、stage `e3`、两成员、ZIP/test/
+  release log SHA、提交窗口和最小间隔；额度 `27/30`，intent nonce
+  `b047b062d900445fa6a8a4337f35b1aa` 为 `prepared`。
+- 按授权执行一次性 confirm 时，平台上传端点立即返回 **HTTP 503**；CLI 在任何
+  可定位 submission/file URL 前将 intent 置为 `uncertain`。按幂等纪律未重试、
+  未改 intent、未换载体。
+- `2026-09-02T09:07:57+08:00` 与 `09:08:57+08:00` 两次只读 status 均显示
+  额度仍为 `27/30`、`latest_submission_at=2026-09-02T01:17:22+08:00`，T38
+  最新仍是旧 submission `7518`/daily seq 4；没有 E3 新记录。因此 E3 尚未进入
+  八芯评测，候选门禁本身已通过，但发送状态未消解前不得自动 preflight/submit。
