@@ -205,3 +205,4 @@ def fused_moe_router_tensorcore(
 __all__ = ["fused_moe_router_tensorcore"]
 
 # water-sample carrier r1 (2026-09-02): bytes identical to e8-140a632 team best
+# water-sample carrier r2 (2026-09-03)
