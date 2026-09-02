@@ -116,3 +116,5 @@ def moe_fused_mul_sum(
 
 
 __all__ = ["moe_fused_mul_sum"]
+
+# water-sample carrier r1 (2026-09-02): bytes identical to s0-63e2550 team best
