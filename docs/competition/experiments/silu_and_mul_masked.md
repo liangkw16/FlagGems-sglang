@@ -1053,3 +1053,18 @@ Hygon-native masked 2D、full 2D（manual/block-pointer 与小 tile warp 作为�
   stop gate:燧原编译失败(Pipeline run failed)→ 该轴永久关闭并
   记录"燧原运行期分支约束扩及块跳过";燧原 < 0.44 回滚字节。
 - 期望:燧原 0.88 → 1.5-3.0(+0.08~0.27 avg);oracle 22.7 → ~22.9。
+
+### E17 release(2026-09-02 23:4x CST)
+
+- commit `970ec0e7`,六成员 = E13 冻结组合(generic `bdafd313`/ascend
+  `c005537c`/amd `a662c810`/kunlun `26980729`/metax `dc6e0d1c`)+
+  新 `_enflame` `67746114`(E10 块跳过结构 + BLOCK_COL 4096);
+  canonical ZIP SHA-256
+  `c9f4c6b3ff36f79afe642a34df23df290fb45f67f8f5356b0b36acf875edb6ac`;
+- release `gpu:/tmp/flagos-rel-t39e17.i2Fb1d`:py_compile/isort/flake8
+  过,SHA 复验 9/9 一致,**unittest 7/7 OK**(含 enflame 变体在 NVIDIA
+  编译+数值);release log SHA-256
+  `a9dc3c1ceb17b3198a7c44af6f519d092e2e2ca6d0e6177bfbe099256037a22c`。
+  燧原真机编译(运行期分支约束)留平台单发裁决。
+- 注:e17 首版 ZIP(7473b09,误用 e10 载体态成员)已删除重建,以本
+  版为准。
