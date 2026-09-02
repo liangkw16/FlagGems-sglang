@@ -5,13 +5,13 @@ task: 29
 operator: gelu_and_mul
 batch: 3
 validity: valid
-platform: 8/8
-team_best_stage: e8
-team_best_commit: d7a8f79
-team_best_speedup: 2.7394
+platform: 8/8(e9,2.805042x)
+team_best_stage: e9
+team_best_commit: 4627e88e3441909ea6a394ce8977326ecd218648
+team_best_speedup: 2.805042
 sealed: yes
 next: exact-erf 官方实现与 minimax 数值边界复核;预期收益远不足66.68%榜差,封存
-updated: 2026-09-01
+updated: 2026-09-02
 ```
 
 状态:S0 候选就绪,待额度重置后首投。2026-08-27 团队当日额度 30/30 已耗尽
@@ -430,3 +430,8 @@ log/kernelgen-round/out_t29_at_huawei.json(job c007b765)。
 - 因此不为一个无全域精度证书、且理论收益不足榜差三分之一的候选跑平台；
   不改源码、不消耗额度。只有题面未来明确 `up` 有界，或出现八芯可移植的
   exact-erf 原语，才重开该轴。
+
+## 2026-09-02 水位采样战役(T29)
+
+- 载体采样(注释载体,核字节=原团队最佳):r1 sub 见 README 战役表;
+  新团队最佳 e9 2.805042x(采样 r1 TB;距榜首 4.5662 -38.6%,封存)。

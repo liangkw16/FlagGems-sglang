@@ -5,12 +5,13 @@ task: 30
 operator: interleaved_rope
 batch: 3
 validity: valid
-platform: 8/8
-team_best_stage: S0
-team_best_speedup: 25.8353
+platform: 8/8(s1,25.9236875x)
+team_best_stage: s1
+team_best_commit: 3937a60b32c97bb89465e92807ff6852f2a9fca4
+team_best_speedup: 25.9236875
 sealed: yes
 next: 实时榜首37.7641;一读一写下界已达,MCP/官方实现复核无可信46.17%路径
-updated: 2026-09-01
+updated: 2026-09-02
 ```
 
 状态:S0 候选就绪,待额度重置后首投(与 T29 同因:2026-08-27 团队当日
@@ -193,3 +194,8 @@ grid-stride)是代理可见轴上的局部最优;与榜首 12.5% 差距不可由
 - 因无新单变量且旧证据已覆盖结构、参数、单芯 autotune 三层，本轮不改
   源码、不消耗额度。重开条件仅限新 vendor 原语或榜首逐芯谱显示单芯可
   贡献至少 95.43 总分增量。
+
+## 2026-09-02 水位采样战役(T30)
+
+- 载体采样(注释载体,核字节=原团队最佳):r1 sub 见 README 战役表;
+  新团队最佳 s1 25.9236875x(采样 r1 TB(近 oracle);距榜首 39.03 -33.6%,封存)。

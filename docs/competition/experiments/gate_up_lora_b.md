@@ -5,14 +5,14 @@ task: 28
 operator: gate_up_lora_b
 batch: 3
 validity: valid
-platform: 8/8(e11,14.3795x,rank3/4)
-team_best_stage: e11
-team_best_commit: b40e5aa
-team_best_speedup: 14.3795
+platform: 8/8(e14,14.98025x)
+team_best_stage: e14
+team_best_commit: d145121
+team_best_speedup: 14.98025
 blockers: 榜首48.031375x，差33.651875x；无已验证追榜候选
 sealed: yes
-next: 保留E11；今日额度已用完，T28停止提交
-updated: 2026-09-01
+next: 采样两连 TB(e13 14.4435/e14 14.98025);封存,明日 1-2 发守榜采样
+updated: 2026-09-02
 ```
 
 状态:E11 平台 8/8 valid、14.3795x、实时第 3/4；PR41 启发的布局物化
@@ -423,3 +423,8 @@ E11 在 NVIDIA 上比旧 vendor 慢，仅作为 validity-first 昆仑结构候�
   因此“route/物化 -> 规则 GEMM -> inverse restore”是有效的芯片专属
   结构修复，而 MCP HTTP 502 确认为验证服务不可用证据，不是 kernel 失败。
   本题不再消耗额度。
+
+## 2026-09-02 水位采样战役(T28)
+
+- 载体采样(注释载体,核字节=原团队最佳):r1 sub 见 README 战役表;
+  新团队最佳 e14 14.98025x(采样 r1/r2 两连 TB;距榜首 48.13 仍 -68.9%,封存+采样守榜)。

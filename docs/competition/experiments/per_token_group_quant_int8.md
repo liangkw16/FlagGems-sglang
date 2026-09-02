@@ -5,12 +5,13 @@ task: 33
 operator: per_token_group_quant_int8
 batch: 3
 validity: valid
-platform: 8/8
-team_best_stage: e10
-team_best_speedup: 5.5720
+platform: 8/8(e14,5.582775x)
+team_best_stage: e14
+team_best_commit: acb6d92592c602317680aec689e826148d46d2cf
+team_best_speedup: 5.582775
 sealed: yes
 next: e13 官方 constexpr/direct/subwarp/M8 家族全未过门;仅新 vendor subgroup 证据可重开
-updated: 2026-09-01
+updated: 2026-09-02
 ```
 
 状态:e10 = 团队最佳 5.5720x(8/8 valid)；E11 metax tile32 与 E12
@@ -659,3 +660,8 @@ minor axes `9c85187f88228bc0c22123fb72fca87b32a6f9c5124e6202a7305f459e7ccbfa`。
 - 唯一全矩阵不回退的 direct+constexpr 只有 `+1.24%` 几何收益，远低于
   10% 离线门和 39.14% 榜差。T33 继续封存 E10，不提交平台；只有出现目标
   vendor 的真实 subgroup primitive/编译器证据，或榜首源码级结构公开时重开。
+
+## 2026-09-02 水位采样战役(T33)
+
+- 载体采样(注释载体,核字节=原团队最佳):r1 sub 见 README 战役表;
+  新团队最佳 e14 5.582775x(采样 r1 TB;距榜首 7.7529 -28.0%,封存)。

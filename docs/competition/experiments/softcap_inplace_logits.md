@@ -5,12 +5,13 @@ task: 40
 operator: softcap_inplace_logits
 batch: 3
 validity: valid
-platform: 8/8
-team_best_stage: e6
-team_best_speedup: 1.7679
+platform: 8/8(e8,2.195604x,rank1)
+team_best_stage: e8
+team_best_commit: 308f366913777863b08805549a74045f5321d938
+team_best_speedup: 2.195604
 sealed: yes
-next: e9 generic direct仅+1.63~3.40%;需+32.25%才登顶,官方可迁移轴已尽
-updated: 2026-09-01
+next: 榜首守榜(autoken 2.156 差 2%);采样票 2-3 发,燧原尖峰窗期望 ~2.8
+updated: 2026-09-02
 ```
 
 ## S0：T24 跨芯 winner 复用
@@ -529,3 +530,8 @@ E6 `1.76791667x`:
 需 **+32.25%** 才能登顶，连整题 +5% 也要求四芯 +8.24%。本轮最高
 +3.40% 不过门，候选回滚、不提交。至此官方 SGLang/vLLM/FlashInfer
 可迁移结构、数学与参数轴均已覆盖，T40 继续封存于 E6。
+
+## 2026-09-02 水位采样战役(T40)
+
+- 载体采样(注释载体,核字节=原团队最佳):r1 sub 见 README 战役表;
+  新团队最佳 e8 2.195604x(采样 r1 TB +24.2% 登顶榜首;明天留 2-3 发守榜+冲 2.8)。
