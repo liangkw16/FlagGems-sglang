@@ -19,30 +19,25 @@ import triton.language as tl
 _MAX_GRID = 65535
 
 
-@triton.jit
-def _stage1_select_kernel(
+@triton.jit(do_not_specialize=["row_start"])
+def _materialize_kernel(
     logits_ptr,
     bias_ptr,
-    ids_ptr,
+    workspace_ptr,
     row_start,
-    n_tokens,
     n_routed,
     n_shared,
-    TOPK: tl.constexpr,
     BLOCK_N: tl.constexpr,
-    BLOCK_K: tl.constexpr,
 ):
     pid = tl.program_id(0)
-    row = row_start + pid
-    if row >= n_tokens:
-        return
+    row_global = row_start + pid
 
     total_experts = n_routed + n_shared
     n_offs = tl.arange(0, BLOCK_N)
     routed_mask = n_offs < n_routed
 
     raw_routed = tl.load(
-        logits_ptr + row.to(tl.int64) * total_experts + n_offs,
+        logits_ptr + row_global.to(tl.int64) * total_experts + n_offs,
         mask=routed_mask,
         other=0.0,
         eviction_policy="evict_last",
@@ -55,39 +50,64 @@ def _stage1_select_kernel(
         eviction_policy="evict_last",
     ).to(tl.float32)
 
-    sel_score = tl.where(
+    selector = tl.where(
         routed_mask, tl.sigmoid(raw_routed) + bias, -float("inf")
     )
 
-    slot_offs = tl.arange(0, BLOCK_K)
-
-    selected_mask = tl.zeros((BLOCK_N,), dtype=tl.int1)
-
-    for slot in tl.static_range(TOPK):
-        cand = tl.where(selected_mask, -float("inf"), sel_score)
-        best_val = tl.max(cand, axis=0)
-        best_idx = tl.min(
-            tl.where((cand == best_val) & routed_mask, n_offs, n_routed),
-            axis=0,
-        )
-        picked = n_offs == best_idx
-        selected_mask = selected_mask | picked
-        store_mask = slot_offs == slot
-        tl.store(
-            ids_ptr + row.to(tl.int64) * TOPK + slot_offs,
-            tl.broadcast_to(best_idx, (BLOCK_K,)),
-            mask=store_mask,
-        )
+    tl.store(
+        workspace_ptr + pid.to(tl.int64) * n_routed + n_offs,
+        selector,
+        mask=routed_mask,
+    )
 
 
-@triton.jit
-def _stage2_normalize_kernel(
+@triton.jit(do_not_specialize=["row_start", "rank"])
+def _select_one_kernel(
+    workspace_ptr,
+    ids_ptr,
+    row_start,
+    n_routed,
+    rank,
+    TOPK: tl.constexpr,
+    BLOCK_N: tl.constexpr,
+):
+    pid = tl.program_id(0)
+    row_global = row_start + pid
+    n_offs = tl.arange(0, BLOCK_N)
+    routed_mask = n_offs < n_routed
+
+    selector = tl.load(
+        workspace_ptr + pid.to(tl.int64) * n_routed + n_offs,
+        mask=routed_mask,
+        other=-float("inf"),
+        eviction_policy="evict_last",
+    ).to(tl.float32)
+    best_value = tl.max(selector, axis=0)
+    best_index = tl.min(
+        tl.where(
+            (selector == best_value) & routed_mask, n_offs, n_routed
+        ),
+        axis=0,
+    )
+
+    tl.store(
+        ids_ptr + row_global.to(tl.int64) * TOPK + rank,
+        best_index,
+    )
+    tl.store(
+        workspace_ptr + pid.to(tl.int64) * n_routed + n_offs,
+        -float("inf"),
+        mask=routed_mask & (n_offs == best_index),
+    )
+
+
+@triton.jit(do_not_specialize=["row_start"])
+def _normalize_kernel(
     logits_ptr,
     ids_ptr,
     routed_w_ptr,
     shared_w_ptr,
     row_start,
-    n_tokens,
     n_routed,
     n_shared,
     route_scale,
@@ -100,8 +120,6 @@ def _stage2_normalize_kernel(
 ):
     pid = tl.program_id(0)
     row = row_start + pid
-    if row >= n_tokens:
-        return
 
     if GLOBAL_SCALE_IS_TENSOR:
         global_scale = tl.load(global_scale_ptr).to(tl.float32)
@@ -146,7 +164,7 @@ def _stage2_normalize_kernel(
 
     denom += tl.sum(shared_probs, axis=0)
 
-    inv_denom = 1.0 / (denom + 1e-9)
+    inv_denom = 1.0 / denom
 
     out_ty = routed_w_ptr.dtype.element_ty
 
@@ -200,34 +218,48 @@ def sigmoid_gate_topk_renorm(
     BLOCK_N = triton.next_power_of_2(max(n_routed, 1))
     BLOCK_K = triton.next_power_of_2(max(k, 1))
     BLOCK_S = triton.next_power_of_2(max(n_shared_experts, 1))
+    selector = torch.empty(
+        (min(n_tokens, _MAX_GRID), n_routed),
+        dtype=torch.float32,
+        device=logits.device,
+    )
 
     row_start = 0
     while row_start < n_tokens:
         chunk = min(n_tokens - row_start, _MAX_GRID)
         grid = (chunk,)
 
-        _stage1_select_kernel[grid](
+        _materialize_kernel[grid](
             logits,
             bias,
-            indices,
+            selector,
             row_start,
-            n_tokens,
             n_routed,
             n_shared_experts,
-            TOPK=k,
             BLOCK_N=BLOCK_N,
-            BLOCK_K=BLOCK_K,
             num_warps=4,
             num_stages=1,
         )
 
-        _stage2_normalize_kernel[grid](
+        for rank in range(k):
+            _select_one_kernel[grid](
+                selector,
+                indices,
+                row_start,
+                n_routed,
+                rank,
+                TOPK=k,
+                BLOCK_N=BLOCK_N,
+                num_warps=4,
+                num_stages=1,
+            )
+
+        _normalize_kernel[grid](
             logits,
             indices,
             routed_weights,
             shared_weights,
             row_start,
-            n_tokens,
             n_routed,
             n_shared_experts,
             float(route_scale),
