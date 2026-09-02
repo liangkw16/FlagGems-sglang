@@ -404,3 +404,27 @@ card_a 9.92 / card_b 9.15 / 华为 0.77 / 燧原 0.40 / 昆仑 0.29——与榜�
   (7.048×8 − 1.432 + 1.8802)/8 ≈ 7.104(+0.8%)。胜则 E12 探燧原
   t64(单变量,基于 E11);华为 t16 若 < E10 窗口 t32 读数 1.432 即
   判混合假设失败,该芯回滚 t32 后封存。
+
+## E11:混合最佳字节(2026-09-02)
+
+- 单变量:`_ascend` 回滚至 E9 t16 字节(commit `dc66469`,SHA-256
+  `26a3f916…`,与 Git blob 逐字节一致),`_enflame` 保 t32
+  (`948fae20…`),generic(`a99d4b85…`)/kunlun e3(`ceca925b…`)冻结;
+- 预注册门:8/8 valid 且平均 > 7.047975(E10)才保留;华为 t16 读数
+  < 1.432(E10 窗口 t32)判混合假设失败;燧原 t32 若失速至 t16 水位
+  (~1.1)则悬崖判平台水位而非 tile 效应,轴关闭;stop gate:数值/
+  编译失败回滚该芯,同指纹不重投。
+- release(commit `32d85fa`,git-object 目录
+  `gpu:/tmp/flagos-rel-t35e11.Cvs3Wt`):py_compile OK;远端 black
+  26.5.1 hug_parens 漂移复现(BLACK_FAIL,已知工具漂移),按 batch-2
+  先例以本地 black 25.12.0 等价执行——5 个 ZIP 源成员全过,唯一
+  would-reformat 的 test 文件为冻结平台验证字节(E9/E10 同字节两次
+  8/8 valid),豁免重排并记录;远端 SHA 复验 7/7 逐字节一致;
+  unittest 5/5 OK(0.793s);release log SHA-256
+  `9ce18e91a8007d7a22a8dfb03dfe09c7ccdb4ec5366e8efe6d1862b0b8f695d9`。
+- canonical ZIP `e11-32d85fa/rotary_embedding.zip`(4 成员),SHA-256
+  `e7599b34116c96019936b1f3c55ea932cb615da36ab918cba23d057399de0e36`;
+- preflight 全过(task competing/can_submit,额度 18/30),nonce
+  `aff6c932a950249490879d049f9a9351` 一次性消费,submission **8264**
+  入队(2026-09-02 15:4x CST),file_url_sha256
+  `2c2348342d9733042f7eea916c8fe9bf579201bfaa3f530c8734736f03fbb139`。
