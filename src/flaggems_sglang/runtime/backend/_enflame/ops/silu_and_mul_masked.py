@@ -16,13 +16,15 @@ import torch
 import triton
 import triton.language as tl
 
-# e9 re-carrier of the e8 enflame vendor (BLOCK 4096, +90% on that chip
-# in e8): crown defense vs starwing 21.601; the frozen four members are
-# byte-identical to the E7 anchor - this roll re-rolls platform variance
-# enflame vendor: BLOCK_COL 4096 - T24 platform-proven enflame
-# optimum for double-read elementwise; structure otherwise identical
+# enflame vendor: E10 token-block skip ported onto the e8-proven
+# BLOCK_COL 4096 optimum. Each program owns a [ROWS_PER_BLOCK, BLOCK_COL]
+# slab; a block whose first row is past masked_m[e] exits after one
+# scalar load (uniform scalar branch - the +246% huawei mechanism from
+# E10/E13, never yet compiled for enflame; known risk: enflame runtime
+# branch compile constraint, accepted as a single-shot probe).
 _BLOCK_COL = 4096
 _MAX_GRID = 65535
+_ROWS_PER_BLOCK = 8
 
 
 @triton.jit
@@ -33,35 +35,45 @@ def _silu_and_mul_masked_kernel(
     total_blocks,
     tokens,
     half_width,
+    num_row_blocks,
     num_col_blocks,
+    ROWS_PER_BLOCK: tl.constexpr,
     BLOCK_COL: tl.constexpr,
 ):
     pid = tl.program_id(0)
     grid_stride = tl.num_programs(0)
     offsets = tl.arange(0, BLOCK_COL)
     for block_id in range(pid, total_blocks, grid_stride):
-        row_id = block_id // num_col_blocks
-        col_block = block_id - row_id * num_col_blocks
-        expert_id = row_id // tokens
-        token_id = row_id - expert_id * tokens
-        cols = col_block * BLOCK_COL + offsets
+        rc = block_id // num_col_blocks
+        col_block = block_id - rc * num_col_blocks
+        expert_id = rc // num_row_blocks
+        row_block = rc - expert_id * num_row_blocks
         valid_rows = tl.load(masked_m_ptr + expert_id)
-        mask = (token_id < valid_rows) & (cols < half_width)
-        input_base = row_id.to(tl.int64) * (2 * half_width)
-        gate = tl.load(input_ptr + input_base + cols, mask=mask, other=0.0).to(
-            tl.float32
-        )
-        up = tl.load(
-            input_ptr + input_base + half_width + cols,
-            mask=mask,
-            other=0.0,
-        ).to(tl.float32)
-        output = (gate / (1.0 + tl.exp(-gate))) * up
-        tl.store(
-            output_ptr + row_id.to(tl.int64) * half_width + cols,
-            output.to(output_ptr.dtype.element_ty),
-            mask=mask,
-        )
+        row_lo = row_block * ROWS_PER_BLOCK
+        if row_lo < valid_rows:
+            cols = col_block * BLOCK_COL + offsets
+            cmask = cols < half_width
+            for r in tl.static_range(ROWS_PER_BLOCK):
+                token_id = row_lo + r
+                if token_id < valid_rows:
+                    row_id = expert_id * tokens + token_id
+                    input_base = row_id.to(tl.int64) * (2 * half_width)
+                    gate = tl.load(
+                        input_ptr + input_base + cols,
+                        mask=cmask,
+                        other=0.0,
+                    ).to(tl.float32)
+                    up = tl.load(
+                        input_ptr + input_base + half_width + cols,
+                        mask=cmask,
+                        other=0.0,
+                    ).to(tl.float32)
+                    output = (gate / (1.0 + tl.exp(-gate))) * up
+                    tl.store(
+                        output_ptr + row_id.to(tl.int64) * half_width + cols,
+                        output.to(output_ptr.dtype.element_ty),
+                        mask=cmask,
+                    )
 
 
 def silu_and_mul_masked(input, masked_m):
@@ -77,8 +89,9 @@ def silu_and_mul_masked(input, masked_m):
     if experts == 0 or tokens == 0 or half_width == 0:
         return output
 
+    num_row_blocks = triton.cdiv(tokens, _ROWS_PER_BLOCK)
     num_col_blocks = triton.cdiv(half_width, _BLOCK_COL)
-    total_blocks = experts * tokens * num_col_blocks
+    total_blocks = experts * num_row_blocks * num_col_blocks
     _silu_and_mul_masked_kernel[(min(total_blocks, _MAX_GRID),)](
         input,
         masked_m,
@@ -86,7 +99,9 @@ def silu_and_mul_masked(input, masked_m):
         total_blocks,
         tokens,
         half_width,
+        num_row_blocks,
         num_col_blocks,
+        ROWS_PER_BLOCK=_ROWS_PER_BLOCK,
         BLOCK_COL=_BLOCK_COL,
     )
     return output
