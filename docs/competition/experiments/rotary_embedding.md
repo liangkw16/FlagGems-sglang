@@ -230,3 +230,16 @@ card_a 9.92 / card_b 9.15 / 华为 0.77 / 燧原 0.40 / 昆仑 0.29——与榜�
 - stop gate:任一 vendor 芯数值/编译失败 → 该芯回滚 e3 字节,同指纹
   不重投;昆仑若再现 1830s compile-worker 崩溃 → 计入崩溃族证据,
   不重投、仅工单。
+
+### E6b 平台提交(sub 8226,2026-09-02 14:0x CST)
+
+- 实时 preflight 核对账号/团队/batch 3/Task 35/tid `s2t1op035`、
+  source=verification commit `44e9c5f`、stage e6、4 成员、ZIP
+  `/Users/bytedance/ccc/flagos/artifacts/competition/rotary_embedding/e6-44e9c5f/rotary_embedding.zip`
+  SHA-256 `58d349ffebdff5d292e68f826a9157c420cb59a002f44ee4451460ab50605280`
+  全部匹配;intent nonce `45157a78a042ffbb583590c2fac824aa` 一次性消费,
+  正式提交成功,submission `8226`,八芯入队;该 intent/ZIP 已 `submitted`,
+  禁止重试;
+- release 证据:git 对象临时目录 `gpu:/tmp/flagos-rel-t35e6.vcms6f`,
+  远端六文件 SHA-256 与本地/ZIP 成员逐项一致,unittest 5/5
+  (`release.log`);screening 证据 `gpu:/tmp/flagos-rotary-e6.aHPpxC`。
