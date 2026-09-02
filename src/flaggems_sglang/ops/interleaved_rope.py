@@ -74,3 +74,4 @@ def interleaved_rope(x, mrope_section):
 __all__ = ["interleaved_rope"]
 
 # water-sample carrier r1 (2026-09-02): bytes identical to s0-99c154e team best
+# water-sample carrier r2 (2026-09-03)
