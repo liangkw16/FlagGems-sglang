@@ -4,15 +4,15 @@
 task: 31
 operator: moe_fused_gate
 batch: 3
-validity: invalid
-platform: 7/8
+validity: candidate
+platform: E7 7/8;E8 待提交
 team_best_stage: e7(=e6字节载体)
 team_best_commit: f093ae8
 team_best_speedup: 七芯~7.73
-blockers: 昆仑 15 次同指纹崩溃;惯用法触发坐实
-sealed: yes
-next: 仅工单或结构改写(topk 形态)
-updated: 2026-08-31
+blockers: E8 KernelGen Kunlun cloud verify 运行中;目标芯尚无实机证据
+sealed: no
+next: E8 canonical ZIP/实时 preflight/单次提交
+updated: 2026-09-02
 ```
 
 状态:S0 候选就绪
@@ -184,3 +184,82 @@ failed_cases=0),排队 ~55 分钟后返回。T31 三投同指纹,恢复窗口
 - 平台"健康窗口"假说对 T31 失效,连带冻结 T36/T38/T41/T28 的
   盲发重载——后续只在各自题出现达标上升 + 平台修复工单回应后
   单发验证;弹药(全部已 commit+ZIP)继续在库。
+
+## E8:昆仑三阶段结构改写(2026-09-02)
+
+状态:screening、source/test commit 与 commit-bound release 已通过；等待
+KernelGen Kunlun cloud verify 后生成 canonical ZIP。
+
+### 决策与预注册门
+
+- 实时只读状态(`2026-09-02T09:19:23+08:00`):E7 sub `7227` 仍为
+  7/8，昆仑 `1833721ms` 后 compile-worker/subproc_pool Fatal Aborted、
+  `failed_cases=[]`；额度 `27/30`，Task 开放至 `2026-09-03 19:59:59`。
+- T31 自身共八投，其中 S0/E1/E2/E3/E5/E6/E7 七次为 1830s 指纹，E4
+  为服务线程卡死；历史"第 15 次"是跨题崩溃族累计，不是 T31 投了 15 次。
+- E7 七芯和约 `54.09`。E8 只用于恢复 8/8/进入有效榜；即使昆仑仅过
+  `0.1x`，预计均值约 `6.77375x`，不把它表述为可信夺冠候选(实时榜首
+  `59.192025x`)。
+- 晋级门:generic 字节冻结；generic+vendor 完整正确性通过；全部代理形状
+  `>=0.1x`；0 spill/0 scratch；commit-bound release 与 ZIP 验签一致。
+  平台 success gate 为 8/8 且昆仑 `>=0.1x`。任一数值失败、昆仑低于
+  `0.1x` 或再次出现同一 1830s 指纹即关闭本三阶段轴，不重试同候选。
+
+### 单变量与 KernelGen
+
+- 单变量只替换 `_kunlunxin`；generic SHA-256 冻结为
+  `7bf2a6f48691ab4eb601206b1176d34e54b8426c571be5f67bc0686fd129f3fc`。
+- 根因假设从"平台间歇"收敛为原 vendor 巨型 AST:评分、group top-2、
+  group top-k、expert top-k、共享槽、renorm/scale 和 device persistent
+  `tl.range` 全在一核。E8 参考 T27 E8 的昆仑成功证据，改为三核:
+  1. 物化 fp32 selector；2. 只做 grouped/expert 选择并写 indices；
+  3. 按 indices 重算/gather activated 并一次写最终权重。
+- KernelGen MCP transport 正常(4 tools)。`optimize_kernel` 首轮因
+  `tl.arange(0,K_ROUTED)` 非 2 次幂、group top-2 并列删除错误和额外 ids
+  workspace 在落盘前被拒；反馈回灌后的第二轮产出当前三阶段模块。只做一处
+  明确单行修复:stage2 store 指针改为 `+ slots`，使 vector value/mask 与
+  pointer shape 一致。生成请求约束保存于
+  `log/kernelgen-round/req_t31_e8_opt_desc.txt`(ignored evidence)。
+- 新 vendor 还修复了旧实现的契约边界:组内两个并列最大值只排除一个确定
+  index，再取第二大；group/expert 均用 max + min-id 精确选择。softmax 的
+  grouped/top-k 严格使用 reference 的 pre-softmax biased logits，只有输出
+  权重使用 softmax probability。
+
+### Screening
+
+| 项目 | 值 |
+| --- | --- |
+| base/source/verification commit | `9b6911de7aa2f794b6d0499ea7a346ea06e7c2b8` |
+| Kunlun vendor SHA-256 | `907e9aaf201423515b622af941677e7e4d1cbe9c0b5d78cbd33967094e5a9926` |
+| test SHA-256 | `9600bcaaf60f6437809434ee34342de84f1c8e729232597ad6ed604c94401f56` |
+| `_op_variants.py` SHA-256 | `cdc5fe3e4cb5a85976f0a3414cd194bb53c79f6f2830be01f685f996b97ca0d7` |
+| benchmark helper SHA-256 | `a5f254739747de9b59ae72e22648873094be81bceb7d7665e23cf2f3ebe83513` |
+| screening 目录 | `gpu-et:/tmp/flagos-moe-fused-gate.ZpSxQb`(0700) |
+| final test PID/PGID/SID | `265840` |
+| test/benchmark log SHA-256 | `99082f81fc050428c0d55661d32681debe893c7bcb59f437a1f8dbd40618061b` / `43eef2f6170511e11ba741fa79f6b3fca0fe9a0c4807c6414ae0c9fa3ed66507` |
+
+- 环境:RTX 5070 Ti、PyTorch `2.13.0+cu130`、Triton `3.7.1`、CUDA
+  `13.0`。py_compile/Black/isort/flake8 通过，generic+vendor unittest
+  **6/6**；覆盖三 dtype/三 scoring、group/shared/renorm/scale、group
+  top-2 精确并列、softmax selector 语义、N=65/G=5、topk 3/6/8、空行及
+  M=70000 grid fold。
+- 五轮 AB/BA、warmup25/repeat100 的 vendor/reference speedup:
+  `2.7016/4.2421/4.2618/4.3559/2.9445/2.2466/4.5959x`。65536×128
+  fp16 的历史 1-ulp 近平局由冻结 generic 与 vendor 同字节复现，显式标记
+  `KNOWN-TIE`；M=70000 精确 indices 回归通过。
+- vendor 最大 `63` registers、0 spill、0 scratch、最多 16 bytes shared，
+  三核均 `num_warps=4,num_stages=1`；generic 最大 103 registers/stages3。
+
+### Commit-bound release
+
+- release 目录:`gpu-et:/tmp/flagos-moe-fused-gate-release.Xkvyno`(0700)，
+  source/test/helper 全由 commit `9b6911d` Git 对象导出；test PID/PGID
+  `266017`，benchmark PID/PGID `266128`。静态检查、6/6 unittest、同七
+  shape benchmark、资源检查和前后完整 SHA 均通过。
+- release test log SHA-256
+  `24f9d7ca2d5b0e87361ae3736b309d871a0d89fbeac5094bc7205753c171fa35`；
+  release benchmark log SHA-256
+  `450a53350b91bf2fb3a4ef4ab03793d08b77c428213adae4c7058929687c5eef`。
+- 打包器 dry-run 仅含 `moe_fused_gate.py` 与
+  `moe_fused_gate_kunlunxin.py`；预计 canonical ZIP 18755 bytes，SHA-256
+  `f7ec5b4fab04ceb1fa78ad7df9931f7fc74beff82d48563445674e1d15c19820`。
