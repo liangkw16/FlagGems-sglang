@@ -5,13 +5,13 @@ task: 31
 operator: moe_fused_gate
 batch: 3
 validity: invalid_correctness
-platform: E8 sub8148 7/8;Kunlun 1833425ms compile-worker crash
+platform: E9 sub8270 7/8;Kunlun 1833723ms 同指纹(第16例)
 team_best_stage: e7(=e6字节载体)
 team_best_commit: f093ae8
 team_best_speedup: 七芯~7.73
-blockers: 三阶段仍触发 Kunlun compile-worker Fatal Aborted
-sealed: no
-next: 仅评估再拆 group-score/group-select/expert-select 的新结构;不扫参数
+blockers: 四微核全拆仍同指纹;崩溃面不在源码复杂度层,超出本地可达
+sealed: yes
+next: 永久封存;仅平台工单回应+他队结构公开或昆仑修复后以 e7 载体单发重验
 updated: 2026-09-02
 ```
 
@@ -370,3 +370,24 @@ compile-worker 崩溃。三阶段同候选封存，禁止重试。
   (daily_seq 14),额度 17→16/30;file_url_sha256
   `35220a654f351b073b8ac2221e1c65f7d79713c94b41c6377a5d66154835da45`;
 - 平台终态待回填(若再现 1830s 指纹,评测约 31 分钟出终态)。
+
+### E9 终态(sub 8270,2026-09-02 16:3x CST):第 16 次同指纹,T31 永久封存
+
+- 七芯全部通过且读数健康(天数 6.8166/沐曦 3.645/燧原 0.8832/海光
+  13.8264/华为 4.8704/card_a 12.529/card_b 11.5736,和 54.24);
+  **昆仑 1833723ms 后 `passed=false`、`failed_cases=[]`,与 E1-E8 的
+  1830s compile-worker Fatal Aborted 完全同指纹**(T31 内第 8 次
+  1830s 型,加 E4 服务线程卡死为九投九败);额度 16/30。
+- **决定性排除**:E9 已把每个核的 AST 压到机制性下限——单核最大
+  20 registers/0 spill、无 static_range、host-stepped 每 slot 一发
+  单 argmax——仍触发同一指纹。E8 归因的主嫌疑"巨型 grouped-route
+  AST"不成立;tl.sqrt 也已在 stage1/3 之外无处可删。崩溃面不在
+  我方 Triton 源的复杂度或惯用法层面,结合 E7"他队同窗通过",唯一
+  剩余差异空间在平台 validation 侧与特定实现的编译交互,超出源码
+  单变量可达范围。
+- **T31 永久封存**(预注册 stop gate 兑现:分核轴已用,无后续轴);
+  树回滚 E8 字节 `9b6911d`(`907e9aaf`,revert commit `f76e46f`)。
+  重启条件:平台工单回应且他队通过样例字节结构公开,或昆仑平台
+  修复后以 e7 载体(`f093ae8`)单发重验;不再做本地结构迭代。
+- 七芯资产价值:E9 七芯读数与 E8 一致,证明四微核结构本身跨芯
+  健壮;若未来昆仑恢复,候选可复用,无需重新开发。
