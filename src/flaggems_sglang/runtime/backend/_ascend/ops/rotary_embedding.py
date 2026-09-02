@@ -104,3 +104,4 @@ __all__ = ["rotary_embedding"]
 # (team-best probe; generic/enflame/kunlunxin frozen)
 # water-sample carrier r2 (2026-09-02)
 # water-sample carrier r3 (2026-09-03)
+# re-issue after stale_after_upload guard (2026-09-03): no submission was created
