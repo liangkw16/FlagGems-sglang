@@ -12,25 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import importlib.util
 import unittest
-from pathlib import Path
 
 import torch
 import torch.nn.functional as F
 
-MODULE_PATH = (
-    Path(__file__).parents[1]
-    / "src"
-    / "flaggems_sglang"
-    / "ops"
-    / "moe_fused_gate.py"
-)
-SPEC = importlib.util.spec_from_file_location(
-    "moe_fused_gate_module", MODULE_PATH
-)
-MOD = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MOD)
+from tests._op_variants import load_operator_modules
+
+MODULES = load_operator_modules("moe_fused_gate")
 
 
 def reference(
@@ -120,12 +109,24 @@ class TestMoeFusedGate(unittest.TestCase):
         torch.manual_seed(M * 131 + N)
         scores = (torch.randn(M, N, device="cuda") * 2).to(dtype)
         bias = torch.randn(N, device="cuda").to(torch.float32)
-        w, i = MOD.moe_fused_gate(scores, bias, **kw)
         rw, ri = reference(scores, bias, **kw)
-        self.assertEqual(w.dtype, torch.float32)
-        self.assertEqual(i.dtype, torch.int32)
-        self.assertTrue(torch.equal(i, ri), f"index mismatch {i} vs {ri}")
-        torch.testing.assert_close(w, rw, rtol=1e-4, atol=1e-4)
+        tolerance = {
+            torch.float32: 1e-4,
+            torch.float16: 1e-2,
+            torch.bfloat16: 1.5e-2,
+        }[dtype]
+        for variant, mod in MODULES:
+            with self.subTest(variant=variant):
+                w, i = mod.moe_fused_gate(scores, bias, **kw)
+                self.assertEqual(w.dtype, torch.float32)
+                self.assertEqual(i.dtype, torch.int32)
+                self.assertTrue(
+                    torch.equal(i, ri),
+                    f"{variant}: index mismatch {i} vs {ri}",
+                )
+                torch.testing.assert_close(
+                    w, rw, rtol=tolerance, atol=tolerance
+                )
 
     def test_matrix(self):
         for dtype in (torch.float32, torch.float16, torch.bfloat16):
@@ -177,19 +178,65 @@ class TestMoeFusedGate(unittest.TestCase):
         scores = torch.zeros(2, 8, device="cuda").to(torch.float32)
         scores[0] = torch.tensor([1.0, 3.0, 3.0, 2.0, 0, 0, 0, 0]).cuda()
         bias = torch.zeros(8, device="cuda")
-        w, i = MOD.moe_fused_gate(scores, bias, topk=3)
         rw, ri = reference(scores, bias, topk=3)
-        # torch.topk tie order is unspecified on CUDA; compare sets and
-        # require our tie order to be ascending (lower index first)
-        self.assertEqual(sorted(i[0].tolist()), sorted(ri[0].tolist()))
-        self.assertEqual(i[0].tolist(), sorted(i[0].tolist()))
-        torch.testing.assert_close(w[:, 1:], rw[:, 1:], rtol=1e-4, atol=1e-4)
+        for variant, mod in MODULES:
+            with self.subTest(variant=variant):
+                w, i = mod.moe_fused_gate(scores, bias, topk=3)
+                # torch.topk tie order is unspecified on CUDA; compare sets and
+                # require our tie order to be ascending (lower index first)
+                self.assertEqual(sorted(i[0].tolist()), sorted(ri[0].tolist()))
+                self.assertEqual(i[0].tolist(), sorted(i[0].tolist()))
+                torch.testing.assert_close(
+                    w[:, 1:], rw[:, 1:], rtol=1e-4, atol=1e-4
+                )
+
+    def test_kunlun_grouped_edges(self):
+        mod = dict(MODULES)["kunlunxin"]
+
+        scores = torch.zeros(1, 8, device="cuda")
+        selector = torch.tensor(
+            [3.0, 3.0, 0.0, 0.0, 4.0, 1.5, 0.0, 0.0],
+            device="cuda",
+        )
+        _, indices = mod.moe_fused_gate(
+            scores,
+            selector - 0.5,
+            topk=1,
+            renormalize=False,
+            num_expert_group=2,
+            topk_group=1,
+        )
+        self.assertLess(indices[0, 0].item(), 4)
+
+        scores = torch.tensor([[10.0, 0.0, 6.0, 6.0]], device="cuda")
+        weights, indices = mod.moe_fused_gate(
+            scores,
+            torch.zeros(4, device="cuda"),
+            topk=1,
+            scoring_func="softmax",
+            renormalize=False,
+            num_expert_group=2,
+            topk_group=1,
+        )
+        ref_weights, _ = reference(
+            scores,
+            torch.zeros(4, device="cuda"),
+            topk=1,
+            scoring_func="softmax",
+            renormalize=False,
+            num_expert_group=2,
+            topk_group=1,
+        )
+        self.assertIn(indices[0, 0].item(), (2, 3))
+        torch.testing.assert_close(weights, ref_weights)
 
     def test_nonpow2_and_large(self):
         with self.subTest("N=96"):
             self._run(7, 96, torch.float32, topk=4)
         with self.subTest("M=4096"):
             self._run(4096, 128, torch.bfloat16, topk=8)
+        with self.subTest("M=70000 grid fold"):
+            self._run(70000, 17, torch.float32, topk=4)
         with self.subTest("N=65 grouped"):
             self._run(
                 4, 65, torch.float32, topk=4, num_expert_group=5, topk_group=2
@@ -198,8 +245,11 @@ class TestMoeFusedGate(unittest.TestCase):
     def test_empty(self):
         scores = torch.empty(0, 16, device="cuda")
         bias = torch.zeros(16, device="cuda")
-        w, i = MOD.moe_fused_gate(scores, bias, topk=4)
-        self.assertEqual(w.shape, (0, 4))
+        for variant, mod in MODULES:
+            with self.subTest(variant=variant):
+                w, i = mod.moe_fused_gate(scores, bias, topk=4)
+                self.assertEqual(w.shape, (0, 4))
+                self.assertEqual(i.shape, (0, 4))
 
 
 if __name__ == "__main__":
