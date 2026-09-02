@@ -4,13 +4,13 @@
 task: 38
 operator: sigmoid_gate_topk_renorm
 batch: 3
-validity: invalid_correctness
-platform: E4 sub 8160 7/8;Kunlun快速执行但9/9数值失败
+validity: candidate
+platform: E4 sub 8160 7/8 numeric;E5 release-ready
 team_best_stage: S0
 team_best_commit: 311570f
-blockers: E3 exact tuple禁止重试;E4 exact tuple禁止重试
+blockers: E3/E4 exact tuple禁止重试;E5 Kunlun待一次性实机验证
 sealed: no
-next: 仅评估移除dynamic rank写槽的新E5;无强证据则封存
+next: E5 新SHA完成preflight后单次提交
 updated: 2026-09-02
 ```
 
@@ -312,3 +312,54 @@ Kunlun verifier 为基础设施 502，目标芯待 commit-bound release 后单�
   直接接收已偏移的 `indices[:, rank]` view，并保持其余 E4 字节结构不变，才构成可评估
   的 E5 单变量；若无 MCP/静态/代理证据支持，或 E5 仍数值失败/超时/低于 `0.1x`，
   立即永久封存 T38 host-stepped 轴。
+
+## E5:pre-offset output view 移除 dynamic rank(2026-09-02 11:38 CST)
+
+状态:新 commit、新 ZIP SHA 的单变量 correctness 修复已完成 commit-bound release；
+E3/E4 的旧 tuple 继续冻结。
+
+### 根因证据与最小修复
+
+- 仓库历史没有 Kunlun 成功样本让每次 launch 变化的
+  `do_not_specialize` scalar 直接参与输出列地址；E4 约 `(k-1)/k` 的错误比例与
+  未初始化大值高度指向该 target lowering/launch ABI 风险，但不把它表述为已证实
+  的 driver 漏参。
+- 反证表明一般跨 launch workspace 可见性可用：T27 producer→consumer、T41 连续
+  read-modify-write 均通过 Kunlun correctness。T28 sub7959 还直接把带行列 storage
+  offset 的非连续输出 view 传给 Triton 并在 Kunlun 以 `4.4045x` 通过。
+- E5 唯一代码变化是从 `_select_one_kernel` ABI 和地址式彻底删除 `rank`；host 循环
+  传 metadata-only `indices[:, rank]`，kernel 固定写
+  `ids_slot_ptr + row_global*TOPK`。selector RMW、三阶段、数学、grid、
+  `4 warps/1 stage` 和 generic 全部冻结；不产生 rank constexpr 编译变体。
+- KernelGen MCP `optimize_kernel(device=kunlun)` 在 26.78s 正常返回，并逐字节同意
+  上述最小修复；没有声称运行了目标芯验证。
+
+### Screening、release 与 ZIP
+
+- screening `gpu-et:/tmp/flagos-sigmoid-gate-topk-renorm-e5.Ncyzbx`；vendor/test/helper
+  SHA-256 为
+  `85b899d9e8c584c2fdbc782e5aa26f0bc58e0c48b8dfdc44215a95c3f5eabcda` /
+  `883446df2662c53200fe8c18f723e64d077d14e6d93e1146f4c9653f4fcc3263` /
+  `5fd7de19ccad6cc0294dac09e300199ac317292f29eb320c6fa7bfcfe00df5f1`；
+  unittest **4/4 PASS**，E4/E5 indices 全 shape 逐位一致；E5 八 shape
+  `3.6080/3.0339/3.2999/3.5738/3.8424/3.6369/0.7288/1.6084x`，最大
+  23 registers、0 spill、0 scratch。日志 SHA-256
+  `d33720f30db489a91790bcc80f42930d101dd304f82b9a671784dbc393b9d06b`。
+- source/verification commit
+  `8f5e0c2f629cc6563fbbc7357a93b37b2b62df5c`；release
+  `gpu-et:/tmp/flagos-sigmoid-gate-topk-renorm-e5-release.dZ51CG` 从 Git objects
+  导出，unittest **4/4 PASS**，八 shape/资源复验通过；release log SHA-256
+  `305be4139bb4b005c6e75f7d483abcbdaf60e8292a2071b5ce10764f559fbffe`。
+- canonical ZIP
+  `artifacts/competition/sigmoid_gate_topk_renorm/e5-8f5e0c2/sigmoid_gate_topk_renorm.zip`，
+  12615 bytes，SHA-256
+  `0f209997ca66f8d12fd4aafdb6e54a22cfe5da9ce9808612f937e561662b8b0b`；成员仅
+  generic `e4840878...2e03` 与 Kunlun vendor `85b899d9...bcda`，dry-run、created、
+  `--verify-existing` 与 `unzip -t` 一致。
+
+### 平台门
+
+- 七芯冻结 generic；Kunlun 必须 9/9 correct 且 `>=0.1x`，才恢复最低约
+  `(34.5374+0.1)/8=4.3297x` 的有效成绩。
+- stop gate:E5 任一数值失败、同族 1830s crash 或 `<0.1x` 即永久封存 T38
+  host-stepped 轴；本包和参数/载体不得重投。
