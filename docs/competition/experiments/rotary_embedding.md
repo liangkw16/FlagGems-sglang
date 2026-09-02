@@ -5,12 +5,12 @@ task: 35
 operator: rotary_embedding
 batch: 3
 validity: valid
-platform: 8/8(E8,5.961875x,rank9)
-team_best_stage: e8
-team_best_commit: e066a9e
-team_best_speedup: 5.961875
+platform: 8/8(E10,7.047975x,team best)
+team_best_stage: e10
+team_best_commit: 988f941
+team_best_speedup: 7.047975
 sealed: no
-next: E10 sub8260 评测中;终态即封存(超5.9619保留字节,否则回滚E8)
+next: E11 混合最佳字节(ascend 回 t16 + enflame 保 t32);胜则 E12 探 enflame t64,败则封存
 updated: 2026-09-02
 ```
 
@@ -379,3 +379,28 @@ card_a 9.92 / card_b 9.15 / 华为 0.77 / 燧原 0.40 / 昆仑 0.29——与榜�
   `8260`(daily seq 12),额度 19→18/30;
 - release 证据:git 对象目录 `gpu:/tmp/flagos-rel-t35e10.XXXXXX`,
   unittest 5/5。
+
+### E10 终态(sub 8260,2026-09-02 15:2x CST 只读 status)
+
+**8/8 valid,平均 7.047975,is_team_best=true —— 新团队最佳**
+(+18.2% vs E8 5.961875,预注册门通过,树保留 E10 字节);额度 18/30。
+
+| 芯片 | E9(t16) | E10(t32) | 同窗归因 |
+| --- | ---: | ---: | --- |
+| enflame | 1.1470 | **10.5928** | **+823% 悬崖**(t32 疑触发整行宽瓦片,该模型第 5 证) |
+| huawei | 1.8802 | 1.4320 | **-23.8% 回退**(远超 ±7% 方差带;t16 为华为峰值) |
+| kunlunxin | 0.3270 | 0.2978 | e3 冻结字节,方差内 |
+| tianshu | 9.9010 | 9.9448 | generic 冻结,+0.4% |
+| muxi | 6.4646 | 6.3812 | generic 冻结,-1.3% |
+| haiguang | 9.2482 | 9.5014 | generic 冻结,+2.7% |
+| card_a | 9.3736 | 9.5472 | generic 冻结,+1.9% |
+| card_b | 8.7600 | 8.6866 | generic 冻结,-0.8% |
+
+- 判定:tile 轴对两 vendor 芯呈相反曲线——燧原 4→8→16→32 单调爬升后
+  在 32 出数量级悬崖;华为峰值在 16、32 显著回退。E10 平均被燧原悬崖
+  抬升,即便华为 -23.8% 仍大幅破团队最佳。
+- 遗留单变量(预注册 E11):`_ascend` 回滚 E9 t16 字节(`dc66469`)、
+  `_enflame` 保 t32,generic/kunlun 冻结;若同窗兑现,期望均值约
+  (7.048×8 − 1.432 + 1.8802)/8 ≈ 7.104(+0.8%)。胜则 E12 探燧原
+  t64(单变量,基于 E11);华为 t16 若 < E10 窗口 t32 读数 1.432 即
+  判混合假设失败,该芯回滚 t32 后封存。

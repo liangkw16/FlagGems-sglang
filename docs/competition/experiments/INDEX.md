@@ -15,7 +15,7 @@
 | 32 | moe_fused_mul_sum | valid | 8/8 | S0 4.4829x | yes | e5 三框架独立reduce同构;流量理想上限仅+22.7%,无法解释433%榜差 | 2026-09-01 | [moe_fused_mul_sum](moe_fused_mul_sum.md) |
 | 33 | per_token_group_quant_int8 | valid | 8/8 | e10 5.5720x | yes | e13 官方 constexpr/direct/subwarp/M8 家族全未过门;仅新 vendor subgroup 证据可重开 | 2026-09-01 | [per_token_group_quant_int8](per_token_group_quant_int8.md) |
 | 34 | per_token_quant_int8 | valid | 8/8 | e1 4.7131x | yes | e4 persistent cap与SGLang launch参数均不过5%全矩阵门;已知轴尽 | 2026-09-01 | [per_token_quant_int8](per_token_quant_int8.md) |
-| 35 | rotary_embedding | valid | 8/8(E8,5.961875x,rank9) | e8 5.961875x | no | E10 sub8260 评测中;终态即封存(超5.9619保留字节,否则回滚E8) | 2026-09-02 | [rotary_embedding](rotary_embedding.md) |
+| 35 | rotary_embedding | valid | 8/8(E10,7.047975x,team best) | e10 7.047975x | no | E11 混合最佳字节(ascend 回 t16 + enflame 保 t32);胜则 E12 探 enflame t64,败则封存 | 2026-09-02 | [rotary_embedding](rotary_embedding.md) |
 | 36 | selective_state_update | invalid_correctness | 7/8(e29;昆仑compile-worker崩溃) | e22(correctness) 5.1200625x | no | persisted-slice轴已关闭;仅有全新源码级结构证据时重开 | 2026-09-01 | [selective_state_update](selective_state_update.md) |
 | 37 | sgemm_lora_a | valid | 8/8(E5,5.3471x,rank6/6;E7 5.168非TB) | e5 5.3470625x | yes | E7 stages轴平台证伪(沐曦-20%/card_b-10%,代理+11%不迁移);树回滚E5字节,收盘 | 2026-09-02 | [sgemm_lora_a](sgemm_lora_a.md) |
 | 38 | sigmoid_gate_topk_renorm | invalid_correctness | E5 sub 8170 7/8;Kunlun快速执行但9/9数值失败 | S0 | yes | T38封存;切换其他任务 | 2026-09-02 | [sigmoid_gate_topk_renorm](sigmoid_gate_topk_renorm.md) |
