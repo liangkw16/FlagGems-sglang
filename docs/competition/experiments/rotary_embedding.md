@@ -5,11 +5,12 @@ task: 35
 operator: rotary_embedding
 batch: 3
 validity: valid
-platform: 8/8(e3);E6 7/8 昆仑1834s崩溃
-team_best_stage: e3
-team_best_speedup: 5.8458
+platform: 8/8(E8,5.961875x,rank9)
+team_best_stage: e8
+team_best_commit: e066a9e
+team_best_speedup: 5.961875
 sealed: no
-next: E7 sub8253 与 E8 tile8 探针均提交中
+next: tile16 探针评估中(4→8 已+13~15%)
 updated: 2026-09-02
 ```
 
@@ -304,3 +305,18 @@ card_a 9.92 / card_b 9.15 / 华为 0.77 / 燧原 0.40 / 昆仑 0.29——与榜�
   unittest 5/5,release log SHA-256 `82303ae0…cb10`;
 - E7(sub 8253)与 E8(sub 8255)同时在评;两包除 ascend/enflame
   vendor 外字节相同,逐芯结果可互相对照归因。
+
+### E7/E8 终态(2026-09-02 15:0x)
+
+- **E7(sub 8253):8/8 valid,平均 5.90115**——昆仑 e3 字节如预期通过
+  (0.2942),七芯增益落袋;但同日即被 E8 超越(is_team_best=false);
+- **E8(sub 8255):8/8 valid,平均 5.961875,新团队最佳(is_team_best
+  =true)**,榜首差距 5.8458→5.9619(-53% 对 c2flow 12.7588);
+- 同窗成对归因(消除跨窗口方差):E7→E8 逐芯——华为 1.5472→1.7554
+  (**tile8 +13.4%**)、燧原 0.881→1.0088(**tile8 +14.5%**),generic
+  五芯 ±2% 噪声(天数 10.51→10.43、card_b 8.71→8.73 等),昆仑冻结
+  0.294→0.296;两芯均过预注册保留门,tree 保持 E8 字节;
+- 跨窗口方差注记:E6→E7 同字节(华为/燧原/generic)读数漂移 -2~
+  -7%(华为 1.663→1.5472),跨提交比较必须用同窗成对;
+- 累计:华为 0.77→1.7554(+128%)、燧原 0.40→1.0088(+152%),
+  题目平均 5.8458→5.9619(+2.0%),rank 10→9。
