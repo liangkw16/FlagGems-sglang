@@ -4,13 +4,13 @@
 task: 38
 operator: sigmoid_gate_topk_renorm
 batch: 3
-validity: candidate
-platform: E5 sub 8170 pending;E4 sub 8160 7/8 numeric
+validity: invalid_correctness
+platform: E5 sub 8170 7/8;Kunlun快速执行但9/9数值失败
 team_best_stage: S0
 team_best_commit: 311570f
-blockers: E3/E4 exact tuple禁止重试;E5 Kunlun待一次性实机验证
-sealed: no
-next: 只读等待 E5 sub 8170 八芯终态
+blockers: E3/E4/E5 exact tuple禁止重试;host-stepped轴已触发stop gate
+sealed: yes
+next: T38封存;切换其他任务
 updated: 2026-09-02
 ```
 
@@ -367,3 +367,15 @@ E3/E4 的旧 tuple 继续冻结。
   **sub 8170 / daily seq 6**；平台返回的公开文件独立下载为 12615 bytes，SHA-256
   `0f209997ca66f8d12fd4aafdb6e54a22cfe5da9ce9808612f937e561662b8b0b`，
   `unzip -t` 两成员均通过。精确 E5 tuple 自此冻结，不得重投。
+
+### 平台终态
+
+- sub 8170 为 **7/8、`invalid_correctness`**。七芯均通过：Tianshu `6.0202x`、
+  Muxi `2.9804x`、Enflame `0.8716x`、Hygon `7.7450x`、Huawei `2.4496x`、
+  card_a `5.8958x`、card_b `8.1412x`，七芯和 `34.1038x`。
+- Kunlun validation `0120619ac70b` 在 **9022 ms** 完成，9/9 correctness case
+  全失败；错误比例 `80.0%` 至 `100.0%`，多数 case 仍出现 `1e28` 至 `1e38`
+  量级的未初始化样式大值。移除 dynamic rank 没有改变核心错误形态，证明它不是
+  唯一根因；同时再次确认这条结构已经越过编译墙，而非 1830s compile-worker crash。
+- E5 已触发预定 stop gate；T38 host-stepped selector/workspace 轴永久封存，E3/E4/E5
+  的包、参数与载体均不得重投。
