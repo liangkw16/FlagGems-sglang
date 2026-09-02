@@ -17,7 +17,7 @@ import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
-_HEADS_TILE = 32
+_HEADS_TILE = 16
 
 
 @triton.jit
@@ -99,3 +99,6 @@ def rotary_embedding(x, cos, sin, interleaved):
 
 
 __all__ = ["rotary_embedding"]
+
+# water-sample carrier r1 (2026-09-02): bytes identical to e11-32d85fa
+# (team-best probe; generic/enflame/kunlunxin frozen)
