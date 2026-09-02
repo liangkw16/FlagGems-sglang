@@ -50,3 +50,29 @@ git fetch community '+refs/heads/*:refs/remotes/community/*'
 ## 重要基线提醒
 
 比赛页给出的 [示例 commit `9642557`](https://github.com/flagos-ai/FlagGems-sglang/commit/9642557dabcd277dabdb8abd09d1bb42e0af3b6b) 从 `49e6ec3` 分叉，不是当前 `master` 的祖先。它适合参考目录与 PR 写法，不适合直接作为第二批分支 base，否则 PR 会夹带无关提交。
+
+## 第三批参考检索(2026-09-02)
+
+- 官方仓库尚无第三批 PR(最新 #39/#40/#41 为第一批 Track1,c2flowDS,
+  2026-09-01;已落盘 `origin/public/pr39/40/41`)。截止前每小时复查
+  `gh api repos/flagos-ai/FlagGems-sglang/pulls`。
+- c2flow 惯用法摘要(pr40 `mrope_fused`,rope 家族):
+  - generic 每 token 一个 program + [BLOCK_HEADS, BLOCK_PAIRS] 2D 瓦片,
+    cos/sin 每行一次载入广播(= 我方 T35 的 +24.8% 经验);
+  - `_kunlunxin`:**3D grid (tokens, head_groups, pairs) + num_warps=1
+    极小 program**——昆仑上微 program 大 grid 可行,未触发 1830s 崩溃族;
+  - `_ascend`:直接 2D 广播瓦片可通过(我方 T35 的"2D 广播瓦片 NaN"
+    应表述为特定 tile 形态/lowering 触发,非 2D 本身);
+  - pr41 `_kunlunxin` fused_moe_gemm:FlagTree XPU 规则 GEMM +
+    `do_not_specialize=["M"]` + `tl.max_contiguous(tl.multiple_of(...))`
+    对齐提示——与 T28 route/materialize 范式互证。
+- 上游 SGLang/vLLM 对第三批弱项:
+  - T33 quant:sgl#33533(乘数 1 ULP 舍入改变 fp8 tie-breaking,与我方
+    div_rn 教训同源;1.23x 主体在 EP 融合路径)、sgl#32296(消毒 clamp
+    减半,CUDA 层)、vllm#46541(Hopper 特定)——无可直接迁移结构;
+    EvokeAgent T33/T34 同分之谜上游无解。
+  - T39:vllm#32735 masked-m fused silu+mul+quant,program=(expert,group)
+    + counts 早退——印证我方 E10 块跳过为业界正统;sgl#29643 DSv4 masked
+    布局参考。
+  - T30:上游仅 diffusion/NPU fused rope,无通用参考。
+- 社区仓库(AizanSousuke)停在 batch-2,无三批内容。
