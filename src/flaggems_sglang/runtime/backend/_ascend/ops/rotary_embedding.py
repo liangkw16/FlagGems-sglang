@@ -102,3 +102,4 @@ __all__ = ["rotary_embedding"]
 
 # water-sample carrier r1 (2026-09-02): bytes identical to e11-32d85fa
 # (team-best probe; generic/enflame/kunlunxin frozen)
+# water-sample carrier r2 (2026-09-02)
