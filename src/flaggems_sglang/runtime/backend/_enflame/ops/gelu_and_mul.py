@@ -100,3 +100,5 @@ def gelu_and_mul(hidden_states):
 
 
 __all__ = ["gelu_and_mul"]
+
+# water-sample carrier r1 (2026-09-02): bytes identical to e8-d7a8f79 team best
