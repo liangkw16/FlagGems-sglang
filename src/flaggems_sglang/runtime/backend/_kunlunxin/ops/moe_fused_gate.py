@@ -74,114 +74,94 @@ def _stage1_selector(
 
 
 @triton.jit
-def _group_score(
+def _stage2_route(
     sel_ptr,
-    gs_ptr,
+    indices_ptr,
     n_experts,
-    n_groups,
     experts_per_group,
     row_start,
-    BLOCK_V: tl.constexpr,
-):
-    row = row_start + tl.program_id(0)
-    for group in range(n_groups):
-        lo = group * experts_per_group
-        offs = tl.arange(0, BLOCK_V)
-        in_group = offs < experts_per_group
-        vals = tl.load(
-            sel_ptr + row * n_experts + lo + offs,
-            mask=in_group,
-            other=-float("inf"),
-        )
-        first = tl.max(vals, axis=0)
-        cnt_first = tl.sum(tl.where(vals == first, 1, 0), axis=0)
-        smaller = tl.max(tl.where(vals < first, vals, -float("inf")), axis=0)
-        second = tl.where(cnt_first >= 2, first, smaller)
-        tl.store(gs_ptr + row * n_groups + group, first + second)
-
-
-@triton.jit
-def _group_select(
-    gs_ptr,
-    gk_ptr,
-    n_groups,
-    row_start,
+    BLOCK_N: tl.constexpr,
+    BLOCK_K: tl.constexpr,
     BLOCK_G: tl.constexpr,
+    K_ROUTED: tl.constexpr,
+    TOPK: tl.constexpr,
+    NUM_GROUPS: tl.constexpr,
     TOPK_GROUP: tl.constexpr,
 ):
     row = row_start + tl.program_id(0)
-    group_ids = tl.arange(0, BLOCK_G)
-    group_mask = group_ids < n_groups
-    vals = tl.load(
-        gs_ptr + row * n_groups + group_ids,
-        mask=group_mask,
+    experts = tl.arange(0, BLOCK_N)
+    expert_mask = experts < n_experts
+    selector = tl.load(
+        sel_ptr + row * n_experts + experts,
+        mask=expert_mask,
         other=-float("inf"),
     )
-    better = (vals[None, :] > vals[:, None]) | (
-        (vals[None, :] == vals[:, None])
-        & (group_ids[None, :] < group_ids[:, None])
-    )
-    rank = tl.sum(
-        tl.where(group_mask[None, :], better.to(tl.int32), 0), axis=1
-    )
-    keep = group_mask & (rank < TOPK_GROUP)
-    tl.store(
-        gk_ptr + row * n_groups + group_ids,
-        keep.to(tl.int32),
-        mask=group_mask,
-    )
 
+    if NUM_GROUPS > 1:
+        group_ids = tl.arange(0, BLOCK_G)
+        group_scores = tl.full((BLOCK_G,), -float("inf"), dtype=tl.float32)
+        for group in tl.static_range(NUM_GROUPS):
+            lo = group * experts_per_group
+            hi = lo + experts_per_group
+            in_group = (experts >= lo) & (experts < hi) & expert_mask
+            values = tl.where(in_group, selector, -float("inf"))
+            first_value = tl.max(values, axis=0)
+            first_index = tl.min(
+                tl.where(values == first_value, experts, n_experts), axis=0
+            )
+            second_value = tl.max(
+                tl.where(experts == first_index, -float("inf"), values),
+                axis=0,
+            )
+            group_scores = tl.where(
+                group_ids == group,
+                first_value + second_value,
+                group_scores,
+            )
 
-@triton.jit
-def _apply_group_mask(
-    sel_ptr,
-    eg_ptr,
-    gk_ptr,
-    selw_ptr,
-    n_experts,
-    n_groups,
-    row_start,
-    BLOCK_N: tl.constexpr,
-):
-    row = row_start + tl.program_id(0)
-    experts = tl.arange(0, BLOCK_N)
-    mask = experts < n_experts
-    sel = tl.load(
-        sel_ptr + row * n_experts + experts, mask=mask, other=-float("inf")
-    )
-    eg = tl.load(eg_ptr + experts, mask=mask, other=0)
-    keep = tl.load(gk_ptr + row * n_groups + eg, mask=mask, other=0)
-    selw = tl.where(keep > 0, sel, -float("inf"))
-    tl.store(selw_ptr + row * n_experts + experts, selw, mask=mask)
+        selected_groups = tl.zeros((BLOCK_G,), dtype=tl.int1)
+        for _ in tl.static_range(TOPK_GROUP):
+            available = tl.where(selected_groups, -float("inf"), group_scores)
+            best_value = tl.max(available, axis=0)
+            best_group = tl.min(
+                tl.where(available == best_value, group_ids, BLOCK_G),
+                axis=0,
+            )
+            selected_groups |= group_ids == best_group
 
+        keep = tl.zeros((BLOCK_N,), dtype=tl.int1)
+        for group in tl.static_range(NUM_GROUPS):
+            lo = group * experts_per_group
+            hi = lo + experts_per_group
+            in_group = (experts >= lo) & (experts < hi) & expert_mask
+            group_is_selected = (
+                tl.sum(
+                    tl.where(
+                        group_ids == group,
+                        selected_groups.to(tl.int32),
+                        0,
+                    ),
+                    axis=0,
+                )
+                > 0
+            )
+            keep |= in_group & group_is_selected
+        selector = tl.where(keep, selector, -float("inf"))
 
-@triton.jit
-def _pick_slot(
-    selw_ptr,
-    selected_ptr,
-    indices_ptr,
-    n_experts,
-    row_start,
-    slot,
-    TOPK: tl.constexpr,
-    BLOCK_N: tl.constexpr,
-):
-    row = row_start + tl.program_id(0)
-    experts = tl.arange(0, BLOCK_N)
-    mask = experts < n_experts
-    sel = tl.load(
-        selw_ptr + row * n_experts + experts, mask=mask, other=-float("inf")
-    )
-    taken = tl.load(
-        selected_ptr + row * n_experts + experts, mask=mask, other=0
-    )
-    cand = tl.where(mask & (taken == 0), sel, -float("inf"))
-    best_value = tl.max(cand, axis=0)
-    best_index = tl.min(
-        tl.where(cand == best_value, experts, n_experts), axis=0
-    )
-    tl.store(indices_ptr + row * TOPK + slot, best_index)
-    tl.store(selected_ptr + row * n_experts + best_index, 1)
+    selected = tl.zeros((BLOCK_N,), dtype=tl.int1)
+    slots = tl.arange(0, BLOCK_K)
+    for slot in tl.static_range(K_ROUTED):
+        available = tl.where(selected, -float("inf"), selector)
+        best_value = tl.max(available, axis=0)
+        best_index = tl.min(
+            tl.where(available == best_value, experts, n_experts), axis=0
+        )
+        selected |= experts == best_index
+        tl.store(
+            indices_ptr + row * TOPK + slots,
+            best_index,
+            mask=slots == slot,
+        )
 
 
 @triton.jit
@@ -319,30 +299,10 @@ def moe_fused_gate(
     groups = num_expert_group
     block_g = triton.next_power_of_2(max(groups, 1))
     experts_per_group = n_experts // groups if groups > 1 else 1
-
     selector = torch.empty(
         (n_rows, n_experts), dtype=torch.float32, device=scores.device
     )
-    selected = torch.zeros(
-        (n_rows, n_experts), dtype=torch.int32, device=scores.device
-    )
-    if groups > 1:
-        group_scores = torch.empty(
-            (n_rows, groups), dtype=torch.float32, device=scores.device
-        )
-        group_keep = torch.empty(
-            (n_rows, groups), dtype=torch.int32, device=scores.device
-        )
-        expert_group = torch.div(
-            torch.arange(n_experts, device=scores.device, dtype=torch.int32),
-            experts_per_group,
-            rounding_mode="floor",
-        ).clamp_(max=groups - 1)
-        sel_work = torch.empty_like(selector)
-    else:
-        sel_work = selector
 
-    block_v = triton.next_power_of_2(max(experts_per_group, 1))
     row_start = 0
     while row_start < n_rows:
         row_count = min(n_rows - row_start, _MAX_GRID)
@@ -359,53 +319,22 @@ def moe_fused_gate(
             num_warps=4,
             num_stages=1,
         )
-        if groups > 1:
-            _group_score[grid](
-                selector,
-                group_scores,
-                n_experts,
-                groups,
-                experts_per_group,
-                row_start,
-                BLOCK_V=block_v,
-                num_warps=4,
-                num_stages=1,
-            )
-            _group_select[grid](
-                group_scores,
-                group_keep,
-                groups,
-                row_start,
-                BLOCK_G=block_g,
-                TOPK_GROUP=topk_group,
-                num_warps=4,
-                num_stages=1,
-            )
-            _apply_group_mask[grid](
-                selector,
-                expert_group,
-                group_keep,
-                sel_work,
-                n_experts,
-                groups,
-                row_start,
-                BLOCK_N=block_n,
-                num_warps=4,
-                num_stages=1,
-            )
-        for slot in range(k_routed):
-            _pick_slot[grid](
-                sel_work,
-                selected,
-                indices,
-                n_experts,
-                row_start,
-                slot,
-                TOPK=topk,
-                BLOCK_N=block_n,
-                num_warps=4,
-                num_stages=1,
-            )
+        _stage2_route[grid](
+            selector,
+            indices,
+            n_experts,
+            experts_per_group,
+            row_start,
+            BLOCK_N=block_n,
+            BLOCK_K=block_k,
+            BLOCK_G=block_g,
+            K_ROUTED=k_routed,
+            TOPK=topk,
+            NUM_GROUPS=groups,
+            TOPK_GROUP=topk_group,
+            num_warps=4,
+            num_stages=1,
+        )
         _stage3_finalize[grid](
             scores,
             selector,
