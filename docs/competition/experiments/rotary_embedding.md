@@ -10,7 +10,7 @@ team_best_stage: e8
 team_best_commit: e066a9e
 team_best_speedup: 5.961875
 sealed: no
-next: E10 tile32 提交中(最后一发)
+next: E10 sub8260 评测中;终态即封存(超5.9619保留字节,否则回滚E8)
 updated: 2026-09-02
 ```
 
@@ -368,3 +368,14 @@ card_a 9.92 / card_b 9.15 / 华为 0.77 / 燧原 0.40 / 昆仑 0.29——与榜�
 - 预注册门:8/8 valid 且平均 > 5.961875(E8)才保留字节;**未超即
   T35 封存**(连续两次 generic 方差失利关轴),树回滚 E8 团队最佳字节;
   stop gate:任一 vendor 芯数值/编译失败回滚该芯,同指纹不重投。
+
+### E10 平台提交(sub 8260,2026-09-02 15:3x CST)
+
+- preflight 核对 source=verification commit `988f941`、stage e10、4 成员
+  (generic `a99d4b85`、ascend t32 `2ddd1a7b`、enflame t32 `948fae20`、
+  kunlun e3 `ceca925b`)、ZIP SHA-256
+  `e0630e66a0def46589dcd3aeae641a6be8b6abc64dc8b1e56c5fb561cc08bd86`;
+  nonce `0a7a99f39995d6b91916d18cd45132a7` 一次性消费,submission
+  `8260`(daily seq 12),额度 19→18/30;
+- release 证据:git 对象目录 `gpu:/tmp/flagos-rel-t35e10.XXXXXX`,
+  unittest 5/5。
