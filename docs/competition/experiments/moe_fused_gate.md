@@ -362,3 +362,11 @@ compile-worker 崩溃。三阶段同候选封存，禁止重试。
   `7bf2a6f4` 冻结、kunlunxin `240f1f75`),SHA-256
   `8eeca0ef34bb06fa2b478f44b540d2343c979dbb57af6be6a91f2e81e4e7a8d4`,
   `--verify-existing`/`unzip -t` 通过。
+
+### E9 平台提交(sub 8270,2026-09-02 16:05 CST)
+
+- preflight 全过(task competing/can_submit,额度 17/30),nonce
+  `39fbbf5eee659881f8feba27aada3773` 一次性消费,submission **8270**
+  (daily_seq 14),额度 17→16/30;file_url_sha256
+  `35220a654f351b073b8ac2221e1c65f7d79713c94b41c6377a5d66154835da45`;
+- 平台终态待回填(若再现 1830s 指纹,评测约 31 分钟出终态)。
