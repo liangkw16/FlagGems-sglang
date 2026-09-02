@@ -339,3 +339,15 @@ confirm 提交,评测入队,逐芯结果待回填。
   平均相对 E5 不回退;燧原/昆仑 vendor 字节冻结不变;
 - stop gate:任一 generic 芯数值失败或平均低于 E5 → 回滚 stages=2,
   同指纹不重投。
+
+### E7 平台提交(sub 8230,2026-09-02 14:4x CST)
+
+- preflight 核对 source=verification commit `0050bc6`、stage e7、4 成员
+  (generic `599ccf0e…`、enflame `ffdb47e2…`、iluvatar `c10bfa4f…`、
+  kunlunxin `776237b8…`)、ZIP SHA-256
+  `5fb5c616575fffb6a509f3bedf540bf68609167507e092046e03ec032692ece8`
+  全部匹配;nonce `cb5bcdc87b3ea34d800496baa10891eb` 一次性消费,提交
+  成功,submission `8230`(daily seq 8),额度 23→22/30;
+- release 证据:git 对象目录 `gpu:/tmp/flagos-rel-t37e7.XXXXXX`,
+  unittest 5/5,release log SHA-256 `f089360f829c8919c281ad7b70868ff3
+  d9b34719685bf2ae1e8fcede8a8e4539`。
