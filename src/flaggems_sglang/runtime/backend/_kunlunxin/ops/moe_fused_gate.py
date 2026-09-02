@@ -333,11 +333,11 @@ def moe_fused_gate(
         group_keep = torch.empty(
             (n_rows, groups), dtype=torch.int32, device=scores.device
         )
-        expert_group = (
-            torch.arange(n_experts, device=scores.device, dtype=torch.int32)
-            .div_(experts_per_group)
-            .clamp_(max=groups - 1)
-        )
+        expert_group = torch.div(
+            torch.arange(n_experts, device=scores.device, dtype=torch.int32),
+            experts_per_group,
+            rounding_mode="floor",
+        ).clamp_(max=groups - 1)
         sel_work = torch.empty_like(selector)
     else:
         sel_work = selector
