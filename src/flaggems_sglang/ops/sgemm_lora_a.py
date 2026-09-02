@@ -178,7 +178,7 @@ def sgemm_lora_a(x, weights, batch_info, stack_num=1):
         BLOCK_N=_BLOCK_N,
         BLOCK_K=_BLOCK_K,
         num_warps=4,
-        num_stages=2,
+        num_stages=3,
     )
     return output
 

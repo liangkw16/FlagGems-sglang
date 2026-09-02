@@ -10,9 +10,9 @@ team_best_stage: e5
 team_best_commit: 6ce280b
 team_best_speedup: 5.3470625
 blockers: 榜首42.1385x，差36.7914375x；已达第6/6截止位
-sealed: yes
-next: 封存E5燧原64³团队最佳字节
-updated: 2026-09-01
+sealed: no
+next: E7 generic num_stages 2→3 防守候选,提交中
+updated: 2026-09-02
 ```
 
 状态:E5 平台终态 8/8 valid、5.3471x、实时第 6/6 并保持团队最佳；E6 仍为 8/8，
@@ -324,3 +324,18 @@ confirm 提交,评测入队,逐芯结果待回填。
 - 23:51 CST 实时榜单：97 submissions/22 teams、6 个达标队；SoulCoder
   5.3470625x 位列第 6/6，榜首 EvokeAgent 42.1385x，绝对差
   36.7914375x。
+
+## E7:generic num_stages 2→3 防守候选(2026-09-02)
+
+- 动机:6/6 截止位防守——任何一队超过 5.3471 即挤出达标线;generic
+  `num_stages` 自 S0 起从未扫过,是账本未覆盖的单变量;
+- screening(gpu:`/tmp/flagos-t37-stages.XXXXXX` 目录,RTX 5070 Ti、
+  Triton 3.7.1;两文件唯一 diff 为 `num_stages=2→3`,base 字节
+  sha 与工作树一致):5 档 shape × 3 dtype 全部数值 match;
+  paired AB/BA 五轮 geomean **1.1143(过 +3% 预注册门)**;
+  分布双峰:`1024x2048x128` 全 dtype +65~74%,`128x512x64` +2~7%,
+  `4096x4096x256` fp16/bf16 -7~-9%(fp32 +9%),小档中性;
+- 预注册门:8/8 valid;generic 六芯(天数/沐曦/海光/华为/国际 A/B)
+  平均相对 E5 不回退;燧原/昆仑 vendor 字节冻结不变;
+- stop gate:任一 generic 芯数值失败或平均低于 E5 → 回滚 stages=2,
+  同指纹不重投。
