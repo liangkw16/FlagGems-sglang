@@ -9,7 +9,7 @@ platform: 8/8(e3);E6 7/8 昆仑1834s崩溃
 team_best_stage: e3
 team_best_speedup: 5.8458
 sealed: no
-next: E7 应急包(昆仑回e3字节+华为/燧原新字节)提交中
+next: E7 sub8253 与 E8 tile8 探针均提交中
 updated: 2026-09-02
 ```
 
@@ -276,3 +276,18 @@ card_a 9.92 / card_b 9.15 / 华为 0.77 / 燧原 0.40 / 昆仑 0.29——与榜�
   `8253`(daily seq 9),额度 22→21/30;
 - release 证据:git 对象目录 `gpu:/tmp/flagos-rel-t35e7.XXXXXX`,
   unittest 5/5,远端成员 SHA 与 ZIP 逐项一致。
+
+## E8:tile8 探针——解交错结构上的瓦片宽度复扫(2026-09-02)
+
+- 背景:E4 燧原宽头瓦片(→16)证伪的前提是 stride-2 访存;E6 换连续
+  访存后瓶颈结构已变,瓦片宽度轴重新开放;
+- 单变量(每芯独立):`_enflame` HEADS_TILE 4→8、`_ascend` 摊销头数
+  4→8;generic 与 `_kunlunxin`(e3 字节)冻结;
+- screening:`gpu:/tmp/flagos-rotary-e6.aHPpxC/{enflame,ascend}_t8.py`,
+  3 dtype × 10 shape(含 H=5/7 非整瓦片)各 30/30 数值全过;
+  ascend tile8 MCP specialize+注入差分 **MINIMAL_DIFF**(/tmp/
+  kg-t35e7-ascend-t8.json);字节:enflame_t8、ascend_t8(见下);
+- 预注册门:8/8 valid 且平均 > E7 落袋值;华为 ≥1.8(1.663 +8%)、
+  燧原 ≥0.95(0.8744 +9%)才保留,否则该芯回滚 E7 字节;stop gate:
+  任一芯数值/编译失败即回滚该芯,同指纹不重投;昆仑字节不动,若其
+  E7 侧异常与本包无关。
