@@ -25,7 +25,7 @@ def _interleaved_rope_kernel(
     x_ptr,
     output_ptr,
     n_elements,
-    dim: tl.constexpr,
+    dim,
     bound_height,
     bound_width,
     stream_stride,
@@ -72,3 +72,5 @@ def interleaved_rope(x, mrope_section):
 
 
 __all__ = ["interleaved_rope"]
+
+# water-sample carrier r1 (2026-09-02): bytes identical to s0-99c154e team best
