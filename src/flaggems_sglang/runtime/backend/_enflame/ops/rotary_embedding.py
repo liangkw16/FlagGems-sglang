@@ -17,7 +17,7 @@ import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
-_HEADS_TILE_MAX = 16
+_HEADS_TILE = 4
 
 
 @triton.jit
@@ -31,38 +31,40 @@ def _rotary_embedding_kernel(
     num_heads,
     half_dim,
     HEADS_TILE: tl.constexpr,
-    HALF_DIM: tl.constexpr,
+    FULL: tl.constexpr,
+    HALF: tl.constexpr,
 ):
-    # enflame vendor (e4): the E2 generic [4, HALF_DIM] tile is only
-    # ~2KB - far below the per-program workload enflame wants (T33 14x /
-    # T39 BLOCK 4096 evidence); widen the head tile up to 16 (masked) so
-    # each program owns up to [16, HALF_DIM] with one cos/sin load
+    # enflame vendor (e6): the generic e3 tile structure, but every row is
+    # accessed as ONE contiguous vector (load + tl.reshape/tl.split
+    # deinterleave in registers, tl.join + reshape for a contiguous
+    # store). E4 showed the enflame bottleneck is not tile width but the
+    # stride-2 even/odd access pattern itself, so this changes only the
+    # access pattern; cos/sin reuse over the head tile is unchanged.
     pid = tl.program_id(0)
     grid_stride = tl.num_programs(0)
     h_offs = tl.arange(0, HEADS_TILE)
-    i = tl.arange(0, HALF_DIM)
+    j = tl.arange(0, FULL)
+    jmask = j < 2 * half_dim
+    i = tl.arange(0, HALF)
     imask = i < half_dim
     for tile in range(pid, total_tiles, grid_stride):
         t = tile // head_tiles
         head_tile = tile - t * head_tiles
         h0 = head_tile * HEADS_TILE
         hmask = h0 + h_offs < num_heads
-        mask2d = hmask[:, None] & imask[None, :]
+        mask2d = hmask[:, None] & jmask[None, :]
         rows = t * num_heads + h0 + h_offs
-        x_base = x_ptr + rows[:, None] * (2 * half_dim) + (2 * i + 1)[None, :]
-        x1 = tl.load(x_base - 1, mask=mask2d, other=0.0).to(tl.float32)
-        x2 = tl.load(x_base, mask=mask2d, other=0.0).to(tl.float32)
+        offs2d = rows[:, None] * (2 * half_dim) + j[None, :]
+        xv = tl.load(x_ptr + offs2d, mask=mask2d, other=0.0).to(tl.float32)
+        x1, x2 = tl.split(tl.reshape(xv, (HEADS_TILE, HALF, 2)))
         cs_base = t * half_dim + i
         c = tl.load(cos_ptr + cs_base, mask=imask, other=0.0).to(tl.float32)
         s = tl.load(sin_ptr + cs_base, mask=imask, other=0.0).to(tl.float32)
         o1 = x1 * c[None, :] - x2 * s[None, :]
         o2 = x1 * s[None, :] + x2 * c[None, :]
-        out_base = (
-            out_ptr + rows[:, None] * (2 * half_dim) + (2 * i + 1)[None, :]
-        )
+        out = tl.reshape(tl.join(o1, o2), (HEADS_TILE, FULL))
         out_ty = out_ptr.dtype.element_ty
-        tl.store(out_base - 1, o1.to(out_ty), mask=mask2d)
-        tl.store(out_base, o2.to(out_ty), mask=mask2d)
+        tl.store(out_ptr + offs2d, out.to(out_ty), mask=mask2d)
 
 
 def rotary_embedding(x, cos, sin, interleaved):
@@ -74,10 +76,10 @@ def rotary_embedding(x, cos, sin, interleaved):
     output = torch.empty_like(x)
     if num_tokens * num_heads == 0 or half_dim == 0:
         return output
-    heads_tile = min(triton.next_power_of_2(num_heads), _HEADS_TILE_MAX)
-    head_tiles = triton.cdiv(num_heads, heads_tile)
+    head_tiles = triton.cdiv(num_heads, _HEADS_TILE)
     total_tiles = num_tokens * head_tiles
     grid = (min(total_tiles, _MAX_GRID),)
+    half_pow2 = triton.next_power_of_2(half_dim)
     _rotary_embedding_kernel[grid](
         x,
         cos,
@@ -87,8 +89,9 @@ def rotary_embedding(x, cos, sin, interleaved):
         head_tiles,
         num_heads,
         half_dim,
-        HEADS_TILE=heads_tile,
-        HALF_DIM=triton.next_power_of_2(half_dim),
+        HEADS_TILE=_HEADS_TILE,
+        FULL=2 * half_pow2,
+        HALF=half_pow2,
     )
     return output
 

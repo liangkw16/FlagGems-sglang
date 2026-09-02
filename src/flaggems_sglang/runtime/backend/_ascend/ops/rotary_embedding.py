@@ -31,17 +31,22 @@ def _rotary_embedding_kernel(
     num_heads,
     half_dim,
     HEADS_TILE: tl.constexpr,
-    HALF_DIM: tl.constexpr,
+    FULL: tl.constexpr,
+    HALF: tl.constexpr,
 ):
-    # ascend vendor (e3): keeps the E1 cos/sin reuse (loaded once per
-    # HEADS_TILE heads - the mechanism that won +48~89% on six chips) but
-    # drops the [HEADS_TILE, HALF_DIM] 2D broadcast tile that triggered the
-    # ascend lowering NaN; every access stays 1D like the S0 kernel that
-    # already passes on huawei, and static_range per-head amortization is
-    # platform-neutral on ascend (T33 e1 evidence)
+    # ascend vendor (e6): keeps the e3 shape - cos/sin loaded once per
+    # HEADS_TILE tile, per-head static_range amortization, strictly 1D
+    # per-head accesses (the [HEADS_TILE, HALF] 2D broadcast tile
+    # triggered the ascend lowering NaN in E1, so it stays banned) - but
+    # each head's row is now touched as ONE contiguous vector:
+    # load + tl.reshape/tl.split deinterleave in registers and a
+    # tl.join + reshape contiguous store, replacing the stride-2
+    # loads/stores of the e3 bytes (0.77x).
     pid = tl.program_id(0)
     grid_stride = tl.num_programs(0)
-    i = tl.arange(0, HALF_DIM)
+    j = tl.arange(0, FULL)
+    jmask = j < 2 * half_dim
+    i = tl.arange(0, HALF)
     imask = i < half_dim
     out_ty = out_ptr.dtype.element_ty
     for tile in range(pid, total_tiles, grid_stride):
@@ -52,16 +57,16 @@ def _rotary_embedding_kernel(
         c = tl.load(cos_ptr + cs_base, mask=imask, other=0.0).to(tl.float32)
         s = tl.load(sin_ptr + cs_base, mask=imask, other=0.0).to(tl.float32)
         for hh in tl.static_range(HEADS_TILE):
-            hmask = (h0 + hh < num_heads) & imask
+            hmask = (h0 + hh < num_heads) & jmask
             row_base = (t * num_heads + h0 + hh) * (2 * half_dim)
-            x_base = x_ptr + row_base + 2 * i
-            x1 = tl.load(x_base, mask=hmask, other=0.0).to(tl.float32)
-            x2 = tl.load(x_base + 1, mask=hmask, other=0.0).to(tl.float32)
+            xv = tl.load(x_ptr + row_base + j, mask=hmask, other=0.0).to(
+                tl.float32
+            )
+            x1, x2 = tl.split(tl.reshape(xv, (HALF, 2)))
             o1 = x1 * c - x2 * s
             o2 = x1 * s + x2 * c
-            out_base = out_ptr + row_base + 2 * i
-            tl.store(out_base, o1.to(out_ty), mask=hmask)
-            tl.store(out_base + 1, o2.to(out_ty), mask=hmask)
+            out = tl.reshape(tl.join(o1, o2), (FULL,))
+            tl.store(out_ptr + row_base + j, out.to(out_ty), mask=hmask)
 
 
 def rotary_embedding(x, cos, sin, interleaved):
@@ -76,6 +81,7 @@ def rotary_embedding(x, cos, sin, interleaved):
     head_tiles = triton.cdiv(num_heads, _HEADS_TILE)
     total_tiles = num_tokens * head_tiles
     grid = (min(total_tiles, _MAX_GRID),)
+    half_pow2 = triton.next_power_of_2(half_dim)
     _rotary_embedding_kernel[grid](
         x,
         cos,
@@ -86,7 +92,8 @@ def rotary_embedding(x, cos, sin, interleaved):
         num_heads,
         half_dim,
         HEADS_TILE=_HEADS_TILE,
-        HALF_DIM=triton.next_power_of_2(half_dim),
+        FULL=2 * half_pow2,
+        HALF=half_pow2,
     )
     return output
 

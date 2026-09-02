@@ -8,9 +8,9 @@ validity: valid
 platform: 8/8
 team_best_stage: e3
 team_best_speedup: 5.8458
-sealed: yes
-next: e5 generic heads_tile 1/2/8/16 全部低于5%门;tile4局部最优,收盘
-updated: 2026-09-01
+sealed: no
+next: E6 vendor 解交错(华为/燧原/昆仑)已提交待八芯终态
+updated: 2026-09-02
 ```
 
 状态:S0 候选就绪(首 screening 全绿)
@@ -183,3 +183,50 @@ NVIDIA 上 stride-2 访存硬件合并良好;且 T30 的逐元素 gather 在
 结论:官方全-head 复用结构在本题 shape/布局上不能迁移；`HEADS_TILE=4`
 仍是代理局部最优。实时榜首 `8.8534x` 对 e3 `5.8458x` 的 51.45%
 差距无法由该参数轴解释，不改源码、不消耗额度，保持封存。
+
+## E6:访问模式轴——连续读 + tl.split/tl.join 解交错(2026-09-02)
+
+**靶点修正**。e3 平台逐芯:沐曦 6.43 / 海光 8.97 / 天数 10.33 /
+card_a 9.92 / card_b 9.15 / 华为 0.77 / 燧原 0.40 / 昆仑 0.29——与榜首
+的差距几乎全部在三个钉死芯;E4 账本已假设燧原瓶颈在 stride-2 偶奇访存。
+本轴只改 vendor,generic 冻结 e3 字节。
+
+### E6a 探针:generic 解交错(未提交,代理门否决)
+
+- 新 generic:整行一次连续 load → `tl.reshape [H,HALF,2]` → `tl.split`
+  拆偶奇 → 计算后 `tl.join`+reshape 连续 store(仅访问模式变化);
+- screening(gpu:`/tmp/flagos-rotary-e6.aHPpxC`,RTX 5070 Ti、Triton
+  3.7.1):unittest 5/5(3 dtype × 8 shape,含 vendor 变体);
+  paired AB/BA 五轮 15 组:仅 `4096x32x128` 半精度 +5.5~6.4%,其余
+  ±1%,**geomean `1.0046` < 预注册 +10% 门,否决提交**;两版 kernel
+  均 0 spill(new 28~40 regs vs old 28~40);
+- 负结果知识:NVIDIA 编译器已把旧版相邻的 `x_base-1`/`x_base` 双载融
+  合成宽访问,generic 五芯无该轴头寸;generic 树回滚 e3 字节。
+
+### E6b 正式包:三 vendor 解交错(single variable per chip)
+
+- `_ascend`(e3 0.77):保持 1D 无广播形态与 cos/sin 复用,每 head 整行
+  连续 load + split 解交错 + join 连续 store;
+- `_enflame`(新 vendor,当前走 generic 0.40):e3 generic tile 形态,
+  访问模式换连续 + split/join;
+- `_kunlunxin`(e3 0.29):保持单行一 program,整行连续 load + split/join;
+- 远端 screening 同目录:unittest **5/5 OK**(generic e3 + 三新 vendor
+  全部变体);三 vendor 字节 SHA-256:
+  ascend `b188103d…25978`、kunlunxin `1e9e46da…3114`、
+  enflame `1957dd66…74e9`,generic 保持 `a99d4b85…4d78`;
+- MCP 华为 specialize+注入差分预检(候选 `b188103d…25978`,返回
+  `4b659470…573`,输出存 `/tmp/kg-t35e6-ascend.json`):**MINIMAL_DIFF
+  (代码行仅 +`import torch_npu`,其余为注释删减)= 零适配需求信号**
+  (与 T33 tile16 平台 +28.8% 前同款);燧原/昆仑无通道,标
+  `static-unverified`。
+
+### 预注册门与 stop gate(E6b,提交前登记)
+
+- 平台门:8/8 valid、每芯 ≥0.1x;
+- vendor 芯目标:华为 ≥0.85(e3 0.77 +10%)、燧原 ≥0.50(+25%)、
+  昆仑 ≥0.35(+20%);任一 vendor 芯低于其 e3 基线 −10% 即回滚该芯;
+- generic 五芯(天数/沐曦/海光/国际 A/B)字节未变,读数应与 e3 一致
+  (±2% 视为平台噪声);
+- stop gate:任一 vendor 芯数值/编译失败 → 该芯回滚 e3 字节,同指纹
+  不重投;昆仑若再现 1830s compile-worker 崩溃 → 计入崩溃族证据,
+  不重投、仅工单。

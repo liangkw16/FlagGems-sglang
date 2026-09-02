@@ -15,7 +15,7 @@
 | 32 | moe_fused_mul_sum | valid | 8/8 | S0 4.4829x | yes | e5 三框架独立reduce同构;流量理想上限仅+22.7%,无法解释433%榜差 | 2026-09-01 | [moe_fused_mul_sum](moe_fused_mul_sum.md) |
 | 33 | per_token_group_quant_int8 | valid | 8/8 | e10 5.5720x | yes | e13 官方 constexpr/direct/subwarp/M8 家族全未过门;仅新 vendor subgroup 证据可重开 | 2026-09-01 | [per_token_group_quant_int8](per_token_group_quant_int8.md) |
 | 34 | per_token_quant_int8 | valid | 8/8 | e1 4.7131x | yes | e4 persistent cap与SGLang launch参数均不过5%全矩阵门;已知轴尽 | 2026-09-01 | [per_token_quant_int8](per_token_quant_int8.md) |
-| 35 | rotary_embedding | valid | 8/8 | e3 5.8458x | yes | e5 generic heads_tile 1/2/8/16 全部低于5%门;tile4局部最优,收盘 | 2026-09-01 | [rotary_embedding](rotary_embedding.md) |
+| 35 | rotary_embedding | valid | 8/8 | e3 5.8458x | no | E6 vendor 解交错(华为/燧原/昆仑)已提交待八芯终态 | 2026-09-02 | [rotary_embedding](rotary_embedding.md) |
 | 36 | selective_state_update | invalid_correctness | 7/8(e29;昆仑compile-worker崩溃) | e22(correctness) 5.1200625x | no | persisted-slice轴已关闭;仅有全新源码级结构证据时重开 | 2026-09-01 | [selective_state_update](selective_state_update.md) |
 | 37 | sgemm_lora_a | valid | 8/8(E5,5.3471x,rank6/6) | e5 5.3470625x | yes | 封存E5燧原64³团队最佳字节 | 2026-09-01 | [sgemm_lora_a](sgemm_lora_a.md) |
 | 38 | sigmoid_gate_topk_renorm | invalid_correctness | E5 sub 8170 7/8;Kunlun快速执行但9/9数值失败 | S0 | yes | T38封存;切换其他任务 | 2026-09-02 | [sigmoid_gate_topk_renorm](sigmoid_gate_topk_renorm.md) |
