@@ -90,3 +90,4 @@ __all__ = ["per_token_quant_int8"]
 
 # water-sample carrier r1 (2026-09-02): bytes identical to e1-088a916 team best
 # water-sample carrier r2 (2026-09-03)
+# non-enflame sampling carrier (2026-09-03, enflame service outage)
