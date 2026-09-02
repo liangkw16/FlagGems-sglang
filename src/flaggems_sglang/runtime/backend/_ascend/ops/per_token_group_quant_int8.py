@@ -88,3 +88,4 @@ __all__ = ["per_token_group_quant_int8"]
 # water-sample carrier r1 (2026-09-02): bytes identical to e10-8e344b4 team best
 # water-sample carrier r2 (2026-09-02)
 # water-sample carrier r3 (2026-09-03)
+# water-sample carrier r5 (2026-09-03 night)
