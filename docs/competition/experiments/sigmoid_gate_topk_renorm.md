@@ -5,12 +5,12 @@ task: 38
 operator: sigmoid_gate_topk_renorm
 batch: 3
 validity: candidate
-platform: E4 sub 8160 7/8 numeric;E5 release-ready
+platform: E5 sub 8170 pending;E4 sub 8160 7/8 numeric
 team_best_stage: S0
 team_best_commit: 311570f
 blockers: E3/E4 exact tuple禁止重试;E5 Kunlun待一次性实机验证
 sealed: no
-next: E5 新SHA完成preflight后单次提交
+next: 只读等待 E5 sub 8170 八芯终态
 updated: 2026-09-02
 ```
 
@@ -363,3 +363,7 @@ E3/E4 的旧 tuple 继续冻结。
   `(34.5374+0.1)/8=4.3297x` 的有效成绩。
 - stop gate:E5 任一数值失败、同族 1830s crash 或 `<0.1x` 即永久封存 T38
   host-stepped 轴；本包和参数/载体不得重投。
+- preflight nonce `0cc9d1728d598621c64986c6dbd02061` 全绿后已按一次性命令提交为
+  **sub 8170 / daily seq 6**；平台返回的公开文件独立下载为 12615 bytes，SHA-256
+  `0f209997ca66f8d12fd4aafdb6e54a22cfe5da9ce9808612f937e561662b8b0b`，
+  `unzip -t` 两成员均通过。精确 E5 tuple 自此冻结，不得重投。
