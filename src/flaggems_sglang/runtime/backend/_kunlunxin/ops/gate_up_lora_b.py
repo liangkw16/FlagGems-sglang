@@ -232,3 +232,4 @@ __all__ = ["gate_up_lora_b"]
 # carrier re-issued as e13 after stale_after_upload guard (upload produced no submission, quota unchanged)
 # water-sample carrier r2 (2026-09-02)
 # water-sample carrier r3 (2026-09-03)
+# re-issue after stale_after_upload guard (2026-09-03): no submission was created
