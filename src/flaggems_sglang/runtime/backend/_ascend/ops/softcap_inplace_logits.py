@@ -75,7 +75,7 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
     )
     num_col_blocks = triton.cdiv(ncols, 512)
     total_blocks = nrows * num_col_blocks
-    _softcap_inplace_logits_kernel[(min(total_blocks, 48),)](
+    _softcap_inplace_logits_kernel[(min(total_blocks, 2048),)](
         full_logits,
         ncols,
         row_stride,
@@ -89,3 +89,5 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
 
 
 __all__ = ["softcap_inplace_logits"]
+
+# e12 probe A: grid cap 48 -> 2048 (MLP hypothesis for huawei 0.74 vs leader 3.40)
