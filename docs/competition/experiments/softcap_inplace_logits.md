@@ -10,8 +10,8 @@ team_best_stage: e8
 team_best_commit: 308f366913777863b08805549a74045f5321d938
 team_best_speedup: 2.195604
 sealed: yes
-next: 榜首守榜(autoken 2.156 差 2%);采样票 2-3 发,燧原尖峰窗期望 ~2.8
-updated: 2026-09-02
+next: 额度用尽收官;e16 华为字节(1.70)+TB 2.1956 #2;榜首 c2flow 2.2593 华为 3.40 未破译
+updated: 2026-09-03
 ```
 
 ## S0：T24 跨芯 winner 复用
