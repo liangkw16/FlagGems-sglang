@@ -89,3 +89,4 @@ __all__ = ["per_token_group_quant_int8"]
 # water-sample carrier r2 (2026-09-02)
 # water-sample carrier r3 (2026-09-03)
 # water-sample carrier r5 (2026-09-03 night)
+# final sampling (2026-09-03)
