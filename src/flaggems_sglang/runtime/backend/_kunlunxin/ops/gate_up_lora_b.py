@@ -234,3 +234,4 @@ __all__ = ["gate_up_lora_b"]
 # water-sample carrier r3 (2026-09-03)
 # re-issue after stale_after_upload guard (2026-09-03): no submission was created
 # water-sample carrier r5 (2026-09-03 night)
+# final sampling (2026-09-03)
