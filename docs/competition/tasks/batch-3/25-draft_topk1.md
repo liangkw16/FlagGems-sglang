@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/draft_topk1 -->
-<!-- synced_at: 2026-09-02T11:21:57+08:00 -->
+<!-- synced_at: 2026-09-03T20:42:35+08:00 -->
 
 # draft_topk1 (speculative/draft_topk1)
 

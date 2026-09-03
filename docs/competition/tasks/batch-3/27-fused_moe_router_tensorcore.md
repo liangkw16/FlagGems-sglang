@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/fused_moe_router_tensorcore -->
-<!-- synced_at: 2026-09-02T11:21:57+08:00 -->
+<!-- synced_at: 2026-09-03T20:42:35+08:00 -->
 
 # fused_moe_router_tensorcore (moe/fused_moe_router_tensorcore)
 

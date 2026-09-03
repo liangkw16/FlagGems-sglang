@@ -111,7 +111,8 @@ def main() -> None:
     tasks_by_batch: dict[int, list[dict]] = {}
     details: dict[str, dict] = {}
 
-    for batch_no in (1, 2, 3):
+    BATCHES = (1, 2, 3, 4)
+    for batch_no in BATCHES:
         tasks = [
             public_task(item)
             for item in get_json(f"operator-tasks?batch_no={batch_no}")
@@ -126,7 +127,7 @@ def main() -> None:
     all_tasks = [task for tasks in tasks_by_batch.values() for task in tasks]
     # platform keeps reshaping (batch counts grew and the overview lost
     # current_batch on 2026-08-29); warn instead of failing the sync
-    for batch_no, want in {1: 7, 2: 17, 3: 12}.items():
+    for batch_no, want in {1: 7, 2: 17, 3: 17, 4: 6}.items():
         got = len(tasks_by_batch.get(batch_no, []))
         if got != want:
             print(f"WARN: batch {batch_no} has {got} tasks (expected {want})")
@@ -137,7 +138,7 @@ def main() -> None:
     ):
         print("WARN: unexpected operator name characters")
     cb = (overview.get("current_batch") or {}).get("batch_no")
-    if cb is not None and cb != 3:
+    if cb is not None and cb != BATCHES[-1]:
         print(f"WARN: current_batch is now {cb}")
 
     for batch_no, tasks in tasks_by_batch.items():

@@ -1,6 +1,6 @@
 # 第二届 FlagOS 算子赛题索引
 
-> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-09-02T11:21:57+08:00`。
+> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-09-03T20:42:35+08:00`。
 > 状态和榜单会变化，运行 `python tools/sync_flagos_season2_docs.py` 更新。
 
 ## 第 1 批
@@ -41,20 +41,31 @@
 
 | 题号 | 算子 | 状态 | 提交/队伍 | 达标队伍 | 当前第一 | 平均加速比 |
 | ---: | --- | --- | ---: | ---: | --- | ---: |
-| 25 | [draft_topk1](tasks/batch-3/25-draft_topk1.md) | competing | 192/24 | 8 | c2flow | 2.2311x |
-| 26 | [fused_moe_router_cudacore](tasks/batch-3/26-fused_moe_router_cudacore.md) | competing | 208/30 | 8 | c2flow | 1.9465x |
-| 27 | [fused_moe_router_tensorcore](tasks/batch-3/27-fused_moe_router_tensorcore.md) | competing | 122/27 | 6 | c2flow | 1.7541x |
-| 28 | [gate_up_lora_b](tasks/batch-3/28-gate_up_lora_b.md) | competing | 127/22 | 4 | RSI | 48.1316x |
-| 29 | [gelu_and_mul](tasks/batch-3/29-gelu_and_mul.md) | competing | 234/29 | 16 | Nectar | 4.5662x |
-| 30 | [interleaved_rope](tasks/batch-3/30-interleaved_rope.md) | competing | 171/24 | 14 | HAiWORLD | 39.0282x |
-| 31 | [moe_fused_gate](tasks/batch-3/31-moe_fused_gate.md) | competing | 139/27 | 7 | RSI | 59.1920x |
-| 32 | [moe_fused_mul_sum](tasks/batch-3/32-moe_fused_mul_sum.md) | competing | 88/15 | 9 | YY-L | 23.9013x |
-| 33 | [per_token_group_quant_int8](tasks/batch-3/33-per_token_group_quant_int8.md) | competing | 118/20 | 10 | wwwwww | 7.7529x |
-| 34 | [per_token_quant_int8](tasks/batch-3/34-per_token_quant_int8.md) | competing | 126/19 | 12 | EvokeAgent | 7.2513x |
-| 35 | [rotary_embedding](tasks/batch-3/35-rotary_embedding.md) | competing | 104/22 | 13 | c2flow | 12.7588x |
-| 36 | [selective_state_update](tasks/batch-3/36-selective_state_update.md) | competing | 193/23 | 3 | EvokeAgent | 9.5367x |
-| 37 | [sgemm_lora_a](tasks/batch-3/37-sgemm_lora_a.md) | competing | 103/22 | 6 | EvokeAgent | 42.1385x |
-| 38 | [sigmoid_gate_topk_renorm](tasks/batch-3/38-sigmoid_gate_topk_renorm.md) | competing | 143/26 | 5 | sitraliqui | 9.0482x |
-| 39 | [silu_and_mul_masked](tasks/batch-3/39-silu_and_mul_masked.md) | competing | 132/21 | 11 | EvokeAgent | 24.3040x |
-| 40 | [softcap_inplace_logits](tasks/batch-3/40-softcap_inplace_logits.md) | competing | 174/24 | 15 | AutokenLab | 2.1556x |
-| 41 | [state_passing](tasks/batch-3/41-state_passing.md) | competing | 175/27 | 6 | wwwwww | 7.8095x |
+| 25 | [draft_topk1](tasks/batch-3/25-draft_topk1.md) | reviewing | 235/29 | 10 | c2flow | 2.2311x |
+| 26 | [fused_moe_router_cudacore](tasks/batch-3/26-fused_moe_router_cudacore.md) | reviewing | 314/39 | 10 | c2flow | 2.2182x |
+| 27 | [fused_moe_router_tensorcore](tasks/batch-3/27-fused_moe_router_tensorcore.md) | reviewing | 172/30 | 8 | EvokeAgent | 2.4391x |
+| 28 | [gate_up_lora_b](tasks/batch-3/28-gate_up_lora_b.md) | reviewing | 178/28 | 4 | RSI | 48.1316x |
+| 29 | [gelu_and_mul](tasks/batch-3/29-gelu_and_mul.md) | reviewing | 273/32 | 17 | Nectar | 4.5662x |
+| 30 | [interleaved_rope](tasks/batch-3/30-interleaved_rope.md) | reviewing | 229/27 | 16 | HAiWORLD | 39.3048x |
+| 31 | [moe_fused_gate](tasks/batch-3/31-moe_fused_gate.md) | reviewing | 175/29 | 9 | RSI | 59.1920x |
+| 32 | [moe_fused_mul_sum](tasks/batch-3/32-moe_fused_mul_sum.md) | reviewing | 113/18 | 13 | YY-L | 23.9013x |
+| 33 | [per_token_group_quant_int8](tasks/batch-3/33-per_token_group_quant_int8.md) | reviewing | 283/36 | 15 | c2flow | 11.0389x |
+| 34 | [per_token_quant_int8](tasks/batch-3/34-per_token_quant_int8.md) | reviewing | 155/23 | 14 | c2flow | 9.2354x |
+| 35 | [rotary_embedding](tasks/batch-3/35-rotary_embedding.md) | reviewing | 125/24 | 15 | c2flow | 12.7588x |
+| 36 | [selective_state_update](tasks/batch-3/36-selective_state_update.md) | reviewing | 224/25 | 3 | EvokeAgent | 10.6046x |
+| 37 | [sgemm_lora_a](tasks/batch-3/37-sgemm_lora_a.md) | reviewing | 137/25 | 7 | EvokeAgent | 42.1385x |
+| 38 | [sigmoid_gate_topk_renorm](tasks/batch-3/38-sigmoid_gate_topk_renorm.md) | reviewing | 158/29 | 7 | sitraliqui | 9.0482x |
+| 39 | [silu_and_mul_masked](tasks/batch-3/39-silu_and_mul_masked.md) | reviewing | 276/30 | 13 | EvokeAgent | 26.1621x |
+| 40 | [softcap_inplace_logits](tasks/batch-3/40-softcap_inplace_logits.md) | reviewing | 264/29 | 17 | c2flow | 2.2593x |
+| 41 | [state_passing](tasks/batch-3/41-state_passing.md) | reviewing | 203/30 | 9 | EvokeAgent | 8.1376x |
+
+## 第 4 批
+
+| 题号 | 算子 | 状态 | 提交/队伍 | 达标队伍 | 当前第一 | 平均加速比 |
+| ---: | --- | --- | ---: | ---: | --- | ---: |
+| 42 | [act_and_mul](tasks/batch-4/42-act_and_mul.md) | competing | 5/5 | 1 | c2flow | 3.1941x |
+| 43 | [causal_conv1d_update](tasks/batch-4/43-causal_conv1d_update.md) | pending_challenge | 15/9 | 0 | - | - |
+| 44 | [chain_speculative_sampling](tasks/batch-4/44-chain_speculative_sampling.md) | pending_challenge | 11/6 | 0 | - | - |
+| 45 | [chunk_scaled_dot_kkt](tasks/batch-4/45-chunk_scaled_dot_kkt.md) | competing | 13/7 | 2 | EvokeAgent | 15.0261x |
+| 46 | [chunked_embedding_lora_a](tasks/batch-4/46-chunked_embedding_lora_a.md) | competing | 2/2 | 1 | EvokeAgent | 18.7483x |
+| 47 | [chunked_sgmv_expand](tasks/batch-4/47-chunked_sgmv_expand.md) | competing | 5/5 | 2 | c2flow | 23.3266x |
