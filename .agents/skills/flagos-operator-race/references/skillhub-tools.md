@@ -158,14 +158,24 @@ JSON-RPC，请求/响应留存 `/tmp/kg-*`；当日有效）：
 
 ### Ascend 特化技术要点（来自 specialize 子文档，作为 _ascend 候选起始假设）
 
+- **int32/int64 Vector CMP 标量退化是 elementwise 头号杀手（T40 平台
+  实证 +130%）**：`cols < N` 类整数比较 lowering 成标量指令；规避 =
+  行结构化每行一 program + 行内子分块、仅末子块带 mask（热路径零比较）。
+  反证：care_padding 单用无效（需 multi-buffer 结构配合）、fp32 比较
+  仅在宽度 <2^24 合法、大 BLOCK 跨行扁平化会行界污染（数值错）。
+  care_padding 是 triton-ascend 专有 kwarg（NVIDIA 侧直接编译错），
+  vendor 需按设备类型分流双内核。
 - 动态 BLOCK_SIZE：`max(32768, triton.next_power_of_2(triton.cdiv(N, 65535)))`，
   保证 coreDim ≤ 65535。
 - 核内子分块：`for sub in range(0, BLOCK_SIZE, BLOCK_SIZE_SUB)`，
   BLOCK_SIZE_SUB 从 1024 起，候选 512/2048/4096。
 - `tl.load(..., care_padding=False)` 减少依赖；wrapper 用 `@libentry()` 并
-  在 `torch_device_fn.device(x.device)` 上下文内 launch。
+  在 `torch_device_fn.device(x.device)` 上下文内 launch（libentry 的
+  dynamic_func 只吃位置参数；repo 包导入需 try/except 降级）。
 - 环境变量 `TRITON_ALL_BLOCKS_PARALLEL=1` 可降低调度开销。
 - 小数据（<1000 元素）在 NPU 上可能不划算，性能按题面实际 shape 评估。
+- 燧原镜像约束：任何运行期分支/特殊 load kwarg 都不可用（T31 微核
+  同指纹、T39 块跳过 system_failed、T40 死循环三题互证）。
 以上仍需单变量验证并在账本记录 AB/BA 证据。
 
 ## gpu-container-setup-flagos：非 NVIDIA 远端容器
