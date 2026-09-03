@@ -4,13 +4,13 @@
 task: 47
 operator: chunked_sgmv_expand
 batch: 4
-validity: candidate
-platform: none(未提交)
-team_best_stage: s0
-team_best_commit: d7d8c4793278062f55617693585ae2ab89c8fbcc
+validity: invalid
+platform: 6/8(s0,enflame+kunlun失败;e1已修enflame,昆仑评测中)
+team_best_stage: e1
+team_best_commit: 663286c2399cac11ece86c7fa74fc2cd638143c5
 team_best_speedup: -
 sealed: no
-next: 额度可用时打包 preflight 首投;观察燧原/昆仑/天数 vendor 信号(预案已备)
+next: 等 e1(9383) 昆仑终态;若仍败走 route/materialize+32³/stages1 规则 GEMM vendor(T28/T37 实证)
 updated: 2026-09-04
 ```
 
@@ -89,3 +89,19 @@ updated: 2026-09-04
 
 - 2026-09-04 00:xx 契约锁定、S0 实现 + 远端 screening 9/9 + 基准
   （自修：torch.full 无 generator 参数、flake8 F401/F841）
+
+## 平台结果（2026-09-04 凌晨）
+
+- S0（submission 9376，daily_seq 5）：6/8，燧原+昆仑 correctness 失败。
+  逐芯：天数 29.489 / 沐曦 21.64 / 海光 55.865 / 华为 13.5175 /
+  A 49.5485 / B 27.337
+- E1（submission 9383，daily_seq 7，source `663286c`，ZIP
+  `413302e1…`）：燧原 vendor（i32 + 无早退 + clamp 哨兵 + stages2）
+  **已翻绿 0.2545x**；其余七芯全过（天数 27.01 / 沐曦 22.40 /
+  海光 53.99 / 华为 13.28 / A 50.14 / B 29.39）；**昆仑评测中**
+  （9376 昆仑为 fail，e1 待终态）
+- 若 e1 昆仑仍败：route/materialize vendor（wrapper index_select
+  物化 → 每非空段 32³/stages1/`do_not_specialize=["M"]` 规则 GEMM →
+  逆 index_select，T28 E11 昆仑 1830s 崩溃→4.40x / T37 E4 3.47x 双证）
+- vendor 数学在 NVIDIA 代理 variants 矩阵 10/10 验证（曾抓出 ieee
+  丢失导致的 TF32 精度回退，已修复后才提交）
