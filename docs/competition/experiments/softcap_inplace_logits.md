@@ -587,3 +587,30 @@ E6 `1.76791667x`:
   可推导范围,留档待其 PR 公开。
 - 树回滚 e8 ascend 字节;剩余 8 额度转纯采样守榜(T40×4/T39×2/
   T28×1/T33×1,均匀铺至 19:00 尾窗)。
+
+### E15:官方昇腾形态包(sub 8782,14:5x CST 发射)
+
+- 依据:triton-ascend 官方《NPU 高性能编程指南》起始假设全套落地,
+  单一 `_ascend` 变量,其余四成员冻结:
+  1. 动态大 BLOCK:`max(32768, next_pow2(cdiv(N,65535)))`(coreDim 保证);
+  2. 核内子分块 `for sub in range(0,BLOCK,4096)`(multi-buffer 流水);
+  3. 尾块分支:非末块零 mask(热路径无 int32 CMP——官方文档 CMP
+     int32/int64 标量退化);末块才 mask;
+  4. `care_padding=False`(E14 单用无效的原因:需 multi-buffer 结构配合);
+  5. `@libentry()` + `torch_device_fn.device` 上下文 +
+     `TRITON_ALL_BLOCKS_PARALLEL=1`(os.environ setdefault)。
+- 平台兼容:care_padding 已由 E14 证明平台可用;libentry/repo 包导入
+  加 try/except 降级(不可导入则退普通发射);NVIDIA 代理无 care_padding
+  kwarg → vendor 按设备类型分 NPU/CUDA 双内核(CUDA 路径供代理验证数学)。
+- release 波折:3edce75(care_padding 平台版,代理编译失败,预期)→
+  8a4c0be(双内核拆分,单测抓出 subnormal-cap NaN,补
+  CAP_RECIPROCAL_OVERFLOWS)→ 1c367876(libentry dynamic_func 需位置
+  传参)。最终 1c367876:PYCOMPILE/ISORT/FLAKE8 过,unittest 5/5 OK,
+  release log SHA-256
+  `44ca759ed8f14e4ba9db357b2426138cf9bf73e8147d7815baf466b21ef86636`。
+- canonical ZIP `e15-1c367876/softcap_inplace_logits.zip` SHA-256
+  `dd5484f2e548b180503c6cf728a321cdbded24f73910fd28fac07741748b6c13`;
+  preflight 全过,sub **8782**,额度 6/30。
+- 预注册门:8/8 valid;华为 >0.9(历史最高 0.75)即轴复活;
+  ≥1.5 且平均 >2.2593(实时榜首)即登顶;<0.9 → 昇腾形态轴关闭,
+  回纯采样守 2.1956。
