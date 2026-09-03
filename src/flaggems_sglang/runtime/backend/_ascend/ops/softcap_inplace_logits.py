@@ -37,9 +37,7 @@ def _softcap_inplace_logits_kernel(
         cols = col_block * BLOCK_SIZE + offsets
         mask = cols < ncols
         pointers = logits_ptr + row.to(tl.int64) * row_stride + cols
-        logits = tl.load(pointers, mask=mask, care_padding=False).to(
-            tl.float32
-        )
+        logits = tl.load(pointers, mask=mask, other=0.0).to(tl.float32)
         scaled = logits / softcap_const
         scaled_sq = scaled * scaled
         near_zero = scaled * (
@@ -91,6 +89,3 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
 
 
 __all__ = ["softcap_inplace_logits"]
-
-
-# e14 probe C: care_padding=False (triton-ascend perf guidelines ex.1 - drop UB pre-fill, unlock MTE2/Vector pipelining)
