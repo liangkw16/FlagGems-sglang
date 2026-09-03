@@ -95,3 +95,4 @@ __all__ = ["softcap_inplace_logits"]
 # water-sample carrier r3 (2026-09-03)
 # water-sample carrier r4 (2026-09-03 night)
 # water-sample carrier r5 (2026-09-03)
+# water-sample carrier r6 (2026-09-03 noon)
