@@ -52,6 +52,7 @@ def _softcap_inplace_logits_npu_kernel(
     softcap_const,
     BLOCK: tl.constexpr,
     SUB: tl.constexpr,
+    CAP_RECIPROCAL_OVERFLOWS: tl.constexpr,
 ):
     pid = tl.program_id(0)
     base = pid * BLOCK
@@ -67,6 +68,10 @@ def _softcap_inplace_logits_npu_kernel(
             output = softcap_const * (
                 2.0 / (1.0 + tl.exp(-2.0 * (logits / softcap_const))) - 1.0
             )
+            if CAP_RECIPROCAL_OVERFLOWS:
+                output = tl.where(
+                    logits == 0.0, logits / (logits - logits), output
+                )
             tl.store(pointers, output.to(pointers.dtype.element_ty), mask=mask)
     else:
         for sub in range(0, BLOCK, SUB):
@@ -76,6 +81,10 @@ def _softcap_inplace_logits_npu_kernel(
             output = softcap_const * (
                 2.0 / (1.0 + tl.exp(-2.0 * (logits / softcap_const))) - 1.0
             )
+            if CAP_RECIPROCAL_OVERFLOWS:
+                output = tl.where(
+                    logits == 0.0, logits / (logits - logits), output
+                )
             tl.store(pointers, output.to(pointers.dtype.element_ty))
 
 
@@ -87,6 +96,7 @@ def _softcap_inplace_logits_cuda_kernel(
     softcap_const,
     BLOCK: tl.constexpr,
     SUB: tl.constexpr,
+    CAP_RECIPROCAL_OVERFLOWS: tl.constexpr,
 ):
     pid = tl.program_id(0)
     base = pid * BLOCK
@@ -100,6 +110,10 @@ def _softcap_inplace_logits_cuda_kernel(
             output = softcap_const * (
                 2.0 / (1.0 + tl.exp(-2.0 * (logits / softcap_const))) - 1.0
             )
+            if CAP_RECIPROCAL_OVERFLOWS:
+                output = tl.where(
+                    logits == 0.0, logits / (logits - logits), output
+                )
             tl.store(pointers, output.to(pointers.dtype.element_ty), mask=mask)
     else:
         for sub in range(0, BLOCK, SUB):
@@ -109,6 +123,10 @@ def _softcap_inplace_logits_cuda_kernel(
             output = softcap_const * (
                 2.0 / (1.0 + tl.exp(-2.0 * (logits / softcap_const))) - 1.0
             )
+            if CAP_RECIPROCAL_OVERFLOWS:
+                output = tl.where(
+                    logits == 0.0, logits / (logits - logits), output
+                )
             tl.store(pointers, output.to(pointers.dtype.element_ty))
 
 
@@ -148,6 +166,9 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
             raise ValueError("final_logit_softcapping must contain one value")
         final_logit_softcapping = float(final_logit_softcapping)
     final_logit_softcapping = float(final_logit_softcapping)
+    cap_reciprocal_overflows = (
+        0.0 < abs(final_logit_softcapping) <= float.fromhex("0x1p-128")
+    )
     if full_logits.is_contiguous():
         n = full_logits.numel()
         if n == 0:
@@ -183,9 +204,6 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
     nrows, ncols = full_logits.shape
     if nrows == 0 or ncols == 0:
         return full_logits
-    cap_reciprocal_overflows = (
-        0.0 < abs(final_logit_softcapping) <= float.fromhex("0x1p-128")
-    )
     num_col_blocks = triton.cdiv(ncols, 512)
     total_blocks = nrows * num_col_blocks
     _softcap_inplace_logits_strided_kernel[(min(total_blocks, _MAX_GRID),)](
