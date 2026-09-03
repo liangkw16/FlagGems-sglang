@@ -101,3 +101,4 @@ def silu_and_mul_masked(input, masked_m):
 
 __all__ = ["silu_and_mul_masked"]
 # anchor-hunt carrier (2026-09-03): bytes identical to e10-b9a48a2
+# anchor-hunt final (2026-09-03)
