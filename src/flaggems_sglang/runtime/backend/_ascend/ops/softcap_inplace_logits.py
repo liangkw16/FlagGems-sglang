@@ -46,7 +46,7 @@ def _libentry():
 
 @_libentry()
 @triton.jit
-def _softcap_inplace_logits_kernel(
+def _softcap_inplace_logits_npu_kernel(
     logits_ptr,
     n_elements,
     softcap_const,
@@ -73,6 +73,39 @@ def _softcap_inplace_logits_kernel(
             offs = sub + tl.arange(0, SUB)
             pointers = logits_ptr + base + offs
             logits = tl.load(pointers, care_padding=False).to(tl.float32)
+            output = softcap_const * (
+                2.0 / (1.0 + tl.exp(-2.0 * (logits / softcap_const))) - 1.0
+            )
+            tl.store(pointers, output.to(pointers.dtype.element_ty))
+
+
+@_libentry()
+@triton.jit
+def _softcap_inplace_logits_cuda_kernel(
+    logits_ptr,
+    n_elements,
+    softcap_const,
+    BLOCK: tl.constexpr,
+    SUB: tl.constexpr,
+):
+    pid = tl.program_id(0)
+    base = pid * BLOCK
+    last = pid == tl.num_programs(0) - 1
+    if last:
+        for sub in range(0, BLOCK, SUB):
+            offs = sub + tl.arange(0, SUB)
+            mask = (base + offs) < n_elements
+            pointers = logits_ptr + base + offs
+            logits = tl.load(pointers, mask=mask, other=0.0).to(tl.float32)
+            output = softcap_const * (
+                2.0 / (1.0 + tl.exp(-2.0 * (logits / softcap_const))) - 1.0
+            )
+            tl.store(pointers, output.to(pointers.dtype.element_ty), mask=mask)
+    else:
+        for sub in range(0, BLOCK, SUB):
+            offs = sub + tl.arange(0, SUB)
+            pointers = logits_ptr + base + offs
+            logits = tl.load(pointers).to(tl.float32)
             output = softcap_const * (
                 2.0 / (1.0 + tl.exp(-2.0 * (logits / softcap_const))) - 1.0
             )
@@ -121,9 +154,15 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
             return full_logits
         block = max(32768, triton.next_power_of_2(triton.cdiv(n, _MAX_GRID)))
         grid = triton.cdiv(n, block)
+        is_npu = full_logits.device.type == "npu"
+        kernel = (
+            _softcap_inplace_logits_npu_kernel
+            if is_npu
+            else _softcap_inplace_logits_cuda_kernel
+        )
         if _HAS_LIBENTRY:
             with torch_device_fn.device(full_logits.device):
-                _softcap_inplace_logits_kernel[(grid,)](
+                kernel[(grid,)](
                     full_logits,
                     n,
                     final_logit_softcapping,
@@ -131,7 +170,7 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
                     SUB=_SUB,
                 )
         else:
-            _softcap_inplace_logits_kernel[(grid,)](
+            kernel[(grid,)](
                 full_logits,
                 n,
                 final_logit_softcapping,
