@@ -101,10 +101,9 @@ JSON-RPC，请求/响应留存 `/tmp/kg-*`；当日有效）：
 - 工具真实行为与名义标签有出入：`specialize_kernel` 与
   `optimize_kernel` 均为**同步纯改写路径**（响应只含 LLM token 用量，
   无 job_id/verify_result，不上设备）；上设备的 autotune/generate 路径
-  中 `autotune_kernel` 入参只有 `pytorch_code`，**我方 Triton 字节
-  无法进入任何设备执行管线**——上文"字节绑定"对 autotune 实际约束
-  的是工具自产代码，不是候选字节。设备侧对我方字节的判据仍只有
-  vendor 容器与平台。
+  当日探测 `autotune_kernel` 只收 `pytorch_code`——**该结论已被
+  2026-09-03 实验修订**（见下节）：description 注入可让候选字节上
+  设备执行，但只有失败信号可信。
 - **提示词注入协议（新增预检通道）**：`func_desc`/`context` 是喂给
   改写 LLM 的自由文本。注入"禁止改写、原样部署"契约后实测：
   `specialize_kernel` 守约（返回代码与输入的 diff 仅一行
@@ -119,6 +118,33 @@ JSON-RPC，请求/响应留存 `/tmp/kg-*`；当日有效）：
 - 记录：调用参数、注入文本、返回代码 SHA-256 与 diff 摘要写入算子
   账本；示例：T33 tile-16 注入版返回 diff 仅 `+import torch_npu`，
   与 e10 华为平台 +28.8% 互证（无需昇腾结构适配）。
+
+### 2026-09-03 注入执行通道与可信度分级（七组对照实验，华为真机）
+
+schema 已变化：`autotune_kernel` 现收 `operator_name`（必填）+
+`description`（自由文本，可嵌完整代码）+ `device`（"huawei" 实测）+
+`target_speedup`（设 999 防过早达标停机）。注入模板：
+description 内 `VERIFICATION-ONLY + BEGIN_CODE/END_CODE + VERBATIM
+attempt-0 禁止改写 + 回传实际执行代码`。实验证据全录
+`docs/competition/experiments/README.md` 2026-09-03 节。
+
+**可信度阶梯（只信前三级）**：
+
+| 信号 | 可信度 | 判据与用法 |
+| --- | --- | --- |
+| 失败神谕（编译/运行） | ✅ fail-closed | attempt 的 `error` 字段含 `benchmark(...) raised:` 链 = 候选在该芯真机失败（带真实 cache 路径）。发射含 NPU 专属写法的 vendor 前先跑，零额度换掉平台上才暴露的编译炸（E15 学费类） |
+| 最终代码保真 diff | ✅ | 终态返回代码 kernel 逻辑与输入逐字节一致（忽略改名/类型注解/注释）；仅最终代码可比，逐 attempt 代码不回传、保真不可核 |
+| 量级屏 | ⚠️ 同量级 | description 嵌入官方基准（do_bench warmup=3/rep=10 + 5 轮 AB/BA + 逐 shape 中位）后，自测 speedup 从 0.07 校准到 0.6-0.8（平台真值 1.66）——只判量级（>1 还是 0.0x），不判名次 |
+| `passed=True` / `tests=0/0` | ❌ | 已知 1.6% 数值错的内核照样 passed；其基准 shape 实测仅 (32,32)/(128,256)/(1024,1024)，小 shape 不触发行界类 bug |
+| 回传的"测量原文" | ❌ 幻觉 | 要求把基准结果写进返回代码注释时，返回完美格式但纯编造数字（1.234567/1.345678 递增数列）——LLM 为满足输出契约幻觉数据 |
+| 异常哨兵通道 | ❌ 被吞 | always-raise 哨兵（`KGPROBE|shape|MISMATCH`）不穿透 error 字段，用户代码异常被后端吞掉，正确性神谕不可达（Codex 会诊方案①已实测证伪） |
+
+**修订后的定位**：MCP 覆盖芯（华为/天数/海光/沐曦/CUDA）上，注入
+执行 = 免费的**编译+可运行初筛**（失败神谕）+ 结构保真确认 + 量级
+方向屏；正确性与精确加速比仍只有远端 NVIDIA 代理（同脚本字节）与
+平台两条可信通道。服务端根治诉求（待提交 kernelgen-submit-feedback）：
+非 LLM 签名结果信封（执行源/reference/harness SHA-256 + 逐 case
+结构化结果 + 环境标识）、stdout 通道、逐 attempt 代码回传。
 
 ### 多芯验证通道矩阵
 
