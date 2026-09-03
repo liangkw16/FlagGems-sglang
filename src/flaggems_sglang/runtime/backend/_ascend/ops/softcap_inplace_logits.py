@@ -58,47 +58,47 @@ def _softcap_inplace_logits_kernel(
 def _softcap_rows_npu_kernel(
     logits_ptr,
     ncols,
-    n_rows,
+    total_segs,
     softcap_const,
     CAP_RECIPROCAL_OVERFLOWS: tl.constexpr,
     SUB: tl.constexpr,
     SEG: tl.constexpr,
 ):
-    row = tl.program_id(0)
-    seg = tl.program_id(1)
-    base = row.to(tl.int64) * ncols
-    seg_lo = seg * SEG
-    seg_hi = seg_lo + SEG
-    nsub = tl.cdiv(SEG, SUB)
-    for sub in range(0, nsub):
-        lo = seg_lo + sub * SUB
-        offs = lo + tl.arange(0, SUB)
-        last_block = lo + SUB >= seg_hi
-        if last_block:
-            mask = offs < ncols
-            pointers = logits_ptr + base + offs
-            logits = tl.load(pointers, mask=mask, other=0.0).to(tl.float32)
-            scaled = logits / softcap_const
-            output = softcap_const * (
-                2.0 / (1.0 + tl.exp(-2.0 * scaled)) - 1.0
-            )
-            if CAP_RECIPROCAL_OVERFLOWS:
-                output = tl.where(
-                    logits == 0.0, logits / (logits - logits), output
+    for flat in range(tl.program_id(0), total_segs, tl.num_programs(0)):
+        seg = flat % tl.cdiv(ncols, SEG)
+        row = flat // tl.cdiv(ncols, SEG)
+        base = row.to(tl.int64) * ncols
+        seg_lo = seg * SEG
+        seg_hi = tl.minimum(seg_lo + SEG, ncols)
+        for sub in range(0, SEG, SUB):
+            lo = seg_lo + sub
+            offs = lo + tl.arange(0, SUB)
+            last_block = lo + SUB >= seg_hi
+            if last_block:
+                mask = offs < seg_hi
+                pointers = logits_ptr + base + offs
+                logits = tl.load(pointers, mask=mask, other=0.0).to(tl.float32)
+                scaled = logits / softcap_const
+                output = softcap_const * (
+                    2.0 / (1.0 + tl.exp(-2.0 * scaled)) - 1.0
                 )
-            tl.store(pointers, output, mask=mask)
-        else:
-            pointers = logits_ptr + base + offs
-            logits = tl.load(pointers).to(tl.float32)
-            scaled = logits / softcap_const
-            output = softcap_const * (
-                2.0 / (1.0 + tl.exp(-2.0 * scaled)) - 1.0
-            )
-            if CAP_RECIPROCAL_OVERFLOWS:
-                output = tl.where(
-                    logits == 0.0, logits / (logits - logits), output
+                if CAP_RECIPROCAL_OVERFLOWS:
+                    output = tl.where(
+                        logits == 0.0, logits / (logits - logits), output
+                    )
+                tl.store(pointers, output, mask=mask)
+            else:
+                pointers = logits_ptr + base + offs
+                logits = tl.load(pointers).to(tl.float32)
+                scaled = logits / softcap_const
+                output = softcap_const * (
+                    2.0 / (1.0 + tl.exp(-2.0 * scaled)) - 1.0
                 )
-            tl.store(pointers, output)
+                if CAP_RECIPROCAL_OVERFLOWS:
+                    output = tl.where(
+                        logits == 0.0, logits / (logits - logits), output
+                    )
+                tl.store(pointers, output)
 
 
 def softcap_inplace_logits(full_logits, final_logit_softcapping):
@@ -115,13 +115,13 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
             0.0 < abs(final_logit_softcapping) <= float.fromhex("0x1p-128")
         )
         sub = 4096 if ncols > 4096 else triton.next_power_of_2(ncols)
-        seg = max(sub, triton.next_power_of_2(ncols) // 8)
-        seg = min(seg, triton.next_power_of_2(ncols))
+        seg = ((triton.next_power_of_2(ncols) + 7) // 8 + sub - 1) // sub * sub
+        seg = max(seg, sub)
         nseg = triton.cdiv(ncols, seg)
-        _softcap_rows_npu_kernel[(min(nrows, 65535), nseg)](
+        _softcap_rows_npu_kernel[(min(nrows * nseg, 65535),)](
             full_logits,
             ncols,
-            nrows,
+            nrows * nseg,
             final_logit_softcapping,
             CAP_RECIPROCAL_OVERFLOWS=cap_ro,
             SUB=sub,
@@ -159,4 +159,4 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
 __all__ = ["softcap_inplace_logits"]
 
 
-# e17: row x col-segment 2D grid NPU kernel (raises parallelism for small-row shapes; hot path still no CMP)
+# e17: row x col-segment flat grid NPU kernel (grid-fold safe, SEG multiple of SUB)
