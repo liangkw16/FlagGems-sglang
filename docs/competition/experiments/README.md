@@ -790,3 +790,29 @@ T32 E3 代理门未过未发射。
   判断矛盾);
 - 昆仑崩溃族(topk/argsort/matmul/einsum reference 触发 inductor
   compile-worker 1830s)16+ 指纹,工单未回。
+
+### 2026-09-03 MCP 原样测试实验(prompt 注入,三组对照)
+
+问题:kernelgen MCP 四工具都是改写器,prompt 注入能否实现"原样字节
+实机测试"?实验方法:`autotune_kernel`(唯一收自由文本 + 实机跑的
+工具),`description` 内嵌完整代码 + BEGIN_CODE/END_CODE + "VERBATIM
+attempt-0,禁止改写" + "回传实际执行代码",`device="huawei"`,
+`target_speedup=999`(防过早达标停机,保留最终代码供比对)。
+
+- **实验 1(冻结性)**:喂 e16 华为获奖内核 → 5 轮迭代后返回的最终
+  代码 kernel 逻辑与输入**逐字节一致**(仅函数改名/类型注解/删注释)
+  ——注入可冻结结构,`passed=True ×5`;
+- **实验 2(抓 bug 能力,决定性)**:喂 E15 已知坏内核(华为平台
+  实锤 1.6% 行界数值错)→ **attempt 1/2/3 全部 `passed=True,
+  tests=0/0`**——平台判错的内核 MCP 报通过,且 total_tests=0;
+- **实验 3(口径)**:e16 的 MCP speedup 0.066-0.071 vs 平台 1.66,
+  基准完全不可比(它自选 shape/reference)。
+
+结论(修订 8/31 的验证通道审计):
+1. **能**:注入可让目标芯"跑一遍你的结构"——返回代码的 kernel
+   逐字节保真 → 免费的目标芯**编译+可运行**初筛信号(零额度);
+2. **不能**:`passed=True` 无测试计数背书(tests=0/0),对已知数值
+   bug 完全失明;speedup 口径不可比——**永远不能替代 release 单测
+   或平台裁决**,只能当编译烟雾测试用;
+3. 可用协议:autotune 注入模板 + final-code 字节 diff(忽略改名/
+   注解/注释)+ `total_tests>0` 才升级为数值信号(实测从未 >0)。
