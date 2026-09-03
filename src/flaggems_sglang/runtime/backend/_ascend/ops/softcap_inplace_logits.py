@@ -187,8 +187,9 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
                     full_logits,
                     n,
                     final_logit_softcapping,
-                    BLOCK=block,
-                    SUB=_SUB,
+                    block,
+                    _SUB,
+                    cap_reciprocal_overflows,
                 )
         else:
             kernel[(grid,)](
@@ -197,6 +198,7 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
                 final_logit_softcapping,
                 BLOCK=block,
                 SUB=_SUB,
+                CAP_RECIPROCAL_OVERFLOWS=cap_reciprocal_overflows,
             )
         return full_logits
     assert full_logits.ndim == 2
