@@ -38,7 +38,9 @@ def _softcap_inplace_logits_kernel(
         cols_cmp = cols.to(tl.float32)
         mask = cols_cmp < ncols
         pointers = logits_ptr + row.to(tl.int64) * row_stride + cols
-        logits = tl.load(pointers, mask=mask, other=0.0).to(tl.float32)
+        logits = tl.load(pointers, mask=mask, care_padding=False).to(
+            tl.float32
+        )
         scaled = logits / softcap_const
         scaled_sq = scaled * scaled
         near_zero = scaled * (
