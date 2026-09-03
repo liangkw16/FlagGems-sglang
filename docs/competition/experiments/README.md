@@ -707,3 +707,86 @@ T32 E3 代理门未过未发射。
   T40 e8r4/T28 r5/T33 r5/T35 r6/T39 e18 锚点猎手)。
 - 若服务全天不恢复:19 发中留 6-8 发至傍晚(尾窗常出高水位),其余
   按恢复窗口机动。
+
+## 2026-09-03 收官:经验教训总账(第三批全程,平台实证)
+
+### 一、跨芯技术知识(全部平台实证,按价值排序)
+
+1. **昇腾 int32/64 Vector CMP 标量退化 = elementwise 头号杀手**
+   (T40 华为 0.74→1.70,+130%,E16 唯一兑现变体):官方文档
+   明示 `cols < N` 类 int 比较 lowering 成标量指令;规避 = **行结构化
+   每行一 program + 行内子分块,仅末子块带 mask**(热路径零比较)。
+   反证五连:E14 care_padding 单用无效(需 multi-buffer 结构配合)、
+   E13 fp32 比较在扁平大 ncols 下 2^24 精度雷、E15 大 BLOCK 扁平化
+   行界污染(1.6% 错)+燧原死循环、E17 列段调度更差、E2 官方 shim
+   无变化。**先看官方 triton-ascend《NPU 高性能编程指南》再写
+   _ascend vendor,本次最大单芯杠杆来源。**
+2. **燧原运行期分支编译约束与规模无关**:T31 四微核全拆(单核 20
+   regs/0 spill)仍 1830s 同指纹;T39 E17 燧原块跳过 system_failed;
+   T40 E15 care_padding 大 BLOCK 死循环——**燧原上任何运行时分支/
+   特殊 load kwarg 都不可用,跳过/谓词机制只能用 load-mask 形态**。
+3. **水位采样是正经武器**(9/2 战役:16 发 7 TB + T40 登顶):
+   平台按团队最佳取 max,追投零下行;同字节跨窗读数差可达 10 倍
+   (燧原 10.59↔0.99);尖峰持续期 <30 分钟,**连发同窗 = 重复抽同一
+   张票**,应分层:定时底料 + 哨兵触发爆发(他队榜单逐芯读数是
+   免费水位传感器)。但 oracle 之外的首榜首分(c2flow 华为 3.40、
+   EvokeAgent T33 10.09)采样追不上——先做逐芯 oracle 核算再决定
+   打不打。
+4. **`Tensor.div_` int64 陷阱**(T31 E9):int64 tensor 的 `.div_`
+   走浮点除直接 RuntimeError,必须 `torch.div(rounding_mode="floor")`;
+   host 侧张量运算也要过远端 release 才能拦住(本轮 unittest 门禁
+   实际拦截一次)。
+5. **care_padding 是 triton-ascend 专有 kwarg**(NVIDIA Triton 3.7.1
+   直接 CompilationError):vendor 若用,必须按设备类型分流双内核,
+   CUDA 孪生核供代理验证数学。
+6. **libentry dynamic_func 只吃位置参数**(T40 E15):kwargs 传参
+   报 `missing 1 required positional argument`;repo 包导入在平台
+   ZIP 环境不可假设,必须 try/except 降级。
+
+### 二、平台行为知识
+
+7. **平台对所有提交强制跑八芯**(T30 纯 generic 也死于 enflame 服务
+   故障):单芯评测服务瘫痪 = 全局 system_failed 且照扣额度
+   (9/3 凌晨 11 发全灭,~37% 日额度);处置 = 立即停火,定时单发
+   探针(1 额度/次)测恢复,恢复信号 = 探针 valid。
+8. **`stale_after_upload` 守卫**(两次):多提交在评时全局状态高频
+   翻转,POST 前校验失败 → 上传了但没提交、不扣额度;该 tuple 指纹
+   会被封,处置 = 注释 bump 换新身份重发,**绝不能清 intent 重试**。
+9. **重复元组指纹守卫**:昨日已提交的 (commit, stage, zip) 组合再次
+   preflight 报 `already submitted`,零额度损失——采样轮转必须每次
+   fresh bump。
+10. **燧原/华为读数窗口方差远大于配置差**:T40 华为同字节 15:29-
+    16:03 内 1.66→1.28→0.82→1.70;跨窗比较必须同窗成对,单发归因
+    不可信(与 8/31 T33 燧原 6.28→0.88 互证)。
+
+### 三、流程教训(按学费排序)
+
+11. **证伪实验的回滚必须当场做**(T34 e3 学费已记,本轮 T31 e9
+    二犯险些重演):e15 首版 ZIP 用错成员集(e10 载体态),构建后
+    核对成员 SHA 才发现——**每次 build 后必核对成员清单与预注册
+    组合逐项一致**。
+12. **"充分验证后再提交"的价值被两次实证**:T40 E17 首版被本地
+    边界矩阵拦下 3 个真 bug(1 行宽行/10 万列 SEG 对齐、65537 行
+    grid 折叠);T31 E9 div_ 陷阱被 unittest 拦下——**边界矩阵
+    (小行数×宽列×非整除×超 65535 行×多 dtype)是 vendor 改动的
+    最低配置**,单测矩阵 5 法不够。
+13. **官方文档 > 经验迁移**:本轮最大两次命中(华为 CMP 退化、
+    care_padding 语义)全部来自联网检索 triton-ascend 官方文档;
+    c2flow 的 mrope 写法(第一批 PR)也印证——**每接触一个新芯,
+    先读该芯官方编程指南,再写 vendor**。
+14. **kernelgen MCP 有 Bash 直连通道**(`scripts/kernelgen_mcp.py`,
+    自动从 .mcp.json 取 token):specialize_kernel(华为)返回的
+    差分是免费的芯适配预检;但返回代码要审(其 wrapper batch 切片
+    有 bug,思想可用代码不可直接抄)。
+15. **额度经济学**:30 发日额度的最优分配 ≈ 1/3 结构探针(可破
+    oracle 上限)+ 2/3 分层采样(兑现水位);故障日第一时间停火
+    保全,恢复后窗口优先给榜首差 <5% 的题。
+
+### 四、留档未破译面(下一季线索)
+
+- c2flow T40 华为 3.40(我们 e16 行结构 1.70,差距 2 倍,超出
+  Triton 方言可推导范围)——等其 PR 公开;
+- EvokeAgent T33/T34 双高分统一 quant 结构(与"昆仑 0.23 固有"
+  判断矛盾);
+- 昆仑崩溃族(topk/argsort/matmul/einsum reference 触发 inductor
+  compile-worker 1830s)16+ 指纹,工单未回。
