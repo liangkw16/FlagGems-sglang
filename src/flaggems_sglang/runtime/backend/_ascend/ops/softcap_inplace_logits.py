@@ -62,14 +62,19 @@ def _softcap_rows_npu_kernel(
     softcap_const,
     CAP_RECIPROCAL_OVERFLOWS: tl.constexpr,
     SUB: tl.constexpr,
+    SEG: tl.constexpr,
 ):
     row = tl.program_id(0)
+    seg = tl.program_id(1)
     base = row.to(tl.int64) * ncols
-    nsub = tl.cdiv(ncols, SUB)
+    seg_lo = seg * SEG
+    seg_hi = seg_lo + SEG
+    nsub = tl.cdiv(SEG, SUB)
     for sub in range(0, nsub):
-        offs = sub * SUB + tl.arange(0, SUB)
-        last = sub == nsub - 1
-        if last:
+        lo = seg_lo + sub * SUB
+        offs = lo + tl.arange(0, SUB)
+        last_block = lo + SUB >= seg_hi
+        if last_block:
             mask = offs < ncols
             pointers = logits_ptr + base + offs
             logits = tl.load(pointers, mask=mask, other=0.0).to(tl.float32)
@@ -110,13 +115,17 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
             0.0 < abs(final_logit_softcapping) <= float.fromhex("0x1p-128")
         )
         sub = 4096 if ncols > 4096 else triton.next_power_of_2(ncols)
-        _softcap_rows_npu_kernel[(min(nrows, 65535),)](
+        seg = max(sub, triton.next_power_of_2(ncols) // 8)
+        seg = min(seg, triton.next_power_of_2(ncols))
+        nseg = triton.cdiv(ncols, seg)
+        _softcap_rows_npu_kernel[(min(nrows, 65535), nseg)](
             full_logits,
             ncols,
             nrows,
             final_logit_softcapping,
             CAP_RECIPROCAL_OVERFLOWS=cap_ro,
             SUB=sub,
+            SEG=seg,
         )
         return full_logits
     if full_logits.is_contiguous():
@@ -150,4 +159,4 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
 __all__ = ["softcap_inplace_logits"]
 
 
-# e16: row-structured NPU kernel (hot path no CMP, SUB subtiling, per-row program)
+# e17: row x col-segment 2D grid NPU kernel (raises parallelism for small-row shapes; hot path still no CMP)
