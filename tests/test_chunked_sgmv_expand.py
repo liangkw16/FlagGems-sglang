@@ -18,6 +18,8 @@ from pathlib import Path
 
 import torch
 
+from tests._op_variants import load_operator_modules
+
 MODULE_PATH = (
     Path(__file__).parents[1]
     / "src"
@@ -221,3 +223,37 @@ class ChunkedSgmvExpandTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
+class ChunkedSgmvExpandVariantsTest(unittest.TestCase):
+    """Core matrix across every backend variant (generic + enflame)."""
+
+    MODULES = load_operator_modules("chunked_sgmv_expand")
+
+    def test_variants_match_reference(self):
+        cases = [
+            ([16, 32, 8], 4, [128, 128], 32, torch.float32),
+            ([0, 12, 0, 12, 0], 3, [65, 80, 129], 16, torch.float32),
+            ([20, 20], 3, [128, 64], 16, torch.bfloat16),
+        ]
+        for seg_lens, num_lora, widths, rank, dtype in cases:
+            x, weights, batch_info, slice_offsets, base_output = make_case(
+                seg_lens, num_lora, widths, rank, dtype=dtype, seed=21
+            )
+            max_slice = max(widths)
+            ref = reference(
+                x, weights, batch_info, slice_offsets, max_slice, base_output
+            )
+            for name, module in self.MODULES:
+                with self.subTest(module=name, seg_lens=seg_lens):
+                    out = module.chunked_sgmv_expand(
+                        x,
+                        weights,
+                        batch_info,
+                        slice_offsets,
+                        max_slice,
+                        base_output,
+                    )
+                    atol, rtol = TOLERANCES[base_output.dtype]
+                    torch.testing.assert_close(out, ref, atol=atol, rtol=rtol)
