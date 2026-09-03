@@ -35,8 +35,7 @@ def _softcap_inplace_logits_kernel(
         row = block_id // num_col_blocks
         col_block = block_id - row * num_col_blocks
         cols = col_block * BLOCK_SIZE + offsets
-        cols_cmp = cols.to(tl.float32)
-        mask = cols_cmp < ncols
+        mask = cols < ncols
         pointers = logits_ptr + row.to(tl.int64) * row_stride + cols
         logits = tl.load(pointers, mask=mask, care_padding=False).to(
             tl.float32
@@ -93,4 +92,5 @@ def softcap_inplace_logits(full_logits, final_logit_softcapping):
 
 __all__ = ["softcap_inplace_logits"]
 
-# e13 probe B: mask cmp int32->fp32 (triton-ascend Vector CMP int32/int64 scalar-degrades; docs/zh/migration_guide/performance_guidelines.md)
+
+# e14 probe C: care_padding=False (triton-ascend perf guidelines ex.1 - drop UB pre-fill, unlock MTE2/Vector pipelining)
