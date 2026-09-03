@@ -156,9 +156,13 @@ weights `[num_lora, max_rank, vocab_size]`；输出 `[S, max_rank]` 未覆盖行
 
 契约：整数输出 atol=0（三 dtype 全零容差）；B×S 串行接受链 + V 维逆 CDF。
 
-**前置实验门（go/no-go，不耗额度）**：远端代理上验证「串行 fp32 累加 +
-逐步 cast 回输入 dtype」能否在三 dtype 逐位复现 torch.sum + torch.cumsum；
-匹配不了直接放弃。
+**go/no-go 实验已完成（2026-09-04，NVIDIA 代理）——半精度判定 NEGATIVE**：
+torch 半精度 `cumsum` 为半精度累加的内部树形扫描，与 fp32 串行 round /
+dtype 逐步累加 / `round(cumsum(f32))` / blocked+Hillis 结构仿真全部
+不一致（各 0/10–0/20）；端到端 fp32 0/10 失配、fp16 2/10、bf16 3/10
+（仅最终 token 偏移，接受链全对）。八芯 torch 构建差异叠加风险。
+**候选保留但带 limitation（fp32 全对）；提交与否留给用户门控**，详见
+`experiments/chain_speculative_sampling.md`。
 
 已知墙（五路调研结论）：
 - atol=0 要求同时 bit-exact 复现 torch.sum/cumsum——账本零先例，逐芯
