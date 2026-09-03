@@ -839,3 +839,39 @@ description,能否在华为真机拿到官方口径读数?
   要求回传测量原文的通道都会被幻觉污染,`passed/speedup` 之外的一切
   回传数据默认不可信;③严格可比的官方加速比仍然只有远端 NVIDIA
   代理(同脚本字节)+ 平台裁决两条通道。
+
+### 2026-09-03 Codex 会诊 + error 通道校准(gpt-5.6-sol xhigh)
+
+Codex 方案(置信度排序):①error 通道哨兵探针(异常标记
+`KGPROBE|shape|MISMATCH` 穿 traceback,绕过 LLM 叙述)→②可执行
+差分 A/B(双冻结内核+随机标签+标签反转+A=A 空对照)→③结构化
+ABBA→④内置验证在出现 hash/manifest 背书前一律不信;服务端修法 =
+非 LLM 签名结果信封。
+
+本轮实测校准(零额度,华为):
+
+- **实验 6(哨兵探针,证伪①的前提)**:GOOD(e16)/BAD(E15 坏核)
+  双探针的 always-raise 哨兵**均不穿透** error 字段(BAD 照旧
+  passed=True,GOOD 的"命中"只是代码回显)——用户代码异常被后端
+  吞掉,正确性神谕不可达,②的前提(异常可见)随之失效;
+- **实验 7(编译失败控制,意外收获)**:非 2 次幂 `tl.arange(0,48)`
+  必炸核 → attempt-3 error 字段出现**真实失败链**
+  `benchmark({'dtype':..,'shape':(32,32)}) raised: [INFO] /root/.triton/cache/...`
+  ×6(fp16/bf16 × 三 shape)——①error 通道对**编译/运行失败**确实
+  开放(带真实环境路径);②顺带实锤其基准 shape=(32,32)/(128,256)/
+  (1024,1024),加速比不可比的根因坐实;③attempt 1-2 err 空 =
+  后端曾擅自"修好"arange 违令迭代(逐 attempt 保真不可核,仅最终
+  代码可比对)。
+
+**修订后的 MCP 可信协议(最终版)**:
+
+| 信号 | 可信度 | 判据 |
+| --- | --- | --- |
+| 编译/运行失败神谕 | ✅ fail-closed | error 字段含 `raised:` 链 = 真机失败;发射前免费编译初筛 |
+| 量级屏(官方口径注入后) | ⚠️ 同量级 | 自测 speedup 0.6-0.8 vs 平台 1.66;只判量级不判名次 |
+| 最终代码保真 diff | ✅ | kernel 逻辑逐字节(忽略改名/注解) |
+| passed / tests=0/0 / 回传数字 / 哨兵 | ❌ | 幻觉或无背书,一律不采 |
+
+服务端改进诉求(待用户决定是否经 kernelgen-submit-feedback 提交):
+非 LLM 结果信封(执行源/reference/harness SHA-256 + 逐 case 结构化
+结果 + 环境标识 + 签名)、stdout 通道、逐 attempt 代码回传。
