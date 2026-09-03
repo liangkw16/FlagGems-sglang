@@ -4,13 +4,13 @@
 task: 45
 operator: chunk_scaled_dot_kkt
 batch: 4
-validity: candidate
-platform: none(未提交)
+validity: invalid
+platform: 6/8(s0,enflame+kunlun correctness失败;huawei 0.031x低于门槛)
 team_best_stage: s0
 team_best_commit: d7d8c4793278062f55617693585ae2ab89c8fbcc
 team_best_speedup: -
 sealed: no
-next: 额度可用时打包 preflight 首投(排 T42/T43/T46 之后);观察燧原/昆仑/华为 dot 读数决定 vendor 单变量
+next: 昆仑fp32-ieee dot vendor + 燧原64/64/128+stages2+fold vendor + 华为性能轴
 updated: 2026-09-04
 ```
 
@@ -89,3 +89,12 @@ updated: 2026-09-04
 - 2026-09-04 00:xx 契约锁定、S0 实现 + 远端 screening 7/7 + 基准
   （测试自修三轮：g 切片尺寸、整除用例、三角 view permute——均为测试
   问题，kernel 字节未动）
+
+## 平台首投结果（2026-09-04 01:17，submission 9375，daily_seq 4）
+
+- 6/8 正确、`invalid_correctness`（燧原、昆仑 fail；case 细节未透出）
+- 逐芯：天数 5.8115 / 沐曦 5.4355 / 燧原 FAIL / 海光 14.777 /
+  昆仑 FAIL / 华为 0.031（低于门槛）/ A 19.246 / B 7.9035
+- 与预案一致：昆仑 fp16 操作数 dot 数值失败镜像（T12）→ fp32-ieee
+  dot vendor；燧原按 64/64/128 + stages2 + capped fold 配置 vendor；
+  华为 0.031x 需 Cube 低精度/结构轴

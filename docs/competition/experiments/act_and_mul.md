@@ -4,13 +4,13 @@
 task: 42
 operator: act_and_mul
 batch: 4
-validity: candidate
-platform: none(未提交,09-03额度耗尽)
+validity: valid
+platform: 8/8(s0,3.066825x)
 team_best_stage: s0
 team_best_commit: 2652a4e980e1bd5af63cbafa33ca13cc067c813b
-team_best_speedup: -
+team_best_speedup: 3.066825
 sealed: no
-next: 09-04 00:00 额度重置后构建规范 ZIP 并 preflight 首投;观察昆仑/燧原/华为读数决定 vendor 单变量
+next: vendor 单变量冲分:昆仑0.279x/燧原0.969x/华为1.671x 距榜首余量;榜首c2flow 3.1941x
 updated: 2026-09-03
 ```
 
@@ -122,3 +122,12 @@ updated: 2026-09-03
 
 - 2026-09-03 20:42 题面同步、契约锁定、S0 实现 + 远端 screening
   11/11 通过 + 基准；commit `2652a4e`；未提交（额度 0/30）
+
+## 平台首投结果（2026-09-04 01:09，submission 9370，daily_seq 1）
+
+- **8/8 valid，平均 3.066825x**（ZIP `3d78528e…`，source `2652a4e`）
+- 逐芯：天数 6.2234 / 沐曦 2.2476 / 燧原 0.969 / 海光 4.9658 /
+  昆仑 0.279 / 华为 1.6714 / 国际A 4.538 / 国际B 3.6404
+- 全芯正确性通过；最低昆仑 0.279x 仍过 0.1 门槛
+- 榜首 c2flow 3.1941x，差距 4.2%；下一轴按预案：昆仑 BLOCK 2048 /
+  燧原整行 4096 / 华为块结构（T39 E10 +246% 同构题）

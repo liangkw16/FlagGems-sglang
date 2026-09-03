@@ -22,11 +22,11 @@
 | 39 | silu_and_mul_masked | valid | 8/8 | E7 19.8698x | yes | - | 2026-09-03 | [silu_and_mul_masked](silu_and_mul_masked.md) |
 | 40 | softcap_inplace_logits | valid | 8/8(e8,2.195604x,rank1) | e8 2.195604x | yes | 额度用尽收官;e16 华为字节(1.70)+TB 2.1956 #2;榜首 c2flow 2.2593 华为 3.40 未破译 | 2026-09-03 | [softcap_inplace_logits](softcap_inplace_logits.md) |
 | 41 | state_passing | invalid | E7 sub8079 system_failed;7 pass,Kunlun 0.0065x,Enflame unrun | E5 diagnostic | yes | 本轮收盘;只保留平台工单与全新结构研究 | 2026-09-02 | [state_passing](state_passing.md) |
-| 42 | act_and_mul | candidate | none(未提交,09-03额度耗尽) | s0 -x | no | 09-04 00:00 额度重置后构建规范 ZIP 并 preflight 首投;观察昆仑/燧原/华为读数决定 vendor 单变量 | 2026-09-03 | [act_and_mul](act_and_mul.md) |
-| 43 | causal_conv1d_update | candidate | none(未提交,09-03额度耗尽) | s0 -x | no | 09-04 额度重置后打包 preflight 首投(排在 T42 之后第2发);pending_challenge 0/9 队达标,重点观察昆仑/燧原正确性与门槛 | 2026-09-03 | [causal_conv1d_update](causal_conv1d_update.md) |
+| 42 | act_and_mul | valid | 8/8(s0,3.066825x) | s0 3.066825x | no | vendor 单变量冲分:昆仑0.279x/燧原0.969x/华为1.671x 距榜首余量;榜首c2flow 3.1941x | 2026-09-03 | [act_and_mul](act_and_mul.md) |
+| 43 | causal_conv1d_update | invalid | 7/8(s0,kunlun correctness失败;huawei 0.0555x/enflame 0.0265x低于门槛) | s0 -x | no | 昆仑正确性修复优先(isCloseCoreTiling/BLOCK轴);华为/燧原性能轴其后——三芯全修才有8/8 | 2026-09-03 | [causal_conv1d_update](causal_conv1d_update.md) |
 | 44 | chain_speculative_sampling | candidate-limited | none(未提交) | s0 -x | no | 半精度逆CDF bit-exact 判定为不可行(NVIDIA代理实证);提交与否需用户门控——fp32全对,fp16/bf16最终token有~20-30%/请求失配;pending_challenge 0/6 队达标,一发探针或可换平台dtype口径情报 | 2026-09-04 | [chain_speculative_sampling](chain_speculative_sampling.md) |
-| 45 | chunk_scaled_dot_kkt | candidate | none(未提交) | s0 -x | no | 额度可用时打包 preflight 首投(排 T42/T43/T46 之后);观察燧原/昆仑/华为 dot 读数决定 vendor 单变量 | 2026-09-04 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
-| 46 | chunked_embedding_lora_a | candidate | none(未提交,09-03额度耗尽) | s0 -x | no | 09-04 额度重置后打包 preflight 首投(第3发);若燧原/昆仑弱,按 T17 实证加 _enflame i32 route 与 _ascend/_kunlunxin token 折叠 vendor | 2026-09-03 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
+| 45 | chunk_scaled_dot_kkt | invalid | 6/8(s0,enflame+kunlun correctness失败;huawei 0.031x低于门槛) | s0 -x | no | 昆仑fp32-ieee dot vendor + 燧原64/64/128+stages2+fold vendor + 华为性能轴 | 2026-09-04 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
+| 46 | chunked_embedding_lora_a | invalid | 7/8(s0,仅enflame失败;其余全过门槛,昆仑0.2325x) | s0 -x | no | 燧原 i32 route+gather vendor(T17 E2a 实证同指纹)→大概率8/8,当前7芯均值~14.6x | 2026-09-03 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
 | 47 | chunked_sgmv_expand | candidate | none(未提交) | s0 -x | no | 额度可用时打包 preflight 首投;观察燧原/昆仑/天数 vendor 信号(预案已备) | 2026-09-04 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

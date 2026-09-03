@@ -4,13 +4,13 @@
 task: 46
 operator: chunked_embedding_lora_a
 batch: 4
-validity: candidate
-platform: none(未提交,09-03额度耗尽)
+validity: invalid
+platform: 7/8(s0,仅enflame失败;其余全过门槛,昆仑0.2325x)
 team_best_stage: s0
 team_best_commit: abe446c6a0a84b64ccbff8ea33a4aeba1b9df2eb
 team_best_speedup: -
 sealed: no
-next: 09-04 额度重置后打包 preflight 首投(第3发);若燧原/昆仑弱,按 T17 实证加 _enflame i32 route 与 _ascend/_kunlunxin token 折叠 vendor
+next: 燧原 i32 route+gather vendor(T17 E2a 实证同指纹)→大概率8/8,当前7芯均值~14.6x
 updated: 2026-09-03
 ```
 
@@ -90,3 +90,12 @@ updated: 2026-09-03
 
 - 2026-09-03 21:59 契约锁定、S0 实现 + 远端 screening 10/10 + 基准；
   commit `abe446c`；未提交（额度 0/30）
+
+## 平台首投结果（2026-09-04 01:14，submission 9374，daily_seq 3）
+
+- 7/8 正确、`invalid_correctness`（**仅燧原 fail**；其余全过 0.1 门槛）
+- 逐芯：天数 26.778 / 沐曦 4.919 / 燧原 FAIL / 海光 20.354 /
+  昆仑 0.2325 / 华为 2.0755 / A 30.2205 / B 17.439
+- 燧原指纹与 T17 S0/S1 同族（int64 地址分量 + 标量控制流）；
+  修复路径 T17 E2a-i32 已实证：metadata 降 i32、route 预计算 + gather
+  零标量分支；修复后 7 芯均值 ~14.6x（榜首 18.7x）

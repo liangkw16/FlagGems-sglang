@@ -4,13 +4,13 @@
 task: 43
 operator: causal_conv1d_update
 batch: 4
-validity: candidate
-platform: none(未提交,09-03额度耗尽)
+validity: invalid
+platform: 7/8(s0,kunlun correctness失败;huawei 0.0555x/enflame 0.0265x低于门槛)
 team_best_stage: s0
 team_best_commit: 07aaf2e5a081e4bfc4bb0ce3207b3e78c91d69df
 team_best_speedup: -
 sealed: no
-next: 09-04 额度重置后打包 preflight 首投(排在 T42 之后第2发);pending_challenge 0/9 队达标,重点观察昆仑/燧原正确性与门槛
+next: 昆仑正确性修复优先(isCloseCoreTiling/BLOCK轴);华为/燧原性能轴其后——三芯全修才有8/8
 updated: 2026-09-03
 ```
 
@@ -108,3 +108,12 @@ updated: 2026-09-03
 
 - 2026-09-03 21:51 契约锁定、S0 实现 + 远端 screening 8/8 通过 +
   基准；commit `07aaf2e`；未提交（额度 0/30）
+
+## 平台首投结果（2026-09-04 01:12，submission 9372，daily_seq 2）
+
+- 7/8 正确、`invalid_correctness`（昆仑 fail；失败 case 平台未透出）
+- 逐芯：天数 13.728 / 沐曦 6.7885 / 燧原 0.0265（过正确性但远低门槛）/
+  海光 11.096 / 昆仑 FAIL / 华为 0.0555（低于门槛）/ A 8.3215 / B 10.497
+- 修复优先级：昆仑正确性（T36 预案：uni_sram→`isCloseCoreTiling=True`、
+  BLOCK 唯一轴、不删恒真 mask）→ 华为性能（BLOCK_D 128/512 扫描）→
+  燧原性能（展开度/launch）
