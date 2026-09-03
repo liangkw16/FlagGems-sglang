@@ -4,13 +4,13 @@
 task: 46
 operator: chunked_embedding_lora_a
 batch: 4
-validity: invalid
-platform: 7/8(s0,仅enflame失败;其余全过门槛,昆仑0.2325x)
-team_best_stage: s0
-team_best_commit: abe446c6a0a84b64ccbff8ea33a4aeba1b9df2eb
-team_best_speedup: -
+validity: valid
+platform: 8/8(e1,12.5165625x)
+team_best_stage: e1
+team_best_commit: 7cb455832f1a06cb985e51245fd2497a728a7952
+team_best_speedup: 12.5165625
 sealed: no
-next: 燧原 i32 route+gather vendor(T17 E2a 实证同指纹)→大概率8/8,当前7芯均值~14.6x
+next: 守榜观察;冲分轴:沐曦4.8x/华为1.93x/昆仑0.23x距榜首18.7x的差距主要在弱芯,7芯强芯已29x级
 updated: 2026-09-03
 ```
 
@@ -99,3 +99,14 @@ updated: 2026-09-03
 - 燧原指纹与 T17 S0/S1 同族（int64 地址分量 + 标量控制流）；
   修复路径 T17 E2a-i32 已实证：metadata 降 i32、route 预计算 + gather
   零标量分支；修复后 7 芯均值 ~14.6x（榜首 18.7x）
+
+## E1 燧原 vendor（2026-09-04 01:52，submission 9381，daily_seq 6）
+
+- **8/8 valid，平均 12.5165625x**（ZIP `57699a9e…`，source `7cb4558`）
+- vendor：`chunked_embedding_lora_a_enflame.py`（T17 E2a-i32 配方：metadata
+  全 i32、零 `tl.cast(int64)`、searchsorted 设备端预路由替代 kernel 内
+  二分、直线 gather 无早退）
+- 燧原 FAIL→0.246x（过门槛）；其余七芯读数与 S0 水位一致
+  （天数 26.704 / 沐曦 4.8065 / 海光 19.9505 / 昆仑 0.2315 /
+  华为 1.9265 / A 29.349 / B 16.9185）
+- 榜首 EvokeAgent 18.7483x；差距集中在弱芯（昆仑/华为/沐曦）
