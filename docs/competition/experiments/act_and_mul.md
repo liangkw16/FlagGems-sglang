@@ -92,6 +92,24 @@ updated: 2026-09-03
 - gelu tanh 分支 fp32 下我们的稳定 tanh 与 torch tanh 有 ulp 级差，
   容差 1e-4 内（单测已含三 dtype 特殊值对齐）
 
+## MCP 实机初筛（注入执行协议，2026-09-04 凌晨）
+
+- 协议：`autotune_kernel` description 注入 VERBATIM 候选全文，
+  `operator_name=<算子名>`（**不得加前缀**——首轮 `screen_` 前缀使
+  harness 按前缀名调用、全部 NameError，失败神谕被污染，已废弃重交，
+  污染产物存 `log/kernelgen-round/screen-prefix-polluted/`）
+- **华为**：completed；iteration 5 轮零 error（失败神谕未触发）；
+  终态代码与候选 kernel 逻辑逐字一致（diff 仅注释/license 头）；
+  total_tests=0 → 按可信度阶梯记
+  `mcp-compile-screened(fidelity)`，不采信 passed/自测 speedup；
+  产物 `log/kernelgen-round/out_act_and_mul_huawei.json`
+  SHA-256 `7f5981c381650ea4…`（完整哈希见文件）
+- **天数**：completed；同样零 error + 逻辑保真 →
+  `mcp-compile-screened(fidelity)`；产物
+  `out_act_and_mul_tianshu.json` SHA-256 `d8e2621c5f8aab27…`
+- 海光/沐曦：后台队列进行中（结果落地后续记）
+- 结论：发射前编译风险最高的两家（华为/天数）无编译失败信号
+
 ## 提交预算与止损（2026-09-03 定稿）
 
 - 默认 5 发：S0 探路 → 最多 3 次 vendor 单变量 → 1 发回归储备；
