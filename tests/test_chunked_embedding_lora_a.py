@@ -18,6 +18,8 @@ from pathlib import Path
 
 import torch
 
+from tests._op_variants import load_operator_modules
+
 MODULE_PATH = (
     Path(__file__).parents[1]
     / "src"
@@ -218,3 +220,32 @@ class ChunkedEmbeddingLoraATest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
+class ChunkedEmbeddingLoraAVariantsTest(unittest.TestCase):
+    """Run the core matrix against every backend variant (generic +
+    enflame i32 route), so vendor files cannot ship numerically broken."""
+
+    MODULES = load_operator_modules("chunked_embedding_lora_a")
+
+    def test_variants_match_reference(self):
+        cases = [
+            ([12, 7, 20, 3], [32, 0, 128, 16], 256, 1024),
+            ([0, 8, 0, 0, 5, 0, 3], [16, 32, 64, 8, 0, 4, 128], 256, 512),
+            ([1], [64], 128, 256),
+        ]
+        for seg_lens, ranks, max_rank, vocab in cases:
+            input_ids, weights, batch_info, _ = make_case(
+                seg_lens, ranks, max_rank=max_rank, vocab_size=vocab,
+                sentinel_empty_widx=True, seed=11,
+            )
+            ref = reference(input_ids, weights, batch_info, vocab)
+            for name, module in self.MODULES:
+                with self.subTest(module=name, seg_lens=seg_lens):
+                    out = module.chunked_embedding_lora_a(
+                        input_ids, weights, batch_info, vocab
+                    )
+                    torch.testing.assert_close(
+                        out, ref, atol=1e-5, rtol=1e-5
+                    )
