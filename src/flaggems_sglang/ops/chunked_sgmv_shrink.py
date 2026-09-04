@@ -125,9 +125,9 @@ def chunked_sgmv_shrink(x, weights, batch_info, num_slices=1):
     block_k = 32
     grid = (
         triton.cdiv(max_len, block_s) * triton.cdiv(N, block_n),
-        max(1, num_slices),
+        1,
         batch_info.bs,
-    )
+    )  # num_slices axis removed: kernel never reads program_id(1)
     _sgmv_shrink_kernel[grid](
         x,
         weights,

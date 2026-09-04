@@ -18,6 +18,8 @@ from pathlib import Path
 
 import torch
 
+from tests._op_variants import load_operator_modules
+
 MODULE_PATH = (
     Path(__file__).parents[1]
     / "src"
@@ -25,9 +27,7 @@ MODULE_PATH = (
     / "ops"
     / "chunked_sgmv_shrink.py"
 )
-SPEC = importlib.util.spec_from_file_location(
-    "chunked_sgmv_shrink_module", MODULE_PATH
-)
+SPEC = importlib.util.spec_from_file_location("chunked_sgmv_shrink_module", MODULE_PATH)
 if SPEC is None or SPEC.loader is None:
     raise RuntimeError(f"cannot load {MODULE_PATH}")
 MODULE = importlib.util.module_from_spec(SPEC)
@@ -69,11 +69,7 @@ def make_case(seg_lens, num_lora, K, N, dtype=torch.float32, seed=0):
     g = torch.Generator().manual_seed(seed)
     S = sum(seg_lens)
     x = torch.randn(S, K, dtype=dtype, generator=g).cuda().to(dtype)
-    weights = (
-        torch.randn(num_lora, N, K, dtype=dtype, generator=g)
-        .cuda()
-        .to(dtype)
-    )
+    weights = torch.randn(num_lora, N, K, dtype=dtype, generator=g).cuda().to(dtype)
     seg_indptr = torch.tensor(
         [0] + list(torch.tensor(seg_lens).cumsum(0).tolist()),
         dtype=torch.int64,
@@ -82,9 +78,7 @@ def make_case(seg_lens, num_lora, K, N, dtype=torch.float32, seed=0):
         0, num_lora, (len(seg_lens),), dtype=torch.int64, generator=g
     ).cuda()
     permutation = torch.randperm(S, generator=g).cuda()
-    batch_info = BatchInfo(
-        seg_indptr, weight_indices, permutation, len(seg_lens)
-    )
+    batch_info = BatchInfo(seg_indptr, weight_indices, permutation, len(seg_lens))
     return x, weights, batch_info
 
 
@@ -93,9 +87,7 @@ class ChunkedSgmvShrinkTest(unittest.TestCase):
     def _check(self, x, weights, batch_info, num_slices=1):
         x_snap = x.clone()
         w_snap = weights.clone()
-        actual = MODULE.chunked_sgmv_shrink(
-            x, weights, batch_info, num_slices
-        )
+        actual = MODULE.chunked_sgmv_shrink(x, weights, batch_info, num_slices)
         expected = reference(x, weights, batch_info, num_slices)
         self.assertEqual(actual.shape, expected.shape)
         self.assertEqual(actual.dtype, expected.dtype)
@@ -126,9 +118,7 @@ class ChunkedSgmvShrinkTest(unittest.TestCase):
 
     def test_identity_permutation(self):
         x, weights, bi = make_case([24, 24], 2, 512, 128)
-        bi.permutation = torch.arange(
-            x.shape[0], dtype=torch.int64, device="cuda"
-        )
+        bi.permutation = torch.arange(x.shape[0], dtype=torch.int64, device="cuda")
         self._check(x, weights, bi)
 
     def test_empty_batch(self):
@@ -139,3 +129,24 @@ class ChunkedSgmvShrinkTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
+class ChunkedSgmvShrinkVariantsTest(unittest.TestCase):
+    """Core matrix across every backend variant (generic + vendors)."""
+
+    MODULES = load_operator_modules("chunked_sgmv_shrink")
+
+    def test_variants_match_reference(self):
+        for seg_lens, K, N in (
+            ([16, 32, 8], 512, 128),
+            ([0, 12, 0, 12, 0], 512, 128),
+            ([24, 12], 65, 80),
+        ):
+            x, weights, bi = make_case(seg_lens, 3, K, N)
+            ref = reference(x, weights, bi)
+            for name, module in self.MODULES:
+                with self.subTest(module=name, seg_lens=seg_lens):
+                    out = module.chunked_sgmv_shrink(x, weights, bi)
+                    atol, rtol = TOLERANCES[x.dtype]
+                    torch.testing.assert_close(out, ref, atol=atol, rtol=rtol)

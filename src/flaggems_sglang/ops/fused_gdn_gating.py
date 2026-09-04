@@ -47,9 +47,14 @@ def _gdn_gating_kernel(
         dt_b = tl.load(dt_bias_ptr + h).to(tl.float32)
 
         x = a_val + dt_b
-        # softplus with threshold: beta*x <= threshold -> softplus, else x
+        # Numerically stable softplus matching F.softplus:
+        # max(0,bx)/b + log1p(exp(-|bx|))/b  (never overflows, never
+        # underflows to zero for extreme negative inputs)
         if beta * x <= threshold:
-            softplus_x = tl.log(1.0 + tl.exp(beta * x)) / beta
+            bx = beta * x
+            softplus_x = (
+                tl.maximum(bx, 0.0) / beta + tl.log(1.0 + tl.exp(-tl.abs(bx))) / beta
+            )
         else:
             softplus_x = x
 

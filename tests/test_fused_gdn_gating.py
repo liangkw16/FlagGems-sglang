@@ -19,6 +19,8 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 
+from tests._op_variants import load_operator_modules
+
 MODULE_PATH = (
     Path(__file__).parents[1]
     / "src"
@@ -95,3 +97,23 @@ class FusedGdnGatingTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
+class FusedGdnGatingVariantsTest(unittest.TestCase):
+    """Core matrix across every backend variant (generic + vendors)."""
+
+    MODULES = load_operator_modules("fused_gdn_gating")
+
+    def test_variants_match_reference(self):
+        for B, H in ((4, 16), (32, 8)):
+            A_log = torch.randn(H, device="cuda") * 5
+            a = torch.randn(B, H, device="cuda") * 3  # match platform range
+            b = torch.randn(B, H, device="cuda") * 3
+            dt_bias = torch.randn(H, device="cuda") * 5
+            ref_g, ref_beta = reference(A_log, a, b, dt_bias)
+            for name, module in self.MODULES:
+                with self.subTest(module=name, B=B, H=H):
+                    g, beta_out = module.fused_gdn_gating(A_log, a, b, dt_bias)
+                    torch.testing.assert_close(g, ref_g, atol=1e-4, rtol=1e-4)
+                    torch.testing.assert_close(beta_out, ref_beta, atol=1e-4, rtol=1e-4)

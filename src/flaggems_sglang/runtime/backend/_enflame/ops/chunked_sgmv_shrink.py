@@ -81,7 +81,7 @@ def _launch_gemm(a, b, c, output_width, rank):
     m = a.shape[0]
     if m == 0:
         return
-    bk = min(triton.next_power_of_2(max(rank, 16)), 512)
+    bk = min(triton.next_power_of_2(max(rank, 16)), 128)
     grid = (triton.cdiv(m, _BLOCK_M) * triton.cdiv(output_width, _BLOCK_N),)
     _shrink_gemm_kernel[grid](
         a,
