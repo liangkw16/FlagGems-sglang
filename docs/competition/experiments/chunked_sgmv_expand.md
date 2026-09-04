@@ -4,13 +4,13 @@
 task: 47
 operator: chunked_sgmv_expand
 batch: 4
-validity: invalid
-platform: 7/8(e4,昆仑翻绿3.74x;燧原评测超时非代码问题)
-team_best_stage: e1
-team_best_commit: 663286c2399cac11ece86c7fa74fc2cd638143c5
-team_best_speedup: -
+validity: valid
+platform: 8/8(e5,25.0048125x,榜首)
+team_best_stage: e5
+team_best_commit: b34d040360f040b6be43ce5443e7dc0ce83d2d47
+team_best_speedup: 25.0048125
 sealed: no
-next: e5(燧原route/materialize替换)已打包,提交意图stale_after_upload(上传成/POST未发/额度未耗/无提交记录),待用户授权归档重提;T45华为已翻correctness绿(0.045x距0.1门槛)
+next: 守榜首(25.00x vs 前榜首23.33x);燧原0.178x/昆仑3.72x为余量轴;stale意图经用户授权归档重提(移至archived/)
 updated: 2026-09-04
 ```
 
@@ -160,3 +160,15 @@ failed_cases` 本就携带完整失败详情，CLI status 视图把它过滤掉�
   `stale_after_upload`（文件上传成功、正式 POST 前过期；status
   核对无提交记录、额度未耗）。CLI 按设计拒绝自动重试，
   **等待用户授权归档重提**
+
+## E5 登顶（2026-09-04 深夜，submission 9512，daily_seq 22）
+
+- **8/8 valid，平均 25.0048125x，team best，当前榜首**
+  （前榜首 c2flow 23.3266x；过线队 3）
+- 燧原 route/materialize（64³/stages2）0.178x 过门槛（上轮同字节
+  评测机超时）；昆仑 long 修复保持 3.717x；天数 29.06 / 沐曦 22.40 /
+  海光 53.27 / 华为 13.74 / A 49.01 / B 28.66
+- stale_after_upload 意图处理：根因是我同窗口提交 T45 e4 改变了
+  账号级 live 状态触发上传后绑定校验；status 复核无提交记录、额度
+  未耗 → 用户明确授权后归档（`.git/flagos-platform/archived/`）→
+  重新 preflight → 单次提交
