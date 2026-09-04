@@ -173,3 +173,17 @@ updated: 2026-09-04
   门槛）；燧原 1.6355x 维持；昆仑 waiting_callback（崩溃族观察中）
 - 华为下一轴：GQA 后仍需 ~2.2x（BLOCK_K 128 单趟/更少冗余 load）；
   若昆仑健康窗口通过则 7/8（只余华为门槛）
+
+## E5/E6 华为 persistent 形态（2026-09-04 深夜，submissions 9564/9565）
+
+- E5（9564）：vllm-ascend 完整 64×64 tile + BK=128 + persistent batch
+  loop → **华为 UB 又爆**（2646016 > 1572864 bits）
+- E6（9565，source `51bea2b`）：回退 32×32 tile + BK=128 单趟 K +
+  persistent batch loop → **华为 correctness 翻绿 0.0455x**（与 e4
+  的 0.045x 持平——K-loop 和 launch 开销不是瓶颈，Ascend 对该形状
+  的上限即在此）
+- 燧原 e6 转超时（同字节 e5 过 1.63x，评测机忙）；昆仑崩溃族持续
+- **判定**：华为 0.0455x 离 0.1x 门槛仍差 2.2x，persistent/BK128
+  均非答案；Ascend UB 预算限制了 tile 大小（64×64 必爆），32×32 +
+  GQA 共享已是该预算内最优形态。需全新的执行策略（如双核拆分或
+  CANN 原生接口）才能突破
