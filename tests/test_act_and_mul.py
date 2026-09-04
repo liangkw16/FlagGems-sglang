@@ -19,6 +19,8 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 
+from tests._op_variants import load_operator_modules
+
 MODULE_PATH = (
     Path(__file__).parents[1] / "src" / "flaggems_sglang" / "ops" / "act_and_mul.py"
 )
@@ -196,3 +198,31 @@ class ActAndMulTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
+class ActAndMulVariantsTest(unittest.TestCase):
+    """Core matrix across every backend variant (generic + vendors)."""
+
+    MODULES = load_operator_modules("act_and_mul")
+
+    def test_variants_match_reference(self):
+        for dtype in (torch.float32, torch.float16, torch.bfloat16):
+            for activation in ("silu", "gelu"):
+                for limit in (None, 7.0):
+                    x = torch.randn(33, 1026, device="cuda", dtype=dtype) * 5.0
+                    expected = reference(
+                        x, activation=activation, swiglu_limit=limit
+                    )
+                    for name, module in self.MODULES:
+                        with self.subTest(
+                            module=name, dtype=dtype,
+                            activation=activation, limit=limit,
+                        ):
+                            out = module.act_and_mul(
+                                x, activation=activation, swiglu_limit=limit
+                            )
+                            atol, rtol = TOLERANCES[dtype]
+                            torch.testing.assert_close(
+                                out, expected, atol=atol, rtol=rtol
+                            )
