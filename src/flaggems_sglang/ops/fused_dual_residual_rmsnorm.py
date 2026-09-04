@@ -46,9 +46,9 @@ def _dual_rmsnorm_kernel(
 
         # First RMSNorm: x_hat = x / rms(x) * w1
         var1 = tl.sum(x * x, axis=0) / dim
-        inv_rms1 = 1.0 / tl.sqrt(var1 + eps)
+        rms1 = tl.sqrt(var1 + eps)
         w1 = tl.load(w1_ptr + offs, mask=mask, other=1.0).to(tl.float32)
-        y1 = x * inv_rms1 * w1
+        y1 = tl.math.div_rn(x, rms1) * w1
 
         # Reference: mid = residual + y1.to(residual.dtype) — the cast
         # happens BEFORE the addition (addition in residual dtype)
@@ -61,9 +61,9 @@ def _dual_rmsnorm_kernel(
         # Second RMSNorm: out = mid.float() / rms(mid) * w2
         mid_f = mid_val.to(tl.float32)
         var2 = tl.sum(mid_f * mid_f, axis=0) / dim
-        inv_rms2 = 1.0 / tl.sqrt(var2 + eps)
+        rms2 = tl.sqrt(var2 + eps)
         w2 = tl.load(w2_ptr + offs, mask=mask, other=1.0).to(tl.float32)
-        out = mid_f * inv_rms2 * w2
+        out = tl.math.div_rn(mid_f, rms2) * w2
 
         tl.store(
             out_ptr + row * o_stride + offs,
