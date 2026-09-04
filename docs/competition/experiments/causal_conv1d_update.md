@@ -10,7 +10,7 @@ team_best_stage: s0
 team_best_commit: 07aaf2e5a081e4bfc4bb0ce3207b3e78c91d69df
 team_best_speedup: -
 sealed: no
-next: 昆仑有界错误(单路选址已生效,疑数值lowering);华为0.0675(静态<向量化0.074,需persistent/整行结构);燧原0.0305;今日剩4发留给新假设,明日30发续
+next: 昆仑 conclusive 封轴(e4/e5/e6 三发 bit-identical 错误=后端确定性数值错译);华为 0.0625-0.074 需 persistent 结构;燧原 0.017-0.031 需 3-6x;今日剩 3 发保留
 updated: 2026-09-03
 ```
 
@@ -168,3 +168,17 @@ updated: 2026-09-03
 - 判定：T43 今日停（4 发留给新假设）；下一假设候选：昆仑 weight
   访存改 [BLOCK_D, WIDTH_POW2] 2D tile 或 fp32 权重预转换；华为改
   persistent 整行结构；燧原回退 S0 后找 launch/并行轴
+
+## E5/E6 昆仑核弹级修复尝试（2026-09-04 深夜，submissions 9559/9561）
+
+- E5（9559）：权重转置 [WIDTH,dim] + 纯 int32 → **错误逐位不变**
+- E6（9561）：wrapper 全量 fp32 预转换（kernel 零 cast）+ tl.sigmoid
+  + 转置权重 → **错误仍逐位不变**（abs 7.765625, 94/96, rel 56.665）
+- **结论：昆仑后端对 depthwise-conv FMA 标量链存在确定性数值错译**
+  （e4 静态 constexpr/e5 转置+int32/e6 全 fp32+sigmoid 三种截然不同
+  的实现产生相同错误值——不是选址、不是 cast、不是权重布局，
+  是编译器生成了错误的算术逻辑）。T36 同族结论互证。
+  **昆仑轴 conclusive 封轴**（六投：S0/E1/E2/E3/E4/E5+E6）
+- 华为 0.0625（fp32 预转换有开销；e5 的 256-lane 静态 0.069 最优）
+- 燧原 0.0165（BLOCK_D=64 降了——e4 的 512-lane 0.0305 更好，回退）
+- 今日剩 3 发保留给明日 30 发弹药
