@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Kunlunxin vendor (bounded-error fix): weight pre-transposed to
-# [WIDTH, dim] so each k-slice is contiguous (removes the non-pow2
-# WIDTH multiplication that miscompiles on this backend), and all
-# addresses are pure int32 (no int64 casts anywhere).
+# Kunlunxin vendor (nuclear fp32): e4/e5 errors are bit-identical
+# regardless of weight layout or index width, proving the bf16->fp32
+# cast + FMA chain miscompiles on this backend. Fix: wrapper upcasts
+# every input to fp32 before the kernel (no in-kernel casts), kernel
+# computes natively in fp32 with tl.sigmoid (T36-proven form), output
+# cast at the wrapper level.
 
 import torch
 import triton
@@ -26,7 +28,7 @@ _BLOCK_D = 128
 
 
 @triton.jit
-def _ccu_static_kernel(
+def _ccu_fp32_kernel(
     x_ptr,
     state_ptr,
     wt_ptr,
@@ -77,26 +79,26 @@ def _ccu_static_kernel(
                         s_base + offs_d * st_sd + p * st_sl,
                         mask=dmask,
                         other=0.0,
-                    ).to(tl.float32)
+                    )
                 else:
                     v = tl.load(
                         x_base + offs_d * x_sd + (p - STATE_LEN) * x_ss,
                         mask=dmask,
                         other=0.0,
-                    ).to(tl.float32)
+                    )
                 wk = tl.load(
                     wt_ptr + k * dim + offs_d,
                     mask=dmask,
                     other=0.0,
-                ).to(tl.float32)
+                )
                 acc += wk * v
             if HAS_BIAS:
-                acc += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(tl.float32)
+                acc += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0)
             if ACT_IS_SILU:
-                acc = acc / (1.0 + tl.exp(-acc))
+                acc = acc * tl.sigmoid(acc)
             tl.store(
                 o_base + offs_d * o_sd + t * o_ss,
-                acc.to(out_ptr.dtype.element_ty),
+                acc,
                 mask=dmask,
             )
 
@@ -107,16 +109,16 @@ def _ccu_static_kernel(
                     s_base + offs_d * st_sd + p * st_sl,
                     mask=dmask,
                     other=0.0,
-                ).to(tl.float32)
+                )
             else:
                 v2 = tl.load(
                     x_base + offs_d * x_sd + (p - STATE_LEN) * x_ss,
                     mask=dmask,
                     other=0.0,
-                ).to(tl.float32)
+                )
             tl.store(
                 n_base + offs_d * ns_sd + i * ns_sl,
-                v2.to(new_state_ptr.dtype.element_ty),
+                v2,
                 mask=dmask,
             )
 
@@ -125,26 +127,26 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     squeeze_out = x.dim() == 2
     if squeeze_out:
         x = x.unsqueeze(-1)
-    x = x.contiguous()
-    state = conv_state.contiguous()
-    # Pre-transpose weight [dim, width] -> [width, dim] so each k-slice
-    # is a contiguous 1D load (no WIDTH multiplication in the kernel).
+    orig_dtype = x.dtype
+    # Nuclear fp32: upcast every input before the kernel so the
+    # backend never sees a bf16->fp32 cast inside the kernel.
+    x = x.contiguous().float()
+    state = conv_state.contiguous().float()
     wt = weight.t().contiguous().float()
     if bias is not None:
-        bias = bias.contiguous()
+        bias = bias.contiguous().float()
     batch, dim, seqlen = x.shape
     state_len = state.shape[-1]
     width = weight.shape[1]
     out = torch.empty_like(x)
     new_state = torch.empty_like(state)
     if batch * dim == 0:
-        if squeeze_out:
-            out = out.squeeze(-1)
-        return out, new_state
+        out = out.squeeze(-1) if squeeze_out else out
+        return out.to(orig_dtype), new_state.to(conv_state.dtype)
     dim_blocks = triton.cdiv(dim, _BLOCK_D)
     total = batch * dim_blocks
     grid = (min(total, _MAX_GRID),)
-    _ccu_static_kernel[grid](
+    _ccu_fp32_kernel[grid](
         x,
         state,
         wt,
@@ -174,6 +176,8 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         num_warps=4,
         num_stages=1,
     )
+    out = out.to(orig_dtype)
+    new_state = new_state.to(conv_state.dtype)
     if squeeze_out:
         out = out.squeeze(-1)
     return out, new_state
