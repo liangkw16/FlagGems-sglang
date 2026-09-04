@@ -18,6 +18,8 @@ from pathlib import Path
 
 import torch
 
+from tests._op_variants import load_operator_modules
+
 MODULE_PATH = (
     Path(__file__).parents[1]
     / "src"
@@ -186,3 +188,52 @@ class ChunkScaledDotKktTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
+class ChunkScaledDotKktVariantsTest(unittest.TestCase):
+    """Core matrix across every backend variant (generic + vendors)."""
+
+    MODULES = load_operator_modules("chunk_scaled_dot_kkt")
+
+    def test_variants_match_reference(self):
+        cases = [
+            dict(
+                batch=2,
+                nchunks=2,
+                chunk_size=64,
+                num_k_heads=2,
+                ratio=2,
+                k_dim=64,
+                seed=31,
+            ),
+            dict(
+                batch=1,
+                nchunks=2,
+                chunk_size=32,
+                num_k_heads=2,
+                ratio=1,
+                k_dim=100,
+                seed=32,
+            ),
+        ]
+        for kwargs in cases:
+            k, beta = make_case(**kwargs)
+            g = -torch.rand(*beta.shape, device="cuda")
+            for has_g in (False, True):
+                expected = reference(
+                    k,
+                    beta,
+                    g if has_g else None,
+                    chunk_size=kwargs["chunk_size"],
+                )
+                for name, module in self.MODULES:
+                    with self.subTest(module=name, has_g=has_g, **kwargs):
+                        out = module.chunk_scaled_dot_kkt(
+                            k,
+                            beta,
+                            g if has_g else None,
+                            chunk_size=kwargs["chunk_size"],
+                        )
+                        atol, rtol = TOLERANCES[k.dtype]
+                        torch.testing.assert_close(out, expected, atol=atol, rtol=rtol)
