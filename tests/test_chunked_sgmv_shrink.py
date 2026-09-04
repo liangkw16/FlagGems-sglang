@@ -1,0 +1,141 @@
+# Copyright 2026 FlagOS Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import importlib.util
+import unittest
+from pathlib import Path
+
+import torch
+
+MODULE_PATH = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "ops"
+    / "chunked_sgmv_shrink.py"
+)
+SPEC = importlib.util.spec_from_file_location(
+    "chunked_sgmv_shrink_module", MODULE_PATH
+)
+if SPEC is None or SPEC.loader is None:
+    raise RuntimeError(f"cannot load {MODULE_PATH}")
+MODULE = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(MODULE)
+
+TOLERANCES = {
+    torch.float32: (1e-4, 1e-4),
+    torch.float16: (1e-2, 1e-2),
+    torch.bfloat16: (1.5e-2, 1.5e-2),
+}
+
+
+class BatchInfo:
+    def __init__(self, seg_indptr, weight_indices, permutation, bs):
+        self.seg_indptr = seg_indptr
+        self.weight_indices = weight_indices
+        self.permutation = permutation
+        self.bs = bs
+
+
+def reference(x, weights, batch_info, num_slices=1):
+    S, K = x.shape
+    N = weights.shape[1]
+    out = x.new_zeros(S, N)
+    for b in range(batch_info.bs):
+        start = int(batch_info.seg_indptr[b].item())
+        end = int(batch_info.seg_indptr[b + 1].item())
+        if start == end:
+            continue
+        w_idx = int(batch_info.weight_indices[b].item())
+        rows = batch_info.permutation[start:end].long()
+        x_seg = x[rows].float()
+        w = weights[w_idx].float()
+        out[rows] = (x_seg @ w.t()).to(x.dtype)
+    return out
+
+
+def make_case(seg_lens, num_lora, K, N, dtype=torch.float32, seed=0):
+    g = torch.Generator().manual_seed(seed)
+    S = sum(seg_lens)
+    x = torch.randn(S, K, dtype=dtype, generator=g).cuda().to(dtype)
+    weights = (
+        torch.randn(num_lora, N, K, dtype=dtype, generator=g)
+        .cuda()
+        .to(dtype)
+    )
+    seg_indptr = torch.tensor(
+        [0] + list(torch.tensor(seg_lens).cumsum(0).tolist()),
+        dtype=torch.int64,
+    ).cuda()
+    weight_indices = torch.randint(
+        0, num_lora, (len(seg_lens),), dtype=torch.int64, generator=g
+    ).cuda()
+    permutation = torch.randperm(S, generator=g).cuda()
+    batch_info = BatchInfo(
+        seg_indptr, weight_indices, permutation, len(seg_lens)
+    )
+    return x, weights, batch_info
+
+
+@unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
+class ChunkedSgmvShrinkTest(unittest.TestCase):
+    def _check(self, x, weights, batch_info, num_slices=1):
+        x_snap = x.clone()
+        w_snap = weights.clone()
+        actual = MODULE.chunked_sgmv_shrink(
+            x, weights, batch_info, num_slices
+        )
+        expected = reference(x, weights, batch_info, num_slices)
+        self.assertEqual(actual.shape, expected.shape)
+        self.assertEqual(actual.dtype, expected.dtype)
+        atol, rtol = TOLERANCES[x.dtype]
+        torch.testing.assert_close(actual, expected, atol=atol, rtol=rtol)
+        torch.testing.assert_close(x, x_snap)
+        torch.testing.assert_close(weights, w_snap)
+        return actual
+
+    def test_dtypes(self):
+        for dtype in (torch.float32, torch.float16, torch.bfloat16):
+            with self.subTest(dtype=dtype):
+                args = make_case([16, 32, 8], 4, 512, 128, dtype=dtype)
+                self._check(*args)
+
+    def test_shapes(self):
+        for seg_lens, K, N in (
+            ([32], 1024, 64),
+            ([8, 8, 8, 8], 512, 256),
+            ([64, 32, 16], 2048, 32),
+            ([1], 128, 16),
+            ([0, 12, 0, 12, 0], 512, 128),
+            ([24, 12], 65, 80),  # non-pow2 K and N
+        ):
+            with self.subTest(seg_lens=seg_lens, K=K, N=N):
+                args = make_case(seg_lens, 3, K, N)
+                self._check(*args)
+
+    def test_identity_permutation(self):
+        x, weights, bi = make_case([24, 24], 2, 512, 128)
+        bi.permutation = torch.arange(
+            x.shape[0], dtype=torch.int64, device="cuda"
+        )
+        self._check(x, weights, bi)
+
+    def test_empty_batch(self):
+        x, weights, bi = make_case([], 1, 512, 128)
+        out = MODULE.chunked_sgmv_shrink(x, weights, bi)
+        self.assertEqual(out.shape, (0, 128))
+
+
+if __name__ == "__main__":
+    unittest.main()
