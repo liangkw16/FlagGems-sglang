@@ -261,7 +261,10 @@ basename 和提交源码内容做只读验签；结果会标记 `verified-existi
 ## 平台提交与逐芯迭代
 
 只有用户明确要求实时平台预检、提交、查看评测或基于逐芯结果迭代时，
-才完整读取[平台提交与逐芯结果](references/platform-workflow.md)。“先不要提交平台”
+才完整读取[平台提交与逐芯结果](references/platform-workflow.md)。失败详情
+优先走文档内「失败情报通道」（submissions API 的 raw_result，勿先上
+浏览器/工单）；芯片硬事实坑表与 GQA 共享 dot 等结构资产见同文档
+「平台评测踩坑硬事实」一节。“先不要提交平台”
 的开发请求在 ZIP、账本和本地 commit 完成后停止，不读取该引用、不运行平台脚本。
 
 ## 平台闭环完成标准
