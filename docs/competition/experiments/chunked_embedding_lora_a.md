@@ -5,12 +5,12 @@ task: 46
 operator: chunked_embedding_lora_a
 batch: 4
 validity: valid
-platform: 8/8(e1,12.5165625x)
-team_best_stage: e1
-team_best_commit: 7cb455832f1a06cb985e51245fd2497a728a7952
-team_best_speedup: 12.5165625
+platform: 8/8(e2,13.998125x)
+team_best_stage: e2
+team_best_commit: 63557eb68f8bb8823cca377a089c1930c7ccfcb8
+team_best_speedup: 13.998125
 sealed: no
-next: 守榜观察;冲分轴:沐曦4.8x/华为1.93x/昆仑0.23x距榜首18.7x的差距主要在弱芯,7芯强芯已29x级
+next: 榜首18.75x差距25%;剩余大拖累:昆仑0.227/燧原0.334/华为2.127/沐曦5.44;华为折叠轴仅+10%,下轴待新证据
 updated: 2026-09-03
 ```
 
@@ -123,3 +123,12 @@ updated: 2026-09-03
   （NameError/IndexError/`constexpr[0]`）不计入失败神谕
 - 平台实测（本账本上方小节）已是更强证据，MCP 结论仅作发射风险
   参考留存
+
+## E2 华为折叠 + 海光 warps2（2026-09-04 06:4x，submission 9447，daily_seq 13）
+
+- **8/8 valid，平均 13.998125x**（12.5166→+11.8%；source `63557eb`，
+  ZIP `1eece864…`）
+- 海光 warps2：19.9505→**27.505（+38%）**；沐曦水位上移
+  4.8065→5.4445；燧原 0.246→0.334；国际A 29.349→31.8545；华为折叠
+  vendor：1.9265→2.127（+10%，幅度有限）；昆仑 0.2315→0.227（水位）
+- 榜首 EvokeAgent 18.7483x，差距收窄至 25%

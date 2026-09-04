@@ -26,7 +26,7 @@
 | 43 | causal_conv1d_update | invalid | 7/8(s0,kunlun correctness失败;huawei 0.0555x/enflame 0.0265x低于门槛) | s0 -x | no | 停止盲投:昆仑两连败止损,enflame重构后反成败笔,华为更慢;需失败case细节或新结构证据再投 | 2026-09-03 | [causal_conv1d_update](causal_conv1d_update.md) |
 | 44 | chain_speculative_sampling | candidate-limited | none(未提交) | s0 -x | no | 半精度逆CDF bit-exact 判定为不可行(NVIDIA代理实证);提交与否需用户门控——fp32全对,fp16/bf16最终token有~20-30%/请求失配;pending_challenge 0/6 队达标,一发探针或可换平台dtype口径情报 | 2026-09-04 | [chain_speculative_sampling](chain_speculative_sampling.md) |
 | 45 | chunk_scaled_dot_kkt | invalid | 6/8(s0,enflame+kunlun correctness失败;huawei 0.031x低于门槛) | s0 -x | no | 瘦原/昆仑轴均两连败止损;若续命需结构性改写(dot形态/tile族);华为0.031x需Cube轴 | 2026-09-04 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
-| 46 | chunked_embedding_lora_a | valid | 8/8(e1,12.5165625x) | e1 12.5165625x | no | 守榜观察;冲分轴:沐曦4.8x/华为1.93x/昆仑0.23x距榜首18.7x的差距主要在弱芯,7芯强芯已29x级 | 2026-09-03 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
+| 46 | chunked_embedding_lora_a | valid | 8/8(e2,13.998125x) | e2 13.998125x | no | 榜首18.75x差距25%;剩余大拖累:昆仑0.227/燧原0.334/华为2.127/沐曦5.44;华为折叠轴仅+10%,下轴待新证据 | 2026-09-03 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
 | 47 | chunked_sgmv_expand | invalid | 7/8(e2,仅昆仑失败;三连败封轴) | e1 -x | no | 昆仑轴封存(S0/E1/E2同指纹三连败,route/materialize亦无效);守榜;可选:华为15.6x/沐曦21.8x冲分轴 | 2026-09-04 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md
