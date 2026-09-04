@@ -5,12 +5,12 @@ task: 42
 operator: act_and_mul
 batch: 4
 validity: valid
-platform: 8/8(e1,3.1647x)
-team_best_stage: e1
-team_best_commit: 1273a60095dd1db08435ac89d25fc840eed85266
-team_best_speedup: 3.1647
+platform: 8/8(e2,3.248925x)
+team_best_stage: e2
+team_best_commit: f69d4e2c694f8418a534785fe8334083a8b0a3e2
+team_best_speedup: 3.248925
 sealed: no
-next: 榜首Warmhearted 3.3698x(7队过线);剩余拖累:昆仑0.455/华为1.668;华为BLOCK轴或slab结构可再试一发
+next: 榜首Warmhearted升至3.5194x(活跃迭代中);剩余轴:昆仑0.456/沐曦2.40/华为2.258;AMD四档autotune可试(+3.83%实证)
 updated: 2026-09-03
 ```
 
@@ -154,3 +154,12 @@ updated: 2026-09-03
 - 未动芯：天数 6.214 / 海光 4.9688 / 华为 1.668 / A 4.238（水位波动）
   / B 3.6368
 - 榜首已升至 Warmhearted 3.369775x（7 队过线）
+
+## E2 华为行结构化 + 海光 warps2（2026-09-04 06:0x，submission 9431，daily_seq 12）
+
+- **8/8 valid，平均 3.248925x**（3.1647→+2.7%；source `f69d4e2`，
+  ZIP `9f5f3bb2…`）
+- 华为行结构化 vendor（每行一 program、行内 1024 子块、仅尾块带
+  mask——T40 向量比较退化规避）：1.668→**2.258（+35%）**；
+  海光 warps2：4.9688→5.067（+2%）；沐曦水位回落 2.4552→2.4006
+- 榜首 Warmhearted 同步升至 3.5194x（7 队过线，44 提交，活跃竞争）

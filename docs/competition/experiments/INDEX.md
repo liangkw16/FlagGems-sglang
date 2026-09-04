@@ -22,7 +22,7 @@
 | 39 | silu_and_mul_masked | valid | 8/8 | E7 19.8698x | yes | - | 2026-09-03 | [silu_and_mul_masked](silu_and_mul_masked.md) |
 | 40 | softcap_inplace_logits | valid | 8/8(e8,2.195604x,rank1) | e8 2.195604x | yes | 额度用尽收官;e16 华为字节(1.70)+TB 2.1956 #2;榜首 c2flow 2.2593 华为 3.40 未破译 | 2026-09-03 | [softcap_inplace_logits](softcap_inplace_logits.md) |
 | 41 | state_passing | invalid | E7 sub8079 system_failed;7 pass,Kunlun 0.0065x,Enflame unrun | E5 diagnostic | yes | 本轮收盘;只保留平台工单与全新结构研究 | 2026-09-02 | [state_passing](state_passing.md) |
-| 42 | act_and_mul | valid | 8/8(e1,3.1647x) | e1 3.1647x | no | 榜首Warmhearted 3.3698x(7队过线);剩余拖累:昆仑0.455/华为1.668;华为BLOCK轴或slab结构可再试一发 | 2026-09-03 | [act_and_mul](act_and_mul.md) |
+| 42 | act_and_mul | valid | 8/8(e2,3.248925x) | e2 3.248925x | no | 榜首Warmhearted升至3.5194x(活跃迭代中);剩余轴:昆仑0.456/沐曦2.40/华为2.258;AMD四档autotune可试(+3.83%实证) | 2026-09-03 | [act_and_mul](act_and_mul.md) |
 | 43 | causal_conv1d_update | invalid | 7/8(s0,kunlun correctness失败;huawei 0.0555x/enflame 0.0265x低于门槛) | s0 -x | no | 停止盲投:昆仑两连败止损,enflame重构后反成败笔,华为更慢;需失败case细节或新结构证据再投 | 2026-09-03 | [causal_conv1d_update](causal_conv1d_update.md) |
 | 44 | chain_speculative_sampling | candidate-limited | none(未提交) | s0 -x | no | 半精度逆CDF bit-exact 判定为不可行(NVIDIA代理实证);提交与否需用户门控——fp32全对,fp16/bf16最终token有~20-30%/请求失配;pending_challenge 0/6 队达标,一发探针或可换平台dtype口径情报 | 2026-09-04 | [chain_speculative_sampling](chain_speculative_sampling.md) |
 | 45 | chunk_scaled_dot_kkt | invalid | 6/8(s0,enflame+kunlun correctness失败;huawei 0.031x低于门槛) | s0 -x | no | 瘦原/昆仑轴均两连败止损;若续命需结构性改写(dot形态/tile族);华为0.031x需Cube轴 | 2026-09-04 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
