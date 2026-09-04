@@ -12,15 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Enflame vendor: dot-free K@K.T - both operands are loaded with the
+# same [rows, k] access pattern (no transposed operand) and the tile is
+# accumulated as per-k broadcast outer products (no tl.dot, no 2D
+# reduction lowering). Correctness-first structure for chips where both
+# dot configurations failed.
+
 import torch
 import triton
 import triton.language as tl
 
-_TILE_CAP = 64
+_K_CHUNK = 128
 
 
 @triton.jit
-def _kkt_kernel_enflame(
+def _kkt_nodot_kernel(
     k_ptr,
     beta_ptr,
     g_ptr,
@@ -29,7 +35,6 @@ def _kkt_kernel_enflame(
     k_size,
     nheads,
     ratio,
-    total_tiles,
     k_stride_batch,
     k_stride_seqlen,
     k_stride_head,
@@ -46,14 +51,9 @@ def _kkt_kernel_enflame(
     output_stride_last,
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
-    BLOCK_K: tl.constexpr,
-    USE_INPUT_DTYPE: tl.constexpr,
+    K_CHUNK: tl.constexpr,
     HAS_G: tl.constexpr,
 ):
-    # Enflame recipe (chunk_state/bmm_chunk platform-proven): 64/64/128
-    # tiles, stages=2, and a capped grid-stride fold over the tile axis
-    # (cap 64) - gcu compilers reject large flat grids and stall on
-    # deep serial K loops at stage 1.
     k_stride_batch = tl.cast(k_stride_batch, tl.int64)
     k_stride_seqlen = tl.cast(k_stride_seqlen, tl.int64)
     k_stride_head = tl.cast(k_stride_head, tl.int64)
@@ -69,6 +69,7 @@ def _kkt_kernel_enflame(
     output_stride_head = tl.cast(output_stride_head, tl.int64)
     output_stride_last = tl.cast(output_stride_last, tl.int64)
 
+    tile_id = tl.program_id(0)
     batch_id = tl.program_id(1)
     chunk_head_id = tl.program_id(2)
     chunk_id = chunk_head_id // nheads
@@ -76,76 +77,71 @@ def _kkt_kernel_enflame(
     group_id = head_id // ratio
 
     num_n_tiles = tl.cdiv(chunk_size, BLOCK_N)
-    grid_size = tl.num_programs(0)
-    for tile_id in range(tl.program_id(0), total_tiles, grid_size):
-        m_tile = tile_id // num_n_tiles
-        n_tile = tile_id - m_tile * num_n_tiles
+    m_tile = tile_id // num_n_tiles
+    n_tile = tile_id - m_tile * num_n_tiles
 
-        m_offsets = m_tile * BLOCK_M + tl.arange(0, BLOCK_M)
-        n_offsets = n_tile * BLOCK_N + tl.arange(0, BLOCK_N)
-        k_offsets = tl.arange(0, BLOCK_K)
-        m_global = chunk_id * chunk_size + m_offsets
-        n_global = chunk_id * chunk_size + n_offsets
+    m_offsets = m_tile * BLOCK_M + tl.arange(0, BLOCK_M)
+    n_offsets = n_tile * BLOCK_N + tl.arange(0, BLOCK_N)
+    m_global = chunk_id * chunk_size + m_offsets
+    n_global = chunk_id * chunk_size + n_offsets
+    m_mask = m_offsets < chunk_size
+    n_mask = n_offsets < chunk_size
 
-        k_base = batch_id * k_stride_batch + group_id * k_stride_head
-        accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
-        for k_block in range(0, tl.cdiv(k_size, BLOCK_K)):
-            current_k = k_block * BLOCK_K + k_offsets
-            a = tl.load(
-                k_ptr
-                + k_base
-                + m_global[:, None] * k_stride_seqlen
-                + current_k[None, :] * k_stride_k,
-                mask=(m_offsets[:, None] < chunk_size) & (current_k[None, :] < k_size),
+    k_base = batch_id * k_stride_batch + group_id * k_stride_head
+    m_row = k_base + m_global * k_stride_seqlen
+    n_row = k_base + n_global * k_stride_seqlen
+
+    accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
+    for k_start in range(0, k_size, K_CHUNK):
+        for kk in tl.static_range(K_CHUNK):
+            idx = k_start + kk
+            valid = idx < k_size
+            a_col = tl.load(
+                k_ptr + m_row + idx * k_stride_k,
+                mask=m_mask & valid,
                 other=0.0,
-            )
-            b = tl.load(
-                k_ptr
-                + k_base
-                + current_k[:, None] * k_stride_k
-                + n_global[None, :] * k_stride_seqlen,
-                mask=(current_k[:, None] < k_size) & (n_offsets[None, :] < chunk_size),
+            ).to(tl.float32)
+            b_col = tl.load(
+                k_ptr + n_row + idx * k_stride_k,
+                mask=n_mask & valid,
                 other=0.0,
-            )
-            if not USE_INPUT_DTYPE:
-                a = a.to(tl.float32)
-                b = b.to(tl.float32)
-            accumulator += tl.dot(a, b, input_precision="ieee")
+            ).to(tl.float32)
+            accumulator += a_col[:, None] * b_col[None, :]
 
-        beta_base = batch_id * beta_stride_batch + head_id * beta_stride_head
-        beta_m = tl.load(
-            beta_ptr + beta_base + m_global * beta_stride_seqlen,
-            mask=m_offsets < chunk_size,
+    beta_base = batch_id * beta_stride_batch + head_id * beta_stride_head
+    beta_m = tl.load(
+        beta_ptr + beta_base + m_global * beta_stride_seqlen,
+        mask=m_mask,
+        other=0.0,
+    ).to(tl.float32)
+    result = accumulator * beta_m[:, None]
+    if HAS_G:
+        g_base = batch_id * g_stride_batch + head_id * g_stride_head
+        g_m = tl.load(
+            g_ptr + g_base + m_global * g_stride_seqlen,
+            mask=m_mask,
             other=0.0,
         ).to(tl.float32)
-        result = accumulator * beta_m[:, None]
-        if HAS_G:
-            g_base = batch_id * g_stride_batch + head_id * g_stride_head
-            g_m = tl.load(
-                g_ptr + g_base + m_global * g_stride_seqlen,
-                mask=m_offsets < chunk_size,
-                other=0.0,
-            ).to(tl.float32)
-            g_n = tl.load(
-                g_ptr + g_base + n_global * g_stride_seqlen,
-                mask=n_offsets < chunk_size,
-                other=0.0,
-            ).to(tl.float32)
-            g_diff = g_m[:, None] - g_n[None, :]
-            result = result * tl.where(g_diff <= 0.0, tl.exp(g_diff), 0.0)
+        g_n = tl.load(
+            g_ptr + g_base + n_global * g_stride_seqlen,
+            mask=n_mask,
+            other=0.0,
+        ).to(tl.float32)
+        g_diff = g_m[:, None] - g_n[None, :]
+        result = result * tl.where(g_diff <= 0.0, tl.exp(g_diff), 0.0)
 
-        result = tl.where(m_offsets[:, None] > n_offsets[None, :], result, 0.0)
-        output_offsets = (
-            batch_id * output_stride_batch
-            + m_global[:, None] * output_stride_seqlen
-            + head_id * output_stride_head
-            + n_offsets[None, :] * output_stride_last
-        )
-        tl.store(
-            output_ptr + output_offsets,
-            result,
-            mask=(m_offsets[:, None] < chunk_size) & (n_offsets[None, :] < chunk_size),
-        )
+    result = tl.where(m_offsets[:, None] > n_offsets[None, :], result, 0.0)
+    output_offsets = (
+        batch_id * output_stride_batch
+        + m_global[:, None] * output_stride_seqlen
+        + head_id * output_stride_head
+        + n_offsets[None, :] * output_stride_last
+    )
+    tl.store(
+        output_ptr + output_offsets,
+        result,
+        mask=m_mask[:, None] & n_mask[None, :],
+    )
 
 
 def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
@@ -167,17 +163,16 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     if output.numel() == 0:
         return output
 
-    block_m = 64
-    block_n = 64
-    total_tiles = triton.cdiv(chunk_size, block_m) * triton.cdiv(chunk_size, block_n)
+    block_m = 32
+    block_n = 32
+    if g_cumsum is None:
+        g_cumsum = beta
     grid = (
-        min(total_tiles, _TILE_CAP),
+        triton.cdiv(chunk_size, block_m) * triton.cdiv(chunk_size, block_n),
         batch,
         nchunks * num_heads,
     )
-    if g_cumsum is None:
-        g_cumsum = beta
-    _kkt_kernel_enflame[grid](
+    _kkt_nodot_kernel[grid](
         k,
         beta,
         g_cumsum,
@@ -186,18 +181,16 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
         k_size,
         num_heads,
         ratio,
-        total_tiles,
         *k.stride(),
         *beta.stride(),
         *g_cumsum.stride(),
         *output.stride(),
         BLOCK_M=block_m,
         BLOCK_N=block_n,
-        BLOCK_K=128,
-        USE_INPUT_DTYPE=k.dtype in (torch.float16, torch.bfloat16),
+        K_CHUNK=_K_CHUNK,
         HAS_G=g_cumsum is not beta,
         num_warps=4,
-        num_stages=2,
+        num_stages=1,
     )
     return output
 

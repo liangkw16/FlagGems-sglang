@@ -12,21 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Kunlunxin vendor: dot-free K@K.T - both operands are loaded with the
-# same [rows, k] access pattern (no transposed operand) and the tile is
-# accumulated as per-k broadcast outer products (no tl.dot, no 2D
-# reduction lowering). Correctness-first structure for chips where both
-# dot configurations failed.
-
 import torch
 import triton
 import triton.language as tl
 
-_K_CHUNK = 128
+# Ascend vendor: 64x64 tiles at stages=1 (chunk_state E7 platform-proven
+# Ascend Cube optimum, 0.329->2.1185x there); S0 ran 32x32 and scored
+# 0.031x, below the 0.1 threshold.
 
 
 @triton.jit
-def _kkt_nodot_kernel(
+def _chunk_scaled_dot_kkt_kernel(
     k_ptr,
     beta_ptr,
     g_ptr,
@@ -51,7 +47,8 @@ def _kkt_nodot_kernel(
     output_stride_last,
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
-    K_CHUNK: tl.constexpr,
+    BLOCK_K: tl.constexpr,
+    USE_INPUT_DTYPE: tl.constexpr,
     HAS_G: tl.constexpr,
 ):
     k_stride_batch = tl.cast(k_stride_batch, tl.int64)
@@ -74,6 +71,7 @@ def _kkt_nodot_kernel(
     chunk_head_id = tl.program_id(2)
     chunk_id = chunk_head_id // nheads
     head_id = chunk_head_id - chunk_id * nheads
+    # GQA: k has Hg = H // ratio heads; beta/g keep the full H heads.
     group_id = head_id // ratio
 
     num_n_tiles = tl.cdiv(chunk_size, BLOCK_N)
@@ -82,36 +80,41 @@ def _kkt_nodot_kernel(
 
     m_offsets = m_tile * BLOCK_M + tl.arange(0, BLOCK_M)
     n_offsets = n_tile * BLOCK_N + tl.arange(0, BLOCK_N)
+    k_offsets = tl.arange(0, BLOCK_K)
     m_global = chunk_id * chunk_size + m_offsets
     n_global = chunk_id * chunk_size + n_offsets
-    m_mask = m_offsets < chunk_size
-    n_mask = n_offsets < chunk_size
 
     k_base = batch_id * k_stride_batch + group_id * k_stride_head
-    m_row = k_base + m_global * k_stride_seqlen
-    n_row = k_base + n_global * k_stride_seqlen
-
     accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
-    for k_start in range(0, k_size, K_CHUNK):
-        for kk in tl.static_range(K_CHUNK):
-            idx = k_start + kk
-            valid = idx < k_size
-            a_col = tl.load(
-                k_ptr + m_row + idx * k_stride_k,
-                mask=m_mask & valid,
-                other=0.0,
-            ).to(tl.float32)
-            b_col = tl.load(
-                k_ptr + n_row + idx * k_stride_k,
-                mask=n_mask & valid,
-                other=0.0,
-            ).to(tl.float32)
-            accumulator += a_col[:, None] * b_col[None, :]
+    for k_block in range(0, tl.cdiv(k_size, BLOCK_K)):
+        current_k = k_block * BLOCK_K + k_offsets
+        a = tl.load(
+            k_ptr
+            + k_base
+            + m_global[:, None] * k_stride_seqlen
+            + current_k[None, :] * k_stride_k,
+            mask=(m_offsets[:, None] < chunk_size) & (current_k[None, :] < k_size),
+            other=0.0,
+        )
+        b = tl.load(
+            k_ptr
+            + k_base
+            + current_k[:, None] * k_stride_k
+            + n_global[None, :] * k_stride_seqlen,
+            mask=(current_k[:, None] < k_size) & (n_offsets[None, :] < chunk_size),
+            other=0.0,
+        )
+        if not USE_INPUT_DTYPE:
+            a = a.to(tl.float32)
+            b = b.to(tl.float32)
+        accumulator += tl.dot(a, b, input_precision="ieee")
 
+    # beta scales rows (i index); safe-exp decay scales elementwise with
+    # exp(g_i - g_j) only when the exponent is <= 0, else zero.
     beta_base = batch_id * beta_stride_batch + head_id * beta_stride_head
     beta_m = tl.load(
         beta_ptr + beta_base + m_global * beta_stride_seqlen,
-        mask=m_mask,
+        mask=m_offsets < chunk_size,
         other=0.0,
     ).to(tl.float32)
     result = accumulator * beta_m[:, None]
@@ -119,17 +122,19 @@ def _kkt_nodot_kernel(
         g_base = batch_id * g_stride_batch + head_id * g_stride_head
         g_m = tl.load(
             g_ptr + g_base + m_global * g_stride_seqlen,
-            mask=m_mask,
+            mask=m_offsets < chunk_size,
             other=0.0,
         ).to(tl.float32)
         g_n = tl.load(
             g_ptr + g_base + n_global * g_stride_seqlen,
-            mask=n_mask,
+            mask=n_offsets < chunk_size,
             other=0.0,
         ).to(tl.float32)
         g_diff = g_m[:, None] - g_n[None, :]
         result = result * tl.where(g_diff <= 0.0, tl.exp(g_diff), 0.0)
 
+    # Strict lower triangular: diagonal and above must be written as
+    # exact zeros, so keep the full boundary mask on the store.
     result = tl.where(m_offsets[:, None] > n_offsets[None, :], result, 0.0)
     output_offsets = (
         batch_id * output_stride_batch
@@ -140,7 +145,7 @@ def _kkt_nodot_kernel(
     tl.store(
         output_ptr + output_offsets,
         result,
-        mask=m_mask[:, None] & n_mask[None, :],
+        mask=(m_offsets[:, None] < chunk_size) & (n_offsets[None, :] < chunk_size),
     )
 
 
@@ -163,16 +168,16 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     if output.numel() == 0:
         return output
 
-    block_m = 32
-    block_n = 32
-    if g_cumsum is None:
-        g_cumsum = beta
+    block_m = 64
+    block_n = 64
     grid = (
         triton.cdiv(chunk_size, block_m) * triton.cdiv(chunk_size, block_n),
         batch,
         nchunks * num_heads,
     )
-    _kkt_nodot_kernel[grid](
+    if g_cumsum is None:
+        g_cumsum = beta
+    _chunk_scaled_dot_kkt_kernel[grid](
         k,
         beta,
         g_cumsum,
@@ -187,7 +192,8 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
         *output.stride(),
         BLOCK_M=block_m,
         BLOCK_N=block_n,
-        K_CHUNK=_K_CHUNK,
+        BLOCK_K=64,
+        USE_INPUT_DTYPE=k.dtype in (torch.float16, torch.bfloat16),
         HAS_G=g_cumsum is not beta,
         num_warps=4,
         num_stages=1,
