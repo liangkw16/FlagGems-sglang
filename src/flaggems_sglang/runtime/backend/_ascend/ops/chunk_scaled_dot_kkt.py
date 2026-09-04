@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Ascend vendor (persistent whole-tile, vllm-ascend#7576 structure):
-# 64x64 output per program (whole chunk), BK=128 single K pass (no
-# K-loop), batch loop inside the kernel (persistent amortization),
-# GQA dot sharing, num_warps=8. e4's 32-tile/K-loop form compiled
-# but stalled at 0.045x; this mirrors the upstream execution structure.
+# Ascend vendor (persistent 32-tile, BK=128 single K pass): the 64x64
+# whole-tile form requires 2646016 UB bits (over the 1572864 budget);
+# this keeps the proven 32x32 output tiles but eliminates the K-loop
+# (BK=128) and amortizes launch across batches (persistent batch loop
+# inside the kernel). GQA dot sharing retained.
 
 import torch
 import triton
@@ -171,8 +171,8 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     if output.numel() == 0:
         return output
 
-    block_m = 64
-    block_n = 64
+    block_m = 32
+    block_n = 32
     block_k = min(triton.next_power_of_2(k_size), 128)
     grid = (
         triton.cdiv(chunk_size, block_m) * triton.cdiv(chunk_size, block_n),
@@ -201,7 +201,7 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
         BLOCK_K=block_k,
         USE_INPUT_DTYPE=k.dtype in (torch.float16, torch.bfloat16),
         HAS_G=g_cumsum is not beta,
-        num_warps=8,
+        num_warps=4,
         num_stages=1,
     )
     return output
