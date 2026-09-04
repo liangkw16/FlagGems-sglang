@@ -5,12 +5,12 @@ task: 45
 operator: chunk_scaled_dot_kkt
 batch: 4
 validity: invalid
-platform: 6/8(s0,enflame+kunlun correctness失败;huawei 0.031x低于门槛)
-team_best_stage: s0
-team_best_commit: d7d8c4793278062f55617693585ae2ab89c8fbcc
+platform: 7/8(e7,仅昆仑失败;华为0.0455→0.2535x过门槛!)
+team_best_stage: e7
+team_best_commit: 4d16e0701b054247b83cf09c2e39664cd750235f
 team_best_speedup: -
 sealed: no
-next: 瘦原/昆仑轴均两连败止损;若续命需结构性改写(dot形态/tile族);华为0.031x需Cube轴
+next: 昆仑崩溃族(compile_worker Aborted,非代码);7/8=此题最优可达;守榜
 updated: 2026-09-04
 ```
 
@@ -187,3 +187,14 @@ updated: 2026-09-04
   均非答案；Ascend UB 预算限制了 tile 大小（64×64 必爆），32×32 +
   GQA 共享已是该预算内最优形态。需全新的执行策略（如双核拆分或
   CANN 原生接口）才能突破
+
+## E7 FLA persistent 大突破（2026-09-05 凌晨，submission 9850，daily_seq 1）
+
+- **华为 0.0455→0.2535x（5.6x 跃升，首次过 0.1x 门槛！）**
+  FLA PR #1023 结构：物理核 persistent + 单 head task + UB-aware BK
+  + beta/g 预转 [H,B,T] + 直接指针——正是"短 accumulator 生命周期"
+  带来的飞跃（source `4d16e07` 含 Codex review P1/P2 修复）
+- 逐芯：天数 5.66 / 沐曦 5.66 / 燧原 1.63 / 海光 14.72 /
+  **华为 0.2535** / A 19.24 / B 7.74；昆仑崩溃族（compile_worker Aborted）
+- **7/8**——华为+燧原均过门槛，唯一阻挡是昆仑平台侧崩溃
+- Codex review P1 修复（非连续 k contiguous）+ P2（BT cap 64）在提交前完成

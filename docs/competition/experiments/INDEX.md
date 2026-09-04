@@ -23,9 +23,9 @@
 | 40 | softcap_inplace_logits | valid | 8/8(e8,2.195604x,rank1) | e8 2.195604x | yes | 额度用尽收官;e16 华为字节(1.70)+TB 2.1956 #2;榜首 c2flow 2.2593 华为 3.40 未破译 | 2026-09-03 | [softcap_inplace_logits](softcap_inplace_logits.md) |
 | 41 | state_passing | invalid | E7 sub8079 system_failed;7 pass,Kunlun 0.0065x,Enflame unrun | E5 diagnostic | yes | 本轮收盘;只保留平台工单与全新结构研究 | 2026-09-02 | [state_passing](state_passing.md) |
 | 42 | act_and_mul | valid | 8/8(e2,3.248925x) | e2 3.248925x | no | 榜首Warmhearted升至3.5194x(活跃迭代中);剩余轴:昆仑0.456/沐曦2.40/华为2.258;AMD四档autotune可试(+3.83%实证) | 2026-09-03 | [act_and_mul](act_and_mul.md) |
-| 43 | causal_conv1d_update | invalid | 7/8(s0,kunlun correctness失败;huawei 0.0555x/enflame 0.0265x低于门槛) | s0 -x | no | 昆仑 conclusive 封轴(e4/e5/e6 三发 bit-identical 错误=后端确定性数值错译);华为 0.0625-0.074 需 persistent 结构;燧原 0.017-0.031 需 3-6x;今日剩 3 发保留 | 2026-09-03 | [causal_conv1d_update](causal_conv1d_update.md) |
+| 43 | causal_conv1d_update | invalid | 7/8(e7,仅昆仑失败;华为0.4435x+燧原0.325x双双过门槛!) | s0 -x | no | 昆仑uni_sram编译墙(width-axis形态也触发了);7/8=此题最优可达;守榜 | 2026-09-03 | [causal_conv1d_update](causal_conv1d_update.md) |
 | 44 | chain_speculative_sampling | candidate-limited | none(未提交) | s0 -x | no | 半精度逆CDF bit-exact 判定为不可行(NVIDIA代理实证);提交与否需用户门控——fp32全对,fp16/bf16最终token有~20-30%/请求失配;pending_challenge 0/6 队达标,一发探针或可换平台dtype口径情报 | 2026-09-04 | [chain_speculative_sampling](chain_speculative_sampling.md) |
-| 45 | chunk_scaled_dot_kkt | invalid | 6/8(s0,enflame+kunlun correctness失败;huawei 0.031x低于门槛) | s0 -x | no | 瘦原/昆仑轴均两连败止损;若续命需结构性改写(dot形态/tile族);华为0.031x需Cube轴 | 2026-09-04 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
+| 45 | chunk_scaled_dot_kkt | invalid | 7/8(e7,仅昆仑失败;华为0.0455→0.2535x过门槛!) | e7 -x | no | 昆仑崩溃族(compile_worker Aborted,非代码);7/8=此题最优可达;守榜 | 2026-09-04 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x) | e3 14.1051875x | no | 守榜:昆仑segment-owned已固化(0.23→0.64),e3=14.105x为team best;后续发收益被水位噪声(±1.5均值)淹没,停止 | 2026-09-03 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
 | 47 | chunked_sgmv_expand | valid | 8/8(e5,25.0048125x,榜首) | e5 25.0048125x | no | 守榜首(25.00x vs 前榜首23.33x);燧原0.178x/昆仑3.72x为余量轴;stale意图经用户授权归档重提(移至archived/) | 2026-09-04 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
 

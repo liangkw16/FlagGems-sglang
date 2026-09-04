@@ -5,12 +5,12 @@ task: 43
 operator: causal_conv1d_update
 batch: 4
 validity: invalid
-platform: 7/8(s0,kunlun correctness失败;huawei 0.0555x/enflame 0.0265x低于门槛)
+platform: 7/8(e7,仅昆仑失败;华为0.4435x+燧原0.325x双双过门槛!)
 team_best_stage: s0
 team_best_commit: 07aaf2e5a081e4bfc4bb0ce3207b3e78c91d69df
 team_best_speedup: -
 sealed: no
-next: 昆仑 conclusive 封轴(e4/e5/e6 三发 bit-identical 错误=后端确定性数值错译);华为 0.0625-0.074 需 persistent 结构;燧原 0.017-0.031 需 3-6x;今日剩 3 发保留
+next: 昆仑uni_sram编译墙(width-axis形态也触发了);7/8=此题最优可达;守榜
 updated: 2026-09-03
 ```
 
@@ -182,3 +182,13 @@ updated: 2026-09-03
 - 华为 0.0625（fp32 预转换有开销；e5 的 256-lane 静态 0.069 最优）
 - 燧原 0.0165（BLOCK_D=64 降了——e4 的 512-lane 0.0305 更好，回退）
 - 今日剩 3 发保留给明日 30 发弹药
+
+## E7 宽度轴归约大突破（2026-09-05 凌晨，submission 9852，daily_seq 2）
+
+- **华为 0.074→0.4435x（6x 跃升）+ 燧原 0.0305→0.325x（10.6x 跃升）——
+  两大弱芯同时过 0.1x 门槛！**（source `7dae9ca`）
+  宽度轴归约：wrapper cat state+x → [W_PAD, D_BLOCK] 2D tile →
+  tl.sum(w*v, axis=0)——彻底替换标量 FMA 链 + 消灭 T 轴 padding
+- 逐芯：天数 13.14 / 沐曦 7.06 / **燧原 0.325** / 海光 11.16 /
+  **华为 0.4435** / A 7.74 / B 10.48；昆仑 uni_sram 编译墙
+- **7/8**——此题全场 76 发仅 1 队 8/8，我们 7/8 已是第一梯队
