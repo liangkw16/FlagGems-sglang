@@ -12,22 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Kunlunxin vendor: static short-axis form at 128-lane blocks;
-# every address is single-path (no runtime selects to mis-lower);
-# compiler-flag combos stay in reserve if this still hits uni_sram.
+# Kunlunxin vendor (bounded-error fix): weight pre-transposed to
+# [WIDTH, dim] so each k-slice is contiguous (removes the non-pow2
+# WIDTH multiplication that miscompiles on this backend), and all
+# addresses are pure int32 (no int64 casts anywhere).
 
 import torch
 import triton
 import triton.language as tl
 
 _MAX_GRID = 65535
+_BLOCK_D = 128
 
 
 @triton.jit
 def _ccu_static_kernel(
     x_ptr,
     state_ptr,
-    weight_ptr,
+    wt_ptr,
     bias_ptr,
     out_ptr,
     new_state_ptr,
@@ -52,11 +54,6 @@ def _ccu_static_kernel(
     ACT_IS_SILU: tl.constexpr,
     BLOCK_D: tl.constexpr,
 ):
-    # Static short-axis form (Ascend tutorial 003 structure): SEQLEN /
-    # STATE_LEN / WIDTH are constexpr, so every window position p is a
-    # compile-time integer and `p < STATE_LEN` resolves to a single
-    # load path per (t, k) - no runtime scalar selects, no dual
-    # addresses, no time-axis padding.
     pid = tl.program_id(0)
     dim_blocks = tl.cdiv(dim, BLOCK_D)
     total = batch * dim_blocks
@@ -66,11 +63,10 @@ def _ccu_static_kernel(
         db = job - b * dim_blocks
         offs_d = db * BLOCK_D + tl.arange(0, BLOCK_D)
         dmask = offs_d < dim
-        offs_d64 = offs_d.to(tl.int64)
-        x_base = x_ptr + b.to(tl.int64).to(tl.int64) * x_sb
-        s_base = state_ptr + b.to(tl.int64).to(tl.int64) * st_sb
-        o_base = out_ptr + b.to(tl.int64).to(tl.int64) * o_sb
-        n_base = new_state_ptr + b.to(tl.int64).to(tl.int64) * ns_sb
+        x_base = x_ptr + b * x_sb
+        s_base = state_ptr + b * st_sb
+        o_base = out_ptr + b * o_sb
+        n_base = new_state_ptr + b * ns_sb
 
         for t in tl.static_range(SEQLEN):
             acc = tl.zeros((BLOCK_D,), dtype=tl.float32)
@@ -78,18 +74,18 @@ def _ccu_static_kernel(
                 p = t + STATE_LEN + 1 - WIDTH + k
                 if p < STATE_LEN:
                     v = tl.load(
-                        s_base + offs_d64 * st_sd + p * st_sl,
+                        s_base + offs_d * st_sd + p * st_sl,
                         mask=dmask,
                         other=0.0,
                     ).to(tl.float32)
                 else:
                     v = tl.load(
-                        x_base + offs_d64 * x_sd + (p - STATE_LEN) * x_ss,
+                        x_base + offs_d * x_sd + (p - STATE_LEN) * x_ss,
                         mask=dmask,
                         other=0.0,
                     ).to(tl.float32)
                 wk = tl.load(
-                    weight_ptr + offs_d64 * WIDTH + k,
+                    wt_ptr + k * dim + offs_d,
                     mask=dmask,
                     other=0.0,
                 ).to(tl.float32)
@@ -99,7 +95,7 @@ def _ccu_static_kernel(
             if ACT_IS_SILU:
                 acc = acc / (1.0 + tl.exp(-acc))
             tl.store(
-                o_base + offs_d64 * o_sd + t * o_ss,
+                o_base + offs_d * o_sd + t * o_ss,
                 acc.to(out_ptr.dtype.element_ty),
                 mask=dmask,
             )
@@ -108,24 +104,21 @@ def _ccu_static_kernel(
             p = SEQLEN + i
             if p < STATE_LEN:
                 v2 = tl.load(
-                    s_base + offs_d64 * st_sd + p * st_sl,
+                    s_base + offs_d * st_sd + p * st_sl,
                     mask=dmask,
                     other=0.0,
                 ).to(tl.float32)
             else:
                 v2 = tl.load(
-                    x_base + offs_d64 * x_sd + (p - STATE_LEN) * x_ss,
+                    x_base + offs_d * x_sd + (p - STATE_LEN) * x_ss,
                     mask=dmask,
                     other=0.0,
                 ).to(tl.float32)
             tl.store(
-                n_base + offs_d64 * ns_sd + i * ns_sl,
+                n_base + offs_d * ns_sd + i * ns_sl,
                 v2.to(new_state_ptr.dtype.element_ty),
                 mask=dmask,
             )
-
-
-_BLOCK_D = 128
 
 
 def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
@@ -134,12 +127,14 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         x = x.unsqueeze(-1)
     x = x.contiguous()
     state = conv_state.contiguous()
-    w = weight.contiguous()
+    # Pre-transpose weight [dim, width] -> [width, dim] so each k-slice
+    # is a contiguous 1D load (no WIDTH multiplication in the kernel).
+    wt = weight.t().contiguous().float()
     if bias is not None:
         bias = bias.contiguous()
     batch, dim, seqlen = x.shape
     state_len = state.shape[-1]
-    width = w.shape[1]
+    width = weight.shape[1]
     out = torch.empty_like(x)
     new_state = torch.empty_like(state)
     if batch * dim == 0:
@@ -152,7 +147,7 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     _ccu_static_kernel[grid](
         x,
         state,
-        w,
+        wt,
         bias if bias is not None else x,
         out,
         new_state,

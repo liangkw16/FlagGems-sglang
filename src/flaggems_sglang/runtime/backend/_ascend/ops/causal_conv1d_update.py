@@ -124,7 +124,7 @@ def _ccu_static_kernel(
             )
 
 
-_BLOCK_D = 512
+_BLOCK_D = 256
 
 
 def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
