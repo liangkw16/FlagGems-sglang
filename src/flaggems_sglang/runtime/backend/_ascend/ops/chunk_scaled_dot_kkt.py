@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Ascend vendor: the S0 32x32-tile K-loop shape (the only form that
-# compiled within the 1572864-bit UB budget - 64-tile forms fail
-# BiShengHIR with ub overflow) extended with the vllm-ascend GQA trick:
-# the dot is computed once per (k-group, tile) and shared by the
-# group's HPG heads, cutting dot work ratio-fold to lift the 0.031x
-# watermark over the 0.1x threshold.
+# Ascend vendor (persistent whole-tile, vllm-ascend#7576 structure):
+# 64x64 output per program (whole chunk), BK=128 single K pass (no
+# K-loop), batch loop inside the kernel (persistent amortization),
+# GQA dot sharing, num_warps=8. e4's 32-tile/K-loop form compiled
+# but stalled at 0.045x; this mirrors the upstream execution structure.
 
 import torch
 import triton
@@ -25,11 +24,13 @@ import triton.language as tl
 
 
 @triton.jit
-def _kkt_gqa_shared_kernel(
+def _kkt_persistent_kernel(
     k_ptr,
     beta_ptr,
     g_ptr,
     output_ptr,
+    batch,
+    seqlen,
     chunk_size,
     k_size,
     nheads,
@@ -71,8 +72,7 @@ def _kkt_gqa_shared_kernel(
     output_stride_last = tl.cast(output_stride_last, tl.int64)
 
     tile_id = tl.program_id(0)
-    batch_id = tl.program_id(1)
-    chunk_group_id = tl.program_id(2)
+    chunk_group_id = tl.program_id(1)
     chunk_id = chunk_group_id // num_k_heads
     i_kg = chunk_group_id - chunk_id * num_k_heads
 
@@ -83,70 +83,73 @@ def _kkt_gqa_shared_kernel(
     m_offsets = m_tile * BLOCK_M + tl.arange(0, BLOCK_M)
     n_offsets = n_tile * BLOCK_N + tl.arange(0, BLOCK_N)
     k_offsets = tl.arange(0, BLOCK_K)
-    m_global = chunk_id * chunk_size + m_offsets
-    n_global = chunk_id * chunk_size + n_offsets
+    m_mask = m_offsets < chunk_size
+    n_mask = n_offsets < chunk_size
+    k_mask = k_offsets < k_size
 
-    k_base = batch_id * k_stride_batch + i_kg * k_stride_head
-    accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
-    for k_block in range(0, tl.cdiv(k_size, BLOCK_K)):
-        current_k = k_block * BLOCK_K + k_offsets
+    strict_lower = m_offsets[:, None] > n_offsets[None, :]
+
+    for b in range(0, batch):
+        m_global = chunk_id * chunk_size + m_offsets
+        n_global = chunk_id * chunk_size + n_offsets
+        k_base = b * k_stride_batch + i_kg * k_stride_head
+
         a = tl.load(
             k_ptr
             + k_base
             + m_global[:, None] * k_stride_seqlen
-            + current_k[None, :] * k_stride_k,
-            mask=(m_offsets[:, None] < chunk_size) & (current_k[None, :] < k_size),
+            + k_offsets[None, :] * k_stride_k,
+            mask=m_mask[:, None] & k_mask[None, :],
             other=0.0,
         )
-        b = tl.load(
+        bt = tl.load(
             k_ptr
             + k_base
-            + current_k[:, None] * k_stride_k
+            + k_offsets[:, None] * k_stride_k
             + n_global[None, :] * k_stride_seqlen,
-            mask=(current_k[:, None] < k_size) & (n_offsets[None, :] < chunk_size),
+            mask=k_mask[:, None] & n_mask[None, :],
             other=0.0,
         )
         if not USE_INPUT_DTYPE:
             a = a.to(tl.float32)
-            b = b.to(tl.float32)
-        accumulator += tl.dot(a, b, input_precision="ieee")
+            bt = bt.to(tl.float32)
+        accumulator = tl.dot(a, bt, input_precision="ieee")
 
-    strict_lower = m_offsets[:, None] > n_offsets[None, :]
-    for i_h_local in range(0, hpg):
-        i_h = i_kg * hpg + i_h_local
-        beta_base = batch_id * beta_stride_batch + i_h * beta_stride_head
-        beta_m = tl.load(
-            beta_ptr + beta_base + m_global * beta_stride_seqlen,
-            mask=m_offsets < chunk_size,
-            other=0.0,
-        ).to(tl.float32)
-        result = accumulator * beta_m[:, None]
-        if HAS_G:
-            g_base = batch_id * g_stride_batch + i_h * g_stride_head
-            g_m = tl.load(
-                g_ptr + g_base + m_global * g_stride_seqlen,
-                mask=m_offsets < chunk_size,
+        for i_h_local in range(0, hpg):
+            i_h = i_kg * hpg + i_h_local
+            beta_base = b * beta_stride_batch + i_h * beta_stride_head
+            beta_m = tl.load(
+                beta_ptr + beta_base + m_global * beta_stride_seqlen,
+                mask=m_mask,
                 other=0.0,
             ).to(tl.float32)
-            g_n = tl.load(
-                g_ptr + g_base + n_global * g_stride_seqlen,
-                mask=n_offsets < chunk_size,
-                other=0.0,
-            ).to(tl.float32)
-            g_diff = g_m[:, None] - g_n[None, :]
-            result = result * tl.where(g_diff <= 0.0, tl.exp(g_diff), 0.0)
-        result = tl.where(strict_lower, result, 0.0)
-        output_offsets = (
-            batch_id * output_stride_batch
-            + m_global[:, None] * output_stride_seqlen
-            + i_h * output_stride_head
-            + n_offsets[None, :] * output_stride_last
-        )
-        tl.store(
-            output_ptr + output_offsets,
-            result,
-            mask=(m_offsets[:, None] < chunk_size) & (n_offsets[None, :] < chunk_size),
-        )
+            result = accumulator * beta_m[:, None]
+            if HAS_G:
+                g_base = b * g_stride_batch + i_h * g_stride_head
+                g_m = tl.load(
+                    g_ptr + g_base + m_global * g_stride_seqlen,
+                    mask=m_mask,
+                    other=0.0,
+                ).to(tl.float32)
+                g_n = tl.load(
+                    g_ptr + g_base + n_global * g_stride_seqlen,
+                    mask=n_mask,
+                    other=0.0,
+                ).to(tl.float32)
+                g_diff = g_m[:, None] - g_n[None, :]
+                result = result * tl.where(g_diff <= 0.0, tl.exp(g_diff), 0.0)
+            result = tl.where(strict_lower, result, 0.0)
+            output_offsets = (
+                b * output_stride_batch
+                + m_global[:, None] * output_stride_seqlen
+                + i_h * output_stride_head
+                + n_offsets[None, :] * output_stride_last
+            )
+            tl.store(
+                output_ptr + output_offsets,
+                result,
+                mask=m_mask[:, None] & n_mask[None, :],
+            )
 
 
 def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
@@ -168,20 +171,22 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     if output.numel() == 0:
         return output
 
-    block_m = 32
-    block_n = 32
+    block_m = 64
+    block_n = 64
+    block_k = min(triton.next_power_of_2(k_size), 128)
     grid = (
         triton.cdiv(chunk_size, block_m) * triton.cdiv(chunk_size, block_n),
-        batch,
         nchunks * num_k_heads,
     )
     if g_cumsum is None:
         g_cumsum = beta
-    _kkt_gqa_shared_kernel[grid](
+    _kkt_persistent_kernel[grid](
         k,
         beta,
         g_cumsum,
         output,
+        batch,
+        seqlen,
         chunk_size,
         k_size,
         num_heads,
@@ -193,10 +198,10 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
         *output.stride(),
         BLOCK_M=block_m,
         BLOCK_N=block_n,
-        BLOCK_K=32,
+        BLOCK_K=block_k,
         USE_INPUT_DTYPE=k.dtype in (torch.float16, torch.bfloat16),
         HAS_G=g_cumsum is not beta,
-        num_warps=4,
+        num_warps=8,
         num_stages=1,
     )
     return output
