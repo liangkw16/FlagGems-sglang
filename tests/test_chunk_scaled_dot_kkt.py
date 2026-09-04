@@ -196,6 +196,40 @@ class ChunkScaledDotKktVariantsTest(unittest.TestCase):
 
     MODULES = load_operator_modules("chunk_scaled_dot_kkt")
 
+    def test_variants_non_contiguous_k(self):
+        """Non-contiguous k must be correct across every variant
+        (the ascend FLA kernel hardcodes contiguous strides and calls
+        k.contiguous() in the wrapper; this guards against regressions)."""
+        for kwargs in (
+            dict(
+                batch=1,
+                nchunks=1,
+                chunk_size=64,
+                num_k_heads=2,
+                ratio=2,
+                k_dim=64,
+                seed=41,
+            ),
+        ):
+            k, beta = make_case(**kwargs)
+            big = torch.randn(
+                k.shape[0],
+                k.shape[1],
+                k.shape[2],
+                k.shape[3] * 2,
+                device="cuda",
+            )
+            k_nc = big[..., ::2]
+            self.assertFalse(k_nc.is_contiguous())
+            g = -torch.rand(*beta.shape, device="cuda")
+            expected = reference(k_nc, beta, g, chunk_size=kwargs["chunk_size"])
+            for name, module in self.MODULES:
+                with self.subTest(module=name):
+                    out = module.chunk_scaled_dot_kkt(
+                        k_nc, beta, g, chunk_size=kwargs["chunk_size"]
+                    )
+                    torch.testing.assert_close(out, expected, atol=1e-4, rtol=1e-4)
+
     def test_variants_match_reference(self):
         cases = [
             dict(

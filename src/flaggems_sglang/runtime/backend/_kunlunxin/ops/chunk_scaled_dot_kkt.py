@@ -115,6 +115,8 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     if output.numel() == 0:
         return output
 
+    # hardcode contiguous strides: normalize non-contiguous inputs
+    k = k.contiguous()
     if g_cumsum is None:
         g_cumsum = beta
     grid = (nchunks, batch)

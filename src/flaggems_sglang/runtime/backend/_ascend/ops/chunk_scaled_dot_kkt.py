@@ -134,7 +134,9 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     if num_heads % num_k_heads:
         raise ValueError("num_heads must be divisible by num_k_heads")
 
-    BT = chunk_size
+    # Cap BT at 64: the [BT,BT] fp32 accumulator alone needs BT*BT*4
+    # bytes; chunk_size=256 would need 256KB > the 192KB UB budget
+    BT = min(chunk_size, 64)
     BK = _ub_safe_bk(BT, k_size)
     nchunks = seqlen // BT
 
@@ -146,6 +148,9 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     if A.numel() == 0:
         return A
 
+    # P1 fix: the kernel hardcodes contiguous [B,T,H,K] address math;
+    # non-contiguous k would be silently wrong
+    k = k.contiguous()
     use_g = g_cumsum is not None
 
     # Pre-transpose beta/g from [B, T, H] to [H, B, T] contiguous
