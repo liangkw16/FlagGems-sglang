@@ -159,3 +159,17 @@ updated: 2026-09-04
   后续若破译华为/昆仑任一即 7/8
 - 判定：华为/昆仑均需失败 case 细节（与 T43 同一情报墙），
   无情报不再盲投
+
+## 失败情报破译与 E4（2026-09-04 晚，submission 9504）
+
+- **华为 E2/E3 失败根因 = BiShengHIR `ub overflow`**（64 tile 需
+  2146304–3694592 bits，预算 1572864）——纯编译资源问题非数值
+- **昆仑 E2/E3 = 评测器崩溃族**（1830s 超时 + compile_worker
+  Aborted）——平台侧故障，按协议不计代码止损、封存等健康窗口
+- E4（source `03469f9`）：华为 vendor = S0 已证可编译的 32³ K-loop
+  形态 + vllm-ascend GQA 共享（每 k-group 的 dot 只算一次、组内
+  HPG head 共享，计算量降 ratio 倍）
+- **E4 结果：华为 correctness 翻绿，0.031→0.045x**（仍低于 0.1
+  门槛）；燧原 1.6355x 维持；昆仑 waiting_callback（崩溃族观察中）
+- 华为下一轴：GQA 后仍需 ~2.2x（BLOCK_K 128 单趟/更少冗余 load）；
+  若昆仑健康窗口通过则 7/8（只余华为门槛）

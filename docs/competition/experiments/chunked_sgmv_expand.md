@@ -5,12 +5,12 @@ task: 47
 operator: chunked_sgmv_expand
 batch: 4
 validity: invalid
-platform: 7/8(e3,昆仑四投 conclusive 封轴;七芯均值~29x)
+platform: 7/8(e4,昆仑翻绿3.74x;燧原评测超时非代码问题)
 team_best_stage: e1
 team_best_commit: 663286c2399cac11ece86c7fa74fc2cd638143c5
 team_best_speedup: -
 sealed: no
-next: 昆仑 conclusive 封轴(元数据型/i32型/规则GEMM三结构均败,且GEMM bug修复后仍败=芯片后端独立问题);守榜;可选华为/沐曦冲分
+next: e5(燧原route/materialize替换)已打包,提交意图stale_after_upload(上传成/POST未发/额度未耗/无提交记录),待用户授权归档重提;T45华为已翻correctness绿(0.045x距0.1门槛)
 updated: 2026-09-04
 ```
 
@@ -141,3 +141,22 @@ updated: 2026-09-04
   封轴，判定为该芯片后端独立数值问题
 - 七芯（修复后读数）：天数 28.82 / 沐曦 25.08 / 燧原 0.2515 /
   海光 53.55 / 华为 14.42 / A 49.97 / B 29.17——七芯均值 ~28.7x
+
+## 失败情报破译（2026-09-04 晚，submissions API raw_result）
+
+**发现**：列表接口 `operator-submissions` 的 `raw_result.errors/
+failed_cases` 本就携带完整失败详情，CLI status 视图把它过滤掉了。
+用 token 直接 GET 即得——无需浏览器登录。
+
+- **昆仑四投全败根因 = `index_copy_(): Expected a long tensor for
+  index, but got Int`**——平台 permutation 为 int32，昆仑 torch 要
+  long（NVIDIA 接受 int32，代理全绿是盲区）。E4 一行修复
+  `rows.long()`（source `b20da5b`，submission 9502）
+- **E4 结果：昆仑 PASS 3.7365x**（7 芯 + 昆仑全过），但燧原
+  **评测超时**（1830s，R 状态机器忙；同字节 E3 过 0.2515x）→
+  非代码回归
+- **E5（source `b34d040`）**：燧原换昆仑同款 route/materialize
+  GEMM（64³/stages2 + long 索引），打包 c62fc211…；提交意图停在
+  `stale_after_upload`（文件上传成功、正式 POST 前过期；status
+  核对无提交记录、额度未耗）。CLI 按设计拒绝自动重试，
+  **等待用户授权归档重提**
