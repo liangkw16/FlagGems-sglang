@@ -102,3 +102,16 @@ screening 8/8（含 1 个如实标注的 expectedFailure）。题目 atol=0 +
 
 - 2026-09-04 00:xx 契约锁定、S0 实现；draft 行索引 bug 差分定位修复；
   cumsum 语义四组实验定论；screening 8/8 + 基准
+
+
+## MCP 实机初筛归档（2026-09-04 晨，24 job 全部终态）
+
+- 产物 `log/kernelgen-round/out_<op>_<chip>.json`（24 个，含 SHA）；
+  协议：注入执行 + 失败神谕 + 终态代码保真 diff
+- 干净通过（fidelity=True 且零 hard error）：本题华为/天数（详见
+  各算子行）；海光/沐曦后端当夜多次 502（`ld0428.baai.ac.cn`），
+  这些芯的编译信号不可得，非候选失败
+- 保真失败（LLM 改写）= 无判定，不作数；harness 侧 artifact
+  （NameError/IndexError/`constexpr[0]`）不计入失败神谕
+- 平台实测（本账本上方小节）已是更强证据，MCP 结论仅作发射风险
+  参考留存

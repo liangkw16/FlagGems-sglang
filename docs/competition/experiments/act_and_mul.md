@@ -131,3 +131,16 @@ updated: 2026-09-03
 - 全芯正确性通过；最低昆仑 0.279x 仍过 0.1 门槛
 - 榜首 c2flow 3.1941x，差距 4.2%；下一轴按预案：昆仑 BLOCK 2048 /
   燧原整行 4096 / 华为块结构（T39 E10 +246% 同构题）
+
+
+## MCP 实机初筛归档（2026-09-04 晨，24 job 全部终态）
+
+- 产物 `log/kernelgen-round/out_<op>_<chip>.json`（24 个，含 SHA）；
+  协议：注入执行 + 失败神谕 + 终态代码保真 diff
+- 干净通过（fidelity=True 且零 hard error）：本题华为/天数（详见
+  各算子行）；海光/沐曦后端当夜多次 502（`ld0428.baai.ac.cn`），
+  这些芯的编译信号不可得，非候选失败
+- 保真失败（LLM 改写）= 无判定，不作数；harness 侧 artifact
+  （NameError/IndexError/`constexpr[0]`）不计入失败神谕
+- 平台实测（本账本上方小节）已是更强证据，MCP 结论仅作发射风险
+  参考留存

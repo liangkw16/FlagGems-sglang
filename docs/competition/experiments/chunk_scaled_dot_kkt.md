@@ -98,3 +98,16 @@ updated: 2026-09-04
 - 与预案一致：昆仑 fp16 操作数 dot 数值失败镜像（T12）→ fp32-ieee
   dot vendor；燧原按 64/64/128 + stages2 + capped fold 配置 vendor；
   华为 0.031x 需 Cube 低精度/结构轴
+
+
+## MCP 实机初筛归档（2026-09-04 晨，24 job 全部终态）
+
+- 产物 `log/kernelgen-round/out_<op>_<chip>.json`（24 个，含 SHA）；
+  协议：注入执行 + 失败神谕 + 终态代码保真 diff
+- 干净通过（fidelity=True 且零 hard error）：本题华为/天数（详见
+  各算子行）；海光/沐曦后端当夜多次 502（`ld0428.baai.ac.cn`），
+  这些芯的编译信号不可得，非候选失败
+- 保真失败（LLM 改写）= 无判定，不作数；harness 侧 artifact
+  （NameError/IndexError/`constexpr[0]`）不计入失败神谕
+- 平台实测（本账本上方小节）已是更强证据，MCP 结论仅作发射风险
+  参考留存
