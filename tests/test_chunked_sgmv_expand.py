@@ -236,6 +236,12 @@ class ChunkedSgmvExpandVariantsTest(unittest.TestCase):
             ([16, 32, 8], 4, [128, 128], 32, torch.float32),
             ([0, 12, 0, 12, 0], 3, [65, 80, 129], 16, torch.float32),
             ([20, 20], 3, [128, 64], 16, torch.bfloat16),
+            # ranks beyond one BLOCK_K tile: the kunlunxin vendor GEMM
+            # miscompiled on its multi-trip K loop before this became a
+            # permanent regression
+            ([24, 12], 3, [128, 64], 64, torch.float32),
+            ([24, 12], 3, [128, 64], 96, torch.float32),
+            ([24, 12], 3, [128, 64], 128, torch.float32),
         ]
         for seg_lens, num_lora, widths, rank, dtype in cases:
             x, weights, batch_info, slice_offsets, base_output = make_case(

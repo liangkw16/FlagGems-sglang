@@ -69,9 +69,7 @@ def _sgmv_regular_gemm_kernel(
             mask=mask_k[:, None] & (offs_n[None, :] < N),
             other=0.0,
         ).to(tl.float32)
-        accumulator = tl.dot(
-            a, b, acc=accumulator, input_precision="ieee"
-        )
+        accumulator = tl.dot(a, b, acc=accumulator, input_precision="ieee")
         a_ptrs += BLOCK_K * stride_ak
         b_ptrs += BLOCK_K * stride_bn
 
@@ -91,6 +89,12 @@ def _launch_gemm(a, b, c, scaling, output_width, rank):
     m = a.shape[0]
     if m == 0:
         return
+    # The multi-trip K loop miscompiles on this kernel shape (verified
+    # on the NVIDIA proxy: rank 32 exact, rank >= 64 wrong by ~1e1; a
+    # single-trip replica is exact). Keep the K loop to one trip by
+    # sizing BLOCK_K to the rank; 512 covers every platform rank and
+    # the tail mask still handles non-power-of-two ranks like 96.
+    block_k = min(triton.next_power_of_2(max(rank, 16)), 512)
     grid = (triton.cdiv(m, _BLOCK_M) * triton.cdiv(output_width, _BLOCK_N),)
     _sgmv_regular_gemm_kernel[grid](
         a,
@@ -108,7 +112,7 @@ def _launch_gemm(a, b, c, scaling, output_width, rank):
         K=rank,
         BLOCK_M=_BLOCK_M,
         BLOCK_N=_BLOCK_N,
-        BLOCK_K=_BLOCK_K,
+        BLOCK_K=block_k,
         GROUP_M=_GROUP_M,
         num_warps=4,
         num_stages=1,
@@ -123,12 +127,7 @@ def chunked_sgmv_expand(
     rank = weights.shape[-1]
     if x.shape[1] != n_slices * rank:
         raise ValueError("x width must equal n_slices * rank")
-    if (
-        output.numel() == 0
-        or n_slices <= 0
-        or batch_info.bs == 0
-        or x.shape[0] == 0
-    ):
+    if output.numel() == 0 or n_slices <= 0 or batch_info.bs == 0 or x.shape[0] == 0:
         return output
 
     # Vendor path: route with framework gathers, then one regular GEMM
@@ -165,9 +164,7 @@ def chunked_sgmv_expand(
                 o_end - o_start,
                 rank,
             )
-        output.index_copy_(
-            0, rows, seg_out.to(base_output.dtype)
-        )
+        output.index_copy_(0, rows, seg_out.to(base_output.dtype))
     return output
 
 
