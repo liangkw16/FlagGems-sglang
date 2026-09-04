@@ -193,6 +193,9 @@ dtype 逐步累加 / `round(cumsum(f32))` / blocked+Hillis 结构仿真全部
 
 - 逐芯技术事实详单：`learning-path.md`、`chip-landscape.md`、
   `season2-retrospective.md`（毒点表）。
+- 官方赛制情报（Vol.19 直播，2026-09-03）：`live-vol19-race-intel-2026-09-03.md`
+  ——每芯 >0.1x 门槛、攻克/攻占语义、30 发/日全队共享、PR 一致性等条款
+  的官方口径出处。
 - 单题当前状态：`docs/competition/experiments/<operator>.md` 的 `current`
   块是唯一人工状态真相；本文档不承载单题状态。
 - 打包与提交流程：skill 主文档 + `references/platform-workflow.md`。
