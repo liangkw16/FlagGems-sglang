@@ -5,12 +5,12 @@ task: 42
 operator: act_and_mul
 batch: 4
 validity: valid
-platform: 8/8(s0,3.066825x)
-team_best_stage: s0
-team_best_commit: 2652a4e980e1bd5af63cbafa33ca13cc067c813b
-team_best_speedup: 3.066825
+platform: 8/8(e1,3.1647x)
+team_best_stage: e1
+team_best_commit: 1273a60095dd1db08435ac89d25fc840eed85266
+team_best_speedup: 3.1647
 sealed: no
-next: vendor 单变量冲分:昆仑0.279x/燧原0.969x/华为1.671x 距榜首余量;榜首c2flow 3.1941x
+next: 榜首Warmhearted 3.3698x(7队过线);剩余拖累:昆仑0.455/华为1.668;华为BLOCK轴或slab结构可再试一发
 updated: 2026-09-03
 ```
 
@@ -144,3 +144,13 @@ updated: 2026-09-03
   （NameError/IndexError/`constexpr[0]`）不计入失败神谕
 - 平台实测（本账本上方小节）已是更强证据，MCP 结论仅作发射风险
   参考留存
+
+## E1 三 vendor 冲分（2026-09-04 04:3x，submission 9416，daily_seq 10）
+
+- **8/8 valid，平均 3.1647x**（3.0668 → +3.2%；source `1273a60`，
+  ZIP `bfe4389f…`）
+- 燧原 4096 整行：0.969→**1.682（+74%）**；昆仑 flat 2048：
+  0.279→**0.4548（+63%）**；沐曦 flat 2048：2.2476→2.4552（+9%）
+- 未动芯：天数 6.214 / 海光 4.9688 / 华为 1.668 / A 4.238（水位波动）
+  / B 3.6368
+- 榜首已升至 Warmhearted 3.369775x（7 队过线）
