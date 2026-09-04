@@ -12,18 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Kunlunxin vendor: fully vectorized variant - time/state positions are
+# arange vectors with vector masks only (the generic kernel's
+# scalar-conditioned dual-path addressing produced 1e35-scale
+# uninitialized-memory garbage on this backend), the serial per-step
+# loops become vector FMA over a [BLOCK_D, BLOCK_T] tile, and the flat
+# capped grid keeps every axis inside hardware limits.
+
 import torch
 import triton
 import triton.language as tl
 
-_BLOCK_D = 64
-
-# Kunlunxin vendor: BLOCK_D=64 lanes (T36 E27 64-core alignment) plus
-# the isCloseCoreTiling launch hint (T36 E13); S0 failed correctness.
+_BLOCK_D = 256
+_BLOCK_T = 64
+_MAX_GRID = 65535
 
 
 @triton.jit
-def _causal_conv1d_update_kernel(
+def _ccu_vec_kernel(
     x_ptr,
     state_ptr,
     weight_ptr,
@@ -50,80 +56,85 @@ def _causal_conv1d_update_kernel(
     HAS_BIAS: tl.constexpr,
     ACT_IS_SILU: tl.constexpr,
     BLOCK_D: tl.constexpr,
-    isCloseCoreTiling: tl.constexpr,
+    BLOCK_T: tl.constexpr,
 ):
-    # One program owns a (batch, dim-block) strip and walks the small
-    # seqlen/state axes as scalar loops, so every load/store stays 1D
-    # (the T36 kunlunxin poison is 2D masked tiles + transcendental +
-    # axis-1 reduce in one compilation unit).
-    db = tl.program_id(0)
-    b = tl.program_id(1)
-    offs_d = db * BLOCK_D + tl.arange(0, BLOCK_D)
-    dmask = offs_d < dim
-    offs_d64 = offs_d.to(tl.int64)
-    x_base = x_ptr + b.to(tl.int64) * x_sb
-    s_base = state_ptr + b.to(tl.int64) * st_sb
-    o_base = out_ptr + b.to(tl.int64) * o_sb
-    n_base = new_state_ptr + b.to(tl.int64) * ns_sb
+    pid = tl.program_id(0)
+    dim_blocks = tl.cdiv(dim, BLOCK_D)
+    total = batch * dim_blocks
+    grid_size = tl.num_programs(0)
+    for job in range(pid, total, grid_size):
+        b = job // dim_blocks
+        db = job - b * dim_blocks
+        offs_d = db * BLOCK_D + tl.arange(0, BLOCK_D)
+        dmask = offs_d < dim
+        offs_d64 = offs_d.to(tl.int64)
+        x_base = x_ptr + b.to(tl.int64) * x_sb
+        s_base = state_ptr + b.to(tl.int64) * st_sb
+        o_base = out_ptr + b.to(tl.int64) * o_sb
+        n_base = new_state_ptr + b.to(tl.int64) * ns_sb
 
-    for t in range(0, seqlen):
-        val = tl.zeros([BLOCK_D], dtype=tl.float32)
-        for k in tl.static_range(WIDTH):
-            # Window position in the virtual concat(state, x).
-            p = t + state_len + 1 - WIDTH + k
-            from_state = p < state_len
-            safe_s = tl.minimum(tl.maximum(p, 0), state_len - 1)
-            safe_x = tl.minimum(tl.maximum(p - state_len, 0), seqlen - 1)
-            s_v = tl.load(
-                s_base + offs_d64 * st_sd + safe_s * st_sl,
-                mask=dmask & from_state,
-                other=0.0,
-            ).to(tl.float32)
-            x_v = tl.load(
-                x_base + offs_d64 * x_sd + safe_x * x_ss,
-                mask=dmask & (p >= state_len),
-                other=0.0,
-            ).to(tl.float32)
-            v = tl.where(from_state, s_v, x_v)
-            wk = tl.load(
-                weight_ptr + offs_d64 * WIDTH + k,
-                mask=dmask,
-                other=0.0,
-            ).to(tl.float32)
-            val += wk * v
-        if HAS_BIAS:
-            val += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(tl.float32)
-        if ACT_IS_SILU:
-            # SiLU in the statement's exact form; stability rewrites
-            # fail the checker at large negative inputs.
-            val = val / (1.0 + tl.exp(-val))
-        tl.store(
-            o_base + offs_d64 * o_sd + t * o_ss,
-            val.to(out_ptr.dtype.element_ty),
-            mask=dmask,
-        )
+        for t0 in range(0, seqlen, BLOCK_T):
+            offs_t = t0 + tl.arange(0, BLOCK_T)
+            tmask = offs_t < seqlen
+            acc = tl.zeros((BLOCK_D, BLOCK_T), dtype=tl.float32)
+            for k in tl.static_range(WIDTH):
+                pos = offs_t + (state_len + 1 - WIDTH) + k
+                in_state = pos < state_len
+                safe_s = tl.minimum(tl.maximum(pos, 0), state_len - 1)
+                safe_x = tl.minimum(tl.maximum(pos - state_len, 0), seqlen - 1)
+                s_v = tl.load(
+                    s_base + offs_d64[:, None] * st_sd + safe_s[None, :] * st_sl,
+                    mask=dmask[:, None] & (in_state & tmask)[None, :],
+                    other=0.0,
+                ).to(tl.float32)
+                x_v = tl.load(
+                    x_base + offs_d64[:, None] * x_sd + safe_x[None, :] * x_ss,
+                    mask=dmask[:, None] & ((pos >= state_len) & tmask)[None, :],
+                    other=0.0,
+                ).to(tl.float32)
+                v = tl.where(in_state[None, :], s_v, x_v)
+                wk = tl.load(
+                    weight_ptr + offs_d64 * WIDTH + k,
+                    mask=dmask,
+                    other=0.0,
+                ).to(tl.float32)
+                acc += wk[:, None] * v
+            if HAS_BIAS:
+                acc += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(tl.float32)[
+                    :, None
+                ]
+            if ACT_IS_SILU:
+                acc = acc / (1.0 + tl.exp(-acc))
+            tl.store(
+                o_base + offs_d64[:, None] * o_sd + offs_t[None, :] * o_ss,
+                acc.to(out_ptr.dtype.element_ty),
+                mask=dmask[:, None] & tmask[None, :],
+            )
 
-    for i in range(0, state_len):
-        p = seqlen + i
-        from_state = p < state_len
-        safe_s = tl.minimum(tl.maximum(p, 0), state_len - 1)
-        safe_x = tl.minimum(tl.maximum(p - state_len, 0), seqlen - 1)
-        s_v = tl.load(
-            s_base + offs_d64 * st_sd + safe_s * st_sl,
-            mask=dmask & from_state,
-            other=0.0,
-        ).to(tl.float32)
-        x_v = tl.load(
-            x_base + offs_d64 * x_sd + safe_x * x_ss,
-            mask=dmask & (p >= state_len),
-            other=0.0,
-        ).to(tl.float32)
-        v = tl.where(from_state, s_v, x_v)
-        tl.store(
-            n_base + offs_d64 * ns_sd + i * ns_sl,
-            v.to(new_state_ptr.dtype.element_ty),
-            mask=dmask,
-        )
+        for i0 in range(0, state_len, BLOCK_T):
+            offs_i = i0 + tl.arange(0, BLOCK_T)
+            imask = offs_i < state_len
+            p = seqlen + offs_i
+            in_state2 = p < state_len
+            safe_s2 = tl.minimum(tl.maximum(p, 0), state_len - 1)
+            safe_x2 = tl.minimum(tl.maximum(p - state_len, 0), seqlen - 1)
+            s_v2 = tl.load(
+                s_base + offs_d64[:, None] * st_sd + safe_s2[None, :] * st_sl,
+                mask=dmask[:, None] & (in_state2 & imask)[None, :],
+                other=0.0,
+            ).to(tl.float32)
+            x_v2 = tl.load(
+                x_base + offs_d64[:, None] * x_sd + safe_x2[None, :] * x_ss,
+                mask=dmask[:, None]
+                & ((p >= state_len) & imask & (p - state_len < seqlen))[None, :],
+                other=0.0,
+            ).to(tl.float32)
+            v2 = tl.where(in_state2[None, :], s_v2, x_v2)
+            tl.store(
+                n_base + offs_d64[:, None] * ns_sd + offs_i[None, :] * ns_sl,
+                v2.to(new_state_ptr.dtype.element_ty),
+                mask=dmask[:, None] & imask[None, :],
+            )
 
 
 def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
@@ -144,8 +155,10 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         if squeeze_out:
             out = out.squeeze(-1)
         return out, new_state
-    grid = (triton.cdiv(dim, _BLOCK_D), batch)
-    _causal_conv1d_update_kernel[grid](
+    dim_blocks = triton.cdiv(dim, _BLOCK_D)
+    total = batch * dim_blocks
+    grid = (min(total, _MAX_GRID),)
+    _ccu_vec_kernel[grid](
         x,
         state,
         w,
@@ -172,7 +185,9 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         HAS_BIAS=bias is not None,
         ACT_IS_SILU=(activation in ("silu", "swish")),
         BLOCK_D=_BLOCK_D,
-        isCloseCoreTiling=True,
+        BLOCK_T=_BLOCK_T,
+        num_warps=4,
+        num_stages=1,
     )
     if squeeze_out:
         out = out.squeeze(-1)
