@@ -10,7 +10,7 @@ team_best_stage: s0
 team_best_commit: 07aaf2e5a081e4bfc4bb0ce3207b3e78c91d69df
 team_best_speedup: -
 sealed: no
-next: 停止盲投:昆仑两连败止损,enflame重构后反成败笔,华为更慢;需失败case细节或新结构证据再投
+next: 三芯仍有距离:华为0.074(差0.1门槛一步)/燧原0.001(向量化形态不适合该芯,回退S0字节再优化)/昆仑uni_sram墙(64-lane+coreTiling无效,试Vectorize/UnrollControl或标量形);明日额度30发继续
 updated: 2026-09-03
 ```
 
@@ -140,3 +140,16 @@ updated: 2026-09-03
   昆仑 FAIL / 华为 0.0255 / A 9.002 / B 10.6205
 - 判定：无失败 case 细节下的重构均为盲试，本题暂停；榜首
   EvokeAgent 6.8566x 证明可解，需要情报（case 详情/工单）再开工
+
+## 失败情报破译 + E2/E3（2026-09-04 深夜，submissions 9520/9522）
+
+- 情报（raw_result）：昆仑 S0/E1 = **1e35 级未初始化内存垃圾**（标量
+  条件选址在该芯静默失效指纹）；燧原 E1 = grid.y>255；华为 S0 过
+  正确性但 0.055x
+- E2（9520）：全向量化 [BLOCK_D=256, BLOCK_T=64]——华为撞 UB 溢出
+  （3745792 bits）、昆仑撞 uni_sram 编译墙、燧原 0.001x 大 tile 拖垮
+- E3（9522，source `1e6ce02`）：三 vendor 缩到 BLOCK_D=64 + 昆仑
+  isCloseCoreTiling 技法——**华为 correctness 翻绿 0.074x**（差门槛
+  一步）；昆仑仍 uni_sram 墙；燧原仍 0.001x
+- 判定：华为一步之遥（BLOCK_T=32/更多 program 可试）；燧原向量化
+  形态错配需回退 S0 字节另寻性能轴；昆仑墙深（T36 同款从未过）
