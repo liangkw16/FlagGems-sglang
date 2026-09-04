@@ -149,7 +149,10 @@ def chunked_sgmv_expand(
         if lora_ranks[w_idx] == 0:
             continue
         scaling = float(scalings[w_idx])
-        rows = permutation[start:end]
+        # the platform hands permutation as int32; kunlunxin torch
+        # requires long indices for index_select/index_copy_ (NVIDIA
+        # accepts int32, which is why the proxy stayed green)
+        rows = permutation[start:end].long()
         x_seg = x.index_select(0, rows).float()
         seg_out = output.index_select(0, rows).float()
         for i in range(n_slices):
