@@ -10,7 +10,7 @@ team_best_stage: s0
 team_best_commit: 07aaf2e5a081e4bfc4bb0ce3207b3e78c91d69df
 team_best_speedup: -
 sealed: no
-next: 昆仑正确性修复优先(isCloseCoreTiling/BLOCK轴);华为/燧原性能轴其后——三芯全修才有8/8
+next: 停止盲投:昆仑两连败止损,enflame重构后反成败笔,华为更慢;需失败case细节或新结构证据再投
 updated: 2026-09-03
 ```
 
@@ -130,3 +130,13 @@ updated: 2026-09-03
   （NameError/IndexError/`constexpr[0]`）不计入失败神谕
 - 平台实测（本账本上方小节）已是更强证据，MCP 结论仅作发射风险
   参考留存
+
+## E1 三 vendor 重构（2026-09-04 05:0x，submission 9422，daily_seq 11）
+
+- 结果**恶化**：燧原由「过但慢」转 correctness 失败（精确 2D grid +
+  去 int64 cast 重构引入）；昆仑仍败（两连败，止损）；华为 0.0555→
+  0.0255 更慢
+- 逐芯：天数 13.723 / 沐曦 7.0445 / 燧原 FAIL / 海光 10.859 /
+  昆仑 FAIL / 华为 0.0255 / A 9.002 / B 10.6205
+- 判定：无失败 case 细节下的重构均为盲试，本题暂停；榜首
+  EvokeAgent 6.8566x 证明可解，需要情报（case 详情/工单）再开工
