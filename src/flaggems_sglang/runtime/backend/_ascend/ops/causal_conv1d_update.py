@@ -23,7 +23,7 @@ import torch
 import triton
 import triton.language as tl
 
-_BLOCK_D = 256
+_BLOCK_D = 64
 _BLOCK_T = 64
 _MAX_GRID = 65535
 

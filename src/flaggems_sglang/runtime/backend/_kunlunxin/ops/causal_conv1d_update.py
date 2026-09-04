@@ -23,7 +23,7 @@ import torch
 import triton
 import triton.language as tl
 
-_BLOCK_D = 256
+_BLOCK_D = 64
 _BLOCK_T = 64
 _MAX_GRID = 65535
 
@@ -57,6 +57,7 @@ def _ccu_vec_kernel(
     ACT_IS_SILU: tl.constexpr,
     BLOCK_D: tl.constexpr,
     BLOCK_T: tl.constexpr,
+    isCloseCoreTiling: tl.constexpr,
 ):
     pid = tl.program_id(0)
     dim_blocks = tl.cdiv(dim, BLOCK_D)
@@ -186,6 +187,7 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         ACT_IS_SILU=(activation in ("silu", "swish")),
         BLOCK_D=_BLOCK_D,
         BLOCK_T=_BLOCK_T,
+        isCloseCoreTiling=True,
         num_warps=4,
         num_stages=1,
     )
