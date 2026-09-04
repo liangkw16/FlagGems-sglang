@@ -10,7 +10,7 @@ team_best_stage: s0
 team_best_commit: 07aaf2e5a081e4bfc4bb0ce3207b3e78c91d69df
 team_best_speedup: -
 sealed: no
-next: 三芯仍有距离:华为0.074(差0.1门槛一步)/燧原0.001(向量化形态不适合该芯,回退S0字节再优化)/昆仑uni_sram墙(64-lane+coreTiling无效,试Vectorize/UnrollControl或标量形);明日额度30发继续
+next: 昆仑有界错误(单路选址已生效,疑数值lowering);华为0.0675(静态<向量化0.074,需persistent/整行结构);燧原0.0305;今日剩4发留给新假设,明日30发续
 updated: 2026-09-03
 ```
 
@@ -153,3 +153,18 @@ updated: 2026-09-03
   一步）；昆仑仍 uni_sram 墙；燧原仍 0.001x
 - 判定：华为一步之遥（BLOCK_T=32/更多 program 可试）；燧原向量化
   形态错配需回退 S0 字节另寻性能轴；昆仑墙深（T36 同款从未过）
+
+## E4 静态短轴形态（2026-09-04 深夜，submission 9550，daily_seq 26，Codex P1/P3/P4）
+
+- SEQLEN/STATE_LEN/WIDTH 全 constexpr + static_range 展开——每 (t,k)
+  单条 load 路径，零运行期标量选择（source `e4bd3a6`，ZIP
+  `39c8c413…`；ascend 512-lane / kunlunxin 128-lane / enflame 512-lane
+  纯 i32）
+- **昆仑：1e35 垃圾 → 有界错误**（abs 7.7–17.4，rel 至 2.9e6；98%
+  元素错）——单路选址已生效，读的是对的数据区域但值算错，疑
+  bf16→fp32 cast 或非 2 幂 WIDTH 权重访存的 lowering 问题
+- 华为 0.0675（< e3 向量化 0.074——静态形态未兑现 2–6x 预期，T 轴
+  padding 论不成立于该芯）；燧原 0.0305（>0.001 但距 0.1 仍 3.3x）
+- 判定：T43 今日停（4 发留给新假设）；下一假设候选：昆仑 weight
+  访存改 [BLOCK_D, WIDTH_POW2] 2D tile 或 fp32 权重预转换；华为改
+  persistent 整行结构；燧原回退 S0 后找 launch/并行轴
