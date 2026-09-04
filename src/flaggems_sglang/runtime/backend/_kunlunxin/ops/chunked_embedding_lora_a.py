@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Ascend vendor: segment-owned persistent workers (Codex-directed: one worker per vector-core-sized slot) -
+# Kunlunxin vendor: segment-owned persistent workers (12 workers matches the FlagTree XPU worker count) -
 # each worker claims whole segments, reads segment bounds and adapter
 # metadata once, then walks the segment's tokens; no per-token binary
 # search and no dispatch cost for tens of thousands of logical
@@ -22,7 +22,7 @@ import torch
 import triton
 import triton.language as tl
 
-_WORKERS = 64
+_WORKERS = 12
 
 
 @triton.jit
