@@ -151,6 +151,53 @@ ZIP，核对实际字节数和 SHA-256 与本次候选 ZIP 完全一致；页面
 不作为验签证据。下载失败或哈希不一致时保留“提交已发送”事实，记录远端验签
 未确认/失败，并停止重试提交 POST。
 
+## 失败情报通道与踩坑沉淀（2026-09-04 实战）
+
+### 失败详情情报通道（优先于浏览器/工单）
+
+`status` 输出把 `raw_result` 过滤掉了，但平台列表接口本来就带完整
+失败详情。用 CLI 同源 token 直接 GET（只读）：
+
+```python
+client = HttpClient(_token())  # platform_cli.py 内部类
+raw = client.get(f"{API}/races/{race}/operator-submissions",
+                 {"page": 1, "page_size": 100})
+for r in raw:                       # 返回即列表
+    if r.get("submission_id") != 目标: continue
+    for g in r.get("gpu_results") or []:
+        rr = g.get("raw_result") or {}
+        # rr["errors"]: 超时/崩溃/编译错全文
+        # rr["failed_cases"]: [{error, params:{case_idx}, test_name,
+        #   traceback, ...}] 逐 case 的断言差异与 shape 线索
+```
+
+- 先看这个再谈浏览器/工单；本轮 5 个"不可解"失败根因全部来自这里。
+- 浏览器只读通道另有 IAB 标签页跨调用被重置回 about:blank 的问题，
+  且失败详情在「我的参赛」后要登录——API 通道两者皆免。
+
+### 平台评测踩坑硬事实（2026-09-04 批次实证）
+
+| 坑 | 表象 | 处置 |
+| --- | --- | --- |
+| 平台 permutation 等 index 张量是 int32 | 昆仑 `index_copy_(): Expected a long tensor for index, but got Int`（NVIDIA 接受 int32，代理全绿是盲区） | wrapper 内对平台传入索引统一 `.long()` 再进 index_select/index_copy_ |
+| 昇腾 BiShengHIR UB 预算 1572864 bits | 64 tile 形态报 `MLIRCompilationError: ub overflow, requires 2146304~3694592 bits` | 用 32³（或更小）tile；E2/E3 两发学费确认与数值无关 |
+| 燧原 grid.y 硬限 255 | `OutOfResources: grid.y, Required: 256, Hardware limit: 255`（batch=256 放 y 轴即炸） | batch 维放 grid.x 或折叠；逐轴限制记忆（grid.x 另有小上限） |
+| Triton 3.7.1 多趟 K 循环 codegen 错 | vendor GEMM rank=32 精确、rank≥64 第二趟起错 ~1e1（独立复刻加一条 store 即不复现） | `BLOCK_K=next_pow2(K)` 恒单趟；回归矩阵必须含 rank>BLOCK_K 的 case |
+| 评测机负载超时 | 同字节内核上轮 0.25x 通过、本轮 1830s 超时（R 状态机器忙） | 慢内核要留性能余量；超时≠代码回归，先比对同字节历史再动 |
+| 昆仑评测器崩溃族新表现 | `执行超时(1830s/1800s) + Subprocess crash: Fatal Python error: Aborted`（compile_worker 栈） | 按崩溃族协议：不计代码止损、封存等健康窗口 |
+| make_block_ptr block_shape 必须 2 幂 | `Expected a list of constant integers` / `Shape element must be a power of 2`（K=100/96） | block 维用 next_pow2 填充 + boundary_check；shape/strides 可 runtime |
+| 字符串补丁在 black 折行字节上静默未命中 | replace 无 assert 时"看似修复"实未命中（beta/g 漏加 pid_t*BT 白跑一轮） | 对已格式化文件做 replace 必须先 assert 旧串存在 |
+
+### 结构资产（可直接迁移）
+
+- **GQA 共享 dot**（源自 vllm-project/vllm-ascend#7576）：每个
+  k-group 只算一次 `dot(k, trans(k))` + 掩码，组内 HPG 个 head 仅做
+  逐 head 缩放与存储——generic 每 head 重算是 ratio 倍浪费；正确性
+  与性能双收益（华为 0.031→correctness 绿；燧原 0.031→1.62x）。
+- GitHub 情报源：vllm-ascend / flash-linear-attention-npu / sglang
+  的 PR 直接搜算子名；竞赛上游 flagos-ai/FlagGems-sglang 的 PR 是
+  其他队结构的公开泄露口。
+
 ## 逐芯结果与最小迭代
 
 评测记录可能需要主动切换“题目说明 → 提交代码”刷新。逐芯记录：正确性、
