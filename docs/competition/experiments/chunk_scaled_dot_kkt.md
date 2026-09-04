@@ -10,7 +10,7 @@ team_best_stage: s0
 team_best_commit: d7d8c4793278062f55617693585ae2ab89c8fbcc
 team_best_speedup: -
 sealed: no
-next: 昆仑fp32-ieee dot vendor + 燧原64/64/128+stages2+fold vendor + 华为性能轴
+next: 瘦原/昆仑轴均两连败止损;若续命需结构性改写(dot形态/tile族);华为0.031x需Cube轴
 updated: 2026-09-04
 ```
 
@@ -111,3 +111,11 @@ updated: 2026-09-04
   （NameError/IndexError/`constexpr[0]`）不计入失败神谕
 - 平台实测（本账本上方小节）已是更强证据，MCP 结论仅作发射风险
   参考留存
+
+## E1 双 vendor（2026-09-04 03:5x，submission 9415，daily_seq 9）
+
+- 燧原 64/64/128+stages2+fold 与 昆仑 fp32-ieee 双 vendor 同发：
+  **两芯仍 correctness 失败，均两连败触发止损**
+- 其余六芯读数与 S0 一致（华为 0.031 仍低于门槛）
+- 结论：本题失败非配置/精度分派能解，需结构性改写（换 dot 形态或
+  tile 族）才值得再投；优先级降后

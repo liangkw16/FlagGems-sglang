@@ -5,12 +5,12 @@ task: 47
 operator: chunked_sgmv_expand
 batch: 4
 validity: invalid
-platform: 6/8(s0,enflame+kunlun失败;e1已修enflame,昆仑评测中)
+platform: 7/8(e2,仅昆仑失败;三连败封轴)
 team_best_stage: e1
 team_best_commit: 663286c2399cac11ece86c7fa74fc2cd638143c5
 team_best_speedup: -
 sealed: no
-next: 等 e1(9383) 昆仑终态;若仍败走 route/materialize+32³/stages1 规则 GEMM vendor(T28/T37 实证)
+next: 昆仑轴封存(S0/E1/E2同指纹三连败,route/materialize亦无效);守榜;可选:华为15.6x/沐曦21.8x冲分轴
 updated: 2026-09-04
 ```
 
@@ -118,3 +118,11 @@ updated: 2026-09-04
   （NameError/IndexError/`constexpr[0]`）不计入失败神谕
 - 平台实测（本账本上方小节）已是更强证据，MCP 结论仅作发射风险
   参考留存
+
+## E2 昆仑 route/materialize vendor（2026-09-04 03:5x，submission 9414，daily_seq 8）
+
+- 7/8，昆仑仍 correctness 失败——**同指纹三连败（S0/E1/E2），昆仑轴
+  按 stop gate 封存**；T28/T37 的规则 GEMM 配方在本题不奏效
+- 其余七芯（generic/enflame vendor 不变）：天数 29.738 / 沐曦 21.7515 /
+  燧原 0.2485 / 海光 55.3695 / 华为 15.6055 / A 48.6245 / B 28.7775
+- 定格 7/8；七芯均值 ~28.6x。剩余提升轴：华为/沐曦性能（非正确性）
