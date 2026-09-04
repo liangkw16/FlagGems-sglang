@@ -18,6 +18,8 @@ from pathlib import Path
 
 import torch
 
+from tests._op_variants import load_operator_modules
+
 MODULE_PATH = (
     Path(__file__).parents[1]
     / "src"
@@ -200,3 +202,23 @@ class CausalConv1dUpdateTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
+class CausalConv1dUpdateVariantsTest(unittest.TestCase):
+    """Core matrix across every backend variant (generic + vendors)."""
+
+    MODULES = load_operator_modules("causal_conv1d_update")
+
+    def test_variants_match_reference(self):
+        for width, state_len, seqlen in ((4, 3, 1), (3, 5, 2), (4, 3, 3)):
+            x = torch.randn(5, 200, seqlen, device="cuda") * 2.0
+            state = torch.randn(5, 200, state_len, device="cuda")
+            w = torch.randn(200, width, device="cuda")
+            b = torch.randn(200, device="cuda")
+            e_out, e_state = reference(x, state, w, bias=b)
+            for name, module in self.MODULES:
+                with self.subTest(module=name, w=width, sl=state_len, sq=seqlen):
+                    out, new_state = module.causal_conv1d_update(x, state, w, bias=b)
+                    torch.testing.assert_close(out, e_out, atol=1e-5, rtol=1e-5)
+                    torch.testing.assert_close(new_state, e_state, atol=1e-5, rtol=1e-5)
