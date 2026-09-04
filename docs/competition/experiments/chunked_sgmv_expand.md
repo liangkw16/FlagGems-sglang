@@ -5,12 +5,12 @@ task: 47
 operator: chunked_sgmv_expand
 batch: 4
 validity: invalid
-platform: 7/8(e2,仅昆仑失败;三连败封轴)
+platform: 7/8(e3,昆仑四投 conclusive 封轴;七芯均值~29x)
 team_best_stage: e1
 team_best_commit: 663286c2399cac11ece86c7fa74fc2cd638143c5
 team_best_speedup: -
 sealed: no
-next: 昆仑轴封存(S0/E1/E2同指纹三连败,route/materialize亦无效);守榜;可选:华为15.6x/沐曦21.8x冲分轴
+next: 昆仑 conclusive 封轴(元数据型/i32型/规则GEMM三结构均败,且GEMM bug修复后仍败=芯片后端独立问题);守榜;可选华为/沐曦冲分
 updated: 2026-09-04
 ```
 
@@ -126,3 +126,18 @@ updated: 2026-09-04
 - 其余七芯（generic/enflame vendor 不变）：天数 29.738 / 沐曦 21.7515 /
   燧原 0.2485 / 海光 55.3695 / 华为 15.6055 / A 48.6245 / B 28.7775
 - 定格 7/8；七芯均值 ~28.6x。剩余提升轴：华为/沐曦性能（非正确性）
+
+## E3 昆仑 GEMM 修复重投（2026-09-04 0x:xx，submission 9467，daily_seq 16）
+
+- Codex 咨询指出 vendor GEMM 确定性缺陷；代理实测证实：**rank 32 单趟
+  K 循环精确、rank≥64 第二趟起错 ~1e1**（Triton 3.7.1 对该 kernel
+  形态的 codegen 问题；独立复刻加一条 store 即不复现），而 variants
+  矩阵此前只覆盖 rank≤32——真实盲区
+- 修复：`BLOCK_K = next_pow2(rank)`（cap 512）恒单趟（T28/T37 昆仑
+  实证形态本身就用 K≤32 单趟）；rank 64/96/128 入永久回归
+  （source `8a9296c`，ZIP `35568985…`）
+- **平台结果：昆仑仍 fail**（第 4 投；有效指纹 3 个结构全败：
+  元数据型 / i32 型 / 规则 fp32-ieee GEMM）→ 昆仑对该题 conclusive
+  封轴，判定为该芯片后端独立数值问题
+- 七芯（修复后读数）：天数 28.82 / 沐曦 25.08 / 燧原 0.2515 /
+  海光 53.55 / 华为 14.42 / A 49.97 / B 29.17——七芯均值 ~28.7x
