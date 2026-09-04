@@ -130,3 +130,22 @@ updated: 2026-09-04
   接近该芯历史 1830s 超时线）；其余六芯正常（A 21.41 / 海光 14.77 /
   天数 5.66 / 沐曦 5.45 / B 7.76）
 - 待终态后判定
+
+## E3 vllm-ascend 惯用法 vendor（2026-09-04，submission 9491，daily_seq 20）
+
+- **来源：GitHub 扫描挖到 `vllm-project/vllm-ascend#7576`**——该算子的
+  昇腾生产 kernel。vendor 镜像其结构：k 以 [BT,K] 连续 block_ptr 加载
+  + `tl.dot(b_k, tl.trans(b_k))`，**dot 与下三角掩码每个 k-group 只算
+  一次、组内 HPG 个 head 共享**（generic 每 head 重算 dot，ratio 倍
+  浪费——华为 0.031x 主嫌疑），逐 head 仅 beta 缩放 + 题面 safe-exp +
+  strided block_ptr 存储
+- 开发中抓到两处 bug：block_shape 需 2 幂（K 填充 next_pow2）；
+  beta/g 行偏移漏 `pid_t*BT`（chunk-local 行号错用——字符串补丁在
+  black 折行字节上静默未命中，改为 assert 后命中）
+- 平台中间态：**燧原 correctness 翻绿且 1.6225x**（此前该芯最高
+  0.031x/全部失败——第三个结构家族命中）；**华为仍败**（第三种结构
+  correctness 失败，该芯对本题的毒点独立于 dot/无 dot/block_ptr 形态）
+  ；昆仑评测中；其余六芯正常（A 19.25 / 海光 16.01 / 天数 5.82 /
+  沐曦 5.43 / B 7.56）
+- 若昆仑终态翻绿则 7/8（只差华为）；昆仑/华为双败则 6/8 但燧原
+  1.62x 的大幅改善已固化为 team 资产
