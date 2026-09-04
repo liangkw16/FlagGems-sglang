@@ -1,0 +1,97 @@
+# Copyright 2026 FlagOS Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import importlib.util
+import unittest
+from pathlib import Path
+
+import torch
+import torch.nn.functional as F
+
+MODULE_PATH = (
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "ops"
+    / "fused_gdn_gating.py"
+)
+SPEC = importlib.util.spec_from_file_location("fused_gdn_gating_module", MODULE_PATH)
+if SPEC is None or SPEC.loader is None:
+    raise RuntimeError(f"cannot load {MODULE_PATH}")
+MODULE = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(MODULE)
+
+
+def reference(A_log, a, b, dt_bias, beta=1.0, threshold=20.0):
+    x = a.float() + dt_bias.float()
+    softplus_x = torch.where(beta * x <= threshold, F.softplus(x, beta=beta), x)
+    g = -torch.exp(A_log.float()) * softplus_x
+    beta_output = torch.sigmoid(b.float())
+    return g.unsqueeze(0).to(torch.float32), beta_output.unsqueeze(0).to(torch.float32)
+
+
+@unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
+class FusedGdnGatingTest(unittest.TestCase):
+    def _check(self, A_log, a, b, dt_bias, beta=1.0, threshold=20.0):
+        actual_g, actual_beta = MODULE.fused_gdn_gating(
+            A_log, a, b, dt_bias, beta, threshold
+        )
+        ref_g, ref_beta = reference(A_log, a, b, dt_bias, beta, threshold)
+        for name, got, exp in (("g", actual_g, ref_g), ("beta", actual_beta, ref_beta)):
+            self.assertEqual(got.shape, exp.shape, name)
+            self.assertEqual(got.dtype, exp.dtype, name)
+            torch.testing.assert_close(got, exp, atol=1e-5, rtol=1e-5)
+
+    def test_basic(self):
+        for B, H in ((1, 8), (4, 16), (32, 32)):
+            with self.subTest(B=B, H=H):
+                A_log = torch.randn(H, device="cuda")
+                a = torch.randn(B, H, device="cuda") * 3
+                b = torch.randn(B, H, device="cuda") * 3
+                dt_bias = torch.randn(H, device="cuda")
+                self._check(A_log, a, b, dt_bias)
+
+    def test_threshold_boundary(self):
+        # values near and beyond threshold=20
+        H = 4
+        A_log = torch.randn(H, device="cuda")
+        dt_bias = torch.zeros(H, device="cuda")
+        a = torch.tensor(
+            [[-25.0, -20.0, 19.9, 25.0], [-1.0, 0.0, 20.0, 30.0]],
+            device="cuda",
+        )
+        b = torch.randn(2, H, device="cuda")
+        self._check(A_log, a, b, dt_bias, beta=1.0, threshold=20.0)
+
+    def test_custom_beta(self):
+        H = 8
+        A_log = torch.randn(H, device="cuda")
+        a = torch.randn(4, H, device="cuda")
+        b = torch.randn(4, H, device="cuda")
+        dt_bias = torch.randn(H, device="cuda")
+        self._check(A_log, a, b, dt_bias, beta=2.0, threshold=15.0)
+
+    def test_empty_batch(self):
+        H = 8
+        A_log = torch.randn(H, device="cuda")
+        a = torch.zeros(0, H, device="cuda")
+        b = torch.zeros(0, H, device="cuda")
+        dt_bias = torch.randn(H, device="cuda")
+        g, beta_out = MODULE.fused_gdn_gating(A_log, a, b, dt_bias)
+        self.assertEqual(g.shape, (1, 0, H))
+        self.assertEqual(beta_out.shape, (1, 0, H))
+
+
+if __name__ == "__main__":
+    unittest.main()
