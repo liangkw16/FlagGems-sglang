@@ -5,12 +5,12 @@ task: 46
 operator: chunked_embedding_lora_a
 batch: 4
 validity: valid
-platform: 8/8(e2,13.998125x)
-team_best_stage: e2
-team_best_commit: 63557eb68f8bb8823cca377a089c1930c7ccfcb8
-team_best_speedup: 13.998125
+platform: 8/8(e3,14.1051875x)
+team_best_stage: e3
+team_best_commit: 6e3a1c4e64304d017ded08cabb6445b9152776f2
+team_best_speedup: 14.1051875
 sealed: no
-next: 榜首18.75x差距25%;剩余大拖累:昆仑0.227/燧原0.334/华为2.127/沐曦5.44;华为折叠轴仅+10%,下轴待新证据
+next: 守榜;各芯 vendor 轴基本打满(沐曦+26%后剩昆仑0.23/燧原0.37/华为2.12为结构性差距);榜首18.75x
 updated: 2026-09-03
 ```
 
@@ -132,3 +132,13 @@ updated: 2026-09-03
   4.8065→5.4445；燧原 0.246→0.334；国际A 29.349→31.8545；华为折叠
   vendor：1.9265→2.127（+10%，幅度有限）；昆仑 0.2315→0.227（水位）
 - 榜首 EvokeAgent 18.7483x，差距收窄至 25%
+
+## E3 沐曦 i32 预路由（2026-09-04 07:4x，submission 9452，daily_seq 15）
+
+- **8/8 valid，平均 14.1051875x**（+0.8%；source `6e3a1c4`，
+  ZIP `0e61b0b6…`）
+- 沐曦 searchsorted 预路由 vendor：5.4445→**6.844（+26%）**；海光
+  水位 27.505→29.462；国际A 水位回落 31.8545→29.445
+- 判定：T46 vendor 轴打满（华为折叠/海光 warps2/燧原 i32/沐曦 i32
+  均已上），剩余差距（昆仑 0.23、燧原 0.37、华为 2.12）为弱芯结构
+  性水位，转入守榜
