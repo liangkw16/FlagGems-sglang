@@ -5,7 +5,7 @@ task: 52
 operator: fused_dual_residual_rmsnorm
 batch: 4
 validity: invalid
-platform: 6/8(e3,card_b翻绿!仅燧原+昆仑)
+platform: 6/8(e4,燧原两核拆分也不行;精度天花板)
 team_best_stage: -
 team_best_speedup: -
 sealed: no
@@ -28,3 +28,7 @@ updated: 2026-09-05
 - tianshu PASS 8.62（direct / generic 继续生效）
 - **6/8**：天数/沐曦/海光/华为/A/card_b 全过
 - 仅燧原+昆仑败（同款 1-4/33M 精度边界，两种除法形式均不过）
+
+## E4 燧原两核拆分（submission 10151）
+- 燧原仍败——memory 物化中间 bf16 也没修复 1/33M 边界翻转
+- **判定：T52 6/8 是当前方法的天花板**（燧原+昆仑均不可修）
