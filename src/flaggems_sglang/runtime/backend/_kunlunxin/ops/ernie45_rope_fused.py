@@ -37,6 +37,7 @@ def _rope_precomputed_pos_kernel(
     cos_sin_stride,
     HEADS_TILE: tl.constexpr,
     BLOCK_R: tl.constexpr,
+    isCloseCoreTiling: tl.constexpr,
 ):
     token = tl.program_id(0)
     head_tile = tl.program_id(1)
@@ -125,7 +126,7 @@ def _compute_positions(positions, mrope_section, half_rd, device):
     return pos.to(torch.int32).contiguous()
 
 
-def _apply_rope_precomputed(x, cos_sin_cache, pos, head_size, rotary_dim, heads_tile=4):
+def _apply_rope_precomputed(x, cos_sin_cache, pos, head_size, rotary_dim, heads_tile=1):
     T, x_dim = x.shape
     n_h = x_dim // head_size
     half_rd = rotary_dim // 2
@@ -148,6 +149,7 @@ def _apply_rope_precomputed(x, cos_sin_cache, pos, head_size, rotary_dim, heads_
         cos_sin_cache.stride(0),
         HEADS_TILE=heads_tile,
         BLOCK_R=block_r,
+        isCloseCoreTiling=True,
         num_warps=4,
         num_stages=1,
     )
