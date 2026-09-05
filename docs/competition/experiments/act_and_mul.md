@@ -7,7 +7,7 @@ batch: 4
 validity: valid
 platform: 8/8(e2,3.248925x)
 team_best_stage: e6
-team_best_commit: 5251bf5f4a5df87396a1ab434323f748a925e7b6
+team_best_commit: 5251bf5f1ef53eaac8ce83c0bb0d0b0b91425fad
 team_best_speedup: 3.25835
 sealed: no
 next: M1载体成TB(3.25835,10344);三候选全消费;守榜,距旧榜首3.5194差-7.4%无新轴
