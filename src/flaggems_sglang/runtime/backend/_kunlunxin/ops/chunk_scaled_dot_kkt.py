@@ -43,6 +43,7 @@ def _kkt_gram_gemm_kernel(
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
     GROUP_M: tl.constexpr,
+    USE_INPUT_DTYPE: tl.constexpr,
 ):
     pid = tl.program_id(0)
     num_pid_m = tl.cdiv(M, BLOCK_M)
@@ -80,12 +81,18 @@ def _kkt_gram_gemm_kernel(
             a_ptrs,
             mask=(offs_m[:, None] < M) & mask_k[None, :],
             other=0.0,
-        ).to(tl.float32)
+        )
         b = tl.load(
             b_ptrs,
             mask=mask_k[:, None] & (offs_n[None, :] < N),
             other=0.0,
-        ).to(tl.float32)
+        )
+        # E10: fp16/bf16 operands dot natively (SDNN path; bf16 inputs
+        # with fp32 accumulation equal fp32-ieee math on bf16-valued
+        # data); true-fp32 inputs stay ieee fp32.
+        if not USE_INPUT_DTYPE:
+            a = a.to(tl.float32)
+            b = b.to(tl.float32)
         accumulator = tl.dot(a, b, acc=accumulator, input_precision="ieee")
         a_ptrs += BLOCK_K * k_sk
         b_ptrs += BLOCK_K * k_sk
@@ -224,6 +231,7 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
         BLOCK_N=32,
         BLOCK_K=block_k,
         GROUP_M=8,
+        USE_INPUT_DTYPE=k.dtype in (torch.float16, torch.bfloat16),
         num_warps=4,
         num_stages=1,
     )
