@@ -12,117 +12,103 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Kunlunxin vendor: width-axis reduction form. Wrapper concatenates
-# state+x into one buffer and pre-transposes weight to [W, D]; the
-# kernel loads a [W_PAD, D_BLOCK] tile per output step and computes
-# tl.sum(w * v, axis=0) - replacing the scalar FMA chain that
-# miscompiles on this backend. No time-axis padding.
+# Kunlunxin vendor: three-kernel split with 3D micro-programs and a
+# rank-1 width reduction (Codex P1). The scalar FMA chain miscompiles
+# deterministically on this backend (E4-E6 identical wrong values) and
+# the E7 [W_PAD, BLOCK_D] 2D-tile form hits the uni_sram compile wall,
+# so the conv kernel holds ONLY a [W_PAD] vector and one tl.sum; bias,
+# SiLU and the output cast live in a separate flat kernel (T53
+# vectorized-flat recipe) and the state copy is a plain flat copy.
 
 import torch
 import triton
 import triton.language as tl
 
-_BLOCK_D = 128
 _MAX_GRID = 65535
 
 
 @triton.jit
-def _ccu_width_reduce_kernel(
+def _ccu_conv_rank1_kernel(
     xcat_ptr,
-    wt_ptr,
-    bias_ptr,
-    out_ptr,
-    new_state_ptr,
-    batch,
+    weight_ptr,
+    pre_ptr,
     dim,
     seqlen,
     state_len,
-    xcat_sb,
-    xcat_sd,
-    xcat_sp,
-    wt_stride_w,
-    wt_stride_d,
-    ns_sb,
-    ns_sd,
-    ns_sl,
-    o_sb,
-    o_sd,
-    o_ss,
-    SEQLEN: tl.constexpr,
-    STATE_LEN: tl.constexpr,
+    l_cat,
     WIDTH: tl.constexpr,
     W_PAD: tl.constexpr,
-    HAS_BIAS: tl.constexpr,
-    ACT_IS_SILU: tl.constexpr,
-    BLOCK_D: tl.constexpr,
 ):
-    pid = tl.program_id(0)
-    dim_blocks = tl.cdiv(dim, BLOCK_D)
-    total = batch * dim_blocks
-    grid_size = tl.num_programs(0)
+    t = tl.program_id(0)
+    d = tl.program_id(1)
+    b = tl.program_id(2)
 
     offs_w = tl.arange(0, W_PAD)
     w_mask = offs_w < WIDTH
-    offs_d_base = tl.arange(0, BLOCK_D)
+    # Window positions in the virtual concat(state, x).
+    p = t + state_len + 1 - WIDTH + offs_w
+    row = b.to(tl.int64) * dim + d
+    v = tl.load(xcat_ptr + row * l_cat + p, mask=w_mask, other=0.0)
+    wk = tl.load(
+        weight_ptr + d.to(tl.int64) * WIDTH + offs_w, mask=w_mask, other=0.0
+    )
+    pre = tl.sum(v * wk, axis=0)
+    tl.store(pre_ptr + row * seqlen + t, pre)
 
-    for job in range(pid, total, grid_size):
-        b = job // dim_blocks
-        db = job - b * dim_blocks
-        offs_d = db * BLOCK_D + offs_d_base
-        dmask = offs_d < dim
 
-        xcat_row = xcat_ptr + b * xcat_sb + offs_d * xcat_sd
-        wt_row = wt_ptr + offs_d * wt_stride_d
+@triton.jit
+def _ccu_postprocess_kernel(
+    pre_ptr,
+    bias_ptr,
+    out_ptr,
+    total,
+    seqlen,
+    dim,
+    HAS_BIAS: tl.constexpr,
+    ACT_IS_SILU: tl.constexpr,
+    BLOCK: tl.constexpr,
+):
+    pid = tl.program_id(0)
+    step = tl.num_programs(0) * BLOCK
+    for start in range(pid * BLOCK, total, step):
+        idx = start + tl.arange(0, BLOCK)
+        mask = idx < total
+        v = tl.load(pre_ptr + idx, mask=mask, other=0.0)
+        if HAS_BIAS:
+            d = (idx // seqlen) % dim
+            v += tl.load(bias_ptr + d, mask=mask, other=0.0)
+        if ACT_IS_SILU:
+            # SiLU in the statement's exact form; stability rewrites
+            # fail the checker at large negative inputs.
+            v = v / (1.0 + tl.exp(-v))
+        tl.store(out_ptr + idx, v.to(out_ptr.dtype.element_ty), mask=mask)
 
-        for t in tl.static_range(SEQLEN):
-            # Window start: the first of `width` consecutive positions
-            # ending at the new token t
-            win_start = t + state_len + 1 - WIDTH
-            p = win_start + offs_w  # [W_PAD] positions in x_cat
-            # 2D tile [W_PAD, BLOCK_D]
-            window = tl.load(
-                xcat_row + p[:, None] * xcat_sp,
-                mask=w_mask[:, None] & dmask[None, :],
-                other=0.0,
-            ).to(tl.float32)
-            wk = tl.load(
-                wt_row + offs_w[:, None] * wt_stride_w,
-                mask=w_mask[:, None] & dmask[None, :],
-                other=0.0,
-            ).to(tl.float32)
-            # Width-axis reduction: [W_PAD, BLOCK_D] -> [BLOCK_D]
-            acc = tl.sum(window * wk, axis=0)
 
-            if HAS_BIAS:
-                acc += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(tl.float32)
-            if ACT_IS_SILU:
-                acc = acc * tl.sigmoid(acc)
-            tl.store(
-                out_ptr + b * o_sb + offs_d * o_sd + t * o_ss,
-                acc.to(out_ptr.dtype.element_ty),
-                mask=dmask,
-            )
-
-        # New state: copy last STATE_LEN positions from x_cat
-        state_offs = tl.arange(0, 64)
-        for i0 in range(0, state_len, 64):
-            si = i0 + state_offs
-            smask = si < state_len
-            src_p = seqlen + si
-            xcat_b2 = xcat_ptr + b * xcat_sb + offs_d[None, :] * xcat_sd
-            v = tl.load(
-                xcat_b2 + src_p[:, None] * xcat_sp,
-                mask=smask[:, None] & dmask[None, :],
-                other=0.0,
-            ).to(tl.float32)
-            tl.store(
-                new_state_ptr
-                + b * ns_sb
-                + offs_d[None, :] * ns_sd
-                + si[:, None] * ns_sl,
-                v.to(new_state_ptr.dtype.element_ty),
-                mask=smask[:, None] & dmask[None, :],
-            )
+@triton.jit
+def _ccu_state_copy_kernel(
+    xcat_ptr,
+    new_state_ptr,
+    total,
+    seqlen,
+    state_len,
+    l_cat,
+    BLOCK: tl.constexpr,
+):
+    pid = tl.program_id(0)
+    step = tl.num_programs(0) * BLOCK
+    for start in range(pid * BLOCK, total, step):
+        idx = start + tl.arange(0, BLOCK)
+        mask = idx < total
+        row = idx // state_len
+        i = idx % state_len
+        v = tl.load(
+            xcat_ptr + row.to(tl.int64) * l_cat + seqlen + i, mask=mask, other=0.0
+        )
+        tl.store(
+            new_state_ptr + idx,
+            v.to(new_state_ptr.dtype.element_ty),
+            mask=mask,
+        )
 
 
 def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
@@ -132,14 +118,18 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     orig_dtype = x.dtype
     # Concatenate state+x along time axis (data layout, not computation)
     x_cat = torch.cat([conv_state.float(), x.float()], dim=-1).contiguous()
-    wt = weight.t().contiguous().float()  # [W, D]
+    weight_f = weight.contiguous().float()  # [D, W]
     if bias is not None:
         bias = bias.contiguous().float()
     batch, dim, seqlen = x.shape
     state_len = conv_state.shape[-1]
     width = weight.shape[1]
-    out = torch.empty(batch, dim, seqlen, dtype=torch.float32, device=x.device)
-    new_state = torch.empty_like(conv_state)
+    out = torch.empty(
+        batch, dim, seqlen, dtype=torch.float32, device=x.device
+    )
+    new_state = torch.empty(
+        conv_state.shape, dtype=conv_state.dtype, device=x.device
+    )
     if batch * dim == 0:
         out = out.to(orig_dtype)
         if squeeze_out:
@@ -147,40 +137,59 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         return out, new_state
 
     w_pad = max(triton.next_power_of_2(width), 2)
-    dim_blocks = triton.cdiv(dim, _BLOCK_D)
-    total = batch * dim_blocks
-    grid = (min(total, _MAX_GRID),)
-    _ccu_width_reduce_kernel[grid](
+    l_cat = state_len + seqlen
+    pre = torch.empty(
+        batch * dim * seqlen, dtype=torch.float32, device=x.device
+    )
+
+    # Kernel 1: one micro-program per (t, d, b) with a [W_PAD] rank-1
+    # reduction - no FMA chain, no 2D tile, no activation, no loop.
+    _ccu_conv_rank1_kernel[(seqlen, dim, batch)](
         x_cat,
-        wt,
-        bias if bias is not None else x_cat,
-        out,
-        new_state,
-        batch,
+        weight_f,
+        pre,
         dim,
         seqlen,
         state_len,
-        x_cat.stride(0),
-        x_cat.stride(1),
-        x_cat.stride(2),
-        wt.stride(0),
-        wt.stride(1),
-        new_state.stride(0),
-        new_state.stride(1),
-        new_state.stride(2),
-        out.stride(0),
-        out.stride(1),
-        out.stride(2),
-        SEQLEN=seqlen,
-        STATE_LEN=state_len,
+        l_cat,
         WIDTH=width,
         W_PAD=w_pad,
+        num_warps=1,
+        num_stages=1,
+    )
+
+    # Kernel 2: flat bias + SiLU + dtype cast (out is contiguous).
+    total = batch * dim * seqlen
+    grid2 = (min(triton.cdiv(total, 1024), _MAX_GRID),)
+    _ccu_postprocess_kernel[grid2](
+        pre,
+        bias if bias is not None else pre,
+        out,
+        total,
+        seqlen,
+        dim,
         HAS_BIAS=bias is not None,
         ACT_IS_SILU=(activation in ("silu", "swish")),
-        BLOCK_D=_BLOCK_D,
+        BLOCK=1024,
         num_warps=4,
         num_stages=1,
     )
+
+    # Kernel 3: flat state copy from the tail of x_cat.
+    total_ns = batch * dim * state_len
+    grid3 = (min(triton.cdiv(total_ns, 1024), _MAX_GRID),)
+    _ccu_state_copy_kernel[grid3](
+        x_cat,
+        new_state,
+        total_ns,
+        seqlen,
+        state_len,
+        l_cat,
+        BLOCK=1024,
+        num_warps=4,
+        num_stages=1,
+    )
+
     out = out.to(orig_dtype)
     if squeeze_out:
         out = out.squeeze(-1)
