@@ -5,7 +5,7 @@ task: 50
 operator: extend_attention
 batch: 4
 validity: candidate-wip
-platform: 5/8(e2,华为两种softmax均败;燧原/昆仑在评)
+platform: 6/8+(e3,燧原翻绿0.013x<门槛;昆仑在评)
 team_best_stage: -
 team_best_speedup: -
 sealed: no
@@ -38,3 +38,9 @@ updated: 2026-09-05
 - **判定**：华为数值问题不在 softmax 算法（online/two-pass 等价
   数学都败），在更底层的 dot/exp/accumulation lowering
 - 五芯稳定过门槛：天数 0.32 / 沐曦 0.59 / 海光 1.33 / A 1.40 / B 1.07
+
+## E3 batched vendor → 燧原翻绿（submission 10141）
+- **燧原 PASS 0.013x**（batched 后不再超时！但低于 0.1x 门槛）
+- 沐羲升至 0.727x（batched 比 per-query 快）
+- 6 芯 correctness 全过（天数/沐曦/燧原/海光/A/B）
+- 华为仍败；昆仑在评
