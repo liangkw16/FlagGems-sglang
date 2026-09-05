@@ -172,3 +172,14 @@ failed_cases` 本就携带完整失败详情，CLI status 视图把它过滤掉�
   账号级 live 状态触发上传后绑定校验；status 复核无提交记录、额度
   未耗 → 用户明确授权后归档（`.git/flagos-platform/archived/`）→
   重新 preflight → 单次提交
+
+## E8-E10 榜首防守优化尝试（2026-09-05 深夜，submissions 10164/10175）
+
+- **E8**（enflame direct 3D-grid + i32）：燧原 FAIL——间接寻址 + dot
+  组合在该芯不支持（与 S0 同根因），route/materialize 是唯一可行形态
+- **E9**（+ 昆仑 direct 3D-grid）：昆仑 FAIL——同样间接 + dot 不支持；
+  7 非昆仑芯水位上涨（华为 15.61 vs 13.74、A 50.05 vs 49.01）
+- **E10**：回退两 vendor → ZIP SHA 与已提交 e5 相同，CLI 拒绝重掷
+- **结论：T47 25.00x 已是当前 vendor 组合的最优**。route/materialize
+  对燧原和昆仑都是唯一 correctness 可行的形态，无法用 direct kernel
+  替换来提速。水位上涨只在无效提交中可见，不可捕获。
