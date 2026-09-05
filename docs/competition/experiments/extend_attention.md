@@ -5,7 +5,7 @@ task: 50
 operator: extend_attention
 batch: 4
 validity: candidate-wip
-platform: 6/8+(e3,燧原翻绿0.013x<门槛;昆仑在评)
+platform: 6/8(e4,昆仑conclusive封轴;华为数值不可修;燧原0.013x<门槛)
 team_best_stage: -
 team_best_speedup: -
 sealed: no
@@ -44,3 +44,8 @@ updated: 2026-09-05
 - 沐羲升至 0.727x（batched 比 per-query 快）
 - 6 芯 correctness 全过（天数/沐曦/燧原/海光/A/B）
 - 华为仍败；昆仑在评
+
+## E4 昆仑 per-query BLOCK_N=16（submission 10280）
+- 昆仑仍败（uni_sram 未被 BLOCK_N=16 + coreTiling 清除）→ conclusive 封轴
+- 6 芯 correctness 过；燧原 0.013x 低于门槛；华为数值问题
+- **T50 最终定格 6 芯 correctness / 5 芯过门槛**
