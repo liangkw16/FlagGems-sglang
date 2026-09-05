@@ -10,7 +10,7 @@ team_best_stage: e7
 team_best_commit: 4d16e0701b054247b83cf09c2e39664cd750235f
 team_best_speedup: -
 sealed: no
-next: E8昆仑首次过correctness(崩溃族击穿!)但0.0095x<门槛;E9去物化直读strides冲0.1x
+next: E9去物化仅+5%(0.01x),瓶颈=ieee fp32 dot;E10=输入精度dot(fp16/bf16走SDNN)一发可决
 updated: 2026-09-06
 ```
 
@@ -242,3 +242,20 @@ K 循环推进 `b_ptrs += BLOCK_K * stride_bn` 是潜伏笔误（应为 stride_b
   fp32 上抛在 kernel 内完成，消除全部 permute/contiguous/float 拷贝
 - 跨题知识沉淀：**route/materialize + 规则 GEMM 同样击穿 KKT 类
   compile-worker 崩溃族**（T28/T37/T45 三题互证，昆仑 dot 题通用解）
+
+## E9 去物化直读 strides（2026-09-06 00:41，submission 10331，daily_seq 4）
+
+- 单变量：GEMM/epilogue 直接按 k/beta/g 原生规整 strides 寻址，
+  wrapper 只留 gram 缓冲，全部 permute/contiguous/float 拷贝消除；
+  source `4e410b1`，ZIP `e9-4e410b1` SHA-256 `730b686b…7a77`
+- screening：unittest 9/9 OK（首轮 `b` 标量与 tile 重名 loop-carried
+  编译错，改名修复）
+- **终态 8 芯 correctness 全过，昆仑 0.01x 仍 < 0.1x（去物化仅 +5%）**
+  ——物化不是瓶颈；瓶颈锁定 ieee fp32 tl.dot 本身（参考是昆仑
+  SDNN 快速 einsum，fp32-ieee dot 走非矩阵单元路径，~100x 差距）
+- 逐芯：天数 5.7955 / 沐曦 5.3295 / 燧原 1.6365 / 海光 14.736 /
+  昆仑 0.01 / 华为 0.252 / A 21.4315 / B 7.6885（avg 7.1099）
+- E10 假设：k 为 fp16/bf16 时 dot 用原生输入精度（SDNN 路径；
+  bf16 输入 + fp32 accumulate 与 fp32-ieee 数学等价），fp32 输入
+  保持 ieee——即 generic 的 USE_INPUT_DTYPE 模式。风险：T12 曾有
+  昆仑 fp16 dot 正确性失败前科，一发可决

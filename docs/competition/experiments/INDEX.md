@@ -25,7 +25,7 @@
 | 42 | act_and_mul | valid | 8/8(e2,3.248925x) | e2 3.248925x | no | A1裁尾+5.8%低于门证伪关闭(10324);剩K1昆仑直达(门≥0.60)择机;431x不追 | 2026-09-06 | [act_and_mul](act_and_mul.md) |
 | 43 | causal_conv1d_update | invalid | 7/8(e7,仅昆仑失败;华为0.4435x+燧原0.325x双双过门槛!) | s0 -x | no | EvokeAgent 8/8证明昆仑可过;P1三kernel拆分rank-1归约已预注册(见09-05方案节) | 2026-09-05 | [causal_conv1d_update](causal_conv1d_update.md) |
 | 44 | chain_speculative_sampling | invalid | 探针确认全芯失败(predicts mismatch=半精度bit-exact) | s0 -x | no | conclusive 封轴;天数/A/B同款517值=fp32也有差;平台测半精度 | 2026-09-04 | [chain_speculative_sampling](chain_speculative_sampling.md) |
-| 45 | chunk_scaled_dot_kkt | invalid | 7/8(e7,仅昆仑失败;华为0.0455→0.2535x过门槛!) | e7 -x | no | E8昆仑首次过correctness(崩溃族击穿!)但0.0095x<门槛;E9去物化直读strides冲0.1x | 2026-09-06 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
+| 45 | chunk_scaled_dot_kkt | invalid | 7/8(e7,仅昆仑失败;华为0.0455→0.2535x过门槛!) | e7 -x | no | E9去物化仅+5%(0.01x),瓶颈=ieee fp32 dot;E10=输入精度dot(fp16/bf16走SDNN)一发可决 | 2026-09-06 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x) | e3 14.1051875x | no | 重开:榜差归因高分芯数据流;天数预路由首发,逐芯晋级滚动组合(见09-05方案节) | 2026-09-05 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
 | 47 | chunked_sgmv_expand | valid | 8/8(e5,25.0048125x,榜首) | e5 25.0048125x | no | 守榜首(25.00x vs 前榜首23.33x);燧原0.178x/昆仑3.72x为余量轴;stale意图经用户授权归档重提(移至archived/) | 2026-09-04 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
 | 48 | chunked_sgmv_shrink | valid | 8/8(e6,4.7198125x) | e6 4.7198125x | no | 守榜;冲分轴:燧原0.58x/昆仑1.79x/天数3.85x | 2026-09-05 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
