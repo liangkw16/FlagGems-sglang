@@ -12,13 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Ascend vendor: two-pass attention (first pass computes all scores
+# and the max/sum, second pass accumulates V). Numerically matches
+# the reference's direct softmax more closely than online softmax.
+
 import torch
 import triton
 import triton.language as tl
 
 
 @triton.jit
-def _extend_attn_simple(
+def _extend_attn_2pass(
     q_ptr,
     kext_ptr,
     vext_ptr,
@@ -34,58 +38,44 @@ def _extend_attn_simple(
     H_KV,
     GROUP_SIZE,
     head_size,
-    max_total_len,
     BLOCK_N: tl.constexpr,
     BLOCK_D: tl.constexpr,
 ):
-    # One program per (query_token, query_head)
     global_q_idx = tl.program_id(0)
     q_head = tl.program_id(1)
-
     kv_head = q_head // GROUP_SIZE
 
-    # Batch assignment precomputed in wrapper
-    b_found = tl.load(batch_ids_ptr + global_q_idx)
-    q_start = tl.load(qo_indptr_ptr + b_found)
-    kv_start = tl.load(kv_indptr_ptr + b_found)
-    kv_end = tl.load(kv_indptr_ptr + b_found + 1)
+    b = tl.load(batch_ids_ptr + global_q_idx)
+    q_start = tl.load(qo_indptr_ptr + b)
+    kv_start = tl.load(kv_indptr_ptr + b)
+    kv_end = tl.load(kv_indptr_ptr + b + 1)
     prefix_len = kv_end - kv_start
-    extend_len = tl.load(qo_indptr_ptr + b_found + 1) - q_start
-    total_len = prefix_len + extend_len
-
-    # Query offset within this batch's extend segment
     q_offset = global_q_idx - q_start
+    total_len = prefix_len + tl.load(qo_indptr_ptr + b + 1) - q_start
 
     offs_d = tl.arange(0, BLOCK_D)
     d_mask = offs_d < head_size
 
-    # Load query [BLOCK_D]
     q = tl.load(
         q_ptr + global_q_idx * (H_Q * head_size) + q_head * head_size + offs_d,
         mask=d_mask,
         other=0.0,
     ).to(tl.float32)
 
-    # Process all KV in one pass (no blocking for correctness)
-    # Accumulate scores and values
+    # Pass 1: find max score
     m_val = -1e30
-    l_val = 0.0
-    acc = tl.zeros((BLOCK_D,), dtype=tl.float32)
-
     for n_start in range(0, total_len, BLOCK_N):
         offs_n = n_start + tl.arange(0, BLOCK_N)
         n_valid = offs_n < total_len
         is_prefix = offs_n < prefix_len
         ext_pos = offs_n - prefix_len
-        ext_valid = (ext_pos >= 0) & (ext_pos < extend_len)
+        ext_valid = (ext_pos >= 0) & (ext_pos < total_len - prefix_len)
 
         prefix_idx = tl.load(
             kv_indices_ptr + kv_start + offs_n,
             mask=is_prefix & n_valid,
             other=0,
         )
-
-        # Load K
         k_buf = tl.load(
             kb_ptr
             + prefix_idx[:, None] * (H_KV * head_size)
@@ -104,23 +94,50 @@ def _extend_attn_simple(
         ).to(tl.float32)
         k = tl.where(is_prefix[:, None], k_buf, k_ext)
 
-        # Scores [BLOCK_N]
         score = tl.sum(k * q[None, :], axis=1) * scale
-
-        # Causal: key position <= prefix_len + q_offset
         causal_ok = offs_n <= (prefix_len + q_offset)
         score = tl.where(causal_ok & n_valid, score, -1e30)
+        m_val = tl.maximum(m_val, tl.max(score, axis=0))
 
-        # Online softmax (per-vector)
-        m_new = tl.maximum(m_val, tl.max(score, axis=0))
-        alpha = tl.exp(m_val - m_new)
-        p = tl.exp(score - m_new)
-        p = tl.where(n_valid & causal_ok, p, 0.0)
-        l_val = l_val * alpha + tl.sum(p, axis=0)
-        acc = acc * alpha
-        m_val = m_new  # CRITICAL: update running max for next block!
+    # Pass 2: compute sum of exp and accumulate V
+    l_val = 0.0
+    acc = tl.zeros((BLOCK_D,), dtype=tl.float32)
+    for n_start in range(0, total_len, BLOCK_N):
+        offs_n = n_start + tl.arange(0, BLOCK_N)
+        n_valid = offs_n < total_len
+        is_prefix = offs_n < prefix_len
+        ext_pos = offs_n - prefix_len
+        ext_valid = (ext_pos >= 0) & (ext_pos < total_len - prefix_len)
 
-        # Load V
+        prefix_idx = tl.load(
+            kv_indices_ptr + kv_start + offs_n,
+            mask=is_prefix & n_valid,
+            other=0,
+        )
+        k_buf = tl.load(
+            kb_ptr
+            + prefix_idx[:, None] * (H_KV * head_size)
+            + kv_head * head_size
+            + offs_d[None, :],
+            mask=is_prefix[:, None] & d_mask[None, :],
+            other=0.0,
+        ).to(tl.float32)
+        k_ext = tl.load(
+            kext_ptr
+            + (q_start + ext_pos)[:, None] * (H_KV * head_size)
+            + kv_head * head_size
+            + offs_d[None, :],
+            mask=ext_valid[:, None] & d_mask[None, :],
+            other=0.0,
+        ).to(tl.float32)
+        k = tl.where(is_prefix[:, None], k_buf, k_ext)
+
+        score = tl.sum(k * q[None, :], axis=1) * scale
+        causal_ok = offs_n <= (prefix_len + q_offset)
+        p = tl.exp(score - m_val)
+        p = tl.where(causal_ok & n_valid, p, 0.0)
+        l_val += tl.sum(p, axis=0)
+
         v_buf = tl.load(
             vb_ptr
             + prefix_idx[:, None] * (H_KV * head_size)
@@ -141,9 +158,7 @@ def _extend_attn_simple(
 
         acc += tl.sum(p[:, None] * v, axis=0)
 
-    # Final
     result = acc / l_val
-
     tl.store(
         o_ptr + global_q_idx * (H_Q * head_size) + q_head * head_size + offs_d,
         result.to(o_ptr.dtype.element_ty),
@@ -175,28 +190,24 @@ def extend_attention(
     if B == 0:
         return o
 
-    # Force fp32 throughout for Ascend numerical stability
+    # Force fp32 for Ascend numerical stability
     q_extend = q_extend.contiguous().float()
     k_extend = k_extend.contiguous().float()
     v_extend = v_extend.contiguous().float()
     k_buffer = k_buffer.contiguous().float()
     v_buffer = v_buffer.contiguous().float()
-    qo_indptr = qo_indptr.contiguous()
-    kv_indptr = kv_indptr.contiguous()
-    kv_indices = kv_indices.contiguous()
 
-    BLOCK_N = 64
-    BLOCK_D = max(triton.next_power_of_2(D), 16)
-
-    # Precompute batch assignment for each query token
+    # Precompute batch assignment
     batch_ids = torch.zeros(E, dtype=torch.int32, device=q_extend.device)
     for b in range(B):
         qs = int(qo_indptr[b].item())
         qe = int(qo_indptr[b + 1].item())
         batch_ids[qs:qe] = b
 
+    BLOCK_N = 64
+    BLOCK_D = max(triton.next_power_of_2(D), 16)
     grid = (E, H_Q)
-    _extend_attn_simple[grid](
+    _extend_attn_2pass[grid](
         q_extend,
         k_extend,
         v_extend,
@@ -212,7 +223,6 @@ def extend_attention(
         H_KV,
         group_size,
         D,
-        max_len_extend,
         BLOCK_N=BLOCK_N,
         BLOCK_D=BLOCK_D,
         num_warps=4,
