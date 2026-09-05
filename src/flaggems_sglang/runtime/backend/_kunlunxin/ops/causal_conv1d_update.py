@@ -27,38 +27,78 @@ import triton.language as tl
 _MAX_GRID = 65535
 
 
-@triton.jit
-def _ccu_conv_rank1_kernel(
-    xcat_ptr,
+@triton.jit(do_not_specialize=["M"])
+def _ccu_conv_gemm_kernel(
+    win_ptr,
     weight_ptr,
     pre_ptr,
-    total,
-    dim,
+    M,
     seqlen,
-    state_len,
-    l_cat,
+    dim,
+    a_matrix_stride,
+    BLOCK_N: tl.constexpr,
     WIDTH: tl.constexpr,
     W_PAD: tl.constexpr,
+    BLOCK_M: tl.constexpr,
+    GROUP_M: tl.constexpr,
 ):
-    # E9: 1D flat grid-stride (T53-proven kunlunxin form) instead of the
-    # 3D (seqlen, dim, batch) grid - E8 produced ~87-94% wrong elements
-    # on kunlunxin only, matching a grid-axis-mapping miscompile.
+    # E10 (Codex P2): the conv as a regular per-channel GEMM - windows
+    # A[D, B*S, W] dotted against the broadcast weight vector. Both the
+    # rank-1 tl.sum form (E8/E9) and every FMA-chain form miscompile on
+    # kunlunxin, while this regular-GEMM family is proven correct there
+    # (T45 e8/e9 platform evidence).
     pid = tl.program_id(0)
-    step = tl.num_programs(0)
-    offs_w = tl.arange(0, W_PAD)
-    w_mask = offs_w < WIDTH
-    for idx in range(pid, total, step):
-        t = idx % seqlen
-        row = idx // seqlen
-        d = row % dim
-        # Window positions in the virtual concat(state, x).
-        p = t + state_len + 1 - WIDTH + offs_w
-        v = tl.load(xcat_ptr + row * l_cat + p, mask=w_mask, other=0.0)
-        wk = tl.load(
-            weight_ptr + d * WIDTH + offs_w, mask=w_mask, other=0.0
+    num_pid_m = tl.cdiv(M, BLOCK_M)
+    num_pid_n = 1  # single N tile: only column 0 of C is meaningful
+    tiles_per_matrix = num_pid_m * num_pid_n
+    d = pid // tiles_per_matrix
+    local = pid - d * tiles_per_matrix
+    num_pid_in_group = GROUP_M * num_pid_n
+    group_id = local // num_pid_in_group
+    first_pid_m = group_id * GROUP_M
+    group_size_m = tl.minimum(num_pid_m - first_pid_m, GROUP_M)
+    pid_m = first_pid_m + (local % group_size_m)
+
+    offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+    offs_n = tl.arange(0, BLOCK_N)
+    offs_k = tl.arange(0, W_PAD)
+    a_ptrs = (
+        win_ptr
+        + d * a_matrix_stride
+        + offs_m[:, None] * WIDTH
+        + offs_k[None, :]
+    )
+    # B operand: the [W] weight vector broadcast across N columns
+    # (stride 0 on the n axis keeps this a fully regular access).
+    b_ptrs = weight_ptr + d.to(tl.int64) * WIDTH + offs_k[:, None] + 0 * offs_n[None, :]
+    accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
+
+    for k in range(0, WIDTH, W_PAD):
+        mask_k = offs_k < WIDTH - k
+        a = tl.load(
+            a_ptrs,
+            mask=(offs_m[:, None] < M) & mask_k[None, :],
+            other=0.0,
         )
-        pre = tl.sum(v * wk, axis=0)
-        tl.store(pre_ptr + idx, pre)
+        b = tl.load(
+            b_ptrs,
+            mask=mask_k[:, None] & (offs_n[None, :] < BLOCK_N),
+            other=0.0,
+        )
+        accumulator = tl.dot(a, b, acc=accumulator, input_precision="ieee")
+        a_ptrs += W_PAD
+        b_ptrs += W_PAD
+
+    # Store only column 0 into pre[b, d, t] (row m encodes (b, t)).
+    b_idx = offs_m // seqlen
+    t_idx = offs_m % seqlen
+    pre_off = (b_idx * dim + d) * seqlen + t_idx
+    store_mask = (offs_m[:, None] < M) & (offs_n[None, :] == 0)
+    tl.store(
+        pre_ptr + (pre_off[:, None] + 0 * offs_n[None, :]),
+        accumulator,
+        mask=store_mask,
+    )
 
 
 @triton.jit
@@ -141,32 +181,43 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
             out = out.squeeze(-1)
         return out, new_state
 
-    w_pad = max(triton.next_power_of_2(width), 2)
+    w_pad = max(triton.next_power_of_2(width), 16)  # tl.dot needs K >= 16
     l_cat = state_len + seqlen
     pre = torch.empty(
         batch * dim * seqlen, dtype=torch.float32, device=x.device
     )
 
-    # Kernel 1: one micro-program per output element with a [W_PAD]
-    # rank-1 reduction - no FMA chain, no 2D tile, no activation.
-    total = batch * dim * seqlen
-    grid1 = (min(total, _MAX_GRID),)
-    _ccu_conv_rank1_kernel[grid1](
-        x_cat,
+    # Kernel 1 (E10): windows [D, B*S, W] via unfold, one regular GEMM
+    # per channel against the broadcast weight vector. Window for
+    # output t starts at t + state_len + 1 - width in x_cat.
+    win_start = state_len + 1 - width
+    win = x_cat.unfold(-1, width, 1)[
+        ..., win_start : win_start + seqlen, :
+    ]
+    a_mat = (
+        win.permute(1, 0, 2, 3).contiguous().view(dim, batch * seqlen, width)
+    )
+    m_rows = batch * seqlen
+    grid1 = (dim * triton.cdiv(m_rows, 32),)
+    _ccu_conv_gemm_kernel[grid1](
+        a_mat,
         weight_f,
         pre,
-        total,
-        dim,
+        m_rows,
         seqlen,
-        state_len,
-        l_cat,
+        dim,
+        a_mat.stride(0),
+        BLOCK_N=32,
         WIDTH=width,
         W_PAD=w_pad,
-        num_warps=1,
+        BLOCK_M=32,
+        GROUP_M=8,
+        num_warps=4,
         num_stages=1,
     )
 
     # Kernel 2: flat bias + SiLU + dtype cast (out is contiguous).
+    total = batch * dim * seqlen
     grid2 = (min(triton.cdiv(total, 1024), _MAX_GRID),)
     _ccu_postprocess_kernel[grid2](
         pre,
