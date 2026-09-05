@@ -202,7 +202,7 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     # Stage 1: one flattened regular fp32 IEEE GEMM over all Q Gram
     # matrices, reading k's native regular strides directly.
     block_k = min(triton.next_power_of_2(max(k_size, 16)), 512)
-    tiles = triton.cdiv(bt, 32) * triton.cdiv(bt, 32)
+    tiles = triton.cdiv(bt, 64) * triton.cdiv(bt, 64)
     _kkt_gram_gemm_kernel[(q_count * tiles,)](
         k,
         gram,
@@ -215,8 +215,8 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
         k.stride(3),
         N=bt,
         K=k_size,
-        BLOCK_M=32,
-        BLOCK_N=32,
+        BLOCK_M=64,
+        BLOCK_N=64,
         BLOCK_K=block_k,
         GROUP_M=8,
         USE_INPUT_DTYPE=k.dtype in (torch.float16, torch.bfloat16),
