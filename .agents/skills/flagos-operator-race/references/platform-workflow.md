@@ -255,3 +255,32 @@ vendor 文件必须自包含、保持同一函数签名并导出同一 `__all__`
 预注册晋级门（受影响芯阈值 + 平均阈值）与 stop gate（两次同指纹失败
 或单芯显著回退即关轴）；同字节方差重掷最多两次低滚后关闭该重载路径；
 每题提交预算默认按当批作战方案执行，用户明示解除时以最新指示为准。
+
+## 第 4 批全战役经验补充（2026-09-05 收盘）
+
+### 常胜结构（可直接迁移到后续批次）
+
+| 结构 | 来源 | 已验证芯 | 迁移要点 |
+| --- | --- | --- | --- |
+| **route/materialize + long-index** | T47/T48 | 燧原+昆仑 | wrapper `index_select` 物化 + 每段规则 GEMM + `rows.long()`；昆仑必加 long |
+| **FLA persistent** | T45 (vllm-ascend#7563) | 华为 | 物理 AI core grid + `tl.range` task stride + 每 task 一个 (chunk, batch×head) + UB-aware BK |
+| **宽度轴归约** | T43 (Codex P1b) | 华为+燧原 | `[W_PAD≤8, D_BLOCK]` 2D tile + `tl.sum(axis=0)`；wrapper cat state+x + weight 预转 [W,D] |
+| **一 program 一行** | T51 (T20 姐妹) | 燧原 | 去 grid-stride 循环；`tl.rsqrt` / `tl.sigmoid`；grid=(rows,) |
+| **precomputed-pos** | T49 | 燧原 | wrapper PyTorch 预计算位置/路由张量；kernel 变纯 gather 零分支 |
+| **vectorized flat** | T53 | 昆仑 | 标量循环→1024-lane 向量化；wrapper contiguous+view(-1) |
+
+### Online softmax 关键 bug（T50 教训）
+
+多 block KV 循环中 **`m_val = m_new` 必须在每次迭代内更新**。缺失时第二个 block 的 `alpha = exp(m_val_old - m_new)` 会把第一个 block 的累积清零。一行修复，4/4 测试全过。渐进定位法：1ext+63pre PASS → 1ext+64pre FAIL → 锁定 BLOCK_N 边界。
+
+### 评测机繁忙模式
+
+燧原评测机会周期性过载（连续 5×1830s 超时后恢复）。同字节平台已过 → 暂态。不要连续重试烧额度；等窗口恢复后最小变更重掷。
+
+### T50 extend_attention 开发经验
+
+从零到 5/8 (208 发 1 队过线题)：
+- per-query 标量 online softmax 是正确性最稳的起步结构
+- `[:, None]` 广播在所有 position×dim 交叉处必须显式标注
+- 华为 correctness 问题在 softmax 算法之外（online/two-pass 等价数学均败）
+- GQA 用 `q_head // GROUP_SIZE` 映射最简
