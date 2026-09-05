@@ -22,7 +22,7 @@
 | 39 | silu_and_mul_masked | valid | 8/8 | E7 19.8698x | yes | - | 2026-09-03 | [silu_and_mul_masked](silu_and_mul_masked.md) |
 | 40 | softcap_inplace_logits | valid | 8/8(e8,2.195604x,rank1) | e8 2.195604x | yes | 额度用尽收官;e16 华为字节(1.70)+TB 2.1956 #2;榜首 c2flow 2.2593 华为 3.40 未破译 | 2026-09-03 | [softcap_inplace_logits](softcap_inplace_logits.md) |
 | 41 | state_passing | invalid | E7 sub8079 system_failed;7 pass,Kunlun 0.0065x,Enflame unrun | E5 diagnostic | yes | 本轮收盘;只保留平台工单与全新结构研究 | 2026-09-02 | [state_passing](state_passing.md) |
-| 42 | act_and_mul | valid | 8/8(e2,3.248925x) | e2 3.248925x | no | A1裁尾+5.8%低于门证伪关闭(10324);剩K1昆仑直达(门≥0.60)择机;431x不追 | 2026-09-06 | [act_and_mul](act_and_mul.md) |
+| 42 | act_and_mul | valid | 8/8(e2,3.248925x) | e2 3.248925x | no | A1/K1均证伪关闭(昆仑0.45=水位);仅剩M1沐曦warps8;E2守榜 | 2026-09-06 | [act_and_mul](act_and_mul.md) |
 | 43 | causal_conv1d_update | invalid | 7/8(e7,仅昆仑失败;华为0.4435x+燧原0.325x双双过门槛!) | s0 -x | no | E8/E9 rank-1两连败(编译墙破但数值错译);E10规则GEMM形态已提交10337待裁决 | 2026-09-06 | [causal_conv1d_update](causal_conv1d_update.md) |
 | 44 | chain_speculative_sampling | invalid | 探针确认全芯失败(predicts mismatch=半精度bit-exact) | s0 -x | no | conclusive 封轴;天数/A/B同款517值=fp32也有差;平台测半精度 | 2026-09-04 | [chain_speculative_sampling](chain_speculative_sampling.md) |
 | 45 | chunk_scaled_dot_kkt | invalid | 7/8(e7,仅昆仑失败;华为0.0455→0.2535x过门槛!) | e7 -x | no | E11 flat epilogue昆仑4.6x至0.048x(差2.1x);E12=GEMM tile 64×64冲0.1x | 2026-09-06 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
