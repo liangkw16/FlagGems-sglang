@@ -237,3 +237,19 @@ IEEE `tl.dot`（只存 C[:,0]；T28/T37 昆仑通过范式）。
   起始偏移，sl>w-1 case 修错）；source `3a0b5cd`，ZIP
   `e10-3a0b5cd` SHA-256 `bbe24679…fbee`（4 成员）
 - 晋级门：昆仑全 case 正确且 ≥0.1x → 8/8；同款错译 → 昆仑轴 conclusive
+
+## E10 终态 + 共享 post kernel 破案（2026-09-06）
+
+- E10（10337）：昆仑仍 5 case 数值失败；**决定性指纹证据——E8/E9/E10
+  三种截然不同的 conv kernel（rank-1 3D / rank-1 flat / 规则 GEMM）在
+  case 0 产生逐位相同的错误**（30/32、abs 4.47265625 @ (1,5)、rel
+  7.619 @ (1,2)，case 1/2 亦高度同构）——错译不在 conv 计算，在三者
+  **共享的 flat post kernel**
+- 嫌疑收敛：post kernel 中唯一的向量 fp32 除法
+  `v / (1.0 + tl.exp(-v))`——T45 的 tl.exp 在昆仑 correctness 全过
+  （exp 无罪），T52 全程在纠缠除法形态（除法有前科）
+- **E11（10338）**：单变量 silu 改 `v * tl.sigmoid(v)`（消除向量除法），
+  其余字节冻结 E10；source `ccf229c`，ZIP `e11-ccf229c`
+  SHA-256 `677c12f0…f6507`，screening 9/9 OK
+- 判定门：指纹变化 → post kernel 坐实并继续分诊（下一变量=bias
+  gather）；指纹不变 → 昆仑轴 conclusive 封存
