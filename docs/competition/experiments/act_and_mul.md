@@ -6,11 +6,11 @@ operator: act_and_mul
 batch: 4
 validity: valid
 platform: 8/8(e2,3.248925x)
-team_best_stage: e2
-team_best_commit: f69d4e2c694f8418a534785fe8334083a8b0a3e2
-team_best_speedup: 3.248925
+team_best_stage: e6
+team_best_commit: 5251bf5f4a5df87396a1ab434323f748a925e7b6
+team_best_speedup: 3.25835
 sealed: no
-next: A1/K1均证伪关闭(昆仑0.45=水位);仅剩M1沐曦warps8;E2守榜
+next: M1载体成TB(3.25835,10344);三候选全消费;守榜,距旧榜首3.5194差-7.4%无新轴
 updated: 2026-09-06
 ```
 
@@ -216,3 +216,14 @@ updated: 2026-09-06
   晋级门 ≥0.60 未达：**直达轴证伪关闭**（T40 的循环瓶颈不迁移到本题，
   0.45x 判定为该 op 在昆仑的水位）
 - 剩余唯一未消费候选：M1 沐曦 warps 4→8（仓库 MetaX 配置背书）
+
+## E6 沐曦 warps8 → 新 team best（2026-09-06，submission 10344）
+
+- M1：沐曦 BLOCK=2048 下 num_warps 默认 4→8（仓库
+  `metax_heuristics_for_num_warps` 2048 档=8 背书）；source `5251bf5`，
+  ZIP `e6-5251bf5` SHA-256 `a6dfefec…2b71`
+- **终态 8/8 valid，avg 3.25835 —— 新 team best**（E2 3.2489 → +0.3%）
+- 逐芯：沐曦 2.2642（窗口水位低于上轮 2.47——warps 轴本身不明确，
+  增益来自其他芯水位：华为 2.333/昆仑 0.4482）
+- 判定：T42 预注册三候选（A1/K1/M1）全部消费完毕；M1 载体成为
+  TB 字节，转守榜。距旧榜首 3.5194 仍有 -7.4%，无已验证新轴
