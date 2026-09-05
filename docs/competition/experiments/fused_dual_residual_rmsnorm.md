@@ -5,12 +5,12 @@ task: 52
 operator: fused_dual_residual_rmsnorm
 batch: 4
 validity: invalid
-platform: 6/8(e4,燧原两核拆分也不行;精度天花板)
+platform: 6/8(e5,五种数学形态同指纹边界失配;已分诊)
 team_best_stage: -
 team_best_speedup: -
-sealed: no
-next: E5预注册:燧原/昆仑tl.rsqrt配方(T19同平台正证据,1发);败则raw_result分诊后封6/8
-updated: 2026-09-05
+sealed: yes
+next: 封存6/8;仅sqrt_rn+div_rn或torch归约树复刻等全新结构证据可重开
+updated: 2026-09-06
 ```
 
 ## S0（reciprocal: v*(1/rms)*w）: 5/8
@@ -47,3 +47,21 @@ T19 fused_rmsnorm 同平台用 tl.rsqrt 在燧原/昆仑均通过（最强直接
 已证伪勿重复：plain /（E2）、两核拆分 mid 物化（E4）、fp64 兜底
 （燧原无原生 fp64）。E5 仍败 → 只读拉 raw_result 分诊 mid vs out
 首个分叉点；无新证据则封 6/8，额度转 T42/T53。
+
+## E5 rsqrt 配方（2026-09-06 00:12，submission 10322，daily_seq 1）
+
+- 载体：generic(E2 plain /) + `_amd`(reciprocal) + `_enflame`/`_kunlunxin`
+  （单核 `v * tl.rsqrt(var+eps) * w`）；source `a0298a2`，
+  ZIP `e5-a0298a2` SHA-256 `5b1d42b1…c8a`（4 成员）
+- screening：远端 `/tmp/flagos-t52e5.6EODJa`（NVIDIA 代理 unittest 5/5 OK
+  含 vendor 矩阵；日志 SHA `fc188f5d…`；black diff 仅既有字节工具漂移）
+- **终态 6/8 invalid_correctness**：天数 8.5836 / 沐曦 5.2425 / 海光
+  8.7104 / 华为 3.7427 / A 8.1713 / B(_amd) 7.9668 过；燧原/昆仑各 1 case 败
+- **失败情报（raw_result）**：两芯同败 `test[18]`（33.5M 元素大 case）；
+  燧原 1 元素 abs 0.0171（容差 0.015）、昆仑 4 元素 abs 0.0195 + 1 处
+  expected=0 的 inf 相对差——第五种数学形态（plain//、div_rn、reciprocal、
+  两核拆分、rsqrt）同指纹边界失配
+- **判定**：分叉点不在除法形式（T19 单 norm rsqrt 正证据未迁移到
+  双 norm + residual 链；疑燧原/昆仑 torch 的 bf16 add/mid 舍入路径
+  差异，无目标芯探测通道）。**T52 按 E5 预注册止损封存 6/8**；仅
+  `sqrt_rn+div_rn`、torch 归约树复刻等全新结构证据可重开。额度 29/30
