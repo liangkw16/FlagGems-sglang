@@ -123,9 +123,12 @@ def _ccu_postprocess_kernel(
             d = (idx // seqlen) % dim
             v += tl.load(bias_ptr + d, mask=mask, other=0.0)
         if ACT_IS_SILU:
-            # SiLU in the statement's exact form; stability rewrites
-            # fail the checker at large negative inputs.
-            v = v / (1.0 + tl.exp(-v))
+            # E11: tl.sigmoid form. E8/E9/E10 shared this flat post
+            # kernel and produced byte-identical wrong values on
+            # kunlunxin regardless of the conv kernel - the vector
+            # fp32 divide in v/(1+exp(-v)) is the common suspect
+            # (T45's tl.exp passes kunlunxin; T52's division saga).
+            v = v * tl.sigmoid(v)
         tl.store(out_ptr + idx, v.to(out_ptr.dtype.element_ty), mask=mask)
 
 
