@@ -4,12 +4,12 @@
 task: 48
 operator: chunked_sgmv_shrink
 batch: 4
-validity: invalid
-platform: 7/8(e5,燧原评测机连续4次超时=平台侧;昆仑1.77x+七芯全过)
-team_best_stage: e2
-team_best_speedup: -
+validity: valid
+platform: 8/8(e6,4.7198125x)
+team_best_stage: e6
+team_best_speedup: 4.7198125
 sealed: no
-next: 燧原评测机恢复后重投(e1字节已验证0.58x);等平台侧窗口
+next: 守榜;冲分轴:燧原0.58x/昆仑1.79x/天数3.85x
 updated: 2026-09-05
 ```
 
@@ -25,3 +25,11 @@ updated: 2026-09-05
   窗口恢复后重投
 - 七芯稳定：天数 3.74 / 沐曦 5.39 / 海光 6.09 / 昆仑 1.77 /
   华为 6.26 / A 7.04 / B 6.69
+
+## E6 → **8/8 VALID**（2026-09-05，submission 10111，第 6 个 8/8！）
+
+- **燧原评测机恢复，e1 字节通过 0.58x**（5 次连续超时后终于恢复）
+- **8/8 valid，平均 4.7198125x**
+- 逐芯：天数 3.85 / 沐曦 5.31 / 燧原 0.58 / 海光 6.00 /
+  昆仑 1.79 / 华为 6.54 / A 6.98 / B 6.70
+- 关键 vendor：燧原 route/materialize + 昆仑 route/materialize + long-index
