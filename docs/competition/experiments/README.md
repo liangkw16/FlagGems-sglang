@@ -875,3 +875,32 @@ ABBA→④内置验证在出现 hash/manifest 背书前一律不信;服务端修
 服务端改进诉求(待用户决定是否经 kernelgen-submit-feedback 提交):
 非 LLM 结果信封(执行源/reference/harness SHA-256 + 逐 case 结构化
 结果 + 环境标识 + 签名)、stdout 通道、逐 attempt 代码回传。
+
+## 2026-09-06 凌晨执行轮（会诊方案落地，17 发）
+
+额度 30/30 起步；执行 09-05 预注册方案队列（Codex 会诊产物）。
+
+- **T42 act_and_mul**：e4 华为裁尾 +5.8%（低于 ≥2.48 门，证伪）；
+  e5 昆仑直达 0%（0.45=水位，证伪）；**e6 沐曦 warps8 载体 8/8
+  3.25835 新 team best**（+0.3%，水位采样效应）。三候选全部消费，
+  转守榜（距旧榜首 3.5194 差 -7.4%）。
+- **T43 causal_conv1d_update**：e8 三 kernel 拆分**破 uni_sram 编译墙**
+  （昆仑首次跑通）→ e8-e12 五连数值错译分诊：**E8/E9/E10 三种
+  conv kernel 指纹逐位相同 → 错译锁定共享 flat post kernel**；e11
+  sigmoid 形态指纹不变；e12 bias 折入 GEMM 指纹变化（向量 gather
+  是错误源之一）但残留错误。**昆仑 10 形态全错译，conclusive 封存
+  7/8**。跨题知识：昆仑向量 gather/广播操作数/除法均为错译高危面。
+- **T45 chunk_scaled_dot_kkt**：e8 route/materialize+规则 GEMM 三段式
+  **击穿 compile-worker 崩溃族（昆仑首次 correctness 通过）**；性能
+  爬坡：0.0095 → e9 去物化 0.01 → e10 输入精度 dot 0.0105（双证伪）
+  → **e11 flat epilogue 0.048（4.6x）→ e13 行分块 0.063（+31%）**；
+  e12 64×64 tile、e14 exp2 双证伪（e14 破 correctness 已回滚）。
+  **八芯 correctness 全过、距 0.1x 门槛差 1.6x**，暂停守 invalid。
+  跨题知识：昆仑 epilogue 整数调度链是 dot 题第二瓶颈。
+- **T52 fused_dual_residual_rmsnorm**：e5 rsqrt 配方（燧原/昆仑 vendor）
+  6/8 同指纹边界失配（第五种数学形态未穿过）——按预注册止损封存。
+- **T46 chunked_embedding_lora_a**：e6 天数 searchsorted 预路由
+  （10349 评测中，七天池已过，天数 18.59 在历史水位带内）。
+- 流程教训：① zsh `$VAR:t` 参数修饰符吃掉冒号后内容，脚本内
+  git show 哈希必须用 `${VAR}:path`；② black 门禁以仓库 79 列
+  配置+25.12 版本为准（远端 26 与既有字节冲突属工具漂移）。
