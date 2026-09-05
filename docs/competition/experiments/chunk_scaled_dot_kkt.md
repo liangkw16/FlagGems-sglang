@@ -10,7 +10,7 @@ team_best_stage: e7
 team_best_commit: 4d16e0701b054247b83cf09c2e39664cd750235f
 team_best_speedup: -
 sealed: no
-next: E9去物化仅+5%(0.01x),瓶颈=ieee fp32 dot;E10=输入精度dot(fp16/bf16走SDNN)一发可决
+next: E10输入精度dot证伪(0.0105x);E11 flat epilogue已提交待裁决;再败则昆仑轴转入深度分诊
 updated: 2026-09-06
 ```
 
@@ -259,3 +259,13 @@ K 循环推进 `b_ptrs += BLOCK_K * stride_bn` 是潜伏笔误（应为 stride_b
   bf16 输入 + fp32 accumulate 与 fp32-ieee 数学等价），fp32 输入
   保持 ieee——即 generic 的 USE_INPUT_DTYPE 模式。风险：T12 曾有
   昆仑 fp16 dot 正确性失败前科，一发可决
+
+## E10 输入精度 dot 终态（2026-09-06，submission 10333）
+
+- fp16/bf16 输入走原生精度 dot（SDNN 路径假设）——**昆仑 0.0105x，
+  与 E9 的 0.01x 持平：假设证伪**（隐藏 case 疑为 fp32，ieee 路径
+  未被绕开；或昆仑低精度 dot 亦不走矩阵单元）
+- 八芯 correctness 全过（天数 5.809/沐曦 5.1775/海光 14.84/华为
+  0.253/A 21.138/B 7.748/昆仑 0.0105；燧原在评但已无悬念）
+- E11（已 screening 9/9）：epilogue 改 flat 1024-lane（T53 已证调度
+  形态），替换 QH×8 个 [16,32] 微 program；source `13bf303`
