@@ -12,88 +12,156 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Kunlunxin: block_ptr + tl.trans idiom replaces the failed forms
-# (vllm-project/vllm-ascend#7576): k tiles are loaded coalesced via
-# make_block_ptr as [BT, K] and dotted against tl.trans(b_k); the dot
-# and the strict lower-triangular mask are computed ONCE per k-group
-# and shared by every head in the group (HPG = H // Hg), which removes
-# the ratio-fold redundant dot work of the generic kernel; per head
-# only beta scaling, the task's safe-exp decay and the strided store
-# remain.
+# Kunlunxin vendor: layout materialization + regular GEMM + separate
+# epilogue (T28 E11 / T37 E4 / T47 recipe). The fused whole-tile kernel
+# family (direct dot, block_ptr + tl.trans, FLA persistent) all end in
+# the compile-worker crash family on this chip; the only proven-working
+# form is a completely regular single-trip fp32 IEEE GEMM with no
+# indirect indexing and no runtime branches. The Gram matrix is
+# computed once per k-group (GQA) and the per-head scaling / decay /
+# masking lives in a second small-tile kernel.
 
 import torch
 import triton
 import triton.language as tl
 
 
+@triton.jit(do_not_specialize=["M"])
+def _kkt_gram_gemm_kernel(
+    a_ptr,
+    b_ptr,
+    c_ptr,
+    M,
+    a_matrix_stride,
+    stride_am,
+    stride_ak,
+    b_matrix_stride,
+    stride_bk,
+    stride_bn,
+    c_matrix_stride,
+    stride_cm,
+    stride_cn,
+    N: tl.constexpr,
+    K: tl.constexpr,
+    BLOCK_M: tl.constexpr,
+    BLOCK_N: tl.constexpr,
+    BLOCK_K: tl.constexpr,
+    GROUP_M: tl.constexpr,
+):
+    pid = tl.program_id(0)
+    num_pid_m = tl.cdiv(M, BLOCK_M)
+    num_pid_n = tl.cdiv(N, BLOCK_N)
+    tiles_per_matrix = num_pid_m * num_pid_n
+    matrix_id = pid // tiles_per_matrix
+    local = pid - matrix_id * tiles_per_matrix
+    num_pid_in_group = GROUP_M * num_pid_n
+    group_id = local // num_pid_in_group
+    first_pid_m = group_id * GROUP_M
+    group_size_m = tl.minimum(num_pid_m - first_pid_m, GROUP_M)
+    pid_m = first_pid_m + (local % group_size_m)
+    pid_n = (local % num_pid_in_group) // group_size_m
+
+    offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+    offs_n = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+    offs_k = tl.arange(0, BLOCK_K)
+    a_ptrs = (
+        a_ptr
+        + matrix_id * a_matrix_stride
+        + offs_m[:, None] * stride_am
+        + offs_k[None, :] * stride_ak
+    )
+    b_ptrs = (
+        b_ptr
+        + matrix_id * b_matrix_stride
+        + offs_k[:, None] * stride_bk
+        + offs_n[None, :] * stride_bn
+    )
+    accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
+
+    # Single trip by construction (BLOCK_K = next_pow2(K)): the
+    # multi-trip K loop miscompiles on this backend family.
+    for k in range(0, K, BLOCK_K):
+        mask_k = offs_k < K - k
+        a = tl.load(
+            a_ptrs,
+            mask=(offs_m[:, None] < M) & mask_k[None, :],
+            other=0.0,
+        )
+        b = tl.load(
+            b_ptrs,
+            mask=mask_k[:, None] & (offs_n[None, :] < N),
+            other=0.0,
+        )
+        accumulator = tl.dot(a, b, acc=accumulator, input_precision="ieee")
+        a_ptrs += BLOCK_K * stride_ak
+        b_ptrs += BLOCK_K * stride_bk
+
+    c_ptrs = (
+        c_ptr
+        + matrix_id * c_matrix_stride
+        + offs_m[:, None] * stride_cm
+        + offs_n[None, :] * stride_cn
+    )
+    mask = (offs_m[:, None] < M) & (offs_n[None, :] < N)
+    tl.store(c_ptrs, accumulator, mask=mask)
+
+
 @triton.jit
-def _kkt_vllmstyle_kernel(
-    k_ptr,
+def _kkt_epilogue_kernel(
+    gram_ptr,
     beta_ptr,
     g_ptr,
-    output_ptr,
-    seqlen,
-    k_size,
-    nheads,
-    hpg,
-    K_POW2: tl.constexpr,
-    HAS_G: tl.constexpr,
+    out_ptr,
+    num_heads,
+    num_k_heads,
+    ratio,
     BT: tl.constexpr,
-    USE_INPUT_DTYPE: tl.constexpr,
+    HAS_G: tl.constexpr,
+    BLOCK_M: tl.constexpr,
+    BLOCK_N: tl.constexpr,
 ):
-    pid_t = tl.program_id(0)
-    pid_b = tl.program_id(1)
-    num_k_heads = nheads // hpg
+    pid = tl.program_id(0)
+    num_pid_m = tl.cdiv(BT, BLOCK_M)
+    num_pid_n = tl.cdiv(BT, BLOCK_N)
+    tiles_per_head = num_pid_m * num_pid_n
+    qh = pid // tiles_per_head
+    local = pid - qh * tiles_per_head
+    m_tile = local // num_pid_n
+    n_tile = local - m_tile * num_pid_n
 
-    o_t = tl.arange(0, BT)
-    o_t_fp32 = o_t.to(tl.float32)
-    lower_tri = (o_t_fp32[:, None] > o_t_fp32[None, :]).to(tl.float32)
+    outer = qh // num_heads
+    h = qh - outer * num_heads
+    kg = h // ratio
+    gram_id = outer * num_k_heads + kg
 
-    k_head_base = k_ptr + (pid_b * seqlen * num_k_heads) * k_size
-    for i_kg in range(0, num_k_heads):
-        p_k = tl.make_block_ptr(
-            k_head_base + i_kg * k_size,
-            (seqlen, k_size),
-            (num_k_heads * k_size, 1),
-            (pid_t * BT, 0),
-            (BT, K_POW2),
-            (1, 0),
-        )
-        b_k = tl.load(p_k, boundary_check=(0, 1))
-        if not USE_INPUT_DTYPE:
-            b_k = b_k.to(tl.float32)
-        base_lower = tl.dot(b_k, tl.trans(b_k), input_precision="ieee") * lower_tri
-        for i_h_local in range(0, hpg):
-            i_h = i_kg * hpg + i_h_local
-            beta_base = beta_ptr + pid_b * seqlen * nheads + i_h
-            beta_i = tl.load(
-                beta_base + (pid_t * BT + o_t) * nheads,
-                mask=pid_t * BT + o_t < seqlen,
-                other=0.0,
-            ).to(tl.float32)
-            res = base_lower * beta_i[:, None]
-            if HAS_G:
-                g_base = g_ptr + pid_b * seqlen * nheads + i_h
-                g_i = tl.load(
-                    g_base + (pid_t * BT + o_t) * nheads,
-                    mask=pid_t * BT + o_t < seqlen,
-                    other=0.0,
-                ).to(tl.float32)
-                g_diff = g_i[:, None] - g_i[None, :]
-                res = res * tl.where(g_diff <= 0.0, tl.exp(g_diff), 0.0)
-            p_a = tl.make_block_ptr(
-                output_ptr + (pid_b * seqlen * nheads + i_h) * BT,
-                (seqlen, BT),
-                (nheads * BT, 1),
-                (pid_t * BT, 0),
-                (BT, BT),
-                (1, 0),
-            )
-            tl.store(
-                p_a,
-                res.to(output_ptr.dtype.element_ty),
-                boundary_check=(0, 1),
-            )
+    offs_m = m_tile * BLOCK_M + tl.arange(0, BLOCK_M)
+    offs_n = n_tile * BLOCK_N + tl.arange(0, BLOCK_N)
+    mask_mn = (offs_m[:, None] < BT) & (offs_n[None, :] < BT)
+
+    gram_base = gram_ptr + gram_id * BT * BT
+    result = tl.load(
+        gram_base + offs_m[:, None] * BT + offs_n[None, :],
+        mask=mask_mn,
+        other=0.0,
+    )
+
+    # Same scaling order as the generic kernel: beta first, then the
+    # safe-exp decay, then the strict lower-triangular zeroing.
+    beta_m = tl.load(beta_ptr + qh * BT + offs_m, mask=offs_m < BT, other=0.0)
+    result = result * beta_m[:, None]
+    if HAS_G:
+        g_m = tl.load(g_ptr + qh * BT + offs_m, mask=offs_m < BT, other=0.0)
+        g_n = tl.load(g_ptr + qh * BT + offs_n, mask=offs_n < BT, other=0.0)
+        g_diff = g_m[:, None] - g_n[None, :]
+        result = result * tl.where(g_diff <= 0.0, tl.exp(g_diff), 0.0)
+    result = tl.where(offs_m[:, None] > offs_n[None, :], result, 0.0)
+
+    out_off = (
+        (outer * BT + offs_m[:, None]) * (num_heads * BT)
+        + h * BT
+        + offs_n[None, :]
+    )
+    tl.store(out_ptr + out_off, result, mask=mask_mn)
 
 
 def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
@@ -105,34 +173,94 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
         raise ValueError("seqlen must be divisible by chunk_size")
     if num_heads % num_k_heads:
         raise ValueError("num_heads must be divisible by num_k_heads")
-    hpg = num_heads // num_k_heads
+    ratio = num_heads // num_k_heads
     nchunks = seqlen // chunk_size
+    bt = chunk_size
     output = torch.empty(
-        (batch, seqlen, num_heads, chunk_size),
+        (batch, seqlen, num_heads, bt),
         dtype=torch.float32,
         device=k.device,
     )
     if output.numel() == 0:
         return output
+    has_g = g_cumsum is not None and g_cumsum is not beta
 
-    # hardcode contiguous strides: normalize non-contiguous inputs
-    k = k.contiguous()
-    if g_cumsum is None:
-        g_cumsum = beta
-    grid = (nchunks, batch)
-    _kkt_vllmstyle_kernel[grid](
-        k,
-        beta,
-        g_cumsum,
+    # Stage 0: materialize regular [Q, BT, K] / [QH, BT] layouts so the
+    # GEMM kernel never sees indirect indexing or broadcast strides.
+    q_count = batch * nchunks * num_k_heads
+    qh_count = batch * nchunks * num_heads
+    k_m = (
+        k.reshape(batch, nchunks, bt, num_k_heads, k_size)
+        .permute(0, 1, 3, 2, 4)
+        .contiguous()
+        .view(q_count, bt, k_size)
+        .float()
+    )
+    beta_m = (
+        beta.reshape(batch, nchunks, bt, num_heads)
+        .permute(0, 1, 3, 2)
+        .contiguous()
+        .view(qh_count, bt)
+        .float()
+    )
+    if has_g:
+        g_m = (
+            g_cumsum.reshape(batch, nchunks, bt, num_heads)
+            .permute(0, 1, 3, 2)
+            .contiguous()
+            .view(qh_count, bt)
+            .float()
+        )
+    else:
+        g_m = beta_m
+
+    # Stage 1: one flattened regular fp32 IEEE GEMM over all Q Gram
+    # matrices (single-trip K by construction).
+    gram = torch.empty(
+        (q_count, bt, bt), dtype=torch.float32, device=k.device
+    )
+    block_k = min(triton.next_power_of_2(max(k_size, 16)), 512)
+    tiles = triton.cdiv(bt, 32) * triton.cdiv(bt, 32)
+    _kkt_gram_gemm_kernel[(q_count * tiles,)](
+        k_m,
+        k_m,
+        gram,
+        bt,
+        k_m.stride(0),
+        k_m.stride(1),
+        k_m.stride(2),
+        k_m.stride(0),
+        k_m.stride(2),
+        k_m.stride(1),
+        gram.stride(0),
+        gram.stride(1),
+        gram.stride(2),
+        N=bt,
+        K=k_size,
+        BLOCK_M=32,
+        BLOCK_N=32,
+        BLOCK_K=block_k,
+        GROUP_M=8,
+        num_warps=4,
+        num_stages=1,
+    )
+
+    # Stage 2: per-head epilogue (beta / decay / strict lower mask)
+    # writing straight into the final contiguous output.
+    e_m, e_n = 16, 32
+    e_tiles = triton.cdiv(bt, e_m) * triton.cdiv(bt, e_n)
+    _kkt_epilogue_kernel[(qh_count * e_tiles,)](
+        gram,
+        beta_m,
+        g_m,
         output,
-        seqlen,
-        k_size,
         num_heads,
-        hpg,
-        K_POW2=triton.next_power_of_2(k_size),
-        HAS_G=g_cumsum is not beta,
-        BT=chunk_size,
-        USE_INPUT_DTYPE=k.dtype in (torch.float16, torch.bfloat16),
+        num_k_heads,
+        ratio,
+        BT=bt,
+        HAS_G=has_g,
+        BLOCK_M=e_m,
+        BLOCK_N=e_n,
         num_warps=4,
         num_stages=1,
     )
