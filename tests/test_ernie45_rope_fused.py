@@ -18,6 +18,8 @@ from pathlib import Path
 
 import torch
 
+from tests._op_variants import load_operator_modules
+
 MODULE_PATH = (
     Path(__file__).parents[1]
     / "src"
@@ -144,3 +146,24 @@ class Ernie45RopeFusedTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
+class Ernie45RopeVariantsTest(unittest.TestCase):
+    """Core matrix across every backend variant (generic + vendors)."""
+
+    MODULES = load_operator_modules("ernie45_rope_fused")
+
+    def test_variants_match_reference(self):
+        for rd, sec in ((64, [16, 16, 0]), (128, [16, 16, 32])):
+            T, hs = 16, 128
+            q = torch.randn(T, 8 * hs, device="cuda")
+            k = torch.randn(T, 2 * hs, device="cuda")
+            cache = torch.randn(256, rd, device="cuda")
+            pos = torch.randint(0, 200, (3, T), device="cuda")
+            eq, ek = reference(q, k, cache, pos, sec, hs, rd)
+            for name, module in self.MODULES:
+                with self.subTest(module=name, rd=rd):
+                    aq, ak = module.ernie45_rope_fused(q, k, cache, pos, sec, hs, rd)
+                    torch.testing.assert_close(aq, eq, atol=1e-4, rtol=1e-4)
+                    torch.testing.assert_close(ak, ek, atol=1e-4, rtol=1e-4)
