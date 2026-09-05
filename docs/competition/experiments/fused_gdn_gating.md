@@ -10,7 +10,7 @@ team_best_stage: e1
 team_best_commit: TO_FILL
 team_best_speedup: 1.769075
 sealed: no
-next: 守榜;冲分轴:昆仑0.72x/燧原0.17x/沐曦1.34x
+next: 根因=generic标量循环;先补anchor再发燧原行向量/华为行结构/沐曦flat(见09-05方案节)
 updated: 2026-09-05
 ```
 
@@ -27,3 +27,29 @@ updated: 2026-09-05
 - **昆仑 0.0625→0.7168x（11.5x 跃升）** → **8/8 valid，avg 1.7691x**
 - 逐芯：天数 2.33 / 沐曦 1.34 / 燧原 0.17 / 海光 2.98 / 昆仑 0.72 /
   华为 1.26 / A 2.65 / B 2.70
+
+## 2026-09-05 Codex 会诊作战方案（预注册）
+
+根因（已验证）：generic 每 program 一个标量 + grid-stride + 逐元素
+`idx//H` 取模——昆仑 flat 向量化 0.0625→0.7168（11.5x）构成因果证据；
+燧原 0.17/华为 1.26/沐曦 1.34 仍在跑标量形态 = -50% 榜差主因。
+
+⚠️ **anchor 纪律（前置，0 发）**：E1 ZIP（`450e6fe`）与当前源码
+（`6ed1fa9` 改过 softplus）字节已分叉，team_best_commit=TO_FILL。
+下一发前二选一：从 `450e6fe` 精确字节建候选，或当前字节先做一次
+8 芯 anchor，再叠加 vendor。
+
+候选（按序单变量）：
+1. **燧原 `_enflame`**：`grid=(B,)` 一 program 一行 + H 全宽向量、
+   无循环无运行期分支（T51 同法把燧原从超时修到 2.34x）；门 ≥0.5x
+   （0.3 为结构兑现下限）
+2. **华为 `_ascend`**：行结构化 head-vector，lane 内无整除/取模，
+   `H==BLOCK_H` 时整行无 mask；门 >1.60x（≥1.70 与 T42 +35% 先验一致）
+3. **沐曦 `_metax`**：昆仑 flat 骨架 BLOCK=2048（勿先试 4096）；
+   门 >1.50x
+4. **generic 二代 `[ROWS_TILE, H]`**：A_log/dt_bias 广播 + `exp(A_log)`
+   按行摊薄复用（lane 预算 ≤1024）——逼近榜首 3.54x 的广谱步骤
+
+测试矩阵：B={0,1,3,32,257}、H={1,7,8,31,32,127,128,129}、threshold
+两侧、beta={0.5,1,2}、a/b/A_log/dt_bias 极值与非连续布局；发射前
+IR 检查（燧原无 scf.if/grid-stride、华为热路径无整数除法/取模）。

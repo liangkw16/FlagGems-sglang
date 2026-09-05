@@ -33,3 +33,19 @@ updated: 2026-09-05
 - 逐芯：天数 3.85 / 沐曦 5.31 / 燧原 0.58 / 海光 6.00 /
   昆仑 1.79 / 华为 6.54 / A 6.98 / B 6.70
 - 关键 vendor：燧原 route/materialize + 昆仑 route/materialize + long-index
+
+## 2026-09-05 冲分预注册（8/8 后；本会话基于同族资产拟定，未做专项会诊）
+
+现状：e6 8/8 4.7198x，榜首 c2flow 21.63x。弱芯燧原 0.58/昆仑 1.79/
+天数 3.85。同族 T47 结论：indirect+dot 在燧原/昆仑不受支持，
+route/materialize 是 sgmv 族唯一可行形态（e8-e10 三投证伪）。
+
+候选（按序，每轴 1 发不过门即关）：
+1. 燧原 0.58x：e1 字节刚过线；T12/T47 燧原 dot 模板（64 tile +
+   stages2）在本题未试过——单发 64³ route/materialize 变体
+2. 天数 3.85x：核对现有实现 dot 操作数 dtype（天数 fp32-dot 静默错
+   执行，必须 fp16 或 split-fp16 三点积）；若已是 fp32-ieee 则试
+   T12 镜像 split-fp16
+3. 昆仑 1.79x：BLOCK 唯一有效轴（T21 1024 唯一成功）——BK/BN/BM
+   单档扫描 ≤2 发
+止损：总额度优先让给 T42/T53/T52 的预注册候选。

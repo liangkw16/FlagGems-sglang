@@ -10,8 +10,8 @@ team_best_stage: e3
 team_best_commit: 6e3a1c4e64304d017ded08cabb6445b9152776f2
 team_best_speedup: 14.1051875
 sealed: no
-next: 守榜:昆仑segment-owned已固化(0.23→0.64),e3=14.105x为team best;后续发收益被水位噪声(±1.5均值)淹没,停止
-updated: 2026-09-03
+next: 重开:榜差归因高分芯数据流;天数预路由首发,逐芯晋级滚动组合(见09-05方案节)
+updated: 2026-09-05
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -153,3 +153,27 @@ updated: 2026-09-03
   噪声淹没
 - **team best 维持 E3（14.1052x）**；判定：T46 继续投发属水位赌博，
   转入守榜。昆仑 segment-owned 结构沉淀为跨题可复用资产
+
+## 2026-09-05 Codex 会诊作战方案（预注册）
+
+榜差归因修正（算术否定单弱芯论）：差 4.64x×8=37.1 逐芯分，弱三芯合计仅
+3.06x——榜首是在多个高分芯换了数据流。本题正证据：沐曦去二分 +26%。
+同族 T17（14.16x）与本题轮廓重合 = 共享结构天花板。
+
+投发纪律：**逐芯晋级、滚动组合**——E5 字节底座，每包只加一个新
+vendor，成功者冻结进下一包（单芯归因不受 ±1.5 水位噪声影响，
+is_team_best=max 保证零下行）。
+
+候选队列：
+1. **天数 `_iluvatar` 预路由（首发，基数最大）**：Triton route kernel
+   展开 position→(w_idx, rank) + BLOCK_RANK=128 直线 gather；门 ≥+15%。
+   成功后海光（保 warps2）→ 国际 B 独立 vendor 移植
+2. **华为真实物理核 persistent**：`_get_num_vector_cores()`（默认 40，
+   非 E4 硬编码 64）+ flat position grid-stride 均衡 + 去 `.max().item()`
+   同步；门 >2.4x，仍 2.0-2.3 即关轴
+3. 燧原 Triton route materializer 替换 torch searchsorted（全 i32、
+   零运行期分支、grid 贴 12 CTA）；目标 ≥0.6x
+4. 昆仑 route/gather 拆分（segment-owned 资产冻结为底座）；目标 >1.0x
+5. 高风险后置：empty+full-store 替代 torch.zeros（必须覆盖
+   `seg_indptr[-1] < S` 未分配行语义）
+国际 A 最后做（T17 NVIDIA 两阶段 route 0.8476x 负证据）。

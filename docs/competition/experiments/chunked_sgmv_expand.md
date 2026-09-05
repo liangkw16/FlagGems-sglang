@@ -183,3 +183,11 @@ failed_cases` 本就携带完整失败详情，CLI status 视图把它过滤掉�
 - **结论：T47 25.00x 已是当前 vendor 组合的最优**。route/materialize
   对燧原和昆仑都是唯一 correctness 可行的形态，无法用 direct kernel
   替换来提速。水位上涨只在无效提交中可见，不可捕获。
+
+## 2026-09-05 守榜注意事项（Codex 会诊附带发现，已核源码）
+
+`_kunlunxin/ops/chunked_sgmv_expand.py` GEMM K 循环推进为
+`b_ptrs += BLOCK_K * stride_bn`，应为 `stride_bk`——现网全部 shape
+K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。守榜期间
+不动字节；若未来重开昆仑轴或调整 BLOCK_K，必须先修此行并补 K 多趟
+单测（33/64/96/100/128）。

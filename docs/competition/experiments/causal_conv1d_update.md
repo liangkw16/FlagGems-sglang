@@ -10,8 +10,8 @@ team_best_stage: s0
 team_best_commit: 07aaf2e5a081e4bfc4bb0ce3207b3e78c91d69df
 team_best_speedup: -
 sealed: no
-next: 昆仑uni_sram编译墙(width-axis形态也触发了);7/8=此题最优可达;守榜
-updated: 2026-09-03
+next: EvokeAgent 8/8证明昆仑可过;P1三kernel拆分rank-1归约已预注册(见09-05方案节)
+updated: 2026-09-05
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -192,3 +192,27 @@ updated: 2026-09-03
 - 逐芯：天数 13.14 / 沐曦 7.06 / **燧原 0.325** / 海光 11.16 /
   **华为 0.4435** / A 7.74 / B 10.48；昆仑 uni_sram 编译墙
 - **7/8**——此题全场 76 发仅 1 队 8/8，我们 7/8 已是第一梯队
+
+## 2026-09-05 Codex 会诊作战方案（预注册）
+
+平台证据修正：全场 EvokeAgent 已 8/8（6.8566x）——昆仑结构存在，
+"7/8=最优可达"仅对我方历史形态成立。双墙重判：E4-E6 相同错误值锁定
+loop-carried FMA 链错译；E7 的 uni_sram OOR 不能定位到宽度归约本身
+（同 kernel 还含 [64,128] 状态 tile 与 sigmoid）。
+
+**P1（首选，1-2 发）：昆仑三 kernel 拆分 + 3D 微 program rank-1 归约**
+- 卷积 kernel：`grid=(seqlen, dim, batch)`，每 program 一个 (t,d,b)，
+  仅持有 `[W_PAD]` 向量 + 一次 `tl.sum(v*w, axis=0)`；无 bias/silu/
+  cast/状态更新、无 static_range(t/k)、无 grid-stride
+- 后处理 kernel：flat BLOCK=1024（T53 昆仑骨架）做 bias/silu/cast
+- 状态 kernel：`grid=(ceil(state_len/16), dim, batch)` rank-1 拷贝
+- 防墙：无 loop-carried FMA（昆仑 rank-1 归约 T16 正确性实证）；最大
+  活跃形状 `[W_PAD,128]`→`[W_PAD]`；3D 小 grid 有 pr40 昆仑先例
+- 分流：正确且 ≥0.1x → 停；E4-E6 同款错误值 → 转 P2；正确但 <0.1x →
+  转 P3；OOR → 读 raw_result 定位具体 kernel，不盲扫 BLOCK
+
+**P2**：wrapper unfold 物化 `[D, B*T, W]` + 每通道权重扩展 + 规则 32³
+IEEE `tl.dot`（只存 C[:,0]；T28/T37 昆仑通过范式）。
+**P3**：`[BLOCK_D≤8, W_PAD]` 小二维归约（tile ≤64 元素）。
+验证矩阵：width 2-8 / dim 7-2049 / seqlen 1-6 / 三 dtype / bias±silu /
+非连续 + IR 检查（P1 无 scf.for；P2 含 ieee dot）。

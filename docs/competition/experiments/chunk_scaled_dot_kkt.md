@@ -10,8 +10,8 @@ team_best_stage: e7
 team_best_commit: 4d16e0701b054247b83cf09c2e39664cd750235f
 team_best_speedup: -
 sealed: no
-next: 昆仑崩溃族(compile_worker Aborted,非代码);7/8=此题最优可达;守榜
-updated: 2026-09-04
+next: 昆仑route/materialize+规则GEMM三段拆分已预注册(见09-05方案节);validity优先
+updated: 2026-09-05
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -198,3 +198,27 @@ updated: 2026-09-04
   **华为 0.2535** / A 19.24 / B 7.74；昆仑崩溃族（compile_worker Aborted）
 - **7/8**——华为+燧原均过门槛，唯一阻挡是昆仑平台侧崩溃
 - Codex review P1 修复（非连续 k contiguous）+ P2（BT cap 64）在提交前完成
+
+## 2026-09-05 Codex 会诊作战方案（预注册）
+
+平台证据：3 队达标 → 昆仑可过。T28（昆仑 4.40x）/T37（3.47-3.73x）的
+route/materialize + 规则 GEMM 是同类 dot 题已验证昆仑解法。
+
+**首选（1-2 发）：昆仑三段拆分**
+1. wrapper 一次性布局物化：k→`[Q=B*NT*Hg, BT, K]` 连续 + 转置副本；
+   beta/g→`[QH, BT]`。Gram 只按 Hg 算一次，ratio 扩展进 epilogue
+2. Stage1 纯规则 GEMM：32×32×32 / GROUP_M=8 / input_precision="ieee" /
+   1D flattened grid / `do_not_specialize=["M"]` /
+   `tl.max_contiguous(tl.multiple_of(...))`；无 block_ptr、无 tl.trans、
+   无 head 循环、无 exp
+3. Stage2 epilogue：16×32 小 tile，按 reference 顺序 g_decay→beta→
+   因果 mask→直接写最终连续输出偏移（上三角/对角精确零）
+
+均值账：昆仑 0.1x 即 8/8（均值 6.88x），0.5x 仅 +0.05x——**validity
+优先，不追昆仑性能**。降级阶梯：flattened 批量仍崩 → host 逐 q 单发
+（T28 原样）；明确 uni_sram → 16³ 或 split-K；规则 tl.dot 仍崩 →
+8×8 Gram tile + runtime `tl.range` 逐 k 外积（禁 static_range(128)）。
+
+⚠️ 实现注意（已核源码）：T47 `_kunlunxin/chunked_sgmv_expand.py` 的
+K 循环推进 `b_ptrs += BLOCK_K * stride_bn` 是潜伏笔误（应为 stride_bk，
+现网 shape 单趟未触发）——勿照抄；K 多趟（33/64/96/100/128）必须单测。
