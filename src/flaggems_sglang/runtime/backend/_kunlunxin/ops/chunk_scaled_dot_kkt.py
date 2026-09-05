@@ -113,7 +113,7 @@ def _kkt_epilogue_kernel(
     beta_ptr,
     g_ptr,
     out_ptr,
-    total,
+    rows,
     seqlen,
     nchunks,
     num_heads,
@@ -126,49 +126,56 @@ def _kkt_epilogue_kernel(
     g_st,
     g_sh,
     BT: tl.constexpr,
+    HBT: tl.constexpr,
     HAS_G: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
-    # E11: flat 1024-lane grid-stride over output elements (T53-proven
-    # kunlunxin scheduling) instead of QH*8 tiny [16, 32] programs.
+    # E13: row-tiled epilogue - one program per output row (b, s) with
+    # the row decomposition in SCALAR math and only ONE vector division
+    # per lane (h = lane // BT; n recovered by mul-sub). The E11 flat
+    # form chained four per-lane divisions and sits at 0.048x.
     pid = tl.program_id(0)
-    step = tl.num_programs(0) * BLOCK
-    for start in range(pid * BLOCK, total, step):
-        idx = start + tl.arange(0, BLOCK)
-        mask = idx < total
-        n = idx % BT
-        rest = idx // BT
-        h = rest % num_heads
-        rest2 = rest // num_heads
-        s = rest2 % seqlen
-        b = rest2 // seqlen
+    nprog = tl.num_programs(0)
+    for r in range(pid, rows, nprog):
+        s = r % seqlen
+        b = r // seqlen
         c = s // BT
         m = s - c * BT
-        gram_id = (b * nchunks + c) * num_k_heads + (h // ratio)
+        bc = b * nchunks + c
+        row_base = r.to(tl.int64) * HBT
+        for l0 in range(0, HBT, BLOCK):
+            lane = l0 + tl.arange(0, BLOCK)
+            lmask = lane < HBT
+            h = lane // BT
+            n = lane - h * BT
+            kg = h // ratio
+            gram_id = bc * num_k_heads + kg
 
-        result = tl.load(
-            gram_ptr + gram_id * BT * BT + m * BT + n, mask=mask, other=0.0
-        )
-        # Same scaling order as the generic kernel: beta first, then
-        # the safe-exp decay, then the strict lower-triangular zeroing.
-        beta_m = tl.load(
-            beta_ptr + b * beta_sb + s * beta_st + h * beta_sh,
-            mask=mask,
-            other=0.0,
-        ).to(tl.float32)
-        result = result * beta_m
-        if HAS_G:
-            g_base = g_ptr + b * g_sb + h * g_sh
-            g_m = tl.load(
-                g_base + s * g_st, mask=mask, other=0.0
+            result = tl.load(
+                gram_ptr + gram_id * (BT * BT) + m * BT + n,
+                mask=lmask,
+                other=0.0,
+            )
+            # Same scaling order as the generic kernel: beta first,
+            # then the safe-exp decay, then the strict lower zeroing.
+            beta_m = tl.load(
+                beta_ptr + b * beta_sb + s * beta_st + h * beta_sh,
+                mask=lmask,
+                other=0.0,
             ).to(tl.float32)
-            g_n = tl.load(
-                g_base + (c * BT + n) * g_st, mask=mask, other=0.0
-            ).to(tl.float32)
-            g_diff = g_m - g_n
-            result = result * tl.where(g_diff <= 0.0, tl.exp(g_diff), 0.0)
-        result = tl.where(m > n, result, 0.0)
-        tl.store(out_ptr + idx, result, mask=mask)
+            result = result * beta_m
+            if HAS_G:
+                g_base = g_ptr + b * g_sb + h * g_sh
+                g_m = tl.load(
+                    g_base + s * g_st, mask=lmask, other=0.0
+                ).to(tl.float32)
+                g_n = tl.load(
+                    g_base + (c * BT + n) * g_st, mask=lmask, other=0.0
+                ).to(tl.float32)
+                g_diff = g_m - g_n
+                result = result * tl.where(g_diff <= 0.0, tl.exp(g_diff), 0.0)
+            result = tl.where(m > n, result, 0.0)
+            tl.store(out_ptr + row_base + lane, result, mask=lmask)
 
 
 def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
@@ -224,16 +231,17 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
         num_stages=1,
     )
 
-    # Stage 2: flat per-element epilogue (beta / decay / strict lower
-    # mask) reading beta/g natively and writing the contiguous output.
-    total = batch * seqlen * num_heads * bt
-    grid2 = (min(triton.cdiv(total, 1024), 65535),)
+    # Stage 2: row-tiled epilogue (beta / decay / strict lower mask)
+    # reading beta/g natively and writing the contiguous output.
+    rows = batch * seqlen
+    hbt = num_heads * bt
+    grid2 = (min(rows, 65535),)
     _kkt_epilogue_kernel[grid2](
         gram,
         beta,
         g_cumsum,
         output,
-        total,
+        rows,
         seqlen,
         nchunks,
         num_heads,
@@ -246,6 +254,7 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
         g_cumsum.stride(1),
         g_cumsum.stride(2),
         BT=bt,
+        HBT=hbt,
         HAS_G=has_g,
         BLOCK=1024,
         num_warps=4,
