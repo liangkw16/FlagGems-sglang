@@ -23,7 +23,7 @@
 | 40 | softcap_inplace_logits | valid | 8/8(e8,2.195604x,rank1) | e8 2.195604x | yes | 额度用尽收官;e16 华为字节(1.70)+TB 2.1956 #2;榜首 c2flow 2.2593 华为 3.40 未破译 | 2026-09-03 | [softcap_inplace_logits](softcap_inplace_logits.md) |
 | 41 | state_passing | invalid | E7 sub8079 system_failed;7 pass,Kunlun 0.0065x,Enflame unrun | E5 diagnostic | yes | 本轮收盘;只保留平台工单与全新结构研究 | 2026-09-02 | [state_passing](state_passing.md) |
 | 42 | act_and_mul | valid | 8/8(e2,3.248925x) | e6 3.25835x | no | M1载体成TB(3.25835,10344);三候选全消费;守榜,距旧榜首3.5194差-7.4%无新轴 | 2026-09-06 | [act_and_mul](act_and_mul.md) |
-| 43 | causal_conv1d_update | invalid | 7/8(e7,仅昆仑失败;华为0.4435x+燧原0.325x双双过门槛!) | s0 -x | no | E8/E9 rank-1两连败(编译墙破但数值错译);E10规则GEMM形态已提交10337待裁决 | 2026-09-06 | [causal_conv1d_update](causal_conv1d_update.md) |
+| 43 | causal_conv1d_update | invalid | 7/8(e12,昆仑10形态全错译;conclusive) | s0 -x | yes | 昆仑轴conclusive封存;仅全新结构证据(非gather/非广播/非FMA)或平台修复可重开 | 2026-09-06 | [causal_conv1d_update](causal_conv1d_update.md) |
 | 44 | chain_speculative_sampling | invalid | 探针确认全芯失败(predicts mismatch=半精度bit-exact) | s0 -x | no | conclusive 封轴;天数/A/B同款517值=fp32也有差;平台测半精度 | 2026-09-04 | [chain_speculative_sampling](chain_speculative_sampling.md) |
 | 45 | chunk_scaled_dot_kkt | invalid | 7/8(e7,仅昆仑失败;华为0.0455→0.2535x过门槛!) | e7 -x | no | E11 flat epilogue昆仑4.6x至0.048x(差2.1x);E12=GEMM tile 64×64冲0.1x | 2026-09-06 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x) | e3 14.1051875x | no | 重开:榜差归因高分芯数据流;天数预路由首发,逐芯晋级滚动组合(见09-05方案节) | 2026-09-05 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |

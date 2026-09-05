@@ -5,12 +5,12 @@ task: 43
 operator: causal_conv1d_update
 batch: 4
 validity: invalid
-platform: 7/8(e7,仅昆仑失败;华为0.4435x+燧原0.325x双双过门槛!)
+platform: 7/8(e12,昆仑10形态全错译;conclusive)
 team_best_stage: s0
 team_best_commit: 07aaf2e5a081e4bfc4bb0ce3207b3e78c91d69df
 team_best_speedup: -
-sealed: no
-next: E8/E9 rank-1两连败(编译墙破但数值错译);E10规则GEMM形态已提交10337待裁决
+sealed: yes
+next: 昆仑轴conclusive封存;仅全新结构证据(非gather/非广播/非FMA)或平台修复可重开
 updated: 2026-09-06
 ```
 
@@ -253,3 +253,17 @@ IEEE `tl.dot`（只存 C[:,0]；T28/T37 昆仑通过范式）。
   SHA-256 `677c12f0…f6507`，screening 9/9 OK
 - 判定门：指纹变化 → post kernel 坐实并继续分诊（下一变量=bias
   gather）；指纹不变 → 昆仑轴 conclusive 封存
+
+## E12 终态与昆仑轴 conclusive 封存（2026-09-06，submission 10341）
+
+- bias 折入 GEMM ones-列（post 无 gather，仅 silu+cast）——**指纹变化：
+  case 0 从 30/32 → 32/32（100%），失败 case 5→4**：向量 gather
+  确认是错误源之一，但有残留错误（嫌疑：GEMM 的 stride-0 广播 B
+  操作数或 post 的 silu；两者均无昆仑单独正证据）
+- 其余七芯全过（天数 13.71/沐曦 7.023/海光 10.9445/华为 0.3945/
+  A 8.559/B 10.6055；燧原在评）
+- **判定：T43 昆仑轴 conclusive 封存 7/8**。任务全史累计 10 种
+  Triton 形态（标量 FMA 链×6、rank-1×2、规则 GEMM×2）在昆仑全部
+  数值错译或编译墙；EvokeAgent 8/8 结构未破译。跨题知识：
+  **昆仑向量 gather 与广播操作数均为错译高危面**（T53 标量 gather
+  为唯一已证安全形态）
