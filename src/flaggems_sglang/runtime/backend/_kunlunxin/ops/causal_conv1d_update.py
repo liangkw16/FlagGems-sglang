@@ -32,6 +32,7 @@ def _ccu_conv_rank1_kernel(
     xcat_ptr,
     weight_ptr,
     pre_ptr,
+    total,
     dim,
     seqlen,
     state_len,
@@ -39,21 +40,25 @@ def _ccu_conv_rank1_kernel(
     WIDTH: tl.constexpr,
     W_PAD: tl.constexpr,
 ):
-    t = tl.program_id(0)
-    d = tl.program_id(1)
-    b = tl.program_id(2)
-
+    # E9: 1D flat grid-stride (T53-proven kunlunxin form) instead of the
+    # 3D (seqlen, dim, batch) grid - E8 produced ~87-94% wrong elements
+    # on kunlunxin only, matching a grid-axis-mapping miscompile.
+    pid = tl.program_id(0)
+    step = tl.num_programs(0)
     offs_w = tl.arange(0, W_PAD)
     w_mask = offs_w < WIDTH
-    # Window positions in the virtual concat(state, x).
-    p = t + state_len + 1 - WIDTH + offs_w
-    row = b.to(tl.int64) * dim + d
-    v = tl.load(xcat_ptr + row * l_cat + p, mask=w_mask, other=0.0)
-    wk = tl.load(
-        weight_ptr + d.to(tl.int64) * WIDTH + offs_w, mask=w_mask, other=0.0
-    )
-    pre = tl.sum(v * wk, axis=0)
-    tl.store(pre_ptr + row * seqlen + t, pre)
+    for idx in range(pid, total, step):
+        t = idx % seqlen
+        row = idx // seqlen
+        d = row % dim
+        # Window positions in the virtual concat(state, x).
+        p = t + state_len + 1 - WIDTH + offs_w
+        v = tl.load(xcat_ptr + row * l_cat + p, mask=w_mask, other=0.0)
+        wk = tl.load(
+            weight_ptr + d * WIDTH + offs_w, mask=w_mask, other=0.0
+        )
+        pre = tl.sum(v * wk, axis=0)
+        tl.store(pre_ptr + idx, pre)
 
 
 @triton.jit
@@ -142,12 +147,15 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         batch * dim * seqlen, dtype=torch.float32, device=x.device
     )
 
-    # Kernel 1: one micro-program per (t, d, b) with a [W_PAD] rank-1
-    # reduction - no FMA chain, no 2D tile, no activation, no loop.
-    _ccu_conv_rank1_kernel[(seqlen, dim, batch)](
+    # Kernel 1: one micro-program per output element with a [W_PAD]
+    # rank-1 reduction - no FMA chain, no 2D tile, no activation.
+    total = batch * dim * seqlen
+    grid1 = (min(total, _MAX_GRID),)
+    _ccu_conv_rank1_kernel[grid1](
         x_cat,
         weight_f,
         pre,
+        total,
         dim,
         seqlen,
         state_len,
@@ -159,7 +167,6 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     )
 
     # Kernel 2: flat bias + SiLU + dtype cast (out is contiguous).
-    total = batch * dim * seqlen
     grid2 = (min(triton.cdiv(total, 1024), _MAX_GRID),)
     _ccu_postprocess_kernel[grid2](
         pre,
