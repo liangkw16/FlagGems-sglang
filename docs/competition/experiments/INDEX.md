@@ -24,12 +24,12 @@
 | 41 | state_passing | invalid | E7 sub8079 system_failed;7 pass,Kunlun 0.0065x,Enflame unrun | E5 diagnostic | yes | 本轮收盘;只保留平台工单与全新结构研究 | 2026-09-02 | [state_passing](state_passing.md) |
 | 42 | act_and_mul | valid | 8/8(e2,3.248925x) | e2 3.248925x | no | 榜首Warmhearted升至3.5194x(活跃迭代中);剩余轴:昆仑0.456/沐曦2.40/华为2.258;AMD四档autotune可试(+3.83%实证) | 2026-09-03 | [act_and_mul](act_and_mul.md) |
 | 43 | causal_conv1d_update | invalid | 7/8(e7,仅昆仑失败;华为0.4435x+燧原0.325x双双过门槛!) | s0 -x | no | 昆仑uni_sram编译墙(width-axis形态也触发了);7/8=此题最优可达;守榜 | 2026-09-03 | [causal_conv1d_update](causal_conv1d_update.md) |
-| 44 | chain_speculative_sampling | candidate-limited | none(未提交) | s0 -x | no | 半精度逆CDF bit-exact 判定为不可行(NVIDIA代理实证);提交与否需用户门控——fp32全对,fp16/bf16最终token有~20-30%/请求失配;pending_challenge 0/6 队达标,一发探针或可换平台dtype口径情报 | 2026-09-04 | [chain_speculative_sampling](chain_speculative_sampling.md) |
+| 44 | chain_speculative_sampling | invalid | 探针确认全芯失败(predicts mismatch=半精度bit-exact) | s0 -x | no | conclusive 封轴;天数/A/B同款517值=fp32也有差;平台测半精度 | 2026-09-04 | [chain_speculative_sampling](chain_speculative_sampling.md) |
 | 45 | chunk_scaled_dot_kkt | invalid | 7/8(e7,仅昆仑失败;华为0.0455→0.2535x过门槛!) | e7 -x | no | 昆仑崩溃族(compile_worker Aborted,非代码);7/8=此题最优可达;守榜 | 2026-09-04 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x) | e3 14.1051875x | no | 守榜:昆仑segment-owned已固化(0.23→0.64),e3=14.105x为team best;后续发收益被水位噪声(±1.5均值)淹没,停止 | 2026-09-03 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
 | 47 | chunked_sgmv_expand | valid | 8/8(e5,25.0048125x,榜首) | e5 25.0048125x | no | 守榜首(25.00x vs 前榜首23.33x);燧原0.178x/昆仑3.72x为余量轴;stale意图经用户授权归档重提(移至archived/) | 2026-09-04 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
 | 48 | chunked_sgmv_shrink | invalid | 7/8(e5,燧原评测机连续4次超时=平台侧;昆仑1.77x+七芯全过) | e2 -x | no | 燧原评测机恢复后重投(e1字节已验证0.58x);等平台侧窗口 | 2026-09-05 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
-| 49 | ernie45_rope_fused | invalid | 7/8(e1,仅昆仑uni_sram;燧原0.55x翻绿) | e1 -x | no | 昆仑uni_sram墙(需更小tile/单head);7/8已是好成绩 | 2026-09-05 | [ernie45_rope_fused](ernie45_rope_fused.md) |
+| 49 | ernie45_rope_fused | invalid | 7/8(e2,昆仑uni_sram墙已3投;conclusive) | e1 -x | no | 昆仑uni_sram墙(需更小tile/单head);7/8已是好成绩 | 2026-09-05 | [ernie45_rope_fused](ernie45_rope_fused.md) |
 | 51 | fla_layernorm_gated | valid | 8/8(e1,5.390025x) | e1 5.390025x | no | 守榜;冲分轴:昆仑0.944/华为2.52 | 2026-09-05 | [fla_layernorm_gated](fla_layernorm_gated.md) |
 | 52 | fused_dual_residual_rmsnorm | invalid | 5/8(e2,天数/燧原/昆仑/card_b 差丝米级精度) | - -x | no | 精度追踪边际递减(3种除法形式各自修一芯破另一芯);建议暂停转T49 | 2026-09-05 | [fused_dual_residual_rmsnorm](fused_dual_residual_rmsnorm.md) |
 | 53 | fused_gdn_gating | valid | 8/8(e1,1.769075x) | e1 1.769075x | no | 守榜;冲分轴:昆仑0.72x/燧原0.17x/沐曦1.34x | 2026-09-05 | [fused_gdn_gating](fused_gdn_gating.md) |

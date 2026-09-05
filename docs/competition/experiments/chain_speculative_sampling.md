@@ -4,13 +4,13 @@
 task: 44
 operator: chain_speculative_sampling
 batch: 4
-validity: candidate-limited
-platform: none(未提交)
+validity: invalid
+platform: 探针确认全芯失败(predicts mismatch=半精度bit-exact)
 team_best_stage: s0
 team_best_commit: d7d8c4793278062f55617693585ae2ab89c8fbcc
 team_best_speedup: -
 sealed: no
-next: 半精度逆CDF bit-exact 判定为不可行(NVIDIA代理实证);提交与否需用户门控——fp32全对,fp16/bf16最终token有~20-30%/请求失配;pending_challenge 0/6 队达标,一发探针或可换平台dtype口径情报
+next: conclusive 封轴;天数/A/B同款517值=fp32也有差;平台测半精度
 updated: 2026-09-04
 ```
 
@@ -115,3 +115,12 @@ screening 8/8（含 1 个如实标注的 expectedFailure）。题目 atol=0 +
   （NameError/IndexError/`constexpr[0]`）不计入失败神谕
 - 平台实测（本账本上方小节）已是更强证据，MCP 结论仅作发射风险
   参考留存
+
+## S0 探针（2026-09-05，submission 10037）
+
+- **至少 5 芯 FAIL（天数/昆仑/华为/A/B），全部 `predicts mismatch`**
+- 天数/A/B predicts 首 token 同为 517 → fp32 dtype 也有差异（不只
+  是半精度问题，accept chain 的 fp32 比较也有跨芯差异）
+- **判定：T44 conclusive 封轴**——接受链+逆CDF 的 atol=0 在八芯
+  上不可达（fp32 + 半精度均有 bit-exact 障碍）
+- 信息价值：确认平台测多种 dtype，fp32-only 假设不成立

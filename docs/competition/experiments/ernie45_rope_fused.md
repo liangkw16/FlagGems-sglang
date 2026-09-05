@@ -5,7 +5,7 @@ task: 49
 operator: ernie45_rope_fused
 batch: 4
 validity: invalid
-platform: 7/8(e1,仅昆仑uni_sram;燧原0.55x翻绿)
+platform: 7/8(e2,昆仑uni_sram墙已3投;conclusive)
 team_best_stage: e1
 team_best_speedup: -
 sealed: no
@@ -20,3 +20,9 @@ updated: 2026-09-05
 - Precomputed-pos vendor：wrapper PyTorch 预计算 [T, half_rd] 位置
   张量（纯元数据），kernel 变纯 gather+RoPE 零分支——PassManager
   毒点彻底消除
+
+## E2 昆仑 HEADS_TILE=1 + coreTiling（submission 10035）
+- 昆仑仍 uni_sram（3 投：S0 generic / e1 precomputed-pos / e2 最小
+  tile+coreTiling）→ **昆仑 conclusive 封轴**
+- 逐芯：天数 16.26 / 沐曦 8.98 / 燧原 0.577 / 海光 9.32 /
+  昆仑 FAIL / 华为 2.47 / A 21.54 / B 9.87
