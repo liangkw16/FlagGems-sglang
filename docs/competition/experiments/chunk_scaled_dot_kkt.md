@@ -10,8 +10,8 @@ team_best_stage: e7
 team_best_commit: 4d16e0701b054247b83cf09c2e39664cd750235f
 team_best_speedup: -
 sealed: no
-next: 昆仑route/materialize+规则GEMM三段拆分已预注册(见09-05方案节);validity优先
-updated: 2026-09-05
+next: E8昆仑首次过correctness(崩溃族击穿!)但0.0095x<门槛;E9去物化直读strides冲0.1x
+updated: 2026-09-06
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -222,3 +222,23 @@ route/materialize + 规则 GEMM 是同类 dot 题已验证昆仑解法。
 ⚠️ 实现注意（已核源码）：T47 `_kunlunxin/chunked_sgmv_expand.py` 的
 K 循环推进 `b_ptrs += BLOCK_K * stride_bn` 是潜伏笔误（应为 stride_bk，
 现网 shape 单趟未触发）——勿照抄；K 多趟（33/64/96/100/128）必须单测。
+
+## E8 昆仑 route/materialize + 规则 GEMM 三段拆分（2026-09-06 00:31，submission 10328，daily_seq 3）
+
+- 载体：`_kunlunxin` 整体替换为三段式——wrapper 物化
+  k→[Q,BT,K]/beta,g→[QH,BT] + Stage1 规则 32×32 单趟 ieee fp32 GEMM
+  （1D flattened grid + GROUP_M=8 + do_not_specialize M）+ Stage2
+  16×32 epilogue（beta→decay→严格下三角→直写连续输出）；
+  source `016bd9c`，ZIP `e8-016bd9c` SHA-256 `5c173dc8…bfd1`（4 成员）
+- screening：远端 `/tmp/flagos-t45b.*`（unittest 9/9 OK；首轮发现批量化
+  步长映射 OOB——矩阵步长误作行步长，修复后全绿）
+- **终态 8 芯 correctness 全过、昆仑首次翻绿——崩溃族击穿！**
+  但昆仑 speedup 0.0095x < 0.1x → `invalid_threshold`
+- 逐芯：天数 5.807 / 沐曦 5.648 / 燧原 1.6225 / 海光 16.0555 /
+  昆仑 0.0095 / 华为 0.252 / A 19.241 / B 7.52（avg 7.0194）
+- **判定**：validity 只差昆仑性能（105 倍差距，疑 wrapper torch 物化
+  + 微 GEMM 开销主导）。E9 单变量 = 去物化：两个 kernel 直接按
+  k/beta/g 原生 strides 寻址（全部规整 stride，无间接索引），
+  fp32 上抛在 kernel 内完成，消除全部 permute/contiguous/float 拷贝
+- 跨题知识沉淀：**route/materialize + 规则 GEMM 同样击穿 KKT 类
+  compile-worker 崩溃族**（T28/T37/T45 三题互证，昆仑 dot 题通用解）
