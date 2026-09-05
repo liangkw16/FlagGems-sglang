@@ -67,6 +67,48 @@ def _act_and_mul_flat_kernel(
         )
 
 
+@triton.jit
+def _act_and_mul_direct_kernel(
+    x_ptr,
+    output_ptr,
+    n_elements,
+    half_width,
+    swiglu_limit,
+    BLOCK_SIZE: tl.constexpr,
+    HAS_LIMIT: tl.constexpr,
+    ACT_IS_GELU: tl.constexpr,
+):
+    # K1: one program per block, no loop and no dynamic step math -
+    # the grid-stride control flow is itself a bottleneck on this
+    # backend (T40: 0.246 -> 0.945 when the loop is compiled out).
+    offsets = tl.program_id(0) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+    mask = offsets < n_elements
+    rows = offsets // half_width
+    cols = offsets - rows * half_width
+    input_base = rows.to(tl.int64) * (2 * half_width) + cols
+    gate = tl.load(x_ptr + input_base, mask=mask, other=0.0).to(tl.float32)
+    up = tl.load(x_ptr + input_base + half_width, mask=mask, other=0.0).to(
+        tl.float32
+    )
+    if HAS_LIMIT:
+        gate = tl.minimum(gate, swiglu_limit)
+        up = tl.minimum(tl.maximum(up, -swiglu_limit), swiglu_limit)
+    if ACT_IS_GELU:
+        scaled = 0.7978845608028654 * (gate + 0.044715 * gate * gate * gate)
+        exp_neg = tl.exp(-2.0 * tl.abs(scaled))
+        ratio = (1.0 - exp_neg) / (1.0 + exp_neg)
+        tanh_scaled = tl.where(scaled < 0.0, -ratio, ratio)
+        act = gate * 0.5 * (1.0 + tanh_scaled)
+    else:
+        act = gate / (1.0 + tl.exp(-gate))
+    elem_ty = output_ptr.dtype.element_ty
+    tl.store(
+        output_ptr + offsets,
+        act.to(elem_ty) * up.to(elem_ty),
+        mask=mask,
+    )
+
+
 def act_and_mul(gateup_output, activation="silu", swiglu_limit=None):
     if activation not in ("silu", "gelu"):
         raise ValueError(f"Unsupported activation: {activation}")
@@ -80,7 +122,20 @@ def act_and_mul(gateup_output, activation="silu", swiglu_limit=None):
         return output
     has_limit = swiglu_limit is not None
     limit = float(swiglu_limit) if has_limit else 0.0
-    grid = (min(triton.cdiv(n_elements, _BLOCK_SIZE), _MAX_GRID),)
+    n_blocks = triton.cdiv(n_elements, _BLOCK_SIZE)
+    if n_blocks <= _MAX_GRID:
+        _act_and_mul_direct_kernel[(n_blocks,)](
+            x,
+            output,
+            n_elements,
+            half_width,
+            limit,
+            BLOCK_SIZE=_BLOCK_SIZE,
+            HAS_LIMIT=has_limit,
+            ACT_IS_GELU=(activation == "gelu"),
+        )
+        return output
+    grid = (min(n_blocks, _MAX_GRID),)
     _act_and_mul_flat_kernel[grid](
         x,
         output,
