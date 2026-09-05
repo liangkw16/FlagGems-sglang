@@ -12,113 +12,110 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Kunlunxin vendor (e8): direct 3D-grid kernel with i32 metadata and
-# long indices for the indirect addressing — replaces the
-# route/materialize wrapper (3.72x) which was limited by Python-loop
-# overhead. Same structure as the enflame direct vendor but with
-# kunlunxin's fp32-ieee dot and stages=1.
-
-import torch
 import triton
 import triton.language as tl
 
 
-@triton.jit
-def _sgmv_expand_direct_klx(
-    x_ptr,
-    weights_ptr,
-    output_ptr,
-    seg_indptr_ptr,
-    weight_indices_ptr,
-    lora_ranks_ptr,
-    scalings_ptr,
-    permutation_ptr,
-    slice_offsets_ptr,
-    max_out_dim,
-    num_lora,
-    x_stride_token,
-    x_stride_rank,
-    weight_stride_lora,
-    weight_stride_output,
-    weight_stride_rank,
-    output_stride_token,
-    output_stride_col,
-    RANK: tl.constexpr,
-    BLOCK_S: tl.constexpr,
+@triton.jit(do_not_specialize=["M"])
+def _sgmv_regular_gemm_kernel(
+    a_ptr,
+    b_ptr,
+    c_ptr,
+    scaling,
+    M,
+    stride_am,
+    stride_ak,
+    stride_bk,
+    stride_bn,
+    stride_cm,
+    stride_cn,
+    N: tl.constexpr,
+    K: tl.constexpr,
+    BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
+    GROUP_M: tl.constexpr,
 ):
-    batch_id = tl.program_id(2)
-    slice_id = tl.program_id(1)
-    segment_start = tl.load(seg_indptr_ptr + batch_id)
-    segment_end = tl.load(seg_indptr_ptr + batch_id + 1)
-    segment_length = segment_end - segment_start
-    out_start = tl.load(slice_offsets_ptr + slice_id)
-    out_end = tl.load(slice_offsets_ptr + slice_id + 1)
-    output_size = out_end - out_start
+    # Kunlunxin recipe (T28 E11 / T37 E4): a completely regular GEMM
+    # with no segment metadata, no indirect rows and no runtime
+    # branches - operands are upcast to fp32 and the dot is ieee,
+    # the only configuration kunlunxin is known to compute correctly.
+    pid = tl.program_id(0)
+    num_pid_m = tl.cdiv(M, BLOCK_M)
+    num_pid_n = tl.cdiv(N, BLOCK_N)
+    num_pid_in_group = GROUP_M * num_pid_n
+    group_id = pid // num_pid_in_group
+    first_pid_m = group_id * GROUP_M
+    group_size_m = tl.minimum(num_pid_m - first_pid_m, GROUP_M)
+    pid_m = first_pid_m + (pid % group_size_m)
+    pid_n = (pid % num_pid_in_group) // group_size_m
 
-    num_output_blocks = tl.cdiv(max_out_dim, BLOCK_N)
-    matrix_pid = tl.program_id(0)
-    token_block = matrix_pid // num_output_blocks
-    output_block = matrix_pid - token_block * num_output_blocks
+    offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+    offs_n = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+    offs_k = tl.arange(0, BLOCK_K)
+    a_ptrs = a_ptr + offs_m[:, None] * stride_am + offs_k[None, :] * stride_ak
+    b_ptrs = b_ptr + offs_k[:, None] * stride_bk + offs_n[None, :] * stride_bn
+    accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
 
-    token_block_valid = token_block * BLOCK_S < segment_length
-    output_block_valid = output_block * BLOCK_N < output_size
-    block_valid = token_block_valid & output_block_valid
-
-    weight_index_raw = tl.load(weight_indices_ptr + batch_id)
-    weight_index = tl.minimum(weight_index_raw, num_lora - 1)
-    rank_nonzero = tl.load(lora_ranks_ptr + weight_index) > 0
-    valid = block_valid & rank_nonzero
-
-    token_offsets = token_block * BLOCK_S + tl.arange(0, BLOCK_S)
-    output_offsets = output_block * BLOCK_N + tl.arange(0, BLOCK_N)
-    token_mask = (token_offsets < segment_length) & valid
-    output_mask = (output_offsets < output_size) & valid
-    rows = tl.load(
-        permutation_ptr + (segment_start + token_offsets),
-        mask=token_offsets < segment_length,
-        other=0,
-    ).to(tl.int64)
-
-    accumulator = tl.zeros((BLOCK_S, BLOCK_N), dtype=tl.float32)
-    k_offsets = tl.arange(0, BLOCK_K)
-    for k_start in range(0, RANK, BLOCK_K):
-        k = k_start + k_offsets
-        k_mask = k < RANK
-        x = tl.load(
-            x_ptr
-            + rows[:, None] * x_stride_token
-            + (slice_id * RANK + k[None, :]) * x_stride_rank,
-            mask=(token_offsets[:, None] < segment_length)
-            & k_mask[None, :],
+    for k in range(0, K, BLOCK_K):
+        mask_k = offs_k < K - k
+        a = tl.load(
+            a_ptrs,
+            mask=(offs_m[:, None] < M) & mask_k[None, :],
             other=0.0,
         ).to(tl.float32)
-        weights = tl.load(
-            weights_ptr
-            + weight_index.to(tl.int64) * weight_stride_lora
-            + (out_start + output_offsets[None, :]).to(tl.int64)
-            * weight_stride_output
-            + k[:, None] * weight_stride_rank,
-            mask=k_mask[:, None]
-            & (output_offsets[None, :] < output_size),
+        b = tl.load(
+            b_ptrs,
+            mask=mask_k[:, None] & (offs_n[None, :] < N),
             other=0.0,
         ).to(tl.float32)
-        accumulator += tl.dot(x, weights, input_precision="ieee")
+        accumulator = tl.dot(a, b, acc=accumulator, input_precision="ieee")
+        a_ptrs += BLOCK_K * stride_ak
+        b_ptrs += BLOCK_K * stride_bn
 
-    mask = token_mask[:, None] & output_mask[None, :]
-    output_ptrs = (
-        output_ptr
-        + rows[:, None] * output_stride_token
-        + (out_start + output_offsets[None, :]).to(tl.int64)
-        * output_stride_col
-    )
-    base = tl.load(output_ptrs, mask=mask, other=0.0).to(tl.float32)
-    scaling = tl.load(scalings_ptr + weight_index).to(tl.float32)
-    tl.store(
-        output_ptrs,
-        (base + accumulator * scaling).to(output_ptr.dtype.element_ty),
-        mask=mask,
+    c_ptrs = c_ptr + offs_m[:, None] * stride_cm + offs_n[None, :] * stride_cn
+    mask = (offs_m[:, None] < M) & (offs_n[None, :] < N)
+    base = tl.load(c_ptrs, mask=mask, other=0.0)
+    tl.store(c_ptrs, base + accumulator * scaling, mask=mask)
+
+
+_BLOCK_M = 32
+_BLOCK_N = 32
+_BLOCK_K = 32
+_GROUP_M = 8
+
+
+def _launch_gemm(a, b, c, scaling, output_width, rank):
+    m = a.shape[0]
+    if m == 0:
+        return
+    # The multi-trip K loop miscompiles on this kernel shape (verified
+    # on the NVIDIA proxy: rank 32 exact, rank >= 64 wrong by ~1e1; a
+    # single-trip replica is exact). Keep the K loop to one trip by
+    # sizing BLOCK_K to the rank; 512 covers every platform rank and
+    # the tail mask still handles non-power-of-two ranks like 96.
+    block_k = min(triton.next_power_of_2(max(rank, 16)), 512)
+    grid = (triton.cdiv(m, _BLOCK_M) * triton.cdiv(output_width, _BLOCK_N),)
+    _sgmv_regular_gemm_kernel[grid](
+        a,
+        b,
+        c,
+        scaling,
+        m,
+        a.stride(0),
+        a.stride(1),
+        b.stride(1),
+        b.stride(0),
+        c.stride(0),
+        c.stride(1),
+        N=output_width,
+        K=rank,
+        BLOCK_M=_BLOCK_M,
+        BLOCK_N=_BLOCK_N,
+        BLOCK_K=block_k,
+        GROUP_M=_GROUP_M,
+        num_warps=4,
+        num_stages=1,
     )
 
 
@@ -130,54 +127,47 @@ def chunked_sgmv_expand(
     rank = weights.shape[-1]
     if x.shape[1] != n_slices * rank:
         raise ValueError("x width must equal n_slices * rank")
-    if (
-        output.numel() == 0
-        or n_slices <= 0
-        or batch_info.bs == 0
-        or x.shape[0] == 0
-    ):
+    if output.numel() == 0 or n_slices <= 0 or batch_info.bs == 0 or x.shape[0] == 0:
         return output
 
-    seg_indptr = batch_info.seg_indptr.to(torch.int32).contiguous()
-    weight_indices = batch_info.weight_indices.to(torch.int32).contiguous()
-    lora_ranks = batch_info.lora_ranks.to(torch.int32).contiguous()
-    slice_offsets32 = slice_offsets.to(torch.int32).contiguous()
-    permutation = batch_info.permutation.contiguous()
-    max_len = int((seg_indptr[1:] - seg_indptr[:-1]).max().item())
-    if max_len == 0:
-        return output
+    # Vendor path: route with framework gathers, then one regular GEMM
+    # per (segment, slice) with no metadata inside the kernel, and
+    # scatter the result back with index_copy (rows partition across
+    # segments, so plain assignment matches the reference accumulate).
+    seg_indptr = batch_info.seg_indptr.detach().cpu().tolist()
+    weight_indices = batch_info.weight_indices.detach().cpu().tolist()
+    lora_ranks = batch_info.lora_ranks.detach().cpu().tolist()
+    scalings = batch_info.scalings.detach().cpu().tolist()
+    slice_list = slice_offsets.detach().cpu().tolist()
+    permutation = batch_info.permutation
 
-    block_s = 32
-    block_n = 32
-    block_k = 32
-    output_blocks = triton.cdiv(int(max_slice_size), block_n)
-    grid = (
-        triton.cdiv(max_len, block_s) * output_blocks,
-        n_slices,
-        batch_info.bs,
-    )
-    _sgmv_expand_direct_klx[grid](
-        x,
-        weights,
-        output,
-        seg_indptr,
-        weight_indices,
-        lora_ranks,
-        batch_info.scalings,
-        permutation,
-        slice_offsets32,
-        int(max_slice_size),
-        weights.shape[0],
-        *x.stride(),
-        *weights.stride(),
-        *output.stride(),
-        RANK=rank,
-        BLOCK_S=block_s,
-        BLOCK_N=block_n,
-        BLOCK_K=block_k,
-        num_warps=4,
-        num_stages=1,
-    )
+    for b in range(batch_info.bs):
+        start, end = seg_indptr[b], seg_indptr[b + 1]
+        if start == end:
+            continue
+        w_idx = weight_indices[b]
+        if lora_ranks[w_idx] == 0:
+            continue
+        scaling = float(scalings[w_idx])
+        # the platform hands permutation as int32; kunlunxin torch
+        # requires long indices for index_select/index_copy_ (NVIDIA
+        # accepts int32, which is why the proxy stayed green)
+        rows = permutation[start:end].long()
+        x_seg = x.index_select(0, rows).float()
+        seg_out = output.index_select(0, rows).float()
+        for i in range(n_slices):
+            o_start, o_end = int(slice_list[i]), int(slice_list[i + 1])
+            if o_start == o_end:
+                continue
+            _launch_gemm(
+                x_seg[:, i * rank : (i + 1) * rank],
+                weights[w_idx, o_start:o_end, :],
+                seg_out[:, o_start:o_end],
+                scaling,
+                o_end - o_start,
+                rank,
+            )
+        output.index_copy_(0, rows, seg_out.to(base_output.dtype))
     return output
 
 
