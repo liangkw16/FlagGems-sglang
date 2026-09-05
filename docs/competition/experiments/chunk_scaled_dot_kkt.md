@@ -10,7 +10,7 @@ team_best_stage: e7
 team_best_commit: 4d16e0701b054247b83cf09c2e39664cd750235f
 team_best_speedup: -
 sealed: no
-next: E13行分块0.063x(差1.6x);E14 exp2换算已提交待裁决;再败则暂停T45转T46
+next: E14 exp2证伪已回滚e13(0.063x八芯过correctness);T45暂停守invalid转T46
 updated: 2026-09-06
 ```
 
@@ -293,3 +293,13 @@ K 循环推进 `b_ptrs += BLOCK_K * stride_bn` 是潜伏笔误（应为 stride_b
 - E14（已 screening 9/9）：decay 的 `tl.exp` → `tl.math.exp2(d·log2e)`
   （若 FlagTree exp 走慢速 libm 而 exp2 原生，则 epilogue 剩余大头
   即此处）
+
+## E14 exp2 换算证伪（2026-09-06，submission 10348）
+
+- decay 的 `tl.exp` → `tl.math.exp2(d·log2e)`——**昆仑 correctness 失败**
+  （exp2 在 FlagTree 错译或舍入超容差），字节已当场回滚 e13
+- 判定：T45 昆仑暂停于 e13 形态（0.063x，八芯 correctness 全过、
+  距 0.1x 差 1.6x）；已证伪轴：去物化(+5%)、输入精度 dot(+5%)、
+  64×64 tile(0)、exp2(负)。剩余未试：epilogue 融入 GEMM（Codex
+  警告崩溃族风险，搁置）。**转 T46 天数预路由**，T45 守 invalid
+  待新证据
