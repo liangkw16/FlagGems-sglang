@@ -9,8 +9,8 @@ platform: 8/8(e1,5.390025x)
 team_best_stage: e1
 team_best_speedup: 5.390025
 sealed: no
-next: 守榜;冲分轴:昆仑0.944/华为2.52
-updated: 2026-09-05
+next: e3华为constexpr-D仅+3.7%证伪关闭;昆仑0.97已修;剩沐曦rsqrt;燧原病态在评
+updated: 2026-09-06
 ```
 
 ## S0（2026-09-05，submission 9867）
@@ -38,3 +38,16 @@ LayerNorm 勿改 `E[x²]-E[x]²` 单遍（大均值小方差消减误差，fp32 
 
 > 注：并行会话 09-05 22:56 记录已发 T51 E2（8/8、5.3939x、未超 e1，轴内容未落账本）；
 > 执行本方案任一候选前先与该会话核对 E2 消费过的轴，避免重复预注册。
+
+## E3 华为 constexpr-D vendor（2026-09-06，submission 10385）
+
+- `_ascend` vendor：generic 数学逐字节不变，唯一变量 = `dim` →
+  `tl.constexpr D`（`offs < D` 编译期折叠 + `/D` 常量折叠）；
+  source `080148b`，ZIP `e3-080148b` SHA-256 `2bddb9d4…271d`
+  （4 成员），screening OK
+- 七芯已过：**华为 2.52→2.6182（+3.7%，远低于 ≥+15% 门——轴单发
+  证伪关闭**：int 比较不是本题华为瓶颈）；天数 9.2822/沐曦 4.3918/
+  海光 8.133/昆仑 0.9682（kunlunxin vendor 生效）/A 8.1964/B 6.873
+- 燧原（非目标芯）卡病态盒子 waiting_callback；无论燧原落点，
+  估算均值 ≤5.38 < e1 TB 5.39——非 team best
+- 判定：constexpr-D 轴关闭；T51 剩余轴：沐曦 rsqrt（预注册 #2）

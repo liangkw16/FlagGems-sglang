@@ -31,7 +31,7 @@
 | 48 | chunked_sgmv_shrink | valid | 8/8(e6,4.7198125x) | e6 4.7198125x | no | 守榜;冲分轴:燧原0.58x/昆仑1.79x/天数3.85x | 2026-09-05 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
 | 49 | ernie45_rope_fused | invalid | 7/8(e2,昆仑uni_sram墙已3投;conclusive) | e1 -x | no | 昆仑uni_sram墙(需更小tile/单head);7/8已是好成绩 | 2026-09-05 | [ernie45_rope_fused](ernie45_rope_fused.md) |
 | 50 | extend_attention | candidate-wip | 6/8(e4,昆仑conclusive封轴;华为数值不可修;燧原0.013x<门槛) | - -x | no | 华为深层数值问题(online+two-pass均败);5/8已是208发1队过线题的好成绩;冲分优先 | 2026-09-05 | [extend_attention](extend_attention.md) |
-| 51 | fla_layernorm_gated | valid | 8/8(e1,5.390025x) | e1 5.390025x | no | 守榜;冲分轴:昆仑0.944/华为2.52 | 2026-09-05 | [fla_layernorm_gated](fla_layernorm_gated.md) |
+| 51 | fla_layernorm_gated | valid | 8/8(e1,5.390025x) | e1 5.390025x | no | e3华为constexpr-D仅+3.7%证伪关闭;昆仑0.97已修;剩沐曦rsqrt;燧原病态在评 | 2026-09-06 | [fla_layernorm_gated](fla_layernorm_gated.md) |
 | 52 | fused_dual_residual_rmsnorm | invalid | 6/8(e5,五种数学形态同指纹边界失配;已分诊) | - -x | yes | 封存6/8;仅sqrt_rn+div_rn或torch归约树复刻等全新结构证据可重开 | 2026-09-06 | [fused_dual_residual_rmsnorm](fused_dual_residual_rmsnorm.md) |
 | 53 | fused_gdn_gating | valid | 8/8(e1,1.769075x) | e1 1.769075x | no | 根因=generic标量循环;先补anchor再发燧原行向量/华为行结构/沐曦flat(见09-05方案节) | 2026-09-05 | [fused_gdn_gating](fused_gdn_gating.md) |
 

@@ -53,3 +53,19 @@ updated: 2026-09-05
 测试矩阵：B={0,1,3,32,257}、H={1,7,8,31,32,127,128,129}、threshold
 两侧、beta={0.5,1,2}、a/b/A_log/dt_bias 极值与非连续布局；发射前
 IR 检查（燧原无 scf.if/grid-stride、华为热路径无整数除法/取模）。
+
+## E2 燧原行向量 vendor（2026-09-06，submission 10384）
+
+- anchor 纪律兑现：generic+`_kunlunxin` 回滚 E1 平台已验证字节
+  （`450e6fe`），唯一新变量 = `_enflame` 行向量 vendor（grid=(B,) +
+  H 全宽 + 零循环零分支，softplus 用 E1 数学的 where 形态）；
+  source `42d98e6`，ZIP `e2-42d98e6` SHA-256 `be3c6b9e…ec97`（3 成员）
+- 附带修复：并行会话 6ed1fa9 的 "stable softplus" 改写从未过平台且
+  在 NVIDIA 代理上可概率性放大误差（log(1+exp) 舍入 6e-8 ×
+  exp(A_log) 超 1e-4）——已随回滚消除；测试种子化 + A_log 限幅
+  ×2（平台实证范围），screening 5/5 OK
+- **七芯已过**：天数 2.434/沐曦 1.3396/海光 3.1538/昆仑 0.7182/
+  华为 1.29/A 2.446/B 2.7264——**燧原（目标芯）卡病态盒子
+  waiting_callback**（T46 同日 1830s 前科）
+- 待燧原裁决：≥0.5x → 轴兑现且 ~1.83x 新 TB；1830s 超时 → 平台侧
+  invalid，候选封存等恢复窗口重载（需逐发授权）
