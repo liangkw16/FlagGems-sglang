@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Kunlunxin vendor: layout materialization + regular GEMM + separate
-# epilogue (T28 E11 / T37 E4 / T47 recipe). The fused whole-tile kernel
-# family (direct dot, block_ptr + tl.trans, FLA persistent) all end in
-# the compile-worker crash family on this chip; the only proven-working
-# form is a completely regular single-trip fp32 IEEE GEMM with no
-# indirect indexing and no runtime branches. The Gram matrix is
-# computed once per k-group (GQA) and the per-head scaling / decay /
-# masking lives in a second small-tile kernel.
+# Kunlunxin vendor: regular GEMM + separate epilogue reading the
+# native (already regular) strides of k/beta/g directly - no layout
+# materialization copies in the wrapper (T28 E11 / T37 E4 / T47
+# recipe; E8 proved this family passes correctness on kunlunxin where
+# every fused whole-tile form ends in the compile-worker crash
+# family). The Gram matrix is computed once per k-group (GQA) in a
+# single-trip fp32 IEEE GEMM; per-head scaling / decay / masking lives
+# in a second small-tile kernel.
 
 import torch
 import triton
@@ -28,19 +28,15 @@ import triton.language as tl
 
 @triton.jit(do_not_specialize=["M"])
 def _kkt_gram_gemm_kernel(
-    a_ptr,
-    b_ptr,
-    c_ptr,
+    k_ptr,
+    gram_ptr,
     M,
-    a_matrix_stride,
-    stride_am,
-    stride_ak,
-    b_matrix_stride,
-    stride_bk,
-    stride_bn,
-    c_matrix_stride,
-    stride_cm,
-    stride_cn,
+    nchunks,
+    num_k_heads,
+    k_sb,
+    k_st,
+    k_sh,
+    k_sk,
     N: tl.constexpr,
     K: tl.constexpr,
     BLOCK_M: tl.constexpr,
@@ -61,21 +57,19 @@ def _kkt_gram_gemm_kernel(
     pid_m = first_pid_m + (local % group_size_m)
     pid_n = (local % num_pid_in_group) // group_size_m
 
+    # matrix_id -> (batch, chunk, k-group); all remaining addressing is
+    # plain regular strides of the native [B, T, Hg, K] layout.
+    kg = matrix_id % num_k_heads
+    bc = matrix_id // num_k_heads
+    c = bc % nchunks
+    bi = bc // nchunks
+    k_base = k_ptr + bi * k_sb + kg * k_sh + c * M * k_st
+
     offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
     offs_n = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
     offs_k = tl.arange(0, BLOCK_K)
-    a_ptrs = (
-        a_ptr
-        + matrix_id * a_matrix_stride
-        + offs_m[:, None] * stride_am
-        + offs_k[None, :] * stride_ak
-    )
-    b_ptrs = (
-        b_ptr
-        + matrix_id * b_matrix_stride
-        + offs_k[:, None] * stride_bk
-        + offs_n[None, :] * stride_bn
-    )
+    a_ptrs = k_base + offs_m[:, None] * k_st + offs_k[None, :] * k_sk
+    b_ptrs = k_base + offs_k[:, None] * k_sk + offs_n[None, :] * k_st
     accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
 
     # Single trip by construction (BLOCK_K = next_pow2(K)): the
@@ -86,24 +80,24 @@ def _kkt_gram_gemm_kernel(
             a_ptrs,
             mask=(offs_m[:, None] < M) & mask_k[None, :],
             other=0.0,
-        )
+        ).to(tl.float32)
         b = tl.load(
             b_ptrs,
             mask=mask_k[:, None] & (offs_n[None, :] < N),
             other=0.0,
-        )
+        ).to(tl.float32)
         accumulator = tl.dot(a, b, acc=accumulator, input_precision="ieee")
-        a_ptrs += BLOCK_K * stride_ak
-        b_ptrs += BLOCK_K * stride_bk
+        a_ptrs += BLOCK_K * k_sk
+        b_ptrs += BLOCK_K * k_sk
 
-    c_ptrs = (
-        c_ptr
-        + matrix_id * c_matrix_stride
-        + offs_m[:, None] * stride_cm
-        + offs_n[None, :] * stride_cn
+    gram_ptrs = (
+        gram_ptr
+        + matrix_id * M * N
+        + offs_m[:, None] * N
+        + offs_n[None, :]
     )
     mask = (offs_m[:, None] < M) & (offs_n[None, :] < N)
-    tl.store(c_ptrs, accumulator, mask=mask)
+    tl.store(gram_ptrs, accumulator, mask=mask)
 
 
 @triton.jit
@@ -112,9 +106,17 @@ def _kkt_epilogue_kernel(
     beta_ptr,
     g_ptr,
     out_ptr,
+    seqlen,
+    nchunks,
     num_heads,
     num_k_heads,
     ratio,
+    beta_sb,
+    beta_st,
+    beta_sh,
+    g_sb,
+    g_st,
+    g_sh,
     BT: tl.constexpr,
     HAS_G: tl.constexpr,
     BLOCK_M: tl.constexpr,
@@ -129,10 +131,12 @@ def _kkt_epilogue_kernel(
     m_tile = local // num_pid_n
     n_tile = local - m_tile * num_pid_n
 
-    outer = qh // num_heads
-    h = qh - outer * num_heads
+    h = qh % num_heads
+    bc = qh // num_heads
+    c = bc % nchunks
+    b = bc // nchunks
     kg = h // ratio
-    gram_id = outer * num_k_heads + kg
+    gram_id = bc * num_k_heads + kg
 
     offs_m = m_tile * BLOCK_M + tl.arange(0, BLOCK_M)
     offs_n = n_tile * BLOCK_N + tl.arange(0, BLOCK_N)
@@ -147,18 +151,26 @@ def _kkt_epilogue_kernel(
 
     # Same scaling order as the generic kernel: beta first, then the
     # safe-exp decay, then the strict lower-triangular zeroing.
-    beta_m = tl.load(beta_ptr + qh * BT + offs_m, mask=offs_m < BT, other=0.0)
+    beta_base = beta_ptr + b * beta_sb + h * beta_sh + c * BT * beta_st
+    beta_m = tl.load(
+        beta_base + offs_m * beta_st, mask=offs_m < BT, other=0.0
+    ).to(tl.float32)
     result = result * beta_m[:, None]
     if HAS_G:
-        g_m = tl.load(g_ptr + qh * BT + offs_m, mask=offs_m < BT, other=0.0)
-        g_n = tl.load(g_ptr + qh * BT + offs_n, mask=offs_n < BT, other=0.0)
+        g_base = g_ptr + b * g_sb + h * g_sh + c * BT * g_st
+        g_m = tl.load(
+            g_base + offs_m * g_st, mask=offs_m < BT, other=0.0
+        ).to(tl.float32)
+        g_n = tl.load(
+            g_base + offs_n * g_st, mask=offs_n < BT, other=0.0
+        ).to(tl.float32)
         g_diff = g_m[:, None] - g_n[None, :]
         result = result * tl.where(g_diff <= 0.0, tl.exp(g_diff), 0.0)
     result = tl.where(offs_m[:, None] > offs_n[None, :], result, 0.0)
 
+    # Output is allocated contiguous [B, T, H, BT].
     out_off = (
-        (outer * BT + offs_m[:, None]) * (num_heads * BT)
-        + h * BT
+        ((b * seqlen + c * BT + offs_m[:, None]) * num_heads + h) * BT
         + offs_n[None, :]
     )
     tl.store(out_ptr + out_off, result, mask=mask_mn)
@@ -184,57 +196,28 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     if output.numel() == 0:
         return output
     has_g = g_cumsum is not None and g_cumsum is not beta
+    if not has_g:
+        g_cumsum = beta
 
-    # Stage 0: materialize regular [Q, BT, K] / [QH, BT] layouts so the
-    # GEMM kernel never sees indirect indexing or broadcast strides.
     q_count = batch * nchunks * num_k_heads
-    qh_count = batch * nchunks * num_heads
-    k_m = (
-        k.reshape(batch, nchunks, bt, num_k_heads, k_size)
-        .permute(0, 1, 3, 2, 4)
-        .contiguous()
-        .view(q_count, bt, k_size)
-        .float()
-    )
-    beta_m = (
-        beta.reshape(batch, nchunks, bt, num_heads)
-        .permute(0, 1, 3, 2)
-        .contiguous()
-        .view(qh_count, bt)
-        .float()
-    )
-    if has_g:
-        g_m = (
-            g_cumsum.reshape(batch, nchunks, bt, num_heads)
-            .permute(0, 1, 3, 2)
-            .contiguous()
-            .view(qh_count, bt)
-            .float()
-        )
-    else:
-        g_m = beta_m
-
-    # Stage 1: one flattened regular fp32 IEEE GEMM over all Q Gram
-    # matrices (single-trip K by construction).
     gram = torch.empty(
         (q_count, bt, bt), dtype=torch.float32, device=k.device
     )
+
+    # Stage 1: one flattened regular fp32 IEEE GEMM over all Q Gram
+    # matrices, reading k's native regular strides directly.
     block_k = min(triton.next_power_of_2(max(k_size, 16)), 512)
     tiles = triton.cdiv(bt, 32) * triton.cdiv(bt, 32)
     _kkt_gram_gemm_kernel[(q_count * tiles,)](
-        k_m,
-        k_m,
+        k,
         gram,
         bt,
-        k_m.stride(0),
-        k_m.stride(1),
-        k_m.stride(2),
-        k_m.stride(0),
-        k_m.stride(2),
-        k_m.stride(1),
-        gram.stride(0),
-        gram.stride(1),
-        gram.stride(2),
+        nchunks,
+        num_k_heads,
+        k.stride(0),
+        k.stride(1),
+        k.stride(2),
+        k.stride(3),
         N=bt,
         K=k_size,
         BLOCK_M=32,
@@ -246,17 +229,26 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     )
 
     # Stage 2: per-head epilogue (beta / decay / strict lower mask)
-    # writing straight into the final contiguous output.
+    # reading beta/g natively and writing the contiguous output.
+    qh_count = batch * nchunks * num_heads
     e_m, e_n = 16, 32
     e_tiles = triton.cdiv(bt, e_m) * triton.cdiv(bt, e_n)
     _kkt_epilogue_kernel[(qh_count * e_tiles,)](
         gram,
-        beta_m,
-        g_m,
+        beta,
+        g_cumsum,
         output,
+        seqlen,
+        nchunks,
         num_heads,
         num_k_heads,
         ratio,
+        beta.stride(0),
+        beta.stride(1),
+        beta.stride(2),
+        g_cumsum.stride(0),
+        g_cumsum.stride(1),
+        g_cumsum.stride(2),
         BT=bt,
         HAS_G=has_g,
         BLOCK_M=e_m,
