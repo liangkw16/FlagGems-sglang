@@ -5,11 +5,11 @@ task: 50
 operator: extend_attention
 batch: 4
 validity: candidate-wip
-platform: 5/8+(S0在评;5芯过门槛;华为correctness败;燧原/昆仑在评)
+platform: 5/8(e2,华为两种softmax均败;燧原/昆仑在评)
 team_best_stage: -
 team_best_speedup: -
 sealed: no
-next: 调试多batch路径(单token已精确);榜首c2flow 3.60x,1队过线
+next: 华为深层数值问题(online+two-pass均败);5/8已是208发1队过线题的好成绩;冲分优先
 updated: 2026-09-05
 ```
 
@@ -29,3 +29,12 @@ updated: 2026-09-05
 - **调试关键**：单 query 标量 online softmax → 多 block KV 循环中
   `m_val = m_new` 缺失导致第二个 block 的 alpha 清零全部先前累积
   ——一行修复，4/4 代理测试全过
+
+## E1-E2 华为 vendor（2026-09-05，submissions 10114/10125）
+
+- E1（fp32 强制）：华为仍败
+- E2（两遍法替代 online softmax）：华为仍败（同款 Comparing error，
+  同款张量值 -4.26e-01 / 4.31e-01）
+- **判定**：华为数值问题不在 softmax 算法（online/two-pass 等价
+  数学都败），在更底层的 dot/exp/accumulation lowering
+- 五芯稳定过门槛：天数 0.32 / 沐曦 0.59 / 海光 1.33 / A 1.40 / B 1.07

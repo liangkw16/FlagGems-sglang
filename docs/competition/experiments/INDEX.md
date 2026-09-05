@@ -30,7 +30,7 @@
 | 47 | chunked_sgmv_expand | valid | 8/8(e5,25.0048125x,榜首) | e5 25.0048125x | no | 守榜首(25.00x vs 前榜首23.33x);燧原0.178x/昆仑3.72x为余量轴;stale意图经用户授权归档重提(移至archived/) | 2026-09-04 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
 | 48 | chunked_sgmv_shrink | valid | 8/8(e6,4.7198125x) | e6 4.7198125x | no | 守榜;冲分轴:燧原0.58x/昆仑1.79x/天数3.85x | 2026-09-05 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
 | 49 | ernie45_rope_fused | invalid | 7/8(e2,昆仑uni_sram墙已3投;conclusive) | e1 -x | no | 昆仑uni_sram墙(需更小tile/单head);7/8已是好成绩 | 2026-09-05 | [ernie45_rope_fused](ernie45_rope_fused.md) |
-| 50 | extend_attention | candidate-wip | 5/8+(S0在评;5芯过门槛;华为correctness败;燧原/昆仑在评) | - -x | no | 调试多batch路径(单token已精确);榜首c2flow 3.60x,1队过线 | 2026-09-05 | [extend_attention](extend_attention.md) |
+| 50 | extend_attention | candidate-wip | 5/8(e2,华为两种softmax均败;燧原/昆仑在评) | - -x | no | 华为深层数值问题(online+two-pass均败);5/8已是208发1队过线题的好成绩;冲分优先 | 2026-09-05 | [extend_attention](extend_attention.md) |
 | 51 | fla_layernorm_gated | valid | 8/8(e1,5.390025x) | e1 5.390025x | no | 守榜;冲分轴:昆仑0.944/华为2.52 | 2026-09-05 | [fla_layernorm_gated](fla_layernorm_gated.md) |
 | 52 | fused_dual_residual_rmsnorm | invalid | 5/8(e2,天数/燧原/昆仑/card_b 差丝米级精度) | - -x | no | 精度追踪边际递减(3种除法形式各自修一芯破另一芯);建议暂停转T49 | 2026-09-05 | [fused_dual_residual_rmsnorm](fused_dual_residual_rmsnorm.md) |
 | 53 | fused_gdn_gating | valid | 8/8(e1,1.769075x) | e1 1.769075x | no | 守榜;冲分轴:昆仑0.72x/燧原0.17x/沐曦1.34x | 2026-09-05 | [fused_gdn_gating](fused_gdn_gating.md) |
