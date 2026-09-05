@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Enflame vendor: rsqrt form (v * tl.rsqrt(var+eps) * w). The plain
-# division (S0/E2 generic), div_rn (E1), reciprocal (S0) and the
-# two-kernel mid-materialized split (E4) all failed this chip at a
-# 1/33.5M-element bf16 rounding boundary, while the same-platform T19
-# fused_rmsnorm with tl.rsqrt passed Enflame.
+# Kunlunxin vendor: rsqrt form (v * tl.rsqrt(var+eps) * w). The plain
+# division (S0/E2 generic), div_rn (E1) and reciprocal (S0) forms all
+# failed this chip at a 1/33.5M-element bf16 rounding boundary, while
+# the same-platform T19 fused_rmsnorm _kunlunxin vendor with tl.rsqrt
+# passed Kunlun.
 
 import torch
 import triton
@@ -26,7 +26,7 @@ _MAX_GRID = 65535
 
 
 @triton.jit
-def _dual_rmsnorm_enflame(
+def _dual_rmsnorm_kunlunxin(
     x_ptr,
     residual_ptr,
     w1_ptr,
@@ -87,7 +87,7 @@ def fused_dual_residual_rmsnorm(x, residual, weight1, weight2, eps):
         return out, mid
 
     grid = (min(rows, _MAX_GRID),)
-    _dual_rmsnorm_enflame[grid](
+    _dual_rmsnorm_kunlunxin[grid](
         x,
         residual,
         weight1,

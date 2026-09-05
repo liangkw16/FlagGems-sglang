@@ -12,26 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import importlib.util
 import unittest
-from pathlib import Path
 
 import torch
 
-MODULE_PATH = (
-    Path(__file__).parents[1]
-    / "src"
-    / "flaggems_sglang"
-    / "ops"
-    / "fused_dual_residual_rmsnorm.py"
-)
-SPEC = importlib.util.spec_from_file_location(
-    "fused_dual_residual_rmsnorm_module", MODULE_PATH
-)
-if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"cannot load {MODULE_PATH}")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+from tests._op_variants import load_operator_modules
+
+MODULES = load_operator_modules("fused_dual_residual_rmsnorm")
+MODULE = dict(MODULES)["generic"]
 
 TOL = {torch.float32: (1e-4, 1e-4), torch.float16: (1e-2, 1e-2),
        torch.bfloat16: (1.5e-2, 1.5e-2)}
@@ -52,8 +40,9 @@ def reference(x, residual, weight1, weight2, eps):
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class FusedDualResidualRmsnormTest(unittest.TestCase):
-    def _check(self, x, residual, w1, w2, eps=1e-5):
-        actual_out, actual_mid = MODULE.fused_dual_residual_rmsnorm(
+    def _check(self, x, residual, w1, w2, eps=1e-5, module=None):
+        mod = module if module is not None else MODULE
+        actual_out, actual_mid = mod.fused_dual_residual_rmsnorm(
             x, residual, w1, w2, eps
         )
         exp_out, exp_mid = reference(x, residual, w1, w2, eps)
@@ -101,6 +90,27 @@ class FusedDualResidualRmsnormTest(unittest.TestCase):
         out, mid = MODULE.fused_dual_residual_rmsnorm(x, r, w1, w2, 1e-5)
         self.assertEqual(out.shape, (0, 128))
         self.assertEqual(mid.shape, (0, 128))
+
+    def test_vendor_variants(self):
+        # Numeric matrix over every backend vendor (generic math check on
+        # the NVIDIA proxy; target-chip lowering is screened separately).
+        for vendor, mod in MODULES:
+            for dtype in (torch.float32, torch.bfloat16):
+                with self.subTest(vendor=vendor, dtype=dtype):
+                    torch.manual_seed(7)
+                    T, D = 33, 1024
+                    x = torch.randn(T, D, device="cuda", dtype=dtype)
+                    r = torch.randn(T, D, device="cuda", dtype=dtype)
+                    w1 = torch.randn(D, device="cuda", dtype=torch.float32)
+                    w2 = torch.randn(D, device="cuda", dtype=torch.float32)
+                    self._check(x, r, w1, w2, module=mod)
+            with self.subTest(vendor=vendor, shape="8192"):
+                torch.manual_seed(11)
+                x = torch.randn(4, 8192, device="cuda", dtype=torch.bfloat16)
+                r = torch.randn(4, 8192, device="cuda", dtype=torch.bfloat16)
+                w1 = torch.randn(8192, device="cuda", dtype=torch.float32)
+                w2 = torch.randn(8192, device="cuda", dtype=torch.float32)
+                self._check(x, r, w1, w2, module=mod)
 
 
 if __name__ == "__main__":
