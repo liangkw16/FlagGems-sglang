@@ -28,7 +28,8 @@
 | 45 | chunk_scaled_dot_kkt | invalid | 7/8(e7,仅昆仑失败;华为0.0455→0.2535x过门槛!) | e7 -x | no | 昆仑崩溃族(compile_worker Aborted,非代码);7/8=此题最优可达;守榜 | 2026-09-04 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x) | e3 14.1051875x | no | 守榜:昆仑segment-owned已固化(0.23→0.64),e3=14.105x为team best;后续发收益被水位噪声(±1.5均值)淹没,停止 | 2026-09-03 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
 | 47 | chunked_sgmv_expand | valid | 8/8(e5,25.0048125x,榜首) | e5 25.0048125x | no | 守榜首(25.00x vs 前榜首23.33x);燧原0.178x/昆仑3.72x为余量轴;stale意图经用户授权归档重提(移至archived/) | 2026-09-04 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
-| 48 | chunked_sgmv_shrink | invalid | 7/8(e2,等燧原终态;昆仑已翻绿1.764x) | e2 -x | no | 等燧原终态;若过即8/8 | 2026-09-05 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
+| 48 | chunked_sgmv_shrink | invalid | 7/8(e5,燧原评测机连续4次超时=平台侧;昆仑1.77x+七芯全过) | e2 -x | no | 燧原评测机恢复后重投(e1字节已验证0.58x);等平台侧窗口 | 2026-09-05 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
+| 49 | ernie45_rope_fused | invalid | 7/8(e1,仅昆仑uni_sram;燧原0.55x翻绿) | e1 -x | no | 昆仑uni_sram墙(需更小tile/单head);7/8已是好成绩 | 2026-09-05 | [ernie45_rope_fused](ernie45_rope_fused.md) |
 | 51 | fla_layernorm_gated | valid | 8/8(e1,5.390025x) | e1 5.390025x | no | 守榜;冲分轴:昆仑0.944/华为2.52 | 2026-09-05 | [fla_layernorm_gated](fla_layernorm_gated.md) |
 | 52 | fused_dual_residual_rmsnorm | invalid | 5/8(e2,天数/燧原/昆仑/card_b 差丝米级精度) | - -x | no | 精度追踪边际递减(3种除法形式各自修一芯破另一芯);建议暂停转T49 | 2026-09-05 | [fused_dual_residual_rmsnorm](fused_dual_residual_rmsnorm.md) |
 | 53 | fused_gdn_gating | valid | 8/8(e1,1.769075x) | e1 1.769075x | no | 守榜;冲分轴:昆仑0.72x/燧原0.17x/沐曦1.34x | 2026-09-05 | [fused_gdn_gating](fused_gdn_gating.md) |
