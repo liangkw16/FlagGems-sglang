@@ -226,3 +226,18 @@ class ActAndMulVariantsTest(unittest.TestCase):
                             torch.testing.assert_close(
                                 out, expected, atol=atol, rtol=rtol
                             )
+
+    def test_variants_aligned_width(self):
+        # half_width % 1024 == 0 exercises the Ascend HAS_TAIL=False
+        # compile-out path (no fully-masked dead tail block per row).
+        for dtype in (torch.float32, torch.bfloat16):
+            for rows, d in ((33, 1024), (7, 2048), (1, 4096)):
+                x = torch.randn(rows, 2 * d, device="cuda", dtype=dtype) * 5.0
+                expected = reference(x)
+                for name, module in self.MODULES:
+                    with self.subTest(module=name, dtype=dtype, rows=rows, d=d):
+                        out = module.act_and_mul(x)
+                        atol, rtol = TOLERANCES[dtype]
+                        torch.testing.assert_close(
+                            out, expected, atol=atol, rtol=rtol
+                        )

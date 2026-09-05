@@ -15,7 +15,10 @@
 # Ascend vendor: one program per row with in-row sub-blocks where only
 # the tail block carries a mask - int32 vector compares degenerate to
 # scalar code on Ascend (T40 platform evidence, +130% there), so the
-# hot path stays comparison-free.
+# hot path stays comparison-free. The tail block is additionally
+# compiled out entirely (HAS_TAIL) when half_width is a multiple of
+# BLOCK_INNER, so aligned shapes (H % 1024 == 0) stop paying for a
+# fully-masked dead block per row.
 
 import torch
 import triton
@@ -35,6 +38,7 @@ def _act_and_mul_row_kernel(
     BLOCK_INNER: tl.constexpr,
     HAS_LIMIT: tl.constexpr,
     ACT_IS_GELU: tl.constexpr,
+    HAS_TAIL: tl.constexpr,
 ):
     pid = tl.program_id(0)
     grid_size = tl.num_programs(0)
@@ -62,29 +66,32 @@ def _act_and_mul_row_kernel(
                 output_ptr + out_base + cols,
                 act.to(elem_ty) * up.to(elem_ty),
             )
-        cols = num_full * BLOCK_INNER + tl.arange(0, BLOCK_INNER)
-        mask = cols < half_width
-        gate = tl.load(x_ptr + row_base + cols, mask=mask, other=0.0).to(tl.float32)
-        up = tl.load(x_ptr + row_base + half_width + cols, mask=mask, other=0.0).to(
-            tl.float32
-        )
-        if HAS_LIMIT:
-            gate = tl.minimum(gate, swiglu_limit)
-            up = tl.minimum(tl.maximum(up, -swiglu_limit), swiglu_limit)
-        if ACT_IS_GELU:
-            scaled = 0.7978845608028654 * (gate + 0.044715 * gate * gate * gate)
-            exp_neg = tl.exp(-2.0 * tl.abs(scaled))
-            ratio = (1.0 - exp_neg) / (1.0 + exp_neg)
-            tanh_scaled = tl.where(scaled < 0.0, -ratio, ratio)
-            act = gate * 0.5 * (1.0 + tanh_scaled)
-        else:
-            act = gate / (1.0 + tl.exp(-gate))
-        elem_ty = output_ptr.dtype.element_ty
-        tl.store(
-            output_ptr + out_base + cols,
-            act.to(elem_ty) * up.to(elem_ty),
-            mask=mask,
-        )
+        if HAS_TAIL:
+            cols = num_full * BLOCK_INNER + tl.arange(0, BLOCK_INNER)
+            mask = cols < half_width
+            gate = tl.load(x_ptr + row_base + cols, mask=mask, other=0.0).to(
+                tl.float32
+            )
+            up = tl.load(
+                x_ptr + row_base + half_width + cols, mask=mask, other=0.0
+            ).to(tl.float32)
+            if HAS_LIMIT:
+                gate = tl.minimum(gate, swiglu_limit)
+                up = tl.minimum(tl.maximum(up, -swiglu_limit), swiglu_limit)
+            if ACT_IS_GELU:
+                scaled = 0.7978845608028654 * (gate + 0.044715 * gate * gate * gate)
+                exp_neg = tl.exp(-2.0 * tl.abs(scaled))
+                ratio = (1.0 - exp_neg) / (1.0 + exp_neg)
+                tanh_scaled = tl.where(scaled < 0.0, -ratio, ratio)
+                act = gate * 0.5 * (1.0 + tanh_scaled)
+            else:
+                act = gate / (1.0 + tl.exp(-gate))
+            elem_ty = output_ptr.dtype.element_ty
+            tl.store(
+                output_ptr + out_base + cols,
+                act.to(elem_ty) * up.to(elem_ty),
+                mask=mask,
+            )
 
 
 def act_and_mul(gateup_output, activation="silu", swiglu_limit=None):
@@ -109,6 +116,7 @@ def act_and_mul(gateup_output, activation="silu", swiglu_limit=None):
         BLOCK_INNER=_BLOCK_INNER,
         HAS_LIMIT=has_limit,
         ACT_IS_GELU=(activation == "gelu"),
+        HAS_TAIL=(half_width % _BLOCK_INNER != 0),
     )
     return output
 
