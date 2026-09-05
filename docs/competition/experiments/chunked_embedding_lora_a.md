@@ -10,8 +10,8 @@ team_best_stage: e3
 team_best_commit: 6e3a1c4e64304d017ded08cabb6445b9152776f2
 team_best_speedup: 14.1051875
 sealed: no
-next: 重开:榜差归因高分芯数据流;天数预路由首发,逐芯晋级滚动组合(见09-05方案节)
-updated: 2026-09-05
+next: e6天数预路由水位带内无法归因,轴关闭;维持E3守榜(14.105x);后续按逐芯晋级纪律择机
+updated: 2026-09-06
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -177,3 +177,16 @@ is_team_best=max 保证零下行）。
 5. 高风险后置：empty+full-store 替代 torch.zeros（必须覆盖
    `seg_indptr[-1] < S` 未分配行语义）
 国际 A 最后做（T17 NVIDIA 两阶段 route 0.8476x 负证据）。
+
+## E6 天数 searchsorted 预路由（2026-09-06，submission 10349）
+
+- 载体：E3 字节 + 新增 `_iluvatar` vendor（searchsorted 预路由 +
+  i32 直线 gather，metax 同构；source `41d8088`，ZIP `e6-41d8088`
+  SHA-256 `1b403a1a…8401`，7 成员，天数正确路由到新 vendor ✓）
+- 七芯已过（燧原慢箱在评，同字节 vendor 前科 0.33 过线）：
+  **天数 18.59 / 沐曦 6.9725 / 海光 27.7295 / 昆仑 0.6325 /
+  华为 1.4795 / A 30.6435 / B 17.5995**
+- **判定：非 team best（七芯均值 ≈14.8，加燧原 ≈13.0 < E3 14.105）**
+  ——天数 18.59 落在其历史 17-27 水位带内，预路由增益无法归因
+  （+15% 门未达）；华为 1.48 为窗口水位下移。**预路由轴单发关闭**，
+  T46 维持 E3 守榜
