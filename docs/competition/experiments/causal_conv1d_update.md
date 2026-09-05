@@ -216,3 +216,24 @@ IEEE `tl.dot`（只存 C[:,0]；T28/T37 昆仑通过范式）。
 **P3**：`[BLOCK_D≤8, W_PAD]` 小二维归约（tile ≤64 元素）。
 验证矩阵：width 2-8 / dim 7-2049 / seqlen 1-6 / 三 dtype / bias±silu /
 非连续 + IR 检查（P1 无 scf.for；P2 含 ieee dot）。
+
+## E8/E9 昆仑 rank-1 归约两连败（2026-09-06，submissions 10329/10332）
+
+- E8（10329）：三 kernel 拆分 + 3D 微 program（每 program 一个 (t,d,b)
+  仅 [W_PAD] + tl.sum）——**昆仑编译通过（uni_sram 墙破）**但 5 case
+  数值失败（87-94% 元素错，abs ≤18.9，与 E4-E6 错译族同指纹）
+- E9（10332）：3D grid 改 1D-flat + `//`/`%` 推导（grid 轴映射假设）
+  ——昆仑仍数值失败，**假设证伪**：错译在 rank-1 窗口归约本身
+- 其余七芯两发全过（E8 逐芯：天数 13.15/沐曦 7.02/燧原 0.327/
+  海光 10.58/华为 0.4565/A 8.99/B 10.64）
+
+## E10 规则 GEMM 形态（2026-09-06 00:49，submission 10337）
+
+- Codex P2：wrapper unfold 物化窗口 [D, B*S, W] + 每通道一次规则
+  32×32 ieee GEMM（B 操作数 = 权重向量跨 N 列广播，只存 C 第 0 列
+  到 pre[b,d,t]）；bias/silu 与状态拷贝沿用 flat kernel。
+  T45 e8/e9 已平台证明该 GEMM 家族在昆仑 correctness 通过
+- screening：unittest 9/9 OK（首轮 unfold 切片漏 state_len+1-width
+  起始偏移，sl>w-1 case 修错）；source `3a0b5cd`，ZIP
+  `e10-3a0b5cd` SHA-256 `bbe24679…fbee`（4 成员）
+- 晋级门：昆仑全 case 正确且 ≥0.1x → 8/8；同款错译 → 昆仑轴 conclusive
