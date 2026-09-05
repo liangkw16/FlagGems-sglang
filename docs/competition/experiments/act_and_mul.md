@@ -10,8 +10,8 @@ team_best_stage: e2
 team_best_commit: f69d4e2c694f8418a534785fe8334083a8b0a3e2
 team_best_speedup: 3.248925
 sealed: no
-next: 431x榜首判定计时病理不追分;预注册A1华为裁尾/K1昆仑直达/M1沐曦warps8(见09-05方案节)
-updated: 2026-09-05
+next: A1裁尾+5.8%低于门证伪关闭(10324);剩K1昆仑直达(门≥0.60)择机;431x不追
+updated: 2026-09-06
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -194,3 +194,17 @@ updated: 2026-09-05
 
 431x 侦查（零额度）：只读拉该提交逐芯明细——单芯千倍=查该芯 reference/
 隐藏 shape；八芯同倍=查计分口径；拿不到明细则维持 3.5x 水位决策。
+
+## E4 华为 HAS_TAIL 裁尾（2026-09-06 00:20，submission 10324，daily_seq 2）
+
+- 载体：E2 字节 + `_ascend` 加 `HAS_TAIL = half_width % BLOCK_INNER != 0`
+  编译期裁掉空尾块（对齐 shape 不再每行白做一整块 mask 激活数学）；
+  source `b6f982c`，ZIP `e4-b6f982c` SHA-256 `b51c80b7…4f1c`（7 成员）
+- screening：远端 `/tmp/flagos-t42a1.8kW0mG`（unittest 13/13 OK 含新增
+  aligned-width vendor 矩阵）；flake8 过，black-79 diff 仅既有字节漂移
+- **终态 8/8 valid，avg 3.2325——非 team best（E2 3.2489 保持）**
+- 华为 2.258→**2.3884（+5.8%）**：方向为正但**低于 ≥2.48 晋级门**
+  （隐藏 shape 疑非全部 H%1024==0，仅部分命中裁尾）；沐曦 2.47（水位）；
+  其余芯持平（昆仑 0.455/燧原 1.685/天数 6.23/海光 4.95/A 4.22/B 3.46）
+- 判定：裁尾轴按单发证伪关闭（增益不足门）；T42 维持 E2 守榜，
+  剩余 K1 昆仑直达（门 ≥0.60）待额度富余再发。额度 28/30
