@@ -10,7 +10,7 @@ team_best_stage: e7
 team_best_commit: 4d16e0701b054247b83cf09c2e39664cd750235f
 team_best_speedup: -
 sealed: no
-next: E11 flat epilogue昆仑4.6x至0.048x(差2.1x);E12=GEMM tile 64×64冲0.1x
+next: E13行分块0.063x(差1.6x);E14 exp2换算已提交待裁决;再败则暂停T45转T46
 updated: 2026-09-06
 ```
 
@@ -278,3 +278,18 @@ K 循环推进 `b_ptrs += BLOCK_K * stride_bn` 是潜伏笔误（应为 stride_b
   1.626/海光 14.82/华为 0.2535/A 19.2175/B 7.7725）
 - 仍 < 0.1x（差 2.1x）——E12 = GEMM tile 32×32→64×64（BT=64 单
   program 一矩阵，T37 昆仑 64³ 先例；source 待 commit）
+
+## E12/E13 终态（2026-09-06，submissions 10343/10345）
+
+- E12（64×64 GEMM tile）：昆仑 0.048 持平——**tile 形状非瓶颈**，
+  证伪关闭（T37 64³ 先例不迁移）
+- E13（行分块 epilogue：标量行分解 + 每 lane 单除法 + mul-sub）：
+  **昆仑 0.048→0.063x（+31%）**；七芯已过（天数 5.7905/沐曦 5.668/
+  海光 14.7945/华为 0.2525/A 19.1895/B 7.7085），燧原在评（同字节
+  e9 已过 1.63）
+- 累计昆仑路径：0.0095 → 0.01（去物化）→ 0.0105（输入精度）→
+  0.048（flat epilogue）→ 0.063（行分块）——**epilogue 整数调度是
+  第一瓶颈链坐实**；距 0.1x 还差 1.6x
+- E14（已 screening 9/9）：decay 的 `tl.exp` → `tl.math.exp2(d·log2e)`
+  （若 FlagTree exp 走慢速 libm 而 exp2 原生，则 epilogue 剩余大头
+  即此处）
