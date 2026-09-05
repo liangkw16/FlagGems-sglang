@@ -173,7 +173,14 @@ def _kkt_epilogue_kernel(
                     g_base + (c * BT + n) * g_st, mask=lmask, other=0.0
                 ).to(tl.float32)
                 g_diff = g_m - g_n
-                result = result * tl.where(g_diff <= 0.0, tl.exp(g_diff), 0.0)
+                # E14: exp2 with the log2(e) prefactor - if the FlagTree
+                # exp lowering is a slow libm path while exp2 is native,
+                # the per-element decay dominates the epilogue at 0.063x.
+                result = result * tl.where(
+                    g_diff <= 0.0,
+                    tl.math.exp2(g_diff * 1.4426950408889634),
+                    0.0,
+                )
             result = tl.where(m > n, result, 0.0)
             tl.store(out_ptr + row_base + lane, result, mask=lmask)
 
