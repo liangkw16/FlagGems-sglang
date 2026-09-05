@@ -93,6 +93,7 @@ def act_and_mul(gateup_output, activation="silu", swiglu_limit=None):
         half_width,
         limit,
         BLOCK_SIZE=_BLOCK_SIZE,
+        num_warps=8,
         HAS_LIMIT=has_limit,
         ACT_IS_GELU=(activation == "gelu"),
     )
