@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Enflame vendor (e5: restored e1 bytes): route/materialize with framework index_select and a
+# Enflame vendor (e6: retry): route/materialize with framework index_select and a
 # regular fp32-ieee GEMM per segment (the generic metadata-indirect
 # kernel fails on this backend).
 
