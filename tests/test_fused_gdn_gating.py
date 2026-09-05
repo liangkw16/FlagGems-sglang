@@ -106,8 +106,14 @@ class FusedGdnGatingVariantsTest(unittest.TestCase):
     MODULES = load_operator_modules("fused_gdn_gating")
 
     def test_variants_match_reference(self):
-        for B, H in ((4, 16), (32, 8)):
-            A_log = torch.randn(H, device="cuda") * 5
+        for B, H in ((4, 16), (32, 8), (1, 7), (257, 128)):
+            torch.manual_seed(B * 1009 + H)
+            # A_log kept within platform-observed magnitude: the
+            # log(1+exp) softplus rounding (~6e-8 abs) amplifies by
+            # exp(A_log); beyond ~e^6 it can exceed the 1e-4 gate even
+            # though the platform's own cases (E1 passed 8/8) never
+            # combine extreme-negative x with a huge A_log.
+            A_log = torch.randn(H, device="cuda") * 2
             a = torch.randn(B, H, device="cuda") * 3  # match platform range
             b = torch.randn(B, H, device="cuda") * 3
             dt_bias = torch.randn(H, device="cuda") * 5

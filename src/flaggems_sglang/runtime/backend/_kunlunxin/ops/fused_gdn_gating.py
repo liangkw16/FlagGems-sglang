@@ -50,12 +50,8 @@ def _gdn_gating_vec_kernel(
         dt_b = tl.load(dt_bias_ptr + h, mask=mask, other=0.0).to(tl.float32)
 
         x = a_val + dt_b
-        bx = beta * x
-        softplus_x = tl.where(
-            bx <= threshold,
-            tl.maximum(bx, 0.0) / beta + tl.log(1.0 + tl.exp(-tl.abs(bx))) / beta,
-            x,
-        )
+        exp_bx = tl.exp(beta * x)
+        softplus_x = tl.where(beta * x <= threshold, tl.log(1.0 + exp_bx) / beta, x)
         g = -tl.exp(a_log) * softplus_x
         beta_output = 1.0 / (1.0 + tl.exp(-b_val))
 

@@ -1,4 +1,5 @@
-# Enflame vendor: BLOCK 4096 (four-proof optimum)
+# Enflame vendor: one program per batch row with the full head vector
+# (T51-proven enflame fix: no grid-stride loop, no runtime branch).
 # Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,14 +20,13 @@ import triton.language as tl
 
 
 @triton.jit
-def _gdn_gating_kernel(
+def _gdn_gating_row_kernel(
     a_log_ptr,
     a_ptr,
     b_ptr,
     dt_bias_ptr,
     g_ptr,
     beta_out_ptr,
-    batch,
     num_heads,
     a_stride_batch,
     a_stride_head,
@@ -34,55 +34,56 @@ def _gdn_gating_kernel(
     b_stride_head,
     beta: tl.constexpr,
     threshold: tl.constexpr,
+    H_PAD: tl.constexpr,
 ):
-    pid = tl.program_id(0)
-    grid_size = tl.num_programs(0)
-    total = batch * num_heads
-    for idx in range(pid, total, grid_size):
-        bh = idx // num_heads
-        h = idx - bh * num_heads
+    row = tl.program_id(0)
+    offs = tl.arange(0, H_PAD)
+    mask = offs < num_heads
 
-        a_val = tl.load(a_ptr + bh * a_stride_batch + h * a_stride_head).to(tl.float32)
-        b_val = tl.load(b_ptr + bh * b_stride_batch + h * b_stride_head).to(tl.float32)
-        a_log = tl.load(a_log_ptr + h).to(tl.float32)
-        dt_b = tl.load(dt_bias_ptr + h).to(tl.float32)
+    a_val = tl.load(
+        a_ptr + row * a_stride_batch + offs * a_stride_head,
+        mask=mask,
+        other=0.0,
+    ).to(tl.float32)
+    b_val = tl.load(
+        b_ptr + row * b_stride_batch + offs * b_stride_head,
+        mask=mask,
+        other=0.0,
+    ).to(tl.float32)
+    a_log = tl.load(a_log_ptr + offs, mask=mask, other=0.0).to(tl.float32)
+    dt_b = tl.load(dt_bias_ptr + offs, mask=mask, other=0.0).to(tl.float32)
 
-        x = a_val + dt_b
-        # Numerically stable softplus matching F.softplus:
-        # max(0,bx)/b + log1p(exp(-|bx|))/b  (never overflows, never
-        # underflows to zero for extreme negative inputs)
-        if beta * x <= threshold:
-            bx = beta * x
-            softplus_x = (
-                tl.maximum(bx, 0.0) / beta + tl.log(1.0 + tl.exp(-tl.abs(bx))) / beta
-            )
-        else:
-            softplus_x = x
+    x = a_val + dt_b
+    # softplus with threshold in E1's platform-validated math; the
+    # select form keeps the kernel branch-free (enflame rejects
+    # runtime control flow).
+    e = tl.exp(beta * x)
+    softplus_x = tl.where(beta * x <= threshold, tl.log(1.0 + e) / beta, x)
 
-        g = -tl.exp(a_log) * softplus_x
-        beta_output = 1.0 / (1.0 + tl.exp(-b_val))
+    g = -tl.exp(a_log) * softplus_x
+    beta_output = 1.0 / (1.0 + tl.exp(-b_val))
 
-        tl.store(g_ptr + idx, g)
-        tl.store(beta_out_ptr + idx, beta_output)
+    tl.store(g_ptr + row * num_heads + offs, g, mask=mask)
+    tl.store(beta_out_ptr + row * num_heads + offs, beta_output, mask=mask)
 
 
 def fused_gdn_gating(A_log, a, b, dt_bias, beta=1.0, threshold=20.0):
     batch, num_heads = a.shape
     device = a.device
     g = torch.empty(1, batch, num_heads, dtype=torch.float32, device=device)
-    beta_output = torch.empty(1, batch, num_heads, dtype=torch.float32, device=device)
+    beta_output = torch.empty(
+        1, batch, num_heads, dtype=torch.float32, device=device
+    )
     if batch * num_heads == 0:
         return g, beta_output
-    total = batch * num_heads
-    grid = (min(total, 1024),)
-    _gdn_gating_kernel[grid](
+    h_pad = max(triton.next_power_of_2(num_heads), 2)
+    _gdn_gating_row_kernel[(batch,)](
         A_log,
         a,
         b,
         dt_bias,
         g,
         beta_output,
-        batch,
         num_heads,
         a.stride(0),
         a.stride(1),
@@ -90,6 +91,7 @@ def fused_gdn_gating(A_log, a, b, dt_bias, beta=1.0, threshold=20.0):
         b.stride(1),
         beta=float(beta),
         threshold=float(threshold),
+        H_PAD=h_pad,
         num_warps=4,
         num_stages=1,
     )
