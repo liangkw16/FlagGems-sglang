@@ -23,7 +23,7 @@
 | 40 | softcap_inplace_logits | valid | 8/8(e8,2.195604x,rank1) | e8 2.195604x | yes | 额度用尽收官;e16 华为字节(1.70)+TB 2.1956 #2;榜首 c2flow 2.2593 华为 3.40 未破译 | 2026-09-03 | [softcap_inplace_logits](softcap_inplace_logits.md) |
 | 41 | state_passing | invalid | E7 sub8079 system_failed;7 pass,Kunlun 0.0065x,Enflame unrun | E5 diagnostic | yes | 本轮收盘;只保留平台工单与全新结构研究 | 2026-09-02 | [state_passing](state_passing.md) |
 | 42 | act_and_mul | valid | 8/8(e2,3.248925x) | e2 3.248925x | no | A1裁尾+5.8%低于门证伪关闭(10324);剩K1昆仑直达(门≥0.60)择机;431x不追 | 2026-09-06 | [act_and_mul](act_and_mul.md) |
-| 43 | causal_conv1d_update | invalid | 7/8(e7,仅昆仑失败;华为0.4435x+燧原0.325x双双过门槛!) | s0 -x | no | EvokeAgent 8/8证明昆仑可过;P1三kernel拆分rank-1归约已预注册(见09-05方案节) | 2026-09-05 | [causal_conv1d_update](causal_conv1d_update.md) |
+| 43 | causal_conv1d_update | invalid | 7/8(e7,仅昆仑失败;华为0.4435x+燧原0.325x双双过门槛!) | s0 -x | no | E8/E9 rank-1两连败(编译墙破但数值错译);E10规则GEMM形态已提交10337待裁决 | 2026-09-06 | [causal_conv1d_update](causal_conv1d_update.md) |
 | 44 | chain_speculative_sampling | invalid | 探针确认全芯失败(predicts mismatch=半精度bit-exact) | s0 -x | no | conclusive 封轴;天数/A/B同款517值=fp32也有差;平台测半精度 | 2026-09-04 | [chain_speculative_sampling](chain_speculative_sampling.md) |
 | 45 | chunk_scaled_dot_kkt | invalid | 7/8(e7,仅昆仑失败;华为0.0455→0.2535x过门槛!) | e7 -x | no | E9去物化仅+5%(0.01x),瓶颈=ieee fp32 dot;E10=输入精度dot(fp16/bf16走SDNN)一发可决 | 2026-09-06 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x) | e3 14.1051875x | no | 重开:榜差归因高分芯数据流;天数预路由首发,逐芯晋级滚动组合(见09-05方案节) | 2026-09-05 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |

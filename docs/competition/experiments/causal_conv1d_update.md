@@ -10,8 +10,8 @@ team_best_stage: s0
 team_best_commit: 07aaf2e5a081e4bfc4bb0ce3207b3e78c91d69df
 team_best_speedup: -
 sealed: no
-next: EvokeAgent 8/8证明昆仑可过;P1三kernel拆分rank-1归约已预注册(见09-05方案节)
-updated: 2026-09-05
+next: E8/E9 rank-1两连败(编译墙破但数值错译);E10规则GEMM形态已提交10337待裁决
+updated: 2026-09-06
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
