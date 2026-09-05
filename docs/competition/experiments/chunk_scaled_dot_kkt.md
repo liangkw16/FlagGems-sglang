@@ -10,7 +10,7 @@ team_best_stage: e7
 team_best_commit: 4d16e0701b054247b83cf09c2e39664cd750235f
 team_best_speedup: -
 sealed: no
-next: E10输入精度dot证伪(0.0105x);E11 flat epilogue已提交待裁决;再败则昆仑轴转入深度分诊
+next: E11 flat epilogue昆仑4.6x至0.048x(差2.1x);E12=GEMM tile 64×64冲0.1x
 updated: 2026-09-06
 ```
 
@@ -269,3 +269,12 @@ K 循环推进 `b_ptrs += BLOCK_K * stride_bn` 是潜伏笔误（应为 stride_b
   0.253/A 21.138/B 7.748/昆仑 0.0105；燧原在评但已无悬念）
 - E11（已 screening 9/9）：epilogue 改 flat 1024-lane（T53 已证调度
   形态），替换 QH×8 个 [16,32] 微 program；source `13bf303`
+
+## E11 flat epilogue 终态（2026-09-06，submission 10339）
+
+- epilogue 改 flat 1024-lane（逐输出元素，///% 推导 gram/beta/g 索引）
+  ——**昆仑 0.0105→0.048x（4.6x 跃升）**，epilogue 微 program 调度
+  是昆仑第一瓶颈坐实；其余七芯持平（天数 5.805/沐曦 5.435/燧原
+  1.626/海光 14.82/华为 0.2535/A 19.2175/B 7.7725）
+- 仍 < 0.1x（差 2.1x）——E12 = GEMM tile 32×32→64×64（BT=64 单
+  program 一矩阵，T37 昆仑 64³ 先例；source 待 commit）
