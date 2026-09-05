@@ -37,7 +37,7 @@ def _ccu_conv_gemm_kernel(
     dim,
     a_matrix_stride,
     BLOCK_N: tl.constexpr,
-    WIDTH: tl.constexpr,
+    K_EXT: tl.constexpr,
     W_PAD: tl.constexpr,
     BLOCK_M: tl.constexpr,
     GROUP_M: tl.constexpr,
@@ -65,16 +65,18 @@ def _ccu_conv_gemm_kernel(
     a_ptrs = (
         win_ptr
         + d * a_matrix_stride
-        + offs_m[:, None] * WIDTH
+        + offs_m[:, None] * K_EXT
         + offs_k[None, :]
     )
-    # B operand: the [W] weight vector broadcast across N columns
-    # (stride 0 on the n axis keeps this a fully regular access).
-    b_ptrs = weight_ptr + d.to(tl.int64) * WIDTH + offs_k[:, None] + 0 * offs_n[None, :]
+    # B operand: the [W+1] vector (weights ++ bias) broadcast across N
+    # columns (stride 0 on the n axis keeps this a fully regular
+    # access); the ones-column of A folds the bias into the dot so the
+    # post kernel needs no per-lane gather.
+    b_ptrs = weight_ptr + d.to(tl.int64) * K_EXT + offs_k[:, None] + 0 * offs_n[None, :]
     accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
 
-    for k in range(0, WIDTH, W_PAD):
-        mask_k = offs_k < WIDTH - k
+    for k in range(0, K_EXT, W_PAD):
+        mask_k = offs_k < K_EXT - k
         a = tl.load(
             a_ptrs,
             mask=(offs_m[:, None] < M) & mask_k[None, :],
@@ -184,34 +186,50 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
             out = out.squeeze(-1)
         return out, new_state
 
-    w_pad = max(triton.next_power_of_2(width), 16)  # tl.dot needs K >= 16
+    w_pad = max(triton.next_power_of_2(width + 1), 16)  # tl.dot needs K >= 16
     l_cat = state_len + seqlen
     pre = torch.empty(
         batch * dim * seqlen, dtype=torch.float32, device=x.device
     )
 
-    # Kernel 1 (E10): windows [D, B*S, W] via unfold, one regular GEMM
-    # per channel against the broadcast weight vector. Window for
-    # output t starts at t + state_len + 1 - width in x_cat.
+    # Kernel 1 (E12): windows ++ ones-column [D, B*S, W+1] via unfold,
+    # one regular GEMM per channel against the broadcast [weights ++
+    # bias] vector - bias comes out of the dot, so the flat post kernel
+    # performs no per-lane gather (E8-E11 fingerprint points at the
+    # shared post kernel; the vector gather is the prime suspect).
     win_start = state_len + 1 - width
     win = x_cat.unfold(-1, width, 1)[
         ..., win_start : win_start + seqlen, :
     ]
-    a_mat = (
-        win.permute(1, 0, 2, 3).contiguous().view(dim, batch * seqlen, width)
+    k_ext = width + 1
+    a_mat = torch.empty(
+        dim, batch * seqlen, k_ext, dtype=torch.float32, device=x.device
     )
+    a_mat[..., :width] = win.permute(1, 0, 2, 3).reshape(
+        dim, batch * seqlen, width
+    )
+    b_vec = torch.empty(
+        dim, k_ext, dtype=torch.float32, device=x.device
+    )
+    b_vec[:, :width] = weight_f
+    if bias is not None:
+        a_mat[..., width] = 1.0
+        b_vec[:, width] = bias
+    else:
+        a_mat[..., width] = 0.0
+        b_vec[:, width] = 0.0
     m_rows = batch * seqlen
     grid1 = (dim * triton.cdiv(m_rows, 32),)
     _ccu_conv_gemm_kernel[grid1](
         a_mat,
-        weight_f,
+        b_vec,
         pre,
         m_rows,
         seqlen,
         dim,
         a_mat.stride(0),
         BLOCK_N=32,
-        WIDTH=width,
+        K_EXT=k_ext,
         W_PAD=w_pad,
         BLOCK_M=32,
         GROUP_M=8,
@@ -224,12 +242,12 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     grid2 = (min(triton.cdiv(total, 1024), _MAX_GRID),)
     _ccu_postprocess_kernel[grid2](
         pre,
-        bias if bias is not None else pre,
+        pre,
         out,
         total,
         seqlen,
         dim,
-        HAS_BIAS=bias is not None,
+        HAS_BIAS=False,  # E12: bias folded into the GEMM ones-column
         ACT_IS_SILU=(activation in ("silu", "swish")),
         BLOCK=1024,
         num_warps=4,
