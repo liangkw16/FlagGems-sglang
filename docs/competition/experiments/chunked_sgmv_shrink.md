@@ -66,3 +66,4 @@ route/materialize 是 sgmv 族唯一可行形态（e8-e10 三投证伪）。
 
 - 63/64/65/256 行的 segment 用例已加入 generic 与 vendor 矩阵；验证状态见本次流程修复记录。
 - E6 平台最佳结果保持历史原值；长段覆盖修复前不再将该方向称为结构证伪。
+- 最终 GPU release 5 tests/27 条 test/subTest 记录通过，generic 与两个 vendor 入口均实际调用。source/verification 身份及完整回执见 [流程实测](../workflow-validation-20260906.md)。

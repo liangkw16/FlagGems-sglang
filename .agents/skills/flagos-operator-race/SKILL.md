@@ -236,6 +236,13 @@ preflight 和 submit 都复核回执。哈希回执用于追溯执行，不是�
 连接、传输、后台日志和证据保留按
 [远端 GPU 代理验证](references/remote-validation.md) 执行。
 
+修改本 skill 或其门禁脚本后，先运行
+`python3 -m unittest discover -s .agents/skills/flagos-operator-race/tests -v`。
+涉及通道或执行流程时，再用最小真实算子跑通 KernelGen 生成/验证、受影响芯片验证、
+GPU commit 字节回归与回执验签。涉及发布门禁时，用真实 ZIP/回执配合 FakeClient
+测试 preflight→submit、篡改拒绝和一次性 nonce；这不访问真实平台，不消耗提交额度。
+逐阶段记录成功或失败，服务端零测试不能用“接口调用成功”掩盖。
+
 远端 NVIDIA 只能筛选语法、数值和候选，不能证明其他芯片正确或性能。
 
 ### 6. 生成不可变 ZIP

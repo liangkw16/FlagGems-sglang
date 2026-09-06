@@ -9,7 +9,7 @@ platform: 8/8(s0,3.10497917x)
 team_best_stage: s0
 team_best_speedup: 3.10497917
 sealed: no
-next: 已修复高维stride,GPU screening 7 tests通过;待提交字节release复验,未提交平台;8/8仍指历史s0
+next: 高维stride修复版GPU release 7 tests通过;未提交平台;8/8仍指历史s0
 updated: 2026-09-06
 ```
 
@@ -26,3 +26,4 @@ updated: 2026-09-06
 - 静态定位：连续高维输入按 `numel / D` 展平为行后，应以 D 作为输入/输出行步长，不能沿用原张量 stride(0)。
 - 修复两个行步长；多维用例扩至三种 dtype、1D/3D/4D 以及前导维转置。现有 s0 成绩和 ZIP 保留原样，不能给修复版背书。
 - 用户已授权源码传输；RTX 5070 Ti screening 7 tests、24 个 test/subTest 记录全部通过，入口实际调用 21 次。提交字节的 release 复验另记。
+- 最终 release 7 tests/24 条记录通过：source `f83c73aeceaa6382c6ec6d93a082fc24e37090fb`，verification `73f6bb801607d2ba77ca8469136e568a43ccf262`。回执、ZIP、门禁复验及完整哈希见 [流程实测](../workflow-validation-20260906.md)；未正式提交。

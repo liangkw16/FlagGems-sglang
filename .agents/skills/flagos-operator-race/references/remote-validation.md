@@ -60,12 +60,15 @@ runner 独占创建 `verification.json` 和 `verification.log`，拒绝覆盖旧
    结果判断。远端哈希必须逐项相同；任一不一致就停止，不能拿 HEAD、工作树或
    screening 的结果替旧 commit 的 ZIP 背书。
 3. 用 `setsid`（或等价方式）建立属于该临时目录的独立进程组，再配合 `nohup` 在
-   远端后台依次执行：
+   远端后台执行需要 runtime 的阶段；静态检查可先在本地仓库完成，绑定同一文件哈希，
+   不必在远端重复安装格式工具。完整检查项为：
    - 目标源码和测试的 `py_compile`；
    - 优先运行仓库定义的 `pre-commit run --files <本次 Python 文件>`；远端没有
      `pre-commit` 时使用与 `.pre-commit-config.yaml` 等价的命令：
      `black --check`、`isort --check-only --profile black --line-length 80`、
      `flake8 --ignore=F405,E731,W503,E203,E704 --max-line-length=120`；
+     Black 读取仓库 `pyproject.toml`（当前 79），不能误用 isort 的 80。
+     若在隔离目录运行格式检查，须同时携带并绑定仓库配置文件；
    - 复验源码和测试 SHA-256，确认静态门禁没有改写已验签字节；
    - 上述 runner 的 `run`（内部使用 unittest 模块加载并强制核对执行数）。
 4. 启动前为每阶段和整次运行设定并记录 wall-clock 上限，命令使用远端 `timeout`
@@ -83,6 +86,9 @@ runner 独占创建 `verification.json` 和 `verification.log`，拒绝覆盖旧
    shape。账本保留可直接重放的完整命令（或脚本完整 SHA-256）、完整输入文件哈希、
    完整日志 SHA-256/保留位置和 AB/BA 原始样本；不截断哈希。远端 NVIDIA 结果只
    标记为代理证据。
+
+取回回执的传输必须完成且成功退出后，才运行本地验签和汇总。不能把“后台任务已结束”
+当成“日志已取全”；先核对预期算子集合和所有回执，再生成汇总。
 
 shell 包装必须 `set -euo pipefail` 或逐阶段显式检查返回码；禁止用 `command | tail`
 的退出码或最后一行 DONE 代替测试状态。计时与正确性回执分开：性能变更保留阶段

@@ -9,7 +9,7 @@
 | `gpu-et` | 同一代理的备用链路；本轮未检查 | 未刷新 | 不能算第二台独立设备 |
 | 华为/天数/海光/沐曦/AMD 独立主机 | 尚无本轮核验的已授权主机记录 | 仅有镜像方案 | target-runtime-unverified |
 | 燧原/昆仑独立主机 | 尚无本轮核验的已授权主机记录 | 未建立容器方案 | target-runtime-unverified |
-| KernelGen MCP | 已配置；用户明确允许用于生成和验证，凭据不入库 | 2026-09-06 tools/list 成功，4 个工具；generate/autotune 含验证，optimize 不验证 | 服务健康不等于某候选通过；每次按执行版本、reference、case 与设备结果记账 |
+| KernelGen MCP | 已配置；用户明确允许用于生成和多 GPU/多芯验证，凭据不入库 | 2026-09-06 tools/list 成功；NVIDIA/Huawei generate 与 autotune 均完成，四份结果 tests=0 | 生成与设备请求流程可用，本轮目标芯正确性证据未满足门禁；回传源码可交 GPU 独立复验 |
 
 新增目标机时只登记 SSH alias，不写 IP/凭据；记录用户授权范围、设备型号、驱动、
 runtime、镜像 digest、最近健康检查日期与日志位置。每次运行另记实际最大 shape、

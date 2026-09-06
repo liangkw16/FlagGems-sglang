@@ -943,3 +943,6 @@ ABBA→④内置验证在出现 hash/manifest 背书前一律不信;服务端修
 - T48 增补长段边界，T50 接入全部 vendor，11 个测试入口移至类定义之后，T56 修复展平行步长。
 - 用户已批准这批源码传到 `gpu`；13 个算子 screening 均通过（RTX 5070 Ti，driver 610.57.04，torch 2.13.0+cu130，Triton 3.7.1）。源码/测试提交后另做 release 复验，历史平台成绩不变。
 - KernelGen 当日 tools/list 成功：generate/autotune 支持验证，optimize 不验证；已将多 GPU/多芯验证分工写回两个 skill。
+- 最终 GPU release：13 算子、96 tests、615 条 test/subTest 记录通过，零 skip/xfail；真实 ZIP/回执的本地模拟 preflight→submit、篡改拒绝、重复提交拒绝均通过。
+- KernelGen NVIDIA/Huawei 的 generate 与显式测试 autotune 均完成，但四份终态 tests=0；未计为目标芯正确性通过。两份返回源码另在 GPU 完成 42 项独立回归。
+- 流程实测还修复了 runner 把 PyTorch 虚拟 `_ops.py` 误判为源码依赖的问题。完整身份、命令、哈希与限制见 [流程实测](../workflow-validation-20260906.md)。

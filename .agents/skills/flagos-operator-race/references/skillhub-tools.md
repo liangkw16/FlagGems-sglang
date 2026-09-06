@@ -89,6 +89,15 @@ python3 .agents/skills/kernelgen-flagos/scripts/kernelgen_mcp.py call <tool> --f
 MCP speedup 的口径未对齐前仅保留原始数据，不用于晋级、关轴或平台名次推断。
 不要要求 LLM 用注释回传测量值。代码注入提示不能替代实际执行接口或机器结果信封。
 
+2026-09-06 流程实测：对同一 L2 契约分别调用 NVIDIA/Huawei 的 generate，以及
+显式传入 21 项 pytest 矩阵的单轮 autotune，四份终态均返回 passed=true、tests=0。
+这证明生成、设备路由和任务轮询可用，但缺少可核验的实际用例计数和执行环境；
+不能据此宣称没有运行过测试，也不能记为多芯正确性通过。请求/响应保留在
+`artifacts/competition/workflow-fix-20260906/kernelgen/`，实测报告见
+`docs/competition/workflow-validation-20260906.md`。
+遇到该结果时停止空转重试，保留服务结果并将返回源码接入 `gpu` 的独立回归；
+目标芯结果仍待服务提供有效执行证据，NVIDIA 复验不替代该目标芯验证。
+
 ### 多芯验证通道与实际资源
 
 按任务的薄弱芯片和本次改动选择 KernelGen 目标设备，分别携带同一契约、reference、
