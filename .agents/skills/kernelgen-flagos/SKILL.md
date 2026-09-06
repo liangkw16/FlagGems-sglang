@@ -173,6 +173,14 @@ Record each job's actual source version, device, cases and results. Never count
 In this repository, follow `flagos-operator-race/references/skillhub-tools.md`
 for evidence classification and `gpu` regression of the current source bytes.
 
+**Speedup/benchmark requests**: `generate_kernel` can return reference/kernel
+timings and speedup in `verify_result`; `autotune_kernel` measures speedup across
+iterations and returns `performance_result` / `iteration_history`. Select each
+target device separately and record the actual code version, reference, inputs,
+timing units and raw results. Use comparable measurements with correctness results
+to guide tuning. `optimize_kernel` only rewrites code; it does not benchmark.
+Competition scores remain the platform's measurements, separate from MCP results.
+
 **Generation requests** (user wants to create/generate a new operator):
 
 | Detection Result | Action |

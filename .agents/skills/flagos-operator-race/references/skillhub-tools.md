@@ -59,10 +59,17 @@ python3 .agents/skills/kernelgen-flagos/scripts/kernelgen_mcp.py call <tool> --f
 
 | 接口 | 作用与验证能力 | 调用要点 |
 | --- | --- | --- |
-| `generate_kernel` | 生成 PyTorch/Triton/test/benchmark，并返回 `verify_result` | 传契约、参考资料、目标 device；核验生成测试是否覆盖题面 |
-| `autotune_kernel` | 生成、迭代并在目标设备验证 | 传 `pytorch_code`、`test_func_code`、`input_specs`；设置 `max_rounds` 和 `verify_timeout`；按 `continue_call` 原字段轮询 |
-| `optimize_kernel` | 单次优化；服务描述明确“不验证、不迭代” | 返回源码另走验证通道，不能把响应成功记为数值通过 |
+| `generate_kernel` | 生成、正确性验证与 benchmark，返回 `verify_result` 中的耗时和加速比 | 传契约、参考资料、目标 device；核验生成测试是否覆盖题面 |
+| `autotune_kernel` | 生成、迭代验证与测速，返回各轮及最佳版本的加速比 | 传 `pytorch_code`、`test_func_code`、`input_specs`；设置 `max_rounds`、`target_speedup` 和 `verify_timeout`；按 `continue_call` 原字段轮询 |
+| `optimize_kernel` | 单次代码优化，不验证、不测速、不迭代 | 返回源码另走验证通道，不能把响应成功记为数值或性能通过 |
 | `specialize_kernel` | 平台特化，当前知识库仅 huawei | 输出是候选；不推断已完成目标设备测试 |
+
+加速比字段：generate 的 `verify_result` 可含 `torch_time_s`、`triton_time_s`、`speedup`；
+autotune 的 `performance_result`、`iteration_history` 可含加速比及版本/轮次。按 device
+分别保存参考实现、输入规格、实际代码版本、计时单位与返回原值；缺失字段不补造。
+同版本正确性通过且 benchmark 口径对齐后，可用多芯加速比分析瓶颈、比较候选、决定
+下一轮调优。正确性计数未回填另行注记，不抹去服务报告的性能数据；正式比赛的逐芯
+加速比和算术平均分仍单独采用平台评测结果。
 
 `autotune_kernel` 当前没有固定 Triton 源码输入字段，不能靠提示注入宣称原样执行了
 本地候选。它能验证服务生成的算子；需检查每次返回证据指向的实际版本。验证当前
