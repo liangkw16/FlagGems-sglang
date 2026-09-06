@@ -89,6 +89,16 @@ counts means "passed as reported; coverage unverified"; a code-only response
 is not execution evidence. Missing auxiliary counts alone do not veto an
 otherwise qualified competition candidate.
 
+For all sub-skills, distinguish authentication/transport failures from remote
+generation, harness and benchmark failures. A verifier `NameError` after a
+successful call does not require a new Token. Preserve returned source bytes
+and errors; check the contract and replay with an independent reference on the
+authorized `gpu` host. Record that device's result separately from MCP results.
+Do not repair service status/count fields or silently replace generated tests.
+The 2026-09-06 negative controls still returned zero tests with both pytest and
+native bench decorators; switching test naming/format is not a verified fix.
+Details: [competition integration](../flagos-operator-race/references/skillhub-tools.md).
+
 ### Phase 0: MCP Transport Check
 
 The kernelgen MCP service lives at `https://kernelgen.flagos.io/sse`

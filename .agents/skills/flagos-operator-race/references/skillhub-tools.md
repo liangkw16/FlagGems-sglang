@@ -122,6 +122,20 @@ error；`status=completed` / `success=true` / `verify_result.passed=true` 都不
 tests=0 且缺少有效用例绑定时仍为覆盖未核实。发现改写契约或矛盾结果后保留原始
 响应，停止同条件重试，转独立验证或修复集成；不改写失败事实，不混入平台成绩。
 
+进一步诊断见 `docs/competition/mcp-diagnosis-20260906.md`：带 pytest marker 的
+前缀/后缀入口，以及官方示例的 `bench` 原生 `@label/@parametrize` 负对照，均仍
+返回零测试、passed=true 和 benchmark AssertionError。更换命名/装饰器未修复问题，
+不能把“必须使用 bench”写成已证实根因。autotune 未返回实际执行的测试，服务端
+收集与汇总的具体缺陷尚未定位；保留证据，等接口或服务修复后再复测。
+
+需要生成时，在结构化参数与描述中明确公式、签名、默认值及能区分相近语义的
+反例；不能只依赖算子名称或传入 reference。本次严格契约的 generate 保住了
+`sqrt(sum(x*x)+eps)` 与 eps=1e-6，但服务验证报 `NameError: torch is not defined`。
+这是远端验证失败，不是 Token 失效，也不能直接判定返回内核有错。保留原始四份
+代码，独立 harness 在 `gpu` 对原样 Triton 源码通过 27 个数值 case、27 次 launch，
+包括小幅输入的默认/显式 eps。该结果仅为 NVIDIA screening；未得到 MCP 多芯正确性
+或有效加速比。生成测试/benchmark 同样需审查 imports、重名函数覆盖和计时返回值。
+
 ### 多芯验证通道与实际资源
 
 按任务的薄弱芯片和本次改动选择 KernelGen 目标设备，分别携带同一契约、reference、
