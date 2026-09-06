@@ -96,6 +96,13 @@ class FusedNormRopeStackedTest(unittest.TestCase):
     def test_single_token_and_large_heads(self):
         self._check(*make_case(1, 5, 16, 64, 32, torch.bfloat16))
 
+    def test_non_multiple_of_four_heads(self):
+        # H not a multiple of HEADS_TILE=4: unmasked head rows would read the
+        # V region and corrupt the next token's output (platform case 0 was H=2).
+        for H, T, L in ((2, 1, 2), (3, 5, 2), (5, 3, 3), (7, 2, 2)):
+            with self.subTest(H=H, T=T, L=L):
+                self._check(*make_case(T, L, H, 64, 32, torch.bfloat16, seed=H))
+
     def test_odd_tokens(self):
         self._check(*make_case(257, 2, 8, 128, 64, torch.float16, seed=3))
 

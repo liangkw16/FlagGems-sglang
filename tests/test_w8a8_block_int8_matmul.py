@@ -86,3 +86,28 @@ class W8A8Test(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
+class W8A8VariantsTest(unittest.TestCase):
+    """Core matrix across every backend variant (generic + vendors)."""
+
+    from tests._op_variants import load_operator_modules
+
+    MODULES = load_operator_modules("w8a8_block_int8_matmul")
+
+    def test_variants_match_reference(self):
+        for M, N, K, bn, bk, dtype in (
+            (16, 128, 256, 128, 64, torch.bfloat16),
+            (64, 512, 1024, 128, 128, torch.bfloat16),
+            (128, 1024, 2048, 128, 64, torch.float16),
+            (32, 128, 256, 64, 64, torch.float16),
+        ):
+            args = make_case(M, N, K, block_n=bn, block_k=bk, dtype=dtype, seed=M)
+            ref = reference(*args)
+            for name, module in self.MODULES:
+                with self.subTest(module=name, M=M, N=N, K=K):
+                    out = module.w8a8_block_int8_matmul(*args)
+                    torch.testing.assert_close(
+                        out.float(), ref.float(), atol=1e-2, rtol=1e-2
+                    )

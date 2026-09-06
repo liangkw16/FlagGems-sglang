@@ -28,6 +28,7 @@ def _norm_rope_stacked_kernel(
     v_out_ptr,
     T,
     kv_size,
+    num_kv_heads,
     head_dim,
     rotary_dim,
     half_rd,
@@ -59,8 +60,9 @@ def _norm_rope_stacked_kernel(
     offs_h = head_tile * HEADS_TILE + tl.arange(0, HEADS_TILE)
     offs_d = tl.arange(0, BLOCK_D)
     d_mask = offs_d < head_dim
+    h_mask = offs_h < num_kv_heads
     row_base = t * kv_stride_t + l * kv_stride_l + offs_h[:, None] * head_dim + offs_d[None, :]
-    hd_mask = d_mask[None, :]
+    hd_mask = h_mask[:, None] & d_mask[None, :]
 
     k_base = row_base
     v_base = row_base + kv_size
@@ -110,8 +112,9 @@ def _norm_rope_stacked_kernel(
         w_r2 = tl.load(
             w_ptr + l * w_stride_l + r + half_rd, mask=r_mask, other=1.0
         ).to(tl.float32)
-        k1 = tl.load(kv_ptr + r_base, mask=r_mask[None, :], other=0.0).to(tl.float32)
-        k2 = tl.load(kv_ptr + r_base + half_rd, mask=r_mask[None, :], other=0.0).to(tl.float32)
+        hr_mask = h_mask[:, None] & r_mask[None, :]
+        k1 = tl.load(kv_ptr + r_base, mask=hr_mask, other=0.0).to(tl.float32)
+        k2 = tl.load(kv_ptr + r_base + half_rd, mask=hr_mask, other=0.0).to(tl.float32)
         k1 = k1 * inv_rms[:, None] * w_r1[None, :]
         k2 = k2 * inv_rms[:, None] * w_r2[None, :]
 
@@ -120,8 +123,8 @@ def _norm_rope_stacked_kernel(
 
         r_out = l * kout_stride_l + t * kout_stride_t + offs_h[:, None] * head_dim + r[None, :]
         out_ty = k_out_ptr.dtype.element_ty
-        tl.store(k_out_ptr + r_out, rot1.to(out_ty), mask=r_mask[None, :])
-        tl.store(k_out_ptr + r_out + half_rd, rot2.to(out_ty), mask=r_mask[None, :])
+        tl.store(k_out_ptr + r_out, rot1.to(out_ty), mask=hr_mask)
+        tl.store(k_out_ptr + r_out + half_rd, rot2.to(out_ty), mask=hr_mask)
 
     # --- V: pure transpose copy ---
     v = tl.load(kv_ptr + v_base, mask=hd_mask, other=0.0)
@@ -167,6 +170,7 @@ def fused_norm_rope_stacked(
         v_out,
         T,
         kv_size,
+        H,
         D,
         rotary_dim,
         half_rd,
