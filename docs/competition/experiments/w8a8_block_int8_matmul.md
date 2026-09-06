@@ -4,12 +4,12 @@
 task: 58
 operator: w8a8_block_int8_matmul
 batch: 4
-validity: pending
-platform: 7/8(s0,avg待算)
-team_best_stage: s0
-team_best_speedup: 0
+validity: valid
+platform: 8/8(e1,118.15512x)
+team_best_stage: e1
+team_best_speedup: 118.15512
 sealed: no
-next: e1(昆仑scalar-b_s vendor)待提交;s0仅昆仑PassManager崩溃,其余7芯37-367x
+next: 冲分轴:燧原4.48x/B7.68x;榜首209.3x差43%;skill沉淀昆仑向量整除崩溃教训
 updated: 2026-09-06
 ```
 
@@ -38,3 +38,10 @@ updated: 2026-09-06
   向量整除 `offs_n // group_n` 改为标量 `(pid_n*BLOCK_N)//group_n`
   （BLOCK_N | group_n 时组索引跨 tile 恒定）；generic 字节不动。
   远端 variants 矩阵 5/5 OK（含 vendor 在 NVIDIA 代理编译+数值）。
+
+## E1 → **8/8 VALID**（2026-09-06，submission seq27，第 8 个 8/8！）
+
+- 逐芯：天数 74.44 / 沐曦 145.17 / 燧原 4.48 / 海光 358.86 /
+  昆仑 142.03 / 华为 185.79 / A 62.84 / B 7.68 → **avg 118.16x**
+- 昆仑 vendor（标量组索引替向量整除）一发修复编译崩溃，且 142x 高性能。
+- 榜首 EvokeAgent 209.30x，差 43%；燧原/B 是短板轴。
