@@ -9,7 +9,7 @@ platform: 0/8(s0)
 team_best_stage: e1
 team_best_speedup: 0
 sealed: no
-next: e1(h_mask修复)待提交;s0全芯49%错=H非4倍数时OOB写坏下一token
+next: e2(行式vendor:燧原/昆仑/华为)已提交5/8基础;e1=5/8
 updated: 2026-09-06
 ```
 
@@ -38,3 +38,13 @@ updated: 2026-09-06
   测试补 H∈{2,3,5,7}×T×L 用例。远端 6/6 OK。
 - 教训沉淀：**tile 的每一根轴都必须进 mask，"shape 恰好整除"不能当不变量**；
   测试矩阵要覆盖非整除 tile 的轴值。
+
+## E1 平台结果（5/8）+ E2 行式 vendor（2026-09-06）
+
+- e1：天数 14.93x / 沐曦 4.74x / 海光 16.69x / A 13.06x / B 7.21x 过；
+  燧原 PassManager 编译崩；昆仑 1-3% 元素大偏差（2D tile + axis=1
+  reduction lowering 嫌疑）；华为仅最大 case（67M 元素）mismatch、
+  且错误信息构造本身在 NPU 上崩（只在大张量打印时）。
+- e2：燧原/昆仑/华为三 vendor 统一用"一 program 一 (t,l,h) 行"的
+  1D [BLOCK_D] 结构（T51 已验证形态：tl.rsqrt、无 2D tile、无 3D grid、
+  无 int64 cast）；已过 5 芯继续 generic。远端 variants 矩阵 7/7 OK。

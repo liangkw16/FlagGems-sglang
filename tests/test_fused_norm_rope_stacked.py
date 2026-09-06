@@ -109,3 +109,29 @@ class FusedNormRopeStackedTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
+class FusedNormRopeStackedVariantsTest(unittest.TestCase):
+    """Core matrix across every backend variant (generic + vendors)."""
+
+    from tests._op_variants import load_operator_modules
+
+    MODULES = load_operator_modules("fused_norm_rope_stacked")
+
+    def test_variants_match_reference(self):
+        for T, L, H, D, rd, dtype in (
+            (1, 2, 2, 64, 32, torch.bfloat16),
+            (64, 4, 8, 128, 64, torch.bfloat16),
+            (32, 3, 8, 128, 128, torch.bfloat16),
+            (16, 2, 4, 96, 48, torch.bfloat16),
+            (33, 5, 5, 64, 32, torch.float16),
+        ):
+            args = make_case(T, L, H, D, rd, dtype, seed=T)
+            k_r, v_r = reference(*args)
+            atol, rtol = TOLS[dtype]
+            for name, module in self.MODULES:
+                with self.subTest(module=name, T=T, H=H):
+                    k_m, v_m = module.fused_norm_rope_stacked(*args)
+                    torch.testing.assert_close(k_m.float(), k_r.float(), atol=atol, rtol=rtol)
+                    torch.testing.assert_close(v_m.float(), v_r.float(), atol=atol, rtol=rtol)
