@@ -9,7 +9,7 @@ platform: 0/8(s0)
 team_best_stage: e1
 team_best_speedup: 0
 sealed: no
-next: e2(行式vendor:燧原/昆仑/华为)已提交5/8基础;e1=5/8
+next: 当日额度耗尽;e2=5/8(行式vendor未修复三芯);远端fuzz 9504组合零失配=非逻辑bug
 updated: 2026-09-06
 ```
 
@@ -48,3 +48,21 @@ updated: 2026-09-06
 - e2：燧原/昆仑/华为三 vendor 统一用"一 program 一 (t,l,h) 行"的
   1D [BLOCK_D] 结构（T51 已验证形态：tl.rsqrt、无 2D tile、无 3D grid、
   无 int64 cast）；已过 5 芯继续 generic。远端 variants 矩阵 7/7 OK。
+
+## E2 平台结果（5/8，行式 vendor 未修复）+ 差分 fuzz 证据
+
+- e2：同三芯败（燧原 PassManager 崩、昆仑 case0 反而 48.8%、华为大 case）。
+  vendor 均被平台正确选中（selected_file 确认）。**行式结构证伪**：
+  两种数学等价结构在同一芯上失败模式不同（e1 case0 4/256 → e2 125/256）
+  → 非确定性特征（降级/调度），非逻辑错误。
+- 远端 5070 Ti 差分 fuzz：9504 组合（T∈{1..33}×L×H∈{1..8}×D∈
+  {32..256}×rd 组合×3 dtype×非连续 kv×bf16/fp16 cache×int32/int64 pos×
+  [1,L,1,D] weight×float eps）—— **generic+row 两实现零失配**
+  （仅 fuzz 自身 reference 对 python-float eps 崩，平台 eps 是张量）。
+- 次日方向：(a) 燧原 PassManager 崩在两种结构都崩 → 怀疑 wrapper 的
+  torch.full/isinstance 分支外的公共构造（如 eps reshape 或 contiguous
+  链）不成立，更可能是 kernel 公共算子（tl.rsqrt/1÷sqrt 或 rope 对偶
+  load）→ 试替换超越函数形态；(b) 昆仑/华为非确定性 → 试
+  torch.zeros 替 empty、单 stream、或在 rope 对偶 load 改单 load +
+  寄存器内 shift（tl.where 构造 partner 索引）消除双读；(c) 用一发
+  "探针"提交（输出=inv_rms 广播）直接读出中间量差异定位。
