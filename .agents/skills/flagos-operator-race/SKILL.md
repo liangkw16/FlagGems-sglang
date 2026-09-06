@@ -8,14 +8,15 @@ metadata:
 # FlagOS 算子竞赛工作流
 
 把一次提交当作可复现实验，而不是临时网页操作。最短闭环是：锁定契约 →
-generic 基线 → 代理验证 → 不可变 ZIP → 实时平台门禁 → 单次自动提交 →
+generic 基线 → 代理验证与执行回执 → 不可变 ZIP → 实时平台门禁 → 单次自动提交 →
 逐芯结果 → 最小 vendor 修复 → 账本与 Git 证据。
 
-当前默认发布策略是“只打榜”：源码、测试和账本保留本地 Git commit 作为不可变证据，
+用户当前会话指令（包括用户提供的 AGENTS.md）优先于本 skill 的默认发布策略；
+若已明确要求自动 commit/push，按该授权执行并保留下述待推提交隔离检查。
+未被当前用户指令覆盖时，默认发布策略是“只打榜”：源码、测试和账本保留本地 Git commit 作为不可变证据，
 但不 push 到任何 Git remote（包括 GitHub）。平台打榜与 GitHub 发布互相独立；任务包含
 平台提交或竞赛闭环且门禁通过时照常自动提交，提交前后都不因此 push。只有用户在当前
-请求中明确要求同步或发布 GitHub 时才允许 push。本竞赛专用规则覆盖项目通用的自动
-push 约定。
+请求中明确要求同步或发布 GitHub 时才允许 push。
 
 先服从请求边界：调研、审计、解释、状态报告、静态验证或现有产物验签只做只读
 本地检查，不刷新快照、不连接远端、不改文件、不打包、不 commit/push、不操作
@@ -101,19 +102,17 @@ platform/team_best/sealed/next/updated），是该任务唯一的人工状态真
 `.agents/skills/` 下装有 FlagOS SkillHub 的配套 skill，按以下边界融入闭环；
 它们服从本 skill 的请求边界、只读规则和提交纪律，不改变任何门禁：
 
-- `kernelgen-flagos`：算子生成/优化/跨芯特化的统一入口，新增 kernel 生成与
-  结构性重写必须走 `kernelgen-mcp`（需在 `.mcp.json` 配置 Token，未配置时先按
-  `kernelgen-mcp-setup.md` 引导用户注册，不要手写代码替代）；明确的单行根因
-  修复（命名、off-by-one、import、格式等）可直接修改，不被外部 MCP 阻塞。
-  用途：
-  新算子起手（generate）、卡瓶颈的第二轮迭代（optimize，基于 MCP 反馈循环）、
-  某芯 Triton 支持差时的 specialize 备选、以及发射前对 MCP 覆盖芯的实机
-  初筛（autotune/specialize 的 device 实机跑，只取编译与数值信号，见集成
-  文档的触发条件和验收门）。产出仍必须过本 skill 的契约锁定、
-  代理验证、不可变 ZIP 门禁，MCP 生成不等于验证证据。本仓库布局是
+- `kernelgen-flagos`：可用于算子生成、优化、特化和多 GPU/多芯片验证，与 `gpu` 主机都是
+  可选验证通道。需要生成新算法或缺少可复用实现时，先用 MCP 获取候选；
+  需要第二实现或瓶颈建议时，再带基线、逐 shape 数据和失败上下文调用 optimize。
+  成熟上游复用、明确根因修复、测试和调度参数调整可直接实现，不要求为满足调用
+  次数而重写代码。选择 MCP 生成路线时遵守其配置与调用协议；服务不可用要记录，
+  不能把未调用说成已调用，也不阻塞已有独立方案的验证。
+  specialize/optimize 的代码改写不等于上设备；autotune 的通过、失败和速度都必须
+  按集成文档核对实际执行源与测试口径。未绑定每次执行源码的错误仅是服务端线索。
+  所有产出仍须过契约、代理验证、执行回执和不可变 ZIP 门禁。本仓库布局是
   `src/flaggems_sglang/` 而非上游 `src/flag_gems/`，其 FlagGems 专用注册与
-  测试布局不适用；错误二分协议（编译类最多自查一次、数值类不盲目自改）与
-  Ascend 特化参数见集成文档。
+  测试布局不适用；验证接口、证据分级、失败定位与 Ascend 特化参数见集成文档。
 - `gpu-container-setup-flagos`：远端 GPU 容器自动选型（NVIDIA/昇腾/Metax/
   天数/海光/AMD，按 vendor hub → BAAI Harbor → 搜索的优先级选镜像）。仓库内脚本
   路径是 `.agents/skills/gpu-container-setup-flagos/scripts/`（skill 文档中的
@@ -194,20 +193,31 @@ S0 只追求全部支持芯片正确且每芯达到题面最低门槛：
 - 公式分支、极值、NaN/Inf（题面相关时）；
 - 平台报错对应的精确回归 case。
 
+每个 tile 轴至少检查 B-1/B/B+1（题面允许时），段内多 tile、非整除维度和多维
+stride 分别覆盖。移植上游 kernel 时同时带走其调用方前提（例如上游先切短 segment），
+不能只搬 BLOCK 参数。修过的失败 case 必须进入持久化回归矩阵。
+测试入口统一使用 unittest 模块加载；`unittest.main()` 必须位于所有测试类之后。
+正常通过、skip、expectedFailure 分开记账，后两者不能让 release 晋级。
+
 按项目约定把远端 GPU 单测放后台，前台继续静态检查和资料整理。验证顺序：
 
 1. `py_compile`；
 2. Black/isort/flake8 或仓库 pre-commit；
 3. 最小 unittest；
 4. 主要 shape 的正确性；
-5. wrapper-inclusive benchmark 与编译产物检查。
+5. 性能候选做 wrapper-inclusive benchmark、阶段计时与编译产物检查；
+6. 用 `scripts/verify_release.py` 生成绑定实际执行的回执。
 
 NVIDIA 代理看不见目标芯自身的 lowering/编译器风险。vendor 候选或改动
-涉及某芯专属路径时，按[SkillHub 工具集成](references/skillhub-tools.md)
-的"多芯验证通道矩阵"为受影响芯选最强通道：MCP 覆盖芯（华为/天数/海光/
-沐曦、NVIDIA 侧）先走"发射前 MCP 实机初筛"（字节绑定 + 编译 + 数值），
-需要完整题面矩阵或计时时起 vendor 容器实机；燧原/昆仑/AMD 不在 MCP
-覆盖内，维持远端代理或账本明确标注静态未验证。新增 vendor 文件必须
+涉及某芯专属路径时，主动使用 KernelGen 多芯验证或已授权目标机，按
+[SkillHub 工具集成](references/skillhub-tools.md)
+的资源登记与证据分级为受影响芯选最强实际可用通道：已有授权厂商主机时执行
+同源完整矩阵；也可用 KernelGen 在其可用设备上执行验证。调用前检查当前 schema，
+携带候选源码和契约测试，核验实际执行源码、测试数、reference、环境和结果。
+能绑定的数值结果记为该设备已覆盖范围的验证；缺失绑定或 tests=0 时只记服务端线索。
+每个目标芯单独记录 job、源码身份、用例覆盖和结果；一个设备通过不能折算成多芯通过。
+镜像已知不代表主机可用；KernelGen 和主机均无有效执行结果时标注 target-runtime-unverified。
+NVIDIA 数学代理不能替其他芯背书。新增 vendor 文件必须
 接进该算子 unittest 矩阵（`tests/_op_variants.py`，T35 为样板）。
 
 未提交候选可用于快速筛选，但不能作为 ZIP 的最终验证证据。候选通过初筛后，
@@ -218,6 +228,10 @@ NVIDIA 代理看不见目标芯自身的 lowering/编译器风险。vendor 候�
 晋级时把 screening 的 source/test SHA-256 与提交后的 Git blob 逐项比较；任一
 变化都视为新候选，旧 screening 不再为它背书。release 临时目录只从明确 commit
 的 Git 对象生成，不能从当前工作树复制源码、测试或其仓库内导入依赖。
+
+执行回执必须包含 source/test/依赖/runner 哈希、环境、实际用例、各源码入口调用数、
+退出码和完整日志哈希。零测试、skip、xfail、漏测 vendor 或字节变化都不得晋级；
+preflight 和 submit 都复核回执。哈希回执用于追溯执行，不是远程硬件签名证明。
 
 连接、传输、后台日志和证据保留按
 [远端 GPU 代理验证](references/remote-validation.md) 执行。

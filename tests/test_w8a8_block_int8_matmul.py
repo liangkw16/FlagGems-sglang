@@ -3,10 +3,15 @@
 import importlib.util
 import unittest
 from pathlib import Path
+
 import torch
 
 MODULE_PATH = (
-    Path(__file__).parents[1] / "src" / "flaggems_sglang" / "ops" / "w8a8_block_int8_matmul.py"
+    Path(__file__).parents[1]
+    / "src"
+    / "flaggems_sglang"
+    / "ops"
+    / "w8a8_block_int8_matmul.py"
 )
 SPEC = importlib.util.spec_from_file_location("w8a8_module", MODULE_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
@@ -53,7 +58,9 @@ class W8A8Test(unittest.TestCase):
         expected = reference(A, B, As, Bs, bs, dtype)
         self.assertEqual(actual.shape, expected.shape)
         self.assertEqual(actual.dtype, expected.dtype)
-        torch.testing.assert_close(actual.float(), expected.float(), atol=1e-2, rtol=1e-2)
+        torch.testing.assert_close(
+            actual.float(), expected.float(), atol=1e-2, rtol=1e-2
+        )
 
     def test_basic(self):
         for dtype in (torch.float16, torch.bfloat16, torch.float32):
@@ -79,13 +86,10 @@ class W8A8Test(unittest.TestCase):
             torch.zeros(32, 64, dtype=torch.int8, device="cuda"),
             torch.zeros(0, 1, device="cuda"),
             torch.zeros(1, 1, device="cuda"),
-            [32, 64], torch.float16,
+            [32, 64],
+            torch.float16,
         )
         self.assertEqual(out.shape, (0, 32))
-
-
-if __name__ == "__main__":
-    unittest.main()
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
@@ -103,7 +107,9 @@ class W8A8VariantsTest(unittest.TestCase):
             (128, 1024, 2048, 128, 64, torch.float16),
             (32, 128, 256, 64, 64, torch.float16),
         ):
-            args = make_case(M, N, K, block_n=bn, block_k=bk, dtype=dtype, seed=M)
+            args = make_case(
+                M, N, K, block_n=bn, block_k=bk, dtype=dtype, seed=M
+            )
             ref = reference(*args)
             for name, module in self.MODULES:
                 with self.subTest(module=name, M=M, N=N, K=K):
@@ -111,3 +117,7 @@ class W8A8VariantsTest(unittest.TestCase):
                     torch.testing.assert_close(
                         out.float(), ref.float(), atol=1e-2, rtol=1e-2
                     )
+
+
+if __name__ == "__main__":
+    unittest.main()

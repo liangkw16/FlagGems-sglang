@@ -5,7 +5,7 @@ description: >
   repository type (FlagGems, vLLM, or general Python/Triton) and dispatches to the appropriate
   specialized sub-skill. Includes operator generation, MCP-based iterative optimization, and
   feedback submission sub-skills. Use this skill when the user wants to generate or optimize a
-  GPU kernel operator, create a Triton kernel, or says things like "generate an operator",
+  GPU kernel operator, validate an operator across multiple GPUs/chip backends, create a Triton kernel, or says things like "generate an operator",
   "create a kernel for X", "optimize triton kernel", or "/kernelgen-flagos".
 argument-hint: "<operator_name> [--func-type <type>]"
 user-invokable: true
@@ -73,6 +73,18 @@ All sub-skill files are located in the **same directory** as this `SKILL.md` fil
 ---
 
 ## Routing Protocol — Follow This BEFORE Doing Anything Else
+
+In this repository, the `flagos-operator-race` workflow decides whether a task
+needs MCP generation. Its explicit allowance for a diagnosed fix, established
+upstream implementation, test change, or parameter adjustment takes precedence
+over the generation-only rules below. When the workflow selects MCP generation,
+use the transport and routing protocol; never claim an unmade call or treat
+generated code as execution evidence.
+
+KernelGen is also a multi-GPU/multi-chip validation channel alongside the configured `gpu`
+host. Inspect the current tool schema and preserve actual executed source,
+reference/harness, cases, environment and results. Credit bound execution for
+its covered device and cases; zero tests or a code-only response is not a pass.
 
 ### Phase 0: MCP Transport Check
 
@@ -150,6 +162,16 @@ Glob: **/skills/kernelgen-flagos/kernelgen-generate.md
 Then use the Read tool to read the matched path.
 
 #### Decision Table
+
+**Validation requests** (including multi-GPU/multi-chip validation): inspect the
+live tools/list schema after Phase 0. Use the verification-capable endpoints
+(`generate_kernel` / `autotune_kernel` as of 2026-09-06), supply the operator
+contract, reference and test matrix, and select each affected `device` separately.
+Keep at most two service jobs active and poll with all `continue_call` fields.
+Record each job's actual source version, device, cases and results. Never count
+`optimize_kernel` (explicitly no verification) or a zero-test response as a pass.
+In this repository, follow `flagos-operator-race/references/skillhub-tools.md`
+for evidence classification and `gpu` regression of the current source bytes.
 
 **Generation requests** (user wants to create/generate a new operator):
 

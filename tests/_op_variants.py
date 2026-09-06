@@ -20,7 +20,7 @@ broken vendor file could only be caught on the competition platform.
 ``load_operator_modules`` returns the generic module together with all
 existing vendor modules so a numeric matrix can iterate every variant
 (running vendor kernels on the NVIDIA proxy verifies their math and JIT;
-target-chip lowering still needs MCP screening or a vendor container).
+target-chip lowering still needs execution evidence bound to that chip).
 """
 
 import importlib.util

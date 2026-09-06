@@ -31,7 +31,9 @@ def _l2norm_kernel(
     row = tl.program_id(0)
     offs = tl.arange(0, BLOCK_D)
     mask = offs < dim
-    x = tl.load(x_ptr + row * x_stride + offs, mask=mask, other=0.0).to(tl.float32)
+    x = tl.load(x_ptr + row * x_stride + offs, mask=mask, other=0.0).to(
+        tl.float32
+    )
     sum_sq = tl.sum(x * x, axis=0)
     rstd = 1.0 / tl.sqrt(sum_sq + eps)
     out = x * rstd
@@ -56,8 +58,8 @@ def l2norm(x, eps=1e-6):
         rows,
         dim,
         float(eps),
-        x.stride(0) if x.dim() > 1 else dim,
-        out.stride(0) if out.dim() > 1 else dim,
+        dim,
+        dim,
         BLOCK_D=max(triton.next_power_of_2(dim), 16),
         num_warps=4,
         num_stages=1,

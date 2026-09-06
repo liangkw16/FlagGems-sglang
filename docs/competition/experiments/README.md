@@ -791,6 +791,9 @@ T32 E3 代理门未过未发射。
 - 昆仑崩溃族(topk/argsort/matmul/einsum reference 触发 inductor
   compile-worker 1830s)16+ 指纹,工单未回。
 
+> 2026-09-06 审查修订：以下 MCP 实验保留为历史观察；最终源码 diff 不能绑定每次 attempt。
+> 当前按 skillhub-tools.md 的 mcp-unbound-observation 分级，旧“失败神谕/编译通过”不再作为候选门禁。
+
 ### 2026-09-03 MCP 原样测试实验(prompt 注入,三组对照)
 
 问题:kernelgen MCP 四工具都是改写器,prompt 注入能否实现"原样字节
@@ -917,7 +920,7 @@ ABBA→④内置验证在出现 hash/manifest 背书前一律不信;服务端修
 - **T54 fused_norm_rope_stacked**：s0 0/8（**tile 每轴必须进 mask**：
   H=2 时多出 head 行越界写坏下一 token）→ e1 +h_mask 5/8 → e2 行式
   vendor（燧原/昆仑/华为）同三芯仍败且失败模式漂移 → **远端 9504 组合
-  差分 fuzz 零失配**（本地逻辑正确，目标芯非确定性降级）。额度耗尽，
+  差分 fuzz 零失配**（仅这些输入在 NVIDIA 通过，目标芯根因尚未确定）。额度耗尽，
   次日探针提交定位（inv_rps 广播变体）。已过 5 芯 14.9/4.7/17.2/13/7.1x。
 - **T55 hc_head**：s0 每 token 两遍融合（sumsq+mixes 共享单遍读），
   7/8 昆仑评测中（天数 1.6/沐曦 1.2/燧原 0.26/海光 3.2/华为 2.0/
@@ -930,6 +933,13 @@ ABBA→④内置验证在出现 hash/manifest 背书前一律不信;服务端修
 - 流程教训（已沉淀 skill）：① `selected_file` 是 vendor 是否生效的
   证据通道；② preflight intent 会因 live 状态漂移过期，未发 POST≠
   失败提交，重跑 preflight 即可；③ 平台才败的正确性问题先差分 fuzz
-  取证再动结构；④ 等价重排后失败模式变化=非确定性问题，停止结构
-  盲试；⑤ 本地测试对齐平台契约（fp32 scale/atol）但对 shape 轴覆盖
+  取证再动结构；④ 不同版本失败不能直接判为非确定性，先固定源码/输入取证；⑤ 本地测试对齐平台契约（fp32 scale/atol）但对 shape 轴覆盖
   加宽（非整除值）。
+
+## 2026-09-06 验证流程修复（不提交平台）
+
+- MCP 改写和未绑定执行结果只作线索；移除“不同源码失败变化=非确定性”与“代理 fuzz 通过=排除逻辑”的规则。
+- 发布改为强制校验执行回执，覆盖 source/test/依赖/runner、实际用例、vendor 入口、退出码和日志；skip/xfail/零测试禁止晋级。
+- T48 增补长段边界，T50 接入全部 vendor，11 个测试入口移至类定义之后，T56 修复展平行步长。
+- 用户已批准这批源码传到 `gpu`；13 个算子 screening 均通过（RTX 5070 Ti，driver 610.57.04，torch 2.13.0+cu130，Triton 3.7.1）。源码/测试提交后另做 release 复验，历史平台成绩不变。
+- KernelGen 当日 tools/list 成功：generate/autotune 支持验证，optimize 不验证；已将多 GPU/多芯验证分工写回两个 skill。

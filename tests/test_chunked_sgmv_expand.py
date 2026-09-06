@@ -27,7 +27,9 @@ MODULE_PATH = (
     / "ops"
     / "chunked_sgmv_expand.py"
 )
-SPEC = importlib.util.spec_from_file_location("chunked_sgmv_expand_module", MODULE_PATH)
+SPEC = importlib.util.spec_from_file_location(
+    "chunked_sgmv_expand_module", MODULE_PATH
+)
 if SPEC is None or SPEC.loader is None:
     raise RuntimeError(f"cannot load {MODULE_PATH}")
 MODULE = importlib.util.module_from_spec(SPEC)
@@ -58,7 +60,9 @@ class BatchInfo:
         self.bs = bs
 
 
-def reference(x, weights, batch_info, slice_offsets, max_slice_size, base_output):
+def reference(
+    x, weights, batch_info, slice_offsets, max_slice_size, base_output
+):
     out = base_output.clone().float()
     n_slices = slice_offsets.numel() - 1
     r = weights.shape[-1]
@@ -110,7 +114,9 @@ def make_case(
         .cuda()
         .to(dtype)
     )
-    base_output = torch.full((S, total_out), base_fill, dtype=dtype).cuda().to(dtype)
+    base_output = (
+        torch.full((S, total_out), base_fill, dtype=dtype).cuda().to(dtype)
+    )
     seg_indptr = torch.tensor(
         [0] + list(torch.tensor(seg_lens).cumsum(0).tolist()),
         dtype=torch.int64,
@@ -119,7 +125,8 @@ def make_case(
         0, num_lora, (len(seg_lens),), dtype=torch.int64, generator=g
     ).cuda()
     lora_ranks = (
-        torch.randint(0, 2, (num_lora,), dtype=torch.int64, generator=g).cuda() * rank
+        torch.randint(0, 2, (num_lora,), dtype=torch.int64, generator=g).cuda()
+        * rank
     )  # 0 or full rank
     scalings = torch.randn(num_lora, dtype=dtype, generator=g).cuda()
     permutation = torch.randperm(S, generator=g).cuda()
@@ -142,7 +149,9 @@ def make_case(
 class ChunkedSgmvExpandTest(unittest.TestCase):
     def _check(self, x, weights, batch_info, slice_offsets, base_output):
         snapshots = [t.clone() for t in (x, weights, base_output)]
-        max_slice_size = int((slice_offsets[1:] - slice_offsets[:-1]).max().item())
+        max_slice_size = int(
+            (slice_offsets[1:] - slice_offsets[:-1]).max().item()
+        )
         actual = MODULE.chunked_sgmv_expand(
             x, weights, batch_info, slice_offsets, max_slice_size, base_output
         )
@@ -221,10 +230,6 @@ class ChunkedSgmvExpandTest(unittest.TestCase):
         self.assertEqual(out.shape, base_output.shape)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class ChunkedSgmvExpandVariantsTest(unittest.TestCase):
     """Core matrix across every backend variant (generic + enflame)."""
@@ -263,3 +268,7 @@ class ChunkedSgmvExpandVariantsTest(unittest.TestCase):
                     )
                     atol, rtol = TOLERANCES[base_output.dtype]
                     torch.testing.assert_close(out, ref, atol=atol, rtol=rtol)
+
+
+if __name__ == "__main__":
+    unittest.main()

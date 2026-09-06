@@ -58,7 +58,9 @@ def reference(k, beta, g_cumsum=None, chunk_size=64):
     if g_cumsum is not None:
         g_c = g_cumsum.float().view(B, NT, BT, H).permute(0, 1, 3, 2)
         g_diff = g_c.unsqueeze(-1) - g_c.unsqueeze(-2)
-        A = A * torch.where(g_diff <= 0, torch.exp(g_diff), torch.zeros_like(g_diff))
+        A = A * torch.where(
+            g_diff <= 0, torch.exp(g_diff), torch.zeros_like(g_diff)
+        )
 
     beta_c = beta.float().view(B, NT, BT, H).permute(0, 1, 3, 2)
     A = A * beta_c.unsqueeze(-1)
@@ -127,7 +129,9 @@ class ChunkScaledDotKktTest(unittest.TestCase):
     def test_gqa_ratios(self):
         for num_k_heads, ratio in ((2, 1), (2, 2), (1, 4), (4, 2)):
             with self.subTest(num_k_heads=num_k_heads, ratio=ratio):
-                k, beta = make_case(num_k_heads=num_k_heads, ratio=ratio, seed=1)
+                k, beta = make_case(
+                    num_k_heads=num_k_heads, ratio=ratio, seed=1
+                )
                 self._check(k, beta)
 
     def test_with_g_cumsum(self):
@@ -149,7 +153,9 @@ class ChunkScaledDotKktTest(unittest.TestCase):
             (64, 128, 1),
             (128, 64, 1),
         ):
-            with self.subTest(chunk_size=chunk_size, k_dim=k_dim, nchunks=nchunks):
+            with self.subTest(
+                chunk_size=chunk_size, k_dim=k_dim, nchunks=nchunks
+            ):
                 k, beta = make_case(
                     nchunks=nchunks,
                     chunk_size=chunk_size,
@@ -184,10 +190,6 @@ class ChunkScaledDotKktTest(unittest.TestCase):
         beta_bad = beta_bad[..., :3]  # H=3 not divisible by Hg=2
         with self.assertRaises(ValueError):
             MODULE.chunk_scaled_dot_kkt(k_bad, beta_bad)
-
-
-if __name__ == "__main__":
-    unittest.main()
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
@@ -228,7 +230,9 @@ class ChunkScaledDotKktVariantsTest(unittest.TestCase):
                     out = module.chunk_scaled_dot_kkt(
                         k_nc, beta, g, chunk_size=kwargs["chunk_size"]
                     )
-                    torch.testing.assert_close(out, expected, atol=1e-4, rtol=1e-4)
+                    torch.testing.assert_close(
+                        out, expected, atol=1e-4, rtol=1e-4
+                    )
 
     def test_variants_match_reference(self):
         cases = [
@@ -270,4 +274,10 @@ class ChunkScaledDotKktVariantsTest(unittest.TestCase):
                             chunk_size=kwargs["chunk_size"],
                         )
                         atol, rtol = TOLERANCES[k.dtype]
-                        torch.testing.assert_close(out, expected, atol=atol, rtol=rtol)
+                        torch.testing.assert_close(
+                            out, expected, atol=atol, rtol=rtol
+                        )
+
+
+if __name__ == "__main__":
+    unittest.main()

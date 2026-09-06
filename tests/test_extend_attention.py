@@ -12,34 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import importlib.util
 import unittest
-from pathlib import Path
 
 import torch
 import torch.nn.functional as F
 
-MODULE_PATH = (
-    Path(__file__).parents[1]
-    / "src"
-    / "flaggems_sglang"
-    / "ops"
-    / "extend_attention.py"
-)
-SPEC = importlib.util.spec_from_file_location(
-    "extend_attention_module", MODULE_PATH
-)
-if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"cannot load {MODULE_PATH}")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+from tests._op_variants import load_operator_modules
 
-TOL = {torch.float32: (1e-4, 1e-4), torch.float16: (1e-2, 1e-2),
-       torch.bfloat16: (1.5e-2, 1.5e-2)}
+TOL = {
+    torch.float32: (1e-4, 1e-4),
+    torch.float16: (1e-2, 1e-2),
+    torch.bfloat16: (1.5e-2, 1.5e-2),
+}
 
 
-def reference(q_extend, k_extend, v_extend, k_buffer, v_buffer,
-              qo_indptr, kv_indptr, kv_indices, max_len_extend):
+def reference(
+    q_extend,
+    k_extend,
+    v_extend,
+    k_buffer,
+    v_buffer,
+    qo_indptr,
+    kv_indptr,
+    kv_indices,
+    max_len_extend,
+):
     B = qo_indptr.size(0) - 1
     _, H_Q, D = q_extend.shape
     _, H_KV, _ = k_extend.shape
@@ -68,24 +65,46 @@ def reference(q_extend, k_extend, v_extend, k_buffer, v_buffer,
         pos_keys = torch.arange(total_len, device=q_extend.device)
         t = prefix_len + torch.arange(extend_len, device=q_extend.device)
         causal_mask = pos_keys.unsqueeze(0) <= t.unsqueeze(1)
-        attn_scores = torch.einsum("qhd,khd->qhk", q_ext.float(), k_full) * scale
-        attn_scores = attn_scores.masked_fill(~causal_mask.unsqueeze(1), float("-inf"))
+        attn_scores = (
+            torch.einsum("qhd,khd->qhk", q_ext.float(), k_full) * scale
+        )
+        attn_scores = attn_scores.masked_fill(
+            ~causal_mask.unsqueeze(1), float("-inf")
+        )
         attn_weights = F.softmax(attn_scores, dim=-1)
         o[q_start:q_end] = torch.einsum("qhk,khd->qhd", attn_weights, v_full)
     return o
 
 
-def make_case(extend_lens, prefix_lens, H_Q=8, H_KV=2, D=128,
-              total_buffer=4096, dtype=torch.float32, seed=0):
+def make_case(
+    extend_lens,
+    prefix_lens,
+    H_Q=8,
+    H_KV=2,
+    D=128,
+    total_buffer=4096,
+    dtype=torch.float32,
+    seed=0,
+):
     g = torch.Generator().manual_seed(seed)
     E = sum(extend_lens)
     q = torch.randn(E, H_Q, D, dtype=dtype, generator=g).cuda().to(dtype)
     k_ext = torch.randn(E, H_KV, D, dtype=dtype, generator=g).cuda().to(dtype)
     v_ext = torch.randn(E, H_KV, D, dtype=dtype, generator=g).cuda().to(dtype)
-    kb = torch.randn(total_buffer, H_KV, D, dtype=dtype, generator=g).cuda().to(dtype)
-    vb = torch.randn(total_buffer, H_KV, D, dtype=dtype, generator=g).cuda().to(dtype)
-    qo_indptr = torch.tensor([0] + list(torch.tensor(extend_lens).cumsum(0).tolist()),
-                             dtype=torch.int64).cuda()
+    kb = (
+        torch.randn(total_buffer, H_KV, D, dtype=dtype, generator=g)
+        .cuda()
+        .to(dtype)
+    )
+    vb = (
+        torch.randn(total_buffer, H_KV, D, dtype=dtype, generator=g)
+        .cuda()
+        .to(dtype)
+    )
+    qo_indptr = torch.tensor(
+        [0] + list(torch.tensor(extend_lens).cumsum(0).tolist()),
+        dtype=torch.int64,
+    ).cuda()
     kv_offsets = [0]
     all_indices = []
     for pl in prefix_lens:
@@ -99,14 +118,22 @@ def make_case(extend_lens, prefix_lens, H_Q=8, H_KV=2, D=128,
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class ExtendAttentionTest(unittest.TestCase):
+    MODULES = load_operator_modules("extend_attention")
+
     def _check(self, q, ke, ve, kb, vb, qoi, kvi, kvidx):
         mle = int((qoi[1:] - qoi[:-1]).max().item()) if qoi.numel() > 1 else 0
-        actual = MODULE.extend_attention(q, ke, ve, kb, vb, qoi, kvi, kvidx, mle)
         expected = reference(q, ke, ve, kb, vb, qoi, kvi, kvidx, mle)
-        self.assertEqual(actual.shape, expected.shape)
-        self.assertEqual(actual.dtype, expected.dtype)
         atol, rtol = TOL[q.dtype]
-        torch.testing.assert_close(actual, expected, atol=atol, rtol=rtol)
+        for name, module in self.MODULES:
+            with self.subTest(module=name):
+                actual = module.extend_attention(
+                    q, ke, ve, kb, vb, qoi, kvi, kvidx, mle
+                )
+                self.assertEqual(actual.shape, expected.shape)
+                self.assertEqual(actual.dtype, expected.dtype)
+                torch.testing.assert_close(
+                    actual, expected, atol=atol, rtol=rtol
+                )
 
     def test_basic(self):
         for dtype in (torch.float32, torch.float16, torch.bfloat16):
@@ -121,15 +148,22 @@ class ExtendAttentionTest(unittest.TestCase):
                 self._check(*args)
 
     def test_edge_cases(self):
-        for ext, pre in (([1], [0]), ([1], [100]), ([32], [0]),
-                         ([0, 8, 0], [16, 0, 32])):
+        for ext, pre in (
+            ([1], [0]),
+            ([1], [100]),
+            ([32], [0]),
+            ([0, 8, 0], [16, 0, 32]),
+        ):
             with self.subTest(ext=ext, pre=pre):
                 args = make_case(ext, pre, seed=2)
                 self._check(*args)
 
     def test_shapes(self):
-        for ext, pre, D in (([4, 8], [16, 32], 64), ([16], [128], 128),
-                            ([32, 16, 8], [64, 32, 16], 256)):
+        for ext, pre, D in (
+            ([4, 8], [16, 32], 64),
+            ([16], [128], 128),
+            ([32, 16, 8], [64, 32, 16], 256),
+        ):
             with self.subTest(ext=ext, pre=pre, D=D):
                 args = make_case(ext, pre, D=D, seed=3)
                 self._check(*args)

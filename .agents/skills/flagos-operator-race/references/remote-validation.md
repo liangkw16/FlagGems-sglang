@@ -16,6 +16,38 @@
 
 每份日志先写明模式，不把 screening 结果升级成 release 结果。
 
+## 统一执行回执
+
+本仓 CUDA/HIP unittest 统一从隔离目录按模块加载，不直接执行测试文件。先生成
+明确文件集合；默认包含 generic、全部规范 vendor、主测试、tests 包入口、variant
+helper 和 runner。其他仓库内导入依赖用 `--dependency <相对路径>` 显式添加，
+运行时发现未绑定的已导入依赖就拒绝晋级。
+
+```bash
+python .agents/skills/flagos-operator-race/scripts/verify_release.py prepare l2norm \
+  --source-commit '<源码commit>' --verification-commit '<测试和runner commit>' \
+  --directory '/tmp/flagos-l2norm-release'
+```
+
+prepare 只从 Git 对象取 release 字节；探索候选加 `--mode screening`，会取工作树
+字节并标记探索证据。传输该目录后，在远端后台、串行、带 timeout 执行：
+
+```bash
+timeout 600 /home/kevin/notebook/.venv/bin/python \
+  /tmp/flagos-l2norm-release/.agents/skills/flagos-operator-race/scripts/verify_release.py \
+  run --directory /tmp/flagos-l2norm-release
+```
+
+runner 独占创建 `verification.json` 和 `verification.log`，拒绝覆盖旧回执；记录
+实际用例、subTest、张量 shape/dtype、每份源码公开入口调用数及环境。源码与依赖
+在运行前后都核对哈希。零测试、失败、skip、xfail、漏测任意 vendor 均返回非零。
+目标专属写法若不能在 CUDA/HIP 执行，只能标记未验证；先建立该目标的同等执行
+回执支持，不能把静态检查写成通过或用跳过绕过当前门禁。
+
+取回 JSON 和完整相邻日志，二者原样保留并计算 SHA。平台 preflight 和 submit
+都强制校验 release 回执及其 Git 字节、覆盖和日志；旧的可选日志 SHA 不再是门禁。
+这是受信任 runner 的执行记录，不是远程硬件证明，不能排除恶意伪造的测试代码。
+
 ## 每次运行
 
 1. 用远端 `mktemp -d /tmp/flagos-<operator>.XXXXXX` 建独立目录并设为 `0700`。
@@ -35,7 +67,7 @@
      `black --check`、`isort --check-only --profile black --line-length 80`、
      `flake8 --ignore=F405,E731,W503,E203,E704 --max-line-length=120`；
    - 复验源码和测试 SHA-256，确认静态门禁没有改写已验签字节；
-   - `python -m unittest -v tests/test_<operator>.py`。
+   - 上述 runner 的 `run`（内部使用 unittest 模块加载并强制核对执行数）。
 4. 启动前为每阶段和整次运行设定并记录 wall-clock 上限，命令使用远端 `timeout`
    或等价机制，禁止无界 `nohup`。超时或任一步失败时，先核验 PID、PGID 和命令均
    属于该临时目录，再只终止该进程组并停止后续阶段；不终止其他用户或任务进程。
@@ -51,6 +83,10 @@
    shape。账本保留可直接重放的完整命令（或脚本完整 SHA-256）、完整输入文件哈希、
    完整日志 SHA-256/保留位置和 AB/BA 原始样本；不截断哈希。远端 NVIDIA 结果只
    标记为代理证据。
+
+shell 包装必须 `set -euo pipefail` 或逐阶段显式检查返回码；禁止用 `command | tail`
+的退出码或最后一行 DONE 代替测试状态。计时与正确性回执分开：性能变更保留阶段
+计时及五轮配对原始样本，纯正确性修复无需为了流程重复整套性能调参。
 
 release 完成后生成 ZIP 时，再核对最终打包器输出与 release 前 manifest 的 source
 commit、成员集合、成员 SHA-256 和 canonical ZIP SHA-256；任一变化都需要重新做

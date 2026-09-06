@@ -95,7 +95,9 @@ def make_case(
     weights = torch.randn(
         num_lora, max_rank, vocab_size, dtype=dtype, generator=g
     ).cuda()
-    input_ids = torch.randint(0, vocab_size, (S,), dtype=id_dtype, generator=g).cuda()
+    input_ids = torch.randint(
+        0, vocab_size, (S,), dtype=id_dtype, generator=g
+    ).cuda()
     seg_indptr = torch.tensor(
         [0] + list(torch.tensor(seg_lens).cumsum(0).tolist()),
         dtype=id_dtype,
@@ -218,10 +220,6 @@ class ChunkedEmbeddingLoraATest(unittest.TestCase):
         self.assertEqual(out.shape, (0, weights.shape[1]))
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class ChunkedEmbeddingLoraAVariantsTest(unittest.TestCase):
     """Run the core matrix against every backend variant (generic +
@@ -237,8 +235,12 @@ class ChunkedEmbeddingLoraAVariantsTest(unittest.TestCase):
         ]
         for seg_lens, ranks, max_rank, vocab in cases:
             input_ids, weights, batch_info, _ = make_case(
-                seg_lens, ranks, max_rank=max_rank, vocab_size=vocab,
-                sentinel_empty_widx=True, seed=11,
+                seg_lens,
+                ranks,
+                max_rank=max_rank,
+                vocab_size=vocab,
+                sentinel_empty_widx=True,
+                seed=11,
             )
             ref = reference(input_ids, weights, batch_info, vocab)
             for name, module in self.MODULES:
@@ -246,6 +248,8 @@ class ChunkedEmbeddingLoraAVariantsTest(unittest.TestCase):
                     out = module.chunked_embedding_lora_a(
                         input_ids, weights, batch_info, vocab
                     )
-                    torch.testing.assert_close(
-                        out, ref, atol=1e-5, rtol=1e-5
-                    )
+                    torch.testing.assert_close(out, ref, atol=1e-5, rtol=1e-5)
+
+
+if __name__ == "__main__":
+    unittest.main()

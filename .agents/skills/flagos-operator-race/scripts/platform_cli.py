@@ -8,6 +8,7 @@ import fcntl
 import getpass
 import gzip
 import hashlib
+import importlib.util
 import io
 import json
 import math
@@ -196,9 +197,7 @@ class HttpClient:
         if isinstance(code, bool) or code not in success_codes:
             if isinstance(code, bool) or not isinstance(code, int):
                 code = "unknown"
-            raise CliError(
-                f"FlagOS API code {code} at {url.split('?')[0]}"
-            )
+            raise CliError(f"FlagOS API code {code} at {url.split('?')[0]}")
         return result.get("data")
 
     def get(
@@ -372,9 +371,7 @@ def _live_state(
             "page_size": 100,
         },
     )
-    all_records = [
-        item for item in all_records or [] if isinstance(item, dict)
-    ]
+    all_records = [item for item in all_records or [] if isinstance(item, dict)]
     task_records = [
         item
         for item in task_records or []
@@ -542,9 +539,7 @@ def _verify_artifact(spec: dict[str, Any]) -> dict[str, Any]:
         spec["source_commit"],
         "--verify-existing",
     ]
-    result = subprocess.run(
-        command, capture_output=True, text=True, timeout=60
-    )
+    result = subprocess.run(command, capture_output=True, text=True, timeout=60)
     if result.returncode:
         message = (result.stderr or result.stdout).strip()[-500:]
         raise CliError(f"artifact verification failed: {message}")
@@ -566,12 +561,8 @@ def _verify_artifact(spec: dict[str, Any]) -> dict[str, Any]:
             value = str(path.resolve())
         if actual != value:
             raise CliError(f"artifact verifier mismatch: {key}")
-    if sorted(verified.get("archive_members") or []) != sorted(
-        spec["members"]
-    ):
-        raise CliError(
-            "artifact member list does not match confirmation tuple"
-        )
+    if sorted(verified.get("archive_members") or []) != sorted(spec["members"]):
+        raise CliError("artifact member list does not match confirmation tuple")
     return verified
 
 
@@ -628,12 +619,8 @@ def _remote_zip_fingerprint(url: str, expected_size: int) -> dict[str, Any]:
         method="GET",
     )
     try:
-        with build_opener(_NoRedirect()).open(
-            request, timeout=120
-        ) as response:
-            encoding = (
-                response.headers.get("Content-Encoding") or ""
-            ).lower()
+        with build_opener(_NoRedirect()).open(request, timeout=120) as response:
+            encoding = (response.headers.get("Content-Encoding") or "").lower()
             if encoding not in {"", "identity"}:
                 raise CliError(
                     f"unsupported remote ZIP content encoding: {encoding}"
@@ -644,9 +631,7 @@ def _remote_zip_fingerprint(url: str, expected_size: int) -> dict[str, Any]:
             f"remote ZIP HTTP {error.code} at {url.split('?')[0]}"
         ) from error
     except URLError as error:
-        raise CliError(
-            f"remote ZIP network error: {error.reason}"
-        ) from error
+        raise CliError(f"remote ZIP network error: {error.reason}") from error
     except OSError as error:
         raise CliError(
             f"remote ZIP network error: {type(error).__name__}"
@@ -692,16 +677,12 @@ def _state_lock(path: Path):
 
 def _intent_path(state_dir: Path, nonce: str) -> Path:
     if not re.fullmatch(r"[0-9a-f]{32}", nonce):
-        raise CliError(
-            "confirmation nonce must be 32 lowercase hex characters"
-        )
+        raise CliError("confirmation nonce must be 32 lowercase hex characters")
     return state_dir / f"{nonce}.json"
 
 
 def _write_intent(path: Path, value: dict[str, Any]) -> None:
-    descriptor, temporary = tempfile.mkstemp(
-        prefix=".intent-", dir=path.parent
-    )
+    descriptor, temporary = tempfile.mkstemp(prefix=".intent-", dir=path.parent)
     try:
         os.fchmod(descriptor, 0o600)
         with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
@@ -741,14 +722,7 @@ def _read_intent(path: Path) -> dict[str, Any]:
 def _verify_test_evidence(
     spec: dict[str, Any], repo_root: Path | None = None
 ) -> None:
-    """Bind the preflight to committed test bytes (verification receipt).
-
-    The source commit alone says nothing about which tests were run; T37
-    shipped a tail-block bug because nothing forced the submitter to surface
-    test evidence. Require the verification commit plus the exact test blob
-    SHA-256 it carries, and optionally the release log SHA-256 as the
-    human-attested receipt.
-    """
+    """Bind committed test bytes AND a successful execution receipt."""
     if repo_root is None:
         repo_root = Path(__file__).resolve().parents[4]
     commit = spec["verification_commit"]
@@ -769,15 +743,33 @@ def _verify_test_evidence(
         raise CliError(f"verification commit not found in git: {commit}")
     show = git("show", f"{commit}:{test_path}")
     if show.returncode:
-        raise CliError(
-            f"{test_path} missing at verification commit {commit}"
-        )
+        raise CliError(f"{test_path} missing at verification commit {commit}")
     actual = hashlib.sha256(show.stdout).hexdigest()
     if actual != spec["test_sha256"]:
         raise CliError(
             f"test blob SHA-256 at {commit} does not match --test-sha256; "
             "commit the current test bytes before preflight"
         )
+    _verify_release_receipt(spec, repo_root)
+
+
+def _verify_release_receipt(spec, repo_root):
+    path = Path(__file__).with_name("verify_release.py")
+    module_spec = importlib.util.spec_from_file_location(
+        "flagos_verify_release", path
+    )
+    module = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(module)
+    try:
+        module.verify_receipt(spec, repo_root)
+    except (
+        OSError,
+        ValueError,
+        KeyError,
+        TypeError,
+        subprocess.SubprocessError,
+    ) as error:
+        raise CliError(f"release evidence rejected: {error}") from error
 
 
 def _preflight(
@@ -798,7 +790,8 @@ def _preflight(
         "members": args.member,
         "verification_commit": args.verification_commit,
         "test_sha256": args.test_sha256,
-        "release_log_sha256": getattr(args, "release_log_sha256", None),
+        "verification_receipt": args.verification_receipt,
+        "verification_receipt_sha256": args.verification_receipt_sha256,
     }
     _verify_artifact(spec)
     _verify_test_evidence(spec)
@@ -850,6 +843,7 @@ def _submit(nonce: str, client: Any, state_dir: Path) -> dict[str, Any]:
 
         spec = intent["spec"]
         _verify_artifact(spec)
+        _verify_test_evidence(spec)
         payload = _read_zip(spec)
         live = _live_state(
             client,
@@ -956,8 +950,7 @@ def _submit(nonce: str, client: Any, state_dir: Path) -> dict[str, Any]:
                 message = str(error)
             else:
                 message = (
-                    "remote ZIP verification failed: "
-                    f"{type(error).__name__}"
+                    "remote ZIP verification failed: " f"{type(error).__name__}"
                 )
             remote_verification = {
                 "status": "unavailable",
@@ -1003,9 +996,7 @@ def _status(args: argparse.Namespace, client: Any) -> int:
             public_record = dict(record)
             file_url = public_record.get("file_url")
             if isinstance(file_url, str):
-                public_record["file_url_sha256"] = _sha256(
-                    file_url.encode()
-                )
+                public_record["file_url_sha256"] = _sha256(file_url.encode())
                 try:
                     target = urlsplit(file_url)
                     if (
@@ -1171,9 +1162,7 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="confirm the account and FlagOS terms before login/register",
     )
-    status_parser = commands.add_parser(
-        "status", help="read submission scores"
-    )
+    status_parser = commands.add_parser("status", help="read submission scores")
     _common(status_parser)
     status_parser.add_argument("--watch", action="store_true")
     status_parser.add_argument("--interval", type=float, default=15)
@@ -1181,9 +1170,7 @@ def _parser() -> argparse.ArgumentParser:
     status_parser.add_argument("--file-url-sha256")
     status_parser.add_argument("--after-epoch", type=float)
 
-    preflight = commands.add_parser(
-        "preflight", help="create a one-use intent"
-    )
+    preflight = commands.add_parser("preflight", help="create a one-use intent")
     _common(preflight)
     preflight.add_argument("--season", required=True)
     preflight.add_argument("--account", required=True)
@@ -1204,8 +1191,14 @@ def _parser() -> argparse.ArgumentParser:
         help="SHA-256 of tests/test_<operator>.py at --verification-commit",
     )
     preflight.add_argument(
-        "--release-log-sha256",
-        help="SHA-256 of the release/screening log cited as the receipt",
+        "--verification-receipt",
+        required=True,
+        help="absolute path to verify_release.py's release verification.json",
+    )
+    preflight.add_argument(
+        "--verification-receipt-sha256",
+        required=True,
+        help="SHA-256 of the execution receipt (its adjacent log is also checked)",
     )
 
     submit = commands.add_parser("submit", help="consume one prepared intent")
@@ -1227,9 +1220,7 @@ def _validate(args: argparse.Namespace) -> None:
         if args.file_url_sha256 and not re.fullmatch(
             r"[0-9a-f]{64}", args.file_url_sha256
         ):
-            raise CliError(
-                "--file-url-sha256 must be a full lowercase SHA-256"
-            )
+            raise CliError("--file-url-sha256 must be a full lowercase SHA-256")
         if args.after_epoch is not None and (
             not args.file_url_sha256
             or not math.isfinite(args.after_epoch)
@@ -1239,6 +1230,17 @@ def _validate(args: argparse.Namespace) -> None:
                 "--after-epoch requires a file URL hash and finite epoch"
             )
     if args.command == "preflight":
+        if not Path(args.verification_receipt).is_absolute():
+            raise CliError("--verification-receipt must be absolute")
+        for name in ("test_sha256", "verification_receipt_sha256"):
+            if not re.fullmatch(r"[0-9a-f]{64}", getattr(args, name)):
+                raise CliError(
+                    f"--{name.replace('_', '-')} must be a full lowercase SHA-256"
+                )
+        if not re.fullmatch(r"[0-9a-f]{40}", args.verification_commit):
+            raise CliError(
+                "--verification-commit must be a full lowercase Git SHA"
+            )
         if not re.fullmatch(r"[0-9a-f]{40}", args.commit):
             raise CliError("--commit must be a full lowercase Git SHA")
         if not re.fullmatch(r"[0-9a-f]{64}", args.sha256):

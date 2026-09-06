@@ -3,6 +3,7 @@
 import importlib.util
 import unittest
 from pathlib import Path
+
 import torch
 
 MODULE_PATH = (
@@ -38,7 +39,9 @@ class L2NormTest(unittest.TestCase):
     def test_dtypes(self):
         for dtype in (torch.float32, torch.float16, torch.bfloat16):
             with self.subTest(dtype=dtype):
-                self._check(torch.randn(32, 512, device="cuda", dtype=dtype) * 3)
+                self._check(
+                    torch.randn(32, 512, device="cuda", dtype=dtype) * 3
+                )
 
     def test_shapes(self):
         for shape in ((1, 16), (100, 1023), (5, 1024), (3, 4096), (8, 8192)):
@@ -46,9 +49,15 @@ class L2NormTest(unittest.TestCase):
                 self._check(torch.randn(*shape, device="cuda"))
 
     def test_multi_dim(self):
-        for shape in ((2, 3, 128), (4, 5, 6, 256)):
-            with self.subTest(shape=shape):
-                self._check(torch.randn(*shape, device="cuda"))
+        for dtype in TOL:
+            for shape in ((128,), (2, 3, 128), (4, 5, 6, 256)):
+                with self.subTest(shape=shape, dtype=dtype):
+                    self._check(torch.randn(*shape, device="cuda", dtype=dtype))
+
+    def test_transposed_leading_dims(self):
+        x = torch.randn(2, 3, 65, device="cuda").transpose(0, 1)
+        self.assertFalse(x.is_contiguous())
+        self._check(x)
 
     def test_non_contiguous(self):
         base = torch.randn(32, 1024, device="cuda")

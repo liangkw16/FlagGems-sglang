@@ -28,7 +28,9 @@ MODULE_PATH = (
     / "ops"
     / "fused_gdn_gating.py"
 )
-SPEC = importlib.util.spec_from_file_location("fused_gdn_gating_module", MODULE_PATH)
+SPEC = importlib.util.spec_from_file_location(
+    "fused_gdn_gating_module", MODULE_PATH
+)
 if SPEC is None or SPEC.loader is None:
     raise RuntimeError(f"cannot load {MODULE_PATH}")
 MODULE = importlib.util.module_from_spec(SPEC)
@@ -40,7 +42,9 @@ def reference(A_log, a, b, dt_bias, beta=1.0, threshold=20.0):
     softplus_x = torch.where(beta * x <= threshold, F.softplus(x, beta=beta), x)
     g = -torch.exp(A_log.float()) * softplus_x
     beta_output = torch.sigmoid(b.float())
-    return g.unsqueeze(0).to(torch.float32), beta_output.unsqueeze(0).to(torch.float32)
+    return g.unsqueeze(0).to(torch.float32), beta_output.unsqueeze(0).to(
+        torch.float32
+    )
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
@@ -50,7 +54,10 @@ class FusedGdnGatingTest(unittest.TestCase):
             A_log, a, b, dt_bias, beta, threshold
         )
         ref_g, ref_beta = reference(A_log, a, b, dt_bias, beta, threshold)
-        for name, got, exp in (("g", actual_g, ref_g), ("beta", actual_beta, ref_beta)):
+        for name, got, exp in (
+            ("g", actual_g, ref_g),
+            ("beta", actual_beta, ref_beta),
+        ):
             self.assertEqual(got.shape, exp.shape, name)
             self.assertEqual(got.dtype, exp.dtype, name)
             torch.testing.assert_close(got, exp, atol=1e-5, rtol=1e-5)
@@ -95,10 +102,6 @@ class FusedGdnGatingTest(unittest.TestCase):
         self.assertEqual(beta_out.shape, (1, 0, H))
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class FusedGdnGatingVariantsTest(unittest.TestCase):
     """Core matrix across every backend variant (generic + vendors)."""
@@ -122,4 +125,10 @@ class FusedGdnGatingVariantsTest(unittest.TestCase):
                 with self.subTest(module=name, B=B, H=H):
                     g, beta_out = module.fused_gdn_gating(A_log, a, b, dt_bias)
                     torch.testing.assert_close(g, ref_g, atol=1e-4, rtol=1e-4)
-                    torch.testing.assert_close(beta_out, ref_beta, atol=1e-4, rtol=1e-4)
+                    torch.testing.assert_close(
+                        beta_out, ref_beta, atol=1e-4, rtol=1e-4
+                    )
+
+
+if __name__ == "__main__":
+    unittest.main()

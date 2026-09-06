@@ -27,7 +27,9 @@ MODULE_PATH = (
     / "ops"
     / "ernie45_rope_fused.py"
 )
-SPEC = importlib.util.spec_from_file_location("ernie45_rope_fused_module", MODULE_PATH)
+SPEC = importlib.util.spec_from_file_location(
+    "ernie45_rope_fused_module", MODULE_PATH
+)
 if SPEC is None or SPEC.loader is None:
     raise RuntimeError(f"cannot load {MODULE_PATH}")
 MODULE = importlib.util.module_from_spec(SPEC)
@@ -50,11 +52,15 @@ def _apply_rope(x, n_h, head_size, rotary_dim, cos, sin):
     sin_e = sin.unsqueeze(1)
     new1 = x1 * cos_e - x2 * sin_e
     new2 = x2 * cos_e + x1 * sin_e
-    out = torch.cat([new1.to(x.dtype), new2.to(x.dtype), x[..., rotary_dim:]], dim=-1)
+    out = torch.cat(
+        [new1.to(x.dtype), new2.to(x.dtype), x[..., rotary_dim:]], dim=-1
+    )
     return out.view(num_tokens, n_h * head_size)
 
 
-def reference(q, k, cos_sin_cache, positions, mrope_section, head_size, rotary_dim):
+def reference(
+    q, k, cos_sin_cache, positions, mrope_section, head_size, rotary_dim
+):
     num_tokens, n_q_dim = q.shape
     n_k_dim = k.shape[1]
     n_qh = n_q_dim // head_size
@@ -84,7 +90,10 @@ class Ernie45RopeFusedTest(unittest.TestCase):
         q_snap, k_snap = q.clone(), k.clone()
         aq, ak = MODULE.ernie45_rope_fused(q, k, cache, pos, sec, hs, rd)
         eq, ek = reference(q, k, cache, pos, sec, hs, rd)
-        for name, got, exp, dt in (("q", aq, eq, q.dtype), ("k", ak, ek, k.dtype)):
+        for name, got, exp, dt in (
+            ("q", aq, eq, q.dtype),
+            ("k", ak, ek, k.dtype),
+        ):
             self.assertEqual(got.shape, exp.shape, name)
             self.assertEqual(got.dtype, exp.dtype, name)
             atol, rtol = TOL[dt]
@@ -124,7 +133,11 @@ class Ernie45RopeFusedTest(unittest.TestCase):
             with self.subTest(hs=hs, rd=rd):
                 T = 8
                 sec_sum = rd // 2
-                sec = [sec_sum // 3, sec_sum // 3, sec_sum - 2 * (sec_sum // 3)]
+                sec = [
+                    sec_sum // 3,
+                    sec_sum // 3,
+                    sec_sum - 2 * (sec_sum // 3),
+                ]
                 # Ensure h==w
                 sec[1] = sec[0]
                 sec[2] = sec_sum - 2 * sec[0]
@@ -139,13 +152,11 @@ class Ernie45RopeFusedTest(unittest.TestCase):
         k = torch.randn(0, 256, device="cuda")
         cache = torch.randn(100, 64, device="cuda")
         pos = torch.zeros(3, 0, dtype=torch.int64, device="cuda")
-        aq, ak = MODULE.ernie45_rope_fused(q, k, cache, pos, [16, 16, 0], 128, 64)
+        aq, ak = MODULE.ernie45_rope_fused(
+            q, k, cache, pos, [16, 16, 0], 128, 64
+        )
         self.assertEqual(aq.shape, (0, 1024))
         self.assertEqual(ak.shape, (0, 256))
-
-
-if __name__ == "__main__":
-    unittest.main()
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
@@ -164,6 +175,12 @@ class Ernie45RopeVariantsTest(unittest.TestCase):
             eq, ek = reference(q, k, cache, pos, sec, hs, rd)
             for name, module in self.MODULES:
                 with self.subTest(module=name, rd=rd):
-                    aq, ak = module.ernie45_rope_fused(q, k, cache, pos, sec, hs, rd)
+                    aq, ak = module.ernie45_rope_fused(
+                        q, k, cache, pos, sec, hs, rd
+                    )
                     torch.testing.assert_close(aq, eq, atol=1e-4, rtol=1e-4)
                     torch.testing.assert_close(ak, ek, atol=1e-4, rtol=1e-4)
+
+
+if __name__ == "__main__":
+    unittest.main()

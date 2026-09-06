@@ -89,7 +89,9 @@ class CausalConv1dUpdateTest(unittest.TestCase):
         self.assertEqual(actual_state.shape, expected_state.shape)
         self.assertEqual(actual_state.dtype, expected_state.dtype)
         atol, rtol = TOLERANCES[x.dtype]
-        torch.testing.assert_close(actual_out, expected_out, atol=atol, rtol=rtol)
+        torch.testing.assert_close(
+            actual_out, expected_out, atol=atol, rtol=rtol
+        )
         atol_s, rtol_s = TOLERANCES[conv_state.dtype]
         torch.testing.assert_close(
             actual_state, expected_state, atol=atol_s, rtol=rtol_s
@@ -109,8 +111,12 @@ class CausalConv1dUpdateTest(unittest.TestCase):
                     state = torch.randn(
                         8, 512, 3, device="cuda", dtype=dtype, generator=g
                     )
-                    w = torch.randn(512, 4, device="cuda", dtype=dtype, generator=g)
-                    b = torch.randn(512, device="cuda", dtype=dtype, generator=g)
+                    w = torch.randn(
+                        512, 4, device="cuda", dtype=dtype, generator=g
+                    )
+                    b = torch.randn(
+                        512, device="cuda", dtype=dtype, generator=g
+                    )
                     self._check(x, state, w, bias=b, activation=activation)
 
     def test_widths_state_lengths_and_seqlens(self):
@@ -141,7 +147,14 @@ class CausalConv1dUpdateTest(unittest.TestCase):
         self.assertTrue(new_state.shape == (7, 300, 3))
 
     def test_batch_and_dim_boundaries(self):
-        for batch, dim in ((1, 1), (1, 64), (3, 100), (17, 255), (2, 256), (5, 2049)):
+        for batch, dim in (
+            (1, 1),
+            (1, 64),
+            (3, 100),
+            (17, 255),
+            (2, 256),
+            (5, 2049),
+        ):
             with self.subTest(batch=batch, dim=dim):
                 x = torch.randn(batch, dim, 1, device="cuda")
                 state = torch.randn(batch, dim, 3, device="cuda")
@@ -175,7 +188,9 @@ class CausalConv1dUpdateTest(unittest.TestCase):
                 x = torch.full((2, 64, 1), -92.0, device="cuda", dtype=dtype)
                 x[0, 0, 0] = 90.0
                 x[1, 3, 0] = float("inf")
-                state = torch.full((2, 64, 3), -90.0, device="cuda", dtype=dtype)
+                state = torch.full(
+                    (2, 64, 3), -90.0, device="cuda", dtype=dtype
+                )
                 state[0, 1, 2] = 1e4
                 w = torch.ones(64, 4, device="cuda", dtype=dtype)
                 # silu(-inf) and silu(+large) can produce inf/NaN in both
@@ -200,10 +215,6 @@ class CausalConv1dUpdateTest(unittest.TestCase):
         self.assertEqual(new_state.shape, (0, 64, 3))
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class CausalConv1dUpdateVariantsTest(unittest.TestCase):
     """Core matrix across every backend variant (generic + vendors)."""
@@ -218,7 +229,17 @@ class CausalConv1dUpdateVariantsTest(unittest.TestCase):
             b = torch.randn(200, device="cuda")
             e_out, e_state = reference(x, state, w, bias=b)
             for name, module in self.MODULES:
-                with self.subTest(module=name, w=width, sl=state_len, sq=seqlen):
-                    out, new_state = module.causal_conv1d_update(x, state, w, bias=b)
+                with self.subTest(
+                    module=name, w=width, sl=state_len, sq=seqlen
+                ):
+                    out, new_state = module.causal_conv1d_update(
+                        x, state, w, bias=b
+                    )
                     torch.testing.assert_close(out, e_out, atol=1e-5, rtol=1e-5)
-                    torch.testing.assert_close(new_state, e_state, atol=1e-5, rtol=1e-5)
+                    torch.testing.assert_close(
+                        new_state, e_state, atol=1e-5, rtol=1e-5
+                    )
+
+
+if __name__ == "__main__":
+    unittest.main()

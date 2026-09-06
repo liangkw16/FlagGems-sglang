@@ -5,11 +5,11 @@
 可复用的跨芯技术事实；边界规则以 SKILL.md 为准。这些是第三方 skill，脚本
 拥有完整 agent 权限，首次调用前先审阅其脚本。
 
-## kernelgen-flagos：MCP 生成/优化/特化
+## kernelgen-flagos：MCP 生成/优化/特化/验证
 
 ### 启用前提
 
-所有生成必须走 `kernelgen-mcp` MCP 服务，配置写入 `.mcp.json`（已配置，
+选择 MCP 生成路线时使用 `kernelgen-mcp` 服务，配置写入 `.mcp.json`（已配置，
 Token 属个人凭据，`.mcp.json` 在 `.git/info/exclude` 本地排除，不入库）：
 
 ```json
@@ -29,158 +29,99 @@ Streamable HTTP 传输，仅收 POST；skill 原文档的 `type: "sse"` 和尾�
 会 307 跳转到网页导致连不上）。注册入口 https://kernelgen.flagos.io/mcp，
 手机号验证码登录，未注册号码自动注册并需填一次试用申请（姓名/单位/机构
 邮箱/用途）。Token 登录后存在页面 localStorage `userLoginInfo.mcp_token`。
-Token 未提供前不手写代码替代、不静默跳过。MCP 生成代码视为未验证草稿。
+选择 MCP 路线但 Token 缺失时如实报告；独立已有方案可继续验证。MCP 代码视为未验证草稿。
 注意本仓库布局是 `src/flaggems_sglang/`，不是上游 `src/flag_gems/`，
 kernelgen 自动检测会按通用流程路由；其 FlagGems 专用子文档中的注册、
-测试布局不适用，落盘位置以本仓产物布局为准。官网标称支持芯片为 CUDA +
-华为/天数/海光/沐曦/摩尔/曦望，不含昆仑芯和寒武纪，昆仑芯 vendor 优化
-用不上 MCP 通道。
+测试布局不适用，落盘位置以本仓产物布局为准。2026-09-06 tools/list 的
+device 描述列出 nvidia/huawei/haiguang/tianshu/muxi/moore/sunrise/kunlun/amd；
+这是接口接受的目标列表，具体设备排队、在线与执行能力以每次响应为准。
 
-### 闭环内用法
+### 使用范围与调用通道
 
-- 新算子起手（generate）：签名、dtype、stride、空输入语义以题面契约为准，
-  不信任 MCP 对题面的猜测；返回的 torch 参考实现可用于交叉核对题面公式。
-- 第二轮迭代（optimize）：S0 基线提交并记录 initial speedup 后，把当前
-  kernel 加优化上下文（基线、逐 shape 数据、瓶颈分析、历史迭代）交给
-  `optimize_kernel`；优化前必须有已记录基线，改进幅度以基线百分比计。
-- 单芯特化（specialize）：`specialize_kernel` 的 `target_platform` 当前
-  只支持 `huawei`；产出按本仓 vendor 文件规范放置并走远端验证。
+KernelGen 可做多 GPU/多芯片验证；`gpu` 主机也是验证通道，KernelGen 还可生成算子。按任务选择通道，
+不要把 MCP 限定为代码建议，也不要把改写响应自动当作设备验证结果。
+先复用本仓和固定上游源码。新算法或缺少实现时用 generate；需要第二实现、跨芯
+建议或瓶颈分析时用 optimize/specialize。明确根因修复、成熟实现移植和参数调整
+不强制依赖 MCP。调用前带上精确契约、当前源码、逐 shape 基线和已有失败证据。
 
-### 发射前 MCP 实机初筛（vendor/泛芯候选）
+原生 `mcp__kernelgen-server__*` 未挂载时，使用已审阅的脚本客户端：
 
-远端 NVIDIA 代理只能证明数学与 JIT，看不见目标芯自身的 lowering 与
-编译器风险。已付学费的平台实证：T35 e1 华为 2D 广播瓦片代理全绿、平台
-99.6% NaN；T40 华为"无循环直通 kernel"结构被昇腾编译器两连拒收（E4
-BLOCK 4096、E5 BLOCK 512 各烧一发额度才确认与 BLOCK 无关）。对受影响
-芯在 MCP 覆盖集内的候选，发射前先实机初筛，用零额度换掉这类盲发：
+```bash
+python3 .agents/skills/kernelgen-flagos/scripts/kernelgen_mcp.py list
+python3 .agents/skills/kernelgen-flagos/scripts/kernelgen_mcp.py call <tool> --file request.json
+```
 
-- 触发条件（任一命中即做）：
-  1. vendor 候选的目标芯在账本中有风险指纹（NaN、编译失败、数值前科）；
-  2. 候选结构（新 tile 形态、新数学 lowering、去循环化）在该芯从未平台
-     验证过；
-  3. 昆仑重载/守榜重掷以外的昂贵弹药首投。
-  同字节方差重掷不需要初筛（字节未变，初筛无新信息）。
-- 工具与覆盖：`autotune_kernel(device=<chip>)` 实机跑；华为另可用
-  `specialize_kernel(target_platform="huawei")`。覆盖集 = 华为/天数/
-  海光/沐曦 + CUDA（国际芯片 NVIDIA 侧）；燧原、昆仑、AMD 不在内。
-  调用通道：`mcp__kernelgen-server__*` 原生工具（若已挂载），否则用
-  kernelgen-flagos skill 自带脚本客户端
-  `python3 .agents/skills/kernelgen-flagos/scripts/kernelgen_mcp.py call <tool> '<json>'`
-  （ZCode 不挂载项目 `.mcp.json`，脚本为默认通道，2026-09-01 实测可用）。
-- 字节绑定（先于一切验收）：MCP 任务实际执行的源码必须就是候选字节。
-  调用时显式传入候选源码，把任务输入源码 SHA-256 与候选 Git blob 的
-  SHA-256 一并写入账本，逐项相等后才可采信结果。autotune 返回的
-  "胜出代码"是工具生成的新候选（T30 实证为 TLE-DSA 形态），只能按
-  generate 产物重走 screening，不得据此给当前候选记
-  `mcp-device-screened`；工具报告 `total_tests=0` 或无法核验输入字节
-  时，本次降级为仅编译信号。
-- 验收门（全部满足才继续 build_submission/打包）：
-  1. 字节绑定核验通过（见上条）；
-  2. 目标芯实机编译通过（无 CompilationError、无 PassManager 失败）；
-  3. 数值信号按 MCP 实际能力取用：任务可注入并执行题面 dtype × 代表
-     shape 时验证容差与 NaN/Inf 零容忍；首次在某芯使用该协议时先确认
-     任务能否执行自定义 correctness case，不能时只采编译与其自带校验
-     信号，不把数值验证虚记为已完成；
-  4. job 输出按惯例存 `log/kernelgen-round/out_<task>_<chip>.json`
-     （该目录已加入 `.gitignore`，账本只记 SHA-256），文件 SHA-256 与
-     调用参数写入该算子账本。
-- 明确不采纳：MCP 自测加速比作为晋级或关轴依据。T29/T30 华为实机自测
-  0.037–1.79x 对平台同源 7.26x，口径不可比（其 torch 基准疑为 torch_npu
-  融合实现）；性能结论一律以平台为准，账本中不得引用 MCP 自测 speedup。
-- 定位与记录：初筛通过只降低发射风险，不替代远端 NVIDIA screening、
-  release 门禁和平台八芯评测。账本按验收门第 3 条的实际覆盖标注
-  `mcp-device-screened`（数值+编译）或 `mcp-compile-screened`（仅编译）；
-  未初筛且未平台验证的芯仍标 `static-unverified`。初筛失败不消耗平台
-  额度，按错误二分协议带完整错误上下文重新生成或换结构，再走初筛。
+配置存在、工具能发现、服务能连通、任务实际执行是不同状态。schema 以本次 tools/list
+为准；不把历史字段或支持列表当作当前已验证能力。请求与响应落盘并记录完整 SHA-256；
+凭据不进入请求文件、日志或 Git。纯审计不启动生成或设备任务。
 
-### 2026-08-31 实测校准与 specialize+注入差分预检
+2026-09-06 实时 tools/list 的调用分工（服务更新后重新核对）：
 
-对四个工具做了一次带字节比对的实测（curl 直连 streamable HTTP
-JSON-RPC，请求/响应留存 `/tmp/kg-*`；当日有效）：
-
-- 工具真实行为与名义标签有出入：`specialize_kernel` 与
-  `optimize_kernel` 均为**同步纯改写路径**（响应只含 LLM token 用量，
-  无 job_id/verify_result，不上设备）；上设备的 autotune/generate 路径
-  当日探测 `autotune_kernel` 只收 `pytorch_code`——**该结论已被
-  2026-09-03 实验修订**（见下节）：description 注入可让候选字节上
-  设备执行，但只有失败信号可信。
-- **提示词注入协议（新增预检通道）**：`func_desc`/`context` 是喂给
-  改写 LLM 的自由文本。注入"禁止改写、原样部署"契约后实测：
-  `specialize_kernel` 守约（返回代码与输入的 diff 仅一行
-  `import torch_npu` 设备引导，kernel 逻辑零改动）；`optimize_kernel`
-  无视契约（强加 `@triton.autotune` 包装，且该形态跨芯非法）。
-- **用法**：新结构候选上昇腾（或未来扩展的目标平台）前，先跑
-  `specialize_kernel + 注入`，把返回 `triton_code` 与候选做逐字节
-  diff——最小 diff（仅设备引导）= 无平台适配需求信号；diff 出现
-  TLE 重构/瓦片拆分/UB 规避 = 明确的编译或 lowering 风险信号
-  （T40 direct 两发额度学费那类坑）。该预检零额度、只出"适配差分"，
-  **不出编译/运行判据**，不替代任何既有门禁。
-- 记录：调用参数、注入文本、返回代码 SHA-256 与 diff 摘要写入算子
-  账本；示例：T33 tile-16 注入版返回 diff 仅 `+import torch_npu`，
-  与 e10 华为平台 +28.8% 互证（无需昇腾结构适配）。
-
-### 2026-09-03 注入执行通道与可信度分级（七组对照实验，华为真机）
-
-schema 已变化：`autotune_kernel` 现收 `operator_name`（必填）+
-`description`（自由文本，可嵌完整代码）+ `device`（"huawei" 实测）+
-`target_speedup`（设 999 防过早达标停机）。注入模板：
-description 内 `VERIFICATION-ONLY + BEGIN_CODE/END_CODE + VERBATIM
-attempt-0 禁止改写 + 回传实际执行代码`。实验证据全录
-`docs/competition/experiments/README.md` 2026-09-03 节。
-
-**可信度阶梯（只信前三级）**：
-
-| 信号 | 可信度 | 判据与用法 |
+| 接口 | 作用与验证能力 | 调用要点 |
 | --- | --- | --- |
-| 失败神谕（编译/运行） | ✅ fail-closed | attempt 的 `error` 字段含 `benchmark(...) raised:` 链 = 候选在该芯真机失败（带真实 cache 路径）。发射含 NPU 专属写法的 vendor 前先跑，零额度换掉平台上才暴露的编译炸（E15 学费类） |
-| 最终代码保真 diff | ✅ | 终态返回代码 kernel 逻辑与输入逐字节一致（忽略改名/类型注解/注释）；仅最终代码可比，逐 attempt 代码不回传、保真不可核 |
-| 量级屏 | ⚠️ 同量级 | description 嵌入官方基准（do_bench warmup=3/rep=10 + 5 轮 AB/BA + 逐 shape 中位）后，自测 speedup 从 0.07 校准到 0.6-0.8（平台真值 1.66）——只判量级（>1 还是 0.0x），不判名次 |
-| `passed=True` / `tests=0/0` | ❌ | 已知 1.6% 数值错的内核照样 passed；其基准 shape 实测仅 (32,32)/(128,256)/(1024,1024)，小 shape 不触发行界类 bug |
-| 回传的"测量原文" | ❌ 幻觉 | 要求把基准结果写进返回代码注释时，返回完美格式但纯编造数字（1.234567/1.345678 递增数列）——LLM 为满足输出契约幻觉数据 |
-| 异常哨兵通道 | ❌ 被吞 | always-raise 哨兵（`KGPROBE|shape|MISMATCH`）不穿透 error 字段，用户代码异常被后端吞掉，正确性神谕不可达（Codex 会诊方案①已实测证伪） |
+| `generate_kernel` | 生成 PyTorch/Triton/test/benchmark，并返回 `verify_result` | 传契约、参考资料、目标 device；核验生成测试是否覆盖题面 |
+| `autotune_kernel` | 生成、迭代并在目标设备验证 | 传 `pytorch_code`、`test_func_code`、`input_specs`；设置 `max_rounds` 和 `verify_timeout`；按 `continue_call` 原字段轮询 |
+| `optimize_kernel` | 单次优化；服务描述明确“不验证、不迭代” | 返回源码另走验证通道，不能把响应成功记为数值通过 |
+| `specialize_kernel` | 平台特化，当前知识库仅 huawei | 输出是候选；不推断已完成目标设备测试 |
 
-**修订后的定位**：MCP 覆盖芯（华为/天数/海光/沐曦/CUDA）上，注入
-执行 = 免费的**编译+可运行初筛**（失败神谕）+ 结构保真确认 + 量级
-方向屏；正确性与精确加速比仍只有远端 NVIDIA 代理（同脚本字节）与
-平台两条可信通道。服务端根治诉求（待提交 kernelgen-submit-feedback）：
-非 LLM 签名结果信封（执行源/reference/harness SHA-256 + 逐 case
-结构化结果 + 环境标识）、stdout 通道、逐 attempt 代码回传。
+`autotune_kernel` 当前没有固定 Triton 源码输入字段，不能靠提示注入宣称原样执行了
+本地候选。它能验证服务生成的算子；需检查每次返回证据指向的实际版本。验证当前
+仓库字节时优先用 `gpu` 的隔离测试，KernelGen 返回的新代码接入本仓测试再复验。
+若服务后续提供固定源码执行接口，再按新 schema 使用，不虚构字段或接口。
 
-### 多芯验证通道矩阵
+### MCP 证据分级（2026-09-06 修订）
 
-发射前按受影响芯选择最强可用通道。"数学代理"指在 NVIDIA 上跑通该
-模块只证明数学与 JIT，不证明目标芯自身的 lowering/编译器行为：
+历史探测中 optimize/specialize 是改写路径；autotune 会多次改写并自选 harness。
+第四批存档 24 份输出中，22 份的 `total_tests=0`，2 份是 502；这不是题面正确性验证。
+历史注入实验见实验 README 的 2026-09-03 记录，下表取代旧“失败神谕/保真即初筛”规则。
 
-| 芯片 | MCP 实机初筛 | vendor 容器实机 | NVIDIA 数学代理 | 平台 |
-| --- | --- | --- | --- | --- |
-| 华为 / 天数 / 海光 / 沐曦 | ✓ | ✓（gpu-container-setup） | ✓ | ✓ |
-| 国际 A/B（NVIDIA 侧） | ✓（CUDA） | ✓ | ✓（同机） | ✓ |
-| 国际 A/B（AMD 侧） | ✗ | ✓（gpu-container-setup AMD 镜像） | ✓ | ✓ |
-| 燧原 | ✗ | ✗（无镜像记录） | ✓ | ✓ |
-| 昆仑 | ✗ | ✗（沿用现有远端流程） | ✓ | ✓ |
+| 信号 | 可采用的结论 | 不可采用的结论 |
+| --- | --- | --- |
+| 返回代码 | 新候选、结构建议；保存源码和差异 | 已编译、已正确、已加速 |
+| 某 attempt 有编译/运行错误 | 服务端该次运行失败；保留原始错误，分开识别 harness/502 | 没有该 attempt 源码哈希时，不能归罪于当前候选或关闭方向 |
+| 最终代码与输入一致 | 最终返回字节一致 | 不能反推每次 attempt 执行相同字节；忽略注解/改名后的 diff 也不是字节相等 |
+| passed=True、tests=0、代码注释中的计时 | 无可采信的正确性或性能结论 | 不得晋级或代替 GPU 回归 |
+| 执行源码+harness+reference 哈希、环境、逐 case 结果可核验 | 仅在实际覆盖范围内记录编译/数值结果 | 未覆盖 shape、其他芯、不同版本不获背书 |
 
-- MCP 初筛最快（免容器、零额度），但只给编译/数值信号；需要题面完整
-  矩阵、wrapper-inclusive 计时或编译产物证据时，起 vendor 容器实机并
-  套用 remote-validation.md 的目录/哈希/超时纪律。
-- 新增 vendor 文件必须同步接进该算子的 unittest 矩阵：
-  `tests/_op_variants.py::load_operator_modules` 枚举 generic 与全部
-  backend 变体（T35 为样板），否则该 vendor 在代理上只被静态检查。
-- NVIDIA 代理是现行单点（`gpu`/`gpu-et`）；链路中断按 remote-validation.md
-  的 EasyTier 预案与弱链路作业纪律执行，必要时按 gpu-container-setup
-  增设备用 NVIDIA 容器。
+当前未取得完整绑定结果时统一记 `mcp-unbound-observation`；不用
+`mcp-device-screened` 或 `mcp-compile-screened(fidelity)` 表示候选已验证。
+数量大于零的 tests 也不足以单独升级，仍需核验执行源、reference、case 与环境。
+MCP speedup 的口径未对齐前仅保留原始数据，不用于晋级、关轴或平台名次推断。
+不要要求 LLM 用注释回传测量值。代码注入提示不能替代实际执行接口或机器结果信封。
 
-### 可复用协议（不用 MCP 也照做）
+### 多芯验证通道与实际资源
 
-- 错误二分：编译/导入类（ImportError、SyntaxError、TritonCompilationError、
-  NameError、签名 TypeError、AttributeError）最多自查修复一次；数值/算法类
-  （assert 失败、shape 不符、NaN/Inf）不盲目自改，带着完整错误上下文重新
-  生成或换实现思路，避免不收敛的修补循环。
-- 上下文组装：先读本仓库同类算子（`src/flaggems_sglang/ops/` 与对应
-  `runtime/backend/_<vendor>/ops/`），提炼成不超过 10 条要点作为生成/优化
-  上下文传入；重试时替换旧错误条目而不是追加。
-- 生成代码落盘前跑首编译 smoke：多 dtype × 多 shape（含 `(0,)` 空张量），
-  JIT 编译错误只在首次调用暴露。
-- 首次计时样本 > 剩余样本中位数 5 倍时按 JIT 编译开销剔除并注明。
+按任务的薄弱芯片和本次改动选择 KernelGen 目标设备，分别携带同一契约、reference、
+用例矩阵与失败上下文启动验证；不要因为只有一台 SSH GPU 就放弃其他芯片验证。
+各 device 独立记录请求/响应、job_id、实际执行版本与结果。服务若生成/改写了不同
+版本，分别标为该版本的验证，不能汇总成同一源码多芯通过。服务并发最多两个任务，
+长任务按 continue_call 轮询，前台继续独立工作；设备不可用与算子失败分开记账。
+
+| 芯片 | 历史 MCP 服务覆盖 | 容器方案 | 当前目标芯执行状态 |
+| --- | --- | --- | --- |
+| 华为/天数/海光/沐曦 | 有历史请求；每次另查可用性 | 有镜像和挂载方案 | 主机授权、可达性、环境及候选结果分别登记 |
+| NVIDIA | 有历史请求 | 有 | `gpu`/`gpu-et` 数学代理；不映射匿名 A/B |
+| AMD | 当前 schema 列出，未核验设备执行 | 有 | 未登记独立目标机，不从 NVIDIA 结果推断 |
+| 燧原/昆仑 | 当前 schema 列出 sunrise/kunlun，未核验设备执行 | 本 skill 未建立 | 可尝试服务验证；未实测就标未知 |
+
+实际资源登记见 [validation-resources.md](validation-resources.md)。镜像支持不等于
+拥有硬件；gpu-container-setup 不租用主机。仅在已授权主机上部署匹配镜像，再记录
+设备/驱动/runtime、容器 digest、最近健康检查和最大已测 shape。实际可用目标机
+执行同源完整矩阵；缺少独立目标机时，可使用 KernelGen 的目标设备验证，按上表核验
+执行绑定与覆盖。若仍无有效目标芯执行结果，保留 NVIDIA 数学代理与平台证据，
+不虚填目标芯通过。
+
+### 回归、定位和性能实验
+
+- 编译/导入错误先最小复现；数值错误先定位首个分歧阶段，再决定修复或换结构。
+  不规定“只能改一次”，也不因修复超过一行就强制重新生成。
+- 测试以契约为准，逐轴覆盖 tile 边界、长段、多维 stride 和所有 vendor。
+  持久化每个已发现失败 case。编译未触发、零测试、skip/xfail 均不等于通过。
+- 代理 fuzz 零失配只覆盖已测输入与代理环境。不同源码的失败指纹不同不能证明
+  非确定性；固定源码/输入/环境重复运行后，才分类随机性、数值边界或确定错误。
+- 性能候选先记 affected shape、晋级门与基线；拆分 wrapper/搬运/GEMM/epilogue，
+  用适用的编译产物检查确认瓶颈，再做至少五轮 AB/BA。NVIDIA 结论不外推其他芯。
+- 执行回执与提交前复验按 remote-validation.md；没有可重放证据不宣布轴已证伪。
 
 ### Ascend 特化技术要点（来自 specialize 子文档，作为 _ascend 候选起始假设）
 

@@ -3,6 +3,7 @@
 import importlib.util
 import unittest
 from pathlib import Path
+
 import torch
 
 MODULE_PATH = (
@@ -12,12 +13,23 @@ MODULE_PATH = (
     / "ops"
     / "fused_norm_rope_stacked.py"
 )
-SPEC = importlib.util.spec_from_file_location("fused_norm_rope_stacked_module", MODULE_PATH)
+SPEC = importlib.util.spec_from_file_location(
+    "fused_norm_rope_stacked_module", MODULE_PATH
+)
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
 
-def reference(kv, k_norm_weight, eps, cos_sin_cache, positions, num_kv_heads, head_dim, rotary_dim):
+def reference(
+    kv,
+    k_norm_weight,
+    eps,
+    cos_sin_cache,
+    positions,
+    num_kv_heads,
+    head_dim,
+    rotary_dim,
+):
     T, L, _ = kv.shape
     H, D = num_kv_heads, head_dim
     kv_size = H * D
@@ -55,9 +67,13 @@ def make_case(T, L, H, D, rotary_dim, dtype, seed=0):
     kv = torch.randn(T, L, H * D * 2, generator=g).cuda().to(dtype)
     w = (torch.randn(L, D, generator=g) * 0.1 + 1.0).cuda().to(dtype)
     eps = torch.full((L,), 1e-6).cuda()
-    cache = torch.randn(max_pos, rotary_dim, generator=g).cuda().to(torch.float32)
+    cache = (
+        torch.randn(max_pos, rotary_dim, generator=g).cuda().to(torch.float32)
+    )
     cache = torch.cat([torch.cos(cache), torch.sin(cache)], dim=-1).contiguous()
-    positions = torch.randint(0, max_pos, (T,), generator=g).cuda().to(torch.int64)
+    positions = (
+        torch.randint(0, max_pos, (T,), generator=g).cuda().to(torch.int64)
+    )
     return kv, w, eps, cache, positions, H, D, rotary_dim
 
 
@@ -107,10 +123,6 @@ class FusedNormRopeStackedTest(unittest.TestCase):
         self._check(*make_case(257, 2, 8, 128, 64, torch.float16, seed=3))
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class FusedNormRopeStackedVariantsTest(unittest.TestCase):
     """Core matrix across every backend variant (generic + vendors)."""
@@ -133,5 +145,13 @@ class FusedNormRopeStackedVariantsTest(unittest.TestCase):
             for name, module in self.MODULES:
                 with self.subTest(module=name, T=T, H=H):
                     k_m, v_m = module.fused_norm_rope_stacked(*args)
-                    torch.testing.assert_close(k_m.float(), k_r.float(), atol=atol, rtol=rtol)
-                    torch.testing.assert_close(v_m.float(), v_r.float(), atol=atol, rtol=rtol)
+                    torch.testing.assert_close(
+                        k_m.float(), k_r.float(), atol=atol, rtol=rtol
+                    )
+                    torch.testing.assert_close(
+                        v_m.float(), v_r.float(), atol=atol, rtol=rtol
+                    )
+
+
+if __name__ == "__main__":
+    unittest.main()

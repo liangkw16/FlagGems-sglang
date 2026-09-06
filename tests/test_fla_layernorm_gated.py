@@ -27,7 +27,9 @@ MODULE_PATH = (
     / "ops"
     / "fla_layernorm_gated.py"
 )
-SPEC = importlib.util.spec_from_file_location("fla_layernorm_gated_module", MODULE_PATH)
+SPEC = importlib.util.spec_from_file_location(
+    "fla_layernorm_gated_module", MODULE_PATH
+)
 if SPEC is None or SPEC.loader is None:
     raise RuntimeError(f"cannot load {MODULE_PATH}")
 MODULE = importlib.util.module_from_spec(SPEC)
@@ -40,7 +42,9 @@ TOL = {
 }
 
 
-def reference(x, g, weight, bias, activation="swish", eps=1e-5, is_rms_norm=True):
+def reference(
+    x, g, weight, bias, activation="swish", eps=1e-5, is_rms_norm=True
+):
     out_dtype = x.dtype
     xf = x.float()
     if is_rms_norm:
@@ -127,10 +131,6 @@ class FlaLayernormGatedTest(unittest.TestCase):
         self.assertEqual(out.shape, (0, 128))
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class FlaLayernormGatedVariantsTest(unittest.TestCase):
     """Core matrix across every backend variant (generic + vendors)."""
@@ -146,5 +146,13 @@ class FlaLayernormGatedVariantsTest(unittest.TestCase):
                 ref = reference(x, g, w, None, activation=act)
                 for name, module in self.MODULES:
                     with self.subTest(module=name, act=act, T=T):
-                        out = module.fla_layernorm_gated(x, g, w, None, activation=act)
-                        torch.testing.assert_close(out, ref, atol=1e-4, rtol=1e-4)
+                        out = module.fla_layernorm_gated(
+                            x, g, w, None, activation=act
+                        )
+                        torch.testing.assert_close(
+                            out, ref, atol=1e-4, rtol=1e-4
+                        )
+
+
+if __name__ == "__main__":
+    unittest.main()

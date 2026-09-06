@@ -96,15 +96,17 @@ class PlatformCliTest(unittest.TestCase):
             member=["demo.py"],
             verification_commit="b" * 40,
             test_sha256="c" * 64,
-            release_log_sha256=None,
+            verification_receipt=str(self.root / "verification.json"),
+            verification_receipt_sha256="d" * 64,
         )
 
     def tearDown(self):
         self.temporary.cleanup()
 
     def preflight(self, client):
-        with mock.patch.object(PLATFORM, "_verify_artifact", return_value={}), \
-                mock.patch.object(PLATFORM, "_verify_test_evidence"):
+        with mock.patch.object(
+            PLATFORM, "_verify_artifact", return_value={}
+        ), mock.patch.object(PLATFORM, "_verify_test_evidence"):
             return PLATFORM._preflight(self.args, client, self.root / "state")
 
     def submit(self, nonce, client):
@@ -113,6 +115,8 @@ class PlatformCliTest(unittest.TestCase):
             PLATFORM, "_verify_artifact", return_value={}
         ), mock.patch.object(
             PLATFORM, "_remote_zip_fingerprint", return_value=remote
+        ), mock.patch.object(
+            PLATFORM, "_verify_test_evidence"
         ):
             return PLATFORM._submit(nonce, client, self.root / "state")
 
@@ -154,9 +158,7 @@ class PlatformCliTest(unittest.TestCase):
 
         result = self.submit(prepared["nonce"], client)
         self.assertEqual(result["state"], "submitted")
-        self.assertEqual(
-            result["remote_verification"]["status"], "verified"
-        )
+        self.assertEqual(result["remote_verification"]["status"], "verified")
         self.assertIn("--file-url-sha256", result["watch_command"])
         self.assertIn("--after-epoch", result["watch_command"])
         self.assertEqual(len(client.posts), 2)
@@ -213,23 +215,32 @@ class PlatformCliTest(unittest.TestCase):
             PLATFORM,
             "_remote_zip_fingerprint",
             side_effect=ValueError("simulated secret download failure"),
+        ), mock.patch.object(
+            PLATFORM, "_verify_test_evidence"
         ):
             result = PLATFORM._submit(
                 prepared["nonce"], client, self.root / "state"
             )
 
         self.assertEqual(result["state"], "submitted")
-        self.assertEqual(
-            result["remote_verification"]["status"], "unavailable"
-        )
+        self.assertEqual(result["remote_verification"]["status"], "unavailable")
         self.assertNotIn("secret", json.dumps(result))
-        self.assertEqual(
-            self.intent(prepared["nonce"])["state"], "submitted"
-        )
+        self.assertEqual(self.intent(prepared["nonce"])["state"], "submitted")
         self.assertEqual(len(client.posts), 2)
         with self.assertRaisesRegex(PLATFORM.CliError, "not reusable"):
             self.submit(prepared["nonce"], client)
-        self.assertEqual(len(client.posts), 2)
+
+    def test_submit_rechecks_execution_receipt_before_any_post(self):
+        client = FakeClient()
+        prepared = self.preflight(client)
+        with mock.patch.object(PLATFORM, "_verify_artifact"), mock.patch.object(
+            PLATFORM,
+            "_verify_test_evidence",
+            side_effect=PLATFORM.CliError("receipt changed"),
+        ):
+            with self.assertRaisesRegex(PLATFORM.CliError, "receipt changed"):
+                PLATFORM._submit(prepared["nonce"], client, self.root / "state")
+        self.assertEqual(client.posts, [])
 
     def test_duplicate_preflight_is_rejected(self):
         client = FakeClient()
@@ -403,7 +414,12 @@ class PlatformCliTest(unittest.TestCase):
             "verification_commit": commit,
             "test_sha256": sha,
         }
-        PLATFORM._verify_test_evidence(good, repo)
+        with mock.patch.object(PLATFORM, "_verify_release_receipt") as check:
+            PLATFORM._verify_test_evidence(good, repo)
+            check.assert_called_once_with(good, repo)
+
+        with self.assertRaisesRegex(PLATFORM.CliError, "receipt is required"):
+            PLATFORM._verify_test_evidence(good, repo)
 
         bad = dict(good, test_sha256="0" * 64)
         with self.assertRaisesRegex(PLATFORM.CliError, "does not match"):
@@ -438,9 +454,7 @@ class PlatformCliTest(unittest.TestCase):
             client.get("https://flagos.io/flagos/api/v1/races/race1"),
             {"ok": True},
         )
-        client._opener.open.return_value = Response(
-            b'{"code":401,"data":null}'
-        )
+        client._opener.open.return_value = Response(b'{"code":401,"data":null}')
         with self.assertRaisesRegex(PLATFORM.CliError, "API code 401"):
             client.get("https://flagos.io/flagos/api/v1/races/race1")
 
@@ -555,17 +569,19 @@ class PlatformCliTest(unittest.TestCase):
         token_file = self.root / "flagos-token"
         args = argparse.Namespace(method="email", accept_terms=True)
 
-        with mock.patch("builtins.input", return_value="alice@example.com"), (
-            mock.patch.object(
-                PLATFORM.getpass, "getpass", return_value="123456"
-            )
+        with mock.patch(
+            "builtins.input", return_value="alice@example.com"
+        ), mock.patch.object(
+            PLATFORM.getpass, "getpass", return_value="123456"
         ), mock.patch.object(
             PLATFORM,
             "HttpClient",
             side_effect=[login_client, validation_client],
         ), mock.patch.object(
             PLATFORM, "_git_path", return_value=token_file
-        ), redirect_stdout(StringIO()) as output:
+        ), redirect_stdout(
+            StringIO()
+        ) as output:
             self.assertEqual(PLATFORM._auth(args), 0)
 
         self.assertEqual(token_file.read_text(), "secret-token\n")
@@ -596,17 +612,19 @@ class PlatformCliTest(unittest.TestCase):
         validation_client = mock.Mock()
         validation_client.get.return_value = {}
 
-        with mock.patch("builtins.input", return_value="13800138000"), (
-            mock.patch.object(
-                PLATFORM.getpass, "getpass", return_value="123456"
-            )
+        with mock.patch(
+            "builtins.input", return_value="13800138000"
+        ), mock.patch.object(
+            PLATFORM.getpass, "getpass", return_value="123456"
         ), mock.patch.object(
             PLATFORM,
             "HttpClient",
             side_effect=[login_client, validation_client],
         ), mock.patch.object(
             PLATFORM, "_git_path", return_value=token_file
-        ), self.assertRaisesRegex(PLATFORM.CliError, "incomplete"):
+        ), self.assertRaisesRegex(
+            PLATFORM.CliError, "incomplete"
+        ):
             PLATFORM._auth(
                 argparse.Namespace(method="phone", accept_terms=True)
             )
@@ -614,9 +632,9 @@ class PlatformCliTest(unittest.TestCase):
         self.assertEqual(token_file.read_text(), "old-token\n")
 
     def test_auth_requires_explicit_terms_acceptance(self):
-        with mock.patch.object(PLATFORM, "HttpClient") as client, (
-            self.assertRaisesRegex(PLATFORM.CliError, "accept-terms")
-        ):
+        with mock.patch.object(
+            PLATFORM, "HttpClient"
+        ) as client, self.assertRaisesRegex(PLATFORM.CliError, "accept-terms"):
             PLATFORM._auth(
                 argparse.Namespace(method="email", accept_terms=False)
             )
@@ -630,9 +648,7 @@ class PlatformCliTest(unittest.TestCase):
             os.environ,
             {"FLAGOS_TOKEN": "", "FLAGOS_TOKEN_FILE": ""},
             clear=False,
-        ), mock.patch.object(
-            PLATFORM, "_git_path", return_value=token_file
-        ):
+        ), mock.patch.object(PLATFORM, "_git_path", return_value=token_file):
             self.assertEqual(PLATFORM._token(), "secret")
 
 

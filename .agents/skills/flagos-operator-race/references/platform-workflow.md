@@ -84,14 +84,15 @@ python .agents/skills/flagos-operator-race/scripts/platform_cli.py preflight \
   --member chunk_state.py \
   --verification-commit '<40位测试证据commit>' \
   --test-sha256 '<该commit下tests/test_<operator>.py的SHA-256>' \
-  --release-log-sha256 '<release/screening日志SHA-256，可省略>'
+  --verification-receipt '<verification.json绝对路径>' \
+  --verification-receipt-sha256 '<verification.json完整SHA-256>'
 ```
 
-`--verification-commit` 与 `--test-sha256` 是硬门：preflight 会用 git
-核验该 commit 存在、`tests/test_<operator>.py` 在该 commit 的 blob
-SHA-256 与给出值逐字节一致（T37 尾块缺陷上平台的教训——source commit
-本身不说明哪些测试被跑过）。`--release-log-sha256` 作为人证 receipt
-一并写入 intent 供审计。
+测试 commit 和测试 SHA 仍需匹配；另必须提供 `verify_release.py` 产生的 release
+执行回执及其 SHA。脚本逐项核验 source/test/依赖/runner 的 Git blob、实际测试数、
+错误/skip/xfail、generic 与每个 vendor 的入口调用数、环境及相邻完整日志的 SHA。
+screening 回执不能用于提交。回执在 preflight 和任何上传前的 submit 各复核一次；
+既有 prepared intent 若没有新回执会拒绝上传，已 submitted/uncertain 状态不改变。
 
 每个 vendor 文件再增加一个 `--member chunk_state_<vendor>.py`。预检不发 POST；它在
 Git 内部目录 `.git/flagos-platform/` 创建权限为 `0600`、十分钟有效的一次性 intent，
@@ -102,7 +103,7 @@ Git 内部目录 `.git/flagos-platform/` 创建权限为 `0600`、十分钟有�
 - race ID/赛季、登录账号、登录团队、batch、Task 编号、tid 和 operator 精确匹配；
 - source commit、stage、成员集合、ZIP 绝对路径与完整 SHA-256 匹配账本和本地证据；
 - verification commit 与其 `tests/test_<operator>.py` blob SHA-256 匹配
-  （preflight 强制校验），release log SHA（如有）与账本一致；
+  （preflight 强制校验），执行回执及完整日志 SHA 与账本一致；
 - Task 为 `competing`；或为等待首个有效解的 `pending_challenge`，且平台同时明确返回
   `status=submitting`、`can_submit=true` 和 `challenge_operator`。此外必须处于提交
   时间窗、最小间隔已满足且当前剩余额度至少为 1。
@@ -246,7 +247,7 @@ vendor 文件必须自包含、保持同一函数签名并导出同一 `__all__`
 继续使用原 generic，避免无关回归。一次提交只改变一个可解释变量；若为恢复
 正确性必须同时消除已知 grid 风险，在账本明确说明。
 
-每轮重复：最小回归 → 适用路径的远端代理、MCP 覆盖芯的发射前实机初筛
+每轮重复：最小回归 → 适用路径的远端代理、有绑定结果的目标芯验证（MCP 无绑定时仅记线索）
 （触发条件与验收门见 SkillHub 工具集成）或明确的静态未验证 → 新 commit →
 新 ZIP/hash → 新 preflight → 单次自动提交 → 平台。默认建议至少预留两次额度给
 截止日前最终回归；实时剩余额度必须写入账本和最终回复，不能靠重复提交碰运气。
@@ -283,7 +284,7 @@ vendor 文件必须自包含、保持同一函数签名并导出同一 `__all__`
 | --- | --- | --- |
 | **tile 每根轴都要进 mask** | T54 s0 0/8 | `[HEADS_TILE=4, BLOCK_D]` 只 mask d 轴，H=2（平台 case0）时多出 head 行读进 V 区、越界写坏下一 token 输出槽 → 49% 错。本地测试 H∈{4,8,16} 全被 4 整除未暴露。**测试矩阵必须覆盖非整除 tile 的每根轴值**（H∈{2,3,5,7}） |
 | **昆仑向量整除崩溃** | T58 s0 7/8 | 逐 lane `offs // runtime_scalar` 触发 PassManager::run failed。当 BLOCK 整除组宽（pow2 嵌套恒成立）时组索引跨 tile 恒定：改标量 `(pid*BLOCK)//group` 一发修复且 142x。注意 T53 昆仑 vendor 里向量整除又能跑——**按内核形态区别对待，崩溃即标量化** |
-| **2D tile 归约嫌疑→已被 T54 e2 证伪** | T54 e1→e2 昆仑/华为 | 昆仑/华为小比例大偏差起初疑似 2D tile+axis=1 归约降级，但换成"一 program 一行"1D 归约 vendor 后同芯仍败且失败模式改变（case0 4/256→125/256）→ 非逻辑、非该结构。**等价重排后失败模式变化=非确定性降级，别再烧结构重排，先取证** |
+| **不同版本失败不能判非确定性** | T54 e1/e2 | 两个源码版本的错误数量不同只能说明行为不同；不排除共同逻辑、精度或确定的 lowering 错误。固定源码/输入/环境重复验证，并定位首个分歧阶段。 |
 | **题面注意事项=硬约束** | T58 | "int8 须先 cast fp32、不可 int8 直接 GEMM"虽只写在注意事项，仍按规执行（fp32 ieee dot 照样 118x），不给判罚留把柄 |
 | **本地测试应对齐平台契约** | T58 bf16 scale 子测 | 自造的 bf16 scale 子测比平台（fp32 scale + atol0.5）严 50 倍，reference 自身的 bf16 乘积误差会假阳性卡候选 |
 
@@ -293,9 +294,9 @@ vendor 文件必须自包含、保持同一函数签名并导出同一 `__all__`
 | 经验 | 来源 | 细则 |
 | --- | --- | --- |
 | **`selected_file` 字段** | T54 e2 | `operator-submissions` 的 `raw_result.gpu_results[].selected_file` 记录平台实际选中的 ZIP 成员。vendor 修复无效时**先查它**：确认 vendor 真被选中再分析 kernel；这是继 `errors/failed_cases` 后第二个 failure intel 通道 |
-| **差分 fuzz 是平台专用故障的取证基线** | T54 e2 | 平台才失败的正确性问题：先在代理 GPU 上跑全组合差分 fuzz（shape×dtype×非连续×cache dtype×pos dtype×weight 形状×eps 形态，~9504 组合 generic vs reference）。零失配=本地逻辑正确，失败在目标芯降级 → 停止结构重排，改用探针提交读中间量 |
-| **探针提交定位中间量** | T54 次日计划 | 怀疑数值链路（如 inv_rms/cos-sin）时，可提交一发"输出=中间量广播"的诊断变体，用平台 mismatch 模式反推哪一环错。一发换一个确定结论，优于盲试结构 |
-| **生产结构移植要带走全部不变量** | T48 e2/e3 | SGLang `BLOCK_M=max_len` 与"一 program 装下整段"是耦合不变量；只搬自适应 BLOCK 而丢段内多 tile 循环 → 段长>64 的 token 全丢（75% mismatch）。两发证伪后回退 E6 字节，generic 回退用 `git checkout <E6 commit> -- <file>` 零成本 |
+| **差分 fuzz 有覆盖边界** | T54 e2 | 9504 组合在 NVIDIA 无失配，只能证明这些输入在该代理环境通过；大 shape、其他编译器和并发仍未排除。记录最大已测 shape，与失败 case 比较缺口。 |
+| **中间量诊断留在验证环境** | T54 计划修正 | 使用独立 debug kernel 和同阶段 reference；不通过自动提交链路发送明知违反输出契约的中间量包。平台最终输出的 mismatch 不能直接当作中间量的正确性判据。 |
+| **生产结构移植携带调用方前提** | T48 e2/e3 | 上游先把 segment 切短，一段一 tile 才覆盖全部行。本题长段必须补段内多 tile；漏行只否定当前实现，修复覆盖并通过 63/64/65/256 回归后再评估结构。 |
 | **intent 会因 live 状态过期** | T58 s0 提交 | preflight intent 绑定实时快照：其他提交的芯片结果落地、额度变化都会使 `submit --confirm` 报 "live state changed"。**未发 POST≠失败提交**，重跑 preflight 取新 nonce 立即重试即可；提交间最小间隔 120s，`sleep` 等待别写在同一前台命令里（2min 超时杀整条链） |
 | **本地测试=平台契约的镜像** | T58 | 自造用例先读题面输入输出规格表（dtype/形状/容差），不要自加严（bf16 scale 子测比平台严 50 倍会假阳性）；但 shape 覆盖要比平台更宽（非整除 tile 轴值） |
 | **题面"注意事项"按硬约束执行** | T58 | "int8 须先 cast fp32、不可 int8 直接 GEMM"→ fp32 ieee dot 照样 118x，不给判罚留把柄；int8 tensor-core 路线再快也不碰 |
