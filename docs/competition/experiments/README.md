@@ -904,3 +904,32 @@ ABBA→④内置验证在出现 hash/manifest 背书前一律不信;服务端修
 - 流程教训：① zsh `$VAR:t` 参数修饰符吃掉冒号后内容，脚本内
   git show 哈希必须用 `${VAR}:path`；② black 门禁以仓库 79 列
   配置+25.12 版本为准（远端 26 与既有字节冲突属工具漂移）。
+
+## 2026-09-06 白天执行轮（4 新题首发 + T48 结构证伪，13 发）
+
+额度 30/30 起步（凌晨轮后重置）；本轮 seq18-30，余 0。
+
+- **T58 w8a8_block_int8_matmul**：s0 fp32-ieee dot + 组内 scale
+  （遵守题面"不可 int8 直接 GEMM"）→ 7/8（昆仑 PassManager 崩）→
+  **e1 标量组索引 vendor 一发修复 → 8/8 VALID avg 118.16x（第 8 个
+  8/8！）**。海光 359/华为 186/沐曦 145/昆仑 142；短板燧原 4.5/B 7.7。
+  榜首 209x 差 43%。
+- **T54 fused_norm_rope_stacked**：s0 0/8（**tile 每轴必须进 mask**：
+  H=2 时多出 head 行越界写坏下一 token）→ e1 +h_mask 5/8 → e2 行式
+  vendor（燧原/昆仑/华为）同三芯仍败且失败模式漂移 → **远端 9504 组合
+  差分 fuzz 零失配**（本地逻辑正确，目标芯非确定性降级）。额度耗尽，
+  次日探针提交定位（inv_rps 广播变体）。已过 5 芯 14.9/4.7/17.2/13/7.1x。
+- **T55 hc_head**：s0 每 token 两遍融合（sumsq+mixes 共享单遍读），
+  7/8 昆仑评测中（天数 1.6/沐曦 1.2/燧原 0.26/海光 3.2/华为 2.0/
+  A 0.97/B 4.4）。
+- **T57 log_scaling_tau**：s0 2D grid 行缩放，7/8 燧原评测中（天数
+  4.0/沐曦 2.7/海光 4.7/昆仑 0.53/华为 0.47/A 3.3/B 2.6）。
+- **T48 chunked_sgmv_shrink**：SGLang 结构移植两发证伪（e2 5/8、e3
+  7/8；缺段内多 tile 循环，BLOCK_M=64 丢 75% token）→ **回退 E6 字节**
+  （git checkout 6ed1fa9），team best 8/8 4.72x 不动。
+- 流程教训（已沉淀 skill）：① `selected_file` 是 vendor 是否生效的
+  证据通道；② preflight intent 会因 live 状态漂移过期，未发 POST≠
+  失败提交，重跑 preflight 即可；③ 平台才败的正确性问题先差分 fuzz
+  取证再动结构；④ 等价重排后失败模式变化=非确定性问题，停止结构
+  盲试；⑤ 本地测试对齐平台契约（fp32 scale/atol）但对 shape 轴覆盖
+  加宽（非整除值）。
