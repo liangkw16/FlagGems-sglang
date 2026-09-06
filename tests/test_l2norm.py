@@ -19,6 +19,20 @@ TOL = {
     torch.bfloat16: (1.5e-2, 1.5e-2),
 }
 
+# Keep the contract matrix visible even if a future load_tests hook filters it.
+RELEASE_REQUIRED_TESTS = [
+    f"L2NormTest.{name}"
+    for name in (
+        "test_dtypes",
+        "test_shapes",
+        "test_multi_dim",
+        "test_transposed_leading_dims",
+        "test_non_contiguous",
+        "test_empty",
+        "test_input_not_modified",
+    )
+]
+
 
 def reference(x, eps=1e-6):
     xf = x.float()

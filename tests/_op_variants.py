@@ -21,9 +21,13 @@ broken vendor file could only be caught on the competition platform.
 existing vendor modules so a numeric matrix can iterate every variant
 (running vendor kernels on the NVIDIA proxy verifies their math and JIT;
 target-chip lowering still needs execution evidence bound to that chip).
+The release runner sets FLAGOS_TEST_SOURCES to select applicable paths before
+import; unavailable target modules are recorded in the receipt, not skipped tests.
 """
 
 import importlib.util
+import json
+import os
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).parents[1]
@@ -43,7 +47,14 @@ def load_operator_modules(operator):
     modules = [
         ("generic", _load(_OPS_DIR / f"{operator}.py", f"{operator}_generic"))
     ]
+    selected = os.environ.get("FLAGOS_TEST_SOURCES")
+    selected = set(json.loads(selected)) if selected is not None else None
     for path in sorted(_BACKEND_DIR.glob(f"*/ops/{operator}.py")):
+        if (
+            selected is not None
+            and path.relative_to(_REPO_ROOT).as_posix() not in selected
+        ):
+            continue
         vendor = path.parents[1].name.lstrip("_")
         modules.append((vendor, _load(path, f"{operator}_{vendor}")))
     return modules

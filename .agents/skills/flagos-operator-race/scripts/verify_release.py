@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 import re
 import subprocess
 import sys
@@ -15,6 +16,41 @@ from pathlib import Path
 RUNNER = ".agents/skills/flagos-operator-race/scripts/verify_release.py"
 GENERIC = "src/flaggems_sglang/ops"
 BACKENDS = "src/flaggems_sglang/runtime/backend"
+
+
+def execution_scope(sources, operator, device_vendor, proxy_vendors):
+    """Keep every candidate byte bound, but execute only applicable paths."""
+    if device_vendor not in {"nvidia", "amd"}:
+        raise ValueError(
+            "this runner supports CUDA/HIP; use target evidence elsewhere"
+        )
+    vendors = {
+        Path(p).parts[-3].lstrip("_")
+        for p in sources
+        if p.startswith(BACKENDS + "/")
+    }
+    if not isinstance(proxy_vendors, list) or any(
+        v not in vendors for v in proxy_vendors
+    ):
+        raise ValueError("unknown proxy vendor")
+    selected = [
+        p
+        for p in sources
+        if p == f"{GENERIC}/{operator}.py"
+        or Path(p).parts[-3].lstrip("_") in {device_vendor, *proxy_vendors}
+    ]
+    return {
+        "device_vendor": device_vendor,
+        "proxy_vendors": sorted(set(proxy_vendors)),
+        "execution_sources": selected,
+        "unexecuted_sources": [p for p in sources if p not in selected],
+        "target_unverified_sources": [
+            p
+            for p in sources
+            if p.startswith(BACKENDS + "/")
+            and Path(p).parts[-3].lstrip("_") != device_vendor
+        ],
+    }
 
 
 def digest(data):
@@ -97,13 +133,16 @@ def prepare(args):
             else git(root, "show", f"{commit}:{name}")
         )
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "mode": args.mode,
         "operator": args.operator,
         "source_commit": source,
         "verification_commit": verification,
         "sources": sources,
         "files": {p: digest(b) for p, b in contents.items()},
+        **execution_scope(
+            sources, args.operator, args.device_vendor, args.proxy_vendor
+        ),
     }
     stage = Path(args.directory).resolve()
     stage.mkdir(mode=0o700)  # Never mix this run with an existing directory.
@@ -127,6 +166,11 @@ class RecordedResult(unittest.TextTestResult):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.cases = []
+        self.passed = []
+
+    def addSuccess(self, test):
+        self.passed.append(test.id())
+        super().addSuccess(test)
 
     def startTest(self, test):
         self.cases.append(test.id())
@@ -140,11 +184,31 @@ class RecordedResult(unittest.TextTestResult):
 def run_suite(root, manifest, stream):
     """Track public wrapper calls, including dynamic importlib vendor modules."""
     root = root.resolve()
-    calls = {p: 0 for p in manifest["sources"]}
+    calls = {p: 0 for p in manifest["execution_sources"]}
+    launches = {p: 0 for p in calls}
     by_filename = {str((root / p).resolve()): p for p in calls}
     shapes = set()
 
     def profile(frame, event, arg):
+        # A completed, non-warmup JIT run under the wrapper is stronger than
+        # entering a wrapper which can return immediately for empty inputs.
+        if (
+            event == "return"
+            and arg is not None
+            and frame.f_code.co_name == "run"
+            and frame.f_globals.get("__name__") == "triton.runtime.jit"
+            and frame.f_locals.get("warmup") is False
+            and all(
+                frame.f_locals.get(f"grid_{axis}", 0) > 0 for axis in range(3)
+            )
+        ):
+            caller = frame.f_back
+            while caller is not None:
+                path = by_filename.get(caller.f_code.co_filename)
+                if path and caller.f_code.co_name == manifest["operator"]:
+                    launches[path] += 1
+                    break
+                caller = caller.f_back
         if event != "call" or frame.f_code.co_name != manifest["operator"]:
             return
         path = by_filename.get(frame.f_code.co_filename)
@@ -163,16 +227,39 @@ def run_suite(root, manifest, stream):
         f"tests.test_{manifest['operator']}", test_path
     )
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    suite = unittest.defaultTestLoader.loadTestsFromModule(module)
+    previous_sources = os.environ.get("FLAGOS_TEST_SOURCES")
+    os.environ["FLAGOS_TEST_SOURCES"] = json.dumps(
+        manifest["execution_sources"]
+    )
     previous = sys.getprofile()
     try:
+        spec.loader.exec_module(module)
+        suite = unittest.defaultTestLoader.loadTestsFromModule(module)
+
+        def test_ids(tests):
+            for test in tests:
+                if isinstance(test, unittest.TestSuite):
+                    yield from test_ids(test)
+                else:
+                    yield test.id()
+
+        expected = sorted(test_ids(suite))
+        required = getattr(module, "RELEASE_REQUIRED_TESTS", [])
+        if any(
+            f"{module.__name__}.{name}" not in expected for name in required
+        ):
+            raise ValueError("required contract test missing from suite")
         sys.setprofile(profile)
         result = unittest.TextTestRunner(
             stream=stream, verbosity=2, resultclass=RecordedResult
         ).run(suite)
     finally:
         sys.setprofile(previous)
+        if previous_sources is None:
+            os.environ.pop("FLAGOS_TEST_SOURCES", None)
+        else:
+            os.environ["FLAGOS_TEST_SOURCES"] = previous_sources
+        sys.path.remove(str(root))
     check_files(root, manifest["files"])
     # Imported repository helpers must be staged and bound too.
     for loaded in list(sys.modules.values()):
@@ -196,7 +283,10 @@ def run_suite(root, manifest, stream):
         "expected_failures": len(result.expectedFailures),
         "unexpected_successes": len(result.unexpectedSuccesses),
         "cases": result.cases,
+        "expected_tests": expected,
+        "passed_tests": result.passed,
         "source_calls": calls,
+        "kernel_launches": launches,
         "tensor_shapes": sorted(shapes),
     }
 
@@ -217,13 +307,40 @@ def require_success(result, sources):
             raise ValueError(f"verification contains {key}")
     if not result.get("cases"):
         raise ValueError("missing executed cases")
+    expected = result.get("expected_tests")
+    if (
+        not isinstance(expected, list)
+        or not expected
+        or len(expected) != result["tests_run"]
+        or len(set(expected)) != len(expected)
+        or sorted(result.get("passed_tests", [])) != sorted(expected)
+    ):
+        raise ValueError("required test suite did not fully pass")
     calls = result.get("source_calls", {})
     if (
         not isinstance(calls, dict)
         or set(calls) != set(sources)
         or any(type(n) is not int or n <= 0 for n in calls.values())
     ):
-        raise ValueError("generic/vendor source was not exercised")
+        raise ValueError("applicable source was not exercised")
+    launches = result.get("kernel_launches", {})
+    if (
+        not isinstance(launches, dict)
+        or set(launches) != set(sources)
+        or any(type(n) is not int or n <= 0 for n in launches.values())
+    ):
+        raise ValueError("applicable source has no completed kernel launch")
+    for source in sources:
+        if not any(
+            p == source
+            and dtype
+            and isinstance(shape, (list, tuple))
+            and all(type(n) is int and n > 0 for n in shape)
+            for p, dtype, shape in result.get("tensor_shapes", [])
+        ):
+            raise ValueError(
+                "applicable source has no nonempty tensor coverage"
+            )
 
 
 def environment():
@@ -242,6 +359,7 @@ def environment():
         "hip": torch.version.hip,
         "device": torch.cuda.get_device_name(),
         "scope": "amd-device" if torch.version.hip else "nvidia-proxy",
+        "device_vendor": "amd" if torch.version.hip else "nvidia",
     }
 
 
@@ -254,9 +372,19 @@ def run(args):
     with (root / "verification.log").open("x") as stream:
         try:
             receipt["environment"] = environment()
+            if (
+                receipt["environment"]["device_vendor"]
+                != manifest["device_vendor"]
+            ):
+                raise ValueError(
+                    "execution device differs from prepared scope"
+                )
             stream.write(json.dumps(receipt["environment"]) + "\n")
             receipt["result"] = run_suite(root, manifest, stream)
-            require_success(receipt["result"], manifest["sources"])
+            import torch
+
+            torch.cuda.synchronize()
+            require_success(receipt["result"], manifest["execution_sources"])
             receipt["exit_code"] = 0
         except Exception as error:
             receipt["error"] = str(error)
@@ -297,8 +425,10 @@ def verify_receipt(spec, root):
     receipt = json.loads(payload)
     if not isinstance(receipt, dict):
         raise ValueError("invalid verification receipt")
-    if receipt.get("schema_version") != 1 or receipt.get("mode") != "release":
-        raise ValueError("only a release execution receipt is accepted")
+    if receipt.get("schema_version") != 2 or receipt.get("mode") != "release":
+        raise ValueError(
+            "a v2 release execution receipt is required; rerun old evidence"
+        )
     if type(receipt.get("exit_code")) is not int or receipt["exit_code"] != 0:
         raise ValueError("release execution did not succeed")
     for key in ("operator", "source_commit", "verification_commit"):
@@ -331,13 +461,23 @@ def verify_receipt(spec, root):
         )
         if digest(git(root, "show", f"{commit}:{name}")) != sha:
             raise ValueError(f"receipt Git blob mismatch: {name}")
-    require_success(receipt.get("result", {}), sources)
+    scope = execution_scope(
+        sources,
+        spec["operator"],
+        receipt.get("device_vendor"),
+        receipt.get("proxy_vendors"),
+    )
+    if any(receipt.get(key) != value for key, value in scope.items()):
+        raise ValueError("receipt execution scope differs from candidate")
+    require_success(receipt.get("result", {}), scope["execution_sources"])
     env = receipt.get("environment", {})
     if not isinstance(env, dict) or any(
         not env.get(key)
         for key in ("python", "torch", "triton", "device", "scope")
     ):
         raise ValueError("receipt environment is incomplete")
+    if env.get("device_vendor") != scope["device_vendor"]:
+        raise ValueError("receipt device differs from execution scope")
     log = checked_path(path.parent, receipt.get("log_file", ""))
     if digest(log.read_bytes()) != receipt.get("log_sha256"):
         raise ValueError("release log SHA-256 mismatch")
@@ -355,6 +495,15 @@ def main():
         "--mode", choices=("screening", "release"), default="release"
     )
     stage.add_argument("--dependency", action="append", default=[])
+    stage.add_argument(
+        "--device-vendor", choices=("nvidia", "amd"), default="nvidia"
+    )
+    stage.add_argument(
+        "--proxy-vendor",
+        action="append",
+        default=[],
+        help="also test this vendor on the proxy; does not establish target-chip correctness",
+    )
     stage.add_argument("--directory", required=True)
     execute = commands.add_parser("run")
     execute.add_argument("--directory", required=True)

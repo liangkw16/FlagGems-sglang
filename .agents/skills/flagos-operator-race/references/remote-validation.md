@@ -15,6 +15,8 @@
   Git 对象生成，不从当前工作树复制。只有该模式的结果可把候选标为“就绪”。
 
 每份日志先写明模式，不把 screening 结果升级成 release 结果。
+screening 采用最小淘汰集；没有筛选需要时直接提交候选后跑完整 release。不要固定
+重复两遍完整矩阵。源码、测试、runner 或依赖变化后重新取证。
 
 ## 统一执行回执
 
@@ -29,6 +31,14 @@ python .agents/skills/flagos-operator-race/scripts/verify_release.py prepare l2n
   --directory '/tmp/flagos-l2norm-release'
 ```
 
+默认 `--device-vendor nvidia`，AMD 使用 `--device-vendor amd`；运行时核对真实
+CUDA/HIP 后端，不接受设备声明错配。自动选择 generic 和本设备同名 vendor，
+其余源码仍全部携带、验签和静态审查，但不强制在错误设备上导入执行。
+明确可兼容代理的 vendor 可重复添加 `--proxy-vendor ascend` 等参数；选中的路径
+与本设备路径一样必须通过完整矩阵，不能在失败后删除选择来隐藏已知正确性问题。
+`tests/_op_variants.py` 在导入前应用 runner 的路径选择，直接 unittest 不受该选择影响。
+新增专属路径使用该 helper 或明确的设备测试入口，不用 blanket skip 掩盖失败。
+
 prepare 只从 Git 对象取 release 字节；探索候选加 `--mode screening`，会取工作树
 字节并标记探索证据。传输该目录后，在远端后台、串行、带 timeout 执行：
 
@@ -38,14 +48,26 @@ timeout 600 /home/kevin/notebook/.venv/bin/python \
   run --directory /tmp/flagos-l2norm-release
 ```
 
-runner 独占创建 `verification.json` 和 `verification.log`，拒绝覆盖旧回执；记录
-实际用例、subTest、张量 shape/dtype、每份源码公开入口调用数及环境。源码与依赖
-在运行前后都核对哈希。零测试、失败、skip、xfail、漏测任意 vendor 均返回非零。
-目标专属写法若不能在 CUDA/HIP 执行，只能标记未验证；先建立该目标的同等执行
-回执支持，不能把静态检查写成通过或用跳过绕过当前门禁。
+runner 独占创建 v2 `verification.json` 和 `verification.log`，拒绝覆盖旧回执；记录
+完整 suite 与通过方法、subTest、张量 shape/dtype、适用源码的入口及非 warmup
+kernel launch 次数和环境。源码与依赖在运行前后核对哈希，结束时同步设备。
+每个适用源码必须存在非空张量调用及真实 JIT launch；零测试、失败、适用矩阵的
+skip/xfail、漏跑必要方法、仅空输入或未启动 kernel 均返回非零。测试模块可用
+`RELEASE_REQUIRED_TESTS = ["TestClass.test_method", ...]` 绑定必须进入 suite 的
+契约方法（见 `tests/test_l2norm.py`）。人工仍须审查数值 reference/容差、dtype、
+tile 边界、stride、受影响分支和已知失败矩阵，launch 计数不能证明这些语义。
+
+回执分别列出 `execution_sources`、`unexecuted_sources` 和
+`target_unverified_sources`：代理执行过的其他 vendor 仍在目标芯未验证列表。
+本 runner 当前只支持 CUDA/HIP 的 Triton JIT 入口；其他 runtime/TLE 启动协议需
+适配后再取同等证据，不能伪填 launch。目标芯可独立使用 KernelGen 或授权主机验证，
+按源码、测试和设备分别保留结果；当前 CLI 的单份回执证明适用 GPU 路径，目标证据
+记入实验账本，不伪装成该 GPU 回执。目标资源缺失不单独阻断已授权平台验证；
+静态检查始终不记为通过，已知相关正确性失败仍须先修复。
 
 取回 JSON 和完整相邻日志，二者原样保留并计算 SHA。平台 preflight 和 submit
 都强制校验 release 回执及其 Git 字节、覆盖和日志；旧的可选日志 SHA 不再是门禁。
+旧 v1 回执可保留作历史证据；新 preflight 要求重新生成 v2，不改写旧结果补字段。
 这是受信任 runner 的执行记录，不是远程硬件证明，不能排除恶意伪造的测试代码。
 
 ## 每次运行
@@ -77,7 +99,7 @@ runner 独占创建 `verification.json` 和 `verification.log`，拒绝覆盖旧
    只有已记录原因时才扩大上限重试。
 5. 记录远端目录、PID/进程组、日志路径和启动时间；前台继续本地源码审查、上游
    检索和账本准备。有限次轮询日志，不用长时间阻塞 shell。
-6. 单测通过后再跑题面主要 shape 的正确性、wrapper-inclusive benchmark 和编译
+6. 完整 unittest 已覆盖的正确性矩阵不重复跑；性能候选再做 wrapper-inclusive benchmark 和编译
    资源检查。性能实验先声明 affected、晋级阈值和资源上限；存在明确未受影响路径
    时再加 control。确认设备没有竞争 workload 后同步执行至少五轮交替 AB/BA，按
    paired speedup 的稳定统计判断。不终止他人 workload；存在竞争、结果落在噪声内

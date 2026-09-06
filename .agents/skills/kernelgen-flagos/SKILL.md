@@ -84,7 +84,10 @@ generated code as execution evidence.
 KernelGen is also a multi-GPU/multi-chip validation channel alongside the configured `gpu`
 host. Inspect the current tool schema and preserve actual executed source,
 reference/harness, cases, environment and results. Credit bound execution for
-its covered device and cases; zero tests or a code-only response is not a pass.
+its covered device and cases. A service-reported pass with missing/zero test
+counts means "passed as reported; coverage unverified"; a code-only response
+is not execution evidence. Missing auxiliary counts alone do not veto an
+otherwise qualified competition candidate.
 
 ### Phase 0: MCP Transport Check
 
