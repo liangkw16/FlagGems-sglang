@@ -5,9 +5,12 @@ import io
 import json
 import os
 import subprocess
+import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
+from unittest import mock
 
 SCRIPT = Path(__file__).parents[1] / "scripts" / "verify_release.py"
 SPEC = importlib.util.spec_from_file_location("verify_release", SCRIPT)
@@ -90,7 +93,23 @@ class DemoTest(unittest.TestCase):
                 (stage / "verification-input.json").read_text()
             )
             log = io.StringIO()
-            result = VERIFY.run_suite(stage, manifest, log)
+            virtual = types.ModuleType("virtual_ops")
+            virtual.__file__ = "_ops.py"
+            previous = Path.cwd()
+            try:
+                os.chdir(stage)
+                with mock.patch.dict(sys.modules, {"virtual_ops": virtual}):
+                    result = VERIFY.run_suite(stage, manifest, log)
+                    # Real local dependencies must still be rejected.
+                    extra = stage / "unbound.py"
+                    extra.write_text("# unstaged helper\n")
+                    virtual.__file__ = str(extra)
+                    with self.assertRaisesRegex(
+                        ValueError, "unbound imported dependency"
+                    ):
+                        VERIFY.run_suite(stage, manifest, io.StringIO())
+            finally:
+                os.chdir(previous)
             VERIFY.require_success(result, manifest["sources"])
             self.assertEqual(result["source_calls"], {generic: 1, vendor: 1})
             self.assertEqual(result["tests_run"], 1)

@@ -177,7 +177,12 @@ def run_suite(root, manifest, stream):
     # Imported repository helpers must be staged and bound too.
     for loaded in list(sys.modules.values()):
         name = getattr(loaded, "__file__", None)
-        if name and Path(name).resolve().is_relative_to(root):
+        # torch.ops/classes advertise virtual _ops.py/_classes.py filenames.
+        if (
+            name
+            and Path(name).is_file()
+            and Path(name).resolve().is_relative_to(root)
+        ):
             relative = Path(name).resolve().relative_to(root).as_posix()
             if relative.endswith(".py") and relative not in manifest["files"]:
                 raise ValueError(
