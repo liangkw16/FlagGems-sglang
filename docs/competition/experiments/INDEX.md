@@ -34,5 +34,6 @@
 | 51 | fla_layernorm_gated | valid | 8/8(e1,5.390025x) | e1 5.390025x | no | e3华为constexpr-D仅+3.7%证伪关闭;昆仑0.97已修;剩沐曦rsqrt;燧原病态在评 | 2026-09-06 | [fla_layernorm_gated](fla_layernorm_gated.md) |
 | 52 | fused_dual_residual_rmsnorm | invalid | 6/8(e5,五种数学形态同指纹边界失配;已分诊) | - -x | yes | 封存6/8;仅sqrt_rn+div_rn或torch归约树复刻等全新结构证据可重开 | 2026-09-06 | [fused_dual_residual_rmsnorm](fused_dual_residual_rmsnorm.md) |
 | 53 | fused_gdn_gating | valid | 8/8(e1,1.769075x) | e1 1.769075x | no | e2七芯过,燧原(目标芯)卡病态盒子在评;出分即判轴;燧原停火直至恢复 | 2026-09-06 | [fused_gdn_gating](fused_gdn_gating.md) |
+| 56 | l2norm | valid | 8/8(s0,3.10497917x) | s0 3.10497917x | no | 冲分轴:昆仑0.578x/华为1.38x/沐曦2.54x;榜首EvokeAgent 3.89x差20% | 2026-09-06 | [l2norm](l2norm.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md
