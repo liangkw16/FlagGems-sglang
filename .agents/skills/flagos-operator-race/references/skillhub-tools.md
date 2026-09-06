@@ -109,6 +109,19 @@ MCP speedup 的口径未对齐前仅保留原始数据，不用于晋级、关�
 遇到该结果时停止空转重试，保留服务结果并将返回源码接入 `gpu` 的独立回归；
 目标芯结果仍待服务提供有效执行证据，NVIDIA 复验不替代该目标芯验证。
 
+2026-09-06 再次实测（见 `docs/competition/mcp-recheck-20260906.md`）：NVIDIA/Huawei
+的单轮 autotune 都返回 passed=true、tests=0，但返回的 PyTorch reference 被改成
+`F.normalize`；NVIDIA 还删除了原契约与传入测试使用的 `eps` 参数。不能据此认定
+传入的 21 项测试对返回版本原样通过。故意失败的负对照也返回 passed=true、tests=0，
+而返回 wrapper 无条件抛 AssertionError，iteration_history 明确记录 benchmark 异常、
+speedup=null。该结果只证明任务结束及存在执行错误，不能算正确性或性能通过。
+
+读取 MCP 结果时同时核对签名、默认值、reference、原始测试、实际源码版本和各轮
+error；`status=completed` / `success=true` / `verify_result.passed=true` 都不能单独
+作为验收门。benchmark 异常单独记性能失败，不自动否定已有独立正确性证据；
+tests=0 且缺少有效用例绑定时仍为覆盖未核实。发现改写契约或矛盾结果后保留原始
+响应，停止同条件重试，转独立验证或修复集成；不改写失败事实，不混入平台成绩。
+
 ### 多芯验证通道与实际资源
 
 按任务的薄弱芯片和本次改动选择 KernelGen 目标设备，分别携带同一契约、reference、
