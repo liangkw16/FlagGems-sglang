@@ -283,9 +283,22 @@ vendor 文件必须自包含、保持同一函数签名并导出同一 `__all__`
 | --- | --- | --- |
 | **tile 每根轴都要进 mask** | T54 s0 0/8 | `[HEADS_TILE=4, BLOCK_D]` 只 mask d 轴，H=2（平台 case0）时多出 head 行读进 V 区、越界写坏下一 token 输出槽 → 49% 错。本地测试 H∈{4,8,16} 全被 4 整除未暴露。**测试矩阵必须覆盖非整除 tile 的每根轴值**（H∈{2,3,5,7}） |
 | **昆仑向量整除崩溃** | T58 s0 7/8 | 逐 lane `offs // runtime_scalar` 触发 PassManager::run failed。当 BLOCK 整除组宽（pow2 嵌套恒成立）时组索引跨 tile 恒定：改标量 `(pid*BLOCK)//group` 一发修复且 142x。注意 T53 昆仑 vendor 里向量整除又能跑——**按内核形态区别对待，崩溃即标量化** |
-| **2D tile + axis=1 归约降级** | T54 e1 昆仑1-3%/华为大case | 行数据用 `[H_TILE, D]` 2D tile 归约在昆仑/华为出小比例大偏差；"一 program 一行"1D 归约 vendor（T51 形态）是兜底正解 |
+| **2D tile 归约嫌疑→已被 T54 e2 证伪** | T54 e1→e2 昆仑/华为 | 昆仑/华为小比例大偏差起初疑似 2D tile+axis=1 归约降级，但换成"一 program 一行"1D 归约 vendor 后同芯仍败且失败模式改变（case0 4/256→125/256）→ 非逻辑、非该结构。**等价重排后失败模式变化=非确定性降级，别再烧结构重排，先取证** |
 | **题面注意事项=硬约束** | T58 | "int8 须先 cast fp32、不可 int8 直接 GEMM"虽只写在注意事项，仍按规执行（fp32 ieee dot 照样 118x），不给判罚留把柄 |
 | **本地测试应对齐平台契约** | T58 bf16 scale 子测 | 自造的 bf16 scale 子测比平台（fp32 scale + atol0.5）严 50 倍，reference 自身的 bf16 乘积误差会假阳性卡候选 |
+
+
+### 平台取证与提交机制经验（2026-09-06，T54/T58/T48 全天）
+
+| 经验 | 来源 | 细则 |
+| --- | --- | --- |
+| **`selected_file` 字段** | T54 e2 | `operator-submissions` 的 `raw_result.gpu_results[].selected_file` 记录平台实际选中的 ZIP 成员。vendor 修复无效时**先查它**：确认 vendor 真被选中再分析 kernel；这是继 `errors/failed_cases` 后第二个 failure intel 通道 |
+| **差分 fuzz 是平台专用故障的取证基线** | T54 e2 | 平台才失败的正确性问题：先在代理 GPU 上跑全组合差分 fuzz（shape×dtype×非连续×cache dtype×pos dtype×weight 形状×eps 形态，~9504 组合 generic vs reference）。零失配=本地逻辑正确，失败在目标芯降级 → 停止结构重排，改用探针提交读中间量 |
+| **探针提交定位中间量** | T54 次日计划 | 怀疑数值链路（如 inv_rms/cos-sin）时，可提交一发"输出=中间量广播"的诊断变体，用平台 mismatch 模式反推哪一环错。一发换一个确定结论，优于盲试结构 |
+| **生产结构移植要带走全部不变量** | T48 e2/e3 | SGLang `BLOCK_M=max_len` 与"一 program 装下整段"是耦合不变量；只搬自适应 BLOCK 而丢段内多 tile 循环 → 段长>64 的 token 全丢（75% mismatch）。两发证伪后回退 E6 字节，generic 回退用 `git checkout <E6 commit> -- <file>` 零成本 |
+| **intent 会因 live 状态过期** | T58 s0 提交 | preflight intent 绑定实时快照：其他提交的芯片结果落地、额度变化都会使 `submit --confirm` 报 "live state changed"。**未发 POST≠失败提交**，重跑 preflight 取新 nonce 立即重试即可；提交间最小间隔 120s，`sleep` 等待别写在同一前台命令里（2min 超时杀整条链） |
+| **本地测试=平台契约的镜像** | T58 | 自造用例先读题面输入输出规格表（dtype/形状/容差），不要自加严（bf16 scale 子测比平台严 50 倍会假阳性）；但 shape 覆盖要比平台更宽（非整除 tile 轴值） |
+| **题面"注意事项"按硬约束执行** | T58 | "int8 须先 cast fp32、不可 int8 直接 GEMM"→ fp32 ieee dot 照样 118x，不给判罚留把柄；int8 tensor-core 路线再快也不碰 |
 
 ### T50 extend_attention 开发经验
 
