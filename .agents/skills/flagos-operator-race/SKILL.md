@@ -279,6 +279,8 @@ preflight 和 submit 都复核回执。哈希回执用于追溯执行，不是�
 涉及发布门禁时，用真实 ZIP/回执配合 FakeClient
 测试 preflight→submit、篡改拒绝和一次性 nonce；这不访问真实平台，不消耗提交额度。
 逐阶段记录成功或失败，服务端零测试不能用“接口调用成功”掩盖。
+v2 门槛的真实 GPU 与模拟提交记录见
+[2026-09-06 实测](../../../docs/competition/gate-optimization-20260906.md)。
 
 远端 NVIDIA 只能筛选语法、数值和候选，不能证明其他芯片正确或性能。
 
