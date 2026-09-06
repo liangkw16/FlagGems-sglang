@@ -34,6 +34,18 @@ updated: 2026-09-05
   昆仑 1.79 / 华为 6.54 / A 6.98 / B 6.70
 - 关键 vendor：燧原 route/materialize + 昆仑 route/materialize + long-index
 
+## 2026-09-06 SGLang 结构两发证伪（e2/e3，submissions 均败）
+
+- e2（c7d2d06）：SGLang 生产形态 BLOCK_M=max_len、shape 自适应
+  BLOCK_N/K → 平台 5/8 correctness 败。
+- e3（885f9e1）：BLOCK_M 封顶 64 重试 → 7/8 败（仅昆仑 vendor 过）。
+  根因：每 program 只装一个 BLOCK_M tile（`tl.arange(0,BLOCK_M)+seg_start`），
+  段长 > BLOCK_M 的 token 直接丢失 → 75% mismatch 与 max_len=256/64=4 吻合。
+- 结论：该移植缺"段内多 tile 循环"，与 SGLang 原版（BLOCK_M 恒等于
+  max_len 且 e2 形态已败）矛盾，结构轴证伪关闭。
+- **generic 已回退 E6 字节（6ed1fa9）**，vendor 不动；远端回归 5/5 OK
+  （含 _op_variants 矩阵）。team best 仍 e6 8/8 4.7198x。
+
 ## 2026-09-05 冲分预注册（8/8 后；本会话基于同族资产拟定，未做专项会诊）
 
 现状：e6 8/8 4.7198x，榜首 c2flow 21.63x。弱芯燧原 0.58/昆仑 1.79/
