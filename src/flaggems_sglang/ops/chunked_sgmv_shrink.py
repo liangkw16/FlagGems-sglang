@@ -126,7 +126,7 @@ def chunked_sgmv_shrink(x, weights, batch_info, num_slices=1):
         return output
 
     # Round up to power of 2 for tl.arange
-    BLOCK_M = max(triton.next_power_of_2(max_len), 16)
+    BLOCK_M = min(max(triton.next_power_of_2(max_len), 16), 64)
     config = _get_shrink_config(K, N, max_len)
     BLOCK_N = min(config["BLOCK_N"], N)
     BLOCK_K = min(config["BLOCK_K"], max(K, 16), 128)  # cap for shared memory
