@@ -28,7 +28,9 @@ MODULE_PATH = (
     / "ops"
     / "act_and_mul.py"
 )
-SPEC = importlib.util.spec_from_file_location("act_and_mul_module", MODULE_PATH)
+SPEC = importlib.util.spec_from_file_location(
+    "act_and_mul_module", MODULE_PATH
+)
 if SPEC is None or SPEC.loader is None:
     raise RuntimeError(f"cannot load {MODULE_PATH}")
 MODULE = importlib.util.module_from_spec(SPEC)
@@ -244,7 +246,9 @@ class ActAndMulVariantsTest(unittest.TestCase):
                 x = torch.randn(rows, 2 * d, device="cuda", dtype=dtype) * 5.0
                 expected = reference(x)
                 for name, module in self.MODULES:
-                    with self.subTest(module=name, dtype=dtype, rows=rows, d=d):
+                    with self.subTest(
+                        module=name, dtype=dtype, rows=rows, d=d
+                    ):
                         out = module.act_and_mul(x)
                         atol, rtol = TOLERANCES[dtype]
                         torch.testing.assert_close(

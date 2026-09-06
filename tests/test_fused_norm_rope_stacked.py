@@ -70,7 +70,9 @@ def make_case(T, L, H, D, rotary_dim, dtype, seed=0):
     cache = (
         torch.randn(max_pos, rotary_dim, generator=g).cuda().to(torch.float32)
     )
-    cache = torch.cat([torch.cos(cache), torch.sin(cache)], dim=-1).contiguous()
+    cache = torch.cat(
+        [torch.cos(cache), torch.sin(cache)], dim=-1
+    ).contiguous()
     positions = (
         torch.randint(0, max_pos, (T,), generator=g).cuda().to(torch.int64)
     )
@@ -117,7 +119,9 @@ class FusedNormRopeStackedTest(unittest.TestCase):
         # V region and corrupt the next token's output (platform case 0 was H=2).
         for H, T, L in ((2, 1, 2), (3, 5, 2), (5, 3, 3), (7, 2, 2)):
             with self.subTest(H=H, T=T, L=L):
-                self._check(*make_case(T, L, H, 64, 32, torch.bfloat16, seed=H))
+                self._check(
+                    *make_case(T, L, H, 64, 32, torch.bfloat16, seed=H)
+                )
 
     def test_odd_tokens(self):
         self._check(*make_case(257, 2, 8, 128, 64, torch.float16, seed=3))

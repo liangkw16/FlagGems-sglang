@@ -235,7 +235,9 @@ class CausalConv1dUpdateVariantsTest(unittest.TestCase):
                     out, new_state = module.causal_conv1d_update(
                         x, state, w, bias=b
                     )
-                    torch.testing.assert_close(out, e_out, atol=1e-5, rtol=1e-5)
+                    torch.testing.assert_close(
+                        out, e_out, atol=1e-5, rtol=1e-5
+                    )
                     torch.testing.assert_close(
                         new_state, e_state, atol=1e-5, rtol=1e-5
                     )

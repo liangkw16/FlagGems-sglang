@@ -88,7 +88,9 @@ def make_case(
     seqlen = nchunks * chunk_size
     num_heads = num_k_heads * ratio
     k = (
-        torch.randn(batch, seqlen, num_k_heads, k_dim, dtype=dtype, generator=g)
+        torch.randn(
+            batch, seqlen, num_k_heads, k_dim, dtype=dtype, generator=g
+        )
         .to("cuda")
         .to(dtype)
     )
@@ -224,7 +226,9 @@ class ChunkScaledDotKktVariantsTest(unittest.TestCase):
             k_nc = big[..., ::2]
             self.assertFalse(k_nc.is_contiguous())
             g = -torch.rand(*beta.shape, device="cuda")
-            expected = reference(k_nc, beta, g, chunk_size=kwargs["chunk_size"])
+            expected = reference(
+                k_nc, beta, g, chunk_size=kwargs["chunk_size"]
+            )
             for name, module in self.MODULES:
                 with self.subTest(module=name):
                     out = module.chunk_scaled_dot_kkt(

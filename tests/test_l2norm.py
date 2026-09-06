@@ -52,7 +52,9 @@ class L2NormTest(unittest.TestCase):
         for dtype in TOL:
             for shape in ((128,), (2, 3, 128), (4, 5, 6, 256)):
                 with self.subTest(shape=shape, dtype=dtype):
-                    self._check(torch.randn(*shape, device="cuda", dtype=dtype))
+                    self._check(
+                        torch.randn(*shape, device="cuda", dtype=dtype)
+                    )
 
     def test_transposed_leading_dims(self):
         x = torch.randn(2, 3, 65, device="cuda").transpose(0, 1)

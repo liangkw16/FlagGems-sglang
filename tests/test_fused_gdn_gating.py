@@ -39,7 +39,9 @@ SPEC.loader.exec_module(MODULE)
 
 def reference(A_log, a, b, dt_bias, beta=1.0, threshold=20.0):
     x = a.float() + dt_bias.float()
-    softplus_x = torch.where(beta * x <= threshold, F.softplus(x, beta=beta), x)
+    softplus_x = torch.where(
+        beta * x <= threshold, F.softplus(x, beta=beta), x
+    )
     g = -torch.exp(A_log.float()) * softplus_x
     beta_output = torch.sigmoid(b.float())
     return g.unsqueeze(0).to(torch.float32), beta_output.unsqueeze(0).to(

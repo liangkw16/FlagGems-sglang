@@ -371,7 +371,9 @@ def _live_state(
             "page_size": 100,
         },
     )
-    all_records = [item for item in all_records or [] if isinstance(item, dict)]
+    all_records = [
+        item for item in all_records or [] if isinstance(item, dict)
+    ]
     task_records = [
         item
         for item in task_records or []
@@ -539,7 +541,9 @@ def _verify_artifact(spec: dict[str, Any]) -> dict[str, Any]:
         spec["source_commit"],
         "--verify-existing",
     ]
-    result = subprocess.run(command, capture_output=True, text=True, timeout=60)
+    result = subprocess.run(
+        command, capture_output=True, text=True, timeout=60
+    )
     if result.returncode:
         message = (result.stderr or result.stdout).strip()[-500:]
         raise CliError(f"artifact verification failed: {message}")
@@ -561,8 +565,12 @@ def _verify_artifact(spec: dict[str, Any]) -> dict[str, Any]:
             value = str(path.resolve())
         if actual != value:
             raise CliError(f"artifact verifier mismatch: {key}")
-    if sorted(verified.get("archive_members") or []) != sorted(spec["members"]):
-        raise CliError("artifact member list does not match confirmation tuple")
+    if sorted(verified.get("archive_members") or []) != sorted(
+        spec["members"]
+    ):
+        raise CliError(
+            "artifact member list does not match confirmation tuple"
+        )
     return verified
 
 
@@ -619,7 +627,9 @@ def _remote_zip_fingerprint(url: str, expected_size: int) -> dict[str, Any]:
         method="GET",
     )
     try:
-        with build_opener(_NoRedirect()).open(request, timeout=120) as response:
+        with build_opener(_NoRedirect()).open(
+            request, timeout=120
+        ) as response:
             encoding = (response.headers.get("Content-Encoding") or "").lower()
             if encoding not in {"", "identity"}:
                 raise CliError(
@@ -677,12 +687,16 @@ def _state_lock(path: Path):
 
 def _intent_path(state_dir: Path, nonce: str) -> Path:
     if not re.fullmatch(r"[0-9a-f]{32}", nonce):
-        raise CliError("confirmation nonce must be 32 lowercase hex characters")
+        raise CliError(
+            "confirmation nonce must be 32 lowercase hex characters"
+        )
     return state_dir / f"{nonce}.json"
 
 
 def _write_intent(path: Path, value: dict[str, Any]) -> None:
-    descriptor, temporary = tempfile.mkstemp(prefix=".intent-", dir=path.parent)
+    descriptor, temporary = tempfile.mkstemp(
+        prefix=".intent-", dir=path.parent
+    )
     try:
         os.fchmod(descriptor, 0o600)
         with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
@@ -950,7 +964,8 @@ def _submit(nonce: str, client: Any, state_dir: Path) -> dict[str, Any]:
                 message = str(error)
             else:
                 message = (
-                    "remote ZIP verification failed: " f"{type(error).__name__}"
+                    "remote ZIP verification failed: "
+                    f"{type(error).__name__}"
                 )
             remote_verification = {
                 "status": "unavailable",
@@ -1162,7 +1177,9 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="confirm the account and FlagOS terms before login/register",
     )
-    status_parser = commands.add_parser("status", help="read submission scores")
+    status_parser = commands.add_parser(
+        "status", help="read submission scores"
+    )
     _common(status_parser)
     status_parser.add_argument("--watch", action="store_true")
     status_parser.add_argument("--interval", type=float, default=15)
@@ -1170,7 +1187,9 @@ def _parser() -> argparse.ArgumentParser:
     status_parser.add_argument("--file-url-sha256")
     status_parser.add_argument("--after-epoch", type=float)
 
-    preflight = commands.add_parser("preflight", help="create a one-use intent")
+    preflight = commands.add_parser(
+        "preflight", help="create a one-use intent"
+    )
     _common(preflight)
     preflight.add_argument("--season", required=True)
     preflight.add_argument("--account", required=True)
@@ -1220,7 +1239,9 @@ def _validate(args: argparse.Namespace) -> None:
         if args.file_url_sha256 and not re.fullmatch(
             r"[0-9a-f]{64}", args.file_url_sha256
         ):
-            raise CliError("--file-url-sha256 must be a full lowercase SHA-256")
+            raise CliError(
+                "--file-url-sha256 must be a full lowercase SHA-256"
+            )
         if args.after_epoch is not None and (
             not args.file_url_sha256
             or not math.isfinite(args.after_epoch)

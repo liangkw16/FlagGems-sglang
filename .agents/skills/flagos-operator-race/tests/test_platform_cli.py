@@ -223,7 +223,9 @@ class PlatformCliTest(unittest.TestCase):
             )
 
         self.assertEqual(result["state"], "submitted")
-        self.assertEqual(result["remote_verification"]["status"], "unavailable")
+        self.assertEqual(
+            result["remote_verification"]["status"], "unavailable"
+        )
         self.assertNotIn("secret", json.dumps(result))
         self.assertEqual(self.intent(prepared["nonce"])["state"], "submitted")
         self.assertEqual(len(client.posts), 2)
@@ -233,13 +235,17 @@ class PlatformCliTest(unittest.TestCase):
     def test_submit_rechecks_execution_receipt_before_any_post(self):
         client = FakeClient()
         prepared = self.preflight(client)
-        with mock.patch.object(PLATFORM, "_verify_artifact"), mock.patch.object(
+        with mock.patch.object(
+            PLATFORM, "_verify_artifact"
+        ), mock.patch.object(
             PLATFORM,
             "_verify_test_evidence",
             side_effect=PLATFORM.CliError("receipt changed"),
         ):
             with self.assertRaisesRegex(PLATFORM.CliError, "receipt changed"):
-                PLATFORM._submit(prepared["nonce"], client, self.root / "state")
+                PLATFORM._submit(
+                    prepared["nonce"], client, self.root / "state"
+                )
         self.assertEqual(client.posts, [])
 
     def test_duplicate_preflight_is_rejected(self):
@@ -454,7 +460,9 @@ class PlatformCliTest(unittest.TestCase):
             client.get("https://flagos.io/flagos/api/v1/races/race1"),
             {"ok": True},
         )
-        client._opener.open.return_value = Response(b'{"code":401,"data":null}')
+        client._opener.open.return_value = Response(
+            b'{"code":401,"data":null}'
+        )
         with self.assertRaisesRegex(PLATFORM.CliError, "API code 401"):
             client.get("https://flagos.io/flagos/api/v1/races/race1")
 

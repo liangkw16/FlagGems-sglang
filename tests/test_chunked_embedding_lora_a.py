@@ -43,7 +43,9 @@ TOLERANCES = {
 
 
 class BatchInfo:
-    def __init__(self, seg_indptr, weight_indices, lora_ranks, permutation, bs):
+    def __init__(
+        self, seg_indptr, weight_indices, lora_ranks, permutation, bs
+    ):
         self.seg_indptr = seg_indptr
         self.weight_indices = weight_indices
         self.lora_ranks = lora_ranks
