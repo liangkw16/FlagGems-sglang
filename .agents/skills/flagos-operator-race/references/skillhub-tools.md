@@ -80,13 +80,17 @@ python3 .agents/skills/kernelgen-flagos/scripts/kernelgen_mcp.py call <tool> --f
 | 返回代码 | 新候选、结构建议；保存源码和差异 | 已编译、已正确、已加速 |
 | 某 attempt 有编译/运行错误 | 服务端该次运行失败；保留原始错误，分开识别 harness/502 | 没有该 attempt 源码哈希时，不能归罪于当前候选或关闭方向 |
 | 最终代码与输入一致 | 最终返回字节一致 | 不能反推每次 attempt 执行相同字节；忽略注解/改名后的 diff 也不是字节相等 |
-| passed=True、tests=0、代码注释中的计时 | 无可采信的正确性或性能结论 | 不得晋级或代替 GPU 回归 |
+| passed=True、tests=0 | 服务端报告通过，覆盖未核实；保留原始计时 | 不推断没有执行；不替代 GPU 回归或平台正式判定 |
+| 代码注释中的计时 | 生成文本 | 不能当作实际测量 |
 | 执行源码+harness+reference 哈希、环境、逐 case 结果可核验 | 仅在实际覆盖范围内记录编译/数值结果 | 未覆盖 shape、其他芯、不同版本不获背书 |
 
-当前未取得完整绑定结果时统一记 `mcp-unbound-observation`；不用
-`mcp-device-screened` 或 `mcp-compile-screened(fidelity)` 表示候选已验证。
+未取得完整绑定结果时，代码/错误记 `mcp-unbound-observation`；服务明确报告通过但
+计数缺失时记“服务端报告通过，覆盖未核实”。不用 `mcp-device-screened` 或
+`mcp-compile-screened(fidelity)` 表示候选已验证。
 数量大于零的 tests 也不足以单独升级，仍需核验执行源、reference、case 与环境。
 MCP speedup 的口径未对齐前仅保留原始数据，不用于晋级、关轴或平台名次推断。
+以上是开发证据分级，不是赛制有效性条件；独立 release 门禁通过时，辅助 MCP 的
+零计数不单独阻断已授权提交。全部芯片正确性、每芯 0.1 门槛及平均分以平台为准。
 不要要求 LLM 用注释回传测量值。代码注入提示不能替代实际执行接口或机器结果信封。
 
 2026-09-06 流程实测：对同一 L2 契约分别调用 NVIDIA/Huawei 的 generate，以及
