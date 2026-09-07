@@ -5,11 +5,11 @@ task: 51
 operator: fla_layernorm_gated
 batch: 4
 validity: valid
-platform: 8/8(e5,5.386175x非最佳);e2最佳5.3939x
+platform: e6七芯有效但昆仑崩溃族7/8invalid;e2最佳5.3939x;e6虚拟均值~5.478
 team_best_stage: e2
 team_best_speedup: 5.3939
 sealed: no
-next: e5燧原默认launch关轴(2.3282<门3.0);E6候选=generic warps按BLOCK_D分档+沐曦metax-pin隔离;昆仑/华为需新结构证据
+next: 额度仅1发;候选=warps分档+hygon-pin(E2字节)+metax-rsqrt合并包,兼昆仑崩溃族重载,需用户授权
 updated: 2026-09-07
 team_best_commit: 5985b1ce09fe6e7cec374c271aa1c25940264783
 ```
@@ -231,3 +231,27 @@ wrapper 对 strided weight/bias 先 `.contiguous()`（commit `445d3eb`；kernel 
   ≥ E2 值 −5%；沐曦（metax pin，E2 字节）须落在同字节噪声带 4.39–4.86。
   失败处置：均值 ≤ E2 则 warps 分档轴关闭，generic 回 E2 字节。
 - 观测时额度 4/30（本发后 3/30）；sending/uncertain/stale_after_upload 不自动重试。
+
+## E6 平台终态：昆仑崩溃族 7/8，七芯读数有效（2026-09-07T20:00:13 观测）
+
+- submission `10877` / created `2026-09-07T19:39:46`；`completed` 但
+  `invalid_correctness`，7/8；观测时额度 `1/30`（并行会话同窗消耗多发）。
+- **昆仑失败 = 崩溃族，非代码问题**：case 0 报 `RuntimeError error code=299,
+  wait for noc idle timeout`（execution 1,207,342ms≈20min），与 T53/T57 记录的
+  昆仑崩溃族同指纹；昆仑 vendor 为 E2 冻结字节 `66e08be2…`，**8 分钟前 E5
+  （19:31）同字节刚以 0.9636 通过**（同载体双投对照）。按崩溃族协议不计入
+  代码止损；重载需用户逐发授权。
+- 七芯有效读数（对照 E2）：**天数 11.1728（+19.6%，warps 分档显著获益）**、
+  沐曦 4.476（metax pin 生效，选中 `_metax`，带内）、燧原 2.3602（冻结，带内）、
+  **海光 6.9598（-14.9%，显著低于其同字节带 7.74–8.18，判定 warps-8 在海光
+  真实负收益）**、华为 2.482（冻结 ascend，带内）、A 8.2492（+0.5%）、
+  B 7.1592（+5.6%）。
+- 昆仑按常规 ~0.963 折算的虚拟均值 ≈ **5.478 > E2 5.3939**：warps 分档轴净正
+  收益但被昆仑崩溃吞掉。轴判定：保留 warps 分档，但海光需 pin 回 E2 字节。
+- 证据 `51-status-e6-final.json` SHA256 见上；`51-submit.json` SHA256
+  `409653ceb8174267aaf65fedabc7c9bb4288a02e51d4f859d385d2003f623169`；
+  远端 ZIP 手工验签 `9ce71b28…10f33` 一致（19195 bytes）。
+- 额度仅剩 1 发：下一发（若授权）建议合并包 = generic warps 分档（保留）+
+  新增 `_hygon` vendor 冻结 E2 字节（隔离海光回退）+ `_metax` 加 rsqrt
+  （沐曦轴，预注册门 ≥+12%）+ 其余 vendor 冻结；同时充当昆仑崩溃族重载
+  （新字节天然绕过同 tuple 限制）。风险：昆仑若再现同指纹即按协议封存。
