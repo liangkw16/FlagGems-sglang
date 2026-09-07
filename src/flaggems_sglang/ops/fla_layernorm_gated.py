@@ -41,40 +41,37 @@ def _fla_ln_gated_kernel(
     ACT_SWISH: tl.constexpr,
     ACT_SIGMOID: tl.constexpr,
     BLOCK_D: tl.constexpr,
-    BLOCK_R: tl.constexpr,
 ):
     pid = tl.program_id(0)
     grid_size = tl.num_programs(0)
-    for block in range(pid, tl.cdiv(rows, BLOCK_R), grid_size):
-        row = block * BLOCK_R + tl.arange(0, BLOCK_R)
-        row = row[:, None]
-        offs = tl.arange(0, BLOCK_D)[None, :]
-        mask = (row < rows) & (offs < dim)
-        x = tl.load(
-            x_ptr + row * x_stride_row + offs, mask=mask, other=0.0
-        ).to(tl.float32)
-        g = tl.load(
-            g_ptr + row * g_stride_row + offs, mask=mask, other=0.0
-        ).to(tl.float32)
+    for row in range(pid, rows, grid_size):
+        offs = tl.arange(0, BLOCK_D)
+        mask = offs < dim
+        x = tl.load(x_ptr + row * x_stride_row + offs, mask=mask, other=0.0).to(
+            tl.float32
+        )
+        g = tl.load(g_ptr + row * g_stride_row + offs, mask=mask, other=0.0).to(
+            tl.float32
+        )
 
         if IS_RMS:
-            var = tl.sum(x * x, axis=1)[:, None] / dim
+            var = tl.sum(x * x, axis=0) / dim
             x_hat = x * 1.0 / tl.sqrt(var + eps)
         else:
-            mean = tl.sum(x, axis=1)[:, None] / dim
+            mean = tl.sum(x, axis=0) / dim
             xc = tl.where(mask, x - mean, 0.0)
-            var = tl.sum(xc * xc, axis=1)[:, None] / dim
+            var = tl.sum(xc * xc, axis=0) / dim
             x_hat = xc * 1.0 / tl.sqrt(var + eps)
 
         y = x_hat
         if HAS_W:
-            y = y * tl.load(
-                w_ptr + offs * w_stride, mask=offs < dim, other=1.0
-            ).to(tl.float32)
+            y = y * tl.load(w_ptr + offs * w_stride, mask=mask, other=1.0).to(
+                tl.float32
+            )
         if HAS_B:
-            y = y + tl.load(
-                b_ptr + offs * b_stride, mask=offs < dim, other=0.0
-            ).to(tl.float32)
+            y = y + tl.load(b_ptr + offs * b_stride, mask=mask, other=0.0).to(
+                tl.float32
+            )
 
         sig_g = 1.0 / (1.0 + tl.exp(-g))
         if ACT_SWISH:
@@ -116,8 +113,7 @@ def fla_layernorm_gated(
 
     HAS_W_FLAG = weight is not x
     HAS_B_FLAG = bias is not x
-    block_r = 4 if dim <= 1024 and rows >= 128 else 1
-    grid = (min(triton.cdiv(rows, block_r), _MAX_GRID),)
+    grid = (min(rows, _MAX_GRID),)
     _fla_ln_gated_kernel[grid](
         x,
         g,
@@ -138,7 +134,6 @@ def fla_layernorm_gated(
         ACT_SWISH=act_swish,
         ACT_SIGMOID=act_sigmoid,
         BLOCK_D=max(triton.next_power_of_2(dim), 16),
-        BLOCK_R=block_r,
         num_warps=4,
         num_stages=1,
     )

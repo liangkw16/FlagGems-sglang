@@ -15,7 +15,9 @@
 # Enflame vendor: one program per row (no grid-stride loop, which the
 # S0 generic used and timed out at 1830s on this backend); tl.rsqrt
 # and tl.sigmoid for the norm and gate (platform-proven on the T20
-# sister task at 0.509x).
+# sister task at 0.509x). E5: no explicit num_warps/num_stages so the
+# GCU backend picks its official default launch (T19 E5 platform-
+# proven +38% on the fused_rmsnorm sister op; kernel bytes unchanged).
 
 import torch
 import triton
@@ -114,8 +116,6 @@ def fla_layernorm_gated(
         ACT_SWISH=act_swish,
         ACT_SIGMOID=act_sigmoid,
         BLOCK_D=max(triton.next_power_of_2(dim), 16),
-        num_warps=4,
-        num_stages=1,
     )
     return out
 
