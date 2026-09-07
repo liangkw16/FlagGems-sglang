@@ -97,6 +97,12 @@ def fla_layernorm_gated(
         bias = x
     HAS_W = weight is not x
     HAS_B = bias is not x
+    if HAS_W:
+        # kernel indexes weight/bias with unit stride; strided args (e.g.
+        # weight[::2]) must be materialized before the launch
+        weight = weight.contiguous()
+    if HAS_B:
+        bias = bias.contiguous()
 
     grid = (rows,)  # one program per row, no grid-stride loop
     _fla_ln_gated_enflame[grid](
