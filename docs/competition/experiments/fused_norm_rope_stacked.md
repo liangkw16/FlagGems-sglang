@@ -5,13 +5,13 @@ task: 54
 operator: fused_norm_rope_stacked
 batch: 4
 validity: invalid_correctness
-platform: 5/8(e2,10414已终态)
+platform: e3/11046 5/8,燧原PassManager/昆仑24.7%失配/华为大case三结构三连败,轴关闭
 team_best_stage: -
 team_best_speedup: -
-sealed: no
-next: 阶段探针/67M代理stress通过;真实三芯失败仍待目标原输入复现,无新生产修复或ZIP
+sealed: yes
+next: 三种结构(fused/row/three-kernel)均败于同三芯;重开需目标芯输入或他队公开PR,不再盲投
 updated: 2026-09-08
-```
+
 
 ## S0 单遍融合 kernel（2026-09-06，远端 GPU 全过）
 
@@ -80,3 +80,20 @@ updated: 2026-09-08
 - source `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`；verification `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`。8 个测试方法、27 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
 - 回执 `artifacts/competition/batch4-implementation-20260907/t54-release1/verification.json`，SHA256 `bfb27398beaad6298dc0515a2f59f703ec99ff446dc1b478c36ea3e15fbd432e`；日志 SHA256 `11242e63d9605f5f53f8c6d22efd24424383215ed18d6c2ee2a24aee8d7f7b10`。
 - 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
+
+## E3 三 kernel 拆分 vendor → 5/8 同三芯败，轴关闭（2026-09-08，sub 11046）
+
+- 候选（commit `9799b26`）：`_kunlunxin`/`_ascend`/`_enflame` 三 vendor
+  改为三 kernel 拆分（T51 已证行式 RMSNorm 写 fp32 中间 + T49 已证 pair
+  RoPE + 纯连续行拷贝；全 1D、单谓词 mask、燧原按 E5 教训省略
+  num_warps/num_stages、昇腾用 `1.0/tl.sqrt` 已证形态）。release 8/8 测试
+  通过后 preflight 单次提交。
+- 终态：五过芯保持（天数 14.99 / 沐曦 4.69 / 海光 17.27 / A 12.79 /
+  B 7.12）；**燧原 PassManager 崩（同一指纹第 3 次）、昆仑 24.7% 失配
+  （e1 1-3% → e2 48.8% → e3 24.7%，结构相关但无一穿过）、华为大 case
+  仍败**。
+- 判定：fused / row / three-kernel 三种数学等价结构在同一三芯全部失败，
+  且每芯失败率随结构漂移——按同指纹纪律关闭本轴。各阶段单独算子
+  （T51 norm、T49 rope）在同芯均通过，失败面在组合 lowering 或评测侧
+  reference，缺目标原输入无法再收敛。**重开条件：目标芯重放取证或他队
+  公开可复用实现。**

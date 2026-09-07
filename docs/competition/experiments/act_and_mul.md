@@ -10,9 +10,9 @@ team_best_stage: e6
 team_best_commit: 5251bf5f1ef53eaac8ce83c0bb0d0b0b91425fad
 team_best_speedup: 3.25835
 sealed: no
-next: stride融合候选代理通过/ZIP验签;按计分布局及其他适用芯片复验,不据局部收益推算均分
+next: e7 stride融合已验证3.149675未超E6(计分布局以连续为主);stride轴关闭,保留E6,无新结构证据不开轴
 updated: 2026-09-08
-```
+
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
 （11/11 单测 + 三项 lint + 基准水位健康），未打包、未提交。2026-09-03
@@ -241,3 +241,13 @@ generic 按真实行/列 stride 读取，消除非连续输入的 contiguous 拷
 - 回执 `artifacts/competition/batch4-implementation-20260907/t42-release1/verification.json`，SHA256 `0065a84045e37aba7fe3e8214070929513c55e572332f2589dfd54f766d00c34`；日志 SHA256 `2281433114927e3978a08f26797f29191879f0906f1c1556cc1ee3430d2e2259`。
 - 不可变 ZIP `artifacts/competition/act_and_mul/research-20260908-26a9576/act_and_mul.zip`，SHA256 `921e5648a0ec00eaaf9d61b7f408824db5ccb75cc89013c478dd78c3b0f0b372`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
 - 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
+
+## E7 stride 融合 → 8/8 valid 3.149675，未超 E6，轴关闭（2026-09-08，sub 11048）
+
+- 候选（commit `26a9576`，t42-release1 回执）：移除强制 contiguous，
+  融合核按真实行/列 stride 读入；代理非连续 1.34-1.62x、连续 0.96-0.97x。
+- 终态逐芯：天数 6.2124 / 沐曦 2.3144 / 燧原 1.681 / 海光 4.933 /
+  昆仑 0.458 / 华为 2.2184 / A 4.2852 / B 3.095；avg 3.149675
+  （E6 team best 3.25835 保持，平台计分 case 以连续布局为主）。
+- 判定：非连续计分假设不成立，stride 轴关闭；榜首 431x 的结构面
+  仍未知，保留 E6 守榜。

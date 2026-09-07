@@ -5,13 +5,14 @@ task: 58
 operator: w8a8_block_int8_matmul
 batch: 4
 validity: valid
-platform: 8/8(e1,10412,122.66158333x,排名3)
+platform: e2/11047 七芯大增但天数fp16失败;e3/11049 天数vendor修复74.08,燧原评测中
 team_best_stage: e1
+team_best_commit: 30464a3
 team_best_speedup: 122.66158333
 sealed: no
-next: 真正int8测试已补齐;cpasync候选待沐曦运行时识别与执行,当前门禁失败无ZIP
+next: e3终态回填;若8/8且avg~220x则刷新team best并核对排名;fp16张量核dot轴已证,剩余看燧原与榜首结构
 updated: 2026-09-08
-```
+
 
 ## S0 fp32-ieee dot + 组内 scale（2026-09-06，远端 GPU 全过）
 
@@ -59,3 +60,23 @@ updated: 2026-09-08
 - source `26a95766b179d263916e9483dfc8d2343c40406a`；verification `26a95766b179d263916e9483dfc8d2343c40406a`。6 个测试方法、23 次实际 kernel 调用；选定 NVIDIA/代理范围门禁失败。
 - 回执 `artifacts/competition/batch4-implementation-20260907/t58-release1/verification.json`，SHA256 `27ad5180edb00e2702b1e4bdda7122b2a9229fa6ac02d73f260a872b70a19109`；日志 SHA256 `0d55f76f5f476e30857a93a5cd779ad0d904163619acde76a76dbde19fae26ea`。
 - 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
+
+## E2/E3 fp16 张量核 dot：七芯 2-14 倍增益，天数 vendor 单发修复（2026-09-08）
+
+- **E2（commit `bb4bbc4`，sub 11047）**：generic 操作数 int8→fp16
+  （int8 值在 fp16 精确表示，张量核 fp16×fp16→fp32 累加；移除
+  `input_precision="ieee"`），删除从未通过门禁的沐曦 pipeline vendor
+  （回到 E1 成员集）。NVIDIA 代理配对计时 6.5-6.8x、输出逐位一致。
+  平台终态 **7/8 invalid_correctness：天数 fp16 dot 失败**，其余七芯
+  大幅上涨——海光 **655.6**（358.9→，+83%）/ 沐曦 **265.5**（145.2→，
+  +83%）/ A **364.7**（62.8→，+481%）/ B **111.4**（7.68→，+1350%）/
+  华为 190.0（+2%）/ 昆仑 139.1（vendor 未动，-2%）/ 燧原 4.63（+3%）。
+- **E3（commit `20379c0`，sub 11049）**：单变量 = 新增 `_iluvatar`
+  vendor（字节 = E1 fp32-ieee generic，天数 dot dtype 敏感性与 T12
+  族一致）。platform：天数恢复 **74.08**，海光 655.6 / A 362.6 /
+  沐曦 221.6 / 华为 195.9 / 昆仑 140.4 / B 111.1，燧原评测中。
+  若燧原保持 ~4.6，预计 avg ≈ 220x（E1 team best 122.66 → +80%）。
+- 跨芯知识（更新 T12 条目）：**天数 dot 操作数 dtype 兼容集依赖算子
+  上下文**——T58 中 fp32-ieee 可用、fp16 失败，与 T12 的结论方向相反；
+  每题逐芯 dtype 路由不可凭单题经验外推。fp16 张量核 unlock 对
+  dot-bound 芯是本季最大单结构杠杆（B +1350%、A +481%）。

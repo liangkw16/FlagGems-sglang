@@ -22,7 +22,7 @@
 | 39 | silu_and_mul_masked | valid | 8/8 | E7 19.8698x | yes | - | 2026-09-03 | [silu_and_mul_masked](silu_and_mul_masked.md) |
 | 40 | softcap_inplace_logits | valid | 8/8(e8,2.195604x,rank1) | e8 2.195604x | yes | 额度用尽收官;e16 华为字节(1.70)+TB 2.1956 #2;榜首 c2flow 2.2593 华为 3.40 未破译 | 2026-09-03 | [softcap_inplace_logits](softcap_inplace_logits.md) |
 | 41 | state_passing | invalid | E7 sub8079 system_failed;7 pass,Kunlun 0.0065x,Enflame unrun | E5 diagnostic | yes | 本轮收盘;只保留平台工单与全新结构研究 | 2026-09-02 | [state_passing](state_passing.md) |
-| 42 | act_and_mul | valid | 8/8(e6,3.25835x,排名10) | e6 3.25835x | no | stride融合候选代理通过/ZIP验签;按计分布局及其他适用芯片复验,不据局部收益推算均分 | 2026-09-08 | [act_and_mul](act_and_mul.md) |
+| 42 | act_and_mul | valid | 8/8(e6,3.25835x,排名10) | e6 3.25835x | no | e7 stride融合已验证3.149675未超E6(计分布局以连续为主);stride轴关闭,保留E6,无新结构证据不开轴 | 2026-09-08 | [act_and_mul](act_and_mul.md) |
 | 43 | causal_conv1d_update | valid | 8/8(e14,6.5204375x非最佳);e13最佳6.545875x | e13 6.545875x | no | 滚动窗口已实现并通过代理;性能未晋级,守E13,需目标加载/占用证据 | 2026-09-08 | [causal_conv1d_update](causal_conv1d_update.md) |
 | 44 | chain_speculative_sampling | invalid | s0八芯predicts失败;本轮修复OOB但half精确采样仍失败,未重投 | s0 -x | no | 诊断已复现predicts[13]失配;release因expected_failure被拒,目标scan/舍入仍未修复,禁止带缺口提交 | 2026-09-08 | [chain_speculative_sampling](chain_speculative_sampling.md) |
 | 45 | chunk_scaled_dot_kkt | invalid_threshold | 8/8正确(e15),昆仑0.063x<0.1;平均7.000125不计有效排名 | - -x | no | 新row/head epilogue代理正确但未提速;候选暂不晋级,昆仑仍需>=0.1目标证据 | 2026-09-08 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
@@ -34,10 +34,10 @@
 | 51 | fla_layernorm_gated | valid | E8/11032八芯valid,5.721075x;历史E7 best5.816325x,第6 | e7 5.816325x | no | E8华为仅+2.65%且总分未晋级;关闭单独延迟load轴,保留E7,结构优化需新的目标性能证据 | 2026-09-08 | [fla_layernorm_gated](fla_layernorm_gated.md) |
 | 52 | fused_dual_residual_rmsnorm | invalid | e6/10743六芯通过,昆仑失败,燧原pending;已无有效分可能 | - -x | no | 阶段探针和大形状代理验证已完成;昆仑4元素问题未复现,仍需目标原输入首分歧,不重投 | 2026-09-08 | [fused_dual_residual_rmsnorm](fused_dual_residual_rmsnorm.md) |
 | 53 | fused_gdn_gating | valid | 8/8(e5,11044,2.954625x新team best) | e5 2.954625x | no | 距榜首仍远(288x);多行结构已兑现,剩余轴=弱芯(昆仑0.72/华为1.47/燧原1.60)新结构证据 | 2026-09-08 | [fused_gdn_gating](fused_gdn_gating.md) |
-| 54 | fused_norm_rope_stacked | invalid_correctness | 5/8(e2,10414已终态) | - -x | no | 阶段探针/67M代理stress通过;真实三芯失败仍待目标原输入复现,无新生产修复或ZIP | 2026-09-08 | [fused_norm_rope_stacked](fused_norm_rope_stacked.md) |
+| 54 | fused_norm_rope_stacked | invalid_correctness | e3/11046 5/8,燧原PassManager/昆仑24.7%失配/华为大case三结构三连败,轴关闭 | - -x | yes | 三种结构(fused/row/three-kernel)均败于同三芯;重开需目标芯输入或他队公开PR,不再盲投 | 2026-09-08 | [fused_norm_rope_stacked](fused_norm_rope_stacked.md) |
 | 55 | hc_head | invalid_correctness | 7/8(e1,10668已终态;昆仑compile_worker Aborted,归因未定) | - -x | no | 独立进程和逐核取证工具已实现;需要昆仑同worker/runtime重放,崩溃归因未定,停止盲投 | 2026-09-08 | [hc_head](hc_head.md) |
 | 56 | l2norm | valid | 8/8(e2,11045,3.13796875x新team best) | e2 3.13796875x | no | 多行tile代理增益未按计分形状兑现(+1.0%);弱芯昆仑0.58/华为1.64需新目标证据,短行轴收益已近天花板 | 2026-09-08 | [l2norm](l2norm.md) |
 | 57 | log_scaling_tau | valid | 8/8(e2,10747,2.36478125x首次有效) | e11 2.50278125x | no | PTX已证实16B访存,本轮向量化轴停止;保留E11,无新生产候选或ZIP | 2026-09-08 | [log_scaling_tau](log_scaling_tau.md) |
-| 58 | w8a8_block_int8_matmul | valid | 8/8(e1,10412,122.66158333x,排名3) | e1 122.66158333x | no | 真正int8测试已补齐;cpasync候选待沐曦运行时识别与执行,当前门禁失败无ZIP | 2026-09-08 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
+| 58 | w8a8_block_int8_matmul | valid | e2/11047 七芯大增但天数fp16失败;e3/11049 天数vendor修复74.08,燧原评测中 | e1 122.66158333x | no | e3终态回填;若8/8且avg~220x则刷新team best并核对排名;fp16张量核dot轴已证,剩余看燧原与榜首结构 | 2026-09-08 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md
