@@ -9,7 +9,7 @@ platform: 8/8(e2,10747,2.36478125x首次有效)
 team_best_stage: e6
 team_best_speedup: 2.40753125
 sealed: no
-next: 冲榜Top1(榜首EvokeAgent 2.816469);E6 valid新TB(10828,华为+43%,燧原/昆仑平=host主导坐实);E7直连发射(闭包化,98ae5648)门=avg>2.40753125且最弱≥0.4,发射中
+next: 冲榜Top1(榜首EvokeAgent 2.816469);TB=E6 2.40753125(10828);E7烧毁(10830,7/8,原始ck.run签名不跨构建移植,教训=改用__getitem__ runner);E8=generic回E6字节+enflame/ascend vendor试runner直连(隔离爆炸半径)
 updated: 2026-09-07
 team_best_commit: c6a0b6d3cd10ac2bf19716661b514d731c12b857
 ```
@@ -328,3 +328,53 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
 - 证据 `e6-c6a0b6d/validation/57-submit.json` SHA256
   `6dccfe8f825448f65c31d24bb1333abf1f1dddca7207029a2241f92c6240ad55`、
   状态快照待 E7 提交后一并归档。
+
+## E7 平台终态：invalid_correctness 7/8——直连原始 ck.run 调用在 FlagTree 构建上签名不移植（2026-09-07T18:29）
+
+- submission `10830` / daily_seq `23`；**invalid_correctness**，唯昆仑
+  vendor 通过（0.54175，与 E6 完全持平 → 该芯直连探测未激活或无增益，
+  无害）。跑 generic 的七芯全败：tianshu/iluvatar driver.py:716、
+  enflame backend.py:664、huawei/ascend driver.py:135、card_a/
+  flagtree-nvidia driver.py:712、card_b/amd driver.py:599 全部
+  `TypeError`——平台各芯 launcher `__call__` 签名与主线 3.7.1 不同
+  （本地缓存的 FlagTree nvidia `__call__` 在 :300 同形，平台版在 :712，
+  版本漂移；核心 CompiledKernel 在各平台核心 triton 内，字节不可见）。
+  佐证：昆仑 `XPULauncher.__call__(*args)` 宽容签名接受任意参数故未炸。
+- 教训：**原始 `ck.run(...)` 直连不可跨构建移植**；必须走各构建自己的
+  `CompiledKernel.__getitem__(grid3)` runner（其内部按本构建签名拼装
+  self.run）。本地 NVIDIA 探针已证 runner 可用（3.12μs vs 标准 5.09μs）。
+- E6 仍为 team best（valid 2.40753125 不受影响）。
+- 证据 `e7-5eec93d/validation/57-failure-detail.json`（逐芯 errors）、
+  `e7-5eec93d/validation/57-submit.json`。
+
+## E8 runner 直连：vendor 隔离试验（2026-09-07）
+
+- 单变量：generic 与 `_kunlunxin` 回退 E6 字节（d7028b01/87925271，
+  保护已验证 8 芯行为）；新增 `_enflame`、`_ascend` vendor，fast 路径
+  直连改走**本构建自己的 `CompiledKernel.__getitem__(grid3)` runner**
+  （其内部按本构建签名拼装 self.run——正是 E7 原始 ck.run 缺失的可
+  移植性）。runner 缺失或指针非 16B 对齐回标准调度；无模块级容器、
+  无 torch fallback。爆炸半径：任一 vendor 失败仅烧该芯，其余芯照常
+  出分（E7 已证 invalid 提交也展示逐芯 speedup）。
+- source/verification commit `9f3f64bd1f6725f95d1a9cb02e30d26435d5f8f2`；
+  本地 py_compile/black/isort/flake8 + 容器 AST 自检 4 文件 CLEAN。
+  screening 与 release（`gpu:/tmp/flagos-t57e8-release`，--proxy-vendor
+  kunlunxin+enflame+ascend）均 5 方法 112 case、0 fail/skip，4 执行源
+  全实跑；激活探针（JIT 计数）确认 enflame/ascend vendor 5 次重复
+  调用 0 次 JIT 调度且数值正确。
+- 预注册门：平台 avg > 2.40753125（E6 TB）且最弱芯 ≥0.4。燧原/华为
+  为主要预期受益芯（E6 证明二者 GPU 侧无响应、host 主导）；若 vendor
+  在平台构建上 runner 缺失则安全回落 = 结果持平 E6，不构成回退。
+- ZIP `e8-9f3f64b`，22237 bytes，SHA256
+  `6fb029f32001dab54fecf420c6e8eadb2981e2377ec96f82dbaa4225949bde2f`；
+  成员 generic `d7028b01a81a8201bc54e5263ccb7a96c6831ac8a4685a97aa841440a2ad6dde`（=E6）、
+  kunlunxin `87925271da48d8815497902441a7123b8701b9431c4953f3394b025394218d89`（=E6）、
+  ascend `a9b4c2ceca22824663d0bb92ad48da628cb2efb3f74508f942eda244a6da5459`、
+  enflame `12306d766570b96d268fac041606357e1f2054b495b3d022e6b342c255ac34dc`
+  （均=release 执行哈希）。
+- 证据 `e8-9f3f64b/validation/verification.json` SHA256
+  `30d98f5dfb8d25fe31b737b59f7a07a145a982c85012a9ee7d270068b55d30ab`、
+  `e8-9f3f64b/validation/verification.log` SHA256
+  `c73515df60c69b577af561eab9f7e134982da1dcc3873091f8cfb1c7b871b8b0`。
+  测试源码 SHA256
+  `4cd5218f2301fd188d3e0a7eb6f766026b790444be8e7aca319095694cb06d6d`。
