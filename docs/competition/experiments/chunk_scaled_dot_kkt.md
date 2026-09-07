@@ -10,7 +10,7 @@ team_best_stage: -
 team_best_commit: -
 team_best_speedup: -
 sealed: no
-next: E16(e16-f58292e)下三角tile跳过+epilogue谓词化已过release门禁待单次平台裁决;预注册门=昆仑>=0.1x转有效,不追加同字节重试
+next: E16昆仑correctness失败(复合谓词mask/early-return错译定位),树已回滚e15字节;本轴关闭,重开需绕开masked谓词的新epilogue结构证据
 updated: 2026-09-07
 ```
 
@@ -380,3 +380,29 @@ K 循环推进 `b_ptrs += BLOCK_K * stride_bn` 是潜伏笔误（应为 stride_b
   `38846f7034cb16d1bbcd1fb667c23cf37323c852e521ca8e6cd6717c9223f65b`、
   `validation/verification.log` SHA256
   `1f623525fb8064d25e716243df3daf059cdcc60d3abe3702f685d1509df6dead`。
+
+## E16 平台终态与错译定位（2026-09-07T17:0x）
+
+- submission `10778`，daily_seq `14`：**invalid_correctness——七芯全过
+  （天数 5.827/沐曦 5.4525/燧原 1.6375/海光 14.8165/华为 0.252/A 21.426/
+  B 7.518），昆仑全 case 数值失败**（首个 case 369/512=72.1% 失配、
+  max abs 49.6；最大 case 45.3% 失配、max abs 93.7）。
+- **决定性定位证据：失败 case 含 BT=32**——该 shape 下 GEMM 仅一个
+  32×32 tile（num_pid_m=num_pid_n=1），下三角 tile 跳过逻辑完全不触发，
+  唯一激活的新结构是 epilogue 的复合谓词 mask（`(lane<HBT)&(m>n)` 用于
+  全部 load/store）与 GEMM 内的 early-return 语句存在性。NVIDIA 代理
+  10/10 全绿 + 大差值垃圾（40-90 量级，非舍入）→ 与既有"昆仑 masked
+  向量操作/gather/广播错译高危"知识族一致，判定 lowering 错译而非语义
+  bug。
+- 处置：树已回滚 e15 昆仑字节（成员 SHA 复核
+  `8e93bdc824fc37d35fb52bd9926a73931d24292093700dc35e47af5e0459e8a1`），
+  七芯其余路径字节本就未动。**本轴关闭**：GEMM-skip-only 变体预期
+  0.063→~0.08（<0.1）不足以转有效，不再消耗额度；重开需绕开
+  masked 谓词的下三角流量消除新结构（如 n 循环上界=m 的窄向量形态
+  需先解决 E11 宽 lane 教训）。
+- 跨题知识沉淀：**昆仑对"复合谓词 mask 的 load/store"与 early-return
+  存在性同样错译**（E15 简单边界 mask lmask 全绿为对照）；T55 昆仑
+  vendor 据此只保留简单边界 mask。
+- 证据 `e16-f58292e/validation/45-submit.json` SHA256
+  `9c4ee6b5ca07f11f2a5e2b53eec2932bdeec4b61dda781b3cc1505164d127897`、
+  `45-status-final.json` 为本节原始逐芯记录。

@@ -19,16 +19,7 @@
 # every fused whole-tile form ends in the compile-worker crash
 # family). The Gram matrix is computed once per k-group (GQA) in a
 # single-trip fp32 IEEE GEMM; per-head scaling / decay / masking lives
-# in a second row-tiled kernel.
-#
-# E16 (validity candidate): only the strict lower triangle of each
-# Gram matrix is ever consumed, so 32x32 GEMM tiles that lie entirely
-# above the diagonal return without loading k or issuing a dot, and
-# the epilogue predicates every load/store on m > n with the output
-# pre-zeroed by the wrapper - upper-triangle memory traffic (gram
-# reads, g_n reads, result stores) disappears instead of being
-# computed and discarded. Math order per element is unchanged from
-# E15 (beta, then safe-exp decay).
+# in a second small-tile kernel.
 
 import torch
 import triton
@@ -66,13 +57,6 @@ def _kkt_gram_gemm_kernel(
     group_size_m = tl.minimum(num_pid_m - first_pid_m, GROUP_M)
     pid_m = first_pid_m + (local % group_size_m)
     pid_n = (local % num_pid_in_group) // group_size_m
-
-    # E16: a tile whose rows all start at or after the tile's column
-    # end lies entirely at/above the diagonal - the epilogue never
-    # reads that region of the Gram buffer, so retire the program
-    # without loading k or running the dot.
-    if (pid_m + 1) * BLOCK_M <= pid_n * BLOCK_N:
-        return
 
     # matrix_id -> (batch, chunk, k-group); all remaining addressing is
     # plain regular strides of the native [B, T, Hg, K] layout.
@@ -144,9 +128,7 @@ def _kkt_epilogue_kernel(
     BLOCK: tl.constexpr,
 ):
     # Specialize the shape divisors, including the per-lane GQA ratio.
-    # E16 keeps the E13/E15 row layout but predicates every load and
-    # the store on m > n: the wrapper pre-zeroes the output, so
-    # upper-triangle lanes issue no memory traffic at all.
+    # The row layout and exp arithmetic stay identical to E13.
     pid = tl.program_id(0)
     nprog = tl.num_programs(0)
     for r in range(pid, rows, nprog):
@@ -158,37 +140,37 @@ def _kkt_epilogue_kernel(
         row_base = r.to(tl.int64) * HBT
         for l0 in range(0, HBT, BLOCK):
             lane = l0 + tl.arange(0, BLOCK)
+            lmask = lane < HBT
             h = lane // BT
             n = lane - h * BT
-            lower = (lane < HBT) & (m > n)
             kg = h // ratio
             gram_id = bc * num_k_heads + kg
 
             result = tl.load(
                 gram_ptr + gram_id * (BT * BT) + m * BT + n,
-                mask=lower,
+                mask=lmask,
                 other=0.0,
             )
             # Same scaling order as the generic kernel: beta first,
-            # then the safe-exp decay; the strict-lower zeroing moves
-            # into the store mask (output pre-zeroed by the wrapper).
+            # then the safe-exp decay, then the strict lower zeroing.
             beta_m = tl.load(
                 beta_ptr + b * beta_sb + s * beta_st + h * beta_sh,
-                mask=lower,
+                mask=lmask,
                 other=0.0,
             ).to(tl.float32)
             result = result * beta_m
             if HAS_G:
                 g_base = g_ptr + b * g_sb + h * g_sh
-                g_m = tl.load(g_base + s * g_st, mask=lower, other=0.0).to(
+                g_m = tl.load(g_base + s * g_st, mask=lmask, other=0.0).to(
                     tl.float32
                 )
                 g_n = tl.load(
-                    g_base + (c * BT + n) * g_st, mask=lower, other=0.0
+                    g_base + (c * BT + n) * g_st, mask=lmask, other=0.0
                 ).to(tl.float32)
                 g_diff = g_m - g_n
                 result = result * tl.where(g_diff <= 0.0, tl.exp(g_diff), 0.0)
-            tl.store(out_ptr + row_base + lane, result, mask=lower)
+            result = tl.where(m > n, result, 0.0)
+            tl.store(out_ptr + row_base + lane, result, mask=lmask)
 
 
 def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
@@ -203,7 +185,7 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     ratio = num_heads // num_k_heads
     nchunks = seqlen // chunk_size
     bt = chunk_size
-    output = torch.zeros(
+    output = torch.empty(
         (batch, seqlen, num_heads, bt),
         dtype=torch.float32,
         device=k.device,
@@ -218,11 +200,9 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     gram = torch.empty((q_count, bt, bt), dtype=torch.float32, device=k.device)
 
     # Stage 1: one flattened regular fp32 IEEE GEMM over all Q Gram
-    # matrices, reading k's native regular strides directly. 32x32
-    # tiles so fully-upper tiles can retire early (E16); E12 showed
-    # 32x32 and 64x64 are equivalent here, so the skip is pure gain.
+    # matrices, reading k's native regular strides directly.
     block_k = min(triton.next_power_of_2(max(k_size, 16)), 512)
-    tiles = triton.cdiv(bt, 32) * triton.cdiv(bt, 32)
+    tiles = triton.cdiv(bt, 64) * triton.cdiv(bt, 64)
     _kkt_gram_gemm_kernel[(q_count * tiles,)](
         k,
         gram,
@@ -235,8 +215,8 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
         k.stride(3),
         N=bt,
         K=k_size,
-        BLOCK_M=32,
-        BLOCK_N=32,
+        BLOCK_M=64,
+        BLOCK_N=64,
         BLOCK_K=block_k,
         GROUP_M=8,
         USE_INPUT_DTYPE=k.dtype in (torch.float16, torch.bfloat16),
