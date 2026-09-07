@@ -10,7 +10,7 @@ team_best_stage: e13
 team_best_commit: 4fa854a376de167e76a1e5d1441c6cd82b5866d7
 team_best_speedup: 6.545875
 sealed: no
-next: 保留e13最佳6.545875;tile128未改善均值;时间并行离线常规case回退,均不追投
+next: E15(e15-cbfae4f)燧原通道连续+华为外提已过release门禁待单次平台裁决;预注册门=超team best 6.545875
 updated: 2026-09-07
 ```
 
