@@ -46,11 +46,15 @@ def reference(
     B, S = candidates.shape
     V = target_probs.shape[-1]
 
-    predicts = torch.zeros(num_slots, dtype=candidates.dtype, device=candidates.device)
+    predicts = torch.zeros(
+        num_slots, dtype=candidates.dtype, device=candidates.device
+    )
     accept_index = torch.full(
         (B, S), -1, dtype=retrive_index.dtype, device=candidates.device
     )
-    accept_token_num = torch.zeros(B, dtype=torch.int32, device=candidates.device)
+    accept_token_num = torch.zeros(
+        B, dtype=torch.int32, device=candidates.device
+    )
 
     for b in range(B):
         root = int(retrive_index[b, 0].item())
@@ -91,7 +95,9 @@ def reference(
         target_u = coin_final * norm_sum
         cumsum = torch.cumsum(val, dim=0)
         match = cumsum > target_u
-        final_token = int(match.float().argmax().item()) if match.any() else V - 1
+        final_token = (
+            int(match.float().argmax().item()) if match.any() else V - 1
+        )
         predicts[last_slot] = final_token
 
     return predicts, accept_index, accept_token_num
@@ -112,15 +118,21 @@ def make_case(
     ).to(device)
     # Distinct slot indices per request, e.g. b*seqlen + j.
     retrive_index = (
-        torch.arange(batch * seqlen, dtype=torch.int64).view(batch, seqlen).to(device)
+        torch.arange(batch * seqlen, dtype=torch.int64)
+        .view(batch, seqlen)
+        .to(device)
     )
-    uniform_samples = torch.rand(batch, seqlen - 1, dtype=dtype, generator=g).to(device)
+    uniform_samples = torch.rand(
+        batch, seqlen - 1, dtype=dtype, generator=g
+    ).to(device)
     uniform_final = torch.rand(batch, dtype=dtype, generator=g).to(device)
 
     # Probabilities that accept with roughly `accept_rate`: make the
     # draft token at step s have q small and p large w.p. accept_rate.
     target = (
-        torch.softmax(torch.randn(batch, seqlen, vocab_size, generator=g) * 3.0, dim=-1)
+        torch.softmax(
+            torch.randn(batch, seqlen, vocab_size, generator=g) * 3.0, dim=-1
+        )
         .to(dtype)
         .to(device)
     )
@@ -183,6 +195,16 @@ class ChainSpeculativeSamplingTest(unittest.TestCase):
         for dtype in (torch.float16, torch.bfloat16):
             with self.subTest(dtype=dtype):
                 self._check(make_case(dtype=dtype, seed=1))
+
+    def test_all_accepted_last_request(self):
+        for seqlen in (1, 4):
+            case = make_case(batch=2, seqlen=seqlen, vocab_size=1025, seed=44)
+            case[4].fill_(1.0)
+            case[5].zero_()
+            case[3].fill_(0.25)
+            with self.subTest(seqlen=seqlen):
+                _, _, accepted = self._check(case)
+                self.assertTrue(torch.all(accepted == seqlen - 1))
 
     def test_accept_rates(self):
         for rate in (0.0, 0.3, 0.7, 1.0):
@@ -247,18 +269,33 @@ class ChainSpeculativeSamplingTest(unittest.TestCase):
         )
 
     def test_empty_batch(self):
-        predicts, accept_index, accept_token_num = MODULE.chain_speculative_sampling(
-            torch.zeros(0, 4, dtype=torch.int64, device="cuda"),
-            torch.zeros(0, 4, dtype=torch.int64, device="cuda"),
-            torch.zeros(0, 3, device="cuda"),
-            torch.zeros(0, device="cuda"),
-            torch.zeros(0, 4, 128, device="cuda"),
-            torch.zeros(0, 3, 128, device="cuda"),
-            0,
+        predicts, accept_index, accept_token_num = (
+            MODULE.chain_speculative_sampling(
+                torch.zeros(0, 4, dtype=torch.int64, device="cuda"),
+                torch.zeros(0, 4, dtype=torch.int64, device="cuda"),
+                torch.zeros(0, 3, device="cuda"),
+                torch.zeros(0, device="cuda"),
+                torch.zeros(0, 4, 128, device="cuda"),
+                torch.zeros(0, 3, 128, device="cuda"),
+                0,
+            )
         )
         self.assertEqual(predicts.shape, (0,))
         self.assertEqual(accept_index.shape, (0, 4))
         self.assertEqual(accept_token_num.shape, (0,))
+
+
+RELEASE_REQUIRED_TESTS = [
+    "ChainSpeculativeSamplingTest.test_fp32_exact_match",
+    "ChainSpeculativeSamplingTest.test_half_dtype_final_sampling_gap",
+    "ChainSpeculativeSamplingTest.test_all_accepted_last_request",
+    "ChainSpeculativeSamplingTest.test_accept_rates",
+    "ChainSpeculativeSamplingTest.test_seqlens_and_batch",
+    "ChainSpeculativeSamplingTest.test_random_exact_match_many_trials",
+    "ChainSpeculativeSamplingTest.test_nan_in_draft_probs",
+    "ChainSpeculativeSamplingTest.test_all_zero_val_falls_back_to_last_token",
+    "ChainSpeculativeSamplingTest.test_empty_batch",
+]
 
 
 if __name__ == "__main__":

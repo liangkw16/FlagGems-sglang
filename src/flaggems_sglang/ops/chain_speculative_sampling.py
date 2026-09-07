@@ -64,7 +64,9 @@ def _chain_accept_kernel(
             + (b * (seqlen - 1) + (s - 1)) * d_stride_row
             + draft_token * d_stride_vocab
         ).to(tl.float32)
-        coin = tl.load(uniform_samples_ptr + b * (seqlen - 1) + (s - 1)).to(tl.float32)
+        coin = tl.load(uniform_samples_ptr + b * (seqlen - 1) + (s - 1)).to(
+            tl.float32
+        )
         # coin*q in torch rounds to the input dtype before comparing;
         # replicate that rounding exactly.
         prod = (coin * q).to(elem_ty).to(tl.float32)
@@ -117,7 +119,8 @@ def _chain_final_sample_kernel(
     k = tl.load(accept_count_ptr + b)
     all_accepted = k == seqlen - 1
     prob_row = (b * seqlen + k) * t_stride_row
-    # draft_probs only has seqlen-1 rows per request.
+    # draft_probs has no row k when every draft token was accepted.
+    # Mask both loads below; tl.where on their values cannot prevent OOB.
     draft_row = (b * (seqlen - 1) + k) * d_stride_row
 
     running = tl.zeros((), dtype=tl.float32)
@@ -136,7 +139,7 @@ def _chain_final_sample_kernel(
         ).to(tl.float32)
         q = tl.load(
             draft_probs_ptr + draft_row + offs * d_stride_vocab,
-            mask=mask,
+            mask=mask & ~all_accepted,
             other=0.0,
         ).to(tl.float32)
         q = tl.where(q != q, 0.0, q)
@@ -159,7 +162,7 @@ def _chain_final_sample_kernel(
         ).to(tl.float32)
         q = tl.load(
             draft_probs_ptr + draft_row + offs * d_stride_vocab,
-            mask=mask,
+            mask=mask & ~all_accepted,
             other=0.0,
         ).to(tl.float32)
         q = tl.where(q != q, 0.0, q)
@@ -169,14 +172,18 @@ def _chain_final_sample_kernel(
         prefixes = carry + tl.cumsum(val, axis=0)
         match = prefixes.to(elem_ty).to(tl.float32) > target_u
         block_min = tl.min(tl.where(mask & match, offs, vocab_size), axis=0)
-        new_first = tl.where(found == 0, tl.minimum(first_idx, block_min), first_idx)
+        new_first = tl.where(
+            found == 0, tl.minimum(first_idx, block_min), first_idx
+        )
         found += (block_min < vocab_size).to(tl.int32)
         first_idx = new_first
         carry += tl.sum(val, axis=0)
 
     final_token = tl.where(first_idx < vocab_size, first_idx, vocab_size - 1)
     slot = tl.load(retrive_index_ptr + b * seqlen + k)
-    tl.store(predicts_ptr + slot, final_token.to(predicts_ptr.dtype.element_ty))
+    tl.store(
+        predicts_ptr + slot, final_token.to(predicts_ptr.dtype.element_ty)
+    )
 
 
 def chain_speculative_sampling(
@@ -201,7 +208,9 @@ def chain_speculative_sampling(
     candidates = candidates.contiguous()
     retrive_index = retrive_index.contiguous()
     uniform_samples = uniform_samples.contiguous()
-    uniform_samples_for_final_sampling = uniform_samples_for_final_sampling.contiguous()
+    uniform_samples_for_final_sampling = (
+        uniform_samples_for_final_sampling.contiguous()
+    )
     accept_count = torch.empty(batch, dtype=torch.int32, device=device)
     # seqlen == 1 leaves draft_probs empty; all_accepted is always True
     # so its values are never used, but loads must stay in bounds.
