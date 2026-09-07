@@ -23,9 +23,9 @@
 | 40 | softcap_inplace_logits | valid | 8/8(e8,2.195604x,rank1) | e8 2.195604x | yes | 额度用尽收官;e16 华为字节(1.70)+TB 2.1956 #2;榜首 c2flow 2.2593 华为 3.40 未破译 | 2026-09-03 | [softcap_inplace_logits](softcap_inplace_logits.md) |
 | 41 | state_passing | invalid | E7 sub8079 system_failed;7 pass,Kunlun 0.0065x,Enflame unrun | E5 diagnostic | yes | 本轮收盘;只保留平台工单与全新结构研究 | 2026-09-02 | [state_passing](state_passing.md) |
 | 42 | act_and_mul | valid | 8/8(e6,3.25835x,排名10) | e6 3.25835x | no | 榜首已431.4843;暂停旧tile/M1轴,仅整体带宽结构有新证据再开 | 2026-09-07 | [act_and_mul](act_and_mul.md) |
-| 43 | causal_conv1d_update | valid | 8/8(e14,6.5204375x非最佳);e13最佳6.545875x | e13 6.545875x | no | 保留e13最佳6.545875;tile128未改善均值;时间并行离线常规case回退,均不追投 | 2026-09-07 | [causal_conv1d_update](causal_conv1d_update.md) |
+| 43 | causal_conv1d_update | valid | 8/8(e14,6.5204375x非最佳);e13最佳6.545875x | e13 6.545875x | no | E15燧原PassManager编译失败收券(华为+41%保留在树);team best仍e13 6.545875;重开需燧原单变量形态拆分证据 | 2026-09-07 | [causal_conv1d_update](causal_conv1d_update.md) |
 | 44 | chain_speculative_sampling | invalid | s0八芯predicts失败;本轮修复OOB但half精确采样仍失败,未重投 | s0 -x | no | 对齐各后端reference扫描/舍入;保留已知half失败,禁止带缺口提交 | 2026-09-07 | [chain_speculative_sampling](chain_speculative_sampling.md) |
-| 45 | chunk_scaled_dot_kkt | invalid_threshold | 8/8正确(e15),昆仑0.063x<0.1;平均7.000125不计有效排名 | - -x | no | constexpr除数平台无收益;停止该轴;保留契约修复,需新的epilogue结构证据 | 2026-09-07 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
+| 45 | chunk_scaled_dot_kkt | invalid_threshold | 8/8正确(e15),昆仑0.063x<0.1;平均7.000125不计有效排名 | - -x | no | E16昆仑correctness失败(复合谓词mask/early-return错译定位),树已回滚e15字节;本轴关闭,重开需绕开masked谓词的新epilogue结构证据 | 2026-09-07 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x) | e3 14.1051875x | no | e6天数预路由水位带内无法归因,轴关闭;维持E3守榜(14.105x);后续按逐芯晋级纪律择机 | 2026-09-06 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
 | 47 | chunked_sgmv_expand | valid | 8/8(e5,25.0048125x,榜首) | e5 25.0048125x | no | 守榜首(25.00x vs 前榜首23.33x);燧原0.178x/昆仑3.72x为余量轴;stale意图经用户授权归档重提(移至archived/) | 2026-09-04 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
 | 48 | chunked_sgmv_shrink | valid | 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor) | e6 4.7198125x | no | e4七芯+1.5%未过15%门,保留e6;自适应BLOCK_S轴关闭;冲分回到预注册vendor轴(燧原dot模板/天数dtype/昆仑BLOCK) | 2026-09-07 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
@@ -35,9 +35,9 @@
 | 52 | fused_dual_residual_rmsnorm | invalid | e6/10743六芯通过,昆仑失败,燧原pending;已无有效分可能 | - -x | no | e6昆仑同4元素失配,本轴关闭;只等10743燧原回调,禁止重投;需目标归约/首分歧证据 | 2026-09-07 | [fused_dual_residual_rmsnorm](fused_dual_residual_rmsnorm.md) |
 | 53 | fused_gdn_gating | valid | 8/8(e4,2.1267x,排名10) | e4 2.1267x | no | 榜首已288.426175;旧4.3306对标过期,暂停小比例调参 | 2026-09-07 | [fused_gdn_gating](fused_gdn_gating.md) |
 | 54 | fused_norm_rope_stacked | invalid_correctness | 5/8(e2,10414已终态) | - -x | no | 三芯失败均已终态;仅固定源码目标复现定位首分歧后重开,非额度用尽 | 2026-09-07 | [fused_norm_rope_stacked](fused_norm_rope_stacked.md) |
-| 55 | hc_head | invalid_correctness | 7/8(e1,10668已终态;昆仑compile_worker Aborted,归因未定) | - -x | no | 先取得reference单独复现或首失败栈;其他题健康不能证明本题仅平台错,禁止同字节自动重投 | 2026-09-07 | [hc_head](hc_head.md) |
+| 55 | hc_head | invalid_correctness | 7/8(e1,10668已终态;昆仑compile_worker Aborted,归因未定) | - -x | no | E2(e2-afbe602)昆仑三平铺kernel vendor已过release门禁待单次平台裁决;假设=深嵌套generic在昆仑编译超时,预注册门=昆仑跑出结果且七芯维持 | 2026-09-07 | [hc_head](hc_head.md) |
 | 56 | l2norm | valid | 8/8(e1,3.10772917x,排名8) | e1 3.10772917x | no | 榜首已72.30680208;守有效分,多行/短行需有整体收益证据再晋级 | 2026-09-07 | [l2norm](l2norm.md) |
-| 57 | log_scaling_tau | valid | 8/8(e2,10747,2.36478125x首次有效) | e2 2.36478125x | no | 保留e2有效2.36478125排名5;warp/BLOCK无收益;华为MCP零测试且错误rank1语义,不晋级 | 2026-09-07 | [log_scaling_tau](log_scaling_tau.md) |
+| 57 | log_scaling_tau | valid | 8/8(e2,10747,2.36478125x首次有效) | e3 2.401375x | no | E3终态valid 2.401375新TB(+1.55%,华为+23.6%);距榜首2.81646875仍-14.8%,高分芯结构未破,收轴待新证据 | 2026-09-07 | [log_scaling_tau](log_scaling_tau.md) |
 | 58 | w8a8_block_int8_matmul | valid | 8/8(e1,10412,122.66158333x,排名3) | e1 122.66158333x | no | 榜首562.41590833;弱两芯翻倍不足追榜,须高分芯GEMM结构收益;保持int8先castFP32契约 | 2026-09-07 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md
