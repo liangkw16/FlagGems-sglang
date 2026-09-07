@@ -10,8 +10,8 @@ team_best_stage: e7
 team_best_commit: 094548df5da1075b8245b4af8ccddf024a319ae3
 team_best_speedup: 4.7489375
 sealed: no
-next: E7终态valid 4.7489375新TB(+0.62%,燧原轴关闭);结构轴定格:燧原0.5x=逐段launch上限,间接寻址不可用;重开需全新结构证据
-updated: 2026-09-07
+next: cpasync候选已实现但NVIDIA不识别pipeline;需沐曦固定源码执行,无本轮ZIP
+updated: 2026-09-08
 ```
 
 ## S0: 6/8（燧原+昆仑败）
@@ -134,3 +134,11 @@ route/materialize 是 sgmv 族唯一可行形态（e8-e10 三投证伪）。
   是唯一结构出路但依赖间接权重寻址（燧原/昆仑不受支持），
   T48 结构轴定格。
 - 证据 `validation/48-status-final.json`。
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+新增沐曦同数学路径 cpasync 候选，补长段跨tile和三dtype。NVIDIA 编译器拒绝 pipeline 参数（7条error），这是运行时覆盖缺口，未删除参数伪造通过，也未打包。
+
+- source `26a95766b179d263916e9483dfc8d2343c40406a`；verification `26a95766b179d263916e9483dfc8d2343c40406a`。6 个测试方法、18 次实际 kernel 调用；选定 NVIDIA/代理范围门禁失败。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t48-release1/verification.json`，SHA256 `7f02b6837a843f77a35f04993b15eaf44c2305d8876860a4ac0276e3d3e44a74`；日志 SHA256 `f023c3e3b871b63720a2d6a4c1a75595b5049ed2faf0169893ab2a79678ec5b8`。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

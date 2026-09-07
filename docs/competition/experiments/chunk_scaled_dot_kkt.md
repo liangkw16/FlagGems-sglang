@@ -10,8 +10,8 @@ team_best_stage: -
 team_best_commit: -
 team_best_speedup: -
 sealed: no
-next: E16昆仑correctness失败(复合谓词mask/early-return错译定位),树已回滚e15字节;本轴关闭,重开需绕开masked谓词的新epilogue结构证据
-updated: 2026-09-07
+next: 新row/head epilogue代理正确但未提速;候选暂不晋级,昆仑仍需>=0.1目标证据
+updated: 2026-09-08
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -421,3 +421,12 @@ K 循环推进 `b_ptrs += BLOCK_K * stride_bn` 是潜伏笔误（应为 stride_b
   错译、逐 lane 除法链回归、窄向量与 E11 宽 lane 教训冲突）。
 - 重开条件：出现免 mask 的 epilogue 流量结构（如紧凑 gram 布局 +
   纯线性寻址），或昆仑 epilogue 瓶颈被新的平台证据重新排序。
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+昆仑 Gram 不变，epilogue 固定 row/head、标量复用 beta/g_m、简单列尾 mask，正确性代理通过。完整调用约 0.96x，没有目标跨过0.1的证据。
+
+- source `26a95766b179d263916e9483dfc8d2343c40406a`；verification `26a95766b179d263916e9483dfc8d2343c40406a`。10 个测试方法、47 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t45-release1/verification.json`，SHA256 `1169cd5dda63d2a93ecae892c67e094fe00f2fec1d3cb54309a4edef76a399f1`；日志 SHA256 `feb08f14cf9daf2d235bb65d06abb137c879b63ac9b1641e4927b84220d79540`。
+- 不可变 ZIP `artifacts/competition/chunk_scaled_dot_kkt/research-20260908-26a9576/chunk_scaled_dot_kkt.zip`，SHA256 `b510bbcb54784e639c1dbfbcc620e4d7ffd5952cf2f75a581ef7b4aaaed5ff13`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

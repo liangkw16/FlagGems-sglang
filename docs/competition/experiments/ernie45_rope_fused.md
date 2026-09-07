@@ -10,8 +10,8 @@ team_best_stage: e3
 team_best_commit: 5a6b8cb3eac758d266765f96cdf52a4581deb2a9
 team_best_speedup: 8.58253125
 sealed: no
-next: e3昆仑0.664x击穿uni_sram墙,8/8 VALID(第9个,is_team_best);榜单:达标4队(含我队),榜首c2flow 15.6064x(差45%);可选轴:昆仑BLOCK_HEADS与A芯21.1x
-updated: 2026-09-07
+next: head16候选代理正确/ZIP验签;需昆仑live buffer和完整wrapper收益后晋级
+updated: 2026-09-08
 ```
 
 ## S0: 6/8（燧原PassManager + 昆仑uni_sram）
@@ -51,3 +51,12 @@ updated: 2026-09-07
   海光 8.95 / **昆仑 0.664** / 华为 2.54 / A 21.11 / B 9.90。
 - PR40 工作划分在昆仑的 grid 总数上限风险未兑现；后续可选轴：昆仑
   `BLOCK_HEADS`（8→16/4）与 A 芯 21.11x 的参数微调，非必需。
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+昆仑保留单 pair 结构，BLOCK_HEADS 8→16；补3/4/5/7/8/9/15/16/17 head边界。代理大head案例约1.15x，小案例持平。
+
+- source `26a95766b179d263916e9483dfc8d2343c40406a`；verification `26a95766b179d263916e9483dfc8d2343c40406a`。6 个测试方法、204 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t49-release1/verification.json`，SHA256 `99e82fc4a2640ca9d7f691870553773b84fec3a1ca1d95d68f0639328f9f22c9`；日志 SHA256 `e70ce8849ceea5342b7b8c247e24ce3c23a6070862adf4235e75012c928fe5ba`。
+- 不可变 ZIP `artifacts/competition/ernie45_rope_fused/research-20260908-26a9576/ernie45_rope_fused.zip`，SHA256 `f7c5a9a4a34bc4ee97619b7225cd9d4bfe0b0cc5774d83983751a071130b6ed0`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

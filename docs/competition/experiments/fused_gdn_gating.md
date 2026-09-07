@@ -10,8 +10,8 @@ team_best_stage: e4
 team_best_commit: 743ebb7f68109cdfd3b8c651aa88d8025d4d9d0c
 team_best_speedup: 2.1267
 sealed: no
-next: 榜首已288.426175;旧4.3306对标过期,暂停小比例调参
-updated: 2026-09-07
+next: 大批量行复用候选已过最终代理和ZIP验签;其他适用芯片及计分形状复验,小规模已保留旧核
+updated: 2026-09-08
 ```
 
 ## S0（2026-09-05 凌晨，submission 9866）
@@ -120,3 +120,12 @@ IR 检查（燧原无 scf.if/grid-stride、华为热路径无整数除法/取模
 
 当前榜首与排名按最新任务API校正；旧段落保留历史快照，不据此分配本轮提交机会。本轮未修改或提交本题源码。
 - 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/tasks-now.json` SHA256 `fc73368c3d98b228b0c7815d6ec1e9042a58af8d953337fff58990daec1474fc`。
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+generic 多行共享 head 参数/exp，支持参数stride；总元素<16384且参数连续时用旧核，避免初版小案例约18%回退。最终128x128/256x128/4096x128为1.19/2.27/33.51x，小案例约0.98x。
+
+- source `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`；verification `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`。7 个测试方法、25 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t53-release2/verification.json`，SHA256 `f9646a2d6fee56ef9e75736765876976bab6dbc1e82070cc2e3987dc53f3ac34`；日志 SHA256 `600b37ab74da4c723e0993732e9df4d5159a4d48bcd27c0f9a45b79f772ef096`。
+- 不可变 ZIP `artifacts/competition/fused_gdn_gating/research-20260908-c73f6c3/fused_gdn_gating.zip`，SHA256 `983e52b0178f451b0d2aebe9b23c56b81274a3f23f16497b29665606add0d44e`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

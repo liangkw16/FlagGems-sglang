@@ -9,8 +9,8 @@ platform: 8/8(e1,10412,122.66158333x,排名3)
 team_best_stage: e1
 team_best_speedup: 122.66158333
 sealed: no
-next: 榜首562.41590833;弱两芯翻倍不足追榜,须高分芯GEMM结构收益;保持int8先castFP32契约
-updated: 2026-09-07
+next: 真正int8测试已补齐;cpasync候选待沐曦运行时识别与执行,当前门禁失败无ZIP
+updated: 2026-09-08
 ```
 
 ## S0 fp32-ieee dot + 组内 scale（2026-09-06，远端 GPU 全过）
@@ -51,3 +51,11 @@ updated: 2026-09-07
 实时 team best 仍 E1/sub10412，真实八芯平均122.66158333，校正旧118.15512。榜首562.41590833；平台当前排名3，本轮未提交。
 - 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/tasks-now.json` SHA256 `fc73368c3d98b228b0c7815d6ec1e9042a58af8d953337fff58990daec1474fc`。
 - 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/58-submissions-now.json` SHA256 `fa822e61f388826ef2e99c7712299f89b369b40a7a2b68f3758f94944eb69d13`。
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+新增沐曦cpasync候选，保持int8先转FP32和scale顺序；修复原测试误生成int64，补负数及K/N尾部。NVIDIA拒绝pipeline参数（13条error），未打包。
+
+- source `26a95766b179d263916e9483dfc8d2343c40406a`；verification `26a95766b179d263916e9483dfc8d2343c40406a`。6 个测试方法、23 次实际 kernel 调用；选定 NVIDIA/代理范围门禁失败。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t58-release1/verification.json`，SHA256 `27ad5180edb00e2702b1e4bdda7122b2a9229fa6ac02d73f260a872b70a19109`；日志 SHA256 `0d55f76f5f476e30857a93a5cd779ad0d904163619acde76a76dbde19fae26ea`。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

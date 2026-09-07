@@ -9,8 +9,8 @@ platform: 7/8(e1,10668已终态;昆仑compile_worker Aborted,归因未定)
 team_best_stage: -
 team_best_speedup: -
 sealed: no
-next: E2终态7/8:昆仑第三次崩溃指纹演化(Aborted→Segfault@验证执行段),编译面假设部分证实但不足;停止盲投,vendor保留待平台/reference取证
-updated: 2026-09-07
+next: 独立进程和逐核取证工具已实现;需要昆仑同worker/runtime重放,崩溃归因未定,停止盲投
+updated: 2026-09-08
 ```
 
 ## S0 每 token 两遍融合（2026-09-06，远端 GPU 1/1 OK）
@@ -115,3 +115,11 @@ updated: 2026-09-07
   重开条件：reference 单独复现、首失败栈取证或平台侧修复信号。
 - 证据 `validation/55-status-final.json`（原始逐芯记录）、
   `55-submit.json`。
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+独立进程执行reference和昆仑候选，记录原有三个kernel边界并保存sumsq/mix/output。HC8诊断代理完成且无观察效应，未复现目标Segfault，三核拆分不算新增结构。
+
+- source `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`；verification `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`。2 个测试方法、22 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t55-release1/verification.json`，SHA256 `40c7e84fa40b1bebd12eb107abed8e3c281d46a3c530fbe9d437d1b5552f2b98`；日志 SHA256 `fa3f4670b3a2b91d5398451035b00a956dd98a1ce025d7f83f9b92031aab7149`。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

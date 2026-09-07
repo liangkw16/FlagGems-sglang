@@ -9,8 +9,8 @@ platform: 8/8(e7,5.816325x TEAM BEST)
 team_best_stage: e7
 team_best_speedup: 5.816325
 sealed: no
-next: 额度0/30通道关闭;e7=5.8163新team best;离线储备=华为大D分块/昆仑需结构证据
-updated: 2026-09-07
+next: 延迟gate候选代理通过/ZIP验签;等待华为IR/UB与计时,代理未证明收益
+updated: 2026-09-08
 team_best_commit: d05e57a0ee3d2d453866c85c0479b22a6fcbae8b
 ```
 
@@ -317,3 +317,12 @@ kunlunxin 冻结。本包同时是昆仑崩溃族重载载体（新 ZIP 字节�
   `86ddc19eebabadf92ee63b9f2b5bd0e74a3c71a164093c3b314dd02a2430313f`。
 - 额度 0/30：本批提交通道关闭；后续仅离线迭代（华为大 D 分块等结构轴留待
   下一窗口或新额度），账本 current 块更新为 e7 终态。
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+华为 gate load 延迟至归约/affine 后。NVIDIA PTX 加载位置变化，但shared占用未降，计时0.994–1.002x；尚未获得华为UB/Scalar/MTE证据。
+
+- source `8ba31a102f4ef0430c08f12c4622b27430915071`；verification `8ba31a102f4ef0430c08f12c4622b27430915071`。7 个测试方法、147 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t51-release1/verification.json`，SHA256 `389a23663a437cfaa2142a6877e4275911e2b5d0fa3459f47e69397bbeaacb4d`；日志 SHA256 `56871542e29e698fe20501d6e58a7a96b048291deee476046353c2e97c182f91`。
+- 不可变 ZIP `artifacts/competition/fla_layernorm_gated/research-20260908-8ba31a1/fla_layernorm_gated.zip`，SHA256 `579d902c7fc7bb8c4dbc382220143ccd7512adc7a05978ad1f77f806b6c81f47`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

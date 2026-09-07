@@ -10,8 +10,8 @@ team_best_stage: e6
 team_best_commit: 5251bf5f1ef53eaac8ce83c0bb0d0b0b91425fad
 team_best_speedup: 3.25835
 sealed: no
-next: 榜首已431.4843;暂停旧tile/M1轴,仅整体带宽结构有新证据再开
-updated: 2026-09-07
+next: stride融合候选代理通过/ZIP验签;按计分布局及其他适用芯片复验,不据局部收益推算均分
+updated: 2026-09-08
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -232,3 +232,12 @@ updated: 2026-09-07
 
 当前榜首与排名按最新任务API校正；旧段落保留历史快照，不据此分配本轮提交机会。本轮未修改或提交本题源码。
 - 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/tasks-now.json` SHA256 `fc73368c3d98b228b0c7815d6ec1e9042a58af8d953337fff58990daec1474fc`。
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+generic 按真实行/列 stride 读取，消除非连续输入的 contiguous 拷贝，保留激活与 cast 顺序。代理非连续案例 1.34–1.62x，连续案例约 0.96–0.97x。
+
+- source `26a95766b179d263916e9483dfc8d2343c40406a`；verification `26a95766b179d263916e9483dfc8d2343c40406a`。14 个测试方法、84 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t42-release1/verification.json`，SHA256 `0065a84045e37aba7fe3e8214070929513c55e572332f2589dfd54f766d00c34`；日志 SHA256 `2281433114927e3978a08f26797f29191879f0906f1c1556cc1ee3430d2e2259`。
+- 不可变 ZIP `artifacts/competition/act_and_mul/research-20260908-26a9576/act_and_mul.zip`，SHA256 `921e5648a0ec00eaaf9d61b7f408824db5ccb75cc89013c478dd78c3b0f0b372`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

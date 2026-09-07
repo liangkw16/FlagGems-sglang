@@ -10,8 +10,8 @@ team_best_stage: e5
 team_best_commit: b34d040360f040b6be43ce5443e7dc0ce83d2d47
 team_best_speedup: 25.0048125
 sealed: no
-next: 守榜首(25.00x vs 前榜首23.33x);燧原0.178x/昆仑3.72x为余量轴;stale意图经用户授权归档重提(移至archived/)
-updated: 2026-09-04
+next: 多轮K真实步长错误已修复且代理回归通过/ZIP验签;先补目标复验再考虑外积,守E5
+updated: 2026-09-08
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -191,3 +191,12 @@ failed_cases` 本就携带完整失败详情，CLI status 视图把它过滤掉�
 K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。守榜期间
 不动字节；若未来重开昆仑轴或调整 BLOCK_K，必须先修此行并补 K 多趟
 单测（33/64/96/100/128）。
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+昆仑/燧原多轮 B 地址递增修为 BLOCK_K*stride_bk，并将 BK 上限降至128。旧源码直接多轮回归各51/51元素失败，修复后完整通过；补 rank127/128/129/511/512/513。
+
+- source `8ba31a102f4ef0430c08f12c4622b27430915071`；verification `8ba31a102f4ef0430c08f12c4622b27430915071`。12 个测试方法、105 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t47-release1/verification.json`，SHA256 `65545a1b6cbc33c6a5e15aeb923bf9c332eed78d492a678b2fcc0daae53c37e0`；日志 SHA256 `0382828f0f48a4b62affadae30ad579444269d6165ed4bc6f416484aba45b232`。
+- 不可变 ZIP `artifacts/competition/chunked_sgmv_expand/research-20260908-8ba31a1/chunked_sgmv_expand.zip`，SHA256 `fe9639026676a93739ce63b14329c01146236ba93bccc0c82108f7f46f447b5e`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

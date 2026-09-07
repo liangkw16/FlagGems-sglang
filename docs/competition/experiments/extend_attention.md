@@ -9,8 +9,8 @@ platform: 6/8(e4,昆仑conclusive封轴;华为数值不可修;燧原0.013x<门�
 team_best_stage: -
 team_best_speedup: -
 sealed: no
-next: 华为深层数值问题(online+two-pass均败);5/8已是208发1队过线题的好成绩;冲分优先
-updated: 2026-09-05
+next: 逐阶段诊断已实现但插桩有观察效应;需要目标原失败重放,不再将两种失败形态称数值永久不可修
+updated: 2026-09-08
 ```
 
 ## S0 开发进度（2026-09-05）
@@ -49,3 +49,11 @@ updated: 2026-09-05
 - 昆仑仍败（uni_sram 未被 BLOCK_N=16 + coreTiling 清除）→ conclusive 封轴
 - 6 芯 correctness 过；燧原 0.013x 低于门槛；华为数值问题
 - **T50 最终定格 6 芯 correctness / 5 芯过门槛**
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+实现华为 QK/max/exp/sum/PV 独立诊断副本；同输入分进程执行。代理完整测试通过，但插桩改变818/6144个最终FP32位值，存在观察效应，不能用当前trace判定目标首差。
+
+- source `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`；verification `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`。4 个测试方法、42 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t50-release1/verification.json`，SHA256 `b49b9d20b0fb66f2685f193428ffc2465b4b4b136c9a5cbb2b677338cbaf421e`；日志 SHA256 `7e4ec08054da182e1ec9c6931edcaf04a6032a69274edaf609caa29a5af1e888`。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

@@ -9,8 +9,8 @@ platform: 5/8(e2,10414已终态)
 team_best_stage: -
 team_best_speedup: -
 sealed: no
-next: 三芯失败均已终态;仅固定源码目标复现定位首分歧后重开,非额度用尽
-updated: 2026-09-07
+next: 阶段探针/67M代理stress通过;真实三芯失败仍待目标原输入复现,无新生产修复或ZIP
+updated: 2026-09-08
 ```
 
 ## S0 单遍融合 kernel（2026-09-06，远端 GPU 全过）
@@ -72,3 +72,11 @@ updated: 2026-09-07
 最新 E2/sub10414 已终态 invalid_correctness，天数/沐曦/海光/A/B五芯通过；燧原/昆仑/华为失败，无有效均值。旧pending与当日额度耗尽措辞过期；本轮未提交。
 - 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/tasks-now.json` SHA256 `fc73368c3d98b228b0c7815d6ec1e9042a58af8d953337fff58990daec1474fc`。
 - 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/54-submissions-now.json` SHA256 `d5e160132b38dc9eb7f53cf8671f861a4223a7a89bcd8538da3d0fa20b6efd05`。
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+新增norm/rotary/V取证与准确cache宽度测试，67M输入stress进入必需集。华为源码大形状代理K容差通过、V bitwise相等，插桩不改最终输出；未拿到实际平台失败输入，未声称生产修复。
+
+- source `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`；verification `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`。8 个测试方法、27 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t54-release1/verification.json`，SHA256 `bfb27398beaad6298dc0515a2f59f703ec99ff446dc1b478c36ea3e15fbd432e`；日志 SHA256 `11242e63d9605f5f53f8c6d22efd24424383215ed18d6c2ee2a24aee8d7f7b10`。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

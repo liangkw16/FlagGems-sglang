@@ -10,8 +10,8 @@ team_best_stage: s0
 team_best_commit: d7d8c4793278062f55617693585ae2ab89c8fbcc
 team_best_speedup: -
 sealed: no
-next: 对齐各后端reference扫描/舍入;保留已知half失败,禁止带缺口提交
-updated: 2026-09-07
+next: 诊断已复现predicts[13]失配;release因expected_failure被拒,目标scan/舍入仍未修复,禁止带缺口提交
+updated: 2026-09-08
 ```
 
 状态：S0 候选就绪但**带已量化 limitation**。接受链（predicts 链 /
@@ -172,3 +172,11 @@ screening 8/8（含 1 个如实标注的 expectedFailure）。题目 atol=0 +
   aten 移植可能复用同分派。风险：hipCUB/厂商移植的内部配置可能不同，
   或需按芯 vendor 分形。工程量大但确定性、公开源码、0/6 队达标——
   破译即独有优势。
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+固定 BF16 seed1 重放后 predicts[13] 仍不同，accept_index/accept_token_num 相同；候选与插桩输出相同。既有 expectedFailure 在 release 门禁明确被拒，未打包。
+
+- source `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`；verification `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`。9 个测试方法、110 次实际 kernel 调用；选定 NVIDIA/代理范围门禁失败。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t44-release1/verification.json`，SHA256 `36bcd96283ae08d5a49fab88bce16c1a7c67946a109502bb3144317a18256035`；日志 SHA256 `813f085634fec95e2e05f32fb158d4ac8d07c51883a780899b92c6c07054a2d6`。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

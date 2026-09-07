@@ -10,8 +10,8 @@ team_best_stage: e3
 team_best_commit: 6e3a1c4e64304d017ded08cabb6445b9152776f2
 team_best_speedup: 14.1051875
 sealed: no
-next: e6天数预路由水位带内无法归因,轴关闭;维持E3守榜(14.105x);后续按逐芯晋级纪律择机
-updated: 2026-09-06
+next: 华为token tile8及rank>128修复代理通过/ZIP验签;等待华为正确性和长短段性能复验
+updated: 2026-09-08
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -198,3 +198,12 @@ is_team_best=max 保证零下行）。
   记 invalid_correctness，team best 不受影响（E3 14.105 保持）
 - 处置：候选字节封存（`41d8088`）；按崩溃族协议，燧原盒子恢复
   窗口的重载需用户逐发明示授权
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+华为 segment 内 token tile8 复用元数据，空段先判空；新增 rank 循环覆盖 >128。代理长段约2.70x、短段约0.98x，目标性能未验证。
+
+- source `26a95766b179d263916e9483dfc8d2343c40406a`；verification `26a95766b179d263916e9483dfc8d2343c40406a`。12 个测试方法、49 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t46-release1/verification.json`，SHA256 `57a4ebefbefb8ae3901b9fccd9e8540791549797ed283f08486a49a34c1f82c0`；日志 SHA256 `08ceae4ceb4f57c04b055779a04638e65a7a5c4c01b19e29597f68fa1bcfb00a`。
+- 不可变 ZIP `artifacts/competition/chunked_embedding_lora_a/research-20260908-26a9576/chunked_embedding_lora_a.zip`，SHA256 `13388ecaeda1cd8edb8dcb17d4a40e728f740186d25e2f5194e1ec60b1e3cd7d`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

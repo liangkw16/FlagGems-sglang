@@ -9,8 +9,8 @@ platform: 8/8(e2,10747,2.36478125x首次有效)
 team_best_stage: e11
 team_best_speedup: 2.50278125
 sealed: no
-next: 当日收官:TB=E11 2.50278125(10887,华为1.354/五强芯持平);距榜首2.816469差0.314;燧原/昆仑C层瓶颈定格0.55,架构内空间用尽;明日30发额度,新证据=榜首结构泄露或跨题可迁移结构
-updated: 2026-09-07
+next: PTX已证实16B访存,本轮向量化轴停止;保留E11,无新生产候选或ZIP
+updated: 2026-09-08
 team_best_commit: d1d687d3974c8ceccb7c7bb491124edce6e0ea83
 ```
 
@@ -541,3 +541,11 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
   明日缓冲。
 - 证据 `e11-3a87cac/validation/57-submit.json`、
   `validation/57-status-final.json`。
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+现有FP32/BF16 fast kernel的PTX均已包含ld/st.global.v4.b32，即16B访存；完整代理测试通过，不再增加宽访存分支。
+
+- source `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`；verification `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`。5 个测试方法、19 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t57-release1/verification.json`，SHA256 `e936b52311d4be4c34d50ebc36746a5e12ce9bdbb88f9b34be6ad2cba6acc49d`；日志 SHA256 `2af1b8332ddf78ffcf93ee0a3c9fe18b3fc9b1ba38e903ca3cca7aa7b2c3b223`。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

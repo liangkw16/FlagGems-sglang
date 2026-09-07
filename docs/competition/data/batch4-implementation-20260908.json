@@ -1,0 +1,3544 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-09-08T00:37:24.696512+08:00",
+  "baseline_commit": "2acbdc054bedd0d72b9342efdeea86e7da393e32",
+  "scope": "Pre-submission local/proxy validation only; no platform preflight, upload or submission",
+  "artifact_root": "/Users/bytedance/ccc/flagos/artifacts/competition/batch4-implementation-20260907",
+  "validation": [
+    {
+      "operator": "act_and_mul",
+      "source_commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "verification_commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/act_and_mul.py"
+      ],
+      "unexecuted_sources": [
+        "src/flaggems_sglang/runtime/backend/_amd/ops/act_and_mul.py",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/act_and_mul.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/act_and_mul.py",
+        "src/flaggems_sglang/runtime/backend/_hygon/ops/act_and_mul.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/act_and_mul.py",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/act_and_mul.py"
+      ],
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_amd/ops/act_and_mul.py",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/act_and_mul.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/act_and_mul.py",
+        "src/flaggems_sglang/runtime/backend/_hygon/ops/act_and_mul.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/act_and_mul.py",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/act_and_mul.py"
+      ],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/act_and_mul.py": "0fc69482922dcd6f79307ea41d730974b389f2ef98e92c07db409687e557295b",
+        "src/flaggems_sglang/runtime/backend/_amd/ops/act_and_mul.py": "946046222b2b08b769f50ab4bcbbb040e4d543afe982f2ca200ba978e4eeaa68",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/act_and_mul.py": "db3b8b424dce0e4648f8f4d7fd92fdbeb508185e873999ea39076c42608f9e86",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/act_and_mul.py": "bf30cb7b1157a5c11edc6234b0961ab5880cc8197059f6ea9422fdb074cddd9f",
+        "src/flaggems_sglang/runtime/backend/_hygon/ops/act_and_mul.py": "c36f32a0d3478fda37930f2038ebecd881dd99cbcd6d3392dc140b8be8240653",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/act_and_mul.py": "1a5ade6d707b2b1e532decf518bd131f6acd2ba18a78cf1382e97c7fc89f2189",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/act_and_mul.py": "df351d81d900d88074a3f83982a9d8f210f31c618ae3bea0d8d167734166b9b3",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_act_and_mul.py": "3b0b0fe6bb199e600f26c3dc2d1f757ffdf78aa819ee3e5c2eb75d4f50245ec6"
+      },
+      "task": 42,
+      "stage": "t42-release1",
+      "receipt_sha256": "0065a84045e37aba7fe3e8214070929513c55e572332f2589dfd54f766d00c34",
+      "log_sha256": "2281433114927e3978a08f26797f29191879f0906f1c1556cc1ee3430d2e2259",
+      "exit_code": 0,
+      "tests_run": 14,
+      "test_and_subtest_records": 92,
+      "source_calls": {
+        "src/flaggems_sglang/ops/act_and_mul.py": 88
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/act_and_mul.py": 84
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "causal_conv1d_update",
+      "source_commit": "8ba31a102f4ef0430c08f12c4622b27430915071",
+      "verification_commit": "8ba31a102f4ef0430c08f12c4622b27430915071",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/causal_conv1d_update.py"
+      ],
+      "unexecuted_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/causal_conv1d_update.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/causal_conv1d_update.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/causal_conv1d_update.py"
+      ],
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/causal_conv1d_update.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/causal_conv1d_update.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/causal_conv1d_update.py"
+      ],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/causal_conv1d_update.py": "f5be2835944d0781bd31ccd20c515ba9cb500c0380940e8b6c49be18f9ce3372",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/causal_conv1d_update.py": "a3a5cd981d492def26fef2745a527a22e4dce207429dfb8566386e927332a49d",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/causal_conv1d_update.py": "57d4825f20b864d1722f8760a8707d0be5e90e5f12038a8fd05809f7f38d43d8",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/causal_conv1d_update.py": "8086def1f50ec326ab7634010b62edcf950e6e78f52995d8bde74320098d3f20",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_causal_conv1d_update.py": "fcb1fc13772c2dc8f36e92187f678ea9838ff283b77e592849ea0efad5cf31b4"
+      },
+      "task": 43,
+      "stage": "t43-release1",
+      "receipt_sha256": "9210e672569db770418288a82c50b69a89d2f7de90763de7867dda4cbda51212",
+      "log_sha256": "5b6652e3d3229686e2a22a8dbc6283aced00127e7887971660e1463c05807706",
+      "exit_code": 0,
+      "tests_run": 11,
+      "test_and_subtest_records": 104,
+      "source_calls": {
+        "src/flaggems_sglang/ops/causal_conv1d_update.py": 97
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/causal_conv1d_update.py": 96
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "chain_speculative_sampling",
+      "source_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "verification_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/chain_speculative_sampling.py"
+      ],
+      "unexecuted_sources": [],
+      "target_unverified_sources": [],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/chain_speculative_sampling.py": "c253f186bb42633e7de95d9a363752b2d37ade453415efdac6f924f9fd8ff735",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_chain_speculative_sampling.py": "20768c5010eb86e2e9e29e8e57bd9bce589b6798d99c5ffb37b3bf593b7fe392"
+      },
+      "task": 44,
+      "stage": "t44-release1",
+      "receipt_sha256": "36bcd96283ae08d5a49fab88bce16c1a7c67946a109502bb3144317a18256035",
+      "log_sha256": "813f085634fec95e2e05f32fb158d4ac8d07c51883a780899b92c6c07054a2d6",
+      "exit_code": 1,
+      "tests_run": 9,
+      "test_and_subtest_records": 20,
+      "source_calls": {
+        "src/flaggems_sglang/ops/chain_speculative_sampling.py": 56
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/chain_speculative_sampling.py": 110
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "expected_failures": 1,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "chunk_scaled_dot_kkt",
+      "source_commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "verification_commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/chunk_scaled_dot_kkt.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunk_scaled_dot_kkt.py"
+      ],
+      "unexecuted_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/chunk_scaled_dot_kkt.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunk_scaled_dot_kkt.py"
+      ],
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/chunk_scaled_dot_kkt.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunk_scaled_dot_kkt.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunk_scaled_dot_kkt.py"
+      ],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/chunk_scaled_dot_kkt.py": "b9072313d76ce351986479934aa1d2624d85d0e21c87ecaaabc367452b556b87",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/chunk_scaled_dot_kkt.py": "caf93043e1df657e15a7644e0b18af11a2ece8e45234b36bdfbc9531a3593ca4",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunk_scaled_dot_kkt.py": "eafa69b8350870398e33754a9979b91601ea884f42f815b9557d4e748ba30332",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunk_scaled_dot_kkt.py": "5ef2b9313ca56b4a3799df12173bc79baf9c0ccd45a1ae005202304af18274f0",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_chunk_scaled_dot_kkt.py": "7bcc787f603df5ff23786819a581e416a2a7c5c5a8b2a045e7e5f1f9b9dda2d9"
+      },
+      "task": 45,
+      "stage": "t45-release1",
+      "receipt_sha256": "1169cd5dda63d2a93ecae892c67e094fe00f2fec1d3cb54309a4edef76a399f1",
+      "log_sha256": "feb08f14cf9daf2d235bb65d06abb137c879b63ac9b1641e4927b84220d79540",
+      "exit_code": 0,
+      "tests_run": 10,
+      "test_and_subtest_records": 44,
+      "source_calls": {
+        "src/flaggems_sglang/ops/chunk_scaled_dot_kkt.py": 29,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunk_scaled_dot_kkt.py": 10
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/chunk_scaled_dot_kkt.py": 27,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunk_scaled_dot_kkt.py": 20
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "chunked_embedding_lora_a",
+      "source_commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "verification_commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/chunked_embedding_lora_a.py",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/chunked_embedding_lora_a.py"
+      ],
+      "unexecuted_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_embedding_lora_a.py",
+        "src/flaggems_sglang/runtime/backend/_hygon/ops/chunked_embedding_lora_a.py",
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/chunked_embedding_lora_a.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_embedding_lora_a.py",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/chunked_embedding_lora_a.py"
+      ],
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/chunked_embedding_lora_a.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_embedding_lora_a.py",
+        "src/flaggems_sglang/runtime/backend/_hygon/ops/chunked_embedding_lora_a.py",
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/chunked_embedding_lora_a.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_embedding_lora_a.py",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/chunked_embedding_lora_a.py"
+      ],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/chunked_embedding_lora_a.py": "ad54c22cd6750e28ff0f54224b34038ee45805232652ad8a0ea1e76115bfe6ea",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/chunked_embedding_lora_a.py": "96790552b97c286fe1e7057bff4e4150341a3e62283c59e631f9d70d6e2f486c",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_embedding_lora_a.py": "aa5be7776a96805d731a6179b3ead391c19e394187205d9aa58675e6d228bee5",
+        "src/flaggems_sglang/runtime/backend/_hygon/ops/chunked_embedding_lora_a.py": "2993445785b730ceb2473c43acbb956bf041551522c8945e7ef38d3cbd56516e",
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/chunked_embedding_lora_a.py": "5f6ffd3c374f5c692da945ca8525e75a908415573b6319c1be356a4dac174adf",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_embedding_lora_a.py": "c239d82cb0387d8c53cae81c035d539761c835f9c7e25ab566d880af9709c5eb",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/chunked_embedding_lora_a.py": "69ea13c75fdc6976add6505df3ce457835c2432f0f52f15e7cf69f924707df54",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_chunked_embedding_lora_a.py": "79dacd7d4a5fc38f3320b9c344c8b41efeda4494a06bfe2641a27160463cba95"
+      },
+      "task": 46,
+      "stage": "t46-release1",
+      "receipt_sha256": "57a4ebefbefb8ae3901b9fccd9e8540791549797ed283f08486a49a34c1f82c0",
+      "log_sha256": "08ceae4ceb4f57c04b055779a04638e65a7a5c4c01b19e29597f68fa1bcfb00a",
+      "exit_code": 0,
+      "tests_run": 12,
+      "test_and_subtest_records": 54,
+      "source_calls": {
+        "src/flaggems_sglang/ops/chunked_embedding_lora_a.py": 35,
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/chunked_embedding_lora_a.py": 15
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/chunked_embedding_lora_a.py": 34,
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/chunked_embedding_lora_a.py": 15
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "chunked_sgmv_expand",
+      "source_commit": "8ba31a102f4ef0430c08f12c4622b27430915071",
+      "verification_commit": "8ba31a102f4ef0430c08f12c4622b27430915071",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/chunked_sgmv_expand.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_expand.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_expand.py"
+      ],
+      "unexecuted_sources": [],
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_expand.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_expand.py"
+      ],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/chunked_sgmv_expand.py": "0d52334731d37bf9fab08888f5963908cd9edbe91d79b8c584bb3649b6fdf579",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_expand.py": "5cdf1c657a108f9fee016742f298f0aab9e264a174ee8dddbeb0edf43980f36b",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_expand.py": "a51fa38d50babc3a45ef177e6357408f4232bba1ae6f33230461a22d3ce08e4b",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_chunked_sgmv_expand.py": "9cc151172b02ed5ecad05f2138958c59b7e6378ba5a6f7dee050d8ccae9ec666"
+      },
+      "task": 47,
+      "stage": "t47-release1",
+      "receipt_sha256": "65545a1b6cbc33c6a5e15aeb923bf9c332eed78d492a678b2fcc0daae53c37e0",
+      "log_sha256": "0382828f0f48a4b62affadae30ad579444269d6165ed4bc6f416484aba45b232",
+      "exit_code": 0,
+      "tests_run": 12,
+      "test_and_subtest_records": 57,
+      "source_calls": {
+        "src/flaggems_sglang/ops/chunked_sgmv_expand.py": 26,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_expand.py": 12,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_expand.py": 12
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/chunked_sgmv_expand.py": 25,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_expand.py": 40,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_expand.py": 40
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "chunked_sgmv_shrink",
+      "source_commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "verification_commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/chunked_sgmv_shrink.py"
+      ],
+      "unexecuted_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py"
+      ],
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/chunked_sgmv_shrink.py"
+      ],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": "a2d53ce449daf52df5fddec49305350b654d79a2bbb9320d96048b121a46dce4",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": "af7a413ef50feb2f76d936feb3155e5d2b237f325c06748e0c02758d41d0112b",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/chunked_sgmv_shrink.py": "c793577a6eaf17ebd920a58b0e8aac30305310b918a5e23ad16867ff6845e3eb",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_chunked_sgmv_shrink.py": "5562a072443c938b99423cae9725e373281cbf9cdf0cc8a152d986995e7b0d3c"
+      },
+      "task": 48,
+      "stage": "t48-release1",
+      "receipt_sha256": "7f02b6837a843f77a35f04993b15eaf44c2305d8876860a4ac0276e3d3e44a74",
+      "log_sha256": "f023c3e3b871b63720a2d6a4c1a75595b5049ed2faf0169893ab2a79678ec5b8",
+      "exit_code": 1,
+      "tests_run": 6,
+      "test_and_subtest_records": 30,
+      "source_calls": {
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": 19,
+        "src/flaggems_sglang/runtime/backend/_metax/ops/chunked_sgmv_shrink.py": 7
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": 18,
+        "src/flaggems_sglang/runtime/backend/_metax/ops/chunked_sgmv_shrink.py": 0
+      },
+      "failures": 0,
+      "errors": 7,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "ernie45_rope_fused",
+      "source_commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "verification_commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/ernie45_rope_fused.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/ernie45_rope_fused.py"
+      ],
+      "unexecuted_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/ernie45_rope_fused.py"
+      ],
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/ernie45_rope_fused.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/ernie45_rope_fused.py"
+      ],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/ernie45_rope_fused.py": "863da143f4c39bc8cb9b44c6686ed8ed16c9dd0c371e4b8bd10893d9ce66a99a",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/ernie45_rope_fused.py": "f8bedf3116ee5ad09e698d23ad153a5df00d64957501163d69a92ecdea6df1e0",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/ernie45_rope_fused.py": "a40cbb4ed8f339bc87c4f9214e5734d8490f7ad9f8306e3db5599c5a8cb51162",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_ernie45_rope_fused.py": "a18e39f9328eac274331d9880663aba7b070396521cf4cf488e5a6451aaf27fc"
+      },
+      "task": 49,
+      "stage": "t49-release1",
+      "receipt_sha256": "99e82fc4a2640ca9d7f691870553773b84fec3a1ca1d95d68f0639328f9f22c9",
+      "log_sha256": "e70ce8849ceea5342b7b8c247e24ce3c23a6070862adf4235e75012c928fe5ba",
+      "exit_code": 0,
+      "tests_run": 6,
+      "test_and_subtest_records": 78,
+      "source_calls": {
+        "src/flaggems_sglang/ops/ernie45_rope_fused.py": 42,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/ernie45_rope_fused.py": 31
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/ernie45_rope_fused.py": 82,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/ernie45_rope_fused.py": 122
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "extend_attention",
+      "source_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "verification_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/extend_attention.py",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/extend_attention.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/extend_attention.py"
+      ],
+      "unexecuted_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/extend_attention.py"
+      ],
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/extend_attention.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/extend_attention.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/extend_attention.py"
+      ],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/extend_attention.py": "9396913442e68e7d26954979b0130fc99da4e0306e4e41152acf786575ba4143",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/extend_attention.py": "424fdf395230531199c6d585d3f4251dd914bda594e77367192c55e1e9451e17",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/extend_attention.py": "35ea4dcd9fb3abac7172915bb10cbbbbfa314fd1abbb1553bff04849aefc40c0",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/extend_attention.py": "bc9d8dafa69cf5cf55289664e2aa73a46fe4c6fb2b249ab178fb03cba2338169",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_extend_attention.py": "0ff77a69d193f599217f49f72d0edd4263a8e8bf6d61d1ff649ba438ee8ff616"
+      },
+      "task": 50,
+      "stage": "t50-release1",
+      "receipt_sha256": "b49b9d20b0fb66f2685f193428ffc2465b4b4b136c9a5cbb2b677338cbaf421e",
+      "log_sha256": "7e4ec08054da182e1ec9c6931edcaf04a6032a69274edaf609caa29a5af1e888",
+      "exit_code": 0,
+      "tests_run": 4,
+      "test_and_subtest_records": 60,
+      "source_calls": {
+        "src/flaggems_sglang/ops/extend_attention.py": 14,
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/extend_attention.py": 14,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/extend_attention.py": 14
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/extend_attention.py": 14,
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/extend_attention.py": 14,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/extend_attention.py": 14
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "fla_layernorm_gated",
+      "source_commit": "8ba31a102f4ef0430c08f12c4622b27430915071",
+      "verification_commit": "8ba31a102f4ef0430c08f12c4622b27430915071",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/fla_layernorm_gated.py",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/fla_layernorm_gated.py"
+      ],
+      "unexecuted_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/fla_layernorm_gated.py",
+        "src/flaggems_sglang/runtime/backend/_hygon/ops/fla_layernorm_gated.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fla_layernorm_gated.py",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/fla_layernorm_gated.py"
+      ],
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/fla_layernorm_gated.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/fla_layernorm_gated.py",
+        "src/flaggems_sglang/runtime/backend/_hygon/ops/fla_layernorm_gated.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fla_layernorm_gated.py",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/fla_layernorm_gated.py"
+      ],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/fla_layernorm_gated.py": "d952eda8ccac83995fb34a2a557fd11ecab428f00e79a5c6f1f03a096926e651",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/fla_layernorm_gated.py": "ac8b090dbda2158390ced51578011ab644f8d90a710e513e3a69bedc154e7f00",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/fla_layernorm_gated.py": "848f50149b4134ae58f6f0c228e9a7908e049950b10f511e3f302db5af59ab4b",
+        "src/flaggems_sglang/runtime/backend/_hygon/ops/fla_layernorm_gated.py": "712c38595eef274a95d559171b23c31edc3af1411b135757fbc378306083c260",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fla_layernorm_gated.py": "66e08be2b4d870028f63ddceb89dd6e6b66ed79ad333e29757ad901332b1ebdd",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/fla_layernorm_gated.py": "a7cd1e8a9807e0ce17d2d955aa0c27b47639242fb6bdcf6fd1069d956d2d2bf1",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_fla_layernorm_gated.py": "dc8e1281482839cecd2d225f89265caf1493803df135ab608516fb7f6959e0eb"
+      },
+      "task": 51,
+      "stage": "t51-release1",
+      "receipt_sha256": "389a23663a437cfaa2142a6877e4275911e2b5d0fa3459f47e69397bbeaacb4d",
+      "log_sha256": "56871542e29e698fe20501d6e58a7a96b048291deee476046353c2e97c182f91",
+      "exit_code": 0,
+      "tests_run": 7,
+      "test_and_subtest_records": 154,
+      "source_calls": {
+        "src/flaggems_sglang/ops/fla_layernorm_gated.py": 84,
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/fla_layernorm_gated.py": 64
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/fla_layernorm_gated.py": 83,
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/fla_layernorm_gated.py": 64
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "fused_dual_residual_rmsnorm",
+      "source_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "verification_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/fused_dual_residual_rmsnorm.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fused_dual_residual_rmsnorm.py"
+      ],
+      "unexecuted_sources": [
+        "src/flaggems_sglang/runtime/backend/_amd/ops/fused_dual_residual_rmsnorm.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/fused_dual_residual_rmsnorm.py"
+      ],
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_amd/ops/fused_dual_residual_rmsnorm.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/fused_dual_residual_rmsnorm.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fused_dual_residual_rmsnorm.py"
+      ],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/fused_dual_residual_rmsnorm.py": "692a5a1769b9bb4bc7a2c018a8c0ac16e73e26b7d2f46827df5bc5cc123427be",
+        "src/flaggems_sglang/runtime/backend/_amd/ops/fused_dual_residual_rmsnorm.py": "f254c779bd3200671f94645929a5a1040c8f85888cca329143fb203f6bc1b832",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/fused_dual_residual_rmsnorm.py": "1e1582905c142c7578321f610e3c8233f3a138f36d8c3ab626b4f81fb1b5dc78",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fused_dual_residual_rmsnorm.py": "257947698a394cbb541dea5f57c0cd8b3aac400cd86b28190b505de60003a287",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_fused_dual_residual_rmsnorm.py": "54b9d711532f224970ae7ab7874b9e0d3aeedbeeb25f3a31da30c04c108c43f1"
+      },
+      "task": 52,
+      "stage": "t52-release1",
+      "receipt_sha256": "d578cd3f99afc053f1fbc3a3c4dde5ec4ab235e1d22e92fcd7a71a8175ad06f5",
+      "log_sha256": "32871ab5032ced9c53d47900a351582a7958cd9ca09b3aa66acd62ace063d5ca",
+      "exit_code": 0,
+      "tests_run": 6,
+      "test_and_subtest_records": 25,
+      "source_calls": {
+        "src/flaggems_sglang/ops/fused_dual_residual_rmsnorm.py": 15,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fused_dual_residual_rmsnorm.py": 6
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/fused_dual_residual_rmsnorm.py": 14,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fused_dual_residual_rmsnorm.py": 6
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "fused_gdn_gating",
+      "source_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "verification_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/fused_gdn_gating.py"
+      ],
+      "unexecuted_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/fused_gdn_gating.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/fused_gdn_gating.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fused_gdn_gating.py",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/fused_gdn_gating.py"
+      ],
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/fused_gdn_gating.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/fused_gdn_gating.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fused_gdn_gating.py",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/fused_gdn_gating.py"
+      ],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/fused_gdn_gating.py": "e25153dbfa394a239a630edbbb38d2cf8027958fe37499702273dfe87e701bfd",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/fused_gdn_gating.py": "7f755ea83c99a3bdfd9c0cc2e20b4e4c7b59387a9a218dc5b20e23b98bb332a9",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/fused_gdn_gating.py": "99c6e86d642ca74b8bf22d6ce4e931213280aefe267ae282c5b23da1e0bd8f96",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fused_gdn_gating.py": "7b3b580a76a6b3d5e97dd3c19522a55b3c9010b7e08a364136f42d7bfd476961",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/fused_gdn_gating.py": "039fec3180867a28cda46eb53712e7f2670a8512fa87e25a453dc1dfb1f32a86",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_fused_gdn_gating.py": "79e0363b9aa3c478f788f22f4f0c407fa760bc3fca01b9ef58623a839c8ae0a4"
+      },
+      "task": 53,
+      "stage": "t53-release2",
+      "receipt_sha256": "f9646a2d6fee56ef9e75736765876976bab6dbc1e82070cc2e3987dc53f3ac34",
+      "log_sha256": "600b37ab74da4c723e0993732e9df4d5159a4d48bcd27c0f9a45b79f772ef096",
+      "exit_code": 0,
+      "tests_run": 7,
+      "test_and_subtest_records": 30,
+      "source_calls": {
+        "src/flaggems_sglang/ops/fused_gdn_gating.py": 26
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/fused_gdn_gating.py": 25
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "fused_norm_rope_stacked",
+      "source_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "verification_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/fused_norm_rope_stacked.py",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/fused_norm_rope_stacked.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fused_norm_rope_stacked.py"
+      ],
+      "unexecuted_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/fused_norm_rope_stacked.py"
+      ],
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/fused_norm_rope_stacked.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/fused_norm_rope_stacked.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fused_norm_rope_stacked.py"
+      ],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/fused_norm_rope_stacked.py": "d21ae1af9fd0d21f581f5e9f3c39dc169e1e773a852c939a43f2cc8312e0426b",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/fused_norm_rope_stacked.py": "7eda199bf7f9df8cad6f86ddb729d6ffba205b6328e924b6d2bcc30b776dd52d",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/fused_norm_rope_stacked.py": "3ee2bb49eacab39850060a277a5cbacd3fba481c2780357679a41ec7f9807cec",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fused_norm_rope_stacked.py": "016b4c9a615fefd42d2836760ffdbc75fe05c309392d406ca4f5f593f32663a3",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_fused_norm_rope_stacked.py": "9c6a4743b9d9a053ba26f0d1b871008da22025127b49596d2420872a9fa7ac98"
+      },
+      "task": 54,
+      "stage": "t54-release1",
+      "receipt_sha256": "bfb27398beaad6298dc0515a2f59f703ec99ff446dc1b478c36ea3e15fbd432e",
+      "log_sha256": "11242e63d9605f5f53f8c6d22efd24424383215ed18d6c2ee2a24aee8d7f7b10",
+      "exit_code": 0,
+      "tests_run": 8,
+      "test_and_subtest_records": 30,
+      "source_calls": {
+        "src/flaggems_sglang/ops/fused_norm_rope_stacked.py": 17,
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/fused_norm_rope_stacked.py": 5,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fused_norm_rope_stacked.py": 5
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/fused_norm_rope_stacked.py": 17,
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/fused_norm_rope_stacked.py": 5,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fused_norm_rope_stacked.py": 5
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "hc_head",
+      "source_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "verification_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/hc_head.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/hc_head.py"
+      ],
+      "unexecuted_sources": [],
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/hc_head.py"
+      ],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/hc_head.py": "173e387098666b37c69e5cf3e06485729fb206eee7b868671bbfa4b5abf84d06",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/hc_head.py": "7eddd591ebf252078ed3728f03ffc965d8d5ffe080f082ac40f276aaa1ac7bd9",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_hc_head.py": "d0cea77446d4d27728cd7f0c56126ad52f822874230cb0cff0bb57f77b3f45c9"
+      },
+      "task": 55,
+      "stage": "t55-release1",
+      "receipt_sha256": "40c7e84fa40b1bebd12eb107abed8e3c281d46a3c530fbe9d437d1b5552f2b98",
+      "log_sha256": "fa3f4670b3a2b91d5398451035b00a956dd98a1ce025d7f83f9b92031aab7149",
+      "exit_code": 0,
+      "tests_run": 2,
+      "test_and_subtest_records": 20,
+      "source_calls": {
+        "src/flaggems_sglang/ops/hc_head.py": 10,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/hc_head.py": 4
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/hc_head.py": 10,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/hc_head.py": 12
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "l2norm",
+      "source_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "verification_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/l2norm.py"
+      ],
+      "unexecuted_sources": [],
+      "target_unverified_sources": [],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/l2norm.py": "96a118af53c15ae0bad203974312ac07dc6c3ea3ee66430b27c5e3ef63053414",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_l2norm.py": "b4f53d47efcb5bd3d9408b02a6d212e51aced44fa49e7508123ae30438f0224b"
+      },
+      "task": 56,
+      "stage": "t56-release2",
+      "receipt_sha256": "6ee0122303a516aa07bde4b47364e2d6d42821cd0ec33406b8cd89a791302ec2",
+      "log_sha256": "a23392a257e8c60d95702ba0414007f5325547c54f5c3db81abd42d685ba4854",
+      "exit_code": 0,
+      "tests_run": 8,
+      "test_and_subtest_records": 133,
+      "source_calls": {
+        "src/flaggems_sglang/ops/l2norm.py": 129
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/l2norm.py": 128
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "log_scaling_tau",
+      "source_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "verification_commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/log_scaling_tau.py"
+      ],
+      "unexecuted_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/log_scaling_tau.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/log_scaling_tau.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/log_scaling_tau.py"
+      ],
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/log_scaling_tau.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/log_scaling_tau.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/log_scaling_tau.py"
+      ],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/log_scaling_tau.py": "58fbdfa0c263bc54f46486cbdd199ea88b15cc3c3b5966e5bab3dc9939f4b731",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/log_scaling_tau.py": "58fbdfa0c263bc54f46486cbdd199ea88b15cc3c3b5966e5bab3dc9939f4b731",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/log_scaling_tau.py": "58fbdfa0c263bc54f46486cbdd199ea88b15cc3c3b5966e5bab3dc9939f4b731",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/log_scaling_tau.py": "87925271da48d8815497902441a7123b8701b9431c4953f3394b025394218d89",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_log_scaling_tau.py": "4cd5218f2301fd188d3e0a7eb6f766026b790444be8e7aca319095694cb06d6d"
+      },
+      "task": 57,
+      "stage": "t57-release1",
+      "receipt_sha256": "e936b52311d4be4c34d50ebc36746a5e12ce9bdbb88f9b34be6ad2cba6acc49d",
+      "log_sha256": "2af1b8332ddf78ffcf93ee0a3c9fe18b3fc9b1ba38e903ca3cca7aa7b2c3b223",
+      "exit_code": 0,
+      "tests_run": 5,
+      "test_and_subtest_records": 43,
+      "source_calls": {
+        "src/flaggems_sglang/ops/log_scaling_tau.py": 29
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/log_scaling_tau.py": 19
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    },
+    {
+      "operator": "w8a8_block_int8_matmul",
+      "source_commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "verification_commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "execution_sources": [
+        "src/flaggems_sglang/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/w8a8_block_int8_matmul.py"
+      ],
+      "unexecuted_sources": [
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py"
+      ],
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/w8a8_block_int8_matmul.py"
+      ],
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/w8a8_block_int8_matmul.py": "d584935c08e615f0fe681f24a58e010cb59d3405fb8be6a50a4574535c64ff9e",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py": "1cfbad625a81aaf00e58fb2a50612d421588f556ed01fb87b9ed8eb19c550f10",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/w8a8_block_int8_matmul.py": "642755ececbb8b4f9a60e3dfe15501365486f57f8437495448889a067383b0a0",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_w8a8_block_int8_matmul.py": "3f490240f940dfcd937e111877de4d501e38ea0124cf2d6dae71dbe9356b3a78"
+      },
+      "task": 58,
+      "stage": "t58-release1",
+      "receipt_sha256": "27ad5180edb00e2702b1e4bdda7122b2a9229fa6ac02d73f260a872b70a19109",
+      "log_sha256": "0d55f76f5f476e30857a93a5cd779ad0d904163619acde76a76dbde19fae26ea",
+      "exit_code": 1,
+      "tests_run": 6,
+      "test_and_subtest_records": 42,
+      "source_calls": {
+        "src/flaggems_sglang/ops/w8a8_block_int8_matmul.py": 24,
+        "src/flaggems_sglang/runtime/backend/_metax/ops/w8a8_block_int8_matmul.py": 13
+      },
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/w8a8_block_int8_matmul.py": 23,
+        "src/flaggems_sglang/runtime/backend/_metax/ops/w8a8_block_int8_matmul.py": 0
+      },
+      "failures": 0,
+      "errors": 13,
+      "skipped": 0,
+      "expected_failures": 0,
+      "unexpected_successes": 0
+    }
+  ],
+  "performance": {
+    "perf2": {
+      "result_sha256": "f94f5c3ac3eece7237339bda42eae3b1abf129d4af7eb7035dc88a08ec9aa1a8",
+      "device": "NVIDIA GeForce RTX 5070 Ti",
+      "torch": "2.13.0+cu130",
+      "triton": "3.7.1",
+      "script_sha256": "cd304881bddef5db8cc8e053aa1b4e752e6a9c4dbbd36e0232615e7f4063e8d2",
+      "timing": "6 alternating AB/BA pairs, 30 complete wrapper calls per measurement, wall clock with CUDA synchronization",
+      "cases": [
+        {
+          "operator": "causal_conv1d_update",
+          "case": "seq1-w2",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "ffa794b7cd13e604eef0c38fc897520eefaa63e1745c0cf3148ee00c6e67f464",
+            "f5be2835944d0781bd31ccd20c515ba9cb500c0380940e8b6c49be18f9ce3372"
+          ],
+          "baseline_us": [
+            12.128733333333333,
+            11.930366666666666,
+            11.530266666666666,
+            11.5914,
+            11.4955,
+            11.5022
+          ],
+          "candidate_us": [
+            12.005166666666666,
+            11.918,
+            11.8649,
+            11.865233333333334,
+            11.703933333333332,
+            11.694566666666667
+          ],
+          "median_paired_speedup": 0.982870968969368
+        },
+        {
+          "operator": "causal_conv1d_update",
+          "case": "seq1-w4",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "ffa794b7cd13e604eef0c38fc897520eefaa63e1745c0cf3148ee00c6e67f464",
+            "f5be2835944d0781bd31ccd20c515ba9cb500c0380940e8b6c49be18f9ce3372"
+          ],
+          "baseline_us": [
+            11.842533333333332,
+            11.74,
+            11.512566666666668,
+            11.747,
+            11.533266666666666,
+            11.487866666666667
+          ],
+          "candidate_us": [
+            12.072966666666668,
+            11.799100000000001,
+            11.8512,
+            24.268099999999997,
+            11.835166666666666,
+            11.7657
+          ],
+          "median_paired_speedup": 0.9754387190177338
+        },
+        {
+          "operator": "causal_conv1d_update",
+          "case": "seq4-w2",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "ffa794b7cd13e604eef0c38fc897520eefaa63e1745c0cf3148ee00c6e67f464",
+            "f5be2835944d0781bd31ccd20c515ba9cb500c0380940e8b6c49be18f9ce3372"
+          ],
+          "baseline_us": [
+            11.790766666666666,
+            11.8669,
+            11.580033333333333,
+            11.621433333333332,
+            11.500200000000001,
+            11.488866666666667
+          ],
+          "candidate_us": [
+            11.8956,
+            11.853533333333333,
+            11.899633333333334,
+            11.837166666666667,
+            11.8619,
+            11.760366666666666
+          ],
+          "median_paired_speedup": 0.9793444515462444
+        },
+        {
+          "operator": "causal_conv1d_update",
+          "case": "seq4-w4",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "ffa794b7cd13e604eef0c38fc897520eefaa63e1745c0cf3148ee00c6e67f464",
+            "f5be2835944d0781bd31ccd20c515ba9cb500c0380940e8b6c49be18f9ce3372"
+          ],
+          "baseline_us": [
+            11.6221,
+            11.407366666666666,
+            11.394666666666666,
+            11.3596,
+            11.3406,
+            11.404666666666666
+          ],
+          "candidate_us": [
+            11.794766666666666,
+            11.745333333333335,
+            11.6742,
+            11.634466666666667,
+            11.665166666666666,
+            12.150766666666666
+          ],
+          "median_paired_speedup": 0.9741159420068
+        },
+        {
+          "operator": "causal_conv1d_update",
+          "case": "seq16-w2",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "ffa794b7cd13e604eef0c38fc897520eefaa63e1745c0cf3148ee00c6e67f464",
+            "f5be2835944d0781bd31ccd20c515ba9cb500c0380940e8b6c49be18f9ce3372"
+          ],
+          "baseline_us": [
+            29.025033333333333,
+            28.894766666666666,
+            28.971933333333336,
+            28.89046666666667,
+            29.019033333333333,
+            28.8654
+          ],
+          "candidate_us": [
+            28.9285,
+            29.0317,
+            28.829666666666668,
+            29.11253333333333,
+            28.810299999999998,
+            28.960933333333333
+          ],
+          "median_paired_speedup": 1.000019133168459
+        },
+        {
+          "operator": "causal_conv1d_update",
+          "case": "seq16-w4",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "ffa794b7cd13e604eef0c38fc897520eefaa63e1745c0cf3148ee00c6e67f464",
+            "f5be2835944d0781bd31ccd20c515ba9cb500c0380940e8b6c49be18f9ce3372"
+          ],
+          "baseline_us": [
+            28.5024,
+            29.161966666666668,
+            32.258766666666666,
+            28.200466666666667,
+            28.324366666666666,
+            28.453966666666666
+          ],
+          "candidate_us": [
+            28.612266666666667,
+            28.493366666666667,
+            28.527766666666665,
+            28.471666666666668,
+            28.531133333333337,
+            28.494033333333334
+          ],
+          "median_paired_speedup": 0.9973770063732135
+        },
+        {
+          "operator": "fla_layernorm_gated",
+          "case": "32x128-rmsFalse",
+          "vendor_source": "ascend",
+          "source_sha256": [
+            "92baf6f3a08d4675cee828d451250be42a8b977d3f889eb59ca8c582654fb0c4",
+            "ac8b090dbda2158390ced51578011ab644f8d90a710e513e3a69bedc154e7f00"
+          ],
+          "baseline_us": [
+            9.652066666666668,
+            9.392266666666666,
+            9.3081,
+            9.3879,
+            9.615366666666667,
+            9.314133333333332
+          ],
+          "candidate_us": [
+            9.512133333333333,
+            9.689133333333332,
+            9.320433333333332,
+            9.350833333333334,
+            9.312100000000001,
+            9.358533333333332
+          ],
+          "median_paired_speedup": 1.0013203692882235
+        },
+        {
+          "operator": "fla_layernorm_gated",
+          "case": "32x128-rmsTrue",
+          "vendor_source": "ascend",
+          "source_sha256": [
+            "92baf6f3a08d4675cee828d451250be42a8b977d3f889eb59ca8c582654fb0c4",
+            "ac8b090dbda2158390ced51578011ab644f8d90a710e513e3a69bedc154e7f00"
+          ],
+          "baseline_us": [
+            9.612366666666667,
+            9.403933333333333,
+            9.424966666666666,
+            9.358166666666666,
+            9.308433333333333,
+            9.401933333333332
+          ],
+          "candidate_us": [
+            9.815066666666668,
+            9.482433333333333,
+            9.3986,
+            9.386266666666666,
+            9.3879,
+            9.436
+          ],
+          "median_paired_speedup": 0.9940556236803234
+        },
+        {
+          "operator": "fla_layernorm_gated",
+          "case": "256x1024-rmsFalse",
+          "vendor_source": "ascend",
+          "source_sha256": [
+            "92baf6f3a08d4675cee828d451250be42a8b977d3f889eb59ca8c582654fb0c4",
+            "ac8b090dbda2158390ced51578011ab644f8d90a710e513e3a69bedc154e7f00"
+          ],
+          "baseline_us": [
+            9.638066666666667,
+            9.464066666666668,
+            9.426,
+            9.426633333333333,
+            9.414966666666666,
+            9.654766666666667
+          ],
+          "candidate_us": [
+            9.560933333333333,
+            9.471433333333332,
+            9.449366666666666,
+            9.486433333333332,
+            9.448033333333333,
+            9.475766666666667
+          ],
+          "median_paired_speedup": 0.9983746968732121
+        },
+        {
+          "operator": "fla_layernorm_gated",
+          "case": "256x1024-rmsTrue",
+          "vendor_source": "ascend",
+          "source_sha256": [
+            "92baf6f3a08d4675cee828d451250be42a8b977d3f889eb59ca8c582654fb0c4",
+            "ac8b090dbda2158390ced51578011ab644f8d90a710e513e3a69bedc154e7f00"
+          ],
+          "baseline_us": [
+            9.778633333333334,
+            9.564566666666668,
+            9.558566666666668,
+            9.760299999999999,
+            9.597966666666666,
+            9.587633333333333
+          ],
+          "candidate_us": [
+            9.625366666666666,
+            9.611,
+            9.773966666666666,
+            9.5135,
+            9.581633333333333,
+            9.562266666666666
+          ],
+          "median_paired_speedup": 1.0021787191290497
+        },
+        {
+          "operator": "fla_layernorm_gated",
+          "case": "32x8192-rmsFalse",
+          "vendor_source": "ascend",
+          "source_sha256": [
+            "92baf6f3a08d4675cee828d451250be42a8b977d3f889eb59ca8c582654fb0c4",
+            "ac8b090dbda2158390ced51578011ab644f8d90a710e513e3a69bedc154e7f00"
+          ],
+          "baseline_us": [
+            9.7663,
+            9.472066666666667,
+            9.471433333333332,
+            9.489433333333332,
+            9.564566666666668,
+            9.550533333333332
+          ],
+          "candidate_us": [
+            9.647733333333333,
+            9.5412,
+            9.504466666666668,
+            9.845433333333332,
+            9.510166666666667,
+            9.602633333333333
+          ],
+          "median_paired_speedup": 0.9955494230387447
+        },
+        {
+          "operator": "fla_layernorm_gated",
+          "case": "32x8192-rmsTrue",
+          "vendor_source": "ascend",
+          "source_sha256": [
+            "92baf6f3a08d4675cee828d451250be42a8b977d3f889eb59ca8c582654fb0c4",
+            "ac8b090dbda2158390ced51578011ab644f8d90a710e513e3a69bedc154e7f00"
+          ],
+          "baseline_us": [
+            9.754933333333332,
+            9.5402,
+            9.460066666666668,
+            9.497433333333332,
+            9.473066666666668,
+            9.510166666666667
+          ],
+          "candidate_us": [
+            9.613333333333333,
+            9.542533333333333,
+            9.805366666666666,
+            9.4811,
+            9.5018,
+            9.511833333333334
+          ],
+          "median_paired_speedup": 0.9997901301926589
+        },
+        {
+          "operator": "l2norm",
+          "case": "32x64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "b40a4f421c140297acd5106ca279253d8ed01800f07a1bc7904003230f9bc0b5"
+          ],
+          "baseline_us": [
+            7.6627,
+            7.485,
+            7.327733333333334,
+            7.358766666666666,
+            7.337733333333333,
+            7.3982
+          ],
+          "candidate_us": [
+            7.903133333333333,
+            7.886100000000001,
+            7.7345,
+            7.782266666666667,
+            7.8002666666666665,
+            7.7365
+          ],
+          "median_paired_speedup": 0.9482735767248762
+        },
+        {
+          "operator": "l2norm",
+          "case": "4096x64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "b40a4f421c140297acd5106ca279253d8ed01800f07a1bc7904003230f9bc0b5"
+          ],
+          "baseline_us": [
+            7.451966666666666,
+            7.409233333333334,
+            7.3374,
+            7.332066666666667,
+            7.476,
+            7.329066666666667
+          ],
+          "candidate_us": [
+            7.701766666666666,
+            7.6620333333333335,
+            7.634633333333333,
+            7.559833333333333,
+            7.620933333333333,
+            7.5842
+          ],
+          "median_paired_speedup": 0.9672860151728271
+        },
+        {
+          "operator": "l2norm",
+          "case": "4096x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "b40a4f421c140297acd5106ca279253d8ed01800f07a1bc7904003230f9bc0b5"
+          ],
+          "baseline_us": [
+            7.4629666666666665,
+            7.352433333333334,
+            7.342066666666667,
+            7.304,
+            7.302333333333333,
+            7.3354
+          ],
+          "candidate_us": [
+            7.628266666666667,
+            7.550133333333333,
+            7.802266666666666,
+            7.700066666666666,
+            7.600233333333334,
+            7.627266666666666
+          ],
+          "median_paired_speedup": 0.9612688073275718
+        },
+        {
+          "operator": "l2norm",
+          "case": "4096x1024",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "b40a4f421c140297acd5106ca279253d8ed01800f07a1bc7904003230f9bc0b5"
+          ],
+          "baseline_us": [
+            8.018366666666667,
+            7.553466666666666,
+            7.571833333333333,
+            7.5792,
+            7.649,
+            7.6079
+          ],
+          "candidate_us": [
+            8.058766666666667,
+            7.647,
+            7.6313,
+            7.590533333333334,
+            7.610566666666666,
+            7.890433333333333
+          ],
+          "median_paired_speedup": 0.993597178602447
+        },
+        {
+          "operator": "act_and_mul",
+          "case": "rows1-stride1",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "c5b7a981ee79694664a77ff266ba6143866afa292858e5395d6de495bba15acb",
+            "0fc69482922dcd6f79307ea41d730974b389f2ef98e92c07db409687e557295b"
+          ],
+          "baseline_us": [
+            8.0227,
+            7.939866666666667,
+            7.7842666666666664,
+            7.799300000000001,
+            7.8537,
+            7.845
+          ],
+          "candidate_us": [
+            8.255799999999999,
+            8.1693,
+            8.164966666666666,
+            8.161933333333334,
+            8.135566666666666,
+            8.0731
+          ],
+          "median_paired_speedup": 0.9685497248560793
+        },
+        {
+          "operator": "act_and_mul",
+          "case": "rows1-stride2",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "c5b7a981ee79694664a77ff266ba6143866afa292858e5395d6de495bba15acb",
+            "0fc69482922dcd6f79307ea41d730974b389f2ef98e92c07db409687e557295b"
+          ],
+          "baseline_us": [
+            11.3536,
+            11.057033333333333,
+            11.084433333333333,
+            10.9956,
+            10.981233333333334,
+            10.993266666666667
+          ],
+          "candidate_us": [
+            8.472866666666667,
+            8.312899999999999,
+            8.2568,
+            8.2057,
+            8.335966666666668,
+            8.224766666666666
+          ],
+          "median_paired_speedup": 1.3383002077248733
+        },
+        {
+          "operator": "act_and_mul",
+          "case": "rows1024-stride1",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "c5b7a981ee79694664a77ff266ba6143866afa292858e5395d6de495bba15acb",
+            "0fc69482922dcd6f79307ea41d730974b389f2ef98e92c07db409687e557295b"
+          ],
+          "baseline_us": [
+            8.2875,
+            8.0778,
+            7.962233333333334,
+            7.994,
+            8.222066666666667,
+            8.011
+          ],
+          "candidate_us": [
+            8.566366666666667,
+            8.3226,
+            8.316566666666667,
+            8.358666666666666,
+            8.438799999999999,
+            8.388033333333333
+          ],
+          "median_paired_speedup": 0.9624203040456291
+        },
+        {
+          "operator": "act_and_mul",
+          "case": "rows1024-stride2",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "c5b7a981ee79694664a77ff266ba6143866afa292858e5395d6de495bba15acb",
+            "0fc69482922dcd6f79307ea41d730974b389f2ef98e92c07db409687e557295b"
+          ],
+          "baseline_us": [
+            14.103066666666667,
+            14.032633333333333,
+            14.024933333333333,
+            20.707133333333335,
+            14.119766666666667,
+            14.026266666666666
+          ],
+          "candidate_us": [
+            8.6943,
+            8.711666666666666,
+            15.776866666666667,
+            16.4525,
+            8.478233333333334,
+            8.414100000000001
+          ],
+          "median_paired_speedup": 1.6164456029366239
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "1x32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "24350fdb856494fdfd364e429c63e8551728a32af761a1a8820579acddafd992"
+          ],
+          "baseline_us": [
+            9.302100000000001,
+            9.1735,
+            9.085666666666667,
+            9.163833333333335,
+            9.111733333333333,
+            9.275066666666667
+          ],
+          "candidate_us": [
+            11.379299999999999,
+            11.273766666666667,
+            11.224666666666666,
+            11.200299999999999,
+            11.250733333333333,
+            11.1649
+          ],
+          "median_paired_speedup": 0.8155806073713203
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "32x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "24350fdb856494fdfd364e429c63e8551728a32af761a1a8820579acddafd992"
+          ],
+          "baseline_us": [
+            9.518833333333333,
+            9.411633333333333,
+            9.384233333333334,
+            9.585966666666668,
+            9.3148,
+            9.325466666666667
+          ],
+          "candidate_us": [
+            11.688533333333332,
+            11.541966666666667,
+            11.491866666666667,
+            11.401366666666666,
+            11.464166666666666,
+            11.4107
+          ],
+          "median_paired_speedup": 0.8160125029703778
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "4096x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "24350fdb856494fdfd364e429c63e8551728a32af761a1a8820579acddafd992"
+          ],
+          "baseline_us": [
+            394.0944666666667,
+            393.13436666666666,
+            392.68153333333333,
+            393.5885333333333,
+            394.9814666666667,
+            394.60276666666664
+          ],
+          "candidate_us": [
+            11.788433333333332,
+            11.581,
+            11.867899999999999,
+            11.816799999999999,
+            11.682866666666667,
+            11.5306
+          ],
+          "median_paired_speedup": 33.61960716223588
+        },
+        {
+          "operator": "ernie45_rope_fused",
+          "case": "tokens32-heads8",
+          "vendor_source": "kunlunxin",
+          "source_sha256": [
+            "18149c4db8638b36151fa8057f302dcaebdbe44d00c58f938500317f39084f54",
+            "a40cbb4ed8f339bc87c4f9214e5734d8490f7ad9f8306e3db5599c5a8cb51162"
+          ],
+          "baseline_us": [
+            30.132133333333336,
+            30.277733333333334,
+            29.822200000000002,
+            29.866933333333336,
+            30.000533333333333,
+            29.8232
+          ],
+          "candidate_us": [
+            29.99083333333333,
+            29.770400000000002,
+            29.756733333333333,
+            29.860599999999998,
+            29.853900000000003,
+            29.866266666666668
+          ],
+          "median_paired_speedup": 1.0034557509446844
+        },
+        {
+          "operator": "ernie45_rope_fused",
+          "case": "tokens256-heads32",
+          "vendor_source": "kunlunxin",
+          "source_sha256": [
+            "18149c4db8638b36151fa8057f302dcaebdbe44d00c58f938500317f39084f54",
+            "a40cbb4ed8f339bc87c4f9214e5734d8490f7ad9f8306e3db5599c5a8cb51162"
+          ],
+          "baseline_us": [
+            76.29793333333333,
+            76.06113333333333,
+            75.98333333333333,
+            75.88616666666667,
+            75.93456666666667,
+            75.90183333333333
+          ],
+          "candidate_us": [
+            66.39236666666667,
+            66.20736666666667,
+            66.13553333333334,
+            66.19333333333333,
+            66.1833,
+            66.1245
+          ],
+          "median_paired_speedup": 1.1483471844659783
+        },
+        {
+          "operator": "ernie45_rope_fused",
+          "case": "tokens3-heads17",
+          "vendor_source": "kunlunxin",
+          "source_sha256": [
+            "18149c4db8638b36151fa8057f302dcaebdbe44d00c58f938500317f39084f54",
+            "a40cbb4ed8f339bc87c4f9214e5734d8490f7ad9f8306e3db5599c5a8cb51162"
+          ],
+          "baseline_us": [
+            30.037933333333335,
+            54.02986666666667,
+            29.7634,
+            46.85476666666667,
+            29.782466666666668,
+            37.030366666666666
+          ],
+          "candidate_us": [
+            29.831533333333333,
+            29.73333333333333,
+            29.613799999999998,
+            36.75083333333333,
+            29.7791,
+            46.646699999999996
+          ],
+          "median_paired_speedup": 1.0059852760373362
+        },
+        {
+          "operator": "chunked_embedding_lora_a",
+          "case": "segments32-length8",
+          "vendor_source": "ascend",
+          "source_sha256": [
+            "c5d4e73e8ec003a76c19f11d3e0d20948da24949d8859019b12925a762eb5602",
+            "96790552b97c286fe1e7057bff4e4150341a3e62283c59e631f9d70d6e2f486c"
+          ],
+          "baseline_us": [
+            12.165466666666667,
+            13.886333333333335,
+            11.942366666666667,
+            11.938366666666667,
+            11.840533333333333,
+            11.892299999999999
+          ],
+          "candidate_us": [
+            12.268966666666667,
+            21.167333333333332,
+            12.187833333333334,
+            12.1835,
+            12.120033333333334,
+            12.108333333333334
+          ],
+          "median_paired_speedup": 0.9798697941744998
+        },
+        {
+          "operator": "chunked_embedding_lora_a",
+          "case": "segments32-length256",
+          "vendor_source": "ascend",
+          "source_sha256": [
+            "c5d4e73e8ec003a76c19f11d3e0d20948da24949d8859019b12925a762eb5602",
+            "96790552b97c286fe1e7057bff4e4150341a3e62283c59e631f9d70d6e2f486c"
+          ],
+          "baseline_us": [
+            90.5319,
+            86.8754,
+            86.90576666666666,
+            86.91813333333333,
+            86.90910000000001,
+            86.86803333333334
+          ],
+          "candidate_us": [
+            32.2614,
+            32.1656,
+            32.3279,
+            32.202666666666666,
+            32.239733333333334,
+            32.23673333333333
+          ],
+          "median_paired_speedup": 2.697405683819843
+        },
+        {
+          "operator": "chunk_scaled_dot_kkt",
+          "case": "chunks1",
+          "vendor_source": "kunlunxin",
+          "source_sha256": [
+            "8e93bdc824fc37d35fb52bd9926a73931d24292093700dc35e47af5e0459e8a1",
+            "5ef2b9313ca56b4a3799df12173bc79baf9c0ccd45a1ae005202304af18274f0"
+          ],
+          "baseline_us": [
+            19.241366666666664,
+            18.869033333333334,
+            18.676299999999998,
+            18.653299999999998,
+            18.683666666666667,
+            18.815566666666665
+          ],
+          "candidate_us": [
+            19.5476,
+            19.686866666666663,
+            19.39966666666667,
+            19.4511,
+            19.587033333333334,
+            19.443066666666667
+          ],
+          "median_paired_speedup": 0.9608483712665533
+        },
+        {
+          "operator": "chunk_scaled_dot_kkt",
+          "case": "chunks16",
+          "vendor_source": "kunlunxin",
+          "source_sha256": [
+            "8e93bdc824fc37d35fb52bd9926a73931d24292093700dc35e47af5e0459e8a1",
+            "5ef2b9313ca56b4a3799df12173bc79baf9c0ccd45a1ae005202304af18274f0"
+          ],
+          "baseline_us": [
+            19.2751,
+            19.047,
+            18.886366666666664,
+            18.914099999999998,
+            18.909733333333335,
+            18.908099999999997
+          ],
+          "candidate_us": [
+            19.8305,
+            20.20416666666667,
+            19.610366666666664,
+            19.5947,
+            20.0512,
+            19.56733333333333
+          ],
+          "median_paired_speedup": 0.9641734346930475
+        }
+      ]
+    },
+    "perf3": {
+      "result_sha256": "ad7bf2b56ff3715b4d2aaf1bed5425d33767099b508c5207342d5ae4313ee597",
+      "device": "NVIDIA GeForce RTX 5070 Ti",
+      "torch": "2.13.0+cu130",
+      "triton": "3.7.1",
+      "script_sha256": "122658b9f93c620d4d01d9dfc09e8e929799d1a1af98255a38d4a28f26820ec0",
+      "timing": "6 alternating AB/BA pairs, 30 complete wrapper calls per measurement, wall clock with CUDA synchronization",
+      "cases": [
+        {
+          "operator": "l2norm",
+          "case": "32x64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "b40a4f421c140297acd5106ca279253d8ed01800f07a1bc7904003230f9bc0b5"
+          ],
+          "baseline_us": [
+            7.993633333333333,
+            7.401833333333333,
+            7.31,
+            7.319366666666666,
+            7.2686,
+            7.264266666666666
+          ],
+          "candidate_us": [
+            7.9462,
+            7.776533333333334,
+            7.647966666666666,
+            7.633966666666666,
+            7.644633333333333,
+            7.6329666666666665
+          ],
+          "median_paired_speedup": 0.9538130907669454
+        },
+        {
+          "operator": "l2norm",
+          "case": "4096x64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "b40a4f421c140297acd5106ca279253d8ed01800f07a1bc7904003230f9bc0b5"
+          ],
+          "baseline_us": [
+            7.624266666666666,
+            7.610233333333333,
+            7.487,
+            7.5521,
+            7.453633333333333,
+            7.5017
+          ],
+          "candidate_us": [
+            7.966566666666667,
+            8.058066666666667,
+            7.8223,
+            7.768533333333334,
+            7.8303,
+            7.758166666666667
+          ],
+          "median_paired_speedup": 0.957084151430209
+        },
+        {
+          "operator": "l2norm",
+          "case": "4096x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "b40a4f421c140297acd5106ca279253d8ed01800f07a1bc7904003230f9bc0b5"
+          ],
+          "baseline_us": [
+            7.639633333333333,
+            7.477966666666666,
+            7.444266666666667,
+            7.5324,
+            7.454933333333333,
+            7.4015
+          ],
+          "candidate_us": [
+            7.909466666666666,
+            7.7434666666666665,
+            7.795933333333333,
+            7.730466666666667,
+            7.766866666666667,
+            7.686366666666666
+          ],
+          "median_paired_speedup": 0.964325870431963
+        },
+        {
+          "operator": "l2norm",
+          "case": "4096x1024",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "b40a4f421c140297acd5106ca279253d8ed01800f07a1bc7904003230f9bc0b5"
+          ],
+          "baseline_us": [
+            7.874733333333333,
+            7.6780333333333335,
+            7.8477,
+            7.6453,
+            7.603899999999999,
+            7.857033333333334
+          ],
+          "candidate_us": [
+            7.720433333333333,
+            7.662,
+            7.603899999999999,
+            8.094466666666666,
+            7.7014,
+            7.664
+          ],
+          "median_paired_speedup": 1.0110392514439897
+        },
+        {
+          "operator": "l2norm",
+          "case": "65536x64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "b40a4f421c140297acd5106ca279253d8ed01800f07a1bc7904003230f9bc0b5"
+          ],
+          "baseline_us": [
+            39.84353333333333,
+            39.8001,
+            39.72796666666667,
+            39.68323333333333,
+            39.70693333333333,
+            39.689566666666664
+          ],
+          "candidate_us": [
+            8.071766666666667,
+            8.254766666666667,
+            8.034366666666667,
+            7.9488666666666665,
+            7.900433333333333,
+            7.920833333333333
+          ],
+          "median_paired_speedup": 4.968533681960157
+        },
+        {
+          "operator": "l2norm",
+          "case": "65536x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "b40a4f421c140297acd5106ca279253d8ed01800f07a1bc7904003230f9bc0b5"
+          ],
+          "baseline_us": [
+            43.08326666666667,
+            43.01546666666667,
+            42.966366666666666,
+            42.97906666666667,
+            42.972699999999996,
+            42.92963333333333
+          ],
+          "candidate_us": [
+            12.095633333333334,
+            12.1651,
+            12.059899999999999,
+            12.020466666666668,
+            12.063566666666668,
+            12.040533333333332
+          ],
+          "median_paired_speedup": 3.5624675705587068
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "1x32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "6e8b5b9540186e4be4161a6689677c4ea446018606feefc673ff5bfd55b330c8"
+          ],
+          "baseline_us": [
+            9.363166666666666,
+            9.168833333333334,
+            9.379566666666667,
+            9.211233333333334,
+            9.1311,
+            9.6083
+          ],
+          "candidate_us": [
+            9.415933333333333,
+            9.333466666666666,
+            9.374533333333332,
+            9.3655,
+            9.3475,
+            9.368866666666667
+          ],
+          "median_paired_speedup": 0.9889621106117299
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "32x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "6e8b5b9540186e4be4161a6689677c4ea446018606feefc673ff5bfd55b330c8"
+          ],
+          "baseline_us": [
+            9.524833333333333,
+            9.325766666666667,
+            9.432633333333333,
+            9.335799999999999,
+            9.344166666666666,
+            9.343466666666668
+          ],
+          "candidate_us": [
+            9.6564,
+            9.5769,
+            9.5739,
+            9.582266666666666,
+            9.577933333333332,
+            9.5355
+          ],
+          "median_paired_speedup": 0.9777272120873468
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "4096x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "6e8b5b9540186e4be4161a6689677c4ea446018606feefc673ff5bfd55b330c8"
+          ],
+          "baseline_us": [
+            394.1372,
+            393.28726666666665,
+            392.75156666666663,
+            393.21413333333334,
+            394.3005,
+            394.5335666666667
+          ],
+          "candidate_us": [
+            12.017133333333334,
+            11.801733333333333,
+            11.996433333333332,
+            11.8378,
+            11.7667,
+            12.062566666666667
+          ],
+          "median_paired_speedup": 33.00738184864841
+        }
+      ]
+    },
+    "perf4": {
+      "result_sha256": "8d5d0468774b23949247d6d8ad27b8f31b6955743217aeb0fdf432890c3e57da",
+      "device": "NVIDIA GeForce RTX 5070 Ti",
+      "torch": "2.13.0+cu130",
+      "triton": "3.7.1",
+      "script_sha256": "ace106c084ab451ae694012642d9eeefe15ea0b4721f36c45046cc9df8a452d1",
+      "timing": "6 alternating AB/BA pairs, 30 complete wrapper calls per measurement; wall clock with CUDA synchronization",
+      "cases": [
+        {
+          "operator": "fused_gdn_gating",
+          "case": "1x32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "6e8b5b9540186e4be4161a6689677c4ea446018606feefc673ff5bfd55b330c8"
+          ],
+          "baseline_us": [
+            9.488433333333333,
+            9.109733333333333,
+            9.101033333333334,
+            9.084,
+            9.033233333333333,
+            9.188833333333333
+          ],
+          "candidate_us": [
+            9.422633333333334,
+            9.328766666666667,
+            9.279333333333334,
+            9.291366666666667,
+            9.2159,
+            9.233266666666667
+          ],
+          "median_paired_speedup": 0.9804822203200633
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "32x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "6e8b5b9540186e4be4161a6689677c4ea446018606feefc673ff5bfd55b330c8"
+          ],
+          "baseline_us": [
+            9.555200000000001,
+            9.490433333333332,
+            9.4036,
+            9.4223,
+            9.404933333333332,
+            9.404233333333334
+          ],
+          "candidate_us": [
+            9.760266666666666,
+            9.6811,
+            10.188033333333333,
+            9.698133333333333,
+            9.628666666666666,
+            9.593266666666667
+          ],
+          "median_paired_speedup": 0.9778767376604205
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "33x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "6e8b5b9540186e4be4161a6689677c4ea446018606feefc673ff5bfd55b330c8"
+          ],
+          "baseline_us": [
+            9.6046,
+            9.603966666666667,
+            9.454366666666667,
+            9.375866666666667,
+            9.329433333333332,
+            9.365533333333333
+          ],
+          "candidate_us": [
+            11.783700000000001,
+            11.462433333333333,
+            11.3429,
+            11.459100000000001,
+            11.4975,
+            11.359566666666668
+          ],
+          "median_paired_speedup": 0.8213324550377403
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "128x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "6e8b5b9540186e4be4161a6689677c4ea446018606feefc673ff5bfd55b330c8"
+          ],
+          "baseline_us": [
+            13.769433333333332,
+            13.7928,
+            13.687266666666666,
+            13.786466666666668,
+            13.908666666666665,
+            13.6926
+          ],
+          "candidate_us": [
+            11.414,
+            11.560966666666667,
+            11.3469,
+            11.275433333333332,
+            11.310133333333333,
+            11.261733333333334
+          ],
+          "median_paired_speedup": 1.2111077208277505
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "256x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "6e8b5b9540186e4be4161a6689677c4ea446018606feefc673ff5bfd55b330c8"
+          ],
+          "baseline_us": [
+            26.261766666666666,
+            26.250733333333333,
+            26.136200000000002,
+            26.483833333333333,
+            26.180933333333336,
+            26.545633333333335
+          ],
+          "candidate_us": [
+            11.559933333333332,
+            11.545233333333334,
+            11.429366666666667,
+            11.416033333333333,
+            11.497166666666667,
+            11.359233333333334
+          ],
+          "median_paired_speedup": 2.2819611593354447
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "4096x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "6e8b5b9540186e4be4161a6689677c4ea446018606feefc673ff5bfd55b330c8"
+          ],
+          "baseline_us": [
+            393.8679,
+            392.7792,
+            393.51256666666666,
+            393.6248,
+            394.4800333333333,
+            394.76256666666666
+          ],
+          "candidate_us": [
+            11.693200000000001,
+            11.5399,
+            11.642766666666667,
+            11.484166666666667,
+            11.587666666666665,
+            11.459100000000001
+          ],
+          "median_paired_speedup": 34.03985771878213
+        }
+      ]
+    },
+    "perf5": {
+      "result_sha256": "9836e31389ba0ff9a53c03020a78749e706c1f864a371f3260a87fa73e4e9dbd",
+      "device": "NVIDIA GeForce RTX 5070 Ti",
+      "torch": "2.13.0+cu130",
+      "triton": "3.7.1",
+      "script_sha256": "0988ea9b6664081306eaf8757023e97299f6e2a679ce0aee85cf1d1cc5551c60",
+      "timing": "6 alternating AB/BA pairs, 30 complete wrapper calls per measurement; wall clock with CUDA synchronization",
+      "cases": [
+        {
+          "operator": "l2norm",
+          "case": "32x64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "96a118af53c15ae0bad203974312ac07dc6c3ea3ee66430b27c5e3ef63053414"
+          ],
+          "baseline_us": [
+            7.9375,
+            7.3571,
+            7.278933333333334,
+            7.627266666666666,
+            7.314,
+            7.2729333333333335
+          ],
+          "candidate_us": [
+            7.556466666666666,
+            7.430233333333334,
+            7.2826,
+            7.308333333333333,
+            7.3053333333333335,
+            7.297633333333334
+          ],
+          "median_paired_speedup": 1.0003414323427304
+        },
+        {
+          "operator": "l2norm",
+          "case": "4096x64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "96a118af53c15ae0bad203974312ac07dc6c3ea3ee66430b27c5e3ef63053414"
+          ],
+          "baseline_us": [
+            7.632266666666666,
+            7.547433333333333,
+            7.496,
+            7.457633333333333,
+            7.6052333333333335,
+            7.463933333333333
+          ],
+          "candidate_us": [
+            7.5795,
+            7.5845,
+            7.4281999999999995,
+            7.4606,
+            7.4927,
+            7.470633333333333
+          ],
+          "median_paired_speedup": 1.0032820581876902
+        },
+        {
+          "operator": "l2norm",
+          "case": "4096x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "96a118af53c15ae0bad203974312ac07dc6c3ea3ee66430b27c5e3ef63053414"
+          ],
+          "baseline_us": [
+            7.626933333333334,
+            7.481333333333333,
+            7.984933333333333,
+            7.565133333333333,
+            7.4927,
+            7.469966666666666
+          ],
+          "candidate_us": [
+            7.535433333333334,
+            7.502366666666667,
+            7.523733333333333,
+            7.531766666666666,
+            7.5127,
+            7.487
+          ],
+          "median_paired_speedup": 1.0010775351549972
+        },
+        {
+          "operator": "l2norm",
+          "case": "4096x1024",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "96a118af53c15ae0bad203974312ac07dc6c3ea3ee66430b27c5e3ef63053414"
+          ],
+          "baseline_us": [
+            7.815633333333333,
+            7.715766666666666,
+            7.7879,
+            7.700066666666666,
+            7.709766666666666,
+            7.681033333333334
+          ],
+          "candidate_us": [
+            8.3576,
+            7.881733333333334,
+            7.731133333333333,
+            7.8774,
+            7.7595,
+            7.6777
+          ],
+          "median_paired_speedup": 0.9862667622224648
+        },
+        {
+          "operator": "l2norm",
+          "case": "65536x64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "96a118af53c15ae0bad203974312ac07dc6c3ea3ee66430b27c5e3ef63053414"
+          ],
+          "baseline_us": [
+            39.94336666666667,
+            39.80476666666667,
+            39.7954,
+            39.7022,
+            39.732933333333335,
+            39.7166
+          ],
+          "candidate_us": [
+            8.055733333333334,
+            7.9078,
+            7.984933333333333,
+            7.976233333333334,
+            8.058399999999999,
+            8.053066666666666
+          ],
+          "median_paired_speedup": 4.967969989454833
+        },
+        {
+          "operator": "l2norm",
+          "case": "65536x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "108d3707f84ab78679ba04a64ebe100761663bb670cf25c44c03fd1f02f59953",
+            "96a118af53c15ae0bad203974312ac07dc6c3ea3ee66430b27c5e3ef63053414"
+          ],
+          "baseline_us": [
+            42.98806666666667,
+            43.0592,
+            42.966,
+            42.964,
+            42.968,
+            42.979
+          ],
+          "candidate_us": [
+            12.116666666666665,
+            12.078233333333333,
+            12.059899999999999,
+            12.031833333333333,
+            12.051533333333333,
+            12.0846
+          ],
+          "median_paired_speedup": 3.563870397519252
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "1x32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "e25153dbfa394a239a630edbbb38d2cf8027958fe37499702273dfe87e701bfd"
+          ],
+          "baseline_us": [
+            9.454333333333334,
+            9.258,
+            9.233600000000001,
+            9.260333333333334,
+            9.284666666666666,
+            9.2306
+          ],
+          "candidate_us": [
+            9.499766666666666,
+            9.468366666666666,
+            9.430299999999999,
+            10.4375,
+            9.463366666666667,
+            9.429966666666667
+          ],
+          "median_paired_speedup": 0.978999940938236
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "32x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "e25153dbfa394a239a630edbbb38d2cf8027958fe37499702273dfe87e701bfd"
+          ],
+          "baseline_us": [
+            9.7883,
+            9.697799999999999,
+            9.379533333333333,
+            9.389533333333333,
+            9.3632,
+            9.358166666666666
+          ],
+          "candidate_us": [
+            9.668733333333334,
+            9.6026,
+            9.521466666666667,
+            9.598266666666666,
+            9.579566666666668,
+            9.621666666666666
+          ],
+          "median_paired_speedup": 0.9816731754329595
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "33x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "e25153dbfa394a239a630edbbb38d2cf8027958fe37499702273dfe87e701bfd"
+          ],
+          "baseline_us": [
+            9.5415,
+            9.745899999999999,
+            9.416266666666667,
+            9.388233333333334,
+            9.427966666666666,
+            9.408266666666666
+          ],
+          "candidate_us": [
+            9.656066666666668,
+            9.631333333333334,
+            9.590933333333332,
+            9.629333333333333,
+            9.6006,
+            9.646033333333333
+          ],
+          "median_paired_speedup": 0.9819034203125223
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "128x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "e25153dbfa394a239a630edbbb38d2cf8027958fe37499702273dfe87e701bfd"
+          ],
+          "baseline_us": [
+            13.8175,
+            13.810166666666666,
+            13.766066666666667,
+            13.748700000000001,
+            13.788466666666666,
+            13.7467
+          ],
+          "candidate_us": [
+            11.697233333333333,
+            11.568633333333333,
+            11.517533333333333,
+            11.748299999999999,
+            11.5035,
+            11.5269
+          ],
+          "median_paired_speedup": 1.1931675949702523
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "256x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "e25153dbfa394a239a630edbbb38d2cf8027958fe37499702273dfe87e701bfd"
+          ],
+          "baseline_us": [
+            26.345266666666667,
+            26.285133333333334,
+            26.320866666666664,
+            26.248733333333334,
+            26.313533333333332,
+            26.268133333333335
+          ],
+          "candidate_us": [
+            11.8184,
+            11.589666666666666,
+            11.629066666666667,
+            11.5359,
+            11.6117,
+            11.554933333333333
+          ],
+          "median_paired_speedup": 2.2670512426320832
+        },
+        {
+          "operator": "fused_gdn_gating",
+          "case": "4096x128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "e9e90f0e783c81bfb5163789f5a2e755d16a1ab5edab53b8e6dbf404e8dfd2fb",
+            "e25153dbfa394a239a630edbbb38d2cf8027958fe37499702273dfe87e701bfd"
+          ],
+          "baseline_us": [
+            394.05833333333334,
+            393.0448,
+            394.0553333333333,
+            394.2397,
+            395.0201333333334,
+            394.952
+          ],
+          "candidate_us": [
+            11.839799999999999,
+            11.759966666666667,
+            11.8251,
+            11.685166666666666,
+            11.760333333333334,
+            11.677166666666666
+          ],
+          "median_paired_speedup": 33.505733461335645
+        }
+      ]
+    }
+  },
+  "diagnostics": {
+    "diagnostics1": {
+      "comparison_sha256": "faf0127095b8554d5aa23e4f9f349cd610ac1273dab6dfff455a0dcf5bc61052",
+      "comparison": [
+        {
+          "task": 52,
+          "outputs": [
+            {
+              "shape": [
+                33,
+                1024
+              ],
+              "reference_mismatches": 0,
+              "exact_differences": 0,
+              "observer_changes": 0,
+              "first_mismatches": []
+            },
+            {
+              "shape": [
+                33,
+                1024
+              ],
+              "reference_mismatches": 0,
+              "exact_differences": 0,
+              "observer_changes": 0,
+              "first_mismatches": []
+            }
+          ],
+          "traces": 1024
+        },
+        {
+          "task": 54,
+          "outputs": [
+            {
+              "shape": [
+                2,
+                33,
+                3,
+                96
+              ],
+              "reference_mismatches": 0,
+              "exact_differences": 2,
+              "observer_changes": 0,
+              "first_mismatches": []
+            },
+            {
+              "shape": [
+                2,
+                33,
+                3,
+                96
+              ],
+              "reference_mismatches": 0,
+              "exact_differences": 0,
+              "observer_changes": 0,
+              "first_mismatches": []
+            }
+          ],
+          "traces": 768
+        },
+        {
+          "task": 55,
+          "outputs": [
+            {
+              "shape": [
+                3,
+                2048
+              ],
+              "reference_mismatches": 0,
+              "exact_differences": 1,
+              "observer_changes": 0,
+              "first_mismatches": []
+            }
+          ],
+          "traces": 0
+        },
+        {
+          "task": 50,
+          "outputs": [
+            {
+              "shape": [
+                8,
+                8,
+                96
+              ],
+              "reference_mismatches": 0,
+              "exact_differences": 5375,
+              "observer_changes": 818,
+              "first_mismatches": []
+            }
+          ],
+          "traces": 1920
+        },
+        {
+          "task": 44,
+          "outputs": [
+            {
+              "shape": [
+                32
+              ],
+              "reference_mismatches": 1,
+              "exact_differences": 1,
+              "observer_changes": 0,
+              "first_mismatches": [
+                [
+                  13
+                ]
+              ]
+            },
+            {
+              "shape": [
+                8,
+                4
+              ],
+              "reference_mismatches": 0,
+              "exact_differences": 0,
+              "observer_changes": 0,
+              "first_mismatches": []
+            },
+            {
+              "shape": [
+                8
+              ],
+              "reference_mismatches": 0,
+              "exact_differences": 0,
+              "observer_changes": 0,
+              "first_mismatches": []
+            }
+          ],
+          "traces": 512
+        }
+      ],
+      "identity": {
+        "t44-candidate": {
+          "operator": "chain_speculative_sampling",
+          "mode": "candidate",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "2d92be282041fc63825ae353bdbc80157a190694e0521dd2e2943c6a022066e7",
+          "script_sha256": "b99ea67d03696adeccc91bed565f37a01357be5a19868bf86cfb28a13d9789ec",
+          "reference_sha256": "20768c5010eb86e2e9e29e8e57bd9bce589b6798d99c5ffb37b3bf593b7fe392",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "c253f186bb42633e7de95d9a363752b2d37ade453415efdac6f924f9fd8ff735"
+        },
+        "t44-reference": {
+          "operator": "chain_speculative_sampling",
+          "mode": "reference",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "2d92be282041fc63825ae353bdbc80157a190694e0521dd2e2943c6a022066e7",
+          "script_sha256": "b99ea67d03696adeccc91bed565f37a01357be5a19868bf86cfb28a13d9789ec",
+          "reference_sha256": "20768c5010eb86e2e9e29e8e57bd9bce589b6798d99c5ffb37b3bf593b7fe392",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "c253f186bb42633e7de95d9a363752b2d37ade453415efdac6f924f9fd8ff735"
+        },
+        "t44-trace": {
+          "operator": "chain_speculative_sampling",
+          "mode": "trace",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "2d92be282041fc63825ae353bdbc80157a190694e0521dd2e2943c6a022066e7",
+          "script_sha256": "b99ea67d03696adeccc91bed565f37a01357be5a19868bf86cfb28a13d9789ec",
+          "reference_sha256": "20768c5010eb86e2e9e29e8e57bd9bce589b6798d99c5ffb37b3bf593b7fe392",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "c253f186bb42633e7de95d9a363752b2d37ade453415efdac6f924f9fd8ff735",
+          "instrumented_sha256": "43b78034491f2e41c0cbb4669688fd2cad4adbf2f096d59c265eca4f3a1ce5e3"
+        },
+        "t50-candidate": {
+          "operator": "extend_attention",
+          "mode": "candidate",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "3c966742f1f65d432825e6201d8ec555a815de9950728c15be853ae693065de5",
+          "script_sha256": "b99ea67d03696adeccc91bed565f37a01357be5a19868bf86cfb28a13d9789ec",
+          "reference_sha256": "0ff77a69d193f599217f49f72d0edd4263a8e8bf6d61d1ff649ba438ee8ff616",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "424fdf395230531199c6d585d3f4251dd914bda594e77367192c55e1e9451e17"
+        },
+        "t50-reference": {
+          "operator": "extend_attention",
+          "mode": "reference",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "3c966742f1f65d432825e6201d8ec555a815de9950728c15be853ae693065de5",
+          "script_sha256": "b99ea67d03696adeccc91bed565f37a01357be5a19868bf86cfb28a13d9789ec",
+          "reference_sha256": "0ff77a69d193f599217f49f72d0edd4263a8e8bf6d61d1ff649ba438ee8ff616",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "424fdf395230531199c6d585d3f4251dd914bda594e77367192c55e1e9451e17"
+        },
+        "t50-trace": {
+          "operator": "extend_attention",
+          "mode": "trace",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "3c966742f1f65d432825e6201d8ec555a815de9950728c15be853ae693065de5",
+          "script_sha256": "b99ea67d03696adeccc91bed565f37a01357be5a19868bf86cfb28a13d9789ec",
+          "reference_sha256": "0ff77a69d193f599217f49f72d0edd4263a8e8bf6d61d1ff649ba438ee8ff616",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "424fdf395230531199c6d585d3f4251dd914bda594e77367192c55e1e9451e17",
+          "instrumented_sha256": "2d4b1d8c4472598b1a2566e84a8a9fd278b5cf3c999412bf91062f4905fe052b"
+        },
+        "t52-candidate": {
+          "operator": "fused_dual_residual_rmsnorm",
+          "mode": "candidate",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "61caaba9c2b58447d787f68a95f6d45c588e5e3e9bdcc64b529cf8914ee00583",
+          "script_sha256": "b99ea67d03696adeccc91bed565f37a01357be5a19868bf86cfb28a13d9789ec",
+          "reference_sha256": "54b9d711532f224970ae7ab7874b9e0d3aeedbeeb25f3a31da30c04c108c43f1",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "257947698a394cbb541dea5f57c0cd8b3aac400cd86b28190b505de60003a287"
+        },
+        "t52-reference": {
+          "operator": "fused_dual_residual_rmsnorm",
+          "mode": "reference",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "61caaba9c2b58447d787f68a95f6d45c588e5e3e9bdcc64b529cf8914ee00583",
+          "script_sha256": "b99ea67d03696adeccc91bed565f37a01357be5a19868bf86cfb28a13d9789ec",
+          "reference_sha256": "54b9d711532f224970ae7ab7874b9e0d3aeedbeeb25f3a31da30c04c108c43f1",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "257947698a394cbb541dea5f57c0cd8b3aac400cd86b28190b505de60003a287"
+        },
+        "t52-trace": {
+          "operator": "fused_dual_residual_rmsnorm",
+          "mode": "trace",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "61caaba9c2b58447d787f68a95f6d45c588e5e3e9bdcc64b529cf8914ee00583",
+          "script_sha256": "b99ea67d03696adeccc91bed565f37a01357be5a19868bf86cfb28a13d9789ec",
+          "reference_sha256": "54b9d711532f224970ae7ab7874b9e0d3aeedbeeb25f3a31da30c04c108c43f1",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "257947698a394cbb541dea5f57c0cd8b3aac400cd86b28190b505de60003a287",
+          "instrumented_sha256": "e203edf166387b5193ba542177039195374b1cbd6582961a76037d573b3602d7"
+        },
+        "t54-candidate": {
+          "operator": "fused_norm_rope_stacked",
+          "mode": "candidate",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "87d90a9bc084b96fedc1961fd72857ea7d8d91f0c7c68d9f5bd6600b8a020623",
+          "script_sha256": "b99ea67d03696adeccc91bed565f37a01357be5a19868bf86cfb28a13d9789ec",
+          "reference_sha256": "01bbe1b646bf89b3af272901f7ef89b53d6d7e34c6cf852cf5e548d839aa20d6",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "7eda199bf7f9df8cad6f86ddb729d6ffba205b6328e924b6d2bcc30b776dd52d"
+        },
+        "t54-reference": {
+          "operator": "fused_norm_rope_stacked",
+          "mode": "reference",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "87d90a9bc084b96fedc1961fd72857ea7d8d91f0c7c68d9f5bd6600b8a020623",
+          "script_sha256": "b99ea67d03696adeccc91bed565f37a01357be5a19868bf86cfb28a13d9789ec",
+          "reference_sha256": "01bbe1b646bf89b3af272901f7ef89b53d6d7e34c6cf852cf5e548d839aa20d6",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "7eda199bf7f9df8cad6f86ddb729d6ffba205b6328e924b6d2bcc30b776dd52d"
+        },
+        "t54-trace": {
+          "operator": "fused_norm_rope_stacked",
+          "mode": "trace",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "87d90a9bc084b96fedc1961fd72857ea7d8d91f0c7c68d9f5bd6600b8a020623",
+          "script_sha256": "b99ea67d03696adeccc91bed565f37a01357be5a19868bf86cfb28a13d9789ec",
+          "reference_sha256": "01bbe1b646bf89b3af272901f7ef89b53d6d7e34c6cf852cf5e548d839aa20d6",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "7eda199bf7f9df8cad6f86ddb729d6ffba205b6328e924b6d2bcc30b776dd52d",
+          "instrumented_sha256": "f679dc844bfe8a10c7a46a47cc7252ce098c68a0341a48f4abf05e1d1847d444"
+        },
+        "t55-candidate": {
+          "operator": "hc_head",
+          "mode": "candidate",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "54af8e0629acc13cce7ff10651e20c7a519edaa31f66acd4a17b34d14bc52e58",
+          "script_sha256": "b99ea67d03696adeccc91bed565f37a01357be5a19868bf86cfb28a13d9789ec",
+          "reference_sha256": "d0cea77446d4d27728cd7f0c56126ad52f822874230cb0cff0bb57f77b3f45c9",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "7eddd591ebf252078ed3728f03ffc965d8d5ffe080f082ac40f276aaa1ac7bd9"
+        },
+        "t55-reference": {
+          "operator": "hc_head",
+          "mode": "reference",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "54af8e0629acc13cce7ff10651e20c7a519edaa31f66acd4a17b34d14bc52e58",
+          "script_sha256": "b99ea67d03696adeccc91bed565f37a01357be5a19868bf86cfb28a13d9789ec",
+          "reference_sha256": "d0cea77446d4d27728cd7f0c56126ad52f822874230cb0cff0bb57f77b3f45c9",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "7eddd591ebf252078ed3728f03ffc965d8d5ffe080f082ac40f276aaa1ac7bd9"
+        },
+        "t55-trace": {
+          "operator": "hc_head",
+          "mode": "trace",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "54af8e0629acc13cce7ff10651e20c7a519edaa31f66acd4a17b34d14bc52e58",
+          "script_sha256": "b99ea67d03696adeccc91bed565f37a01357be5a19868bf86cfb28a13d9789ec",
+          "reference_sha256": "d0cea77446d4d27728cd7f0c56126ad52f822874230cb0cff0bb57f77b3f45c9",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "7eddd591ebf252078ed3728f03ffc965d8d5ffe080f082ac40f276aaa1ac7bd9",
+          "instrumented_sha256": "7eddd591ebf252078ed3728f03ffc965d8d5ffe080f082ac40f276aaa1ac7bd9"
+        }
+      },
+      "file_sha256": {
+        "diagnostics1/t44-candidate/identity.json": "cda446ddf27974d7adb146ce2cd37f50d385015a7e80ee17255944cfc110e792",
+        "diagnostics1/t44-candidate.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t44-candidate.log": "cdc8eed6e723a4132ad40848f7c32c2ed1dc2d9f4f34f68261f6eb148dbcc8bb",
+        "diagnostics1/t44-make.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t44-make.log": "4c6fb523bd9e2676f7ea0a5b2881605bf98e918526af8dace412b3de8b94a036",
+        "diagnostics1/t44-reference/identity.json": "165166540310547235e12f426025b93a7c7fbba98a8ed7dfe4a0e07487b13a94",
+        "diagnostics1/t44-reference.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t44-reference.log": "32edd0af1e1ec54d01dc7d6fe067142cfcce3b608cf063ae5e3f8399530e4437",
+        "diagnostics1/t44-trace/identity.json": "daf4bee6876ff343492dd07b060f45c905c085550376375bea5082b40dac848a",
+        "diagnostics1/t44-trace/instrumented.py": "43b78034491f2e41c0cbb4669688fd2cad4adbf2f096d59c265eca4f3a1ce5e3",
+        "diagnostics1/t44-trace.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t44-trace.log": "fcb3d2999f410075a92d83c687979e00cafc403cabd29987795b40544551dc9a",
+        "diagnostics1/t50-candidate/identity.json": "6e9994e4760011f006384203aa30c3c74f5a3fafaa3a3dc95d96266e0566db06",
+        "diagnostics1/t50-candidate.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t50-candidate.log": "7654b6350976fba69b3693ee46a33a39b98820abbdebf948f202e108121daac8",
+        "diagnostics1/t50-make.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t50-make.log": "93f5892bac95c9892a57615e7445bf9b492d8c68efef136b2dff8fad45a36862",
+        "diagnostics1/t50-reference/identity.json": "26d149d29486e0ef4cf94267de66d01bc10ab5eebff50d271dd7a27a86585f1a",
+        "diagnostics1/t50-reference.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t50-reference.log": "16073aa3e0c297ea73215c03e05ad79143289273ac0c02a516923dce1c13a24b",
+        "diagnostics1/t50-trace/identity.json": "4f97acde36224f3c052c0383da7194f236cb92e19853823a63ed0e65f2f56895",
+        "diagnostics1/t50-trace/instrumented.py": "2d4b1d8c4472598b1a2566e84a8a9fd278b5cf3c999412bf91062f4905fe052b",
+        "diagnostics1/t50-trace.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t50-trace.log": "55d587c7fab9e4ef71e1df9d078a58ccc86dae014f21b5cedf56688231bfa8db",
+        "diagnostics1/t52-candidate/identity.json": "6a66b5f4e18c213e7420bef08ef402a68f570630c95564f7d93dcc69de0dae35",
+        "diagnostics1/t52-candidate.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t52-candidate.log": "6e598e6d1949269ffaaf2eff7c968e49535ca1727256fd437fee203c9aa1b786",
+        "diagnostics1/t52-make.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t52-make.log": "2e0b240e5f1a81331487603b21cce9b903ba2a8a6a57bd234487683d5963b740",
+        "diagnostics1/t52-reference/identity.json": "fbd46a38eecae3bd030ffce584912233d20b2aaa2a55dd88822342a02f299594",
+        "diagnostics1/t52-reference.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t52-reference.log": "894d55b2aeaae08495b13b014f4a642962a76c4e2916e545e99eac0233f034cd",
+        "diagnostics1/t52-trace/identity.json": "79093d09346e82dd99fe0386685be18ad4e9e7e2b792f20de2f01d84985b0def",
+        "diagnostics1/t52-trace/instrumented.py": "e203edf166387b5193ba542177039195374b1cbd6582961a76037d573b3602d7",
+        "diagnostics1/t52-trace.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t52-trace.log": "2502beb40f03177eb2d8acb37f1613d1dbe765266e22b9a50e892c4f8db040bc",
+        "diagnostics1/t54-candidate/identity.json": "70ef1e3041585bb9e393ff65e9cb4bb6cbcacaf3dcf95a811142f62aa41cc835",
+        "diagnostics1/t54-candidate.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t54-candidate.log": "0897d14fa2df76b821f177501fa549cd6a01ad3535327b6f4a588a638773253d",
+        "diagnostics1/t54-make.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t54-make.log": "ec639868cf6b86be0414e59182637a620127aa2dec7ee6ceea947d4d12a221bb",
+        "diagnostics1/t54-reference/identity.json": "364776b52cb6ce528866e43d7b4ae456abde5c36673bb57b5e2144ae2b3dce01",
+        "diagnostics1/t54-reference.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t54-reference.log": "65afd481b34046de6b88dd48fba3ff291da4667e2778c83876f9f461fa5160d4",
+        "diagnostics1/t54-trace/identity.json": "7bb7f3b15c6c71edfa40f78a66dc04f5ab709b4ab42e234bc62a82df87ffa5c7",
+        "diagnostics1/t54-trace/instrumented.py": "f679dc844bfe8a10c7a46a47cc7252ce098c68a0341a48f4abf05e1d1847d444",
+        "diagnostics1/t54-trace.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t54-trace.log": "27cacae1a0df164513d5c88ac904188c6b9927b70116ea893022e562fbaf3deb",
+        "diagnostics1/t55-candidate/identity.json": "0248ee77aeb02f9347c671259330d66efb51e5e8e6e4e4876dcb689a275e7a39",
+        "diagnostics1/t55-candidate.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t55-candidate.log": "ff77184a8e5c63baab3a1c9d47fbcedb667d52c9fd2d602c8add29982cf216d9",
+        "diagnostics1/t55-make.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t55-make.log": "d91a15fcb8b947cec234dd8225c47c3671868c9ebebd77b99fb0b5c8210be2ee",
+        "diagnostics1/t55-reference/identity.json": "eed36d1037fb6183155507156144dc0a6a57783de713b3296432bc20314a6a34",
+        "diagnostics1/t55-reference.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t55-reference.log": "2e02b6832374f88a3a21ce83f6e1d64f92d327a594475f1f05b8ca96d1560dbf",
+        "diagnostics1/t55-trace/identity.json": "57b470d3299cf4c1b2cd637d4a0db4bccfaabdaaf1f3e62f139dc5b1ca215761",
+        "diagnostics1/t55-trace/instrumented.py": "7eddd591ebf252078ed3728f03ffc965d8d5ffe080f082ac40f276aaa1ac7bd9",
+        "diagnostics1/t55-trace.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics1/t55-trace.log": "704fe33e3c41654c607d2df78cb03c653cc80885c1767703c95211157463daa8"
+      },
+      "process_exit_codes": {
+        "t44-candidate.exit": 0,
+        "t44-make.exit": 0,
+        "t44-reference.exit": 0,
+        "t44-trace.exit": 0,
+        "t50-candidate.exit": 0,
+        "t50-make.exit": 0,
+        "t50-reference.exit": 0,
+        "t50-trace.exit": 0,
+        "t52-candidate.exit": 0,
+        "t52-make.exit": 0,
+        "t52-reference.exit": 0,
+        "t52-trace.exit": 0,
+        "t54-candidate.exit": 0,
+        "t54-make.exit": 0,
+        "t54-reference.exit": 0,
+        "t54-trace.exit": 0,
+        "t55-candidate.exit": 0,
+        "t55-make.exit": 0,
+        "t55-reference.exit": 0,
+        "t55-trace.exit": 0
+      },
+      "comparison_scope": "Diagnostic comparison only: integer exact for T44, floating atol=rtol=0.015. Official release tests independently apply operator/dtype tolerances; this diagnostic summary is not a release gate."
+    },
+    "diagnostics2": {
+      "comparison_sha256": "45858d05de6079a285c920c6777ab8571a7c206a3846ea7de41ab33e50197a1d",
+      "comparison": [
+        {
+          "task": 52,
+          "outputs": [
+            {
+              "shape": [
+                4096,
+                8192
+              ],
+              "reference_mismatches": 0,
+              "exact_differences": 254,
+              "observer_changes": 0,
+              "first_mismatches": []
+            },
+            {
+              "shape": [
+                4096,
+                8192
+              ],
+              "reference_mismatches": 0,
+              "exact_differences": 75,
+              "observer_changes": 0,
+              "first_mismatches": []
+            }
+          ],
+          "traces": 1024
+        },
+        {
+          "task": 54,
+          "outputs": [
+            {
+              "shape": [
+                8,
+                2048,
+                16,
+                128
+              ],
+              "reference_mismatches": 0,
+              "exact_differences": 427,
+              "observer_changes": 0,
+              "first_mismatches": []
+            },
+            {
+              "shape": [
+                8,
+                2048,
+                16,
+                128
+              ],
+              "reference_mismatches": 0,
+              "exact_differences": 0,
+              "observer_changes": 0,
+              "first_mismatches": []
+            }
+          ],
+          "traces": 768
+        }
+      ],
+      "identity": {
+        "t52-candidate": {
+          "operator": "fused_dual_residual_rmsnorm",
+          "mode": "candidate",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "892c4beb9c79041eae2e55659c055acfcc8517bd6c2583210a92d5dabfbfcfd7",
+          "script_sha256": "d9ca487c19e4172190436f274d3c1b9d16ffbc83610029a4727d91767563b9a4",
+          "reference_sha256": "54b9d711532f224970ae7ab7874b9e0d3aeedbeeb25f3a31da30c04c108c43f1",
+          "row": 3969,
+          "col": 4831,
+          "source_sha256": "257947698a394cbb541dea5f57c0cd8b3aac400cd86b28190b505de60003a287"
+        },
+        "t52-reference": {
+          "operator": "fused_dual_residual_rmsnorm",
+          "mode": "reference",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "892c4beb9c79041eae2e55659c055acfcc8517bd6c2583210a92d5dabfbfcfd7",
+          "script_sha256": "d9ca487c19e4172190436f274d3c1b9d16ffbc83610029a4727d91767563b9a4",
+          "reference_sha256": "54b9d711532f224970ae7ab7874b9e0d3aeedbeeb25f3a31da30c04c108c43f1",
+          "row": 3969,
+          "col": 4831,
+          "source_sha256": "257947698a394cbb541dea5f57c0cd8b3aac400cd86b28190b505de60003a287"
+        },
+        "t52-trace": {
+          "operator": "fused_dual_residual_rmsnorm",
+          "mode": "trace",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "892c4beb9c79041eae2e55659c055acfcc8517bd6c2583210a92d5dabfbfcfd7",
+          "script_sha256": "d9ca487c19e4172190436f274d3c1b9d16ffbc83610029a4727d91767563b9a4",
+          "reference_sha256": "54b9d711532f224970ae7ab7874b9e0d3aeedbeeb25f3a31da30c04c108c43f1",
+          "row": 3969,
+          "col": 4831,
+          "source_sha256": "257947698a394cbb541dea5f57c0cd8b3aac400cd86b28190b505de60003a287",
+          "instrumented_sha256": "4a6a50a96c59d98997ad842af094c010600e50ded8235ac46d3a551b5e5c9e4c"
+        },
+        "t54-candidate": {
+          "operator": "fused_norm_rope_stacked",
+          "mode": "candidate",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "e6e5ace4c7da3bb9ddbd425972ab74cacb2467178f9ae5165b5a28003cc22093",
+          "script_sha256": "d9ca487c19e4172190436f274d3c1b9d16ffbc83610029a4727d91767563b9a4",
+          "reference_sha256": "9c6a4743b9d9a053ba26f0d1b871008da22025127b49596d2420872a9fa7ac98",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "7eda199bf7f9df8cad6f86ddb729d6ffba205b6328e924b6d2bcc30b776dd52d"
+        },
+        "t54-reference": {
+          "operator": "fused_norm_rope_stacked",
+          "mode": "reference",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "e6e5ace4c7da3bb9ddbd425972ab74cacb2467178f9ae5165b5a28003cc22093",
+          "script_sha256": "d9ca487c19e4172190436f274d3c1b9d16ffbc83610029a4727d91767563b9a4",
+          "reference_sha256": "9c6a4743b9d9a053ba26f0d1b871008da22025127b49596d2420872a9fa7ac98",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "7eda199bf7f9df8cad6f86ddb729d6ffba205b6328e924b6d2bcc30b776dd52d"
+        },
+        "t54-trace": {
+          "operator": "fused_norm_rope_stacked",
+          "mode": "trace",
+          "device": "cuda",
+          "torch": "2.13.0+cu130",
+          "triton": "3.7.1",
+          "input_sha256": "e6e5ace4c7da3bb9ddbd425972ab74cacb2467178f9ae5165b5a28003cc22093",
+          "script_sha256": "d9ca487c19e4172190436f274d3c1b9d16ffbc83610029a4727d91767563b9a4",
+          "reference_sha256": "9c6a4743b9d9a053ba26f0d1b871008da22025127b49596d2420872a9fa7ac98",
+          "row": 0,
+          "col": 0,
+          "source_sha256": "7eda199bf7f9df8cad6f86ddb729d6ffba205b6328e924b6d2bcc30b776dd52d",
+          "instrumented_sha256": "f679dc844bfe8a10c7a46a47cc7252ce098c68a0341a48f4abf05e1d1847d444"
+        }
+      },
+      "file_sha256": {
+        "diagnostics2/t52-candidate/identity.json": "6e365b14f42413ea73de309154e92faa12a2efca2be2f4633ace06d8af07e9b2",
+        "diagnostics2/t52-candidate.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics2/t52-candidate.log": "72726a14954a52809bbffd9c96d25df503f1dcf4234401fac3e1cea165e7b413",
+        "diagnostics2/t52-make.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics2/t52-make.log": "f2fcb750ce4d8f51e3aed85f5becfd183ea6ab09e54334bb585266d2e06dbf10",
+        "diagnostics2/t52-reference/identity.json": "71bfb0258d0a02434546036a22f7ab510f2719acaa77c3cae5d7ba5bce921fb9",
+        "diagnostics2/t52-reference.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics2/t52-reference.log": "96c2610e014d102999f3ef580c956e3f5a283655b7b40091691244e9123911ed",
+        "diagnostics2/t52-trace/identity.json": "10de6a3349120bd4fc2051d47d10831510de28f2a7e0ca672f3bd95a1ab532f7",
+        "diagnostics2/t52-trace/instrumented.py": "4a6a50a96c59d98997ad842af094c010600e50ded8235ac46d3a551b5e5c9e4c",
+        "diagnostics2/t52-trace.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics2/t52-trace.log": "404cd1d6a4351d80de716d7871c90dd6ad25566d22db1c75a4e0dc955655e181",
+        "diagnostics2/t54-candidate/identity.json": "1621e72df25fc5d78583aed801517d113987cdaef3506439aa8250c7786e55d1",
+        "diagnostics2/t54-candidate.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics2/t54-candidate.log": "ad6b05b20423dc9946c7a788ec38fad24106581323f7e27851a4062834657b0f",
+        "diagnostics2/t54-make.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics2/t54-make.log": "833e1fecbea54c9cce09c0afa845d1cee829ff014a52912d7d5624b2abd8b2d9",
+        "diagnostics2/t54-reference/identity.json": "510289bf3e752d7c6a1d4cf84c17f7016bfddd3f2deed92eb44cb92157983e93",
+        "diagnostics2/t54-reference.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics2/t54-reference.log": "c4bc49b57c2af0b2ef293455dfd867088ba7a2a078a726ec4fa5cd981cac9e20",
+        "diagnostics2/t54-trace/identity.json": "0e61f71061a970afcb2d25387f6aa5ad6b0223b73c494131bec856b359f04dac",
+        "diagnostics2/t54-trace/instrumented.py": "f679dc844bfe8a10c7a46a47cc7252ce098c68a0341a48f4abf05e1d1847d444",
+        "diagnostics2/t54-trace.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "diagnostics2/t54-trace.log": "d37c8a88a68d8828ef35e18255ca326e5aebc78d9df4ceaf3b44fba86a0805c6"
+      },
+      "process_exit_codes": {
+        "t52-candidate.exit": 0,
+        "t52-make.exit": 0,
+        "t52-reference.exit": 0,
+        "t52-trace.exit": 0,
+        "t54-candidate.exit": 0,
+        "t54-make.exit": 0,
+        "t54-reference.exit": 0,
+        "t54-trace.exit": 0
+      },
+      "comparison_scope": "Diagnostic comparison only: integer exact for T44, floating atol=rtol=0.015. Official release tests independently apply operator/dtype tolerances; this diagnostic summary is not a release gate."
+    }
+  },
+  "zips": [
+    {
+      "task": 47,
+      "status": "created",
+      "operator": "chunked_sgmv_expand",
+      "commit": "8ba31a102f4ef0430c08f12c4622b27430915071",
+      "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/chunked_sgmv_expand/research-20260908-8ba31a1/chunked_sgmv_expand.zip",
+      "size": 18326,
+      "zip_sha256": "fe9639026676a93739ce63b14329c01146236ba93bccc0c82108f7f46f447b5e",
+      "canonical_zip_sha256": "fe9639026676a93739ce63b14329c01146236ba93bccc0c82108f7f46f447b5e",
+      "archive_members": [
+        "chunked_sgmv_expand.py",
+        "chunked_sgmv_expand_enflame.py",
+        "chunked_sgmv_expand_kunlunxin.py"
+      ],
+      "members": [
+        {
+          "name": "chunked_sgmv_expand.py",
+          "source": "src/flaggems_sglang/ops/chunked_sgmv_expand.py",
+          "size": 6148,
+          "sha256": "0d52334731d37bf9fab08888f5963908cd9edbe91d79b8c584bb3649b6fdf579"
+        },
+        {
+          "name": "chunked_sgmv_expand_enflame.py",
+          "source": "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_expand.py",
+          "size": 5880,
+          "sha256": "5cdf1c657a108f9fee016742f298f0aab9e264a174ee8dddbeb0edf43980f36b"
+        },
+        {
+          "name": "chunked_sgmv_expand_kunlunxin.py",
+          "source": "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_expand.py",
+          "size": 5880,
+          "sha256": "a51fa38d50babc3a45ef177e6357408f4232bba1ae6f33230461a22d3ce08e4b"
+        }
+      ],
+      "verification_stage": "t47-release1",
+      "target_runtime_verified": false,
+      "submitted": false
+    },
+    {
+      "task": 51,
+      "status": "created",
+      "operator": "fla_layernorm_gated",
+      "commit": "8ba31a102f4ef0430c08f12c4622b27430915071",
+      "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/fla_layernorm_gated/research-20260908-8ba31a1/fla_layernorm_gated.zip",
+      "size": 23261,
+      "zip_sha256": "579d902c7fc7bb8c4dbc382220143ccd7512adc7a05978ad1f77f806b6c81f47",
+      "canonical_zip_sha256": "579d902c7fc7bb8c4dbc382220143ccd7512adc7a05978ad1f77f806b6c81f47",
+      "archive_members": [
+        "fla_layernorm_gated.py",
+        "fla_layernorm_gated_ascend.py",
+        "fla_layernorm_gated_enflame.py",
+        "fla_layernorm_gated_hygon.py",
+        "fla_layernorm_gated_kunlunxin.py",
+        "fla_layernorm_gated_metax.py"
+      ],
+      "members": [
+        {
+          "name": "fla_layernorm_gated.py",
+          "source": "src/flaggems_sglang/ops/fla_layernorm_gated.py",
+          "size": 3805,
+          "sha256": "d952eda8ccac83995fb34a2a557fd11ecab428f00e79a5c6f1f03a096926e651"
+        },
+        {
+          "name": "fla_layernorm_gated_ascend.py",
+          "source": "src/flaggems_sglang/runtime/backend/_ascend/ops/fla_layernorm_gated.py",
+          "size": 4037,
+          "sha256": "ac8b090dbda2158390ced51578011ab644f8d90a710e513e3a69bedc154e7f00"
+        },
+        {
+          "name": "fla_layernorm_gated_enflame.py",
+          "source": "src/flaggems_sglang/runtime/backend/_enflame/ops/fla_layernorm_gated.py",
+          "size": 3619,
+          "sha256": "848f50149b4134ae58f6f0c228e9a7908e049950b10f511e3f302db5af59ab4b"
+        },
+        {
+          "name": "fla_layernorm_gated_hygon.py",
+          "source": "src/flaggems_sglang/runtime/backend/_hygon/ops/fla_layernorm_gated.py",
+          "size": 3871,
+          "sha256": "712c38595eef274a95d559171b23c31edc3af1411b135757fbc378306083c260"
+        },
+        {
+          "name": "fla_layernorm_gated_kunlunxin.py",
+          "source": "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fla_layernorm_gated.py",
+          "size": 3318,
+          "sha256": "66e08be2b4d870028f63ddceb89dd6e6b66ed79ad333e29757ad901332b1ebdd"
+        },
+        {
+          "name": "fla_layernorm_gated_metax.py",
+          "source": "src/flaggems_sglang/runtime/backend/_metax/ops/fla_layernorm_gated.py",
+          "size": 3795,
+          "sha256": "a7cd1e8a9807e0ce17d2d955aa0c27b47639242fb6bdcf6fd1069d956d2d2bf1"
+        }
+      ],
+      "verification_stage": "t51-release1",
+      "target_runtime_verified": false,
+      "submitted": false
+    },
+    {
+      "task": 43,
+      "status": "created",
+      "operator": "causal_conv1d_update",
+      "commit": "8ba31a102f4ef0430c08f12c4622b27430915071",
+      "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/research-20260908-8ba31a1/causal_conv1d_update.zip",
+      "size": 24717,
+      "zip_sha256": "9308dfc04f2b619f7071340b7e31020e3ff6a8e917e7f2d9748219b6d8124592",
+      "canonical_zip_sha256": "9308dfc04f2b619f7071340b7e31020e3ff6a8e917e7f2d9748219b6d8124592",
+      "archive_members": [
+        "causal_conv1d_update.py",
+        "causal_conv1d_update_ascend.py",
+        "causal_conv1d_update_enflame.py",
+        "causal_conv1d_update_kunlunxin.py"
+      ],
+      "members": [
+        {
+          "name": "causal_conv1d_update.py",
+          "source": "src/flaggems_sglang/ops/causal_conv1d_update.py",
+          "size": 7901,
+          "sha256": "f5be2835944d0781bd31ccd20c515ba9cb500c0380940e8b6c49be18f9ce3372"
+        },
+        {
+          "name": "causal_conv1d_update_ascend.py",
+          "source": "src/flaggems_sglang/runtime/backend/_ascend/ops/causal_conv1d_update.py",
+          "size": 6173,
+          "sha256": "a3a5cd981d492def26fef2745a527a22e4dce207429dfb8566386e927332a49d"
+        },
+        {
+          "name": "causal_conv1d_update_enflame.py",
+          "source": "src/flaggems_sglang/runtime/backend/_enflame/ops/causal_conv1d_update.py",
+          "size": 5824,
+          "sha256": "57d4825f20b864d1722f8760a8707d0be5e90e5f12038a8fd05809f7f38d43d8"
+        },
+        {
+          "name": "causal_conv1d_update_kunlunxin.py",
+          "source": "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/causal_conv1d_update.py",
+          "size": 4259,
+          "sha256": "8086def1f50ec326ab7634010b62edcf950e6e78f52995d8bde74320098d3f20"
+        }
+      ],
+      "verification_stage": "t43-release1",
+      "target_runtime_verified": false,
+      "submitted": false
+    },
+    {
+      "task": 46,
+      "status": "created",
+      "operator": "chunked_embedding_lora_a",
+      "commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/chunked_embedding_lora_a/research-20260908-26a9576/chunked_embedding_lora_a.zip",
+      "size": 30765,
+      "zip_sha256": "13388ecaeda1cd8edb8dcb17d4a40e728f740186d25e2f5194e1ec60b1e3cd7d",
+      "canonical_zip_sha256": "13388ecaeda1cd8edb8dcb17d4a40e728f740186d25e2f5194e1ec60b1e3cd7d",
+      "archive_members": [
+        "chunked_embedding_lora_a.py",
+        "chunked_embedding_lora_a_ascend.py",
+        "chunked_embedding_lora_a_enflame.py",
+        "chunked_embedding_lora_a_hygon.py",
+        "chunked_embedding_lora_a_iluvatar.py",
+        "chunked_embedding_lora_a_kunlunxin.py",
+        "chunked_embedding_lora_a_metax.py"
+      ],
+      "members": [
+        {
+          "name": "chunked_embedding_lora_a.py",
+          "source": "src/flaggems_sglang/ops/chunked_embedding_lora_a.py",
+          "size": 4388,
+          "sha256": "ad54c22cd6750e28ff0f54224b34038ee45805232652ad8a0ea1e76115bfe6ea"
+        },
+        {
+          "name": "chunked_embedding_lora_a_ascend.py",
+          "source": "src/flaggems_sglang/runtime/backend/_ascend/ops/chunked_embedding_lora_a.py",
+          "size": 4450,
+          "sha256": "96790552b97c286fe1e7057bff4e4150341a3e62283c59e631f9d70d6e2f486c"
+        },
+        {
+          "name": "chunked_embedding_lora_a_enflame.py",
+          "source": "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_embedding_lora_a.py",
+          "size": 4118,
+          "sha256": "aa5be7776a96805d731a6179b3ead391c19e394187205d9aa58675e6d228bee5"
+        },
+        {
+          "name": "chunked_embedding_lora_a_hygon.py",
+          "source": "src/flaggems_sglang/runtime/backend/_hygon/ops/chunked_embedding_lora_a.py",
+          "size": 4515,
+          "sha256": "2993445785b730ceb2473c43acbb956bf041551522c8945e7ef38d3cbd56516e"
+        },
+        {
+          "name": "chunked_embedding_lora_a_iluvatar.py",
+          "source": "src/flaggems_sglang/runtime/backend/_iluvatar/ops/chunked_embedding_lora_a.py",
+          "size": 4196,
+          "sha256": "5f6ffd3c374f5c692da945ca8525e75a908415573b6319c1be356a4dac174adf"
+        },
+        {
+          "name": "chunked_embedding_lora_a_kunlunxin.py",
+          "source": "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_embedding_lora_a.py",
+          "size": 4017,
+          "sha256": "c239d82cb0387d8c53cae81c035d539761c835f9c7e25ab566d880af9709c5eb"
+        },
+        {
+          "name": "chunked_embedding_lora_a_metax.py",
+          "source": "src/flaggems_sglang/runtime/backend/_metax/ops/chunked_embedding_lora_a.py",
+          "size": 4057,
+          "sha256": "69ea13c75fdc6976add6505df3ce457835c2432f0f52f15e7cf69f924707df54"
+        }
+      ],
+      "verification_stage": "t46-release1",
+      "target_runtime_verified": false,
+      "submitted": false
+    },
+    {
+      "task": 49,
+      "status": "created",
+      "operator": "ernie45_rope_fused",
+      "commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/ernie45_rope_fused/research-20260908-26a9576/ernie45_rope_fused.zip",
+      "size": 18476,
+      "zip_sha256": "f7c5a9a4a34bc4ee97619b7225cd9d4bfe0b0cc5774d83983751a071130b6ed0",
+      "canonical_zip_sha256": "f7c5a9a4a34bc4ee97619b7225cd9d4bfe0b0cc5774d83983751a071130b6ed0",
+      "archive_members": [
+        "ernie45_rope_fused.py",
+        "ernie45_rope_fused_enflame.py",
+        "ernie45_rope_fused_kunlunxin.py"
+      ],
+      "members": [
+        {
+          "name": "ernie45_rope_fused.py",
+          "source": "src/flaggems_sglang/ops/ernie45_rope_fused.py",
+          "size": 7659,
+          "sha256": "863da143f4c39bc8cb9b44c6686ed8ed16c9dd0c371e4b8bd10893d9ce66a99a"
+        },
+        {
+          "name": "ernie45_rope_fused_enflame.py",
+          "source": "src/flaggems_sglang/runtime/backend/_enflame/ops/ernie45_rope_fused.py",
+          "size": 5243,
+          "sha256": "f8bedf3116ee5ad09e698d23ad153a5df00d64957501163d69a92ecdea6df1e0"
+        },
+        {
+          "name": "ernie45_rope_fused_kunlunxin.py",
+          "source": "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/ernie45_rope_fused.py",
+          "size": 5162,
+          "sha256": "a40cbb4ed8f339bc87c4f9214e5734d8490f7ad9f8306e3db5599c5a8cb51162"
+        }
+      ],
+      "verification_stage": "t49-release1",
+      "target_runtime_verified": false,
+      "submitted": false
+    },
+    {
+      "task": 45,
+      "status": "created",
+      "operator": "chunk_scaled_dot_kkt",
+      "commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/research-20260908-26a9576/chunk_scaled_dot_kkt.zip",
+      "size": 26899,
+      "zip_sha256": "b510bbcb54784e639c1dbfbcc620e4d7ffd5952cf2f75a581ef7b4aaaed5ff13",
+      "canonical_zip_sha256": "b510bbcb54784e639c1dbfbcc620e4d7ffd5952cf2f75a581ef7b4aaaed5ff13",
+      "archive_members": [
+        "chunk_scaled_dot_kkt.py",
+        "chunk_scaled_dot_kkt_ascend.py",
+        "chunk_scaled_dot_kkt_enflame.py",
+        "chunk_scaled_dot_kkt_kunlunxin.py"
+      ],
+      "members": [
+        {
+          "name": "chunk_scaled_dot_kkt.py",
+          "source": "src/flaggems_sglang/ops/chunk_scaled_dot_kkt.py",
+          "size": 6691,
+          "sha256": "b9072313d76ce351986479934aa1d2624d85d0e21c87ecaaabc367452b556b87"
+        },
+        {
+          "name": "chunk_scaled_dot_kkt_ascend.py",
+          "source": "src/flaggems_sglang/runtime/backend/_ascend/ops/chunk_scaled_dot_kkt.py",
+          "size": 7101,
+          "sha256": "caf93043e1df657e15a7644e0b18af11a2ece8e45234b36bdfbc9531a3593ca4"
+        },
+        {
+          "name": "chunk_scaled_dot_kkt_enflame.py",
+          "source": "src/flaggems_sglang/runtime/backend/_enflame/ops/chunk_scaled_dot_kkt.py",
+          "size": 4669,
+          "sha256": "eafa69b8350870398e33754a9979b91601ea884f42f815b9557d4e748ba30332"
+        },
+        {
+          "name": "chunk_scaled_dot_kkt_kunlunxin.py",
+          "source": "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunk_scaled_dot_kkt.py",
+          "size": 7878,
+          "sha256": "5ef2b9313ca56b4a3799df12173bc79baf9c0ccd45a1ae005202304af18274f0"
+        }
+      ],
+      "verification_stage": "t45-release1",
+      "target_runtime_verified": false,
+      "submitted": false
+    },
+    {
+      "task": 56,
+      "status": "created",
+      "operator": "l2norm",
+      "commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/l2norm/research-20260908-c73f6c3/l2norm.zip",
+      "size": 2707,
+      "zip_sha256": "e31e9c826871d4d786fffbfe866590ac0d31e4c49dda8d6924e195b5b25c1a39",
+      "canonical_zip_sha256": "e31e9c826871d4d786fffbfe866590ac0d31e4c49dda8d6924e195b5b25c1a39",
+      "archive_members": [
+        "l2norm.py"
+      ],
+      "members": [
+        {
+          "name": "l2norm.py",
+          "source": "src/flaggems_sglang/ops/l2norm.py",
+          "size": 2591,
+          "sha256": "96a118af53c15ae0bad203974312ac07dc6c3ea3ee66430b27c5e3ef63053414"
+        }
+      ],
+      "verification_stage": "t56-release2",
+      "target_runtime_verified": false,
+      "submitted": false
+    },
+    {
+      "task": 42,
+      "status": "created",
+      "operator": "act_and_mul",
+      "commit": "26a95766b179d263916e9483dfc8d2343c40406a",
+      "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/act_and_mul/research-20260908-26a9576/act_and_mul.zip",
+      "size": 31771,
+      "zip_sha256": "921e5648a0ec00eaaf9d61b7f408824db5ccb75cc89013c478dd78c3b0f0b372",
+      "canonical_zip_sha256": "921e5648a0ec00eaaf9d61b7f408824db5ccb75cc89013c478dd78c3b0f0b372",
+      "archive_members": [
+        "act_and_mul.py",
+        "act_and_mul_amd.py",
+        "act_and_mul_ascend.py",
+        "act_and_mul_enflame.py",
+        "act_and_mul_hygon.py",
+        "act_and_mul_kunlunxin.py",
+        "act_and_mul_metax.py"
+      ],
+      "members": [
+        {
+          "name": "act_and_mul.py",
+          "source": "src/flaggems_sglang/ops/act_and_mul.py",
+          "size": 4348,
+          "sha256": "0fc69482922dcd6f79307ea41d730974b389f2ef98e92c07db409687e557295b"
+        },
+        {
+          "name": "act_and_mul_amd.py",
+          "source": "src/flaggems_sglang/runtime/backend/_amd/ops/act_and_mul.py",
+          "size": 4627,
+          "sha256": "946046222b2b08b769f50ab4bcbbb040e4d543afe982f2ca200ba978e4eeaa68"
+        },
+        {
+          "name": "act_and_mul_ascend.py",
+          "source": "src/flaggems_sglang/runtime/backend/_ascend/ops/act_and_mul.py",
+          "size": 4696,
+          "sha256": "db3b8b424dce0e4648f8f4d7fd92fdbeb508185e873999ea39076c42608f9e86"
+        },
+        {
+          "name": "act_and_mul_enflame.py",
+          "source": "src/flaggems_sglang/runtime/backend/_enflame/ops/act_and_mul.py",
+          "size": 4278,
+          "sha256": "bf30cb7b1157a5c11edc6234b0961ab5880cc8197059f6ea9422fdb074cddd9f"
+        },
+        {
+          "name": "act_and_mul_hygon.py",
+          "source": "src/flaggems_sglang/runtime/backend/_hygon/ops/act_and_mul.py",
+          "size": 4316,
+          "sha256": "c36f32a0d3478fda37930f2038ebecd881dd99cbcd6d3392dc140b8be8240653"
+        },
+        {
+          "name": "act_and_mul_kunlunxin.py",
+          "source": "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/act_and_mul.py",
+          "size": 5221,
+          "sha256": "1a5ade6d707b2b1e532decf518bd131f6acd2ba18a78cf1382e97c7fc89f2189"
+        },
+        {
+          "name": "act_and_mul_metax.py",
+          "source": "src/flaggems_sglang/runtime/backend/_metax/ops/act_and_mul.py",
+          "size": 3453,
+          "sha256": "df351d81d900d88074a3f83982a9d8f210f31c618ae3bea0d8d167734166b9b3"
+        }
+      ],
+      "verification_stage": "t42-release1",
+      "target_runtime_verified": false,
+      "submitted": false
+    },
+    {
+      "task": 53,
+      "status": "created",
+      "operator": "fused_gdn_gating",
+      "commit": "c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67",
+      "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/fused_gdn_gating/research-20260908-c73f6c3/fused_gdn_gating.zip",
+      "size": 18948,
+      "zip_sha256": "983e52b0178f451b0d2aebe9b23c56b81274a3f23f16497b29665606add0d44e",
+      "canonical_zip_sha256": "983e52b0178f451b0d2aebe9b23c56b81274a3f23f16497b29665606add0d44e",
+      "archive_members": [
+        "fused_gdn_gating.py",
+        "fused_gdn_gating_ascend.py",
+        "fused_gdn_gating_enflame.py",
+        "fused_gdn_gating_kunlunxin.py",
+        "fused_gdn_gating_metax.py"
+      ],
+      "members": [
+        {
+          "name": "fused_gdn_gating.py",
+          "source": "src/flaggems_sglang/ops/fused_gdn_gating.py",
+          "size": 5474,
+          "sha256": "e25153dbfa394a239a630edbbb38d2cf8027958fe37499702273dfe87e701bfd"
+        },
+        {
+          "name": "fused_gdn_gating_ascend.py",
+          "source": "src/flaggems_sglang/runtime/backend/_ascend/ops/fused_gdn_gating.py",
+          "size": 3836,
+          "sha256": "7f755ea83c99a3bdfd9c0cc2e20b4e4c7b59387a9a218dc5b20e23b98bb332a9"
+        },
+        {
+          "name": "fused_gdn_gating_enflame.py",
+          "source": "src/flaggems_sglang/runtime/backend/_enflame/ops/fused_gdn_gating.py",
+          "size": 2936,
+          "sha256": "99c6e86d642ca74b8bf22d6ce4e931213280aefe267ae282c5b23da1e0bd8f96"
+        },
+        {
+          "name": "fused_gdn_gating_kunlunxin.py",
+          "source": "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fused_gdn_gating.py",
+          "size": 2762,
+          "sha256": "7b3b580a76a6b3d5e97dd3c19522a55b3c9010b7e08a364136f42d7bfd476961"
+        },
+        {
+          "name": "fused_gdn_gating_metax.py",
+          "source": "src/flaggems_sglang/runtime/backend/_metax/ops/fused_gdn_gating.py",
+          "size": 3286,
+          "sha256": "039fec3180867a28cda46eb53712e7f2670a8512fa87e25a453dc1dfb1f32a86"
+        }
+      ],
+      "verification_stage": "t53-release2",
+      "target_runtime_verified": false,
+      "submitted": false
+    }
+  ],
+  "static_checks": [
+    "Black py312",
+    "isort black profile line-length 80",
+    "flake8 max-line-length 120",
+    "py_compile",
+    "git diff --check"
+  ]
+}

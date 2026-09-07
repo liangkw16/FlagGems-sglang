@@ -10,8 +10,8 @@ team_best_stage: e1
 team_best_commit: f83c73aeceaa6382c6ec6d93a082fc24e37090fb
 team_best_speedup: 3.10772917
 sealed: no
-next: 榜首已72.30680208;守有效分,多行/短行需有整体收益证据再晋级
-updated: 2026-09-07
+next: 短D大行数候选最终代理通过/ZIP验签;计分形状和其他适用芯片复验,小形状保留旧核
+updated: 2026-09-08
 ```
 
 ## S0 → **8/8 VALID**（2026-09-06，submission 10405）
@@ -50,3 +50,12 @@ updated: 2026-09-07
 
 当前榜首与排名按最新任务API校正；旧段落保留历史快照，不据此分配本轮提交机会。本轮未修改或提交本题源码。
 - 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/tasks-now.json` SHA256 `fc73368c3d98b228b0c7815d6ec1e9042a58af8d953337fff58990daec1474fc`。
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+多行tile8限定 D<=128且rows>4096；小规模保留旧核。最终65536x64/128为4.97x/3.56x，小案例约持平；新增rows4095/4096/4097分流边界。
+
+- source `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`；verification `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`。8 个测试方法、128 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t56-release2/verification.json`，SHA256 `6ee0122303a516aa07bde4b47364e2d6d42821cd0ec33406b8cd89a791302ec2`；日志 SHA256 `a23392a257e8c60d95702ba0414007f5325547c54f5c3db81abd42d685ba4854`。
+- 不可变 ZIP `artifacts/competition/l2norm/research-20260908-c73f6c3/l2norm.zip`，SHA256 `e31e9c826871d4d786fffbfe866590ac0d31e4c49dda8d6924e195b5b25c1a39`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

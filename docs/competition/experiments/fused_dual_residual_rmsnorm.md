@@ -9,8 +9,8 @@ platform: e6/10743六芯通过,昆仑失败,燧原pending;已无有效分可能
 team_best_stage: -
 team_best_speedup: -
 sealed: no
-next: e6昆仑同4元素失配,本轴关闭;只等10743燧原回调,禁止重投;需目标归约/首分歧证据
-updated: 2026-09-07
+next: 阶段探针和大形状代理验证已完成;昆仑4元素问题未复现,仍需目标原输入首分歧,不重投
+updated: 2026-09-08
 ```
 
 ## S0（reciprocal: v*(1/rms)*w）: 5/8
@@ -111,3 +111,11 @@ NVIDIA seed42、BF16 `[4096,8192]` 在 `(689,410)` 的第一层均方：旧 1.00
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fused_dual_residual_rmsnorm/e6-b290b6a/validation/52-submit.json` SHA256 `fb90f2eadb4bb1409b1c56f2e36a7c2d3da6f691d13dbc575d2bcfaa2ee78436`。
 
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fused_dual_residual_rmsnorm/e6-b290b6a/validation/52-status-first-round.json` SHA256 `df19fd00e8ad1a3e02d943df3d03a13b7774a9c273c19e026e4a159eb60417fb`。
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+保持RN生产公式；新增固定输入、reference/candidate/trace独立进程和逐阶段位值打印。4096x8192 BF16代理容差通过，out/mid分别254/75个位值差异，插桩不改最终输出；不是平台失败输入。
+
+- source `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`；verification `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`。6 个测试方法、20 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t52-release1/verification.json`，SHA256 `d578cd3f99afc053f1fbc3a3c4dde5ec4ab235e1d22e92fcd7a71a8175ad06f5`；日志 SHA256 `32871ab5032ced9c53d47900a351582a7958cd9ca09b3aa66acd62ace063d5ca`。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。

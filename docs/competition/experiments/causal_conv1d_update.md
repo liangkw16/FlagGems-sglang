@@ -10,8 +10,8 @@ team_best_stage: e13
 team_best_commit: 4fa854a376de167e76a1e5d1441c6cd82b5866d7
 team_best_speedup: 6.545875
 sealed: no
-next: E15燧原PassManager编译失败收券(华为+41%保留在树);team best仍e13 6.545875;重开需燧原单变量形态拆分证据
-updated: 2026-09-07
+next: 滚动窗口已实现并通过代理;性能未晋级,守E13,需目标加载/占用证据
+updated: 2026-09-08
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -400,3 +400,12 @@ IEEE `tl.dot`（只存 C[:,0]；T28/T37 昆仑通过范式）。
   （含 `enable_fp_fusion=False` kwarg 与 permute 物化 wrapper）编译
   失败，update 形态迁移需单变量拆分验证。
 - 证据 `validation/43-status-final.json`（原始逐芯记录）。
+
+## 2026-09-08 推荐方案实现与提交前验证（未提交平台）
+
+generic width2/3/4 多 token 用寄存器滚动历史和权重复用；长序列/stride/输入 state 不变测试通过。完整 wrapper 配对约 0.974–1.000x，未形成稳定性能收益。
+
+- source `8ba31a102f4ef0430c08f12c4622b27430915071`；verification `8ba31a102f4ef0430c08f12c4622b27430915071`。11 个测试方法、96 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
+- 回执 `artifacts/competition/batch4-implementation-20260907/t43-release1/verification.json`，SHA256 `9210e672569db770418288a82c50b69a89d2f7de90763de7867dda4cbda51212`；日志 SHA256 `5b6652e3d3229686e2a22a8dbc6283aced00127e7887971660e1463c05807706`。
+- 不可变 ZIP `artifacts/competition/causal_conv1d_update/research-20260908-8ba31a1/causal_conv1d_update.zip`，SHA256 `9308dfc04f2b619f7071340b7e31020e3ff6a8e917e7f2d9748219b6d8124592`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
+- 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
