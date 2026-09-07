@@ -5,12 +5,12 @@ task: 56
 operator: l2norm
 batch: 4
 validity: valid
-platform: 8/8(e1,3.10772917x,排名8)
-team_best_stage: e1
-team_best_commit: f83c73aeceaa6382c6ec6d93a082fc24e37090fb
-team_best_speedup: 3.10772917
+platform: 8/8(e2,11045,3.13796875x新team best)
+team_best_stage: e2
+team_best_commit: c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67
+team_best_speedup: 3.13796875
 sealed: no
-next: 短D大行数候选最终代理通过/ZIP验签;计分形状和其他适用芯片复验,小形状保留旧核
+next: 多行tile代理增益未按计分形状兑现(+1.0%);弱芯昆仑0.58/华为1.64需新目标证据,短行轴收益已近天花板
 updated: 2026-09-08
 ```
 
@@ -59,3 +59,15 @@ updated: 2026-09-08
 - 回执 `artifacts/competition/batch4-implementation-20260907/t56-release2/verification.json`，SHA256 `6ee0122303a516aa07bde4b47364e2d6d42821cd0ec33406b8cd89a791302ec2`；日志 SHA256 `a23392a257e8c60d95702ba0414007f5325547c54f5c3db81abd42d685ba4854`。
 - 不可变 ZIP `artifacts/competition/l2norm/research-20260908-c73f6c3/l2norm.zip`，SHA256 `e31e9c826871d4d786fffbfe866590ac0d31e4c49dda8d6924e195b5b25c1a39`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
 - 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
+
+## E2 短行多行 tile → **8/8 VALID，avg 3.13796875x 新 team best**（2026-09-08，sub 11045）
+
+- 候选 = 09-08 方案轮的短 D 多行 tile（commit `c73f6c3`，D≤128 且
+  rows>4096 才启用 tile=8，小规模沿用旧核）；ZIP `e2-c73f6c3` SHA256
+  `e31e9c826871d4d786fffbfe866590ac0d31e4c49dda8d6924e195b5b25c1a39`，
+  单成员 generic，与 t56-release2 回执逐字节一致后经实时 preflight 单次提交。
+- 终态逐芯：天数 6.62225 / 沐曦 2.55158333 / 燧原 1.271（+7%）/
+  海光 4.597 / 昆仑 0.578 / 华为 **1.63733333**（1.41→，+16%）/
+  A 3.6325 / B 4.21408333；avg 3.13796875（3.1077→，**+1.0%**）。
+- 判定：代理 5x 的大行数场景在计分形状中占比不足，结构收益仅华为/燧原
+  小幅兑现；距榜首 72x 的差距不在本轴，短行 tile 轴收益近天花板。

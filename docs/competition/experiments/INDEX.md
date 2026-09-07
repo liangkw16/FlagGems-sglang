@@ -33,10 +33,10 @@
 | 50 | extend_attention | candidate-wip | 6/8(e4,昆仑conclusive封轴;华为数值不可修;燧原0.013x<门槛) | - -x | no | 逐阶段诊断已实现但插桩有观察效应;需要目标原失败重放,不再将两种失败形态称数值永久不可修 | 2026-09-08 | [extend_attention](extend_attention.md) |
 | 51 | fla_layernorm_gated | valid | E8/11032八芯valid,5.721075x;历史E7 best5.816325x,第6 | e7 5.816325x | no | E8华为仅+2.65%且总分未晋级;关闭单独延迟load轴,保留E7,结构优化需新的目标性能证据 | 2026-09-08 | [fla_layernorm_gated](fla_layernorm_gated.md) |
 | 52 | fused_dual_residual_rmsnorm | invalid | e6/10743六芯通过,昆仑失败,燧原pending;已无有效分可能 | - -x | no | 阶段探针和大形状代理验证已完成;昆仑4元素问题未复现,仍需目标原输入首分歧,不重投 | 2026-09-08 | [fused_dual_residual_rmsnorm](fused_dual_residual_rmsnorm.md) |
-| 53 | fused_gdn_gating | valid | 8/8(e4,2.1267x,排名10) | e4 2.1267x | no | 大批量行复用候选已过最终代理和ZIP验签;其他适用芯片及计分形状复验,小规模已保留旧核 | 2026-09-08 | [fused_gdn_gating](fused_gdn_gating.md) |
+| 53 | fused_gdn_gating | valid | 8/8(e5,11044,2.954625x新team best) | e5 2.954625x | no | 距榜首仍远(288x);多行结构已兑现,剩余轴=弱芯(昆仑0.72/华为1.47/燧原1.60)新结构证据 | 2026-09-08 | [fused_gdn_gating](fused_gdn_gating.md) |
 | 54 | fused_norm_rope_stacked | invalid_correctness | 5/8(e2,10414已终态) | - -x | no | 阶段探针/67M代理stress通过;真实三芯失败仍待目标原输入复现,无新生产修复或ZIP | 2026-09-08 | [fused_norm_rope_stacked](fused_norm_rope_stacked.md) |
 | 55 | hc_head | invalid_correctness | 7/8(e1,10668已终态;昆仑compile_worker Aborted,归因未定) | - -x | no | 独立进程和逐核取证工具已实现;需要昆仑同worker/runtime重放,崩溃归因未定,停止盲投 | 2026-09-08 | [hc_head](hc_head.md) |
-| 56 | l2norm | valid | 8/8(e1,3.10772917x,排名8) | e1 3.10772917x | no | 短D大行数候选最终代理通过/ZIP验签;计分形状和其他适用芯片复验,小形状保留旧核 | 2026-09-08 | [l2norm](l2norm.md) |
+| 56 | l2norm | valid | 8/8(e2,11045,3.13796875x新team best) | e2 3.13796875x | no | 多行tile代理增益未按计分形状兑现(+1.0%);弱芯昆仑0.58/华为1.64需新目标证据,短行轴收益已近天花板 | 2026-09-08 | [l2norm](l2norm.md) |
 | 57 | log_scaling_tau | valid | 8/8(e2,10747,2.36478125x首次有效) | e11 2.50278125x | no | PTX已证实16B访存,本轮向量化轴停止;保留E11,无新生产候选或ZIP | 2026-09-08 | [log_scaling_tau](log_scaling_tau.md) |
 | 58 | w8a8_block_int8_matmul | valid | 8/8(e1,10412,122.66158333x,排名3) | e1 122.66158333x | no | 真正int8测试已补齐;cpasync候选待沐曦运行时识别与执行,当前门禁失败无ZIP | 2026-09-08 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
 

@@ -5,12 +5,12 @@ task: 53
 operator: fused_gdn_gating
 batch: 4
 validity: valid
-platform: 8/8(e4,2.1267x,排名10)
-team_best_stage: e4
-team_best_commit: 743ebb7f68109cdfd3b8c651aa88d8025d4d9d0c
-team_best_speedup: 2.1267
+platform: 8/8(e5,11044,2.954625x新team best)
+team_best_stage: e5
+team_best_commit: c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67
+team_best_speedup: 2.954625
 sealed: no
-next: 大批量行复用候选已过最终代理和ZIP验签;其他适用芯片及计分形状复验,小规模已保留旧核
+next: 距榜首仍远(288x);多行结构已兑现,剩余轴=弱芯(昆仑0.72/华为1.47/燧原1.60)新结构证据
 updated: 2026-09-08
 ```
 
@@ -129,3 +129,19 @@ generic 多行共享 head 参数/exp，支持参数stride；总元素<16384且�
 - 回执 `artifacts/competition/batch4-implementation-20260907/t53-release2/verification.json`，SHA256 `f9646a2d6fee56ef9e75736765876976bab6dbc1e82070cc2e3987dc53f3ac34`；日志 SHA256 `600b37ab74da4c723e0993732e9df4d5159a4d48bcd27c0f9a45b79f772ef096`。
 - 不可变 ZIP `artifacts/competition/fused_gdn_gating/research-20260908-c73f6c3/fused_gdn_gating.zip`，SHA256 `983e52b0178f451b0d2aebe9b23c56b81274a3f23f16497b29665606add0d44e`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
 - 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
+
+## E5 多行结构 generic 上位 → **8/8 VALID，avg 2.954625x 新 team best**（2026-09-08，sub 11044）
+
+- 候选 = 09-08 方案轮的多行复用 generic（commit `c73f6c3`，多行共享 head
+  参数与 `exp(A_log)`，总元素<16384 且参数连续时沿用旧核分流）；ZIP
+  `e5-c73f6c3` SHA256 `983e52b0178f451b0d2aebe9b23c56b81274a3f23f16497b29665606add0d44e`，
+  成员 5（generic/ascend/enflame/kunlunxin/metax），与 t53-release2 回执
+  逐字节一致后经实时 preflight 单次提交。
+- 终态逐芯：天数 **4.7802**（2.44→,+96%）/ 沐曦 2.751 / 燧原 1.601 /
+  海光 **4.3194**（+47%）/ 昆仑 0.7158 / 华为 1.4678（+7%）/
+  A **3.6912**（+42%）/ B **4.3106**（+63%）；avg 2.954625（2.1267→，
+  **+38.9%**）。
+- 判定：大批量行复用结构在四芯兑现，代理 33.5x 的方向按计分形状打折后
+  仍为该题最大单轮结构增益；小规模分流保护未引入回退（沐曦/燧原/昆仑
+  持平）。距榜首 288x 仍远，弱芯（昆仑/华为/燧原）需要新的目标证据。
+
