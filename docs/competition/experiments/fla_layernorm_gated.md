@@ -5,13 +5,13 @@ task: 51
 operator: fla_layernorm_gated
 batch: 4
 validity: valid
-platform: e6七芯有效但昆仑崩溃族7/8invalid;e2最佳5.3939x;e6虚拟均值~5.478
-team_best_stage: e2
-team_best_speedup: 5.3939
+platform: 8/8(e7,5.816325x TEAM BEST)
+team_best_stage: e7
+team_best_speedup: 5.816325
 sealed: no
-next: 额度仅1发;候选=warps分档+hygon-pin(E2字节)+metax-rsqrt合并包,兼昆仑崩溃族重载,需用户授权
+next: 额度0/30通道关闭;e7=5.8163新team best;离线储备=华为大D分块/昆仑需结构证据
 updated: 2026-09-07
-team_best_commit: 5985b1ce09fe6e7cec374c271aa1c25940264783
+team_best_commit: d05e57a0ee3d2d453866c85c0479b22a6fcbae8b
 ```
 
 ## S0（2026-09-05，submission 9867）
@@ -285,3 +285,35 @@ kunlunxin 冻结。本包同时是昆仑崩溃族重载载体（新 ZIP 字节�
   （rsqrt 门 +12%）；海光回带 ≥7.7；昆仑若再报 299 同指纹 → 按崩溃族协议
   封存候选、不再探针，仅走平台工单路径。**本发为最后一发额度（1/30）且属
   崩溃族重载，按纪律需用户当次明示授权后才执行 preflight+submit。**
+
+## E7 平台终态：**8/8 VALID，新 TEAM BEST 5.816325x**（2026-09-07T21:45:32 观测）
+
+- submission `10924` / created `2026-09-07T21:41:47`，用户会话内授权后执行唯一
+  一次 preflight+submit；远端 ZIP 手工验签 `0211916a…df2ad4` 一致（23185 bytes）。
+- `completed` / `valid`，8/8，average_speedup **5.816325**，is_team_best `True`
+  （E2 5.3939 → +7.8%）；观测时额度 `0/30`（本批额度用尽）。
+
+| 芯片 | 状态/正确性 | 加速比 | vs E2 | 实际文件 |
+| --- | --- | ---: | ---: | --- |
+| tianshu | completed/True | 11.4872 | **+22.9%** | `fla_layernorm_gated.py`（warps 分档） |
+| muxi | completed/True | 4.4776 | -1.9% | `fla_layernorm_gated_metax.py`（rsqrt，带内） |
+| enflame | completed/True | 3.7314 | **+34.6%** | `fla_layernorm_gated_enflame.py`（冻结字节） |
+| haiguang | completed/True | 7.9938 | -2.2% | `fla_layernorm_gated_hygon.py`（pin 生效） |
+| kunlunxin | completed/True | 0.9644 | +0.1% | `fla_layernorm_gated_kunlunxin.py`（无崩溃） |
+| huawei | completed/True | 2.3028 | -1.5% | `fla_layernorm_gated_ascend.py`（带内） |
+| card_a | completed/True | 8.428 | +2.7% | `fla_layernorm_gated.py` |
+| card_b | completed/True | 7.1454 | +5.3% | `fla_layernorm_gated.py` |
+
+- 轴结算：warps 分档（天数 +2.14、B +0.36）+ hygon pin（海光回带 +1.03 vs E6
+  读数）为净收益主贡献；**沐曦 rsqrt 无效果**（4.4776 vs pin 基线 4.476，
+  轴按门 ≥+12% 判负关闭）；昆仑崩溃族未复发（E6 判定平台侧获最终佐证）。
+- **E5 燧原关轴判定修正**：E7 携带的燧原 vendor 与 E5 逐字节相同（默认
+  launch，`848f5014…`），E5 读 2.3282、E7 读 3.7314——E5 的低位是评测机
+  忙时窗口压制，默认 launch 轴实际有效（对照显式参数轮 2.33–2.34 三连读，
+  +60%）；教训记入：燧原读数窗口效应 > 单轮门禁，弱带内芯片的关轴需双轮证据。
+- 证据 `51-submit.json` SHA256
+  `f205f4c85b5f0f51764b00e99c95241727c75e260dd40afb94b180dd2c7c76b0`；
+  `51-status-e7-final.json` SHA256
+  `86ddc19eebabadf92ee63b9f2b5bd0e74a3c71a164093c3b314dd02a2430313f`。
+- 额度 0/30：本批提交通道关闭；后续仅离线迭代（华为大 D 分块等结构轴留待
+  下一窗口或新额度），账本 current 块更新为 e7 终态。
