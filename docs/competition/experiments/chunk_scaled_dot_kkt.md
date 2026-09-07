@@ -10,7 +10,7 @@ team_best_stage: -
 team_best_commit: -
 team_best_speedup: -
 sealed: no
-next: constexpr除数平台无收益;停止该轴;保留契约修复,需新的epilogue结构证据
+next: E16(e16-f58292e)下三角tile跳过+epilogue谓词化已过release门禁待单次平台裁决;预注册门=昆仑>=0.1x转有效,不追加同字节重试
 updated: 2026-09-07
 ```
 
@@ -354,3 +354,29 @@ K 循环推进 `b_ptrs += BLOCK_K * stride_bn` 是潜伏笔误（应为 stride_b
 
 - `d08d8d2d-4f1c-437f-9256-e3fb3343d464` status=`failed`, verify_result=`{'passed': False, 'total_tests': 0, 'passed_tests': 0}`, performance=`{'speedup': None, 'best_version': '', 'total_rounds': 1}`；证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/validation/45-huawei-response5.json` SHA256 `fd090e373e24a77bade6b33efc4c22d6b45241ac00d441d9bb71774317201a47`。
 - `56da3782-97ed-425f-b76b-809b9b9fa856` status=`completed`, verify_result=`{'passed': True, 'total_tests': 0, 'passed_tests': 0}`, performance=`{'speedup': None, 'best_version': 'v1', 'total_rounds': 1}`；证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/validation/45-enflame-response2.json` SHA256 `0eb76fcd30e095963e7e7f514709f5d05aa7404a19e1a822004b47dad62fa72f`。
+
+## E16 下三角 tile 跳过 + epilogue 谓词化（2026-09-07）
+
+- 调研定位昆仑 0.063x 的结构性剩余：GEMM 全方块中纯上三角 tile 的 dot 从未被
+  epilogue 读取（BT=64 时 1/4、BT=128 时 6/16 的计算量与载入纯属浪费）；epilogue
+  上半 lane 的 gram/g_n load 与含零 store 同样是被算后丢弃的流量。
+- 单变量 = `_kunlunxin` 三处联动（同轴"下三角流量消除"）：GEMM 32×32 化 +
+  纯上三角 tile 标量提前 return（E12 已证 32/64 tile 等价，skip 为纯收益）；
+  epilogue 全部 load/store 谓词 `m > n`；wrapper 输出 `torch.zeros` 预清零。
+  逐元素数学顺序与 E15 完全一致（beta→safe-exp→store）。
+- source/verification commit `f58292e`；screening `/tmp/flagos-t45e16` 与
+  release `/tmp/flagos-t45e16-rel`（远端 RTX 5070 Ti / torch 2.13.0+cu130 /
+  triton 3.7.1）均 10/10 方法通过、0 skip/xfail/errors，kunlunxin 10 调用
+  /20 kernel launch 实跑；远端 black/isort/flake8 全过。
+- NVIDIA 代理配对计时不作为本候选晋级依据（vendor 仅昆仑芯片使用）；目标通道
+  = 平台单发。预注册门 = 昆仑 ≥0.1x 使整题转有效（均值账：0.063→0.1 仅
+  +0.0046 但决定资格）；若 <0.1 记录逐芯读数后按同指纹两连败纪律评估。
+- ZIP `e16-f58292e`，28359 bytes，SHA256
+  `4de9ec521256ea1877b0709800031b571e5e6cb0a766f27d6e4189e38889547a`；
+  成员 4（generic/ascend/enflame/kunlunxin），generic/ascend/enflame 字节
+  与 e15 逐字节一致（成员 SHA 见 e15 节，kunlunxin
+  `c762f86d783b65baaa90267e6041c23eb0560c409c33091311b1c7d8983f2af5`）。
+- 证据 `validation/verification.json` SHA256
+  `38846f7034cb16d1bbcd1fb667c23cf37323c852e521ca8e6cd6717c9223f65b`、
+  `validation/verification.log` SHA256
+  `1f623525fb8064d25e716243df3daf059cdcc60d3abe3702f685d1509df6dead`。
