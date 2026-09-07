@@ -5,12 +5,12 @@ task: 43
 operator: causal_conv1d_update
 batch: 4
 validity: valid
-platform: e16 7/8燧原复制仍编译失败；e17恢复燧原已验证形态并试昇腾tile
+platform: e17 8/8 6.5374375x未晋级；保留e13 6.545875x，排名3
 team_best_stage: e13
 team_best_commit: 4fa854a376de167e76a1e5d1441c6cd82b5866d7
 team_best_speedup: 6.545875
 sealed: no
-next: E17昇腾STATE_BLOCK=min(64,pow2(state_len))；第二次候选门禁后单投，目标8.14x
+next: 本轮2/2已用；停止constexpr-copy和Ascend小tile投券，先取得目标GCU/NPU最小复现与阶段耗时
 updated: 2026-09-07
 ```
 
@@ -478,3 +478,33 @@ IEEE `tl.dot`（只存 C[:,0]；T28/T37 昆仑通过范式）。
 - evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e17-6f55b2d/validation/verification-input.json` SHA256 `2ccc6701394ddf6433b1fec54c66e313511c5f3c646f4c9aa6c26abaf51a72d7`。
 - evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e17-6f55b2d/validation/verification.json` SHA256 `46c871459468b007cf845e191aa2571f94e79ed032c138317971d0edc50b19e2`。
 - evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e17-6f55b2d/validation/verification.log` SHA256 `e4ced4f870ec2177fa68e9cb634ae319f694b3756a113dd9502ad9a111ff9f24`。
+
+## E17 平台终态与本轮收口（2026-09-07T18:21:57+08:00）
+
+- 正式 submission `10826`，18:21:07单次上传+提交；远端ZIP大小与SHA匹配。**8/8 valid，平均6.5374375x**，未超过E13的6.545875x（-0.12890%）；不晋级。18:21:57额度9/30，今晚T43两次已用2/2，本轮不再正式提交。
+- 登录态任务详情再次确认team best6.545875、排名3，榜首7.90325（AttentionImOnly2YearsOld），截止2026-09-10 19:59:59 CST。距榜首仍需+20.74%，本轮没有新增Top1。
+
+| 芯片 | 正确性 | 加速比 |
+| --- | --- | ---: |
+| tianshu | True | 13.7745 |
+| muxi | True | 7.0585 |
+| enflame | True | 0.3265 |
+| haiguang | True | 10.938 |
+| kunlunxin | True | 0.406 |
+| huawei | True | 0.3895 |
+| card_a | True | 8.828 |
+| card_b | True | 10.5785 |
+
+- 昇腾0.3895相对E16的0.3775仅+3.18%，低于E15同基线单次0.484；没有证据证明代理巨幅收益迁移NPU，且整体均值未改善。停止STATE_BLOCK单轴继续投券。燧原恢复E13形态后0.3265且正确；不把E16卷积先行调用成功等同完整正确。
+- 工作树四源码恢复E13计算AST，generic/Ascend/Enflame仅Black折行，Kunlun字节相等。11方法回归继续保留，E16/E17源码、ZIP和日志保持不可变，不覆盖失败证据。原E13 source/ZIP仍为平台best的唯一身份，新格式树不冒充原ZIP字节。
+- evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e17-6f55b2d/validation/43-preflight.json` SHA256 `57280bcb2355a5e69d277c8db04d1baade3ea23a612dd7142c7a85ebab583dbe`。
+- evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e17-6f55b2d/validation/43-submit.json` SHA256 `c963ab39ef17e8e77a5777f77bd07050ef8cfc48e2ccbda03c4cccd702b7708d`。
+- evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e17-6f55b2d/validation/43-status-final.json` SHA256 `019c2721cf508622523f3169add6331f50a9b6daf1148e814e67ad0c7baa8f98`。
+- evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e17-6f55b2d/validation/43-task-final.json` SHA256 `d5d0f68c616695d2f58201b54fbcbbc351dff53e50afe26330dbf86979dff1e1`。
+- evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e17-6f55b2d/validation/best-restoration-audit.json` SHA256 `d38f2c3a95b40fb8c2a84871cbc4637d4bd423b322683eeeec3d17c0bdc3bd8b`。
+
+### 下一轮开工门槛
+
+1. **燧原：先拿可复现的copy编译日志/IR。** E15/E16均在flat copy失败；下一最小实验是按(b,time)行组织、channel连续复制，去掉逐lane除余和int64行乘法，并分别验证仅copy、仅conv和完整wrapper；用相同原始输入检查精确new_state及不修改输入。PassManager根因目前未知，不能预先认定int64或某一pass有错。目标GCU服务恢复前不占平台次数重复同形态。
+2. **昇腾：先阶段计时，再改布局/融合。** 官方[cat-slice-conv1d实践](https://github.com/Ascend/triton-ascend-ops/blob/755cf18c30f18720f67b6360c2b2856b64739822/tutorial/best_practice/003-fused-cat-slice-conv1d.zh.md)给出UB对齐、借轴/转置路线。先测cat/float/权重转置/kernel/输出cast；只改占比最大的阶段。其示例in-place与多步store索引不可直接复用，本题out-of-place及非连续输入必须保留。
+3. **Top1预算：** 当前E13强五芯合计51.2905，超过现榜首需要弱三芯合计>11.9355（均值>3.9785，假设强芯不变）。小幅弱芯改善不足以冲榜；目标仍8.14x，只有结构改动且目标芯/完整wrapper实测有足够收益才申请下一轮候选，不重复仅靠NVIDIA倍数的投券判断。
