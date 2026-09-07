@@ -255,3 +255,33 @@ wrapper 对 strided weight/bias 先 `.contiguous()`（commit `445d3eb`；kernel 
   新增 `_hygon` vendor 冻结 E2 字节（隔离海光回退）+ `_metax` 加 rsqrt
   （沐曦轴，预注册门 ≥+12%）+ 其余 vendor 冻结；同时充当昆仑崩溃族重载
   （新字节天然绕过同 tuple 限制）。风险：昆仑若再现同指纹即按协议封存。
+
+## E7 合并包：warps 分档保留 + hygon-pin + metax-rsqrt（2026-09-07，就绪待授权未提交）
+
+内容：generic 维持 E6 warps 分档字节不动；**新增 `_hygon` vendor = E2 冻结字节**
+（修复 E6 实测海光 -14.9%，pin 回其 7.74–8.18 带）；`_metax` 由 E2 冻结字节改为
+**仅 `1.0/tl.sqrt → tl.rsqrt`**（09-05 预注册沐曦轴，门 ≥+12%）；ascend/enflame/
+kunlunxin 冻结。本包同时是昆仑崩溃族重载载体（新 ZIP 字节绕过同 tuple 限制）。
+
+预期账（E6 七芯实测 + 海光回带 + 沐曦 rsqrt 门值 + 昆仑常规 ~0.96）：
+11.17 + 5.0 + 2.36 + 8.0 + 0.96 + 2.48 + 8.25 + 7.16 ≈ 45.4 → **均值 ~5.67**
+（#4–5 名量级；距榜首 6.67 仍差，最后一发额度下的最优期望组合）。
+
+- source/verification commit：`d05e57a0ee3d2d453866c85c0479b22a6fcbae8b`。
+- release v2 回执全绿：7 方法，generic 83 + hygon 64 + metax 64 次非 warmup
+  launch，fail/error/skip/xfail=0；两个改动/新增 vendor 均按规程代理执行。
+  RTX5070Ti / Python3.12.13 / torch2.13.0+cu130 / triton3.7.1，
+  远端 `gpu:/tmp/flagos-t51-e7.BeQMBI`（timeout 600，PID 316073）。
+- ZIP `e7-d05e57a/fla_layernorm_gated.zip`，6 成员，SHA256
+  `0211916a1afa740df00dd31e59e6996ceb89f5692e319d697c0b393949df2ad4`。
+  成员：generic `d952eda8…`（=E6）、ascend `92baf6f3…`、enflame `848f5014…`、
+  **hygon `712c3859…`（新）**、kunlunxin `66e08be2…`（冻结）、
+  **metax `a7cd1e8a…`（rsqrt）**。
+- 回执 `verification.json` SHA256
+  `c2bc380f3e7327404310f45120b5e4dc99570fa69e15f7878ad16780b7fb014f`；
+  `verification.log` SHA256
+  `830ecaf088554d6287fd79462d24f24c459822f69066e585f317751675a229ef`。
+- 预注册晋级门：8/8 valid 且均值 > 5.3939（team best 晋级）；沐曦 ≥5.0
+  （rsqrt 门 +12%）；海光回带 ≥7.7；昆仑若再报 299 同指纹 → 按崩溃族协议
+  封存候选、不再探针，仅走平台工单路径。**本发为最后一发额度（1/30）且属
+  崩溃族重载，按纪律需用户当次明示授权后才执行 preflight+submit。**
