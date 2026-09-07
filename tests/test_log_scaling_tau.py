@@ -66,12 +66,50 @@ class LogScalingTauTest(unittest.TestCase):
     def test_fp32(self):
         self._check(*make_case(7, (320,), torch.float32, seed=2))
 
+    def test_repeated_calls_direct_launch(self):
+        # Second and later calls for a shape key take the prebound
+        # CompiledKernel launcher; repeated calls and fresh tensors
+        # must stay exact.
+        for T, tail, dtype in (
+            (4, (64,), torch.float16),
+            (16, (64, 128), torch.float16),
+            (4, (64,), torch.bfloat16),
+        ):
+            x, tau = make_case(T, tail, dtype)
+            expected = reference(x, tau)
+            for name, mod in MODULES:
+                with self.subTest(module=name, T=T, dtype=dtype):
+                    first = mod.log_scaling_tau(x, tau)
+                    second = mod.log_scaling_tau(x, tau)
+                    third = mod.log_scaling_tau(x.clone(), tau.clone())
+                    for actual in (first, second, third):
+                        torch.testing.assert_close(
+                            actual.float(),
+                            expected.float(),
+                            atol=1e-2,
+                            rtol=1e-2,
+                        )
+        # Misaligned contiguous views (odd storage offset) must
+        # re-enter the standard dispatch path after the aligned key is
+        # already cached and stay correct.
+        storage = torch.randn(4 * 64 + 1, device="cuda", dtype=torch.float16)
+        x = storage[1:].view(4, 64)
+        tau = torch.randn(4, device="cuda").float()
+        expected = reference(x, tau)
+        for name, mod in MODULES:
+            with self.subTest(module=name, case="misaligned"):
+                actual = mod.log_scaling_tau(x, tau)
+                torch.testing.assert_close(
+                    actual.float(), expected.float(), atol=1e-2, rtol=1e-2
+                )
+
 
 RELEASE_REQUIRED_TESTS = [
     "LogScalingTauTest.test_platform_shapes",
     "LogScalingTauTest.test_fp32",
     "LogScalingTauTest.test_strided_input_and_tau",
     "LogScalingTauTest.test_tail_boundaries",
+    "LogScalingTauTest.test_repeated_calls_direct_launch",
 ]
 
 
