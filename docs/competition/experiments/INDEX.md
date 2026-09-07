@@ -27,11 +27,11 @@
 | 44 | chain_speculative_sampling | invalid | s0八芯predicts失败;本轮修复OOB但half精确采样仍失败,未重投 | s0 -x | no | 诊断已复现predicts[13]失配;release因expected_failure被拒,目标scan/舍入仍未修复,禁止带缺口提交 | 2026-09-08 | [chain_speculative_sampling](chain_speculative_sampling.md) |
 | 45 | chunk_scaled_dot_kkt | invalid_threshold | 8/8正确(e15),昆仑0.063x<0.1;平均7.000125不计有效排名 | - -x | no | 新row/head epilogue代理正确但未提速;候选暂不晋级,昆仑仍需>=0.1目标证据 | 2026-09-08 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x) | e3 14.1051875x | no | 华为token tile8及rank>128修复代理通过/ZIP验签;等待华为正确性和长短段性能复验 | 2026-09-08 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
-| 47 | chunked_sgmv_expand | valid | 8/8(e5,25.0048125x,榜首) | e5 25.0048125x | no | 多轮K真实步长错误已修复且代理回归通过/ZIP验签;先补目标复验再考虑外积,守E5 | 2026-09-08 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
+| 47 | chunked_sgmv_expand | valid | 8/8(e5,25.0048125x,榜首) | e5 25.0048125x | no | E11已预注册,按用户恢复额度授权执行一次平台评测;保持E5历史best | 2026-09-08 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
 | 48 | chunked_sgmv_shrink | valid | 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor) | e7 4.7489375x | no | cpasync候选已实现但NVIDIA不识别pipeline;需沐曦固定源码执行,无本轮ZIP | 2026-09-08 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
 | 49 | ernie45_rope_fused | valid | 8/8(e3,8.58253125x) | e3 8.58253125x | no | head16候选代理正确/ZIP验签;需昆仑live buffer和完整wrapper收益后晋级 | 2026-09-08 | [ernie45_rope_fused](ernie45_rope_fused.md) |
 | 50 | extend_attention | candidate-wip | 6/8(e4,昆仑conclusive封轴;华为数值不可修;燧原0.013x<门槛) | - -x | no | 逐阶段诊断已实现但插桩有观察效应;需要目标原失败重放,不再将两种失败形态称数值永久不可修 | 2026-09-08 | [extend_attention](extend_attention.md) |
-| 51 | fla_layernorm_gated | valid | 8/8(e7,5.816325x TEAM BEST) | e7 5.816325x | no | 延迟gate候选代理通过/ZIP验签;等待华为IR/UB与计时,代理未证明收益 | 2026-09-08 | [fla_layernorm_gated](fla_layernorm_gated.md) |
+| 51 | fla_layernorm_gated | valid | 8/8(e7,5.816325x TEAM BEST) | e7 5.816325x | no | E8已预注册,按用户恢复额度授权执行一次平台评测;华为收益待实测 | 2026-09-08 | [fla_layernorm_gated](fla_layernorm_gated.md) |
 | 52 | fused_dual_residual_rmsnorm | invalid | e6/10743六芯通过,昆仑失败,燧原pending;已无有效分可能 | - -x | no | 阶段探针和大形状代理验证已完成;昆仑4元素问题未复现,仍需目标原输入首分歧,不重投 | 2026-09-08 | [fused_dual_residual_rmsnorm](fused_dual_residual_rmsnorm.md) |
 | 53 | fused_gdn_gating | valid | 8/8(e4,2.1267x,排名10) | e4 2.1267x | no | 大批量行复用候选已过最终代理和ZIP验签;其他适用芯片及计分形状复验,小规模已保留旧核 | 2026-09-08 | [fused_gdn_gating](fused_gdn_gating.md) |
 | 54 | fused_norm_rope_stacked | invalid_correctness | 5/8(e2,10414已终态) | - -x | no | 阶段探针/67M代理stress通过;真实三芯失败仍待目标原输入复现,无新生产修复或ZIP | 2026-09-08 | [fused_norm_rope_stacked](fused_norm_rope_stacked.md) |

@@ -9,7 +9,7 @@ platform: 8/8(e7,5.816325x TEAM BEST)
 team_best_stage: e7
 team_best_speedup: 5.816325
 sealed: no
-next: 延迟gate候选代理通过/ZIP验签;等待华为IR/UB与计时,代理未证明收益
+next: E8已预注册,按用户恢复额度授权执行一次平台评测;华为收益待实测
 updated: 2026-09-08
 team_best_commit: d05e57a0ee3d2d453866c85c0479b22a6fcbae8b
 ```
@@ -326,3 +326,23 @@ kunlunxin 冻结。本包同时是昆仑崩溃族重载载体（新 ZIP 字节�
 - 回执 `artifacts/competition/batch4-implementation-20260907/t51-release1/verification.json`，SHA256 `389a23663a437cfaa2142a6877e4275911e2b5d0fa3459f47e69397bbeaacb4d`；日志 SHA256 `56871542e29e698fe20501d6e58a7a96b048291deee476046353c2e97c182f91`。
 - 不可变 ZIP `artifacts/competition/fla_layernorm_gated/research-20260908-8ba31a1/fla_layernorm_gated.zip`，SHA256 `579d902c7fc7bb8c4dbc382220143ccd7512adc7a05978ad1f77f806b6c81f47`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
 - 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
+
+## E8 额度恢复后评测预注册（2026-09-08）
+
+- 用户已明确授权提交评测。本轮顺序 T47 E11 → T51 E8，预算每候选仅1次上传/正式提交；2026-09-08T01:42:22+08:00 实时额度30/30，账号全局间隔120秒。sending/uncertain/stale_after_upload/submitted 均不自动重试。
+- 假设与优先级：华为延迟 gate load，其他五个成员与 E7 相同；当前第6，历史均值5.816325，榜首6.668225。七芯不变时华为需从2.3028升至9.118才能登顶，不能承诺单轴达成。NVIDIA计时0.994–1.002x，目标编译器收益未验证。
+- 晋级/停止门：8/8 valid、每芯≥0.1；均值>5.816325 才晋级 team best；华为≥2.53308（+10%）才支持该轴收益。无收益保留 E7，失败取证后封存该候选，不以同字节重掷。
+- source commit `8ba31a102f4ef0430c08f12c4622b27430915071`；verification commit `8ba31a102f4ef0430c08f12c4622b27430915071`；本节 ledger commit 为提交本节的独立文档提交，不等同源码或验证提交。
+- 正式不可变 ZIP `/Users/bytedance/ccc/flagos/artifacts/competition/fla_layernorm_gated/e8-8ba31a1/fla_layernorm_gated.zip`，23261 bytes，SHA256 `579d902c7fc7bb8c4dbc382220143ccd7512adc7a05978ad1f77f806b6c81f47`；正式阶段 `e8`，与上一节 research 包逐成员一致，existing 验签通过。
+- release 回执 `artifacts/competition/batch4-implementation-20260907/t51-release1/verification.json`，SHA256 `389a23663a437cfaa2142a6877e4275911e2b5d0fa3459f47e69397bbeaacb4d`；日志 SHA256 `56871542e29e698fe20501d6e58a7a96b048291deee476046353c2e97c182f91`；测试 SHA256 `dc8e1281482839cecd2d225f89265caf1493803df135ab608516fb7f6959e0eb`。
+- 所选 release 范围全绿，目标设备仍为 `target-runtime-unverified`，本次授权评测补齐；保留上一节执行范围，不将代理通过写成目标通过。
+- 原始 manifest / preflight / submit / 状态证据保存目录 `artifacts/competition/batch4-submit-20260908`。提交前尚无本阶段平台结果，历史 best 保持。
+
+| ZIP 成员 | SHA256 |
+| --- | --- |
+| `fla_layernorm_gated.py` | `d952eda8ccac83995fb34a2a557fd11ecab428f00e79a5c6f1f03a096926e651` |
+| `fla_layernorm_gated_ascend.py` | `ac8b090dbda2158390ced51578011ab644f8d90a710e513e3a69bedc154e7f00` |
+| `fla_layernorm_gated_enflame.py` | `848f50149b4134ae58f6f0c228e9a7908e049950b10f511e3f302db5af59ab4b` |
+| `fla_layernorm_gated_hygon.py` | `712c38595eef274a95d559171b23c31edc3af1411b135757fbc378306083c260` |
+| `fla_layernorm_gated_kunlunxin.py` | `66e08be2b4d870028f63ddceb89dd6e6b66ed79ad333e29757ad901332b1ebdd` |
+| `fla_layernorm_gated_metax.py` | `a7cd1e8a9807e0ce17d2d955aa0c27b47639242fb6bdcf6fd1069d956d2d2bf1` |

@@ -10,7 +10,7 @@ team_best_stage: e5
 team_best_commit: b34d040360f040b6be43ce5443e7dc0ce83d2d47
 team_best_speedup: 25.0048125
 sealed: no
-next: 多轮K真实步长错误已修复且代理回归通过/ZIP验签;先补目标复验再考虑外积,守E5
+next: E11已预注册,按用户恢复额度授权执行一次平台评测;保持E5历史best
 updated: 2026-09-08
 ```
 
@@ -200,3 +200,20 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
 - 回执 `artifacts/competition/batch4-implementation-20260907/t47-release1/verification.json`，SHA256 `65545a1b6cbc33c6a5e15aeb923bf9c332eed78d492a678b2fcc0daae53c37e0`；日志 SHA256 `0382828f0f48a4b62affadae30ad579444269d6165ed4bc6f416484aba45b232`。
 - 不可变 ZIP `artifacts/competition/chunked_sgmv_expand/research-20260908-8ba31a1/chunked_sgmv_expand.zip`，SHA256 `fe9639026676a93739ce63b14329c01146236ba93bccc0c82108f7f46f447b5e`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
 - 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
+
+## E11 额度恢复后评测预注册（2026-09-08）
+
+- 用户已明确授权提交评测。本轮顺序 T47 E11 → T51 E8，预算每候选仅1次上传/正式提交；2026-09-08T01:42:22+08:00 实时额度30/30，账号全局间隔120秒。sending/uncertain/stale_after_upload/submitted 均不自动重试。
+- 假设与优先级：多轮 K 正确性修复守榜；generic 与 E5 完全相同，燧原/昆仑修正 stride_bk 并限制 BK≤128。当前第1，历史均值25.0048125。性能收益尚待目标评测，不把修复本身当作已提速。
+- 晋级/停止门：8/8 valid、每芯≥0.1；均值>25.0048125 才晋级 team best。若无净收益保留 E5；任何目标失败或超时只读取证，不重投同字节。
+- source commit `8ba31a102f4ef0430c08f12c4622b27430915071`；verification commit `8ba31a102f4ef0430c08f12c4622b27430915071`；本节 ledger commit 为提交本节的独立文档提交，不等同源码或验证提交。
+- 正式不可变 ZIP `/Users/bytedance/ccc/flagos/artifacts/competition/chunked_sgmv_expand/e11-8ba31a1/chunked_sgmv_expand.zip`，18326 bytes，SHA256 `fe9639026676a93739ce63b14329c01146236ba93bccc0c82108f7f46f447b5e`；正式阶段 `e11`，与上一节 research 包逐成员一致，existing 验签通过。
+- release 回执 `artifacts/competition/batch4-implementation-20260907/t47-release1/verification.json`，SHA256 `65545a1b6cbc33c6a5e15aeb923bf9c332eed78d492a678b2fcc0daae53c37e0`；日志 SHA256 `0382828f0f48a4b62affadae30ad579444269d6165ed4bc6f416484aba45b232`；测试 SHA256 `9cc151172b02ed5ecad05f2138958c59b7e6378ba5a6f7dee050d8ccae9ec666`。
+- 所选 release 范围全绿，目标设备仍为 `target-runtime-unverified`，本次授权评测补齐；保留上一节执行范围，不将代理通过写成目标通过。
+- 原始 manifest / preflight / submit / 状态证据保存目录 `artifacts/competition/batch4-submit-20260908`。提交前尚无本阶段平台结果，历史 best 保持。
+
+| ZIP 成员 | SHA256 |
+| --- | --- |
+| `chunked_sgmv_expand.py` | `0d52334731d37bf9fab08888f5963908cd9edbe91d79b8c584bb3649b6fdf579` |
+| `chunked_sgmv_expand_enflame.py` | `5cdf1c657a108f9fee016742f298f0aab9e264a174ee8dddbeb0edf43980f36b` |
+| `chunked_sgmv_expand_kunlunxin.py` | `a51fa38d50babc3a45ef177e6357408f4232bba1ae6f33230461a22d3ce08e4b` |
