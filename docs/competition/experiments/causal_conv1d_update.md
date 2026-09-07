@@ -10,7 +10,7 @@ team_best_stage: e13
 team_best_commit: 4fa854a376de167e76a1e5d1441c6cd82b5866d7
 team_best_speedup: 6.545875
 sealed: no
-next: E15(e15-cbfae4f)燧原通道连续+华为外提已过release门禁待单次平台裁决;预注册门=超team best 6.545875
+next: E15燧原PassManager编译失败收券(华为+41%保留在树);team best仍e13 6.545875;重开需燧原单变量形态拆分证据
 updated: 2026-09-07
 ```
 
@@ -380,3 +380,23 @@ IEEE `tl.dot`（只存 C[:,0]；T28/T37 昆仑通过范式）。
 - 证据 `validation/verification.json` SHA256
   `200ff974a7bd0536cd49bc68af3679083dbd98543c963d8ec01b5aef4fa7b080`、
   `validation/verification.log`（相邻完整日志随回执归档）。
+
+## E15 平台终态与处置（2026-09-07T18:2x）
+
+- submission `10789`：invalid_correctness——**燧原 5 case 全部
+  `Pipeline run failed: PassManager execution failed`**（通道连续形态
+  不过 GCU 编译器；与"燧原编译路径对 kernel 形态敏感"知识吻合，
+  PR34 结构在 fn 算子可用不代表 update 算子形态可用）。
+- 其余七芯全过：天数 13.4375 / 沐曦 7.0025 / 海光 11.382 / 昆仑 0.406 /
+  **华为 0.484（微优化 +41% 兑现：weight/bias 外提 + 输出直存原
+  dtype 去 `.to()` 整趟）** / A 8.0865 / B 10.47。
+- 即使燧原按旧 0.326 通过，均值 6.449 也低于 team best 6.545875
+  （A 芯 8.84→8.09 等水位下漂 +0.14 华为增益无法覆盖）→ **本轴收券，
+  不追投**；树回滚 `_enflame` 至 e13 已验证字节（成员 SHA
+  `57d4825f20b864d1722f8760a8707d0be5e90e5f12038a8fd05809f7f38d43d8`），
+  **保留 `_ascend` 外提改进**（平台实证 +41%，为后续候选打底）。
+- 跨题知识：①昇腾"wrapper 整趟 dtype cast 消除"是真实杠杆（本题为
+  输出流量主导型算子）；②燧原 PassManager 对通道连续双 kernel 形态
+  （含 `enable_fp_fusion=False` kwarg 与 permute 物化 wrapper）编译
+  失败，update 形态迁移需单变量拆分验证。
+- 证据 `validation/43-status-final.json`（原始逐芯记录）。
