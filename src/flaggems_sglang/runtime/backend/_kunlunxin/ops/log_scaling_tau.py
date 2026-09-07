@@ -27,6 +27,7 @@ def _log_scaling_tau_kernel(
     o_stride_row,
     tau_stride,
     BLOCK: tl.constexpr,
+    EVEN: tl.constexpr,
 ):
     row = tl.program_id(0)
     col_block = tl.program_id(1)
@@ -35,15 +36,24 @@ def _log_scaling_tau_kernel(
 
     tau = tl.load(tau_ptr + row * tau_stride).to(tl.float32)
     offs = col_block * BLOCK + tl.arange(0, BLOCK)
-    mask = offs < n_cols
-    x = tl.load(x_ptr + row * x_stride_row + offs, mask=mask, other=0.0).to(
-        tl.float32
-    )
-    tl.store(
-        out_ptr + row * o_stride_row + offs,
-        (x * tau).to(out_ptr.dtype.element_ty),
-        mask=mask,
-    )
+    # Full blocks skip the per-lane compare (T45 E16 lesson: keep the
+    # masks that remain simple single-term bounds only).
+    if EVEN:
+        x = tl.load(x_ptr + row * x_stride_row + offs).to(tl.float32)
+        tl.store(
+            out_ptr + row * o_stride_row + offs,
+            (x * tau).to(out_ptr.dtype.element_ty),
+        )
+    else:
+        mask = offs < n_cols
+        x = tl.load(x_ptr + row * x_stride_row + offs, mask=mask, other=0.0).to(
+            tl.float32
+        )
+        tl.store(
+            out_ptr + row * o_stride_row + offs,
+            (x * tau).to(out_ptr.dtype.element_ty),
+            mask=mask,
+        )
 
 
 def log_scaling_tau(x, tau):
@@ -66,6 +76,7 @@ def log_scaling_tau(x, tau):
         out.stride(0),
         tau.stride(0),
         BLOCK=block,
+        EVEN=(n_cols % block == 0),
         num_warps=4,
         num_stages=2,
     )

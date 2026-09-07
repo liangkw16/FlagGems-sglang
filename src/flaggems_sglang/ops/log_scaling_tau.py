@@ -28,6 +28,7 @@ def _log_scaling_tau_kernel(
     tau_stride,
     COL_BLOCKS: tl.constexpr,
     BLOCK: tl.constexpr,
+    EVEN: tl.constexpr,
 ):
     row = tl.program_id(0) // COL_BLOCKS
     col_block = tl.program_id(0) % COL_BLOCKS
@@ -36,15 +37,25 @@ def _log_scaling_tau_kernel(
 
     tau = tl.load(tau_ptr + row * tau_stride).to(tl.float32)
     offs = col_block * BLOCK + tl.arange(0, BLOCK)
-    mask = offs < n_cols
-    x = tl.load(x_ptr + row * x_stride_row + offs, mask=mask, other=0.0).to(
-        tl.float32
-    )
-    tl.store(
-        out_ptr + row * o_stride_row + offs,
-        (x * tau).to(out_ptr.dtype.element_ty),
-        mask=mask,
-    )
+    # Full blocks skip the per-lane int compare entirely - the
+    # Ascend vector-CMP scalar-degradation fix (T40 E16 pattern);
+    # only ragged tails keep the mask.
+    if EVEN:
+        x = tl.load(x_ptr + row * x_stride_row + offs).to(tl.float32)
+        tl.store(
+            out_ptr + row * o_stride_row + offs,
+            (x * tau).to(out_ptr.dtype.element_ty),
+        )
+    else:
+        mask = offs < n_cols
+        x = tl.load(x_ptr + row * x_stride_row + offs, mask=mask, other=0.0).to(
+            tl.float32
+        )
+        tl.store(
+            out_ptr + row * o_stride_row + offs,
+            (x * tau).to(out_ptr.dtype.element_ty),
+            mask=mask,
+        )
 
 
 def log_scaling_tau(x, tau):
@@ -68,6 +79,7 @@ def log_scaling_tau(x, tau):
         tau.stride(0),
         COL_BLOCKS=col_blocks,
         BLOCK=block,
+        EVEN=(n_cols % block == 0),
         num_warps=4,
         num_stages=2,
     )
