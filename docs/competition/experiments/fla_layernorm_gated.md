@@ -98,3 +98,20 @@ LayerNorm 勿改 `E[x²]-E[x]²` 单遍（大均值小方差消减误差，fp32 
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fla_layernorm_gated/e4-5544a77/validation/51-submit.json` SHA256 `78c9eb2c5ea6416ce70162d585f9acc914c7d17f6538457a2867473408f84182`。
 
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fla_layernorm_gated/e4-5544a77/validation/51-status-first-round.json` SHA256 `f1a1c304a944abf543a866887fdce262d865c483b97053f2e61a212e1b81a7b4`。
+
+## (dtype,行数)×调度档位离线扫描（2026-09-07，PR50 模板，零额度）
+
+- 代理端（RTX 5070 Ti）5 行数档 × 3 维度档 × 3 dtype 共 45 桶，扫
+  BLOCK_R{1,2,4,8,16} × warps{4,8} × grid_cap{无,4096}，基线 =
+  BLOCK_R=1/warps4/不封顶（E2 形态）。证据
+  `research-20260907/t51_scan.{py,json}`。
+- **唯一显著档位轴 = BLOCK_D≥2048 时 warps 4→8**：BR1_w8 不封顶在
+  9 桶最优、均值 +10.9%、峰值 +36.5%（bf16/1024 行/4096 维）、
+  +23.1%（fp16 同档）、+19.7%（fp32/1024/2048）；其余 36 桶最优
+  配置增益 ≤5%，多行（BR≥2）与 grid 封顶全部 marginal——与 E4
+  多行平台回退互证（多行轴确认关闭）。
+- 处置：warps 档位是纯调度轴（不改 IR 维度结构），但 E4 前科表明
+  代理单桶增益不可外推平台均值；且 9 桶全在 rows=1024 单行档，
+  与弱芯（昆仑 0.94/华为 2.52）瓶颈画像不重叠。**不投平台**，该
+  轴留作组合包组件（若未来 vendor 组合包需要，generic warps 按
+  BLOCK_D 分档是安全叠加项）。
