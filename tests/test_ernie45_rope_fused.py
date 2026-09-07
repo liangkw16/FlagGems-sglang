@@ -166,20 +166,29 @@ class Ernie45RopeVariantsTest(unittest.TestCase):
     MODULES = load_operator_modules("ernie45_rope_fused")
 
     def test_variants_match_reference(self):
-        for rd, sec in ((64, [16, 16, 0]), (128, [16, 16, 32])):
-            T, hs = 16, 128
-            q = torch.randn(T, 8 * hs, device="cuda")
-            k = torch.randn(T, 2 * hs, device="cuda")
-            cache = torch.randn(256, rd, device="cuda")
+        # (T, head_size, rotary_dim, section, dtype): covers no-tail and
+        # t-section splits, a non-128 head size, and a bf16 pass so the
+        # per-pair vendor indexing is checked beyond the fp32 defaults.
+        cases = (
+            (16, 128, 64, [16, 16, 0], torch.float32),
+            (16, 128, 128, [16, 16, 32], torch.float32),
+            (8, 64, 32, [8, 8, 0], torch.float32),
+            (5, 128, 64, [6, 6, 20], torch.bfloat16),
+        )
+        for T, hs, rd, sec, dtype in cases:
+            q = torch.randn(T, 8 * hs, device="cuda", dtype=dtype)
+            k = torch.randn(T, 2 * hs, device="cuda", dtype=dtype)
+            cache = torch.randn(256, rd, device="cuda", dtype=dtype)
             pos = torch.randint(0, 200, (3, T), device="cuda")
             eq, ek = reference(q, k, cache, pos, sec, hs, rd)
+            atol, rtol = TOL[dtype]
             for name, module in self.MODULES:
-                with self.subTest(module=name, rd=rd):
+                with self.subTest(module=name, rd=rd, hs=hs, dtype=dtype):
                     aq, ak = module.ernie45_rope_fused(
                         q, k, cache, pos, sec, hs, rd
                     )
-                    torch.testing.assert_close(aq, eq, atol=1e-4, rtol=1e-4)
-                    torch.testing.assert_close(ak, ek, atol=1e-4, rtol=1e-4)
+                    torch.testing.assert_close(aq, eq, atol=atol, rtol=rtol)
+                    torch.testing.assert_close(ak, ek, atol=atol, rtol=rtol)
 
 
 if __name__ == "__main__":
