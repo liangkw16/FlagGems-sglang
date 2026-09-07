@@ -6,12 +6,12 @@ operator: log_scaling_tau
 batch: 4
 validity: valid
 platform: 8/8(e2,10747,2.36478125x首次有效)
-team_best_stage: e2
-team_best_speedup: 2.36478125
+team_best_stage: e3
+team_best_speedup: 2.401375
 sealed: no
-next: E3(e3-49dbb7f)EVEN特化已过release门禁待单次平台裁决;预注册门=超team best 2.36478125,否则收轴
+next: E3终态valid 2.401375新TB(+1.55%,华为+23.6%);距榜首2.81646875仍-14.8%,高分芯结构未破,收轴待新证据
 updated: 2026-09-07
-team_best_commit: 493b4956a0a39077e0db047bd64e0f1dd12a4c5b
+team_best_commit: 49dbb7f1c691c33befc1d4be2f1e5873a0e8a127
 ```
 
 ## S0 2D grid 行缩放（2026-09-06，远端 GPU 2/2 OK）
@@ -136,3 +136,15 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
   `ec1f2a9dfaa43846f36f69e2106bc390d5c4692bd0f8f8e0918eae801b3b685d`、
   `validation/verification.log` SHA256
   `5c3b8f1bb35f13f0398a2cb8c2bf861a643fb16edb9e63d62ceb666095680fe6`。
+
+## E3 平台终态（2026-09-07T17:5x）
+
+- submission `10786`：**valid，avg 2.401375，新 team best（+1.55%）**；
+  quota 观测 14/30。
+- 逐芯：天数 4.0935 / 沐曦 2.705 / 燧原 0.55425 / 海光 4.81275 /
+  昆仑 0.539（vendor）/ **华为 0.49025（+23.6%，EVEN 免逐 lane 比较在
+  昇腾兑现，T40 知识第三次命中）** / A 3.31625 / B 2.7。
+- 距榜首 2.81646875 仍差 -14.8%；高分芯（天数/海光 4-5x 水位）与
+  燧原/昆仑 0.5x 档未破。按预注册门已晋级，后续需高分芯结构证据
+  才重开，本轮收轴。
+- 证据 `validation/57-status-final.json`（原始逐芯记录）。
