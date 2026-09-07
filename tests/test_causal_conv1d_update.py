@@ -221,6 +221,49 @@ class CausalConv1dUpdateVariantsTest(unittest.TestCase):
 
     MODULES = load_operator_modules("causal_conv1d_update")
 
+    def test_state_copy_boundaries(self):
+        torch.manual_seed(4316)
+        for state_len, seqlen in (
+            (3, 1),
+            (5, 5),
+            (7, 9),
+            (63, 2),
+            (64, 2),
+            (65, 2),
+            (129, 3),
+        ):
+            for dtype in TOLERANCES:
+                x = torch.randn(2, 17, seqlen, device="cuda", dtype=dtype)
+                state = torch.randn(
+                    2, 34, state_len * 2, device="cuda", dtype=dtype
+                )[:, ::2, ::2]
+                weight = torch.randn(17, 4, device="cuda", dtype=dtype)
+                expected, expected_state = reference(x, state, weight)
+                original = state.clone()
+                for name, module in self.MODULES:
+                    with self.subTest(
+                        module=name,
+                        state_len=state_len,
+                        seqlen=seqlen,
+                        dtype=dtype,
+                    ):
+                        actual, new_state = module.causal_conv1d_update(
+                            x, state, weight
+                        )
+                        atol, rtol = TOLERANCES[dtype]
+                        torch.testing.assert_close(
+                            actual, expected, atol=atol, rtol=rtol
+                        )
+                        torch.testing.assert_close(
+                            new_state, expected_state, atol=0, rtol=0
+                        )
+                        torch.testing.assert_close(
+                            state, original, atol=0, rtol=0
+                        )
+                        self.assertNotEqual(
+                            new_state.data_ptr(), state.data_ptr()
+                        )
+
     def test_affine_layout_boundaries(self):
         torch.manual_seed(43)
         for dim, width, state_len, seqlen in (
@@ -296,6 +339,7 @@ RELEASE_REQUIRED_TESTS = [
     "CausalConv1dUpdateTest.test_seqlen_larger_than_state_len",
     "CausalConv1dUpdateTest.test_special_values",
     "CausalConv1dUpdateTest.test_empty_batch",
+    "CausalConv1dUpdateVariantsTest.test_state_copy_boundaries",
     "CausalConv1dUpdateVariantsTest.test_affine_layout_boundaries",
     "CausalConv1dUpdateVariantsTest.test_variants_match_reference",
 ]

@@ -74,6 +74,18 @@ def _ccu_width_reduce_kernel(
         xcat_row = xcat_ptr + b * xcat_sb + offs_d * xcat_sd
         wt_row = wt_ptr + offs_d * wt_stride_d
 
+        # Loop-invariant loads hoisted out of the time loop: the weight
+        # tile and bias do not depend on t (they were re-read per step).
+        wk = tl.load(
+            wt_row + offs_w[:, None] * wt_stride_w,
+            mask=w_mask[:, None] & dmask[None, :],
+            other=0.0,
+        ).to(tl.float32)
+        if HAS_BIAS:
+            bias_v = tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(
+                tl.float32
+            )
+
         for t in tl.static_range(SEQLEN):
             # Window start: the first of `width` consecutive positions
             # ending at the new token t
@@ -85,16 +97,11 @@ def _ccu_width_reduce_kernel(
                 mask=w_mask[:, None] & dmask[None, :],
                 other=0.0,
             ).to(tl.float32)
-            wk = tl.load(
-                wt_row + offs_w[:, None] * wt_stride_w,
-                mask=w_mask[:, None] & dmask[None, :],
-                other=0.0,
-            ).to(tl.float32)
             # Width-axis reduction: [W_PAD, BLOCK_D] -> [BLOCK_D]
             acc = tl.sum(window * wk, axis=0)
 
             if HAS_BIAS:
-                acc += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(tl.float32)
+                acc += bias_v
             if ACT_IS_SILU:
                 acc = acc * tl.sigmoid(acc)
             tl.store(
@@ -138,10 +145,12 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     batch, dim, seqlen = x.shape
     state_len = conv_state.shape[-1]
     width = weight.shape[1]
-    out = torch.empty(batch, dim, seqlen, dtype=torch.float32, device=x.device)
+    # Allocate the output in the original dtype so the kernel's single
+    # elementwise cast is also the only full-output pass (the previous
+    # fp32 buffer plus a wrapper .to() doubled the output traffic).
+    out = torch.empty(batch, dim, seqlen, dtype=orig_dtype, device=x.device)
     new_state = torch.empty_like(conv_state)
     if batch * dim == 0:
-        out = out.to(orig_dtype)
         if squeeze_out:
             out = out.squeeze(-1)
         return out, new_state
@@ -181,7 +190,6 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         num_warps=4,
         num_stages=1,
     )
-    out = out.to(orig_dtype)
     if squeeze_out:
         out = out.squeeze(-1)
     return out, new_state

@@ -148,8 +148,7 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         if squeeze_out:
             out = out.squeeze(-1)
         return out, new_state
-    block_d = 128 if seqlen > 1 else _BLOCK_D
-    dim_blocks = triton.cdiv(dim, block_d)
+    dim_blocks = triton.cdiv(dim, _BLOCK_D)
     total = batch * dim_blocks
     grid = (min(total, _MAX_GRID),)
     _causal_conv1d_update_kernel[grid](
@@ -178,7 +177,7 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         WIDTH=width,
         HAS_BIAS=bias is not None,
         ACT_IS_SILU=(activation in ("silu", "swish")),
-        BLOCK_D=block_d,
+        BLOCK_D=_BLOCK_D,
     )
     if squeeze_out:
         out = out.squeeze(-1)
