@@ -37,7 +37,7 @@
 | 54 | fused_norm_rope_stacked | invalid_correctness | 5/8(e2,10414已终态) | - -x | no | 三芯失败均已终态;仅固定源码目标复现定位首分歧后重开,非额度用尽 | 2026-09-07 | [fused_norm_rope_stacked](fused_norm_rope_stacked.md) |
 | 55 | hc_head | invalid_correctness | 7/8(e1,10668已终态;昆仑compile_worker Aborted,归因未定) | - -x | no | E2终态7/8:昆仑第三次崩溃指纹演化(Aborted→Segfault@验证执行段),编译面假设部分证实但不足;停止盲投,vendor保留待平台/reference取证 | 2026-09-07 | [hc_head](hc_head.md) |
 | 56 | l2norm | valid | 8/8(e1,3.10772917x,排名8) | e1 3.10772917x | no | 榜首已72.30680208;守有效分,多行/短行需有整体收益证据再晋级 | 2026-09-07 | [l2norm](l2norm.md) |
-| 57 | log_scaling_tau | valid | 8/8(e2,10747,2.36478125x首次有效) | e10 2.45078125x | no | E10 valid新TB(10881,华为+51%直连兑现,燧原/昆仑=C层瓶颈定格);E11=generic直连扩展(3a87cac)已提交待评测;目标2.816+,差0.366 | 2026-09-07 | [log_scaling_tau](log_scaling_tau.md) |
+| 57 | log_scaling_tau | valid | 8/8(e2,10747,2.36478125x首次有效) | e11 2.50278125x | no | 当日收官:TB=E11 2.50278125(10887,华为1.354/五强芯持平);距榜首2.816469差0.314;燧原/昆仑C层瓶颈定格0.55,架构内空间用尽;明日30发额度,新证据=榜首结构泄露或跨题可迁移结构 | 2026-09-07 | [log_scaling_tau](log_scaling_tau.md) |
 | 58 | w8a8_block_int8_matmul | valid | 8/8(e1,10412,122.66158333x,排名3) | e1 122.66158333x | no | 榜首562.41590833;弱两芯翻倍不足追榜,须高分芯GEMM结构收益;保持int8先castFP32契约 | 2026-09-07 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

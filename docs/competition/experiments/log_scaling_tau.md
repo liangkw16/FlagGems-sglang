@@ -6,10 +6,10 @@ operator: log_scaling_tau
 batch: 4
 validity: valid
 platform: 8/8(e2,10747,2.36478125x首次有效)
-team_best_stage: e10
-team_best_speedup: 2.45078125
+team_best_stage: e11
+team_best_speedup: 2.50278125
 sealed: no
-next: E10 valid新TB(10881,华为+51%直连兑现,燧原/昆仑=C层瓶颈定格);E11=generic直连扩展(3a87cac)已提交待评测;目标2.816+,差0.366
+next: 当日收官:TB=E11 2.50278125(10887,华为1.354/五强芯持平);距榜首2.816469差0.314;燧原/昆仑C层瓶颈定格0.55,架构内空间用尽;明日30发额度,新证据=榜首结构泄露或跨题可迁移结构
 updated: 2026-09-07
 team_best_commit: d1d687d3974c8ceccb7c7bb491124edce6e0ea83
 ```
@@ -525,3 +525,19 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
   `78b7e7a322570c7ffc43ac665b2d0c71f8e7117515feb460e27c6e97919dd08e`。
   测试源码 SHA256
   `4cd5218f2301fd188d3e0a7eb6f766026b790444be8e7aca319095694cb06d6d`。
+
+## E11 平台终态：valid 8/8，avg 2.50278125 新 TB（2026-09-07T20:0x）
+
+- submission `10887` / daily_seq `29`：**valid，8/8，avg 2.50278125 新
+  team best（+0.052）**，过门（>2.45078125）。逐芯：天数 4.13025 /
+  沐曦 2.764（+5%）/ 燧原 0.55225 / 海光 4.7035 / 昆仑 0.54175 /
+  **华为 1.35375（同字节较 E10 再 +27.5% → 昇腾轮间方差大，
+  1.06-1.35 为观测带）** / 卡A 3.2675 / 卡B 2.70925。
+- 五强芯对 generic 直连基本持平（binder 非其测量时间主导）；
+  当日累计 E3 2.401375 → E11 2.50278125（+4.2%）。距榜首 2.816469
+  仍差 0.314。剩余理论空间：燧原/昆仑=C 层瓶颈不可及（定格 0.55），
+  华为方差带已收割至 1.35，五强芯 GPU/基线主导——本轮架构内
+  优化空间基本用尽。额度 29/30 用完（并行会话共享），1 发留作
+  明日缓冲。
+- 证据 `e11-3a87cac/validation/57-submit.json`、
+  `validation/57-status-final.json`。
