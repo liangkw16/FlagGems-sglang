@@ -4,12 +4,12 @@
 task: 57
 operator: log_scaling_tau
 batch: 4
-validity: invalid
-platform: s0终态7/8;燧原1830s运行态超时;e1发布验证通过待提交
+validity: pending
+platform: e1提交10704;7/8通过,燧原0.54675x已修复;昆仑waiting_callback
 team_best_stage: -
 team_best_speedup: -
 sealed: no
-next: e1修复strides并flatten调度;提交后确认燧原及八芯0.1门槛
+next: 仅查10704昆仑回调,不得重复上传;最终有效性待八芯终态
 updated: 2026-09-07
 ```
 
@@ -39,3 +39,23 @@ updated: 2026-09-07
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/log_scaling_tau/e1-ee551b5/validation/57-kg-request.json` SHA256 `7ec8fd6c6520d31aba2229b911370f2f5d0bff5bb261e4475cfeaa79571d2bff`。
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/log_scaling_tau/e1-ee551b5/validation/57-kg-response2.json` SHA256 `21c4c295eabd465a7a4807a33ba76df209b743e035cb3305ff3ad6ffcdd76d0c`。
 - 提交前实时快照：2026-09-07T12:08:53+08:00，s0 submission10410，daily quota24/30；实际提交结果另追加。
+
+## E1 平台结果（2026-09-07T12:29:32.275961+08:00）
+
+- submission `10704`，daily_seq `7`，创建 `2026-09-07T12:20:45`；正式上传/提交各一次，远端ZIP SHA验签 `verified`。
+- 状态 `pending`，平台average_speedup `None`；quota `21/30`（本条观测时）。
+
+| 芯片 | 正确性/状态 | 加速比 | 实际成员 |
+|---|---|---|---|
+| tianshu | True / completed | 4.0595 | log_scaling_tau.py |
+| muxi | True / completed | 2.683 | log_scaling_tau.py |
+| enflame | True / completed | 0.54675 | log_scaling_tau.py |
+| haiguang | True / completed | 4.7875 | log_scaling_tau.py |
+| kunlunxin | None / waiting_callback | None | log_scaling_tau.py |
+| huawei | True / completed | 0.473 | log_scaling_tau.py |
+| card_a | True / completed | 3.19225 | log_scaling_tau.py |
+| card_b | True / completed | 2.63825 | log_scaling_tau.py |
+
+- 燧原已完成正确性与性能0.54675x；昆仑缺回调，不按旧S0昆仑通过记录补造本次结果，不重投。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/log_scaling_tau/e1-ee551b5/validation/57-submit.json` SHA256 `fe64330b996e229eeccd56c2afe0d72ae69acbadf3ac05bd7e2f2b2aed0c9a1b`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/log_scaling_tau/e1-ee551b5/validation/57-status-now.json` SHA256 `48f414bfd509b201f15e526d372601c7d6c48f59b819a032fb06b1f7f7322522`。

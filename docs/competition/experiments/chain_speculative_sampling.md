@@ -5,13 +5,13 @@ task: 44
 operator: chain_speculative_sampling
 batch: 4
 validity: invalid
-platform: 探针确认全芯失败(predicts mismatch=半精度bit-exact)
+platform: s0八芯predicts失败;本轮修复OOB但half精确采样仍失败,未重投
 team_best_stage: s0
 team_best_commit: d7d8c4793278062f55617693585ae2ab89c8fbcc
 team_best_speedup: -
 sealed: no
-next: conclusive 封轴;天数/A/B同款517值=fp32也有差;平台测半精度
-updated: 2026-09-04
+next: 对齐各后端reference扫描/舍入;保留已知half失败,禁止带缺口提交
+updated: 2026-09-07
 ```
 
 状态：S0 候选就绪但**带已量化 limitation**。接受链（predicts 链 /
@@ -124,3 +124,18 @@ screening 8/8（含 1 个如实标注的 expectedFailure）。题目 atol=0 +
 - **判定：T44 conclusive 封轴**——接受链+逆CDF 的 atol=0 在八芯
   上不可达（fp32 + 半精度均有 bit-exact 障碍）
 - 信息价值：确认平台测多种 dtype，fp32-only 假设不成立
+
+## 越界根因修复，本轮不提交（2026-09-07）
+
+- source/verification commit `e50d6eedfe1f9d367041a7a27016b88c4a22e2c6`；没有生成ZIP、没有preflight、没有消耗平台额度。
+- `k == S-1` 时 draft 只有S-1行，最终采样两遍扫描原先仍读取第k行；`tl.where(all_accepted,p,corrected)`不能保护已经发生的load。给两次draft load增加 `~all_accepted` mask。
+- 回归先在旧源码执行：B2/S1或4/V1025、全部接受，`PYTORCH_NO_CUDA_MEMORY_CACHING=1` + `compute-sanitizer --tool memcheck --error-exitcode 77` 报 `_chain_final_sample_kernel` 第138行 invalid global read，ERROR SUMMARY=130。相同检查修复后 **0 errors**、两种S通过，证实根因修复。
+- 完整commit字节runner：9方法，8正常通过、1 expectedFailure，110真实kernel launches。runner退出1并明确 `verification contains expected_failures`；这份失败回执**不可发布**。half inverse-CDF精确舍入仍未解决，不把修复OOB当作八芯采样问题全部解决。
+- 静态py_compile/Black/isort/flake8通过。远端 `gpu:/tmp/flagos-b4-invalid.eYQz0q/t44-after`；重放脚本为下列run44.sh，整组timeout500，内存检查180s/全矩阵300s，错误不吞掉。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chain_speculative_sampling/oob-e50d6ee/validation/verification.json` SHA256 `461b0fe2d2b4c3af70c46586013d3f2c8d8e858765046968873b5e86130d9e8a`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chain_speculative_sampling/oob-e50d6ee/validation/verification.log` SHA256 `68377e8e84f87db26f9ec69249f7d334dfa2ed4f768c80881cdb02e8ddfcb998`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chain_speculative_sampling/oob-e50d6ee/validation/verification-input.json` SHA256 `f7002d3be14e50e3784faa41dcc7a50223e873effb72907e417bc9ac009b7482`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chain_speculative_sampling/oob-e50d6ee/validation/before-input.json` SHA256 `07fa5f107b608afbc08ba9768cbfa598b487660ccc3a6cb47622d49ff608938d`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chain_speculative_sampling/oob-e50d6ee/validation/t44-before-memcheck.log` SHA256 `edf2f9d3ef3464c14b37d47181555a962a50b6ba55fd0d0b85237dd23d657ac7`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chain_speculative_sampling/oob-e50d6ee/validation/t44-after-memcheck.log` SHA256 `2e1caafd9f57dde2e20bb2a6a9bbc06225215d18b5fbd3df0ccdca7ba1a4d17e`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chain_speculative_sampling/oob-e50d6ee/validation/run44.sh` SHA256 `0b3bf175bbd8e66ed6ff820dc44cbe560261edac494cc0439eb3161a510a4899`。

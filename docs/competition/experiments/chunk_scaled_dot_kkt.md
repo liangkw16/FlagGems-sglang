@@ -4,13 +4,13 @@
 task: 45
 operator: chunk_scaled_dot_kkt
 batch: 4
-validity: invalid
-platform: e13八芯正确但昆仑0.063x;e14昆仑正确性失败;e15发布验证通过
+validity: invalid_threshold
+platform: 8/8正确(e15),昆仑0.063x<0.1;平均7.000125不计有效排名
 team_best_stage: -
 team_best_commit: -
 team_best_speedup: -
 sealed: no
-next: e15提交验证常量除数与契约修复;目标昆仑>=0.1,不把代理持平计为收益
+next: constexpr除数平台无收益;停止该轴;保留契约修复,需新的epilogue结构证据
 updated: 2026-09-07
 ```
 
@@ -329,3 +329,28 @@ K 循环推进 `b_ptrs += BLOCK_K * stride_bn` 是潜伏笔误（应为 stride_b
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/validation/45-kg-request.json` SHA256 `c224de4fa58b5d8712beca88cfa1733de94ee36f7ab5a7cf260e3aca94175b4f`。
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/validation/45-kg-response.json` SHA256 `92afbbac89b844f85c246c3eeb9c290c53565de4ce8bded312b2553158970e9b`。
 - 提交前快照：2026-09-07T12:08:44+08:00，最新旧候选10348，quota24/30；T57本轮已另消耗一发，提交额度以preflight为准。
+
+## E15 平台结果（2026-09-07T12:25:41.097372+08:00）
+
+- submission `10705`，daily_seq `8`，创建 `2026-09-07T12:24:11`；正式上传/提交各一次，远端ZIP SHA验签 `verified`。
+- 状态 `invalid_threshold`，平台average_speedup `7.000125`；quota `22/30`（本条观测时）。
+
+| 芯片 | 正确性/状态 | 加速比 | 实际成员 |
+|---|---|---|---|
+| tianshu | True / completed | 5.824 | chunk_scaled_dot_kkt.py |
+| muxi | True / completed | 5.156 | chunk_scaled_dot_kkt.py |
+| enflame | True / completed | 1.636 | chunk_scaled_dot_kkt_enflame.py |
+| haiguang | True / completed | 16.069 | chunk_scaled_dot_kkt.py |
+| kunlunxin | True / completed | 0.063 | chunk_scaled_dot_kkt_kunlunxin.py |
+| huawei | True / completed | 0.2555 | chunk_scaled_dot_kkt_ascend.py |
+| card_a | True / completed | 19.241 | chunk_scaled_dot_kkt.py |
+| card_b | True / completed | 7.7565 | chunk_scaled_dot_kkt.py |
+
+- 昆仑0.063x与E13持平，常量除数不是剩余主瓶颈；本轴不追加平台重试。契约修复保留，八芯正确不等于有效成绩。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/validation/45-submit.json` SHA256 `4707349a4b5793945e6569f54849f4a53e0f4ffed8cdc6ef401e53fe94811cd0`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/validation/45-status-now.json` SHA256 `37ee8eacd8b6c66ca6048f1e5fc45fa1817e04c3aa79faba7017911910735d10`。
+
+### 辅助MCP状态（不替代已取得的平台八芯结果）
+
+- `d08d8d2d-4f1c-437f-9256-e3fb3343d464` status=`failed`, verify_result=`{'passed': False, 'total_tests': 0, 'passed_tests': 0}`, performance=`{'speedup': None, 'best_version': '', 'total_rounds': 1}`；证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/validation/45-huawei-response5.json` SHA256 `fd090e373e24a77bade6b33efc4c22d6b45241ac00d441d9bb71774317201a47`。
+- `56da3782-97ed-425f-b76b-809b9b9fa856` status=`completed`, verify_result=`{'passed': True, 'total_tests': 0, 'passed_tests': 0}`, performance=`{'speedup': None, 'best_version': 'v1', 'total_rounds': 1}`；证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/validation/45-enflame-response2.json` SHA256 `0eb76fcd30e095963e7e7f514709f5d05aa7404a19e1a822004b47dad62fa72f`。

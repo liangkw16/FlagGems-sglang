@@ -4,13 +4,13 @@
 task: 43
 operator: causal_conv1d_update
 batch: 4
-validity: invalid
-platform: e12终态6/8(昆仑数值失败+燧原超时);e13新布局发布验证通过
-team_best_stage: -
-team_best_commit: -
-team_best_speedup: -
+validity: valid
+platform: 8/8(e13,6.545875x,排名3;昆仑首次0.407x)
+team_best_stage: e13
+team_best_commit: 4fa854a376de167e76a1e5d1441c6cd82b5866d7
+team_best_speedup: 6.545875
 sealed: no
-next: PR34通道连续affine结构重开;本候选一发验证昆仑及燧原恢复
+next: 保持有效解;后续只按全芯均值收益排序,勿重试旧昆仑gather/GEMM轴
 updated: 2026-09-07
 ```
 
@@ -289,3 +289,23 @@ IEEE `tl.dot`（只存 C[:,0]；T28/T37 昆仑通过范式）。
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e13-4fa854a/validation/43-kg-request.json` SHA256 `b53b6bdfd166ba3e9ffbe2ad46a07f53a785f735f3df8c56542e1732a17cd8cb`。
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e13-4fa854a/validation/43-kg-response.json` SHA256 `92afbbac89b844f85c246c3eeb9c290c53565de4ce8bded312b2553158970e9b`。
 - 实时旧状态2026-09-07T12:08:44+08:00：submission10341，quota24/30；本轮其他候选已另消耗额度，正式submit以preflight为准。
+
+## E13 平台结果（2026-09-07T12:29:32.414023+08:00）
+
+- submission `10706`，daily_seq `9`，创建 `2026-09-07T12:28:30`；正式上传/提交各一次，远端ZIP SHA验签 `verified`。
+- 状态 `valid`，平台average_speedup `6.545875`；quota `21/30`（本条观测时）。
+
+| 芯片 | 正确性/状态 | 加速比 | 实际成员 |
+|---|---|---|---|
+| tianshu | True / completed | 13.7035 | causal_conv1d_update.py |
+| muxi | True / completed | 7.0445 | causal_conv1d_update.py |
+| enflame | True / completed | 0.326 | causal_conv1d_update_enflame.py |
+| haiguang | True / completed | 11.177 | causal_conv1d_update.py |
+| kunlunxin | True / completed | 0.407 | causal_conv1d_update_kunlunxin.py |
+| huawei | True / completed | 0.3435 | causal_conv1d_update_ascend.py |
+| card_a | True / completed | 8.837 | causal_conv1d_update.py |
+| card_b | True / completed | 10.5285 | causal_conv1d_update.py |
+
+- 平台实时题面接口确认 **my_rank=3**，my_best_speedup=6.545875；榜首AttentionImOnly2YearsOld 7.90325。PR34结构移植本次在昆仑过线：0.407x，燧原0.326x。只证明本候选和本题，不能把通道连续布局的收益泛化到所有算子。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e13-4fa854a/validation/43-submit.json` SHA256 `dca04eaf49ae65b63e884cd85e4fcc3170cea9eabcadf89b4ff1cf7889a5896d`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e13-4fa854a/validation/43-status-now.json` SHA256 `a4cf5fc666a491c9950850e84a908bf6cdaf2b67316d22eea489c8a9cee21001`。
