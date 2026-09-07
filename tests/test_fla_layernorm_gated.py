@@ -137,6 +137,45 @@ class FlaLayernormGatedVariantsTest(unittest.TestCase):
 
     MODULES = load_operator_modules("fla_layernorm_gated")
 
+    def test_tile_boundaries_and_strides(self):
+        torch.manual_seed(51)
+        for rows, dim in (
+            (3, 127),
+            (4, 128),
+            (5, 129),
+            (7, 1023),
+            (8, 1024),
+            (9, 1025),
+            (9, 4096),
+            (127, 128),
+            (128, 128),
+            (129, 128),
+        ):
+            for dtype in TOL:
+                x = torch.randn(rows, dim * 2, device="cuda", dtype=dtype)[
+                    :, ::2
+                ]
+                g = torch.randn_like(x)
+                weight = torch.randn(dim * 2, device="cuda", dtype=dtype)[::2]
+                bias = torch.randn_like(weight)
+                for rms, act in ((True, "swish"), (False, "sigmoid")):
+                    expected = reference(x, g, weight, bias, act, 1e-5, rms)
+                    for name, mod in self.MODULES:
+                        with self.subTest(
+                            module=name,
+                            rows=rows,
+                            dim=dim,
+                            dtype=dtype,
+                            rms=rms,
+                        ):
+                            actual = mod.fla_layernorm_gated(
+                                x, g, weight, bias, act, 1e-5, rms
+                            )
+                            atol, rtol = TOL[dtype]
+                            torch.testing.assert_close(
+                                actual, expected, atol=atol, rtol=rtol
+                            )
+
     def test_variants_match_reference(self):
         for T, D in ((8, 256), (32, 512)):
             for act in ("swish", "sigmoid"):
@@ -152,6 +191,17 @@ class FlaLayernormGatedVariantsTest(unittest.TestCase):
                         torch.testing.assert_close(
                             out, ref, atol=1e-4, rtol=1e-4
                         )
+
+
+RELEASE_REQUIRED_TESTS = [
+    "FlaLayernormGatedTest.test_dtypes_and_activations",
+    "FlaLayernormGatedTest.test_norm_modes",
+    "FlaLayernormGatedTest.test_weight_bias_combos",
+    "FlaLayernormGatedTest.test_shapes",
+    "FlaLayernormGatedTest.test_empty",
+    "FlaLayernormGatedVariantsTest.test_tile_boundaries_and_strides",
+    "FlaLayernormGatedVariantsTest.test_variants_match_reference",
+]
 
 
 if __name__ == "__main__":
