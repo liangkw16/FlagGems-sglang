@@ -9,7 +9,7 @@ platform: 8/8(e2,10747,2.36478125x首次有效)
 team_best_stage: e2
 team_best_speedup: 2.36478125
 sealed: no
-next: 保留e2有效2.36478125排名5;warp/BLOCK无收益;华为MCP零测试且错误rank1语义,不晋级
+next: E3(e3-49dbb7f)EVEN特化已过release门禁待单次平台裁决;预注册门=超team best 2.36478125,否则收轴
 updated: 2026-09-07
 team_best_commit: 493b4956a0a39077e0db047bd64e0f1dd12a4c5b
 ```
@@ -112,3 +112,27 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
 - 返回源码在rank1分支使用`x.unsqueeze(0)`，把原来T行单列误作1行T列并仅应用tau[0]；与题目逐行缩放契约冲突，静态审计即拒绝。原参考`[T]`需逐元素使用tau。该生成源码只留证，未写入算子、未发布ZIP。
 - row内串行column blocks也没有优于当前载体的证据。第二轮之后不再调用，当前无运行中的MCP任务；本轮不追加平台提交。
 - 证据清单 `/Users/bytedance/ccc/flagos/artifacts/competition/log_scaling_tau/e2-493b495/validation/57-huawei-evidence-sha256.json` SHA256 `80cd14404e341a1c6398a69be87ccdde1434b6767a6aed07743713cc06b2735b`。
+
+## E3 EVEN 特化：整块免逐 lane 比较（2026-09-07）
+
+- 调研定位：generic 与昆仑 vendor 的 `offs < n_cols` 是逐 lane int 比较，
+  昇腾 vector-CMP 标量退化（T40 +130% 同源）；n_cols 整除 BLOCK 时
+  （公开 shape 64/128 尾维全部命中）该 mask 可整体消除。单变量 =
+  EVEN constexpr 分支（整块路径无 mask load/store，非整除走原 masked
+  路径），generic 与 `_kunlunxin` vendor 同步；其余字节不动。
+  昆仑侧仅保留单项边界 mask（T45 E16 复合谓词错译教训规避）。
+- source/verification commit `49dbb7f`（首个 commit `4488034` black
+  未过已追加格式化修正 commit，流程教训：管道后不接 lint 退出码）。
+  screening `/tmp/flagos-t57e3`（4/4）与 release `/tmp/flagos-t57e3-rel`
+  （4/4 方法、0 fail/skip，generic 18 launch、kunlunxin 18 launch 实跑）
+  双绿；black/isort/flake8 在 release 字节上复验全过。
+- 预注册门：平台 avg 超 team best 2.36478125 才算晋级（华为 0.397 为
+  最大预期受益芯；高分芯不动）。未超则收轴不追投。
+- ZIP `e3-49dbb7f`，SHA256
+  `18a4b55286ddd75cceb90b5245cf4edee79640bfcb8a90a59b10ab513987f5cc`；
+  成员 2：generic `5d4c1bf6f6adabc925eaac1df5f84f0f919a4186108be5471d4075dc58958fc5`、
+  kunlunxin `219696f724084bbbd6b9d6b22aa5a246dd0ba15328d32631a10e1ae3a5ab3904`。
+- 证据 `validation/verification.json` SHA256
+  `ec1f2a9dfaa43846f36f69e2106bc390d5c4692bd0f8f8e0918eae801b3b685d`、
+  `validation/verification.log` SHA256
+  `5c3b8f1bb35f13f0398a2cb8c2bf861a643fb16edb9e63d62ceb666095680fe6`。
