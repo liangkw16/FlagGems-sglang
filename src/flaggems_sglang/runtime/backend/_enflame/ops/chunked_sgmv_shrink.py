@@ -13,8 +13,16 @@
 # limitations under the License.
 
 # Enflame vendor (e6: retry): route/materialize with framework index_select and a
-# regular fp32-ieee GEMM per segment (the generic metadata-indirect
-# kernel fails on this backend).
+# regular GEMM per segment (the generic metadata-indirect kernel fails on this
+# backend).
+#
+# E7 (T12 mirror): fp32-ieee dot operands are the pathological GCU
+# configuration (T12 batch-2: ieee-fp32 dot + small tile + low stages ran
+# 0.116x there, native fp16 operands with 64/64 tiles + stages 2 ran
+# 0.743x). Keep bf16/fp16 inputs in their native dtype for the dot with
+# an fp32 accumulator - bf16 x bf16 products are exact in fp32, so the
+# math matches the reference's fp32 GEMM within the low-precision
+# tolerances. True-fp32 inputs stay on the ieee path.
 
 import torch
 import triton
@@ -38,6 +46,7 @@ def _shrink_gemm_kernel(
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
+    USE_INPUT_DTYPE: tl.constexpr,
 ):
     pid = tl.program_id(0)
     num_pid_n = tl.cdiv(N, BLOCK_N)
@@ -55,12 +64,15 @@ def _shrink_gemm_kernel(
             a_ptrs,
             mask=(offs_m[:, None] < M) & mask_k[None, :],
             other=0.0,
-        ).to(tl.float32)
+        )
         b = tl.load(
             b_ptrs,
             mask=mask_k[:, None] & (offs_n[None, :] < N),
             other=0.0,
-        ).to(tl.float32)
+        )
+        if not USE_INPUT_DTYPE:
+            a = a.to(tl.float32)
+            b = b.to(tl.float32)
         accumulator = tl.dot(a, b, acc=accumulator, input_precision="ieee")
         a_ptrs += BLOCK_K * stride_ak
         b_ptrs += BLOCK_K * stride_bk
@@ -99,6 +111,7 @@ def _launch_gemm(a, b, c, output_width, rank):
         BLOCK_M=_BLOCK_M,
         BLOCK_N=_BLOCK_N,
         BLOCK_K=bk,
+        USE_INPUT_DTYPE=(a.dtype in (torch.float16, torch.bfloat16)),
         num_warps=4,
         num_stages=2,
     )
@@ -123,8 +136,10 @@ def chunked_sgmv_shrink(x, weights, batch_info, num_slices=1):
         if w_idx < 0:
             continue
         rows = permutation[start:end].long()
-        x_seg = x.index_select(0, rows).float()
-        out_seg = torch.empty(len(rows), N, dtype=torch.float32, device=x.device)
+        x_seg = x.index_select(0, rows)
+        out_seg = torch.empty(
+            len(rows), N, dtype=torch.float32, device=x.device
+        )
         _launch_gemm(x_seg, weights[w_idx], out_seg, N, K)
         output.index_copy_(0, rows, out_seg.to(x.dtype))
     return output
