@@ -127,50 +127,39 @@ def _kkt_epilogue_kernel(
     HAS_G: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
-    # Specialize the shape divisors, including the per-lane GQA ratio.
-    # The row layout and exp arithmetic stay identical to E13.
+    # One program owns a row/head pair. GQA division and row values
+    # are scalar; only the column coordinate varies across lanes.
     pid = tl.program_id(0)
     nprog = tl.num_programs(0)
-    for r in range(pid, rows, nprog):
+    for job in range(pid, rows * num_heads, nprog):
+        r = job // num_heads
+        h = job % num_heads
         s = r % seqlen
         b = r // seqlen
         c = s // BT
         m = s - c * BT
-        bc = b * nchunks + c
-        row_base = r.to(tl.int64) * HBT
-        for l0 in range(0, HBT, BLOCK):
-            lane = l0 + tl.arange(0, BLOCK)
-            lmask = lane < HBT
-            h = lane // BT
-            n = lane - h * BT
-            kg = h // ratio
-            gram_id = bc * num_k_heads + kg
-
+        gram_id = (b * nchunks + c) * num_k_heads + h // ratio
+        beta_m = tl.load(
+            beta_ptr + b * beta_sb + s * beta_st + h * beta_sh
+        ).to(tl.float32)
+        if HAS_G:
+            g_base = g_ptr + b * g_sb + h * g_sh
+            g_m = tl.load(g_base + s * g_st).to(tl.float32)
+        for start in range(0, BT, BLOCK):
+            n = start + tl.arange(0, BLOCK)
+            mask = n < BT
             result = tl.load(
-                gram_ptr + gram_id * (BT * BT) + m * BT + n,
-                mask=lmask,
-                other=0.0,
+                gram_ptr + gram_id * (BT * BT) + m * BT + n, mask, 0
             )
-            # Same scaling order as the generic kernel: beta first,
-            # then the safe-exp decay, then the strict lower zeroing.
-            beta_m = tl.load(
-                beta_ptr + b * beta_sb + s * beta_st + h * beta_sh,
-                mask=lmask,
-                other=0.0,
-            ).to(tl.float32)
             result = result * beta_m
             if HAS_G:
-                g_base = g_ptr + b * g_sb + h * g_sh
-                g_m = tl.load(g_base + s * g_st, mask=lmask, other=0.0).to(
+                g_n = tl.load(g_base + (c * BT + n) * g_st, mask, 0).to(
                     tl.float32
                 )
-                g_n = tl.load(
-                    g_base + (c * BT + n) * g_st, mask=lmask, other=0.0
-                ).to(tl.float32)
                 g_diff = g_m - g_n
                 result = result * tl.where(g_diff <= 0.0, tl.exp(g_diff), 0.0)
             result = tl.where(m > n, result, 0.0)
-            tl.store(out_ptr + row_base + lane, result, mask=lmask)
+            tl.store(out_ptr + r.to(tl.int64) * HBT + h * BT + n, result, mask)
 
 
 def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
@@ -228,7 +217,7 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     # reading beta/g natively and writing the contiguous output.
     rows = batch * seqlen
     hbt = num_heads * bt
-    grid2 = (min(rows, 65535),)
+    grid2 = (min(rows * num_heads, 65535),)
     _kkt_epilogue_kernel[grid2](
         gram,
         beta,
@@ -249,7 +238,7 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
         BT=bt,
         HBT=hbt,
         HAS_G=has_g,
-        BLOCK=1024,
+        BLOCK=triton.next_power_of_2(bt),
         num_warps=4,
         num_stages=1,
     )

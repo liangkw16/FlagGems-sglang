@@ -165,6 +165,25 @@ class Ernie45RopeVariantsTest(unittest.TestCase):
 
     MODULES = load_operator_modules("ernie45_rope_fused")
 
+    def test_head_group_boundaries(self):
+        torch.manual_seed(49)
+        for heads in (3, 4, 5, 7, 8, 9, 15, 16, 17):
+            for dtype in TOL:
+                q = torch.randn(3, heads * 96, device="cuda", dtype=dtype)
+                k = torch.randn(3, 3 * 96, device="cuda", dtype=dtype)
+                cache = torch.randn(32, 64, device="cuda", dtype=dtype)
+                pos = torch.randint(0, 32, (3, 3), device="cuda")
+                args = (q, k, cache, pos, [8, 8, 16], 96, 64)
+                expected = reference(*args)
+                for name, module in self.MODULES:
+                    with self.subTest(module=name, heads=heads, dtype=dtype):
+                        actual = module.ernie45_rope_fused(*args)
+                        for got, want in zip(actual, expected):
+                            atol, rtol = TOL[dtype]
+                            torch.testing.assert_close(
+                                got, want, atol=atol, rtol=rtol
+                            )
+
     def test_variants_match_reference(self):
         # (T, head_size, rotary_dim, section, dtype): covers no-tail and
         # t-section splits, a non-128 head size, and a bf16 pass so the
@@ -189,6 +208,16 @@ class Ernie45RopeVariantsTest(unittest.TestCase):
                     )
                     torch.testing.assert_close(aq, eq, atol=atol, rtol=rtol)
                     torch.testing.assert_close(ak, ek, atol=atol, rtol=rtol)
+
+
+RELEASE_REQUIRED_TESTS = [
+    "Ernie45RopeFusedTest.test_dtypes",
+    "Ernie45RopeFusedTest.test_sections",
+    "Ernie45RopeFusedTest.test_gqa_and_tail",
+    "Ernie45RopeFusedTest.test_empty",
+    "Ernie45RopeVariantsTest.test_head_group_boundaries",
+    "Ernie45RopeVariantsTest.test_variants_match_reference",
+]
 
 
 if __name__ == "__main__":

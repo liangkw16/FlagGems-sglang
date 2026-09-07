@@ -42,8 +42,12 @@ def reference(A, B, As, Bs, block_size, output_dtype):
 def make_case(M, N, K, block_n=128, block_k=128, dtype=torch.float16, seed=0):
     # Platform contract: int8 operands, fp32 scales; dtype param is output dtype.
     g = torch.Generator().manual_seed(seed)
-    A_int = torch.randint(-127, 127, (M, K), generator=g).cuda()
-    B_int = torch.randint(-127, 127, (N, K), generator=g).cuda()
+    A_int = torch.randint(
+        -128, 128, (M, K), dtype=torch.int8, generator=g
+    ).cuda()
+    B_int = torch.randint(
+        -128, 128, (N, K), dtype=torch.int8, generator=g
+    ).cuda()
     n_tiles = (N + block_n - 1) // block_n
     k_tiles = (K + block_k - 1) // block_k
     As = torch.randn(M, k_tiles, generator=g).cuda().abs() * 0.01
@@ -100,6 +104,24 @@ class W8A8VariantsTest(unittest.TestCase):
 
     MODULES = load_operator_modules("w8a8_block_int8_matmul")
 
+    def test_int8_group_and_tile_tails(self):
+        for m, n, k in ((63, 127, 127), (64, 128, 128), (65, 129, 129)):
+            for dtype in (torch.float32, torch.float16, torch.bfloat16):
+                args = make_case(
+                    m, n, k, block_n=128, block_k=128, dtype=dtype, seed=58
+                )
+                self.assertEqual(args[0].dtype, torch.int8)
+                self.assertEqual(args[1].dtype, torch.int8)
+                expected = reference(*args)
+                for name, module in self.MODULES:
+                    with self.subTest(
+                        module=name, shape=(m, n, k), dtype=dtype
+                    ):
+                        actual = module.w8a8_block_int8_matmul(*args)
+                        torch.testing.assert_close(
+                            actual, expected, atol=0.5, rtol=1e-2
+                        )
+
     def test_variants_match_reference(self):
         for M, N, K, bn, bk, dtype in (
             (16, 128, 256, 128, 64, torch.bfloat16),
@@ -117,6 +139,16 @@ class W8A8VariantsTest(unittest.TestCase):
                     torch.testing.assert_close(
                         out.float(), ref.float(), atol=1e-2, rtol=1e-2
                     )
+
+
+RELEASE_REQUIRED_TESTS = [
+    "W8A8Test.test_basic",
+    "W8A8Test.test_block_sizes",
+    "W8A8Test.test_shapes",
+    "W8A8Test.test_empty",
+    "W8A8VariantsTest.test_int8_group_and_tile_tails",
+    "W8A8VariantsTest.test_variants_match_reference",
+]
 
 
 if __name__ == "__main__":

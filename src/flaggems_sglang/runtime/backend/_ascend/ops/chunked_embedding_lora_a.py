@@ -22,6 +22,7 @@ import triton.language as tl
 
 _NUM_CORE = 32
 _BLOCK_RANK = 128
+_BLOCK_TOKENS = 8
 
 
 @triton.jit
@@ -48,6 +49,8 @@ def _cela_persistent_kernel(
     output_stride_token,
     output_stride_rank,
     BLOCK_RANK: tl.constexpr,
+    BLOCK_TOKENS: tl.constexpr,
+    MAX_RANK: tl.constexpr,
 ):
     core_id = tl.program_id(0)
     for task_id in tl.range(core_id, task_num, num_core):
@@ -55,35 +58,41 @@ def _cela_persistent_kernel(
         if seg < num_segments:
             start = tl.load(seg_indptr + seg * seg_stride)
             end = tl.load(seg_indptr + (seg + 1) * seg_stride)
-            w_idx = tl.load(weight_indices + seg * widx_stride)
-            w_idx = tl.minimum(w_idx, num_lora - 1)
-            rank = tl.load(lora_ranks + w_idx * ranks_stride)
-
-            if rank > 0:
+            if start < end:
+                w_idx = tl.load(weight_indices + seg * widx_stride)
+                rank = tl.minimum(
+                    tl.load(lora_ranks + w_idx * ranks_stride), MAX_RANK
+                )
                 w_idx64 = w_idx.to(tl.int64)
-                for local in range(0, end - start):
-                    row = tl.load(permutation + (start + local) * perm_stride).to(
-                        tl.int64
-                    )
-                    token_id = tl.load(input_ids + row * ids_stride).to(tl.int64)
-
-                    r_offs = tl.arange(0, BLOCK_RANK)
-                    r_mask = r_offs < rank
-                    values = tl.load(
-                        weights
-                        + w_idx64 * weight_stride_lora
-                        + r_offs * weight_stride_rank
-                        + token_id * weight_stride_vocab,
-                        mask=r_mask,
-                        other=0.0,
-                    )
-                    tl.store(
-                        output
-                        + row * output_stride_token
-                        + r_offs * output_stride_rank,
-                        values,
-                        mask=r_mask,
-                    )
+                for local in range(0, end - start, BLOCK_TOKENS):
+                    offsets = local + tl.arange(0, BLOCK_TOKENS)
+                    token_mask = offsets < end - start
+                    rows = tl.load(
+                        permutation + (start + offsets) * perm_stride,
+                        token_mask,
+                        0,
+                    ).to(tl.int64)
+                    tokens = tl.load(
+                        input_ids + rows * ids_stride, token_mask, 0
+                    ).to(tl.int64)
+                    for rank_start in range(0, rank, BLOCK_RANK):
+                        r = rank_start + tl.arange(0, BLOCK_RANK)
+                        mask = token_mask[:, None] & (r[None, :] < rank)
+                        values = tl.load(
+                            weights
+                            + w_idx64 * weight_stride_lora
+                            + r[None, :] * weight_stride_rank
+                            + tokens[:, None] * weight_stride_vocab,
+                            mask,
+                            0,
+                        )
+                        tl.store(
+                            output
+                            + rows[:, None] * output_stride_token
+                            + r[None, :] * output_stride_rank,
+                            values,
+                            mask,
+                        )
 
 
 def chunked_embedding_lora_a(input_ids, weights, batch_info, vocab_size):
@@ -118,6 +127,8 @@ def chunked_embedding_lora_a(input_ids, weights, batch_info, vocab_size):
         *weights.stride(),
         *output.stride(),
         BLOCK_RANK=_BLOCK_RANK,
+        BLOCK_TOKENS=_BLOCK_TOKENS,
+        MAX_RANK=max_rank,
         num_warps=4,
         num_stages=1,
     )

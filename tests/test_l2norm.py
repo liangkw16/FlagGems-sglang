@@ -24,6 +24,7 @@ RELEASE_REQUIRED_TESTS = [
     f"L2NormTest.{name}"
     for name in (
         "test_dtypes",
+        "test_short_row_tiles",
         "test_shapes",
         "test_multi_dim",
         "test_transposed_leading_dims",
@@ -49,6 +50,16 @@ class L2NormTest(unittest.TestCase):
         self.assertEqual(actual.dtype, expected.dtype)
         atol, rtol = TOL[x.dtype]
         torch.testing.assert_close(actual, expected, atol=atol, rtol=rtol)
+
+    def test_short_row_tiles(self):
+        torch.manual_seed(56)
+        for rows in (7, 8, 9):
+            for dim in (63, 64, 65, 127, 128, 129):
+                for dtype in TOL:
+                    with self.subTest(rows=rows, dim=dim, dtype=dtype):
+                        x = torch.randn(rows, dim, device="cuda", dtype=dtype)
+                        x[0] = 0
+                        self._check(x)
 
     def test_dtypes(self):
         for dtype in (torch.float32, torch.float16, torch.bfloat16):

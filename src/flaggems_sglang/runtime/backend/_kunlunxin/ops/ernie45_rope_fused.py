@@ -24,6 +24,8 @@ import torch
 import triton
 import triton.language as tl
 
+_BLOCK_HEADS = 16
+
 
 @triton.jit
 def _ernie_rope_pair_kernel(
@@ -116,7 +118,7 @@ def _apply_rope_pairs(
     out = torch.empty_like(x)
     if out.numel() == 0:
         return out
-    block_heads = 8
+    block_heads = _BLOCK_HEADS
     head_groups = triton.cdiv(n_h, block_heads)
     if half_rd > 0:
         grid = (num_tokens, head_groups, half_rd)

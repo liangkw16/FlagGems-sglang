@@ -229,6 +229,28 @@ class ChunkedEmbeddingLoraAVariantsTest(unittest.TestCase):
 
     MODULES = load_operator_modules("chunked_embedding_lora_a")
 
+    def test_token_and_rank_tile_boundaries(self):
+        for dtype in TOLERANCES:
+            for rank in (127, 128, 129, 256):
+                ids, weights, info, _ = make_case(
+                    [7, 8, 9, 0, 65, 129],
+                    [rank],
+                    max_rank=256,
+                    vocab_size=257,
+                    dtype=dtype,
+                    sentinel_empty_widx=True,
+                    seed=46,
+                )
+                expected = reference(ids, weights, info, 257)
+                for name, module in self.MODULES:
+                    with self.subTest(module=name, rank=rank, dtype=dtype):
+                        actual = module.chunked_embedding_lora_a(
+                            ids, weights, info, 257
+                        )
+                        torch.testing.assert_close(
+                            actual, expected, atol=0, rtol=0
+                        )
+
     def test_variants_match_reference(self):
         cases = [
             ([12, 7, 20, 3], [32, 0, 128, 16], 256, 1024),
@@ -251,6 +273,22 @@ class ChunkedEmbeddingLoraAVariantsTest(unittest.TestCase):
                         input_ids, weights, batch_info, vocab
                     )
                     torch.testing.assert_close(out, ref, atol=1e-5, rtol=1e-5)
+
+
+RELEASE_REQUIRED_TESTS = [
+    "ChunkedEmbeddingLoraATest.test_dtypes",
+    "ChunkedEmbeddingLoraATest.test_id_dtypes",
+    "ChunkedEmbeddingLoraATest.test_rank_boundaries",
+    "ChunkedEmbeddingLoraATest.test_empty_segments_with_sentinel_widx",
+    "ChunkedEmbeddingLoraATest.test_all_ranks_zero",
+    "ChunkedEmbeddingLoraATest.test_single_segment_and_single_token",
+    "ChunkedEmbeddingLoraATest.test_many_segments",
+    "ChunkedEmbeddingLoraATest.test_columns_beyond_rank_stay_zero",
+    "ChunkedEmbeddingLoraATest.test_non_contiguous_weights",
+    "ChunkedEmbeddingLoraATest.test_empty_batch",
+    "ChunkedEmbeddingLoraAVariantsTest.test_token_and_rank_tile_boundaries",
+    "ChunkedEmbeddingLoraAVariantsTest.test_variants_match_reference",
+]
 
 
 if __name__ == "__main__":

@@ -142,6 +142,20 @@ class ChunkedSgmvShrinkVariantsTest(unittest.TestCase):
 
     MODULES = load_operator_modules("chunked_sgmv_shrink")
 
+    def test_pipeline_long_segment_dtypes(self):
+        for dtype in TOLERANCES:
+            args = make_case(
+                [63, 64, 65, 256, 257], 3, 129, 33, dtype=dtype, seed=48
+            )
+            expected = reference(*args)
+            for name, module in self.MODULES:
+                with self.subTest(module=name, dtype=dtype):
+                    actual = module.chunked_sgmv_shrink(*args)
+                    atol, rtol = TOLERANCES[dtype]
+                    torch.testing.assert_close(
+                        actual, expected, atol=atol, rtol=rtol
+                    )
+
     def test_variants_match_reference(self):
         for seg_lens, K, N in (
             ([16, 32, 8], 512, 128),
@@ -156,6 +170,16 @@ class ChunkedSgmvShrinkVariantsTest(unittest.TestCase):
                     out = module.chunked_sgmv_shrink(x, weights, bi)
                     atol, rtol = TOLERANCES[x.dtype]
                     torch.testing.assert_close(out, ref, atol=atol, rtol=rtol)
+
+
+RELEASE_REQUIRED_TESTS = [
+    "ChunkedSgmvShrinkTest.test_dtypes",
+    "ChunkedSgmvShrinkTest.test_shapes",
+    "ChunkedSgmvShrinkTest.test_identity_permutation",
+    "ChunkedSgmvShrinkTest.test_empty_batch",
+    "ChunkedSgmvShrinkVariantsTest.test_pipeline_long_segment_dtypes",
+    "ChunkedSgmvShrinkVariantsTest.test_variants_match_reference",
+]
 
 
 if __name__ == "__main__":

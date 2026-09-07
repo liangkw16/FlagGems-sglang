@@ -123,6 +123,17 @@ class ActAndMulTest(unittest.TestCase):
         self._check(torch.randn(4097, 8192, device="cuda"))
         self._check(torch.randn(1, 2, device="cuda"))
 
+    def test_strided_rows_and_columns_dtypes(self):
+        torch.manual_seed(42)
+        for dtype in (torch.float32, torch.float16, torch.bfloat16):
+            for half in (1023, 1024, 1025):
+                x = torch.randn(6, half * 4, device="cuda", dtype=dtype)[
+                    ::2, 1::2
+                ]
+                for act in ("silu", "gelu"):
+                    with self.subTest(dtype=dtype, half=half, activation=act):
+                        self._check(x, activation=act, swiglu_limit=7.0)
+
     def test_non_contiguous_input(self):
         base = torch.randn(32, 2048, device="cuda")
         x = base[:, ::2]
@@ -254,6 +265,24 @@ class ActAndMulVariantsTest(unittest.TestCase):
                         torch.testing.assert_close(
                             out, expected, atol=atol, rtol=rtol
                         )
+
+
+RELEASE_REQUIRED_TESTS = [
+    "ActAndMulTest.test_contiguous_dtypes_and_activations",
+    "ActAndMulTest.test_half_width_and_row_boundaries",
+    "ActAndMulTest.test_contract_is_2d_only",
+    "ActAndMulTest.test_strided_rows_and_columns_dtypes",
+    "ActAndMulTest.test_non_contiguous_input",
+    "ActAndMulTest.test_input_not_modified",
+    "ActAndMulTest.test_empty_rows_and_zero_width",
+    "ActAndMulTest.test_special_values_match_reference",
+    "ActAndMulTest.test_swiglu_limit_clamping",
+    "ActAndMulTest.test_swiglu_limit_zero_still_clamps",
+    "ActAndMulTest.test_asymmetric_clamp_semantics",
+    "ActAndMulTest.test_unsupported_activation_raises",
+    "ActAndMulVariantsTest.test_variants_match_reference",
+    "ActAndMulVariantsTest.test_variants_aligned_width",
+]
 
 
 if __name__ == "__main__":
