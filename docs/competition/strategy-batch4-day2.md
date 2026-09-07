@@ -1,4 +1,36 @@
-# 第 4 批明日冲榜方案（2026-09-06）
+# 第四批冲榜方案与执行记录
+
+## 2026-09-07 首轮实际结果与重新分配
+
+最新快照：有效题 **11/17**，Top1 **1题（T47）**；本轮4次正式提交，实时剩17/30。T57新增有效2.36478125、排名5。T43 E14=6.5204375、T51 E4=5.195325均未超过既有最佳；T52 E6昆仑失败，燧原仍待回调，已经无八芯有效分可能。
+
+本轮没有新增Top1。代理单case 1.5倍不等于全芯均值增长；后续以八芯算术均值和真实榜首为门。只有新候选达到发布门禁、不可变ZIP及实时preflight后才提交。预留6次，剩余11次也是上限，不能把额度当作必须用完的任务。
+
+| 题 | 算子 | 当前最佳 / 排名 | 实时榜首 | 追榜所需增幅 | 下一项证据 / 方案 |
+| ---: | --- | --- | ---: | ---: | --- |
+| 42 | [act_and_mul](experiments/act_and_mul.md) | 3.258350 / #10 | 431.484300 | 13142.4% | 暂缓；旧M1/tile轴停止，需要整体内存访问结构的新证据 |
+| 43 | [causal_conv1d_update](experiments/causal_conv1d_update.md) | 6.545875 / #3 | 7.903250 | 20.7% | 优先研究；保留E13，tile128平台无增益、时间并行常规case回退；后续须窗口复用/状态写回成本的新证据 |
+| 44 | [chain_speculative_sampling](experiments/chain_speculative_sampling.md) | 无有效分 | 1.981275 | 先有效 | 先正确性；定位half概率归一化/扫描首分歧，保留失败回归，不能带缺口提交 |
+| 45 | [chunk_scaled_dot_kkt](experiments/chunk_scaled_dot_kkt.md) | 无有效分 | 17.957125 | 先有效 | 先过线；昆仑0.063需至少1.59倍，改epilogue结构前先拿目标编译证据 |
+| 46 | [chunked_embedding_lora_a](experiments/chunked_embedding_lora_a.md) | 14.105187 / #5 | 24.413875 | 73.1% | 储备；仅分段路由和权重复用的新结构，旧天数预路由水位内波动不重复 |
+| 47 | [chunked_sgmv_expand](experiments/chunked_sgmv_expand.md) | 25.004812 / #1 | 25.004812 | 0.0% | 守榜；保持25.0048125，未被超越不为微小弱芯收益消耗机会 |
+| 48 | [chunked_sgmv_shrink](experiments/chunked_sgmv_shrink.md) | 4.719812 / #3 | 23.743625 | 403.1% | 储备；段合批降低launch/重复权重加载，先证实整个wrapper收益，旧BLOCK_S轴关闭 |
+| 49 | [ernie45_rope_fused](experiments/ernie45_rope_fused.md) | 8.582531 / #4 | 15.606438 | 81.8% | 储备；参考PR40的RoPE访存/跨头并行，保留已修昆仑；须同时提高多个高分芯 |
+| 50 | [extend_attention](experiments/extend_attention.md) | 无有效分 | 10.723281 | 先有效 | 先诊断；PR38/47仅供LSE合并与归约参考，尚缺目标芯正确性和燧原≥0.1证据 |
+| 51 | [fla_layernorm_gated](experiments/fla_layernorm_gated.md) | 5.393900 / #6 | 6.668225 | 23.6% | 优先研究；E4平台回退关闭本轴；若重开，先隔离BLOCK_R=1路径的IR变化并验证沐曦 |
+| 52 | [fused_dual_residual_rmsnorm](experiments/fused_dual_residual_rmsnorm.md) | 无有效分 | 5.425125 | 先有效 | 待目标证据；RN仍昆仑4元素同指纹，需固定源码逐阶段var/rms/y1/mid/out对照，不再换等价公式盲投 |
+| 53 | [fused_gdn_gating](experiments/fused_gdn_gating.md) | 2.126700 / #10 | 288.426175 | 13462.1% | 暂缓；榜首跳升至288.426175，旧小比例gate调参不足，需整体带宽结构证据 |
+| 54 | [fused_norm_rope_stacked](experiments/fused_norm_rope_stacked.md) | 无有效分 | 10.223469 | 先有效 | 先诊断；已终态5/8，分开归一化、RoPE与输出布局定位三芯首分歧 |
+| 55 | [hc_head](experiments/hc_head.md) | 无有效分 | 6.363313 | 先有效 | 先诊断；隔离reference/compile_worker/候选，撤回纯平台归因；即使单芯过线也离Top1很远 |
+| 56 | [l2norm](experiments/l2norm.md) | 3.107729 / #8 | 72.306802 | 2226.7% | 暂缓；榜首72.30680208，先测全wrapper带宽/归约成本，旧短行调参不直接投 |
+| 57 | [log_scaling_tau](experiments/log_scaling_tau.md) | 2.364781 / #5 | 2.816469 | 19.1% | 优先；E2新增有效并排名5，仍需+19.10%；warp/BLOCK扫描无收益，华为目标结构探索待证实 |
+| 58 | [w8a8_block_int8_matmul](experiments/w8a8_block_int8_matmul.md) | 122.661583 / #3 | 562.415908 | 358.5% | 储备；需高分芯GEMM整体结构变化，保留int8先castFP32再计算契约，弱两芯翻倍不足追榜 |
+
+PR调研的实际落点： [PR34](https://github.com/flagos-ai/FlagGems-sglang/pull/34) 的channel连续布局帮助T43此前E13首次有效；[PR50](https://github.com/flagos-ai/FlagGems-sglang/pull/50) 的多行调度本轮迁移到T51后平台未获益。 [PR40](https://github.com/flagos-ai/FlagGems-sglang/pull/40)、[PR38](https://github.com/flagos-ai/FlagGems-sglang/pull/38)、[PR47](https://github.com/flagos-ai/FlagGems-sglang/pull/47) 继续作为RoPE/attention结构参考，不能当作本题通过凭证。
+
+榜单原始证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/tasks-after-round.json`，SHA256 `d4a03f5b13ef9c9784987cf14b6f634490e31565e7ef3ddea30b33eec91443eb`。逐芯结果、源码/测试/ZIP哈希和负向实验见各题账本及[自动生成索引](experiments/INDEX.md)。
+
+## 以下为2026-09-06历史方案（已被上方盘点更新）
 
 ## 复盘：当前位置与可提升空间
 

@@ -4,13 +4,13 @@
 task: 54
 operator: fused_norm_rope_stacked
 batch: 4
-validity: pending
-platform: 5/8(e2)
-team_best_stage: e1
-team_best_speedup: 0
+validity: invalid_correctness
+platform: 5/8(e2,10414已终态)
+team_best_stage: -
+team_best_speedup: -
 sealed: no
-next: 当日额度耗尽;e2=5/8(行式vendor未修复三芯);代理fuzz仅覆盖已测输入;固定源码复现并定位首个分歧
-updated: 2026-09-06
+next: 三芯失败均已终态;仅固定源码目标复现定位首分歧后重开,非额度用尽
+updated: 2026-09-07
 ```
 
 ## S0 单遍融合 kernel（2026-09-06，远端 GPU 全过）
@@ -66,3 +66,9 @@ updated: 2026-09-06
   torch.zeros 替 empty、单 stream、或在 rope 对偶 load 改单 load +
   寄存器内 shift（tl.where 构造 partner 索引）消除双读；(c) 在独立 debug kernel 中比较 inv_rms、归一化值和 RoPE；
   不经自动发布门禁提交故意改变输出契约的探针。
+
+## 2026-09-07 只读盘点校正
+
+最新 E2/sub10414 已终态 invalid_correctness，天数/沐曦/海光/A/B五芯通过；燧原/昆仑/华为失败，无有效均值。旧pending与当日额度耗尽措辞过期；本轮未提交。
+- 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/tasks-now.json` SHA256 `fc73368c3d98b228b0c7815d6ec1e9042a58af8d953337fff58990daec1474fc`。
+- 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/54-submissions-now.json` SHA256 `d5e160132b38dc9eb7f53cf8671f861a4223a7a89bcd8538da3d0fa20b6efd05`。

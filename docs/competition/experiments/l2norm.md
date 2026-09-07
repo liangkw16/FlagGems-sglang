@@ -5,12 +5,12 @@ task: 56
 operator: l2norm
 batch: 4
 validity: valid
-platform: 8/8(e1,3.10772917x)
+platform: 8/8(e1,3.10772917x,排名8)
 team_best_stage: e1
 team_best_commit: f83c73aeceaa6382c6ec6d93a082fc24e37090fb
 team_best_speedup: 3.10772917
 sealed: no
-next: e1修复版8/8复验通过(3.1077x,s0同水位,is_team_best);榜单:达标11队,榜首Warmhearted 4.2591x(差27%);后续可试短行num_warps=1/2与多行tile
+next: 榜首已72.30680208;守有效分,多行/短行需有整体收益证据再晋级
 updated: 2026-09-07
 ```
 
@@ -45,3 +45,8 @@ updated: 2026-09-07
 - 逐芯：天数 6.68 / 沐曦 2.59 / 燧原 1.19 / 海光 4.57 / 昆仑 0.585 /
   华为 1.41 / A 3.63 / B 4.21。"账本 8/8 与产物证据"的冲突至此消除：
   当前平台记录即修复字节。
+
+## 2026-09-07 只读盘点校正
+
+当前榜首与排名按最新任务API校正；旧段落保留历史快照，不据此分配本轮提交机会。本轮未修改或提交本题源码。
+- 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/tasks-now.json` SHA256 `fc73368c3d98b228b0c7815d6ec1e9042a58af8d953337fff58990daec1474fc`。

@@ -5,11 +5,11 @@ task: 52
 operator: fused_dual_residual_rmsnorm
 batch: 4
 validity: invalid
-platform: 6/8(e5,五种数学形态同指纹边界失配;已分诊)
+platform: e6/10743六芯通过,昆仑失败,燧原pending;已无有效分可能
 team_best_stage: -
 team_best_speedup: -
 sealed: no
-next: e6已完成发布验证和不可变ZIP;实时preflight后首投,按全芯均值判定
+next: e6昆仑同4元素失配,本轴关闭;只等10743燧原回调,禁止重投;需目标归约/首分歧证据
 updated: 2026-09-07
 ```
 
@@ -90,3 +90,24 @@ NVIDIA seed42、BF16 `[4096,8192]` 在 `(689,410)` 的第一层均方：旧 1.00
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fused_dual_residual_rmsnorm/e6-b290b6a/validation/verification-input.json` SHA256 `6a1a8de77d358d0b86c1136b7dce7438f50dff8022b54575c241f9c2243cb6cd`。
 - 附加基准、诊断及 MCP 证据清单 `/Users/bytedance/ccc/flagos/artifacts/competition/fused_dual_residual_rmsnorm/e6-b290b6a/validation/evidence-sha256.json` SHA256 `fb67922ae0f359c12fe7f6bb2952eb9a361a4209bf45be43670f51249083bf26`。
 - 首轮每题最多1次正式上传/提交；本次预算上限沿用批准的 T43/T51/T52 各4、T57 3、储备6，须有新证据才继续消耗。sending/uncertain/stale_after_upload 不自动重试。
+
+## 本轮平台结果与止损（2026-09-07T14:55:36+08:00）
+
+- submission `10743` / daily_seq `10` / created `2026-09-07T14:42:51`；preflight与上传/提交均只执行一次，远端ZIP验签 `verified`。
+- 平台原始状态 `evaluating` / `pending`，通过6/8、终态7/8；average_speedup `None`，is_team_best `False`；观测时额度 `18/30`。
+- 昆仑 case18仍4/33554432元素失败，最大abs0.01953125坐标(3969,4831)、expected0的inf相对差坐标(1005,6909)，与E5指纹相同。RN未解决目标芯卡点；平台聚合仍pending（燧原waiting_callback），但本候选已经不可能获得八芯有效分。保留代理可复现诊断和回归，不再以该证据外推目标芯。
+
+| 芯片 | 状态/正确性 | 加速比 | 实际文件 |
+| --- | --- | ---: | --- |
+| tianshu | completed/True | 8.37006667 | `fused_dual_residual_rmsnorm.py` |
+| muxi | completed/True | 3.762 | `fused_dual_residual_rmsnorm.py` |
+| enflame | waiting_callback/None | None | `fused_dual_residual_rmsnorm_enflame.py` |
+| haiguang | completed/True | 9.29186667 | `fused_dual_residual_rmsnorm.py` |
+| kunlunxin | completed/False | None | `fused_dual_residual_rmsnorm_kunlunxin.py` |
+| huawei | completed/True | 3.22833333 | `fused_dual_residual_rmsnorm.py` |
+| card_a | completed/True | 6.99346667 | `fused_dual_residual_rmsnorm.py` |
+| card_b | completed/True | 8.1058 | `fused_dual_residual_rmsnorm_amd.py` |
+
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fused_dual_residual_rmsnorm/e6-b290b6a/validation/52-submit.json` SHA256 `fb90f2eadb4bb1409b1c56f2e36a7c2d3da6f691d13dbc575d2bcfaa2ee78436`。
+
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fused_dual_residual_rmsnorm/e6-b290b6a/validation/52-status-first-round.json` SHA256 `df19fd00e8ad1a3e02d943df3d03a13b7774a9c273c19e026e4a159eb60417fb`。

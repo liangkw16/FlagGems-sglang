@@ -5,12 +5,12 @@ task: 53
 operator: fused_gdn_gating
 batch: 4
 validity: valid
-platform: 8/8(e4,2.1267x)
+platform: 8/8(e4,2.1267x,排名10)
 team_best_stage: e4
 team_best_commit: 743ebb7f68109cdfd3b8c651aa88d8025d4d9d0c
 team_best_speedup: 2.1267
 sealed: no
-next: e4沐曦2.7402x(+104%,过门,is_team_best);榜单:达标10队,榜首EvokeAgent 4.3306x(差51%);后续轴:generic二代[ROWS_TILE,H]
+next: 榜首已288.426175;旧4.3306对标过期,暂停小比例调参
 updated: 2026-09-07
 ```
 
@@ -115,3 +115,8 @@ IR 检查（燧原无 scf.if/grid-stride、华为热路径无整数除法/取模
   波动，e3 记录 1.654）/ A 2.6012 / B 2.6378。
 - E2→E3→E4 三发单变量全部兑现；预注册剩余轴：generic 二代
   `[ROWS_TILE, H]`（A_log/dt_bias 广播复用），目标逼近榜首 3.54x。
+
+## 2026-09-07 只读盘点校正
+
+当前榜首与排名按最新任务API校正；旧段落保留历史快照，不据此分配本轮提交机会。本轮未修改或提交本题源码。
+- 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/tasks-now.json` SHA256 `fc73368c3d98b228b0c7815d6ec1e9042a58af8d953337fff58990daec1474fc`。

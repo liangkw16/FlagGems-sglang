@@ -5,12 +5,12 @@ task: 43
 operator: causal_conv1d_update
 batch: 4
 validity: valid
-platform: 8/8(e13,6.545875x,排名3;昆仑首次0.407x)
+platform: 8/8(e14,6.5204375x非最佳);e13最佳6.545875x
 team_best_stage: e13
 team_best_commit: 4fa854a376de167e76a1e5d1441c6cd82b5866d7
 team_best_speedup: 6.545875
 sealed: no
-next: e14已完成发布验证和不可变ZIP;实时preflight后首投,按全芯均值判定
+next: 保留e13最佳6.545875;tile128未改善均值;时间并行离线常规case回退,均不追投
 updated: 2026-09-07
 ```
 
@@ -332,3 +332,25 @@ IEEE `tl.dot`（只存 C[:,0]；T28/T37 昆仑通过范式）。
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e14-5cce466/validation/verification-input.json` SHA256 `7b5afa43b903ba8fff7b87d33abb43e5f8212646f61469c878526d0d42a767be`。
 - 附加基准、诊断及 MCP 证据清单 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e14-5cce466/validation/evidence-sha256.json` SHA256 `b5ab669b6c45cfbcc0d1818f45f05c5aa3006459c28f0f0019cbe057f5a6cc52`。
 - 首轮每题最多1次正式上传/提交；本次预算上限沿用批准的 T43/T51/T52 各4、T57 3、储备6，须有新证据才继续消耗。sending/uncertain/stale_after_upload 不自动重试。
+
+## 本轮平台结果与止损（2026-09-07T14:55:36+08:00）
+
+- submission `10745` / daily_seq `11` / created `2026-09-07T14:45:23`；preflight与上传/提交均只执行一次，远端ZIP验签 `verified`。
+- 平台原始状态 `completed` / `valid`，通过8/8、终态8/8；average_speedup `6.5204375`，is_team_best `False`；观测时额度 `19/30`。
+- E14 比最佳 E13 回退约0.389%，代理两个case的1.5x未迁移成全芯收益。后续离线 time-grid capped8 方案在既有10方法通过，但 `[32,4096,4]` 仅0.833x，三个其他常规多步case约1.0x，额外 `[1,128,65]` 3.475x不足以证明题目加速，故不发布该方案。
+
+| 芯片 | 状态/正确性 | 加速比 | 实际文件 |
+| --- | --- | ---: | --- |
+| tianshu | completed/True | 13.6185 | `causal_conv1d_update.py` |
+| muxi | completed/True | 7.013 | `causal_conv1d_update.py` |
+| enflame | completed/True | 0.3255 | `causal_conv1d_update_enflame.py` |
+| haiguang | completed/True | 11.299 | `causal_conv1d_update.py` |
+| kunlunxin | completed/True | 0.409 | `causal_conv1d_update_kunlunxin.py` |
+| huawei | completed/True | 0.3775 | `causal_conv1d_update_ascend.py` |
+| card_a | completed/True | 8.452 | `causal_conv1d_update.py` |
+| card_b | completed/True | 10.669 | `causal_conv1d_update.py` |
+
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e14-5cce466/validation/43-submit.json` SHA256 `c524d25b871c1c904c41e6e613313cbc253f60bafc1eb26bc8f70c874f77f420`。
+
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e14-5cce466/validation/43-status-first-round.json` SHA256 `1918d1d0d4e7e09860137d057b1b5c034a1a57e65628851501f08c555f86776f`。
+- 未晋级后续实验 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e14-5cce466/validation/followup-evidence-sha256.json` SHA256 `4e846306d3b972f1b6f196ab1eb1cb0f6314573c8aabfe51f2db4428940276fc`。

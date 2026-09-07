@@ -5,13 +5,13 @@ task: 42
 operator: act_and_mul
 batch: 4
 validity: valid
-platform: 8/8(e2,3.248925x)
+platform: 8/8(e6,3.25835x,排名10)
 team_best_stage: e6
 team_best_commit: 5251bf5f1ef53eaac8ce83c0bb0d0b0b91425fad
 team_best_speedup: 3.25835
 sealed: no
-next: M1载体成TB(3.25835,10344);三候选全消费;守榜,距旧榜首3.5194差-7.4%无新轴
-updated: 2026-09-06
+next: 榜首已431.4843;暂停旧tile/M1轴,仅整体带宽结构有新证据再开
+updated: 2026-09-07
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -227,3 +227,8 @@ updated: 2026-09-06
   增益来自其他芯水位：华为 2.333/昆仑 0.4482）
 - 判定：T42 预注册三候选（A1/K1/M1）全部消费完毕；M1 载体成为
   TB 字节，转守榜。距旧榜首 3.5194 仍有 -7.4%，无已验证新轴
+
+## 2026-09-07 只读盘点校正
+
+当前榜首与排名按最新任务API校正；旧段落保留历史快照，不据此分配本轮提交机会。本轮未修改或提交本题源码。
+- 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/tasks-now.json` SHA256 `fc73368c3d98b228b0c7815d6ec1e9042a58af8d953337fff58990daec1474fc`。

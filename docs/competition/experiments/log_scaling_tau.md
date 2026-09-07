@@ -4,13 +4,14 @@
 task: 57
 operator: log_scaling_tau
 batch: 4
-validity: invalid
-platform: 7/8(e1,10704);昆仑error299已终态
-team_best_stage: -
-team_best_speedup: -
+validity: valid
+platform: 8/8(e2,10747,2.36478125x首次有效)
+team_best_stage: e2
+team_best_speedup: 2.36478125
 sealed: no
-next: e2已完成发布验证和不可变ZIP;实时preflight后首投,按全芯均值判定
+next: e2首次8/8有效2.36478125;启动参数扫描无收益;华为目标结构探索中
 updated: 2026-09-07
+team_best_commit: 493b4956a0a39077e0db047bd64e0f1dd12a4c5b
 ```
 
 ## S0 2D grid 行缩放（2026-09-06，远端 GPU 2/2 OK）
@@ -82,3 +83,25 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/log_scaling_tau/e2-493b495/validation/verification-input.json` SHA256 `d6404c5ca4a1fa5259c622780fc70b5c622ce5653447eb1093ab9634aab93a62`。
 - 附加基准、诊断及 MCP 证据清单 `/Users/bytedance/ccc/flagos/artifacts/competition/log_scaling_tau/e2-493b495/validation/evidence-sha256.json` SHA256 `a4abbded27664b0fea47346d7e48c40a54b98062e8bb7d608eff7d3cdad08d73`。
 - 首轮每题最多1次正式上传/提交；本次预算上限沿用批准的 T43/T51/T52 各4、T57 3、储备6，须有新证据才继续消耗。sending/uncertain/stale_after_upload 不自动重试。
+
+## 本轮平台结果与止损（2026-09-07T14:55:36+08:00）
+
+- submission `10747` / daily_seq `13` / created `2026-09-07T14:51:08`；preflight与上传/提交均只执行一次，远端ZIP验签 `verified`。
+- 平台原始状态 `completed` / `valid`，通过8/8、终态8/8；average_speedup `2.36478125`，is_team_best `True`；观测时额度 `17/30`。
+- 昆仑二维调度恢复正确性0.5345x，E2首次八芯有效。相对当时榜首2.81646875仍需+19.10%，未获Top1。额外9组warp/block启动配置×6shape×五轮交错A/B无稳定收益，单个大shape4warp/BLOCK256降至0.706x；不生成第三个提交候选。
+
+| 芯片 | 状态/正确性 | 加速比 | 实际文件 |
+| --- | --- | ---: | --- |
+| tianshu | completed/True | 4.03225 | `log_scaling_tau.py` |
+| muxi | completed/True | 2.72075 | `log_scaling_tau.py` |
+| enflame | completed/True | 0.56775 | `log_scaling_tau.py` |
+| haiguang | completed/True | 4.77725 | `log_scaling_tau.py` |
+| kunlunxin | completed/True | 0.5345 | `log_scaling_tau_kunlunxin.py` |
+| huawei | completed/True | 0.39675 | `log_scaling_tau.py` |
+| card_a | completed/True | 3.22175 | `log_scaling_tau.py` |
+| card_b | completed/True | 2.66725 | `log_scaling_tau.py` |
+
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/log_scaling_tau/e2-493b495/validation/57-submit.json` SHA256 `403d1f1e7ed59a847896696067e50cb0b4077fd8c8d63cc031b367b23fe4af09`。
+
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/log_scaling_tau/e2-493b495/validation/57-status-first-round.json` SHA256 `a8cacdcdb6f0776ba2186c721abe000c8e07e22ec8f70b6aeb97daec7f7f4b28`。
+- 未晋级后续实验 `/Users/bytedance/ccc/flagos/artifacts/competition/log_scaling_tau/e2-493b495/validation/followup-evidence-sha256.json` SHA256 `c051f10ea5dd950303bbf54c7bcce8e99e36e5e1f0f135dc352637b460c4ed5f`。

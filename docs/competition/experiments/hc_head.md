@@ -5,11 +5,11 @@ task: 55
 operator: hc_head
 batch: 4
 validity: invalid_correctness
-platform: 7/8(e1,昆仑=评测器崩溃族第2次;七芯总分+40%)
+platform: 7/8(e1,10668已终态;昆仑compile_worker Aborted,归因未定)
 team_best_stage: -
-team_best_speedup: 0
+team_best_speedup: -
 sealed: no
-next: 昆仑对该题reference确定性崩溃(s0/e1同指纹,同日昆仑评过T48/T49/T53/T56);等平台窗口同字节重试;燧原0.30x仍弱
+next: 先取得reference单独复现或首失败栈;其他题健康不能证明本题仅平台错,禁止同字节自动重投
 updated: 2026-09-07
 ```
 
@@ -62,3 +62,9 @@ updated: 2026-09-07
   若昆仑恢复，e1 字节即为大幅 team best 候选；同字节重试不需新候选。
 - 结构结论：循环外归约在华为/A/B 大幅兑现，海光/天数/沐曦小回退，
   与官方 FlagGems 结构在该三芯的 lowering 差异待后续分轴。
+
+## 2026-09-07 只读盘点校正
+
+旧节“确定性reference崩溃、非我方kernel问题”证据不足，现撤回该归因。两个提交的compile_worker/Aborted与其他题当天成功，只证明题目相关失败，不排除候选代码、编译与设备状态作用。本轮未再次提交。
+- 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/tasks-now.json` SHA256 `fc73368c3d98b228b0c7815d6ec1e9042a58af8d953337fff58990daec1474fc`。
+- 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/55-submissions-now.json` SHA256 `3a954f68db1ecbadc01b3e43a704eab3d8bd6929e57e34d2f77c9053b2864085`。

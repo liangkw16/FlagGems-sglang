@@ -5,11 +5,11 @@ task: 51
 operator: fla_layernorm_gated
 batch: 4
 validity: valid
-platform: 8/8(e2,5.3939x,排名6);e3燧原超时7/8
+platform: 8/8(e4,5.195325x非最佳);e2最佳5.3939x
 team_best_stage: e2
 team_best_speedup: 5.3939
 sealed: no
-next: e4已完成发布验证和不可变ZIP;实时preflight后首投,按全芯均值判定
+next: 保留e2最佳5.3939;多行tile平台回退,关闭本轴;需新目标芯结构证据
 updated: 2026-09-07
 team_best_commit: 5985b1ce09fe6e7cec374c271aa1c25940264783
 ```
@@ -77,3 +77,24 @@ LayerNorm 勿改 `E[x²]-E[x]²` 单遍（大均值小方差消减误差，fp32 
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fla_layernorm_gated/e4-5544a77/validation/verification-input.json` SHA256 `35c1b19af362fe9b0a0d91adf37f10e3f48bee314fa975b1a0000c3e2632aa7f`。
 - 附加基准、诊断及 MCP 证据清单 `/Users/bytedance/ccc/flagos/artifacts/competition/fla_layernorm_gated/e4-5544a77/validation/evidence-sha256.json` SHA256 `45a1aa10a777047186b2409b759228b4cfa61b990190f56dfcffcb84d7ee251c`。
 - 首轮每题最多1次正式上传/提交；本次预算上限沿用批准的 T43/T51/T52 各4、T57 3、储备6，须有新证据才继续消耗。sending/uncertain/stale_after_upload 不自动重试。
+
+## 本轮平台结果与止损（2026-09-07T14:55:36+08:00）
+
+- submission `10746` / daily_seq `12` / created `2026-09-07T14:48:28`；preflight与上传/提交均只执行一次，远端ZIP验签 `verified`。
+- 平台原始状态 `completed` / `valid`，通过8/8、终态8/8；average_speedup `5.195325`，is_team_best `False`；观测时额度 `18/30`。
+- E4 比最佳 E2 回退约3.68%；沐曦3.7252对旧4.5654回退18.40%，其他芯波动也影响均值。不能把全部回退归因多行分支：BLOCK_R=1仍改变IR维度，且隐藏性能case未透出。此轴无净收益，停止追加平台试验。
+
+| 芯片 | 状态/正确性 | 加速比 | 实际文件 |
+| --- | --- | ---: | --- |
+| tianshu | completed/True | 9.235 | `fla_layernorm_gated.py` |
+| muxi | completed/True | 3.7252 | `fla_layernorm_gated.py` |
+| enflame | completed/True | 2.3446 | `fla_layernorm_gated_enflame.py` |
+| haiguang | completed/True | 7.9656 | `fla_layernorm_gated.py` |
+| kunlunxin | completed/True | 0.9616 | `fla_layernorm_gated_kunlunxin.py` |
+| huawei | completed/True | 2.3488 | `fla_layernorm_gated_ascend.py` |
+| card_a | completed/True | 8.0856 | `fla_layernorm_gated.py` |
+| card_b | completed/True | 6.8962 | `fla_layernorm_gated.py` |
+
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fla_layernorm_gated/e4-5544a77/validation/51-submit.json` SHA256 `78c9eb2c5ea6416ce70162d585f9acc914c7d17f6538457a2867473408f84182`。
+
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fla_layernorm_gated/e4-5544a77/validation/51-status-first-round.json` SHA256 `f1a1c304a944abf543a866887fdce262d865c483b97053f2e61a212e1b81a7b4`。
