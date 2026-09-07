@@ -87,26 +87,37 @@ def _log_scaling_tau_fast_kernel(
         )
 
 
-def _runner_launcher(compiled, grid0):
+def _runner_launcher(compiled, grid0, const_args):
     # Launch the already-compiled fast kernel through THIS Triton
-    # build's own CompiledKernel.__getitem__ runner: the build's runner
-    # internally assembles self.run with this build's exact launcher
-    # signature, which a raw ck.run(...) call cannot assume across
-    # vendor forks (E7 lesson: seven FlagTree builds raised TypeError).
-    # The first call per shape key always goes through the standard JIT
-    # dispatch, which compiles the kernel; the runner only skips its
-    # per-call Python binder. Builds without the API keep the standard
-    # dispatch - the SAME Triton kernel executes either way and there
-    # is no torch fallback.
+    # build's own CompiledKernel.__getitem__ runner. FlagTree launchers
+    # carry a kernel_signature wrapper and expect the FULL bound-args
+    # tuple - constexpr values included, in declaration order, which
+    # they filter internally - while mainline launchers take only the
+    # non-constexpr args (E7/E8 lesson: three pointer args alone raise
+    # TypeError on FlagTree builds). The convention is detected from
+    # the launcher object; the first call per shape key always goes
+    # through the standard JIT dispatch, which compiles the kernel.
+    # Builds without the runner API keep the standard dispatch - the
+    # SAME Triton kernel executes either way and there is no torch
+    # fallback.
     getitem = getattr(compiled, "__getitem__", None)
     if not callable(getitem):
         return False
     runner = getitem((grid0, 1, 1))
     if not callable(runner):
         return False
+    launch_obj = getattr(compiled, "run", None)
+    flagtree = getattr(launch_obj, "kernel_signature", None) is not None
 
-    def _launch(x, tau, out):
-        runner(x, tau, out)
+    if flagtree:
+
+        def _launch(x, tau, out, _runner=runner, _const=const_args):
+            _runner(x, tau, out, *_const)
+
+    else:
+
+        def _launch(x, tau, out, _runner=runner):
+            _runner(x, tau, out)
 
     return _launch
 
@@ -151,7 +162,11 @@ def _make_fast_dispatch():
             num_stages=1,
         )
         if entry is None:
-            launchers[key] = _runner_launcher(ck, grid0) if aligned else False
+            launchers[key] = (
+                _runner_launcher(ck, grid0, (n_cols, col_blocks, block, even))
+                if aligned
+                else False
+            )
 
     return _fast
 
