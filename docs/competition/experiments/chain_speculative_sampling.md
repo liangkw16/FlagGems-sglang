@@ -139,3 +139,36 @@ screening 8/8（含 1 个如实标注的 expectedFailure）。题目 atol=0 +
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chain_speculative_sampling/oob-e50d6ee/validation/t44-before-memcheck.log` SHA256 `edf2f9d3ef3464c14b37d47181555a962a50b6ba55fd0d0b85237dd23d657ac7`。
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chain_speculative_sampling/oob-e50d6ee/validation/t44-after-memcheck.log` SHA256 `2e1caafd9f57dde2e20bb2a6a9bbc06225215d18b5fbd3df0ccdca7ba1a4d17e`。
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chain_speculative_sampling/oob-e50d6ee/validation/run44.sh` SHA256 `0b3bf175bbd8e66ed6ff820dc44cbe560261edac494cc0439eb3161a510a4899`。
+
+## 题面 reference 逐行 audit 与 cumsum 真实路径破案（2026-09-07，零额度）
+
+- **accept 链逐行核对无误**：`coin*q` torch 同 dtype 标量乘在 fp32 opmath
+  计算后 round 回 dtype、比较在 dtype 域——现实现 `(f32*f32).to(dtype)
+  .to(f32) < p` 语义一致；行基址 `cur_row==s-1` 不变量、`predicts[
+  retrive[b,s-1]]=c[b,s]`（次序槽位）、`accept_index[j<=k]`、最终槽
+  `retrive[b,k]` 全部与 reference 一致。此前"fp32 accept 链跨芯差异"
+  的旧判断撤回——分歧全部来自最终采样。
+- **分歧根源定位**：天数/A/B predicts 同槽位（517）失配 + 每请求 token
+  偏移 1-11 位 → 是 cumsum 求和顺序差在**大 V**（隐藏 V≈128k-152k，
+  fp32 序差 ~sqrt(V)·eps≈5e-5 ≫ 代理 V=4096 的 8e-6，代理 10/10 通过
+  解释为样本量不足）。
+- **决定性发现（固定 v2.5.0 源码）**：`CumsumKernel.cu → scan_dim →
+  ScanUtils.cuh L447`：**`if (self.numel() == self.size(dim)) →
+  cuda::cub::inclusive_scan`**——reference 的 `torch.cumsum(val, dim=0)`
+  是 1-D 调用，走 **CUB 路径而非 aten Sklansky kernel**（2.13 同构，
+  仅 index_t 类型差异；2.13 另有 deterministicAlgorithms() 时的
+  `inclusive_deterministic_scan` 变体）。此前四组构造与本轮 Sklansky
+  逐位仿真（内部自洽、原语单测通过）全部瞄错目标——Sklansky 仅在
+  numel>size(dim) 的多维 innermost 路径使用。
+- 探针证据（`research-20260907/`，本地 torch 2.13）：adversarial
+  V=1024 下 torch/sim/triton 三者两两不同（torch 总和 1.00000012 vs
+  两者 1.0），坐实 torch 走独立关联序。Sklansky Triton 仿真的
+  reshape/permute/split halving 原语族已单测验证，可复用。
+- **修订后的可行路径**（未开工，需独立会话）：解码 CUB
+  `DeviceScan::InclusiveSum`（cub/agent/agent_scan_impl.cuh 单块/多块
+  decoupled-lookback，thread-serial + warp/block 扫描的固定关联序）并
+  Triton 复刻；同法还需复刻 `val.sum()` 的 TensorIterator 归约序
+  （target_u 依赖）。天数/A/B（CUDA 系）应共享 CUB 序；昇腾/昆仑的
+  aten 移植可能复用同分派。风险：hipCUB/厂商移植的内部配置可能不同，
+  或需按芯 vendor 分形。工程量大但确定性、公开源码、0/6 队达标——
+  破译即独有优势。
