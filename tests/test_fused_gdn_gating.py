@@ -132,5 +132,29 @@ class FusedGdnGatingVariantsTest(unittest.TestCase):
                     )
 
 
+    def test_variants_noncontiguous_inputs(self):
+        # SGLang #22312-class regression: non-contiguous a/b must be read
+        # through their own strides, never an assumed-contiguous flat
+        # layout.
+        B, H = 32, 16
+        torch.manual_seed(7)
+        A_log = torch.randn(H, device="cuda") * 2
+        wide_a = torch.randn(B, H * 2, device="cuda") * 3
+        wide_b = torch.randn(B, H * 2, device="cuda") * 3
+        a = wide_a[:, ::2]
+        b = wide_b[:, 1::2]
+        self.assertFalse(a.is_contiguous())
+        self.assertFalse(b.is_contiguous())
+        dt_bias = torch.randn(H, device="cuda") * 5
+        ref_g, ref_beta = reference(A_log, a, b, dt_bias)
+        for name, module in self.MODULES:
+            with self.subTest(module=name):
+                g, beta_output = module.fused_gdn_gating(A_log, a, b, dt_bias)
+                torch.testing.assert_close(g, ref_g, atol=1e-4, rtol=1e-4)
+                torch.testing.assert_close(
+                    beta_output, ref_beta, atol=1e-4, rtol=1e-4
+                )
+
+
 if __name__ == "__main__":
     unittest.main()
