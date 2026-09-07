@@ -156,3 +156,16 @@ wrapper 对 strided weight/bias 先 `.contiguous()`（commit `445d3eb`；kernel 
   sending/uncertain/stale_after_upload 不自动重试。
 - 附加证据清单 `e5-445d3eb/validation/evidence-sha256.json` SHA256 `392a443f5bf3c94d0126cad173787f8dbb3f03cdcef54e9d330373f4c888586f`
 （含作废首版回执 `5ca0f400…d6f86`/`296e03b1…66566de` 与最终回执哈希）。
+
+## E5 提交网络超时与对账（2026-09-07 18:16–18:20，未入队）
+
+- 18:16:17 preflight 全绿后执行一次性 submit（nonce `9781638b…4e090c`）：
+  ZIP 上传成功（KS3 `…/9ip3BVEJ/fla_layernorm_gated.zip`），创建提交的 POST 于
+  18:17:34 网络超时（`Errno 60`），intent 状态 `uncertain`。
+- 只读对账两次（18:18:03 / 18:19:51）：T51 提交列表无新记录（最新仍 E4
+  14:48:28）、quota 保持 10/30 未扣、上传 URL 不被任何提交记录引用。
+  判定 POST 未达服务器，候选未提交、额度未消耗；服务端 Idempotency-Key
+  `flagos-<nonce>` 幂等保护仍在。
+- 按 sending/uncertain 不自动重试纪律，未重发。nonce 已自然过期（18:26:02）；
+  重提需用户明示授权：归档 `.git/flagos-platform/9781638b….json` 后重新
+  preflight + 一次性 submit（候选字节不变、门禁证据全部有效）。
