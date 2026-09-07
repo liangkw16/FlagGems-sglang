@@ -221,6 +221,50 @@ class CausalConv1dUpdateVariantsTest(unittest.TestCase):
 
     MODULES = load_operator_modules("causal_conv1d_update")
 
+    def test_affine_layout_boundaries(self):
+        torch.manual_seed(43)
+        for dim, width, state_len, seqlen in (
+            (127, 2, 1, 3),
+            (128, 3, 5, 2),
+            (129, 8, 7, 6),
+            (1023, 4, 3, 1),
+            (1024, 4, 3, 1),
+            (1025, 4, 3, 1),
+        ):
+            for dtype in TOLERANCES:
+                x = torch.randn(
+                    2, dim, seqlen * 2, device="cuda", dtype=dtype
+                )[..., ::2]
+                state = torch.randn(
+                    2, dim, state_len, device="cuda", dtype=dtype
+                )
+                w = torch.randn(dim, width, device="cuda", dtype=dtype)
+                for activation, bias in (
+                    ("identity", None),
+                    ("silu", torch.randn(dim, device="cuda", dtype=dtype)),
+                ):
+                    expected, es = reference(x, state, w, bias, activation)
+                    original = state.clone()
+                    for name, module in self.MODULES:
+                        with self.subTest(
+                            module=name,
+                            dim=dim,
+                            width=width,
+                            dtype=dtype,
+                            activation=activation,
+                        ):
+                            actual, ns = module.causal_conv1d_update(
+                                x, state, w, bias, activation
+                            )
+                            atol, rtol = TOLERANCES[dtype]
+                            torch.testing.assert_close(
+                                actual, expected, atol=atol, rtol=rtol
+                            )
+                            torch.testing.assert_close(ns, es, atol=0, rtol=0)
+                            torch.testing.assert_close(
+                                state, original, atol=0, rtol=0
+                            )
+
     def test_variants_match_reference(self):
         for width, state_len, seqlen in ((4, 3, 1), (3, 5, 2), (4, 3, 3)):
             x = torch.randn(5, 200, seqlen, device="cuda") * 2.0
@@ -241,6 +285,20 @@ class CausalConv1dUpdateVariantsTest(unittest.TestCase):
                     torch.testing.assert_close(
                         new_state, e_state, atol=1e-5, rtol=1e-5
                     )
+
+
+RELEASE_REQUIRED_TESTS = [
+    "CausalConv1dUpdateTest.test_dtypes_with_bias_and_activation",
+    "CausalConv1dUpdateTest.test_widths_state_lengths_and_seqlens",
+    "CausalConv1dUpdateTest.test_2d_input_is_seqlen_one",
+    "CausalConv1dUpdateTest.test_batch_and_dim_boundaries",
+    "CausalConv1dUpdateTest.test_non_contiguous_inputs",
+    "CausalConv1dUpdateTest.test_seqlen_larger_than_state_len",
+    "CausalConv1dUpdateTest.test_special_values",
+    "CausalConv1dUpdateTest.test_empty_batch",
+    "CausalConv1dUpdateVariantsTest.test_affine_layout_boundaries",
+    "CausalConv1dUpdateVariantsTest.test_variants_match_reference",
+]
 
 
 if __name__ == "__main__":
