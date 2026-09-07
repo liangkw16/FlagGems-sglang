@@ -5,12 +5,12 @@ task: 47
 operator: chunked_sgmv_expand
 batch: 4
 validity: valid
-platform: 8/8(e5,25.0048125x,榜首)
+platform: E11/11031八芯valid,21.6584375x;历史E5 best25.0048125x
 team_best_stage: e5
 team_best_commit: b34d040360f040b6be43ce5443e7dc0ce83d2d47
 team_best_speedup: 25.0048125
 sealed: no
-next: E11已预注册,按用户恢复额度授权执行一次平台评测;保持E5历史best
+next: E11目标正确性通过但未晋级,保留E5守榜;不重投同字节,需新增目标性能证据再开轴
 updated: 2026-09-08
 ```
 
@@ -217,3 +217,24 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
 | `chunked_sgmv_expand.py` | `0d52334731d37bf9fab08888f5963908cd9edbe91d79b8c584bb3649b6fdf579` |
 | `chunked_sgmv_expand_enflame.py` | `5cdf1c657a108f9fee016742f298f0aab9e264a174ee8dddbeb0edf43980f36b` |
 | `chunked_sgmv_expand_kunlunxin.py` | `a51fa38d50babc3a45ef177e6357408f4232bba1ae6f33230461a22d3ce08e4b` |
+
+## E11 平台终态（2026-09-08）
+
+- submission `11031`，daily_seq `1`，created `2026-09-08T01:49:42`；观测 `2026-09-08T01:50:18.195945+08:00`。`completed / valid`，8/8，均值 **21.6584375x**，`is_team_best=false`，保留 E5 **25.0048125x**。
+- 一次上传、一次正式提交；远端匿名下载验签通过，18326 bytes，ZIP SHA256 `fe9639026676a93739ce63b14329c01146236ba93bccc0c82108f7f46f447b5e`。file URL SHA256 `21ed812de07c9e6176a21646f50b71fe06c3b5c608cf106f535fea10f236e799`。
+- 预注册 ledger commit `e18b94b876dabbadde49762f5fe0bfe7cbf46a75`；source / verification commit 均保持 `8ba31a102f4ef0430c08f12c4622b27430915071`。
+- 原始提交 `artifacts/competition/batch4-submit-20260908/47-submit.json` SHA256 `b96a2cb922e377f96b6a3d4c58467757742c49099446a1070e39bf4d2f07970a`；终态 `artifacts/competition/batch4-submit-20260908/47-status-final.json` SHA256 `742c84090e245dcf6d7505ece76d399b284ad3e1803abc85df412b96adb29b2d`。
+
+| 芯片 | 正确性 | E11 加速比 | E5 加速比 | 实际文件 |
+| --- | --- | ---: | ---: | --- |
+| tianshu | PASS | 29.757 | 29.056 | `chunked_sgmv_expand.py` |
+| muxi | PASS | 21.5455 | 22.404 | `chunked_sgmv_expand.py` |
+| enflame | PASS | 0.1725 | 0.178 | `chunked_sgmv_expand_enflame.py` |
+| haiguang | PASS | 24.629 | 53.271 | `chunked_sgmv_expand.py` |
+| kunlunxin | PASS | 3.716 | 3.717 | `chunked_sgmv_expand_kunlunxin.py` |
+| huawei | PASS | 13.8335 | 13.7365 | `chunked_sgmv_expand.py` |
+| card_a | PASS | 50.9785 | 49.0125 | `chunked_sgmv_expand.py` |
+| card_b | PASS | 28.6355 | 28.6635 | `chunked_sgmv_expand.py` |
+
+- 结算：两 vendor 在平台本轮用例正确性通过；燧原0.1725、昆仑3.716，均未提速。均值降低主要来自海光（使用与 E5 相同的 generic 字节），单轮数据无法证明代码回归或明确环境原因。平台覆盖范围不等于新增大 rank 回归已在目标设备执行。
+- 停止门已触发：本候选未晋级，不重投；保留真实步长修复作为后续开发基线，历史榜单 best 不变。此时剩余29/30，下一发为预注册 T51 E8。
