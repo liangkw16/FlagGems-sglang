@@ -378,3 +378,46 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
   `c73515df60c69b577af561eab9f7e134982da1dcc3873091f8cfb1c7b871b8b0`。
   测试源码 SHA256
   `4cd5218f2301fd188d3e0a7eb6f766026b790444be8e7aca319095694cb06d6d`。
+
+## E8 平台终态：invalid 6+2——vendor 隔离生效，两 vendor 同位 TypeError 定根因（2026-09-07T18:38）
+
+- submission `10836` / daily_seq `24`：invalid_correctness；6 芯（天数
+  4.117/沐曦 2.714/海光 4.733/昆仑 0.545/卡A 3.383/卡B 2.696）全部
+  passed=E6 水位（generic/昆仑=E6 字节，零回归），**燧原/华为两 vendor
+  均败且错误行号与 E7 完全相同**（enflame backend.py:664、ascend
+  driver.py:135，TypeError）→ runner 与原始 ck.run 同构失败。
+- 根因定位（缓存源码+昆仑注释双重证据）：FlagTree launcher（带
+  `kernel_signature` 包装层）接收**含 constexpr 在内的完整绑定参数
+  元组**（内部 zip signature 滤除 constexpr），主线 launcher 只收非
+  constexpr 参数。E7/E8 都只传了 3 个指针 → 参数计数不符 TypeError。
+  昆仑 launcher 的 zip-short 滤波宽容短元组故 E7 未炸。平台 8 芯全是
+  FlagTree 家族（card_a 环境名 flagbench-flagtree），仅我方 NVIDIA
+  代理是主线约定。
+- 证据 `e8-9f3f64b/validation/57-failure-detail.json`、
+  `e8-9f3f64b/validation/57-status-final.json`、`57-submit.json`。
+
+## E9 约定自适应：kernel_signature 探测 + FlagTree 全参数元组（2026-09-07）
+
+- 单变量（相对 E8）：`_runner_launcher` 增加约定探测——launcher 对象
+  有 `kernel_signature` 属性（FlagTree）时 runner 收
+  `(x, tau, out, n_cols, col_blocks, block, even)` 声明序全参数；否则
+  （主线）收 3 指针。generic/昆仑仍为 E6 字节。NVIDIA 代理验证主线
+  分支（探测为 False）+ 全数值矩阵；FlagTree 分支由平台正确性实测。
+- source/verification commit `8a0f44b748ed4e2596ef2169ac39c220fba3272a`；
+  本地门禁+容器自检 CLEAN。screening（worktree）与 release（commit，
+  `gpu:/tmp/flagos-t57e9-release`）均 5 方法 112 case、0 fail/skip、
+  4 执行源；激活探针确认两 vendor 5 次重复 0 次 JIT 调度、数值正确。
+- 止损预注册：燧原/华为任一仍报同位 TypeError 即该芯直连轴关闭
+  （E7→E8→E9 三连同类失败），回 E6 字节收官；generic 直连扩展（E10）
+  仅在两 vendor 均兑现后启动。
+- ZIP `e9-8a0f44b`，23277 bytes，SHA256
+  `bae008cb061c846f8bbbedc6ed1190a9ba2463028d2832373979a145c0c00b6b`；
+  成员 generic `d7028b01…`（=E6）、kunlunxin `87925271…`（=E6）、
+  ascend/enflame 均 `ef99f98af00b5a5ea3e35729cf7713d311c958731c8c7fc89187c8d2b0bf7cbc`
+  （=release 执行哈希）。
+- 证据 `e9-8a0f44b/validation/verification.json` SHA256
+  `f67703bc62efa0b1f496433da494272d7c1a8b041e76fd71f96073be3a059b01`、
+  `e9-8a0f44b/validation/verification.log` SHA256
+  `521daf057ca6723a8ab28a49c4fd17b480265b4759f8020bce4f26082a190709`。
+  测试源码 SHA256
+  `4cd5218f2301fd188d3e0a7eb6f766026b790444be8e7aca319095694cb06d6d`。
