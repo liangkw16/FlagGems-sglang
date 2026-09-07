@@ -406,3 +406,18 @@ K 循环推进 `b_ptrs += BLOCK_K * stride_bn` 是潜伏笔误（应为 stride_b
 - 证据 `e16-f58292e/validation/45-submit.json` SHA256
   `9c4ee6b5ca07f11f2a5e2b53eec2932bdeec4b61dda781b3cc1505164d127897`、
   `45-status-final.json` 为本节原始逐芯记录。
+
+## E17 设计备注：无分支 tile-list 下三角跳过（2026-09-07，未实施）
+
+- E16 教训后的安全设计：wrapper 在 host 侧预计算下三角 tile 清单
+  （matrix_id, pid_m, pid_n）写入小 int32 张量（shape 全 host 已知，
+  无 GPU 同步）；GEMM grid = 恰好所需 program 数，每个 program 三次
+  标量 load 取坐标——零死块、零 early-return、零复合谓词，epilogue
+  保持 E15 逐字节（其 `tl.where(m>n)` 是元素级 select 非 masked load，
+  上三角垃圾 gram 被安全清零）。
+- 预期：GEMM 侧省 25%（BT=64）/37.5%（BT=128），昆仑 0.063→约
+  0.07-0.08——**单独不足以过 0.1x 门槛**，不消耗额度。epilogue 上
+  半 lane 的 load/store 流量削减在 E16 已证无安全实现路径（复合谓词
+  错译、逐 lane 除法链回归、窄向量与 E11 宽 lane 教训冲突）。
+- 重开条件：出现免 mask 的 epilogue 流量结构（如紧凑 gram 布局 +
+  纯线性寻址），或昆仑 epilogue 瓶颈被新的平台证据重新排序。
