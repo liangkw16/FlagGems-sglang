@@ -9,7 +9,7 @@ platform: 8/8(e2,10747,2.36478125x首次有效)
 team_best_stage: e6
 team_best_speedup: 2.40753125
 sealed: no
-next: 当日收官:TB=E6 2.40753125(10828,华为+43%);E7/E8/E9直连发射三连同位TypeError止损关轴(原始ck.run与runner均不可跨FlagTree构建移植);距榜首2.816469仍-14.5%,剩余轴(燧原T51结构/华为warp扫描)预期 <+0.1,冲Top1需榜首结构泄露或新证据;额度5/30
+next: 调研重开直连轴(E9探测器错配,E7-E9从未测过全参数形态);E10=燧原/昇腾vendor复刻运行时自身9前导+全参数调用,代理已实跑验证,提交待评测;兑现则E11扩generic收割五强芯;目标2.816+
 updated: 2026-09-07
 team_best_commit: c6a0b6d3cd10ac2bf19716661b514d731c12b857
 ```
@@ -443,3 +443,49 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
   提交仍展示逐芯 speedup，vendor 隔离是安全的试错结构。
 - 证据 `e9-8a0f44b/validation/57-failure-detail.json`、
   `e9-8a0f44b/validation/57-status-final.json`、`57-submit.json`。
+
+## 调研重开直连轴：E9 探测器错配坐实 + 调用形态源码铁证（2026-09-07 晚）
+
+- 用户授权的只读调研轮（拉 pinned 源码逐行核对）：FlagTree 核心
+  `jit.py`（c1ea828）标准调度为 `kernel.run(g0,g1,g2,stream,function,
+  packed_metadata,launch_metadata,hook,hook, *bound_args.values())`——
+  **9 前导 + 含 constexpr 全参数**；triton-ascend（865691e）C stub
+  ParseTuple 格式 `"iiiKKOOOO"+全部 signature 条目`；enflame
+  `backend.py` 同构。E7 失败全景解释：天数/沐曦/海光 launcher 为
+  6 前导 Python 签名（9 前导调用参数错位）、card_a/b 与燧原/华为
+  C stub 期望 7 个 kernel 参数而只收到 3。**E9 的 7 参数修复方向
+  正确但探测器（kernel_signature）只匹配 CudaLauncher 家族，
+  NPULauncher/GcuLauncher 无该属性 → E9 在两 vendor 上仍走 3 参数
+  分支，全参数形态从未被测试**。E7 昆仑实跑直连无增益（binder 非
+  昆仑瓶颈）→ 昆仑不再投入。
+- 修正认知：远端 3.7.1 venv 的 CudaLauncher 也带 kernel_signature
+  包装（args 以元组柔性匹配），全参数调用在代理上**完整实跑通过**
+  （screening 112 case 全绿 + 激活探针 ok）。
+
+## E10 全参数直连：燧原/昇腾 vendor 复刻运行时自身调用（2026-09-07 晚）
+
+- 单变量（相对 E6 基线字节）：新增 `_enflame`/`_ascend` vendor，
+  fast 路径首个同 key 调用走标准 JIT 调度，后续对齐调用以
+  `_run(g0,1,1,stream,function,packed,None,None,None, x,tau,out,
+  n_cols,col_blocks,block,even)` 直发射——与该运行时 jit.py 自身
+  调用逐参数一致。非包装类 launcher 或注册 hook 环境回落标准调度；
+  无模块级容器、无 torch fallback。generic/昆仑保持 E6 字节。
+- source/verification commit `d1d687d3974c8ceccb7c7bb491124edce6e0ea83`；
+  静态门禁+容器自检 4 文件 CLEAN；screening（worktree）与 release
+  （commit，`gpu:/tmp/flagos-t57e10-release`，3 proxy vendor）均
+  5 方法 112 case、0 fail/skip；代理上探测器=True、全参数直连
+  实跑、复调用数值正确。
+- 预注册门：平台 avg > 2.40753125（E6 TB）且最弱芯 ≥0.4。燧原
+  0.552→预期 0.9-1.5、华为 0.703→0.9-1.2；任一 vendor 仍同位
+  TypeError 则该芯直连轴真关死（本次为全参数形态实测）。
+- ZIP `e10-d1d687d`，28299 bytes，SHA256
+  `d984034cb18c83662675aec8549471ba5f684d96d5860c688721ea62a7a86515`；
+  成员 generic `d7028b01…`（=E6）、kunlunxin `87925271…`（=E6）、
+  ascend/enflame 均 `58fbdfa0c263bc54f46486cbdd199ea88b15cc3c3b5966e5bab3dc9939f4b731`
+  （=release 执行哈希）。
+- 证据 `e10-d1d687d/validation/verification.json` SHA256
+  `203ea619a64bdf80ba5c27751e6495bab8eab780a178383577361eca9563cee6`、
+  `e10-d1d687d/validation/verification.log` SHA256
+  `61339260012d61cc6c90fd25373ff6c12ca975b728d7dbb0078fe75e70ab7d30`。
+  测试源码 SHA256
+  `4cd5218f2301fd188d3e0a7eb6f766026b790444be8e7aca319095694cb06d6d`。
