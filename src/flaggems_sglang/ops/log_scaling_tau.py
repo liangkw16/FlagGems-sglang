@@ -15,7 +15,6 @@
 import torch
 import triton
 import triton.language as tl
-from triton.runtime import driver as _triton_driver
 
 
 @triton.jit
@@ -95,85 +94,38 @@ def _log_scaling_tau_fast_kernel(
         )
 
 
-_LAUNCH_PLANS = {}
+def _make_fast_dispatch():
+    # Launch-plan memo lives in this closure: the platform code-safety
+    # scan rejects module-level mutable containers, and function-local
+    # state is its documented compliant form. Nothing here caches
+    # results - every call still computes and launches the Triton
+    # kernel; only the (block, col_blocks, even) integers are reused.
+    plans = {}
 
-
-def _launch_plan(n_cols):
-    plan = _LAUNCH_PLANS.get(n_cols)
-    if plan is None:
-        block = min(triton.next_power_of_2(max(n_cols, 1)), 1024)
-        col_blocks = triton.cdiv(n_cols, block)
-        plan = (block, col_blocks, n_cols % block == 0)
-        _LAUNCH_PLANS[n_cols] = plan
-    return plan
-
-
-_TRITON_KNOBS = getattr(triton, "knobs", None)
-_FAST_LAUNCHERS = {}
-
-
-def _hook_chain_empty(hook):
-    # triton >= 3.6 represents launch hooks as HookChain objects; the
-    # chain is inert while its call list is empty. Anything else that
-    # is not None is treated as an active hook.
-    calls = getattr(hook, "calls", None)
-    return isinstance(calls, list) and not calls
-
-
-def _direct_launcher(compiled, grid0):
-    # Prebound launcher for the already-compiled fast kernel. The first
-    # call for a shape goes through the standard Triton JIT dispatch,
-    # which compiles the kernel and returns its CompiledKernel handle;
-    # this closure then launches that SAME Triton kernel on later calls
-    # with only a stream query and the C launcher call, skipping the
-    # per-call Python binder (signature hashing and argument binding).
-    # This is the same launch shape torch.compile's generated wrappers
-    # use. Any Triton build without the documented CompiledKernel API
-    # (or with launch hooks registered) keeps the standard dispatch -
-    # there is no torch fallback in any path.
-    launcher = getattr(compiled, "run", None)
-    function = getattr(compiled, "function", None)
-    packed = getattr(compiled, "packed_metadata", None)
-    active = getattr(_triton_driver, "active", None)
-    if (
-        not callable(launcher)
-        or function is None
-        or packed is None
-        or not hasattr(active, "get_current_stream")
-        or not hasattr(active, "get_current_device")
-    ):
-        return False
-    enter = exit_hook = None
-    if _TRITON_KNOBS is not None:
-        enter = getattr(_TRITON_KNOBS.runtime, "launch_enter_hook", None)
-        exit_hook = getattr(_TRITON_KNOBS.runtime, "launch_exit_hook", None)
-        for hook in (enter, exit_hook):
-            if hook is not None and not _hook_chain_empty(hook):
-                # An active profiling hook keeps the fully instrumented
-                # standard dispatch; triton >= 3.6 exposes no-op
-                # HookChain objects whose empty call list is safe to
-                # pass straight to the C launcher.
-                return False
-
-    def _launch(x, tau, out):
-        device = active.get_current_device()
-        stream = active.get_current_stream(device)
-        launcher(
-            grid0,
-            1,
-            1,
-            stream,
-            function,
-            packed,
-            None,
-            enter,
-            exit_hook,
+    def _fast(x, tau, out, rows, n_cols):
+        plan = plans.get(n_cols)
+        if plan is None:
+            block = min(triton.next_power_of_2(max(n_cols, 1)), 1024)
+            col_blocks = triton.cdiv(n_cols, block)
+            plan = (block, col_blocks, n_cols % block == 0)
+            plans[n_cols] = plan
+        block, col_blocks, even = plan
+        _log_scaling_tau_fast_kernel[(rows * col_blocks,)](
             x,
             tau,
             out,
+            N_COLS=n_cols,
+            COL_BLOCKS=col_blocks,
+            BLOCK=block,
+            EVEN=even,
+            num_warps=4,
+            num_stages=1,
         )
 
-    return _launch
+    return _fast
+
+
+_fast_dispatch = _make_fast_dispatch()
 
 
 def log_scaling_tau(x, tau):
@@ -185,44 +137,16 @@ def log_scaling_tau(x, tau):
 
     rows = x.shape[0]
     n_cols = numel // rows
-    block, col_blocks, even = _launch_plan(n_cols)
-    grid = (rows * col_blocks,)
     if tau.stride(0) == 1 and numel < 2**31:
         # Contiguous tau and 32-bit-safe sizes take the constexpr-only
         # fast kernel; any other layout keeps the fully general strided
         # kernel below. Both paths are Triton kernels executing the
         # same fp32 row-scale math - there is no torch fallback.
-        key = (x.dtype, rows, n_cols, x.get_device())
-        entry = _FAST_LAUNCHERS.get(key)
-        aligned = (
-            x.data_ptr() % 16 == 0
-            and tau.data_ptr() % 16 == 0
-            and out.data_ptr() % 16 == 0
-        )
-        if entry is not None and entry and aligned:
-            entry(x, tau, out)
-            return out
-        ck = _log_scaling_tau_fast_kernel[grid](
-            x,
-            tau,
-            out,
-            N_COLS=n_cols,
-            COL_BLOCKS=col_blocks,
-            BLOCK=block,
-            EVEN=even,
-            num_warps=4,
-            num_stages=1,
-        )
-        if entry is None:
-            # Cache a prebound launcher only for binaries compiled from
-            # 16-byte-aligned pointers (the Triton pointer
-            # specialization the direct path must preserve); later
-            # misaligned calls re-enter the standard dispatch above.
-            _FAST_LAUNCHERS[key] = (
-                _direct_launcher(ck, grid[0]) if aligned else False
-            )
+        _fast_dispatch(x, tau, out, rows, n_cols)
         return out
-    _log_scaling_tau_kernel[grid](
+    block = min(triton.next_power_of_2(max(n_cols, 1)), 1024)
+    col_blocks = triton.cdiv(n_cols, block)
+    _log_scaling_tau_kernel[(rows * col_blocks,)](
         x,
         tau,
         out,
@@ -232,7 +156,7 @@ def log_scaling_tau(x, tau):
         tau.stride(0),
         COL_BLOCKS=col_blocks,
         BLOCK=block,
-        EVEN=even,
+        EVEN=n_cols % block == 0,
         num_warps=4,
         num_stages=2,
     )

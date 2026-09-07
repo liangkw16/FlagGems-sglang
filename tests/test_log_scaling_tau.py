@@ -67,9 +67,9 @@ class LogScalingTauTest(unittest.TestCase):
         self._check(*make_case(7, (320,), torch.float32, seed=2))
 
     def test_repeated_calls_direct_launch(self):
-        # Second and later calls for a shape key take the prebound
-        # CompiledKernel launcher; repeated calls and fresh tensors
-        # must stay exact.
+        # Repeated calls for a shape key reuse cached launch state;
+        # repeated calls, fresh tensors and misaligned views must all
+        # stay exact.
         for T, tail, dtype in (
             (4, (64,), torch.float16),
             (16, (64, 128), torch.float16),
