@@ -9,7 +9,7 @@ platform: 8/8(e2,10747,2.36478125x首次有效)
 team_best_stage: e6
 team_best_speedup: 2.40753125
 sealed: no
-next: 冲榜Top1(榜首EvokeAgent 2.816469);TB=E6 2.40753125(10828);E7烧毁(10830,7/8,原始ck.run签名不跨构建移植,教训=改用__getitem__ runner);E8=generic回E6字节+enflame/ascend vendor试runner直连(隔离爆炸半径)
+next: 当日收官:TB=E6 2.40753125(10828,华为+43%);E7/E8/E9直连发射三连同位TypeError止损关轴(原始ck.run与runner均不可跨FlagTree构建移植);距榜首2.816469仍-14.5%,剩余轴(燧原T51结构/华为warp扫描)预期 <+0.1,冲Top1需榜首结构泄露或新证据;额度5/30
 updated: 2026-09-07
 team_best_commit: c6a0b6d3cd10ac2bf19716661b514d731c12b857
 ```
@@ -421,3 +421,25 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
   `521daf057ca6723a8ab28a49c4fd17b480265b4759f8020bce4f26082a190709`。
   测试源码 SHA256
   `4cd5218f2301fd188d3e0a7eb6f766026b790444be8e7aca319095694cb06d6d`。
+
+## E9 平台终态与当日收官（2026-09-07T18:45）
+
+- submission `10840` / daily_seq `25`：invalid_correctness；燧原/华为
+  vendor **第三次**同位 TypeError（enflame backend.py:664、ascend
+  driver.py:135，与 E7/E8 逐字相同）。7 参数全元组与 kernel_signature
+  探测未改变结局 → 失败不在（或不只在）参数计数，平台侧 traceback
+  文本缺失使远程定位到头。6 芯 passed=E6 水位（muxi 3.14 为同字节
+  E6 的轮间波动，说明 muxi 方差 ~16%）。
+- **止损触发**：E7→E8→E9 三连同指纹 → 直连发射轴（燧原/华为/未来
+  generic 扩展）全部关闭。昆仑 E7 数据同时表明直连即使被宽容签名
+  接受也无增益。当日 T57 定格于 **E6 valid 2.40753125 team best**，
+  额度 5/30 剩。
+- 源码树清理：删除 `_enflame`/`_ascend` vendor（死路证据保留于
+  e7/e8/e9 产物与账本），树回到 E6 字节状态。
+- 教训沉淀（平台硬事实新增）：① 算子文件禁模块级 dict/set（闭包
+  合规）；② 原始 ck.run 与 __getitem__ runner 直连在 FlagTree 构建上
+  均不可用（同一 TypeError 位），跨构建直连路线关闭；③ 平台 8 芯均
+  FlagTree 家族，NVIDIA 主线代理的 launcher 约定不可外推；④ invalid
+  提交仍展示逐芯 speedup，vendor 隔离是安全的试错结构。
+- 证据 `e9-8a0f44b/validation/57-failure-detail.json`、
+  `e9-8a0f44b/validation/57-status-final.json`、`57-submit.json`。
