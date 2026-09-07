@@ -5,13 +5,13 @@ task: 53
 operator: fused_gdn_gating
 batch: 4
 validity: valid
-platform: 8/8(e1,1.769075x)
+platform: 8/8(e1,1.769075x);e3已提交待裁
 team_best_stage: e1
 team_best_commit: TO_FILL
 team_best_speedup: 1.769075
 sealed: no
-next: e2七芯过,燧原(目标芯)卡病态盒子在评;出分即判轴;燧原停火直至恢复
-updated: 2026-09-06
+next: e2燧原=1830s评测机忙(非代码);e3(+_ascend,d2d6ea9)已提交待裁,门:华为>1.60x;e4(+_metax,743ebb7)已commit待e3华为出分后投
+updated: 2026-09-07
 ```
 
 ## S0（2026-09-05 凌晨，submission 9866）
@@ -69,3 +69,30 @@ IR 检查（燧原无 scf.if/grid-stride、华为热路径无整数除法/取模
   waiting_callback**（T46 同日 1830s 前科）
 - 待燧原裁决：≥0.5x → 轴兑现且 ~1.83x 新 TB；1830s 超时 → 平台侧
   invalid，候选封存等恢复窗口重载（需逐发授权）
+
+## E2 燧原终态（2026-09-07 核实）
+
+- submission 10384 燧原 `执行超时(1830s/1800s)`，子进程 R 状态
+  （评测机忙，同字节其余七芯全过）——按病态盒子协议判平台侧超时，
+  非代码回归；燧原轴不定罪，等健康窗口随 e3 顺带重试。
+- 七芯成绩：天数 2.434 / 沐曦 1.3396 / 海光 3.1538 / 昆仑 0.7182 /
+  华为 1.29 / A 2.446 / B 2.7264；team best 仍 e1 1.7691x。
+
+## E3 华为行向量 vendor（2026-09-07 已提交）
+
+- `_ascend`：一 program 一行 + H 全宽向量、lane 内无整除/取模、
+  `H==H_PAD` 时整行无 mask（constexpr 分支）；a/b 显式行/列 stride，
+  并按 SGLang #22312 教训在 variants 增加非连续 a/b 回归
+  （`wide[:, ::2]` / `wide[:, 1::2]`）。
+- softplus 保持 E1 平台已验证 where 形态；NVIDIA 代理 screening
+  6 tests / 5 sources、release 25 launches 0 失败。source `d2d6ea9`，
+  ZIP `e3-d2d6ea9`（4 成员）SHA-256
+  `956f0bab7b132005a6d43c6cf74ed5809cd378295df753ea2fd0f64350740ea3`。
+- 2026-09-07 提交评测中；门：华为 >1.60x；燧原同字节顺带重试 e2 裁决。
+
+## E4 沐曦 flat vendor（2026-09-07 已 commit，未提交）
+
+- `_metax`：昆仑 E1 骨架 BLOCK=2048（勿先试 4096），flat [B*H] 索引
+  改为显式 a/b 行/列 stride 寻址（免 contiguous 拷贝，#22312 类）。
+- source `743ebb7`；screening 已随 5-source 矩阵通过；单变量纪律：
+  待 e3 华为出分后再投，门：沐曦 >1.50x。

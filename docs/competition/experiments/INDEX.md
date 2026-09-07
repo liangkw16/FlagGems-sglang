@@ -28,15 +28,15 @@
 | 45 | chunk_scaled_dot_kkt | invalid | 7/8(e7,仅昆仑失败;华为0.0455→0.2535x过门槛!) | e7 -x | no | E14 exp2证伪已回滚e13(0.063x八芯过correctness);T45暂停守invalid转T46 | 2026-09-06 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x) | e3 14.1051875x | no | e6天数预路由水位带内无法归因,轴关闭;维持E3守榜(14.105x);后续按逐芯晋级纪律择机 | 2026-09-06 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
 | 47 | chunked_sgmv_expand | valid | 8/8(e5,25.0048125x,榜首) | e5 25.0048125x | no | 守榜首(25.00x vs 前榜首23.33x);燧原0.178x/昆仑3.72x为余量轴;stale意图经用户授权归档重提(移至archived/) | 2026-09-04 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
-| 48 | chunked_sgmv_shrink | valid | 8/8(e6,4.7198125x) | e6 4.7198125x | no | 守榜;冲分轴:燧原0.58x/昆仑1.79x/天数3.85x | 2026-09-05 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
-| 49 | ernie45_rope_fused | invalid | 7/8(e2,昆仑uni_sram墙已3投;conclusive) | e1 -x | no | 昆仑uni_sram墙(需更小tile/单head);7/8已是好成绩 | 2026-09-05 | [ernie45_rope_fused](ernie45_rope_fused.md) |
+| 48 | chunked_sgmv_shrink | valid | 8/8(e6,4.7198125x);e4已提交待裁 | e6 4.7198125x | no | e4(8b134f4)自适应BLOCK_S已提交(2026-09-07)评测中;出分后按>=15%判晋级 | 2026-09-07 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
+| 49 | ernie45_rope_fused | invalid | 7/8(e2,昆仑uni_sram墙已3投;e3新结构已提交待裁) | e1 -x | no | e3(5a6b8cb)昆仑pair-per-program已提交(2026-09-07 seq2)评测中;门:昆仑>=0.12x | 2026-09-07 | [ernie45_rope_fused](ernie45_rope_fused.md) |
 | 50 | extend_attention | candidate-wip | 6/8(e4,昆仑conclusive封轴;华为数值不可修;燧原0.013x<门槛) | - -x | no | 华为深层数值问题(online+two-pass均败);5/8已是208发1队过线题的好成绩;冲分优先 | 2026-09-05 | [extend_attention](extend_attention.md) |
 | 51 | fla_layernorm_gated | valid | 8/8(e1,5.390025x) | e1 5.390025x | no | e3华为constexpr-D仅+3.7%证伪关闭;昆仑0.97已修;剩沐曦rsqrt;燧原病态在评 | 2026-09-06 | [fla_layernorm_gated](fla_layernorm_gated.md) |
 | 52 | fused_dual_residual_rmsnorm | invalid | 6/8(e5,五种数学形态同指纹边界失配;已分诊) | - -x | yes | 封存6/8;仅sqrt_rn+div_rn或torch归约树复刻等全新结构证据可重开 | 2026-09-06 | [fused_dual_residual_rmsnorm](fused_dual_residual_rmsnorm.md) |
-| 53 | fused_gdn_gating | valid | 8/8(e1,1.769075x) | e1 1.769075x | no | e2七芯过,燧原(目标芯)卡病态盒子在评;出分即判轴;燧原停火直至恢复 | 2026-09-06 | [fused_gdn_gating](fused_gdn_gating.md) |
+| 53 | fused_gdn_gating | valid | 8/8(e1,1.769075x);e3已提交待裁 | e1 1.769075x | no | e2燧原=1830s评测机忙(非代码);e3(+_ascend,d2d6ea9)已提交待裁,门:华为>1.60x;e4(+_metax,743ebb7)已commit待e3华为出分后投 | 2026-09-07 | [fused_gdn_gating](fused_gdn_gating.md) |
 | 54 | fused_norm_rope_stacked | pending | 5/8(e2) | e1 0x | no | 当日额度耗尽;e2=5/8(行式vendor未修复三芯);代理fuzz仅覆盖已测输入;固定源码复现并定位首个分歧 | 2026-09-06 | [fused_norm_rope_stacked](fused_norm_rope_stacked.md) |
-| 55 | hc_head | pending | 7/8(s0,昆仑pending) | s0 0x | no | 昆仑pending;燧原0.257x弱;榜首6.25x | 2026-09-06 | [hc_head](hc_head.md) |
-| 56 | l2norm | valid | 8/8(s0,3.10497917x) | s0 3.10497917x | no | 高维stride修复版GPU release 7 tests通过;未提交平台;8/8仍指历史s0 | 2026-09-06 | [l2norm](l2norm.md) |
+| 55 | hc_head | pending | 7/8(s0,昆仑=评测器崩溃族非代码);e1已提交待裁 | s0 0x | no | e1(0052424)循环外归约重写已提交(2026-09-07)评测中;门:燧原>=0.31x(≥20%) | 2026-09-07 | [hc_head](hc_head.md) |
+| 56 | l2norm | valid | 8/8(s0,3.10497917x) | s0 3.10497917x | no | e1(f83c73a)高维stride修复版已提交(submission 10665,2026-09-07)评测中;出分后更新8/8口径 | 2026-09-07 | [l2norm](l2norm.md) |
 | 57 | log_scaling_tau | pending | 7/8(s0,燧原pending) | s0 0x | no | 燧原pending;昆仑0.47/华为0.53偏弱;榜首2.82x | 2026-09-06 | [log_scaling_tau](log_scaling_tau.md) |
 | 58 | w8a8_block_int8_matmul | valid | 8/8(e1,118.15512x) | e1 118.15512x | no | 冲分轴:燧原4.48x/B7.68x;榜首209.3x差43%;skill沉淀昆仑向量整除崩溃教训 | 2026-09-06 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
 

@@ -5,12 +5,12 @@ task: 48
 operator: chunked_sgmv_shrink
 batch: 4
 validity: valid
-platform: 8/8(e6,4.7198125x)
+platform: 8/8(e6,4.7198125x);e4已提交待裁
 team_best_stage: e6
 team_best_speedup: 4.7198125
 sealed: no
-next: 守榜;冲分轴:燧原0.58x/昆仑1.79x/天数3.85x
-updated: 2026-09-05
+next: e4(8b134f4)自适应BLOCK_S已提交(2026-09-07)评测中;出分后按>=15%判晋级
+updated: 2026-09-07
 ```
 
 ## S0: 6/8（燧原+昆仑败）
@@ -67,3 +67,17 @@ route/materialize 是 sgmv 族唯一可行形态（e8-e10 三投证伪）。
 - 63/64/65/256 行的 segment 用例已加入 generic 与 vendor 矩阵；验证状态见本次流程修复记录。
 - E6 平台最佳结果保持历史原值；长段覆盖修复前不再将该方向称为结构证伪。
 - 最终 GPU release 5 tests/27 条 test/subTest 记录通过，generic 与两个 vendor 入口均实际调用。source/verification 身份及完整回执见 [流程实测](../workflow-validation-20260906.md)。
+
+## E4 自适应 BLOCK_S（2026-09-07 已提交）
+
+- 重开 e2/e3 方向的修正版：上游 #10286 的关键前提是生产段很短
+  （调用方先切成 16 行），BM=64 对 ≤16 行段是 4 倍填充浪费。
+  单变量仅 BLOCK_S 随 max_len 取 16/32/64；BLOCK_N=128/BLOCK_K=32/
+  warps=4/stages=3 保持 E6 平台已验证值，(token_tile, output_tile)
+  网格覆盖不变（e2/e3 败因是每段单 tile，已由 E6 结构避免）。
+- NVIDIA 代理 wrapper 基准：8 行段 1.47x、16 行段 1.47x、
+  (8 行段,K=4096,bf16) 1.75x；64/256/257 行段 1.00x 不回退；
+  screening 5/5（含 63/64/65/256 边界）、release 37 launches 0 失败。
+- source `8b134f4`，ZIP `e4-8b134f4` SHA-256
+  `6141f43ce475cba01498e9cefb6e82e015c303fdc6e7c3a649d2881dedf9b5b4`；
+  2026-09-07 提交评测中。目标芯 ≥15% 才晋级 team best，否则保留 e6。
