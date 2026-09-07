@@ -9,7 +9,7 @@ platform: 8/8(e4,5.195325x非最佳);e2最佳5.3939x
 team_best_stage: e2
 team_best_speedup: 5.3939
 sealed: no
-next: 保留e2最佳5.3939;多行tile平台回退,关闭本轴;需新目标芯结构证据
+next: e5燧原默认launch在途(09-07,本会话);E6候选=generic warps按BLOCK_D分档+沐曦metax-pin隔离;昆仑/华为需新结构证据
 updated: 2026-09-07
 team_best_commit: 5985b1ce09fe6e7cec374c271aa1c25940264783
 ```
@@ -115,3 +115,44 @@ LayerNorm 勿改 `E[x²]-E[x]²` 单遍（大均值小方差消减误差，fp32 
   与弱芯（昆仑 0.94/华为 2.52）瓶颈画像不重叠。**不投平台**，该
   轴留作组合包组件（若未来 vendor 组合包需要，generic warps 按
   BLOCK_D 分档是安全叠加项）。
+
+## E5 燧原默认 launch vendor（2026-09-07，Top1 冲刺第 1 发，提交前）
+
+假设：GCU 官方默认 launch 优于显式 `num_warps=4, num_stages=1`——T19（fused_rmsnorm
+同族）E5 平台实证同款单变量 +38%（1.50→2.08）。本会话 Top1 计划第 1 发。
+
+单变量与成员冻结：generic 回退 E2 字节（撤销 E4 多行 generic，SHA
+`cae3e2d5…7ab868a` = E2 ZIP 成员逐字节）；ascend `92baf6f3…`、kunlunxin
+`66e08be2…` 冻结 E4 字节；唯一变更 = `_enflame` vendor 去 launch 参数。
+
+**中间失败（如实记录）**：首版 commit `0358012`（仅去 launch 参数）按规程加
+`--proxy-vendor enflame` 在 NVIDIA 代理执行时暴露 E1 以来潜在 bug：该 vendor kernel
+以 `w_ptr + offs` 读 weight/bias（无 stride），边界测试 `weight[::2]` 步长切片下
+60 subTest 全部数值不符（`Tensor-likes are not close`）；平台 E1/E2/E4 八芯通过
+从未暴露，因为该 vendor 此前从未在代理执行且平台隐藏 case 传连续权重。修复 =
+wrapper 对 strided weight/bias 先 `.contiguous()`（commit `445d3eb`；kernel 字节
+不变、平台连续输入零开销）。kunlunxin vendor 同病（同为无 stride 读），无代理执行
+通道且平台已验证，本轮不动，待其下次变更时一并修复；ascend vendor 有 stride 无此问题。
+
+- source/verification commit：`445d3eb`（首版 `0358012` 已被失败回执引用，作废不投）。
+- 本地 py_compile 通过；Black/isort/flake8 沿用远端 release 流程核对。NVIDIA release
+  v2 回执：7 方法、generic 83 + enflame 64 次非 warmup kernel launch，fail/error/skip/
+  xfail 均为 0；enflame 路径首次完整代理执行（默认 launch 参数下边界矩阵全过）。
+  执行源：generic + `_enflame`；ascend/kunlunxin 静态携带，target-runtime-unverified。
+- 环境：RTX5070Ti / driver610.57.04 / Python3.12.13 / torch2.13.0+cu130 / triton3.7.1。
+  远端 `gpu:/tmp/flagos-t51-e5c.sQ0KdU`（串行后台，timeout 600，PID 313535）。
+- ZIP `artifacts/competition/fla_layernorm_gated/e5-445d3eb/fla_layernorm_gated.zip`，
+  15060 bytes，SHA256 `9e2995baea00f6786a3310cb3e86d61f9fe76e97f7342bcea5e9c31858d1f185`；
+  dry-run 与最终 manifest 恒等字段全部匹配；`unzip -t` 4 成员通过。
+  成员 SHA：generic `cae3e2d5…7ab868a`、ascend `92baf6f3…b0c4`、
+  enflame `848f5014…`、kunlunxin `66e08be2…`（完整值见打包器 manifest）。
+- 回执 `e5-445d3eb/validation/verification.json` SHA256
+  `0c5bf1a61f489ae7ad55f82a5539c26c80ad2721b8ce916bc5fd4cfef4eb5671`；
+  `verification.log` SHA256 `76c1767756e913046847ce475e457145d6a1e317bc78e3bfa9919eb0faad0cb9`。
+  首版失败回执保留于 `e5-0358012/validation/`（该 ZIP 作废未提交）。
+- 预注册晋级门：8/8 valid 且燧原 ≥3.0x（E2/E4 同字节噪声带 2.34–2.77 上沿之外）；
+  均值须高于 E2 5.3939 才记 team best；燧原 <2.77 则关轴、保留 E2。其他七芯字节
+  冻结或回 E2，读数仅在各自噪声带内波动。首轮每题最多 1 次正式上传/提交；
+  sending/uncertain/stale_after_upload 不自动重试。
+- 附加证据清单 `e5-445d3eb/validation/evidence-sha256.json` SHA256 `392a443f5bf3c94d0126cad173787f8dbb3f03cdcef54e9d330373f4c888586f`
+（含作废首版回执 `5ca0f400…d6f86`/`296e03b1…66566de` 与最终回执哈希）。
