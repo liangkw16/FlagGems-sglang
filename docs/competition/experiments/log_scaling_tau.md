@@ -6,12 +6,12 @@ operator: log_scaling_tau
 batch: 4
 validity: valid
 platform: 8/8(e2,10747,2.36478125x首次有效)
-team_best_stage: e3
-team_best_speedup: 2.401375
+team_best_stage: e6
+team_best_speedup: 2.40753125
 sealed: no
-next: 冲榜Top1(榜首EvokeAgent 2.816469,gap 0.415);E4被代码安全扫描烧毁(10817,0/8,禁模块级dict/set);E6=闭包缓存版E4内容已提交待评测;E7=直连发射(闭包化)按E6数据接力
+next: 冲榜Top1(榜首EvokeAgent 2.816469);E6 valid新TB(10828,华为+43%,燧原/昆仑平=host主导坐实);E7直连发射(闭包化,98ae5648)门=avg>2.40753125且最弱≥0.4,发射中
 updated: 2026-09-07
-team_best_commit: 49dbb7f1c691c33befc1d4be2f1e5873a0e8a127
+team_best_commit: c6a0b6d3cd10ac2bf19716661b514d731c12b857
 ```
 
 ## S0 2D grid 行缩放（2026-09-06，远端 GPU 2/2 OK）
@@ -302,3 +302,29 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
   `7f3677b1e52b3a7971542b41c3d298b8094e62f9a359aae9c808dec9d04e2906`。
   测试源码 SHA256
   `4cd5218f2301fd188d3e0a7eb6f766026b790444be8e7aca319095694cb06d6d`。
+
+## E6 平台终态：valid 8/8，avg 2.40753125 新 TB（2026-09-07T18:26）
+
+- submission `10828` / daily_seq `22` / created `2026-09-07T18:23:52`；
+  preflight 与上传/提交各执行一次。**valid，8/8 passed，avg
+  2.40753125，新 team best（+0.006）**；过预注册门（>2.401375 且最弱
+  芯 0.54175≥0.4）。观测时额度 8/30 剩。闭包缓存形态通过代码安全
+  扫描（E4 烧毁规则不再触发）。
+
+| 芯片 | E3 | E6 | Δ | 解读 |
+| --- | ---: | ---: | ---: | --- |
+| tianshu | 4.0935 | 4.08925 | -0.004 | 噪声级 |
+| muxi | 2.705 | 2.74125 | +0.036 | 微升 |
+| enflame | 0.55425 | 0.552 | -0.002 | **平**：GPU 侧改不动 |
+| haiguang | 4.81275 | 4.80825 | -0.005 | 噪声级 |
+| kunlunxin | 0.539 | 0.54175 | +0.003 | **平**：GPU 侧改不动 |
+| huawei | 0.49025 | 0.703 | **+0.213（+43%）** | int32+stages1 在昇腾兑现 |
+| card_a | 3.31625 | 3.1425 | -0.174 | 闭包分支小代价 |
+| card_b | 2.7 | 2.68225 | -0.018 | 噪声级 |
+
+- 诊断结论：燧原/昆仑对 GPU 侧变化无响应 = host 调度主导坐实，
+  E7 直连发射（已就绪）为对症候选；华为 GPU 侧已收割一轮，host 侧
+  仍有直连空间。E7 预注册门：avg > 2.40753125 且最弱芯 ≥0.4。
+- 证据 `e6-c6a0b6d/validation/57-submit.json` SHA256
+  `6dccfe8f825448f65c31d24bb1333abf1f1dddca7207029a2241f92c6240ad55`、
+  状态快照待 E7 提交后一并归档。
