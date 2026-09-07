@@ -10,7 +10,7 @@ team_best_stage: e6
 team_best_commit: 6ed1fa9之前的e1字节族(见E6段)
 team_best_speedup: 4.7198125
 sealed: no
-next: e4七芯+1.5%未过15%门,保留e6;自适应BLOCK_S轴关闭;冲分回到预注册vendor轴(燧原dot模板/天数dtype/昆仑BLOCK)
+next: E7(e7-094548d)燧原原生低精度dot已过release门禁待单次平台裁决;预注册门=燧原>=1.5x且avg超4.7198125
 updated: 2026-09-07
 ```
 
@@ -94,3 +94,26 @@ route/materialize 是 sgmv 族唯一可行形态（e8-e10 三投证伪）。
   （平台隐藏 shape 的短段占比低于代理假设）。
 - 结构结论：完整多 tile 覆盖下自适应 BM 方向正确但收益微小；
   e2/e3 的"结构证伪"改判为"覆盖缺陷 + 低收益"，账本留档。
+
+## E7 燧原原生低精度 dot 操作数（2026-09-07）
+
+- 预注册 vendor 轴 #1（T12 镜像）：e6 燧原 vendor 的 GEMM 把操作数
+  cast 到 fp32 后 ieee dot——恰是 T12 实证的 GCU 病理配置（ieee-fp32
+  操作数 + 小 tile 低 stages，T12 当时 0.116x；fp16 原生操作数 +
+  64/64 tile + stages2 → 0.743x）。单变量：bf16/fp16 输入保持原生
+  dtype 进 dot（fp32 累加；bf16×bf16/fp16×fp16 乘积在 fp32 内精确，
+  与 reference 的 fp32 GEMM 在低精度容差内等价），fp32 输入维持 ieee
+  路径；index_select 物化同步降为原生 dtype（省一半拷贝流量）。
+  generic/kunlunxin 字节冻结。
+- source/verification commit `094548d`；screening `/tmp/flagos-t48e7`
+  （5/5）与 release `/tmp/flagos-t48e7-rel`（5/5 方法、0 fail/skip，
+  generic 15 / enflame 11 / kunlunxin 11 launch 实跑）双绿；远端
+  black/isort/flake8 全过（black 重排后取回 hash 一致）。
+- 预注册门：燧原 ≥0.58x 基础上兑现 T12 量级（≥1.5x）且整题 avg 超
+  team best 4.7198125 才晋级；燧原评测机忙超时（1830s R 态）不计
+  代码失败、不重试同字节。
+- ZIP `e7-094548d`，SHA256
+  `84fe1c7df7c158ce5f0965aa22562b654f31bab6b31e0217bc8774af3a9d9307`；
+  成员 3（generic/kunlunxin 与 e6 一致，enflame 为新字节）。
+- 证据 `validation/verification.json` SHA256
+  `0cafa617d5e848eb5b5d99d432e3c6cab0568719855b0db5eb34c89fb043b36d`。
