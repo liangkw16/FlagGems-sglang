@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# MetaX vendor: E2 generic schedule (grid-stride single-row, fixed
-# num_warps=4) with tl.rsqrt instead of 1/sqrt - the 2026-09-05
-# pre-registered muxi axis (gate >= +12%), consumed in T51 e7.
+# Hygon vendor: byte-frozen E2 generic (fixed num_warps=4) - the e6
+# BLOCK_D-keyed warps tier was net positive overall but read -14.9%
+# on hygon, below its same-bytes band; pin hygon back to the proven
+# schedule while tianshu/card_b keep the tier (T51 e7).
 
 import torch
 import triton
@@ -60,12 +61,12 @@ def _fla_ln_gated_kernel(
 
         if IS_RMS:
             var = tl.sum(x * x, axis=0) / dim
-            x_hat = x * tl.rsqrt(var + eps)
+            x_hat = x * 1.0 / tl.sqrt(var + eps)
         else:
             mean = tl.sum(x, axis=0) / dim
             xc = tl.where(mask, x - mean, 0.0)
             var = tl.sum(xc * xc, axis=0) / dim
-            x_hat = xc * tl.rsqrt(var + eps)
+            x_hat = xc * 1.0 / tl.sqrt(var + eps)
 
         y = x_hat
         if HAS_W:
