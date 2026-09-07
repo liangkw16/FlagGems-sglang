@@ -1,6 +1,6 @@
 # 第二届 FlagOS 算子赛题索引
 
-> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-09-03T20:42:35+08:00`。
+> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-09-07T11:09:08+08:00`。
 > 状态和榜单会变化，运行 `python tools/sync_flagos_season2_docs.py` 更新。
 
 ## 第 1 批
@@ -19,23 +19,23 @@
 
 | 题号 | 算子 | 状态 | 提交/队伍 | 达标队伍 | 当前第一 | 平均加速比 |
 | ---: | --- | --- | ---: | ---: | --- | ---: |
-| 8 | [apply_token_bitmask](tasks/batch-2/08-apply_token_bitmask.md) | reviewing | 188/26 | 18 | hbmu9306 | 709.4368x |
-| 9 | [bmm_chunk](tasks/batch-2/09-bmm_chunk.md) | reviewing | 262/25 | 13 | RSI | 4.0070x |
-| 10 | [chunk_cumsum](tasks/batch-2/10-chunk_cumsum.md) | reviewing | 379/31 | 4 | c2flow | 5.5907x |
-| 11 | [chunk_local_cumsum_vector](tasks/batch-2/11-chunk_local_cumsum_vector.md) | reviewing | 179/26 | 5 | EvokeAgent | 2.1942x |
-| 12 | [chunk_state](tasks/batch-2/12-chunk_state.md) | reviewing | 170/26 | 12 | RSI | 17.7777x |
-| 13 | [chunk_state_varlen](tasks/batch-2/13-chunk_state_varlen.md) | reviewing | 128/21 | 6 | c2flow | 707.0045x |
-| 14 | [context_attention](tasks/batch-2/14-context_attention.md) | reviewing | 185/32 | 1 | EvokeAgent | 3.7924x |
-| 15 | [decode_attention](tasks/batch-2/15-decode_attention.md) | reviewing | 95/18 | 3 | RSI | 103.3379x |
-| 16 | [decode_grouped_attention](tasks/batch-2/16-decode_grouped_attention.md) | reviewing | 92/23 | 2 | RSI | 303.0163x |
-| 17 | [embedding_lora_a](tasks/batch-2/17-embedding_lora_a.md) | reviewing | 186/22 | 8 | RSI | 25.5830x |
-| 18 | [fused_recurrent_gdn](tasks/batch-2/18-fused_recurrent_gdn.md) | pending_challenge | 137/30 | 0 | - | - |
-| 19 | [fused_rmsnorm](tasks/batch-2/19-fused_rmsnorm.md) | reviewing | 114/23 | 18 | torpedo | 703.1127x |
-| 20 | [mamba_layernorm_gated](tasks/batch-2/20-mamba_layernorm_gated.md) | reviewing | 127/15 | 8 | RSI | 7.4590x |
-| 21 | [moe_sum_reduce](tasks/batch-2/21-moe_sum_reduce.md) | reviewing | 195/22 | 11 | HAiWORLD | 3.8270x |
-| 22 | [qkv_lora_b](tasks/batch-2/22-qkv_lora_b.md) | reviewing | 74/11 | 1 | c2flow | 181.7155x |
-| 23 | [sgemm_lora_b](tasks/batch-2/23-sgemm_lora_b.md) | reviewing | 137/17 | 5 | RSI | 40.5614x |
-| 24 | [softcap_out](tasks/batch-2/24-softcap_out.md) | reviewing | 175/20 | 14 | MakeYUNAGreatAgain | 58.5631x |
+| 8 | [apply_token_bitmask](tasks/batch-2/08-apply_token_bitmask.md) | occupied | 188/26 | 18 | hbmu9306 | 709.4368x |
+| 9 | [bmm_chunk](tasks/batch-2/09-bmm_chunk.md) | occupied | 262/25 | 13 | RSI | 4.0070x |
+| 10 | [chunk_cumsum](tasks/batch-2/10-chunk_cumsum.md) | occupied | 379/31 | 4 | c2flow | 5.5907x |
+| 11 | [chunk_local_cumsum_vector](tasks/batch-2/11-chunk_local_cumsum_vector.md) | occupied | 179/26 | 5 | EvokeAgent | 2.1942x |
+| 12 | [chunk_state](tasks/batch-2/12-chunk_state.md) | occupied | 170/26 | 12 | RSI | 17.7777x |
+| 13 | [chunk_state_varlen](tasks/batch-2/13-chunk_state_varlen.md) | occupied | 128/21 | 6 | c2flow | 707.0045x |
+| 14 | [context_attention](tasks/batch-2/14-context_attention.md) | occupied | 185/32 | 1 | EvokeAgent | 3.7924x |
+| 15 | [decode_attention](tasks/batch-2/15-decode_attention.md) | occupied | 95/18 | 3 | RSI | 103.3379x |
+| 16 | [decode_grouped_attention](tasks/batch-2/16-decode_grouped_attention.md) | occupied | 92/23 | 2 | RSI | 303.0163x |
+| 17 | [embedding_lora_a](tasks/batch-2/17-embedding_lora_a.md) | occupied | 186/22 | 8 | RSI | 25.5830x |
+| 18 | [fused_recurrent_gdn](tasks/batch-2/18-fused_recurrent_gdn.md) | invalid | 137/30 | 0 | - | - |
+| 19 | [fused_rmsnorm](tasks/batch-2/19-fused_rmsnorm.md) | occupied | 114/23 | 18 | torpedo | 703.1127x |
+| 20 | [mamba_layernorm_gated](tasks/batch-2/20-mamba_layernorm_gated.md) | occupied | 127/15 | 8 | RSI | 7.4590x |
+| 21 | [moe_sum_reduce](tasks/batch-2/21-moe_sum_reduce.md) | occupied | 195/22 | 11 | HAiWORLD | 3.8270x |
+| 22 | [qkv_lora_b](tasks/batch-2/22-qkv_lora_b.md) | occupied | 74/11 | 1 | c2flow | 181.7155x |
+| 23 | [sgemm_lora_b](tasks/batch-2/23-sgemm_lora_b.md) | occupied | 137/17 | 5 | RSI | 40.5614x |
+| 24 | [softcap_out](tasks/batch-2/24-softcap_out.md) | occupied | 175/20 | 14 | MakeYUNAGreatAgain | 58.5631x |
 
 ## 第 3 批
 
@@ -63,9 +63,20 @@
 
 | 题号 | 算子 | 状态 | 提交/队伍 | 达标队伍 | 当前第一 | 平均加速比 |
 | ---: | --- | --- | ---: | ---: | --- | ---: |
-| 42 | [act_and_mul](tasks/batch-4/42-act_and_mul.md) | competing | 5/5 | 1 | c2flow | 3.1941x |
-| 43 | [causal_conv1d_update](tasks/batch-4/43-causal_conv1d_update.md) | pending_challenge | 15/9 | 0 | - | - |
-| 44 | [chain_speculative_sampling](tasks/batch-4/44-chain_speculative_sampling.md) | pending_challenge | 11/6 | 0 | - | - |
-| 45 | [chunk_scaled_dot_kkt](tasks/batch-4/45-chunk_scaled_dot_kkt.md) | competing | 13/7 | 2 | EvokeAgent | 15.0261x |
-| 46 | [chunked_embedding_lora_a](tasks/batch-4/46-chunked_embedding_lora_a.md) | competing | 2/2 | 1 | EvokeAgent | 18.7483x |
-| 47 | [chunked_sgmv_expand](tasks/batch-4/47-chunked_sgmv_expand.md) | competing | 5/5 | 2 | c2flow | 23.3266x |
+| 42 | [act_and_mul](tasks/batch-4/42-act_and_mul.md) | competing | 190/24 | 18 | gonzhanshishenmeganjue | 431.4843x |
+| 43 | [causal_conv1d_update](tasks/batch-4/43-causal_conv1d_update.md) | competing | 163/27 | 3 | AttentionImOnly2YearsOld | 7.9032x |
+| 44 | [chain_speculative_sampling](tasks/batch-4/44-chain_speculative_sampling.md) | competing | 171/25 | 1 | c2flow | 1.9813x |
+| 45 | [chunk_scaled_dot_kkt](tasks/batch-4/45-chunk_scaled_dot_kkt.md) | competing | 125/23 | 4 | GuanghuLab | 17.9571x |
+| 46 | [chunked_embedding_lora_a](tasks/batch-4/46-chunked_embedding_lora_a.md) | competing | 110/23 | 5 | c2flow | 24.4139x |
+| 47 | [chunked_sgmv_expand](tasks/batch-4/47-chunked_sgmv_expand.md) | competing | 61/20 | 3 | SoulCoder | 25.0048x |
+| 48 | [chunked_sgmv_shrink](tasks/batch-4/48-chunked_sgmv_shrink.md) | competing | 39/15 | 3 | KernelX | 23.7436x |
+| 49 | [ernie45_rope_fused](tasks/batch-4/49-ernie45_rope_fused.md) | competing | 38/13 | 4 | c2flow | 15.6064x |
+| 50 | [extend_attention](tasks/batch-4/50-extend_attention.md) | competing | 247/27 | 1 | c2flow | 10.7233x |
+| 51 | [fla_layernorm_gated](tasks/batch-4/51-fla_layernorm_gated.md) | competing | 77/12 | 9 | c2flow | 6.6682x |
+| 52 | [fused_dual_residual_rmsnorm](tasks/batch-4/52-fused_dual_residual_rmsnorm.md) | competing | 92/22 | 1 | c2flow | 5.4251x |
+| 53 | [fused_gdn_gating](tasks/batch-4/53-fused_gdn_gating.md) | competing | 53/15 | 10 | EvokeAgent | 4.3306x |
+| 54 | [fused_norm_rope_stacked](tasks/batch-4/54-fused_norm_rope_stacked.md) | competing | 47/14 | 2 | EvokeAgent | 10.2235x |
+| 55 | [hc_head](tasks/batch-4/55-hc_head.md) | competing | 34/13 | 3 | 你这个token跑得过我吗 | 6.3633x |
+| 56 | [l2norm](tasks/batch-4/56-l2norm.md) | competing | 34/11 | 11 | Warmhearted | 4.2591x |
+| 57 | [log_scaling_tau](tasks/batch-4/57-log_scaling_tau.md) | competing | 33/11 | 6 | EvokeAgent | 2.8165x |
+| 58 | [w8a8_block_int8_matmul](tasks/batch-4/58-w8a8_block_int8_matmul.md) | competing | 45/13 | 3 | EvokeAgent | 209.2952x |
