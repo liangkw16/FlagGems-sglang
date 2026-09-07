@@ -53,13 +53,9 @@ def _fla_ln_gated_kernel_asc(
     for row in range(pid, rows, grid_size):
         offs = tl.arange(0, BLOCK_D)
         mask = offs < D
-        x = tl.load(x_ptr + row * x_stride_row + offs, mask=mask, other=0.0).to(
-            tl.float32
-        )
-        g = tl.load(g_ptr + row * g_stride_row + offs, mask=mask, other=0.0).to(
-            tl.float32
-        )
-
+        x = tl.load(
+            x_ptr + row * x_stride_row + offs, mask=mask, other=0.0
+        ).to(tl.float32)
         if IS_RMS:
             var = tl.sum(x * x, axis=0) / D
             x_hat = x * 1.0 / tl.sqrt(var + eps)
@@ -79,6 +75,10 @@ def _fla_ln_gated_kernel_asc(
                 tl.float32
             )
 
+        # Gate is independent of the reduction; keep it out of its live set.
+        g = tl.load(
+            g_ptr + row * g_stride_row + offs, mask=mask, other=0.0
+        ).to(tl.float32)
         sig_g = 1.0 / (1.0 + tl.exp(-g))
         if ACT_SWISH:
             y = y * g * sig_g

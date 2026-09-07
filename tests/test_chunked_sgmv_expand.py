@@ -236,14 +236,71 @@ class ChunkedSgmvExpandVariantsTest(unittest.TestCase):
 
     MODULES = load_operator_modules("chunked_sgmv_expand")
 
+    def test_vendor_multi_k_pointer_stride(self):
+        torch.manual_seed(47)
+        a = torch.randn(3, 65, device="cuda")
+        b = torch.randn(17, 65, device="cuda")
+        base = torch.randn(3, 17, device="cuda")
+        expected = base + (a @ b.T) * 0.5
+        for name, module in self.MODULES:
+            if name not in ("enflame", "kunlunxin"):
+                continue
+            kernel = (
+                module._sgmv_gemm_kernel_enflame
+                if name == "enflame"
+                else module._sgmv_regular_gemm_kernel
+            )
+            with self.subTest(module=name):
+                actual = base.clone()
+                kernel[(1,)](
+                    a,
+                    b,
+                    actual,
+                    0.5,
+                    3,
+                    a.stride(0),
+                    a.stride(1),
+                    b.stride(1),
+                    b.stride(0),
+                    actual.stride(0),
+                    actual.stride(1),
+                    N=17,
+                    K=65,
+                    BLOCK_M=16,
+                    BLOCK_N=32,
+                    BLOCK_K=32,
+                    GROUP_M=8,
+                    num_warps=4,
+                    num_stages=1,
+                )
+                torch.testing.assert_close(
+                    actual, expected, atol=1e-4, rtol=1e-4
+                )
+
+    def test_rank_beyond_single_k_tile(self):
+        # Large ranks must use several bounded K tiles. The next rank must
+        # advance B along its rank stride, not its output-column stride.
+        for rank in (127, 128, 129, 511, 512, 513):
+            args = make_case([33, 0, 65], 2, [17, 33], rank, seed=47)
+            x, weights, info, offsets, base = args
+            info.lora_ranks[:] = 1  # nonzero means use the stored rank
+            expected = reference(x, weights, info, offsets, 33, base)
+            for name, module in self.MODULES:
+                with self.subTest(module=name, rank=rank):
+                    actual = module.chunked_sgmv_expand(
+                        x, weights, info, offsets, 33, base
+                    )
+                    torch.testing.assert_close(
+                        actual, expected, atol=1e-4, rtol=1e-4
+                    )
+
     def test_variants_match_reference(self):
         cases = [
             ([16, 32, 8], 4, [128, 128], 32, torch.float32),
             ([0, 12, 0, 12, 0], 3, [65, 80, 129], 16, torch.float32),
             ([20, 20], 3, [128, 64], 16, torch.bfloat16),
-            # ranks beyond one BLOCK_K tile: the kunlunxin vendor GEMM
-            # miscompiled on its multi-trip K loop before this became a
-            # permanent regression
+            # Keep historical rank regressions; the small direct-kernel
+            # test separately exercises the corrected rank-stride advance.
             ([24, 12], 3, [128, 64], 64, torch.float32),
             ([24, 12], 3, [128, 64], 96, torch.float32),
             ([24, 12], 3, [128, 64], 128, torch.float32),
@@ -268,6 +325,22 @@ class ChunkedSgmvExpandVariantsTest(unittest.TestCase):
                     )
                     atol, rtol = TOLERANCES[base_output.dtype]
                     torch.testing.assert_close(out, ref, atol=atol, rtol=rtol)
+
+
+RELEASE_REQUIRED_TESTS = [
+    "ChunkedSgmvExpandTest.test_dtypes_equal_slice",
+    "ChunkedSgmvExpandTest.test_unequal_slice_widths",
+    "ChunkedSgmvExpandTest.test_rank_sizes",
+    "ChunkedSgmvExpandTest.test_empty_segments_and_zero_ranks",
+    "ChunkedSgmvExpandTest.test_all_rank_zero",
+    "ChunkedSgmvExpandTest.test_single_segment_single_token",
+    "ChunkedSgmvExpandTest.test_identity_permutation",
+    "ChunkedSgmvExpandTest.test_base_output_untouched_for_rank_zero",
+    "ChunkedSgmvExpandTest.test_empty_batch",
+    "ChunkedSgmvExpandVariantsTest.test_variants_match_reference",
+    "ChunkedSgmvExpandVariantsTest.test_rank_beyond_single_k_tile",
+    "ChunkedSgmvExpandVariantsTest.test_vendor_multi_k_pointer_stride",
+]
 
 
 if __name__ == "__main__":

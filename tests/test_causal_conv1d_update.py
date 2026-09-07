@@ -182,6 +182,27 @@ class CausalConv1dUpdateTest(unittest.TestCase):
             new_state, x[:, :, -3:].to(state.dtype), atol=1e-6, rtol=1e-6
         )
 
+    def test_rolling_window_long_sequence(self):
+        torch.manual_seed(4308)
+        for width in (2, 3, 4):
+            for dim in (127, 128, 129):
+                for dtype in TOLERANCES:
+                    with self.subTest(width=width, dim=dim, dtype=dtype):
+                        x = torch.randn(
+                            2,
+                            dim,
+                            (width + 3) * 2,
+                            device="cuda",
+                            dtype=dtype,
+                        )[..., ::2]
+                        state = torch.randn(
+                            2, dim, width + 1, device="cuda", dtype=dtype
+                        )
+                        weight = torch.randn(
+                            dim, width, device="cuda", dtype=dtype
+                        )
+                        self._check(x, state, weight)
+
     def test_special_values(self):
         for dtype in (torch.float32, torch.float16, torch.bfloat16):
             with self.subTest(dtype=dtype):
@@ -288,6 +309,7 @@ class CausalConv1dUpdateVariantsTest(unittest.TestCase):
 
 
 RELEASE_REQUIRED_TESTS = [
+    "CausalConv1dUpdateTest.test_rolling_window_long_sequence",
     "CausalConv1dUpdateTest.test_dtypes_with_bias_and_activation",
     "CausalConv1dUpdateTest.test_widths_state_lengths_and_seqlens",
     "CausalConv1dUpdateTest.test_2d_input_is_seqlen_one",

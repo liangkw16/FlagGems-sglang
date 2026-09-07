@@ -71,7 +71,7 @@ def _sgmv_gemm_kernel_enflame(
         ).to(tl.float32)
         accumulator = tl.dot(a, b, acc=accumulator, input_precision="ieee")
         a_ptrs += BLOCK_K * stride_ak
-        b_ptrs += BLOCK_K * stride_bn
+        b_ptrs += BLOCK_K * stride_bk
 
     c_ptrs = c_ptr + offs_m[:, None] * stride_cm + offs_n[None, :] * stride_cn
     mask = (offs_m[:, None] < M) & (offs_n[None, :] < N)
@@ -89,12 +89,9 @@ def _launch_gemm(a, b, c, scaling, output_width, rank):
     m = a.shape[0]
     if m == 0:
         return
-    # The multi-trip K loop miscompiles on this kernel shape (verified
-    # on the NVIDIA proxy: rank 32 exact, rank >= 64 wrong by ~1e1; a
-    # single-trip replica is exact). Keep the K loop to one trip by
-    # sizing BLOCK_K to the rank; 512 covers every platform rank and
-    # the tail mask still handles non-power-of-two ranks like 96.
-    block_k = min(triton.next_power_of_2(max(rank, 16)), 512)
+    # Advance B along rank in the K loop. Bound shared memory for large
+    # ranks instead of forcing the entire rank into one program tile.
+    block_k = min(triton.next_power_of_2(max(rank, 16)), 128)
     grid = (triton.cdiv(m, _BLOCK_M) * triton.cdiv(output_width, _BLOCK_N),)
     _sgmv_gemm_kernel_enflame[grid](
         a,
@@ -127,7 +124,12 @@ def chunked_sgmv_expand(
     rank = weights.shape[-1]
     if x.shape[1] != n_slices * rank:
         raise ValueError("x width must equal n_slices * rank")
-    if output.numel() == 0 or n_slices <= 0 or batch_info.bs == 0 or x.shape[0] == 0:
+    if (
+        output.numel() == 0
+        or n_slices <= 0
+        or batch_info.bs == 0
+        or x.shape[0] == 0
+    ):
         return output
 
     # Vendor path: route with framework gathers, then one regular GEMM
