@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# MetaX vendor: byte-frozen E2 generic (grid-stride single-row, fixed
+# num_warps=4) so muxi stays on the platform-proven path while the
+# generic explores a BLOCK_D-keyed num_warps tier (T51 e6).
+
 import torch
 import triton
 import triton.language as tl
@@ -113,7 +117,6 @@ def fla_layernorm_gated(
 
     HAS_W_FLAG = weight is not x
     HAS_B_FLAG = bias is not x
-    block_d = max(triton.next_power_of_2(dim), 16)
     grid = (min(rows, _MAX_GRID),)
     _fla_ln_gated_kernel[grid](
         x,
@@ -134,10 +137,8 @@ def fla_layernorm_gated(
         HAS_B=HAS_B_FLAG,
         ACT_SWISH=act_swish,
         ACT_SIGMOID=act_sigmoid,
-        BLOCK_D=block_d,
-        # wide rows need more warps to keep vector lanes fed (T51 e6,
-        # scheduling-tier scan: BLOCK_D>=2048 warps 4->8, +10.9% proxy mean)
-        num_warps=8 if block_d >= 2048 else 4,
+        BLOCK_D=max(triton.next_power_of_2(dim), 16),
+        num_warps=4,
         num_stages=1,
     )
     return out
