@@ -23,7 +23,7 @@
 | 40 | softcap_inplace_logits | valid | 8/8(e8,2.195604x,rank1) | e8 2.195604x | yes | 额度用尽收官;e16 华为字节(1.70)+TB 2.1956 #2;榜首 c2flow 2.2593 华为 3.40 未破译 | 2026-09-03 | [softcap_inplace_logits](softcap_inplace_logits.md) |
 | 41 | state_passing | invalid | E7 sub8079 system_failed;7 pass,Kunlun 0.0065x,Enflame unrun | E5 diagnostic | yes | 本轮收盘;只保留平台工单与全新结构研究 | 2026-09-02 | [state_passing](state_passing.md) |
 | 42 | act_and_mul | valid | 8/8(e2,3.248925x) | e6 3.25835x | no | M1载体成TB(3.25835,10344);三候选全消费;守榜,距旧榜首3.5194差-7.4%无新轴 | 2026-09-06 | [act_and_mul](act_and_mul.md) |
-| 43 | causal_conv1d_update | invalid | 7/8(e12,昆仑10形态全错译;conclusive) | s0 -x | yes | 昆仑轴conclusive封存;仅全新结构证据(非gather/非广播/非FMA)或平台修复可重开 | 2026-09-06 | [causal_conv1d_update](causal_conv1d_update.md) |
+| 43 | causal_conv1d_update | invalid | e12终态6/8(昆仑数值失败+燧原超时);e13新布局发布验证通过 | - -x | no | PR34通道连续affine结构重开;本候选一发验证昆仑及燧原恢复 | 2026-09-07 | [causal_conv1d_update](causal_conv1d_update.md) |
 | 44 | chain_speculative_sampling | invalid | 探针确认全芯失败(predicts mismatch=半精度bit-exact) | s0 -x | no | conclusive 封轴;天数/A/B同款517值=fp32也有差;平台测半精度 | 2026-09-04 | [chain_speculative_sampling](chain_speculative_sampling.md) |
 | 45 | chunk_scaled_dot_kkt | invalid | e13八芯正确但昆仑0.063x;e14昆仑正确性失败;e15发布验证通过 | - -x | no | e15提交验证常量除数与契约修复;目标昆仑>=0.1,不把代理持平计为收益 | 2026-09-07 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x) | e3 14.1051875x | no | e6天数预路由水位带内无法归因,轴关闭;维持E3守榜(14.105x);后续按逐芯晋级纪律择机 | 2026-09-06 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |

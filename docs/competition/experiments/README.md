@@ -950,3 +950,5 @@ ABBA→④内置验证在出现 hash/manifest 背书前一律不信;服务端修
 - 2026-09-07 T57：e1 `ee551b5` 修复非连续 x/tau 和 1D 调度，release 4/4，通过待提交；S0 已终态燧原超时。当前状态以算子 CURRENT/INDEX 为准。
 
 - 2026-09-07 T45：e15 `ee551b5` 修复alias gate与Ascend chunk/低精度gate，昆仑常量除数候选；release10/10，NVIDIA配对计时持平，目标芯性能待平台。
+
+- 2026-09-07 T43：e13 `4fa854a` 以PR34通道连续布局替换昆仑gather/GEMM，screening及release10/10通过，待一次平台验证；E12燧原最终超时，实际6/8。

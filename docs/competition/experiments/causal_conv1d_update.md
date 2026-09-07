@@ -5,13 +5,13 @@ task: 43
 operator: causal_conv1d_update
 batch: 4
 validity: invalid
-platform: 7/8(e12,昆仑10形态全错译;conclusive)
-team_best_stage: s0
-team_best_commit: 07aaf2e5a081e4bfc4bb0ce3207b3e78c91d69df
+platform: e12终态6/8(昆仑数值失败+燧原超时);e13新布局发布验证通过
+team_best_stage: -
+team_best_commit: -
 team_best_speedup: -
-sealed: yes
-next: 昆仑轴conclusive封存;仅全新结构证据(非gather/非广播/非FMA)或平台修复可重开
-updated: 2026-09-06
+sealed: no
+next: PR34通道连续affine结构重开;本候选一发验证昆仑及燧原恢复
+updated: 2026-09-07
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -267,3 +267,25 @@ IEEE `tl.dot`（只存 C[:,0]；T28/T37 昆仑通过范式）。
   数值错译或编译墙；EvokeAgent 8/8 结构未破译。跨题知识：
   **昆仑向量 gather 与广播操作数均为错译高危面**（T53 标量 gather
   为唯一已证安全形态）
+
+## E13 通道连续 affine 卷积（2026-09-07）
+
+- 新证据：[FlagGems-sglang PR34 固定源码](https://github.com/flagos-ai/FlagGems-sglang/blob/e7f91a5f6c813d499275b3f3a6288e1b3b5dddc9/src/flaggems_sglang/runtime/backend/_kunlunxin/ops/causal_conv1d_fn.py)。沿其 `[time,channel]` 连续加载模式，将本题 state+x 物化为 `[B,L,D]`，weight 为 `[W,D]`。每 program 一个时间位置和连续 channel block，scalar 基址+arange，宽度静态累加，bias/sigmoid仍在 Triton。此为新数据布局，非旧FMA源码重投；PR不构成本候选昆仑通过证据。
+- 保留 generic/Ascend/Enflame 字节，只替换 Kunlun 的窗口 gather+stride0广播GEMM+后处理；state保留独立Triton拷贝。无设备判断或torch算子计算fallback。
+- source/verification commit `4fa854a376de167e76a1e5d1441c6cd82b5866d7`。screening 两方法（144边界subcases+12核心subcases）通过，提交前后源/测试SHA一致；完整release10方法通过，零fail/error/skip/xfail。
+- 三dtype、identity/no-bias与silu/bias；W2/3/4/8、state较长、S>state、D127/128/129与1023/1024/1025、非连续x、state不变性及精确state输出。generic既有其他回归最大D2049；新Kunlun本轮最大D1025、S6，未将generic覆盖外推。
+- 远端 `gpu:/tmp/flagos-b4-invalid.eYQz0q/t43-release`，RTX5070Ti/torch2.13.0+cu130/triton3.7.1；执行 `timeout 420 /home/kevin/notebook/.venv/bin/python .agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/flagos-b4-invalid.eYQz0q/t43-release`。py_compile/Black/isort/flake8通过。
+- 昆仑 MCP verify 本次HTTP502，未执行，`target-runtime-unverified`。七芯历史通过路径不能替代本次逐芯结果；E12燧原实际最终1830s运行态超时，纠正旧“7/8”措辞。
+- 晋级：全芯正确且各≥0.1，先取得有效分；新布局需付transpose搬运开销，性能未知。止损：本候选最多一发；仍错则保存首个失败case/selected_file，不把同指纹当作平台reference故障，不用注释重投。
+- ZIP `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e13-4fa854a/causal_conv1d_update.zip`，22281 bytes，SHA256 `465bd4baaa2c4251978cffc9f9ed8bbac467c1c82c466461f5ee7737ac642bba`；dry-run/release/final source manifest一致。
+- 成员 `causal_conv1d_update.py` ← `src/flaggems_sglang/ops/causal_conv1d_update.py` SHA256 `0e62c67bd41c3ebf3d1a8ee12fc3eb6a4ba264dd94841b657f44e9c8df39bf35`。
+- 成员 `causal_conv1d_update_ascend.py` ← `src/flaggems_sglang/runtime/backend/_ascend/ops/causal_conv1d_update.py` SHA256 `85cc6109f376ab786ca0a15cce634736617f60e625c5baa9d613c810eef38165`。
+- 成员 `causal_conv1d_update_enflame.py` ← `src/flaggems_sglang/runtime/backend/_enflame/ops/causal_conv1d_update.py` SHA256 `57d4825f20b864d1722f8760a8707d0be5e90e5f12038a8fd05809f7f38d43d8`。
+- 成员 `causal_conv1d_update_kunlunxin.py` ← `src/flaggems_sglang/runtime/backend/_kunlunxin/ops/causal_conv1d_update.py` SHA256 `8086def1f50ec326ab7634010b62edcf950e6e78f52995d8bde74320098d3f20`。
+- 实际kernel launches `{'src/flaggems_sglang/ops/causal_conv1d_update.py': 69, 'src/flaggems_sglang/runtime/backend/_ascend/ops/causal_conv1d_update.py': 39, 'src/flaggems_sglang/runtime/backend/_enflame/ops/causal_conv1d_update.py': 39, 'src/flaggems_sglang/runtime/backend/_kunlunxin/ops/causal_conv1d_update.py': 78}`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e13-4fa854a/validation/verification.json` SHA256 `3f08d408cabffc4d93ef5e4429b0d5c284674c207fc686e5024d601577c82e03`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e13-4fa854a/validation/verification.log` SHA256 `6c2779725af453a05c2885a0305e285052d59286aff76c4079efe93b19857697`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e13-4fa854a/validation/verification-input.json` SHA256 `44e0417c0d258ef9e073a4dc99137b4628b615b81cace8bda2dd97249ad357ca`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e13-4fa854a/validation/43-kg-request.json` SHA256 `b53b6bdfd166ba3e9ffbe2ad46a07f53a785f735f3df8c56542e1732a17cd8cb`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e13-4fa854a/validation/43-kg-response.json` SHA256 `92afbbac89b844f85c246c3eeb9c290c53565de4ce8bded312b2553158970e9b`。
+- 实时旧状态2026-09-07T12:08:44+08:00：submission10341，quota24/30；本轮其他候选已另消耗额度，正式submit以preflight为准。
