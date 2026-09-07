@@ -10,6 +10,7 @@
 - [题型学习与八芯资料入口](docs/competition/learning-path.md)
 - [跨芯极致优化方案](docs/competition/cross-chip-optimization-plan.md)
 - [八芯公开规格与编译期约束](docs/competition/chip-landscape.md)
+- [第四批逐芯调研与 17 题下一轮方案（09-07）](docs/competition/research-batch4-vendor-20260907.md)
 - [第二批候选、产物哈希与提交队列](docs/competition/experiments/README.md)
 - [参考仓库与本地 Git 引用](docs/competition/reference-repositories.md)
 - 厂商 backend 源码缓存：`docs/competition/data/vendor-backends/`
