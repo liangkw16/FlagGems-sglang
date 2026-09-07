@@ -36,36 +36,42 @@ def _hc_head_kernel(
     t = tl.program_id(0)
     scale = tl.load(scale_ptr).to(tl.float32)
 
+    offs_j = tl.arange(0, HC)
     offs_m = tl.arange(0, HC)
     offs_h = tl.arange(0, BLOCK_H)
+    j_ok = offs_j < hc_mult
     m_ok = offs_m < hc_mult
 
-    # Pass 1 over the flattened row: sum of squares for RMSNorm and the raw
-    # mixes dot with each hc_fn row share one read of x.
-    sumsq = 0.0
-    mixes_raw = tl.zeros((HC,), dtype=tl.float32)
+    # Pass 1 over the flattened row: per-lane vector accumulators for the
+    # sum of squares and each mix defer every tl.sum to after the hidden
+    # loop (the S0 form held a [HC, HC, BLOCK_H] fn tile and ran nested
+    # reductions inside the loop). fn is streamed as flat [HC, BLOCK_H]
+    # tiles, one per hc_fn input row m.
+    sqr_acc = tl.zeros((BLOCK_H,), dtype=tl.float32)
+    mix_acc = tl.zeros((HC, BLOCK_H), dtype=tl.float32)
     for h0 in range(0, hidden, BLOCK_H):
         h_ok = offs_h < hidden - h0
-        x = tl.load(
-            x_ptr + t * D + offs_m[:, None] * hidden + h0 + offs_h[None, :],
-            mask=m_ok[:, None] & h_ok[None, :],
-            other=0.0,
-        ).to(tl.float32)
-        sumsq += tl.sum(x * x)
-        # fn tile [j, m, h]: row j of hc_fn, cols m*hidden + h
-        fn = tl.load(
-            fn_ptr
-            + offs_m[:, None, None] * fn_stride_row
-            + offs_m[None, :, None] * hidden
-            + (h0 + offs_h)[None, None, :],
-            mask=m_ok[:, None, None] & m_ok[None, :, None] & h_ok[None, None, :],
-            other=0.0,
-        ).to(tl.float32)
-        mixes_raw += tl.sum(tl.sum(fn * x[None, :, :], axis=2), axis=1)
+        for m in range(HC):
+            r = tl.load(
+                x_ptr + t * D + m * hidden + h0 + offs_h,
+                mask=h_ok & (m < hc_mult),
+                other=0.0,
+            ).to(tl.float32)
+            sqr_acc += r * r
+            fn_jm = tl.load(
+                fn_ptr
+                + offs_j[:, None] * fn_stride_row
+                + m * hidden
+                + h0
+                + offs_h[None, :],
+                mask=j_ok[:, None] & h_ok[None, :],
+                other=0.0,
+            ).to(tl.float32)
+            mix_acc += r[None, :] * fn_jm
 
-    r = 1.0 / tl.sqrt(sumsq / D + norm_eps)
-    mixes = mixes_raw * r
-    base = tl.load(base_ptr + offs_m, mask=m_ok, other=0.0).to(tl.float32)
+    r = 1.0 / tl.sqrt(tl.sum(sqr_acc) / D + norm_eps)
+    mixes = tl.sum(mix_acc, axis=1) * r
+    base = tl.load(base_ptr + offs_j, mask=j_ok, other=0.0).to(tl.float32)
     pre = 1.0 / (1.0 + tl.exp(-(mixes * scale + base))) + hc_eps
 
     # Pass 2: weighted fold of the hc_mult axis.
@@ -95,8 +101,10 @@ def hc_head(x, hc_fn, hc_scale, hc_base, norm_eps, hc_eps):
     D = hc_mult * hidden
 
     hc_pow2 = triton.next_power_of_2(hc_mult)
-    # Keep the [HC, HC, BLOCK_H] fn tile within 4096 elements.
-    block_h = max(min(triton.next_power_of_2(hidden), 4096 // (hc_pow2 * hc_pow2)), 32)
+    # Live state per program is mix_acc plus one streamed [HC, BLOCK_H] fn
+    # tile; keep HC * BLOCK_H within 2048 elements (256 at HC=8, 512 at
+    # HC=4, 1024 at HC=2).
+    block_h = max(min(triton.next_power_of_2(hidden), 2048 // hc_pow2), 32)
     _hc_head_kernel[(T,)](
         x,
         hc_fn,
