@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Enflame vendor: rsqrt form (v * tl.rsqrt(var+eps) * w). The plain
-# division (S0/E2 generic), div_rn (E1), reciprocal (S0) and the
-# two-kernel mid-materialized split (E4) all failed this chip at a
-# 1/33.5M-element bf16 rounding boundary, while the same-platform T19
-# fused_rmsnorm with tl.rsqrt passed Enflame.
+# Use correctly rounded sqrt and division at the bf16 residual boundary.
 
 import torch
 import triton
@@ -48,24 +44,28 @@ def _dual_rmsnorm_enflame(
         offs = tl.arange(0, BLOCK_D)
         mask = offs < dim
 
-        x = tl.load(x_ptr + row * x_stride + offs, mask=mask, other=0.0).to(tl.float32)
+        x = tl.load(x_ptr + row * x_stride + offs, mask=mask, other=0.0).to(
+            tl.float32
+        )
 
         var1 = tl.sum(x * x, axis=0) / dim
-        inv_rms1 = tl.rsqrt(var1 + eps)
+        rms1 = tl.sqrt_rn(var1 + eps)
         w1 = tl.load(w1_ptr + offs, mask=mask, other=1.0).to(tl.float32)
-        y1 = x * inv_rms1 * w1
+        y1 = tl.div_rn(x, rms1) * w1
 
         mid_ty = mid_ptr.dtype.element_ty
         y1_cast = y1.to(mid_ty)
-        r_typed = tl.load(residual_ptr + row * r_stride + offs, mask=mask, other=0.0)
+        r_typed = tl.load(
+            residual_ptr + row * r_stride + offs, mask=mask, other=0.0
+        )
         mid_val = r_typed + y1_cast
         tl.store(mid_ptr + row * m_stride + offs, mid_val, mask=mask)
 
         mid_f = mid_val.to(tl.float32)
         var2 = tl.sum(mid_f * mid_f, axis=0) / dim
-        inv_rms2 = tl.rsqrt(var2 + eps)
+        rms2 = tl.sqrt_rn(var2 + eps)
         w2 = tl.load(w2_ptr + offs, mask=mask, other=1.0).to(tl.float32)
-        out = mid_f * inv_rms2 * w2
+        out = tl.div_rn(mid_f, rms2) * w2
 
         tl.store(
             out_ptr + row * o_stride + offs,

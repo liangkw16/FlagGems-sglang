@@ -21,8 +21,11 @@ from tests._op_variants import load_operator_modules
 MODULES = load_operator_modules("fused_dual_residual_rmsnorm")
 MODULE = dict(MODULES)["generic"]
 
-TOL = {torch.float32: (1e-4, 1e-4), torch.float16: (1e-2, 1e-2),
-       torch.bfloat16: (1.5e-2, 1.5e-2)}
+TOL = {
+    torch.float32: (1e-4, 1e-4),
+    torch.float16: (1e-2, 1e-2),
+    torch.bfloat16: (1.5e-2, 1.5e-2),
+}
 
 
 def _rmsnorm32(v32, w32, eps):
@@ -31,9 +34,9 @@ def _rmsnorm32(v32, w32, eps):
 
 
 def reference(x, residual, weight1, weight2, eps):
-    mid = residual + _rmsnorm32(
-        x.float(), weight1.float(), eps
-    ).to(residual.dtype)
+    mid = residual + _rmsnorm32(x.float(), weight1.float(), eps).to(
+        residual.dtype
+    )
     out = _rmsnorm32(mid.float(), weight2.float(), eps).to(x.dtype)
     return out, mid
 
@@ -91,6 +94,19 @@ class FusedDualResidualRmsnormTest(unittest.TestCase):
         self.assertEqual(out.shape, (0, 128))
         self.assertEqual(mid.shape, (0, 128))
 
+    def test_large_bf16_rounding_boundary(self):
+        # Seed 42 reproduces a norm1 rounding flip at (689, 410) in the
+        # old generic: mid -0.015625 instead of -0.03125, then out fails.
+        for seed in (0, 7, 42):
+            torch.manual_seed(seed)
+            x = torch.randn(4096, 8192, device="cuda", dtype=torch.bfloat16)
+            residual = torch.randn_like(x)
+            w1 = torch.randn(8192, device="cuda", dtype=x.dtype)
+            w2 = torch.randn_like(w1)
+            for vendor, mod in MODULES:
+                with self.subTest(seed=seed, vendor=vendor):
+                    self._check(x, residual, w1, w2, module=mod)
+
     def test_vendor_variants(self):
         # Numeric matrix over every backend vendor (generic math check on
         # the NVIDIA proxy; target-chip lowering is screened separately).
@@ -111,6 +127,16 @@ class FusedDualResidualRmsnormTest(unittest.TestCase):
                 w1 = torch.randn(8192, device="cuda", dtype=torch.float32)
                 w2 = torch.randn(8192, device="cuda", dtype=torch.float32)
                 self._check(x, r, w1, w2, module=mod)
+
+
+RELEASE_REQUIRED_TESTS = [
+    "FusedDualResidualRmsnormTest.test_same_dtype",
+    "FusedDualResidualRmsnormTest.test_mixed_dtype",
+    "FusedDualResidualRmsnormTest.test_shapes",
+    "FusedDualResidualRmsnormTest.test_empty",
+    "FusedDualResidualRmsnormTest.test_vendor_variants",
+    "FusedDualResidualRmsnormTest.test_large_bf16_rounding_boundary",
+]
 
 
 if __name__ == "__main__":
