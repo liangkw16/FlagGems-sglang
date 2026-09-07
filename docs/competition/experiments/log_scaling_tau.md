@@ -6,12 +6,12 @@ operator: log_scaling_tau
 batch: 4
 validity: valid
 platform: 8/8(e2,10747,2.36478125x首次有效)
-team_best_stage: e6
-team_best_speedup: 2.40753125
+team_best_stage: e10
+team_best_speedup: 2.45078125
 sealed: no
-next: 调研重开直连轴(E9探测器错配,E7-E9从未测过全参数形态);E10=燧原/昇腾vendor复刻运行时自身9前导+全参数调用,代理已实跑验证,提交待评测;兑现则E11扩generic收割五强芯;目标2.816+
+next: E10 valid新TB(10881,华为+51%直连兑现,燧原/昆仑=C层瓶颈定格);E11=generic直连扩展(3a87cac)已提交待评测;目标2.816+,差0.366
 updated: 2026-09-07
-team_best_commit: c6a0b6d3cd10ac2bf19716661b514d731c12b857
+team_best_commit: d1d687d3974c8ceccb7c7bb491124edce6e0ea83
 ```
 
 ## S0 2D grid 行缩放（2026-09-06，远端 GPU 2/2 OK）
@@ -487,5 +487,41 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
   `203ea619a64bdf80ba5c27751e6495bab8eab780a178383577361eca9563cee6`、
   `e10-d1d687d/validation/verification.log` SHA256
   `61339260012d61cc6c90fd25373ff6c12ca975b728d7dbb0078fe75e70ab7d30`。
+  测试源码 SHA256
+  `4cd5218f2301fd188d3e0a7eb6f766026b790444be8e7aca319095694cb06d6d`。
+
+## E10 平台终态：valid 8/8，avg 2.45078125 新 TB——华为 +51% 兑现（2026-09-07T19:51）
+
+- submission `10881` / daily_seq `28`：**valid，8/8 passed，avg
+  2.45078125 新 team best（+0.043）**，过门（>2.40753125）。
+  逐芯：天数 4.1425 / 沐曦 2.629 / 燧原 0.5515 / 海光 4.672 /
+  昆仑 0.544（回调延迟后到）/ **华为 1.0615（0.703→+51%，全参数
+  直连在昇腾实跑兑现）** / 卡A 3.3285 / 卡B 2.67725。
+- 燧原持平 0.5515（与 E6/E8/E9 同值到小数点后三位）→ 其瓶颈在
+  C launcher/运行时层而非 Python binder（与 E7 昆仑结论同类），
+  Python 侧不可及，燧原 ~0.55 定格。
+- 昆仑 vendor 保持 E6 字节照常通过。
+
+## E11 全参数直连扩展 generic（2026-09-07 晚）
+
+- 单变量（相对 E10）：generic fast 路径同样走缓存 CompiledKernel
+  全参数直连（generic/ascend/enflame 三成员同字节
+  `58fbdfa0…`）；昆仑 vendor 保持 E6 字节（binder 已证非其瓶颈）。
+  目标收割天数/沐曦/海光/卡A/卡B 的 binder 开销（预期各 +5-15%）。
+- source/verification commit `3a87cac37d5624d6e64fe8e2f0915cfde8ae250b`；
+  静态门禁+容器自检 CLEAN；screening（worktree，代理上 JIT 计数
+  探针=5 次重复 0 次调度、数值正确）与 release（commit，
+  `gpu:/tmp/flagos-t57e11-release`，3 proxy vendor）均 5 方法
+  112 case、0 fail/skip。
+- 预注册门：avg > 2.45078125（E10 TB）且最弱芯 ≥0.4；generic 侧
+  任一芯 TypeError → 该芯直连关轴、回 E10 字节收官。
+- ZIP `e11-3a87cac`，32045 bytes，SHA256
+  `048945a006f20cec817a1cc2396abbc6f24ca2fe87a92d10eaee261785311cc4`；
+  成员 generic/ascend/enflame 均 `58fbdfa0c263bc54f46486cbdd199ea88b15cc3c3b5966e5bab3dc9939f4b731`、
+  kunlunxin `87925271…`（=release 执行哈希）。
+- 证据 `e11-3a87cac/validation/verification.json` SHA256
+  `70a92bbffeb028bd3a1be47ab87fa797208409eef11addc172016510fd0d33c0`、
+  `e11-3a87cac/validation/verification.log` SHA256
+  `78b7e7a322570c7ffc43ac665b2d0c71f8e7117515feb460e27c6e97919dd08e`。
   测试源码 SHA256
   `4cd5218f2301fd188d3e0a7eb6f766026b790444be8e7aca319095694cb06d6d`。
