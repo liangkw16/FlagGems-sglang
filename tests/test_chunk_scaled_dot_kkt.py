@@ -200,6 +200,26 @@ class ChunkScaledDotKktVariantsTest(unittest.TestCase):
 
     MODULES = load_operator_modules("chunk_scaled_dot_kkt")
 
+    def test_variants_aliased_gate_and_ratio_three(self):
+        for dtype in TOLERANCES:
+            k, beta = make_case(
+                batch=1,
+                nchunks=2,
+                num_k_heads=2,
+                ratio=3,
+                k_dim=33,
+                dtype=dtype,
+                seed=45,
+            )
+            expected = reference(k, beta, beta)
+            for name, module in self.MODULES:
+                with self.subTest(module=name, dtype=dtype):
+                    actual = module.chunk_scaled_dot_kkt(k, beta, beta)
+                    atol, rtol = TOLERANCES[dtype]
+                    torch.testing.assert_close(
+                        actual, expected, atol=atol, rtol=rtol
+                    )
+
     def test_variants_non_contiguous_k(self):
         """Non-contiguous k must be correct across every variant
         (the ascend FLA kernel hardcodes contiguous strides and calls
@@ -241,6 +261,15 @@ class ChunkScaledDotKktVariantsTest(unittest.TestCase):
     def test_variants_match_reference(self):
         cases = [
             dict(
+                batch=1,
+                nchunks=2,
+                chunk_size=128,
+                num_k_heads=2,
+                ratio=3,
+                k_dim=33,
+                seed=45,
+            ),
+            dict(
                 batch=2,
                 nchunks=2,
                 chunk_size=64,
@@ -281,6 +310,20 @@ class ChunkScaledDotKktVariantsTest(unittest.TestCase):
                         torch.testing.assert_close(
                             out, expected, atol=atol, rtol=rtol
                         )
+
+
+RELEASE_REQUIRED_TESTS = [
+    "ChunkScaledDotKktTest.test_dtypes_without_g",
+    "ChunkScaledDotKktTest.test_gqa_ratios",
+    "ChunkScaledDotKktTest.test_with_g_cumsum",
+    "ChunkScaledDotKktTest.test_chunk_sizes_and_k_dims",
+    "ChunkScaledDotKktTest.test_strict_lower_triangular_zeros",
+    "ChunkScaledDotKktTest.test_batch_one_and_non_contiguous",
+    "ChunkScaledDotKktTest.test_invalid_shapes_raise",
+    "ChunkScaledDotKktVariantsTest.test_variants_non_contiguous_k",
+    "ChunkScaledDotKktVariantsTest.test_variants_match_reference",
+    "ChunkScaledDotKktVariantsTest.test_variants_aliased_gate_and_ratio_three",
+]
 
 
 if __name__ == "__main__":

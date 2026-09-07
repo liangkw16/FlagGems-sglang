@@ -62,6 +62,7 @@ def _kkt_fla_kernel(
     HV: tl.constexpr,
     K: tl.constexpr,
     BT: tl.constexpr,
+    CHUNK_SIZE: tl.constexpr,
     BK: tl.constexpr,
     IS_VARLEN: tl.constexpr,
     USE_G: tl.constexpr,
@@ -88,8 +89,15 @@ def _kkt_fla_kernel(
             i_t = i_t_i.to(tl.int64)
             T_local = T
 
-        o_t = i_t * BT + tl.arange(0, BT)
-        m_t = o_t < T_local
+        TILES: tl.constexpr = triton.cdiv(CHUNK_SIZE, BT)
+        chunk = i_t // (TILES * TILES)
+        tile = i_t % (TILES * TILES)
+        local_m = (tile // TILES) * BT + tl.arange(0, BT)
+        local_n = (tile % TILES) * BT + tl.arange(0, BT)
+        o_t = chunk * CHUNK_SIZE + local_m
+        o_n = chunk * CHUNK_SIZE + local_n
+        m_t = (o_t < T_local) & (local_m < CHUNK_SIZE)
+        m_n = (o_n < T_local) & (local_n < CHUNK_SIZE)
 
         # beta/g are pre-transposed to [HV, B, T] contiguous
         p_beta = beta_ptr + i_h * bt_stride + bos + o_t
@@ -100,28 +108,54 @@ def _kkt_fla_kernel(
         kg = i_h // (HV // H)
         for i_k in range(0, tl.cdiv(K, BK)):
             o_k = i_k * BK + tl.arange(0, BK)
-            p_k = k_ptr + (bos * H + kg) * K + o_t[:, None] * (H * K) + o_k[None, :]
-            b_k = tl.load(p_k, mask=m_t[:, None] & (o_k < K)[None, :], other=0.0)
-            b_A += tl.dot(b_k, tl.trans(b_k), input_precision="ieee")
+            p_k = (
+                k_ptr
+                + (bos * H + kg) * K
+                + o_t[:, None] * (H * K)
+                + o_k[None, :]
+            )
+            b_k = tl.load(
+                p_k, mask=m_t[:, None] & (o_k < K)[None, :], other=0.0
+            )
+            if TILES == 1:
+                b_n = b_k
+            else:
+                p_n = (
+                    k_ptr
+                    + (bos * H + kg) * K
+                    + o_n[:, None] * (H * K)
+                    + o_k[None, :]
+                )
+                b_n = tl.load(
+                    p_n, mask=m_n[:, None] & (o_k < K)[None, :], other=0.0
+                )
+            b_A += tl.dot(b_k, tl.trans(b_n), input_precision="ieee")
 
         if USE_G:
             p_g = g_ptr + i_h * bt_stride + bos + o_t
-            b_g = tl.load(p_g, mask=m_t, other=0.0)
-            b_g_diff = b_g[:, None] - b_g[None, :]
+            b_g = tl.load(p_g, mask=m_t, other=0.0).to(tl.float32)
+            b_gn = tl.load(
+                g_ptr + i_h * bt_stride + bos + o_n, mask=m_n, other=0.0
+            ).to(tl.float32)
+            b_g_diff = b_g[:, None] - b_gn[None, :]
             # Task-mandated safe-exp: exponent <= 0 -> exp, else -> 0
             b_A *= tl.where(b_g_diff <= 0.0, tl.exp(b_g_diff), 0.0)
 
         b_A *= b_beta[:, None].to(tl.float32)
-        m_A = (o_t[:, None] > o_t[None, :]) & (m_t[:, None] & m_t)
+        m_A = (o_t[:, None] > o_n[None, :]) & (m_t[:, None] & m_n)
         b_A = tl.where(m_A, b_A, 0.0)
 
         p_A = (
             A_ptr
-            + (bos * HV + i_h) * BT
-            + o_t[:, None] * (BT * HV)
-            + tl.arange(0, BT)[None, :]
+            + (bos * HV + i_h) * CHUNK_SIZE
+            + o_t[:, None] * (CHUNK_SIZE * HV)
+            + local_n[None, :]
         )
-        tl.store(p_A, b_A.to(A_ptr.dtype.element_ty), mask=m_t[:, None])
+        tl.store(
+            p_A,
+            b_A.to(A_ptr.dtype.element_ty),
+            mask=m_t[:, None] & (local_n < CHUNK_SIZE)[None, :],
+        )
 
 
 def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
@@ -134,14 +168,13 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     if num_heads % num_k_heads:
         raise ValueError("num_heads must be divisible by num_k_heads")
 
-    # Cap BT at 64: the [BT,BT] fp32 accumulator alone needs BT*BT*4
-    # bytes; chunk_size=256 would need 256KB > the 192KB UB budget
-    BT = min(chunk_size, 64)
+    # Tile large chunks without changing their output shape or causal window.
+    BT = min(triton.next_power_of_2(chunk_size), 64)
     BK = _ub_safe_bk(BT, k_size)
-    nchunks = seqlen // BT
+    nchunks = seqlen // chunk_size
 
     A = torch.zeros(
-        (batch, seqlen, num_heads, BT),
+        (batch, seqlen, num_heads, chunk_size),
         dtype=torch.float32,
         device=k.device,
     )
@@ -158,7 +191,7 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     g_t = g_cumsum.permute(2, 0, 1).contiguous() if use_g else beta_t
 
     bh_step = batch * num_heads
-    task_num = nchunks * bh_step
+    task_num = nchunks * bh_step * triton.cdiv(chunk_size, BT) ** 2
     _kkt_fla_kernel[(_NUM_CORE,)](
         k,
         g_t,
@@ -175,6 +208,7 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
         HV=num_heads,
         K=k_size,
         BT=BT,
+        CHUNK_SIZE=chunk_size,
         BK=BK,
         IS_VARLEN=False,
         USE_G=use_g,

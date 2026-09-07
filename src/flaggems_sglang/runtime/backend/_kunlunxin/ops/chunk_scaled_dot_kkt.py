@@ -98,10 +98,7 @@ def _kkt_gram_gemm_kernel(
         b_ptrs += BLOCK_K * k_sk
 
     gram_ptrs = (
-        gram_ptr
-        + matrix_id * M * N
-        + offs_m[:, None] * N
-        + offs_n[None, :]
+        gram_ptr + matrix_id * M * N + offs_m[:, None] * N + offs_n[None, :]
     )
     mask = (offs_m[:, None] < M) & (offs_n[None, :] < N)
     tl.store(gram_ptrs, accumulator, mask=mask)
@@ -114,11 +111,11 @@ def _kkt_epilogue_kernel(
     g_ptr,
     out_ptr,
     rows,
-    seqlen,
-    nchunks,
-    num_heads,
-    num_k_heads,
-    ratio,
+    seqlen: tl.constexpr,
+    nchunks: tl.constexpr,
+    num_heads: tl.constexpr,
+    num_k_heads: tl.constexpr,
+    ratio: tl.constexpr,
     beta_sb,
     beta_st,
     beta_sh,
@@ -130,10 +127,8 @@ def _kkt_epilogue_kernel(
     HAS_G: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
-    # E13: row-tiled epilogue - one program per output row (b, s) with
-    # the row decomposition in SCALAR math and only ONE vector division
-    # per lane (h = lane // BT; n recovered by mul-sub). The E11 flat
-    # form chained four per-lane divisions and sits at 0.048x.
+    # Specialize the shape divisors, including the per-lane GQA ratio.
+    # The row layout and exp arithmetic stay identical to E13.
     pid = tl.program_id(0)
     nprog = tl.num_programs(0)
     for r in range(pid, rows, nprog):
@@ -166,9 +161,9 @@ def _kkt_epilogue_kernel(
             result = result * beta_m
             if HAS_G:
                 g_base = g_ptr + b * g_sb + h * g_sh
-                g_m = tl.load(
-                    g_base + s * g_st, mask=lmask, other=0.0
-                ).to(tl.float32)
+                g_m = tl.load(g_base + s * g_st, mask=lmask, other=0.0).to(
+                    tl.float32
+                )
                 g_n = tl.load(
                     g_base + (c * BT + n) * g_st, mask=lmask, other=0.0
                 ).to(tl.float32)
@@ -197,14 +192,12 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
     )
     if output.numel() == 0:
         return output
-    has_g = g_cumsum is not None and g_cumsum is not beta
+    has_g = g_cumsum is not None
     if not has_g:
         g_cumsum = beta
 
     q_count = batch * nchunks * num_k_heads
-    gram = torch.empty(
-        (q_count, bt, bt), dtype=torch.float32, device=k.device
-    )
+    gram = torch.empty((q_count, bt, bt), dtype=torch.float32, device=k.device)
 
     # Stage 1: one flattened regular fp32 IEEE GEMM over all Q Gram
     # matrices, reading k's native regular strides directly.

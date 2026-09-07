@@ -89,7 +89,8 @@ def _chunk_scaled_dot_kkt_kernel(
             + k_base
             + m_global[:, None] * k_stride_seqlen
             + current_k[None, :] * k_stride_k,
-            mask=(m_offsets[:, None] < chunk_size) & (current_k[None, :] < k_size),
+            mask=(m_offsets[:, None] < chunk_size)
+            & (current_k[None, :] < k_size),
             other=0.0,
         )
         b = tl.load(
@@ -97,7 +98,8 @@ def _chunk_scaled_dot_kkt_kernel(
             + k_base
             + current_k[:, None] * k_stride_k
             + n_global[None, :] * k_stride_seqlen,
-            mask=(current_k[:, None] < k_size) & (n_offsets[None, :] < chunk_size),
+            mask=(current_k[:, None] < k_size)
+            & (n_offsets[None, :] < chunk_size),
             other=0.0,
         )
         if not USE_INPUT_DTYPE:
@@ -141,7 +143,8 @@ def _chunk_scaled_dot_kkt_kernel(
     tl.store(
         output_ptr + output_offsets,
         result,
-        mask=(m_offsets[:, None] < chunk_size) & (n_offsets[None, :] < chunk_size),
+        mask=(m_offsets[:, None] < chunk_size)
+        & (n_offsets[None, :] < chunk_size),
     )
 
 
@@ -171,7 +174,8 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
         batch,
         nchunks * num_heads,
     )
-    if g_cumsum is None:
+    has_g = g_cumsum is not None
+    if not has_g:
         g_cumsum = beta
     _chunk_scaled_dot_kkt_kernel[grid](
         k,
@@ -190,7 +194,7 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
         BLOCK_N=block_n,
         BLOCK_K=32,
         USE_INPUT_DTYPE=k.dtype in (torch.float16, torch.bfloat16),
-        HAS_G=g_cumsum is not beta,
+        HAS_G=has_g,
         num_warps=4,
         num_stages=1,
     )

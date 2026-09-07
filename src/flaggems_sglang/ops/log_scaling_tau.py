@@ -25,17 +25,21 @@ def _log_scaling_tau_kernel(
     n_cols,
     x_stride_row,
     o_stride_row,
+    tau_stride,
+    COL_BLOCKS: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
-    row = tl.program_id(0)
-    col_block = tl.program_id(1)
+    row = tl.program_id(0) // COL_BLOCKS
+    col_block = tl.program_id(0) % COL_BLOCKS
     x_stride_row = tl.cast(x_stride_row, tl.int64)
     o_stride_row = tl.cast(o_stride_row, tl.int64)
 
-    tau = tl.load(tau_ptr + row).to(tl.float32)
+    tau = tl.load(tau_ptr + row * tau_stride).to(tl.float32)
     offs = col_block * BLOCK + tl.arange(0, BLOCK)
     mask = offs < n_cols
-    x = tl.load(x_ptr + row * x_stride_row + offs, mask=mask, other=0.0).to(tl.float32)
+    x = tl.load(x_ptr + row * x_stride_row + offs, mask=mask, other=0.0).to(
+        tl.float32
+    )
     tl.store(
         out_ptr + row * o_stride_row + offs,
         (x * tau).to(out_ptr.dtype.element_ty),
@@ -44,15 +48,16 @@ def _log_scaling_tau_kernel(
 
 
 def log_scaling_tau(x, tau):
+    x = x.contiguous()
     out = torch.empty_like(x)
     rows = x.shape[0]
     if out.numel() == 0:
         return out
 
-    x = x.contiguous()
     n_cols = x.numel() // rows
     block = min(triton.next_power_of_2(max(n_cols, 1)), 1024)
-    grid = (rows, triton.cdiv(n_cols, block))
+    col_blocks = triton.cdiv(n_cols, block)
+    grid = (rows * col_blocks,)
     _log_scaling_tau_kernel[grid](
         x,
         tau,
@@ -60,6 +65,8 @@ def log_scaling_tau(x, tau):
         n_cols,
         x.stride(0),
         out.stride(0),
+        tau.stride(0),
+        COL_BLOCKS=col_blocks,
         BLOCK=block,
         num_warps=4,
         num_stages=2,

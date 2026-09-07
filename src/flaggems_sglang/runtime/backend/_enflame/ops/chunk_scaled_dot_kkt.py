@@ -62,7 +62,9 @@ def _kkt_vllmstyle_kernel(
         b_k = tl.load(p_k, boundary_check=(0, 1))
         if not USE_INPUT_DTYPE:
             b_k = b_k.to(tl.float32)
-        base_lower = tl.dot(b_k, tl.trans(b_k), input_precision="ieee") * lower_tri
+        base_lower = (
+            tl.dot(b_k, tl.trans(b_k), input_precision="ieee") * lower_tri
+        )
         for i_h_local in range(0, hpg):
             i_h = i_kg * hpg + i_h_local
             beta_base = beta_ptr + pid_b * seqlen * nheads + i_h
@@ -117,7 +119,8 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
 
     # hardcode contiguous strides: normalize non-contiguous inputs
     k = k.contiguous()
-    if g_cumsum is None:
+    has_g = g_cumsum is not None
+    if not has_g:
         g_cumsum = beta
     grid = (nchunks, batch)
     _kkt_vllmstyle_kernel[grid](
@@ -130,7 +133,7 @@ def chunk_scaled_dot_kkt(k, beta, g_cumsum=None, chunk_size=64):
         num_heads,
         hpg,
         K_POW2=triton.next_power_of_2(k_size),
-        HAS_G=g_cumsum is not beta,
+        HAS_G=has_g,
         BT=chunk_size,
         USE_INPUT_DTYPE=k.dtype in (torch.float16, torch.bfloat16),
         num_warps=4,
