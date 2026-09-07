@@ -5,12 +5,12 @@ task: 43
 operator: causal_conv1d_update
 batch: 4
 validity: valid
-platform: e16候选已验证待单次提交；team best e13 8/8 6.545875x
+platform: e16 7/8燧原复制仍编译失败；e17恢复燧原已验证形态并试昇腾tile
 team_best_stage: e13
 team_best_commit: 4fa854a376de167e76a1e5d1441c6cd82b5866d7
 team_best_speedup: 6.545875
 sealed: no
-next: E16仅常量化燧原状态复制形状；E17昇腾自适应状态tile独立筛选；目标8.14x
+next: E17昇腾STATE_BLOCK=min(64,pow2(state_len))；第二次候选门禁后单投，目标8.14x
 updated: 2026-09-07
 ```
 
@@ -423,3 +423,58 @@ IEEE `tl.dot`（只存 C[:,0]；T28/T37 昆仑通过范式）。
 - evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e16-3f48629/validation/verification.json` SHA256 `44d655d0d26d5caf75041dc6a895136a36816accc33424431b3c114e9d4ee49b`。
 - evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e16-3f48629/validation/verification.log` SHA256 `7e2fc1abd05c34920b3c11c58c7f83a6d95ac3d57b4272fb7f030b56f23b20de`。
 - 静态复核和阶段计时：`e17-screening/bench.py` 以五轮 AB/BA 测整个 wrapper；Ascend另测 kernel，GPU 无其他进程校验逐case执行。结果仅 NVIDIA 代理，不外推 GCU/NPU。
+
+
+## E16 平台终态与停止该假设（2026-09-07T18:13:46+08:00）
+
+- 正式 submission `10824`，18:12:45 提交；单次上传与单次提交完成，远端 ZIP 大小/SHA 全部匹配。终态 `completed/invalid_correctness`，7/8通过，无有效平均分。额度快照10/30；今晚T43两次计划已用1次。
+- 燧原五个case仍全部在 `_ccu_state_copy_kernel` 的 GCU `make_gcuir -> Pipeline.run` 报 PassManager execution failed；常量化除数没有修复，本假设停止。下一候选恢复E13已验证燧原实现；后续需目标GCU复现和简化IR，不能以代理性能重投相同失败。
+
+| 芯片 | 正确性 | 加速比 |
+| --- | --- | ---: |
+| tianshu | True | 13.667 |
+| muxi | True | 6.994 |
+| enflame | False | 无 |
+| haiguang | True | 10.935 |
+| kunlunxin | True | 0.4075 |
+| huawei | True | 0.3775 |
+| card_a | True | 8.8665 |
+| card_b | True | 10.443 |
+
+- E16 华为0.3775，E15同字节0.484；旧记录把+41%直接归因微优化的证据不足，存在跨次性能波动。E17用AB/BA代理计时筛选，最终仍以全芯正式平均判晋级。
+- 证据 `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e16-3f48629/validation/43-preflight.json` SHA256 `59e36fb18dbe75052e87e263a4aef780a4acc3a1e741097e5d0160ec50ef9028`。
+- 证据 `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e16-3f48629/validation/43-submit.json` SHA256 `bf71897441e2ed4fcc589c7dd9100cef82cce8f1bea303697ccb4dc3c06a5f1c`。
+- 证据 `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e16-3f48629/validation/43-status-final.json` SHA256 `85b60096c54e92b90d0dee3de3f47013be819b9f2cb775406734739b8528330c`。
+
+## E17 昇腾状态复制 tile 筛选与预注册（2026-09-07）
+
+- 根因假设：原先每个program无论实际state_len多短，都构造 `[64,256]` 状态复制tile；短状态绝大部分被mask但仍施加资源压力。只将状态轴改为 `STATE_BLOCK=min(64,next_power_of_2(max(state_len,1)))`；卷积归约、wrapper、block/grid和输入契约不变。L>=64仍64分块。
+- `8e50aec` 初始候选代理release11/11，但携带E16失败燧原，**不打包/不提交**。`88681d6` 恢复E13燧原；`6f55b2d01b0a38cf59a51a7f8a169c46f0ee1459` 仅追加Black要求折行，AST与E13相等，最终以此源码重新完整release。
+- NVIDIA RTX5070Ti，torch2.13.0+cu130、Triton3.7.1；五组AB/BA顺序配对，完整wrapper和独立kernel分别计时；每case前后检查无其他GPU进程。固定随机种子，输出对reference校验且new_state精确。新增状态边界回归也覆盖非连续输入、不修改输入、输出不别名。
+
+| B,D,S,L | bf16 wrapper加速 | fp32 wrapper加速 |
+| --- | ---: | ---: |
+| 1,128,1,3 | 2.159x | 7.295x |
+| 32,2048,1,3 | 11.523x | 34.664x |
+| 64,4096,1,3 | 26.974x | 79.808x |
+| 8,2048,4,3 | 3.048x | 4.981x |
+| 2,4096,16,3 | 1.772x | 1.769x |
+| 2,17,2,64 | 1.000x | 1.000x |
+
+- 上表仅NVIDIA代理；短L的spills从648（bf16）、588–924（fp32）降为0；L64控制组1.0x。**不外推昇腾倍数或榜单分数**。晋级门：八芯正确且每芯>=0.1，平均>6.545875才保留；同轴失败或不改善则停止，不追加第三次。
+- screening `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e17-screening/bench.py` SHA256 `5b6ac5a635f742e7344539f8419c57b45aa091a99630eaa5e6cb94bb71a687b8`。
+- screening `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e17-screening/bench.log` SHA256 `e43e2a8abc9c456e4a24f1865a2ae3a3dad1d69f1d31f9a0fd0fda9e61f8a0a1`。
+- KernelGen sunrise job `3aa1da47-a9e9-4e0e-b073-f22a4635fcc7` 与 huawei job `6233b233-34d5-4544-816e-c16c5bd864cb` 均在目标verify接口504，total_tests=0；均为服务生成代码、非固定源码验签，不作为本地候选失败或通过证据。原始请求/响应/返回源码归档在e16-research及e17-screening。
+
+### E17 最终发布绑定
+
+- source/verification commit `6f55b2d01b0a38cf59a51a7f8a169c46f0ee1459`；py_compile、Black/isort/flake8通过；11方法全过，0fail/error/skip/xfail，四个源码全部实际执行。remote `/tmp/flagos-t43-top1.LOFr42/e17-sealed-release`，timeout600后台release。代理仍不能证明目标芯性能。
+- ZIP `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e17-6f55b2d/causal_conv1d_update.zip`，22828 bytes，SHA256 `66e6bd77b124cbf564dcf9ae24aaa7f32b54b33d5cbd213e6bda66d233394307`；dry-run与final commit、成员与SHA一致。
+- member `causal_conv1d_update.py` ← `src/flaggems_sglang/ops/causal_conv1d_update.py` SHA256 `93fac21875b4509390b0f17e10144d6b60a40e015f782a47c9424dbb39c78cee`。
+- member `causal_conv1d_update_ascend.py` ← `src/flaggems_sglang/runtime/backend/_ascend/ops/causal_conv1d_update.py` SHA256 `48d632005cad759317891809fdaa58a9bc08fefb5e3634d2461b986747135257`。
+- member `causal_conv1d_update_enflame.py` ← `src/flaggems_sglang/runtime/backend/_enflame/ops/causal_conv1d_update.py` SHA256 `508bb9f4f4d2c2552fb838120c8ff8d90b783ca648e384989d05d668fafd6e5d`。
+- member `causal_conv1d_update_kunlunxin.py` ← `src/flaggems_sglang/runtime/backend/_kunlunxin/ops/causal_conv1d_update.py` SHA256 `8086def1f50ec326ab7634010b62edcf950e6e78f52995d8bde74320098d3f20`。
+- test SHA256 `f212ec7e780587a305bfbf79224d5211282e33a48571cc3ecd7cf5cc45d867a3`。
+- evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e17-6f55b2d/validation/verification-input.json` SHA256 `2ccc6701394ddf6433b1fec54c66e313511c5f3c646f4c9aa6c26abaf51a72d7`。
+- evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e17-6f55b2d/validation/verification.json` SHA256 `46c871459468b007cf845e191aa2571f94e79ed032c138317971d0edc50b19e2`。
+- evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e17-6f55b2d/validation/verification.log` SHA256 `e4ced4f870ec2177fa68e9cb634ae319f694b3756a113dd9502ad9a111ff9f24`。

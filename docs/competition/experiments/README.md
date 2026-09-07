@@ -973,4 +973,4 @@ ABBA→④内置验证在出现 hash/manifest 背书前一律不信;服务端修
 
 ## T43 Top1 第二轮（2026-09-07）
 
-[T43 账本](causal_conv1d_update.md)：E16 `3f48629` 修燧原 state-copy 参数常量化，纠正 E15 generic 实为 E14 的基线记录；11方法四源码代理release通过，候选待单次平台提交。E17昇腾状态tile独立筛选；当前有效最佳仍E13 6.545875x。实时终态以 CURRENT/INDEX 为准。
+[T43 账本](causal_conv1d_update.md)：E16 `10824` 终态7/8，燧原状态复制常量化未解决GCU编译失败，该假设停止。E17恢复已验证燧原形态，仅推进有AB/BA代理证据的昇腾短状态tile；当前有效最佳仍E13 6.545875x。今晚两次已用1次，18:13额度10/30。实时终态以 CURRENT/INDEX 为准。
