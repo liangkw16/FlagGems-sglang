@@ -10,7 +10,7 @@ team_best_stage: e13
 team_best_commit: 4fa854a376de167e76a1e5d1441c6cd82b5866d7
 team_best_speedup: 6.545875
 sealed: no
-next: 保持有效解;后续只按全芯均值收益排序,勿重试旧昆仑gather/GEMM轴
+next: e14已完成发布验证和不可变ZIP;实时preflight后首投,按全芯均值判定
 updated: 2026-09-07
 ```
 
@@ -309,3 +309,26 @@ IEEE `tl.dot`（只存 C[:,0]；T28/T37 昆仑通过范式）。
 - 平台实时题面接口确认 **my_rank=3**，my_best_speedup=6.545875；榜首AttentionImOnly2YearsOld 7.90325。PR34结构移植本次在昆仑过线：0.407x，燧原0.326x。只证明本候选和本题，不能把通道连续布局的收益泛化到所有算子。
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e13-4fa854a/validation/43-submit.json` SHA256 `dca04eaf49ae65b63e884cd85e4fcc3170cea9eabcadf89b4ff1cf7889a5896d`。
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e13-4fa854a/validation/43-status-now.json` SHA256 `a4cf5fc666a491c9950850e84a908bf6cdaf2b67316d22eea489c8a9cee21001`。
+
+## E14 Top1 冲刺候选（2026-09-07，提交前）
+
+多步卷积 `seqlen>1` 的 generic channel tile 从 256 改 128，单步仍 256；厂商文件不变。保持状态更新、累加和激活顺序。最终源码字节已与纯 wrapper 五轮交错 A/B 基准匹配。
+
+代理端 `(B,D,S)`：`(4,1024,3)`、`(2,4096,16)` 为旧版的 1.50x；`(32,4096,4)` 1.00x；三个单步对照 0.985–1.00x。编译产物显示多步 tile 的 shared memory 512→0、寄存器 48→37。早期 constexpr dims/seqlen/state_len 方案在单步大 batch 回退至 0.753x，已丢弃；1 warp 方案也未采用。
+
+预注册：本轴首投一次探测全芯实际收益；目标是超过 team best 6.545875，冲榜目标按当时榜首 7.90325×1.03≈8.14035。未接近均值目标则不因单 case 1.5x 盲目重复调参。
+
+- source/verification commit：`5cce466f70090896819a3fb8f4abd93221faa14c`；ledger commit 为本节所属提交。
+- 本地 py_compile、Black、isort、flake8 通过。NVIDIA release：10 方法、69 次 kernel launch，fail/error/skip/xfail 均为0。执行源：`src/flaggems_sglang/ops/causal_conv1d_update.py`。
+- 测试源码 SHA256：`efad97ced382855e86dba4958362bdaf88a5be3c99fe12b04b1ddff329a48c7f`；各输入文件 SHA 见 verification-input.json。
+- 远端 `gpu:/tmp/flagos-b4-top1.8nsvBC/t43-release`，RTX5070Ti / driver610.57.04 / Python3.12.13 / torch2.13.0+cu130 / triton3.7.1。串行后台执行：`timeout 600 /home/kevin/notebook/.venv/bin/python .agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/flagos-b4-top1.8nsvBC/t43-release`。
+- ZIP `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e14-5cce466/causal_conv1d_update.zip`，22363 bytes，SHA256 `120876dee438b4c3d37c84d2cbaea26196164ebd5094fa0f70eccad7d19d39bc`；dry-run 与最终 manifest 五项恒等字段全部匹配。
+- ZIP member `causal_conv1d_update.py` SHA256 `ffa794b7cd13e604eef0c38fc897520eefaa63e1745c0cf3148ee00c6e67f464`。
+- ZIP member `causal_conv1d_update_ascend.py` SHA256 `85cc6109f376ab786ca0a15cce634736617f60e625c5baa9d613c810eef38165`。
+- ZIP member `causal_conv1d_update_enflame.py` SHA256 `57d4825f20b864d1722f8760a8707d0be5e90e5f12038a8fd05809f7f38d43d8`。
+- ZIP member `causal_conv1d_update_kunlunxin.py` SHA256 `8086def1f50ec326ab7634010b62edcf950e6e78f52995d8bde74320098d3f20`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e14-5cce466/validation/verification.json` SHA256 `cebc75997528c24cfe212358988d827a24a0d39cda84306ab27429d3344c305b`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e14-5cce466/validation/verification.log` SHA256 `de83969cff940fd8b737decbbb998bc7591571b425c0e7e1c3ab58ddf42d0a17`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e14-5cce466/validation/verification-input.json` SHA256 `7b5afa43b903ba8fff7b87d33abb43e5f8212646f61469c878526d0d42a767be`。
+- 附加基准、诊断及 MCP 证据清单 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e14-5cce466/validation/evidence-sha256.json` SHA256 `b5ab669b6c45cfbcc0d1818f45f05c5aa3006459c28f0f0019cbe057f5a6cc52`。
+- 首轮每题最多1次正式上传/提交；本次预算上限沿用批准的 T43/T51/T52 各4、T57 3、储备6，须有新证据才继续消耗。sending/uncertain/stale_after_upload 不自动重试。

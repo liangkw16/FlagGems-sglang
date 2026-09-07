@@ -23,7 +23,7 @@
 | 40 | softcap_inplace_logits | valid | 8/8(e8,2.195604x,rank1) | e8 2.195604x | yes | 额度用尽收官;e16 华为字节(1.70)+TB 2.1956 #2;榜首 c2flow 2.2593 华为 3.40 未破译 | 2026-09-03 | [softcap_inplace_logits](softcap_inplace_logits.md) |
 | 41 | state_passing | invalid | E7 sub8079 system_failed;7 pass,Kunlun 0.0065x,Enflame unrun | E5 diagnostic | yes | 本轮收盘;只保留平台工单与全新结构研究 | 2026-09-02 | [state_passing](state_passing.md) |
 | 42 | act_and_mul | valid | 8/8(e2,3.248925x) | e6 3.25835x | no | M1载体成TB(3.25835,10344);三候选全消费;守榜,距旧榜首3.5194差-7.4%无新轴 | 2026-09-06 | [act_and_mul](act_and_mul.md) |
-| 43 | causal_conv1d_update | valid | 8/8(e13,6.545875x,排名3;昆仑首次0.407x) | e13 6.545875x | no | 保持有效解;后续只按全芯均值收益排序,勿重试旧昆仑gather/GEMM轴 | 2026-09-07 | [causal_conv1d_update](causal_conv1d_update.md) |
+| 43 | causal_conv1d_update | valid | 8/8(e13,6.545875x,排名3;昆仑首次0.407x) | e13 6.545875x | no | e14已完成发布验证和不可变ZIP;实时preflight后首投,按全芯均值判定 | 2026-09-07 | [causal_conv1d_update](causal_conv1d_update.md) |
 | 44 | chain_speculative_sampling | invalid | s0八芯predicts失败;本轮修复OOB但half精确采样仍失败,未重投 | s0 -x | no | 对齐各后端reference扫描/舍入;保留已知half失败,禁止带缺口提交 | 2026-09-07 | [chain_speculative_sampling](chain_speculative_sampling.md) |
 | 45 | chunk_scaled_dot_kkt | invalid_threshold | 8/8正确(e15),昆仑0.063x<0.1;平均7.000125不计有效排名 | - -x | no | constexpr除数平台无收益;停止该轴;保留契约修复,需新的epilogue结构证据 | 2026-09-07 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x) | e3 14.1051875x | no | e6天数预路由水位带内无法归因,轴关闭;维持E3守榜(14.105x);后续按逐芯晋级纪律择机 | 2026-09-06 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
@@ -31,13 +31,13 @@
 | 48 | chunked_sgmv_shrink | valid | 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor) | e6 4.7198125x | no | e4七芯+1.5%未过15%门,保留e6;自适应BLOCK_S轴关闭;冲分回到预注册vendor轴(燧原dot模板/天数dtype/昆仑BLOCK) | 2026-09-07 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
 | 49 | ernie45_rope_fused | valid | 8/8(e3,8.58253125x) | e3 8.58253125x | no | e3昆仑0.664x击穿uni_sram墙,8/8 VALID(第9个,is_team_best);榜单:达标4队(含我队),榜首c2flow 15.6064x(差45%);可选轴:昆仑BLOCK_HEADS与A芯21.1x | 2026-09-07 | [ernie45_rope_fused](ernie45_rope_fused.md) |
 | 50 | extend_attention | candidate-wip | 6/8(e4,昆仑conclusive封轴;华为数值不可修;燧原0.013x<门槛) | - -x | no | 华为深层数值问题(online+two-pass均败);5/8已是208发1队过线题的好成绩;冲分优先 | 2026-09-05 | [extend_attention](extend_attention.md) |
-| 51 | fla_layernorm_gated | valid | 8/8(e1,5.390025x) | e1 5.390025x | no | e3华为constexpr-D仅+3.7%证伪关闭;昆仑0.97已修;剩沐曦rsqrt;燧原病态在评 | 2026-09-06 | [fla_layernorm_gated](fla_layernorm_gated.md) |
-| 52 | fused_dual_residual_rmsnorm | invalid | 6/8(e5,五种数学形态同指纹边界失配;已分诊) | - -x | yes | 封存6/8;仅sqrt_rn+div_rn或torch归约树复刻等全新结构证据可重开 | 2026-09-06 | [fused_dual_residual_rmsnorm](fused_dual_residual_rmsnorm.md) |
+| 51 | fla_layernorm_gated | valid | 8/8(e2,5.3939x,排名6);e3燧原超时7/8 | e2 5.3939x | no | e4已完成发布验证和不可变ZIP;实时preflight后首投,按全芯均值判定 | 2026-09-07 | [fla_layernorm_gated](fla_layernorm_gated.md) |
+| 52 | fused_dual_residual_rmsnorm | invalid | 6/8(e5,五种数学形态同指纹边界失配;已分诊) | - -x | no | e6已完成发布验证和不可变ZIP;实时preflight后首投,按全芯均值判定 | 2026-09-07 | [fused_dual_residual_rmsnorm](fused_dual_residual_rmsnorm.md) |
 | 53 | fused_gdn_gating | valid | 8/8(e4,2.1267x) | e4 2.1267x | no | e4沐曦2.7402x(+104%,过门,is_team_best);榜单:达标10队,榜首EvokeAgent 4.3306x(差51%);后续轴:generic二代[ROWS_TILE,H] | 2026-09-07 | [fused_gdn_gating](fused_gdn_gating.md) |
 | 54 | fused_norm_rope_stacked | pending | 5/8(e2) | e1 0x | no | 当日额度耗尽;e2=5/8(行式vendor未修复三芯);代理fuzz仅覆盖已测输入;固定源码复现并定位首个分歧 | 2026-09-06 | [fused_norm_rope_stacked](fused_norm_rope_stacked.md) |
 | 55 | hc_head | invalid_correctness | 7/8(e1,昆仑=评测器崩溃族第2次;七芯总分+40%) | - 0x | no | 昆仑对该题reference确定性崩溃(s0/e1同指纹,同日昆仑评过T48/T49/T53/T56);等平台窗口同字节重试;燧原0.30x仍弱 | 2026-09-07 | [hc_head](hc_head.md) |
 | 56 | l2norm | valid | 8/8(e1,3.10772917x) | e1 3.10772917x | no | e1修复版8/8复验通过(3.1077x,s0同水位,is_team_best);榜单:达标11队,榜首Warmhearted 4.2591x(差27%);后续可试短行num_warps=1/2与多行tile | 2026-09-07 | [l2norm](l2norm.md) |
-| 57 | log_scaling_tau | pending | e1提交10704;7/8通过,燧原0.54675x已修复;昆仑waiting_callback | - -x | no | 仅查10704昆仑回调,不得重复上传;最终有效性待八芯终态 | 2026-09-07 | [log_scaling_tau](log_scaling_tau.md) |
+| 57 | log_scaling_tau | invalid | 7/8(e1,10704);昆仑error299已终态 | - -x | no | e2已完成发布验证和不可变ZIP;实时preflight后首投,按全芯均值判定 | 2026-09-07 | [log_scaling_tau](log_scaling_tau.md) |
 | 58 | w8a8_block_int8_matmul | valid | 8/8(e1,118.15512x) | e1 118.15512x | no | 冲分轴:燧原4.48x/B7.68x;榜首209.3x差43%;skill沉淀昆仑向量整除崩溃教训 | 2026-09-06 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

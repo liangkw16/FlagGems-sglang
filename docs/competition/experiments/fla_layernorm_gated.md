@@ -5,12 +5,13 @@ task: 51
 operator: fla_layernorm_gated
 batch: 4
 validity: valid
-platform: 8/8(e1,5.390025x)
-team_best_stage: e1
-team_best_speedup: 5.390025
+platform: 8/8(e2,5.3939x,排名6);e3燧原超时7/8
+team_best_stage: e2
+team_best_speedup: 5.3939
 sealed: no
-next: e3华为constexpr-D仅+3.7%证伪关闭;昆仑0.97已修;剩沐曦rsqrt;燧原病态在评
-updated: 2026-09-06
+next: e4已完成发布验证和不可变ZIP;实时preflight后首投,按全芯均值判定
+updated: 2026-09-07
+team_best_commit: 5985b1ce09fe6e7cec374c271aa1c25940264783
 ```
 
 ## S0（2026-09-05，submission 9867）
@@ -51,3 +52,28 @@ LayerNorm 勿改 `E[x²]-E[x]²` 单遍（大均值小方差消减误差，fp32 
 - 燧原（非目标芯）卡病态盒子 waiting_callback；无论燧原落点，
   估算均值 ≤5.38 < e1 TB 5.39——非 team best
 - 判定：constexpr-D 轴关闭；T51 剩余轴：沐曦 rsqrt（预注册 #2）
+
+## E4 Top1 冲刺候选（2026-09-07，提交前）
+
+先校正旧记录：2026-09-07 只读查询确认 E2/submission10276 才是 team best 5.3939（source 5985b1ce09fe6e7cec374c271aa1c25940264783），高于 E1 5.390025；旧节“未超 E1”是过期表述。E3/submission10385 已终态 7/8 invalid_correctness，燧原 1830s 超时，不能继续写在评。
+
+参考 GitHub PR50 的多行 tile 调度，针对本题非分组 RMS/LayerNorm 契约适配：仅 `rows>=128 and dim<=1024` 使用 BLOCK_R=4，其余1；列归约改 axis=1，权重/偏置保留列 mask，原数学运算顺序不变。测试新增行数 127/128/129 等 tile 边界、列127/128/129与1023/1024/1025、三dtype、两种norm/gate和stride。
+
+五轮交错代理 A/B：`[4096,128]` 1.50x；`[4096,256/512/1024]` 1.008/1.003/1.001x；`[4096,8192]` 1.00x；阈值边界约0.995–1.008x。早期 rows>=8 导致 `[32,512]` 0.697x，已缩小条件并复测；单独 rsqrt 仅≈1.016x，未采用。
+
+预注册：一次平台探索检验隐藏 case 是否受益；目标超过 5.3939，冲榜需当时榜首6.668225×1.03≈6.86827。只有一个代理 case 明显获益，不承诺总体收益；无均值提升则关闭多行阈值轴。
+
+- source/verification commit：`5544a77d406e1f22e735f6cba2bd4ead8f80d4f8`；ledger commit 为本节所属提交。
+- 本地 py_compile、Black、isort、flake8 通过。NVIDIA release：7 方法、83 次 kernel launch，fail/error/skip/xfail 均为0。执行源：`src/flaggems_sglang/ops/fla_layernorm_gated.py`。
+- 测试源码 SHA256：`dc8e1281482839cecd2d225f89265caf1493803df135ab608516fb7f6959e0eb`；各输入文件 SHA 见 verification-input.json。
+- 远端 `gpu:/tmp/flagos-b4-top1.8nsvBC/t51-release`，RTX5070Ti / driver610.57.04 / Python3.12.13 / torch2.13.0+cu130 / triton3.7.1。串行后台执行：`timeout 600 /home/kevin/notebook/.venv/bin/python .agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/flagos-b4-top1.8nsvBC/t51-release`。
+- ZIP `/Users/bytedance/ccc/flagos/artifacts/competition/fla_layernorm_gated/e4-5544a77/fla_layernorm_gated.zip`，14982 bytes，SHA256 `05e9e495d68e068cfd3f0aa764d8af84fbed86d47a68a7108d26ef7def8350e7`；dry-run 与最终 manifest 五项恒等字段全部匹配。
+- ZIP member `fla_layernorm_gated.py` SHA256 `e1aa34a0f3d851473998a2848175b0539ee9be681b2c4d753f06a922efdf309e`。
+- ZIP member `fla_layernorm_gated_ascend.py` SHA256 `92baf6f3a08d4675cee828d451250be42a8b977d3f889eb59ca8c582654fb0c4`。
+- ZIP member `fla_layernorm_gated_enflame.py` SHA256 `7be3674559520a8f77d34208580761b4d98cd4eb8ff414ea6a6f74ca7a39bae8`。
+- ZIP member `fla_layernorm_gated_kunlunxin.py` SHA256 `66e08be2b4d870028f63ddceb89dd6e6b66ed79ad333e29757ad901332b1ebdd`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fla_layernorm_gated/e4-5544a77/validation/verification.json` SHA256 `08476719b7cc4736e179bc9c16b593ef882d8dd8478911796fd3f1acfcb64795`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fla_layernorm_gated/e4-5544a77/validation/verification.log` SHA256 `7ea153e1e09fb8aee45357ec6ce7d39ac4685117954d2e3ec5c744f6107fcbf1`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fla_layernorm_gated/e4-5544a77/validation/verification-input.json` SHA256 `35c1b19af362fe9b0a0d91adf37f10e3f48bee314fa975b1a0000c3e2632aa7f`。
+- 附加基准、诊断及 MCP 证据清单 `/Users/bytedance/ccc/flagos/artifacts/competition/fla_layernorm_gated/e4-5544a77/validation/evidence-sha256.json` SHA256 `45a1aa10a777047186b2409b759228b4cfa61b990190f56dfcffcb84d7ee251c`。
+- 首轮每题最多1次正式上传/提交；本次预算上限沿用批准的 T43/T51/T52 各4、T57 3、储备6，须有新证据才继续消耗。sending/uncertain/stale_after_upload 不自动重试。

@@ -8,9 +8,9 @@ validity: invalid
 platform: 6/8(e5,五种数学形态同指纹边界失配;已分诊)
 team_best_stage: -
 team_best_speedup: -
-sealed: yes
-next: 封存6/8;仅sqrt_rn+div_rn或torch归约树复刻等全新结构证据可重开
-updated: 2026-09-06
+sealed: no
+next: e6已完成发布验证和不可变ZIP;实时preflight后首投,按全芯均值判定
+updated: 2026-09-07
 ```
 
 ## S0（reciprocal: v*(1/rms)*w）: 5/8
@@ -65,3 +65,28 @@ T19 fused_rmsnorm 同平台用 tl.rsqrt 在燧原/昆仑均通过（最强直接
   双 norm + residual 链；疑燧原/昆仑 torch 的 bf16 add/mid 舍入路径
   差异，无目标芯探测通道）。**T52 按 E5 预注册止损封存 6/8**；仅
   `sqrt_rn+div_rn`、torch 归约树复刻等全新结构证据可重开。额度 29/30
+
+## E6 Top1 冲刺候选（2026-09-07，提交前）
+
+T52 以新的可复现数值证据重开。generic 和 enflame/kunlunxin 两 vendor 的两次归一化均使用 `tl.sqrt_rn` + `tl.div_rn`，AMD reciprocal 字节保留。此前 plain `/`、rsqrt、仅 div_rn、物化中间值的失败不作为本次通过证明。
+
+NVIDIA seed42、BF16 `[4096,8192]` 在 `(689,410)` 的第一层均方：旧 1.0039855241775513/reference 1.0039856433868408；rms 1.0019956827163696/1.0019958019256592；y1 舍入前 2.507812738418579/2.507812261581421，BF16 变成 2.515625/2.5。加 residual -2.53125 后 mid 为 -0.015625/-0.03125，最终 out 为 -0.0311279296875/-0.062255859375。诊断 kernel 与原 kernel 在三个 seed 的 mid/out 逐位一致。RN 写法修复 seed0/7/42；仅禁用 FMA 仍失败 seed42。新增大 BF16 回归保留在正式测试中。这是代理机根因证据，不能断言目标两芯根因相同。
+
+目标芯探索：昆仑 KernelGen 返回 502/All backends failed；燧原 job f4a4aeb5-9800-4b32-b2a3-54d2d592d723 测试 0，报 `NameError: torch is not defined`，生成的 plain sqrt/div + mid 重载方案未采用。目标运行时仍未验证。
+
+预注册：本轴首投一次，八芯正确且各芯≥0.1 才能计有效分。以六个旧过芯分数不变推算，剩两芯合计需 >0.98373333 才超当时榜首 5.425125，需≥2.28576333 才有 3% 余量；实际以本次八芯结果为准。
+
+- source/verification commit：`b290b6a34e368a37b5c37351a4fd3cedb0c8e2a1`；ledger commit 为本节所属提交。
+- 本地 py_compile、Black、isort、flake8 通过。NVIDIA release：6 方法、26 次 kernel launch，fail/error/skip/xfail 均为0。执行源：`src/flaggems_sglang/ops/fused_dual_residual_rmsnorm.py`, `src/flaggems_sglang/runtime/backend/_enflame/ops/fused_dual_residual_rmsnorm.py`, `src/flaggems_sglang/runtime/backend/_kunlunxin/ops/fused_dual_residual_rmsnorm.py`。
+- 测试源码 SHA256：`54b9d711532f224970ae7ab7874b9e0d3aeedbeeb25f3a31da30c04c108c43f1`；各输入文件 SHA 见 verification-input.json。
+- 远端 `gpu:/tmp/flagos-b4-top1.8nsvBC/t52-release`，RTX5070Ti / driver610.57.04 / Python3.12.13 / torch2.13.0+cu130 / triton3.7.1。串行后台执行：`timeout 600 /home/kevin/notebook/.venv/bin/python .agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/flagos-b4-top1.8nsvBC/t52-release`。
+- ZIP `/Users/bytedance/ccc/flagos/artifacts/competition/fused_dual_residual_rmsnorm/e6-b290b6a/fused_dual_residual_rmsnorm.zip`，12615 bytes，SHA256 `735a8efd32f70ca87e61c705bed89854f0a9bc8a0f9f8a517f0fd533cfb6d795`；dry-run 与最终 manifest 五项恒等字段全部匹配。
+- ZIP member `fused_dual_residual_rmsnorm.py` SHA256 `692a5a1769b9bb4bc7a2c018a8c0ac16e73e26b7d2f46827df5bc5cc123427be`。
+- ZIP member `fused_dual_residual_rmsnorm_amd.py` SHA256 `f254c779bd3200671f94645929a5a1040c8f85888cca329143fb203f6bc1b832`。
+- ZIP member `fused_dual_residual_rmsnorm_enflame.py` SHA256 `1e1582905c142c7578321f610e3c8233f3a138f36d8c3ab626b4f81fb1b5dc78`。
+- ZIP member `fused_dual_residual_rmsnorm_kunlunxin.py` SHA256 `257947698a394cbb541dea5f57c0cd8b3aac400cd86b28190b505de60003a287`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fused_dual_residual_rmsnorm/e6-b290b6a/validation/verification.json` SHA256 `5b1463670b31f82d405c9b14a4769e30cbbd8c70acbb92b92c564cf1d9e3530e`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fused_dual_residual_rmsnorm/e6-b290b6a/validation/verification.log` SHA256 `7e1d2ea4da5770779de8149601242eb0b329ae7d2c9b78a8773793de7a98f0ac`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/fused_dual_residual_rmsnorm/e6-b290b6a/validation/verification-input.json` SHA256 `6a1a8de77d358d0b86c1136b7dce7438f50dff8022b54575c241f9c2243cb6cd`。
+- 附加基准、诊断及 MCP 证据清单 `/Users/bytedance/ccc/flagos/artifacts/competition/fused_dual_residual_rmsnorm/e6-b290b6a/validation/evidence-sha256.json` SHA256 `fb67922ae0f359c12fe7f6bb2952eb9a361a4209bf45be43670f51249083bf26`。
+- 首轮每题最多1次正式上传/提交；本次预算上限沿用批准的 T43/T51/T52 各4、T57 3、储备6，须有新证据才继续消耗。sending/uncertain/stale_after_upload 不自动重试。

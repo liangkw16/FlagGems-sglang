@@ -954,3 +954,16 @@ ABBA→④内置验证在出现 hash/manifest 背书前一律不信;服务端修
 - 2026-09-07 T43：e13 `4fa854a` 以PR34通道连续布局替换昆仑gather/GEMM，screening及release10/10通过，待一次平台验证；E12燧原最终超时，实际6/8。
 
 - 2026-09-07 无有效分优先尝试：T43 e13正式**8/8有效6.545875x，排名3**；T45 e15八芯正确但昆仑0.063x仍无效；T57 e1燧原0.54675x通过，7/8等待昆仑回调；T44 OOB修复经memcheck 130→0，half门禁仍失败，未重投。本轮正式提交3次，12:29快照额度21/30。
+
+## 第四批 Top1 冲刺首轮（2026-09-07）
+
+本轮保护 T47，首投顺序 T52→T43→T51→T57。当前状态仍以 CURRENT/INDEX 为准。
+
+| Task | 候选账本 | 首轮证据与目标 |
+| ---: | --- | --- |
+| 52 | [e6](fused_dual_residual_rmsnorm.md) | RN 修复代理大BF16边界回归，6方法26launch；先争八芯有效再比较榜首 |
+| 43 | [e14](causal_conv1d_update.md) | 多步channel tile128，两个代理case1.5x；10方法69launch |
+| 51 | [e4](fla_layernorm_gated.md) | 大batch短行多行tile，一个代理case1.5x；7方法83launch |
+| 57 | [e2](log_scaling_tau.md) | 隔离昆仑二维grid并保留stride修复；4方法36launch |
+
+按9月7日14:13快照剩21/30，非永久额度。首轮只用4次；后续逐题必须有实际全芯收益或明确新失败证据再晋级。
