@@ -946,3 +946,5 @@ ABBA→④内置验证在出现 hash/manifest 背书前一律不信;服务端修
 - 最终 GPU release：13 算子、96 tests、615 条 test/subTest 记录通过，零 skip/xfail；真实 ZIP/回执的本地模拟 preflight→submit、篡改拒绝、重复提交拒绝均通过。
 - KernelGen NVIDIA/Huawei 的 generate 与显式测试 autotune 均完成，但四份终态 tests=0；未计为目标芯正确性通过。两份返回源码另在 GPU 完成 42 项独立回归。
 - 流程实测还修复了 runner 把 PyTorch 虚拟 `_ops.py` 误判为源码依赖的问题。完整身份、命令、哈希与限制见 [流程实测](../workflow-validation-20260906.md)。
+
+- 2026-09-07 T57：e1 `ee551b5` 修复非连续 x/tau 和 1D 调度，release 4/4，通过待提交；S0 已终态燧原超时。当前状态以算子 CURRENT/INDEX 为准。

@@ -37,7 +37,7 @@
 | 54 | fused_norm_rope_stacked | pending | 5/8(e2) | e1 0x | no | 当日额度耗尽;e2=5/8(行式vendor未修复三芯);代理fuzz仅覆盖已测输入;固定源码复现并定位首个分歧 | 2026-09-06 | [fused_norm_rope_stacked](fused_norm_rope_stacked.md) |
 | 55 | hc_head | invalid_correctness | 7/8(e1,昆仑=评测器崩溃族第2次;七芯总分+40%) | - 0x | no | 昆仑对该题reference确定性崩溃(s0/e1同指纹,同日昆仑评过T48/T49/T53/T56);等平台窗口同字节重试;燧原0.30x仍弱 | 2026-09-07 | [hc_head](hc_head.md) |
 | 56 | l2norm | valid | 8/8(e1,3.10772917x) | e1 3.10772917x | no | e1修复版8/8复验通过(3.1077x,s0同水位,is_team_best);榜单:达标11队,榜首Warmhearted 4.2591x(差27%);后续可试短行num_warps=1/2与多行tile | 2026-09-07 | [l2norm](l2norm.md) |
-| 57 | log_scaling_tau | pending | 7/8(s0,燧原pending) | s0 0x | no | 燧原pending;昆仑0.47/华为0.53偏弱;榜首2.82x | 2026-09-06 | [log_scaling_tau](log_scaling_tau.md) |
+| 57 | log_scaling_tau | invalid | s0终态7/8;燧原1830s运行态超时;e1发布验证通过待提交 | - -x | no | e1修复strides并flatten调度;提交后确认燧原及八芯0.1门槛 | 2026-09-07 | [log_scaling_tau](log_scaling_tau.md) |
 | 58 | w8a8_block_int8_matmul | valid | 8/8(e1,118.15512x) | e1 118.15512x | no | 冲分轴:燧原4.48x/B7.68x;榜首209.3x差43%;skill沉淀昆仑向量整除崩溃教训 | 2026-09-06 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md
