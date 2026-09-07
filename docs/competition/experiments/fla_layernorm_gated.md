@@ -201,3 +201,33 @@ wrapper 对 strided weight/bias 先 `.contiguous()`（commit `445d3eb`；kernel 
   `41857c1b1bdef06f88b24a3887679f54c3b114e8db1bbc50b78685fce1846e6b`。
 - 下一发（E6）：generic warps 按 BLOCK_D 分档（≥2048 用 8，45 桶扫描代理
   +10.9%）+ 新增 `_metax` vendor 冻结 E2 字节隔离沐曦；多行轴维持关闭。
+
+## E6 generic warps 分档 + 沐曦 metax-pin（2026-09-07，Top1 冲刺第 2 发，提交前）
+
+假设：BLOCK_D≥2048 时 warps 4→8 提升 generic 强芯——45 桶调度扫描（2026-09-07
+并行会话，RTX5070Ti）唯一显著轴：受影响桶均值 +10.9%、峰值 +36.5%
+（bf16/1024 行/4096 维）；多行与 grid 封顶均 marginal，维持关闭。
+
+单变量与隔离：generic 仅 wrapper 层 warps 分档（kernel 函数字节不变，
+`num_warps=8 if block_d >= 2048 else 4`）；**新增 `_metax` vendor = E2 generic
+冻结字节**（固定 warps=4），把沐曦钉在已验证路径、隔离 generic 变化对沐曦的
+不可外推风险（E4 教训）；ascend/enflame/kunlunxin 冻结 E5 字节。爆炸半径收敛为
+天数/海光/A/B 四强芯（历史同字节波动 ±3%）。
+
+- source/verification commit：`d9b7aec960ec673c570b9c02232550f7ecb0b214`。
+- release v2 回执：7 方法、generic 83 + metax 64 次非 warmup launch，
+  fail/error/skip/xfail 均为 0；metax 为新增受影响路径，已按规程代理执行。
+  环境 RTX5070Ti / Python3.12.13 / torch2.13.0+cu130 / triton3.7.1，
+  远端 `gpu:/tmp/flagos-t51-e6.mFAqHw`（timeout 600，PID 315637）。
+- ZIP `e6-d9b7aec/fla_layernorm_gated.zip`，5 成员（新增 metax），SHA256
+  `9ce71b28cb48a0639a8ca2e53a086e1e48358afbdfc32708e9e8f1fb88a10f33`。
+  成员：generic `d952eda8…`、ascend `92baf6f3…`、enflame `848f5014…`、
+  kunlunxin `66e08be2…`、metax `3a4f040c…`（完整值见打包器 manifest）。
+- 回执 `verification.json` SHA256
+  `a98e97e46e520a636057c2930f74c42450ed7e461fca83bf43456c237280e4f2`；
+  `verification.log` SHA256
+  `3201f55a41ff6a430d3e02a34a036aedcae35321e31aecf0fc62a3ed14296d17`。
+- 预注册晋级门：8/8 valid；均值 > E2 5.3939 才记 team best；四强芯各自
+  ≥ E2 值 −5%；沐曦（metax pin，E2 字节）须落在同字节噪声带 4.39–4.86。
+  失败处置：均值 ≤ E2 则 warps 分档轴关闭，generic 回 E2 字节。
+- 观测时额度 4/30（本发后 3/30）；sending/uncertain/stale_after_upload 不自动重试。
