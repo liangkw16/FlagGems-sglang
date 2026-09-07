@@ -10,7 +10,7 @@ team_best_stage: e1
 team_best_commit: f83c73aeceaa6382c6ec6d93a082fc24e37090fb
 team_best_speedup: 3.10772917
 sealed: no
-next: e1修复版8/8复验通过(3.1077x,s0同水位);后续可试短行num_warps=1/2与多行tile;榜首3.89x
+next: e1修复版8/8复验通过(3.1077x,s0同水位,is_team_best);榜单:达标11队,榜首Warmhearted 4.2591x(差27%);后续可试短行num_warps=1/2与多行tile
 updated: 2026-09-07
 ```
 

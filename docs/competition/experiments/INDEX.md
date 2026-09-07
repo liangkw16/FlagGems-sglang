@@ -29,14 +29,14 @@
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x) | e3 14.1051875x | no | e6天数预路由水位带内无法归因,轴关闭;维持E3守榜(14.105x);后续按逐芯晋级纪律择机 | 2026-09-06 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
 | 47 | chunked_sgmv_expand | valid | 8/8(e5,25.0048125x,榜首) | e5 25.0048125x | no | 守榜首(25.00x vs 前榜首23.33x);燧原0.178x/昆仑3.72x为余量轴;stale意图经用户授权归档重提(移至archived/) | 2026-09-04 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
 | 48 | chunked_sgmv_shrink | valid | 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor) | e6 4.7198125x | no | e4七芯+1.5%未过15%门,保留e6;自适应BLOCK_S轴关闭;冲分回到预注册vendor轴(燧原dot模板/天数dtype/昆仑BLOCK) | 2026-09-07 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
-| 49 | ernie45_rope_fused | valid | 8/8(e3,8.58253125x) | e3 8.58253125x | no | e3昆仑0.664x击穿uni_sram墙,8/8 VALID(第9个);守榜;可选轴:昆仑BLOCK_HEADS与A芯21.1x | 2026-09-07 | [ernie45_rope_fused](ernie45_rope_fused.md) |
+| 49 | ernie45_rope_fused | valid | 8/8(e3,8.58253125x) | e3 8.58253125x | no | e3昆仑0.664x击穿uni_sram墙,8/8 VALID(第9个,is_team_best);榜单:达标4队(含我队),榜首c2flow 15.6064x(差45%);可选轴:昆仑BLOCK_HEADS与A芯21.1x | 2026-09-07 | [ernie45_rope_fused](ernie45_rope_fused.md) |
 | 50 | extend_attention | candidate-wip | 6/8(e4,昆仑conclusive封轴;华为数值不可修;燧原0.013x<门槛) | - -x | no | 华为深层数值问题(online+two-pass均败);5/8已是208发1队过线题的好成绩;冲分优先 | 2026-09-05 | [extend_attention](extend_attention.md) |
 | 51 | fla_layernorm_gated | valid | 8/8(e1,5.390025x) | e1 5.390025x | no | e3华为constexpr-D仅+3.7%证伪关闭;昆仑0.97已修;剩沐曦rsqrt;燧原病态在评 | 2026-09-06 | [fla_layernorm_gated](fla_layernorm_gated.md) |
 | 52 | fused_dual_residual_rmsnorm | invalid | 6/8(e5,五种数学形态同指纹边界失配;已分诊) | - -x | yes | 封存6/8;仅sqrt_rn+div_rn或torch归约树复刻等全新结构证据可重开 | 2026-09-06 | [fused_dual_residual_rmsnorm](fused_dual_residual_rmsnorm.md) |
-| 53 | fused_gdn_gating | valid | 8/8(e4,2.1267x) | e4 2.1267x | no | e4沐曦2.7402x(+104%,过门);E2→E4三连兑现;后续轴:generic二代[ROWS_TILE,H]逼近榜首3.54x | 2026-09-07 | [fused_gdn_gating](fused_gdn_gating.md) |
+| 53 | fused_gdn_gating | valid | 8/8(e4,2.1267x) | e4 2.1267x | no | e4沐曦2.7402x(+104%,过门,is_team_best);榜单:达标10队,榜首EvokeAgent 4.3306x(差51%);后续轴:generic二代[ROWS_TILE,H] | 2026-09-07 | [fused_gdn_gating](fused_gdn_gating.md) |
 | 54 | fused_norm_rope_stacked | pending | 5/8(e2) | e1 0x | no | 当日额度耗尽;e2=5/8(行式vendor未修复三芯);代理fuzz仅覆盖已测输入;固定源码复现并定位首个分歧 | 2026-09-06 | [fused_norm_rope_stacked](fused_norm_rope_stacked.md) |
 | 55 | hc_head | invalid_correctness | 7/8(e1,昆仑=评测器崩溃族第2次;七芯总分+40%) | - 0x | no | 昆仑对该题reference确定性崩溃(s0/e1同指纹,同日昆仑评过T48/T49/T53/T56);等平台窗口同字节重试;燧原0.30x仍弱 | 2026-09-07 | [hc_head](hc_head.md) |
-| 56 | l2norm | valid | 8/8(e1,3.10772917x) | e1 3.10772917x | no | e1修复版8/8复验通过(3.1077x,s0同水位);后续可试短行num_warps=1/2与多行tile;榜首3.89x | 2026-09-07 | [l2norm](l2norm.md) |
+| 56 | l2norm | valid | 8/8(e1,3.10772917x) | e1 3.10772917x | no | e1修复版8/8复验通过(3.1077x,s0同水位,is_team_best);榜单:达标11队,榜首Warmhearted 4.2591x(差27%);后续可试短行num_warps=1/2与多行tile | 2026-09-07 | [l2norm](l2norm.md) |
 | 57 | log_scaling_tau | pending | 7/8(s0,燧原pending) | s0 0x | no | 燧原pending;昆仑0.47/华为0.53偏弱;榜首2.82x | 2026-09-06 | [log_scaling_tau](log_scaling_tau.md) |
 | 58 | w8a8_block_int8_matmul | valid | 8/8(e1,118.15512x) | e1 118.15512x | no | 冲分轴:燧原4.48x/B7.68x;榜首209.3x差43%;skill沉淀昆仑向量整除崩溃教训 | 2026-09-06 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
 

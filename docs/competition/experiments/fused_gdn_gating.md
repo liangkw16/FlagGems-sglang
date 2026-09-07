@@ -10,7 +10,7 @@ team_best_stage: e4
 team_best_commit: 743ebb7f68109cdfd3b8c651aa88d8025d4d9d0c
 team_best_speedup: 2.1267
 sealed: no
-next: e4沐曦2.7402x(+104%,过门);E2→E4三连兑现;后续轴:generic二代[ROWS_TILE,H]逼近榜首3.54x
+next: e4沐曦2.7402x(+104%,过门,is_team_best);榜单:达标10队,榜首EvokeAgent 4.3306x(差51%);后续轴:generic二代[ROWS_TILE,H]
 updated: 2026-09-07
 ```
 

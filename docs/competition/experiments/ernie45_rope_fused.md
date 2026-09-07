@@ -10,7 +10,7 @@ team_best_stage: e3
 team_best_commit: 5a6b8cb3eac758d266765f96cdf52a4581deb2a9
 team_best_speedup: 8.58253125
 sealed: no
-next: e3昆仑0.664x击穿uni_sram墙,8/8 VALID(第9个);守榜;可选轴:昆仑BLOCK_HEADS与A芯21.1x
+next: e3昆仑0.664x击穿uni_sram墙,8/8 VALID(第9个,is_team_best);榜单:达标4队(含我队),榜首c2flow 15.6064x(差45%);可选轴:昆仑BLOCK_HEADS与A芯21.1x
 updated: 2026-09-07
 ```
 
