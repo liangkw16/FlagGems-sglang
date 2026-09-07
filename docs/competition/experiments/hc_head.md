@@ -9,7 +9,7 @@ platform: 7/8(e1,10668已终态;昆仑compile_worker Aborted,归因未定)
 team_best_stage: -
 team_best_speedup: -
 sealed: no
-next: E2(e2-afbe602)昆仑三平铺kernel vendor已过release门禁待单次平台裁决;假设=深嵌套generic在昆仑编译超时,预注册门=昆仑跑出结果且七芯维持
+next: E2终态7/8:昆仑第三次崩溃指纹演化(Aborted→Segfault@验证执行段),编译面假设部分证实但不足;停止盲投,vendor保留待平台/reference取证
 updated: 2026-09-07
 ```
 
@@ -99,3 +99,19 @@ updated: 2026-09-07
   `2e7c03773e2d7f1a4a5a3e3c63b40e2e41c206fffd8074adb207c77cace6f518`、
   `validation/verification.log` SHA256
   `6755facfbbb640f581e7270363bf517f3451580fb44fc6e2fba56a533eb02e1c`。
+
+## E2 平台终态（2026-09-07T19:5x）
+
+- submission `10782`：invalid_correctness——七芯全过（天数 1.38375 /
+  沐曦 1.0945 / 燧原 0.2995 / 海光 2.14075 / 华为 2.95575 / A 2.149 /
+  B 9.096，与 e1 同水位）；**昆仑第三次崩溃且指纹演化**：
+  `执行超时(1830s/1800s) 验证执行阶段 + Subprocess crash:
+  Fatal Python error: Segmentation fault`（torch inductor compile_worker
+  栈；前两次为 Aborted）。vendor 已过编译段进入验证执行——平铺三
+  kernel 形态比深嵌套 generic 走得更远，但评测子进程仍段错误。
+- 判定：编译面假设部分证实（指纹推进）但不足以通过；评测侧
+  reference/inductor 嫌疑上升。按预注册协议**停止盲投**，vendor
+  保留在树（NVIDIA 全绿，仅昆仑使用；平台修复后任何重投自动携带）。
+  重开条件：reference 单独复现、首失败栈取证或平台侧修复信号。
+- 证据 `validation/55-status-final.json`（原始逐芯记录）、
+  `55-submit.json`。
