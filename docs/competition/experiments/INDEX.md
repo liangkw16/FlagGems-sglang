@@ -31,7 +31,7 @@
 | 48 | chunked_sgmv_shrink | valid | 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor) | e7 4.7489375x | no | E7终态valid 4.7489375新TB(+0.62%,燧原轴关闭);结构轴定格:燧原0.5x=逐段launch上限,间接寻址不可用;重开需全新结构证据 | 2026-09-07 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
 | 49 | ernie45_rope_fused | valid | 8/8(e3,8.58253125x) | e3 8.58253125x | no | e3昆仑0.664x击穿uni_sram墙,8/8 VALID(第9个,is_team_best);榜单:达标4队(含我队),榜首c2flow 15.6064x(差45%);可选轴:昆仑BLOCK_HEADS与A芯21.1x | 2026-09-07 | [ernie45_rope_fused](ernie45_rope_fused.md) |
 | 50 | extend_attention | candidate-wip | 6/8(e4,昆仑conclusive封轴;华为数值不可修;燧原0.013x<门槛) | - -x | no | 华为深层数值问题(online+two-pass均败);5/8已是208发1队过线题的好成绩;冲分优先 | 2026-09-05 | [extend_attention](extend_attention.md) |
-| 51 | fla_layernorm_gated | valid | 8/8(e4,5.195325x非最佳);e2最佳5.3939x | e2 5.3939x | no | e5燧原默认launch在途(09-07,本会话);E6候选=generic warps按BLOCK_D分档+沐曦metax-pin隔离;昆仑/华为需新结构证据 | 2026-09-07 | [fla_layernorm_gated](fla_layernorm_gated.md) |
+| 51 | fla_layernorm_gated | valid | 8/8(e5,5.386175x非最佳);e2最佳5.3939x | e2 5.3939x | no | e5燧原默认launch关轴(2.3282<门3.0);E6候选=generic warps按BLOCK_D分档+沐曦metax-pin隔离;昆仑/华为需新结构证据 | 2026-09-07 | [fla_layernorm_gated](fla_layernorm_gated.md) |
 | 52 | fused_dual_residual_rmsnorm | invalid | e6/10743六芯通过,昆仑失败,燧原pending;已无有效分可能 | - -x | no | e6昆仑同4元素失配,本轴关闭;只等10743燧原回调,禁止重投;需目标归约/首分歧证据 | 2026-09-07 | [fused_dual_residual_rmsnorm](fused_dual_residual_rmsnorm.md) |
 | 53 | fused_gdn_gating | valid | 8/8(e4,2.1267x,排名10) | e4 2.1267x | no | 榜首已288.426175;旧4.3306对标过期,暂停小比例调参 | 2026-09-07 | [fused_gdn_gating](fused_gdn_gating.md) |
 | 54 | fused_norm_rope_stacked | invalid_correctness | 5/8(e2,10414已终态) | - -x | no | 三芯失败均已终态;仅固定源码目标复现定位首分歧后重开,非额度用尽 | 2026-09-07 | [fused_norm_rope_stacked](fused_norm_rope_stacked.md) |

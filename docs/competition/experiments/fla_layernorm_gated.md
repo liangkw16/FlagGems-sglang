@@ -5,11 +5,11 @@ task: 51
 operator: fla_layernorm_gated
 batch: 4
 validity: valid
-platform: 8/8(e4,5.195325x非最佳);e2最佳5.3939x
+platform: 8/8(e5,5.386175x非最佳);e2最佳5.3939x
 team_best_stage: e2
 team_best_speedup: 5.3939
 sealed: no
-next: e5燧原默认launch在途(09-07,本会话);E6候选=generic warps按BLOCK_D分档+沐曦metax-pin隔离;昆仑/华为需新结构证据
+next: e5燧原默认launch关轴(2.3282<门3.0);E6候选=generic warps按BLOCK_D分档+沐曦metax-pin隔离;昆仑/华为需新结构证据
 updated: 2026-09-07
 team_best_commit: 5985b1ce09fe6e7cec374c271aa1c25940264783
 ```
@@ -169,3 +169,35 @@ wrapper 对 strided weight/bias 先 `.contiguous()`（commit `445d3eb`；kernel 
 - 按 sending/uncertain 不自动重试纪律，未重发。nonce 已自然过期（18:26:02）；
   重提需用户明示授权：归档 `.git/flagos-platform/9781638b….json` 后重新
   preflight + 一次性 submit（候选字节不变、门禁证据全部有效）。
+
+## E5 平台终态与关轴（2026-09-07T19:32:11 观测）
+
+- submission `10873` / daily_seq `26` / created `2026-09-07T19:31:04`（18:16 首次
+  提交因 POST 网络超时未入队，用户授权归档 uncertain intent 后 19:31 重提成功；
+  远端 ZIP 手工验签 `9e2995ba…d1f185` 与本地逐字节一致，15060 bytes）。
+- 平台 `completed` / `valid`，通过 8/8；average_speedup `5.386175`，
+  is_team_best `False`（E2 5.3939 保持 team best）；观测时额度 `4/30`。
+- **燧原 2.3282，远低于预注册门 ≥3.0，也低于噪声带下沿 2.34——T19 E5 的
+  默认 launch +38% 模式未迁移到本题，按预注册关轴：燧原默认 launch 轴关闭，
+  不再以此机制消耗额度。**
+
+| 芯片 | 状态/正确性 | 加速比 | vs E2 | 实际文件 |
+| --- | --- | ---: | ---: | --- |
+| tianshu | completed/True | 9.215 | -1.4% | `fla_layernorm_gated.py` |
+| muxi | completed/True | 4.858 | +6.4% | `fla_layernorm_gated.py` |
+| enflame | completed/True | 2.3282 | **-15.9%** | `fla_layernorm_gated_enflame.py` |
+| haiguang | completed/True | 7.9994 | -2.2% | `fla_layernorm_gated.py` |
+| kunlunxin | completed/True | 0.9636 | +0.0% | `fla_layernorm_gated_kunlunxin.py` |
+| huawei | completed/True | 2.357 | +0.8% | `fla_layernorm_gated_ascend.py` |
+| card_a | completed/True | 8.2822 | +0.9% | `fla_layernorm_gated.py` |
+| card_b | completed/True | 7.086 | +4.5% | `fla_layernorm_gated.py` |
+
+- 附带读数校准：generic 为 E2 逐字节，七芯全部落在历史噪声带内（muxi 同字节
+  带 4.39–4.86，E5 读 4.858 属带内高位）；燧原显式参数（E1/E4）与默认 launch
+  （E5）读数 2.33–2.35 无差异，E2 的 2.77 判定为评测机高位噪声。
+- 证据 `e5-445d3eb/validation/51-submit.json` SHA256
+  `7fcd6fde6a376549f2f1e9654878576d89c7cbe5ebbd0cbae42650e46aff9a6b`；
+  `51-status-e5-final.json` SHA256
+  `41857c1b1bdef06f88b24a3887679f54c3b114e8db1bbc50b78685fce1846e6b`。
+- 下一发（E6）：generic warps 按 BLOCK_D 分档（≥2048 用 8，45 桶扫描代理
+  +10.9%）+ 新增 `_metax` vendor 冻结 E2 字节隔离沐曦；多行轴维持关闭。
