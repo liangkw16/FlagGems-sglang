@@ -508,3 +508,10 @@ IEEE `tl.dot`（只存 C[:,0]；T28/T37 昆仑通过范式）。
 1. **燧原：先拿可复现的copy编译日志/IR。** E15/E16均在flat copy失败；下一最小实验是按(b,time)行组织、channel连续复制，去掉逐lane除余和int64行乘法，并分别验证仅copy、仅conv和完整wrapper；用相同原始输入检查精确new_state及不修改输入。PassManager根因目前未知，不能预先认定int64或某一pass有错。目标GCU服务恢复前不占平台次数重复同形态。
 2. **昇腾：先阶段计时，再改布局/融合。** 官方[cat-slice-conv1d实践](https://github.com/Ascend/triton-ascend-ops/blob/755cf18c30f18720f67b6360c2b2856b64739822/tutorial/best_practice/003-fused-cat-slice-conv1d.zh.md)给出UB对齐、借轴/转置路线。先测cat/float/权重转置/kernel/输出cast；只改占比最大的阶段。其示例in-place与多步store索引不可直接复用，本题out-of-place及非连续输入必须保留。
 3. **Top1预算：** 当前E13强五芯合计51.2905，超过现榜首需要弱三芯合计>11.9355（均值>3.9785，假设强芯不变）。小幅弱芯改善不足以冲榜；目标仍8.14x，只有结构改动且目标芯/完整wrapper实测有足够收益才申请下一轮候选，不重复仅靠NVIDIA倍数的投券判断。
+
+### 最佳版本恢复后验证
+
+- 恢复commit `7b9967b108081c5b17a6c0b44bfcc2637d10b998`；四个源码AST与E13相等。Black/isort/flake8通过，远端RTX5070Ti release11/11、0fail/error/skip/xfail，新增非连续状态与63/64/65/129边界全部通过。此验证不触发第三次平台提交。
+- evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/restored-best-7b9967b/verification-input.json` SHA256 `618580359b23af285cfc023c546fec4d970b84f9c60f79665e289948f20bcd4e`。
+- evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/restored-best-7b9967b/verification.json` SHA256 `818a4f8b190b6af55c16f433a9049e692b5143cbc6662e3e7a28853a0da80073`。
+- evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/restored-best-7b9967b/verification.log` SHA256 `04c036af0046b8b13f10fbcf446656a90a9d11a42f181a911ba1f8fb3a82aef1`。
