@@ -354,3 +354,29 @@ IEEE `tl.dot`（只存 C[:,0]；T28/T37 昆仑通过范式）。
 
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e14-5cce466/validation/43-status-first-round.json` SHA256 `1918d1d0d4e7e09860137d057b1b5c034a1a57e65628851501f08c555f86776f`。
 - 未晋级后续实验 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e14-5cce466/validation/followup-evidence-sha256.json` SHA256 `4e846306d3b972f1b6f196ab1eb1cb0f6314573c8aabfe51f2db4428940276fc`。
+
+## E15 燧原通道连续布局 + 华为循环不变量外提（2026-09-07）
+
+- 调研定位两处结构剩余：①燧原 width-reduce vendor 的窗口加载是
+  `[W_PAD, BLOCK_D]` index-shift 形式（[B,D,L] 布局下逐 lane 跨 seqlen
+  stride）——PR34 在 GCU 实测该形态比规范连续加载慢 ~100x，燧原 0.326x
+  与此吻合；②华为 vendor 的 weight tile 与 bias 在 `tl.static_range
+  (SEQLEN)` 内逐步重载，且输出走 fp32 缓冲 + wrapper `.to()` 整趟转换。
+- 单变量两 vendor：`_enflame` 整体替换为昆仑 E13 同款通道连续
+  `[B,L,D]` 双 kernel 形态（PR34 结构，输出转置 pass 保留）；`_ascend`
+  weight/bias 外提 + 输出直存原 dtype（去掉 `.to()` 整趟）。generic 与
+  `_kunlunxin` 字节冻结。
+- source/verification commit `cbfae4f`；screening `/tmp/flagos-t43e15`
+  （10/10）与 release `/tmp/flagos-t43e15-rel`（10/10 方法、0 fail/skip，
+  generic 69 / ascend 39 / enflame 78 / kunlunxin 78 launch 实跑）双绿；
+  black/isort/flake8 在两 vendor 字节上分别全过。
+- 预注册门：平台 avg 超 team best 6.545875 才晋级（燧原 0.326→预期
+  主受益；华为微优化幅度小）；未超则收轴。
+- ZIP `e15-cbfae4f`，SHA256
+  `59abbc45f97c4049d34d28e8d1351439c3b4ef31ccb57e0cb9950cba48136b94`；
+  成员 4（generic/kunlunxin 字节与 e13 一致；ascend
+  `a3a5cd981d492def26fef2745a527a22e4dce207429dfb8566386e927332a49d`、
+  enflame `01801b0a91726f5c98b6c9f91e05a5ee35874b4a541f2e93b7718a9dbe454319`）。
+- 证据 `validation/verification.json` SHA256
+  `200ff974a7bd0536cd49bc68af3679083dbd98543c963d8ec01b5aef4fa7b080`、
+  `validation/verification.log`（相邻完整日志随回执归档）。
