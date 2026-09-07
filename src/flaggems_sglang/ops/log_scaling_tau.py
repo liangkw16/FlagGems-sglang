@@ -58,31 +58,97 @@ def _log_scaling_tau_kernel(
         )
 
 
+@triton.jit
+def _log_scaling_tau_fast_kernel(
+    x_ptr,
+    tau_ptr,
+    out_ptr,
+    N_COLS: tl.constexpr,
+    COL_BLOCKS: tl.constexpr,
+    BLOCK: tl.constexpr,
+    EVEN: tl.constexpr,
+):
+    # Contiguous rows with unit-stride tau: every address term folds
+    # into constexpr int32 arithmetic, so the launcher binds only the
+    # three pointers. int32 offsets are safe because the wrapper only
+    # selects this kernel when numel < 2**31.
+    row = tl.program_id(0) // COL_BLOCKS
+    col_block = tl.program_id(0) % COL_BLOCKS
+    tau = tl.load(tau_ptr + row).to(tl.float32)
+    offs = col_block * BLOCK + tl.arange(0, BLOCK)
+    if EVEN:
+        x = tl.load(x_ptr + row * N_COLS + offs).to(tl.float32)
+        tl.store(
+            out_ptr + row * N_COLS + offs,
+            (x * tau).to(out_ptr.dtype.element_ty),
+        )
+    else:
+        mask = offs < N_COLS
+        x = tl.load(x_ptr + row * N_COLS + offs, mask=mask, other=0.0).to(
+            tl.float32
+        )
+        tl.store(
+            out_ptr + row * N_COLS + offs,
+            (x * tau).to(out_ptr.dtype.element_ty),
+            mask=mask,
+        )
+
+
+_LAUNCH_PLANS = {}
+
+
+def _launch_plan(n_cols):
+    plan = _LAUNCH_PLANS.get(n_cols)
+    if plan is None:
+        block = min(triton.next_power_of_2(max(n_cols, 1)), 1024)
+        col_blocks = triton.cdiv(n_cols, block)
+        plan = (block, col_blocks, n_cols % block == 0)
+        _LAUNCH_PLANS[n_cols] = plan
+    return plan
+
+
 def log_scaling_tau(x, tau):
     x = x.contiguous()
     out = torch.empty_like(x)
-    rows = x.shape[0]
-    if out.numel() == 0:
+    numel = out.numel()
+    if numel == 0:
         return out
 
-    n_cols = x.numel() // rows
-    block = min(triton.next_power_of_2(max(n_cols, 1)), 1024)
-    col_blocks = triton.cdiv(n_cols, block)
+    rows = x.shape[0]
+    n_cols = numel // rows
+    block, col_blocks, even = _launch_plan(n_cols)
     grid = (rows * col_blocks,)
-    _log_scaling_tau_kernel[grid](
-        x,
-        tau,
-        out,
-        n_cols,
-        x.stride(0),
-        out.stride(0),
-        tau.stride(0),
-        COL_BLOCKS=col_blocks,
-        BLOCK=block,
-        EVEN=(n_cols % block == 0),
-        num_warps=4,
-        num_stages=2,
-    )
+    if tau.stride(0) == 1 and numel < 2**31:
+        # Contiguous tau and 32-bit-safe sizes take the constexpr-only
+        # fast kernel; any other layout keeps the fully general strided
+        # kernel below. Both paths are Triton kernels executing the
+        # same fp32 row-scale math - there is no torch fallback.
+        _log_scaling_tau_fast_kernel[grid](
+            x,
+            tau,
+            out,
+            N_COLS=n_cols,
+            COL_BLOCKS=col_blocks,
+            BLOCK=block,
+            EVEN=even,
+            num_warps=4,
+            num_stages=1,
+        )
+    else:
+        _log_scaling_tau_kernel[grid](
+            x,
+            tau,
+            out,
+            n_cols,
+            x.stride(0),
+            out.stride(0),
+            tau.stride(0),
+            COL_BLOCKS=col_blocks,
+            BLOCK=block,
+            EVEN=even,
+            num_warps=4,
+            num_stages=2,
+        )
     return out
 
 
