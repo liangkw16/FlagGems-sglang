@@ -9,7 +9,7 @@ platform: 8/8(e2,10747,2.36478125x首次有效)
 team_best_stage: e3
 team_best_speedup: 2.401375
 sealed: no
-next: 冲榜Top1(实时榜首EvokeAgent 2.816469,gap 0.415);E4已提交(36e8b63 constexpr快核+int32+stages1+缓存调度);E5直连发射(CompiledKernel run绕过JIT调度,昇腾/昆仑/燧原fork API已静态验证)按E4逐芯数据接力
+next: 冲榜Top1(榜首EvokeAgent 2.816469,gap 0.415);E4提交评测中(10817);E5直连发射候选就绪(97016bf,release+ZIP全绿)待token恢复后preflight/submit;阻塞=平台token过期401
 updated: 2026-09-07
 team_best_commit: 49dbb7f1c691c33befc1d4be2f1e5873a0e8a127
 ```
@@ -198,3 +198,58 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
   测试源码 SHA256（verification commit）
   `17f953d64835eca778b3cc71144a716dfe009a249c7527c6f94e2d921719f8b7`。
 - 平台结果待提交后另节追加。
+
+## E5 直连发射：缓存 CompiledKernel 句柄绕过每调用 JIT 调度（2026-09-07）
+
+- 依据：launch-bound 诊断 + 远端探针（triton 3.7.1 RTX5070Ti 实测）：
+  `kernel[grid](...)` 返回 CompiledKernel；`ck.run` 属性为 C launcher，
+  签名 `(g0,g1,g2,stream,function,packed_metadata,launch_metadata,
+  enter,exit,*args)`；标准 JIT 调度 host 5.09μs/call、`ck[grid]` runner
+  3.12μs、预绑定闭包 2.15μs（torch 三算子 reference 9.71μs）。fork 静态
+  核对：triton-ascend `compiler.py` 的 `__getitem__`/`run` 与主线同构、
+  昆仑 `driver.py:875` launcher 同签名、燧原委托 `get_current_stream`/
+  `launcher_cls`；Inductor 生成包装为生产先例。
+- 单变量（在 E4 字节之上）：fast 路径首个同 key 调用走标准 JIT 调度并
+  捕获返回的 CompiledKernel；后续对齐调用用预绑定闭包直发射同一编译
+  产物（仅 stream 查询 + C launcher 调用）。探测全 getattr/hasattr、
+  无运行时 try/except；triton≥3.6 的空 HookChain（`calls==[]`）按无
+  hook 放行并把链对象原样传给 launcher（官方 runner 同形），非空链或
+  未知 hook 对象、API 缺失、指针非 16B 对齐一律回标准调度。key 为
+  `(dtype, rows, n_cols, device)`；`out` 为我方 empty_like 新分配。
+  两条发射机制执行同一 Triton kernel，无 torch fallback、无设备判断。
+- 首轮 screening 发现守卫 bug：triton 3.7.1 默认 hook 是 HookChain
+  对象非 None，`is not None` 判定导致直连永不激活（数值仍对、纯性能
+  平庸）；修正为空链放行。二轮 screening（worktree 字节
+  `gpu:/tmp/flagos-t57e5-screen`）5 方法 66 case 全过，激活探针确认
+  generic/kunlunxin `_FAST_LAUNCHERS` 均 callable 且复调用数值正确。
+  NVIDIA 预览（do_bench median，公开 5 shape）：ref 6.14-10.21μs、
+  e5 4.03-4.19μs、speedup 1.48-2.46x——5070Ti 已近 event/kernel 地板，
+  host 削减被 GPU 地板遮蔽；弱芯 fork 调度更慢，为主收益预期。
+- 新增回归 `test_repeated_calls_direct_launch`（3 shape×复调用×换指针
+  + misaligned 连续视图，9 case）进 RELEASE_REQUIRED_TESTS。
+- source/verification commit `97016bf75d4614eb9d511030bbb2cff246918b07`；
+  本地 py_compile/black/isort/flake8 全过。release
+  `gpu:/tmp/flagos-t57e5-release`：5 方法 66 case、0 fail/skip/error，
+  generic+kunlunxin(proxy) 双执行源。执行
+  `timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/flagos-t57e5-release/.agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/flagos-t57e5-release`。
+  昇腾/昆仑/燧原目标运行时未验证（target-runtime-unverified；平台
+  correctness 先跑同代码路径，直连若错即正确性失败可见，不会静默
+  虚增速度）。
+- 预注册门：平台 avg > E4 结果才晋级；弱三芯任一跌破 0.4 或出现
+  正确性失败即回退保留 E3/E4 最佳。同指纹两次失败关轴；昆仑 1830s
+  compile-worker 崩溃按崩溃族协议处理。
+- ZIP `e5-97016bf`，15425 bytes，SHA256
+  `f2532d04da2453c78b7d446028f28eb2cd097f6f638b0a0c136efe2539bf62ac`；
+  成员 `log_scaling_tau.py` SHA256
+  `004a113b0af14c3f527cb11abef0ab7cd999ce8732df71c29c59403e844cadcd`、
+  `log_scaling_tau_kunlunxin.py` SHA256
+  `604c4d95d6f94b25e7020b6d4bef34f7f45251f80599d913c83ffacfaf9d4667`
+  （均=release 执行哈希）。
+- 证据 `e5-97016bf/validation/verification.json` SHA256
+  `1d4fe2073c0f07bcef5f1cce7b5b4d9e6935ec3f3e96f386841f4ec99d96be0f`、
+  `e5-97016bf/validation/verification.log` SHA256
+  `198a6101d61b5cbcfce42eb2ba8a9ce0baf4d60d9eabae3f81058b8f0c4d8402`。
+  测试源码 SHA256
+  `ac8b5419f058f3f54774b69204520ec2fdcf8591df9b13e7607ed82d7583fb1d`。
+- 阻塞：平台 token 于 E4 提交后过期（HTTP 401），E5 preflight/submit
+  与 E4（submission 10817）逐芯结果查询待用户重新 auth 后执行。
