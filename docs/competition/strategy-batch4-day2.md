@@ -23,7 +23,7 @@
 | 54 | [fused_norm_rope_stacked](experiments/fused_norm_rope_stacked.md) | 无有效分 | 10.223469 | 先有效 | 先诊断；已终态5/8，分开归一化、RoPE与输出布局定位三芯首分歧 |
 | 55 | [hc_head](experiments/hc_head.md) | 无有效分 | 6.363313 | 先有效 | 先诊断；隔离reference/compile_worker/候选，撤回纯平台归因；即使单芯过线也离Top1很远 |
 | 56 | [l2norm](experiments/l2norm.md) | 3.107729 / #8 | 72.306802 | 2226.7% | 暂缓；榜首72.30680208，先测全wrapper带宽/归约成本，旧短行调参不直接投 |
-| 57 | [log_scaling_tau](experiments/log_scaling_tau.md) | 2.364781 / #5 | 2.816469 | 19.1% | 优先；E2新增有效并排名5，仍需+19.10%；warp/BLOCK扫描无收益，华为目标结构探索待证实 |
+| 57 | [log_scaling_tau](experiments/log_scaling_tau.md) | 2.364781 / #5 | 2.816469 | 19.1% | 优先；E2新增有效并排名5，仍需+19.10%；warp/BLOCK扫描无收益，华为MCP两轮零测试且rank1语义错误，未晋级 |
 | 58 | [w8a8_block_int8_matmul](experiments/w8a8_block_int8_matmul.md) | 122.661583 / #3 | 562.415908 | 358.5% | 储备；需高分芯GEMM整体结构变化，保留int8先castFP32再计算契约，弱两芯翻倍不足追榜 |
 
 PR调研的实际落点： [PR34](https://github.com/flagos-ai/FlagGems-sglang/pull/34) 的channel连续布局帮助T43此前E13首次有效；[PR50](https://github.com/flagos-ai/FlagGems-sglang/pull/50) 的多行调度本轮迁移到T51后平台未获益。 [PR40](https://github.com/flagos-ai/FlagGems-sglang/pull/40)、[PR38](https://github.com/flagos-ai/FlagGems-sglang/pull/38)、[PR47](https://github.com/flagos-ai/FlagGems-sglang/pull/47) 继续作为RoPE/attention结构参考，不能当作本题通过凭证。

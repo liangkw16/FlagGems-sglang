@@ -37,7 +37,7 @@
 | 54 | fused_norm_rope_stacked | invalid_correctness | 5/8(e2,10414已终态) | - -x | no | 三芯失败均已终态;仅固定源码目标复现定位首分歧后重开,非额度用尽 | 2026-09-07 | [fused_norm_rope_stacked](fused_norm_rope_stacked.md) |
 | 55 | hc_head | invalid_correctness | 7/8(e1,10668已终态;昆仑compile_worker Aborted,归因未定) | - -x | no | 先取得reference单独复现或首失败栈;其他题健康不能证明本题仅平台错,禁止同字节自动重投 | 2026-09-07 | [hc_head](hc_head.md) |
 | 56 | l2norm | valid | 8/8(e1,3.10772917x,排名8) | e1 3.10772917x | no | 榜首已72.30680208;守有效分,多行/短行需有整体收益证据再晋级 | 2026-09-07 | [l2norm](l2norm.md) |
-| 57 | log_scaling_tau | valid | 8/8(e2,10747,2.36478125x首次有效) | e2 2.36478125x | no | e2首次8/8有效2.36478125;启动参数扫描无收益;华为目标结构探索中 | 2026-09-07 | [log_scaling_tau](log_scaling_tau.md) |
+| 57 | log_scaling_tau | valid | 8/8(e2,10747,2.36478125x首次有效) | e2 2.36478125x | no | 保留e2有效2.36478125排名5;warp/BLOCK无收益;华为MCP零测试且错误rank1语义,不晋级 | 2026-09-07 | [log_scaling_tau](log_scaling_tau.md) |
 | 58 | w8a8_block_int8_matmul | valid | 8/8(e1,10412,122.66158333x,排名3) | e1 122.66158333x | no | 榜首562.41590833;弱两芯翻倍不足追榜,须高分芯GEMM结构收益;保持int8先castFP32契约 | 2026-09-07 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

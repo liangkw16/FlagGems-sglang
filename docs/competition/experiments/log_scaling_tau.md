@@ -9,7 +9,7 @@ platform: 8/8(e2,10747,2.36478125x首次有效)
 team_best_stage: e2
 team_best_speedup: 2.36478125
 sealed: no
-next: e2首次8/8有效2.36478125;启动参数扫描无收益;华为目标结构探索中
+next: 保留e2有效2.36478125排名5;warp/BLOCK无收益;华为MCP零测试且错误rank1语义,不晋级
 updated: 2026-09-07
 team_best_commit: 493b4956a0a39077e0db047bd64e0f1dd12a4c5b
 ```
@@ -105,3 +105,10 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
 
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/log_scaling_tau/e2-493b495/validation/57-status-first-round.json` SHA256 `a8cacdcdb6f0776ba2186c721abe000c8e07e22ec8f70b6aeb97daec7f7f4b28`。
 - 未晋级后续实验 `/Users/bytedance/ccc/flagos/artifacts/competition/log_scaling_tau/e2-493b495/validation/followup-evidence-sha256.json` SHA256 `c051f10ea5dd950303bbf54c7bcce8e99e36e5e1f0f135dc352637b460c4ed5f`。
+
+## 华为探索终态（2026-09-07 15:00）
+
+- KernelGen job `50ad0f87-ea2a-46d6-bc64-3f89b158e917` 两轮完成；服务自报passed，但两轮test count均0，speedup分别0.0065838352250970665、0.006335368592540647。分类`mcp-unbound-observation`，不证明本候选执行或目标正确性。
+- 返回源码在rank1分支使用`x.unsqueeze(0)`，把原来T行单列误作1行T列并仅应用tau[0]；与题目逐行缩放契约冲突，静态审计即拒绝。原参考`[T]`需逐元素使用tau。该生成源码只留证，未写入算子、未发布ZIP。
+- row内串行column blocks也没有优于当前载体的证据。第二轮之后不再调用，当前无运行中的MCP任务；本轮不追加平台提交。
+- 证据清单 `/Users/bytedance/ccc/flagos/artifacts/competition/log_scaling_tau/e2-493b495/validation/57-huawei-evidence-sha256.json` SHA256 `80cd14404e341a1c6398a69be87ccdde1434b6767a6aed07743713cc06b2735b`。
