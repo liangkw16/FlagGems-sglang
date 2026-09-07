@@ -948,3 +948,5 @@ ABBA→④内置验证在出现 hash/manifest 背书前一律不信;服务端修
 - 流程实测还修复了 runner 把 PyTorch 虚拟 `_ops.py` 误判为源码依赖的问题。完整身份、命令、哈希与限制见 [流程实测](../workflow-validation-20260906.md)。
 
 - 2026-09-07 T57：e1 `ee551b5` 修复非连续 x/tau 和 1D 调度，release 4/4，通过待提交；S0 已终态燧原超时。当前状态以算子 CURRENT/INDEX 为准。
+
+- 2026-09-07 T45：e15 `ee551b5` 修复alias gate与Ascend chunk/低精度gate，昆仑常量除数候选；release10/10，NVIDIA配对计时持平，目标芯性能待平台。

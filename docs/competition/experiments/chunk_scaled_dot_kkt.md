@@ -5,13 +5,13 @@ task: 45
 operator: chunk_scaled_dot_kkt
 batch: 4
 validity: invalid
-platform: 7/8(e7,仅昆仑失败;华为0.0455→0.2535x过门槛!)
-team_best_stage: e7
-team_best_commit: 4d16e0701b054247b83cf09c2e39664cd750235f
+platform: e13八芯正确但昆仑0.063x;e14昆仑正确性失败;e15发布验证通过
+team_best_stage: -
+team_best_commit: -
 team_best_speedup: -
 sealed: no
-next: E14 exp2证伪已回滚e13(0.063x八芯过correctness);T45暂停守invalid转T46
-updated: 2026-09-06
+next: e15提交验证常量除数与契约修复;目标昆仑>=0.1,不把代理持平计为收益
+updated: 2026-09-07
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -303,3 +303,29 @@ K 循环推进 `b_ptrs += BLOCK_K * stride_bn` 是潜伏笔误（应为 stride_b
   64×64 tile(0)、exp2(负)。剩余未试：epilogue 融入 GEMM（Codex
   警告崩溃族风险，搁置）。**转 T46 天数预路由**，T45 守 invalid
   待新证据
+
+## E15 常量除数与契约缺口修复（2026-09-07）
+
+- source/verification commit `ee551b50b7405e6abe315b61fc54a72501607242`；ledger commit 为本节所属提交。
+- 昆仑从 E13 保留 exp 与行 epilogue，将 seqlen/nchunks/head/ratio 设 constexpr，消除 per-lane 动态 ratio 除数；不沿用 E14 exp2。
+- 回归先复现：g 与 beta 同对象时 generic/enflame/kunlun 三路径×三 dtype 全部错误；现在 None 才表示无门控。Ascend 原低精度 gate 直接 tl.exp 编译失败，改 fp32 差分；原 chunk_size>64 直接截为64导致输出 shape/窗口错误，改64 tile分块保留真实 CHUNK_SIZE。
+- NVIDIA release 10/10 方法通过，全部4源实际执行，零 skip/xfail/errors；公开dtype/容差、GQA1/2/3/4、alias门控、K33/100尾块、BT32/64/128、非连续k及输入不变性。已知修复没有通过排除vendor规避。
+- 完整执行：`timeout 420 /home/kevin/notebook/.venv/bin/python .agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/flagos-b4-invalid.eYQz0q/t45-release`；GPU RTX5070Ti / torch2.13.0+cu130 / triton3.7.1。
+- 配对性能：每shape五轮交替AB/BA、wrapper-inclusive，affected(B,T,Hg,ratio,K)=(2,1024,4,4,128)/(4,2048,4,4,64)/(1,512,2,3,33)，control=(1,128,2,1,64)；median新/旧加速比分别1.0000/1.0003/1.0020，control1.0011。均在噪声内，**没有NVIDIA性能晋级结论**；寄存器40/48不变，共享内存0。阶段耗时和完整原始样本见 bench45-v2.log。TTIR确认 runtime ratio 变常量3/4，不能据此宣称昆仑已加速。
+- 首次性能探针因 Triton do_bench 返回float而非list出 TypeError，未产生有效样本；修正采样脚本后在其他GPU任务结束时独立重跑，保留两份脚本/日志，不改变源码或release回执。
+- 目标通道：昆仑本次 MCP verify HTTP502，未执行候选；Huawei/Sunrise 请求另保留，生成版本不等于本仓源码。所有非NVIDIA目标仍 target-runtime-unverified，交平台补齐。
+- 本轮平台试验以真实正确性修复和昆仑常量除数假设入场，**不把代理持平计为性能收益**。目标八芯正确、各≥0.1；昆仑0.063→0.1仅对总均值增加0.004625，却决定有效资格。若仍<0.1，本轴不追加同字节提交；本候选最多一发。
+- ZIP `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/chunk_scaled_dot_kkt.zip`，27239 bytes，SHA256 `0362426e2a35a476ea4046533ea4b3b860b2ea98039d4c8c9f47dbf2ae50d5a7`；dry-run/source/release/final manifest 完全一致。
+- 成员 `chunk_scaled_dot_kkt.py` ← `src/flaggems_sglang/ops/chunk_scaled_dot_kkt.py` SHA256 `b9072313d76ce351986479934aa1d2624d85d0e21c87ecaaabc367452b556b87`。
+- 成员 `chunk_scaled_dot_kkt_ascend.py` ← `src/flaggems_sglang/runtime/backend/_ascend/ops/chunk_scaled_dot_kkt.py` SHA256 `caf93043e1df657e15a7644e0b18af11a2ece8e45234b36bdfbc9531a3593ca4`。
+- 成员 `chunk_scaled_dot_kkt_enflame.py` ← `src/flaggems_sglang/runtime/backend/_enflame/ops/chunk_scaled_dot_kkt.py` SHA256 `eafa69b8350870398e33754a9979b91601ea884f42f815b9557d4e748ba30332`。
+- 成员 `chunk_scaled_dot_kkt_kunlunxin.py` ← `src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunk_scaled_dot_kkt.py` SHA256 `8e93bdc824fc37d35fb52bd9926a73931d24292093700dc35e47af5e0459e8a1`。
+- kernel launch 计数 `{'src/flaggems_sglang/ops/chunk_scaled_dot_kkt.py': 27, 'src/flaggems_sglang/runtime/backend/_ascend/ops/chunk_scaled_dot_kkt.py': 10, 'src/flaggems_sglang/runtime/backend/_enflame/ops/chunk_scaled_dot_kkt.py': 10, 'src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunk_scaled_dot_kkt.py': 20}`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/validation/verification.json` SHA256 `d39f4bc010e79f53218931f0f41e6afdf20648fb2deed7856caa1b5618de692e`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/validation/verification.log` SHA256 `88ad1f54d99c708a778bc1ed2dc2bce88125079edf242691c835b9f721c9d71b`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/validation/verification-input.json` SHA256 `8e37efe1fa2139a57124dd747a8987db7b5197ad319a7ad109a1edfac9e38747`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/validation/bench45.py` SHA256 `1a3b9d8264c785e6e9c93a0ec4e269940b5b699309480fc848cb03b336d0971b`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/validation/bench45-v2.log` SHA256 `d9d46cc18c37144c77363b9f0e9ab99e1e0c31e92c8ad341231daa53674e624f`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/validation/45-kg-request.json` SHA256 `c224de4fa58b5d8712beca88cfa1733de94ee36f7ab5a7cf260e3aca94175b4f`。
+- 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/chunk_scaled_dot_kkt/e15-ee551b5/validation/45-kg-response.json` SHA256 `92afbbac89b844f85c246c3eeb9c290c53565de4ce8bded312b2553158970e9b`。
+- 提交前快照：2026-09-07T12:08:44+08:00，最新旧候选10348，quota24/30；T57本轮已另消耗一发，提交额度以preflight为准。
