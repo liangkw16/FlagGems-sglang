@@ -50,6 +50,7 @@ def _ccu_width_reduce_kernel(
     o_ss,
     SEQLEN: tl.constexpr,
     STATE_LEN: tl.constexpr,
+    STATE_BLOCK: tl.constexpr,
     WIDTH: tl.constexpr,
     W_PAD: tl.constexpr,
     HAS_BIAS: tl.constexpr,
@@ -111,8 +112,8 @@ def _ccu_width_reduce_kernel(
             )
 
         # New state: copy last STATE_LEN positions from x_cat
-        state_offs = tl.arange(0, 64)
-        for i0 in range(0, state_len, 64):
+        state_offs = tl.arange(0, STATE_BLOCK)
+        for i0 in range(0, state_len, STATE_BLOCK):
             si = i0 + state_offs
             smask = si < state_len
             src_p = seqlen + si
@@ -182,6 +183,7 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         out.stride(2),
         SEQLEN=seqlen,
         STATE_LEN=state_len,
+        STATE_BLOCK=min(64, triton.next_power_of_2(max(state_len, 1))),
         WIDTH=width,
         W_PAD=w_pad,
         HAS_BIAS=bias is not None,
