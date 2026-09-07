@@ -65,13 +65,18 @@ def _w8a8_block_matmul_kernel(
             a_ptr + offs_m[:, None] * a_stride_m + (k_start + offs_k)[None, :] * a_stride_k,
             mask=m_mask[:, None] & k_mask[None, :],
             other=0.0,
-        ).to(tl.float32)
+        ).to(tl.float16)
         b = tl.load(
             b_ptr + offs_n[None, :] * b_stride_n + (k_start + offs_k)[:, None] * b_stride_k,
             mask=n_mask[None, :] & k_mask[:, None],
             other=0.0,
-        ).to(tl.float32)
-        acc_k = tl.dot(a, b, input_precision="ieee")
+        ).to(tl.float16)
+        # int8 values are exact in fp16 and the fp32 accumulator keeps
+        # block sums exact; fp16 operands unlock the tensor-core dot on
+        # the backends where the fp32-ieee path runs on slow vector FMAs
+        # (T12 E5 cross-chip evidence). The Kunlunxin vendor keeps the
+        # fp32-ieee dot (fp16 operands miscompile there).
+        acc_k = tl.dot(a, b)
         k_group = k_start // group_k
         a_s = tl.load(
             as_ptr + offs_m * as_stride_m + k_group * as_stride_k,
