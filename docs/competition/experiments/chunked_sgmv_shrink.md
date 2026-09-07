@@ -6,11 +6,11 @@ operator: chunked_sgmv_shrink
 batch: 4
 validity: valid
 platform: 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor)
-team_best_stage: e6
-team_best_commit: 6ed1fa9之前的e1字节族(见E6段)
-team_best_speedup: 4.7198125
+team_best_stage: e7
+team_best_commit: 094548df5da1075b8245b4af8ccddf024a319ae3
+team_best_speedup: 4.7489375
 sealed: no
-next: E7(e7-094548d)燧原原生低精度dot已过release门禁待单次平台裁决;预注册门=燧原>=1.5x且avg超4.7198125
+next: E7终态valid 4.7489375新TB(+0.62%,燧原轴关闭);结构轴定格:燧原0.5x=逐段launch上限,间接寻址不可用;重开需全新结构证据
 updated: 2026-09-07
 ```
 
@@ -117,3 +117,20 @@ route/materialize 是 sgmv 族唯一可行形态（e8-e10 三投证伪）。
   成员 3（generic/kunlunxin 与 e6 一致，enflame 为新字节）。
 - 证据 `validation/verification.json` SHA256
   `0cafa617d5e848eb5b5d99d432e3c6cab0568719855b0db5eb34c89fb043b36d`。
+
+## E7 平台终态（2026-09-07T2x:xx）
+
+- submission `10808`：**valid，avg 4.7489375，新 team best（+0.62%）**；
+  quota 观测 12/30。
+- 逐芯：天数 3.7705 / 沐曦 5.305 / **燧原 0.528（预注册门未达：
+  T12 原生操作数模板未迁移，0.58→0.53 噪声带内；燧原轴关闭）** /
+  海光 6.223 / 昆仑 1.785 / 华为 6.622 / A 7.132 / B 6.626。
+- 均值增量来自未动芯小幅水位（华为 +1.2%/A +2.2%/海光 +3.7%）。
+- 跨题知识：**T12 燧原 fp16-操作数 dot 模板只在融合 kernel 形态
+  兑现；route/materialize wrapper 的逐段 launch + 规则 GEMM 不受
+  操作数 dtype 影响**——燧原 sgmv 瓶颈在逐段 Python 循环
+  （index_select/GEMM/index_copy × B 段），而间接寻址 dot 又是
+  该芯不可用形态，0.5x 接近该结构上限。csgmv 单 launch 分段 CSR
+  是唯一结构出路但依赖间接权重寻址（燧原/昆仑不受支持），
+  T48 结构轴定格。
+- 证据 `validation/48-status-final.json`。
