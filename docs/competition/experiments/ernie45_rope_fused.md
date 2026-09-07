@@ -4,12 +4,13 @@
 task: 49
 operator: ernie45_rope_fused
 batch: 4
-validity: invalid
-platform: 7/8(e2,昆仑uni_sram墙已3投;e3新结构已提交待裁)
-team_best_stage: e1
-team_best_speedup: -
+validity: valid
+platform: 8/8(e3,8.58253125x)
+team_best_stage: e3
+team_best_commit: 5a6b8cb3eac758d266765f96cdf52a4581deb2a9
+team_best_speedup: 8.58253125
 sealed: no
-next: e3(5a6b8cb)昆仑pair-per-program已提交(2026-09-07 seq2)评测中;门:昆仑>=0.12x
+next: e3昆仑0.664x击穿uni_sram墙,8/8 VALID(第9个);守榜;可选轴:昆仑BLOCK_HEADS与A芯21.1x
 updated: 2026-09-07
 ```
 
@@ -41,3 +42,12 @@ updated: 2026-09-07
   50）0 失败。source `5a6b8cb`，ZIP `e3-5a6b8cb` SHA-256
   `36db259a70a94e5a950f6a96b0c016c9cee139a7b1f3637d664e80aaba1e1c96`。
 - 2026-09-07 seq2 提交评测中；晋级门：昆仑 ≥0.12x 且其余七芯不回退。
+
+## E3 终态 → **8/8 VALID**（2026-09-07，seq 2，第 9 个 8/8）
+
+- **昆仑 0.66425x——pair-per-program 击穿 uni_sram 墙**（S0/e1/e2 三投
+  均败后，第 4 发换结构通过）；燧原 0.577→0.6265，华为 2.47→2.5365。
+- **8/8 valid，avg 8.58253125x**：天数 16.10 / 沐曦 8.78 / 燧原 0.627 /
+  海光 8.95 / **昆仑 0.664** / 华为 2.54 / A 21.11 / B 9.90。
+- PR40 工作划分在昆仑的 grid 总数上限风险未兑现；后续可选轴：昆仑
+  `BLOCK_HEADS`（8→16/4）与 A 芯 21.11x 的参数微调，非必需。

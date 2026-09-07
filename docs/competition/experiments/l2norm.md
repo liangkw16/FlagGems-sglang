@@ -5,11 +5,12 @@ task: 56
 operator: l2norm
 batch: 4
 validity: valid
-platform: 8/8(s0,3.10497917x)
-team_best_stage: s0
-team_best_speedup: 3.10497917
+platform: 8/8(e1,3.10772917x)
+team_best_stage: e1
+team_best_commit: f83c73aeceaa6382c6ec6d93a082fc24e37090fb
+team_best_speedup: 3.10772917
 sealed: no
-next: e1(f83c73a)高维stride修复版已提交(submission 10665,2026-09-07)评测中;出分后更新8/8口径
+next: e1修复版8/8复验通过(3.1077x,s0同水位);后续可试短行num_warps=1/2与多行tile;榜首3.89x
 updated: 2026-09-07
 ```
 
@@ -39,4 +40,8 @@ updated: 2026-09-07
   `artifacts/competition/l2norm/e1-f83c73a/`，SHA-256
   `00506003196f9637dd7dba22a7fadbe6d34903986dc3c184f95292b8aefeb599`。
 - preflight 全门禁通过（task=competing、额度充足、元组逐项核对）后按持续
-  授权自动提交；评测中。s0 的 8/8 与 3.1050x 在 e1 出分前保持 team best。
+  授权自动提交；**8/8 复验通过，avg 3.10772917x 新 team best**（与 s0 同
+  水位，证明修复只影响高维正确性不影响性能）。
+- 逐芯：天数 6.68 / 沐曦 2.59 / 燧原 1.19 / 海光 4.57 / 昆仑 0.585 /
+  华为 1.41 / A 3.63 / B 4.21。"账本 8/8 与产物证据"的冲突至此消除：
+  当前平台记录即修复字节。

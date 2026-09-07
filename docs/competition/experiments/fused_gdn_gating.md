@@ -5,12 +5,12 @@ task: 53
 operator: fused_gdn_gating
 batch: 4
 validity: valid
-platform: 8/8(e1,1.769075x);e3已提交待裁
-team_best_stage: e1
-team_best_commit: TO_FILL
-team_best_speedup: 1.769075
+platform: 8/8(e4,2.1267x)
+team_best_stage: e4
+team_best_commit: 743ebb7f68109cdfd3b8c651aa88d8025d4d9d0c
+team_best_speedup: 2.1267
 sealed: no
-next: e2燧原=1830s评测机忙(非代码);e3(+_ascend,d2d6ea9)已提交待裁,门:华为>1.60x;e4(+_metax,743ebb7)已commit待e3华为出分后投
+next: e4沐曦2.7402x(+104%,过门);E2→E4三连兑现;后续轴:generic二代[ROWS_TILE,H]逼近榜首3.54x
 updated: 2026-09-07
 ```
 
@@ -90,9 +90,28 @@ IR 检查（燧原无 scf.if/grid-stride、华为热路径无整数除法/取模
   `956f0bab7b132005a6d43c6cf74ed5809cd378295df753ea2fd0f64350740ea3`。
 - 2026-09-07 提交评测中；门：华为 >1.60x；燧原同字节顺带重试 e2 裁决。
 
-## E4 沐曦 flat vendor（2026-09-07 已 commit，未提交）
+## E3 终态 → **8/8 VALID，avg 2.014025x 新 team best**（2026-09-07，seq 4）
+
+- **华为 1.654x（1.29→+28%，过 >1.60 门）**；**燧原 1.605x**——e2 的
+  1830s 超时确系评测机忙，行向量 vendor 实际兑现 0.17→1.605（9.4 倍）。
+- 逐芯：天数 2.452 / 沐曦 1.3402（generic）/ 燧原 1.605 / 海光 2.763 /
+  昆仑 0.7286 / 华为 1.654 / A 2.9108 / B 2.6586。
+- 双门全过 → 按预注册顺序解除 e4 阻塞。
+
+## E4 沐曦 flat vendor（2026-09-07 已提交）
 
 - `_metax`：昆仑 E1 骨架 BLOCK=2048（勿先试 4096），flat [B*H] 索引
   改为显式 a/b 行/列 stride 寻址（免 contiguous 拷贝，#22312 类）。
-- source `743ebb7`；screening 已随 5-source 矩阵通过；单变量纪律：
-  待 e3 华为出分后再投，门：沐曦 >1.50x。
+- source `743ebb7`，ZIP `e4-743ebb7`（5 成员）SHA-256
+  `536ea4c7f77954526ba19da566910b9bca120b8d2a21dd7d7d3a84c23fec0f0d`；
+  release 回执 0 失败（`artifacts/competition/fused_gdn_gating/e4-743ebb7/`）。
+- 2026-09-07 提交评测中；门：沐曦 >1.50x（当前 generic 1.34）。
+
+## E4 终态 → **8/8 VALID，avg 2.1267x 新 team best**（2026-09-07，seq 6）
+
+- **沐曦 2.7402x（1.3402→+104%，远过 >1.50 门）**——flat 向量化在沐曦
+  与昆仑同源兑现。逐芯：天数 2.4364 / 沐曦 2.7402 / 燧原 1.5856 /
+  海光 2.9286 / 昆仑 0.7162 / 华为 1.3676（ascend 同字节 -17%，评测机
+  波动，e3 记录 1.654）/ A 2.6012 / B 2.6378。
+- E2→E3→E4 三发单变量全部兑现；预注册剩余轴：generic 二代
+  `[ROWS_TILE, H]`（A_log/dt_bias 广播复用），目标逼近榜首 3.54x。
