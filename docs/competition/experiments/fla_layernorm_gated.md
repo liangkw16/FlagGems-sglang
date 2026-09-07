@@ -5,11 +5,11 @@ task: 51
 operator: fla_layernorm_gated
 batch: 4
 validity: valid
-platform: 8/8(e7,5.816325x TEAM BEST)
+platform: E8/11032八芯valid,5.721075x;历史E7 best5.816325x,第6
 team_best_stage: e7
 team_best_speedup: 5.816325
 sealed: no
-next: E8已预注册,按用户恢复额度授权执行一次平台评测;华为收益待实测
+next: E8华为仅+2.65%且总分未晋级;关闭单独延迟load轴,保留E7,结构优化需新的目标性能证据
 updated: 2026-09-08
 team_best_commit: d05e57a0ee3d2d453866c85c0479b22a6fcbae8b
 ```
@@ -346,3 +346,26 @@ kunlunxin 冻结。本包同时是昆仑崩溃族重载载体（新 ZIP 字节�
 | `fla_layernorm_gated_hygon.py` | `712c38595eef274a95d559171b23c31edc3af1411b135757fbc378306083c260` |
 | `fla_layernorm_gated_kunlunxin.py` | `66e08be2b4d870028f63ddceb89dd6e6b66ed79ad333e29757ad901332b1ebdd` |
 | `fla_layernorm_gated_metax.py` | `a7cd1e8a9807e0ce17d2d955aa0c27b47639242fb6bdcf6fd1069d956d2d2bf1` |
+
+## E8 平台终态（2026-09-08）
+
+- submission `11032`，daily_seq `2`，created `2026-09-08T01:52:34`；观测 `2026-09-08T01:53:38.008714+08:00`。`completed / valid`，8/8，均值 **5.721075x**，`is_team_best=false`，保留 E7 **5.816325x**。
+- 一次上传、一次正式提交；远端匿名下载验签通过，23261 bytes，ZIP SHA256 `579d902c7fc7bb8c4dbc382220143ccd7512adc7a05978ad1f77f806b6c81f47`。file URL SHA256 `0afa077050bc4735ab78aa750ce296b5f4d4ea05e66be6f676bfc5d0cd5a73f5`。
+- 预注册 ledger commit `e18b94b876dabbadde49762f5fe0bfe7cbf46a75`；source / verification commit 均保持 `8ba31a102f4ef0430c08f12c4622b27430915071`。
+- 原始提交 `artifacts/competition/batch4-submit-20260908/51-submit.json` SHA256 `97317a26053cb31b8ae2c8e5d77568946638ab741717261ebb814583713b0947`；终态 `artifacts/competition/batch4-submit-20260908/51-status-final.json` SHA256 `bd1b41ed7b5838059b847669e6cd135819ad2a589ca20745c1f63a3254ed0c04`。
+
+| 芯片 | 正确性 | E8 加速比 | E7 加速比 | 实际文件 |
+| --- | --- | ---: | ---: | --- |
+| tianshu | PASS | 11.2122 | 11.4872 | `fla_layernorm_gated.py` |
+| muxi | PASS | 4.7748 | 4.4776 | `fla_layernorm_gated_metax.py` |
+| enflame | PASS | 2.3324 | 3.7314 | `fla_layernorm_gated_enflame.py` |
+| haiguang | PASS | 8.6432 | 7.9938 | `fla_layernorm_gated_hygon.py` |
+| kunlunxin | PASS | 1.0292 | 0.9644 | `fla_layernorm_gated_kunlunxin.py` |
+| huawei | PASS | 2.3638 | 2.3028 | `fla_layernorm_gated_ascend.py` |
+| card_a | PASS | 8.3158 | 8.428 | `fla_layernorm_gated.py` |
+| card_b | PASS | 7.0972 | 7.1454 | `fla_layernorm_gated.py` |
+
+- 结算：华为2.3638 vs2.3028，+2.65%，未达+10%门；总分-1.64%，未晋级，单独延迟 load 轴停止。其余五个成员均为 E7 字节，燧原从3.7314回到2.3324；不可把其他芯片读数变化归因于华为改动，也不凭单轮小涨声称目标性能优化成立。
+- 本轮两候选均已终态且未刷新 best，累计只用2次额度，剩余28/30。没有重投；后续结构优化需新源码与性能证据，已知失败或门禁未过候选保持不提交。
+
+- 提交后实时排名复核 `2026-09-08T01:54:27.199190+08:00`：第 **6**，本队 best **5.816325x**，榜首 **6.668225x**（c2flow）。证据 `artifacts/competition/batch4-submit-20260908/tasks-after.json` SHA256 `f7959a760a01815c0072e76de5c3e7fa8fb08c4e41ec3579ca946c6c64001170`。
