@@ -9,7 +9,7 @@ platform: 8/8(e2,10747,2.36478125x首次有效)
 team_best_stage: e3
 team_best_speedup: 2.401375
 sealed: no
-next: E3终态valid 2.401375新TB(+1.55%,华为+23.6%);距榜首2.81646875仍-14.8%,高分芯结构未破,收轴待新证据
+next: 冲榜Top1(实时榜首EvokeAgent 2.816469,gap 0.415);E4已提交(36e8b63 constexpr快核+int32+stages1+缓存调度);E5直连发射(CompiledKernel run绕过JIT调度,昇腾/昆仑/燧原fork API已静态验证)按E4逐芯数据接力
 updated: 2026-09-07
 team_best_commit: 49dbb7f1c691c33befc1d4be2f1e5873a0e8a127
 ```
@@ -148,3 +148,53 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
   燧原/昆仑 0.5x 档未破。按预注册门已晋级，后续需高分芯结构证据
   才重开，本轮收轴。
 - 证据 `validation/57-status-final.json`（原始逐芯记录）。
+
+## E4 launch 瘦身：constexpr 快核 + int32 寻址 + 缓存调度（2026-09-07）
+
+- 冲榜侦察（用户授权 Top1 目标后的只读轮）：实时榜首 EvokeAgent
+  2.81646875（8/8，11 队 42 提交），我方 2.401375 排名 5，gap 0.415；
+  quota 观测 13/30 剩（17:35）。结论：平台计时分子为 torch 三算子
+  reference（float()/广播乘/.to()，3 launch+2 临时分配）；公开 harness
+  `benchmark/bench_report.py` 用 do_bench CUDA-event 计时，host 调度
+  全额入表；SGLang 上游 generic 为 flat BLOCK=1024 逐 lane `//`/`%`
+  （我方 kernel 本体已优于它，竞争维度=压低我方单次调用总耗时）；
+  FlagGems-sglang PR 仅有 batch-1/2 结构，无本题泄露。弱三芯 0.5x 档
+  =1 次 Triton Python 调度输给 3 次 torch C++ dispatch，host 侧为
+  剩余主瓶颈；E5 直连发射的 fork API 已静态验证（triton-ascend
+  CompiledKernel.__getitem__/run、昆仑 driver.py:875、燧原委托
+  launcher_cls，均与主线 3.x 同构；Inductor 生成代码为生产先例）。
+- 单变量：`tau.stride(0)==1` 且 `numel<2^31` 时走新增
+  `_log_scaling_tau_fast_kernel`（N_COLS/COL_BLOCKS/BLOCK/EVEN 全
+  constexpr、int32 寻址、仅 3 指针参数、num_stages=1）；strided tau
+  或超大输入保持 E3 general kernel 字节不动（num_stages=2）。
+  wrapper 按 n_cols 缓存 (block, col_blocks, even)。generic 与
+  `_kunlunxin` vendor（保持 2D 调度）同步。两条路径均为 Triton
+  kernel，无 torch fallback、无设备判断、无 try/except。
+- source/verification commit `36e8b6354a7240fee3e3e4fc89df74bff7524a78`；
+  本地 py_compile、black（pyproject 79）、isort、flake8 全过。
+  NVIDIA release 两轮：generic-only（`gpu:/tmp/flagos-t57e4-release`）
+  4 方法全过；`--proxy-vendor kunlunxin` 复跑（`gpu:/tmp/flagos-t57e4-rel2`）
+  generic+kunlunxin 双执行源、4 方法 57 case、0 fail/skip/error，
+  两条 fast kernel 实跑。执行
+  `timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/flagos-t57e4-rel2/.agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/flagos-t57e4-rel2`。
+  RTX5070Ti / Python3.12.13 / torch2.13.0+cu130 / triton3.7.1。
+  昆仑目标运行时未验证（target-runtime-unverified 沿用 E2 以来状态）。
+- 诊断意图与预注册门：int32/stages 砍 GPU 侧、缓存+减参砍 host 侧，
+  逐芯涨跌分解 host/GPU 占比。晋级门：平台 avg > 2.401375 且最弱芯
+  ≥0.4。弱三芯若各 +0.05 以下，视为 GPU 侧证据不足、host 主导加强，
+  E5 直连发射照发（E4/E5 不互斥）。同指纹两次失败关轴；昆仑 1830s
+  compile-worker 崩溃按崩溃族协议不计代码止损。
+- ZIP `artifacts/competition/log_scaling_tau/e4-36e8b63/log_scaling_tau.zip`，
+  9247 bytes，SHA256
+  `5331d98597cfa14f6d4f264684513539ddfd23438985a89dc8ac919ca5e5f2a8`；
+  成员 `log_scaling_tau.py` SHA256
+  `c5e4a9fd4a5ca19627c1346d8fc74ec1c2417993c6d715ada473b3081bad195c`
+  （=release 执行哈希）、`log_scaling_tau_kunlunxin.py` SHA256
+  `4006d7c5e141609d3eb56b4e71f4eff375e6529c57f09b2ed6776aa63d789119`。
+- 证据 `e4-36e8b63/validation/verification.json` SHA256
+  `323127944cc4985a2ba555472a7107854b02c9b764f049da3460eb0418e959ec`、
+  `e4-36e8b63/validation/verification.log` SHA256
+  `3ddb899a974c583debcc926ee0df497ec49b3a8669514c434222a6c4a2d6f444`。
+  测试源码 SHA256（verification commit）
+  `17f953d64835eca778b3cc71144a716dfe009a249c7527c6f94e2d921719f8b7`。
+- 平台结果待提交后另节追加。
