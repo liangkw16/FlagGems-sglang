@@ -5,12 +5,12 @@ task: 43
 operator: causal_conv1d_update
 batch: 4
 validity: valid
-platform: 8/8(e14,6.5204375x非最佳);e13最佳6.545875x
+platform: e16候选已验证待单次提交；team best e13 8/8 6.545875x
 team_best_stage: e13
 team_best_commit: 4fa854a376de167e76a1e5d1441c6cd82b5866d7
 team_best_speedup: 6.545875
 sealed: no
-next: 保留e13最佳6.545875;tile128未改善均值;时间并行离线常规case回退,均不追投
+next: E16仅常量化燧原状态复制形状；E17昇腾自适应状态tile独立筛选；目标8.14x
 updated: 2026-09-07
 ```
 
@@ -354,3 +354,72 @@ IEEE `tl.dot`（只存 C[:,0]；T28/T37 昆仑通过范式）。
 
 - 证据 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e14-5cce466/validation/43-status-first-round.json` SHA256 `1918d1d0d4e7e09860137d057b1b5c034a1a57e65628851501f08c555f86776f`。
 - 未晋级后续实验 `/Users/bytedance/ccc/flagos/artifacts/competition/causal_conv1d_update/e14-5cce466/validation/followup-evidence-sha256.json` SHA256 `4e846306d3b972f1b6f196ab1eb1cb0f6314573c8aabfe51f2db4428940276fc`。
+
+## E15 燧原通道连续布局 + 华为循环不变量外提（2026-09-07）
+
+- 调研定位两处结构剩余：①燧原 width-reduce vendor 的窗口加载是
+  `[W_PAD, BLOCK_D]` index-shift 形式（[B,D,L] 布局下逐 lane 跨 seqlen
+  stride）——PR34 在 GCU 实测该形态比规范连续加载慢 ~100x，燧原 0.326x
+  与此吻合；②华为 vendor 的 weight tile 与 bias 在 `tl.static_range
+  (SEQLEN)` 内逐步重载，且输出走 fp32 缓冲 + wrapper `.to()` 整趟转换。
+- 单变量两 vendor：`_enflame` 整体替换为昆仑 E13 同款通道连续
+  `[B,L,D]` 双 kernel 形态（PR34 结构，输出转置 pass 保留）；`_ascend`
+  weight/bias 外提 + 输出直存原 dtype（去掉 `.to()` 整趟）。generic 与
+  `_kunlunxin` 字节冻结。
+- source/verification commit `cbfae4f`；screening `/tmp/flagos-t43e15`
+  （10/10）与 release `/tmp/flagos-t43e15-rel`（10/10 方法、0 fail/skip，
+  generic 69 / ascend 39 / enflame 78 / kunlunxin 78 launch 实跑）双绿；
+  black/isort/flake8 在两 vendor 字节上分别全过。
+- 预注册门：平台 avg 超 team best 6.545875 才晋级（燧原 0.326→预期
+  主受益；华为微优化幅度小）；未超则收轴。
+- ZIP `e15-cbfae4f`，SHA256
+  `59abbc45f97c4049d34d28e8d1351439c3b4ef31ccb57e0cb9950cba48136b94`；
+  成员 4（generic/kunlunxin 字节与 e13 一致；ascend
+  `a3a5cd981d492def26fef2745a527a22e4dce207429dfb8566386e927332a49d`、
+  enflame `01801b0a91726f5c98b6c9f91e05a5ee35874b4a541f2e93b7718a9dbe454319`）。
+- 证据 `validation/verification.json` SHA256
+  `200ff974a7bd0536cd49bc68af3679083dbd98543c963d8ec01b5aef4fa7b080`、
+  `validation/verification.log`（相邻完整日志随回执归档）。
+
+## E15 平台终态与处置（2026-09-07T18:2x）
+
+- submission `10789`：invalid_correctness——**燧原 5 case 全部
+  `Pipeline run failed: PassManager execution failed`**（通道连续形态
+  不过 GCU 编译器；与"燧原编译路径对 kernel 形态敏感"知识吻合，
+  PR34 结构在 fn 算子可用不代表 update 算子形态可用）。
+- 其余七芯全过：天数 13.4375 / 沐曦 7.0025 / 海光 11.382 / 昆仑 0.406 /
+  **华为 0.484（微优化 +41% 兑现：weight/bias 外提 + 输出直存原
+  dtype 去 `.to()` 整趟）** / A 8.0865 / B 10.47。
+- 即使燧原按旧 0.326 通过，均值 6.449 也低于 team best 6.545875
+  （A 芯 8.84→8.09 等水位下漂 +0.14 华为增益无法覆盖）→ **本轴收券，
+  不追投**；树回滚 `_enflame` 至 e13 已验证字节（成员 SHA
+  `57d4825f20b864d1722f8760a8707d0be5e90e5f12038a8fd05809f7f38d43d8`），
+  **保留 `_ascend` 外提改进**（平台实证 +41%，为后续候选打底）。
+- 跨题知识：①昇腾"wrapper 整趟 dtype cast 消除"是真实杠杆（本题为
+  输出流量主导型算子）；②燧原 PassManager 对通道连续双 kernel 形态
+  （含 `enable_fp_fusion=False` kwarg 与 permute 物化 wrapper）编译
+  失败，update 形态迁移需单变量拆分验证。
+- 证据 `validation/43-status-final.json`（原始逐芯记录）。
+
+
+## E16 燧原复制编译修复与冲榜基线校正（2026-09-07T18:03:39+08:00）
+
+- 用户授权开工、通过门禁自动提交。独立 worktree `/Users/bytedance/ccc/flagos-t43-top1`，分支 `codex/t43-top1-e16` 从已推送 `4d54076` 建立，只携带 T43 文件；避免发布其他任务尚未推送的提交。
+- 核验 E15 实际 ZIP：generic SHA `ffa794b7cd13e604eef0c38fc897520eefaa63e1745c0cf3148ee00c6e67f464` 与 E14 一致，**不等于 E13**。旧 E15“generic 冻结 E13”记录有误；本节纠正该归因，不能把 E15 强芯回退全部归于噪声。E16 generic 恢复 E13 BLOCK256，Black 仅折行，AST 与 E13 相等，非逐字节相等。
+- E15 五个燧原失败均定位到 `_ccu_state_copy_kernel` 的 GCU PassManager 编译，不能据此否定已先行调用的卷积 kernel，更不能据此声称卷积正确。`enable_fp_fusion=False` 只传卷积，不是复制编译失败的直接入口。
+- E16 单一新修复假设：保持 E15 燧原卷积和 wrapper，复制 kernel 的 `seqlen/state_len/l_cat` 改 `tl.constexpr`，排查运行期向量除余的 lowering；具体触发操作尚未证实。Ascend 保留 E15 字节，Kunlun 保留 E13 字节。相对 E15 另有明确基线纠正，不声称整包仅三行变化。
+- 持久回归新增 `test_state_copy_boundaries`：state 3/5/7/63/64/65/129，seq 1/2/3/5/9，三 dtype，非连续 state，输出精确 state、输入不变与独立地址。复用其余10方法。
+- source/verification commit `3f48629aa8c45761b360211d1887acb53240240e`。py_compile、Black、isort、flake8通过；release 11方法、fail/error/skip/xfail均0，generic/ascend/enflame/kunlunxin全部实际执行。NVIDIA RTX5070Ti、torch2.13.0+cu130、triton3.7.1、Python3.12.13；目标芯仍 target-runtime-unverified。
+- release 后台命令：`nohup setsid timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/flagos-t43-top1.LOFr42/e16-release/.agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/flagos-t43-top1.LOFr42/e16-release`；PID313897，完整日志及回执已取回。
+- KernelGen tools/list 已刷新；没有固定源码验证接口。sunrise job `3aa1da47-a9e9-4e0e-b073-f22a4635fcc7` 为服务生成验证，待结果，不能为本地字节背书；华为小tile服务任务另记 E17。请求和原始响应在 `e16-research/`。
+- 晋级：八芯全部正确且每芯>=0.1；以正式平均是否超过6.545875判断保留，冲榜目标>7.90325，工作目标8.14。只恢复正确性但无收益不追投；相同失败不以注释重投。今晚 T43 最多两次不同候选，E16最多一次上传+提交，第二次优先有实测证据的昇腾 tile。
+- ZIP `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e16-3f48629/causal_conv1d_update.zip`，21354 bytes，SHA256 `800ce5f1f680e028cbd2d60a67efb33dd4f5336e950e994948d950db5cbc4f80`。dry-run/final commit、成员、成员SHA、ZIP SHA相同。
+- member `causal_conv1d_update.py` ← `src/flaggems_sglang/ops/causal_conv1d_update.py` SHA256 `93fac21875b4509390b0f17e10144d6b60a40e015f782a47c9424dbb39c78cee`。
+- member `causal_conv1d_update_ascend.py` ← `src/flaggems_sglang/runtime/backend/_ascend/ops/causal_conv1d_update.py` SHA256 `a3a5cd981d492def26fef2745a527a22e4dce207429dfb8566386e927332a49d`。
+- member `causal_conv1d_update_enflame.py` ← `src/flaggems_sglang/runtime/backend/_enflame/ops/causal_conv1d_update.py` SHA256 `60e9e3cc3bae0c3a5f4bfce69749025635a311b8a75f2434a1cc0e7094a3cdf4`。
+- member `causal_conv1d_update_kunlunxin.py` ← `src/flaggems_sglang/runtime/backend/_kunlunxin/ops/causal_conv1d_update.py` SHA256 `8086def1f50ec326ab7634010b62edcf950e6e78f52995d8bde74320098d3f20`。
+- test SHA256 `f212ec7e780587a305bfbf79224d5211282e33a48571cc3ecd7cf5cc45d867a3`。
+- evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e16-3f48629/validation/verification-input.json` SHA256 `659553a41b1f80696cfd3960497139b50676fb13259fb66440cfa4c66b6bac55`。
+- evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e16-3f48629/validation/verification.json` SHA256 `44d655d0d26d5caf75041dc6a895136a36816accc33424431b3c114e9d4ee49b`。
+- evidence `/Users/bytedance/ccc/flagos-t43-top1/artifacts/competition/causal_conv1d_update/e16-3f48629/validation/verification.log` SHA256 `7e2fc1abd05c34920b3c11c58c7f83a6d95ac3d57b4272fb7f030b56f23b20de`。
+- 静态复核和阶段计时：`e17-screening/bench.py` 以五轮 AB/BA 测整个 wrapper；Ascend另测 kernel，GPU 无其他进程校验逐case执行。结果仅 NVIDIA 代理，不外推 GCU/NPU。
