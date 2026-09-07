@@ -9,7 +9,7 @@ platform: 7/8(e1,10668已终态;昆仑compile_worker Aborted,归因未定)
 team_best_stage: -
 team_best_speedup: -
 sealed: no
-next: 先取得reference单独复现或首失败栈;其他题健康不能证明本题仅平台错,禁止同字节自动重投
+next: E2(e2-afbe602)昆仑三平铺kernel vendor已过release门禁待单次平台裁决;假设=深嵌套generic在昆仑编译超时,预注册门=昆仑跑出结果且七芯维持
 updated: 2026-09-07
 ```
 
@@ -68,3 +68,34 @@ updated: 2026-09-07
 旧节“确定性reference崩溃、非我方kernel问题”证据不足，现撤回该归因。两个提交的compile_worker/Aborted与其他题当天成功，只证明题目相关失败，不排除候选代码、编译与设备状态作用。本轮未再次提交。
 - 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/tasks-now.json` SHA256 `fc73368c3d98b228b0c7815d6ec1e9042a58af8d953337fff58990daec1474fc`。
 - 查询证据 `/Users/bytedance/ccc/flagos/artifacts/competition/batch4-top1-20260907/55-submissions-now.json` SHA256 `3a954f68db1ecbadc01b3e43a704eab3d8bd6929e57e34d2f77c9053b2864085`。
+
+## E2 昆仑三平铺 kernel vendor（2026-09-07）
+
+- 假设：两次 compile_worker 崩溃（1830s 超时 + Aborted）的触发面是
+  generic 深嵌套结构（hidden 循环内逐 h0 展开 [HC,BLOCK_H] fn tile）在
+  昆仑 FlagTree 的编译耗时/崩溃；T45 E16 刚定位的"复合谓词 mask 错译"
+  进一步约束 vendor 形态。新 `_kunlunxin` vendor 按 T28 E11/T37 E4/T45 E8
+  配方拆三个平铺规则 kernel：①grid-stride 行平方和（BLOCK 1024）；
+  ②per-(token,j) mixes GEMV（纯向量 FMA 无 tl.dot，fp32；T45 证据昆仑
+  fp32 dot 本就走标量路，无损）③per-(token,h-block) 折叠（HC 标量
+  unroll + 512 宽向量，sigmoid/rsqrt 逐标量重算）。全部 mask 均为简单
+  边界 `<` 谓词，无复合谓词、无 early-return、无 gather/广播操作数。
+- generic 字节不动（七芯 e1 读数路径不变）；单变量 = 昆仑成员替换。
+  数学顺序逐元素对齐 reference（mean 后 rsqrt、sigmoid((mix*r)*scale+base)、
+  fp32 加权求和后单点 cast）。
+- source/verification commit `afbe602`；screening `/tmp/flagos-t55e2`
+  （2/2）与 release `/tmp/flagos-t55e2-rel`（2/2 方法、0 fail/error/skip/
+  xfail，generic 10 调用/10 launch、kunlunxin 12 调用/12 launch 实跑）
+  双绿；远端 black/isort/flake8 全过（black 重排后取回，hash 一致）。
+  新增 `HcHeadVariantsTest`（4 shape × 全 variant）+ RELEASE_REQUIRED_TESTS。
+- NVIDIA 代理性能不作依据（vendor 仅昆仑用）；目标 = 昆仑跑出首个结果
+  （correctness 或明确失败指纹均可推进归因）。若再次 compile_worker
+  同指纹崩溃 → 编译面假设削弱，转 reference 侧取证，不再盲投。
+- ZIP `e2-afbe602`，9355 bytes，SHA256
+  `884d35d654b1e81e33bf7db42baa66bbf1489de28251b7c68de2db86ac32668f`；
+  成员 2：`hc_head.py`（generic，e1 字节不变）、`hc_head_kunlunxin.py`
+  SHA256 `7eddd591ebf252078ed3728f03ffc965d8d5ffe080f082ac40f276aaa1ac7bd9`。
+- 证据 `validation/verification.json` SHA256
+  `2e7c03773e2d7f1a4a5a3e3c63b40e2e41c206fffd8074adb207c77cace6f518`、
+  `validation/verification.log` SHA256
+  `6755facfbbb640f581e7270363bf517f3451580fb44fc6e2fba56a533eb02e1c`。
