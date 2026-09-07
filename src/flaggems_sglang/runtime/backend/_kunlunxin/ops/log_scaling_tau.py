@@ -46,9 +46,9 @@ def _log_scaling_tau_kernel(
         )
     else:
         mask = offs < n_cols
-        x = tl.load(x_ptr + row * x_stride_row + offs, mask=mask, other=0.0).to(
-            tl.float32
-        )
+        x = tl.load(
+            x_ptr + row * x_stride_row + offs, mask=mask, other=0.0
+        ).to(tl.float32)
         tl.store(
             out_ptr + row * o_stride_row + offs,
             (x * tau).to(out_ptr.dtype.element_ty),
