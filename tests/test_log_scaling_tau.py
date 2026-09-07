@@ -1,23 +1,13 @@
 # Copyright 2026 FlagOS Contributors
 # (same license)
-import importlib.util
 import unittest
-from pathlib import Path
 
 import torch
 
-MODULE_PATH = (
-    Path(__file__).parents[1]
-    / "src"
-    / "flaggems_sglang"
-    / "ops"
-    / "log_scaling_tau.py"
-)
-SPEC = importlib.util.spec_from_file_location(
-    "log_scaling_tau_module", MODULE_PATH
-)
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+from tests._op_variants import load_operator_modules
+
+MODULES = load_operator_modules("log_scaling_tau")
+MODULE = dict(MODULES)["generic"]
 
 
 def reference(x, tau):
@@ -37,13 +27,15 @@ def make_case(T, tail, dtype, seed=0):
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class LogScalingTauTest(unittest.TestCase):
     def _check(self, x, tau):
-        actual = MODULE.log_scaling_tau(x, tau)
         expected = reference(x, tau)
-        self.assertEqual(actual.shape, expected.shape)
-        self.assertEqual(actual.dtype, expected.dtype)
-        torch.testing.assert_close(
-            actual.float(), expected.float(), atol=1e-2, rtol=1e-2
-        )
+        for name, mod in MODULES:
+            with self.subTest(module=name):
+                actual = mod.log_scaling_tau(x, tau)
+                self.assertEqual(actual.shape, expected.shape)
+                self.assertEqual(actual.dtype, expected.dtype)
+                torch.testing.assert_close(
+                    actual.float(), expected.float(), atol=1e-2, rtol=1e-2
+                )
 
     def test_platform_shapes(self):
         for T, tail, dtype in (
