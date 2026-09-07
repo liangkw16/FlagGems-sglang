@@ -120,7 +120,17 @@ def chunked_sgmv_shrink(x, weights, batch_info, num_slices=1):
     if max_len == 0:
         return output
 
-    block_s = 64
+    # e4: shape-adaptive token tile (SGLang production premise: request
+    # segments are short, so BM=64 pads 4x on a <=16-row segment). Only
+    # BLOCK_S adapts; BLOCK_N/K, warps and stages stay at the E6
+    # platform-proven values, and the (token_tile, output_tile) grid
+    # keeps full coverage of segments longer than one tile.
+    if max_len <= 16:
+        block_s = 16
+    elif max_len <= 32:
+        block_s = 32
+    else:
+        block_s = 64
     block_n = 128
     block_k = 32
     grid = (
