@@ -4,12 +4,12 @@
 task: 55
 operator: hc_head
 batch: 4
-validity: pending
-platform: 7/8(s0,昆仑=评测器崩溃族非代码);e1已提交待裁
-team_best_stage: s0
+validity: invalid_correctness
+platform: 7/8(e1,昆仑=评测器崩溃族第2次;七芯总分+40%)
+team_best_stage: -
 team_best_speedup: 0
 sealed: no
-next: e1(0052424)循环外归约重写已提交(2026-09-07)评测中;门:燧原>=0.31x(≥20%)
+next: 昆仑对该题reference确定性崩溃(s0/e1同指纹,同日昆仑评过T48/T49/T53/T56);等平台窗口同字节重试;燧原0.30x仍弱
 updated: 2026-09-07
 ```
 
@@ -49,3 +49,16 @@ updated: 2026-09-07
 - source `0052424`，ZIP `e1-0052424` SHA-256
   `cf34629620dd7b945a428a06ca0f022bbf7218b0e80e8cbdef77674649d45cde`；
   2026-09-07 提交评测中。燧原（0.257x 弱芯）目标 ≥20%；昆仑同时重试。
+
+## E1 终态（2026-09-07，submission 10668）
+
+- **7/8，昆仑第 2 次同一崩溃指纹**（`compile_worker Aborted`，与 s0
+  seq26 完全一致）；同日昆仑评测器正常完成 T48/T49/T53/T56 本队提交，
+  证明是 hc_head 题评测侧（reference/inductor）确定性崩溃，非我方
+  Triton 内核问题。按崩溃族协议不计代码止损。
+- 七芯 vs s0：天数 1.38（-13%）/ 沐曦 1.10（-11%）/ 燧原 0.2995
+  （+16.5%，未过 20% 门）/ 海光 2.156（-33%）/ **华为 3.153（+54%）/
+  A 2.1815（+125%）/ B 9.088（+104%）**；七芯总和 13.76→19.36（+40%）。
+  若昆仑恢复，e1 字节即为大幅 team best 候选；同字节重试不需新候选。
+- 结构结论：循环外归约在华为/A/B 大幅兑现，海光/天数/沐曦小回退，
+  与官方 FlagGems 结构在该三芯的 lowering 差异待后续分轴。

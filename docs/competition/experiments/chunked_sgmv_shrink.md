@@ -5,11 +5,12 @@ task: 48
 operator: chunked_sgmv_shrink
 batch: 4
 validity: valid
-platform: 8/8(e6,4.7198125x);e4已提交待裁
+platform: 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor)
 team_best_stage: e6
+team_best_commit: 6ed1fa9之前的e1字节族(见E6段)
 team_best_speedup: 4.7198125
 sealed: no
-next: e4(8b134f4)自适应BLOCK_S已提交(2026-09-07)评测中;出分后按>=15%判晋级
+next: e4七芯+1.5%未过15%门,保留e6;自适应BLOCK_S轴关闭;冲分回到预注册vendor轴(燧原dot模板/天数dtype/昆仑BLOCK)
 updated: 2026-09-07
 ```
 
@@ -81,3 +82,15 @@ route/materialize 是 sgmv 族唯一可行形态（e8-e10 三投证伪）。
 - source `8b134f4`，ZIP `e4-8b134f4` SHA-256
   `6141f43ce475cba01498e9cefb6e82e015c303fdc6e7c3a649d2881dedf9b5b4`；
   2026-09-07 提交评测中。目标芯 ≥15% 才晋级 team best，否则保留 e6。
+
+## E4 终态（2026-09-07，submission 10670）
+
+- **7/8**：燧原 1830s R 状态超时（评测机忙）；其运行的是与 e6 通过
+  0.58x 完全相同的 `_enflame` vendor 字节，非代码回归，同 2026-09-05
+  e3–e5 拥堵前科。team best 仍 e6 8/8 4.7198x。
+- 七芯 vs e6：天数 3.77（-2%）/ 沐曦 5.35（+1%）/ 海光 6.30（+5%）/
+  昆仑 1.77（-1%）/ 华为 6.76（+3.4%）/ A 7.19（+3%）/ B 6.79（+1.3%），
+  总和 +1.5%——**未过 ≥15% 晋级门，自适应 BLOCK_S 轴按预注册关闭**
+  （平台隐藏 shape 的短段占比低于代理假设）。
+- 结构结论：完整多 tile 覆盖下自适应 BM 方向正确但收益微小；
+  e2/e3 的"结构证伪"改判为"覆盖缺陷 + 低收益"，账本留档。
