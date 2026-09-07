@@ -94,7 +94,9 @@ def _causal_conv1d_update_kernel(
                 ).to(tl.float32)
                 val += wk * v
             if HAS_BIAS:
-                val += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(tl.float32)
+                val += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(
+                    tl.float32
+                )
             if ACT_IS_SILU:
                 # SiLU in the statement's exact form; stability rewrites
                 # fail the checker at large negative inputs.
@@ -146,7 +148,8 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         if squeeze_out:
             out = out.squeeze(-1)
         return out, new_state
-    dim_blocks = triton.cdiv(dim, _BLOCK_D)
+    block_d = 128 if seqlen > 1 else _BLOCK_D
+    dim_blocks = triton.cdiv(dim, block_d)
     total = batch * dim_blocks
     grid = (min(total, _MAX_GRID),)
     _causal_conv1d_update_kernel[grid](
@@ -175,7 +178,7 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         WIDTH=width,
         HAS_BIAS=bias is not None,
         ACT_IS_SILU=(activation in ("silu", "swish")),
-        BLOCK_D=_BLOCK_D,
+        BLOCK_D=block_d,
     )
     if squeeze_out:
         out = out.squeeze(-1)
