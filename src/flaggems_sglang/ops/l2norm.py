@@ -73,7 +73,7 @@ def l2norm(x, eps=1e-6):
     dim = x.shape[-1]
     if rows * dim == 0:
         return out
-    if dim <= 128:
+    if dim <= 128 and rows > 4096:
         _l2norm_rows_kernel[(triton.cdiv(rows, 8),)](
             x,
             out,

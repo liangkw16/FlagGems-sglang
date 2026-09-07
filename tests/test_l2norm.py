@@ -53,7 +53,7 @@ class L2NormTest(unittest.TestCase):
 
     def test_short_row_tiles(self):
         torch.manual_seed(56)
-        for rows in (7, 8, 9):
+        for rows in (7, 8, 9, 4095, 4096, 4097):
             for dim in (63, 64, 65, 127, 128, 129):
                 for dtype in TOL:
                     with self.subTest(rows=rows, dim=dim, dtype=dtype):

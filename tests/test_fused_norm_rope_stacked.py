@@ -68,7 +68,9 @@ def make_case(T, L, H, D, rotary_dim, dtype, seed=0):
     w = (torch.randn(L, D, generator=g) * 0.1 + 1.0).cuda().to(dtype)
     eps = torch.full((L,), 1e-6).cuda()
     cache = (
-        torch.randn(max_pos, rotary_dim, generator=g).cuda().to(torch.float32)
+        torch.randn(max_pos, rotary_dim // 2, generator=g)
+        .cuda()
+        .to(torch.float32)
     )
     cache = torch.cat(
         [torch.cos(cache), torch.sin(cache)], dim=-1
@@ -104,6 +106,11 @@ class FusedNormRopeStackedTest(unittest.TestCase):
         for dtype in (torch.float32, torch.bfloat16, torch.float16):
             with self.subTest(dtype=dtype):
                 self._check(*make_case(64, 4, 8, 128, 64, dtype))
+
+    def test_large_exact_cache_layout(self):
+        args = make_case(2048, 8, 16, 128, 64, torch.bfloat16, seed=54)
+        self.assertEqual(args[3].shape[1], 64)
+        self._check(*args)
 
     def test_rotary_equals_dim(self):
         self._check(*make_case(32, 3, 8, 128, 128, torch.bfloat16))
@@ -155,6 +162,18 @@ class FusedNormRopeStackedVariantsTest(unittest.TestCase):
                     torch.testing.assert_close(
                         v_m.float(), v_r.float(), atol=atol, rtol=rtol
                     )
+
+
+RELEASE_REQUIRED_TESTS = [
+    "FusedNormRopeStackedTest.test_basic",
+    "FusedNormRopeStackedTest.test_large_exact_cache_layout",
+    "FusedNormRopeStackedTest.test_rotary_equals_dim",
+    "FusedNormRopeStackedTest.test_non_pow2_dim",
+    "FusedNormRopeStackedTest.test_single_token_and_large_heads",
+    "FusedNormRopeStackedTest.test_non_multiple_of_four_heads",
+    "FusedNormRopeStackedTest.test_odd_tokens",
+    "FusedNormRopeStackedVariantsTest.test_variants_match_reference",
+]
 
 
 if __name__ == "__main__":

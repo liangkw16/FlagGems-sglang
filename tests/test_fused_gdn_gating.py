@@ -129,7 +129,18 @@ class FusedGdnGatingVariantsTest(unittest.TestCase):
     MODULES = load_operator_modules("fused_gdn_gating")
 
     def test_variants_match_reference(self):
-        for B, H in ((4, 16), (32, 8), (1, 7), (257, 128)):
+        for B, H in (
+            (4, 16),
+            (32, 8),
+            (1, 7),
+            (31, 128),
+            (32, 128),
+            (33, 128),
+            (127, 128),
+            (128, 128),
+            (129, 128),
+            (257, 128),
+        ):
             torch.manual_seed(B * 1009 + H)
             # A_log kept within platform-observed magnitude: the
             # log(1+exp) softplus rounding (~6e-8 abs) amplifies by
