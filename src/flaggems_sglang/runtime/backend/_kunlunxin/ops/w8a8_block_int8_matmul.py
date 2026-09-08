@@ -18,7 +18,8 @@
 # BLOCK_N divides group_n (both powers of two, BLOCK_N <= group_n), the n
 # group index is constant across the tile: compute it as a scalar from
 # pid_n. Same math, no vector idiv.
-# e8 probe: the historical fp16-operand dot miscompile family traces to the
+# e8r re-roll of the e8 sub-11640 bytes (fp16 dot verified correct on the
+# platform, +4.4% on this chip). e8 probe: the historical fp16-operand dot miscompile family traces to the
 # SDNN int<->float DMA dequant-scale bug fixed in xpu-sdnn-objects
 # v0.3.6.6.1 (FlagTree #1099, verified int8 dot on KL3), and the current
 # XPU stack ships v0.3.6.8.0 (FlagTree #1124). This backend never ran the
