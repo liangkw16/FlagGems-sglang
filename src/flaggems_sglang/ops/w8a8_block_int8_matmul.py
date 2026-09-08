@@ -60,7 +60,7 @@ def _w8a8_block_matmul_kernel(
     n_mask = offs_n < N
 
     accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
-    # Group-level scale accumulation (r2 identity bump; kernel bytes
+    # Group-level scale accumulation (r3 final identity bump; kernel bytes
     # identical to e6/e6r/e7 subs 11202/11210/11228): K steps inside one
     # scale group
     # accumulate in the dot accumulator (tensor-core native) and the
