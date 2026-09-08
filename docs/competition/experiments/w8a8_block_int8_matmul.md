@@ -146,3 +146,26 @@ updated: 2026-09-08
   `queued`，file_url SHA256 `f67ea92139228f713e0eba04e2d73a59c0022e539927d694c4fa840730987c4f`；
   证据 `batch4-codex-round-20260908/`（58-preflight intent nonce
   `cfd4e110…`、submit 响应、58-watch.jsonl）。
+
+## E6 平台终态与 e6r 重载（2026-09-08T15:1x–15:24）
+
+- **sub 11202 终态：`invalid_correctness` 7/8**——昆仑 18/18 case 同指纹
+  `RuntimeError error code=299, wait for noc idle timeout`，栈在 XMLIR
+  运行时 `aten_capture/eager_customized/cat.cpp:44` 与 `copy_kernel.cpp:414`
+  （benchmark 基建层，非 kernel），执行 1,206,418ms——**昆仑崩溃族**
+  （与 T51 E6 同指纹，~1.207s 级执行）；昆仑 vendor 为 e5 冻结字节，
+  今日 12:00 同字节刚以 139.58 通过。按崩溃族协议不计代码止损。
+- **七芯结构读数（vs e5）**：海光 **703.93（+9.2%）**、沐曦
+  **219.21（+5.5%）**、天数 76.85（+2.5%，ieee 路径组级化也有小赚）、
+  昆仑回调失败、华为 404.49（冻结字节 -9.2% = 窗口噪声）、A 372.23
+  （-1.2%）、B 85.78（-21.5%，疑窗口/待复验）、燧原 6.22（冻结持平）。
+  generic 四芯中两芯 ≥+5%（预注册"结构兑现"门），B 的回落需 e6r 复读。
+- **e6r = 注释载体（commit `80bba3d`，generic 仅注释差异，四 vendor
+  与 e6 逐字节一致；e5 昆仑冻结字节在内）**：按载体纪律过 py_compile，
+  因 v2 回执绑定 source commit 另跑 exact release（回执
+  `e6r-80bba3d/validation/verification.json` SHA256
+  `7a3e515cd13411600cdc9bfdce928d9b3bb6fdf7e60489234d01855a29271f30`）。
+  ZIP `e6r-80bba3d` SHA256
+  `c062ada088ee6b68e38b9303ce1aa011363ce63112cdee62499b047b248a4fbc`。
+- **sub 11210**（15:24:46）已提交，重掷昆仑回调窗口；晋级门沿用 e6
+  （8/8 且 avg > 250.64599167）。同字节重掷 ≤2 次纪律内（第 1 次）。
