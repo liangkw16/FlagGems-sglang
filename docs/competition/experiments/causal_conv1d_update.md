@@ -5,12 +5,12 @@ task: 43
 operator: causal_conv1d_update
 batch: 4
 validity: valid
-platform: 8/8(e14,6.5204375x非最佳);e13最佳6.545875x
+platform: 8/8(e13,6.545875x最佳);e14 6.5204375x非最佳;e16候选就绪
 team_best_stage: e13
 team_best_commit: 4fa854a376de167e76a1e5d1441c6cd82b5866d7
 team_best_speedup: 6.545875
 sealed: no
-next: 滚动窗口已实现并通过代理;性能未晋级,守E13,需目标加载/占用证据
+next: E16三vendor字节瘦身+视图返回,回执/ZIP/manifest全绿,进入平台preflight
 updated: 2026-09-08
 ```
 
@@ -409,3 +409,58 @@ generic width2/3/4 多 token 用寄存器滚动历史和权重复用；长序列
 - 回执 `artifacts/competition/batch4-implementation-20260907/t43-release1/verification.json`，SHA256 `9210e672569db770418288a82c50b69a89d2f7de90763de7867dda4cbda51212`；日志 SHA256 `5b6652e3d3229686e2a22a8dbc6283aced00127e7887971660e1463c05807706`。
 - 不可变 ZIP `artifacts/competition/causal_conv1d_update/research-20260908-8ba31a1/causal_conv1d_update.zip`，SHA256 `9308dfc04f2b619f7071340b7e31020e3ff6a8e917e7f2d9748219b6d8124592`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
 - 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
+
+## E16 三 vendor 字节瘦身 + 视图返回（2026-09-08，提交前）
+
+- **证据基础**：E15 平台 raw_result 重新归因——燧原 5 个失败 case 的
+  traceback 全部指向 `_ccu_state_copy_kernel` 启动行的编译阶段
+  （`make_gcuir` PassManager），affine kernel 在其之前已编译并 launch；
+  raw 中的 grid.y=256 OutOfResources 均属历史提交（9422/9520/9522/9852），
+  与 E15 无关。「通道连续形态不可编译」假设推翻，修复面缩小到 state
+  copy。Codex 咨询（gpt-6-astra/ultra）复核字节收支与算术（登顶需三弱芯
+  均值约 4x）；平台 checker 比较走 `assert_close`（默认
+  `check_stride=False`），视图返回风险降为低档，仍按探针纪律首发一次。
+- **改动（每芯相对自身已验证基线单变量）**：
+  - generic：回退 E13 平台已验证字节（`0e62c67b…`）+ 一处 black 折行
+    （AST 等价；远端 black 版本较昨日新，两文件各一处折行在 fd3907e 修正，
+    generic 成员 SHA 变为 `93fac218…`）
+  - enflame：cat/out 改原 dtype（去两趟 `.float()` 与一趟 `.to()`）；
+    kernel 删除 state-copy 块（卷积 tap 字节不动）；new_state =
+    `x_cat[:, :, seqlen:].to(conv_state.dtype)` 尾切片视图（混合 dtype
+    时由 `.to()` 物化正确 dtype）
+  - kunlunxin：`torch.cat((state.permute(0,2,1), x.permute(0,2,1)), dim=1)`
+    一次直建通道连续 [B,L+S,D] 原 dtype pack；affine kernel 字节冻结
+    （输入指针 dtype 变化=新编译实例）；删 state-copy kernel；
+    new_state = pack 尾切片 permute 视图
+  - ascend：E15 外提字节为底，唯一变量 cat 改原 dtype（kernel 内
+    `.to(tl.float32)` 载入承接精确 cast）
+- **测试**：新增 `test_variants_chain_updates`（返回 state 链式复用 +
+  输出与输入存储不别名，覆盖全部 vendor 视图路径）与
+  `test_variants_mixed_input_dtypes`（x/state 混合 fp32/bf16/fp16），
+  RELEASE_REQUIRED_TESTS 同步为 13 项。
+- **验证**：source/verification commit `fd3907e9b49ffefaa362ff7f535274cd3a1f6ae5`
+  （前序 `daacaa9` 同逻辑首轮回执亦 13/13，被 fd3907e 绑定回执取代）。
+  远端 `gpu:/tmp/flagos-t43e16.0908/t43-release2`，RTX 5070 Ti /
+  driver 610.57.04 / Python 3.12.13 / torch 2.13.0+cu130 / triton 3.7.1。
+  py_compile、Black、isort、flake8 全绿（black 带 pyproject line-length
+  79）。release 回执 13 方法 0 fail/error/skip/xfail；实际 kernel launch
+  generic 102 / ascend 45 / enflame 45 / kunlunxin 45；三 vendor 维持
+  `target-runtime-unverified`（昆仑 MCP 本轮未调用，平台八芯为准）。
+  回执 `validation/verification.json` SHA256
+  `6e923bb192d2fa70a24b378aee3c9915b3599eb5a8681a9e43d6f08073539679`、
+  `validation/verification.log` SHA256
+  `f9cd27756d314d124b11170b68c43e911b6f06285374a52b77914961a55d6b18`。
+- **ZIP** `artifacts/competition/causal_conv1d_update/e16-fd3907e/causal_conv1d_update.zip`，
+  22359 bytes，SHA256
+  `b1bd1fd5d2e2f783816953973ad1586e2afefdae9c7fb5137803ee3c6c658670`；
+  dry-run/最终 manifest 四成员恒等：
+  - `causal_conv1d_update.py` ← `93fac21875b4509390b0f17e10144d6b60a40e015f782a47c9424dbb39c78cee`
+  - `causal_conv1d_update_ascend.py` ← `21770f939f4fb9690bd5f811f2cfab100935d8983a60ec75d3d7759f93830045`
+  - `causal_conv1d_update_enflame.py` ← `5a70077f0513662f059e61918fbd5bc5561c13375befa6712663986ae2dbdb4c`
+  - `causal_conv1d_update_kunlunxin.py` ← `9a3a186dd8889a2a501a25e08d029fcc0d02bd98c719c2b402a4353044c0d01d`
+- **预注册晋级门与止损**：平台 avg > 6.545875 才替换队最佳（预期主受益
+  燧原/昆仑/华为，字节收支约 2.4~5x；fp32 case 的 `.float()` 为 no-op，
+  收益按 dtype 混合打折）。视图返回为唯一探针点：任一芯 correctness
+  失败先查该芯 `selected_file` 与视图/dtype 路径，回退方案 = 恢复各自
+  E13 已验证 state 搬运字节另发；同指纹失败连 2 次停轴。generic/强芯
+  路径与 E13 语义逐字节一致（一处 AST 等价折行），预期不变。

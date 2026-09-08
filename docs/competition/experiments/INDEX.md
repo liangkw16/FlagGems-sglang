@@ -23,7 +23,7 @@
 | 40 | softcap_inplace_logits | valid | 8/8(e8,2.195604x,rank1) | e8 2.195604x | yes | 额度用尽收官;e16 华为字节(1.70)+TB 2.1956 #2;榜首 c2flow 2.2593 华为 3.40 未破译 | 2026-09-03 | [softcap_inplace_logits](softcap_inplace_logits.md) |
 | 41 | state_passing | invalid | E7 sub8079 system_failed;7 pass,Kunlun 0.0065x,Enflame unrun | E5 diagnostic | yes | 本轮收盘;只保留平台工单与全新结构研究 | 2026-09-02 | [state_passing](state_passing.md) |
 | 42 | act_and_mul | valid | 8/8(e6,3.25835x,排名10) | e6 3.25835x | no | e7 stride融合已验证3.149675未超E6(计分布局以连续为主);stride轴关闭,保留E6,无新结构证据不开轴 | 2026-09-08 | [act_and_mul](act_and_mul.md) |
-| 43 | causal_conv1d_update | valid | 8/8(e14,6.5204375x非最佳);e13最佳6.545875x | e13 6.545875x | no | 滚动窗口已实现并通过代理;性能未晋级,守E13,需目标加载/占用证据 | 2026-09-08 | [causal_conv1d_update](causal_conv1d_update.md) |
+| 43 | causal_conv1d_update | valid | 8/8(e13,6.545875x最佳);e14 6.5204375x非最佳;e16候选就绪 | e13 6.545875x | no | E16三vendor字节瘦身+视图返回,回执/ZIP/manifest全绿,进入平台preflight | 2026-09-08 | [causal_conv1d_update](causal_conv1d_update.md) |
 | 44 | chain_speculative_sampling | invalid | s0八芯predicts失败;本轮修复OOB但half精确采样仍失败,未重投 | s0 -x | no | 诊断已复现predicts[13]失配;release因expected_failure被拒,目标scan/舍入仍未修复,禁止带缺口提交 | 2026-09-08 | [chain_speculative_sampling](chain_speculative_sampling.md) |
 | 45 | chunk_scaled_dot_kkt | invalid_threshold | 8/8正确(e15),昆仑0.063x<0.1;平均7.000125不计有效排名 | - -x | no | 新row/head epilogue代理正确但未提速;候选暂不晋级,昆仑仍需>=0.1目标证据 | 2026-09-08 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x) | e3 14.1051875x | no | 华为token tile8及rank>128修复代理通过/ZIP验签;等待华为正确性和长短段性能复验 | 2026-09-08 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
