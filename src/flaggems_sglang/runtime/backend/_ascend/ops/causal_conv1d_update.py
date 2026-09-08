@@ -22,7 +22,12 @@ import torch
 import triton
 import triton.language as tl
 
-_BLOCK_D = 256
+# E16 platform run: with the input-dtype concatenation the in-kernel
+# .to(tl.float32) double-buffers the window tile and the width-reduce
+# kernel exceeded the Ascend 192KB UB budget (2424832 bits required,
+# BiShengHIR compile failure). Halving the channel block keeps every
+# tile under budget; the conv form is unchanged.
+_BLOCK_D = 128
 _MAX_GRID = 65535
 
 
