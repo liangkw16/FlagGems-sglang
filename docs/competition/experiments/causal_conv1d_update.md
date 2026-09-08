@@ -6,9 +6,9 @@ operator: causal_conv1d_update
 batch: 4
 validity: valid
 platform: e19r/11237八芯valid,6.560375x新team best(重掷第1次破线)
-team_best_stage: e19r
-team_best_commit: de039ad
-team_best_speedup: 6.560375
+team_best_stage: e19r2
+team_best_commit: 1b11d54
+team_best_speedup: 6.573625
 sealed: no
 next: E19重掷第1次即破线(6.5604);同字节还剩≤1次,榜首7.90需结构面,守TB为主
 updated: 2026-09-08

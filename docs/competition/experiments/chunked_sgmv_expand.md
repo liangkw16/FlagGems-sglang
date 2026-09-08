@@ -6,9 +6,9 @@ operator: chunked_sgmv_expand
 batch: 4
 validity: valid
 platform: E11/11031八芯valid,21.6584375x;历史E5 best25.0048125x
-team_best_stage: e5
-team_best_commit: b34d040360f040b6be43ce5443e7dc0ce83d2d47
-team_best_speedup: 25.0048125
+team_best_stage: e5r
+team_best_commit: 5286d26
+team_best_speedup: 25.1925
 sealed: no
 next: E11目标正确性通过但未晋级,保留E5守榜;不重投同字节,需新增目标性能证据再开轴
 updated: 2026-09-08

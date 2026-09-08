@@ -6,9 +6,9 @@ operator: ernie45_rope_fused
 batch: 4
 validity: valid
 platform: e4/11245八芯valid,8.71115625x新team best
-team_best_stage: e3
-team_best_commit: 5a6b8cb3eac758d266765f96cdf52a4581deb2a9
-team_best_speedup: 8.58253125
+team_best_stage: e4r
+team_best_commit: 16fe1d4
+team_best_speedup: 8.9578125
 sealed: no
 next: head16候选代理正确/ZIP验签;需昆仑live buffer和完整wrapper收益后晋级
 updated: 2026-09-08
