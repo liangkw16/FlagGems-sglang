@@ -564,3 +564,30 @@ generic width2/3/4 多 token 用寄存器滚动历史和权重复用；长序列
   保护（affine kernel 字节冻结；B·S·d_blocks 在 block=1024 时曾有
   超限风险，本次显式加固）。晋级门不变：avg > 6.545875。昆仑若
   ≥1.5 视为占用率假设成立；华为 <0.35 则水位/结构再分诊。
+
+## 编号说明（2026-09-08）
+
+并行会话（t43-top1 worktree）昨日 E16/E17 = submissions 10824/10826，
+详见其 7b9967b 账本节；本会话 E16/E17 = submissions 11148/11152。两串
+编号并存，以 submission id 为准。
+
+## E18 华为回退 + 昆仑占用率（2026-09-08，提交前）
+
+- 两 vendor 单文件、每芯单变量：
+  ①ascend 逐字节回退 E15 平台实证字节（成员 SHA `a3a5cd98…`，
+  0.484/0.3895 区间；E17 证明 bf16-cast 形态被 UB 锁死在 BLOCK 128
+  且负收益）；②kunlun wrapper 块策略 `min(np2(dim),256)`，
+  `B·S·cdiv(D,block)>65535` 时倍增保护（affine kernel 字节冻结，
+  同时修复 block=1024 时代 B=4096·D=5120 类 shape 的潜在 grid.x
+  超限）。generic/enflame 字节与 E16/E17 完全冻结。
+- source/verification commit `6f5e16d8c59bebc0f956014404502a4eb10e70ab`。
+  远端 `gpu:/tmp/flagos-t43e18.0908/t43-release`：13 方法 0 fail/
+  error/skip/xfail；launch generic 102 / 各 vendor 45。回执 SHA256
+  `0bee13655a664a86f3fb45d5894e23b2805f331b7f0e7d0fe757dd7fa3acfb87`、
+  日志 `25b7f786952671311078e567d6da3833726e97bb3ee380b8a3f67b3e09469cd0`。
+- ZIP `artifacts/competition/causal_conv1d_update/e18-6f5e16d/causal_conv1d_update.zip`
+  SHA256 `c5bec9ac35f1e21a60e4dd22933dd4f18dd81bb480487d968655752990f4879d`；
+  成员：generic `93fac218…`（=E16/E17）、ascend `a3a5cd98…`（E15 回退）、
+  enflame `5a70077f…`（=E16/E17）、kunlunxin `08a5ca99…`（唯一新变化）。
+- 预注册晋级门：avg > 6.545875。分诊：昆仑 <1.0 → 块策略回退
+  `min(np2(dim),1024)`；华为 <0.35 → 水位再判；全芯正确为底线。
