@@ -1,3 +1,4 @@
+# r1 water re-roll carrier of e15 8/8-correct bytes (kunlun 0.063).
 # Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
