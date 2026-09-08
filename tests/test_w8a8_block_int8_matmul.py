@@ -104,8 +104,60 @@ class W8A8VariantsTest(unittest.TestCase):
 
     MODULES = load_operator_modules("w8a8_block_int8_matmul")
 
+    def test_scale_group_boundary(self):
+        # A BK=32 tile starting at k=32 crosses the group boundary at 48.
+        # Likewise a BN=32 tile must not use one scale across n=48.
+        a = torch.ones(16, 96, dtype=torch.int8, device="cuda")
+        b = torch.ones(96, 96, dtype=torch.int8, device="cuda")
+        a_s = torch.tensor([1.0, 10.0], device="cuda").expand(16, 2)
+        b_s = torch.tensor([[1.0, 1.0], [2.0, 3.0]], device="cuda")
+        expected = torch.cat(
+            (torch.full((16, 48), 528.0), torch.full((16, 48), 1536.0)),
+            dim=1,
+        ).cuda()
+        for name, module in self.MODULES:
+            with self.subTest(module=name):
+                actual = module.w8a8_block_int8_matmul(
+                    a, b, a_s, b_s, [48, 48], torch.float32
+                )
+                torch.testing.assert_close(actual, expected, atol=0, rtol=0)
+
+    def test_non_power_of_two_groups_and_strides(self):
+        for bn, bk in ((3, 5), (48, 48), (96, 192), (127, 129)):
+            args = list(make_case(17, 131, 259, bn, bk, seed=58))
+            for index in range(4):
+                tensor = args[index]
+                storage = torch.empty(
+                    tensor.shape[0],
+                    tensor.shape[1] * 2,
+                    dtype=tensor.dtype,
+                    device=tensor.device,
+                )
+                storage[:, ::2] = tensor
+                args[index] = storage[:, ::2]
+            expected = reference(*args)
+            for name, module in self.MODULES:
+                with self.subTest(module=name, block_n=bn, block_k=bk):
+                    actual = module.w8a8_block_int8_matmul(*args)
+                    torch.testing.assert_close(
+                        actual, expected, atol=0.5, rtol=1e-2
+                    )
+
     def test_int8_group_and_tile_tails(self):
-        for m, n, k in ((63, 127, 127), (64, 128, 128), (65, 129, 129)):
+        for m, n, k in (
+            (15, 31, 63),
+            (16, 32, 64),
+            (17, 33, 65),
+            (31, 63, 127),
+            (32, 64, 128),
+            (33, 65, 129),
+            (63, 127, 127),
+            (64, 128, 128),
+            (65, 129, 129),
+            (255, 129, 259),
+            (256, 129, 259),
+            (257, 129, 259),
+        ):
             for dtype in (torch.float32, torch.float16, torch.bfloat16):
                 args = make_case(
                     m, n, k, block_n=128, block_k=128, dtype=dtype, seed=58
@@ -146,6 +198,8 @@ RELEASE_REQUIRED_TESTS = [
     "W8A8Test.test_block_sizes",
     "W8A8Test.test_shapes",
     "W8A8Test.test_empty",
+    "W8A8VariantsTest.test_scale_group_boundary",
+    "W8A8VariantsTest.test_non_power_of_two_groups_and_strides",
     "W8A8VariantsTest.test_int8_group_and_tile_tails",
     "W8A8VariantsTest.test_variants_match_reference",
 ]

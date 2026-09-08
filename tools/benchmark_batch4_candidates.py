@@ -117,6 +117,42 @@ def fixtures(op):
                 nchunks=chunks, dtype=torch.bfloat16, seed=45
             )
             yield f"chunks{chunks}", (k, beta, None, 64)
+    elif op == "w8a8_block_int8_matmul":
+        test = importlib.import_module("tests.test_" + op)
+        for m, n, k, bk in (
+            (16, 128, 256, 64),
+            (32, 256, 512, 64),
+            (64, 512, 1024, 128),
+            (128, 1024, 2048, 64),
+            (1, 2048, 4096, 128),
+            (1024, 2048, 4096, 128),
+        ):
+            yield f"{m}x{n}x{k}-bk{bk}", test.make_case(
+                m,
+                n,
+                k,
+                block_n=128,
+                block_k=bk,
+                dtype=torch.bfloat16 if m <= 64 else torch.float16,
+                seed=58,
+            )
+    elif op == "chunked_sgmv_shrink":
+        test = importlib.import_module("tests.test_" + op)
+        for segments, k in (
+            ([8] * 32, 512),
+            ([8] * 32, 4096),
+            ([16] * 32, 512),
+            ([64] * 32, 512),
+            ([257] * 4, 512),
+            ([0] * 31 + [1025], 512),
+        ):
+            for dtype in (torch.float32, torch.bfloat16):
+                name = (
+                    f"segments{len(segments)}-last{segments[-1]}-k{k}-{dtype}"
+                )
+                yield name, test.make_case(
+                    segments, 4, k, 128, dtype=dtype, seed=48
+                )
 
 
 def main():
@@ -148,6 +184,8 @@ def main():
         "chunked_embedding_lora_a": "ascend",
         "chunk_scaled_dot_kkt": "kunlunxin",
         "log_scaling_tau": None,
+        "w8a8_block_int8_matmul": None,
+        "chunked_sgmv_shrink": None,
     }
     run = JITFunction.run
     label = ""

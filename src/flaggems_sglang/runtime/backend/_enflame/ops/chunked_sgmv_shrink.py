@@ -57,6 +57,7 @@ def _shrink_gemm_kernel(
     a_ptrs = a_ptr + offs_m[:, None] * stride_am + offs_k[None, :] * stride_ak
     b_ptrs = b_ptr + offs_k[:, None] * stride_bk + offs_n[None, :] * stride_bn
     accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
+    correction = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
 
     for k in range(0, K, BLOCK_K):
         mask_k = offs_k < K - k
@@ -73,7 +74,14 @@ def _shrink_gemm_kernel(
         if not USE_INPUT_DTYPE:
             a = a.to(tl.float32)
             b = b.to(tl.float32)
-        accumulator = tl.dot(a, b, acc=accumulator, input_precision="ieee")
+        if not USE_INPUT_DTYPE and K >= 1024:
+            partial = tl.dot(a, b, input_precision="ieee")
+            adjusted = partial - correction
+            updated = accumulator + adjusted
+            correction = (updated - accumulator) - adjusted
+            accumulator = updated
+        else:
+            accumulator = tl.dot(a, b, acc=accumulator, input_precision="ieee")
         a_ptrs += BLOCK_K * stride_ak
         b_ptrs += BLOCK_K * stride_bk
 
@@ -94,6 +102,8 @@ def _launch_gemm(a, b, c, output_width, rank):
     if m == 0:
         return
     bk = min(triton.next_power_of_2(max(rank, 16)), 128)
+    if rank >= 1024 and a.dtype == torch.float32:
+        bk = 32
     grid = (triton.cdiv(m, _BLOCK_M) * triton.cdiv(output_width, _BLOCK_N),)
     _shrink_gemm_kernel[grid](
         a,

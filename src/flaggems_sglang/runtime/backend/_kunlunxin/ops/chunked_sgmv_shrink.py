@@ -48,6 +48,7 @@ def _shrink_gemm_klx(
     a_ptrs = a_ptr + offs_m[:, None] * stride_am + offs_k[None, :] * stride_ak
     b_ptrs = b_ptr + offs_k[:, None] * stride_bk + offs_n[None, :] * stride_bn
     accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
+    correction = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
     for k in range(0, K, BLOCK_K):
         mask_k = offs_k < K - k
         a = tl.load(
@@ -60,7 +61,14 @@ def _shrink_gemm_klx(
             mask=mask_k[:, None] & (offs_n[None, :] < N),
             other=0.0,
         ).to(tl.float32)
-        accumulator = tl.dot(a, b, acc=accumulator, input_precision="ieee")
+        if K >= 1024:
+            partial = tl.dot(a, b, input_precision="ieee")
+            adjusted = partial - correction
+            updated = accumulator + adjusted
+            correction = (updated - accumulator) - adjusted
+            accumulator = updated
+        else:
+            accumulator = tl.dot(a, b, acc=accumulator, input_precision="ieee")
         a_ptrs += BLOCK_K * stride_ak
         b_ptrs += BLOCK_K * stride_bk
     c_ptrs = c_ptr + offs_m[:, None] * stride_cm + offs_n[None, :] * stride_cn
@@ -80,6 +88,8 @@ def _launch_gemm(a, b, c, output_width, rank):
     if m == 0:
         return
     bk = min(triton.next_power_of_2(max(rank, 16)), 256)
+    if rank >= 1024:
+        bk = 32
     grid = (triton.cdiv(m, _BLOCK_M) * triton.cdiv(output_width, _BLOCK_N),)
     _shrink_gemm_klx[grid](
         a,
@@ -124,7 +134,9 @@ def chunked_sgmv_shrink(x, weights, batch_info, num_slices=1):
         # torch requires long for index_select/index_copy_ (T47-proven)
         rows = permutation[start:end].long()
         x_seg = x.index_select(0, rows).float()
-        out_seg = torch.empty(len(rows), N, dtype=torch.float32, device=x.device)
+        out_seg = torch.empty(
+            len(rows), N, dtype=torch.float32, device=x.device
+        )
         _launch_gemm(x_seg, weights[w_idx], out_seg, N, K)
         output.index_copy_(0, rows, out_seg.to(x.dtype))
     return output

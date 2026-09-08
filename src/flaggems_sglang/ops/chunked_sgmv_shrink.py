@@ -25,7 +25,7 @@ def _sgmv_shrink_kernel(
     seg_indptr_ptr,
     weight_indices_ptr,
     permutation_ptr,
-    max_out_dim,
+    max_out_dim: tl.constexpr,
     x_stride_token,
     x_stride_col,
     weight_stride_lora,
@@ -36,10 +36,12 @@ def _sgmv_shrink_kernel(
     seg_indptr_stride,
     weight_indices_stride,
     permutation_stride,
+    TOTAL_TOKENS: tl.constexpr,
     RANK: tl.constexpr,
     BLOCK_S: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
+    TOKEN_WORKERS: tl.constexpr,
 ):
     x_stride_token = tl.cast(x_stride_token, tl.int64)
     x_stride_col = tl.cast(x_stride_col, tl.int64)
@@ -49,63 +51,78 @@ def _sgmv_shrink_kernel(
     output_stride_token = tl.cast(output_stride_token, tl.int64)
     output_stride_col = tl.cast(output_stride_col, tl.int64)
 
-    batch_id = tl.program_id(2)
+    num_output_blocks = tl.cdiv(max_out_dim, BLOCK_N)
+    batch_id = tl.program_id(0) // num_output_blocks
+    output_block = tl.program_id(0) % num_output_blocks
     segment_start = tl.load(seg_indptr_ptr + batch_id * seg_indptr_stride)
     segment_end = tl.load(seg_indptr_ptr + (batch_id + 1) * seg_indptr_stride)
     segment_length = segment_end - segment_start
-    weight_index = tl.load(weight_indices_ptr + batch_id * weight_indices_stride)
+    weight_index = tl.load(
+        weight_indices_ptr + batch_id * weight_indices_stride
+    )
     if weight_index < 0:
         return
     if segment_start >= segment_end:
         return
 
-    num_output_blocks = tl.cdiv(max_out_dim, BLOCK_N)
-    matrix_pid = tl.program_id(0)
-    token_block = matrix_pid // num_output_blocks
-    output_block = matrix_pid - token_block * num_output_blocks
-    if token_block * BLOCK_S >= segment_length:
-        return
-
-    token_offsets = token_block * BLOCK_S + tl.arange(0, BLOCK_S)
     output_offsets = output_block * BLOCK_N + tl.arange(0, BLOCK_N)
-    token_mask = token_offsets < segment_length
     output_mask = output_offsets < max_out_dim
-    rows = tl.load(
-        permutation_ptr + (segment_start + token_offsets) * permutation_stride,
-        mask=token_mask,
-        other=0,
-    )
-
-    accumulator = tl.zeros((BLOCK_S, BLOCK_N), dtype=tl.float32)
-    k_offsets = tl.arange(0, BLOCK_K)
-    for k_start in range(0, RANK, BLOCK_K):
-        k = k_start + k_offsets
-        k_mask = k < RANK
-        x = tl.load(
-            x_ptr + rows[:, None] * x_stride_token + k[None, :] * x_stride_col,
-            mask=token_mask[:, None] & k_mask[None, :],
-            other=0.0,
+    token_start = tl.program_id(1) * BLOCK_S
+    # Stripe the whole segment across workers; average length only tunes launch.
+    if token_start >= segment_length:
+        return
+    for _ in range(tl.cdiv(TOTAL_TOKENS, TOKEN_WORKERS * BLOCK_S)):
+        token_offsets = token_start + tl.arange(0, BLOCK_S)
+        token_mask = token_offsets < segment_length
+        rows = tl.load(
+            permutation_ptr
+            + (segment_start + token_offsets) * permutation_stride,
+            mask=token_mask,
+            other=0,
         )
-        weights = tl.load(
-            weights_ptr
-            + weight_index * weight_stride_lora
-            + output_offsets[None, :] * weight_stride_out
-            + k[:, None] * weight_stride_k,
-            mask=k_mask[:, None] & output_mask[None, :],
-            other=0.0,
-        )
-        accumulator += tl.dot(x, weights, input_precision="ieee")
 
-    output_ptrs = (
-        output_ptr
-        + rows[:, None] * output_stride_token
-        + output_offsets[None, :] * output_stride_col
-    )
-    tl.store(
-        output_ptrs,
-        accumulator.to(output_ptr.dtype.element_ty),
-        mask=token_mask[:, None] & output_mask[None, :],
-    )
+        accumulator = tl.zeros((BLOCK_S, BLOCK_N), dtype=tl.float32)
+        correction = tl.zeros((BLOCK_S, BLOCK_N), dtype=tl.float32)
+        k_offsets = tl.arange(0, BLOCK_K)
+        for k_start in range(0, RANK, BLOCK_K):
+            k = k_start + k_offsets
+            k_mask = k < RANK
+            x = tl.load(
+                x_ptr
+                + rows[:, None] * x_stride_token
+                + k[None, :] * x_stride_col,
+                mask=token_mask[:, None] & k_mask[None, :],
+                other=0.0,
+            )
+            weights = tl.load(
+                weights_ptr
+                + weight_index * weight_stride_lora
+                + output_offsets[None, :] * weight_stride_out
+                + k[:, None] * weight_stride_k,
+                mask=k_mask[:, None] & output_mask[None, :],
+                other=0.0,
+            )
+            partial = tl.dot(x, weights, input_precision="ieee")
+            if x_ptr.dtype.element_ty == tl.float32 and RANK >= 1024:
+                # Compensate long-K summation near zero at the FP32 tolerance.
+                adjusted = partial - correction
+                updated = accumulator + adjusted
+                correction = (updated - accumulator) - adjusted
+                accumulator = updated
+            else:
+                accumulator += partial
+
+        output_ptrs = (
+            output_ptr
+            + rows[:, None] * output_stride_token
+            + output_offsets[None, :] * output_stride_col
+        )
+        tl.store(
+            output_ptrs,
+            accumulator.to(output_ptr.dtype.element_ty),
+            mask=token_mask[:, None] & output_mask[None, :],
+        )
+        token_start += TOKEN_WORKERS * BLOCK_S
 
 
 def chunked_sgmv_shrink(x, weights, batch_info, num_slices=1):
@@ -116,28 +133,15 @@ def chunked_sgmv_shrink(x, weights, batch_info, num_slices=1):
         return output
 
     seg_indptr = batch_info.seg_indptr
-    max_len = int((seg_indptr[1:] - seg_indptr[:-1]).max().item())
-    if max_len == 0:
-        return output
-
-    # e4: shape-adaptive token tile (SGLang production premise: request
-    # segments are short, so BM=64 pads 4x on a <=16-row segment). Only
-    # BLOCK_S adapts; BLOCK_N/K, warps and stages stay at the E6
-    # platform-proven values, and the (token_tile, output_tile) grid
-    # keeps full coverage of segments longer than one tile.
-    if max_len <= 16:
-        block_s = 16
-    elif max_len <= 32:
-        block_s = 32
-    else:
-        block_s = 64
-    block_n = 128
+    average_length = triton.cdiv(S, batch_info.bs)
+    block_s = (
+        16 if average_length <= 16 else 32 if average_length <= 32 else 64
+    )
+    block_n = 64 if x.dtype == torch.float32 else 128
     block_k = 32
-    grid = (
-        triton.cdiv(max_len, block_s) * triton.cdiv(N, block_n),
-        1,
-        batch_info.bs,
-    )  # num_slices axis removed: kernel never reads program_id(1)
+    token_workers = min(32, triton.cdiv(S, block_s))
+    # Keep the first worker of adjacent segments adjacent in launch order.
+    grid = (triton.cdiv(N, block_n) * batch_info.bs, token_workers)
     _sgmv_shrink_kernel[grid](
         x,
         weights,
@@ -152,10 +156,12 @@ def chunked_sgmv_shrink(x, weights, batch_info, num_slices=1):
         seg_indptr.stride(0),
         batch_info.weight_indices.stride(0),
         batch_info.permutation.stride(0),
+        TOTAL_TOKENS=S,
         RANK=K,
         BLOCK_S=block_s,
         BLOCK_N=block_n,
         BLOCK_K=block_k,
+        TOKEN_WORKERS=token_workers,
         num_warps=4,
         num_stages=3,
     )

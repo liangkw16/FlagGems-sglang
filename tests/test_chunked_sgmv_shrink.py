@@ -112,7 +112,10 @@ class ChunkedSgmvShrinkTest(unittest.TestCase):
     def test_shapes(self):
         for seg_lens, K, N in (
             ([32], 1024, 64),
+            ([8, 17], 128, 63),
+            ([8, 17], 128, 65),
             ([8, 8, 8, 8], 512, 256),
+            ([8] * 32, 4096, 128),
             ([64, 32, 16], 2048, 32),
             ([1], 128, 16),
             ([0, 12, 0, 12, 0], 512, 128),
@@ -135,12 +138,46 @@ class ChunkedSgmvShrinkTest(unittest.TestCase):
         out = MODULE.chunked_sgmv_shrink(x, weights, bi)
         self.assertEqual(out.shape, (0, 128))
 
+    def test_cuda_graph(self):
+        args = make_case([0, 17, 257, 0], 3, 65, 33)
+        expected = reference(*args)
+        stream = torch.cuda.Stream()
+        stream.wait_stream(torch.cuda.current_stream())
+        with torch.cuda.stream(stream):
+            for _ in range(3):
+                MODULE.chunked_sgmv_shrink(*args)
+        torch.cuda.current_stream().wait_stream(stream)
+        graph = torch.cuda.CUDAGraph()
+        with torch.cuda.graph(graph):
+            actual = MODULE.chunked_sgmv_shrink(*args)
+        graph.replay()
+        torch.testing.assert_close(actual, expected, atol=1e-4, rtol=1e-4)
+
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class ChunkedSgmvShrinkVariantsTest(unittest.TestCase):
     """Core matrix across every backend variant (generic + vendors)."""
 
     MODULES = load_operator_modules("chunked_sgmv_shrink")
+
+    def test_skewed_segments_and_uncovered_strided_rows(self):
+        for segments in (
+            [0] * 127 + [4097],
+            [0] * 31 + [1025],
+            [15, 16, 17, 31, 32, 33, 0],
+        ):
+            x, weights, bi = make_case(segments, 3, 65, 129, seed=48)
+            # Extra input rows are not referenced by the segment table.
+            x = torch.cat((x, torch.randn_like(x[:7])))
+            x = torch.stack((x, x), dim=-1)[..., 0]
+            weights = torch.stack((weights, weights), dim=-1)[..., 0]
+            expected = reference(x, weights, bi)
+            for name, module in self.MODULES:
+                with self.subTest(module=name, segments=segments):
+                    actual = module.chunked_sgmv_shrink(x, weights, bi, 3)
+                    torch.testing.assert_close(
+                        actual, expected, atol=1e-4, rtol=1e-4
+                    )
 
     def test_pipeline_long_segment_dtypes(self):
         for dtype in TOLERANCES:
@@ -159,6 +196,7 @@ class ChunkedSgmvShrinkVariantsTest(unittest.TestCase):
     def test_variants_match_reference(self):
         for seg_lens, K, N in (
             ([16, 32, 8], 512, 128),
+            ([8] * 32, 4096, 128),
             ([0, 12, 0, 12, 0], 512, 128),
             ([24, 12], 65, 80),
             ([63, 64, 65, 256], 128, 32),
@@ -177,6 +215,8 @@ RELEASE_REQUIRED_TESTS = [
     "ChunkedSgmvShrinkTest.test_shapes",
     "ChunkedSgmvShrinkTest.test_identity_permutation",
     "ChunkedSgmvShrinkTest.test_empty_batch",
+    "ChunkedSgmvShrinkTest.test_cuda_graph",
+    "ChunkedSgmvShrinkVariantsTest.test_skewed_segments_and_uncovered_strided_rows",
     "ChunkedSgmvShrinkVariantsTest.test_pipeline_long_segment_dtypes",
     "ChunkedSgmvShrinkVariantsTest.test_variants_match_reference",
 ]
