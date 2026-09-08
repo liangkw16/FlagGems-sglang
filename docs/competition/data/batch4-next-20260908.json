@@ -2852,10 +2852,170 @@
     },
     "artifacts/competition/batch4-next-20260908/pre-registered.txt": {
       "sha256": "1d4a4497582f72cc531451bafe35312df947c141e256ee4d8c87e4e675fe3f7c"
+    },
+    "artifacts/competition/batch4-next-20260908/gpu-environment.txt": {
+      "sha256": "a100746715b7499534c56b91bde4f2919e8cc4fce5cb53e4f656d85033d8db9a"
+    },
+    "artifacts/competition/batch4-next-20260908/benchmark48bn64-driver.log": {
+      "sha256": "7f53c25bd079c53856392e97e8bae79fcb73b19d4b7ed9a35b6a3e12190ecfd5"
+    },
+    "artifacts/competition/batch4-next-20260908/benchmark58final-driver.log": {
+      "sha256": "a9a536b24ebb0cf197a6ceb4be7fba4ea2b1148e8a6317eadd176be2b572e0ee"
+    },
+    "artifacts/competition/batch4-next-20260908/benchmark48final-driver.log": {
+      "sha256": "cb716ca9086be150a2966e61a3f71294662e1cf7bd0ce28a9ce612160f18957f"
+    },
+    "artifacts/competition/batch4-next-20260908/benchmark3-driver.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "artifacts/competition/batch4-next-20260908/profile-driver.log": {
+      "sha256": "2f114c7a680ab64f247ec7b36074bfd2d169f64c542cd680b0eda506314be60d"
+    },
+    "artifacts/competition/batch4-next-20260908/profile2-driver.log": {
+      "sha256": "5c18aa27608db9969d34573f4bfa2919e77f89ee3e956f291820f248299a028a"
+    },
+    "artifacts/competition/batch4-next-20260908/benchmark3-processes-before.txt": {
+      "sha256": "96baccb86eec7f891248adf38f01288820e1cb860a0812d06dabfe6f240339be"
+    },
+    "artifacts/competition/batch4-next-20260908/benchmark48bn64-processes-before.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "artifacts/competition/batch4-next-20260908/benchmark58final-processes-before.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "artifacts/competition/batch4-next-20260908/benchmark48final-processes-before.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     }
   },
   "decisions": {
-    "t48": "e8 passes proxy promotion: 12/12 cases 1.598-2.568x; 3 profiled candidates have zero spills. Pending live preflight.",
+    "t48": "Submitted 11170 once; seven chips passed, Kunlun callback pending; no final average/rank and no duplicate submission.",
     "t58": "e6 correctness candidate only; final BM64 large GEMM ~0.795x vs old fp16 path; no platform submission."
+  },
+  "platform_submission": {
+    "task": 48,
+    "submission_id": 11170,
+    "created_at": "2026-09-08T12:52:50",
+    "daily_seq": 17,
+    "state": "submitted",
+    "file_url_sha256": "5c409d1b1234bcbea47668c9d8469f2ea1f0fe21664304066c85b03ce134dd17",
+    "remote_verification": {
+      "expected_sha256": "b872fcb8beffb132d4ef9823d176919e1daa83d0f98ca7994cc0082cf0b0e6fa",
+      "expected_size": 15849,
+      "sha256": "b872fcb8beffb132d4ef9823d176919e1daa83d0f98ca7994cc0082cf0b0e6fa",
+      "size": 15849,
+      "status": "verified"
+    },
+    "preflight_sha256": "2541e680ba2657b64706a09a3d0698b55390022c3e2c08a399066ebddc6b97ad",
+    "submit_receipt_sha256": "2efe987484ce50eec48c3c836434f9e35379c0064797fca12f8403175870bcbc"
+  },
+  "platform_snapshot": {
+    "observed_at": "2026-09-08T13:00:36.710258+08:00",
+    "quota": {
+      "remaining": 13,
+      "total": 30,
+      "used": 17
+    },
+    "submission_id": 11170,
+    "validity": "pending",
+    "average_speedup": null,
+    "passed_gpu_count": 7,
+    "gpu_results": [
+      {
+        "gpu": "tianshu",
+        "status": "completed",
+        "passed": true,
+        "speedup": 6.391,
+        "selected_file": "chunked_sgmv_shrink.py",
+        "last_progress_at": "2026-09-08T12:53:23",
+        "next_status_query_at": null,
+        "error": null
+      },
+      {
+        "gpu": "muxi",
+        "status": "completed",
+        "passed": true,
+        "speedup": 9.1925,
+        "selected_file": "chunked_sgmv_shrink.py",
+        "last_progress_at": "2026-09-08T12:53:21",
+        "next_status_query_at": null,
+        "error": null
+      },
+      {
+        "gpu": "enflame",
+        "status": "completed",
+        "passed": true,
+        "speedup": 0.56,
+        "selected_file": "chunked_sgmv_shrink_enflame.py",
+        "last_progress_at": "2026-09-08T12:53:09",
+        "next_status_query_at": null,
+        "error": null
+      },
+      {
+        "gpu": "haiguang",
+        "status": "completed",
+        "passed": true,
+        "speedup": 17.174,
+        "selected_file": "chunked_sgmv_shrink.py",
+        "last_progress_at": "2026-09-08T12:53:13",
+        "next_status_query_at": null,
+        "error": null
+      },
+      {
+        "gpu": "kunlunxin",
+        "status": "waiting_callback",
+        "passed": null,
+        "speedup": null,
+        "selected_file": "chunked_sgmv_shrink_kunlunxin.py",
+        "last_progress_at": "2026-09-08T12:52:53",
+        "next_status_query_at": "2026-09-08T14:52:53",
+        "error": null
+      },
+      {
+        "gpu": "huawei",
+        "status": "completed",
+        "passed": true,
+        "speedup": 15.395,
+        "selected_file": "chunked_sgmv_shrink.py",
+        "last_progress_at": "2026-09-08T12:53:36",
+        "next_status_query_at": null,
+        "error": null
+      },
+      {
+        "gpu": "card_a",
+        "status": "completed",
+        "passed": true,
+        "speedup": 12.482,
+        "selected_file": "chunked_sgmv_shrink.py",
+        "last_progress_at": "2026-09-08T12:53:09",
+        "next_status_query_at": null,
+        "error": null
+      },
+      {
+        "gpu": "card_b",
+        "status": "completed",
+        "passed": true,
+        "speedup": 10.4835,
+        "selected_file": "chunked_sgmv_shrink.py",
+        "last_progress_at": "2026-09-08T12:53:09",
+        "next_status_query_at": null,
+        "error": null
+      }
+    ],
+    "receipt": "artifacts/competition/batch4-next-20260908/t48-latest-status.json",
+    "receipt_sha256": "07fca4f3b29eca152a15b231b1791a37fc9f625adf262a049bbef3834f88d7e8"
+  },
+  "ci": {
+    "triggered": false,
+    "reason": "push/PR filter is master; no workflow dispatched",
+    "fixed_versions": {
+      "black": "24.8.0",
+      "isort": "5.12.0",
+      "flake8": "7.1.0"
+    },
+    "passed": true,
+    "log": "artifacts/competition/batch4-next-20260908/ci-pinned-style-final.log",
+    "log_sha256": "e1ad15c70cdc5dd3dac0e4a060c818881119c674c840556fabec9e77df7753f4",
+    "benchmark_ast_unchanged_after_parentheses_format": true,
+    "current_benchmark_sha256": "42bf94ad8b48ab9eb4fa0c06f9674ed6207fa5792b1a92e9373969d1aa8e1603"
   }
 }

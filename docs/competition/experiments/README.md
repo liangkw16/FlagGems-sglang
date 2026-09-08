@@ -972,4 +972,4 @@ ABBA→④内置验证在出现 hash/manifest 背书前一律不信;服务端修
 
 ## 2026-09-08 后续实施：T48 / T58
 
-T48 E8 去除 generic CPU 同步并修复三份源码的长 K 精度，NVIDIA 12 个配对样本 1.60–2.57x，待实时平台门禁。T58 E6 修复分组跨界和计算 dtype；大矩阵回退约20%，保留成果但不提交。源码/测试 `65b7fdd418d941ad4393ae9485541c74a55e5017`，两个 release 共 16 方法、396 次 kernel launch 全过。当前状态仍以各算子 CURRENT/INDEX 为准；[证据清单](../data/batch4-next-20260908.json)。
+T48 E8 去除 generic CPU 同步并修复三份源码的长 K 精度，NVIDIA 12 个配对样本 1.60–2.57x；已单次提交11170，7/8通过、昆仑待回调、总分待定。T58 E6 修复分组跨界和计算 dtype；大矩阵回退约20%，保留成果但不提交。源码/测试 `65b7fdd418d941ad4393ae9485541c74a55e5017`，两个 release 共 16 方法、396 次 kernel launch 全过。当前状态仍以各算子 CURRENT/INDEX 为准；[证据清单](../data/batch4-next-20260908.json)。

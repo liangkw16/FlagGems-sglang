@@ -264,7 +264,7 @@ def main():
                     fn(*args)
             samples = [[], []]
             for pair in range(6):
-                for i in ((0, 1) if pair % 2 == 0 else (1, 0)):
+                for i in (0, 1) if pair % 2 == 0 else (1, 0):
                     torch.cuda.synchronize()
                     start = time.perf_counter_ns()
                     for _ in range(30):

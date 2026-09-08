@@ -28,7 +28,7 @@
 | 45 | chunk_scaled_dot_kkt | invalid_threshold | 8/8正确(e15),昆仑0.063x<0.1;平均7.000125不计有效排名 | - -x | no | 新row/head epilogue代理正确但未提速;候选暂不晋级,昆仑仍需>=0.1目标证据 | 2026-09-08 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x) | e3 14.1051875x | no | 华为token tile8及rank>128修复代理通过/ZIP验签;等待华为正确性和长短段性能复验 | 2026-09-08 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
 | 47 | chunked_sgmv_expand | valid | E11/11031八芯valid,21.6584375x;历史E5 best25.0048125x | e5 25.0048125x | no | E11目标正确性通过但未晋级,保留E5守榜;不重投同字节,需新增目标性能证据再开轴 | 2026-09-08 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
-| 48 | chunked_sgmv_shrink | valid | 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor) | e7 4.7489375x | no | E8去同步+长K精度修复release通过;待实时preflight单次提交 | 2026-09-08 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
+| 48 | chunked_sgmv_shrink | valid | e8(11170)=7/8已通过,昆仑待回调;最佳仍e7(10808,4.7489375x) | e7 4.7489375x | no | 仅查11170昆仑回调,不得重复提交;总分与Top1未确定 | 2026-09-08 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
 | 49 | ernie45_rope_fused | valid | 8/8(e3,8.58253125x) | e3 8.58253125x | no | head16候选代理正确/ZIP验签;需昆仑live buffer和完整wrapper收益后晋级 | 2026-09-08 | [ernie45_rope_fused](ernie45_rope_fused.md) |
 | 50 | extend_attention | candidate-wip | 6/8(e4,昆仑conclusive封轴;华为数值不可修;燧原0.013x<门槛) | - -x | no | 逐阶段诊断已实现但插桩有观察效应;需要目标原失败重放,不再将两种失败形态称数值永久不可修 | 2026-09-08 | [extend_attention](extend_attention.md) |
 | 51 | fla_layernorm_gated | valid | e9/11124昆仑真机correctness失败invalid;team best保持E7 5.816325x | e7 5.816325x | no | e9行块特化证伪(天数-20%/昆仑真机失败);行块轴关闭,保留E7,需c2flow结构情报 | 2026-09-08 | [fla_layernorm_gated](fla_layernorm_gated.md) |

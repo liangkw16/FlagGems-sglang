@@ -5,12 +5,12 @@ task: 48
 operator: chunked_sgmv_shrink
 batch: 4
 validity: valid
-platform: 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor)
+platform: e8(11170)=7/8已通过,昆仑待回调;最佳仍e7(10808,4.7489375x)
 team_best_stage: e7
 team_best_commit: 094548df5da1075b8245b4af8ccddf024a319ae3
 team_best_speedup: 4.7489375
 sealed: no
-next: E8去同步+长K精度修复release通过;待实时preflight单次提交
+next: 仅查11170昆仑回调,不得重复提交;总分与Top1未确定
 updated: 2026-09-08
 ```
 
@@ -152,3 +152,23 @@ route/materialize 是 sgmv 族唯一可行形态（e8-e10 三投证伪）。
 - GPU 读取段长，worker 遍历长段；相邻段优先排列，FP32 使用 BN64。补 CUDA Graph、非连续/未覆盖行、4097 行偏斜段、长 K 回归。generic/燧原/昆仑长 K 使用补偿累加，原容差不变。
 - 移除从未取得目标执行证据的沐曦 cpasync 试验覆盖，恢复 E7 三成员集合，让沐曦使用新 generic；原失败仍保留在历史记录。
 - 12 个 NVIDIA wrapper 样本 1.598–2.568x；6 轮 AB/BA 原始数据保留。3 个 profiler 样本候选均零 spill，DtoH 1→0，kernel 4→2。满足本轮代理晋级门，待实时平台门禁。
+
+## E8 平台回执（2026-09-08T13:00:36.710258+08:00 快照）
+
+- 单次提交 `11170`，提交时间 `2026-09-08T12:52:50+08:00`，daily_seq `17`。平台 ZIP 再下载验签 `verified`，SHA-256 与本地完全一致。
+- 当前 **7/8 已通过，昆仑 waiting_callback，整体 pending**；不得提前记为有效、更新 team best 或宣称 Top1。平台下一次主动查询时间显示 `2026-09-08T14:52:53+08:00`，实际回调可能更早；不重复上传或提交。
+- 额度快照：已用 17/30，剩 13，观测时间 `2026-09-08T13:00:36.710258+08:00`。
+
+| 芯片 | E7 | E8 已返回 | 状态 |
+| --- | ---: | ---: | --- |
+| tianshu | 3.7705 | 6.391 | completed |
+| muxi | 5.305 | 9.1925 | completed |
+| enflame | 0.528 | 0.56 | completed |
+| haiguang | 6.223 | 17.174 | completed |
+| kunlunxin | 1.785 | 待定 | waiting_callback |
+| huawei | 6.622 | 15.395 | completed |
+| card_a | 7.132 | 12.482 | completed |
+| card_b | 6.626 | 10.4835 | completed |
+
+- 后续结构假设：燧原/昆仑保留的逐段 CPU 循环仍是下一处候选瓶颈。先验证“全批次一次 route → 连续地址分段 GEMM → 一次 scatter”的目标编译可行性，避免把融合间接寻址失败概括成所有分段 GEMM 都不可行。该假设尚未实现或验证。
+- GitHub CI 仅在 master push/PR 或手动触发；本独立分支没有触发 CI。本地按 CI 固定 Black 24.8.0 / isort 5.12.0 / flake8 7.1.0 全部通过。benchmark 后续仅去除冗余括号，AST 相同；实际计时仍绑定 `65b7fdd` 的旧脚本 SHA，源码/测试/ZIP 不变。
