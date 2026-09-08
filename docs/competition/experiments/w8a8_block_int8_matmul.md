@@ -189,3 +189,21 @@ updated: 2026-09-08
 - 排名维持 **3**（榜首 c2flow 576.32，差距 2.23x）；额度余量充足。
 - 证据 `batch4-codex-round-20260908/58r-{preflight,submit}.*`；
   e6r release 回执 `e6r-80bba3d/validation/`。
+
+## E7 card_b 逐块缩放 `_amd` vendor（2026-09-08T16:20，sub 11228）
+
+- 单变量：新增 `_amd` vendor = **e5 generic 逐块缩放字节逐字节搬运**
+  （`cf31913` 的 generic，SHA256 `eec198bb…`，平台实证 card_b 109.35）；
+  generic（组级 scale）/ ascend / enflame / iluvatar / kunlunxin 全部冻结
+  e6r 字节。依据：e6/e6r 两发 card_b 同量级回退（85.78/84.28 vs 109.35，
+  -22.9%/-23.0%），组级累加在该后端真实负收益（代理不可见，平台两连证）。
+- screening + release（`gpu:/tmp/flagos-t58e7-rel`）全绿：generic 25 +
+  amd 15 次非 warmup launch，0 fail。回执
+  `e7-091377a/validation/verification.json` SHA256
+  `0e07514c155d39295e077a093b0eb4dcc58a0fd1a6e1e5704e926451cf240360`。
+- ZIP `e7-091377a`（6 成员）SHA256
+  `a496b4cbeef38977a5ceb81fdc33db560524dc44e04e00388661e85bc29a898d`；
+  source/verification commit `091377a`。
+- 预注册晋级门：8/8 valid 且 avg > 258.04890833（e6r TB）；card_b
+  应回 100+（e5 带 109±3），其余七芯带内。若 card_b 仍 <95 → e5 字节
+  假设证伪，B 的回退另有原因（窗口/评测器），关闭该轴。
