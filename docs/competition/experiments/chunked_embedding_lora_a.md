@@ -207,3 +207,14 @@ is_team_best=max 保证零下行）。
 - 回执 `artifacts/competition/batch4-implementation-20260907/t46-release1/verification.json`，SHA256 `57a4ebefbefb8ae3901b9fccd9e8540791549797ed283f08486a49a34c1f82c0`；日志 SHA256 `08ceae4ceb4f57c04b055779a04638e65a7a5c4c01b19e29597f68fa1bcfb00a`。
 - 不可变 ZIP `artifacts/competition/chunked_embedding_lora_a/research-20260908-26a9576/chunked_embedding_lora_a.zip`，SHA256 `13388ecaeda1cd8edb8dcb17d4a40e728f740186d25e2f5194e1ec60b1e3cd7d`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
 - 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
+
+## E7 华为 tile8 探针（2026-09-08T16:23，sub 11229）
+
+- 候选 = 晨间轮（`26a95766`）华为 segment 内 token tile=8 共享路由 +
+  空段先判空 + rank 分 tile 补齐 >128 输出；其余六成员冻结 e3 字节。
+- release 回执 `batch4-implementation-20260907/t46-release1/`（generic
+  34 + ascend 15 launch，0 fail）；ZIP `e7-26a9576` SHA256
+  `13388ecaeda1cd8edb8dcb17d4a40e728f740186d25e2f5194e1ec60b1e3cd7d`。
+- 预注册门：8/8 valid 且 avg > 14.1051875（e3 TB）才晋级；华为 ≥2.8
+  （+32%）视为 tile8 兑现。华为 correctness 失败则回滚 ascend 字节关轴。
+  本发兼作华为目标验证探针（晨间唯一缺口）。
