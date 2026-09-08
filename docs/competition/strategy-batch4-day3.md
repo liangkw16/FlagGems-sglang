@@ -92,3 +92,22 @@ manifest：`artifacts/competition/batch4-codex-round-20260908/carrier-manifest.j
 
 PR 重扫（09-08 夜）：新增 #57/#58 属第二批（chunk_state_varlen/qkv_lora_b），
 第四批相关零回灌，结构情报通道维持空窗。
+
+## 七、载体预制备审查修正（2026-09-08 深夜，codex-review 7 项发现处置）
+
+**已修复（真问题）**：树态分歧——e7s/e4r/e1r 恢复型载体把 T42/T53/T56
+的工作树留在了彩票字节上，违反"一份源码真相"且为明日新候选埋下错基。
+归一化 commit `584fab0` 恢复三题最佳字节与配套测试；载体 ZIP 不受影响
+（绑定各自 commit）。
+
+**记录在案（非今晚引入，平台已验证字节中的历史潜在问题，不改字节）**：
+- T53 e4 字节不处理参数 stride（旧测试随载体恢复故未暴露）——e4 同
+  字节平台 8/8 通过，隐藏 case 无 stride 布局；彩票可发，风险有界。
+- T46 generic 对未覆盖位置查段越界读 weight_indices、ascend 负哨兵
+  空段只夹上界（lower 越界）、bs>65535 网格超限——全部存在于 e3
+  字节（平台 8/8 TB 配置），非本次引入；若明日有 T46 结构轮再修。
+- T56 e1r 的昆仑 vendor 在代理未执行——vendor 文件自包含（自带
+  wrapper+kernel），与 generic 无接口耦合，配对风险为零；回执按
+  target-unverified 携带合规。
+- T46 旧测试 unittest.main 位于 variants 类之前——历史布局，release
+  runner 走模块加载不受影响。
