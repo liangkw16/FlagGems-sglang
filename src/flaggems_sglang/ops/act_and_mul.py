@@ -1,3 +1,4 @@
+# r1 water re-roll carrier of e6 team-best bytes.
 # Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,8 +28,6 @@ def _act_and_mul_kernel(
     rows,
     half_width,
     swiglu_limit,
-    X_ROW_STRIDE: tl.constexpr,
-    X_COL_STRIDE: tl.constexpr,
     BLOCK_COL: tl.constexpr,
     HAS_LIMIT: tl.constexpr,
     ACT_IS_GELU: tl.constexpr,
@@ -42,14 +41,14 @@ def _act_and_mul_kernel(
         col_block = block_id - row_id * num_col_blocks
         col_offsets = col_block * BLOCK_COL + tl.arange(0, BLOCK_COL)
         col_mask = col_offsets < half_width
-        row_base = row_id.to(tl.int64) * X_ROW_STRIDE
+        row_base = row_id.to(tl.int64) * (2 * half_width)
         gate = tl.load(
-            x_ptr + row_base + col_offsets * X_COL_STRIDE,
+            x_ptr + row_base + col_offsets,
             mask=col_mask,
             other=0.0,
         ).to(tl.float32)
         up = tl.load(
-            x_ptr + row_base + (half_width + col_offsets) * X_COL_STRIDE,
+            x_ptr + row_base + half_width + col_offsets,
             mask=col_mask,
             other=0.0,
         ).to(tl.float32)
@@ -61,9 +60,7 @@ def _act_and_mul_kernel(
             # s * (1 - e^-2|y|) / (1 + e^-2|y|) so it saturates exactly
             # to +/-1 and never overflows, and no libdevice call is
             # involved (tl.math.erf crashes the kunlunxin compiler).
-            scaled = 0.7978845608028654 * (
-                gate + 0.044715 * gate * gate * gate
-            )
+            scaled = 0.7978845608028654 * (gate + 0.044715 * gate * gate * gate)
             exp_neg = tl.exp(-2.0 * tl.abs(scaled))
             ratio = (1.0 - exp_neg) / (1.0 + exp_neg)
             tanh_scaled = tl.where(scaled < 0.0, -ratio, ratio)
@@ -88,12 +85,10 @@ def act_and_mul(gateup_output, activation="silu", swiglu_limit=None):
     # no defined reference semantics (the reference slices dim 1).
     if activation not in ("silu", "gelu"):
         raise ValueError(f"Unsupported activation: {activation}")
-    x = gateup_output
+    x = gateup_output.contiguous()
     last_dim = x.shape[-1]
     half_width = last_dim // 2
-    output = torch.empty(
-        x.shape[:-1] + (half_width,), dtype=x.dtype, device=x.device
-    )
+    output = torch.empty(x.shape[:-1] + (half_width,), dtype=x.dtype, device=x.device)
     if last_dim == 0:
         return output
     rows = x.numel() // last_dim
@@ -110,8 +105,6 @@ def act_and_mul(gateup_output, activation="silu", swiglu_limit=None):
         rows,
         half_width,
         limit,
-        X_ROW_STRIDE=x.stride(0),
-        X_COL_STRIDE=x.stride(1),
         BLOCK_COL=_BLOCK_COL,
         HAS_LIMIT=has_limit,
         ACT_IS_GELU=(activation == "gelu"),
