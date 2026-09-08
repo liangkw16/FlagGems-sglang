@@ -307,6 +307,76 @@ class CausalConv1dUpdateVariantsTest(unittest.TestCase):
                         new_state, e_state, atol=1e-5, rtol=1e-5
                     )
 
+    def test_variants_chain_updates(self):
+        # The returned new_state (a strided view on the vendor pack
+        # buffers) must chain into the next call exactly like the
+        # reference's cloned state, and neither output may share
+        # storage with any input tensor.
+        g = torch.Generator(device="cuda").manual_seed(7)
+        state = torch.randn(2, 96, 3, device="cuda", generator=g)
+        w = torch.randn(96, 4, device="cuda", generator=g)
+        b = torch.randn(96, device="cuda", generator=g)
+        for name, module in self.MODULES:
+            with self.subTest(module=name):
+                cur_state = state.clone()
+                ref_state = state.clone()
+                for _step in range(3):
+                    x = torch.randn(2, 96, 1, device="cuda", generator=g)
+                    out, new_state = module.causal_conv1d_update(
+                        x, cur_state, w, bias=b
+                    )
+                    e_out, ref_state = reference(x, ref_state, w, bias=b)
+                    torch.testing.assert_close(
+                        out, e_out, atol=1e-5, rtol=1e-5
+                    )
+                    torch.testing.assert_close(
+                        new_state, ref_state, atol=1e-5, rtol=1e-5
+                    )
+                    for produced in (out, new_state):
+                        for consumed in (x, cur_state, w, b):
+                            self.assertNotEqual(
+                                produced.untyped_storage().data_ptr(),
+                                consumed.untyped_storage().data_ptr(),
+                            )
+                    cur_state = new_state
+                    ref_state = ref_state.clone()
+
+    def test_variants_mixed_input_dtypes(self):
+        # x and conv_state may differ in dtype; the reference computes
+        # in fp32 and casts each output back to its own dtype.
+        for x_dtype, s_dtype in (
+            (torch.float32, torch.bfloat16),
+            (torch.bfloat16, torch.float32),
+            (torch.float16, torch.float32),
+        ):
+            with self.subTest(x_dtype=x_dtype, s_dtype=s_dtype):
+                g = torch.Generator(device="cuda").manual_seed(11)
+                x = torch.randn(
+                    3, 160, 2, device="cuda", dtype=x_dtype, generator=g
+                )
+                state = torch.randn(
+                    3, 160, 3, device="cuda", dtype=s_dtype, generator=g
+                )
+                w = torch.randn(
+                    160, 4, device="cuda", dtype=torch.float32, generator=g
+                )
+                e_out, e_state = reference(x, state, w)
+                for name, module in self.MODULES:
+                    with self.subTest(module=name):
+                        out, new_state = module.causal_conv1d_update(
+                            x, state, w
+                        )
+                        self.assertEqual(out.dtype, x_dtype)
+                        self.assertEqual(new_state.dtype, s_dtype)
+                        atol, rtol = TOLERANCES[x_dtype]
+                        torch.testing.assert_close(
+                            out, e_out, atol=atol, rtol=rtol
+                        )
+                        atol_s, rtol_s = TOLERANCES[s_dtype]
+                        torch.testing.assert_close(
+                            new_state, e_state, atol=atol_s, rtol=rtol_s
+                        )
+
 
 RELEASE_REQUIRED_TESTS = [
     "CausalConv1dUpdateTest.test_rolling_window_long_sequence",
@@ -320,6 +390,8 @@ RELEASE_REQUIRED_TESTS = [
     "CausalConv1dUpdateTest.test_empty_batch",
     "CausalConv1dUpdateVariantsTest.test_affine_layout_boundaries",
     "CausalConv1dUpdateVariantsTest.test_variants_match_reference",
+    "CausalConv1dUpdateVariantsTest.test_variants_chain_updates",
+    "CausalConv1dUpdateVariantsTest.test_variants_mixed_input_dtypes",
 ]
 
 

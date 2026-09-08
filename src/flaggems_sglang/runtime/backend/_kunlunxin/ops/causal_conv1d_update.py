@@ -15,6 +15,14 @@
 # Channel-contiguous affine loads adapted from FlagGems-sglang PR #34,
 # e7f91a5f6c813d499275b3f3a6288e1b3b5dddc9, causal_conv1d_fn.
 # Materialization changes layout only; convolution and SiLU stay in Triton.
+#
+# E16 byte diet: the pack buffer is built straight in the
+# channel-contiguous [B, L+S, D] layout in the input dtype (one aten
+# transpose-copy instead of the fp32 cast + cat + permute chain; the
+# kernel's .to(tl.float32) loads are the exact cast the reference
+# applies first), and new_state is the tail slice of that buffer
+# viewed back to [B, D, L] instead of a second Triton copy kernel.
+
 import torch
 import triton
 import triton.language as tl
@@ -56,35 +64,6 @@ def _ccu_affine_kernel(
     tl.store(out_ptr + row * DIM + d, acc, mask=mask)
 
 
-@triton.jit
-def _ccu_state_copy_kernel(
-    xcat_ptr,
-    new_state_ptr,
-    total,
-    seqlen,
-    state_len,
-    l_cat,
-    BLOCK: tl.constexpr,
-):
-    pid = tl.program_id(0)
-    step = tl.num_programs(0) * BLOCK
-    for start in range(pid * BLOCK, total, step):
-        idx = start + tl.arange(0, BLOCK)
-        mask = idx < total
-        row = idx // state_len
-        i = idx % state_len
-        v = tl.load(
-            xcat_ptr + row.to(tl.int64) * l_cat + seqlen + i,
-            mask=mask,
-            other=0.0,
-        )
-        tl.store(
-            new_state_ptr + idx,
-            v.to(new_state_ptr.dtype.element_ty),
-            mask=mask,
-        )
-
-
 def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     squeeze_out = x.dim() == 2
     if squeeze_out:
@@ -92,13 +71,12 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     batch, dim, seqlen = x.shape
     state_len = conv_state.shape[-1]
     width = weight.shape[1]
-    x_cat = torch.cat([conv_state.float(), x.float()], dim=-1)
-    x_t = x_cat.permute(0, 2, 1).contiguous()
+    # Pack state+x directly into the channel-contiguous [B, L+S, D]
+    # layout in the input dtype (mixed dtypes promote like the
+    # reference's leading .float() pair).
+    x_t = torch.cat((conv_state.permute(0, 2, 1), x.permute(0, 2, 1)), dim=1)
     w_t = weight.t().contiguous()
     out_t = torch.empty((batch, seqlen, dim), dtype=x.dtype, device=x.device)
-    new_state = torch.empty(
-        conv_state.shape, dtype=conv_state.dtype, device=x.device
-    )
     if batch * dim * seqlen:
         block = min(triton.next_power_of_2(dim), 1024)
         d_blocks = triton.cdiv(dim, block)
@@ -119,19 +97,10 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
             num_stages=1,
             enable_fp_fusion=False,
         )
-    total = batch * dim * state_len
-    if total:
-        _ccu_state_copy_kernel[(min(triton.cdiv(total, 1024), 65535),)](
-            x_cat,
-            new_state,
-            total,
-            seqlen,
-            state_len,
-            state_len + seqlen,
-            BLOCK=1024,
-            num_warps=4,
-            num_stages=1,
-        )
+    # new_state is the pack buffer's tail slice viewed back to
+    # [B, D, L]; same dtype is a zero-copy view, a promoted dtype
+    # materializes the cast copy.
+    new_state = x_t[:, seqlen:, :].permute(0, 2, 1).to(conv_state.dtype)
     out = out_t.permute(0, 2, 1).contiguous()
     return (out.squeeze(-1) if squeeze_out else out), new_state
 

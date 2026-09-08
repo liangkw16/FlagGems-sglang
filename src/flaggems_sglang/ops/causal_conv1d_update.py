@@ -45,7 +45,6 @@ def _causal_conv1d_update_kernel(
     o_sd,
     o_ss,
     WIDTH: tl.constexpr,
-    ROLLING: tl.constexpr,
     HAS_BIAS: tl.constexpr,
     ACT_IS_SILU: tl.constexpr,
     BLOCK_D: tl.constexpr,
@@ -69,85 +68,33 @@ def _causal_conv1d_update_kernel(
         o_base = out_ptr + b.to(tl.int64) * o_sb
         n_base = new_state_ptr + b.to(tl.int64) * ns_sb
 
-        if ROLLING:
-            # Width 2/3/4: the previous WIDTH-1 values survive in registers.
-            w0 = tl.load(weight_ptr + offs_d64 * WIDTH, dmask, 0).to(
-                tl.float32
-            )
-            w1 = tl.load(weight_ptr + offs_d64 * WIDTH + 1, dmask, 0).to(
-                tl.float32
-            )
-            s_start = state_len + 1 - WIDTH
-            v0 = tl.load(
-                s_base + offs_d64 * st_sd + s_start * st_sl, dmask, 0
-            ).to(tl.float32)
-            if WIDTH >= 3:
-                w2 = tl.load(weight_ptr + offs_d64 * WIDTH + 2, dmask, 0).to(
-                    tl.float32
-                )
-                v1 = tl.load(
-                    s_base + offs_d64 * st_sd + (s_start + 1) * st_sl, dmask, 0
-                ).to(tl.float32)
-            if WIDTH == 4:
-                w3 = tl.load(weight_ptr + offs_d64 * WIDTH + 3, dmask, 0).to(
-                    tl.float32
-                )
-                v2 = tl.load(
-                    s_base + offs_d64 * st_sd + (s_start + 2) * st_sl, dmask, 0
-                ).to(tl.float32)
-
         for t in range(0, seqlen):
             val = tl.zeros([BLOCK_D], dtype=tl.float32)
-            if ROLLING:
-                current = tl.load(
-                    x_base + offs_d64 * x_sd + t * x_ss, dmask, 0
+            for k in tl.static_range(WIDTH):
+                # Window position in the virtual concat(state, x).
+                p = t + state_len + 1 - WIDTH + k
+                from_state = p < state_len
+                safe_s = tl.minimum(tl.maximum(p, 0), state_len - 1)
+                safe_x = tl.minimum(tl.maximum(p - state_len, 0), seqlen - 1)
+                s_v = tl.load(
+                    s_base + offs_d64 * st_sd + safe_s * st_sl,
+                    mask=dmask & from_state,
+                    other=0.0,
                 ).to(tl.float32)
-                val += w0 * v0
-                if WIDTH == 2:
-                    val += w1 * current
-                    v0 = current
-                elif WIDTH == 3:
-                    val += w1 * v1
-                    val += w2 * current
-                    v0 = v1
-                    v1 = current
-                else:
-                    val += w1 * v1
-                    val += w2 * v2
-                    val += w3 * current
-                    v0 = v1
-                    v1 = v2
-                    v2 = current
-            else:
-                for k in tl.static_range(WIDTH):
-                    # Window position in the virtual concat(state, x).
-                    p = t + state_len + 1 - WIDTH + k
-                    from_state = p < state_len
-                    safe_s = tl.minimum(tl.maximum(p, 0), state_len - 1)
-                    safe_x = tl.minimum(
-                        tl.maximum(p - state_len, 0), seqlen - 1
-                    )
-                    s_v = tl.load(
-                        s_base + offs_d64 * st_sd + safe_s * st_sl,
-                        mask=dmask & from_state,
-                        other=0.0,
-                    ).to(tl.float32)
-                    x_v = tl.load(
-                        x_base + offs_d64 * x_sd + safe_x * x_ss,
-                        mask=dmask & (p >= state_len),
-                        other=0.0,
-                    ).to(tl.float32)
-                    v = tl.where(from_state, s_v, x_v)
-                    wk = tl.load(
-                        weight_ptr + offs_d64 * WIDTH + k,
-                        mask=dmask,
-                        other=0.0,
-                    ).to(tl.float32)
-                    val += wk * v
+                x_v = tl.load(
+                    x_base + offs_d64 * x_sd + safe_x * x_ss,
+                    mask=dmask & (p >= state_len),
+                    other=0.0,
+                ).to(tl.float32)
+                v = tl.where(from_state, s_v, x_v)
+                wk = tl.load(
+                    weight_ptr + offs_d64 * WIDTH + k,
+                    mask=dmask,
+                    other=0.0,
+                ).to(tl.float32)
+                val += wk * v
             if HAS_BIAS:
-                val += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(
-                    tl.float32
-                )
+                val += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(tl.float32)
             if ACT_IS_SILU:
                 # SiLU in the statement's exact form; stability rewrites
                 # fail the checker at large negative inputs.
@@ -199,8 +146,7 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         if squeeze_out:
             out = out.squeeze(-1)
         return out, new_state
-    block_d = 128 if seqlen > 1 else _BLOCK_D
-    dim_blocks = triton.cdiv(dim, block_d)
+    dim_blocks = triton.cdiv(dim, _BLOCK_D)
     total = batch * dim_blocks
     grid = (min(total, _MAX_GRID),)
     _causal_conv1d_update_kernel[grid](
@@ -227,10 +173,9 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         out.stride(1),
         out.stride(2),
         WIDTH=width,
-        ROLLING=seqlen > 1 and width in (2, 3, 4),
         HAS_BIAS=bias is not None,
         ACT_IS_SILU=(activation in ("silu", "swish")),
-        BLOCK_D=block_d,
+        BLOCK_D=_BLOCK_D,
     )
     if squeeze_out:
         out = out.squeeze(-1)

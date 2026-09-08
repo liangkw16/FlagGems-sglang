@@ -17,6 +17,14 @@
 # kernel loads a [W_PAD, D_BLOCK] tile per output step and computes
 # tl.sum(w * v, axis=0) - replacing the scalar FMA chain that
 # miscompiles on this backend. No time-axis padding.
+#
+# E16 byte diet: the concatenation and the kernel output now stay in
+# the input dtype (the in-kernel .to(tl.float32) is the exact cast the
+# reference applies first, so no fp32 staging buffers or full-output
+# cast pass are needed), and new_state is returned as a slice view of
+# the concatenated buffer. The E15 platform failure isolated the
+# compile break to the separate state-copy kernel, so this kernel
+# keeps the proven conv bytes and carries no state block at all.
 
 import torch
 import triton
@@ -32,7 +40,6 @@ def _ccu_width_reduce_kernel(
     wt_ptr,
     bias_ptr,
     out_ptr,
-    new_state_ptr,
     batch,
     dim,
     seqlen,
@@ -42,9 +49,6 @@ def _ccu_width_reduce_kernel(
     xcat_sp,
     wt_stride_w,
     wt_stride_d,
-    ns_sb,
-    ns_sd,
-    ns_sl,
     o_sb,
     o_sd,
     o_ss,
@@ -103,45 +107,28 @@ def _ccu_width_reduce_kernel(
                 mask=dmask,
             )
 
-        # New state: copy last STATE_LEN positions from x_cat
-        state_offs = tl.arange(0, 64)
-        for i0 in range(0, state_len, 64):
-            si = i0 + state_offs
-            smask = si < state_len
-            src_p = seqlen + si
-            xcat_b2 = xcat_ptr + b * xcat_sb + offs_d[None, :] * xcat_sd
-            v = tl.load(
-                xcat_b2 + src_p[:, None] * xcat_sp,
-                mask=smask[:, None] & dmask[None, :],
-                other=0.0,
-            ).to(tl.float32)
-            tl.store(
-                new_state_ptr
-                + b * ns_sb
-                + offs_d[None, :] * ns_sd
-                + si[:, None] * ns_sl,
-                v.to(new_state_ptr.dtype.element_ty),
-                mask=smask[:, None] & dmask[None, :],
-            )
-
 
 def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     squeeze_out = x.dim() == 2
     if squeeze_out:
         x = x.unsqueeze(-1)
-    orig_dtype = x.dtype
-    # Concatenate state+x along time axis (data layout, not computation)
-    x_cat = torch.cat([conv_state.float(), x.float()], dim=-1).contiguous()
+    # Concatenate state+x along the time axis in the input dtype (data
+    # layout, not computation); mixed dtypes promote like the
+    # reference's leading .float() pair.
+    x_cat = torch.cat([conv_state, x], dim=-1).contiguous()
     wt = weight.t().contiguous().float()  # [W, D]
     if bias is not None:
         bias = bias.contiguous().float()
     batch, dim, seqlen = x.shape
     state_len = conv_state.shape[-1]
     width = weight.shape[1]
-    out = torch.empty(batch, dim, seqlen, dtype=torch.float32, device=x.device)
-    new_state = torch.empty_like(conv_state)
+    # Output lives in the input dtype: the kernel's single elementwise
+    # cast is the only output pass.
+    out = torch.empty(batch, dim, seqlen, dtype=x.dtype, device=x.device)
+    # new_state is the tail slice of the concatenation; same dtype is a
+    # zero-copy view, a promoted dtype materializes the cast copy.
+    new_state = x_cat[:, :, seqlen:].to(conv_state.dtype)
     if batch * dim == 0:
-        out = out.to(orig_dtype)
         if squeeze_out:
             out = out.squeeze(-1)
         return out, new_state
@@ -155,7 +142,6 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         wt,
         bias if bias is not None else x_cat,
         out,
-        new_state,
         batch,
         dim,
         seqlen,
@@ -165,9 +151,6 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         x_cat.stride(2),
         wt.stride(0),
         wt.stride(1),
-        new_state.stride(0),
-        new_state.stride(1),
-        new_state.stride(2),
         out.stride(0),
         out.stride(1),
         out.stride(2),
@@ -181,7 +164,6 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         num_warps=4,
         num_stages=1,
     )
-    out = out.to(orig_dtype)
     if squeeze_out:
         out = out.squeeze(-1)
     return out, new_state
