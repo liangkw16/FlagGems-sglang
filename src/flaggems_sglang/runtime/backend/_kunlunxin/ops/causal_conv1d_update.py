@@ -78,7 +78,11 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     w_t = weight.t().contiguous()
     out_t = torch.empty((batch, seqlen, dim), dtype=x.dtype, device=x.device)
     if batch * dim * seqlen:
-        block = min(triton.next_power_of_2(dim), 1024)
+        # Narrower channel blocks give the many-core XPU more programs
+        # per decode step; grow the block only to respect the grid.x cap.
+        block = min(triton.next_power_of_2(dim), 256)
+        while batch * seqlen * triton.cdiv(dim, block) > 65535:
+            block *= 2
         d_blocks = triton.cdiv(dim, block)
         _ccu_affine_kernel[(batch * seqlen * d_blocks,)](
             x_t,

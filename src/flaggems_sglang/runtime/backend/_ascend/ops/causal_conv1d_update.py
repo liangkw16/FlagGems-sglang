@@ -22,12 +22,7 @@ import torch
 import triton
 import triton.language as tl
 
-# E16 platform run: with the input-dtype concatenation the in-kernel
-# .to(tl.float32) double-buffers the window tile and the width-reduce
-# kernel exceeded the Ascend 192KB UB budget (2424832 bits required,
-# BiShengHIR compile failure). Halving the channel block keeps every
-# tile under budget; the conv form is unchanged.
-_BLOCK_D = 128
+_BLOCK_D = 256
 _MAX_GRID = 65535
 
 
@@ -142,12 +137,8 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     if squeeze_out:
         x = x.unsqueeze(-1)
     orig_dtype = x.dtype
-    # Concatenate state+x along the time axis in the input dtype (data
-    # layout, not computation); the kernel's .to(tl.float32) loads are
-    # the exact cast the reference applies first, so no fp32 staging
-    # pass is needed. Mixed dtypes promote like the reference's
-    # .float() pair.
-    x_cat = torch.cat([conv_state, x], dim=-1).contiguous()
+    # Concatenate state+x along time axis (data layout, not computation)
+    x_cat = torch.cat([conv_state.float(), x.float()], dim=-1).contiguous()
     wt = weight.t().contiguous().float()  # [W, D]
     if bias is not None:
         bias = bias.contiguous().float()
