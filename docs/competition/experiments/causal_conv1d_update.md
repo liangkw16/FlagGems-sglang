@@ -6,11 +6,11 @@ operator: causal_conv1d_update
 batch: 4
 validity: valid
 platform: e19r/11237八芯valid,6.560375x新team best(重掷第1次破线)
-team_best_stage: e13
-team_best_commit: 4fa854a376de167e76a1e5d1441c6cd82b5866d7
-team_best_speedup: 6.545875
+team_best_stage: e19r
+team_best_commit: de039ad
+team_best_speedup: 6.560375
 sealed: no
-next: 字节轴三vendor已达实际地板,收口;留水位窗口重掷E19包(可叠kunlun 2048微探针),同字节重掷≤2次
+next: E19重掷第1次即破线(6.5604);同字节还剩≤1次,榜首7.90需结构面,守TB为主
 updated: 2026-09-08
 ```
 
