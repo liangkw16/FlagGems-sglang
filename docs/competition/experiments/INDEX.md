@@ -36,7 +36,7 @@
 | 53 | fused_gdn_gating | valid | 8/8(e5,11044,2.954625x新team best) | e5 2.954625x | no | 距榜首仍远(288x);多行结构已兑现,剩余轴=弱芯(昆仑0.72/华为1.47/燧原1.60)新结构证据 | 2026-09-08 | [fused_gdn_gating](fused_gdn_gating.md) |
 | 54 | fused_norm_rope_stacked | invalid_correctness | e3/11046 5/8,燧原PassManager/昆仑24.7%失配/华为大case三结构三连败,轴关闭 | - -x | yes | 三种结构(fused/row/three-kernel)均败于同三芯;重开需目标芯输入或他队公开PR,不再盲投 | 2026-09-08 | [fused_norm_rope_stacked](fused_norm_rope_stacked.md) |
 | 55 | hc_head | invalid_correctness | 7/8(e1,10668已终态;昆仑compile_worker Aborted,归因未定) | - -x | no | 独立进程和逐核取证工具已实现;需要昆仑同worker/runtime重放,崩溃归因未定,停止盲投 | 2026-09-08 | [hc_head](hc_head.md) |
-| 56 | l2norm | valid | 8/8(e2,11045,3.13796875x新team best) | e2 3.13796875x | no | 多行tile代理增益未按计分形状兑现(+1.0%);弱芯昆仑0.58/华为1.64需新目标证据,短行轴收益已近天花板 | 2026-09-08 | [l2norm](l2norm.md) |
+| 56 | l2norm | valid | 8/8(e3,11062,3.20691667x新team best) | e3 3.20691667x | no | 昆仑行块vendor兑现0.578→1.08;榜首72x未破译,弱芯华为1.54/燧原1.21需新证据,短行轴已尽 | 2026-09-08 | [l2norm](l2norm.md) |
 | 57 | log_scaling_tau | valid | 8/8(e2,10747,2.36478125x首次有效) | e11 2.50278125x | no | PTX已证实16B访存,本轮向量化轴停止;保留E11,无新生产候选或ZIP | 2026-09-08 | [log_scaling_tau](log_scaling_tau.md) |
 | 58 | w8a8_block_int8_matmul | valid | e2/11047 七芯大增但天数fp16失败;e3/11049 天数vendor修复74.08,燧原评测中 | e1 122.66158333x | no | e3终态回填;若8/8且avg~220x则刷新team best并核对排名;fp16张量核dot轴已证,剩余看燧原与榜首结构 | 2026-09-08 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
 

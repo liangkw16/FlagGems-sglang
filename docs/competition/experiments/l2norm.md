@@ -5,14 +5,14 @@ task: 56
 operator: l2norm
 batch: 4
 validity: valid
-platform: 8/8(e2,11045,3.13796875x新team best)
-team_best_stage: e2
-team_best_commit: c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67
-team_best_speedup: 3.13796875
+platform: 8/8(e3,11062,3.20691667x新team best)
+team_best_stage: e3
+team_best_commit: c0384fada9d69aa95c51c08d2b85934ecaa3310c
+team_best_speedup: 3.20691667
 sealed: no
-next: 多行tile代理增益未按计分形状兑现(+1.0%);弱芯昆仑0.58/华为1.64需新目标证据,短行轴收益已近天花板
+next: 昆仑行块vendor兑现0.578→1.08;榜首72x未破译,弱芯华为1.54/燧原1.21需新证据,短行轴已尽
 updated: 2026-09-08
-```
+
 
 ## S0 → **8/8 VALID**（2026-09-06，submission 10405）
 
@@ -71,3 +71,22 @@ updated: 2026-09-08
   A 3.6325 / B 4.21408333；avg 3.13796875（3.1077→，**+1.0%**）。
 - 判定：代理 5x 的大行数场景在计分形状中占比不足，结构收益仅华为/燧原
   小幅兑现；距榜首 72x 的差距不在本轴，短行 tile 轴收益近天花板。
+
+## E3 昆仑行块 vendor → **8/8 valid，avg 3.20691667x 新 team best**（2026-09-08，sub 11062）
+
+- 诊断：e2 的多行 kernel 只在 `dim<=128 && rows>4096` 启用，平台计分
+  shape 多未触发，昆仑仍走每行一 program 的最小粒度（0.578 = 纯
+  per-program 固定开销）。
+- 候选（commit `c0384fa`，仅 `_kunlunxin` vendor 单变量）：2D
+  [BLOCK_ROWS, BLOCK_D] 行块 tile 常开（e2 已证该结构昆仑 correctness
+  通过），element 预算 4096/program（D=64 时 32 行），grid-stride
+  cap 65535（T45/T48 配方）；generic 六过芯字节不动。补
+  `L2NormVariantsTest`（release 门禁曾拦 "applicable source was not
+  exercised"，补测试后 9/9 过）。
+- 终态逐芯：天数 6.68241667 / 沐曦 2.59433333 / 燧原 1.213 /
+  海光 4.62766667 / **昆仑 1.07966667（0.578→，+87%）** /
+  华为 1.53991667（generic 未动，窗口噪声 -6%）/ A 3.65333333 /
+  B 4.265；avg 3.20691667（3.138→，**+2.2%**）。
+- 判定：昆仑 per-program 开销论兑现，跨题再次验证"少而肥的 program"
+  是昆仑 elementwise/轻归约第一杠杆（T53-E1、T24 后第三证）。距榜首
+  sikadeer 72.3x 仍远（22.5x），华为/燧原需要新证据，短行轴收益已尽。
