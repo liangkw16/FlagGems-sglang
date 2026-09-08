@@ -111,3 +111,23 @@ PR 重扫（09-08 夜）：新增 #57/#58 属第二批（chunk_state_varlen/qkv_
   target-unverified 携带合规。
 - T46 旧测试 unittest.main 位于 variants 类之前——历史布局，release
   runner 走模块加载不受影响。
+
+## 八、深夜 PR 情报轮（2026-09-08，FlagGems-sglang/FlagTree/FlagGems 全扫）
+
+1. **FlagTree #1099（高价值）**：昆仑 dot 错译族根因坐实——SDNN
+   int↔float 转换 DMA 去量化 scale=0（i8 元素 ×0.0f、dot 全零输出），
+   xpu-sdnn-objects v0.3.6.6.1 修复，KL3 实证 int8 dot 恢复；#1124
+   显示当前 XPU 栈已消费 v0.3.6.8.0。**产出：T58 e8 昆仑 fp16 张量核
+   探针已预制**（`7c3b301`，ZIP `b847bdf2…`，回执全绿，门=昆仑 ≥150），
+   列为明日结构首发——若兑现 250+ 则均值 272+，是 T58 最大单杠杆。
+2. **FlagTree #1116（沐曦/PPU）**：dot 能力契约（NATIVE/NON_NATIVE/
+   UNSUPPORTED + resolve_dot 查询）——fp8 族为主，对现有 fp16 路径无
+   直接增量；T48 cpasync 阻塞依旧（代理不识别 pipeline kwarg）。
+3. **FlagTree #1092（AMD）**：volatile load 保留修复——与 card_b 组级
+   累加回退（重结合类）机制不符，无直接动作。
+4. **FlagGems-sglang**：c2flowDS #57/#58 仍为第二批题（varlen/qkv），
+   xuanzhengdu #48-#53 同批；**第四批榜首结构镜像继续保持零**。
+5. FlagGems 主仓 #6081/#6084 为 fused_moe/测试基建，与 T58 无关。
+
+弹药总数更新：**13 发**（12 载体 + e8 结构探针）。明日主力窗顺序
+调整为：T58 e8（结构首发）→ T57 e11r2 → T43 e19r2。
