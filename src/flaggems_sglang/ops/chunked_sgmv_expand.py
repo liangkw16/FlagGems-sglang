@@ -1,4 +1,4 @@
-# r1 defense carrier of E11 sub-11031 bytes (stride-bk fixed multi-K).
+# r2 evening re-roll of E5 team-best bytes (25.26 TB family).
 # Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
