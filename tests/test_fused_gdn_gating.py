@@ -64,6 +64,24 @@ class FusedGdnGatingTest(unittest.TestCase):
             self.assertEqual(got.dtype, exp.dtype, name)
             torch.testing.assert_close(got, exp, atol=1e-5, rtol=1e-5)
 
+    def test_row_head_tiles_and_parameter_strides(self):
+        torch.manual_seed(53)
+        for rows, heads in ((3, 127), (4, 128), (5, 129)):
+            a = torch.randn(rows, heads * 2, device="cuda")[:, ::2]
+            b = torch.randn_like(a)
+            alog = torch.randn(heads * 2, device="cuda")[::2]
+            bias = torch.randn(heads * 2, device="cuda")[::2]
+            for beta, threshold in ((0.5, 10.0), (1.0, 20.0), (2.0, 20.0)):
+                with self.subTest(rows=rows, heads=heads, beta=beta):
+                    actual = MODULE.fused_gdn_gating(
+                        alog, a, b, bias, beta, threshold
+                    )
+                    expected = reference(alog, a, b, bias, beta, threshold)
+                    for got, want in zip(actual, expected):
+                        torch.testing.assert_close(
+                            got, want, atol=1e-4, rtol=1e-4
+                        )
+
     def test_basic(self):
         for B, H in ((1, 8), (4, 16), (32, 32)):
             with self.subTest(B=B, H=H):
@@ -111,7 +129,18 @@ class FusedGdnGatingVariantsTest(unittest.TestCase):
     MODULES = load_operator_modules("fused_gdn_gating")
 
     def test_variants_match_reference(self):
-        for B, H in ((4, 16), (32, 8), (1, 7), (257, 128)):
+        for B, H in (
+            (4, 16),
+            (32, 8),
+            (1, 7),
+            (31, 128),
+            (32, 128),
+            (33, 128),
+            (127, 128),
+            (128, 128),
+            (129, 128),
+            (257, 128),
+        ):
             torch.manual_seed(B * 1009 + H)
             # A_log kept within platform-observed magnitude: the
             # log(1+exp) softplus rounding (~6e-8 abs) amplifies by
@@ -130,7 +159,6 @@ class FusedGdnGatingVariantsTest(unittest.TestCase):
                     torch.testing.assert_close(
                         beta_out, ref_beta, atol=1e-4, rtol=1e-4
                     )
-
 
     def test_variants_noncontiguous_inputs(self):
         # SGLang #22312-class regression: non-contiguous a/b must be read
@@ -154,6 +182,17 @@ class FusedGdnGatingVariantsTest(unittest.TestCase):
                 torch.testing.assert_close(
                     beta_output, ref_beta, atol=1e-4, rtol=1e-4
                 )
+
+
+RELEASE_REQUIRED_TESTS = [
+    "FusedGdnGatingTest.test_row_head_tiles_and_parameter_strides",
+    "FusedGdnGatingTest.test_basic",
+    "FusedGdnGatingTest.test_threshold_boundary",
+    "FusedGdnGatingTest.test_custom_beta",
+    "FusedGdnGatingTest.test_empty_batch",
+    "FusedGdnGatingVariantsTest.test_variants_match_reference",
+    "FusedGdnGatingVariantsTest.test_variants_noncontiguous_inputs",
+]
 
 
 if __name__ == "__main__":
