@@ -513,3 +513,24 @@ generic width2/3/4 多 token 用寄存器滚动历史和权重复用；长序列
 - 证据 `validation/43-submit.json`（提交后快照）SHA256
   `cd4257db6e8bd587519be6d7676ec0db468259a4ef425f6c78a68df2805d963e`；
   上传 `file_url_sha256` 前缀 `de6aa8e3`。
+
+## E17 华为 UB 修复（2026-09-08，提交前）
+
+- 单变量：仅 ascend `_BLOCK_D` 256→128（E16 华为失败为 bf16 载入 +
+  kernel 内 cast 的多缓冲 UB 溢出，2424832 bits > 1572864；折半后
+  全部 tile 缓冲进入预算）。generic/enflame/kunlunxin 字节与 E16
+  完全冻结（成员 SHA 逐一相同）。
+- source/verification commit `a55eea95b9f402d980d28d8c6203b9a4a983cfd1`。
+  远端 `gpu:/tmp/flagos-t43e17.0908/t43-release`（RTX 5070 Ti /
+  torch 2.13.0+cu130 / triton 3.7.1）：13 方法 0 fail/error/skip/
+  xfail；launch generic 102 / ascend 45 / enflame 45 / kunlunxin 45；
+  ascend 变更文件 black/flake8 复验通过。回执 SHA256
+  `4b8853beefaa79f02588e2a2dc08f1932902797001ef4fee28891f76baf4ff73`、
+  日志 `930bc9fb61bf1c88b2598a8b659e80fb2b2062d78a889d265c90807a9d3e84be`。
+- ZIP `artifacts/competition/causal_conv1d_update/e17-a55eea9/causal_conv1d_update.zip`
+  SHA256 `de3b86cbb1f2affd74fbf374be3ec9054b94d48b811955b9169da39fd05eb935`；
+  成员：generic `93fac218…`（=E16）、ascend `1a6d8b83…`（唯一变化）、
+  enflame `5a70077f…`（=E16）、kunlunxin `9a3a186d…`（=E16）。
+- 晋级门（预注册）：华为正确且全芯 avg > 6.545875 才替换队最佳。
+  失败分诊：华为仍 UB 溢出 → 第二刀 state tile 64→`np2(state_len)`；
+  两刀失败 → 华为回退 E15 fp32 cat 字节保底，燧原/昆仑增益随包锁定。
