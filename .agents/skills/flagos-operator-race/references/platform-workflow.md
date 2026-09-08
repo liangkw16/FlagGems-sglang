@@ -194,6 +194,11 @@ for r in raw:                       # 返回即列表
 | 昆仑评测器崩溃族新表现 | `执行超时(1830s/1800s) + Subprocess crash: Fatal Python error: Aborted`（compile_worker 栈） | 按崩溃族协议：不计代码止损、封存等健康窗口 |
 | make_block_ptr block_shape 必须 2 幂 | `Expected a list of constant integers` / `Shape element must be a power of 2`（K=100/96） | block 维用 next_pow2 填充 + boundary_check；shape/strides 可 runtime |
 | 字符串补丁在 black 折行字节上静默未命中 | replace 无 assert 时"看似修复"实未命中（beta/g 漏加 pid_t*BT 白跑一轮） | 对已格式化文件做 replace 必须先 assert 旧串存在 |
+| 额度是账号全局每日 30 发、全题共享 | 17 题 status 同时查询返回同一计数器（2026-09-08 实证）；"每题独立 30"是误判 | 排弹药按全局预算算；全局 120s 间隔 |
+| 昆仑崩溃族是间歇性的（同字节可过） | T58 e6 昆仑 18/18 同指纹 299 崩 → 3 小时后 e6r 同字节通过 142.13 | 注释载体（新 commit/新 ZIP）重掷 ≤2 次；载体必须跑自己的 exact release（v2 回执绑定 source_commit，preflight 拒绝 mismatch） |
+| 评测机慢窗可爆两个数量级读数 | 燧原冻结字节 2.3–3.73（exec 8–11s）→ 442.8（exec 1299s）；慢窗下 reference 退化远超单融合 kernel | 水位彩票机制：最佳字节载体随时待发；读数合法但脆弱（同窗 E3 即 1830s 超时死）；exec_ms 与 speedup 强相关可作窗口判据 |
+| 昇腾 aclnn 原生库层错误 | `aclnnCat` 进程内错误（T46 tile8 探针，单 case，异步栈不可靠） | 无法区分候选触发 vs 平台间歇；单发探针止损，不据此改结构 |
+| fp16 张量核整数乘积精确域 | int8 操作数 fp16 精确（≤2048）但乘积 127×127=16129 超域；2936 万元素 1 个差 0.5088 vs 0.5 判负（T58 天数） | dot 操作数 dtype 兼容性逐题逐芯验证；失败先拉 raw_result 数失败元素量级再定方向 |
 
 ### 结构资产（可直接迁移）
 
