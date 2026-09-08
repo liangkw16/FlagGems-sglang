@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Kunlunxin vendor: one program per row (no grid-stride loop, which the
-# S0 generic used and timed out at 1830s on this backend); tl.rsqrt
-# and tl.sigmoid for the norm and gate (platform-proven on the T20
-# sister task at 0.509x).
+# Kunlunxin vendor: 2D row-block tiles in the T56-e3 platform-proven
+# form (element budget 4096 per program, grid-stride capped at 65535)
+# - one tiny program per row measured 0.96-1.03x here, the same
+# per-program fixed overhead the l2norm row-block vendor cut by +87%.
+# tl.rsqrt / tl.sigmoid and isCloseCoreTiling kept from the proven
+# E7/E8 form.
 
 import torch
 import triton
@@ -23,57 +25,73 @@ import triton.language as tl
 
 
 @triton.jit
-def _fla_ln_gated_enflame(
+def _fla_ln_gated_kunlun(
     x_ptr,
     g_ptr,
     w_ptr,
     b_ptr,
     out_ptr,
+    rows,
     dim,
     eps,
-    x_stride,
-    g_stride,
-    o_stride,
+    row_blocks,
     IS_RMS: tl.constexpr,
     HAS_W: tl.constexpr,
     HAS_B: tl.constexpr,
     ACT_SWISH: tl.constexpr,
     ACT_SIGMOID: tl.constexpr,
+    BLOCK_ROWS: tl.constexpr,
     BLOCK_D: tl.constexpr,
+    HAS_ROW_MASK: tl.constexpr,
+    HAS_D_MASK: tl.constexpr,
     isCloseCoreTiling: tl.constexpr,
 ):
-    row = tl.program_id(0)
-    offs = tl.arange(0, BLOCK_D)
-    mask = offs < dim
-    x = tl.load(x_ptr + row * x_stride + offs, mask=mask, other=0.0).to(tl.float32)
-    g = tl.load(g_ptr + row * g_stride + offs, mask=mask, other=0.0).to(tl.float32)
+    pid = tl.program_id(0)
+    grid_size = tl.num_programs(0)
+    for rb in range(pid, row_blocks, grid_size):
+        row = rb * BLOCK_ROWS + tl.arange(0, BLOCK_ROWS)
+        offs = tl.arange(0, BLOCK_D)
+        d_mask = offs < dim
+        if HAS_ROW_MASK:
+            m2 = (row[:, None] < rows) & d_mask[None, :]
+        else:
+            m2 = d_mask[None, :] & (row[:, None] < rows)
+        x = tl.load(
+            x_ptr + row[:, None] * dim + offs[None, :], mask=m2, other=0.0
+        ).to(tl.float32)
+        g = tl.load(
+            g_ptr + row[:, None] * dim + offs[None, :], mask=m2, other=0.0
+        ).to(tl.float32)
 
-    if IS_RMS:
-        var = tl.sum(x * x, axis=0) / dim
-        x_hat = x * tl.rsqrt(var + eps)
-    else:
-        mean = tl.sum(x, axis=0) / dim
-        xc = tl.where(mask, x - mean, 0.0)
-        var = tl.sum(xc * xc, axis=0) / dim
-        x_hat = xc * tl.rsqrt(var + eps)
+        if IS_RMS:
+            var = tl.sum(x * x, axis=1) / dim
+            rstd = tl.rsqrt(var + eps)[:, None]
+            x_hat = x * rstd
+        else:
+            mean = tl.sum(x, axis=1) / dim
+            xc = tl.where(m2, x - mean[:, None], 0.0)
+            var = tl.sum(xc * xc, axis=1) / dim
+            x_hat = xc * tl.rsqrt(var + eps)[:, None]
 
-    y = x_hat
-    if HAS_W:
-        y = y * tl.load(w_ptr + offs, mask=mask, other=1.0).to(tl.float32)
-    if HAS_B:
-        y = y + tl.load(b_ptr + offs, mask=mask, other=0.0).to(tl.float32)
+        y = x_hat
+        if HAS_W:
+            w = tl.load(w_ptr + offs, mask=d_mask, other=1.0).to(tl.float32)
+            y = y * w[None, :]
+        if HAS_B:
+            b = tl.load(b_ptr + offs, mask=d_mask, other=0.0).to(tl.float32)
+            y = y + b[None, :]
 
-    sig_g = tl.sigmoid(g)
-    if ACT_SWISH:
-        y = y * g * sig_g
-    elif ACT_SIGMOID:
-        y = y * sig_g
+        sig_g = tl.sigmoid(g)
+        if ACT_SWISH:
+            y = y * g * sig_g
+        elif ACT_SIGMOID:
+            y = y * sig_g
 
-    tl.store(
-        out_ptr + row * o_stride + offs,
-        y.to(out_ptr.dtype.element_ty),
-        mask=mask,
-    )
+        tl.store(
+            out_ptr + row[:, None] * dim + offs[None, :],
+            y.to(out_ptr.dtype.element_ty),
+            mask=m2,
+        )
 
 
 def fla_layernorm_gated(
@@ -96,25 +114,34 @@ def fla_layernorm_gated(
         bias = x
     HAS_W = weight is not x
     HAS_B = bias is not x
+    if HAS_W:
+        weight = weight.contiguous()
+    if HAS_B:
+        bias = bias.contiguous()
 
-    grid = (rows,)  # one program per row, no grid-stride loop
-    _fla_ln_gated_enflame[grid](
+    block_d = max(triton.next_power_of_2(dim), 16)
+    block_rows = max(1, min(16, 4096 // block_d))
+    row_blocks = triton.cdiv(rows, block_rows)
+    grid = (min(row_blocks, 65535),)
+    _fla_ln_gated_kunlun[grid](
         x,
         g,
         weight,
         bias,
         out,
+        rows,
         dim,
         float(eps),
-        x.stride(0),
-        g.stride(0),
-        out.stride(0),
+        row_blocks,
         IS_RMS=is_rms_norm,
         HAS_W=HAS_W,
         HAS_B=HAS_B,
         ACT_SWISH=act_swish,
         ACT_SIGMOID=act_sigmoid,
-        BLOCK_D=max(triton.next_power_of_2(dim), 16),
+        BLOCK_ROWS=block_rows,
+        BLOCK_D=block_d,
+        HAS_ROW_MASK=(rows % block_rows != 0),
+        HAS_D_MASK=(dim != block_d),
         isCloseCoreTiling=True,
         num_warps=4,
         num_stages=1,
