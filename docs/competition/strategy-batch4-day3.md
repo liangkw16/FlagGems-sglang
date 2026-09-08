@@ -69,3 +69,26 @@ T43 e20 kunlun2048）按 30-60 分钟间隔打；同时 T47/T51 榜单复查。
 
 上午：未消耗的主窗口弹药 + PR 情报兑现；下午：最后彩票轮；
 19:00 前全部终态回填账本、INDEX 终态化、赛季收口 commit/push。
+
+## 六、今夜备弹完成盘点（2026-09-08 夜，全部 release 全绿 + ZIP 验签）
+
+12 发弹药就绪，preflight 仅需明日现做（intent 10 分钟过期）。回执与
+manifest：`artifacts/competition/batch4-codex-round-20260908/carrier-manifest.json`。
+
+| 弹药 | commit | ZIP SHA-256（前 16） | 说明 |
+| --- | --- | --- | --- |
+| T57 e11r2 | 664de8c | 98fed3f93a2938ec | E11 终掷 |
+| T43 e19r2 | 1b11d54 | 4b8806ecfaa4447a | E19 终掷 |
+| T43 e20 | 576b568 | 6150503d631445fc | 昆仑 2048 新字节探针 |
+| T58 e7r2 | c9b2481 | 5c9a61107a5a3edc | e7 终掷（6 成员） |
+| T42 e6r2 | 65b39bc | 1048d438384a1311 | e6 终掷 |
+| T42 e7s | ff373dd | fe14d44e42cef0a3 | e7-stride 第二身份 |
+| T53 e5r2 | f632062 | b22af97d24b1edd9 | e5 终掷 |
+| T53 e4r | 1813a97 | 3b23bedc608e8a4a | e4 第二身份（旧字节+旧测试） |
+| T56 e3r2 | 66fea2d | 115b8784c41ded18 | e3 终掷 |
+| T56 e1r | cac799a | 54fd72a613c2fd8c | E1 generic + e3 昆仑 vendor 组合 |
+| T46 e3r | 149c7a4 | 0a9354c9705d77c2 | e3 恢复（成员集/测试回滚到 e3） |
+| T49 e4r | 16fe1d4 | d3e311106141f4c9 | e4 首掷 |
+
+PR 重扫（09-08 夜）：新增 #57/#58 属第二批（chunk_state_varlen/qkv_lora_b），
+第四批相关零回灌，结构情报通道维持空窗。
