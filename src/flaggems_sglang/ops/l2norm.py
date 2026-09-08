@@ -1,4 +1,4 @@
-# r2 final water re-roll carrier of e3 sub 11062 team-best bytes.
+# r1 water re-roll carrier of E1 sub 10665 second-identity bytes.
 # Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
