@@ -226,3 +226,21 @@ updated: 2026-09-08
 - e7 字节注释载体（`4c4ca9d`）。华为 385 带内波动未回 410+，均值
   251.38 < 258.05。e7 字节同字节重掷已 1 次（≤2 纪律），明日窗口
   （华为 410-445 带）可再 1 次。
+
+## E8 昆仑 fp16 张量核探针（2026-09-08 深夜，预制待发）
+
+- **依据（PR 情报）**：FlagTree #1099 破案昆仑 dot 错译族根因——SDNN
+  int↔float 转换 DMA 的去量化 scale 字段为 0（i8 元素全部 ×0.0f，dot
+  输出全零），v0.3.6.6.1 修复并在 KL3 实证 int8 dot 恢复；#1124 显示
+  当前 XPU 栈已消费 v0.3.6.8.0。若平台昆仑 worker 运行 ≥修复版 objects，
+  本题昆仑的 fp16 张量核路径（**从未在 T58 平台测过**——e2 时昆仑走
+  冻结 ieee vendor）可能已可用；其他芯同路径解锁 +80%~+1350%。
+- 单变量：`_kunlunxin` vendor 两处操作数 cast `fp32→fp16`、
+  `tl.dot(..., input_precision="ieee")` → `tl.dot(...)`；标量 n_group、
+  BLOCK 64、逐块 scale 全部不动；generic/其余四 vendor = e7 字节冻结。
+- release 全绿（generic 25 + amd/iluvatar/kunlunxin 各 15 launch，0 fail；
+  NVIDIA 上 fp16 dot 数值等价通过）。回执
+  `e8-7c3b301/validation/verification.json`。
+- 预注册门：8/8 且昆仑 ≥150 才晋级（现 139.58 走 ieee）；昆仑数值
+  失败 → 根因假设证伪，回滚 e7 字节封轴（错译族在平台运行时未修复）。
+  若兑现 250+ → 均值 272+，T58 最大单杠杆。
