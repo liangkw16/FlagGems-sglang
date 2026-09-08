@@ -139,3 +139,10 @@ updated: 2026-09-08
   generic 四芯（沐曦/海光/A/B）任一 ≥+5% 视为结构兑现。若 8/8 但未超
   e5，字节保留为已验证组合（组级结构无回退证据）并记逐芯读数。e4 教训
   在案：代理 +15% 不保证逐芯方向，平台逐芯数据为准。
+
+## E6 提交记录（2026-09-08T14:56）
+
+- preflight 一次性通过（quota 13/30）；submit **submission 11202**
+  `queued`，file_url SHA256 `f67ea92139228f713e0eba04e2d73a59c0022e539927d694c4fa840730987c4f`；
+  证据 `batch4-codex-round-20260908/`（58-preflight intent nonce
+  `cfd4e110…`、submit 响应、58-watch.jsonl）。

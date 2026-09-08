@@ -417,3 +417,9 @@ kunlunxin 冻结。本包同时是昆仑崩溃族重载载体（新 ZIP 字节�
   未达前科在案，本次门更高因结构变化更大）。华为若编译失败
   （UB overflow 反向）则该 vendor 回滚整行字节并关轴。其他七芯
   字节冻结，读数仅在各自噪声带内（E8 燧原 2.33↔E7 3.73 窗口带）。
+
+## E10 提交记录（2026-09-08T14:58）
+
+- preflight 通过（quota 12/30，间隔等待 86s 后重试成功）；submit
+  **submission 11204** `queued`；证据
+  `batch4-codex-round-20260908/51-{preflight,submit}.*`、`51-watch.jsonl`。
