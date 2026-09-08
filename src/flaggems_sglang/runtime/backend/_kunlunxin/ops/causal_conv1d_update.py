@@ -79,12 +79,11 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     w_t = weight.t().contiguous()
     out_t = torch.empty((batch, seqlen, dim), dtype=x.dtype, device=x.device)
     if batch * dim * seqlen:
-        # E19 platform runs: the 1024-wide cap is the proven form (E18's
-        # 256-wide blocks lost 72%); e20 probes the next bandwidth tier,
-        # 2048-wide blocks, with the same grid.x guard. Only the affine
-        # kernel's per-program vector width changes - kernel bytes and
-        # math stay identical.
-        block = min(triton.next_power_of_2(dim), 2048)
+        # Bandwidth-tier ladder on this chip: 256 lost 72% (E18), 1024 is
+        # the E19-proven form, 2048 won +27% (e20 sub 11649, kunlun
+        # 1.233 -> 1.564); e21 probes the next tier, 4096-wide blocks,
+        # with the same grid.x guard. Kernel bytes and math stay identical.
+        block = min(triton.next_power_of_2(dim), 4096)
         while batch * seqlen * triton.cdiv(dim, block) > 65535:
             block *= 2
         d_blocks = triton.cdiv(dim, block)
