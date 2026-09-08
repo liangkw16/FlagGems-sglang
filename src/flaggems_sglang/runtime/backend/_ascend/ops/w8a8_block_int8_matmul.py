@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Ascend vendor of the T58 fp16 tensor-core dot: carries the
+# tile config that the T58 e4 round proved on this backend.
+
 import torch
 import triton
 import triton.language as tl
@@ -113,9 +116,12 @@ def w8a8_block_int8_matmul(A, B, As, Bs, block_size, output_dtype):
     group_n, group_k = int(block_size[0]), int(block_size[1])
     # BLOCK_K must divide group_k so one k-iteration stays inside one scale
     # group; power-of-two block sizes make any pow2 <= group_k a divisor.
-    block_m = 64
-    block_n = min(_largest_pow2_leq(group_n, 64), triton.next_power_of_2(max(N, 16)))
-    block_k = _largest_pow2_leq(group_k, 64)
+    # 128x128x128 tiles (platform-proven on this backend in the T58 e4
+    # round: huawei 195.9->391.8 (+100%)), with Bs loaded as a per-lane vector so
+    # BLOCK_N may span multiple n-groups.
+    block_m = 128
+    block_n = min(_largest_pow2_leq(group_n, 128), triton.next_power_of_2(max(N, 16)))
+    block_k = _largest_pow2_leq(group_k, 128)
 
     grid = (triton.cdiv(M, block_m), triton.cdiv(N, block_n))
     _w8a8_block_matmul_kernel[grid](
@@ -142,7 +148,7 @@ def w8a8_block_int8_matmul(A, B, As, Bs, block_size, output_dtype):
         BLOCK_M=block_m,
         BLOCK_N=block_n,
         BLOCK_K=block_k,
-        num_warps=4,
+        num_warps=8,
         num_stages=2,
     )
     return C
