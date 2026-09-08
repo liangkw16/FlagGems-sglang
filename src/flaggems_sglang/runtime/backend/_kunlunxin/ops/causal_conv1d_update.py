@@ -79,6 +79,7 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     w_t = weight.t().contiguous()
     out_t = torch.empty((batch, seqlen, dim), dtype=x.dtype, device=x.device)
     if batch * dim * seqlen:
+        # e21r water re-roll of e21 sub-11652 bytes.
         # Bandwidth-tier ladder on this chip: 256 lost 72% (E18), 1024 is
         # the E19-proven form, 2048 won +27% (e20 sub 11649, kunlun
         # 1.233 -> 1.564); e21 probes the next tier, 4096-wide blocks,
