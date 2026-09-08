@@ -113,9 +113,12 @@ def w8a8_block_int8_matmul(A, B, As, Bs, block_size, output_dtype):
     group_n, group_k = int(block_size[0]), int(block_size[1])
     # BLOCK_K must divide group_k so one k-iteration stays inside one scale
     # group; power-of-two block sizes make any pow2 <= group_k a divisor.
-    block_m = 64
-    block_n = min(_largest_pow2_leq(group_n, 64), triton.next_power_of_2(max(N, 16)))
-    block_k = _largest_pow2_leq(group_k, 64)
+    # BLOCK_N may span multiple n-groups: the kernel loads Bs as a per-lane
+    # vector (offs_n // group_n), so only BLOCK_M/BLOCK_K resource limits
+    # bound the tile. 128x128x128 keeps the fp16 tensor-core dot fed.
+    block_m = 128
+    block_n = min(_largest_pow2_leq(group_n, 128), triton.next_power_of_2(max(N, 16)))
+    block_k = _largest_pow2_leq(group_k, 128)
 
     grid = (triton.cdiv(M, block_m), triton.cdiv(N, block_n))
     _w8a8_block_matmul_kernel[grid](
@@ -142,7 +145,7 @@ def w8a8_block_int8_matmul(A, B, As, Bs, block_size, output_dtype):
         BLOCK_M=block_m,
         BLOCK_N=block_n,
         BLOCK_K=block_k,
-        num_warps=4,
+        num_warps=8 if block_m * block_n >= 16384 else 4,
         num_stages=2,
     )
     return C
