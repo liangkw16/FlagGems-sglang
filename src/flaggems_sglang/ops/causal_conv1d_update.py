@@ -94,7 +94,9 @@ def _causal_conv1d_update_kernel(
                 ).to(tl.float32)
                 val += wk * v
             if HAS_BIAS:
-                val += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(tl.float32)
+                val += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(
+                    tl.float32
+                )
             if ACT_IS_SILU:
                 # SiLU in the statement's exact form; stability rewrites
                 # fail the checker at large negative inputs.

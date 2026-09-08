@@ -98,7 +98,9 @@ def _ccu_width_reduce_kernel(
             acc = tl.sum(window * wk, axis=0)
 
             if HAS_BIAS:
-                acc += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(tl.float32)
+                acc += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(
+                    tl.float32
+                )
             if ACT_IS_SILU:
                 acc = acc * tl.sigmoid(acc)
             tl.store(
