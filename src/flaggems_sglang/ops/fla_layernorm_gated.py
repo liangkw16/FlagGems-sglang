@@ -86,76 +86,6 @@ def _fla_ln_gated_kernel(
         )
 
 
-@triton.jit
-def _fla_ln_gated_rows_kernel(
-    x_ptr,
-    g_ptr,
-    w_ptr,
-    b_ptr,
-    out_ptr,
-    eps,
-    ROWS: tl.constexpr,
-    DIM: tl.constexpr,
-    IS_RMS: tl.constexpr,
-    HAS_W: tl.constexpr,
-    HAS_B: tl.constexpr,
-    ACT_SWISH: tl.constexpr,
-    ACT_SIGMOID: tl.constexpr,
-    BLOCK_ROWS: tl.constexpr,
-    BLOCK_D: tl.constexpr,
-    HAS_ROW_MASK: tl.constexpr,
-    HAS_D_MASK: tl.constexpr,
-):
-    # Multi-row tile (PR FlagGems-sglang #50 recipe): ROWS/DIM are baked
-    # as constexpr so the platform benchmark shapes compile without
-    # bounds loops or row masks, and weight/bias load once per program
-    # instead of once per row.
-    pid = tl.program_id(0)
-    row = pid * BLOCK_ROWS + tl.arange(0, BLOCK_ROWS)
-    offs = tl.arange(0, BLOCK_D)
-    d_mask = offs < DIM
-    if HAS_ROW_MASK:
-        m2 = (row[:, None] < ROWS) & d_mask[None, :]
-    else:
-        m2 = d_mask[None, :] & (row[:, None] < ROWS)
-    x = tl.load(x_ptr + row[:, None] * DIM + offs[None, :], mask=m2, other=0.0).to(
-        tl.float32
-    )
-    g = tl.load(g_ptr + row[:, None] * DIM + offs[None, :], mask=m2, other=0.0).to(
-        tl.float32
-    )
-
-    if IS_RMS:
-        var = tl.sum(x * x, axis=1) / DIM
-        rstd = (1.0 / tl.sqrt(var + eps))[:, None]
-        x_hat = x * rstd
-    else:
-        mean = tl.sum(x, axis=1) / DIM
-        xc = tl.where(m2, x - mean[:, None], 0.0)
-        var = tl.sum(xc * xc, axis=1) / DIM
-        x_hat = xc * (1.0 / tl.sqrt(var + eps))[:, None]
-
-    y = x_hat
-    if HAS_W:
-        w = tl.load(w_ptr + offs, mask=d_mask, other=1.0).to(tl.float32)
-        y = y * w[None, :]
-    if HAS_B:
-        b = tl.load(b_ptr + offs, mask=d_mask, other=0.0).to(tl.float32)
-        y = y + b[None, :]
-
-    sig_g = 1.0 / (1.0 + tl.exp(-g))
-    if ACT_SWISH:
-        y = y * g * sig_g
-    elif ACT_SIGMOID:
-        y = y * sig_g
-
-    tl.store(
-        out_ptr + row[:, None] * DIM + offs[None, :],
-        y.to(out_ptr.dtype.element_ty),
-        mask=m2,
-    )
-
-
 def fla_layernorm_gated(
     x,
     g,
@@ -183,41 +113,7 @@ def fla_layernorm_gated(
 
     HAS_W_FLAG = weight is not x
     HAS_B_FLAG = bias is not x
-    if HAS_W_FLAG:
-        weight = weight.contiguous()
-    if HAS_B_FLAG:
-        bias = bias.contiguous()
     block_d = max(triton.next_power_of_2(dim), 16)
-
-    # Multi-row specialized path: bake the benchmark shape as constexpr
-    # and amortize weight/bias across BLOCK_ROWS rows. Falls back to the
-    # per-row kernel for the single-row case.
-    rows_tile = max(1, min(16, 8192 // block_d))
-    if rows > 1 and rows_tile >= 2:
-        grid = (triton.cdiv(rows, rows_tile),)
-        _fla_ln_gated_rows_kernel[grid](
-            x,
-            g,
-            weight,
-            bias,
-            out,
-            float(eps),
-            ROWS=rows,
-            DIM=dim,
-            IS_RMS=is_rms_norm,
-            HAS_W=HAS_W_FLAG,
-            HAS_B=HAS_B_FLAG,
-            ACT_SWISH=act_swish,
-            ACT_SIGMOID=act_sigmoid,
-            BLOCK_ROWS=rows_tile,
-            BLOCK_D=block_d,
-            HAS_ROW_MASK=(rows % rows_tile != 0),
-            HAS_D_MASK=(dim != block_d),
-            num_warps=8 if block_d >= 2048 else 4,
-            num_stages=1,
-        )
-        return out
-
     grid = (min(rows, _MAX_GRID),)
     _fla_ln_gated_kernel[grid](
         x,
