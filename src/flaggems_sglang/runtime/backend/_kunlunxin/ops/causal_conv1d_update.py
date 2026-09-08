@@ -1,4 +1,4 @@
-# r2 water re-roll carrier of e19 sub 11156 bytes.
+# r3 final water re-roll carrier of e19 sub 11156 bytes.
 # Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
