@@ -5,12 +5,12 @@ task: 58
 operator: w8a8_block_int8_matmul
 batch: 4
 validity: valid
-platform: 8/8(e5,11143,250.64599167x新team best)
+platform: 8/8(e5,11143,250.64599167x新team best);e6组级scale候选就绪待提交
 team_best_stage: e5
 team_best_commit: cf31913e61b91654542b654fe4d7d8c226e0d222
 team_best_speedup: 250.64599167
 sealed: no
-next: 芯级tile分派兑现(华为445/燧原6.16);距榜首576.32收窄至2.30x;剩余=高分芯同斜率结构或水位采样
+next: e6组级scale累加(代理+15.3~15.9%)已过release/ZIP验签,单次提交中;E2天数失败已诊断=fp16乘积舍入刀锋(1/29M),天数维持ieee路径
 updated: 2026-09-08
 ```
 
@@ -102,3 +102,40 @@ updated: 2026-09-08
   128、海光/沐曦/A/B 要 64）——"vendor 分派不可省"（T39 块跳过教训）
   在 GEMM tile 维度第二次验证。代理 +10% 不代表平台方向，逐芯平台
   数据才是分派依据。
+
+## E6 组级 scale 累加（2026-09-08，提交前预注册）
+
+- 假设：K 循环按 scale group 两级化——group 内 BLOCK_K 步用
+  `tl.dot(a, b, acc)` 在张量累加器内累加（零逐元素开销），`acc * a_s * b_s`
+  的 [M,N] 逐元素链每组只跑一次（group_k=128、BLOCK_K=64 时减半）；
+  As/Bs gather 也减半。结构来自 MLSys2026 FlashInfer MoE 冠军 kernel
+  （`mlsys2026-flashinfer-contest-solution/submissions/moe-fp8/solution/
+  python/main.py`，本地 external-repos 已 clone）。组内累加比逐块缩放
+  更贴近 reference（整组 matmul 后乘 scale）。
+- 单变量：generic + `_iluvatar` 同构改造（两条 dot 路径各一文件）；
+  `_ascend`/`_enflame`（BLOCK_K=128=group，无组内步可省）与
+  `_kunlunxin` 字节冻结。
+- **E2 天数失败先诊断（零额度 raw_result）**：sub 11047 tianshu 仅
+  **1/29,360,128 元素**超差——abs 0.5088 vs atol 0.5、ref≈0.26 的
+  大数消减刀锋元素；根因是 fp16 张量核乘积 127×127=16129 超 fp16
+  整数精确域 2048 的舍入翻转，非 lowering 错译，结构上不可绕。
+  天数维持 `_iluvatar` fp32-ieee；本候选给该路径减 epilogue。
+- NVIDIA 配对计时（RTX5070Ti，6 组 AB/BA×30 次 wrapper 全含，
+  `pair-generic.json`）：generic 三组 g128 case **+15.3%/+15.3%/
+  +15.6%**，g64（GROUP_STEPS=1 退化）+0.6% 中性；iluvatar
+  （`pair-iluvatar.json`）0.995~1.005 中性（fp32-ieee 在代理为
+  FMA-bound，epilogue 占比小；天数真机 FMA:epilogue 比不同，中性
+  无下行风险故随包携带）。
+- source/verification commit `18616ff`；release v2 回执（远端
+  `gpu:/tmp/flagos-t58e6-rel`）：6 方法全过（RELEASE_REQUIRED 全集），
+  generic 25 + iluvatar 15 次非 warmup launch，fail/error/skip/xfail=0。
+  回执 `e6-18616ff/validation/verification.json` SHA256
+  `8da35db804324bf9d4b66cf3ab6bc4c405e41d927dcabde14d90c357dd38c97c`、
+  日志 `6479ee10c3ec709955b455e2a7ec9d935c65034f5bb0f59504c4e680427284e0`。
+- ZIP `e6-18616ff/w8a8_block_int8_matmul.zip`（5 成员：generic 新、
+  ascend/enflame/kunlunxin 冻结、iluvatar 新）24785 bytes，SHA256
+  `6d63454b06391f3c8f692f42223fad2241d5eea962ba352ab9e4ad028e0f8972`。
+- 预注册晋级门：8/8 valid 且 avg > 250.64599167（e5 team best）才晋级；
+  generic 四芯（沐曦/海光/A/B）任一 ≥+5% 视为结构兑现。若 8/8 但未超
+  e5，字节保留为已验证组合（组级结构无回退证据）并记逐芯读数。e4 教训
+  在案：代理 +15% 不保证逐芯方向，平台逐芯数据为准。

@@ -5,11 +5,11 @@ task: 51
 operator: fla_layernorm_gated
 batch: 4
 validity: valid
-platform: e9/11124昆仑真机correctness失败invalid;team best保持E7 5.816325x
+platform: e9/11124昆仑真机失败;team best保持E7 5.816325x;e10华为子块候选就绪待提交
 team_best_stage: e7
 team_best_speedup: 5.816325
 sealed: no
-next: e9行块特化证伪(天数-20%/昆仑真机失败);行块轴关闭,保留E7,需c2flow结构情报
+next: e10华为大D子块vendor(两遍/三遍,零mask)已过release/ZIP验签,单次提交中;代理中性=预期签名(UB收益只在昇腾),门=华为>=2.9
 updated: 2026-09-08
 team_best_commit: d05e57a0ee3d2d453866c85c0479b22a6fcbae8b
 ```
@@ -385,3 +385,35 @@ kunlunxin 冻结。本包同时是昆仑崩溃族重载载体（新 ZIP 字节�
   天数偏好 per-row 调度（与 T56 l2norm 行块 +87% 相反）——**行块配方
   芯相关且算子相关，不可跨题外推**。剩余差距需 c2flow（6.668）结构
   情报，上游无 PR。
+
+## E10 华为大 D 子块 vendor（2026-09-08，提交前预注册）
+
+- 假设：D>1024 且 256|D 的行不走整行 BLOCK_D 形态，改为
+  D_TILE= min(dim&-dim, 1024) 的 N_SUB 个精确子块（无任何 bounds
+  mask、无运行时向量比较）：RMS 两遍（sumsq 遍 + 归一化输出遍）、
+  LayerNorm 三遍（sum→centered sumsq→输出；保持减均值后再归约的
+  reference 顺序，不用 E[x²]-E[x]²）。机制：昇腾 CMP 标量退化
+  （T40 +130% 家族）+ 整行 8192 宽 fp32 多活向量撑爆 UB 的 spill
+  开销；x 重读换小活跃集。dim≤1024 或非 256 整除时回落平台已验证
+  的整行 kernel（host 分派）。
+- 单变量：仅 `_ascend` vendor 变更；generic（E8 回滚字节）/
+  enflame/hygon/kunlunxin/metax 全部冻结。
+- NVIDIA 配对计时（`pair-generic.json` fla 段，ascend vendor）：
+  全 case 0.97~1.006 中性——**预期签名**：UB/CMP 缓释收益只在昇腾
+  真机体现（T40 E16 同款：代理不可见、平台 +130%）；NVIDIA 上
+  整行形态本就无 UB 约束，8192 case -2.5~3% 为重读成本。
+- source/verification commit `18616ff`；release v2 回执（远端
+  `gpu:/tmp/flagos-t51e10-rel`）：7 方法全过（RELEASE_REQUIRED 全集，
+  含新增 2048/1536/8192 子块维度），generic 101 + ascend 82 次非
+  warmup launch，fail/error/skip/xfail=0。回执
+  `e10-18616ff/validation/verification.json` SHA256
+  `c8a128a5b18adf49f36a9cd8f4e6d7fb12fed4539485b4ec3dfbf7460ff564a4`、
+  日志 `35711a75d621bf2dd884f5715275bfc0dcb3582414e0d3a62b27e79f6bcca145`。
+- ZIP `e10-18616ff/fla_layernorm_gated.zip`（6 成员：仅 ascend 新）
+  26533 bytes，SHA256
+  `97823b0c76cb83b546f840422e695c700983eb43c9c9de78ba65aa78ba8418f8`。
+- 预注册晋级门：8/8 valid 且 avg > 5.816325（E7 team best）才晋级；
+  华为 ≥2.9（+26%）视为 UB 假设兑现、<2.4 视为轴证伪（E8 门 +10%
+  未达前科在案，本次门更高因结构变化更大）。华为若编译失败
+  （UB overflow 反向）则该 vendor 回滚整行字节并关轴。其他七芯
+  字节冻结，读数仅在各自噪声带内（E8 燧原 2.33↔E7 3.73 窗口带）。
