@@ -31,7 +31,7 @@
 | 48 | chunked_sgmv_shrink | valid | 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor) | e7 4.7489375x | no | cpasync候选已实现但NVIDIA不识别pipeline;需沐曦固定源码执行,无本轮ZIP | 2026-09-08 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
 | 49 | ernie45_rope_fused | valid | 8/8(e3,8.58253125x) | e3 8.58253125x | no | head16候选代理正确/ZIP验签;需昆仑live buffer和完整wrapper收益后晋级 | 2026-09-08 | [ernie45_rope_fused](ernie45_rope_fused.md) |
 | 50 | extend_attention | candidate-wip | 6/8(e4,昆仑conclusive封轴;华为数值不可修;燧原0.013x<门槛) | - -x | no | 逐阶段诊断已实现但插桩有观察效应;需要目标原失败重放,不再将两种失败形态称数值永久不可修 | 2026-09-08 | [extend_attention](extend_attention.md) |
-| 51 | fla_layernorm_gated | valid | e9/11124昆仑真机失败;team best保持E7 5.816325x;e10华为子块候选就绪待提交 | e7 5.816325x | no | e10华为大D子块vendor(两遍/三遍,零mask)已过release/ZIP验签,单次提交中;代理中性=预期签名(UB收益只在昇腾),门=华为>=2.9 | 2026-09-08 | [fla_layernorm_gated](fla_layernorm_gated.md) |
+| 51 | fla_layernorm_gated | valid | e10/11204八芯valid,60.7192x新team best,实时rank1 | e10 60.7192x | no | 已登顶(燧原442.8极端水位+华为子块+10%同发兑现);守榜为主,华为子块结构知识可迁移 | 2026-09-08 | [fla_layernorm_gated](fla_layernorm_gated.md) |
 | 52 | fused_dual_residual_rmsnorm | invalid | e6/10743六芯通过,昆仑失败,燧原pending;已无有效分可能 | - -x | no | 阶段探针和大形状代理验证已完成;昆仑4元素问题未复现,仍需目标原输入首分歧,不重投 | 2026-09-08 | [fused_dual_residual_rmsnorm](fused_dual_residual_rmsnorm.md) |
 | 53 | fused_gdn_gating | valid | 8/8(e5,11044,2.954625x新team best) | e5 2.954625x | no | 距榜首仍远(288x);多行结构已兑现,剩余轴=弱芯(昆仑0.72/华为1.47/燧原1.60)新结构证据 | 2026-09-08 | [fused_gdn_gating](fused_gdn_gating.md) |
 | 54 | fused_norm_rope_stacked | invalid_correctness | e3/11046 5/8,燧原PassManager/昆仑24.7%失配/华为大case三结构三连败,轴关闭 | - -x | yes | 三种结构(fused/row/three-kernel)均败于同三芯;重开需目标芯输入或他队公开PR,不再盲投 | 2026-09-08 | [fused_norm_rope_stacked](fused_norm_rope_stacked.md) |

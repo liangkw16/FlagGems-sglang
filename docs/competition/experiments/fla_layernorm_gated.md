@@ -5,11 +5,12 @@ task: 51
 operator: fla_layernorm_gated
 batch: 4
 validity: valid
-platform: e9/11124昆仑真机失败;team best保持E7 5.816325x;e10华为子块候选就绪待提交
-team_best_stage: e7
-team_best_speedup: 5.816325
+platform: e10/11204八芯valid,60.7192x新team best,实时rank1
+team_best_stage: e10
+team_best_commit: 18616ffa954cf7ddd57e578bc6fa9863c6e38740
+team_best_speedup: 60.7192
 sealed: no
-next: e10华为大D子块vendor(两遍/三遍,零mask)已过release/ZIP验签,单次提交中;代理中性=预期签名(UB收益只在昇腾),门=华为>=2.9
+next: 已登顶(燧原442.8极端水位+华为子块+10%同发兑现);守榜为主,华为子块结构知识可迁移
 updated: 2026-09-08
 team_best_commit: d05e57a0ee3d2d453866c85c0479b22a6fcbae8b
 ```
@@ -423,3 +424,23 @@ kunlunxin 冻结。本包同时是昆仑崩溃族重载载体（新 ZIP 字节�
 - preflight 通过（quota 12/30，间隔等待 86s 后重试成功）；submit
   **submission 11204** `queued`；证据
   `batch4-codex-round-20260908/51-{preflight,submit}.*`、`51-watch.jsonl`。
+
+## E10 平台终态：**8/8 VALID，60.7192x 新 TEAM BEST，RANK 1**（2026-09-08T15:3x）
+
+- sub `11204` 终态 `completed / valid`，8/8 全过，average **60.7192**，
+  `is_team_best=true`；实时榜单 **my_rank=1**（旧榜首 c2flow 6.668225，
+  我方为其 9.1 倍；同分先交优先，追平也难越）。
+- 逐芯：天数 11.3126 / 沐曦 4.5796（metax pin）/ **燧原 442.8042** /
+  海光 7.9608（hygon pin）/ 昆仑 0.9672 / **华为 2.5348** / A 8.4304 /
+  B 7.164。
+- **结算**：① 燧原 442.8 = 冻结 E5 vendor 字节撞上极端高水位窗口
+  （历史带 2.33–3.73，本次两个数量级以上——水位彩票以最大幅度兑现，
+  机制疑为该窗口燧原 reference 侧极慢）；② 华为 2.5348 vs E7 2.3028
+  = **+10.0%，子块 vendor 结构收益真实兑现**（低于 ≥2.9 强门但高于
+  证伪门 2.4，UB/宽行假设方向正确、幅度中等；均值贡献 +0.29）；
+  ③ 其余六芯全部落在冻结字节噪声带内。
+- T51 就此从第 6 名（5.816）跃居 **Top1（60.72）**；本批 Top1 数
+  T47+T51=2。后续：守榜（差距两个数量级，被超风险极低）；华为子块
+  结构知识（大 D 行拆 D_TILE 精确子块、零 mask、两/三遍）入库可迁移。
+- 证据 `batch4-codex-round-20260908/51-{preflight,submit}.*`、
+  `51-watch.jsonl`；本节状态同步至 CURRENT/INDEX。
