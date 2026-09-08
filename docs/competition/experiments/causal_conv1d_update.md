@@ -610,3 +610,20 @@ generic width2/3/4 多 token 用寄存器滚动历史和权重复用；长序列
   逐芯最优组合包（燧原 E16 字节 + 昆仑 1024 + 华为 E15 字节）。
   今日水位下预期 ~6.50（差门槛 ~0.05），水位回升即过 6.55；同字节
   方差重掷按纪律最多两次。
+
+## E19 已知最优组合包（2026-09-08，提交前）
+
+- 单变量：昆仑 wrapper 回退 `min(np2(dim),1024)` + 保留 65535 倍增
+  保护；其余三文件与 E18 逐字节冻结。组合 = generic(E13 语义) +
+  燧原 E16 字节 + 昆仑 1024 块 + 华为 E15 字节。
+- source/verification commit `2c45d4e133c7dca0ed3148371568913367f02e85`。
+  远端 `gpu:/tmp/flagos-t43e19.0908/t43-release`：13 方法 0 fail/
+  error/skip/xfail。回执 SHA256
+  `30135a6772121f987e2bd7b63cf1369daf9503e17f259cfeebca446ca5048754`、
+  日志 `fe2a9a3ffea686a8a80e57a9c38ca13f11026a2cb2e69741f26bb3345069250b`。
+- ZIP `artifacts/competition/causal_conv1d_update/e19-2c45d4e/causal_conv1d_update.zip`
+  SHA256 `d4c98454486b852b66b537097112a3e41900ac741c75ab66d81fd4f2d1b9c598`；
+  kunlunxin 成员 `cfd5d132…`（唯一变化），其余与 E18 相同。
+- 晋级门：avg > 6.545875；昆仑应回 1.2+，华为 0.38~0.48。若仍差
+  门槛且弱芯符合预期，判定为强芯水位（card_a 7.79 vs 8.84），留待
+  水位窗口重掷（同字节方差最多两次）。
