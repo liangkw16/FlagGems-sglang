@@ -1,4 +1,4 @@
-# r1 defense re-roll carrier of E5 sub-10412 team-best bytes.
+# r1 defense carrier of E11 sub-11031 bytes (stride-bk fixed multi-K).
 # Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
