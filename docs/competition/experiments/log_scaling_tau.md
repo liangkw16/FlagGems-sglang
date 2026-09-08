@@ -549,3 +549,8 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
 - source `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`；verification `c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67`。5 个测试方法、19 次实际 kernel 调用；选定 NVIDIA/代理范围门禁通过。
 - 回执 `artifacts/competition/batch4-implementation-20260907/t57-release1/verification.json`，SHA256 `e936b52311d4be4c34d50ebc36746a5e12ce9bdbb88f9b34be6ad2cba6acc49d`；日志 SHA256 `2af1b8332ddf78ffcf93ee0a3c9fe18b3fc9b1ba38e903ca3cca7aa7b2c3b223`。
 - 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
+
+## E11r 水位重掷终态：8/8 valid 2.4653，未超 TB（2026-09-08T16:49，sub 11239）
+
+- E11 字节注释载体（`2ec5a8b`）。各芯带内，未现窗口尖峰；TB 2.5028 保持。
+  同字节重掷剩 ≤1 次。

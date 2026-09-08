@@ -430,3 +430,11 @@ K 循环推进 `b_ptrs += BLOCK_K * stride_bn` 是潜伏笔误（应为 stride_b
 - 回执 `artifacts/competition/batch4-implementation-20260907/t45-release1/verification.json`，SHA256 `1169cd5dda63d2a93ecae892c67e094fe00f2fec1d3cb54309a4edef76a399f1`；日志 SHA256 `feb08f14cf9daf2d235bb65d06abb137c879b63ac9b1641e4927b84220d79540`。
 - 不可变 ZIP `artifacts/competition/chunk_scaled_dot_kkt/research-20260908-26a9576/chunk_scaled_dot_kkt.zip`，SHA256 `b510bbcb54784e639c1dbfbcc620e4d7ffd5952cf2f75a581ef7b4aaaed5ff13`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
 - 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
+
+## E15r 昆仑慢窗彩票终态：8/8 全对、昆仑 0.063 未过门槛（2026-09-08T17:19，sub 11248）
+
+- e15 字节注释载体（`4bc6159`）。昆仑 0.063 与 e15 原始读数完全一致
+  （同字节确定性水位，无慢窗运气）；其余七芯带内（A 21.41/海光 14.79）。
+  invalid_threshold 维持。处置：昆仑 0.063 判定为该字节族的稳定读数，
+  慢窗彩票对该题无效；过线只剩结构面（epilogue 减法已证伪，需新结构
+  证据）。今日额度尾发，零下行。
