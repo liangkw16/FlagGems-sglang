@@ -5,12 +5,12 @@ task: 43
 operator: causal_conv1d_update
 batch: 4
 validity: valid
-platform: 8/8(e13,6.545875x最佳);e14 6.5204375x非最佳;e16候选就绪
+platform: 8/8(e13,6.545875x最佳);e16仅华为UB溢出,燧原0.4775/昆仑1.235兑现
 team_best_stage: e13
 team_best_commit: 4fa854a376de167e76a1e5d1441c6cd82b5866d7
 team_best_speedup: 6.545875
 sealed: no
-next: E16三vendor字节瘦身+视图返回,回执/ZIP/manifest全绿,进入平台preflight
+next: E17单变量ascend BLOCK_D 256→128修UB,其余字节冻结,目标过晋级门>6.545875
 updated: 2026-09-08
 ```
 
@@ -464,3 +464,52 @@ generic width2/3/4 多 token 用寄存器滚动历史和权重复用；长序列
   失败先查该芯 `selected_file` 与视图/dtype 路径，回退方案 = 恢复各自
   E13 已验证 state 搬运字节另发；同指纹失败连 2 次停轴。generic/强芯
   路径与 E13 语义逐字节一致（一处 AST 等价折行），预期不变。
+
+## 补记：E15 后未入账的两发（2026-09-08 发现）
+
+- 10824（09-07 18:12，seq 20，invalid）：燧原再次失败（另一会话尝试，
+  ZIP SHA 前缀 `8a450854`）；其余七芯通过，昆仑 0.4075。
+- 10826（09-07 18:21，seq 21，**valid，avg 6.5374375**）：八芯全过
+  ——天数 13.7745 / 沐曦 7.0585 / 燧原 0.3265 / 海光 10.938 / 昆仑
+  0.406 / 华为 0.3895 / A 8.828 / B 10.5785；低于 E13 6.545875，
+  不替换队最佳。推断为 E15 后的恢复投（燧原/昆仑回 E13 字节 +
+  华为 E15 外提字节；华为 0.3895 vs E15 轮 0.484 属水位波动）。
+  今日 12:00:04 的 latest_submission_at 属其他任务，非本题。
+
+## E16 平台终态（2026-09-08T12:11，submission 11148，daily_seq 13）
+
+- **invalid_correctness：仅华为失败；燧原/昆仑两轴大幅兑现**：
+
+| 芯片 | 状态/正确性 | 加速比 | 对比 E13 |
+|---|---|---:|---|
+| tianshu | completed/True | 13.693 | ≈持平 |
+| muxi | completed/True | 6.9795 | -0.065 水位 |
+| enflame | completed/True | **0.4775** | 0.326→+46.5% |
+| haiguang | completed/True | 10.857 | -0.32 水位 |
+| kunlunxin | completed/True | **1.235** | 0.407→**3.04x** |
+| huawei | completed/**False** | — | UB 溢出编译失败 |
+| card_a | completed/True | 8.2215 | -0.615 水位 |
+| card_b | completed/True | 10.176 | -0.35 水位 |
+
+- 七芯合计 51.6395；视图返回在燧原/昆仑的 checker 下无异议
+  （assert_close 不查 stride 的判断获平台实证）。额度观测 17/30。
+- **华为失败情报（raw_result）**：唯一失败 case_idx 2，非数值错——
+  `ub overflow, requires 2424832 bits while 1572864 bits available`
+  （BiShengHIR，部署文件第 30 行=width-reduce kernel）。根因：bf16
+  载入 + kernel 内 `.to(tl.float32)` 使多缓冲峰值超过昇腾 192KB UB
+  （踩坑表已知模式：E2 华为 3745792 bits 同族）。其余 case 编译通过
+  → 与 W_PAD×BLOCK_D 组合相关。
+- **判定**：字节轴在燧原/昆仑的结构性收益坐实（昆仑 3 倍、燧原 1.47
+  倍）；华为需缩小 tile 重投。强芯水位整体下漂约 -0.9（E13→E16 轮），
+  判断为评测机波动，非 generic 语义变化（generic 与 E13 仅差一处 AST
+  等价折行）。
+- **E17 预注册（单变量）**：仅 ascend `_BLOCK_D` 256→128（UB 减半，
+  2424832→约 1.21M bits < 1572864 预算）；其余三文件字节冻结。
+  晋级门：平台 avg > 6.545875；华为正确且 ≥0.1 为必要条件，预期
+  0.4~1.1。若华为仍 UB 溢出（同指纹），第二刀 state tile 64 行→
+  `np2(state_len)`（Codex 建议轴），两刀都失败则华为回退 E15 fp32
+  cat 字节保底。七芯水位若延续 E16 低水位，华为需 ≥0.6 才能过
+  晋级门——以平台实测为准，不预设。
+- 证据 `validation/43-submit.json`（提交后快照）SHA256
+  `cd4257db6e8bd587519be6d7676ec0db468259a4ef425f6c78a68df2805d963e`；
+  上传 `file_url_sha256` 前缀 `de6aa8e3`。
