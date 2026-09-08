@@ -78,9 +78,10 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     w_t = weight.t().contiguous()
     out_t = torch.empty((batch, seqlen, dim), dtype=x.dtype, device=x.device)
     if batch * dim * seqlen:
-        # Narrower channel blocks give the many-core XPU more programs
-        # per decode step; grow the block only to respect the grid.x cap.
-        block = min(triton.next_power_of_2(dim), 256)
+        # E18 platform run: 256-wide blocks lost 72% on this chip - the
+        # per-program vector width dominates, so keep the proven 1024 cap
+        # and only grow it if the grid.x limit would be exceeded.
+        block = min(triton.next_power_of_2(dim), 1024)
         while batch * seqlen * triton.cdiv(dim, block) > 65535:
             block *= 2
         d_blocks = triton.cdiv(dim, block)
