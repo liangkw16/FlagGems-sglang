@@ -32,7 +32,7 @@ RELEASE_REQUIRED_TESTS = [
         "test_empty",
         "test_input_not_modified",
     )
-]
+] + ["L2NormVariantsTest.test_variants_match_reference"]
 
 
 def reference(x, eps=1e-6):
@@ -101,6 +101,29 @@ class L2NormTest(unittest.TestCase):
         snap = x.clone()
         self._check(x)
         torch.testing.assert_close(x, snap)
+
+
+@unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
+class L2NormVariantsTest(unittest.TestCase):
+    """Every backend vendor variant must match the reference on the proxy."""
+
+    from tests._op_variants import load_operator_modules
+
+    MODULES = load_operator_modules("l2norm")
+
+    def test_variants_match_reference(self):
+        for rows, dim in ((1, 16), (7, 63), (512, 64), (4096, 128), (4097, 65)):
+            for dtype in TOL:
+                torch.manual_seed(rows + dim)
+                x = torch.randn(rows, dim, device="cuda", dtype=dtype)
+                expected = reference(x)
+                atol, rtol = TOL[dtype]
+                for name, module in self.MODULES:
+                    with self.subTest(module=name, rows=rows, dim=dim, dtype=dtype):
+                        actual = module.l2norm(x, 1e-6)
+                        torch.testing.assert_close(
+                            actual, expected, atol=atol, rtol=rtol
+                        )
 
 
 if __name__ == "__main__":
