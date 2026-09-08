@@ -50,6 +50,7 @@ def _w8a8_block_matmul_kernel(
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
+    GROUP_STEPS: tl.constexpr,
 ):
     a_stride_m = tl.cast(a_stride_m, tl.int64)
     a_stride_k = tl.cast(a_stride_k, tl.int64)
@@ -67,27 +68,38 @@ def _w8a8_block_matmul_kernel(
     n_mask = offs_n < N
 
     accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
-    for k_start in range(0, K, BLOCK_K):
-        k_mask = (k_start + offs_k) < K
-        a = tl.load(
-            a_ptr + offs_m[:, None] * a_stride_m + (k_start + offs_k)[None, :] * a_stride_k,
-            mask=m_mask[:, None] & k_mask[None, :],
-            other=0.0,
-        ).to(tl.float32)
-        b = tl.load(
-            b_ptr + offs_n[None, :] * b_stride_n + (k_start + offs_k)[:, None] * b_stride_k,
-            mask=n_mask[None, :] & k_mask[:, None],
-            other=0.0,
-        ).to(tl.float32)
-        acc_k = tl.dot(a, b, input_precision="ieee")
-        k_group = k_start // group_k
+    # Group-level scale accumulation, mirroring the generic kernel: dot
+    # steps inside one scale group accumulate in the tensor accumulator
+    # and the [M, N] scale FMA runs once per group. On this backend the
+    # ieee dot is the platform-proven path (fp16 operands fail by a
+    # rounding hair: 1/29M elements, T58 e2 raw_result).
+    for g in range(0, tl.cdiv(K, group_k)):
+        acc_k = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
+        for kk in range(GROUP_STEPS):
+            k_base = g * group_k + kk * BLOCK_K
+            k_mask = (k_base + offs_k) < K
+            a = tl.load(
+                a_ptr
+                + offs_m[:, None] * a_stride_m
+                + (k_base + offs_k)[None, :] * a_stride_k,
+                mask=m_mask[:, None] & k_mask[None, :],
+                other=0.0,
+            ).to(tl.float32)
+            b = tl.load(
+                b_ptr
+                + offs_n[None, :] * b_stride_n
+                + (k_base + offs_k)[:, None] * b_stride_k,
+                mask=n_mask[None, :] & k_mask[:, None],
+                other=0.0,
+            ).to(tl.float32)
+            acc_k = tl.dot(a, b, acc_k, input_precision="ieee")
         a_s = tl.load(
-            as_ptr + offs_m * as_stride_m + k_group * as_stride_k,
+            as_ptr + offs_m * as_stride_m + g * as_stride_k,
             mask=m_mask,
             other=0.0,
         ).to(tl.float32)
         b_s = tl.load(
-            bs_ptr + (offs_n // group_n) * bs_stride_n + k_group * bs_stride_k,
+            bs_ptr + (offs_n // group_n) * bs_stride_n + g * bs_stride_k,
             mask=n_mask,
             other=0.0,
         ).to(tl.float32)
@@ -145,6 +157,7 @@ def w8a8_block_int8_matmul(A, B, As, Bs, block_size, output_dtype):
         BLOCK_M=block_m,
         BLOCK_N=block_n,
         BLOCK_K=block_k,
+        GROUP_STEPS=group_k // block_k,
         num_warps=4,
         num_stages=2,
     )

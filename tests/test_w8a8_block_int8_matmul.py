@@ -128,6 +128,10 @@ class W8A8VariantsTest(unittest.TestCase):
             (64, 512, 1024, 128, 128, torch.bfloat16),
             (128, 1024, 2048, 128, 64, torch.float16),
             (32, 128, 256, 64, 64, torch.float16),
+            # deep K: many scale groups through the nested group loop
+            (32, 128, 4096, 128, 128, torch.float16),
+            # K tail inside a scale group (300 = 2*128 + 44)
+            (17, 96, 300, 128, 128, torch.float16),
         ):
             args = make_case(
                 M, N, K, block_n=bn, block_k=bk, dtype=dtype, seed=M

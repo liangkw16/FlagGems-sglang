@@ -45,7 +45,13 @@ def fixtures(op):
                     "silu",
                 )
     elif op == "fla_layernorm_gated":
-        for rows, dim in ((32, 128), (256, 1024), (32, 8192)):
+        for rows, dim in (
+            (32, 128),
+            (256, 1024),
+            (128, 2048),
+            (64, 1536),
+            (32, 8192),
+        ):
             for rms in (False, True):
                 yield f"{rows}x{dim}-rms{rms}", (
                     rand(rows, dim),
@@ -66,6 +72,30 @@ def fixtures(op):
             (65536, 128),
         ):
             yield f"{rows}x{dim}", (rand(rows, dim),)
+    elif op == "w8a8_block_int8_matmul":
+
+        def ints(*shape, seed):
+            g = torch.Generator().manual_seed(seed)
+            return torch.randint(
+                -128, 128, shape, generator=g, dtype=torch.int8
+            ).cuda()
+
+        for m, n, k, bn, bk in (
+            (64, 4096, 4096, 128, 128),
+            (128, 2048, 7168, 128, 128),
+            (16, 1024, 4096, 128, 128),
+            (64, 4096, 4096, 128, 64),
+        ):
+            kt = (k + bk - 1) // bk
+            nt = (n + bn - 1) // bn
+            yield f"{m}x{n}x{k}-g{bn}x{bk}", (
+                ints(m, k, seed=m),
+                ints(n, k, seed=n),
+                torch.randn(m, kt).cuda().abs() * 0.01,
+                torch.randn(nt, kt).cuda().abs() * 0.01,
+                [bn, bk],
+                torch.bfloat16,
+            )
     elif op == "act_and_mul":
         for rows in (1, 1024):
             for stride in (1, 2):
@@ -148,6 +178,7 @@ def main():
         "chunked_embedding_lora_a": "ascend",
         "chunk_scaled_dot_kkt": "kunlunxin",
         "log_scaling_tau": None,
+        "w8a8_block_int8_matmul": None,
     }
     run = JITFunction.run
     label = ""
@@ -177,8 +208,13 @@ def main():
         return compiled
 
     if len(sys.argv) > 4:
-        selected = sys.argv[4].split(",")
-        vendors = {op: vendors[op] for op in selected}
+        picked = {}
+        for item in sys.argv[4].split(","):
+            op, _, vendor = item.partition("@")
+            if vendor:
+                vendors[op] = vendor
+            picked[op] = vendors[op]
+        vendors = picked
     for op, vendor in vendors.items():
         rel = Path("src/flaggems_sglang")
         if vendor:

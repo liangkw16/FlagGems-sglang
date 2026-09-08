@@ -42,6 +42,7 @@ def _w8a8_block_matmul_kernel(
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
+    GROUP_STEPS: tl.constexpr,
 ):
     a_stride_m = tl.cast(a_stride_m, tl.int64)
     a_stride_k = tl.cast(a_stride_k, tl.int64)
@@ -59,32 +60,46 @@ def _w8a8_block_matmul_kernel(
     n_mask = offs_n < N
 
     accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
-    for k_start in range(0, K, BLOCK_K):
-        k_mask = (k_start + offs_k) < K
-        a = tl.load(
-            a_ptr + offs_m[:, None] * a_stride_m + (k_start + offs_k)[None, :] * a_stride_k,
-            mask=m_mask[:, None] & k_mask[None, :],
-            other=0.0,
-        ).to(tl.float16)
-        b = tl.load(
-            b_ptr + offs_n[None, :] * b_stride_n + (k_start + offs_k)[:, None] * b_stride_k,
-            mask=n_mask[None, :] & k_mask[:, None],
-            other=0.0,
-        ).to(tl.float16)
-        # int8 values are exact in fp16 and the fp32 accumulator keeps
-        # block sums exact; fp16 operands unlock the tensor-core dot on
-        # the backends where the fp32-ieee path runs on slow vector FMAs
-        # (T12 E5 cross-chip evidence). The Kunlunxin vendor keeps the
-        # fp32-ieee dot (fp16 operands miscompile there).
-        acc_k = tl.dot(a, b)
-        k_group = k_start // group_k
+    # Group-level scale accumulation: K steps inside one scale group
+    # accumulate in the dot accumulator (tensor-core native) and the
+    # [M, N] scale FMA runs once per group instead of once per BLOCK_K
+    # step. BLOCK_K divides group_k by construction, so GROUP_STEPS
+    # trips never straddle a group boundary; the masked tail of the
+    # last group contributes exact zeros. Round-by-round this is also
+    # closer to the reference, which scales one whole group product.
+    for g in range(0, tl.cdiv(K, group_k)):
+        acc_k = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
+        for kk in range(GROUP_STEPS):
+            k_base = g * group_k + kk * BLOCK_K
+            k_mask = (k_base + offs_k) < K
+            a = tl.load(
+                a_ptr
+                + offs_m[:, None] * a_stride_m
+                + (k_base + offs_k)[None, :] * a_stride_k,
+                mask=m_mask[:, None] & k_mask[None, :],
+                other=0.0,
+            ).to(tl.float16)
+            b = tl.load(
+                b_ptr
+                + offs_n[None, :] * b_stride_n
+                + (k_base + offs_k)[:, None] * b_stride_k,
+                mask=n_mask[None, :] & k_mask[:, None],
+                other=0.0,
+            ).to(tl.float16)
+            # int8 values are exact in fp16 and the fp32 accumulator
+            # keeps block sums exact; fp16 operands unlock the
+            # tensor-core dot on the backends where the fp32-ieee path
+            # runs on slow vector FMAs (T12 E5 cross-chip evidence).
+            # The Kunlunxin vendor keeps the fp32-ieee dot (fp16
+            # operands miscompile there).
+            acc_k = tl.dot(a, b, acc_k)
         a_s = tl.load(
-            as_ptr + offs_m * as_stride_m + k_group * as_stride_k,
+            as_ptr + offs_m * as_stride_m + g * as_stride_k,
             mask=m_mask,
             other=0.0,
         ).to(tl.float32)
         b_s = tl.load(
-            bs_ptr + (offs_n // group_n) * bs_stride_n + k_group * bs_stride_k,
+            bs_ptr + (offs_n // group_n) * bs_stride_n + g * bs_stride_k,
             mask=n_mask,
             other=0.0,
         ).to(tl.float32)
@@ -142,6 +157,7 @@ def w8a8_block_int8_matmul(A, B, As, Bs, block_size, output_dtype):
         BLOCK_M=block_m,
         BLOCK_N=block_n,
         BLOCK_K=block_k,
+        GROUP_STEPS=group_k // block_k,
         num_warps=4,
         num_stages=2,
     )
