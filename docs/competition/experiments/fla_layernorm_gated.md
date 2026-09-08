@@ -5,11 +5,11 @@ task: 51
 operator: fla_layernorm_gated
 batch: 4
 validity: valid
-platform: E8/11032八芯valid,5.721075x;历史E7 best5.816325x,第6
+platform: e9/11124昆仑真机correctness失败invalid;team best保持E7 5.816325x
 team_best_stage: e7
 team_best_speedup: 5.816325
 sealed: no
-next: E8华为仅+2.65%且总分未晋级;关闭单独延迟load轴,保留E7,结构优化需新的目标性能证据
+next: e9行块特化证伪(天数-20%/昆仑真机失败);行块轴关闭,保留E7,需c2flow结构情报
 updated: 2026-09-08
 team_best_commit: d05e57a0ee3d2d453866c85c0479b22a6fcbae8b
 ```
@@ -369,3 +369,19 @@ kunlunxin 冻结。本包同时是昆仑崩溃族重载载体（新 ZIP 字节�
 - 本轮两候选均已终态且未刷新 best，累计只用2次额度，剩余28/30。没有重投；后续结构优化需新源码与性能证据，已知失败或门禁未过候选保持不提交。
 
 - 提交后实时排名复核 `2026-09-08T01:54:27.199190+08:00`：第 **6**，本队 best **5.816325x**，榜首 **6.668225x**（c2flow）。证据 `artifacts/competition/batch4-submit-20260908/tasks-after.json` SHA256 `f7959a760a01815c0072e76de5c3e7fa8fb08c4e41ec3579ca946c6c64001170`。
+
+## E9 行块特化 → invalid（昆仑真机失败），轴关闭（2026-09-08，sub 11124）
+
+- 候选（commit `fbd7386`，PR FlagGems-sglang #50 配方）：generic 增
+  ROWS/DIM constexpr 行块特化 kernel（16 行块、weight/bias 每 program
+  单次载入、HAS_ROW_MASK/HAS_D_MASK 编译期折叠），`_kunlunxin` 换
+  T56-e3 行块形态（tl.rsqrt/sigmoid 与 isCloseCoreTiling 保留）。
+  代理 7/7 全过、配对 +1~5%。
+- 终态 **invalid_correctness：昆仑真机 correctness 失败**（NVIDIA 代理
+  通过 ≠ 目标芯通过，再次印证）。已出七芯：天数 **9.1732（E7 11.49→，
+  行块在天数 -20% 反向）** / 沐曦 4.5712 / 燧原 2.299 / 海光 7.7266 /
+  华为 2.2568 / A 8.326 / B 6.878。team best 保持 E7 5.816325。
+- 处置：`_kunlunxin` 与 generic 字节已回滚 E8 树态；行块轴对 T51 关闭。
+  天数偏好 per-row 调度（与 T56 l2norm 行块 +87% 相反）——**行块配方
+  芯相关且算子相关，不可跨题外推**。剩余差距需 c2flow（6.668）结构
+  情报，上游无 PR。

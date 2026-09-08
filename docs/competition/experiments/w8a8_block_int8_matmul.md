@@ -5,12 +5,12 @@ task: 58
 operator: w8a8_block_int8_matmul
 batch: 4
 validity: valid
-platform: 8/8(e3,11049,220.752425x新team best)
-team_best_stage: e3
-team_best_commit: 20379c0f0b6f66d23a3c4f7f5631d57a90ab8251
-team_best_speedup: 220.752425
+platform: 8/8(e5,11143,250.64599167x新team best)
+team_best_stage: e5
+team_best_commit: cf31913e61b91654542b654fe4d7d8c226e0d222
+team_best_speedup: 250.64599167
 sealed: no
-next: fp16张量核轴已收;距榜首c2flow 576.32约2.6x,BLOCK128大tile/constexpr全tile为剩余杠杆
+next: 芯级tile分派兑现(华为445/燧原6.16);距榜首576.32收窄至2.30x;剩余=高分芯同斜率结构或水位采样
 updated: 2026-09-08
 ```
 
@@ -83,3 +83,22 @@ updated: 2026-09-08
   上下文**——T58 中 fp32-ieee 可用、fp16 失败，与 T12 的结论方向相反；
   每题逐芯 dtype 路由不可凭单题经验外推。fp16 张量核 unlock 对
   dot-bound 芯是本季最大单结构杠杆（B +1350%、A +481%）。
+
+## E4/E5 芯级 tile 分派：e4 证伪拆出方向，e5 **250.65 新 team best**（2026-09-08）
+
+- **E4（commit `6d687b0`，sub 11129）**：generic 全面升
+  BLOCK 128×128×128（代理 +10%）。平台 8/8 valid 但 avg **184.956525
+  （e3 220.75→，-16% 证伪）**。逐芯拆分极性鲜明：**华为 391.82
+  （195.91→，+100%）、燧原 6.12（4.79→，+28%）** vs 沐曦 114.26
+  （-48%）、海光 461.74（-30%）、A 263.19（-27%）、B 25.33（-77%）。
+- **E5（commit `cf31913`，sub 11143）→ 8/8 VALID，avg 250.64599167
+  新 team best**：单变量 = generic 回 BLOCK64（e3 字节）+ 新增
+  `_ascend`/`_enflame` 两 vendor 携带 e4 已证 128 tile（华为/燧原
+  各自平台实证，芯级分派）。终态：**华为 445.56（+127% vs e3）** /
+  **燧原 6.16（+29%）** / 海光 644.82 / A 376.91 / 沐曦 207.85 /
+  B 109.35 / 天数 74.95 / 昆仑 139.58。e3 220.75 → **+13.5%**，
+  距榜首 c2flow 576.32 收窄至 **2.30x**（今日从 4.70x 起两连收）。
+- 跨芯知识：**tensor-core dot 的最优 tile 严格芯相关**（华为/燧原要
+  128、海光/沐曦/A/B 要 64）——"vendor 分派不可省"（T39 块跳过教训）
+  在 GEMM tile 维度第二次验证。代理 +10% 不代表平台方向，逐芯平台
+  数据才是分派依据。
