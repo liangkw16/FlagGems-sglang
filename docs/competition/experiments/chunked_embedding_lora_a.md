@@ -5,12 +5,12 @@ task: 46
 operator: chunked_embedding_lora_a
 batch: 4
 validity: valid
-platform: 8/8(e3,14.1051875x)
+platform: 8/8(e3,14.1051875x);e7/11229 7/8华为aclnnCat内部错误
 team_best_stage: e3
 team_best_commit: 6e3a1c4e64304d017ded08cabb6445b9152776f2
 team_best_speedup: 14.1051875
 sealed: no
-next: 华为token tile8及rank>128修复代理通过/ZIP验签;等待华为正确性和长短段性能复验
+next: tile8探针华为失败(aclnnCat单case,原生库层);ascend回滚e3,tile8轴关闭,需aclnn间歇旁证才重开
 updated: 2026-09-08
 ```
 
@@ -218,3 +218,12 @@ is_team_best=max 保证零下行）。
 - 预注册门：8/8 valid 且 avg > 14.1051875（e3 TB）才晋级；华为 ≥2.8
   （+32%）视为 tile8 兑现。华为 correctness 失败则回滚 ascend 字节关轴。
   本发兼作华为目标验证探针（晨间唯一缺口）。
+
+## E7 平台终态：7/8 invalid_correctness，华为 aclnnCat 内部错误（2026-09-08T16:4x）
+
+- sub `11229` 华为 case 4 单 case 失败：`RuntimeError: ... current
+  working operator name is aclnnCat`（昇腾 aclnn 原生算子库层的进程内
+  错误，异步栈不可靠）。tile8 候选的华为正确性未通过；其余七芯通过。
+- 处置：无法区分候选触发 vs 平台 aclnn 间歇（单 case、错误在原生库层）；
+  ascend 字节回滚 e3、tile8 轴关闭，除非后续出现 aclnn 间歇的旁证再议。
+  e3 TB 14.1051875 不受影响（平台取 max）。
