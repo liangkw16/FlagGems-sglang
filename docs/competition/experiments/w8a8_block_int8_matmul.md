@@ -5,13 +5,14 @@ task: 58
 operator: w8a8_block_int8_matmul
 batch: 4
 validity: valid
-platform: e2/11047 七芯大增但天数fp16失败;e3/11049 天数vendor修复74.08,燧原评测中
-team_best_stage: e1
-team_best_commit: 30464a3
-team_best_speedup: 122.66158333
+platform: 8/8(e3,11049,220.752425x新team best)
+team_best_stage: e3
+team_best_commit: 20379c0f0b6f66d23a3c4f7f5631d57a90ab8251
+team_best_speedup: 220.752425
 sealed: no
-next: e3终态回填;若8/8且avg~220x则刷新team best并核对排名;fp16张量核dot轴已证,剩余看燧原与榜首结构
+next: fp16张量核轴已收;距榜首c2flow 576.32约2.6x,BLOCK128大tile/constexpr全tile为剩余杠杆
 updated: 2026-09-08
+```
 
 
 ## S0 fp32-ieee dot + 组内 scale（2026-09-06，远端 GPU 全过）
@@ -74,8 +75,10 @@ updated: 2026-09-08
 - **E3（commit `20379c0`，sub 11049）**：单变量 = 新增 `_iluvatar`
   vendor（字节 = E1 fp32-ieee generic，天数 dot dtype 敏感性与 T12
   族一致）。platform：天数恢复 **74.08**，海光 655.6 / A 362.6 /
-  沐曦 221.6 / 华为 195.9 / 昆仑 140.4 / B 111.1，燧原评测中。
-  若燧原保持 ~4.6，预计 avg ≈ 220x（E1 team best 122.66 → +80%）。
+  沐曦 221.6 / 华为 195.9 / 昆仑 140.4 / B 111.1。
+  **终态 8/8 VALID，avg 220.752425 新 team best（is_team_best）**：
+  燧原 4.79 通过；E1 122.66 → **+80%**，距榜首 c2flow 576.32 收窄至
+  2.61x（原 4.70x）。
 - 跨芯知识（更新 T12 条目）：**天数 dot 操作数 dtype 兼容集依赖算子
   上下文**——T58 中 fp32-ieee 可用、fp16 失败，与 T12 的结论方向相反；
   每题逐芯 dtype 路由不可凭单题经验外推。fp16 张量核 unlock 对
