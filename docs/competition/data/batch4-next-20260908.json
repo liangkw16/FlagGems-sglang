@@ -1,0 +1,2861 @@
+{
+  "source_commit": "65b7fdd418d941ad4393ae9485541c74a55e5017",
+  "verification_commit": "65b7fdd418d941ad4393ae9485541c74a55e5017",
+  "artifact_root": "artifacts/competition/batch4-next-20260908",
+  "remote": "gpu:/tmp/flagos-batch4-next.ou1xCS",
+  "scope": "NVIDIA proxy only; target runtimes unverified",
+  "verification": [
+    {
+      "stage": "t48-after",
+      "mode": "screening",
+      "receipt": "artifacts/competition/batch4-next-20260908/t48-after/verification.json",
+      "receipt_sha256": "f091677e86aafe615681c0be185bbd792d2508ac723ad98b2cde7174f6c1d461",
+      "log_sha256": "817e7499f87e117f0fb7fce5be8d5e89e3b027e51cbd6e0ee16b1b00eaba8844",
+      "exit_code": 0,
+      "tests_run": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": 24,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": 33,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": 33
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": "9503c1c106e5ad2887b35a1e34420fd8b860390ec414d0e91b409b8ffcd379bc",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": "a2d53ce449daf52df5fddec49305350b654d79a2bbb9320d96048b121a46dce4",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": "af7a413ef50feb2f76d936feb3155e5d2b237f325c06748e0c02758d41d0112b",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/chunked_sgmv_shrink.py": "c793577a6eaf17ebd920a58b0e8aac30305310b918a5e23ad16867ff6845e3eb",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_chunked_sgmv_shrink.py": "445f869e7c2506fcedb02901abb2cdca74d88b99eee800656af94bd4f8245f6e"
+      },
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/chunked_sgmv_shrink.py"
+      ]
+    },
+    {
+      "stage": "t48-after2",
+      "mode": "screening",
+      "receipt": "artifacts/competition/batch4-next-20260908/t48-after2/verification.json",
+      "receipt_sha256": "a6992a33a625d93318149b813571d739039cfedac886b6b30a8bb94036670274",
+      "log_sha256": "1d648d2745a4c089bd7200bf04ec39db76ff09aac6cf7898e28ab3b77833f576",
+      "exit_code": 0,
+      "tests_run": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": 25,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": 34,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": 34
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": "d195b02a5e1f98cb1c69fa7102223a7b20319f43f57fbc423e9a6fd78212bc39",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": "a2d53ce449daf52df5fddec49305350b654d79a2bbb9320d96048b121a46dce4",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": "af7a413ef50feb2f76d936feb3155e5d2b237f325c06748e0c02758d41d0112b",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_chunked_sgmv_shrink.py": "ff4e5efad5b7d5d4961cc51aa66badf7bf845702d2e9c449c6791f4406168f9f"
+      },
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py"
+      ]
+    },
+    {
+      "stage": "t48-after3-final",
+      "mode": "screening",
+      "receipt": "artifacts/competition/batch4-next-20260908/t48-after3-final/verification.json",
+      "receipt_sha256": "a100dbf72c1639d6a9816d3490703b2d22206a7541f9382fee1b2fd6f181c393",
+      "log_sha256": "c8652ee2ee1065eaeca8e0a5502e894786992b48c4932df12415f56b885f5e88",
+      "exit_code": 0,
+      "tests_run": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": 25,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": 34,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": 34
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": "8dd4cba3e4cdafec64f8e726cb19834138dda589a7559cf1b8e69a019177a81d",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": "a2d53ce449daf52df5fddec49305350b654d79a2bbb9320d96048b121a46dce4",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": "af7a413ef50feb2f76d936feb3155e5d2b237f325c06748e0c02758d41d0112b",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_chunked_sgmv_shrink.py": "ff4e5efad5b7d5d4961cc51aa66badf7bf845702d2e9c449c6791f4406168f9f"
+      },
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py"
+      ]
+    },
+    {
+      "stage": "t48-after4",
+      "mode": "screening",
+      "receipt": "artifacts/competition/batch4-next-20260908/t48-after4/verification.json",
+      "receipt_sha256": "184c38f1eae9c000b7a05693385aa36928f01e704d71fd3c4de76eff7373d416",
+      "log_sha256": "c4f5920f7ef5104c1ec3f7220491b81d54b32994ffcff410e8172ab2a8d579d1",
+      "exit_code": 1,
+      "tests_run": 8,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": 26,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": 34,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": 34
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": "1f1997870fa3dd371558502251468eb88ba359694cafa1d3c528a990b4ae95ea",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": "a2d53ce449daf52df5fddec49305350b654d79a2bbb9320d96048b121a46dce4",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": "af7a413ef50feb2f76d936feb3155e5d2b237f325c06748e0c02758d41d0112b",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_chunked_sgmv_shrink.py": "f39e553120a89d3a910a64b59c024ea5c61b2ad5cd6923454d232afa83962e72"
+      },
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py"
+      ]
+    },
+    {
+      "stage": "t48-after5",
+      "mode": "screening",
+      "receipt": "artifacts/competition/batch4-next-20260908/t48-after5/verification.json",
+      "receipt_sha256": "48701d6952f41d68f251ab3209dccc92df2a1d6233f8e7b1dbf4fad15922c5a9",
+      "log_sha256": "f746156c05e4912e73e37bd1efb87a2eddb2a3b29df13d05c38f44a50ae15c1c",
+      "exit_code": 0,
+      "tests_run": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": 26,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": 34,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": 34
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": "a2d53ce449daf52df5fddec49305350b654d79a2bbb9320d96048b121a46dce4",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": "af7a413ef50feb2f76d936feb3155e5d2b237f325c06748e0c02758d41d0112b",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_chunked_sgmv_shrink.py": "f39e553120a89d3a910a64b59c024ea5c61b2ad5cd6923454d232afa83962e72"
+      },
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py"
+      ]
+    },
+    {
+      "stage": "t48-all-fix",
+      "mode": "screening",
+      "receipt": "artifacts/competition/batch4-next-20260908/t48-all-fix/verification.json",
+      "receipt_sha256": "9913c2b4bb86a5038999e96c354cdef599b138f85ac17ffb5c52dbf99896b0fc",
+      "log_sha256": "541ffbfdecec703e047b7552e4ae175133f0c1da2868b3b776b5dde9424282e7",
+      "exit_code": 0,
+      "tests_run": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": 27,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": 66,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": 66
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": "806a2b0aa3087c5ad8c808a1297a9f07f2324ba9952c75a96a66617f9cb113a2",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": "d05ad0bd4d1bb9fa1cc94cca948754b3c55a6ea11d76b39d88f496e15bdce536",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": "8e05555a5368efc5fa6103aa292dd3d95d72b80b7a3c76c88036d164fbd61a4e",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_chunked_sgmv_shrink.py": "92f64acf5fc6bd67faa1085b2551fc3bdff2e0bd588a1ef3da9e7f1332eb9444"
+      },
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py"
+      ]
+    },
+    {
+      "stage": "t48-before",
+      "mode": "screening",
+      "receipt": "artifacts/competition/batch4-next-20260908/t48-before/verification.json",
+      "receipt_sha256": "54b5c96e123738e68414fbb95248bcc6c6112e8be3b7441cddad4c5bb8c8bf4c",
+      "log_sha256": "db57914546c67040e77d085296a1f590f5dc83898217de239d4c1cdecdfe1f37",
+      "exit_code": 1,
+      "tests_run": 8,
+      "failures": 0,
+      "errors": 1,
+      "skipped": 0,
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": 23,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": 33,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": 33
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": "a2d53ce449daf52df5fddec49305350b654d79a2bbb9320d96048b121a46dce4",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": "af7a413ef50feb2f76d936feb3155e5d2b237f325c06748e0c02758d41d0112b",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/chunked_sgmv_shrink.py": "c793577a6eaf17ebd920a58b0e8aac30305310b918a5e23ad16867ff6845e3eb",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_chunked_sgmv_shrink.py": "445f869e7c2506fcedb02901abb2cdca74d88b99eee800656af94bd4f8245f6e"
+      },
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_metax/ops/chunked_sgmv_shrink.py"
+      ]
+    },
+    {
+      "stage": "t48-bn64",
+      "mode": "screening",
+      "receipt": "artifacts/competition/batch4-next-20260908/t48-bn64/verification.json",
+      "receipt_sha256": "c358cb3c9cc09fc80d76b06d3019f04fb3b28bb928aafb22a5b5dbabf60ce222",
+      "log_sha256": "43775b3291d1287c4e99c790cee350dfbab69d3034e7919fa5adb52bb2add47c",
+      "exit_code": 0,
+      "tests_run": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": 29,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": 66,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": 66
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": "d05ad0bd4d1bb9fa1cc94cca948754b3c55a6ea11d76b39d88f496e15bdce536",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": "8e05555a5368efc5fa6103aa292dd3d95d72b80b7a3c76c88036d164fbd61a4e",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_chunked_sgmv_shrink.py": "a9ab27387e6af2f2de4d171de2e8683fbe99b0b186897fc328b096ffd9503689"
+      },
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py"
+      ]
+    },
+    {
+      "stage": "t48-final-check",
+      "mode": "screening",
+      "receipt": "artifacts/competition/batch4-next-20260908/t48-final-check/verification.json",
+      "receipt_sha256": "fd9dc3f0cd599324a7aa13806a0da944041751ef5263efecf0b4d6476ef916a8",
+      "log_sha256": "45360172770ef7f16902ad77b3783ec02a2e34a09be435cfff0c74915c29d8fd",
+      "exit_code": 1,
+      "tests_run": 8,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0,
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": 27,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": 66,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": 66
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": "a2d53ce449daf52df5fddec49305350b654d79a2bbb9320d96048b121a46dce4",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": "af7a413ef50feb2f76d936feb3155e5d2b237f325c06748e0c02758d41d0112b",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_chunked_sgmv_shrink.py": "92f64acf5fc6bd67faa1085b2551fc3bdff2e0bd588a1ef3da9e7f1332eb9444"
+      },
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py"
+      ]
+    },
+    {
+      "stage": "t48-release",
+      "mode": "release",
+      "receipt": "artifacts/competition/batch4-next-20260908/t48-release/verification.json",
+      "receipt_sha256": "125c1980d9dd25a9ab3d7a12a25fd6691c9527ace0a96fba4204047bfea5019d",
+      "log_sha256": "ce7fc674e76f2e0d753b7a33ec794f74214ed30e37e5ae43449568eedb5614b2",
+      "exit_code": 0,
+      "tests_run": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": 29,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": 66,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": 66
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/chunked_sgmv_shrink.py": "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py": "d05ad0bd4d1bb9fa1cc94cca948754b3c55a6ea11d76b39d88f496e15bdce536",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py": "8e05555a5368efc5fa6103aa292dd3d95d72b80b7a3c76c88036d164fbd61a4e",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_chunked_sgmv_shrink.py": "a9ab27387e6af2f2de4d171de2e8683fbe99b0b186897fc328b096ffd9503689"
+      },
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py"
+      ]
+    },
+    {
+      "stage": "t58-after",
+      "mode": "screening",
+      "receipt": "artifacts/competition/batch4-next-20260908/t58-after/verification.json",
+      "receipt_sha256": "924814ef4e0f35dfe3ef983877de2b66c73039795b8861f9436d347b0faffa67",
+      "log_sha256": "23f8d3f685577c60c0ea052f0fa03c0a334d262b8c8d0ca999d513c5a99b3de4",
+      "exit_code": 0,
+      "tests_run": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/w8a8_block_int8_matmul.py": 28,
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py": 18,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py": 18,
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py": 18,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py": 18
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/w8a8_block_int8_matmul.py": "f7b5fe815a9588bacc92a26af9148cb2a1b04a377d93d5c57c4b1b4d3599beef",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py": "256164c12573f0fa85a17b57db5d19dbcfd347cfa33f7821c1d6825383f31262",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py": "2beaab7ae5b6dfd10723f86109be3ae266ccbc89be0539b1c392345b4ae1e612",
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py": "7c225d87ecc1b8086116884a56cbfd96d55b4b39914bf2da4d3abc332935c31d",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py": "7c225d87ecc1b8086116884a56cbfd96d55b4b39914bf2da4d3abc332935c31d",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_w8a8_block_int8_matmul.py": "ecbd3932c867bf88df6e1e5ef2a0536bbf5737339c700ba6d1175fd7ab64b780"
+      },
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py"
+      ]
+    },
+    {
+      "stage": "t58-after2",
+      "mode": "screening",
+      "receipt": "artifacts/competition/batch4-next-20260908/t58-after2/verification.json",
+      "receipt_sha256": "87be171936ca1cc8a5842f623fefda8c267c0ddfa295bc5398f42265a04440cb",
+      "log_sha256": "b0a2780851fb3d995625c393d425f272103b39c92ff2fa3732b622862ca9a08c",
+      "exit_code": 0,
+      "tests_run": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/w8a8_block_int8_matmul.py": 28,
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py": 18,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py": 18,
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py": 18,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py": 18
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/w8a8_block_int8_matmul.py": "4ab6e0b4bf8d0c3927101b06bc334a77fd36946b182faaeb38736460c4016ea3",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py": "256164c12573f0fa85a17b57db5d19dbcfd347cfa33f7821c1d6825383f31262",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py": "2beaab7ae5b6dfd10723f86109be3ae266ccbc89be0539b1c392345b4ae1e612",
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py": "7c225d87ecc1b8086116884a56cbfd96d55b4b39914bf2da4d3abc332935c31d",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py": "7c225d87ecc1b8086116884a56cbfd96d55b4b39914bf2da4d3abc332935c31d",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_w8a8_block_int8_matmul.py": "ecbd3932c867bf88df6e1e5ef2a0536bbf5737339c700ba6d1175fd7ab64b780"
+      },
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py"
+      ]
+    },
+    {
+      "stage": "t58-after3",
+      "mode": "screening",
+      "receipt": "artifacts/competition/batch4-next-20260908/t58-after3/verification.json",
+      "receipt_sha256": "351791c4945c5978dd40a959b7527c4ead2a851cdc92e91ca20e440ea1568f40",
+      "log_sha256": "cfb461b7c86c709f8e6b98cf651fb64e09e15922d0c33c1e90e778cbc0b37c0d",
+      "exit_code": 0,
+      "tests_run": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/w8a8_block_int8_matmul.py": 55,
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py": 45,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py": 45,
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py": 45,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py": 45
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/w8a8_block_int8_matmul.py": "932dc9f8e4eb96ad342b3517f40e599d676cf857c33b141502dc63dc154cbdfc",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py": "256164c12573f0fa85a17b57db5d19dbcfd347cfa33f7821c1d6825383f31262",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py": "2beaab7ae5b6dfd10723f86109be3ae266ccbc89be0539b1c392345b4ae1e612",
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py": "7c225d87ecc1b8086116884a56cbfd96d55b4b39914bf2da4d3abc332935c31d",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py": "7c225d87ecc1b8086116884a56cbfd96d55b4b39914bf2da4d3abc332935c31d",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_w8a8_block_int8_matmul.py": "60e02ce2feb5a2e5ec99fa38362a098162bbcd2f2de62d91dc8cda17339bb8e8"
+      },
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py"
+      ]
+    },
+    {
+      "stage": "t58-before",
+      "mode": "screening",
+      "receipt": "artifacts/competition/batch4-next-20260908/t58-before/verification.json",
+      "receipt_sha256": "c57f2a1701988e536796858732538c9c1260e28d185aae7f4945d8f4365ce720",
+      "log_sha256": "e497663e9ae1cf1576cd2d9efcd4f4ffe02914eba29af0a4c13bd00a2d522750",
+      "exit_code": 1,
+      "tests_run": 8,
+      "failures": 18,
+      "errors": 5,
+      "skipped": 0,
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/w8a8_block_int8_matmul.py": 27,
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py": 17,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py": 17,
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py": 17,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py": 17
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/w8a8_block_int8_matmul.py": "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py": "bbbb4eb1d6bd340ce7c5e4064a1022968ed024fd4c0c948fdaa8718a7ded0d3e",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py": "8e47a8eb027f8a1a43747d671c1042ce8d00feaa5bdbc025c1d5792fa324970b",
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py": "f164b88e8ddf4ac0bf0ac631574dd38dfc2af6c91644623d46def7a6f9c57939",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py": "1cfbad625a81aaf00e58fb2a50612d421588f556ed01fb87b9ed8eb19c550f10",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_w8a8_block_int8_matmul.py": "a8cc5cf13116bda379b26a055f118a62a59fe67a301fc67b654d9302afe0b9fd"
+      },
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py"
+      ]
+    },
+    {
+      "stage": "t58-release",
+      "mode": "release",
+      "receipt": "artifacts/competition/batch4-next-20260908/t58-release/verification.json",
+      "receipt_sha256": "f8cefffe9b588ecba4f1dbddeb0caec0754b75050c42b6e22177fb7e9d35ee6a",
+      "log_sha256": "4db87d81b73dc925c6c4d1a2a7f513834884406ec436b9be66e5a432db800a7e",
+      "exit_code": 0,
+      "tests_run": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "kernel_launches": {
+        "src/flaggems_sglang/ops/w8a8_block_int8_matmul.py": 55,
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py": 45,
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py": 45,
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py": 45,
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py": 45
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/w8a8_block_int8_matmul.py": "f7b5fe815a9588bacc92a26af9148cb2a1b04a377d93d5c57c4b1b4d3599beef",
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py": "256164c12573f0fa85a17b57db5d19dbcfd347cfa33f7821c1d6825383f31262",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py": "2beaab7ae5b6dfd10723f86109be3ae266ccbc89be0539b1c392345b4ae1e612",
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py": "7c225d87ecc1b8086116884a56cbfd96d55b4b39914bf2da4d3abc332935c31d",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py": "7c225d87ecc1b8086116884a56cbfd96d55b4b39914bf2da4d3abc332935c31d",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_w8a8_block_int8_matmul.py": "60e02ce2feb5a2e5ec99fa38362a098162bbcd2f2de62d91dc8cda17339bb8e8"
+      },
+      "target_unverified_sources": [
+        "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py",
+        "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py"
+      ]
+    }
+  ],
+  "packages": {
+    "t48": {
+      "status": "verified-existing",
+      "operator": "chunked_sgmv_shrink",
+      "commit": "65b7fdd418d941ad4393ae9485541c74a55e5017",
+      "artifact": "/Users/bytedance/ccc/flagos-batch4-next/artifacts/competition/chunked_sgmv_shrink/e8-65b7fdd/chunked_sgmv_shrink.zip",
+      "size": 15849,
+      "zip_sha256": "b872fcb8beffb132d4ef9823d176919e1daa83d0f98ca7994cc0082cf0b0e6fa",
+      "canonical_zip_sha256": "b872fcb8beffb132d4ef9823d176919e1daa83d0f98ca7994cc0082cf0b0e6fa",
+      "archive_members": [
+        "chunked_sgmv_shrink.py",
+        "chunked_sgmv_shrink_enflame.py",
+        "chunked_sgmv_shrink_kunlunxin.py"
+      ],
+      "members": [
+        {
+          "name": "chunked_sgmv_shrink.py",
+          "source": "src/flaggems_sglang/ops/chunked_sgmv_shrink.py",
+          "size": 5874,
+          "sha256": "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf"
+        },
+        {
+          "name": "chunked_sgmv_shrink_enflame.py",
+          "source": "src/flaggems_sglang/runtime/backend/_enflame/ops/chunked_sgmv_shrink.py",
+          "size": 5021,
+          "sha256": "d05ad0bd4d1bb9fa1cc94cca948754b3c55a6ea11d76b39d88f496e15bdce536"
+        },
+        {
+          "name": "chunked_sgmv_shrink_kunlunxin.py",
+          "source": "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/chunked_sgmv_shrink.py",
+          "size": 4536,
+          "sha256": "8e05555a5368efc5fa6103aa292dd3d95d72b80b7a3c76c88036d164fbd61a4e"
+        }
+      ]
+    },
+    "t58": {
+      "status": "created",
+      "operator": "w8a8_block_int8_matmul",
+      "commit": "65b7fdd418d941ad4393ae9485541c74a55e5017",
+      "artifact": "/Users/bytedance/ccc/flagos-batch4-next/artifacts/competition/w8a8_block_int8_matmul/e6-65b7fdd/w8a8_block_int8_matmul.zip",
+      "size": 23363,
+      "zip_sha256": "68893a461103596298c62e8a560e9a36f7a6cfdc8817fdd256734e3027c59b1f",
+      "canonical_zip_sha256": "68893a461103596298c62e8a560e9a36f7a6cfdc8817fdd256734e3027c59b1f",
+      "archive_members": [
+        "w8a8_block_int8_matmul.py",
+        "w8a8_block_int8_matmul_ascend.py",
+        "w8a8_block_int8_matmul_enflame.py",
+        "w8a8_block_int8_matmul_iluvatar.py",
+        "w8a8_block_int8_matmul_kunlunxin.py"
+      ],
+      "members": [
+        {
+          "name": "w8a8_block_int8_matmul.py",
+          "source": "src/flaggems_sglang/ops/w8a8_block_int8_matmul.py",
+          "size": 4524,
+          "sha256": "f7b5fe815a9588bacc92a26af9148cb2a1b04a377d93d5c57c4b1b4d3599beef"
+        },
+        {
+          "name": "w8a8_block_int8_matmul_ascend.py",
+          "source": "src/flaggems_sglang/runtime/backend/_ascend/ops/w8a8_block_int8_matmul.py",
+          "size": 4592,
+          "sha256": "256164c12573f0fa85a17b57db5d19dbcfd347cfa33f7821c1d6825383f31262"
+        },
+        {
+          "name": "w8a8_block_int8_matmul_enflame.py",
+          "source": "src/flaggems_sglang/runtime/backend/_enflame/ops/w8a8_block_int8_matmul.py",
+          "size": 4593,
+          "sha256": "2beaab7ae5b6dfd10723f86109be3ae266ccbc89be0539b1c392345b4ae1e612"
+        },
+        {
+          "name": "w8a8_block_int8_matmul_iluvatar.py",
+          "source": "src/flaggems_sglang/runtime/backend/_iluvatar/ops/w8a8_block_int8_matmul.py",
+          "size": 4467,
+          "sha256": "7c225d87ecc1b8086116884a56cbfd96d55b4b39914bf2da4d3abc332935c31d"
+        },
+        {
+          "name": "w8a8_block_int8_matmul_kunlunxin.py",
+          "source": "src/flaggems_sglang/runtime/backend/_kunlunxin/ops/w8a8_block_int8_matmul.py",
+          "size": 4467,
+          "sha256": "7c225d87ecc1b8086116884a56cbfd96d55b4b39914bf2da4d3abc332935c31d"
+        }
+      ]
+    }
+  },
+  "benchmarks": {
+    "t48-benchmark": {
+      "path": "artifacts/competition/batch4-next-20260908/t48-benchmark/results.json",
+      "sha256": "665c99f06eeddfb9bd73f692b3f3c86b8897ea3e58151672046d59f6f26609ad",
+      "script_sha256": "416dfb2d80e74b772e937f000330faf27f491258653907c694e81c7dff76e93a",
+      "cases": [
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9503c1c106e5ad2887b35a1e34420fd8b860390ec414d0e91b409b8ffcd379bc"
+          ],
+          "baseline_us": [
+            50.298966666666665,
+            50.08926666666667,
+            49.6965,
+            49.80973333333333,
+            49.46143333333333,
+            49.4751
+          ],
+          "candidate_us": [
+            54.968,
+            54.02623333333333,
+            53.9244,
+            53.1005,
+            53.9511,
+            53.08813333333333
+          ],
+          "median_paired_speedup": 0.9243622003191705
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9503c1c106e5ad2887b35a1e34420fd8b860390ec414d0e91b409b8ffcd379bc"
+          ],
+          "baseline_us": [
+            27.425066666666666,
+            27.015966666666667,
+            26.7408,
+            26.914766666666665,
+            26.764166666666668,
+            27.510866666666665
+          ],
+          "candidate_us": [
+            13.426,
+            13.315766666666667,
+            13.313799999999999,
+            13.125766666666667,
+            13.2373,
+            13.153166666666666
+          ],
+          "median_paired_speedup": 2.035776943822478
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k4096-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9503c1c106e5ad2887b35a1e34420fd8b860390ec414d0e91b409b8ffcd379bc"
+          ],
+          "baseline_us": [
+            238.512,
+            239.39833333333334,
+            238.49766666666665,
+            238.04046666666667,
+            238.0061,
+            239.66683333333333
+          ],
+          "candidate_us": [
+            388.0190333333333,
+            408.0656333333334,
+            413.8227,
+            401.05263333333335,
+            401.04426666666666,
+            401.50079999999997
+          ],
+          "median_paired_speedup": 0.593502563543114
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k4096-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9503c1c106e5ad2887b35a1e34420fd8b860390ec414d0e91b409b8ffcd379bc"
+          ],
+          "baseline_us": [
+            44.24973333333333,
+            42.8992,
+            42.428666666666665,
+            41.7023,
+            43.19343333333333,
+            42.067
+          ],
+          "candidate_us": [
+            36.3243,
+            36.25613333333333,
+            36.5634,
+            36.3453,
+            36.36803333333333,
+            36.20843333333333
+          ],
+          "median_paired_speedup": 1.1725135873406014
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last16-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9503c1c106e5ad2887b35a1e34420fd8b860390ec414d0e91b409b8ffcd379bc"
+          ],
+          "baseline_us": [
+            49.82776666666667,
+            49.82606666666666,
+            49.74393333333333,
+            49.666466666666665,
+            49.64076666666667,
+            49.874199999999995
+          ],
+          "candidate_us": [
+            55.00906666666667,
+            55.01576666666667,
+            54.3976,
+            52.5829,
+            55.21746666666667,
+            54.93593333333333
+          ],
+          "median_paired_speedup": 0.9068356147891325
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last16-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9503c1c106e5ad2887b35a1e34420fd8b860390ec414d0e91b409b8ffcd379bc"
+          ],
+          "baseline_us": [
+            27.221333333333334,
+            27.3723,
+            26.833266666666667,
+            26.85066666666667,
+            26.337366666666664,
+            26.724066666666666
+          ],
+          "candidate_us": [
+            13.385566666666668,
+            13.3338,
+            13.215933333333332,
+            13.195233333333334,
+            13.280733333333334,
+            13.1959
+          ],
+          "median_paired_speedup": 2.0320028355073996
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last64-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9503c1c106e5ad2887b35a1e34420fd8b860390ec414d0e91b409b8ffcd379bc"
+          ],
+          "baseline_us": [
+            64.94423333333333,
+            64.97330000000001,
+            64.31406666666666,
+            64.4687,
+            63.95206666666667,
+            64.54083333333334
+          ],
+          "candidate_us": [
+            75.10113333333334,
+            72.152,
+            74.855,
+            75.02266666666667,
+            74.92913333333333,
+            74.15173333333334
+          ],
+          "median_paired_speedup": 0.862039997232231
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last64-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9503c1c106e5ad2887b35a1e34420fd8b860390ec414d0e91b409b8ffcd379bc"
+          ],
+          "baseline_us": [
+            28.9322,
+            28.904799999999998,
+            29.1683,
+            28.536466666666666,
+            29.542,
+            29.315566666666665
+          ],
+          "candidate_us": [
+            15.4147,
+            15.609399999999999,
+            15.5907,
+            15.532933333333332,
+            15.389299999999999,
+            15.521866666666666
+          ],
+          "median_paired_speedup": 1.8739004147112017
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments4-last257-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9503c1c106e5ad2887b35a1e34420fd8b860390ec414d0e91b409b8ffcd379bc"
+          ],
+          "baseline_us": [
+            64.43996666666666,
+            64.51176666666667,
+            64.56583333333333,
+            64.9429,
+            63.67653333333333,
+            64.38253333333333
+          ],
+          "candidate_us": [
+            45.19583333333333,
+            45.397533333333335,
+            45.286300000000004,
+            44.99476666666667,
+            45.05723333333333,
+            45.012800000000006
+          ],
+          "median_paired_speedup": 1.425759963475867
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments4-last257-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9503c1c106e5ad2887b35a1e34420fd8b860390ec414d0e91b409b8ffcd379bc"
+          ],
+          "baseline_us": [
+            29.134566666666665,
+            28.493033333333333,
+            28.463,
+            29.10816666666667,
+            28.720133333333337,
+            28.772233333333332
+          ],
+          "candidate_us": [
+            13.632033333333332,
+            13.556566666666667,
+            13.531533333333332,
+            13.487433333333332,
+            13.5609,
+            13.5345
+          ],
+          "median_paired_speedup": 2.1218535990904095
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last1025-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9503c1c106e5ad2887b35a1e34420fd8b860390ec414d0e91b409b8ffcd379bc"
+          ],
+          "baseline_us": [
+            99.06176666666666,
+            98.98426666666666,
+            98.76623333333333,
+            96.5377,
+            98.67869999999999,
+            99.05106666666667
+          ],
+          "candidate_us": [
+            135.5697,
+            131.5789333333333,
+            133.05173333333335,
+            131.15483333333333,
+            132.16036666666668,
+            135.07379999999998
+          ],
+          "median_paired_speedup": 0.7391867764066684
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last1025-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9503c1c106e5ad2887b35a1e34420fd8b860390ec414d0e91b409b8ffcd379bc"
+          ],
+          "baseline_us": [
+            33.68736666666667,
+            33.856366666666666,
+            31.9515,
+            33.775866666666666,
+            33.385466666666666,
+            33.721466666666664
+          ],
+          "candidate_us": [
+            24.857633333333336,
+            24.9351,
+            25.004233333333335,
+            25.457733333333334,
+            24.874299999999998,
+            25.106433333333335
+          ],
+          "median_paired_speedup": 1.3426537763656408
+        }
+      ]
+    },
+    "t48-benchmark2": {
+      "path": "artifacts/competition/batch4-next-20260908/t48-benchmark2/results.json",
+      "sha256": "3d0181f5dbce2038da93c83e02e71ef3703e0f52c1925595791658e3956ea342",
+      "script_sha256": "416dfb2d80e74b772e937f000330faf27f491258653907c694e81c7dff76e93a",
+      "cases": [
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "8dd4cba3e4cdafec64f8e726cb19834138dda589a7559cf1b8e69a019177a81d"
+          ],
+          "baseline_us": [
+            50.31873333333333,
+            50.13903333333333,
+            49.6341,
+            50.61893333333333,
+            49.50886666666667,
+            49.5346
+          ],
+          "candidate_us": [
+            55.5635,
+            54.547599999999996,
+            55.25893333333333,
+            52.88183333333333,
+            52.896166666666666,
+            53.64023333333333
+          ],
+          "median_paired_speedup": 0.921319636320451
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "8dd4cba3e4cdafec64f8e726cb19834138dda589a7559cf1b8e69a019177a81d"
+          ],
+          "baseline_us": [
+            27.20733333333333,
+            26.946166666666667,
+            27.245099999999997,
+            26.594866666666665,
+            26.798933333333334,
+            27.064066666666665
+          ],
+          "candidate_us": [
+            13.552566666666667,
+            13.503833333333334,
+            13.430366666666666,
+            13.279733333333333,
+            13.3509,
+            13.300799999999999
+          ],
+          "median_paired_speedup": 2.007408210816868
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k4096-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "8dd4cba3e4cdafec64f8e726cb19834138dda589a7559cf1b8e69a019177a81d"
+          ],
+          "baseline_us": [
+            238.56766666666667,
+            238.5456,
+            238.4992,
+            239.33513333333332,
+            238.22436666666667,
+            238.78643333333332
+          ],
+          "candidate_us": [
+            401.0903666666666,
+            420.51056666666665,
+            408.19863333333336,
+            415.0410333333333,
+            408.8732,
+            421.5231
+          ],
+          "median_paired_speedup": 0.5796452217045173
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k4096-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "8dd4cba3e4cdafec64f8e726cb19834138dda589a7559cf1b8e69a019177a81d"
+          ],
+          "baseline_us": [
+            42.0974,
+            42.089400000000005,
+            41.71906666666666,
+            41.6706,
+            42.132466666666666,
+            42.1014
+          ],
+          "candidate_us": [
+            29.6008,
+            30.2136,
+            30.8164,
+            31.685033333333333,
+            30.206566666666667,
+            31.558433333333333
+          ],
+          "median_paired_speedup": 1.373427851408369
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last16-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "8dd4cba3e4cdafec64f8e726cb19834138dda589a7559cf1b8e69a019177a81d"
+          ],
+          "baseline_us": [
+            50.32706666666667,
+            49.814099999999996,
+            50.165099999999995,
+            49.78706666666667,
+            49.74263333333333,
+            50.00983333333333
+          ],
+          "candidate_us": [
+            55.70976666666667,
+            56.4214,
+            56.2217,
+            55.4673,
+            54.732933333333335,
+            55.47233333333334
+          ],
+          "median_paired_speedup": 0.8995603023010209
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last16-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "8dd4cba3e4cdafec64f8e726cb19834138dda589a7559cf1b8e69a019177a81d"
+          ],
+          "baseline_us": [
+            27.304866666666666,
+            28.0713,
+            27.11916666666667,
+            26.86703333333333,
+            26.785866666666664,
+            26.795900000000003
+          ],
+          "candidate_us": [
+            13.718233333333334,
+            13.701533333333332,
+            13.599333333333334,
+            13.457733333333334,
+            13.759966666666667,
+            13.569966666666668
+          ],
+          "median_paired_speedup": 1.9922805266040042
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last64-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "8dd4cba3e4cdafec64f8e726cb19834138dda589a7559cf1b8e69a019177a81d"
+          ],
+          "baseline_us": [
+            64.75193333333334,
+            64.42633333333333,
+            64.25333333333333,
+            64.8047,
+            64.2874,
+            64.72056666666667
+          ],
+          "candidate_us": [
+            72.22653333333334,
+            70.30226666666667,
+            70.17269999999999,
+            72.7762,
+            72.06823333333334,
+            71.16656666666667
+          ],
+          "median_paired_speedup": 0.9029677381152259
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last64-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "8dd4cba3e4cdafec64f8e726cb19834138dda589a7559cf1b8e69a019177a81d"
+          ],
+          "baseline_us": [
+            29.053099999999997,
+            28.685433333333336,
+            28.925533333333334,
+            28.671766666666667,
+            28.692766666666667,
+            29.153633333333335
+          ],
+          "candidate_us": [
+            16.694433333333333,
+            16.241933333333332,
+            16.682733333333335,
+            16.979633333333336,
+            16.6704,
+            16.778933333333335
+          ],
+          "median_paired_speedup": 1.7356873317052384
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments4-last257-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "8dd4cba3e4cdafec64f8e726cb19834138dda589a7559cf1b8e69a019177a81d"
+          ],
+          "baseline_us": [
+            64.4517,
+            64.10973333333332,
+            63.788133333333334,
+            64.5666,
+            64.1705,
+            64.3071
+          ],
+          "candidate_us": [
+            43.86036666666667,
+            43.7555,
+            43.69873333333333,
+            43.65096666666667,
+            43.69873333333333,
+            43.646966666666664
+          ],
+          "median_paired_speedup": 1.4689748890836123
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments4-last257-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "8dd4cba3e4cdafec64f8e726cb19834138dda589a7559cf1b8e69a019177a81d"
+          ],
+          "baseline_us": [
+            28.831366666666664,
+            28.3134,
+            28.3134,
+            28.351133333333333,
+            28.262966666666667,
+            28.72083333333333
+          ],
+          "candidate_us": [
+            13.790666666666667,
+            13.672799999999999,
+            13.717566666666668,
+            13.675133333333333,
+            13.647433333333332,
+            13.575933333333332
+          ],
+          "median_paired_speedup": 2.0720626101892887
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last1025-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "8dd4cba3e4cdafec64f8e726cb19834138dda589a7559cf1b8e69a019177a81d"
+          ],
+          "baseline_us": [
+            99.0094,
+            99.02913333333333,
+            98.75093333333334,
+            99.09123333333334,
+            98.79666666666667,
+            99.1216
+          ],
+          "candidate_us": [
+            73.6719,
+            73.564,
+            73.5443,
+            73.52093333333333,
+            73.50489999999999,
+            73.42743333333334
+          ],
+          "median_paired_speedup": 1.345122854176962
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last1025-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "8dd4cba3e4cdafec64f8e726cb19834138dda589a7559cf1b8e69a019177a81d"
+          ],
+          "baseline_us": [
+            32.12583333333333,
+            32.960033333333335,
+            33.59726666666667,
+            32.224333333333334,
+            34.248466666666666,
+            32.65016666666667
+          ],
+          "candidate_us": [
+            13.864133333333333,
+            13.728566666666667,
+            13.826733333333333,
+            13.8635,
+            13.898866666666667,
+            13.763633333333333
+          ],
+          "median_paired_speedup": 2.3865206125136114
+        }
+      ]
+    },
+    "t48-benchmark-final": {
+      "path": "artifacts/competition/batch4-next-20260908/t48-benchmark-final/results.json",
+      "sha256": "4efdafeedec35b86dfb6f90c8f838d8b1c3e69e70c097712e0f81a8c6180f334",
+      "script_sha256": "416dfb2d80e74b772e937f000330faf27f491258653907c694e81c7dff76e93a",
+      "cases": [
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3"
+          ],
+          "baseline_us": [
+            50.1472,
+            50.0901,
+            49.72743333333334,
+            50.147533333333335,
+            49.51736666666667,
+            49.6129
+          ],
+          "candidate_us": [
+            31.063433333333336,
+            30.935866666666666,
+            30.934866666666665,
+            30.884766666666668,
+            30.9135,
+            30.879766666666665
+          ],
+          "median_paired_speedup": 1.6109182404242173
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3"
+          ],
+          "baseline_us": [
+            38.04866666666666,
+            26.9223,
+            27.124299999999998,
+            26.909933333333335,
+            27.1464,
+            27.092266666666667
+          ],
+          "candidate_us": [
+            22.621133333333336,
+            13.370633333333334,
+            13.320566666666668,
+            13.2217,
+            13.283466666666667,
+            13.253766666666666
+          ],
+          "median_paired_speedup": 2.0357788289502103
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k4096-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3"
+          ],
+          "baseline_us": [
+            238.95013333333333,
+            239.01623333333333,
+            239.5446,
+            239.25706666666667,
+            238.31026666666665,
+            238.88303333333332
+          ],
+          "candidate_us": [
+            241.76146666666668,
+            241.77716666666666,
+            241.9011,
+            241.9765,
+            241.90706666666668,
+            241.82926666666665
+          ],
+          "median_paired_speedup": 0.9884760639071092
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k4096-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3"
+          ],
+          "baseline_us": [
+            42.14406666666667,
+            42.38823333333333,
+            42.8474,
+            42.2279,
+            43.09686666666667,
+            41.970099999999995
+          ],
+          "candidate_us": [
+            24.742833333333333,
+            24.9973,
+            24.720433333333336,
+            24.633933333333335,
+            24.7141,
+            24.6777
+          ],
+          "median_paired_speedup": 1.7087502414647173
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last16-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3"
+          ],
+          "baseline_us": [
+            50.406400000000005,
+            50.0597,
+            50.00026666666667,
+            49.72976666666667,
+            49.8306,
+            49.827933333333334
+          ],
+          "candidate_us": [
+            31.3032,
+            31.212400000000002,
+            31.215066666666665,
+            31.1526,
+            31.167333333333332,
+            31.122533333333333
+          ],
+          "median_paired_speedup": 1.6014117346980217
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last16-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3"
+          ],
+          "baseline_us": [
+            26.995433333333335,
+            27.013133333333336,
+            27.171766666666667,
+            26.882866666666665,
+            26.881866666666664,
+            26.889533333333333
+          ],
+          "candidate_us": [
+            13.494533333333333,
+            13.377666666666666,
+            13.411366666666666,
+            13.2938,
+            13.3085,
+            13.247066666666667
+          ],
+          "median_paired_speedup": 2.0210564613932656
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last64-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3"
+          ],
+          "baseline_us": [
+            64.93719999999999,
+            64.34976666666667,
+            64.22016666666667,
+            64.70243333333333,
+            64.63163333333333,
+            64.16106666666667
+          ],
+          "candidate_us": [
+            44.50186666666667,
+            44.39566666666666,
+            44.386966666666666,
+            44.298833333333334,
+            44.347566666666665,
+            44.3212
+          ],
+          "median_paired_speedup": 1.453424512750784
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last64-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3"
+          ],
+          "baseline_us": [
+            28.963133333333335,
+            29.226633333333336,
+            28.335266666666666,
+            28.53066666666667,
+            28.761400000000002,
+            28.26816666666667
+          ],
+          "candidate_us": [
+            13.825166666666666,
+            13.559333333333335,
+            13.639133333333334,
+            13.685566666666668,
+            13.6171,
+            13.5009
+          ],
+          "median_paired_speedup": 2.0943779744764166
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments4-last257-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3"
+          ],
+          "baseline_us": [
+            64.9556,
+            64.45393333333334,
+            64.2195,
+            64.69673333333333,
+            64.73416666666667,
+            64.25526666666667
+          ],
+          "candidate_us": [
+            43.89473333333333,
+            43.777166666666666,
+            43.73273333333333,
+            43.72506666666666,
+            43.76613333333333,
+            43.76583333333333
+          ],
+          "median_paired_speedup": 1.4757055922117663
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments4-last257-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3"
+          ],
+          "baseline_us": [
+            28.928733333333334,
+            29.297066666666666,
+            28.3667,
+            28.856933333333334,
+            28.697633333333336,
+            28.974133333333334
+          ],
+          "candidate_us": [
+            13.692933333333333,
+            13.588033333333334,
+            13.5236,
+            13.5386,
+            13.558,
+            13.462133333333334
+          ],
+          "median_paired_speedup": 2.1240565318466684
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last1025-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3"
+          ],
+          "baseline_us": [
+            99.13726666666666,
+            99.1109,
+            98.79293333333334,
+            98.997,
+            99.00466666666667,
+            98.8233
+          ],
+          "candidate_us": [
+            61.50536666666667,
+            64.28863333333334,
+            64.45793333333333,
+            62.5093,
+            62.545,
+            62.367666666666665
+          ],
+          "median_paired_speedup": 1.5833256482541533
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last1025-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3"
+          ],
+          "baseline_us": [
+            32.9684,
+            32.545566666666666,
+            32.29213333333333,
+            33.926199999999994,
+            34.2625,
+            31.339299999999998
+          ],
+          "candidate_us": [
+            14.2817,
+            14.783299999999999,
+            14.567866666666667,
+            14.652733333333334,
+            14.032533333333333,
+            15.5808
+          ],
+          "median_paired_speedup": 2.262552660213344
+        }
+      ]
+    },
+    "t48-benchmark-bn64": {
+      "path": "artifacts/competition/batch4-next-20260908/t48-benchmark-bn64/results.json",
+      "sha256": "97856971ab5d94137d552f1152fa50d4f2d656474e947005a0652cdf50b86c5a",
+      "script_sha256": "416dfb2d80e74b772e937f000330faf27f491258653907c694e81c7dff76e93a",
+      "cases": [
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf"
+          ],
+          "baseline_us": [
+            50.4691,
+            50.08606666666667,
+            49.876,
+            50.10376666666667,
+            49.690333333333335,
+            60.85803333333333
+          ],
+          "candidate_us": [
+            19.6427,
+            19.510133333333336,
+            19.533466666666666,
+            19.4934,
+            19.5098,
+            19.4707
+          ],
+          "median_paired_speedup": 2.5682693685515146
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf"
+          ],
+          "baseline_us": [
+            26.754433333333335,
+            26.7935,
+            26.534333333333333,
+            26.491933333333336,
+            27.0089,
+            26.481233333333332
+          ],
+          "candidate_us": [
+            13.828033333333332,
+            13.4086,
+            13.345466666666667,
+            13.3829,
+            13.3996,
+            13.3251
+          ],
+          "median_paired_speedup": 1.9877926740644845
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k4096-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf"
+          ],
+          "baseline_us": [
+            239.58386666666667,
+            238.58833333333334,
+            239.6356,
+            238.43066666666667,
+            238.65346666666667,
+            238.94866666666667
+          ],
+          "candidate_us": [
+            127.82723333333334,
+            127.6075,
+            127.68096666666666,
+            127.51833333333333,
+            127.714,
+            127.517
+          ],
+          "median_paired_speedup": 1.8718164648604354
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last8-k4096-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf"
+          ],
+          "baseline_us": [
+            43.06146666666667,
+            43.43286666666667,
+            43.78183333333334,
+            43.32966666666666,
+            42.57293333333333,
+            42.5592
+          ],
+          "candidate_us": [
+            25.616266666666668,
+            25.606266666666667,
+            25.539133333333336,
+            25.5515,
+            25.490033333333333,
+            25.506733333333333
+          ],
+          "median_paired_speedup": 1.6883991007545767
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last16-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf"
+          ],
+          "baseline_us": [
+            49.85933333333334,
+            51.82366666666666,
+            49.83756666666667,
+            49.93846666666667,
+            49.55673333333333,
+            49.84693333333333
+          ],
+          "candidate_us": [
+            19.7352,
+            19.648366666666664,
+            19.757233333333332,
+            19.637666666666668,
+            19.685433333333336,
+            19.63566666666667
+          ],
+          "median_paired_speedup": 2.5325038794792434
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last16-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf"
+          ],
+          "baseline_us": [
+            27.359566666666666,
+            27.05466666666667,
+            26.89033333333333,
+            27.446066666666667,
+            26.7641,
+            26.814533333333333
+          ],
+          "candidate_us": [
+            13.4764,
+            13.3545,
+            13.388233333333334,
+            13.290733333333334,
+            13.338466666666667,
+            13.316433333333332
+          ],
+          "median_paired_speedup": 2.0197631004493024
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last64-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf"
+          ],
+          "baseline_us": [
+            65.11136666666667,
+            64.4458,
+            64.26646666666667,
+            64.61976666666666,
+            64.36563333333334,
+            64.2324
+          ],
+          "candidate_us": [
+            34.2235,
+            34.06886666666667,
+            34.08423333333333,
+            34.032466666666664,
+            34.06516666666666,
+            33.9904
+          ],
+          "median_paired_speedup": 1.8906775125706916
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last64-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf"
+          ],
+          "baseline_us": [
+            28.572533333333332,
+            28.575200000000002,
+            28.420566666666666,
+            29.087833333333332,
+            28.546799999999998,
+            29.150933333333334
+          ],
+          "candidate_us": [
+            13.622033333333333,
+            13.507466666666668,
+            13.7035,
+            13.3859,
+            13.5679,
+            13.3919
+          ],
+          "median_paired_speedup": 2.1097534403579896
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments4-last257-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf"
+          ],
+          "baseline_us": [
+            64.4321,
+            64.53593333333333,
+            64.23140000000001,
+            64.32823333333333,
+            64.16756666666666,
+            63.8834
+          ],
+          "candidate_us": [
+            33.29776666666667,
+            33.2203,
+            33.29943333333333,
+            33.18923333333333,
+            33.23063333333333,
+            33.17986666666667
+          ],
+          "median_paired_speedup": 1.9330020063132007
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments4-last257-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf"
+          ],
+          "baseline_us": [
+            28.611900000000002,
+            28.93283333333333,
+            28.5428,
+            28.76053333333333,
+            28.609933333333334,
+            28.5535
+          ],
+          "candidate_us": [
+            13.764266666666666,
+            13.562866666666666,
+            13.603299999999999,
+            13.455333333333334,
+            13.578233333333333,
+            13.581266666666666
+          ],
+          "median_paired_speedup": 2.104730954148022
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last1025-k512-torch.float32",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf"
+          ],
+          "baseline_us": [
+            99.21463333333332,
+            99.0029,
+            98.37673333333333,
+            98.72406666666667,
+            98.61883333333333,
+            98.67060000000001
+          ],
+          "candidate_us": [
+            62.32946666666667,
+            61.3927,
+            61.32993333333334,
+            63.032133333333334,
+            61.28516666666666,
+            62.24966666666666
+          ],
+          "median_paired_speedup": 1.5979173748642799
+        },
+        {
+          "operator": "chunked_sgmv_shrink",
+          "case": "segments32-last1025-k512-torch.bfloat16",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf"
+          ],
+          "baseline_us": [
+            34.14703333333333,
+            32.4268,
+            33.689800000000005,
+            32.8262,
+            31.9058,
+            30.883200000000002
+          ],
+          "candidate_us": [
+            15.0654,
+            13.941600000000001,
+            13.790633333333334,
+            14.669633333333334,
+            14.332,
+            14.191766666666666
+          ],
+          "median_paired_speedup": 2.2521419731433
+        }
+      ]
+    },
+    "t58-benchmark": {
+      "path": "artifacts/competition/batch4-next-20260908/t58-benchmark/results.json",
+      "sha256": "05851c71a67a3322e6653b363dd1dd912a1f7b6eff1a9f1a01d96f673ce74acf",
+      "script_sha256": "416dfb2d80e74b772e937f000330faf27f491258653907c694e81c7dff76e93a",
+      "cases": [
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "16x128x256-bk64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "f7b5fe815a9588bacc92a26af9148cb2a1b04a377d93d5c57c4b1b4d3599beef"
+          ],
+          "baseline_us": [
+            12.272866666666667,
+            11.911166666666666,
+            11.754533333333333,
+            11.8544,
+            11.805,
+            11.724133333333333
+          ],
+          "candidate_us": [
+            11.9833,
+            11.925866666666666,
+            11.785933333333332,
+            11.708133333333333,
+            12.2478,
+            11.730833333333335
+          ],
+          "median_paired_speedup": 0.9990981203797888
+        },
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "32x256x512-bk64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "f7b5fe815a9588bacc92a26af9148cb2a1b04a377d93d5c57c4b1b4d3599beef"
+          ],
+          "baseline_us": [
+            12.251833333333334,
+            12.110533333333333,
+            12.020700000000001,
+            12.019033333333333,
+            12.416433333333332,
+            12.0157
+          ],
+          "candidate_us": [
+            12.083833333333335,
+            11.892466666666667,
+            11.9703,
+            11.870733333333334,
+            11.965633333333333,
+            11.8888
+          ],
+          "median_paired_speedup": 1.0131978913588737
+        },
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "64x512x1024-bk128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "f7b5fe815a9588bacc92a26af9148cb2a1b04a377d93d5c57c4b1b4d3599beef"
+          ],
+          "baseline_us": [
+            18.027533333333334,
+            17.9384,
+            18.088366666666666,
+            17.946066666666667,
+            17.894333333333332,
+            17.900299999999998
+          ],
+          "candidate_us": [
+            17.161633333333334,
+            17.104833333333332,
+            17.075133333333333,
+            17.0581,
+            17.0858,
+            17.053066666666666
+          ],
+          "median_paired_speedup": 1.05006886953567
+        },
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "128x1024x2048-bk64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "f7b5fe815a9588bacc92a26af9148cb2a1b04a377d93d5c57c4b1b4d3599beef"
+          ],
+          "baseline_us": [
+            34.744,
+            34.6789,
+            34.56033333333333,
+            34.602066666666666,
+            34.564,
+            34.59243333333333
+          ],
+          "candidate_us": [
+            35.6584,
+            35.66573333333333,
+            35.5325,
+            35.5161,
+            35.49976666666667,
+            35.635
+          ],
+          "median_paired_speedup": 0.9731401368130996
+        },
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "1x2048x4096-bk128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "f7b5fe815a9588bacc92a26af9148cb2a1b04a377d93d5c57c4b1b4d3599beef"
+          ],
+          "baseline_us": [
+            66.18786666666666,
+            66.05763333333333,
+            65.95846666666667,
+            65.96846666666666,
+            65.9381,
+            65.90366666666667
+          ],
+          "candidate_us": [
+            18.983,
+            18.8808,
+            18.908533333333335,
+            18.8818,
+            18.8905,
+            18.850766666666665
+          ],
+          "median_paired_speedup": 3.4921511440576944
+        },
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "1024x2048x4096-bk128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "f7b5fe815a9588bacc92a26af9148cb2a1b04a377d93d5c57c4b1b4d3599beef"
+          ],
+          "baseline_us": [
+            312.60193333333336,
+            312.95826666666665,
+            313.2258,
+            313.1726666666667,
+            313.3981,
+            313.4492333333333
+          ],
+          "candidate_us": [
+            392.45026666666666,
+            392.53273333333334,
+            393.8892666666667,
+            393.82986666666665,
+            394.0502666666667,
+            393.9463666666666
+          ],
+          "median_paired_speedup": 0.7954949608372295
+        }
+      ]
+    },
+    "t58-benchmark2": {
+      "path": "artifacts/competition/batch4-next-20260908/t58-benchmark2/results.json",
+      "sha256": "2df392b8c3fd92325d0eb29cc0c8785cdddc6a453d77c60e11a862e3b3c506da",
+      "script_sha256": "416dfb2d80e74b772e937f000330faf27f491258653907c694e81c7dff76e93a",
+      "cases": [
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "16x128x256-bk64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "4ab6e0b4bf8d0c3927101b06bc334a77fd36946b182faaeb38736460c4016ea3"
+          ],
+          "baseline_us": [
+            11.9536,
+            11.6183,
+            11.489033333333333,
+            11.628333333333334,
+            11.464666666666666,
+            11.474366666666667
+          ],
+          "candidate_us": [
+            11.939233333333334,
+            11.602933333333333,
+            11.400566666666668,
+            11.410933333333332,
+            11.401233333333334,
+            11.364466666666667
+          ],
+          "median_paired_speedup": 1.0066617868782672
+        },
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "32x256x512-bk64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "4ab6e0b4bf8d0c3927101b06bc334a77fd36946b182faaeb38736460c4016ea3"
+          ],
+          "baseline_us": [
+            12.073166666666665,
+            12.064133333333332,
+            11.8711,
+            12.0157,
+            11.960266666666666,
+            12.026066666666667
+          ],
+          "candidate_us": [
+            11.842733333333333,
+            11.693766666666667,
+            11.936566666666668,
+            11.665733333333334,
+            11.7806,
+            11.6851
+          ],
+          "median_paired_speedup": 1.0243186966663944
+        },
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "64x512x1024-bk128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "4ab6e0b4bf8d0c3927101b06bc334a77fd36946b182faaeb38736460c4016ea3"
+          ],
+          "baseline_us": [
+            17.984166666666667,
+            17.9421,
+            17.904,
+            17.927400000000002,
+            17.892333333333333,
+            17.9157
+          ],
+          "candidate_us": [
+            17.053099999999997,
+            17.0117,
+            17.017033333333334,
+            17.175,
+            16.99566666666667,
+            16.992
+          ],
+          "median_paired_speedup": 1.0535597110011645
+        },
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "128x1024x2048-bk64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "4ab6e0b4bf8d0c3927101b06bc334a77fd36946b182faaeb38736460c4016ea3"
+          ],
+          "baseline_us": [
+            34.7427,
+            34.67826666666667,
+            34.60046666666667,
+            34.5824,
+            34.56536666666667,
+            34.567033333333335
+          ],
+          "candidate_us": [
+            35.6581,
+            35.598333333333336,
+            35.52583333333334,
+            35.49176666666667,
+            35.51583333333333,
+            35.467400000000005
+          ],
+          "median_paired_speedup": 0.974241317081636
+        },
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "1x2048x4096-bk128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "4ab6e0b4bf8d0c3927101b06bc334a77fd36946b182faaeb38736460c4016ea3"
+          ],
+          "baseline_us": [
+            66.16760000000001,
+            66.05203333333334,
+            65.97186666666667,
+            65.9919,
+            65.95783333333333,
+            65.9104
+          ],
+          "candidate_us": [
+            18.9396,
+            18.878466666666668,
+            18.8912,
+            18.853466666666666,
+            18.908233333333335,
+            18.86446666666667
+          ],
+          "median_paired_speedup": 3.493751391680413
+        },
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "1024x2048x4096-bk128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "4ab6e0b4bf8d0c3927101b06bc334a77fd36946b182faaeb38736460c4016ea3"
+          ],
+          "baseline_us": [
+            312.5668333333333,
+            313.33993333333336,
+            313.0380666666666,
+            313.35493333333335,
+            313.37736666666666,
+            313.49890000000005
+          ],
+          "candidate_us": [
+            399.37486666666666,
+            400.4689,
+            400.6429,
+            400.5724333333333,
+            400.07546666666667,
+            400.57776666666666
+          ],
+          "median_paired_speedup": 0.7825247259503736
+        }
+      ]
+    },
+    "t58-benchmark3": {
+      "path": "artifacts/competition/batch4-next-20260908/t58-benchmark3/results.json",
+      "sha256": "949685380857c37004515ab440ca6efd9e8aa8d62a2ba3f8ad3e3dbfabfe5372",
+      "script_sha256": "416dfb2d80e74b772e937f000330faf27f491258653907c694e81c7dff76e93a",
+      "cases": [
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "16x128x256-bk64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "932dc9f8e4eb96ad342b3517f40e599d676cf857c33b141502dc63dc154cbdfc"
+          ],
+          "baseline_us": [
+            12.126266666666666,
+            11.699133333333334,
+            11.583566666666668,
+            11.680433333333333,
+            11.596633333333333,
+            11.646700000000001
+          ],
+          "candidate_us": [
+            11.897166666666665,
+            11.712166666666667,
+            11.522466666666666,
+            11.503433333333332,
+            11.8825,
+            11.566566666666667
+          ],
+          "median_paired_speedup": 1.0061153489093193
+        },
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "32x256x512-bk64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "932dc9f8e4eb96ad342b3517f40e599d676cf857c33b141502dc63dc154cbdfc"
+          ],
+          "baseline_us": [
+            12.222433333333333,
+            12.235466666666667,
+            12.093566666666668,
+            12.095533333333332,
+            11.996333333333334,
+            12.073166666666665
+          ],
+          "candidate_us": [
+            12.232133333333334,
+            12.0007,
+            11.980666666666666,
+            11.8798,
+            11.997366666666666,
+            11.868466666666666
+          ],
+          "median_paired_speedup": 1.0133354497439637
+        },
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "64x512x1024-bk128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "932dc9f8e4eb96ad342b3517f40e599d676cf857c33b141502dc63dc154cbdfc"
+          ],
+          "baseline_us": [
+            17.990866666666665,
+            17.9414,
+            17.906033333333333,
+            17.927066666666665,
+            17.904033333333334,
+            17.911366666666666
+          ],
+          "candidate_us": [
+            17.061799999999998,
+            16.999,
+            17.007,
+            17.174666666666667,
+            16.999666666666666,
+            17.001
+          ],
+          "median_paired_speedup": 1.0533734564273605
+        },
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "128x1024x2048-bk64",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "932dc9f8e4eb96ad342b3517f40e599d676cf857c33b141502dc63dc154cbdfc"
+          ],
+          "baseline_us": [
+            34.8239,
+            34.63953333333333,
+            34.591800000000006,
+            34.59813333333333,
+            34.556066666666666,
+            34.5614
+          ],
+          "candidate_us": [
+            35.690533333333335,
+            35.5733,
+            35.53653333333333,
+            35.478433333333335,
+            35.50083333333333,
+            35.47043333333333
+          ],
+          "median_paired_speedup": 0.9740614975497079
+        },
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "1x2048x4096-bk128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "932dc9f8e4eb96ad342b3517f40e599d676cf857c33b141502dc63dc154cbdfc"
+          ],
+          "baseline_us": [
+            66.35366666666667,
+            66.20203333333335,
+            66.13323333333334,
+            66.0227,
+            65.92083333333333,
+            65.9035
+          ],
+          "candidate_us": [
+            19.0348,
+            18.925933333333333,
+            18.942633333333337,
+            18.908266666666666,
+            18.8912,
+            18.849133333333334
+          ],
+          "median_paired_speedup": 3.4914874394059874
+        },
+        {
+          "operator": "w8a8_block_int8_matmul",
+          "case": "1024x2048x4096-bk128",
+          "vendor_source": "generic",
+          "source_sha256": [
+            "eec198bb7a06fe332eb2647aff1b5299e79dee1aefbc1b3ffb02c98ca419730c",
+            "932dc9f8e4eb96ad342b3517f40e599d676cf857c33b141502dc63dc154cbdfc"
+          ],
+          "baseline_us": [
+            312.3367,
+            313.2187,
+            312.8813666666666,
+            312.99923333333334,
+            313.0717666666667,
+            313.2334
+          ],
+          "candidate_us": [
+            396.58036666666663,
+            397.4666666666667,
+            397.3057,
+            397.0175,
+            397.4850333333333,
+            397.70143333333334
+          ],
+          "median_paired_speedup": 0.7876205082928353
+        }
+      ]
+    }
+  },
+  "profiles": {
+    "profile48-final": {
+      "path": "artifacts/competition/batch4-next-20260908/profile48-final/results.json",
+      "sha256": "f818fbe69f9c5dba3206c2a16c6f0e08a45b6e64f9d5e5bd86a82e4202b03554",
+      "result": {
+        "script_sha256": "aefc3aa0ee9e4351bb7d14ccb4c7ffd6520f65b758fb43b941608a257ddffcb5",
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "cases": [
+          {
+            "operator": "chunked_sgmv_shrink",
+            "case": "segments32-last8-k4096-torch.float32",
+            "version": "t48-before",
+            "source_sha256": "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "trace_sha256": "f8040febfa836752a437efbcb50ffda99a6cc6866a9fc039511ab900007b4ff7",
+            "trace": "t482t48-before.json",
+            "calls": 20,
+            "resources": [
+              {
+                "name": "_sgmv_shrink_kernel",
+                "registers": 148,
+                "spills": 0,
+                "shared": 36864
+              }
+            ],
+            "gpu_kernel_us_per_call": 224.23409999999998,
+            "kernel_count": 80,
+            "item_calls": 20,
+            "dtoh_events": 20
+          },
+          {
+            "operator": "chunked_sgmv_shrink",
+            "case": "segments32-last8-k4096-torch.float32",
+            "version": "t48-after5",
+            "source_sha256": "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3",
+            "trace_sha256": "a3471356f94b935daf615bb6b8fb7b8c4de98203142e83f0ac6d5534f4620a36",
+            "trace": "t482t48-after5.json",
+            "calls": 20,
+            "resources": [
+              {
+                "name": "_sgmv_shrink_kernel",
+                "registers": 255,
+                "spills": 6,
+                "shared": 36864
+              }
+            ],
+            "gpu_kernel_us_per_call": 241.36615,
+            "kernel_count": 40,
+            "item_calls": 0,
+            "dtoh_events": 0
+          },
+          {
+            "operator": "chunked_sgmv_shrink",
+            "case": "segments32-last8-k4096-torch.bfloat16",
+            "version": "t48-before",
+            "source_sha256": "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "trace_sha256": "053dee077107d2e27995d4ae00af533eba0f39c9fec9c6d6b3d5200d2f920c3b",
+            "trace": "t483t48-before.json",
+            "calls": 20,
+            "resources": [
+              {
+                "name": "_sgmv_shrink_kernel",
+                "registers": 56,
+                "spills": 0,
+                "shared": 18432
+              }
+            ],
+            "gpu_kernel_us_per_call": 27.281150000000004,
+            "kernel_count": 80,
+            "item_calls": 20,
+            "dtoh_events": 20
+          },
+          {
+            "operator": "chunked_sgmv_shrink",
+            "case": "segments32-last8-k4096-torch.bfloat16",
+            "version": "t48-after5",
+            "source_sha256": "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3",
+            "trace_sha256": "a1cbe5ec3cc39aa4a0b4c00a4608d402e4f6e091c6046b74f7434fd731a9fc28",
+            "trace": "t483t48-after5.json",
+            "calls": 20,
+            "resources": [
+              {
+                "name": "_sgmv_shrink_kernel",
+                "registers": 64,
+                "spills": 2,
+                "shared": 18432
+              }
+            ],
+            "gpu_kernel_us_per_call": 24.4453,
+            "kernel_count": 40,
+            "item_calls": 0,
+            "dtoh_events": 0
+          },
+          {
+            "operator": "chunked_sgmv_shrink",
+            "case": "segments32-last1025-k512-torch.float32",
+            "version": "t48-before",
+            "source_sha256": "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "trace_sha256": "d1f74b4fed83f0d7a93c44046176fb8a0bd8fd3d7c79a10400b23d18ee40cf26",
+            "trace": "t4810t48-before.json",
+            "calls": 20,
+            "resources": [
+              {
+                "name": "_sgmv_shrink_kernel",
+                "registers": 254,
+                "spills": 10,
+                "shared": 49152
+              }
+            ],
+            "gpu_kernel_us_per_call": 80.97915,
+            "kernel_count": 80,
+            "item_calls": 20,
+            "dtoh_events": 20
+          },
+          {
+            "operator": "chunked_sgmv_shrink",
+            "case": "segments32-last1025-k512-torch.float32",
+            "version": "t48-after5",
+            "source_sha256": "a737c5761be9ef975804c32e539604e33bb64b259fa859f8c01c38666093d0b3",
+            "trace_sha256": "80fa71944543769c027a60ed73b829580415497826f1611e75c0445a981f3e33",
+            "trace": "t4810t48-after5.json",
+            "calls": 20,
+            "resources": [
+              {
+                "name": "_sgmv_shrink_kernel",
+                "registers": 254,
+                "spills": 4,
+                "shared": 49152
+              }
+            ],
+            "gpu_kernel_us_per_call": 61.03685,
+            "kernel_count": 40,
+            "item_calls": 0,
+            "dtoh_events": 0
+          }
+        ]
+      }
+    },
+    "profile48-bn64": {
+      "path": "artifacts/competition/batch4-next-20260908/profile48-bn64/results.json",
+      "sha256": "6ca5698935dc5e45fc488775653055faf588c1d6e09e912b5de150d6272bdb89",
+      "result": {
+        "script_sha256": "070431b6d1212830f915ee1f15bf1bedc66c94172ae0a6f52c4d71d969d9be6c",
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "cases": [
+          {
+            "operator": "chunked_sgmv_shrink",
+            "case": "segments32-last8-k4096-torch.float32",
+            "version": "t48-before",
+            "source_sha256": "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "trace_sha256": "536ab7a118bcda049c43df441d4ed2f6f2603558f64d8cb8b377ad93eee5f356",
+            "trace": "t482t48-before.json",
+            "calls": 20,
+            "resources": [
+              {
+                "name": "_sgmv_shrink_kernel",
+                "registers": 148,
+                "spills": 0,
+                "shared": 36864
+              }
+            ],
+            "gpu_kernel_us_per_call": 224.3291,
+            "kernel_count": 80,
+            "item_calls": 20,
+            "dtoh_events": 20
+          },
+          {
+            "operator": "chunked_sgmv_shrink",
+            "case": "segments32-last8-k4096-torch.float32",
+            "version": "t48-bn64",
+            "source_sha256": "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf",
+            "trace_sha256": "d9ec341f1e7c06f9971633f23f579e245e3ae8d67b852a51a599d58509a43744",
+            "trace": "t482t48-bn64.json",
+            "calls": 20,
+            "resources": [
+              {
+                "name": "_sgmv_shrink_kernel",
+                "registers": 128,
+                "spills": 0,
+                "shared": 20480
+              }
+            ],
+            "gpu_kernel_us_per_call": 127.34604999999999,
+            "kernel_count": 40,
+            "item_calls": 0,
+            "dtoh_events": 0
+          },
+          {
+            "operator": "chunked_sgmv_shrink",
+            "case": "segments32-last8-k4096-torch.bfloat16",
+            "version": "t48-before",
+            "source_sha256": "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "trace_sha256": "a9287db240dd07a903c453c1957a7f22213d5c4b392b4d46a8d11c2d2d2fb2c1",
+            "trace": "t483t48-before.json",
+            "calls": 20,
+            "resources": [
+              {
+                "name": "_sgmv_shrink_kernel",
+                "registers": 56,
+                "spills": 0,
+                "shared": 18432
+              }
+            ],
+            "gpu_kernel_us_per_call": 27.262700000000002,
+            "kernel_count": 80,
+            "item_calls": 20,
+            "dtoh_events": 20
+          },
+          {
+            "operator": "chunked_sgmv_shrink",
+            "case": "segments32-last8-k4096-torch.bfloat16",
+            "version": "t48-bn64",
+            "source_sha256": "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf",
+            "trace_sha256": "62e0714d375a0750f0a3f941ee0e540c3d3731e6cc6f27a5bc8550ee293bd554",
+            "trace": "t483t48-bn64.json",
+            "calls": 20,
+            "resources": [
+              {
+                "name": "_sgmv_shrink_kernel",
+                "registers": 54,
+                "spills": 0,
+                "shared": 18432
+              }
+            ],
+            "gpu_kernel_us_per_call": 24.9829,
+            "kernel_count": 40,
+            "item_calls": 0,
+            "dtoh_events": 0
+          },
+          {
+            "operator": "chunked_sgmv_shrink",
+            "case": "segments32-last1025-k512-torch.float32",
+            "version": "t48-before",
+            "source_sha256": "f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780",
+            "trace_sha256": "db0a3d05e8c138e739a2bcf9d45f24657cf5d57aab76792ca737f818ed9fa329",
+            "trace": "t4810t48-before.json",
+            "calls": 20,
+            "resources": [
+              {
+                "name": "_sgmv_shrink_kernel",
+                "registers": 254,
+                "spills": 10,
+                "shared": 49152
+              }
+            ],
+            "gpu_kernel_us_per_call": 80.97535,
+            "kernel_count": 80,
+            "item_calls": 20,
+            "dtoh_events": 20
+          },
+          {
+            "operator": "chunked_sgmv_shrink",
+            "case": "segments32-last1025-k512-torch.float32",
+            "version": "t48-bn64",
+            "source_sha256": "9bd430a4b53a561bb4c7388ff512335cee452fa1b5059a9100be22e0ef8bdbaf",
+            "trace_sha256": "1e8f9ec72bb41252105b95f27ec2b5982ca3abaefa85e1577b2cbd28b2a2a898",
+            "trace": "t4810t48-bn64.json",
+            "calls": 20,
+            "resources": [
+              {
+                "name": "_sgmv_shrink_kernel",
+                "registers": 168,
+                "spills": 0,
+                "shared": 32768
+              }
+            ],
+            "gpu_kernel_us_per_call": 64.37445,
+            "kernel_count": 40,
+            "item_calls": 0,
+            "dtoh_events": 0
+          }
+        ]
+      }
+    }
+  },
+  "scripts": {
+    "artifacts/competition/batch4-next-20260908/benchmark_batch4_candidates.py": {
+      "sha256": "416dfb2d80e74b772e937f000330faf27f491258653907c694e81c7dff76e93a"
+    },
+    "artifacts/competition/batch4-next-20260908/profile48.py": {
+      "sha256": "1f01e23f2249be60df5539e3979d6ad7c242ebe24823eb88ca45dda0b73ca782"
+    },
+    "artifacts/competition/batch4-next-20260908/profile48bn64.py": {
+      "sha256": "070431b6d1212830f915ee1f15bf1bedc66c94172ae0a6f52c4d71d969d9be6c"
+    },
+    "artifacts/competition/batch4-next-20260908/profile48final.py": {
+      "sha256": "aefc3aa0ee9e4351bb7d14ccb4c7ffd6520f65b758fb43b941608a257ddffcb5"
+    },
+    "artifacts/competition/batch4-next-20260908/profile_stages.py": {
+      "sha256": "365d77610841073bf17bef78db81df6ed69ae0d8110909545ed949a76de0e259"
+    },
+    "artifacts/competition/batch4-next-20260908/profile_stages2.py": {
+      "sha256": "da82efd16f238ef89b130a2fa2d8c888f2e87585fc3b98d46270f9e7422ec550"
+    },
+    "artifacts/competition/batch4-next-20260908/remote_jobs.py": {
+      "sha256": "31ca60b9dbf6cbea8ab009849ea41b3a5bc556ed88889cfd0e5aeec4955cb225"
+    },
+    "artifacts/competition/batch4-next-20260908/benchmark-run.sh": {
+      "sha256": "9260b404444a260a73122354348a85cd5694c0db8f661e2dda4ec4eb3f813757"
+    },
+    "artifacts/competition/batch4-next-20260908/benchmark2-run.sh": {
+      "sha256": "d84e7e30a5713947674ed18cd6e011154f495da41e9153d1bee19e784860521b"
+    },
+    "artifacts/competition/batch4-next-20260908/benchmark3-run.sh": {
+      "sha256": "e4c6d7a2f29fad6b9c33d98c43e719d740a9f2172e585c0ddb7de94a889cdef8"
+    },
+    "artifacts/competition/batch4-next-20260908/benchmark48bn64-run.sh": {
+      "sha256": "9342c2ee983997d79179a2cb4c88088bd8c8a43d97f7d4b2f3652c80b8ea4750"
+    },
+    "artifacts/competition/batch4-next-20260908/benchmark48final-run.sh": {
+      "sha256": "3e950ed22b351519d9bd8b3cf50e97ca7a79f49160074a79c4a8f88e9ab59dff"
+    },
+    "artifacts/competition/batch4-next-20260908/benchmark58final-run.sh": {
+      "sha256": "9b8bade512c384c61914e995a590e6b191faf297d4f96bd437f4bbcb69fbcdb6"
+    },
+    "artifacts/competition/batch4-next-20260908/t48-after-run.sh": {
+      "sha256": "6018696cf42472f87a75db1c586e1fbb5fc1c5f9097dc994147ec6f1fec47e4b"
+    },
+    "artifacts/competition/batch4-next-20260908/t48-after2-run.sh": {
+      "sha256": "b05332351933019ef3cbbb28f45506e60f933c6257f4c302d16f2674df9d27e9"
+    },
+    "artifacts/competition/batch4-next-20260908/t48-after5-run.sh": {
+      "sha256": "7b3a3897f587086d0a0f245aae5561b47fc55e524f9b3c67f7b18fb4a43369f0"
+    },
+    "artifacts/competition/batch4-next-20260908/t48-all-fix-run.sh": {
+      "sha256": "7ff03fb6f16725aaee2806d39c28d2e9a628719ced32ca61c3cc74e5b30aa800"
+    },
+    "artifacts/competition/batch4-next-20260908/t48-before-run.sh": {
+      "sha256": "cdf19bbea82cd8257eb4734cf5c7b44f4a096c40830b0f0f7405b40d09e276c9"
+    },
+    "artifacts/competition/batch4-next-20260908/t48-bn64-run.sh": {
+      "sha256": "ebbb09374e7dd3ce96188ca3481932f784f68e71cf337e0081e48a2f53d330ce"
+    },
+    "artifacts/competition/batch4-next-20260908/t48-final-check-run.sh": {
+      "sha256": "3d65f7597372b28af13d2c89399b4f36b66f81eed1655c1696c84baaffa28c85"
+    },
+    "artifacts/competition/batch4-next-20260908/t48-release-t58-release-run.sh": {
+      "sha256": "ba7825fefcdb4b9f28e0e06f60928522fac7ca08f54ddef413c081462ce4ea94"
+    },
+    "artifacts/competition/batch4-next-20260908/t58-after-run.sh": {
+      "sha256": "a6159d8910942d0740421bf79ed7730c1f8a2883ad46c1d2af0ad15dd470b1c1"
+    },
+    "artifacts/competition/batch4-next-20260908/t58-after2-t48-after3-final-run.sh": {
+      "sha256": "1bfd1acc399a374026e8984d16ad97d444f5a2b37e78c44d5f3f0ba2f7ef95db"
+    },
+    "artifacts/competition/batch4-next-20260908/t58-after3-t48-after4-run.sh": {
+      "sha256": "07ce34ef17ccf934d593811c09e8306648fad2832bf6d67ff360f03c60551e6c"
+    },
+    "artifacts/competition/batch4-next-20260908/t58-before-run.sh": {
+      "sha256": "cea9ec0e625433272abd6cf217829354b2192d7c35dc840b57610d9799549e76"
+    },
+    "artifacts/competition/batch4-next-20260908/kernelgen-tools.json": {
+      "sha256": "b58be765019ad98c1aa1f47063ded6242aa15f95f79fa19adb1bbd1113162868"
+    },
+    "artifacts/competition/batch4-next-20260908/static-final.json": {
+      "sha256": "43fd72a56e0c2b6dfd3c6e005c7fc9e8ca15da44bb88928254105860c6016746"
+    },
+    "artifacts/competition/batch4-next-20260908/static-final.log": {
+      "sha256": "708782dc7c0a4656c04211eb431e8f007c9848ddd89b49fe018f63ef65864218"
+    },
+    "artifacts/competition/batch4-next-20260908/pre-registered.txt": {
+      "sha256": "1d4a4497582f72cc531451bafe35312df947c141e256ee4d8c87e4e675fe3f7c"
+    }
+  },
+  "decisions": {
+    "t48": "e8 passes proxy promotion: 12/12 cases 1.598-2.568x; 3 profiled candidates have zero spills. Pending live preflight.",
+    "t58": "e6 correctness candidate only; final BM64 large GEMM ~0.795x vs old fp16 path; no platform submission."
+  }
+}

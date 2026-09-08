@@ -10,7 +10,7 @@ team_best_stage: e5
 team_best_commit: cf31913e61b91654542b654fe4d7d8c226e0d222
 team_best_speedup: 250.64599167
 sealed: no
-next: 芯级tile分派兑现(华为445/燧原6.16);距榜首576.32收窄至2.30x;剩余=高分芯同斜率结构或水位采样
+next: E6分组边界与FP32契约修复release通过;大矩阵代理回退约20%,未晋级不提交
 updated: 2026-09-08
 ```
 
@@ -102,3 +102,12 @@ updated: 2026-09-08
   128、海光/沐曦/A/B 要 64）——"vendor 分派不可省"（T39 块跳过教训）
   在 GEMM tile 维度第二次验证。代理 +10% 不代表平台方向，逐芯平台
   数据才是分派依据。
+
+## 2026-09-08 E6 后续实施（独立分支）
+
+- source / verification：`65b7fdd418d941ad4393ae9485541c74a55e5017`。
+- release：8 方法、235 次 kernel launch，0 fail/error/skip。NVIDIA 代理范围通过；其他目标芯运行时未验证。
+- 回执 `artifacts/competition/batch4-next-20260908/t58-release/verification.json`，SHA-256 `f8cefffe9b588ecba4f1dbddeb0caec0754b75050c42b6e22177fb7e9d35ee6a`；完整日志 SHA-256 `4db87d81b73dc925c6c4d1a2a7f513834884406ec436b9be66e5a432db800a7e`。
+- ZIP `/Users/bytedance/ccc/flagos-batch4-next/artifacts/competition/w8a8_block_int8_matmul/e6-65b7fdd/w8a8_block_int8_matmul.zip`，SHA-256 `68893a461103596298c62e8a560e9a36f7a6cfdc8817fdd256734e3027c59b1f`，23363 bytes；成员：`w8a8_block_int8_matmul.py`, `w8a8_block_int8_matmul_ascend.py`, `w8a8_block_int8_matmul_enflame.py`, `w8a8_block_int8_matmul_iluvatar.py`, `w8a8_block_int8_matmul_kunlunxin.py`。逐成员完整 SHA、测试/runner/依赖身份见[证据清单](../data/batch4-next-20260908.json)。
+- N/K tile 严格落在各自量化组内，组内累加后再乘 scale；int8 先转 FP32，generic/Ascend/Enflame 用 TF32（int8 值可精确表示），天数/昆仑保留 IEEE。补任意分组和 stride/分块边界。
+- 旧源在新增回归有 18 failure / 5 error；修复版全部通过。M=1 约 3.49x，公开四形状接近持平，但 M=1024,N=2048,K=4096 约 0.795x。BK128/BM128 尝试未改善，恢复较小配置。**性能不晋级，本轮不提交平台**，历史 E5 250.64599167x 仍为平台最佳。

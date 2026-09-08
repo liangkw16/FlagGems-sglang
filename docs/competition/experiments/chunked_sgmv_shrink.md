@@ -10,7 +10,7 @@ team_best_stage: e7
 team_best_commit: 094548df5da1075b8245b4af8ccddf024a319ae3
 team_best_speedup: 4.7489375
 sealed: no
-next: cpasync候选已实现但NVIDIA不识别pipeline;需沐曦固定源码执行,无本轮ZIP
+next: E8去同步+长K精度修复release通过;待实时preflight单次提交
 updated: 2026-09-08
 ```
 
@@ -142,3 +142,13 @@ route/materialize 是 sgmv 族唯一可行形态（e8-e10 三投证伪）。
 - source `26a95766b179d263916e9483dfc8d2343c40406a`；verification `26a95766b179d263916e9483dfc8d2343c40406a`。6 个测试方法、18 次实际 kernel 调用；选定 NVIDIA/代理范围门禁失败。
 - 回执 `artifacts/competition/batch4-implementation-20260907/t48-release1/verification.json`，SHA256 `7f02b6837a843f77a35f04993b15eaf44c2305d8876860a4ac0276e3d3e44a74`；日志 SHA256 `f023c3e3b871b63720a2d6a4c1a75595b5049ed2faf0169893ab2a79678ec5b8`。
 - 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
+
+## 2026-09-08 E8 后续实施（独立分支）
+
+- source / verification：`65b7fdd418d941ad4393ae9485541c74a55e5017`。
+- release：8 方法、161 次 kernel launch，0 fail/error/skip。NVIDIA 代理范围通过；其他目标芯运行时未验证。
+- 回执 `artifacts/competition/batch4-next-20260908/t48-release/verification.json`，SHA-256 `125c1980d9dd25a9ab3d7a12a25fd6691c9527ace0a96fba4204047bfea5019d`；完整日志 SHA-256 `ce7fc674e76f2e0d753b7a33ec794f74214ed30e37e5ae43449568eedb5614b2`。
+- ZIP `/Users/bytedance/ccc/flagos-batch4-next/artifacts/competition/chunked_sgmv_shrink/e8-65b7fdd/chunked_sgmv_shrink.zip`，SHA-256 `b872fcb8beffb132d4ef9823d176919e1daa83d0f98ca7994cc0082cf0b0e6fa`，15849 bytes；成员：`chunked_sgmv_shrink.py`, `chunked_sgmv_shrink_enflame.py`, `chunked_sgmv_shrink_kunlunxin.py`。逐成员完整 SHA、测试/runner/依赖身份见[证据清单](../data/batch4-next-20260908.json)。
+- GPU 读取段长，worker 遍历长段；相邻段优先排列，FP32 使用 BN64。补 CUDA Graph、非连续/未覆盖行、4097 行偏斜段、长 K 回归。generic/燧原/昆仑长 K 使用补偿累加，原容差不变。
+- 移除从未取得目标执行证据的沐曦 cpasync 试验覆盖，恢复 E7 三成员集合，让沐曦使用新 generic；原失败仍保留在历史记录。
+- 12 个 NVIDIA wrapper 样本 1.598–2.568x；6 轮 AB/BA 原始数据保留。3 个 profiler 样本候选均零 spill，DtoH 1→0，kernel 4→2。满足本轮代理晋级门，待实时平台门禁。
