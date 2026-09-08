@@ -18,6 +18,12 @@
 # BLOCK_N divides group_n (both powers of two, BLOCK_N <= group_n), the n
 # group index is constant across the tile: compute it as a scalar from
 # pid_n. Same math, no vector idiv.
+# e8 probe: the historical fp16-operand dot miscompile family traces to the
+# SDNN int<->float DMA dequant-scale bug fixed in xpu-sdnn-objects
+# v0.3.6.6.1 (FlagTree #1099, verified int8 dot on KL3), and the current
+# XPU stack ships v0.3.6.8.0 (FlagTree #1124). This backend never ran the
+# fp16 tensor-core dot on T58; swap the ieee fp32 dot for the generic's
+# fp16 form (int8 values stay exact in fp16, fp32 accumulator).
 
 import torch
 import triton
@@ -65,13 +71,13 @@ def _w8a8_block_matmul_kunlunxin_kernel(
             a_ptr + offs_m[:, None] * a_stride_m + (k_start + offs_k)[None, :] * a_stride_k,
             mask=m_mask[:, None] & k_mask[None, :],
             other=0.0,
-        ).to(tl.float32)
+        ).to(tl.float16)
         b = tl.load(
             b_ptr + offs_n[None, :] * b_stride_n + (k_start + offs_k)[:, None] * b_stride_k,
             mask=n_mask[None, :] & k_mask[:, None],
             other=0.0,
-        ).to(tl.float32)
-        acc_k = tl.dot(a, b, input_precision="ieee")
+        ).to(tl.float16)
+        acc_k = tl.dot(a, b)
         k_group = k_start // group_k
         n_group = (pid_n * BLOCK_N) // group_n
         a_s = tl.load(
