@@ -5,7 +5,7 @@ task: 53
 operator: fused_gdn_gating
 batch: 4
 validity: valid
-platform: 8/8(e5,11044,2.954625x新team best)
+platform: e5r/11242八芯valid,3.03205x新team best
 team_best_stage: e5
 team_best_commit: c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67
 team_best_speedup: 2.954625
@@ -145,3 +145,9 @@ generic 多行共享 head 参数/exp，支持参数stride；总元素<16384且�
   仍为该题最大单轮结构增益；小规模分流保护未引入回退（沐曦/燧原/昆仑
   持平）。距榜首 288x 仍远，弱芯（昆仑/华为/燧原）需要新的目标证据。
 
+
+## E5r 水位重掷：**8/8 valid 3.03205 新 TEAM BEST**（2026-09-08T16:55，sub 11242）
+
+- 注释载体（`64304af`，e5 字节逐字节一致）。多芯带内上沿兑现：
+  天数 4.80 / 燧原 1.66 / 华为 1.61 / B 4.25——均值 2.9546→**3.0321
+  （+2.6%）**。零下行（平台取 max），水位采样第 N 次兑现。

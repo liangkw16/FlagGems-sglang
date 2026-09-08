@@ -5,7 +5,7 @@ task: 49
 operator: ernie45_rope_fused
 batch: 4
 validity: valid
-platform: 8/8(e3,8.58253125x)
+platform: e4/11245八芯valid,8.71115625x新team best
 team_best_stage: e3
 team_best_commit: 5a6b8cb3eac758d266765f96cdf52a4581deb2a9
 team_best_speedup: 8.58253125
@@ -60,3 +60,11 @@ updated: 2026-09-08
 - 回执 `artifacts/competition/batch4-implementation-20260907/t49-release1/verification.json`，SHA256 `99e82fc4a2640ca9d7f691870553773b84fec3a1ca1d95d68f0639328f9f22c9`；日志 SHA256 `e70ce8849ceea5342b7b8c247e24ce3c23a6070862adf4235e75012c928fe5ba`。
 - 不可变 ZIP `artifacts/competition/ernie45_rope_fused/research-20260908-26a9576/ernie45_rope_fused.zip`，SHA256 `f7c5a9a4a34bc4ee97619b7225cd9d4bfe0b0cc5774d83983751a071130b6ed0`；与 dry-run manifest、构建和 existing 验签一致。ZIP 是候选产物，不等于目标芯或平台已通过。
 - 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
+
+## E4 head16 探针：**8/8 valid 8.71115625 新 TEAM BEST**（2026-09-08T17:00，sub 11245）
+
+- 晨间候选（`26a9576`，昆仑 pair 小 program 保持、head tile 8→16）。
+- 逐芯：天数 16.08 / 沐曦 8.90 / 燧原 0.573 / 海光 9.51 / **昆仑 0.667
+  （e3 0.664 持平）** / 华为 2.44 / A 21.61 / B 9.91——多芯带宽带内微升，
+  均值 8.5825→**8.7112（+1.5%）**。head16 轴温和正收益，保留。
+- 排名看实时榜（旧 #5，榜首 17.06）；下一轴未定，守此 TB。
