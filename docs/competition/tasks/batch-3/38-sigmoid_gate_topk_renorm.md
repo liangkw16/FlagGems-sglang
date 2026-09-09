@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/sigmoid_gate_topk_renorm -->
-<!-- synced_at: 2026-09-07T11:09:08+08:00 -->
+<!-- synced_at: 2026-09-10T07:55:22+08:00 -->
 
 # sigmoid_gate_topk_renorm (moe/sigmoid_gate_topk_renorm)
 
