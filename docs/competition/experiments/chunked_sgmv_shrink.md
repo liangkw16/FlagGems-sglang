@@ -5,12 +5,12 @@ task: 48
 operator: chunked_sgmv_shrink
 batch: 4
 validity: valid
-platform: E7有效4.7489375；E8 FP32窄输出Split-K release通过待提交
+platform: E8/11767八芯有效4.460625，未超E7最佳4.7489375
 team_best_stage: e7
 team_best_commit: 094548df5da1075b8245b4af8ccddf024a319ae3
 team_best_speedup: 4.7489375
 sealed: no
-next: E8一次平台提交；cpasync未验证原型排除，本轮不混入
+next: Split-K未达晋级门；分析T47调度结果后决定迁移，禁止同候选重投
 updated: 2026-09-09
 ```
 
@@ -163,3 +163,9 @@ route/materialize 是 sgmv 族唯一可行形态（e8-e10 三投证伪）。
 |chunked_sgmv_shrink.py|`55ddc5fdad8df3c1109b85c2ff50871eea39d713095faeba90a1748ddf684c0e`|
 |chunked_sgmv_shrink_enflame.py|`a2d53ce449daf52df5fddec49305350b654d79a2bbb9320d96048b121a46dce4`|
 |chunked_sgmv_shrink_kunlunxin.py|`af7a413ef50feb2f76d936feb3155e5d2b237f325c06748e0c02758d41d0112b`|
+
+- E8 已于2026-09-09 12:22:36提交 `11767`，当日第20次，上传后远端SHA256一致；nonce已消费，不得重试。完整响应在 `e8-179fe7c/submit.json`。
+
+### E8 八芯终态（2026-09-09 12:23 CST）
+
+`11767` 为8/8 valid，均值 **4.460625**，较团队最佳4.7489375低6.1%，未晋级。天数3.728、沐曦4.972、燧原0.326、海光5.8125、昆仑1.752、华为5.5255、A6.7085、B6.8605。新 FP32 子域的代理收益未转化为整题收益；也存在未动 vendor 的水位差，无法仅凭均值精确归因。原始响应 `e8-179fe7c/raw-status-1.json`。停止该候选，不消耗额度重投。

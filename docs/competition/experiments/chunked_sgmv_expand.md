@@ -10,7 +10,7 @@ team_best_stage: e12
 team_best_commit: d649a9d
 team_best_speedup: 25.36275
 sealed: no
-next: E15向量方案停止；E16紧凑调度验证中，两弱恢复E11有效实现
+next: E16紧凑调度release15方法通过，待一次提交；两弱恢复E11有效实现
 updated: 2026-09-09
 ```
 
@@ -320,3 +320,24 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
 - 燧原正确但速度 **0.01**，低于 >=0.1 的有效门槛。代理机大幅提速没有迁移，两弱向量方案关闭，不再重投。
 - 其余逐芯：天数28.7435、沐曦21.4795、海光53.829、华为14.752、A50.5255、B28.662。八芯均值无效，不据此晋级；团队最佳仍 E12/25.36275。
 - 后续 E16 独立验证 generic 的设备端段 tile 前缀调度；两弱恢复 `8ba31a1` 已通过平台的有界 K 模板。前述 E13 的 reference 崩溃归因是历史推测，已有 raw trace 不足以证明候选无关。
+
+## E16 设备端紧凑段 tile 调度（2026-09-09，提交预注册）
+
+- generic 保留同一 IEEE dot 主体，设备端计算各段 ceil(length/64) 的前缀；扁平 task 二分寻找实际段，消除无 max_len 时的 host 同步和长短段矩形网格浪费。给定 max_len 时走原单 kernel 网格；bs>4096 保留原最大长度兜底。65535 网格分批，GPU前缀终点屏蔽多余上界 tile，无持久任务缓存。
+- 两弱回退到 `8ba31a1` 的已通过平台有界 K 模板，避免把 E15 编译失败和0.01速度带入新候选。新收益轴仅 generic 调度；相对 E12 燧原 tile 恢复64×64，已知该tile轴速度在0.17附近。
+- 门：八芯正确且每芯>=0.1；avg>25.36275 才晋级；六强合计较E12增加>=15% 视为结构兑现。失败先取原始错误，不重投。
+- NVIDIA RTX5070Ti release 15 方法、0 fail/error/skip/xfail，所有3成员执行。新增高度偏斜段、重复前缀、4097段兜底，以及有/无max_len均与reference比对。远端 `/tmp/flagos-t47-e16-release.WtRRFj`，PID333511，timeout600。
+- 六轮AB/BA、每次30完整调用相对 `7c5bfc0` generic：无max_len约1.4–1.7倍；有提示约0.95–1.02倍，额外参数有小幅开销。平台隐藏形状收益未知，不外推Top1。
+- source/verification commit：`f9cb2475c7b61ab97e485c28cd0207fac7db15a9`；ledger commit 为本节独立文档提交。
+- validation/verification.json SHA256：`f86c9075556231ec3a5acb6a665b9fdda2a247d4aceb33f8b384719e20b9976e`。
+- validation/verification.log SHA256：`ba7f2d236befb7d9cc30a84f5f017e34e162af72c85d1c7574c5af35d56bc886`。
+- validation/bench.py SHA256：`5e99afe6cf384cc82a9146451619b699ca9be4e8c2a9c470e2d93142350096cc`。
+- validation/perf.json SHA256：`a04ac4a3ff165b6225ac128297c0094d083b81f2a10656b1c203008a13e4fe76`。
+- test SHA256：`ee475a1c2d8d665ab2f0df7b37bc5eaa7d08e9876ac9dacca74b089575b443af`。
+- ZIP：`/private/tmp/flagos-batch4-structural-20260909/artifacts/competition/chunked_sgmv_expand/e16-f9cb247/chunked_sgmv_expand.zip`；20975 bytes；SHA256 `694cb6a3a5d6f769e919fdb613d71c98160ec67446c2f3a2862d672497825479`；dry-run/build/verify-existing 一致。
+
+|成员|SHA256|
+|---|---|
+|chunked_sgmv_expand.py|`9f0c4d0afaf296e97f973f957abcd189e3bb1bfebba82b13a46b3dc40eb955fc`|
+|chunked_sgmv_expand_enflame.py|`5cdf1c657a108f9fee016742f298f0aab9e264a174ee8dddbeb0edf43980f36b`|
+|chunked_sgmv_expand_kunlunxin.py|`a51fa38d50babc3a45ef177e6357408f4232bba1ae6f33230461a22d3ce08e4b`|
