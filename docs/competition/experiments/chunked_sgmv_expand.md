@@ -10,7 +10,7 @@ team_best_stage: e17
 team_best_commit: cea2a0c10878b39c251a36857d97311d1ab4cd73
 team_best_speedup: 25.5965
 sealed: no
-next: 保留E17合并结构；复核燧原原生半精度dot，昆仑保持FP32
+next: E18仅燧原原生半精度dot release通过，待一次提交；保留E17最佳作为基线
 updated: 2026-09-09
 ```
 
@@ -374,3 +374,23 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
 - `11771` 于12:37:44正式提交，当日第22次；一次上传/提交且远端SHA256一致。8/8 valid，**25.5965新团队最佳**（相对25.36275约+0.92%）。
 - 天数28.9565、沐曦21.697、**燧原0.2925、昆仑4.8525**、海光55.875、华为13.766、A50.053、B29.2795。两弱合计5.145，相对E12的3.912增加31.52%，达到预注册15%结构门；总体仍受六强水位影响，未获Top1。
 - `e17-cea2a0c/submit.json`、`raw-status-1.json`为实际响应。后续E18仅燧原保留半精度dot操作数（FP32累加），沿用本仓T48已存在的dtype分派；FP32和混合dtype仍cast FP32，不把昆仑更严格的数值经验一同改掉。
+
+## E18 合并后燧原原生半精度 dot（2026-09-09，提交预注册）
+
+- 仅enflame变更：x gather保留输入dtype；当x和weights同为FP16/BF16时原生输入dot、FP32累加。FP32/混合dtype仍双操作数cast FP32、IEEE dot；base仍FP32累加并最终cast。复用本仓T48 enflame已有分派；generic/kunlunxin与E17冻结。
+- 前置：E17已在平台证明两弱合并收益；本探针检验减少launch后GEMM算力的剩余空间。门：八芯正确且每芯>=0.1，avg>25.5965才晋级；燧原>0.2925的15%作为dtype收益门。一次提交，无同候选重投。
+- 最终NVIDIA release16方法、全部3成员实际入口/launch、0fail/error/skip/xfail。远端`/tmp/flagos-t47-e18-release.G0kzji` PID334270 timeout600；完整调用六轮AB/BA对`cea2a0c` enflame。FP32约1.0倍；BF16小rank约1.04倍、大rank约3.5–13.8倍。目标性能未验证，不能作为平台分数。
+- source/verification commit `e887aab5f70fa2f9ac70e351eb36f57726610ca8`；ledger为本节独立文档提交。
+- validation/verification.json SHA256 `b5a5c80c8522b4fdead92a913e624fca1922a24169ea41da51b6662e7e52ce33`。
+- validation/verification.log SHA256 `7b0df48ae99d52454f7e59dd6d5bcfc67a253bc4baff6aeb0482ab68d923ca96`。
+- validation/perf.json SHA256 `3372d813819b5a5cacee866f295e58cb02f25fe2bd40d4cfb83923d8c43d8232`。
+- validation/bench.py SHA256 `7e68167f58c779ca428f41ac8bb0ec4767dca0a5fbee3cfe1eb69ea9781b7bb7`。
+- validation/baseline.py SHA256 `ec7fe0ccab03d150ce6ef11d0b38ebf036726ace8d0cb38745f69c792ea63c4d`。
+- test SHA256 `10fab9d45fd4a852686851e8fca7260dc0b5a3f76f8100c15e02f82aa61fd3eb`。
+- ZIP `/private/tmp/flagos-batch4-structural-20260909/artifacts/competition/chunked_sgmv_expand/e18-e887aab/chunked_sgmv_expand.zip`；18487 bytes；SHA256 `3cc36eaab832146bd498ed40bfcd2a5f12802014090cd382d6db60e12d5bedfa`；dry-run/build/verify-existing一致。
+
+|成员|SHA256|
+|---|---|
+|chunked_sgmv_expand.py|`cec9fec2b67b3cd9c92cc83da01fd626eb3469ddbbe8795b05d708fd065e6059`|
+|chunked_sgmv_expand_enflame.py|`713ba9c207fb9d50493cda8c79ce7a4cf215bf527ac98c9b39cc82330ab0e408`|
+|chunked_sgmv_expand_kunlunxin.py|`ba0690d263dad46d5ea816a94b5d8e5f5a88c6ac9d39cf094062a91cbda856bb`|
