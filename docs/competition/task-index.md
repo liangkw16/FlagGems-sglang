@@ -1,6 +1,6 @@
 # 第二届 FlagOS 算子赛题索引
 
-> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-09-07T11:09:08+08:00`。
+> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-09-10T07:55:22+08:00`。
 > 状态和榜单会变化，运行 `python tools/sync_flagos_season2_docs.py` 更新。
 
 ## 第 1 批
@@ -63,20 +63,20 @@
 
 | 题号 | 算子 | 状态 | 提交/队伍 | 达标队伍 | 当前第一 | 平均加速比 |
 | ---: | --- | --- | ---: | ---: | --- | ---: |
-| 42 | [act_and_mul](tasks/batch-4/42-act_and_mul.md) | competing | 190/24 | 18 | gonzhanshishenmeganjue | 431.4843x |
-| 43 | [causal_conv1d_update](tasks/batch-4/43-causal_conv1d_update.md) | competing | 163/27 | 3 | AttentionImOnly2YearsOld | 7.9032x |
-| 44 | [chain_speculative_sampling](tasks/batch-4/44-chain_speculative_sampling.md) | competing | 171/25 | 1 | c2flow | 1.9813x |
-| 45 | [chunk_scaled_dot_kkt](tasks/batch-4/45-chunk_scaled_dot_kkt.md) | competing | 125/23 | 4 | GuanghuLab | 17.9571x |
-| 46 | [chunked_embedding_lora_a](tasks/batch-4/46-chunked_embedding_lora_a.md) | competing | 110/23 | 5 | c2flow | 24.4139x |
-| 47 | [chunked_sgmv_expand](tasks/batch-4/47-chunked_sgmv_expand.md) | competing | 61/20 | 3 | SoulCoder | 25.0048x |
-| 48 | [chunked_sgmv_shrink](tasks/batch-4/48-chunked_sgmv_shrink.md) | competing | 39/15 | 3 | KernelX | 23.7436x |
-| 49 | [ernie45_rope_fused](tasks/batch-4/49-ernie45_rope_fused.md) | competing | 38/13 | 4 | c2flow | 15.6064x |
-| 50 | [extend_attention](tasks/batch-4/50-extend_attention.md) | competing | 247/27 | 1 | c2flow | 10.7233x |
-| 51 | [fla_layernorm_gated](tasks/batch-4/51-fla_layernorm_gated.md) | competing | 77/12 | 9 | c2flow | 6.6682x |
-| 52 | [fused_dual_residual_rmsnorm](tasks/batch-4/52-fused_dual_residual_rmsnorm.md) | competing | 92/22 | 1 | c2flow | 5.4251x |
-| 53 | [fused_gdn_gating](tasks/batch-4/53-fused_gdn_gating.md) | competing | 53/15 | 10 | EvokeAgent | 4.3306x |
-| 54 | [fused_norm_rope_stacked](tasks/batch-4/54-fused_norm_rope_stacked.md) | competing | 47/14 | 2 | EvokeAgent | 10.2235x |
-| 55 | [hc_head](tasks/batch-4/55-hc_head.md) | competing | 34/13 | 3 | 你这个token跑得过我吗 | 6.3633x |
-| 56 | [l2norm](tasks/batch-4/56-l2norm.md) | competing | 34/11 | 11 | Warmhearted | 4.2591x |
-| 57 | [log_scaling_tau](tasks/batch-4/57-log_scaling_tau.md) | competing | 33/11 | 6 | EvokeAgent | 2.8165x |
-| 58 | [w8a8_block_int8_matmul](tasks/batch-4/58-w8a8_block_int8_matmul.md) | competing | 45/13 | 3 | EvokeAgent | 209.2952x |
+| 42 | [act_and_mul](tasks/batch-4/42-act_and_mul.md) | competing | 292/35 | 25 | gonzhanshishenmeganjue | 431.4843x |
+| 43 | [causal_conv1d_update](tasks/batch-4/43-causal_conv1d_update.md) | competing | 251/31 | 5 | EvokeAgent | 8.5496x |
+| 44 | [chain_speculative_sampling](tasks/batch-4/44-chain_speculative_sampling.md) | competing | 195/28 | 1 | c2flow | 77.9541x |
+| 45 | [chunk_scaled_dot_kkt](tasks/batch-4/45-chunk_scaled_dot_kkt.md) | competing | 301/38 | 5 | EvokeAgent | 20.1943x |
+| 46 | [chunked_embedding_lora_a](tasks/batch-4/46-chunked_embedding_lora_a.md) | competing | 284/27 | 6 | EvokeAgent | 28.9367x |
+| 47 | [chunked_sgmv_expand](tasks/batch-4/47-chunked_sgmv_expand.md) | competing | 155/25 | 3 | EvokeAgent | 50.9169x |
+| 48 | [chunked_sgmv_shrink](tasks/batch-4/48-chunked_sgmv_shrink.md) | competing | 220/32 | 5 | RSI | 32.1779x |
+| 49 | [ernie45_rope_fused](tasks/batch-4/49-ernie45_rope_fused.md) | competing | 99/23 | 8 | c2flow | 21.1873x |
+| 50 | [extend_attention](tasks/batch-4/50-extend_attention.md) | competing | 329/31 | 2 | c2flow | 10.7233x |
+| 51 | [fla_layernorm_gated](tasks/batch-4/51-fla_layernorm_gated.md) | competing | 133/15 | 12 | SoulCoder | 60.7192x |
+| 52 | [fused_dual_residual_rmsnorm](tasks/batch-4/52-fused_dual_residual_rmsnorm.md) | competing | 164/26 | 3 | RSI | 6.9649x |
+| 53 | [fused_gdn_gating](tasks/batch-4/53-fused_gdn_gating.md) | competing | 103/19 | 15 | Nectar | 288.4262x |
+| 54 | [fused_norm_rope_stacked](tasks/batch-4/54-fused_norm_rope_stacked.md) | competing | 136/23 | 3 | EvokeAgent | 10.8090x |
+| 55 | [hc_head](tasks/batch-4/55-hc_head.md) | competing | 109/29 | 5 | EvokeAgent | 7.0834x |
+| 56 | [l2norm](tasks/batch-4/56-l2norm.md) | competing | 78/16 | 14 | sikadeer | 72.3068x |
+| 57 | [log_scaling_tau](tasks/batch-4/57-log_scaling_tau.md) | competing | 191/22 | 15 | EvokeAgent | 3.3434x |
+| 58 | [w8a8_block_int8_matmul](tasks/batch-4/58-w8a8_block_int8_matmul.md) | competing | 182/23 | 5 | c2flow | 649.2598x |
