@@ -10,7 +10,7 @@ team_best_stage: e21
 team_best_commit: 23be6795f1298a99dbca1c41b29c2dad66ec9832
 team_best_speedup: 25.9625625
 sealed: no
-next: 三次提交已结算，保留E21精确源码/测试；第3，剩2/30；下一步需海光/A目标逐用例耗时定位
+next: 去clone筛选正确但中位0.87x且spill增加，未提交；保留E21精确源码/测试，需目标profile再开轴
 updated: 2026-09-09
 ```
 
@@ -513,3 +513,18 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
 - 终态证据 `e21-23be679/raw-status-final.json` SHA256 `e0dd0dacfa544d9ebac6bdb03a2093d4c9df50a318a66dcd9d9b0aa6575a6c8b`。
 - 终态证据 `e22-40de0c6/raw-status-final.json` SHA256 `abf8fb3b0433660a9986acba33b333b41234e22831fab07a5e0bcce2e6cc3f49`。
 - 终态证据 `e21-23be679/final-summary.json` SHA256 `8a259a4523538b54da77d6ed0fba58ae52887e77fe3e315645eee2d769969346`。
+
+## E23 去 base clone 筛选（2026-09-09，未提交）
+
+- generic输出改empty：额外Triton仅复制未覆盖permutation前后缀、rank-zero行和slice范围外列；原GEMM直接读取base并写active区域。三vendor保持E21。新回归覆盖部分行、前后列边界、空slice、rank0、无效空段adapter、三dtype和输入不变性。
+- KernelGen `optimize_kernel` 请求已发送，服务返回success=false/downstream401，无代码/验证结果；请求和原始响应保留 `e23-screen/kernelgen-{request,response}.json`。最终使用自有代码。
+- 首轮3方法报4个编译错误：int32 S与int64 seg_indptr形成branch phi类型不一致；全部start/end显式转int64后重做screen。第二轮3方法全部通过，覆盖generic+两vendor。远端 `/tmp/flagos-t47-e23-screen2.5Y1gOe`，PID336209，timeout900；短暂SSH断连未中断后台任务，后取回完整日志。
+- 24组、六轮AB/BA完整调用：速度比0.641–1.106、中位0.869。新增base指针与stride令主GEMM spill：rank32从96→182，rank128从50→124；对应主核计时也变差，省clone不足抵消。该具体实现拒绝晋级，不把它泛化为所有融合方案不可能。
+- 无source commit/ZIP/preflight/上传/提交，不耗额度。最终generic和测试恢复E21/23be679精确字节；候选源码、测试、benchmark与原始结果保留 `artifacts/competition/chunked_sgmv_expand/e23-screen/validation2/`。最后一次额度让给有平台逐芯证据的T43海光隔离候选，T48迁移未实施。
+- `src/flaggems_sglang/ops/chunked_sgmv_expand.py` SHA256 `9311c3b0173d5895d976c86cd15613e86aab3cf9a2f48a61c7729092f6ff1f38`。
+- `tests/test_chunked_sgmv_expand.py` SHA256 `0a94481bad51ae6da3e2ba724a0c2d8bb0926b2fff62793990ad8734acfa49b9`。
+- `run.sh` SHA256 `8b7f02145fd43dec0af63b91fa1d9a7b64b23d32755ce7f3d848ba6e844185ae`。
+- `bench.py` SHA256 `f89a6c4fcb03f7a6f138267122f66f8094a77105b0aa47fea5b35def5838a717`。
+- `run.log` SHA256 `1c9166ea0c54bf48e2d7eb21a9bf08ae578a831a4502776959dd94d43201f60d`。
+- `perf.json` SHA256 `3c9159674b730621330a0c2bed1e7f00fb8a1c4e0181d7bfce1a60657de47323`。
+- `screen-sha256.json` SHA256 `a079645e24489410d30856aec2ae833ce47e704a84dc4ee2ac5d8c7542039486`。
