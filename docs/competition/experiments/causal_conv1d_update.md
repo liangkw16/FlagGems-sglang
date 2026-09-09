@@ -5,12 +5,12 @@ task: 43
 operator: causal_conv1d_update
 batch: 4
 validity: valid
-platform: E22/11807八芯valid6.562625未晋级；E21/11652仍最佳6.6005625
-team_best_stage: e21
-team_best_commit: b8a7fc4
-team_best_speedup: 6.6005625
+platform: E23/11811八芯valid7.1471875新最佳；E22/11807有效未晋级
+team_best_stage: e23
+team_best_commit: 478035baa4044bc37772cdec4b217198d1c5ec6a
+team_best_speedup: 7.1471875
 sealed: no
-next: E23海光隔离版14方法release通过，使用最后一次额度评测；E21仍为平台最佳
+next: 保留E23精确源码/测试；第4，追平Top1需18.62%；今日额度0，海光专属优化需新证据
 updated: 2026-09-09
 ```
 
@@ -730,3 +730,18 @@ generic width2/3/4 多 token 用寄存器滚动历史和权重复用；长序列
 - `verification.log` SHA256 `25c873dd2885b6d4ca4db01b09777c0baca1b58d1a20fc568aface14d9e92176`。
 - `run.sh` SHA256 `3beee9e4b2d5457cdd19c8ac0c6387b7a5cd269f58f6b410ba0b24b9d8ec1c6b`。
 - 测试SHA256 `786cb5b013539af8a7168bcff0733692548c19e07e8e2a9082bc89bcc391c9e9`。
+
+### E23 八芯终态与本轮收口（2026-09-09 15:11 CST）
+
+- 15:09:12上传/提交各一次，submission11811/day30，远端ZIP验签verified；15:10:28完成八芯valid，avg **7.1471875**、新team best。相对本轮起点E21/6.6005625提高 **8.2815%**。
+- 逐芯：天数15.165、沐曦9.5985、燧原0.4765、海光11.0995、昆仑1.61、华为0.4435、A8.5525、B10.232。海光实际selected_file=`causal_conv1d_update_hygon.py`，正确性和单芯恢复获得平台证据；原generic在其他四芯继续执行。
+- 15:11:40实时第4，榜首EvokeAgent8.47775；追平所需提升由28.4398%降至18.6166%，未新增Top1。第四批仍只有T51榜首；T47保留25.9625625/第3。账号30/30，剩0。
+- 两次正式提交均有效：E22/11807=6.562625未晋级；E23/11811=7.1471875晋级。T47去clone只做筛选，正确但中位0.869倍未上传，恢复E21；T48迁移因更强平台证据的候选出现，本轮未启动。旧晚间四发脚本已停止，无本轮新增自动排程。
+- 最终T43 generic/四vendor/测试逐字节等于478035b release；T47 generic/两vendor/测试逐字节等于23be679 release。代码、必要回归、账本和生成索引提交推送到fork/codex/batch4-structural-20260909。
+- `e23-478035b/raw-status-final.json` SHA256 `7621837faab07ca5f13b64b1c8da8d7fea1845b74d197fd91fdaa29cbc8b1428`。
+- `e23-478035b/status-latest.json` SHA256 `99e1d2f582f80fe53fa88a41f04ec5694f0bd34ad997c3b2a6f88b187707dbe9`。
+- `e23-478035b/final-summary.json` SHA256 `684950e3b115085c603b5fbe45ce54dbdf3de36aa7061fde90115a97ed67dd7b`。
+- `e23-478035b/submit.json` SHA256 `10a69dc9f9f4804e246b48f16cb99d0a40a8fc17e8b5e5c7dd97c6ff8d86d24a`。
+- `e22-3716ef9/raw-status-final.json` SHA256 `2b2f864465cfe02b75d1ce7c4e38880f1e3cfc2cb3421e91248fa52b22519a79`。
+- `e22-3716ef9/status-latest.json` SHA256 `7f5e1eeb6988123ece33d6752fc741e3f04d4ac092c9e6a3dc900b8c28c982b6`。
+- `e22-3716ef9/submit.json` SHA256 `c7651c32223e75da85df76a6fdff20a0d2f53695ba5b09dd2fa51a7f92830ae8`。

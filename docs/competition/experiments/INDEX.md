@@ -23,7 +23,7 @@
 | 40 | softcap_inplace_logits | valid | 8/8(e8,2.195604x,rank1) | e8 2.195604x | yes | 额度用尽收官;e16 华为字节(1.70)+TB 2.1956 #2;榜首 c2flow 2.2593 华为 3.40 未破译 | 2026-09-03 | [softcap_inplace_logits](softcap_inplace_logits.md) |
 | 41 | state_passing | invalid | E7 sub8079 system_failed;7 pass,Kunlun 0.0065x,Enflame unrun | E5 diagnostic | yes | 本轮收盘;只保留平台工单与全新结构研究 | 2026-09-02 | [state_passing](state_passing.md) |
 | 42 | act_and_mul | valid | 8/8(e6,3.25835x,排名10) | e6 3.25835x | no | e7 stride融合已验证3.149675未超E6(计分布局以连续为主);stride轴关闭,保留E6,无新结构证据不开轴 | 2026-09-08 | [act_and_mul](act_and_mul.md) |
-| 43 | causal_conv1d_update | valid | E22/11807八芯valid6.562625未晋级；E21/11652仍最佳6.6005625 | e21 6.6005625x | no | E23海光隔离版14方法release通过，使用最后一次额度评测；E21仍为平台最佳 | 2026-09-09 | [causal_conv1d_update](causal_conv1d_update.md) |
+| 43 | causal_conv1d_update | valid | E23/11811八芯valid7.1471875新最佳；E22/11807有效未晋级 | e23 7.1471875x | no | 保留E23精确源码/测试；第4，追平Top1需18.62%；今日额度0，海光专属优化需新证据 | 2026-09-09 | [causal_conv1d_update](causal_conv1d_update.md) |
 | 44 | chain_speculative_sampling | invalid | s0八芯predicts失败;本轮修复OOB但half精确采样仍失败,未重投 | s0 -x | no | 诊断已复现predicts[13]失配;release因expected_failure被拒,目标scan/舍入仍未修复,禁止带缺口提交 | 2026-09-08 | [chain_speculative_sampling](chain_speculative_sampling.md) |
 | 45 | chunk_scaled_dot_kkt | invalid_threshold | 8/8正确(e15),昆仑0.063x<0.1;平均7.000125不计有效排名 | - -x | no | 新row/head epilogue代理正确但未提速;候选暂不晋级,昆仑仍需>=0.1目标证据 | 2026-09-08 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x);e7/11229 7/8华为aclnnCat内部错误 | e3 14.1051875x | no | tile8探针华为失败(aclnnCat单case,原生库层);ascend回滚e3,tile8轴关闭,需aclnn间歇旁证才重开 | 2026-09-08 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
