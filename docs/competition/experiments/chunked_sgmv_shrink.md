@@ -5,12 +5,12 @@ task: 48
 operator: chunked_sgmv_shrink
 batch: 4
 validity: valid
-platform: E8/11767八芯有效4.460625，未超E7最佳4.7489375
-team_best_stage: e7
-team_best_commit: 094548df5da1075b8245b4af8ccddf024a319ae3
-team_best_speedup: 4.7489375
+platform: E9/11775八芯valid4.8135625，新团队最佳
+team_best_stage: e9
+team_best_commit: cea2a0c10878b39c251a36857d97311d1ab4cd73
+team_best_speedup: 4.8135625
 sealed: no
-next: E9同adapter段合并release通过，待一次平台提交
+next: 保留E9同adapter合并；本轮两弱收益兑现，等待新目标瓶颈证据
 updated: 2026-09-09
 ```
 
@@ -190,3 +190,9 @@ route/materialize 是 sgmv 族唯一可行形态（e8-e10 三投证伪）。
 |chunked_sgmv_shrink.py|`f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780`|
 |chunked_sgmv_shrink_enflame.py|`1a05db5c432e55181d40dde4f10cd81f8c1470ccddee505093774adb65540352`|
 |chunked_sgmv_shrink_kunlunxin.py|`2a9e8182734f4936cdab4f04e61b7706792355c84973c54e0c7b77dadb9c08e2`|
+
+### E9 终态：同adapter合并兑现（2026-09-09 12:43 CST）
+
+- `11775` 于12:41:15正式提交，当日第23次；一次上传/提交，远端ZIP SHA256一致。8/8 valid，**4.8135625新团队最佳**，相对E7的4.7489375约+1.36%。
+- 天数3.828、沐曦5.3525、**燧原0.897、昆仑2.424**、海光6.306、华为5.893、A7.008、B6.8。两弱合计3.321，相对E7的2.313增加43.58%，超过15%结构门；总体仍包含未变芯水位，不把全部分差归因于代码。
+- 同源响应 `e9-cea2a0c/submit.json`、`raw-status-1.json`；保留E9，Split-K E8不再混入。

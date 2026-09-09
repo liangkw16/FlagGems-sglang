@@ -5,12 +5,12 @@ task: 47
 operator: chunked_sgmv_expand
 batch: 4
 validity: valid
-platform: E16/11769八芯valid24.897未晋级；最佳E12/25.36275
-team_best_stage: e12
-team_best_commit: d649a9d
-team_best_speedup: 25.36275
+platform: E17/11771八芯valid25.5965，新团队最佳；E18燧原dtype复核中
+team_best_stage: e17
+team_best_commit: cea2a0c10878b39c251a36857d97311d1ab4cd73
+team_best_speedup: 25.5965
 sealed: no
-next: E17同adapter段合并release通过，待一次平台提交
+next: 保留E17合并结构；复核燧原原生半精度dot，昆仑保持FP32
 updated: 2026-09-09
 ```
 
@@ -368,3 +368,9 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
 |chunked_sgmv_expand.py|`cec9fec2b67b3cd9c92cc83da01fd626eb3469ddbbe8795b05d708fd065e6059`|
 |chunked_sgmv_expand_enflame.py|`ec7fe0ccab03d150ce6ef11d0b38ebf036726ace8d0cb38745f69c792ea63c4d`|
 |chunked_sgmv_expand_kunlunxin.py|`ba0690d263dad46d5ea816a94b5d8e5f5a88c6ac9d39cf094062a91cbda856bb`|
+
+### E17 终态：同adapter合并兑现（2026-09-09 12:39 CST）
+
+- `11771` 于12:37:44正式提交，当日第22次；一次上传/提交且远端SHA256一致。8/8 valid，**25.5965新团队最佳**（相对25.36275约+0.92%）。
+- 天数28.9565、沐曦21.697、**燧原0.2925、昆仑4.8525**、海光55.875、华为13.766、A50.053、B29.2795。两弱合计5.145，相对E12的3.912增加31.52%，达到预注册15%结构门；总体仍受六强水位影响，未获Top1。
+- `e17-cea2a0c/submit.json`、`raw-status-1.json`为实际响应。后续E18仅燧原保留半精度dot操作数（FP32累加），沿用本仓T48已存在的dtype分派；FP32和混合dtype仍cast FP32，不把昆仑更严格的数值经验一同改掉。
