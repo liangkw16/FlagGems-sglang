@@ -27,8 +27,8 @@
 | 44 | chain_speculative_sampling | invalid | s0八芯predicts失败;本轮修复OOB但half精确采样仍失败,未重投 | s0 -x | no | 诊断已复现predicts[13]失配;release因expected_failure被拒,目标scan/舍入仍未修复,禁止带缺口提交 | 2026-09-08 | [chain_speculative_sampling](chain_speculative_sampling.md) |
 | 45 | chunk_scaled_dot_kkt | invalid_threshold | 8/8正确(e15),昆仑0.063x<0.1;平均7.000125不计有效排名 | - -x | no | 新row/head epilogue代理正确但未提速;候选暂不晋级,昆仑仍需>=0.1目标证据 | 2026-09-08 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x);e7/11229 7/8华为aclnnCat内部错误 | e3 14.1051875x | no | tile8探针华为失败(aclnnCat单case,原生库层);ascend回滚e3,tile8轴关闭,需aclnn间歇旁证才重开 | 2026-09-08 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
-| 47 | chunked_sgmv_expand | valid | E16/11769八芯valid24.897未晋级；最佳E12/25.36275 | e12 25.36275x | no | 关闭紧凑调度提分轴；合并重复adapter段的常规GEMM正在验证 | 2026-09-09 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
-| 48 | chunked_sgmv_shrink | valid | E8/11767八芯有效4.460625，未超E7最佳4.7489375 | e7 4.7489375x | no | Split-K未达晋级门；分析T47调度结果后决定迁移，禁止同候选重投 | 2026-09-09 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
+| 47 | chunked_sgmv_expand | valid | E16/11769八芯valid24.897未晋级；最佳E12/25.36275 | e12 25.36275x | no | E17同adapter段合并release通过，待一次平台提交 | 2026-09-09 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
+| 48 | chunked_sgmv_shrink | valid | E8/11767八芯有效4.460625，未超E7最佳4.7489375 | e7 4.7489375x | no | E9同adapter段合并release通过，待一次平台提交 | 2026-09-09 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
 | 49 | ernie45_rope_fused | valid | e4/11245八芯valid,8.71115625x新team best | e4r 8.9578125x | no | head16候选代理正确/ZIP验签;需昆仑live buffer和完整wrapper收益后晋级 | 2026-09-08 | [ernie45_rope_fused](ernie45_rope_fused.md) |
 | 50 | extend_attention | candidate-wip | 6/8(e4,昆仑conclusive封轴;华为数值不可修;燧原0.013x<门槛) | - -x | no | 逐阶段诊断已实现但插桩有观察效应;需要目标原失败重放,不再将两种失败形态称数值永久不可修 | 2026-09-08 | [extend_attention](extend_attention.md) |
 | 51 | fla_layernorm_gated | valid | e10/11204八芯valid,60.7192x新team best,实时rank1 | e10 60.7192x | no | 已登顶(燧原442.8极端水位+华为子块+10%同发兑现);守榜为主,华为子块结构知识可迁移 | 2026-09-08 | [fla_layernorm_gated](fla_layernorm_gated.md) |

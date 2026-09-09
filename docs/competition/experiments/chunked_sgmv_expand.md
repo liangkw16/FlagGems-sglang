@@ -10,7 +10,7 @@ team_best_stage: e12
 team_best_commit: d649a9d
 team_best_speedup: 25.36275
 sealed: no
-next: 关闭紧凑调度提分轴；合并重复adapter段的常规GEMM正在验证
+next: E17同adapter段合并release通过，待一次平台提交
 updated: 2026-09-09
 ```
 
@@ -347,3 +347,24 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
 - `11769` 于12:25:42正式提交，当日第21次；一次上传/提交，远端SHA256复核一致。8/8 valid，均值 **24.897**，较最佳25.36275低1.84%，未晋级。
 - 逐芯：天数29.76、沐曦21.653、燧原0.147、海光52.4575、昆仑3.708、华为13.1735、A49.458、B28.819。设备端调度正确，但完整代理调用中的1.4–1.7倍未反映为平台整题提速；无法确认平台计时/形状对host同步的权重，不能据此盲迁T48。
 - 证据 `e16-f9cb247/submit.json`、`raw-status-1.json`。恢复generic到原最佳族，下一轴合并同adapter多个段，沿用已经在两弱通过的regular GEMM；保留未覆盖行和空段语义。
+
+## E17 同adapter段合并（2026-09-09，提交预注册）
+
+- 不改变GEMM及其launcher：读取既有host段元数据，按weight index把多个段组成同一行列表，每个adapter一次gather、GEMM、scatter。只有一个段时沿用原行视图，不做cat；重复adapter仅合并行，权重、scale和slice语义不变，输出行独立。空段先跳过再读取哨兵adapter，保留既有rank0/负adapter规则。
+- 两弱vendor增加路由合并；generic恢复`01d736b`已通过平台的基线，上一结构候选未晋级，不继续混入。kernel/launcher AST与`f9cb247`逐函数相同，新增互相穿插的重复adapter、int32 permutation、空段哨兵、3dtype测试。
+- 预注册：八芯正确且每芯>=0.1；均值>25.36275才晋级；两弱合计提高至少15%视为合并有效。只提交一次；若平台没有重复adapter收益则关轴。
+- source/verification commit：`cea2a0c10878b39c251a36857d97311d1ab4cd73`；ledger commit 为本节独立文档提交。NVIDIA RTX5070Ti release 16方法，0fail/error/skip/xfail，3打包成员均实际执行。远端`/tmp/flagos-coalesce-release.6I3BMw/t47`，PID333966，timeout900，T47和T48按顺序验证/计时。
+- 完整enflame wrapper六轮AB/BA、每轮10次，基线是`f9cb247`原逐段vendor。重复adapter代理速度范围2.82–9.75倍；各段adapter独立对照1.00–1.00倍。未获目标同源计时，平台负责补齐；不把代理倍率记作目标速度。
+- validation/verification.json SHA256 `26e9114b99c288535638702f6e33450ee0ed2ee59791202488ae19febb375aeb`。
+- validation/verification.log SHA256 `8f981b563cdbc428b99eb2993ecc3a64b525b6a49f5bed44e9ceaf07b7910a0f`。
+- validation/perf.json SHA256 `52e6b41775c76407b1e0525ae8c566f0746c67d4d4106a7f9dadae3c214f05d2`。
+- validation/bench.py SHA256 `cf98c4d6616c0f8bcff9f11ab4a366d126ae01a1f647c0749b85ed484438fd7c`。
+- validation/baseline.py SHA256 `5cdf1c657a108f9fee016742f298f0aab9e264a174ee8dddbeb0edf43980f36b`。
+- test SHA256 `10fab9d45fd4a852686851e8fca7260dc0b5a3f76f8100c15e02f82aa61fd3eb`。
+- ZIP `/private/tmp/flagos-batch4-structural-20260909/artifacts/competition/chunked_sgmv_expand/e17-cea2a0c/chunked_sgmv_expand.zip`；18464 bytes；SHA256 `30bdb5d81015f81960712c3034a2decdb4d65a28ca5bb86b52431d7720d7730c`；dry-run/build/verify-existing一致。
+
+|成员|SHA256|
+|---|---|
+|chunked_sgmv_expand.py|`cec9fec2b67b3cd9c92cc83da01fd626eb3469ddbbe8795b05d708fd065e6059`|
+|chunked_sgmv_expand_enflame.py|`ec7fe0ccab03d150ce6ef11d0b38ebf036726ace8d0cb38745f69c792ea63c4d`|
+|chunked_sgmv_expand_kunlunxin.py|`ba0690d263dad46d5ea816a94b5d8e5f5a88c6ac9d39cf094062a91cbda856bb`|

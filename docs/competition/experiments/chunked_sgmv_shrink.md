@@ -10,7 +10,7 @@ team_best_stage: e7
 team_best_commit: 094548df5da1075b8245b4af8ccddf024a319ae3
 team_best_speedup: 4.7489375
 sealed: no
-next: Split-K未达晋级门；分析T47调度结果后决定迁移，禁止同候选重投
+next: E9同adapter段合并release通过，待一次平台提交
 updated: 2026-09-09
 ```
 
@@ -169,3 +169,24 @@ route/materialize 是 sgmv 族唯一可行形态（e8-e10 三投证伪）。
 ### E8 八芯终态（2026-09-09 12:23 CST）
 
 `11767` 为8/8 valid，均值 **4.460625**，较团队最佳4.7489375低6.1%，未晋级。天数3.728、沐曦4.972、燧原0.326、海光5.8125、昆仑1.752、华为5.5255、A6.7085、B6.8605。新 FP32 子域的代理收益未转化为整题收益；也存在未动 vendor 的水位差，无法仅凭均值精确归因。原始响应 `e8-179fe7c/raw-status-1.json`。停止该候选，不消耗额度重投。
+
+## E9 同adapter段合并（2026-09-09，提交预注册）
+
+- 不改变GEMM及其launcher：读取既有host段元数据，按weight index把多个段组成同一行列表，每个adapter一次gather、GEMM、scatter。只有一个段时沿用原行视图，不做cat；重复adapter仅合并行，权重、scale和slice语义不变，输出行独立。空段先跳过再读取哨兵adapter，保留既有rank0/负adapter规则。
+- 两弱vendor增加路由合并；generic恢复`01d736b`已通过平台的基线，上一结构候选未晋级，不继续混入。kernel/launcher AST与`f9cb247`逐函数相同，新增互相穿插的重复adapter、int32 permutation、空段哨兵、3dtype测试。
+- 预注册：八芯正确且每芯>=0.1；均值>4.7489375才晋级；两弱合计提高至少15%视为合并有效。只提交一次；若平台没有重复adapter收益则关轴。
+- source/verification commit：`cea2a0c10878b39c251a36857d97311d1ab4cd73`；ledger commit 为本节独立文档提交。NVIDIA RTX5070Ti release 8方法，0fail/error/skip/xfail，3打包成员均实际执行。远端`/tmp/flagos-coalesce-release.6I3BMw/t48`，PID333966，timeout900，T47和T48按顺序验证/计时。
+- 完整enflame wrapper六轮AB/BA、每轮10次，基线是`f9cb247`原逐段vendor。重复adapter代理速度范围2.66–12.16倍；各段adapter独立对照1.00–1.00倍。未获目标同源计时，平台负责补齐；不把代理倍率记作目标速度。
+- validation/verification.json SHA256 `d76d2bcec99bd2279610b0c0077cb39879dbf5ef37c63fb26e74f290246a3f74`。
+- validation/verification.log SHA256 `bbc366152c3a4e3d36274f838b0da1cb01e06b956b17aecb81b2d29aaf8159d7`。
+- validation/perf.json SHA256 `8c0eb96c9a5d4ddc4004595df918222b1506adf1cc854696e3b45856655903a6`。
+- validation/bench.py SHA256 `2a201fbe4a46651effae808a90dba83a6990baa9c6d6f6339f4f4a9f4aec6498`。
+- validation/baseline.py SHA256 `a2d53ce449daf52df5fddec49305350b654d79a2bbb9320d96048b121a46dce4`。
+- test SHA256 `9a865241e27b637b967c8ee609ca54d2276fb24d8ae6e77774b2b0c817d17540`。
+- ZIP `/private/tmp/flagos-batch4-structural-20260909/artifacts/competition/chunked_sgmv_shrink/e9-cea2a0c/chunked_sgmv_shrink.zip`；15144 bytes；SHA256 `2696c03c0a287c5409dc58fb49a41c129554bdaa0231d374ed4d384e1ae10743`；dry-run/build/verify-existing一致。
+
+|成员|SHA256|
+|---|---|
+|chunked_sgmv_shrink.py|`f8cf4e66072448689f4a57e25120428371c821536d048754d74c8bfcda22b780`|
+|chunked_sgmv_shrink_enflame.py|`1a05db5c432e55181d40dde4f10cd81f8c1470ccddee505093774adb65540352`|
+|chunked_sgmv_shrink_kunlunxin.py|`2a9e8182734f4936cdab4f04e61b7706792355c84973c54e0c7b77dadb9c08e2`|
