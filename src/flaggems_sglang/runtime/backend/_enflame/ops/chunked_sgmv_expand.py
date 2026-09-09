@@ -36,11 +36,9 @@ def _sgmv_gemm_kernel_enflame(
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
     GROUP_M: tl.constexpr,
+    USE_INPUT_DTYPE: tl.constexpr,
 ):
-    # Kunlunxin recipe (T28 E11 / T37 E4): a completely regular GEMM
-    # with no segment metadata, no indirect rows and no runtime
-    # branches - operands are upcast to fp32 and the dot is ieee,
-    # the only configuration kunlunxin is known to compute correctly.
+    # Preserve low-precision input values and accumulate the regular dot in FP32.
     pid = tl.program_id(0)
     num_pid_m = tl.cdiv(M, BLOCK_M)
     num_pid_n = tl.cdiv(N, BLOCK_N)
@@ -64,12 +62,15 @@ def _sgmv_gemm_kernel_enflame(
             a_ptrs,
             mask=(offs_m[:, None] < M) & mask_k[None, :],
             other=0.0,
-        ).to(tl.float32)
+        )
         b = tl.load(
             b_ptrs,
             mask=mask_k[:, None] & (offs_n[None, :] < N),
             other=0.0,
-        ).to(tl.float32)
+        )
+        if not USE_INPUT_DTYPE:
+            a = a.to(tl.float32)
+            b = b.to(tl.float32)
         accumulator = tl.dot(a, b, acc=accumulator, input_precision="ieee")
         a_ptrs += BLOCK_K * stride_ak
         b_ptrs += BLOCK_K * stride_bk
@@ -112,6 +113,9 @@ def _launch_gemm(a, b, c, scaling, output_width, rank):
         BLOCK_N=_BLOCK_N,
         BLOCK_K=block_k,
         GROUP_M=_GROUP_M,
+        USE_INPUT_DTYPE=(
+            a.dtype == b.dtype and a.dtype in (torch.float16, torch.bfloat16)
+        ),
         num_warps=4,
         num_stages=2,
     )
@@ -161,7 +165,7 @@ def chunked_sgmv_expand(
                 [permutation[start:end] for start, end in segments]
             ).long()
         scaling = float(scalings[w_idx])
-        x_seg = x.index_select(0, rows).float()
+        x_seg = x.index_select(0, rows)
         seg_out = output.index_select(0, rows).float()
         for i in range(n_slices):
             o_start, o_end = int(slice_list[i]), int(slice_list[i + 1])
