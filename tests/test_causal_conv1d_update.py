@@ -161,6 +161,30 @@ class CausalConv1dUpdateTest(unittest.TestCase):
                 w = torch.randn(dim, 4, device="cuda")
                 self._check(x, state, w)
 
+    def test_static_decode_boundaries(self):
+        torch.manual_seed(4322)
+        for dim, width, state_len in (
+            (255, 2, 1),
+            (256, 3, 7),
+            (257, 4, 8),
+            (257, 4, 9),
+            (255, 5, 4),
+            (1, 2, 8),
+        ):
+            for dtype in TOLERANCES:
+                with self.subTest(
+                    dim=dim, width=width, state_len=state_len, dtype=dtype
+                ):
+                    x = torch.randn(3, dim * 2, device="cuda", dtype=dtype)[
+                        :, ::2
+                    ]
+                    state = torch.randn(3, dim, state_len, device="cuda")
+                    weight = torch.randn(
+                        dim, width, device="cuda", dtype=dtype
+                    )
+                    bias = torch.randn(dim, device="cuda")
+                    self._check(x, state, weight, bias)
+
     def test_non_contiguous_inputs(self):
         x_base = torch.randn(4, 128, 8, device="cuda")
         x = x_base[:, :, ::2]
@@ -379,6 +403,7 @@ class CausalConv1dUpdateVariantsTest(unittest.TestCase):
 
 
 RELEASE_REQUIRED_TESTS = [
+    "CausalConv1dUpdateTest.test_static_decode_boundaries",
     "CausalConv1dUpdateTest.test_rolling_window_long_sequence",
     "CausalConv1dUpdateTest.test_dtypes_with_bias_and_activation",
     "CausalConv1dUpdateTest.test_widths_state_lengths_and_seqlens",

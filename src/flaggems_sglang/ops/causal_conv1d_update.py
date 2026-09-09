@@ -130,6 +130,67 @@ def _causal_conv1d_update_kernel(
             )
 
 
+@triton.jit
+def _causal_conv1d_decode_kernel(
+    x_ptr,
+    state_ptr,
+    weight_ptr,
+    bias_ptr,
+    out_ptr,
+    new_state_ptr,
+    TOTAL,
+    DIM: tl.constexpr,
+    STATE_LEN: tl.constexpr,
+    WIDTH: tl.constexpr,
+    HAS_BIAS: tl.constexpr,
+    ACT_IS_SILU: tl.constexpr,
+    BLOCK: tl.constexpr,
+):
+    # A single token has a statically known source for every tap. Flatten
+    # batch/channel to keep partial channel blocks occupied across batches.
+    for start in range(
+        tl.program_id(0) * BLOCK, TOTAL, tl.num_programs(0) * BLOCK
+    ):
+        idx = start + tl.arange(0, BLOCK)
+        mask = idx < TOTAL
+        idx64 = idx.to(tl.int64)
+        channel = idx % DIM
+        current = tl.load(x_ptr + idx64, mask=mask, other=0).to(tl.float32)
+        value = tl.full((BLOCK,), 0, tl.float32)
+        for k in tl.static_range(WIDTH):
+            if k == WIDTH - 1:
+                sample = current
+            else:
+                sample = tl.load(
+                    state_ptr + idx64 * STATE_LEN + STATE_LEN + 1 - WIDTH + k,
+                    mask=mask,
+                    other=0,
+                ).to(tl.float32)
+            weight = tl.load(
+                weight_ptr + channel.to(tl.int64) * WIDTH + k,
+                mask=mask,
+                other=0,
+            ).to(tl.float32)
+            value += sample * weight
+        if HAS_BIAS:
+            value += tl.load(bias_ptr + channel, mask=mask, other=0).to(
+                tl.float32
+            )
+        if ACT_IS_SILU:
+            value = value / (1.0 + tl.exp(-value))
+        tl.store(out_ptr + idx64, value, mask=mask)
+        for i in tl.static_range(STATE_LEN):
+            if i == STATE_LEN - 1:
+                shifted = current
+            else:
+                shifted = tl.load(
+                    state_ptr + idx64 * STATE_LEN + i + 1,
+                    mask=mask,
+                    other=0,
+                ).to(tl.float32)
+            tl.store(new_state_ptr + idx64 * STATE_LEN + i, shifted, mask=mask)
+
+
 def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     squeeze_out = x.dim() == 2
     if squeeze_out:
@@ -148,6 +209,25 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
         if squeeze_out:
             out = out.squeeze(-1)
         return out, new_state
+    if seqlen == 1 and 2 <= width <= 4 and width - 1 <= state_len <= 8:
+        _causal_conv1d_decode_kernel[
+            (min(triton.cdiv(batch * dim, _BLOCK_D), _MAX_GRID),)
+        ](
+            x,
+            state,
+            w,
+            bias if bias is not None else x,
+            out,
+            new_state,
+            batch * dim,
+            DIM=dim,
+            STATE_LEN=state_len,
+            WIDTH=width,
+            HAS_BIAS=bias is not None,
+            ACT_IS_SILU=(activation in ("silu", "swish")),
+            BLOCK=_BLOCK_D,
+        )
+        return (out.squeeze(-1) if squeeze_out else out), new_state
     dim_blocks = triton.cdiv(dim, _BLOCK_D)
     total = batch * dim_blocks
     grid = (min(total, _MAX_GRID),)
