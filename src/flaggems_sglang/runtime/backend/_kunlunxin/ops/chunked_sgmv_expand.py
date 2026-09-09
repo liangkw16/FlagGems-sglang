@@ -137,12 +137,11 @@ def _sgmv_grouped_gemm_kernel(
                 mask=k_ok[:, None],
                 other=0.0,
             )
-            acc = tl.dot(
-                a.to(tl.float32),
-                b.to(tl.float32),
-                acc,
-                input_precision="ieee",
-            )
+            # e14 dtype probe: native operands straight into the dot
+            # (fp16/bf16 native MMA); input_precision only governs fp32
+            # operands, so fp32 inputs keep exact ieee math while low
+            # precision inputs skip the fp32 vector-FMA detour.
+            acc = tl.dot(a, b, acc, input_precision="ieee")
 
         c_ptrs = (
             c_ptr
