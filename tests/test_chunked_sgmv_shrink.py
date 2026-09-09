@@ -152,6 +152,24 @@ class ChunkedSgmvShrinkVariantsTest(unittest.TestCase):
 
     MODULES = load_operator_modules("chunked_sgmv_shrink")
 
+    def test_repeated_adapter_segments(self):
+        for dtype in TOLERANCES:
+            x, w, info = make_case(
+                [1, 65, 0, 7, 3, 129], 3, 129, 33, dtype=dtype, seed=103
+            )
+            info.weight_indices.copy_(
+                torch.tensor([1, 2, 99, 1, 2, 1], device=x.device)
+            )
+            info.permutation = info.permutation.to(torch.int32)
+            expected = reference(x, w, info)
+            for name, module in self.MODULES:
+                with self.subTest(dtype=dtype, variant=name):
+                    actual = module.chunked_sgmv_shrink(x, w, info)
+                    atol, rtol = TOLERANCES[dtype]
+                    torch.testing.assert_close(
+                        actual, expected, atol=atol, rtol=rtol
+                    )
+
     def test_pipeline_long_segment_dtypes(self):
         for dtype in TOLERANCES:
             args = make_case(
@@ -183,6 +201,7 @@ class ChunkedSgmvShrinkVariantsTest(unittest.TestCase):
 
 
 RELEASE_REQUIRED_TESTS = [
+    "ChunkedSgmvShrinkVariantsTest.test_repeated_adapter_segments",
     "ChunkedSgmvShrinkTest.test_dtypes",
     "ChunkedSgmvShrinkTest.test_shapes",
     "ChunkedSgmvShrinkTest.test_split_k_boundaries_and_partial",

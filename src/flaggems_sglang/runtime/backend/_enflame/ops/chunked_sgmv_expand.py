@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import torch
 import triton
 import triton.language as tl
 
@@ -132,10 +133,8 @@ def chunked_sgmv_expand(
     ):
         return output
 
-    # Vendor path: route with framework gathers, then one regular GEMM
-    # per (segment, slice) with no metadata inside the kernel, and
-    # scatter the result back with index_copy (rows partition across
-    # segments, so plain assignment matches the reference accumulate).
+    # Coalesce repeated adapters so each uses one gather/GEMM/scatter.
+    # Dot operands remain regular matrices; kernels carry no route metadata.
     seg_indptr = batch_info.seg_indptr.detach().cpu().tolist()
     weight_indices = batch_info.weight_indices.detach().cpu().tolist()
     lora_ranks = batch_info.lora_ranks.detach().cpu().tolist()
@@ -143,6 +142,7 @@ def chunked_sgmv_expand(
     slice_list = slice_offsets.detach().cpu().tolist()
     permutation = batch_info.permutation
 
+    adapter_segments = {}
     for b in range(batch_info.bs):
         start, end = seg_indptr[b], seg_indptr[b + 1]
         if start == end:
@@ -150,11 +150,17 @@ def chunked_sgmv_expand(
         w_idx = weight_indices[b]
         if lora_ranks[w_idx] == 0:
             continue
+        adapter_segments.setdefault(w_idx, []).append((start, end))
+
+    for w_idx, segments in adapter_segments.items():
+        if len(segments) == 1:
+            start, end = segments[0]
+            rows = permutation[start:end].long()
+        else:
+            rows = torch.cat(
+                [permutation[start:end] for start, end in segments]
+            ).long()
         scaling = float(scalings[w_idx])
-        # the platform hands permutation as int32; kunlunxin torch
-        # requires long indices for index_select/index_copy_ (NVIDIA
-        # accepts int32, which is why the proxy stayed green)
-        rows = permutation[start:end].long()
         x_seg = x.index_select(0, rows).float()
         seg_out = output.index_select(0, rows).float()
         for i in range(n_slices):

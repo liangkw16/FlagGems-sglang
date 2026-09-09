@@ -289,6 +289,27 @@ class ChunkedSgmvExpandVariantsTest(unittest.TestCase):
                             actual, expected, atol=1e-4, rtol=1e-4
                         )
 
+    def test_repeated_adapter_segments(self):
+        for dtype in TOLERANCES:
+            x, w, info, offsets, base = make_case(
+                [1, 65, 0, 7, 3, 129], 3, [17, 33], 65, dtype=dtype, seed=103
+            )
+            info.weight_indices.copy_(
+                torch.tensor([1, 2, 99, 1, 2, 1], device=x.device)
+            )
+            info.lora_ranks.fill_(65)
+            info.permutation = info.permutation.to(torch.int32)
+            expected = reference(x, w, info, offsets, 33, base)
+            for name, module in self.MODULES:
+                with self.subTest(dtype=dtype, variant=name):
+                    actual = module.chunked_sgmv_expand(
+                        x, w, info, offsets, 33, base
+                    )
+                    atol, rtol = TOLERANCES[dtype]
+                    torch.testing.assert_close(
+                        actual, expected, atol=atol, rtol=rtol
+                    )
+
     def test_skewed_segments_and_empty_prefix(self):
         for lengths in (
             [1024] + [1] * 31,
@@ -403,6 +424,7 @@ class ChunkedSgmvExpandVariantsTest(unittest.TestCase):
 
 
 RELEASE_REQUIRED_TESTS = [
+    "ChunkedSgmvExpandVariantsTest.test_repeated_adapter_segments",
     "ChunkedSgmvExpandTest.test_dtypes_equal_slice",
     "ChunkedSgmvExpandTest.test_unequal_slice_widths",
     "ChunkedSgmvExpandTest.test_rank_sizes",

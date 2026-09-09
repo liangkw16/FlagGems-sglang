@@ -128,6 +128,7 @@ def chunked_sgmv_shrink(x, weights, batch_info, num_slices=1):
     weight_indices = batch_info.weight_indices.detach().cpu().tolist()
     permutation = batch_info.permutation
 
+    adapter_segments = {}
     for b in range(batch_info.bs):
         start, end = seg_indptr[b], seg_indptr[b + 1]
         if start == end:
@@ -135,7 +136,16 @@ def chunked_sgmv_shrink(x, weights, batch_info, num_slices=1):
         w_idx = weight_indices[b]
         if w_idx < 0:
             continue
-        rows = permutation[start:end].long()
+        adapter_segments.setdefault(w_idx, []).append((start, end))
+
+    for w_idx, segments in adapter_segments.items():
+        if len(segments) == 1:
+            start, end = segments[0]
+            rows = permutation[start:end].long()
+        else:
+            rows = torch.cat(
+                [permutation[start:end] for start, end in segments]
+            ).long()
         x_seg = x.index_select(0, rows)
         out_seg = torch.empty(
             len(rows), N, dtype=torch.float32, device=x.device
