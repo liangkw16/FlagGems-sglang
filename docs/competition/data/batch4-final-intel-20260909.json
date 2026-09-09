@@ -1,0 +1,2341 @@
+{
+ "observed_at": "2026-09-09T15:0x+08:00",
+ "race_id": "782kzq4m",
+ "quota": {
+  "total": 30,
+  "used": 29,
+  "remaining": 1,
+  "note": "account-global daily, resets 00:00"
+ },
+ "deadline": "2026-09-10T19:59:59",
+ "tasks": [
+  {
+   "task_no": 42,
+   "tid": "s2t1op042",
+   "operator": "act_and_mul",
+   "current_best_speedup": 431.4843,
+   "current_leader_team_name": "gonzhanshishenmeganjue",
+   "my_best_speedup": 3.25835,
+   "my_rank": 13,
+   "submission_count": 276,
+   "participating_team_count": 32
+  },
+  {
+   "task_no": 43,
+   "tid": "s2t1op043",
+   "operator": "causal_conv1d_update",
+   "current_best_speedup": 8.47775,
+   "current_leader_team_name": "EvokeAgent",
+   "my_best_speedup": 6.6005625,
+   "my_rank": 4,
+   "submission_count": 231,
+   "participating_team_count": 29
+  },
+  {
+   "task_no": 44,
+   "tid": "s2t1op044",
+   "operator": "chain_speculative_sampling",
+   "current_best_speedup": 77.954125,
+   "current_leader_team_name": "c2flow",
+   "my_best_speedup": null,
+   "my_rank": null,
+   "submission_count": 195,
+   "participating_team_count": 28
+  },
+  {
+   "task_no": 45,
+   "tid": "s2t1op045",
+   "operator": "chunk_scaled_dot_kkt",
+   "current_best_speedup": 19.7779375,
+   "current_leader_team_name": "EvokeAgent",
+   "my_best_speedup": null,
+   "my_rank": null,
+   "submission_count": 248,
+   "participating_team_count": 32
+  },
+  {
+   "task_no": 46,
+   "tid": "s2t1op046",
+   "operator": "chunked_embedding_lora_a",
+   "current_best_speedup": 28.0405625,
+   "current_leader_team_name": "EvokeAgent",
+   "my_best_speedup": 14.1051875,
+   "my_rank": 6,
+   "submission_count": 233,
+   "participating_team_count": 25
+  },
+  {
+   "task_no": 47,
+   "tid": "s2t1op047",
+   "operator": "chunked_sgmv_expand",
+   "current_best_speedup": 42.9844375,
+   "current_leader_team_name": "c2flow",
+   "my_best_speedup": 25.9625625,
+   "my_rank": 3,
+   "submission_count": 133,
+   "participating_team_count": 23
+  },
+  {
+   "task_no": 48,
+   "tid": "s2t1op048",
+   "operator": "chunked_sgmv_shrink",
+   "current_best_speedup": 26.944,
+   "current_leader_team_name": "c2flow",
+   "my_best_speedup": 4.8135625,
+   "my_rank": 5,
+   "submission_count": 92,
+   "participating_team_count": 23
+  },
+  {
+   "task_no": 49,
+   "tid": "s2t1op049",
+   "operator": "ernie45_rope_fused",
+   "current_best_speedup": 21.18734375,
+   "current_leader_team_name": "c2flow",
+   "my_best_speedup": 8.9578125,
+   "my_rank": 8,
+   "submission_count": 86,
+   "participating_team_count": 21
+  },
+  {
+   "task_no": 50,
+   "tid": "s2t1op050",
+   "operator": "extend_attention",
+   "current_best_speedup": 10.72328125,
+   "current_leader_team_name": "c2flow",
+   "my_best_speedup": null,
+   "my_rank": null,
+   "submission_count": 292,
+   "participating_team_count": 29
+  },
+  {
+   "task_no": 51,
+   "tid": "s2t1op051",
+   "operator": "fla_layernorm_gated",
+   "current_best_speedup": 60.7192,
+   "current_leader_team_name": "SoulCoder",
+   "my_best_speedup": 60.7192,
+   "my_rank": 1,
+   "submission_count": 125,
+   "participating_team_count": 13
+  },
+  {
+   "task_no": 52,
+   "tid": "s2t1op052",
+   "operator": "fused_dual_residual_rmsnorm",
+   "current_best_speedup": 5.63800833,
+   "current_leader_team_name": "c2flow",
+   "my_best_speedup": null,
+   "my_rank": null,
+   "submission_count": 138,
+   "participating_team_count": 25
+  },
+  {
+   "task_no": 53,
+   "tid": "s2t1op053",
+   "operator": "fused_gdn_gating",
+   "current_best_speedup": 288.426175,
+   "current_leader_team_name": "Nectar",
+   "my_best_speedup": 3.03205,
+   "my_rank": 13,
+   "submission_count": 92,
+   "participating_team_count": 18
+  },
+  {
+   "task_no": 54,
+   "tid": "s2t1op054",
+   "operator": "fused_norm_rope_stacked",
+   "current_best_speedup": 10.80896875,
+   "current_leader_team_name": "EvokeAgent",
+   "my_best_speedup": null,
+   "my_rank": null,
+   "submission_count": 111,
+   "participating_team_count": 21
+  },
+  {
+   "task_no": 55,
+   "tid": "s2t1op055",
+   "operator": "hc_head",
+   "current_best_speedup": 6.49028125,
+   "current_leader_team_name": "c2flow",
+   "my_best_speedup": null,
+   "my_rank": null,
+   "submission_count": 78,
+   "participating_team_count": 21
+  },
+  {
+   "task_no": 56,
+   "tid": "s2t1op056",
+   "operator": "l2norm",
+   "current_best_speedup": 72.30680208,
+   "current_leader_team_name": "sikadeer",
+   "my_best_speedup": 3.20691667,
+   "my_rank": 10,
+   "submission_count": 73,
+   "participating_team_count": 14
+  },
+  {
+   "task_no": 57,
+   "tid": "s2t1op057",
+   "operator": "log_scaling_tau",
+   "current_best_speedup": 3.27190625,
+   "current_leader_team_name": "EvokeAgent",
+   "my_best_speedup": 2.50278125,
+   "my_rank": 7,
+   "submission_count": 114,
+   "participating_team_count": 15
+  },
+  {
+   "task_no": 58,
+   "tid": "s2t1op058",
+   "operator": "w8a8_block_int8_matmul",
+   "current_best_speedup": 616.79514167,
+   "current_leader_team_name": "EvokeAgent",
+   "my_best_speedup": 261.84538333,
+   "my_rank": 4,
+   "submission_count": 166,
+   "participating_team_count": 21
+  }
+ ],
+ "leaderboards": {
+  "42": {
+   "operator": "act_and_mul",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "gonzhanshishenmeganjue",
+     "is_mine": false,
+     "avg": 431.4843,
+     "chips": {
+      "tianshu": 5.9672,
+      "muxi": 2.9252,
+      "enflame": 3427.0242,
+      "haiguang": 5.4024,
+      "kunlunxin": 0.8148,
+      "huawei": 1.728,
+      "card_a": 4.4518,
+      "card_b": 3.5608
+     }
+    },
+    {
+     "rank": 2,
+     "team": "KernelX",
+     "is_mine": false,
+     "avg": 4.503975,
+     "chips": {
+      "tianshu": 6.9732,
+      "muxi": 2.926,
+      "enflame": 9.3332,
+      "haiguang": 5.2098,
+      "kunlunxin": 0.9928,
+      "huawei": 2.502,
+      "card_a": 4.4922,
+      "card_b": 3.6026
+     }
+    },
+    {
+     "rank": 3,
+     "team": "aiaijiaolvle",
+     "is_mine": false,
+     "avg": 4.5039,
+     "chips": {
+      "tianshu": 7.0092,
+      "muxi": 3.1732,
+      "enflame": 9.3932,
+      "haiguang": 5.378,
+      "kunlunxin": 0.9042,
+      "huawei": 2.139,
+      "card_a": 4.4522,
+      "card_b": 3.5822
+     }
+    },
+    {
+     "rank": 4,
+     "team": "EvokeAgent",
+     "is_mine": false,
+     "avg": 4.039675,
+     "chips": {
+      "tianshu": 7.1126,
+      "muxi": 2.936,
+      "enflame": 4.908,
+      "haiguang": 5.5302,
+      "kunlunxin": 1.028,
+      "huawei": 2.671,
+      "card_a": 4.3986,
+      "card_b": 3.733
+     }
+    },
+    {
+     "rank": 5,
+     "team": "RSI",
+     "is_mine": false,
+     "avg": 3.8866,
+     "chips": {
+      "tianshu": 6.8772,
+      "muxi": 3.0564,
+      "enflame": 4.3488,
+      "haiguang": 5.316,
+      "kunlunxin": 0.9708,
+      "huawei": 2.49,
+      "card_a": 4.4528,
+      "card_b": 3.5808
+     }
+    },
+    {
+     "rank": 6,
+     "team": "sitraliqui",
+     "is_mine": false,
+     "avg": 3.820775,
+     "chips": {
+      "tianshu": 7.1032,
+      "muxi": 2.9518,
+      "enflame": 4.0102,
+      "haiguang": 5.136,
+      "kunlunxin": 0.993,
+      "huawei": 2.1964,
+      "card_a": 4.4988,
+      "card_b": 3.6768
+     }
+    },
+    {
+     "rank": 7,
+     "team": "Nectar",
+     "is_mine": false,
+     "avg": 3.62955,
+     "chips": {
+      "tianshu": 6.3932,
+      "muxi": 2.9764,
+      "enflame": 3.769,
+      "haiguang": 5.333,
+      "kunlunxin": 0.8226,
+      "huawei": 1.8784,
+      "card_a": 4.2074,
+      "card_b": 3.6564
+     }
+    },
+    {
+     "rank": 8,
+     "team": "Warmhearted",
+     "is_mine": false,
+     "avg": 3.53575,
+     "chips": {
+      "tianshu": 7.0968,
+      "muxi": 2.9248,
+      "enflame": 1.9976,
+      "haiguang": 5.3428,
+      "kunlunxin": 0.9934,
+      "huawei": 2.0664,
+      "card_a": 4.1038,
+      "card_b": 3.7604
+     }
+    },
+    {
+     "rank": 9,
+     "team": "FrostStar",
+     "is_mine": false,
+     "avg": 3.4307,
+     "chips": {
+      "tianshu": 6.1248,
+      "muxi": 2.9204,
+      "enflame": 3.367,
+      "haiguang": 5.078,
+      "kunlunxin": 0.8146,
+      "huawei": 1.1952,
+      "card_a": 4.3316,
+      "card_b": 3.614
+     }
+    },
+    {
+     "rank": 10,
+     "team": "Fields",
+     "is_mine": false,
+     "avg": 3.391775,
+     "chips": {
+      "tianshu": 5.5652,
+      "muxi": 3.0308,
+      "enflame": 2.5676,
+      "haiguang": 5.0472,
+      "kunlunxin": 0.9498,
+      "huawei": 2.101,
+      "card_a": 4.308,
+      "card_b": 3.5646
+     }
+    },
+    {
+     "rank": 11,
+     "team": "NekoHUB",
+     "is_mine": false,
+     "avg": 3.3437,
+     "chips": {
+      "tianshu": 5.9546,
+      "muxi": 2.9432,
+      "enflame": 2.8308,
+      "haiguang": 5.2256,
+      "kunlunxin": 0.4848,
+      "huawei": 1.536,
+      "card_a": 4.2298,
+      "card_b": 3.5448
+     }
+    },
+    {
+     "rank": 12,
+     "team": "dadadaguai",
+     "is_mine": false,
+     "avg": 3.309875,
+     "chips": {
+      "tianshu": 6.2032,
+      "muxi": 2.8006,
+      "enflame": 3.2412,
+      "haiguang": 4.9726,
+      "kunlunxin": 0.4854,
+      "huawei": 0.827,
+      "card_a": 4.3018,
+      "card_b": 3.6472
+     }
+    },
+    {
+     "rank": 13,
+     "team": "SoulCoder",
+     "is_mine": true,
+     "avg": 3.25835,
+     "chips": {
+      "tianshu": 6.1856,
+      "muxi": 2.2642,
+      "enflame": 1.6996,
+      "haiguang": 5.1182,
+      "kunlunxin": 0.4482,
+      "huawei": 2.333,
+      "card_a": 4.597,
+      "card_b": 3.421
+     }
+    },
+    {
+     "rank": 14,
+     "team": "sikadeer",
+     "is_mine": false,
+     "avg": 3.20495,
+     "chips": {
+      "tianshu": 6.2884,
+      "muxi": 2.9428,
+      "enflame": 0.9814,
+      "haiguang": 5.0594,
+      "kunlunxin": 0.8128,
+      "huawei": 1.3894,
+      "card_a": 4.5518,
+      "card_b": 3.6136
+     }
+    },
+    {
+     "rank": 15,
+     "team": "c2flow",
+     "is_mine": false,
+     "avg": 3.194125,
+     "chips": {
+      "tianshu": 6.1764,
+      "muxi": 3.091,
+      "enflame": 0.987,
+      "haiguang": 5.2028,
+      "kunlunxin": 0.8108,
+      "huawei": 1.6064,
+      "card_a": 4.1208,
+      "card_b": 3.5578
+     }
+    },
+    {
+     "rank": 16,
+     "team": "YY-L",
+     "is_mine": false,
+     "avg": 3.159225,
+     "chips": {
+      "tianshu": 6.126,
+      "muxi": 2.7746,
+      "enflame": 1.0014,
+      "haiguang": 5.1762,
+      "kunlunxin": 0.2832,
+      "huawei": 1.9408,
+      "card_a": 4.4238,
+      "card_b": 3.5478
+     }
+    },
+    {
+     "rank": 17,
+     "team": "Weweawaeaw2132",
+     "is_mine": false,
+     "avg": 3.1533,
+     "chips": {
+      "tianshu": 5.1184,
+      "muxi": 2.9688,
+      "enflame": 1.2976,
+      "haiguang": 5.2788,
+      "kunlunxin": 0.9012,
+      "huawei": 2.3604,
+      "card_a": 3.8366,
+      "card_b": 3.4646
+     }
+    },
+    {
+     "rank": 18,
+     "team": "ImBLANK",
+     "is_mine": false,
+     "avg": 3.152175,
+     "chips": {
+      "tianshu": 6.0642,
+      "muxi": 2.8154,
+      "enflame": 1.2038,
+      "haiguang": 4.7672,
+      "kunlunxin": 0.2728,
+      "huawei": 2.57,
+      "card_a": 4.171,
+      "card_b": 3.353
+     }
+    },
+    {
+     "rank": 19,
+     "team": "1048576",
+     "is_mine": false,
+     "avg": 3.068975,
+     "chips": {
+      "tianshu": 5.8508,
+      "muxi": 2.8832,
+      "enflame": 0.9804,
+      "haiguang": 5.2186,
+      "kunlunxin": 0.2768,
+      "huawei": 1.4816,
+      "card_a": 4.2518,
+      "card_b": 3.6086
+     }
+    },
+    {
+     "rank": 20,
+     "team": "heke1228",
+     "is_mine": false,
+     "avg": 3.0516,
+     "chips": {
+      "tianshu": 6.7222,
+      "muxi": 2.6606,
+      "enflame": 0.6306,
+      "haiguang": 4.5204,
+      "kunlunxin": 0.276,
+      "huawei": 1.4834,
+      "card_a": 4.465,
+      "card_b": 3.6546
+     }
+    },
+    {
+     "rank": 21,
+     "team": "MakeYUNAGreatAgain",
+     "is_mine": false,
+     "avg": 2.743625,
+     "chips": {
+      "tianshu": 5.2634,
+      "muxi": 1.9728,
+      "enflame": 1.4284,
+      "haiguang": 4.0886,
+      "kunlunxin": 0.2792,
+      "huawei": 0.7216,
+      "card_a": 4.4572,
+      "card_b": 3.7378
+     }
+    },
+    {
+     "rank": 22,
+     "team": "ChipVoyager",
+     "is_mine": false,
+     "avg": 2.6423,
+     "chips": {
+      "tianshu": 5.709,
+      "muxi": 2.29,
+      "enflame": 0.5072,
+      "haiguang": 3.6252,
+      "kunlunxin": 0.3448,
+      "huawei": 1.4496,
+      "card_a": 4.4614,
+      "card_b": 2.7512
+     }
+    },
+    {
+     "rank": 23,
+     "team": "Monday",
+     "is_mine": false,
+     "avg": 1.624725,
+     "chips": {
+      "tianshu": 3.0224,
+      "muxi": 1.3688,
+      "enflame": 0.2824,
+      "haiguang": 2.2462,
+      "kunlunxin": 0.3124,
+      "huawei": 1.575,
+      "card_a": 2.1516,
+      "card_b": 2.039
+     }
+    }
+   ]
+  },
+  "43": {
+   "operator": "causal_conv1d_update",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "EvokeAgent",
+     "is_mine": false,
+     "avg": 8.47775,
+     "chips": {
+      "tianshu": 16.0305,
+      "muxi": 12.97,
+      "enflame": 3.205,
+      "haiguang": 15.3595,
+      "kunlunxin": 0.2165,
+      "huawei": 0.2025,
+      "card_a": 9.0545,
+      "card_b": 10.7835
+     }
+    },
+    {
+     "rank": 2,
+     "team": "Fields",
+     "is_mine": false,
+     "avg": 8.2375,
+     "chips": {
+      "tianshu": 13.9345,
+      "muxi": 13.0255,
+      "enflame": 1.293,
+      "haiguang": 15.886,
+      "kunlunxin": 0.101,
+      "huawei": 2.7375,
+      "card_a": 8.588,
+      "card_b": 10.3345
+     }
+    },
+    {
+     "rank": 3,
+     "team": "AttentionImOnly2YearsOld",
+     "is_mine": false,
+     "avg": 7.90325,
+     "chips": {
+      "tianshu": 15.4265,
+      "muxi": 10.902,
+      "enflame": 3.498,
+      "haiguang": 11.459,
+      "kunlunxin": 0.1075,
+      "huawei": 1.116,
+      "card_a": 9.3,
+      "card_b": 11.417
+     }
+    },
+    {
+     "rank": 4,
+     "team": "SoulCoder",
+     "is_mine": true,
+     "avg": 6.6005625,
+     "chips": {
+      "tianshu": 13.694,
+      "muxi": 7.0205,
+      "enflame": 0.476,
+      "haiguang": 10.887,
+      "kunlunxin": 1.589,
+      "huawei": 0.3545,
+      "card_a": 8.0275,
+      "card_b": 10.756
+     }
+    },
+    {
+     "rank": 5,
+     "team": "CialloTeam",
+     "is_mine": false,
+     "avg": 6.378,
+     "chips": {
+      "tianshu": 14.546,
+      "muxi": 10.0505,
+      "enflame": 0.725,
+      "haiguang": 6.2955,
+      "kunlunxin": 0.5835,
+      "huawei": 0.3185,
+      "card_a": 9.169,
+      "card_b": 9.336
+     }
+    }
+   ]
+  },
+  "44": {
+   "operator": "chain_speculative_sampling",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "c2flow",
+     "is_mine": false,
+     "avg": 77.954125,
+     "chips": {
+      "tianshu": 8.6308,
+      "muxi": 49.0194,
+      "enflame": 0.124,
+      "haiguang": 76.175,
+      "kunlunxin": 0.155,
+      "huawei": 14.0348,
+      "card_a": 347.1612,
+      "card_b": 128.3328
+     }
+    }
+   ]
+  },
+  "45": {
+   "operator": "chunk_scaled_dot_kkt",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "EvokeAgent",
+     "is_mine": false,
+     "avg": 19.7779375,
+     "chips": {
+      "tianshu": 22.9175,
+      "muxi": 24.573,
+      "enflame": 7.6055,
+      "haiguang": 39.804,
+      "kunlunxin": 2.6305,
+      "huawei": 8.6355,
+      "card_a": 33.947,
+      "card_b": 18.1105
+     }
+    },
+    {
+     "rank": 2,
+     "team": "c2flow",
+     "is_mine": false,
+     "avg": 19.6953125,
+     "chips": {
+      "tianshu": 22.3055,
+      "muxi": 22.139,
+      "enflame": 7.372,
+      "haiguang": 38.8235,
+      "kunlunxin": 2.7775,
+      "huawei": 8.555,
+      "card_a": 38.034,
+      "card_b": 17.556
+     }
+    },
+    {
+     "rank": 3,
+     "team": "GuanghuLab",
+     "is_mine": false,
+     "avg": 18.2956875,
+     "chips": {
+      "tianshu": 22.848,
+      "muxi": 22.9185,
+      "enflame": 6.456,
+      "haiguang": 32.7765,
+      "kunlunxin": 2.6375,
+      "huawei": 3.2175,
+      "card_a": 37.577,
+      "card_b": 17.9345
+     }
+    },
+    {
+     "rank": 4,
+     "team": "hbmu9306",
+     "is_mine": false,
+     "avg": 11.654875,
+     "chips": {
+      "tianshu": 7.1035,
+      "muxi": 15.506,
+      "enflame": 1.7625,
+      "haiguang": 28.156,
+      "kunlunxin": 1.157,
+      "huawei": 2.395,
+      "card_a": 31.155,
+      "card_b": 6.004
+     }
+    }
+   ]
+  },
+  "46": {
+   "operator": "chunked_embedding_lora_a",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "EvokeAgent",
+     "is_mine": false,
+     "avg": 28.0405625,
+     "chips": {
+      "tianshu": 32.445,
+      "muxi": 25.077,
+      "enflame": 4.1715,
+      "haiguang": 55.9655,
+      "kunlunxin": 2.624,
+      "huawei": 19.98,
+      "card_a": 47.3215,
+      "card_b": 36.74
+     }
+    },
+    {
+     "rank": 2,
+     "team": "c2flow",
+     "is_mine": false,
+     "avg": 24.413875,
+     "chips": {
+      "tianshu": 31.2755,
+      "muxi": 20.756,
+      "enflame": 5.2325,
+      "haiguang": 69.2305,
+      "kunlunxin": 1.1575,
+      "huawei": 9.9015,
+      "card_a": 39.0905,
+      "card_b": 18.667
+     }
+    },
+    {
+     "rank": 3,
+     "team": "GuanghuLab",
+     "is_mine": false,
+     "avg": 23.940875,
+     "chips": {
+      "tianshu": 31.2205,
+      "muxi": 18.9025,
+      "enflame": 2.654,
+      "haiguang": 61.4165,
+      "kunlunxin": 1.241,
+      "huawei": 2.275,
+      "card_a": 39.347,
+      "card_b": 34.4705
+     }
+    },
+    {
+     "rank": 4,
+     "team": "AttentionImOnly2YearsOld",
+     "is_mine": false,
+     "avg": 22.5266875,
+     "chips": {
+      "tianshu": 29.9005,
+      "muxi": 21.5455,
+      "enflame": 2.7005,
+      "haiguang": 61.9,
+      "kunlunxin": 0.1935,
+      "huawei": 6.2495,
+      "card_a": 39.114,
+      "card_b": 18.61
+     }
+    },
+    {
+     "rank": 5,
+     "team": "sparkteam",
+     "is_mine": false,
+     "avg": 17.6285625,
+     "chips": {
+      "tianshu": 26.462,
+      "muxi": 16.9425,
+      "enflame": 1.363,
+      "haiguang": 41.931,
+      "kunlunxin": 0.297,
+      "huawei": 4.8895,
+      "card_a": 32.0415,
+      "card_b": 17.102
+     }
+    },
+    {
+     "rank": 6,
+     "team": "SoulCoder",
+     "is_mine": true,
+     "avg": 14.1051875,
+     "chips": {
+      "tianshu": 26.7455,
+      "muxi": 6.844,
+      "enflame": 0.3685,
+      "haiguang": 29.462,
+      "kunlunxin": 0.2295,
+      "huawei": 2.116,
+      "card_a": 29.445,
+      "card_b": 17.631
+     }
+    }
+   ]
+  },
+  "47": {
+   "operator": "chunked_sgmv_expand",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "c2flow",
+     "is_mine": false,
+     "avg": 42.9844375,
+     "chips": {
+      "tianshu": 35.541,
+      "muxi": 35.788,
+      "enflame": 0.32,
+      "haiguang": 103.948,
+      "kunlunxin": 14.9475,
+      "huawei": 25.201,
+      "card_a": 87.688,
+      "card_b": 40.442
+     }
+    },
+    {
+     "rank": 2,
+     "team": "EvokeAgent",
+     "is_mine": false,
+     "avg": 40.6845625,
+     "chips": {
+      "tianshu": 31.752,
+      "muxi": 35.363,
+      "enflame": 26.2135,
+      "haiguang": 64.454,
+      "kunlunxin": 25.587,
+      "huawei": 27.1295,
+      "card_a": 73.662,
+      "card_b": 41.3155
+     }
+    },
+    {
+     "rank": 3,
+     "team": "SoulCoder",
+     "is_mine": true,
+     "avg": 25.9625625,
+     "chips": {
+      "tianshu": 29.5625,
+      "muxi": 24.549,
+      "enflame": 0.293,
+      "haiguang": 54.971,
+      "kunlunxin": 5.9585,
+      "huawei": 13.693,
+      "card_a": 50.972,
+      "card_b": 27.7015
+     }
+    }
+   ]
+  },
+  "48": {
+   "operator": "chunked_sgmv_shrink",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "c2flow",
+     "is_mine": false,
+     "avg": 26.944,
+     "chips": {
+      "tianshu": 19.54,
+      "muxi": 23.7055,
+      "enflame": 28.7925,
+      "haiguang": 49.113,
+      "kunlunxin": 8.1135,
+      "huawei": 17.9455,
+      "card_a": 36.514,
+      "card_b": 31.828
+     }
+    },
+    {
+     "rank": 2,
+     "team": "EvokeAgent",
+     "is_mine": false,
+     "avg": 26.7243125,
+     "chips": {
+      "tianshu": 17.243,
+      "muxi": 23.009,
+      "enflame": 14.939,
+      "haiguang": 60.304,
+      "kunlunxin": 7.156,
+      "huawei": 21.273,
+      "card_a": 51.4445,
+      "card_b": 18.426
+     }
+    },
+    {
+     "rank": 3,
+     "team": "KernelX",
+     "is_mine": false,
+     "avg": 23.743625,
+     "chips": {
+      "tianshu": 23.117,
+      "muxi": 23.8925,
+      "enflame": 2.1235,
+      "haiguang": 49.2305,
+      "kunlunxin": 4.971,
+      "huawei": 16.757,
+      "card_a": 37.3055,
+      "card_b": 32.552
+     }
+    },
+    {
+     "rank": 4,
+     "team": "RSI",
+     "is_mine": false,
+     "avg": 23.4504375,
+     "chips": {
+      "tianshu": 22.047,
+      "muxi": 23.699,
+      "enflame": 2.194,
+      "haiguang": 48.4715,
+      "kunlunxin": 5.3135,
+      "huawei": 16.844,
+      "card_a": 36.95,
+      "card_b": 32.0845
+     }
+    },
+    {
+     "rank": 5,
+     "team": "SoulCoder",
+     "is_mine": true,
+     "avg": 4.8135625,
+     "chips": {
+      "tianshu": 3.828,
+      "muxi": 5.3525,
+      "enflame": 0.897,
+      "haiguang": 6.306,
+      "kunlunxin": 2.424,
+      "huawei": 5.893,
+      "card_a": 7.008,
+      "card_b": 6.8
+     }
+    }
+   ]
+  },
+  "49": {
+   "operator": "ernie45_rope_fused",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "c2flow",
+     "is_mine": false,
+     "avg": 21.18734375,
+     "chips": {
+      "tianshu": 23.419,
+      "muxi": 12.2575,
+      "enflame": 38.77975,
+      "haiguang": 37.68275,
+      "kunlunxin": 1.0545,
+      "huawei": 12.40325,
+      "card_a": 28.998,
+      "card_b": 14.904
+     }
+    },
+    {
+     "rank": 2,
+     "team": "GuanghuLab",
+     "is_mine": false,
+     "avg": 17.3585625,
+     "chips": {
+      "tianshu": 24.59325,
+      "muxi": 12.41075,
+      "enflame": 0.8145,
+      "haiguang": 52.71675,
+      "kunlunxin": 0.8135,
+      "huawei": 4.99675,
+      "card_a": 27.6825,
+      "card_b": 14.8405
+     }
+    },
+    {
+     "rank": 3,
+     "team": "KernelX",
+     "is_mine": false,
+     "avg": 17.0628125,
+     "chips": {
+      "tianshu": 24.106,
+      "muxi": 11.29525,
+      "enflame": 1.7965,
+      "haiguang": 38.507,
+      "kunlunxin": 1.073,
+      "huawei": 11.697,
+      "card_a": 31.445,
+      "card_b": 16.58275
+     }
+    },
+    {
+     "rank": 4,
+     "team": "RSI",
+     "is_mine": false,
+     "avg": 16.98028125,
+     "chips": {
+      "tianshu": 23.89275,
+      "muxi": 11.31525,
+      "enflame": 1.475,
+      "haiguang": 39.55925,
+      "kunlunxin": 1.06525,
+      "huawei": 12.5005,
+      "card_a": 29.50025,
+      "card_b": 16.534
+     }
+    },
+    {
+     "rank": 5,
+     "team": "EvokeAgent",
+     "is_mine": false,
+     "avg": 14.66646875,
+     "chips": {
+      "tianshu": 23.97525,
+      "muxi": 11.48875,
+      "enflame": 2.4115,
+      "haiguang": 40.37225,
+      "kunlunxin": 1.52975,
+      "huawei": 5.91575,
+      "card_a": 21.43825,
+      "card_b": 10.20025
+     }
+    },
+    {
+     "rank": 6,
+     "team": "ChipVoyager",
+     "is_mine": false,
+     "avg": 10.5796875,
+     "chips": {
+      "tianshu": 12.616,
+      "muxi": 6.92225,
+      "enflame": 1.54375,
+      "haiguang": 26.7505,
+      "kunlunxin": 0.833,
+      "huawei": 1.2345,
+      "card_a": 22.736,
+      "card_b": 12.0015
+     }
+    },
+    {
+     "rank": 7,
+     "team": "AttentionImOnly2YearsOld",
+     "is_mine": false,
+     "avg": 10.06390625,
+     "chips": {
+      "tianshu": 14.425,
+      "muxi": 8.26625,
+      "enflame": 3.00125,
+      "haiguang": 21.91925,
+      "kunlunxin": 1.13175,
+      "huawei": 4.5575,
+      "card_a": 17.60375,
+      "card_b": 9.6065
+     }
+    },
+    {
+     "rank": 8,
+     "team": "SoulCoder",
+     "is_mine": true,
+     "avg": 8.9578125,
+     "chips": {
+      "tianshu": 15.65825,
+      "muxi": 8.9975,
+      "enflame": 0.567,
+      "haiguang": 10.482,
+      "kunlunxin": 0.66475,
+      "huawei": 2.4565,
+      "card_a": 22.86775,
+      "card_b": 9.96875
+     }
+    }
+   ]
+  },
+  "50": {
+   "operator": "extend_attention",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "c2flow",
+     "is_mine": false,
+     "avg": 10.72328125,
+     "chips": {
+      "tianshu": 7.45125,
+      "muxi": 1.70325,
+      "enflame": 0.72925,
+      "haiguang": 22.04875,
+      "kunlunxin": 0.132,
+      "huawei": 8.7085,
+      "card_a": 38.97925,
+      "card_b": 6.034
+     }
+    }
+   ]
+  },
+  "51": {
+   "operator": "fla_layernorm_gated",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "SoulCoder",
+     "is_mine": true,
+     "avg": 60.7192,
+     "chips": {
+      "tianshu": 11.3126,
+      "muxi": 4.5796,
+      "enflame": 442.8042,
+      "haiguang": 7.9608,
+      "kunlunxin": 0.9672,
+      "huawei": 2.5348,
+      "card_a": 8.4304,
+      "card_b": 7.164
+     }
+    },
+    {
+     "rank": 2,
+     "team": "RSI",
+     "is_mine": false,
+     "avg": 10.954625,
+     "chips": {
+      "tianshu": 10.6328,
+      "muxi": 6.2722,
+      "enflame": 41.6014,
+      "haiguang": 9.8494,
+      "kunlunxin": 1.0304,
+      "huawei": 2.5182,
+      "card_a": 8.3162,
+      "card_b": 7.4164
+     }
+    },
+    {
+     "rank": 3,
+     "team": "EvokeAgent",
+     "is_mine": false,
+     "avg": 6.726875,
+     "chips": {
+      "tianshu": 12.7204,
+      "muxi": 5.5738,
+      "enflame": 5.6042,
+      "haiguang": 9.6734,
+      "kunlunxin": 1.216,
+      "huawei": 3.2332,
+      "card_a": 8.4394,
+      "card_b": 7.3546
+     }
+    },
+    {
+     "rank": 4,
+     "team": "c2flow",
+     "is_mine": false,
+     "avg": 6.668225,
+     "chips": {
+      "tianshu": 11.8274,
+      "muxi": 5.705,
+      "enflame": 5.2112,
+      "haiguang": 9.8906,
+      "kunlunxin": 1.0332,
+      "huawei": 4.1276,
+      "card_a": 8.1136,
+      "card_b": 7.4372
+     }
+    },
+    {
+     "rank": 5,
+     "team": "HAiWORLD",
+     "is_mine": false,
+     "avg": 6.613575,
+     "chips": {
+      "tianshu": 12.5864,
+      "muxi": 5.4338,
+      "enflame": 5.4028,
+      "haiguang": 9.722,
+      "kunlunxin": 0.9942,
+      "huawei": 2.7984,
+      "card_a": 8.4664,
+      "card_b": 7.5046
+     }
+    },
+    {
+     "rank": 6,
+     "team": "Nectar",
+     "is_mine": false,
+     "avg": 6.272175,
+     "chips": {
+      "tianshu": 9.9258,
+      "muxi": 6.4826,
+      "enflame": 4.5752,
+      "haiguang": 9.7924,
+      "kunlunxin": 0.9434,
+      "huawei": 2.719,
+      "card_a": 8.4632,
+      "card_b": 7.2758
+     }
+    },
+    {
+     "rank": 7,
+     "team": "sikadeer",
+     "is_mine": false,
+     "avg": 6.24135,
+     "chips": {
+      "tianshu": 10.7456,
+      "muxi": 6.6562,
+      "enflame": 3.109,
+      "haiguang": 9.7498,
+      "kunlunxin": 0.9702,
+      "huawei": 2.7202,
+      "card_a": 8.5264,
+      "card_b": 7.4534
+     }
+    },
+    {
+     "rank": 8,
+     "team": "Warmhearted",
+     "is_mine": false,
+     "avg": 5.944175,
+     "chips": {
+      "tianshu": 12.4758,
+      "muxi": 5.0278,
+      "enflame": 1.4742,
+      "haiguang": 9.1508,
+      "kunlunxin": 0.9782,
+      "huawei": 2.1462,
+      "card_a": 8.6856,
+      "card_b": 7.6148
+     }
+    },
+    {
+     "rank": 9,
+     "team": "ImBLANK",
+     "is_mine": false,
+     "avg": 5.195775,
+     "chips": {
+      "tianshu": 8.7278,
+      "muxi": 4.6502,
+      "enflame": 2.3968,
+      "haiguang": 5.727,
+      "kunlunxin": 0.993,
+      "huawei": 3.3448,
+      "card_a": 8.4412,
+      "card_b": 7.2854
+     }
+    },
+    {
+     "rank": 10,
+     "team": "ChipVoyager",
+     "is_mine": false,
+     "avg": 4.8452,
+     "chips": {
+      "tianshu": 10.9356,
+      "muxi": 5.1456,
+      "enflame": 0.4388,
+      "haiguang": 7.2836,
+      "kunlunxin": 0.3254,
+      "huawei": 0.2464,
+      "card_a": 7.3352,
+      "card_b": 7.051
+     }
+    },
+    {
+     "rank": 11,
+     "team": "Weweawaeaw2132",
+     "is_mine": false,
+     "avg": 4.69955,
+     "chips": {
+      "tianshu": 8.7276,
+      "muxi": 4.0852,
+      "enflame": 1.2852,
+      "haiguang": 7.5096,
+      "kunlunxin": 0.6,
+      "huawei": 2.7558,
+      "card_a": 6.4718,
+      "card_b": 6.1612
+     }
+    },
+    {
+     "rank": 12,
+     "team": "MakeYUNAGreatAgain",
+     "is_mine": false,
+     "avg": 4.409775,
+     "chips": {
+      "tianshu": 9.8548,
+      "muxi": 4.0588,
+      "enflame": 0.9688,
+      "haiguang": 7.0594,
+      "kunlunxin": 0.5806,
+      "huawei": 1.9254,
+      "card_a": 4.4626,
+      "card_b": 6.3678
+     }
+    }
+   ]
+  },
+  "52": {
+   "operator": "fused_dual_residual_rmsnorm",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "c2flow",
+     "is_mine": false,
+     "avg": 5.63800833,
+     "chips": {
+      "tianshu": 11.15893333,
+      "muxi": 3.5834,
+      "enflame": 0.94253333,
+      "haiguang": 10.62653333,
+      "kunlunxin": 0.9278,
+      "huawei": 3.03513333,
+      "card_a": 7.3492,
+      "card_b": 7.48053333
+     }
+    }
+   ]
+  },
+  "53": {
+   "operator": "fused_gdn_gating",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "Nectar",
+     "is_mine": false,
+     "avg": 288.426175,
+     "chips": {
+      "tianshu": 7.0392,
+      "muxi": 3.2708,
+      "enflame": 2280.6832,
+      "haiguang": 4.688,
+      "kunlunxin": 0.835,
+      "huawei": 1.5688,
+      "card_a": 4.5006,
+      "card_b": 4.8238
+     }
+    },
+    {
+     "rank": 2,
+     "team": "EvokeAgent",
+     "is_mine": false,
+     "avg": 4.3306,
+     "chips": {
+      "tianshu": 7.5466,
+      "muxi": 3.4416,
+      "enflame": 7.842,
+      "haiguang": 4.917,
+      "kunlunxin": 0.6796,
+      "huawei": 1.3274,
+      "card_a": 4.1458,
+      "card_b": 4.7448
+     }
+    },
+    {
+     "rank": 3,
+     "team": "KernelX",
+     "is_mine": false,
+     "avg": 3.86415,
+     "chips": {
+      "tianshu": 6.7182,
+      "muxi": 3.5196,
+      "enflame": 4.7858,
+      "haiguang": 4.5474,
+      "kunlunxin": 0.6788,
+      "huawei": 1.3654,
+      "card_a": 4.4466,
+      "card_b": 4.8514
+     }
+    },
+    {
+     "rank": 4,
+     "team": "RSI",
+     "is_mine": false,
+     "avg": 3.667025,
+     "chips": {
+      "tianshu": 6.67,
+      "muxi": 3.3796,
+      "enflame": 3.394,
+      "haiguang": 4.852,
+      "kunlunxin": 0.686,
+      "huawei": 1.4522,
+      "card_a": 4.1078,
+      "card_b": 4.7946
+     }
+    },
+    {
+     "rank": 5,
+     "team": "AttentionImOnly2YearsOld",
+     "is_mine": false,
+     "avg": 3.664275,
+     "chips": {
+      "tianshu": 6.1532,
+      "muxi": 3.5206,
+      "enflame": 3.5272,
+      "haiguang": 4.5502,
+      "kunlunxin": 0.6122,
+      "huawei": 1.9544,
+      "card_a": 4.2246,
+      "card_b": 4.7718
+     }
+    },
+    {
+     "rank": 6,
+     "team": "MiniMind",
+     "is_mine": false,
+     "avg": 3.6071,
+     "chips": {
+      "tianshu": 7.1446,
+      "muxi": 3.3872,
+      "enflame": 2.0642,
+      "haiguang": 4.6424,
+      "kunlunxin": 0.8458,
+      "huawei": 1.5212,
+      "card_a": 4.5054,
+      "card_b": 4.746
+     }
+    },
+    {
+     "rank": 7,
+     "team": "Warmhearted",
+     "is_mine": false,
+     "avg": 3.579675,
+     "chips": {
+      "tianshu": 6.2862,
+      "muxi": 3.4998,
+      "enflame": 2.8836,
+      "haiguang": 4.6576,
+      "kunlunxin": 0.6562,
+      "huawei": 1.536,
+      "card_a": 4.3018,
+      "card_b": 4.8162
+     }
+    },
+    {
+     "rank": 8,
+     "team": "HAiWORLD",
+     "is_mine": false,
+     "avg": 3.395525,
+     "chips": {
+      "tianshu": 6.592,
+      "muxi": 3.5428,
+      "enflame": 0.4148,
+      "haiguang": 4.7364,
+      "kunlunxin": 0.847,
+      "huawei": 1.7466,
+      "card_a": 4.3708,
+      "card_b": 4.9138
+     }
+    },
+    {
+     "rank": 9,
+     "team": "sikadeer",
+     "is_mine": false,
+     "avg": 3.368775,
+     "chips": {
+      "tianshu": 7.057,
+      "muxi": 3.3352,
+      "enflame": 0.1626,
+      "haiguang": 4.7842,
+      "kunlunxin": 0.8336,
+      "huawei": 1.6,
+      "card_a": 4.3308,
+      "card_b": 4.8468
+     }
+    },
+    {
+     "rank": 10,
+     "team": "ChipVoyager",
+     "is_mine": false,
+     "avg": 3.3555,
+     "chips": {
+      "tianshu": 6.9188,
+      "muxi": 3.4866,
+      "enflame": 0.5722,
+      "haiguang": 4.3766,
+      "kunlunxin": 0.647,
+      "huawei": 1.2084,
+      "card_a": 4.5976,
+      "card_b": 5.0368
+     }
+    },
+    {
+     "rank": 11,
+     "team": "BxRKingsQC",
+     "is_mine": false,
+     "avg": 3.34155,
+     "chips": {
+      "tianshu": 6.8638,
+      "muxi": 3.4484,
+      "enflame": 0.34,
+      "haiguang": 4.522,
+      "kunlunxin": 0.831,
+      "huawei": 1.7406,
+      "card_a": 4.1376,
+      "card_b": 4.849
+     }
+    },
+    {
+     "rank": 12,
+     "team": "Weweawaeaw2132",
+     "is_mine": false,
+     "avg": 3.3106,
+     "chips": {
+      "tianshu": 6.1882,
+      "muxi": 3.0376,
+      "enflame": 1.499,
+      "haiguang": 4.2544,
+      "kunlunxin": 0.6478,
+      "huawei": 1.6178,
+      "card_a": 4.3678,
+      "card_b": 4.8722
+     }
+    },
+    {
+     "rank": 13,
+     "team": "SoulCoder",
+     "is_mine": true,
+     "avg": 3.03205,
+     "chips": {
+      "tianshu": 4.8042,
+      "muxi": 2.7994,
+      "enflame": 1.6632,
+      "haiguang": 4.3748,
+      "kunlunxin": 0.7158,
+      "huawei": 1.6094,
+      "card_a": 4.0408,
+      "card_b": 4.2488
+     }
+    },
+    {
+     "rank": 14,
+     "team": "MakeYUNAGreatAgain",
+     "is_mine": false,
+     "avg": 2.569575,
+     "chips": {
+      "tianshu": 4.015,
+      "muxi": 2.4872,
+      "enflame": 1.463,
+      "haiguang": 3.2996,
+      "kunlunxin": 0.141,
+      "huawei": 1.126,
+      "card_a": 3.808,
+      "card_b": 4.2168
+     }
+    }
+   ]
+  },
+  "54": {
+   "operator": "fused_norm_rope_stacked",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "EvokeAgent",
+     "is_mine": false,
+     "avg": 10.80896875,
+     "chips": {
+      "tianshu": 16.39175,
+      "muxi": 11.9575,
+      "enflame": 3.229,
+      "haiguang": 21.30375,
+      "kunlunxin": 1.0795,
+      "huawei": 7.202,
+      "card_a": 14.54475,
+      "card_b": 10.7635
+     }
+    },
+    {
+     "rank": 2,
+     "team": "c2flow",
+     "is_mine": false,
+     "avg": 8.76471875,
+     "chips": {
+      "tianshu": 15.56125,
+      "muxi": 8.905,
+      "enflame": 0.369,
+      "haiguang": 18.536,
+      "kunlunxin": 0.32875,
+      "huawei": 3.6875,
+      "card_a": 12.563,
+      "card_b": 10.16725
+     }
+    }
+   ]
+  },
+  "55": {
+   "operator": "hc_head",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "c2flow",
+     "is_mine": false,
+     "avg": 6.49028125,
+     "chips": {
+      "tianshu": 6.1565,
+      "muxi": 4.39825,
+      "enflame": 1.75675,
+      "haiguang": 8.41475,
+      "kunlunxin": 0.61575,
+      "huawei": 2.96725,
+      "card_a": 6.94325,
+      "card_b": 20.66975
+     }
+    },
+    {
+     "rank": 2,
+     "team": "你这个token跑得过我吗",
+     "is_mine": false,
+     "avg": 6.3633125,
+     "chips": {
+      "tianshu": 6.00175,
+      "muxi": 4.37725,
+      "enflame": 2.157,
+      "haiguang": 7.4785,
+      "kunlunxin": 0.51675,
+      "huawei": 3.022,
+      "card_a": 6.8195,
+      "card_b": 20.53375
+     }
+    },
+    {
+     "rank": 3,
+     "team": "EvokeAgent",
+     "is_mine": false,
+     "avg": 5.87278125,
+     "chips": {
+      "tianshu": 5.3635,
+      "muxi": 3.5295,
+      "enflame": 0.9225,
+      "haiguang": 8.15125,
+      "kunlunxin": 0.64925,
+      "huawei": 4.11275,
+      "card_a": 4.22875,
+      "card_b": 20.02475
+     }
+    }
+   ]
+  },
+  "56": {
+   "operator": "l2norm",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "sikadeer",
+     "is_mine": false,
+     "avg": 72.30680208,
+     "chips": {
+      "tianshu": 8.19191667,
+      "muxi": 3.12633333,
+      "enflame": 551.40008333,
+      "haiguang": 5.08291667,
+      "kunlunxin": 0.8645,
+      "huawei": 1.32208333,
+      "card_a": 3.94991667,
+      "card_b": 4.51666667
+     }
+    },
+    {
+     "rank": 2,
+     "team": "Warmhearted",
+     "is_mine": false,
+     "avg": 4.2590625,
+     "chips": {
+      "tianshu": 7.77691667,
+      "muxi": 3.05025,
+      "enflame": 7.31416667,
+      "haiguang": 5.63425,
+      "kunlunxin": 0.68483333,
+      "huawei": 1.54475,
+      "card_a": 3.73166667,
+      "card_b": 4.33566667
+     }
+    },
+    {
+     "rank": 3,
+     "team": "EvokeAgent",
+     "is_mine": false,
+     "avg": 4.06442708,
+     "chips": {
+      "tianshu": 8.96525,
+      "muxi": 3.05258333,
+      "enflame": 3.52233333,
+      "haiguang": 5.30883333,
+      "kunlunxin": 1.09491667,
+      "huawei": 2.2575,
+      "card_a": 3.91758333,
+      "card_b": 4.39641667
+     }
+    },
+    {
+     "rank": 4,
+     "team": "Nectar",
+     "is_mine": false,
+     "avg": 3.86364583,
+     "chips": {
+      "tianshu": 8.53275,
+      "muxi": 3.20233333,
+      "enflame": 2.88025,
+      "haiguang": 5.46291667,
+      "kunlunxin": 0.9675,
+      "huawei": 1.41266667,
+      "card_a": 3.90308333,
+      "card_b": 4.54766667
+     }
+    },
+    {
+     "rank": 5,
+     "team": "KernelX",
+     "is_mine": false,
+     "avg": 3.65922917,
+     "chips": {
+      "tianshu": 7.85308333,
+      "muxi": 3.14108333,
+      "enflame": 1.988,
+      "haiguang": 5.25441667,
+      "kunlunxin": 1.0175,
+      "huawei": 1.6385,
+      "card_a": 3.85125,
+      "card_b": 4.53
+     }
+    },
+    {
+     "rank": 6,
+     "team": "c2flow",
+     "is_mine": false,
+     "avg": 3.45694792,
+     "chips": {
+      "tianshu": 6.94975,
+      "muxi": 2.665,
+      "enflame": 3.10791667,
+      "haiguang": 4.52558333,
+      "kunlunxin": 0.56841667,
+      "huawei": 1.82616667,
+      "card_a": 3.747,
+      "card_b": 4.26575
+     }
+    },
+    {
+     "rank": 7,
+     "team": "HAiWORLD",
+     "is_mine": false,
+     "avg": 3.39236458,
+     "chips": {
+      "tianshu": 7.35591667,
+      "muxi": 3.44575,
+      "enflame": 1.33841667,
+      "haiguang": 4.59366667,
+      "kunlunxin": 0.578,
+      "huawei": 1.67983333,
+      "card_a": 3.68333333,
+      "card_b": 4.464
+     }
+    },
+    {
+     "rank": 8,
+     "team": "betterthanmythos",
+     "is_mine": false,
+     "avg": 3.39103125,
+     "chips": {
+      "tianshu": 7.36458333,
+      "muxi": 3.05775,
+      "enflame": 2.04858333,
+      "haiguang": 4.4155,
+      "kunlunxin": 0.58208333,
+      "huawei": 1.48766667,
+      "card_a": 3.69066667,
+      "card_b": 4.48141667
+     }
+    },
+    {
+     "rank": 9,
+     "team": "BxRKingsQC",
+     "is_mine": false,
+     "avg": 3.24190625,
+     "chips": {
+      "tianshu": 6.81716667,
+      "muxi": 2.70433333,
+      "enflame": 1.23441667,
+      "haiguang": 4.60575,
+      "kunlunxin": 0.579,
+      "huawei": 1.75158333,
+      "card_a": 3.9035,
+      "card_b": 4.3395
+     }
+    },
+    {
+     "rank": 10,
+     "team": "SoulCoder",
+     "is_mine": true,
+     "avg": 3.20691667,
+     "chips": {
+      "tianshu": 6.68241667,
+      "muxi": 2.59433333,
+      "enflame": 1.213,
+      "haiguang": 4.62766667,
+      "kunlunxin": 1.07966667,
+      "huawei": 1.53991667,
+      "card_a": 3.65333333,
+      "card_b": 4.265
+     }
+    },
+    {
+     "rank": 11,
+     "team": "AttentionImOnly2YearsOld",
+     "is_mine": false,
+     "avg": 3.00519792,
+     "chips": {
+      "tianshu": 6.75391667,
+      "muxi": 2.67291667,
+      "enflame": 0.34791667,
+      "haiguang": 4.44741667,
+      "kunlunxin": 0.47025,
+      "huawei": 1.09191667,
+      "card_a": 3.797,
+      "card_b": 4.46025
+     }
+    },
+    {
+     "rank": 12,
+     "team": "Weweawaeaw2132",
+     "is_mine": false,
+     "avg": 2.9806875,
+     "chips": {
+      "tianshu": 6.22616667,
+      "muxi": 2.45083333,
+      "enflame": 1.1225,
+      "haiguang": 4.4635,
+      "kunlunxin": 0.57516667,
+      "huawei": 1.39416667,
+      "card_a": 3.5605,
+      "card_b": 4.05266667
+     }
+    },
+    {
+     "rank": 13,
+     "team": "MakeYUNAGreatAgain",
+     "is_mine": false,
+     "avg": 2.91852083,
+     "chips": {
+      "tianshu": 6.80733333,
+      "muxi": 2.63216667,
+      "enflame": 0.70525,
+      "haiguang": 3.93358333,
+      "kunlunxin": 0.61525,
+      "huawei": 1.07091667,
+      "card_a": 3.5985,
+      "card_b": 3.98516667
+     }
+    }
+   ]
+  },
+  "57": {
+   "operator": "log_scaling_tau",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "EvokeAgent",
+     "is_mine": false,
+     "avg": 3.27190625,
+     "chips": {
+      "tianshu": 4.13325,
+      "muxi": 3.03,
+      "enflame": 3.10125,
+      "haiguang": 5.2855,
+      "kunlunxin": 1.058,
+      "huawei": 3.65025,
+      "card_a": 3.3035,
+      "card_b": 2.6135
+     }
+    },
+    {
+     "rank": 2,
+     "team": "Nectar",
+     "is_mine": false,
+     "avg": 2.77,
+     "chips": {
+      "tianshu": 4.0415,
+      "muxi": 2.7015,
+      "enflame": 2.8435,
+      "haiguang": 5.0825,
+      "kunlunxin": 0.53875,
+      "huawei": 0.93175,
+      "card_a": 3.333,
+      "card_b": 2.6875
+     }
+    },
+    {
+     "rank": 3,
+     "team": "c2flow",
+     "is_mine": false,
+     "avg": 2.74684375,
+     "chips": {
+      "tianshu": 3.60375,
+      "muxi": 2.96425,
+      "enflame": 2.80125,
+      "haiguang": 5.019,
+      "kunlunxin": 0.518,
+      "huawei": 1.117,
+      "card_a": 3.326,
+      "card_b": 2.6255
+     }
+    },
+    {
+     "rank": 4,
+     "team": "Warmhearted",
+     "is_mine": false,
+     "avg": 2.62015625,
+     "chips": {
+      "tianshu": 3.677,
+      "muxi": 3.5205,
+      "enflame": 1.58525,
+      "haiguang": 4.898,
+      "kunlunxin": 0.542,
+      "huawei": 0.70675,
+      "card_a": 3.265,
+      "card_b": 2.76675
+     }
+    },
+    {
+     "rank": 5,
+     "team": "KernelX",
+     "is_mine": false,
+     "avg": 2.55109375,
+     "chips": {
+      "tianshu": 3.67875,
+      "muxi": 2.98225,
+      "enflame": 0.69225,
+      "haiguang": 5.37525,
+      "kunlunxin": 0.83425,
+      "huawei": 0.9515,
+      "card_a": 3.23975,
+      "card_b": 2.65475
+     }
+    },
+    {
+     "rank": 6,
+     "team": "BxRKingsQC",
+     "is_mine": false,
+     "avg": 2.54234375,
+     "chips": {
+      "tianshu": 3.70725,
+      "muxi": 3.03825,
+      "enflame": 0.73925,
+      "haiguang": 5.486,
+      "kunlunxin": 0.64625,
+      "huawei": 0.7835,
+      "card_a": 3.306,
+      "card_b": 2.63225
+     }
+    },
+    {
+     "rank": 7,
+     "team": "SoulCoder",
+     "is_mine": true,
+     "avg": 2.50278125,
+     "chips": {
+      "tianshu": 4.13025,
+      "muxi": 2.764,
+      "enflame": 0.55225,
+      "haiguang": 4.7035,
+      "kunlunxin": 0.54175,
+      "huawei": 1.35375,
+      "card_a": 3.2675,
+      "card_b": 2.70925
+     }
+    },
+    {
+     "rank": 8,
+     "team": "sikadeer",
+     "is_mine": false,
+     "avg": 2.487,
+     "chips": {
+      "tianshu": 3.77675,
+      "muxi": 3.443,
+      "enflame": 0.79675,
+      "haiguang": 5.12275,
+      "kunlunxin": 0.607,
+      "huawei": 0.367,
+      "card_a": 3.20025,
+      "card_b": 2.5825
+     }
+    },
+    {
+     "rank": 9,
+     "team": "Weweawaeaw2132",
+     "is_mine": false,
+     "avg": 2.458125,
+     "chips": {
+      "tianshu": 3.6535,
+      "muxi": 2.9215,
+      "enflame": 0.72125,
+      "haiguang": 5.15675,
+      "kunlunxin": 0.6435,
+      "huawei": 0.698,
+      "card_a": 3.30275,
+      "card_b": 2.56775
+     }
+    },
+    {
+     "rank": 10,
+     "team": "dadadaguai",
+     "is_mine": false,
+     "avg": 2.3529375,
+     "chips": {
+      "tianshu": 3.946,
+      "muxi": 2.7425,
+      "enflame": 0.54625,
+      "haiguang": 4.81375,
+      "kunlunxin": 0.2345,
+      "huawei": 0.66675,
+      "card_a": 3.19725,
+      "card_b": 2.6765
+     }
+    },
+    {
+     "rank": 11,
+     "team": "AttentionImOnly2YearsOld",
+     "is_mine": false,
+     "avg": 2.3461875,
+     "chips": {
+      "tianshu": 4.05125,
+      "muxi": 2.654,
+      "enflame": 0.554,
+      "haiguang": 4.7235,
+      "kunlunxin": 0.23075,
+      "huawei": 0.632,
+      "card_a": 3.26725,
+      "card_b": 2.65675
+     }
+    },
+    {
+     "rank": 12,
+     "team": "HAiWORLD",
+     "is_mine": false,
+     "avg": 1.67059375,
+     "chips": {
+      "tianshu": 3.43575,
+      "muxi": 1.50875,
+      "enflame": 0.409,
+      "haiguang": 2.1205,
+      "kunlunxin": 0.343,
+      "huawei": 0.79375,
+      "card_a": 3.09425,
+      "card_b": 1.65975
+     }
+    }
+   ]
+  },
+  "58": {
+   "operator": "w8a8_block_int8_matmul",
+   "rows": [
+    {
+     "rank": 1,
+     "team": "EvokeAgent",
+     "is_mine": false,
+     "avg": 616.79514167,
+     "chips": {
+      "tianshu": 242.24846667,
+      "muxi": 475.77073333,
+      "enflame": 62.93206667,
+      "haiguang": 1519.64246667,
+      "kunlunxin": 354.99246667,
+      "huawei": 808.72246667,
+      "card_a": 1273.49293333,
+      "card_b": 196.55953333
+     }
+    },
+    {
+     "rank": 2,
+     "team": "c2flow",
+     "is_mine": false,
+     "avg": 576.316175,
+     "chips": {
+      "tianshu": 169.58406667,
+      "muxi": 496.64613333,
+      "enflame": 9.1692,
+      "haiguang": 1658.59,
+      "kunlunxin": 268.43293333,
+      "huawei": 625.46046667,
+      "card_a": 1247.49533333,
+      "card_b": 135.15126667
+     }
+    },
+    {
+     "rank": 3,
+     "team": "RSI",
+     "is_mine": false,
+     "avg": 323.187025,
+     "chips": {
+      "tianshu": 129.15826667,
+      "muxi": 325.6548,
+      "enflame": 43.03126667,
+      "haiguang": 1226.63326667,
+      "kunlunxin": 2.262,
+      "huawei": 107.73013333,
+      "card_a": 622.11653333,
+      "card_b": 128.90993333
+     }
+    },
+    {
+     "rank": 4,
+     "team": "SoulCoder",
+     "is_mine": true,
+     "avg": 261.84538333,
+     "chips": {
+      "tianshu": 76.54753333,
+      "muxi": 215.81826667,
+      "enflame": 6.12126667,
+      "haiguang": 778.40846667,
+      "kunlunxin": 156.2342,
+      "huawei": 375.46106667,
+      "card_a": 377.83173333,
+      "card_b": 108.34053333
+     }
+    }
+   ]
+  }
+ },
+ "our_best_per_chip": {
+  "42": {
+   "stage_submission_id": 10344,
+   "created_at": "2026-09-06T01:16:15",
+   "avg": 3.25835,
+   "chips": {
+    "tianshu": 6.1856,
+    "muxi": 2.2642,
+    "enflame": 1.6996,
+    "haiguang": 5.1182,
+    "kunlunxin": 0.4482,
+    "huawei": 2.333,
+    "card_a": 4.597,
+    "card_b": 3.421
+   }
+  },
+  "43": {
+   "stage_submission_id": 11652,
+   "created_at": "2026-09-09T06:58:43",
+   "avg": 6.6005625,
+   "chips": {
+    "tianshu": 13.694,
+    "muxi": 7.0205,
+    "enflame": 0.476,
+    "haiguang": 10.887,
+    "kunlunxin": 1.589,
+    "huawei": 0.3545,
+    "card_a": 8.0275,
+    "card_b": 10.756
+   }
+  },
+  "45": {
+   "stage_submission_id": 11248,
+   "created_at": "2026-09-08T17:19:16",
+   "avg": 7.148625,
+   "chips": {
+    "tianshu": 5.812,
+    "muxi": 5.634,
+    "enflame": 1.634,
+    "haiguang": 14.7855,
+    "kunlunxin": 0.063,
+    "huawei": 0.252,
+    "card_a": 21.409,
+    "card_b": 7.5995
+   }
+  },
+  "46": {
+   "stage_submission_id": 9452,
+   "created_at": "2026-09-04T11:18:44",
+   "avg": 14.1051875,
+   "chips": {
+    "tianshu": 26.7455,
+    "muxi": 6.844,
+    "enflame": 0.3685,
+    "haiguang": 29.462,
+    "kunlunxin": 0.2295,
+    "huawei": 2.116,
+    "card_a": 29.445,
+    "card_b": 17.631
+   }
+  },
+  "47": {
+   "stage_submission_id": 11793,
+   "created_at": "2026-09-09T14:03:52",
+   "avg": 25.9625625,
+   "chips": {
+    "tianshu": 29.5625,
+    "muxi": 24.549,
+    "enflame": 0.293,
+    "haiguang": 54.971,
+    "kunlunxin": 5.9585,
+    "huawei": 13.693,
+    "card_a": 50.972,
+    "card_b": 27.7015
+   }
+  },
+  "48": {
+   "stage_submission_id": 11775,
+   "created_at": "2026-09-09T12:41:15",
+   "avg": 4.8135625,
+   "chips": {
+    "tianshu": 3.828,
+    "muxi": 5.3525,
+    "enflame": 0.897,
+    "haiguang": 6.306,
+    "kunlunxin": 2.424,
+    "huawei": 5.893,
+    "card_a": 7.008,
+    "card_b": 6.8
+   }
+  },
+  "49": {
+   "stage_submission_id": 11648,
+   "created_at": "2026-09-09T06:44:18",
+   "avg": 8.9578125,
+   "chips": {
+    "tianshu": 15.65825,
+    "muxi": 8.9975,
+    "enflame": 0.567,
+    "haiguang": 10.482,
+    "kunlunxin": 0.66475,
+    "huawei": 2.4565,
+    "card_a": 22.86775,
+    "card_b": 9.96875
+   }
+  },
+  "51": {
+   "stage_submission_id": 11204,
+   "created_at": "2026-09-08T14:58:36",
+   "avg": 60.7192,
+   "chips": {
+    "tianshu": 11.3126,
+    "muxi": 4.5796,
+    "enflame": 442.8042,
+    "haiguang": 7.9608,
+    "kunlunxin": 0.9672,
+    "huawei": 2.5348,
+    "card_a": 8.4304,
+    "card_b": 7.164
+   }
+  },
+  "53": {
+   "stage_submission_id": 11242,
+   "created_at": "2026-09-08T16:55:17",
+   "avg": 3.03205,
+   "chips": {
+    "tianshu": 4.8042,
+    "muxi": 2.7994,
+    "enflame": 1.6632,
+    "haiguang": 4.3748,
+    "kunlunxin": 0.7158,
+    "huawei": 1.6094,
+    "card_a": 4.0408,
+    "card_b": 4.2488
+   }
+  },
+  "56": {
+   "stage_submission_id": 11062,
+   "created_at": "2026-09-08T08:32:03",
+   "avg": 3.20691667,
+   "chips": {
+    "tianshu": 6.68241667,
+    "muxi": 2.59433333,
+    "enflame": 1.213,
+    "haiguang": 4.62766667,
+    "kunlunxin": 1.07966667,
+    "huawei": 1.53991667,
+    "card_a": 3.65333333,
+    "card_b": 4.265
+   }
+  },
+  "57": {
+   "stage_submission_id": 10887,
+   "created_at": "2026-09-07T19:55:22",
+   "avg": 2.50278125,
+   "chips": {
+    "tianshu": 4.13025,
+    "muxi": 2.764,
+    "enflame": 0.55225,
+    "haiguang": 4.7035,
+    "kunlunxin": 0.54175,
+    "huawei": 1.35375,
+    "card_a": 3.2675,
+    "card_b": 2.70925
+   }
+  },
+  "58": {
+   "stage_submission_id": 11695,
+   "created_at": "2026-09-09T09:17:44",
+   "avg": 261.84538333,
+   "chips": {
+    "tianshu": 76.54753333,
+    "muxi": 215.81826667,
+    "enflame": 6.12126667,
+    "haiguang": 778.40846667,
+    "kunlunxin": 156.2342,
+    "huawei": 375.46106667,
+    "card_a": 377.83173333,
+    "card_b": 108.34053333
+   }
+  }
+ }
+}
