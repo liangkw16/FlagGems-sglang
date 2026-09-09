@@ -182,6 +182,22 @@ class ChunkedSgmvExpandTest(unittest.TestCase):
                 args = make_case([20, 20], 3, [128, 64], rank, seed=2)
                 self._check(*args)
 
+    def test_small_rank_tile_boundaries(self):
+        for dtype in TOLERANCES:
+            for rank in (15, 16, 17, 31, 32, 33, 63, 64, 65, 127, 128, 129):
+                with self.subTest(dtype=dtype, rank=rank):
+                    for lengths in ([15, 16, 17, 31, 32], [33, 63, 64, 65]):
+                        args = make_case(
+                            lengths,
+                            3,
+                            [127, 128, 129],
+                            rank,
+                            dtype=dtype,
+                            seed=109,
+                        )
+                        args[2].lora_ranks.fill_(1)
+                        self._check(*args)
+
     def test_empty_segments_and_zero_ranks(self):
         # Empty segments carry sentinel adapter indices; rank-0 adapters
         # contribute nothing (rows keep base values).
@@ -424,6 +440,7 @@ class ChunkedSgmvExpandVariantsTest(unittest.TestCase):
 
 
 RELEASE_REQUIRED_TESTS = [
+    "ChunkedSgmvExpandTest.test_small_rank_tile_boundaries",
     "ChunkedSgmvExpandVariantsTest.test_repeated_adapter_segments",
     "ChunkedSgmvExpandTest.test_dtypes_equal_slice",
     "ChunkedSgmvExpandTest.test_unequal_slice_widths",
