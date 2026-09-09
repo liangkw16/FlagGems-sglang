@@ -10,7 +10,7 @@ team_best_stage: e21
 team_best_commit: 23be6795f1298a99dbca1c41b29c2dad66ec9832
 team_best_speedup: 25.9625625
 sealed: no
-next: 保留E21新最佳；E22小rank安全窄寻址候选待提交；E19继续只读取终态
+next: 已恢复E21精确源码/测试；E22有效未晋级；本轮停止新提交，等待E19天数终态
 updated: 2026-09-09
 ```
 
@@ -488,3 +488,15 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
 |chunked_sgmv_expand.py|`efe42b2c81247ff3fc2ba9d56dae334432c1d54851c7bc028a5620df9427e307`|
 |chunked_sgmv_expand_enflame.py|`522bbd563c27b0fbc6600a7fd249a35ddf1276edb7bf85f0cca39dc79419898c`|
 |chunked_sgmv_expand_kunlunxin.py|`c9d9937a74be019fe0a25658ad0efd77d86d1c4939b07d0387d9e77b9d970ce1`|
+
+### E22 终态与保留版本
+
+- 14:11:10提交11795，当日第28次；一次上传/一次正式提交，远端ZIP哈希和长度完全一致。14:12:32 status确认8/8 valid，均值25.9073125，未超过E21的25.9625625。实时全局28/30、剩2，本轮不再发新候选。
+- 天数29.193、沐曦21.583、燧原0.2875、海光54.4345、昆仑5.6795、华为15.4135、A52.6225、B28.045。相对E21，华为/A提高，但总分未晋级，generic六芯合计没有达到15%结构门。不把单次逐芯最高值拼成一个已提交总分。
+- 工作树generic、两vendor、test及runner/helper逐字节恢复并核验为E21 source/verification commit 23be6795f1298a99dbca1c41b29c2dad66ec9832。该恢复提交不生成新ZIP、不重投；E22及其宽stride回归保存在40de0c6和独立release产物中。
+- 本轮实际上传3个候选（E19/E21/E22），另有整rank dot、全域小行块、constexpr布局、全域窄寻址初筛负结果。E21是目前唯一已晋级版本；E19七芯正确、天数待回调，15分钟watch超时后仅只读延长观察，没有重投或提前判失败。
+- 初筛源码、测试、脚本和原始样本清单 `e19-c3aad6d/screen/sha256.json` SHA256 `c54abf834aaf3da837b612dffb1ec92bf59a67c5dcc001e9d3a96d2f56e76621`。
+- 初筛源码、测试、脚本和原始样本清单 `e19-c3aad6d/screen2/sha256.json` SHA256 `3772d68e832fe6299446119b41a909e7933d458fc0af81a2faf139a27ff2898b`。
+- 初筛源码、测试、脚本和原始样本清单 `e20-layout-screen/sha256.json` SHA256 `40576dca2aab270e009f114e3b1d2506845ddea50edad03997777e8cee4b6044`。
+- 初筛源码、测试、脚本和原始样本清单 `e21-23be679/screen/sha256.json` SHA256 `95fd27f424a6762551c167a3f92864ffae757e872eaa77c14d127526a2ff9798`。
+- 初筛源码、测试、脚本和原始样本清单 `e22-40de0c6/screen/sha256.json` SHA256 `0df7c6c1c195e3ff5ea22234decb1530b95bb7c59afafb92e95fc35466b8e23f`。

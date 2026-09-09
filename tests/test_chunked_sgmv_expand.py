@@ -198,16 +198,6 @@ class ChunkedSgmvExpandTest(unittest.TestCase):
                         args[2].lora_ranks.fill_(1)
                         self._check(*args)
 
-    def test_wide_single_adapter_stride(self):
-        args = list(make_case([15, 17], 1, [17, 33], 32, seed=111))
-        weights = args[1]
-        # A size-one adapter axis permits a wide stride without a huge buffer.
-        args[1] = weights.as_strided(
-            weights.shape, (2**31, *weights.stride()[1:])
-        )
-        args[2].lora_ranks.fill_(1)
-        self._check(*args)
-
     def test_empty_segments_and_zero_ranks(self):
         # Empty segments carry sentinel adapter indices; rank-0 adapters
         # contribute nothing (rows keep base values).
@@ -450,7 +440,6 @@ class ChunkedSgmvExpandVariantsTest(unittest.TestCase):
 
 
 RELEASE_REQUIRED_TESTS = [
-    "ChunkedSgmvExpandTest.test_wide_single_adapter_stride",
     "ChunkedSgmvExpandTest.test_small_rank_tile_boundaries",
     "ChunkedSgmvExpandVariantsTest.test_repeated_adapter_segments",
     "ChunkedSgmvExpandTest.test_dtypes_equal_slice",
