@@ -9,8 +9,8 @@ platform: 8/8(e2,10747,2.36478125x首次有效)
 team_best_stage: e11
 team_best_speedup: 2.50278125
 sealed: no
-next: PTX已证实16B访存,本轮向量化轴停止;保留E11,无新生产候选或ZIP
-updated: 2026-09-08
+next: e12燧原persistent走访(38f8dbc,release exit0+ZIP 9cdb8501)就绪;预注册门燧原>=1.5(次名靶3.10)
+updated: 2026-09-10
 team_best_commit: d1d687d3974c8ceccb7c7bb491124edce6e0ea83
 ```
 
@@ -561,3 +561,15 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
   睡眠（锁/IO/驱动阻塞）`——崩溃族/基建抖动，非代码（同字节 sub 10887
   于 09-07 八芯通过）。终掷被平台吞掉，TB 2.5028 保持，T57 收盘。
   榜首隔夜 2.82→3.27（+16%），结构面不明，无已验证路径。
+
+## E12 燧原 SIP-capped pingpong 走访（2026-09-09 深夜，commit `38f8dbc`，未提交平台）
+
+- 两个 kernel（constexpr fast path + strided 回退）的 (row, col_block)
+  展平空间改为 24 program persistent + `tl.range(num_stages=3)`；两条
+  launch 路径去钉 num_warps。缓存直发器绑定 cap 后的 grid 与新 total
+  参数，保留 FlagTree 族的 per-call binder 跳过。
+- exact release 回执 `/tmp/flagos-log_scaling_tau-rel/verification.json`
+  （0 skip/xfail，exit 0）；canonical ZIP `e12-38f8dbc`，SHA-256
+  `9cdb8501103fb4d33c49e77245b5ead96e43df17f2210c96ecb093c546e61a7e`。
+- 预注册门：燧原 ≥1.5（当前 0.55，次名靶 3.10，P1 组内最大相对差）；
+  其余七芯不低于噪声带。

@@ -10,8 +10,8 @@ team_best_stage: e3
 team_best_commit: 6e3a1c4e64304d017ded08cabb6445b9152776f2
 team_best_speedup: 14.1051875
 sealed: no
-next: tile8探针华为失败(aclnnCat单case,原生库层);ascend回滚e3,tile8轴关闭,需aclnn间歇旁证才重开
-updated: 2026-09-08
+next: e8资产重组(4f918ac,昆仑E5回植+燧原segment-owned+华为int32,release exit0+ZIP 29d12224)就绪;预注册门昆仑>=0.6/燧原>=1.5/华为>=2.5
+updated: 2026-09-10
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -229,3 +229,29 @@ is_team_best=max 保证零下行）。
   e3 TB 14.1051875 不受影响（平台取 max）。
 ## E3r 重掷：8/8 valid 13.9934 未超 TB（2026-09-09T06:41，sub 11647）
 - 带内（14.105 保持）。e3 字节重掷已 1 次。
+
+## E8 资产重组（2026-09-09 深夜，commit `4f918ac`，未提交平台）
+
+按逐芯情报（昆仑 0.23 vs 次名 2.62、燧原 0.37 vs 5.23、华为 2.12 vs
+19.98）+ 审查修正（"generic 去二分"错误归因撤回，改按各芯实际路径）：
+
+- **昆仑回植**：E5 segment-owned 12-worker vendor（a4684c6 字节，当时
+  平台实证 0.2295→0.6375）重新入树——E5 当年因整题均值未超被弃，逐芯
+  情报证明昆仑 0.23 与他队 2.62 差距巨大，该资产应回归包内。仅
+  black 重排，kernel 语义与平台验证字节相同。
+- **燧原 segment-owned**：镜像昆仑结构（24 worker、tl.range
+  num_stages=3、去钉 warps），替换原"每 token 二分 + grid cap 65535"
+  形态——launch 风暴与逐 token 标量搜索链同时消除。
+- **华为 int32 化**：段界/permutation/token_id/lora_ranks wrapper 侧转
+  int32（昇腾 int64 标量算术降速，值域远小于 2^31），仅 adapter 基址
+  保留 int64（w_idx×stride_lora 可达 num_lora×rank×vocab 溢出）。
+  fold 结构本身不动（T17 E2a 平台已证形态）。
+- generic/hygon/metax 字节冻结。逐芯归因互不干扰（三 vendor 各管一芯）。
+- exact release 回执 `/tmp/flagos-t46-e8-release/verification.json`
+  （RTX 5070 Ti，enflame+ascend+kunlunxin 三个 proxy vendor 全执行，
+  0 skip/xfail，exit 0）；canonical ZIP `e8-4f918ac`，SHA-256
+  `29d12224145ed7012d6b53ae0090b88f2d255942e6894962c9d39dc39eca0c9c`。
+- 预注册门：8/8 valid；昆仑 ≥0.6（回植兑现线）、燧原 ≥1.5、华为
+  ≥2.5（int32 兑现线）任一未达即记该芯轴证伪；avg 超 14.105 则 TB。
+- 注意：华为 aclnnCat 间歇（E7）与本题 int32 改动无共享路径，若华为
+  再现单 case 原生库错误，先按间歇处置不急于归因。

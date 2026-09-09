@@ -10,8 +10,8 @@ team_best_stage: e4r
 team_best_commit: 16fe1d4
 team_best_speedup: 8.9578125
 sealed: no
-next: e5燧原persistent+pingpong已commit(0d4d758)代理6-6通过,燧原未验证待平台;榜首21.19为真实结构非慢窗
-updated: 2026-09-09
+next: e5(0d4d758,燧原persistent,release exit0+ZIP 803cb28b)与e6(aec238a,generic合并launch/共享gather/int32,release exit0+ZIP 61c35716)双候选就绪;明日e5首发验燧原,e6第二发验generic面
+updated: 2026-09-10
 ```
 
 ## S0: 6/8（燧原PassManager + 昆仑uni_sram）
@@ -108,3 +108,34 @@ c2flow 21.19 逐芯健康（非慢窗产物）。按 `Δavg=(target-ours)/n` 估
 不低于当前噪声带；八芯平均预期 8.96 → ≥11。
 止损：若燧原读数无改善且 exec_ms 未下降，说明瓶颈不在 grid 超发，
 转查 wrapper 侧 `_compute_positions` 的 PyTorch 预计算开销。
+
+## 2026-09-09 深夜执行轮（e5/e6 双候选就绪，未提交平台）
+
+### e5 就绪（release + ZIP 补齐）
+
+- exact release 回执 `/tmp/flagos-t49-e5-release/verification.json`
+  （RTX 5070 Ti，6/6 用例含 head-group 边界与 variants，0 skip/xfail，
+  generic 41 + enflame 62 真实 launch，exit 0）。
+- canonical ZIP `e5-0d4d758`，SHA-256
+  `803cb28bfad8d4aa78c74b681fde17f97571d40b7b4b6eb443cd9dc9c9e7f63f`。
+
+### e6 候选（generic 三合一调度修复，commit `aec238a`）
+
+- 依据（上游证据 + 审查修正）：sglang PR #19144 的同算子 fused kernel
+  每 program 只做一次 cos/sin gather；逐芯情报中华为 2.46 vs 榜首 12.4、
+  海光 10.5 vs 37.7 的差距主嫌疑是 repeated gather、int64 位置标量链
+  （昇腾已证退化）与双 launch。
+- 改动（数学零变化）：① Q/K 两次 launch 合并为单 kernel，(token,
+  head_tile) program 对 q/k 同 tile 共享同一份 cos/sin gather；②
+  positions wrapper 侧转 int32（值域受 cache 行数约束）；③ grid 形状
+  与 e4 相同（token×head_tile），decode 小 T 并行度不回退。
+- 收益预期修正（审查算术）：仅燧原 0.567→3 时均值约 **9.26 而非 11**；
+  华为/海光若同步受益才向 11+ 走。带宽模型下纯 gather 去重上限约一成，
+  数倍级收益须来自调度/lowering 面——e5（燧原）与 e6（generic）分两发
+  归因。
+- exact release 回执 `/tmp/flagos-t49-e6-release/verification.json`
+  （6/6，0 skip，exit 0）；canonical ZIP `e6-aec238a`，SHA-256
+  `61c35716be270b2b04e5bba87677f86b7e397e50384c9fffc2a43fb5792652df`。
+
+发射序：e5 首发（燧原单芯归因，验 persistent 假设）→ e6 第二发
+（generic 面，华为/海光/天数归因）。

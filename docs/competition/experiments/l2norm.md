@@ -10,8 +10,8 @@ team_best_stage: e3
 team_best_commit: c0384fada9d69aa95c51c08d2b85934ecaa3310c
 team_best_speedup: 3.20691667
 sealed: no
-next: 榜首72.31判定为燧原慢窗产物(同芯次优仅7.31);正确靶子7.31,待套用燧原persistent形态
-updated: 2026-09-09
+next: e4新燧原persistent vendor(e4cc425,release exit0+ZIP ab7a6f5d)就绪;预注册门燧原>=3(次名靶7.31)
+updated: 2026-09-10
 
 
 ## S0 → **8/8 VALID**（2026-09-06，submission 10405）
@@ -119,3 +119,13 @@ updated: 2026-09-09
 `num_warps`），根因、厂商文档依据与逐芯测算见
 [第四批终盘方案](../strategy-batch4-final-20260909.md)；T49 的 `0d4d758`
 是该形态的参考实现。本轮未改本题源码、未提交平台。
+
+## E4 燧原 persistent vendor（2026-09-09 深夜，commit `e4cc425`，未提交平台）
+
+- 新建 `_enflame/l2norm.py`（此前燧原走 generic：每行一 program + 钉
+  warps=4）：24 program persistent 行走访 + `tl.range(num_stages=3)` +
+  去钉 warps，数学与 generic 行核一致（fp32 sumsq、rstd、cast store）。
+- exact release 回执 `/tmp/flagos-l2norm-rel/verification.json`
+  （0 skip/xfail，exit 0）；canonical ZIP `e4-e4cc425`，SHA-256
+  `ab7a6f5dbe6090f01677e2ff8114fe67e832f8e18e96d3a2e0c4575fe649a19b`。
+- 预注册门：燧原 ≥3（当前 1.21，次名靶 7.31）。

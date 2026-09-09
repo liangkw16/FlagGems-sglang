@@ -10,8 +10,8 @@ team_best_stage: e7
 team_best_commit: 094548df5da1075b8245b4af8ccddf024a319ae3
 team_best_speedup: 4.7489375
 sealed: no
-next: e5 tile几何修复已commit(fcf5997)代理3.06x/5-5通过,待明日额度打首发;燧原轴重开(他队同芯28.79证水位论不成立)
-updated: 2026-09-09
+next: e5(fcf5997,精度门216组关闭+release exit0+ZIP 0417bfa2)与e9(3fba418,燧原tile描述表persistent,release exit0+ZIP c13a2f8b)双候选就绪;明日e5首发验tile几何,e9第二发验燧原
+updated: 2026-09-10
 ```
 
 ## S0: 6/8（燧原+昆仑败）
@@ -193,3 +193,54 @@ K_in 上（16–128 趟），BLOCK_N 又给**小**的 rank 填 50–87% 空列�
 八芯均不低于当前读数的噪声带；八芯平均预期 4.81 → ≥8.3。
 止损：若平台八芯读数与 e6 无显著差异（±10% 内），说明平台 shape 与
 本地假设不符，改从 raw_result 取实际 shape 后再定 tile。
+
+## 2026-09-09 深夜执行轮（精度门关闭 + e5/e9 双候选就绪，未提交平台）
+
+### 精度门（Codex 审查要求，已关闭）
+
+审查指出 `test_tile_geometry_axes` 的 float64+sqrt(K) 判据不能替代题面
+fp32 reference + 题面容差。补测：216 组（3 dtype × K∈{512,1024,2048,
+4096} × N∈{16,32,64,80,128,256} × 3 段型），对**题面 reference**（fp32
+matmul）按**题面容差**（fp32 1e-4 / fp16 1e-2 / bf16 1.5e-2）计 max err
+与超差元素数。结果：**216/216 PASS**——e5 的误差在每组 ≤ e4×1.10 且不
+新增超差；关键组 fp32 K=4096 上 e4/e5 的 max err 与超差计数**逐组完全
+一致**（如 [63,64,65,256] 段型同为 7.935e-04/9 元素），e4 平台 8/8 已
+两过，e5 继承该误差剖面的平台通过性。evidence：远端
+`/tmp/flagos-t48-acc.fCDOQ1/gate.log`（216 PASS，本地副本
+`/tmp/t48_gate.log`，SHA-256 `8a349212cb15d8bcd0e5d674a01b04fe274a7dc0730b50b3e8b3a84a97d28391`）。
+
+预注册门修正（审查意见采纳）：e5 是 generic 改动、燧原走 e7 vendor，
+"燧原 ≥3x"不应作为 e5 的晋级门；e5 的门改为**八芯平均较 e7 团队最佳
++30% 以上**（代理 1.4–3.1x 的保守下限）。燧原 ≥3x 门移交给 e9。
+
+### e5 候选就绪（release + ZIP）
+
+- source/verification commit `fcf5997`；exact release 回执
+  `/tmp/flagos-t48-e5-release/verification.json`（RTX 5070 Ti，7/7 用例
+  含 variants 矩阵，0 skip/xfail，exit 0）。
+- canonical ZIP `e5-fcf5997`，SHA-256
+  `0417bfa21c6e6157c7d2d76e9f3f779ed7c7a1a57d6737eccb4cb077c59ec0f3`。
+
+### e9 候选（燧原 launch 风暴修复，commit `3fba418`）
+
+- 结构：host 逐段 `index_select→GEMM launch→index_copy_` 循环（成百次
+  launch，GCU 启动开销不可掩盖 + 每次 launch 各自超发 grid）折叠为
+  **单次 launch + tile 描述表 persistent 走访**（grid cap 24）。表项
+  `(seg, m0, n0)`，内核所有内层循环 shape-static（T47 e13 grouped-GEMM
+  评测崩溃的教训：不允许数据相关循环界），每 tile 5 次标量 load。
+- 单变量纪律：每 tile 的 GEMM 配置与 e7 逐字节相同（64×64、BK≤128、
+  bf16/fp16 原生 dtype dot + fp32 acc、fp32 走 ieee、warps4/stages2），
+  只改调度。空段/负 weight_index 在 host 丢弃（与 generic 平台已接受
+  的跳过语义一致）。
+- 代理证据：screening 21 组（32 段持久回绕/多 M-tile 段/空段/非 2 幂）
+  20/21 过；唯一 fail（fp32 K=4096 单段 2048）A/B 实证与 e7 **逐位一致**
+  （max 7.019043e-04、7 元素超差）——已知累加序伪差，非回归。
+  variants 矩阵补 32 段用例固化回归。
+- exact release 回执 `/tmp/flagos-t48-e9-release/verification.json`
+  （7/7，generic 109 + enflame 8 真实 launch，0 skip，exit 0）；
+  canonical ZIP `e9-3fba418`，SHA-256
+  `c13a2f8bccb38dac58847f0fdf9dfecb0a36a88614ffbb5a9a227d9377fd8b84`。
+- 燧原调度/lowering 未被代理验证（target-runtime-unverified），等平台。
+
+发射序（明日额度）：e5 首发（验 tile 几何，八芯归因）→ e9 第二发
+（在 e5 基线上验燧原批量化，燧原单芯归因）。

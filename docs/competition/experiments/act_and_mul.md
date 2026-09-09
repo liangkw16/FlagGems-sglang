@@ -10,8 +10,8 @@ team_best_stage: e6
 team_best_commit: 5251bf5f1ef53eaac8ce83c0bb0d0b0b91425fad
 team_best_speedup: 3.25835
 sealed: no
-next: 榜首431.48判定为燧原慢窗产物(同芯次优仅9.39);正确靶子9.39,待套用燧原persistent形态
-updated: 2026-09-09
+next: e8燧原persistent走访(0eab029,release exit0+ZIP 0607901c)就绪;预注册门燧原>=3(次名靶9.39)
+updated: 2026-09-10
 
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -284,3 +284,12 @@ generic 按真实行/列 stride 读取，消除非连续输入的 contiguous 拷
 `num_warps`），根因、厂商文档依据与逐芯测算见
 [第四批终盘方案](../strategy-batch4-final-20260909.md)；T49 的 `0d4d758`
 是该形态的参考实现。本轮未改本题源码、未提交平台。
+
+## E8 燧原 SIP-capped pingpong 走访（2026-09-09 深夜，commit `0eab029`，未提交平台）
+
+- 65535 grid-stride 走访改为 24 program persistent + `tl.range(num_stages=3)`
+  pingpong；BLOCK_COL=4096 与未钉 warps 保持四证明整行最优，只改走访形态。
+- exact release 回执 `/tmp/flagos-act_and_mul-rel/verification.json`
+  （0 skip/xfail，exit 0）；canonical ZIP `e8-0eab029`，SHA-256
+  `0607901c1924d7a54e73710c1c4e5133e32d16b5f6c755007c65a8996f463869`。
+- 预注册门：燧原 ≥3（当前 1.70，次名靶 9.33）；其余七芯不低于噪声带。

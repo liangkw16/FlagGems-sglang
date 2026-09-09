@@ -10,8 +10,8 @@ team_best_stage: e5
 team_best_commit: c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67
 team_best_speedup: 2.954625
 sealed: no
-next: 榜首288.43判定为燧原慢窗产物(同芯次优仅7.84);正确靶子7.84,待套用燧原persistent形态
-updated: 2026-09-09
+next: e6燧原去钉launch参数(625be60,release exit0+ZIP d6da3cfc)就绪;预注册门燧原>=2.5(次名靶7.84)
+updated: 2026-09-10
 ```
 
 ## S0（2026-09-05 凌晨，submission 9866）
@@ -179,3 +179,13 @@ generic 多行共享 head 参数/exp，支持参数stride；总元素<16384且�
 `num_warps`），根因、厂商文档依据与逐芯测算见
 [第四批终盘方案](../strategy-batch4-final-20260909.md)；T49 的 `0d4d758`
 是该形态的参考实现。本轮未改本题源码、未提交平台。
+
+## E6 燧原去钉 launch 参数（2026-09-09 深夜，commit `625be60`，未提交平台）
+
+- 去掉 `num_warps=4/num_stages=1`，交回 GCU 后端默认（T19-E5/T51-E5 两次
+  +38%；本批未钉组中位数 2.08 vs 钉住组 0.73）。grid 保持每 batch 行一
+  program 的 T51 已证无循环形态。
+- exact release 回执 `/tmp/flagos-fused_gdn_gating-rel/verification.json`
+  （0 skip/xfail，exit 0）；canonical ZIP `e6-625be60`，SHA-256
+  `d6da3cfc666d75705f82c5a0e2fee7b7e22fd25e3b52a1b0459d923b668a78ed`。
+- 预注册门：燧原 ≥2.5（当前 1.66，次名靶 7.84）。
