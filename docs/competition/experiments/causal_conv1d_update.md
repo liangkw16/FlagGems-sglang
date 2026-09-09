@@ -10,7 +10,7 @@ team_best_stage: e21
 team_best_commit: b8a7fc4
 team_best_speedup: 6.6005625
 sealed: no
-next: E22天数/沐曦增益被海光回退抵消；E23为海光恢复原generic字节，待release
+next: E23海光隔离版14方法release通过，使用最后一次额度评测；E21仍为平台最佳
 updated: 2026-09-09
 ```
 
@@ -713,3 +713,20 @@ generic width2/3/4 多 token 用寄存器滚动历史和权重复用；长序列
 - 逐芯：天数15.4095、沐曦9.4845、燧原0.4705、海光6.5665、昆仑1.59、华为0.395、A8.351、B10.234。相对E21天数+12.53%、沐曦+35.10%、海光-39.69%；平均-0.57%。目标芯差异已观测，不能用NVIDIA全部加速替代八芯结论，也不能断言单次回退完全由代码引起。
 - E23候选仅新增 `_hygon/ops/causal_conv1d_update.py`，逐字节复制E21/b8a7fc4的原generic（SHA256 `93fac21875b4509390b0f17e10144d6b60a40e015f782a47c9424dbb39c78cee`）；海光后缀由公开规则确认。generic及其余三vendor完全冻结E22。测试variant helper自动收集新文件，release必须显式加入hygon代理并确认实际launch。
 - 若海光恢复E21读数且本轮其他芯保持，仅作算术敏感性估计为7.1026875（不是已提交分数）。该候选存在平台逐芯依据，将与T47去clone筛选结果比较最后一次机会；一旦晋级只提交一次。
+
+### E23 release 与提交预注册（2026-09-09）
+
+- source/verification commit `478035baa4044bc37772cdec4b217198d1c5ec6a`。本轮真实14方法0fail/error/skip/xfail；generic120次launch、ascend/enflame/hygon/kunlunxin各45次。新hygon成员确实执行，未省略适用路径。NVIDIA代理环境同E22；远端 `/tmp/flagos-t43-e23-release.LwrhFm`，PID336329，timeout900。
+- 四个原成员与E22逐项SHA相等，新增hygon成员与E21 generic逐字节相等。性能证据沿用相同字节E22本轮六轮配对及两次平台提交；不再重复测量未改源码。新hygon封装在目标runtime尚未执行，标记target-runtime-unverified，最终看平台selected_file与正确性。
+- T47 E23去clone筛选中位0.869倍、未晋级；最后1次额度改投本候选，T48迁移本轮不启动。八芯正确且每芯>=0.1、avg>6.6005625才晋级；否则恢复E21，无同候选重投。
+- ZIP `/private/tmp/flagos-batch4-structural-20260909/artifacts/competition/causal_conv1d_update/e23-478035b/causal_conv1d_update.zip`，31270 bytes；SHA256 `9466199ce4a2d91dd457ba5860a5f72753f8cd952545c69f80c7cda5ff1ecb81`。dry-run/build/verify-existing身份一致。
+- ZIP成员：
+  - `causal_conv1d_update.py`：`31bd33161a750df26aeeec5664082945ae516047cd56c1f314ebe4a8133aa9e7`
+  - `causal_conv1d_update_ascend.py`：`a3a5cd981d492def26fef2745a527a22e4dce207429dfb8566386e927332a49d`
+  - `causal_conv1d_update_enflame.py`：`5a70077f0513662f059e61918fbd5bc5561c13375befa6712663986ae2dbdb4c`
+  - `causal_conv1d_update_hygon.py`：`93fac21875b4509390b0f17e10144d6b60a40e015f782a47c9424dbb39c78cee`
+  - `causal_conv1d_update_kunlunxin.py`：`717ca0fcdb676f2f9be1e5a4e7368b59c9343044739da19511ac0b44ad9f3702`
+- `verification.json` SHA256 `8b39283c59339290334b8ac89c37e6fde711b28e004f24354d982a9483a9fd3c`。
+- `verification.log` SHA256 `25c873dd2885b6d4ca4db01b09777c0baca1b58d1a20fc568aface14d9e92176`。
+- `run.sh` SHA256 `3beee9e4b2d5457cdd19c8ac0c6387b7a5cd269f58f6b410ba0b24b9d8ec1c6b`。
+- 测试SHA256 `786cb5b013539af8a7168bcff0733692548c19e07e8e2a9082bc89bcc391c9e9`。
