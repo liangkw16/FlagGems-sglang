@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import importlib.util
+import math
 import unittest
 from pathlib import Path
 
@@ -64,6 +65,22 @@ def reference(x, weights, batch_info, num_slices=1):
         x_seg = x[rows].float()
         w = weights[w_idx].float()
         out[rows] = (x_seg @ w.t()).to(x.dtype)
+    return out
+
+
+def reference_f64(x, weights, batch_info, num_slices=1):
+    """float64 reference, for separating fp32 accumulation order from bugs."""
+    S, K = x.shape
+    N = weights.shape[1]
+    out = x.new_zeros(S, N, dtype=torch.float64)
+    for b in range(batch_info.bs):
+        start = int(batch_info.seg_indptr[b].item())
+        end = int(batch_info.seg_indptr[b + 1].item())
+        if start == end:
+            continue
+        w_idx = int(batch_info.weight_indices[b].item())
+        rows = batch_info.permutation[start:end].long()
+        out[rows] = x[rows].double() @ weights[w_idx].double().t()
     return out
 
 
@@ -130,6 +147,51 @@ class ChunkedSgmvShrinkTest(unittest.TestCase):
         )
         self._check(x, weights, bi)
 
+    def test_tile_geometry_axes(self):
+        # e5 derives BLOCK_N from N (the output/rank axis) and walks the
+        # reduction axis K with BLOCK_K, inverting e4's mapping. Pin both
+        # axes around every tile boundary the new selection can pick:
+        # BLOCK_N floors at 16, doubles up to 128, then must tile; BLOCK_K
+        # tops out at 128, so K needs values just under, equal to and just
+        # over each, plus non-pow2 tails.
+        #
+        # This test targets tile masking and coverage, which fail loudly
+        # (whole rows/columns wrong, O(1) relative error). It deliberately
+        # includes K=4096, where summing 4096 fp32 products in a different
+        # order than torch.matmul costs slightly more than the task's flat
+        # atol=1e-4 on a handful of elements -- the committed e4 kernel
+        # shows byte-identical error there, so a flat bound would flag
+        # reference accumulation order rather than a kernel defect. Compare
+        # against a float64 reference and scale the bound with sqrt(K), the
+        # expected growth of fp32 accumulation error.
+        for K in (1, 127, 128, 129, 255, 256, 257, 384, 4096):
+            for N in (1, 15, 16, 17, 31, 32, 33, 128, 129, 200):
+                with self.subTest(K=K, N=N):
+                    x, weights, bi = make_case(
+                        [17, 48], 2, K, N, seed=K * 1000 + N
+                    )
+                    x_snap = x.clone()
+                    w_snap = weights.clone()
+                    actual = MODULE.chunked_sgmv_shrink(x, weights, bi)
+                    expected = reference_f64(x, weights, bi)
+                    self.assertEqual(actual.shape, expected.shape)
+                    bound = 1e-4 * max(1.0, math.sqrt(K) / 16.0)
+                    torch.testing.assert_close(
+                        actual.double(),
+                        expected,
+                        atol=bound,
+                        rtol=bound,
+                    )
+                    # A masking or coverage bug cannot hide inside the
+                    # numeric bound: no element may be grossly wrong.
+                    scale = expected.abs().amax().clamp(min=1e-6)
+                    self.assertLess(
+                        (actual.double() - expected).abs().amax().item(),
+                        0.01 * scale.item(),
+                    )
+                    torch.testing.assert_close(x, x_snap)
+                    torch.testing.assert_close(weights, w_snap)
+
     def test_empty_batch(self):
         x, weights, bi = make_case([], 1, 512, 128)
         out = MODULE.chunked_sgmv_shrink(x, weights, bi)
@@ -176,6 +238,7 @@ RELEASE_REQUIRED_TESTS = [
     "ChunkedSgmvShrinkTest.test_dtypes",
     "ChunkedSgmvShrinkTest.test_shapes",
     "ChunkedSgmvShrinkTest.test_identity_permutation",
+    "ChunkedSgmvShrinkTest.test_tile_geometry_axes",
     "ChunkedSgmvShrinkTest.test_empty_batch",
     "ChunkedSgmvShrinkVariantsTest.test_pipeline_long_segment_dtypes",
     "ChunkedSgmvShrinkVariantsTest.test_variants_match_reference",

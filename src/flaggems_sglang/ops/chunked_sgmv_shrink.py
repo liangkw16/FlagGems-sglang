@@ -36,7 +36,7 @@ def _sgmv_shrink_kernel(
     seg_indptr_stride,
     weight_indices_stride,
     permutation_stride,
-    RANK: tl.constexpr,
+    K_DIM: tl.constexpr,
     BLOCK_S: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
@@ -78,9 +78,11 @@ def _sgmv_shrink_kernel(
 
     accumulator = tl.zeros((BLOCK_S, BLOCK_N), dtype=tl.float32)
     k_offsets = tl.arange(0, BLOCK_K)
-    for k_start in range(0, RANK, BLOCK_K):
+    # BLOCK_K walks the reduction axis, which for shrink is the *input*
+    # feature dim K_DIM (512-4096), not the low-rank dim.
+    for k_start in range(0, K_DIM, BLOCK_K):
         k = k_start + k_offsets
-        k_mask = k < RANK
+        k_mask = k < K_DIM
         x = tl.load(
             x_ptr + rows[:, None] * x_stride_token + k[None, :] * x_stride_col,
             mask=token_mask[:, None] & k_mask[None, :],
@@ -121,18 +123,49 @@ def chunked_sgmv_shrink(x, weights, batch_info, num_slices=1):
         return output
 
     # e4: shape-adaptive token tile (SGLang production premise: request
-    # segments are short, so BM=64 pads 4x on a <=16-row segment). Only
-    # BLOCK_S adapts; BLOCK_N/K, warps and stages stay at the E6
-    # platform-proven values, and the (token_tile, output_tile) grid
-    # keeps full coverage of segments longer than one tile.
+    # segments are short, so BM=64 pads 4x on a <=16-row segment).
     if max_len <= 16:
         block_s = 16
     elif max_len <= 32:
         block_s = 32
     else:
         block_s = 64
-    block_n = 128
-    block_k = 32
+
+    # e5 tile geometry: shrink and expand SWAP the roles of the two
+    # non-token axes, so expand's (BLOCK_N=128, BLOCK_K=32) is wrong here.
+    #   expand: out[S,out_dim] = x[S,rank] @ W[rank,out_dim]
+    #           reduction = rank (small), output = out_dim (large)
+    #   shrink: out[S,rank]    = x[S,K_in] @ W[rank,K_in]^T
+    #           reduction = K_in (512-4096), output = rank (16-64)
+    # Carrying the expand tiles over cost both a 16-128 trip reduction
+    # loop and a 50-87% padded dot (rank < 128 columns), which matches the
+    # uniform 3-8x deficit seen on all eight chips.
+    #
+    # BLOCK_N tracks the real output width (rank), floored at 16 for tl.dot
+    # and capped at 128 so wide-rank cases still tile instead of blowing up
+    # the accumulator.
+    block_n = min(max(triton.next_power_of_2(N), 16), 128)
+    # BLOCK_K then takes the reduction axis. Both operand tiles are staged
+    # num_stages deep, so the fast-memory cost is
+    #   BLOCK_K * (BLOCK_S + BLOCK_N) * itemsize * num_stages
+    # A fixed BLOCK_K=256 overflows real budgets (196 KB required vs the
+    # 101 KB NVIDIA smem limit observed on RTX 5070 Ti; Ascend UB is
+    # 1572864 bits = 192 KB), so search (num_stages, BLOCK_K) jointly and
+    # keep the largest BLOCK_K that fits, preferring more stages on ties.
+    # Cutting reduction trips matters more than depth here, since the old
+    # BLOCK_K=32 cost 16-128 trips over K_in.
+    k_cap = min(128, max(triton.next_power_of_2(K), 16))
+    itemsize = x.element_size()
+    budget_bytes = 64 * 1024
+    block_k, num_stages = 32, 1
+    for stages in (3, 2, 1):
+        for cand in (128, 64, 32):
+            if cand > k_cap:
+                continue
+            staged = cand * (block_s + block_n) * itemsize * stages
+            if staged <= budget_bytes and cand >= block_k:
+                if cand > block_k or stages > num_stages:
+                    block_k, num_stages = cand, stages
     grid = (
         triton.cdiv(max_len, block_s) * triton.cdiv(N, block_n),
         1,
@@ -152,12 +185,12 @@ def chunked_sgmv_shrink(x, weights, batch_info, num_slices=1):
         seg_indptr.stride(0),
         batch_info.weight_indices.stride(0),
         batch_info.permutation.stride(0),
-        RANK=K,
+        K_DIM=K,
         BLOCK_S=block_s,
         BLOCK_N=block_n,
         BLOCK_K=block_k,
         num_warps=4,
-        num_stages=3,
+        num_stages=num_stages,
     )
     return output
 
