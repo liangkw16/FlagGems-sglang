@@ -5,13 +5,13 @@ task: 48
 operator: chunked_sgmv_shrink
 batch: 4
 validity: valid
-platform: 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor)
+platform: E7有效4.7489375；E8 FP32窄输出Split-K release通过待提交
 team_best_stage: e7
 team_best_commit: 094548df5da1075b8245b4af8ccddf024a319ae3
 team_best_speedup: 4.7489375
 sealed: no
-next: cpasync候选已实现但NVIDIA不识别pipeline;需沐曦固定源码执行,无本轮ZIP
-updated: 2026-09-08
+next: E8一次平台提交；cpasync未验证原型排除，本轮不混入
+updated: 2026-09-09
 ```
 
 ## S0: 6/8（燧原+昆仑败）
@@ -142,3 +142,24 @@ route/materialize 是 sgmv 族唯一可行形态（e8-e10 三投证伪）。
 - source `26a95766b179d263916e9483dfc8d2343c40406a`；verification `26a95766b179d263916e9483dfc8d2343c40406a`。6 个测试方法、18 次实际 kernel 调用；选定 NVIDIA/代理范围门禁失败。
 - 回执 `artifacts/competition/batch4-implementation-20260907/t48-release1/verification.json`，SHA256 `7f02b6837a843f77a35f04993b15eaf44c2305d8876860a4ac0276e3d3e44a74`；日志 SHA256 `f023c3e3b871b63720a2d6a4c1a75595b5049ed2faf0169893ab2a79678ec5b8`。
 - 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
+
+## E8 FP32 窄输出 Split-K（2026-09-09，提交预注册）
+
+- 明确形状分支：仅 FP32、K>=1024、N<=128、输出 tile 数<128 时四路 K 并行；分界按32对齐，FP32 workspace 后按 part 顺序归约。FP32窄 N 用16/32行 tile；FP16/BF16 保留原 tile 和单路点积。保留长段多 tile、负 adapter 跳过、部分覆盖输出零。
+- source/verification commit：`179fe7ccff681d4f99e4c4f31f0753aea6b6a7ad`，核心代码提交 `2bbdb4b`；ledger commit 为本节独立文档提交。沐曦 cpasync 原型没有固定目标执行证据，已从本隔离分支候选排除；历史源仍在 `01d736b`，本地主分支未改。
+- 门：八芯正确且每芯>=0.1；整题 avg>4.7489375 才晋级团队最佳；>=15% 视为有意义结构收益。一次提交后先分析 raw_result，不以新注释/新ZIP重投相同计算。
+- NVIDIA RTX5070Ti 最终 release 7 方法通过，全部3个打包成员实际入口和 kernel 均被测试，0 fail/error/skip/xfail。新增1023/1024/1025/4095/4096/4097 K边界、3dtype、部分段覆盖。
+- 六轮 AB/BA、每次30次完整调用对 `01d736b` generic：FP32速度约1.14–4.36倍；BF16约0.91–0.97倍（增加参数/分支有约3%–9%开销，平台实测决定取舍）。原始配对在 validation/perf.json，不作为目标八芯证据。
+- 最终验证远端 `/tmp/flagos-t48-e8-final.pBUxSd`，PID333442，timeout600；运行 verify_release 后才运行 bench。未同时运行其他GPU基准。
+- validation/verification.json SHA256：`f49da1ad13ebfac68d6945962bc257a46c1b5d54ce11abade60ceefc44cf9c04`。
+- validation/verification.log SHA256：`166f95440f85d93f6fdd516276526c3d6e0c5c449bd45a552ac756c3200c9fa7`。
+- validation/bench.py SHA256：`9147fa85386d7ef961782bceaa085fb16b47830331787bd76c0ed3ffe4be13ab`。
+- validation/perf.json SHA256：`737d86b998f9f3cdf2e5e8b5dbd5959eb0d51bec8ed0803bcb44fce22f499612`。
+- test SHA256：`0a44058d12400e8d802b6f707053556dd0427ad9d1b1f897ae5179b0c91aaad9`。
+- ZIP：`/private/tmp/flagos-batch4-structural-20260909/artifacts/competition/chunked_sgmv_shrink/e8-179fe7c/chunked_sgmv_shrink.zip`；15784 bytes；SHA256 `8f2323df05c07561a4fae6def68e40d7d5493b089c105364cedffbc378de2120`；dry-run/build/verify-existing 一致。
+
+|成员|SHA256|
+|---|---|
+|chunked_sgmv_shrink.py|`55ddc5fdad8df3c1109b85c2ff50871eea39d713095faeba90a1748ddf684c0e`|
+|chunked_sgmv_shrink_enflame.py|`a2d53ce449daf52df5fddec49305350b654d79a2bbb9320d96048b121a46dce4`|
+|chunked_sgmv_shrink_kunlunxin.py|`af7a413ef50feb2f76d936feb3155e5d2b237f325c06748e0c02758d41d0112b`|
