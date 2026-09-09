@@ -5,12 +5,12 @@ task: 47
 operator: chunked_sgmv_expand
 batch: 4
 validity: valid
-platform: E12有效25.36275；E15/11764终态7/8且燧原0.01低于门槛；E13r待回调
+platform: E16/11769八芯valid24.897未晋级；最佳E12/25.36275
 team_best_stage: e12
 team_best_commit: d649a9d
 team_best_speedup: 25.36275
 sealed: no
-next: E16紧凑调度release15方法通过，待一次提交；两弱恢复E11有效实现
+next: 关闭紧凑调度提分轴；合并重复adapter段的常规GEMM正在验证
 updated: 2026-09-09
 ```
 
@@ -341,3 +341,9 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
 |chunked_sgmv_expand.py|`9f0c4d0afaf296e97f973f957abcd189e3bb1bfebba82b13a46b3dc40eb955fc`|
 |chunked_sgmv_expand_enflame.py|`5cdf1c657a108f9fee016742f298f0aab9e264a174ee8dddbeb0edf43980f36b`|
 |chunked_sgmv_expand_kunlunxin.py|`a51fa38d50babc3a45ef177e6357408f4232bba1ae6f33230461a22d3ce08e4b`|
+
+### E16 八芯终态（2026-09-09 12:27 CST）
+
+- `11769` 于12:25:42正式提交，当日第21次；一次上传/提交，远端SHA256复核一致。8/8 valid，均值 **24.897**，较最佳25.36275低1.84%，未晋级。
+- 逐芯：天数29.76、沐曦21.653、燧原0.147、海光52.4575、昆仑3.708、华为13.1735、A49.458、B28.819。设备端调度正确，但完整代理调用中的1.4–1.7倍未反映为平台整题提速；无法确认平台计时/形状对host同步的权重，不能据此盲迁T48。
+- 证据 `e16-f9cb247/submit.json`、`raw-status-1.json`。恢复generic到原最佳族，下一轴合并同adapter多个段，沿用已经在两弱通过的regular GEMM；保留未覆盖行和空段语义。

@@ -10,8 +10,8 @@ team_best_stage: e9
 team_best_commit: d649a9d
 team_best_speedup: 261.84538333
 sealed: no
-next: e7字节(e6r组级+amd逐块B)为最优组合,均值差=华为窗口三连下行;水位回常态时以e7字节重掷(新ZIP身份,≤2次)
-updated: 2026-09-08
+next: 组并行及单launch FP32 IEEE试验均未提速；保留E9团队最佳，不提交负收益候选
+updated: 2026-09-09
 ```
 
 
@@ -264,3 +264,31 @@ updated: 2026-09-08
   B 108.3（_amd 带内稳定）。
 - e9 字节为 T58 新最优（组级+stages3+B分派+昆仑fp16），剩 1 次重掷。
 - 排名看实时（旧 #4，榜首 616.8）。
+
+## 2026-09-09 结构尝试闭环：两种 FP32 组归约均未晋级
+
+- 组级并行试验：每量化组独立 GEMM→缩放→FP32 partial，第二 kernel 按原组序归约；避免 scale 提前折入输入改变舍入。NVIDIA screening 7方法通过，完整wrapper对当前有效族在5种形状仅0.22–0.69倍。额外工作区和启动成本没有被并行度抵消。
+- 单launch复核：删除组工作区/第二次启动，M<=32用16/32行tile，其余64；保留先cast FP32的IEEE组内点积和逐组缩放/归约。screening同7方法通过，5形状仅0.90/0.38/0.20/0.22/0.22倍。小M改善仍低于原基线，大K受IEEE算力限制。两者都不提交、不改团队最佳。
+- 第一远端 `/tmp/flagos-t58-struct.dFtn9z`，第二 `/tmp/flagos-t58-single.AHTcbA` PID333598；RTX5070Ti。第二次运行在T47 release结束之后，基准均使用完整调用六轮AB/BA，没有与其他GPU基准并发。
+- 基线为 `01d736b` generic（int8转FP16的既有提交族）；本实验改变到题面要求的FP32算术路径，无法把速度变化只归因于调度。旧源码中精度口径疑点不通过本轮新提交扩散；新探索使用FP32，不把旧族既有valid视作所有dtype/目标的数值证明。
+- source/verification为screening工作区快照，未生成release候选/ZIP。以下候选和测试原字节连同验证日志、基准及基线存入本地忽略产物；工作树两文件已恢复原HEAD。仅本节 ledger 提交进入Git。
+
+证据 `artifacts/competition/structural-20260909/t58-screen1`：
+
+- candidate.py SHA256 `c3830d54dde41798bc9e7df31875021c1b9d75707c0460f7b25383e4695ad418`
+- tests.py SHA256 `6f9033c961595cd4e7afc6bb0076b4b3cd8ddbddbb79f83f6029f016035b20dc`
+- verification.json SHA256 `6171f4237e34de28d618f3189caeff7922c3fa54aa0b65c81bc3a7128f674030`
+- verification.log SHA256 `67a225a9e44e7e2a95dd69601113bd3b7e2f00ff85a9d083cc24a6c8de5433bc`
+- perf.json SHA256 `029998b5264d383dd0530e437f9b35f5826ed9eae1af3a87bffc3895ebb4498c`
+- bench.py SHA256 `8155c09a00df141738f6a9857556370d80b80a56af3caaebc8f82875e03c8d72`
+- baseline.py SHA256 `659b8d7f39d3fad82fe3b94a54ad55e11cc4f514bd735642f316e62d40d80df9`
+
+证据 `artifacts/competition/structural-20260909/t58-screen2`：
+
+- candidate.py SHA256 `79d24dd2fb72bab1f9c9d67f8225af959445a21c6d76317e3fcf66504845a4e9`
+- tests.py SHA256 `0711585f6627c7ca6629fb5947de3ce44b3cd091ef67c9f064c253852643227f`
+- verification.json SHA256 `b695fd472c957b3be682ade26d71fde03a060d2358d35dd088cdeacc0fa0b37f`
+- verification.log SHA256 `cd2fa64f53d184fd798caa1c7d04a6adb2349a1489e2a73b830f8e950abb58a0`
+- perf.json SHA256 `d3e405d1669c89eba0b498022630f795803932a3370be68f0863bc3f8968dcdd`
+- bench.py SHA256 `8155c09a00df141738f6a9857556370d80b80a56af3caaebc8f82875e03c8d72`
+- baseline.py SHA256 `659b8d7f39d3fad82fe3b94a54ad55e11cc4f514bd735642f316e62d40d80df9`
