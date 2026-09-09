@@ -27,7 +27,9 @@ MODULE_PATH = (
     / "ops"
     / "chunked_sgmv_expand.py"
 )
-SPEC = importlib.util.spec_from_file_location("chunked_sgmv_expand_module", MODULE_PATH)
+SPEC = importlib.util.spec_from_file_location(
+    "chunked_sgmv_expand_module", MODULE_PATH
+)
 if SPEC is None or SPEC.loader is None:
     raise RuntimeError(f"cannot load {MODULE_PATH}")
 MODULE = importlib.util.module_from_spec(SPEC)
@@ -58,7 +60,9 @@ class BatchInfo:
         self.bs = bs
 
 
-def reference(x, weights, batch_info, slice_offsets, max_slice_size, base_output):
+def reference(
+    x, weights, batch_info, slice_offsets, max_slice_size, base_output
+):
     out = base_output.clone().float()
     n_slices = slice_offsets.numel() - 1
     r = weights.shape[-1]
@@ -110,7 +114,9 @@ def make_case(
         .cuda()
         .to(dtype)
     )
-    base_output = torch.full((S, total_out), base_fill, dtype=dtype).cuda().to(dtype)
+    base_output = (
+        torch.full((S, total_out), base_fill, dtype=dtype).cuda().to(dtype)
+    )
     seg_indptr = torch.tensor(
         [0] + list(torch.tensor(seg_lens).cumsum(0).tolist()),
         dtype=torch.int64,
@@ -119,7 +125,8 @@ def make_case(
         0, num_lora, (len(seg_lens),), dtype=torch.int64, generator=g
     ).cuda()
     lora_ranks = (
-        torch.randint(0, 2, (num_lora,), dtype=torch.int64, generator=g).cuda() * rank
+        torch.randint(0, 2, (num_lora,), dtype=torch.int64, generator=g).cuda()
+        * rank
     )  # 0 or full rank
     scalings = torch.randn(num_lora, dtype=dtype, generator=g).cuda()
     permutation = torch.randperm(S, generator=g).cuda()
@@ -142,7 +149,9 @@ def make_case(
 class ChunkedSgmvExpandTest(unittest.TestCase):
     def _check(self, x, weights, batch_info, slice_offsets, base_output):
         snapshots = [t.clone() for t in (x, weights, base_output)]
-        max_slice_size = int((slice_offsets[1:] - slice_offsets[:-1]).max().item())
+        max_slice_size = int(
+            (slice_offsets[1:] - slice_offsets[:-1]).max().item()
+        )
         actual = MODULE.chunked_sgmv_expand(
             x, weights, batch_info, slice_offsets, max_slice_size, base_output
         )
@@ -221,24 +230,92 @@ class ChunkedSgmvExpandTest(unittest.TestCase):
         self.assertEqual(out.shape, base_output.shape)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class ChunkedSgmvExpandVariantsTest(unittest.TestCase):
     """Core matrix across every backend variant (generic + enflame)."""
 
     MODULES = load_operator_modules("chunked_sgmv_expand")
 
+    def test_vendor_multi_k_pointer_stride(self):
+        # Multi-trip K exactness through the grouped kernel itself
+        # (K=65 with BLOCK_K=32 -> three trips): the e13 vendors
+        # recompute K addresses from k_start each trip, so the
+        # historical stride-advance miscompile class cannot recur.
+        torch.manual_seed(47)
+        rows_cnt, rank, width = 3, 65, 17
+        a = torch.randn(rows_cnt, rank, device="cuda")
+        w = torch.randn(1, width, rank, device="cuda")
+        base = torch.randn(rows_cnt, width, device="cuda")
+        seg = torch.tensor([0, rows_cnt], device="cuda", dtype=torch.int32)
+        wid = torch.tensor([0], device="cuda", dtype=torch.int32)
+        ranks = torch.tensor([rank], device="cuda", dtype=torch.int32)
+        scal = torch.tensor([0.5], device="cuda")
+        slices = torch.tensor([0, width], device="cuda", dtype=torch.int32)
+        expected = base + (a @ w[0].T) * 0.5
+        for name, module in self.MODULES:
+            if name not in ("enflame", "kunlunxin"):
+                continue
+            kernel = module._sgmv_grouped_gemm_kernel
+            with self.subTest(module=name):
+                c = base.clone().float()
+                kernel[(1,)](
+                    a,
+                    w,
+                    c,
+                    seg,
+                    wid,
+                    ranks,
+                    scal,
+                    slices,
+                    1,
+                    rows_cnt,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    a.stride(0),
+                    a.stride(1),
+                    w.stride(0),
+                    w.stride(1),
+                    w.stride(2),
+                    c.stride(0),
+                    c.stride(1),
+                    RANK=rank,
+                    BLOCK_M=16,
+                    BLOCK_N=32,
+                    BLOCK_K=32,
+                    num_warps=4,
+                    num_stages=1,
+                )
+                torch.testing.assert_close(
+                    c, expected, atol=1e-4, rtol=1e-4
+                )
+
+    def test_rank_beyond_single_k_tile(self):
+        # Large ranks must use several bounded K tiles. The next rank must
+        # advance B along its rank stride, not its output-column stride.
+        for rank in (127, 128, 129, 511, 512, 513):
+            args = make_case([33, 0, 65], 2, [17, 33], rank, seed=47)
+            x, weights, info, offsets, base = args
+            info.lora_ranks[:] = 1  # nonzero means use the stored rank
+            expected = reference(x, weights, info, offsets, 33, base)
+            for name, module in self.MODULES:
+                with self.subTest(module=name, rank=rank):
+                    actual = module.chunked_sgmv_expand(
+                        x, weights, info, offsets, 33, base
+                    )
+                    torch.testing.assert_close(
+                        actual, expected, atol=1e-4, rtol=1e-4
+                    )
+
     def test_variants_match_reference(self):
         cases = [
             ([16, 32, 8], 4, [128, 128], 32, torch.float32),
             ([0, 12, 0, 12, 0], 3, [65, 80, 129], 16, torch.float32),
             ([20, 20], 3, [128, 64], 16, torch.bfloat16),
-            # ranks beyond one BLOCK_K tile: the kunlunxin vendor GEMM
-            # miscompiled on its multi-trip K loop before this became a
-            # permanent regression
+            # Keep historical rank regressions; the small direct-kernel
+            # test separately exercises the corrected rank-stride advance.
             ([24, 12], 3, [128, 64], 64, torch.float32),
             ([24, 12], 3, [128, 64], 96, torch.float32),
             ([24, 12], 3, [128, 64], 128, torch.float32),
@@ -263,3 +340,23 @@ class ChunkedSgmvExpandVariantsTest(unittest.TestCase):
                     )
                     atol, rtol = TOLERANCES[base_output.dtype]
                     torch.testing.assert_close(out, ref, atol=atol, rtol=rtol)
+
+
+RELEASE_REQUIRED_TESTS = [
+    "ChunkedSgmvExpandTest.test_dtypes_equal_slice",
+    "ChunkedSgmvExpandTest.test_unequal_slice_widths",
+    "ChunkedSgmvExpandTest.test_rank_sizes",
+    "ChunkedSgmvExpandTest.test_empty_segments_and_zero_ranks",
+    "ChunkedSgmvExpandTest.test_all_rank_zero",
+    "ChunkedSgmvExpandTest.test_single_segment_single_token",
+    "ChunkedSgmvExpandTest.test_identity_permutation",
+    "ChunkedSgmvExpandTest.test_base_output_untouched_for_rank_zero",
+    "ChunkedSgmvExpandTest.test_empty_batch",
+    "ChunkedSgmvExpandVariantsTest.test_variants_match_reference",
+    "ChunkedSgmvExpandVariantsTest.test_rank_beyond_single_k_tile",
+    "ChunkedSgmvExpandVariantsTest.test_vendor_multi_k_pointer_stride",
+]
+
+
+if __name__ == "__main__":
+    unittest.main()
