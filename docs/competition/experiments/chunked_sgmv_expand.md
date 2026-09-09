@@ -10,7 +10,7 @@ team_best_stage: e17
 team_best_commit: cea2a0c10878b39c251a36857d97311d1ab4cd73
 team_best_speedup: 25.5965
 sealed: no
-next: 本轮闭环完成，保留E17最佳字节；向量/紧凑调度/dtype三个未达标轴关闭
+next: E19通用短段/小rank行块候选发布验证通过，待一次性平台提交；保留E17平台最佳
 updated: 2026-09-09
 ```
 
@@ -401,3 +401,27 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
 - 其余逐芯：天数29.5875、沐曦21.618、海光54.0055、昆仑4.764、华为14.268、A50.9425、B28.254。完整最终响应 `e18-e887aab/raw-status-final.json`；未重投任何候选。
 - 本工作分支enflame源恢复到`cea2a0c` E17逐字节内容；generic/kunlunxin与E17相同，测试/runner/依赖逐文件SHA也与E17 release一致。因此最终保留已验证的同adapter合并，不留dtype试验为默认实现；没有给恢复提交新建ZIP或声称新source身份已上平台。
 - 本轮总表、最新榜单与提交来源见[结构尝试结果](../structural-attempts-20260909.md)。
+
+## E19 通用短段/小 rank 行块（2026-09-09，提交预注册）
+
+- 用户要求对比Top1后开工；13:37公开逐芯榜单显示海光+A占分差61.61%，generic六芯占92.72%。故本轮先改generic，enflame/kunlunxin完全沿用E17。13:41:35实时账号额度24/30，剩6；本轮新候选最多4次，预留2次。
+- 仅改变行分块：rank<=32或max_len<=32时BM16，其余BM64；BN128/BK32、IEEE点积、4warps/3stages及路由/clone语义保留。来源启发为公开c2flowDS qkv_lora_b PR58（d50f52e5280ebf77e6fb34837d450314393b8c18），不是T47榜首源码。所有大rank、stride、空段、rank0、部分覆盖仍遵守原契约。
+- 初筛否决两项过宽策略：BM16+整rank dot在FP32 rank128长段仅0.065倍且1250 spills；BM16全域在FP32长段rank64/128仅0.48–0.61倍。最终限定到有收益域，未把已知退化候选送平台。初筛产物在本目录screen/screen2，属于未提交探索证据。
+- 最终release 17方法，0fail/error/skip/xfail，generic及两vendor均真实调用/launch。新增3dtype、rank15/16/17/31/32/33/63/64/65/127/128/129及段长15/16/17/31/32/33/63/64/65、输出127/128/129边界回归。
+- NVIDIA RTX5070Ti、torch2.13.0+cu130、Triton3.7.1；远端`/tmp/flagos-t47-e19-release.4Npqbu`，PID334870，timeout900，run.sh先完整release后24组shape/dtype/hint的6轮AB/BA×20完整调用。受益域1.008–2.551倍；保留路径0.997–1.004倍。短段rank32寄存器255→117、spills96→0。此为NVIDIA代理证据；目标六芯target-runtime-unverified，不外推平台倍数。
+- 平台门：8/8正确、每芯>=0.1且均值>25.5965才晋级team best；generic六芯合计提升>=15%记结构收益兑现。目标分数未知。若未晋级，取原始逐芯结果后保留已验证最佳，不重复投相同候选。
+- source/verification commit：`c3aad6d65a9e381e8cdbb209cc76ab34a8ef0d36`；本节ledger为独立提交。
+- ZIP：`/private/tmp/flagos-batch4-structural-20260909/artifacts/competition/chunked_sgmv_expand/e19-c3aad6d/chunked_sgmv_expand.zip`，18677 bytes，SHA256 `95f94c5f011c62eb4b5bbb4253d1b216ba71d434658b5016f62c8ad22db5939b`；dry-run/build/verify-existing身份一致。
+- validation/verification.json SHA256 `29e50bfe7e52142bd02575d72441f7bc33078a8b7e8144b953bd16be0cca3268`。
+- validation/verification.log SHA256 `7622441e64348ac1e458833ecb7760e5a6a044225eca9676fb14b9dd4f0fc755`。
+- validation/bench.py SHA256 `f89a6c4fcb03f7a6f138267122f66f8094a77105b0aa47fea5b35def5838a717`。
+- validation/baseline.py SHA256 `cec9fec2b67b3cd9c92cc83da01fd626eb3469ddbbe8795b05d708fd065e6059`。
+- validation/perf.json SHA256 `1cdf28f1d30ef28a801d11ff8ed566969fec23b5fea80340adde8a191b5bef7e`。
+- validation/run.sh SHA256 `143620d6e42a0a0b40b6ccdd040893e32b6ea6e7625e60adf90af39d6d5cdd46`。
+- test SHA256 `424476e26b0273561578ade8365dce4e8505c2104e855cf5a54b27118df774d6`。
+
+| ZIP成员 | SHA256 |
+|---|---|
+|chunked_sgmv_expand.py|`d97ac1b5f50cba5b7228a60092330a6089810ff5d8bfd8b2d60db2410cb46071`|
+|chunked_sgmv_expand_enflame.py|`ec7fe0ccab03d150ce6ef11d0b38ebf036726ace8d0cb38745f69c792ea63c4d`|
+|chunked_sgmv_expand_kunlunxin.py|`ba0690d263dad46d5ea816a94b5d8e5f5a88c6ac9d39cf094062a91cbda856bb`|
