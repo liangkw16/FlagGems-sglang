@@ -79,9 +79,15 @@ def _sgmv_gemm_kernel_enflame(
     tl.store(c_ptrs, base + accumulator * scaling, mask=mask)
 
 
+# Enflame dot law (T09/T23/T37): tensor tiles need >=64-wide M/N to
+# leave the slow vector path; with thin K (=lora rank, often 16-64) the
+# 64x64 tiles collapsed to thin MMAs and this backend floor sat at
+# 0.18x across every submission. Widen M/N to 128 for deep-enough
+# segment batches; small m keeps the 64 tile to avoid masked waste.
+_BLOCK_M_LARGE = 128
+_BLOCK_N_LARGE = 128
 _BLOCK_M = 64
 _BLOCK_N = 64
-_BLOCK_K = 32
 _GROUP_M = 8
 
 
@@ -95,7 +101,9 @@ def _launch_gemm(a, b, c, scaling, output_width, rank):
     # sizing BLOCK_K to the rank; 512 covers every platform rank and
     # the tail mask still handles non-power-of-two ranks like 96.
     block_k = min(triton.next_power_of_2(max(rank, 16)), 512)
-    grid = (triton.cdiv(m, _BLOCK_M) * triton.cdiv(output_width, _BLOCK_N),)
+    block_m = _BLOCK_M_LARGE if m >= 128 else _BLOCK_M
+    block_n = _BLOCK_N_LARGE
+    grid = (triton.cdiv(m, block_m) * triton.cdiv(output_width, block_n),)
     _sgmv_gemm_kernel_enflame[grid](
         a,
         b,
@@ -110,8 +118,8 @@ def _launch_gemm(a, b, c, scaling, output_width, rank):
         c.stride(1),
         N=output_width,
         K=rank,
-        BLOCK_M=_BLOCK_M,
-        BLOCK_N=_BLOCK_N,
+        BLOCK_M=block_m,
+        BLOCK_N=block_n,
         BLOCK_K=block_k,
         GROUP_M=_GROUP_M,
         num_warps=4,

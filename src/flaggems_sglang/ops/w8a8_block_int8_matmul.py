@@ -161,7 +161,12 @@ def w8a8_block_int8_matmul(A, B, As, Bs, block_size, output_dtype):
         BLOCK_K=block_k,
         GROUP_STEPS=group_k // block_k,
         num_warps=4,
-        num_stages=2,
+        # stages probe (e9): the three group-scale beneficiary chips
+        # (muxi/haiguang/card_a) all run this generic; one more buffer
+        # stage fits shared memory at 64^3 tiles and was never tried on
+        # the platform (kunlunxin/ascend/enflame vendors keep their own
+        # launch params).
+        num_stages=3,
     )
     return C
 
