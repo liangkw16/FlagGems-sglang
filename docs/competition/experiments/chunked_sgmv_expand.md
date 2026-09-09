@@ -5,13 +5,13 @@ task: 47
 operator: chunked_sgmv_expand
 batch: 4
 validity: valid
-platform: E11/11031八芯valid,21.6584375x;历史E5 best25.0048125x
+platform: E12有效25.36275；E13/11728失败；E13r/11756评测中；E15待提交
 team_best_stage: e12
 team_best_commit: d649a9d
 team_best_speedup: 25.36275
 sealed: no
-next: E11目标正确性通过但未晋级,保留E5守榜;不重投同字节,需新增目标性能证据再开轴
-updated: 2026-09-08
+next: E15 vector GEMV release已通过；待一次正式提交，目标芯未验证
+updated: 2026-09-09
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -292,3 +292,23 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
   （门：燧原 ≥0.5、昆仑 ≥6）。
 - e14（dtype 探针，`c2ffd5d` 全绿在库）冻结不发：同结构，e13 判死则
   连带死，e13r 过则按读数决定。
+
+## E15 设备路由 + FP32 向量归约（2026-09-09，本轮预注册）
+
+- 用户授权：充分利用提交机会完成结构尝试；每个候选只提交一次。
+- 改动：两弱卡去掉分组 dot 与逐段物化，Triton 预路由 + 每 token/output tile 向量乘加；K 维部分和在循环后归约。generic 冻结。上游机制参考 vLLM PR52880，固定提交 3d45361674f874eccf51f04999e17e5f0b28c3b4。
+- 契约：原签名和 FP32 计算/输出 dtype；rank 非零时使用权重存储 rank；空段、部分覆盖、零 rank 保留 base，输入不修改。新增 int32/stride、动态 metadata、65535 网格边界及多 K 回归。
+- 门：八芯正确且每芯 >=0.1；整题均值 >25.36275 才晋级。两弱分数合计增加至少4作为结构收益信号，不承诺六强冻结即可 Top1。失败先取 raw_result，不重投相同候选。
+- NVIDIA release 14 方法通过，完整调用对 E12 两弱旧模板代理配对速度约8.10/8.23/26.75/41.14/99.33倍；六轮 AB/BA 原始数据在 validation/perf.json。对比源为 d649a9d，非 E13；不能外推目标性能。
+- 目标资源：KernelGen schema 无固定 Triton 执行接口；本轮 sunrise 单轮请求初始生成失败（0 attempts/tests）；kunlun 返回502。响应在 artifacts/competition/structural-20260909/mcp/，目标两芯仍 target-runtime-unverified，由已授权平台评测补齐。
+- 远端：/tmp/flagos-t47-e15.fMAwBB，PID332772，timeout600，run.sh 先执行 verify_release.py run，再完整 wrapper 计时；RTX5070Ti、torch2.13.0+cu130、Triton3.7.1。
+- source commit / verification commit：`7c5bfc05cf2107f1a5787599d39839b0469fe35b`；ledger commit 为本节独立文档提交。
+- test SHA256：`af8657f177785feb6d0129721cb4d25b64b12e82c1556e289a9e60e2931523b2`。
+- ZIP：`/private/tmp/flagos-batch4-structural-20260909/artifacts/competition/chunked_sgmv_expand/e15-7c5bfc0/chunked_sgmv_expand.zip`，18268 bytes，SHA256 `d2c42661289c5a737432e7f1e8a8b73fd732e4f63f6698213e0b20e938beb733`；dry-run/build/verify-existing 一致。
+- release receipt SHA256：`2c7669221b4f0c1736839b91b1f3bb9df7d22c3faf51c45307e18f78cc925f00`；完整日志 SHA256：`043a513b7f5a30437ce4eba0b4f41062bd793a4ebfffc570827c0757cc19f766`；bench.py SHA256：`416fc3c942f383fc3a43c911a378ae35873ef5ae18df8db3bb60d8fbeac0f17a`；perf.json SHA256：`ec3a1cd46dec30ebe8fe2a9405ad23db38d318c0a8a8336013fe19f6ebb41273`。
+
+| 成员 | SHA256 |
+|---|---|
+| chunked_sgmv_expand.py | `cec9fec2b67b3cd9c92cc83da01fd626eb3469ddbbe8795b05d708fd065e6059` |
+| chunked_sgmv_expand_enflame.py | `d49b12dc4890d0cea083c9265986e2e0732e7353d0358f87157835627aaf81bf` |
+| chunked_sgmv_expand_kunlunxin.py | `d49b12dc4890d0cea083c9265986e2e0732e7353d0358f87157835627aaf81bf` |

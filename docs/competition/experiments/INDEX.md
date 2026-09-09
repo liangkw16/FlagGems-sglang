@@ -27,7 +27,7 @@
 | 44 | chain_speculative_sampling | invalid | s0八芯predicts失败;本轮修复OOB但half精确采样仍失败,未重投 | s0 -x | no | 诊断已复现predicts[13]失配;release因expected_failure被拒,目标scan/舍入仍未修复,禁止带缺口提交 | 2026-09-08 | [chain_speculative_sampling](chain_speculative_sampling.md) |
 | 45 | chunk_scaled_dot_kkt | invalid_threshold | 8/8正确(e15),昆仑0.063x<0.1;平均7.000125不计有效排名 | - -x | no | 新row/head epilogue代理正确但未提速;候选暂不晋级,昆仑仍需>=0.1目标证据 | 2026-09-08 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x);e7/11229 7/8华为aclnnCat内部错误 | e3 14.1051875x | no | tile8探针华为失败(aclnnCat单case,原生库层);ascend回滚e3,tile8轴关闭,需aclnn间歇旁证才重开 | 2026-09-08 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
-| 47 | chunked_sgmv_expand | valid | E11/11031八芯valid,21.6584375x;历史E5 best25.0048125x | e12 25.36275x | no | E11目标正确性通过但未晋级,保留E5守榜;不重投同字节,需新增目标性能证据再开轴 | 2026-09-08 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
+| 47 | chunked_sgmv_expand | valid | E12有效25.36275；E13/11728失败；E13r/11756评测中；E15待提交 | e12 25.36275x | no | E15 vector GEMV release已通过；待一次正式提交，目标芯未验证 | 2026-09-09 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
 | 48 | chunked_sgmv_shrink | valid | 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor) | e7 4.7489375x | no | cpasync候选已实现但NVIDIA不识别pipeline;需沐曦固定源码执行,无本轮ZIP | 2026-09-08 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
 | 49 | ernie45_rope_fused | valid | e4/11245八芯valid,8.71115625x新team best | e4r 8.9578125x | no | head16候选代理正确/ZIP验签;需昆仑live buffer和完整wrapper收益后晋级 | 2026-09-08 | [ernie45_rope_fused](ernie45_rope_fused.md) |
 | 50 | extend_attention | candidate-wip | 6/8(e4,昆仑conclusive封轴;华为数值不可修;燧原0.013x<门槛) | - -x | no | 逐阶段诊断已实现但插桩有观察效应;需要目标原失败重放,不再将两种失败形态称数值永久不可修 | 2026-09-08 | [extend_attention](extend_attention.md) |
