@@ -12,23 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Enflame vendor: segment-owned persistent workers, mirroring the
-# kunlunxin E5 structure that platform-verified 0.2295 -> 0.6375 on this
-# task. The vendor guide states GCU kernel launch overhead is not
-# hidden, so the previous form -- one logical program per token with an
-# in-kernel binary search over segments, grid capped at 65535 -- paid
-# both the per-token scalar search chain and heavy grid oversubscription
-# against the 24 SIPs. Workers here claim whole segments, read segment
-# bounds and adapter metadata once, then walk the segment's tokens; the
-# walk carries num_stages=3 so the loop can pingpong, and num_warps is
-# left to the backend default (pinning it has been the wrong call on
-# this chip twice: T19-E5, T51-E5).
+# Kunlunxin vendor: segment-owned persistent workers (12 workers matches the FlagTree XPU worker count) -
+# each worker claims whole segments, reads segment bounds and adapter
+# metadata once, then walks the segment's tokens; no per-token binary
+# search and no dispatch cost for tens of thousands of logical
+# programs.
 
 import torch
 import triton
 import triton.language as tl
 
-_WORKERS = 24  # GCU300 SIP count
+_WORKERS = 12
 
 
 @triton.jit
@@ -56,7 +50,7 @@ def _cela_segment_owned_kernel(
 ):
     pid = tl.program_id(0)
     num_workers = tl.num_programs(0)
-    for seg in tl.range(pid, num_segments, num_workers, num_stages=3):
+    for seg in range(pid, num_segments, num_workers):
         start = tl.load(seg_indptr + seg * seg_stride)
         end = tl.load(seg_indptr + (seg + 1) * seg_stride)
         w_idx = tl.load(weight_indices + seg * widx_stride)
@@ -99,30 +93,30 @@ def chunked_embedding_lora_a(input_ids, weights, batch_info, vocab_size):
     output = torch.zeros(
         (total_tokens, max_rank), dtype=weights.dtype, device=weights.device
     )
-    if total_tokens == 0 or batch_info.bs == 0:
+    num_segments = batch_info.bs
+    if total_tokens == 0 or num_segments == 0:
         return output
-    seg_indptr = batch_info.seg_indptr
-    if int((seg_indptr[1:] - seg_indptr[:-1]).max().item()) == 0:
-        return output
-    grid = (min(batch_info.bs, _WORKERS),)
+    grid = (min(num_segments, _WORKERS),)
     _cela_segment_owned_kernel[grid](
         input_ids,
         weights,
         output,
         batch_info.permutation,
-        seg_indptr,
+        batch_info.seg_indptr,
         batch_info.weight_indices,
         batch_info.lora_ranks,
-        batch_info.bs,
+        num_segments,
         weights.shape[0],
         input_ids.stride(0),
         batch_info.permutation.stride(0),
-        seg_indptr.stride(0),
+        batch_info.seg_indptr.stride(0),
         batch_info.weight_indices.stride(0),
         batch_info.lora_ranks.stride(0),
         *weights.stride(),
         *output.stride(),
         BLOCK_RANK=128,
+        num_warps=4,
+        num_stages=1,
     )
     return output
 

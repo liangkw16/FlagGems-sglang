@@ -16,10 +16,21 @@
 # (token slots, batch) with token folding under the 65535 flatten cap;
 # segment bounds and adapter metadata are read once per program and
 # hoisted out of the token loop, rows guarded in-loop.
+#
+# int32 pass: the per-token index chain (seg bounds, permutation row,
+# token id, lora rank) is cast to int32 in the wrapper -- Ascend lowers
+# int64 scalar/vector arithmetic to a fraction of the int32 rate, and
+# these values are bounded by token count / vocab size, both far below
+# 2**31. Only the adapter base offset keeps an int64 cast, since
+# w_idx * stride_lora can reach num_lora * rank * vocab and overflow.
 
 import torch
 import triton
 import triton.language as tl
+
+
+def _as_int32(t):
+    return t if t.dtype == torch.int32 else t.to(torch.int32)
 
 
 @triton.jit
@@ -58,8 +69,8 @@ def _cela_fold_kernel_ascend(
     w_idx64 = w_idx.to(tl.int64)
     num_rank_blocks = tl.cdiv(rank, BLOCK_RANK)
     for local in range(token_slot, seg_len, token_cap):
-        row = tl.load(permutation + (start + local) * perm_stride).to(tl.int64)
-        token_id = tl.load(input_ids + row * ids_stride).to(tl.int64)
+        row = tl.load(permutation + (start + local) * perm_stride)
+        token_id = tl.load(input_ids + row * ids_stride)
         for rank_block in range(0, num_rank_blocks):
             rank_offsets = rank_block * BLOCK_RANK + tl.arange(0, BLOCK_RANK)
             rank_mask = rank_offsets < rank
@@ -72,7 +83,9 @@ def _cela_fold_kernel_ascend(
                 other=0.0,
             )
             tl.store(
-                output + row * output_stride_token + rank_offsets * output_stride_rank,
+                output
+                + row * output_stride_token
+                + rank_offsets * output_stride_rank,
                 values,
                 mask=rank_mask,
             )
@@ -94,13 +107,13 @@ def chunked_embedding_lora_a(input_ids, weights, batch_info, vocab_size):
     token_cap = max(1, min(max_len, 65535 // bs))
     grid = (token_cap, bs)
     _cela_fold_kernel_ascend[grid](
-        input_ids,
+        _as_int32(input_ids),
         weights,
         output,
-        batch_info.permutation,
-        seg_indptr,
-        batch_info.weight_indices,
-        batch_info.lora_ranks,
+        _as_int32(batch_info.permutation),
+        _as_int32(seg_indptr),
+        _as_int32(batch_info.weight_indices),
+        _as_int32(batch_info.lora_ranks),
         weights.shape[0],
         input_ids.stride(0),
         batch_info.permutation.stride(0),
