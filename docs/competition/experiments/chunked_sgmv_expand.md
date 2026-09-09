@@ -5,12 +5,12 @@ task: 47
 operator: chunked_sgmv_expand
 batch: 4
 validity: valid
-platform: E21/11793八芯valid25.9625625新最佳；E19/11788待天数回调
+platform: E21/11793八芯valid25.9625625最佳；E22/11795有效未晋级；E19/11788天数超时无效
 team_best_stage: e21
 team_best_commit: 23be6795f1298a99dbca1c41b29c2dad66ec9832
 team_best_speedup: 25.9625625
 sealed: no
-next: 已恢复E21精确源码/测试；E22有效未晋级；本轮停止新提交，等待E19天数终态
+next: 三次提交已结算，保留E21精确源码/测试；第3，剩2/30；下一步需海光/A目标逐用例耗时定位
 updated: 2026-09-09
 ```
 
@@ -500,3 +500,16 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
 - 初筛源码、测试、脚本和原始样本清单 `e20-layout-screen/sha256.json` SHA256 `40576dca2aab270e009f114e3b1d2506845ddea50edad03997777e8cee4b6044`。
 - 初筛源码、测试、脚本和原始样本清单 `e21-23be679/screen/sha256.json` SHA256 `95fd27f424a6762551c167a3f92864ffae757e872eaa77c14d127526a2ff9798`。
 - 初筛源码、测试、脚本和原始样本清单 `e22-40de0c6/screen/sha256.json` SHA256 `0df7c6c1c195e3ff5ea22234decb1530b95bb7c59afafb92e95fc35466b8e23f`。
+
+### E19 最终结算与本轮结束（2026-09-09 14:22 CST）
+
+- 11788最终8/8终态、7/8正确，平台validity=invalid_correctness，无有效均值。天数14:22:05返回，execution_time_ms=1851926；raw_result明确为验证阶段1830s/1800s超时，子进程仍为R状态，failed_cases为空。没有数值失配证据，也不能把服务推测的“长时间运行或死循环”当成已定位根因；未重投。
+- E19两次watch只发GET；第二次正常退出0并返回终态。原始watch输出包含多个JSON快照，已按JSON流解析保存status-final.json，原始输出完整保留。
+- 本轮3发全部结算：E19无效、E21八芯valid25.9625625新最佳、E22八芯valid25.9073125未晋级。最终源码、测试和runner仍与E21/23be679逐字节一致。14:22:56实时榜单第3，Top1 c2flow42.9844375，追平仍需65.5632%；账号used28/30、remaining2。
+- 对4次generic字节完全相同的提交11764/11771/11776/11793复核：海光53.829–55.875，国际A50.053–50.972。这几个观测点的波动远小于榜首差距；没有榜首逐用例参考/候选耗时，仍不能完全分离算法收益与参考计时影响。下一轮优先取得海光/A目标profile，再选择新的计算路径，不继续重复当前分块/constexpr/窄寻址微调。
+- 本分支按用户AGENTS自动commit/push，CI只监听master push或以master为目标的PR，因此codex分支push不触发该CI；未创建PR。
+- 终态证据 `e19-c3aad6d/raw-status-final.json` SHA256 `a97929aeb4d9178653241eb46c4da8800a00817a5a51aae601191b204c3bbbdc`。
+- 终态证据 `e19-c3aad6d/status-final.json` SHA256 `fc0013576d192bd8c84560d43c2f945f2f526e177636bac12f50769127107678`。
+- 终态证据 `e21-23be679/raw-status-final.json` SHA256 `e0dd0dacfa544d9ebac6bdb03a2093d4c9df50a318a66dcd9d9b0aa6575a6c8b`。
+- 终态证据 `e22-40de0c6/raw-status-final.json` SHA256 `abf8fb3b0433660a9986acba33b333b41234e22831fab07a5e0bcce2e6cc3f49`。
+- 终态证据 `e21-23be679/final-summary.json` SHA256 `8a259a4523538b54da77d6ed0fba58ae52887e77fe3e315645eee2d769969346`。
