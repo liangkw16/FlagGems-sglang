@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# e13r re-roll of sub 11728 (crash-family reload discriminator).
 # Kunlunxin vendor, grouped-GEMM form (e13): the same single-launch
 # regular-GEMM body as the enflame vendor (this backend's per-segment
 # route/materialize loop also capped it near 4x while six strong chips

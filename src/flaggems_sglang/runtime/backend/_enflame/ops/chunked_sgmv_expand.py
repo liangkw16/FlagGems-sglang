@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# e13r re-roll: sub 11728 died in the platform's inductor
+# compile-worker (crash-family fingerprint, eval phase) on both weak
+# chips; this reload distinguishes platform flake from kernel trigger.
 # Enflame vendor, grouped-GEMM form (e13). The earlier per-(segment,
 # slice) launch loop floored this backend at 0.18x across every round -
 # the 128x128 tile probe (e12) proved tile geometry is not the cause, so
