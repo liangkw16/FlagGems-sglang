@@ -237,60 +237,97 @@ class ChunkedSgmvExpandVariantsTest(unittest.TestCase):
     MODULES = load_operator_modules("chunked_sgmv_expand")
 
     def test_vendor_multi_k_pointer_stride(self):
-        # Multi-trip K exactness through the grouped kernel itself
-        # (K=65 with BLOCK_K=32 -> three trips): the e13 vendors
-        # recompute K addresses from k_start each trip, so the
-        # historical stride-advance miscompile class cannot recur.
-        torch.manual_seed(47)
-        rows_cnt, rank, width = 3, 65, 17
-        a = torch.randn(rows_cnt, rank, device="cuda")
-        w = torch.randn(1, width, rank, device="cuda")
-        base = torch.randn(rows_cnt, width, device="cuda")
-        seg = torch.tensor([0, rows_cnt], device="cuda", dtype=torch.int32)
-        wid = torch.tensor([0], device="cuda", dtype=torch.int32)
-        ranks = torch.tensor([rank], device="cuda", dtype=torch.int32)
-        scal = torch.tensor([0.5], device="cuda")
-        slices = torch.tensor([0, width], device="cuda", dtype=torch.int32)
-        expected = base + (a @ w[0].T) * 0.5
+        # Public-entry regression replaces the retired private GEMM entry.
+        for rank in (65, 193):
+            x, weights, info, offsets, base = make_case(
+                [3, 0, 2], 2, [17, 33], rank, seed=92
+            )
+            info.lora_ranks.fill_(rank)
+            expected = reference(x, weights, info, offsets, 33, base)
+            for name, module in self.MODULES:
+                with self.subTest(module=name, rank=rank):
+                    actual = module.chunked_sgmv_expand(
+                        x, weights, info, offsets, 33, base
+                    )
+                    torch.testing.assert_close(
+                        actual, expected, atol=1e-4, rtol=1e-4
+                    )
+
+    def test_route_mutation_partial_and_grid_tail(self):
+        for lengths, widths in (
+            ([0, 3, 0, 2, 0], [15, 16, 17]),
+            ([129], [8193]),
+        ):
+            x, weights, info, offsets, base = make_case(
+                lengths, 2, widths, 8, seed=94
+            )
+            info.lora_ranks.fill_(8)
+            for _ in range(2):
+                info.weight_indices.copy_(1 - info.weight_indices)
+                expected = reference(
+                    x, weights, info, offsets, max(widths), base
+                )
+                for name, module in self.MODULES:
+                    with self.subTest(module=name, lengths=lengths):
+                        actual = module.chunked_sgmv_expand(
+                            x, weights, info, offsets, max(widths), base
+                        )
+                        torch.testing.assert_close(
+                            actual, expected, atol=1e-4, rtol=1e-4
+                        )
+            if len(lengths) > 1:
+                info.seg_indptr[-2:] = 3
+                expected = reference(
+                    x, weights, info, offsets, max(widths), base
+                )
+                for name, module in self.MODULES:
+                    with self.subTest(module=name, partial=True):
+                        actual = module.chunked_sgmv_expand(
+                            x, weights, info, offsets, max(widths), base
+                        )
+                        torch.testing.assert_close(
+                            actual, expected, atol=1e-4, rtol=1e-4
+                        )
+
+    def test_int32_metadata_and_strides(self):
+        x, weights, info, offsets, base = make_case(
+            [0, 7, 2, 0], 3, [17, 33], 33, seed=95
+        )
+        info.lora_ranks.fill_(33)
+
+        def strided(t):
+            storage = torch.empty(
+                (*t.shape[:-1], t.shape[-1] * 2),
+                dtype=t.dtype,
+                device=t.device,
+            )
+            storage[..., ::2] = t
+            return storage[..., ::2]
+
+        x, weights, base = (strided(t) for t in (x, weights, base))
+        for name in (
+            "seg_indptr",
+            "weight_indices",
+            "lora_ranks",
+            "permutation",
+        ):
+            setattr(info, name, strided(getattr(info, name).to(torch.int32)))
+        info.scalings = strided(info.scalings)
+        offsets = strided(offsets.to(torch.int32))
+        expected = reference(x, weights, info, offsets, 33, base)
+        snapshots = [t.clone() for t in (x, weights, base)]
         for name, module in self.MODULES:
-            if name not in ("enflame", "kunlunxin"):
-                continue
-            kernel = module._sgmv_grouped_gemm_kernel
             with self.subTest(module=name):
-                c = base.clone().float()
-                kernel[(1,)](
-                    a,
-                    w,
-                    c,
-                    seg,
-                    wid,
-                    ranks,
-                    scal,
-                    slices,
-                    1,
-                    rows_cnt,
-                    1,
-                    1,
-                    1,
-                    1,
-                    1,
-                    a.stride(0),
-                    a.stride(1),
-                    w.stride(0),
-                    w.stride(1),
-                    w.stride(2),
-                    c.stride(0),
-                    c.stride(1),
-                    RANK=rank,
-                    BLOCK_M=16,
-                    BLOCK_N=32,
-                    BLOCK_K=32,
-                    num_warps=4,
-                    num_stages=1,
+                actual = module.chunked_sgmv_expand(
+                    x, weights, info, offsets, 33, base
                 )
                 torch.testing.assert_close(
-                    c, expected, atol=1e-4, rtol=1e-4
+                    actual, expected, atol=1e-4, rtol=1e-4
                 )
+                for tensor, snapshot in zip((x, weights, base), snapshots):
+                    torch.testing.assert_close(
+                        tensor, snapshot, atol=0, rtol=0
+                    )
 
     def test_rank_beyond_single_k_tile(self):
         # Large ranks must use several bounded K tiles. The next rank must
@@ -355,6 +392,8 @@ RELEASE_REQUIRED_TESTS = [
     "ChunkedSgmvExpandVariantsTest.test_variants_match_reference",
     "ChunkedSgmvExpandVariantsTest.test_rank_beyond_single_k_tile",
     "ChunkedSgmvExpandVariantsTest.test_vendor_multi_k_pointer_stride",
+    "ChunkedSgmvExpandVariantsTest.test_route_mutation_partial_and_grid_tail",
+    "ChunkedSgmvExpandVariantsTest.test_int32_metadata_and_strides",
 ]
 
 
