@@ -5,12 +5,12 @@ task: 47
 operator: chunked_sgmv_expand
 batch: 4
 validity: valid
-platform: E17/11771最佳25.5965；E18/11776有效25.4674375未晋级
-team_best_stage: e17
-team_best_commit: cea2a0c10878b39c251a36857d97311d1ab4cd73
-team_best_speedup: 25.5965
+platform: E21/11793八芯valid25.9625625新最佳；E19/11788待天数回调
+team_best_stage: e21
+team_best_commit: 23be6795f1298a99dbca1c41b29c2dad66ec9832
+team_best_speedup: 25.9625625
 sealed: no
-next: E19/11788七芯已过等待天数；E21批次物化候选发布验证通过待提交；E17仍为平台最佳
+next: 保留E21新最佳；E22小rank安全窄寻址候选待提交；E19继续只读取终态
 updated: 2026-09-09
 ```
 
@@ -457,5 +457,34 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
 | ZIP成员 | SHA256 |
 |---|---|
 |chunked_sgmv_expand.py|`cec9fec2b67b3cd9c92cc83da01fd626eb3469ddbbe8795b05d708fd065e6059`|
+|chunked_sgmv_expand_enflame.py|`522bbd563c27b0fbc6600a7fd249a35ddf1276edb7bf85f0cca39dc79419898c`|
+|chunked_sgmv_expand_kunlunxin.py|`c9d9937a74be019fe0a25658ad0efd77d86d1c4939b07d0387d9e77b9d970ce1`|
+
+### E21 终态：八芯通过，新团队最佳
+
+- 14:03:52提交11793，当日第27次，一次上传/一次正式提交，远端ZIP验签通过；14:05:04天数最后完成。八芯valid，均值25.9625625，is_team_best=true，较E17提升1.4301%。
+- 天数29.5625、沐曦24.549、燧原0.293、海光54.971、昆仑5.9585、华为13.693、A50.972、B27.7015。两vendor合计6.2515，相对E17的5.145提升21.51%，满足15%结构门；其他六芯代码未变，不把其波动归因于物化优化。
+- 预检期间账号有另一任务提交（14:00:58，11791），故首次preflight仅因间隔剩2s拒绝，未上传；重新实时预检后使用新nonce一次成功提交。提交前全局剩4次，提交后剩3次。
+- E19的15分钟watch超时，仍七芯完成/天数waiting_callback，未重投；E21同窗口天数已经完成，因此不能断言整个平台天数不可用。保留原始状态和未决实验。
+
+## E22 小rank安全窄寻址（2026-09-09，提交预注册）
+
+- 相对E21仅改generic寻址：rank<=32且x/weights/output的保守元素偏移上界（含128个尾块余量、零stride保护）<2^31时，数据偏移使用int32；其余使用int64。adapter元数据指针仍显式int64计算，避免大metadata stride溢出。没有设备值同步或索引reinterpret截断。两vendor与E21精确一致，BM64/BN128/BK32和IEEE数学路径不变。
+- 全域int32初筛收益有限且尾rank129 BF16有提示路径约0.89倍，故限定小rank；大rank恢复宽寻址对照。新增size-one adapter轴stride=2^31回归，无需巨量内存即可执行64位保护路径；18方法完整release、0fail/error/skip/xfail，三成员实际执行。
+- NVIDIA RTX5070Ti、torch2.13.0+cu130、Triton3.7.1；远端`/tmp/flagos-t47-e22-release.oZUdZQ`，PID335550，timeout900。24组shape/dtype/hint、6轮AB/BA×20完整调用；rank32 FP32约1.109–1.271倍，BF16约0.990–1.064倍，保留路径约0.990–1.006倍。proxy-only，目标generic六芯性能及lowering未知。
+- 平台门：8/8正确且每芯>=0.1；均值>25.9625625晋级团队最佳，generic六芯合计提升>=15%记结构兑现。本轮最多再投一次，要求实时至少剩3次，以保留2次账号额度；若未晋级恢复E21源码，不重投同候选。
+- source/verification commit：`40de0c66657649f4877d8ce88022a0715890b4be`；本节ledger独立提交。
+- ZIP：`/private/tmp/flagos-batch4-structural-20260909/artifacts/competition/chunked_sgmv_expand/e22-40de0c6/chunked_sgmv_expand.zip`，19886 bytes，SHA256 `c2c29c7fde44146b4a330d76bb1c398dcf778a27fba0149c1d859949345e3563`；dry-run/build/verify-existing一致。
+- validation/verification.json SHA256 `c16db5d3f58cc20a8566b8ccb3e7507150b21078f3cdba818164ef1e327cb9fd`。
+- validation/verification.log SHA256 `57167a8cdbd6848b981e0b78936800495db04bd83a9dd5cd8e9a1dfdbb3fc8c5`。
+- validation/bench.py SHA256 `f89a6c4fcb03f7a6f138267122f66f8094a77105b0aa47fea5b35def5838a717`。
+- validation/baseline.py SHA256 `cec9fec2b67b3cd9c92cc83da01fd626eb3469ddbbe8795b05d708fd065e6059`。
+- validation/perf.json SHA256 `87bb6e71336c342973d88d1d5c783176f2fe845c80271a0326e1fd5b5aee53fd`。
+- validation/run.sh SHA256 `143620d6e42a0a0b40b6ccdd040893e32b6ea6e7625e60adf90af39d6d5cdd46`。
+- test SHA256 `a1ed3520cd4cc10a6c61628c0ed15d8c138f82aa2fa8f8705a0e4b87b93d7bf9`。
+
+| ZIP成员 | SHA256 |
+|---|---|
+|chunked_sgmv_expand.py|`efe42b2c81247ff3fc2ba9d56dae334432c1d54851c7bc028a5620df9427e307`|
 |chunked_sgmv_expand_enflame.py|`522bbd563c27b0fbc6600a7fd249a35ddf1276edb7bf85f0cca39dc79419898c`|
 |chunked_sgmv_expand_kunlunxin.py|`c9d9937a74be019fe0a25658ad0efd77d86d1c4939b07d0387d9e77b9d970ce1`|
