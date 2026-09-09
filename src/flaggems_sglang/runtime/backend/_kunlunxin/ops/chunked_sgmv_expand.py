@@ -12,114 +12,107 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Short-rank GEMV: device routing plus FP32 elementwise products. Keeping
-# lane partials across K blocks moves the cross-thread sum outside the loop
-# (vLLM PR 52880, commit 3d45361674f874eccf51f04999e17e5f0b28c3b4).
-import torch
 import triton
 import triton.language as tl
 
 
-@triton.jit
-def _expand_route(
-    seg,
-    route,
-    S: tl.constexpr,
-    BS: tl.constexpr,
-    SEG_STRIDE: tl.constexpr,
-    STEPS: tl.constexpr,
-    BLOCK: tl.constexpr,
+@triton.jit(do_not_specialize=["M"])
+def _sgmv_regular_gemm_kernel(
+    a_ptr,
+    b_ptr,
+    c_ptr,
+    scaling,
+    M,
+    stride_am,
+    stride_ak,
+    stride_bk,
+    stride_bn,
+    stride_cm,
+    stride_cn,
+    N: tl.constexpr,
+    K: tl.constexpr,
+    BLOCK_M: tl.constexpr,
+    BLOCK_N: tl.constexpr,
+    BLOCK_K: tl.constexpr,
+    GROUP_M: tl.constexpr,
 ):
-    pos = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
-    lo = tl.full((BLOCK,), 0, tl.int32)
-    hi = tl.full((BLOCK,), BS + 1, tl.int32)
-    for _ in tl.static_range(STEPS):
-        mid = (lo + hi) // 2
-        bound = tl.load(seg + tl.minimum(mid, BS) * SEG_STRIDE)
-        right = (lo < hi) & (bound <= pos)
-        hi = tl.where((lo < hi) & ~right, mid, hi)
-        lo = tl.where(right, mid + 1, lo)
-    owner = lo - 1
-    start = tl.load(seg)
-    end = tl.load(seg + BS * SEG_STRIDE)
-    active = (pos >= start) & (pos < end) & (owner >= 0) & (owner < BS)
-    tl.store(route + pos, tl.where(active, owner, -1), mask=pos < S)
+    # Kunlunxin recipe (T28 E11 / T37 E4): a completely regular GEMM
+    # with no segment metadata, no indirect rows and no runtime
+    # branches - operands are upcast to fp32 and the dot is ieee,
+    # the only configuration kunlunxin is known to compute correctly.
+    pid = tl.program_id(0)
+    num_pid_m = tl.cdiv(M, BLOCK_M)
+    num_pid_n = tl.cdiv(N, BLOCK_N)
+    num_pid_in_group = GROUP_M * num_pid_n
+    group_id = pid // num_pid_in_group
+    first_pid_m = group_id * GROUP_M
+    group_size_m = tl.minimum(num_pid_m - first_pid_m, GROUP_M)
+    pid_m = first_pid_m + (pid % group_size_m)
+    pid_n = (pid % num_pid_in_group) // group_size_m
 
+    offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+    offs_n = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+    offs_k = tl.arange(0, BLOCK_K)
+    a_ptrs = a_ptr + offs_m[:, None] * stride_am + offs_k[None, :] * stride_ak
+    b_ptrs = b_ptr + offs_k[:, None] * stride_bk + offs_n[None, :] * stride_bn
+    accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
 
-@triton.jit
-def _expand_vector(
-    x,
-    w,
-    base,
-    out,
-    route,
-    perm,
-    wid,
-    ranks,
-    scales,
-    slices,
-    task_start,
-    S: tl.constexpr,
-    NS: tl.constexpr,
-    NTILES: tl.constexpr,
-    NUM_LORA: tl.constexpr,
-    XS0: tl.constexpr,
-    XS1: tl.constexpr,
-    WS0: tl.constexpr,
-    WS1: tl.constexpr,
-    WS2: tl.constexpr,
-    BS0: tl.constexpr,
-    BS1: tl.constexpr,
-    OS0: tl.constexpr,
-    OS1: tl.constexpr,
-    PS: tl.constexpr,
-    IS: tl.constexpr,
-    RS: tl.constexpr,
-    SS: tl.constexpr,
-    SLS: tl.constexpr,
-    RANK: tl.constexpr,
-    BN: tl.constexpr,
-    BK: tl.constexpr,
-):
-    task = task_start + tl.program_id(0)
-    tile = task % NTILES
-    sid = (task // NTILES) % NS
-    pos = task // (NTILES * NS)
-    owner = tl.load(route + pos)
-    idx = tl.load(wid + tl.maximum(owner, 0) * IS)
-    safe_idx = tl.minimum(tl.maximum(idx, 0), NUM_LORA - 1)
-    live = (owner >= 0) & (tl.load(ranks + safe_idx * RS) != 0)
-    row = tl.load(perm + pos * PS).to(tl.int64)
-    begin = tl.load(slices + sid * SLS)
-    end = tl.load(slices + (sid + 1) * SLS)
-    col = begin + tile * BN + tl.arange(0, BN)
-    kval = tl.arange(0, BK)
-    partial = tl.zeros((BN, BK), tl.float32)
-    for kbase in range(0, RANK, BK):
-        k = kbase + kval
-        xv = tl.load(
-            x + row * XS0 + (sid * RANK + k) * XS1,
-            mask=(k < RANK) & live,
+    for k in range(0, K, BLOCK_K):
+        mask_k = offs_k < K - k
+        a = tl.load(
+            a_ptrs,
+            mask=(offs_m[:, None] < M) & mask_k[None, :],
             other=0.0,
         ).to(tl.float32)
-        wv = tl.load(
-            w
-            + safe_idx.to(tl.int64) * WS0
-            + col[:, None].to(tl.int64) * WS1
-            + k[None, :] * WS2,
-            mask=(col[:, None] < end) & (k[None, :] < RANK) & live,
+        b = tl.load(
+            b_ptrs,
+            mask=mask_k[:, None] & (offs_n[None, :] < N),
             other=0.0,
         ).to(tl.float32)
-        partial += wv * xv[None, :]
-    value = tl.sum(partial, axis=1)
-    scale = tl.load(scales + safe_idx * SS).to(tl.float32)
-    old = tl.load(
-        base + row * BS0 + col * BS1, mask=(col < end) & live, other=0.0
-    ).to(tl.float32)
-    tl.store(
-        out + row * OS0 + col * OS1,
-        old + value * scale,
-        mask=(col < end) & live,
+        accumulator = tl.dot(a, b, acc=accumulator, input_precision="ieee")
+        a_ptrs += BLOCK_K * stride_ak
+        b_ptrs += BLOCK_K * stride_bk
+
+    c_ptrs = c_ptr + offs_m[:, None] * stride_cm + offs_n[None, :] * stride_cn
+    mask = (offs_m[:, None] < M) & (offs_n[None, :] < N)
+    base = tl.load(c_ptrs, mask=mask, other=0.0)
+    tl.store(c_ptrs, base + accumulator * scaling, mask=mask)
+
+
+_BLOCK_M = 32
+_BLOCK_N = 32
+_BLOCK_K = 32
+_GROUP_M = 8
+
+
+def _launch_gemm(a, b, c, scaling, output_width, rank):
+    m = a.shape[0]
+    if m == 0:
+        return
+    # Advance B along rank in the K loop. Bound shared memory for large
+    # ranks instead of forcing the entire rank into one program tile.
+    block_k = min(triton.next_power_of_2(max(rank, 16)), 128)
+    grid = (triton.cdiv(m, _BLOCK_M) * triton.cdiv(output_width, _BLOCK_N),)
+    _sgmv_regular_gemm_kernel[grid](
+        a,
+        b,
+        c,
+        scaling,
+        m,
+        a.stride(0),
+        a.stride(1),
+        b.stride(1),
+        b.stride(0),
+        c.stride(0),
+        c.stride(1),
+        N=output_width,
+        K=rank,
+        BLOCK_M=_BLOCK_M,
+        BLOCK_N=_BLOCK_N,
+        BLOCK_K=block_k,
+        GROUP_M=_GROUP_M,
+        num_warps=4,
+        num_stages=1,
     )
 
 
@@ -127,63 +120,56 @@ def chunked_sgmv_expand(
     x, weights, batch_info, slice_offsets, max_slice_size, base_output
 ):
     output = base_output.clone()
-    ns = slice_offsets.numel() - 1
+    n_slices = slice_offsets.numel() - 1
     rank = weights.shape[-1]
-    if x.shape[1] != ns * rank:
+    if x.shape[1] != n_slices * rank:
         raise ValueError("x width must equal n_slices * rank")
-    total = batch_info.permutation.numel()
-    if output.numel() == 0 or total == 0 or ns <= 0 or batch_info.bs == 0:
+    if (
+        output.numel() == 0
+        or n_slices <= 0
+        or batch_info.bs == 0
+        or x.shape[0] == 0
+    ):
         return output
-    route = torch.empty((total,), dtype=torch.int32, device=x.device)
-    _expand_route[(triton.cdiv(total, 256),)](
-        batch_info.seg_indptr,
-        route,
-        total,
-        batch_info.bs,
-        batch_info.seg_indptr.stride(0),
-        (batch_info.bs + 1).bit_length(),
-        BLOCK=256,
-        num_warps=4,
-    )
-    bn = 16
-    bk = min(triton.next_power_of_2(max(rank, 1)), 128)
-    tiles = triton.cdiv(int(max_slice_size), bn)
-    tasks = total * ns * tiles
-    # Shape-only chunks respect the backend grid cap without a runtime
-    # persistent loop. Metadata is recomputed from current tensors each call.
-    for start in range(0, tasks, 65535):
-        _expand_vector[(min(tasks - start, 65535),)](
-            x,
-            weights,
-            base_output,
-            output,
-            route,
-            batch_info.permutation,
-            batch_info.weight_indices,
-            batch_info.lora_ranks,
-            batch_info.scalings,
-            slice_offsets,
-            start,
-            total,
-            ns,
-            tiles,
-            weights.shape[0],
-            *x.stride(),
-            *weights.stride(),
-            *base_output.stride(),
-            *output.stride(),
-            batch_info.permutation.stride(0),
-            batch_info.weight_indices.stride(0),
-            batch_info.lora_ranks.stride(0),
-            batch_info.scalings.stride(0),
-            slice_offsets.stride(0),
-            rank,
-            bn,
-            bk,
-            num_warps=4,
-            num_stages=1,
-            enable_fp_fusion=False,
-        )
+
+    # Vendor path: route with framework gathers, then one regular GEMM
+    # per (segment, slice) with no metadata inside the kernel, and
+    # scatter the result back with index_copy (rows partition across
+    # segments, so plain assignment matches the reference accumulate).
+    seg_indptr = batch_info.seg_indptr.detach().cpu().tolist()
+    weight_indices = batch_info.weight_indices.detach().cpu().tolist()
+    lora_ranks = batch_info.lora_ranks.detach().cpu().tolist()
+    scalings = batch_info.scalings.detach().cpu().tolist()
+    slice_list = slice_offsets.detach().cpu().tolist()
+    permutation = batch_info.permutation
+
+    for b in range(batch_info.bs):
+        start, end = seg_indptr[b], seg_indptr[b + 1]
+        if start == end:
+            continue
+        w_idx = weight_indices[b]
+        if lora_ranks[w_idx] == 0:
+            continue
+        scaling = float(scalings[w_idx])
+        # the platform hands permutation as int32; kunlunxin torch
+        # requires long indices for index_select/index_copy_ (NVIDIA
+        # accepts int32, which is why the proxy stayed green)
+        rows = permutation[start:end].long()
+        x_seg = x.index_select(0, rows).float()
+        seg_out = output.index_select(0, rows).float()
+        for i in range(n_slices):
+            o_start, o_end = int(slice_list[i]), int(slice_list[i + 1])
+            if o_start == o_end:
+                continue
+            _launch_gemm(
+                x_seg[:, i * rank : (i + 1) * rank],
+                weights[w_idx, o_start:o_end, :],
+                seg_out[:, o_start:o_end],
+                scaling,
+                o_end - o_start,
+                rank,
+            )
+        output.index_copy_(0, rows, seg_out.to(base_output.dtype))
     return output
 
 

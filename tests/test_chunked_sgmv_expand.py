@@ -289,6 +289,29 @@ class ChunkedSgmvExpandVariantsTest(unittest.TestCase):
                             actual, expected, atol=1e-4, rtol=1e-4
                         )
 
+    def test_skewed_segments_and_empty_prefix(self):
+        for lengths in (
+            [1024] + [1] * 31,
+            [0] * 31 + [65],
+            [0, 1, 0, 64, 0, 65],
+            [0] * 64,
+            [0] * 4096 + [1],
+        ):
+            x, w, info, offsets, base = make_case(
+                lengths, 3, [17, 33], 16, seed=98
+            )
+            info.lora_ranks.fill_(16)
+            expected = reference(x, w, info, offsets, 33, base)
+            for hint in (False, True):
+                if hint:
+                    info.max_len = max(lengths)
+                actual = MODULE.chunked_sgmv_expand(
+                    x, w, info, offsets, 33, base
+                )
+                torch.testing.assert_close(
+                    actual, expected, atol=1e-4, rtol=1e-4
+                )
+
     def test_int32_metadata_and_strides(self):
         x, weights, info, offsets, base = make_case(
             [0, 7, 2, 0], 3, [17, 33], 33, seed=95
@@ -394,6 +417,7 @@ RELEASE_REQUIRED_TESTS = [
     "ChunkedSgmvExpandVariantsTest.test_vendor_multi_k_pointer_stride",
     "ChunkedSgmvExpandVariantsTest.test_route_mutation_partial_and_grid_tail",
     "ChunkedSgmvExpandVariantsTest.test_int32_metadata_and_strides",
+    "ChunkedSgmvExpandVariantsTest.test_skewed_segments_and_empty_prefix",
 ]
 
 
