@@ -10,8 +10,8 @@ team_best_stage: e4r
 team_best_commit: 16fe1d4
 team_best_speedup: 8.9578125
 sealed: no
-next: head16候选代理正确/ZIP验签;需昆仑live buffer和完整wrapper收益后晋级
-updated: 2026-09-08
+next: e5燧原persistent+pingpong已commit(0d4d758)代理6-6通过,燧原未验证待平台;榜首21.19为真实结构非慢窗
+updated: 2026-09-09
 ```
 
 ## S0: 6/8（燧原PassManager + 昆仑uni_sram）
@@ -73,3 +73,38 @@ updated: 2026-09-08
 
 - e4 字节注释载体（16fe1d4）。晨窗带内上沿兑现，8.7112→**8.9578（+2.8%）**。
 - e4 字节重掷已 1 次（≤2）；距榜首 21.19（今晨又涨 +24%）差距扩大，结构面未明。
+
+## 2026-09-09 燧原 persistent+pingpong 候选（e5，未提交平台）
+
+榜单逐芯情报（按题 leaderboard 端点，只读）显示本题榜差集中在燧原：
+我方 **0.567**，同芯他队 c2flow **38.78**、EvokeAgent 等亦远高；榜首
+c2flow 21.19 逐芯健康（非慢窗产物）。按 `Δavg=(target-ours)/n` 估算，
+仅把燧原抬到他队已证读数即可 8.96 → 13.73（+53.3%）。
+
+根因（厂商文档硬事实）：燧原 TritonGCU 性能优化指南明确 GCU 平台
+**kernel 启动开销无法被完全掩盖**，以大于硬件资源数的 GridDim 并行执行
+会引入额外调度开销、增加执行时间，**且在 kernel 计算量较小时尤为明显**，
+建议把 kernel 间并行度以循环方式放入 kernel 内；推荐 GridDim 为 6
+（GCU300/nw=4）或 24（GCU400/nw=8），硬件仅 24 个 SIP。
+
+本题 enflame vendor 恰是该缺陷的最坏形态：grid `(T, cdiv(n_h, 4))`
+且每个 program 体量极小，实际 1e3–1e4，超发约 100 倍；同时
+`num_stages=1` 意味着 pingpong 从未开启。
+
+### e5 改动（本地 commit `0d4d758`）
+
+- grid 改为 `(min(total_tiles, 24),)`，kernel 内用
+  `tl.range(pid, total_tiles, tl.num_programs(0), num_stages=3)`
+  遍历同一 (token, head_tile) 空间——tile 分解、掩码与数学全未变，
+  只改 program→tile 的映射；`num_stages=3` 才使能 pingpong。
+- 去掉显式 `num_warps`，交回 GCU 后端默认。该芯上钉 warps 已两次被
+  证明是错的（T19-E5 / T51-E5 各 +38%）；本批统计：未钉 warps 组燧原
+  中位数 **2.077** vs 钉住组 **0.732**（n=9 / 20）。
+- NVIDIA 代理 6/6 通过（含 variants 矩阵与 head-group 边界）。
+- **燧原本身未验证**：NVIDIA 代理无法验证 GCU 调度与 lowering，而本次
+  预期收益全在燧原，按 target-runtime-unverified 记，交平台补齐。
+
+预注册晋级门：燧原 ≥3x（他队已证 38.78 可达，3x 为保守下限），其余七芯
+不低于当前噪声带；八芯平均预期 8.96 → ≥11。
+止损：若燧原读数无改善且 exec_ms 未下降，说明瓶颈不在 grid 超发，
+转查 wrapper 侧 `_compute_positions` 的 PyTorch 预计算开销。

@@ -10,8 +10,8 @@ team_best_stage: e7
 team_best_commit: 094548df5da1075b8245b4af8ccddf024a319ae3
 team_best_speedup: 4.7489375
 sealed: no
-next: cpasync候选已实现但NVIDIA不识别pipeline;需沐曦固定源码执行,无本轮ZIP
-updated: 2026-09-08
+next: e5 tile几何修复已commit(fcf5997)代理3.06x/5-5通过,待明日额度打首发;燧原轴重开(他队同芯28.79证水位论不成立)
+updated: 2026-09-09
 ```
 
 ## S0: 6/8（燧原+昆仑败）
@@ -142,3 +142,54 @@ route/materialize 是 sgmv 族唯一可行形态（e8-e10 三投证伪）。
 - source `26a95766b179d263916e9483dfc8d2343c40406a`；verification `26a95766b179d263916e9483dfc8d2343c40406a`。6 个测试方法、18 次实际 kernel 调用；选定 NVIDIA/代理范围门禁失败。
 - 回执 `artifacts/competition/batch4-implementation-20260907/t48-release1/verification.json`，SHA256 `7f02b6837a843f77a35f04993b15eaf44c2305d8876860a4ac0276e3d3e44a74`；日志 SHA256 `f023c3e3b871b63720a2d6a4c1a75595b5049ed2faf0169893ab2a79678ec5b8`。
 - 环境、逐源码执行范围、原始配对数据和未完成条件见[本轮报告](../implementation-batch4-20260908.md)及[证据清单](../data/batch4-implementation-20260908.json)。本轮不更新历史有效分，未做平台 preflight、上传或正式提交。
+
+## 2026-09-09 榜单逐芯情报推翻两条历史结论（e5 候选，未提交平台）
+
+本轮首次拉取按题 leaderboard 端点（返回**每支队伍的逐芯 speedup**，
+只读、不耗额度），据此更正本账本此前两条判断：
+
+1. **"燧原 0.5x 接近该结构上限"、"燧原轴关闭"不成立。** 同题他队燧原
+   读数：c2flow **28.79**、EvokeAgent 8.11 等，均在同一评测口径下取得，
+   与我方 0.528/0.58 相差 50 倍。水位论证据不足——这是我方结构问题，
+   不是该芯在该 op 的物理上限。原"燧原轴关闭"结论撤回。
+2. **"T48 结构轴定格"过早。** 真正的证伪只覆盖 route/materialize 与
+   csgmv 间接寻址两条路径，未覆盖 **tile 几何**这一独立轴。
+
+新证据（tile 几何轴，此前从未检验）：T48 与 T47 是姐妹题，但两题的
+归约维与输出维**恰好互换**：
+
+| | 归约维（BLOCK_K 该管） | 输出维（BLOCK_N 该管） |
+| --- | --- | --- |
+| T47 expand | rank，小 8–64 | out_dim，大 ~1e3 |
+| T48 shrink | K_in，**大 512–4096** | rank，**小 16–64** |
+
+e4 沿用了 T47 的 `BLOCK_N=128 / BLOCK_K=32`，于是 BLOCK_K 走在**大**的
+K_in 上（16–128 趟），BLOCK_N 又给**小**的 rank 填 50–87% 空列。这与
+平台观测到的**八芯一致落后 3–8x**（天数 5.1 / 沐曦 4.4 / 燧原 32 /
+海光 7.8 / 昆仑 3.4 / 华为 3.1 / A 5.2 / B 4.7）在量级上吻合；八芯同步
+落后本身即排除任何单芯 lowering 解释。
+
+### e5 候选（本地已 commit，未提交平台）
+
+- source/verification commit `fcf5997`；BLOCK_N 跟随真实输出维，
+  BLOCK_K 走归约维，并对 (num_stages, BLOCK_K) 做快存预算联合搜索。
+- **过程中自查出一个真实缺陷**：先试的固定 `BLOCK_K=256` 实测需
+  196608 B 快存 > NVIDIA 101376 B 上限（RTX 5070 Ti），被新增测试拦下，
+  未流到平台。
+- NVIDIA 代理内核耗时（旧→新）：decode bs=32 r=16 0.2389→0.0781（3.06x）、
+  bs=64 r=16 0.2411→0.0778（3.10x）、prefill 4×128 r=16 0.3700→0.1642
+  （2.25x）、8×64 r=32 0.1963→0.1394（1.41x）、bs=32 r=64 0.2404→0.1740
+  （1.38x）。
+- 新增 `test_tile_geometry_axes`：90 组 (K,N) 覆盖 BLOCK_N/BLOCK_K 每个
+  可选边界与非 2 幂尾块，对 float64 reference 按 sqrt(K) 缩放判据 +
+  1% 硬性粗错检查。**K=4096 处 e4 与 e5 误差逐位相同**（5.951e-04），
+  说明该处是 reference 累加顺序而非内核缺陷，平台 flat atol=1e-4 在此
+  偏严；泛化矩阵 5/5 通过。
+- 其他芯未验证（仅 NVIDIA 代理），按 target-runtime-unverified 记。
+  既有 `_metax` vendor 在本 harness 上因无关的 `pipeline` kwarg 失败，
+  与本次改动无关。
+
+预注册晋级门：燧原 ≥3x（他队已证 28.79 可达，故 3x 为保守下限）且
+八芯均不低于当前读数的噪声带；八芯平均预期 4.81 → ≥8.3。
+止损：若平台八芯读数与 e6 无显著差异（±10% 内），说明平台 shape 与
+本地假设不符，改从 raw_result 取实际 shape 后再定 tile。
