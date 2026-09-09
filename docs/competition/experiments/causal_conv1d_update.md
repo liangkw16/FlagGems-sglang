@@ -5,12 +5,12 @@ task: 43
 operator: causal_conv1d_update
 batch: 4
 validity: valid
-platform: e19r/11237八芯valid,6.560375x新team best(重掷第1次破线)
+platform: E22/11807八芯valid6.562625未晋级；E21/11652仍最佳6.6005625
 team_best_stage: e21
 team_best_commit: b8a7fc4
 team_best_speedup: 6.6005625
 sealed: no
-next: E22单token generic短卷积release通过，待一次平台评测；保留E21为已验证最佳
+next: E22天数/沐曦增益被海光回退抵消；E23为海光恢复原generic字节，待release
 updated: 2026-09-09
 ```
 
@@ -706,3 +706,10 @@ generic width2/3/4 多 token 用寄存器滚动历史和权重复用；长序列
 - `profile.py` SHA256 `ef5340c02fbf45846e30904bbc137c9f232d172c2c3f4b0cfc04d30ff661c791`。
 - `profile.json` SHA256 `857045663442e69b4f199f3050ce78a4590e679e7c456ff932b12c88c67a9c45`。
 - 测试SHA256 `786cb5b013539af8a7168bcff0733692548c19e07e8e2a9082bc89bcc391c9e9`。
+
+### E22 终态与 E23 海光隔离（2026-09-09 15:00 CST）
+
+- 14:59:20上传和提交各一次，submission11807/day29，远端ZIP SHA验签verified；15:00:35状态八芯valid，avg6.562625、非team best，额度29/30剩1。
+- 逐芯：天数15.4095、沐曦9.4845、燧原0.4705、海光6.5665、昆仑1.59、华为0.395、A8.351、B10.234。相对E21天数+12.53%、沐曦+35.10%、海光-39.69%；平均-0.57%。目标芯差异已观测，不能用NVIDIA全部加速替代八芯结论，也不能断言单次回退完全由代码引起。
+- E23候选仅新增 `_hygon/ops/causal_conv1d_update.py`，逐字节复制E21/b8a7fc4的原generic（SHA256 `93fac21875b4509390b0f17e10144d6b60a40e015f782a47c9424dbb39c78cee`）；海光后缀由公开规则确认。generic及其余三vendor完全冻结E22。测试variant helper自动收集新文件，release必须显式加入hygon代理并确认实际launch。
+- 若海光恢复E21读数且本轮其他芯保持，仅作算术敏感性估计为7.1026875（不是已提交分数）。该候选存在平台逐芯依据，将与T47去clone筛选结果比较最后一次机会；一旦晋级只提交一次。
