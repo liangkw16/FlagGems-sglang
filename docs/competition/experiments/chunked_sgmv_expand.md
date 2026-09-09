@@ -5,12 +5,12 @@ task: 47
 operator: chunked_sgmv_expand
 batch: 4
 validity: valid
-platform: E12有效25.36275；E13/11728失败；E13r/11756评测中；E15待提交
+platform: E12有效25.36275；E15/11764终态7/8且燧原0.01低于门槛；E13r待回调
 team_best_stage: e12
 team_best_commit: d649a9d
 team_best_speedup: 25.36275
 sealed: no
-next: E15 vector GEMV release已通过；待一次正式提交，目标芯未验证
+next: E15向量方案停止；E16紧凑调度验证中，两弱恢复E11有效实现
 updated: 2026-09-09
 ```
 
@@ -312,3 +312,11 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
 | chunked_sgmv_expand.py | `cec9fec2b67b3cd9c92cc83da01fd626eb3469ddbbe8795b05d708fd065e6059` |
 | chunked_sgmv_expand_enflame.py | `d49b12dc4890d0cea083c9265986e2e0732e7353d0358f87157835627aaf81bf` |
 | chunked_sgmv_expand_kunlunxin.py | `d49b12dc4890d0cea083c9265986e2e0732e7353d0358f87157835627aaf81bf` |
+
+## E15 平台终态（2026-09-09 12:09 CST）
+
+- 2026-09-09 12:04:39 正式提交 `11764`，当日第19次；一次上传/一次提交，远端 ZIP SHA256 复核一致。完整响应见同产物目录 `submit.json`、`status-watch.json`、`raw-status-1.json`。
+- 终态 `invalid_correctness`，8 芯终态、7 芯正确；昆仑 case0/1 在 XPU arch3 的 `make_ttxir` 编译阶段失败：`OutOfResources: uni_sram PassManager::run failed`。错误包装显示 Required=0/limit=0，不能由此推断实际 SRAM 需求；栈中没有 kernel 名称，尚不能区分 route/vector。不是已证明的平台 reference 故障。
+- 燧原正确但速度 **0.01**，低于 >=0.1 的有效门槛。代理机大幅提速没有迁移，两弱向量方案关闭，不再重投。
+- 其余逐芯：天数28.7435、沐曦21.4795、海光53.829、华为14.752、A50.5255、B28.662。八芯均值无效，不据此晋级；团队最佳仍 E12/25.36275。
+- 后续 E16 独立验证 generic 的设备端段 tile 前缀调度；两弱恢复 `8ba31a1` 已通过平台的有界 K 模板。前述 E13 的 reference 崩溃归因是历史推测，已有 raw trace 不足以证明候选无关。
