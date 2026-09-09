@@ -10,8 +10,8 @@ team_best_stage: e21
 team_best_commit: b8a7fc4
 team_best_speedup: 6.6005625
 sealed: no
-next: E19重掷第1次即破线(6.5604);同字节还剩≤1次,榜首7.90需结构面,守TB为主
-updated: 2026-09-08
+next: E22单token generic短卷积release通过，待一次平台评测；保留E21为已验证最佳
+updated: 2026-09-09
 ```
 
 状态：S0 候选就绪（generic 单文件），远端 NVIDIA 代理 screening 通过
@@ -682,3 +682,27 @@ generic width2/3/4 多 token 用寄存器滚动历史和权重复用；长序列
 - 带宽梯曲线定形：256（-72% 证伪）→1024→2048（+27%）→4096（+1.6%）
   ——**收益在 2048 后急剧递减，梯到顶**；8192 不再探。e20/e21 各剩 1 次
   重掷，尾窗可用。T43 今日四连破：6.5459→6.5604→6.5736→6.5924→6.6006。
+
+## E22 单 token 静态卷积（2026-09-09，提交前）
+
+- 用户按新优先级开工；旧晚间脚本 `/tmp/evening-v2.sh` 四次重投与剩余2次额度冲突，核验后停止其PID54838及直属sleep54854；脚本和日志保留，未创建新排程。
+- 仅generic新增 `seqlen==1, 2<=width<=4, width-1<=state_len<=8` 路径：batch/channel合并，tap来源静态确定，保留FP32累加/原SiLU表达式与独立out/state。原多token/宽width路径不变；三vendor与起始c3c1210字节相同，相对E21/b8a7fc4仅昆仑已有注释不同、AST逐项相同。
+- 新回归覆盖255/256/257通道、state7/8/9、width4/5、非连续单token输入、混合dtype和输入不变性。screening三方法通过；24组完整调用六轮AB/BA：18组受影响范围1.036–1.257，中位1.241；6对照0.998–1.004。screen源码/测试逐字节等于source commit。
+- source/verification commit `3716ef9ab9867aac882eebf3f62613314adbc6e8`。NVIDIA5070Ti/driver610.57.04/Python3.12.13/torch2.13.0+cu130/Triton3.7.1，完整release14方法，0fail/error/skip/xfail，generic+ascend/enflame/kunlunxin均实际执行；远端 `/tmp/flagos-t43-e22-release.0M3QhL`，PID335994，timeout900。
+- release完整调用受影响1.036–1.264，中位1.243；对照0.992–1.002。额外CUDA graph计时四组约1.031–1.100；寄存器40→36，spill均0。主机调用收益不等于八芯性能，目标generic五芯性能未验证；三个未改vendor沿用平台覆盖证据。
+- KernelGen实时tools/list可用，未提供任意固定源码执行入口；另为T47新结构调用optimize返回服务下游401，无生成代码或执行证据。
+- 预注册：一发；八芯正确且每芯>=0.1、整题avg>6.6005625才晋级。单token形状在平台的权重未知，不承诺Top1。若失败或未晋级，保留E21，不重投本候选。
+- 产物 `artifacts/competition/causal_conv1d_update/e22-3716ef9`，ZIP SHA256 `b6889508f116a839785e620bbcb2b29902d23b2c208822a486976764bbbbc657`，25283 bytes；dry-run/build/verify-existing身份一致。
+- ZIP成员：
+  - `causal_conv1d_update.py`：`31bd33161a750df26aeeec5664082945ae516047cd56c1f314ebe4a8133aa9e7`
+  - `causal_conv1d_update_ascend.py`：`a3a5cd981d492def26fef2745a527a22e4dce207429dfb8566386e927332a49d`
+  - `causal_conv1d_update_enflame.py`：`5a70077f0513662f059e61918fbd5bc5561c13375befa6712663986ae2dbdb4c`
+  - `causal_conv1d_update_kunlunxin.py`：`717ca0fcdb676f2f9be1e5a4e7368b59c9343044739da19511ac0b44ad9f3702`
+- `verification.json` SHA256 `aaf188de4a7cd3a6b34a055cca3643e8e8c128f1d75967b966f3e916e5210126`。
+- `verification.log` SHA256 `ecc9b4a0e0ecff38c09b5c4d3f535cf738d5870bed0149cde9678b68fdfe70da`。
+- `run.sh` SHA256 `143620d6e42a0a0b40b6ccdd040893e32b6ea6e7625e60adf90af39d6d5cdd46`。
+- `bench.py` SHA256 `b05ed40dabe2431ce8d1f23eec3a351905f00bb83dd6dbae4a5e769fc5201b0f`。
+- `perf.json` SHA256 `2fa541116a493e258fbf0acae0a063be82d89e6bfb6c02351747530a66a35ae5`。
+- `profile.py` SHA256 `ef5340c02fbf45846e30904bbc137c9f232d172c2c3f4b0cfc04d30ff661c791`。
+- `profile.json` SHA256 `857045663442e69b4f199f3050ce78a4590e679e7c456ff932b12c88c67a9c45`。
+- 测试SHA256 `786cb5b013539af8a7168bcff0733692548c19e07e8e2a9082bc89bcc391c9e9`。
