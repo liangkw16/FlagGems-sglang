@@ -31,6 +31,7 @@ def _rope_precomputed_pos_kernel(
     n_heads,
     head_size,
     half_rd,
+    num_tokens,
     x_stride,
     o_stride,
     pos_stride,
@@ -38,76 +39,95 @@ def _rope_precomputed_pos_kernel(
     HEADS_TILE: tl.constexpr,
     BLOCK_R: tl.constexpr,
 ):
-    token = tl.program_id(0)
-    head_tile = tl.program_id(1)
+    # Persistent form for GCU: the vendor guide states kernel launch
+    # overhead is NOT hidden, so a GridDim above the hardware resource
+    # count is pure scheduling cost, worst of all when each program does
+    # little work -- which is exactly this kernel (one token x head tile).
+    # The old grid was (T, cdiv(n_heads, HEADS_TILE)), i.e. 1e3-1e4
+    # programs against 24 SIPs. Launch a SIP-sized grid instead and walk
+    # the flattened (token, head_tile) space in-kernel; tl.range carries
+    # num_stages so the loop can pingpong.
+    head_tiles = tl.cdiv(n_heads, HEADS_TILE)
+    total_tiles = num_tokens * head_tiles
     r = tl.arange(0, BLOCK_R)
     r_mask = r < half_rd
-    head_offsets = head_tile * HEADS_TILE + tl.arange(0, HEADS_TILE)
-    h_mask = head_offsets < n_heads
-
-    # Precomputed position per (token, r) — pure gather, no branching
-    pos = tl.load(pos_ptr + token * pos_stride + r, mask=r_mask, other=0)
-    cos = tl.load(
-        cos_sin_ptr + pos * cos_sin_stride + r,
-        mask=r_mask,
-        other=0.0,
-    ).to(tl.float32)
-    sin = tl.load(
-        cos_sin_ptr + pos * cos_sin_stride + r + half_rd,
-        mask=r_mask,
-        other=0.0,
-    ).to(tl.float32)
-
-    x1 = tl.load(
-        x_ptr + token * x_stride + head_offsets[:, None] * head_size + r[None, :],
-        mask=h_mask[:, None] & r_mask[None, :],
-        other=0.0,
-    ).to(tl.float32)
-    x2 = tl.load(
-        x_ptr
-        + token * x_stride
-        + head_offsets[:, None] * head_size
-        + (r + half_rd)[None, :],
-        mask=h_mask[:, None] & r_mask[None, :],
-        other=0.0,
-    ).to(tl.float32)
-    new1 = x1 * cos[None, :] - x2 * sin[None, :]
-    new2 = x2 * cos[None, :] + x1 * sin[None, :]
-    o_ty = out_ptr.dtype.element_ty
-    tl.store(
-        out_ptr + token * o_stride + head_offsets[:, None] * head_size + r[None, :],
-        new1.to(o_ty),
-        mask=h_mask[:, None] & r_mask[None, :],
-    )
-    tl.store(
-        out_ptr
-        + token * o_stride
-        + head_offsets[:, None] * head_size
-        + (r + half_rd)[None, :],
-        new2.to(o_ty),
-        mask=h_mask[:, None] & r_mask[None, :],
-    )
-    # Tail pass-through
     tail_off = tl.arange(0, 64)
-    for t0 in range(2 * half_rd, head_size, 64):
-        tail = t0 + tail_off
-        t_mask = tail < head_size
-        v = tl.load(
+    for tile in tl.range(
+        tl.program_id(0), total_tiles, tl.num_programs(0), num_stages=3
+    ):
+        token = tile // head_tiles
+        head_tile = tile - token * head_tiles
+        head_offsets = head_tile * HEADS_TILE + tl.arange(0, HEADS_TILE)
+        h_mask = head_offsets < n_heads
+
+        # Precomputed position per (token, r) — pure gather, no branching
+        pos = tl.load(pos_ptr + token * pos_stride + r, mask=r_mask, other=0)
+        cos = tl.load(
+            cos_sin_ptr + pos * cos_sin_stride + r,
+            mask=r_mask,
+            other=0.0,
+        ).to(tl.float32)
+        sin = tl.load(
+            cos_sin_ptr + pos * cos_sin_stride + r + half_rd,
+            mask=r_mask,
+            other=0.0,
+        ).to(tl.float32)
+
+        x1 = tl.load(
             x_ptr
             + token * x_stride
             + head_offsets[:, None] * head_size
-            + tail[None, :],
-            mask=h_mask[:, None] & t_mask[None, :],
+            + r[None, :],
+            mask=h_mask[:, None] & r_mask[None, :],
             other=0.0,
+        ).to(tl.float32)
+        x2 = tl.load(
+            x_ptr
+            + token * x_stride
+            + head_offsets[:, None] * head_size
+            + (r + half_rd)[None, :],
+            mask=h_mask[:, None] & r_mask[None, :],
+            other=0.0,
+        ).to(tl.float32)
+        new1 = x1 * cos[None, :] - x2 * sin[None, :]
+        new2 = x2 * cos[None, :] + x1 * sin[None, :]
+        o_ty = out_ptr.dtype.element_ty
+        tl.store(
+            out_ptr
+            + token * o_stride
+            + head_offsets[:, None] * head_size
+            + r[None, :],
+            new1.to(o_ty),
+            mask=h_mask[:, None] & r_mask[None, :],
         )
         tl.store(
             out_ptr
             + token * o_stride
             + head_offsets[:, None] * head_size
-            + tail[None, :],
-            v,
-            mask=h_mask[:, None] & t_mask[None, :],
+            + (r + half_rd)[None, :],
+            new2.to(o_ty),
+            mask=h_mask[:, None] & r_mask[None, :],
         )
+        # Tail pass-through
+        for t0 in range(2 * half_rd, head_size, 64):
+            tail = t0 + tail_off
+            t_mask = tail < head_size
+            v = tl.load(
+                x_ptr
+                + token * x_stride
+                + head_offsets[:, None] * head_size
+                + tail[None, :],
+                mask=h_mask[:, None] & t_mask[None, :],
+                other=0.0,
+            )
+            tl.store(
+                out_ptr
+                + token * o_stride
+                + head_offsets[:, None] * head_size
+                + tail[None, :],
+                v,
+                mask=h_mask[:, None] & t_mask[None, :],
+            )
 
 
 def _compute_positions(positions, mrope_section, half_rd, device):
@@ -133,7 +153,14 @@ def _apply_rope_precomputed(x, cos_sin_cache, pos, head_size, rotary_dim, heads_
     if T * x_dim == 0:
         return out
     block_r = max(triton.next_power_of_2(half_rd), 2)
-    grid = (T, triton.cdiv(n_h, heads_tile))
+    # GCU300 has 24 SIPs (2 die x 12); the vendor guide's recommended
+    # GridDim is 6 at num_warps=4 and 24 at num_warps=8. Cap the grid at
+    # the SIP count and let the persistent loop cover the rest, instead of
+    # launching one program per (token, head_tile). num_warps is left to
+    # the backend default: pinning it has been the wrong call on this chip
+    # twice before (T19-E5, T51-E5).
+    total_tiles = T * triton.cdiv(n_h, heads_tile)
+    grid = (min(total_tiles, 24),)
     _rope_precomputed_pos_kernel[grid](
         x,
         out,
@@ -142,14 +169,13 @@ def _apply_rope_precomputed(x, cos_sin_cache, pos, head_size, rotary_dim, heads_
         n_h,
         head_size,
         half_rd,
+        T,
         x.stride(0),
         out.stride(0),
         pos.stride(0),
         cos_sin_cache.stride(0),
         HEADS_TILE=heads_tile,
         BLOCK_R=block_r,
-        num_warps=4,
-        num_stages=1,
     )
     return out
 
