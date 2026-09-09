@@ -17,6 +17,13 @@ import triton
 import triton.language as tl
 from triton.runtime import driver as _triton_driver
 
+# e3: persistent walk capped at the 24 SIPs (the vendor guide states GCU
+# launch overhead is not hidden, so rows*col_blocks tiny programs
+# oversubscribe the hardware), tl.range carries num_stages=3 so the
+# loop can pingpong, and num_warps is left to the backend default.
+
+_GRID_CAP = 24
+
 
 @triton.jit
 def _log_scaling_tau_kernel(
@@ -24,6 +31,7 @@ def _log_scaling_tau_kernel(
     tau_ptr,
     out_ptr,
     n_cols,
+    total,
     x_stride_row,
     o_stride_row,
     tau_stride,
@@ -31,32 +39,35 @@ def _log_scaling_tau_kernel(
     BLOCK: tl.constexpr,
     EVEN: tl.constexpr,
 ):
-    row = tl.program_id(0) // COL_BLOCKS
-    col_block = tl.program_id(0) % COL_BLOCKS
     x_stride_row = tl.cast(x_stride_row, tl.int64)
     o_stride_row = tl.cast(o_stride_row, tl.int64)
 
-    tau = tl.load(tau_ptr + row * tau_stride).to(tl.float32)
-    offs = col_block * BLOCK + tl.arange(0, BLOCK)
-    # Full blocks skip the per-lane int compare entirely - the
-    # Ascend vector-CMP scalar-degradation fix (T40 E16 pattern);
-    # only ragged tails keep the mask.
-    if EVEN:
-        x = tl.load(x_ptr + row * x_stride_row + offs).to(tl.float32)
-        tl.store(
-            out_ptr + row * o_stride_row + offs,
-            (x * tau).to(out_ptr.dtype.element_ty),
-        )
-    else:
-        mask = offs < n_cols
-        x = tl.load(
-            x_ptr + row * x_stride_row + offs, mask=mask, other=0.0
-        ).to(tl.float32)
-        tl.store(
-            out_ptr + row * o_stride_row + offs,
-            (x * tau).to(out_ptr.dtype.element_ty),
-            mask=mask,
-        )
+    for bid in tl.range(
+        tl.program_id(0), total, tl.num_programs(0), num_stages=3
+    ):
+        row = bid // COL_BLOCKS
+        col_block = bid % COL_BLOCKS
+        tau = tl.load(tau_ptr + row * tau_stride).to(tl.float32)
+        offs = col_block * BLOCK + tl.arange(0, BLOCK)
+        # Full blocks skip the per-lane int compare entirely - the
+        # Ascend vector-CMP scalar-degradation fix (T40 E16 pattern);
+        # only ragged tails keep the mask.
+        if EVEN:
+            x = tl.load(x_ptr + row * x_stride_row + offs).to(tl.float32)
+            tl.store(
+                out_ptr + row * o_stride_row + offs,
+                (x * tau).to(out_ptr.dtype.element_ty),
+            )
+        else:
+            mask = offs < n_cols
+            x = tl.load(
+                x_ptr + row * x_stride_row + offs, mask=mask, other=0.0
+            ).to(tl.float32)
+            tl.store(
+                out_ptr + row * o_stride_row + offs,
+                (x * tau).to(out_ptr.dtype.element_ty),
+                mask=mask,
+            )
 
 
 @triton.jit
@@ -64,6 +75,7 @@ def _log_scaling_tau_fast_kernel(
     x_ptr,
     tau_ptr,
     out_ptr,
+    total,
     N_COLS: tl.constexpr,
     COL_BLOCKS: tl.constexpr,
     BLOCK: tl.constexpr,
@@ -73,26 +85,29 @@ def _log_scaling_tau_fast_kernel(
     # into constexpr int32 arithmetic, so the launcher binds only the
     # three pointers. int32 offsets are safe because the wrapper only
     # selects this kernel when numel < 2**31.
-    row = tl.program_id(0) // COL_BLOCKS
-    col_block = tl.program_id(0) % COL_BLOCKS
-    tau = tl.load(tau_ptr + row).to(tl.float32)
-    offs = col_block * BLOCK + tl.arange(0, BLOCK)
-    if EVEN:
-        x = tl.load(x_ptr + row * N_COLS + offs).to(tl.float32)
-        tl.store(
-            out_ptr + row * N_COLS + offs,
-            (x * tau).to(out_ptr.dtype.element_ty),
-        )
-    else:
-        mask = offs < N_COLS
-        x = tl.load(x_ptr + row * N_COLS + offs, mask=mask, other=0.0).to(
-            tl.float32
-        )
-        tl.store(
-            out_ptr + row * N_COLS + offs,
-            (x * tau).to(out_ptr.dtype.element_ty),
-            mask=mask,
-        )
+    for bid in tl.range(
+        tl.program_id(0), total, tl.num_programs(0), num_stages=3
+    ):
+        row = bid // COL_BLOCKS
+        col_block = bid % COL_BLOCKS
+        tau = tl.load(tau_ptr + row).to(tl.float32)
+        offs = col_block * BLOCK + tl.arange(0, BLOCK)
+        if EVEN:
+            x = tl.load(x_ptr + row * N_COLS + offs).to(tl.float32)
+            tl.store(
+                out_ptr + row * N_COLS + offs,
+                (x * tau).to(out_ptr.dtype.element_ty),
+            )
+        else:
+            mask = offs < N_COLS
+            x = tl.load(x_ptr + row * N_COLS + offs, mask=mask, other=0.0).to(
+                tl.float32
+            )
+            tl.store(
+                out_ptr + row * N_COLS + offs,
+                (x * tau).to(out_ptr.dtype.element_ty),
+                mask=mask,
+            )
 
 
 def _flagtree_full_args(launch_obj):
@@ -195,7 +210,8 @@ def _make_fast_dispatch():
             plan = (block, col_blocks, n_cols % block == 0)
             plans[n_cols] = plan
         block, col_blocks, even = plan
-        grid0 = rows * col_blocks
+        total = rows * col_blocks
+        grid0 = min(total, _GRID_CAP)
         key = (x.dtype, rows, n_cols, x.get_device())
         entry = launchers.get(key)
         aligned = (
@@ -210,12 +226,11 @@ def _make_fast_dispatch():
             x,
             tau,
             out,
+            total,
             N_COLS=n_cols,
             COL_BLOCKS=col_blocks,
             BLOCK=block,
             EVEN=even,
-            num_warps=4,
-            num_stages=1,
         )
         if entry is None:
             # Bind a launcher only for binaries compiled from 16-byte
@@ -223,7 +238,9 @@ def _make_fast_dispatch():
             # call must preserve); misaligned calls re-enter the
             # standard dispatch above.
             launchers[key] = (
-                _direct_launcher(ck, grid0, (n_cols, col_blocks, block, even))
+                _direct_launcher(
+                    ck, grid0, (total, n_cols, col_blocks, block, even)
+                )
                 if aligned
                 else False
             )
@@ -252,19 +269,19 @@ def log_scaling_tau(x, tau):
         return out
     block = min(triton.next_power_of_2(max(n_cols, 1)), 1024)
     col_blocks = triton.cdiv(n_cols, block)
-    _log_scaling_tau_kernel[(rows * col_blocks,)](
+    total = rows * col_blocks
+    _log_scaling_tau_kernel[(min(total, _GRID_CAP),)](
         x,
         tau,
         out,
         n_cols,
+        total,
         x.stride(0),
         out.stride(0),
         tau.stride(0),
         COL_BLOCKS=col_blocks,
         BLOCK=block,
         EVEN=n_cols % block == 0,
-        num_warps=4,
-        num_stages=2,
     )
     return out
 
