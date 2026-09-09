@@ -123,6 +123,16 @@ class ChunkedSgmvShrinkTest(unittest.TestCase):
                 args = make_case(seg_lens, 3, K, N)
                 self._check(*args)
 
+    def test_split_k_boundaries_and_partial(self):
+        for k in (1023, 1024, 1025, 4095, 4096, 4097):
+            for dtype in TOLERANCES:
+                x, w, bi = make_case(
+                    [0, 3, 0, 2, 0], 2, k, 33, dtype=dtype, seed=96
+                )
+                self._check(x, w, bi)
+                bi.seg_indptr[-2:] = 3
+                self._check(x, w, bi)
+
     def test_identity_permutation(self):
         x, weights, bi = make_case([24, 24], 2, 512, 128)
         bi.permutation = torch.arange(
@@ -175,6 +185,7 @@ class ChunkedSgmvShrinkVariantsTest(unittest.TestCase):
 RELEASE_REQUIRED_TESTS = [
     "ChunkedSgmvShrinkTest.test_dtypes",
     "ChunkedSgmvShrinkTest.test_shapes",
+    "ChunkedSgmvShrinkTest.test_split_k_boundaries_and_partial",
     "ChunkedSgmvShrinkTest.test_identity_permutation",
     "ChunkedSgmvShrinkTest.test_empty_batch",
     "ChunkedSgmvShrinkVariantsTest.test_pipeline_long_segment_dtypes",
