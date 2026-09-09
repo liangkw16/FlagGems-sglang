@@ -258,3 +258,24 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
   launch 风暴（GCU launch 开销主导）。修法=单 launch 批处理（设备端
   tile→segment 映射，moe-fp8/T28 配方），属半日级重构，若做需明日
   16:00 前完成载体。tile 轴关闭。
+
+## E13 分组单 launch GEMM（2026-09-09，sub 待回填）
+
+- **结构**（codex-ask 会诊主线）：燧原/昆仑 vendor 从 per-(segment,slice)
+  launch 循环改为**单次分组 GEMM**——wrapper 一次 index_select 物化 +
+  kernel 平铺 task 解码（标量 div/mod）、只读标量元数据、零运行期分支、
+  零间接操作数地址、钳制合法地址 + store-mask、多轮 K（BLOCK_K≤64，
+  按 k_start 重算地址，E11 stride 错误类不可再现，K 尾 constexpr 掩码
+  补零）。grid.x 封顶 65535 + work 循环。
+- **过程修复**：①首版 K 尾钳制重复加载第 0 列被 dot 计入（rank=127
+  screening FAIL）→ constexpr k_mask 补零；②大 rank 单趟 BLOCK_K 爆
+  shared（代理 101KB；旧 vendor 在代理同样爆——它从未在代理跑过大
+  rank，平台芯局部存储更大才通过）→ 多轮 K + BLOCK_K≤64。
+- **代理阶段计时（launch 风暴实锤）**：旧 per-seg vs 新 grouped =
+  4 段 **2.97x** / 16 段 **2.16x** / 64 段 **12.0x**——段数越多收益
+  越大，燧原 0.18 地板（launch 开销主导）预期多倍改善。
+- 回归重写：multi-k stride 测试改为直接驱动新 kernel（K=65×3 趟），
+  保留 rank 127/129/511/512/513 全矩阵。release 全绿（12 方法，
+  generic 25 + 两 vendor 各 12 launch）。
+- 预注册门：8/8 且燧原 ≥0.5 视为结构兑现、昆仑 ≥6 视为大兑现；
+  任一 vendor 编译失败回滚 e12 字节。
