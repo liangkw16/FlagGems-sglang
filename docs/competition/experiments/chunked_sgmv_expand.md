@@ -10,7 +10,7 @@ team_best_stage: e17
 team_best_commit: cea2a0c10878b39c251a36857d97311d1ab4cd73
 team_best_speedup: 25.5965
 sealed: no
-next: E19通用短段/小rank行块候选发布验证通过，待一次性平台提交；保留E17平台最佳
+next: E19/11788七芯已过等待天数；E21批次物化候选发布验证通过待提交；E17仍为平台最佳
 updated: 2026-09-09
 ```
 
@@ -425,3 +425,37 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
 |chunked_sgmv_expand.py|`d97ac1b5f50cba5b7228a60092330a6089810ff5d8bfd8b2d60db2410cb46071`|
 |chunked_sgmv_expand_enflame.py|`ec7fe0ccab03d150ce6ef11d0b38ebf036726ace8d0cb38745f69c792ea63c4d`|
 |chunked_sgmv_expand_kunlunxin.py|`ba0690d263dad46d5ea816a94b5d8e5f5a88c6ac9d39cf094062a91cbda856bb`|
+
+### E19 已提交，终态待定
+
+- 13:51:07提交11788，当日第25次，一次上传/一次正式提交，远端ZIP验签通过，剩5/30。最新响应七芯正确：沐曦19.2515、燧原0.245、海光54.364、昆仑4.7465、华为10.782、A52.374、B30.423；天数waiting_callback，不能判定八芯均值或晋级。
+- E21恢复generic为E17精确字节，选择已确认的八芯最佳作为独立基线，不把E19部分成绩拼装成有效成绩。E19仍继续只读等待。
+
+## E20 编译期布局参数初筛（未提交）
+
+- 在E19上仅把max_out_dim和stride参数设为constexpr，保留64位索引和相同数学路径。17方法中的边界/stride最小2方法初筛通过；24组6轮AB/BA完整调用速度中位1.0106倍，尾rank129 BF16有提示路径0.8325倍。收益不足，未commit候选、未打包、未上传。源码和原始样本保留`artifacts/competition/chunked_sgmv_expand/e20-layout-screen/`。
+
+## E21 批次级行物化（2026-09-09，提交预注册）
+
+- 相对E17仅更改两vendor的物化粒度：先按adapter组织全部活跃行，一次x gather、一次base gather、每adapter/slice原规则GEMM，最后一次scatter；索引统一long。generic与E17精确一致，GEMM/launcher AST与E17逐函数一致。空段先跳过、rank0和部分未覆盖行保留base，stored-rank及3dtype契约不变。
+- 单adapter是开销对照，代理约0.972–0.977倍；多adapter约1.02–1.69倍。8adapter BF16 profiler显示index_select16→2、index_copy_8→1、cat8→1，证明减少物化调用。最大已测packed x/out约17MiB；批次级临时缓冲随活跃行数线性增长，比原逐adapter峰值更高，隐藏最大shape内存仍未知。
+- NVIDIA RTX5070Ti、torch2.13.0+cu130、Triton3.7.1；17方法完整release、0fail/error/skip/xfail、3成员均实际执行。远端`/tmp/flagos-t47-e21-release.yvxbV4`，PID335282，timeout900；run.sh先release再24组6轮AB/BA×20完整调用。原始时间/阶段调用计数在perf.json。
+- KernelGen本轮实时tools/list仍只有generate/autotune生成验证接口，没有固定Triton源码执行字段；optimize仅改写，不用其返回替本候选验证。schema已保留kernelgen-tools.json。没有已授权的两目标芯主机，enflame/kunlunxin标记target-runtime-unverified，平台补齐目标证据。
+- 平台门：8/8正确、每芯>=0.1且均值>25.5965晋级team best；两vendor合计比E17的5.145提升>=15%记结构兑现。若目标失败或未提分，先取raw_result定位，不重投同字节；仍保留两次账号额度。
+- source/verification commit：`23be6795f1298a99dbca1c41b29c2dad66ec9832`；本节ledger独立提交，后续工作树候选不改变本次Git取源身份。
+- ZIP：`/private/tmp/flagos-batch4-structural-20260909/artifacts/competition/chunked_sgmv_expand/e21-23be679/chunked_sgmv_expand.zip`，19150 bytes，SHA256 `70f8a287adb59c50fb2b59563fcc80d498b999e5e486a919071e4fb1b11c4154`；dry-run/build/verify-existing一致。
+- validation/verification.json SHA256 `8b0be79d70e148bc1c2bc723d0657f059f8a7f657046a5b3eb0b1f22fc958e41`。
+- validation/verification.log SHA256 `dee0593261510cc7af4fb48e347e464ed36b26aa6a2bc8c8bb53a046930a79e9`。
+- validation/bench.py SHA256 `1c6adc965eeac6d11a58989a8b5b8b9424cc32ba3b898870d7e26947d89897fd`。
+- validation/baseline_enflame.py SHA256 `ec7fe0ccab03d150ce6ef11d0b38ebf036726ace8d0cb38745f69c792ea63c4d`。
+- validation/baseline_kunlunxin.py SHA256 `ba0690d263dad46d5ea816a94b5d8e5f5a88c6ac9d39cf094062a91cbda856bb`。
+- validation/perf.json SHA256 `cccfebcb41d13ea2c7986ae50d7d0d99103e5e4a0a673a3bd15d5365b1db0865`。
+- validation/run.sh SHA256 `143620d6e42a0a0b40b6ccdd040893e32b6ea6e7625e60adf90af39d6d5cdd46`。
+- validation/kernelgen-tools.json SHA256 `7388610e2f73095b4ef8bac7d5dcd5b569b7e563c01852c303562175ff81dd7b`。
+- test SHA256 `424476e26b0273561578ade8365dce4e8505c2104e855cf5a54b27118df774d6`。
+
+| ZIP成员 | SHA256 |
+|---|---|
+|chunked_sgmv_expand.py|`cec9fec2b67b3cd9c92cc83da01fd626eb3469ddbbe8795b05d708fd065e6059`|
+|chunked_sgmv_expand_enflame.py|`522bbd563c27b0fbc6600a7fd249a35ddf1276edb7bf85f0cca39dc79419898c`|
+|chunked_sgmv_expand_kunlunxin.py|`c9d9937a74be019fe0a25658ad0efd77d86d1c4939b07d0387d9e77b9d970ce1`|
