@@ -182,6 +182,47 @@ for r in raw:                       # 返回即列表
 - 浏览器只读通道另有 IAB 标签页跨调用被重置回 about:blank 的问题，
   且失败详情在「我的参赛」后要登录——API 通道两者皆免。
 
+### 榜单逐芯情报通道（2026-09-09 实证；优先于"榜差不可破译"结论）
+
+`operator-tasks` 只给榜首的 `current_best_speedup`（**单个均值**）。
+按题的 leaderboard 端点则返回**每一支队伍的完整 `gpu_results[]`**，
+把不透明的"榜差"拆成可归因的**逐芯差**——这是决定打哪道题、打哪根轴的
+第一手依据，开题和每轮排弹药前都应先拉：
+
+```python
+client = HttpClient(_token())            # platform_cli.py 内部类
+tasks = client.get(f"{API}/races/{race}/operator-tasks",
+                   {"page": 1, "page_size": 100})   # 取 tid
+rows = client.get(f"{API}/races/{race}/operator-tasks/{tid}/leaderboard",
+                  {"page": 1, "page_size": 50})     # 返回即列表
+for r in rows:
+    r["rank"], r["team_name"], r["is_mine"]
+    r["best_average_speedup"], r["passed_gpu_count"]
+    r["first_valid_submitted_at"]                   # 同分先到先得的判据
+    {g["gpu"]: g["speedup"] for g in r["gpu_results"]}   # 逐芯
+```
+
+用途（缺一即回到盲猜）：
+
+1. **彩票榜首判据（客观化）**：榜首某芯读数 > 第二名**同芯**读数 20 倍
+   ⇒ 该均值是慢窗产物，不是结构。2026-09-09 实证：T42 榜首 431.48
+   （燧原 3427.0 vs 同芯次优 9.39，365x）、T53 288.43（2280.7 vs 7.84，
+   291x）、T56 72.31（551.4 vs 7.31，75x）三题均为窗口分；同期
+   T43/T46/T47/T48/T49/T57/T58 榜首逐芯健康，是真实结构领先。
+   **不要只看均值量级判彩票**——T58 榜首 616.80 逐芯健康（海光 1519、
+   A 1273 全队同量级），是真实的。
+2. **正确靶子**：榜首为彩票时，真实可达目标是**同芯次优队读数**，
+   不是榜首。对彩票榜首继续投同字节重掷弹是错靶，会白烧额度。
+3. **弱芯优先级与收益测算**：把某芯抬到"他队已证明可达"的读数，按
+   `Δavg = (target - ours) / n` 直接算均值增量与届时排名，用于给
+   候选排序、定预注册门；比"代理提速百分比"更接近计分口径。
+4. **水位论的反证**：某芯低分若被本队反复记为"该 op 在该芯的水位"，
+   先查他队同芯读数——若他队高出数倍，水位论不成立，是我方结构问题。
+
+只读 GET，不消耗额度、不产生提交记录。逐芯快照应连同 `observed_at`
+落盘进 `docs/competition/data/`，并把 SHA-256 写入方案或账本；榜单会
+随他队提交变化，事后无法复现。
+
 ### 平台评测踩坑硬事实（2026-09-04 批次实证）
 
 | 坑 | 表象 | 处置 |
@@ -199,6 +240,8 @@ for r in raw:                       # 返回即列表
 | 评测机慢窗可爆两个数量级读数 | 燧原冻结字节 2.3–3.73（exec 8–11s）→ 442.8（exec 1299s）；慢窗下 reference 退化远超单融合 kernel | 水位彩票机制：最佳字节载体随时待发；读数合法但脆弱（同窗 E3 即 1830s 超时死）；exec_ms 与 speedup 强相关可作窗口判据 |
 | 昇腾 aclnn 原生库层错误 | `aclnnCat` 进程内错误（T46 tile8 探针，单 case，异步栈不可靠） | 无法区分候选触发 vs 平台间歇；单发探针止损，不据此改结构 |
 | fp16 张量核整数乘积精确域 | int8 操作数 fp16 精确（≤2048）但乘积 127×127=16129 超域；2936 万元素 1 个差 0.5088 vs 0.5 判负（T58 天数） | dot 操作数 dtype 兼容性逐题逐芯验证；失败先拉 raw_result 数失败元素量级再定方向 |
+| 燧原 grid 超发是跨题系统缺陷 | 厂商指南：GCU **启动开销无法被掩盖**，GridDim 超过硬件资源即纯调度开销，计算量小时尤甚；硬件仅 24 SIP，推荐 GridDim 6（GCU300/nw=4）或 24（GCU400/nw=8）。我方多题燧原 grid 为 1e3–1e4（超发 100–2700x），且 enflame vendor 普遍未开 pingpong | 改 persistent 形态：`grid=(min(tiles, 24),)` + `tl.range(pid, tiles, tl.num_programs(0), num_stages=3)`（`num_stages>=3` 才开 pingpong，2D 计算官方实测 +15%）；launch **不写** `num_warps` 让后端取默认（T19-E5/T51-E5 两次平台实证 +38%；2026-09-09 统计：未钉 warps 组燧原中位数 2.077 vs 钉住组 0.732）。GCU 的 BLOCK_SIZE 倾向远大于 GPU |
+| 姐妹题移植必须重核**维度角色** | T48 shrink 沿用 T47 expand 的 `BLOCK_N=128/BLOCK_K=32`，但两题归约维与输出维恰好互换：expand 归约=rank（小 8–64）、输出=out_dim（大 1e3）；shrink 归约=K_in（大 512–4096）、输出=rank（小 16–64）。结果 K 循环 16–128 趟（应 2–16）+ dot 空列填充 50–87%，表现为**八芯一致落后 3–8x** | **八芯同步落后 ⇒ generic 结构问题，与任何单芯 lowering 无关**，先查 tile 几何而非加 vendor。移植姐妹题 tile 参数前先写清每根轴的物理含义与量级；`BLOCK_N=max(16,next_pow2(输出维))`、`BLOCK_K` 走真实归约维 |
 
 ### 结构资产（可直接迁移）
 
