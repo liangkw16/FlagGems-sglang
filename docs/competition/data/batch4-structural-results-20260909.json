@@ -1,0 +1,545 @@
+{
+  "queried_at": "2026-09-09T12:50:10.837847+08:00",
+  "team": "SoulCoder",
+  "race": "782kzq4m",
+  "batch": 4,
+  "quota": {
+    "used": 24,
+    "total": 30,
+    "remaining": 6,
+    "min_interval_seconds": 120,
+    "retry_after_seconds": 38
+  },
+  "results": [
+    {
+      "task": 47,
+      "operator": "chunked_sgmv_expand",
+      "stage": "e15",
+      "idea": "设备路由向量GEMV",
+      "source_commit": "7c5bfc05cf2107f1a5787599d39839b0469fe35b",
+      "zip_sha256": "d2c42661289c5a737432e7f1e8a8b73fd732e4f63f6698213e0b20e938beb733",
+      "submission_id": 11764,
+      "status": "completed",
+      "validity": "invalid_correctness",
+      "average_speedup": null,
+      "passed_gpu_count": 7,
+      "terminal_gpu_count": 8,
+      "is_current_team_best": false,
+      "gpus": [
+        {
+          "gpu": "tianshu",
+          "passed": true,
+          "speedup": 28.7435,
+          "status": "completed"
+        },
+        {
+          "gpu": "muxi",
+          "passed": true,
+          "speedup": 21.4795,
+          "status": "completed"
+        },
+        {
+          "gpu": "enflame",
+          "passed": true,
+          "speedup": 0.01,
+          "status": "completed"
+        },
+        {
+          "gpu": "haiguang",
+          "passed": true,
+          "speedup": 53.829,
+          "status": "completed"
+        },
+        {
+          "gpu": "kunlunxin",
+          "passed": false,
+          "speedup": null,
+          "status": "completed"
+        },
+        {
+          "gpu": "huawei",
+          "passed": true,
+          "speedup": 14.752,
+          "status": "completed"
+        },
+        {
+          "gpu": "card_a",
+          "passed": true,
+          "speedup": 50.5255,
+          "status": "completed"
+        },
+        {
+          "gpu": "card_b",
+          "passed": true,
+          "speedup": 28.662,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "task": 47,
+      "operator": "chunked_sgmv_expand",
+      "stage": "e16",
+      "idea": "紧凑段tile调度",
+      "source_commit": "f9cb2475c7b61ab97e485c28cd0207fac7db15a9",
+      "zip_sha256": "694cb6a3a5d6f769e919fdb613d71c98160ec67446c2f3a2862d672497825479",
+      "submission_id": 11769,
+      "status": "completed",
+      "validity": "valid",
+      "average_speedup": 24.897,
+      "passed_gpu_count": 8,
+      "terminal_gpu_count": 8,
+      "is_current_team_best": false,
+      "gpus": [
+        {
+          "gpu": "tianshu",
+          "passed": true,
+          "speedup": 29.76,
+          "status": "completed"
+        },
+        {
+          "gpu": "muxi",
+          "passed": true,
+          "speedup": 21.653,
+          "status": "completed"
+        },
+        {
+          "gpu": "enflame",
+          "passed": true,
+          "speedup": 0.147,
+          "status": "completed"
+        },
+        {
+          "gpu": "haiguang",
+          "passed": true,
+          "speedup": 52.4575,
+          "status": "completed"
+        },
+        {
+          "gpu": "kunlunxin",
+          "passed": true,
+          "speedup": 3.708,
+          "status": "completed"
+        },
+        {
+          "gpu": "huawei",
+          "passed": true,
+          "speedup": 13.1735,
+          "status": "completed"
+        },
+        {
+          "gpu": "card_a",
+          "passed": true,
+          "speedup": 49.458,
+          "status": "completed"
+        },
+        {
+          "gpu": "card_b",
+          "passed": true,
+          "speedup": 28.819,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "task": 48,
+      "operator": "chunked_sgmv_shrink",
+      "stage": "e8",
+      "idea": "FP32窄输出Split-K",
+      "source_commit": "179fe7ccff681d4f99e4c4f31f0753aea6b6a7ad",
+      "zip_sha256": "8f2323df05c07561a4fae6def68e40d7d5493b089c105364cedffbc378de2120",
+      "submission_id": 11767,
+      "status": "completed",
+      "validity": "valid",
+      "average_speedup": 4.460625,
+      "passed_gpu_count": 8,
+      "terminal_gpu_count": 8,
+      "is_current_team_best": false,
+      "gpus": [
+        {
+          "gpu": "tianshu",
+          "passed": true,
+          "speedup": 3.728,
+          "status": "completed"
+        },
+        {
+          "gpu": "muxi",
+          "passed": true,
+          "speedup": 4.972,
+          "status": "completed"
+        },
+        {
+          "gpu": "enflame",
+          "passed": true,
+          "speedup": 0.326,
+          "status": "completed"
+        },
+        {
+          "gpu": "haiguang",
+          "passed": true,
+          "speedup": 5.8125,
+          "status": "completed"
+        },
+        {
+          "gpu": "kunlunxin",
+          "passed": true,
+          "speedup": 1.752,
+          "status": "completed"
+        },
+        {
+          "gpu": "huawei",
+          "passed": true,
+          "speedup": 5.5255,
+          "status": "completed"
+        },
+        {
+          "gpu": "card_a",
+          "passed": true,
+          "speedup": 6.7085,
+          "status": "completed"
+        },
+        {
+          "gpu": "card_b",
+          "passed": true,
+          "speedup": 6.8605,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "task": 47,
+      "operator": "chunked_sgmv_expand",
+      "stage": "e17",
+      "idea": "重复adapter段合并",
+      "source_commit": "cea2a0c10878b39c251a36857d97311d1ab4cd73",
+      "zip_sha256": "30bdb5d81015f81960712c3034a2decdb4d65a28ca5bb86b52431d7720d7730c",
+      "submission_id": 11771,
+      "status": "completed",
+      "validity": "valid",
+      "average_speedup": 25.5965,
+      "passed_gpu_count": 8,
+      "terminal_gpu_count": 8,
+      "is_current_team_best": true,
+      "gpus": [
+        {
+          "gpu": "tianshu",
+          "passed": true,
+          "speedup": 28.9565,
+          "status": "completed"
+        },
+        {
+          "gpu": "muxi",
+          "passed": true,
+          "speedup": 21.697,
+          "status": "completed"
+        },
+        {
+          "gpu": "enflame",
+          "passed": true,
+          "speedup": 0.2925,
+          "status": "completed"
+        },
+        {
+          "gpu": "haiguang",
+          "passed": true,
+          "speedup": 55.875,
+          "status": "completed"
+        },
+        {
+          "gpu": "kunlunxin",
+          "passed": true,
+          "speedup": 4.8525,
+          "status": "completed"
+        },
+        {
+          "gpu": "huawei",
+          "passed": true,
+          "speedup": 13.766,
+          "status": "completed"
+        },
+        {
+          "gpu": "card_a",
+          "passed": true,
+          "speedup": 50.053,
+          "status": "completed"
+        },
+        {
+          "gpu": "card_b",
+          "passed": true,
+          "speedup": 29.2795,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "task": 48,
+      "operator": "chunked_sgmv_shrink",
+      "stage": "e9",
+      "idea": "重复adapter段合并",
+      "source_commit": "cea2a0c10878b39c251a36857d97311d1ab4cd73",
+      "zip_sha256": "2696c03c0a287c5409dc58fb49a41c129554bdaa0231d374ed4d384e1ae10743",
+      "submission_id": 11775,
+      "status": "completed",
+      "validity": "valid",
+      "average_speedup": 4.8135625,
+      "passed_gpu_count": 8,
+      "terminal_gpu_count": 8,
+      "is_current_team_best": true,
+      "gpus": [
+        {
+          "gpu": "tianshu",
+          "passed": true,
+          "speedup": 3.828,
+          "status": "completed"
+        },
+        {
+          "gpu": "muxi",
+          "passed": true,
+          "speedup": 5.3525,
+          "status": "completed"
+        },
+        {
+          "gpu": "enflame",
+          "passed": true,
+          "speedup": 0.897,
+          "status": "completed"
+        },
+        {
+          "gpu": "haiguang",
+          "passed": true,
+          "speedup": 6.306,
+          "status": "completed"
+        },
+        {
+          "gpu": "kunlunxin",
+          "passed": true,
+          "speedup": 2.424,
+          "status": "completed"
+        },
+        {
+          "gpu": "huawei",
+          "passed": true,
+          "speedup": 5.893,
+          "status": "completed"
+        },
+        {
+          "gpu": "card_a",
+          "passed": true,
+          "speedup": 7.008,
+          "status": "completed"
+        },
+        {
+          "gpu": "card_b",
+          "passed": true,
+          "speedup": 6.8,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "task": 47,
+      "operator": "chunked_sgmv_expand",
+      "stage": "e18",
+      "idea": "合并后燧原原生半精度dot",
+      "source_commit": "e887aab5f70fa2f9ac70e351eb36f57726610ca8",
+      "zip_sha256": "3cc36eaab832146bd498ed40bfcd2a5f12802014090cd382d6db60e12d5bedfa",
+      "submission_id": 11776,
+      "status": "completed",
+      "validity": "valid",
+      "average_speedup": 25.4674375,
+      "passed_gpu_count": 8,
+      "terminal_gpu_count": 8,
+      "is_current_team_best": false,
+      "gpus": [
+        {
+          "gpu": "tianshu",
+          "passed": true,
+          "speedup": 29.5875,
+          "status": "completed"
+        },
+        {
+          "gpu": "muxi",
+          "passed": true,
+          "speedup": 21.618,
+          "status": "completed"
+        },
+        {
+          "gpu": "enflame",
+          "passed": true,
+          "speedup": 0.3,
+          "status": "completed"
+        },
+        {
+          "gpu": "haiguang",
+          "passed": true,
+          "speedup": 54.0055,
+          "status": "completed"
+        },
+        {
+          "gpu": "kunlunxin",
+          "passed": true,
+          "speedup": 4.764,
+          "status": "completed"
+        },
+        {
+          "gpu": "huawei",
+          "passed": true,
+          "speedup": 14.268,
+          "status": "completed"
+        },
+        {
+          "gpu": "card_a",
+          "passed": true,
+          "speedup": 50.9425,
+          "status": "completed"
+        },
+        {
+          "gpu": "card_b",
+          "passed": true,
+          "speedup": 28.254,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "leaderboard": [
+    {
+      "task_no": 42,
+      "operator": "act_and_mul",
+      "my_best_speedup": 3.25835,
+      "my_rank": 13,
+      "current_best_speedup": 431.4843,
+      "current_leader_team_name": "gonzhanshishenmeganjue"
+    },
+    {
+      "task_no": 43,
+      "operator": "causal_conv1d_update",
+      "my_best_speedup": 6.6005625,
+      "my_rank": 4,
+      "current_best_speedup": 8.47775,
+      "current_leader_team_name": "EvokeAgent"
+    },
+    {
+      "task_no": 44,
+      "operator": "chain_speculative_sampling",
+      "my_best_speedup": null,
+      "my_rank": null,
+      "current_best_speedup": 77.954125,
+      "current_leader_team_name": "c2flow"
+    },
+    {
+      "task_no": 45,
+      "operator": "chunk_scaled_dot_kkt",
+      "my_best_speedup": null,
+      "my_rank": null,
+      "current_best_speedup": 19.7779375,
+      "current_leader_team_name": "EvokeAgent"
+    },
+    {
+      "task_no": 46,
+      "operator": "chunked_embedding_lora_a",
+      "my_best_speedup": 14.1051875,
+      "my_rank": 6,
+      "current_best_speedup": 28.0405625,
+      "current_leader_team_name": "EvokeAgent"
+    },
+    {
+      "task_no": 47,
+      "operator": "chunked_sgmv_expand",
+      "my_best_speedup": 25.5965,
+      "my_rank": 3,
+      "current_best_speedup": 42.9844375,
+      "current_leader_team_name": "c2flow"
+    },
+    {
+      "task_no": 48,
+      "operator": "chunked_sgmv_shrink",
+      "my_best_speedup": 4.8135625,
+      "my_rank": 5,
+      "current_best_speedup": 26.944,
+      "current_leader_team_name": "c2flow"
+    },
+    {
+      "task_no": 49,
+      "operator": "ernie45_rope_fused",
+      "my_best_speedup": 8.9578125,
+      "my_rank": 8,
+      "current_best_speedup": 21.18734375,
+      "current_leader_team_name": "c2flow"
+    },
+    {
+      "task_no": 50,
+      "operator": "extend_attention",
+      "my_best_speedup": null,
+      "my_rank": null,
+      "current_best_speedup": 10.72328125,
+      "current_leader_team_name": "c2flow"
+    },
+    {
+      "task_no": 51,
+      "operator": "fla_layernorm_gated",
+      "my_best_speedup": 60.7192,
+      "my_rank": 1,
+      "current_best_speedup": 60.7192,
+      "current_leader_team_name": "SoulCoder"
+    },
+    {
+      "task_no": 52,
+      "operator": "fused_dual_residual_rmsnorm",
+      "my_best_speedup": null,
+      "my_rank": null,
+      "current_best_speedup": 5.63800833,
+      "current_leader_team_name": "c2flow"
+    },
+    {
+      "task_no": 53,
+      "operator": "fused_gdn_gating",
+      "my_best_speedup": 3.03205,
+      "my_rank": 13,
+      "current_best_speedup": 288.426175,
+      "current_leader_team_name": "Nectar"
+    },
+    {
+      "task_no": 54,
+      "operator": "fused_norm_rope_stacked",
+      "my_best_speedup": null,
+      "my_rank": null,
+      "current_best_speedup": 10.80896875,
+      "current_leader_team_name": "EvokeAgent"
+    },
+    {
+      "task_no": 55,
+      "operator": "hc_head",
+      "my_best_speedup": null,
+      "my_rank": null,
+      "current_best_speedup": 6.49028125,
+      "current_leader_team_name": "c2flow"
+    },
+    {
+      "task_no": 56,
+      "operator": "l2norm",
+      "my_best_speedup": 3.20691667,
+      "my_rank": 10,
+      "current_best_speedup": 72.30680208,
+      "current_leader_team_name": "sikadeer"
+    },
+    {
+      "task_no": 57,
+      "operator": "log_scaling_tau",
+      "my_best_speedup": 2.50278125,
+      "my_rank": 7,
+      "current_best_speedup": 3.27190625,
+      "current_leader_team_name": "EvokeAgent"
+    },
+    {
+      "task_no": 58,
+      "operator": "w8a8_block_int8_matmul",
+      "my_best_speedup": 261.84538333,
+      "my_rank": 4,
+      "current_best_speedup": 616.79514167,
+      "current_leader_team_name": "EvokeAgent"
+    }
+  ],
+  "top1_count": 1,
+  "valid_tasks": 11
+}

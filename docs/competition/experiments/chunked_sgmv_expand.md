@@ -5,12 +5,12 @@ task: 47
 operator: chunked_sgmv_expand
 batch: 4
 validity: valid
-platform: E17/11771八芯valid25.5965，新团队最佳；E18燧原dtype复核中
+platform: E17/11771最佳25.5965；E18/11776有效25.4674375未晋级
 team_best_stage: e17
 team_best_commit: cea2a0c10878b39c251a36857d97311d1ab4cd73
 team_best_speedup: 25.5965
 sealed: no
-next: E18仅燧原原生半精度dot release通过，待一次提交；保留E17最佳作为基线
+next: 本轮闭环完成，保留E17最佳字节；向量/紧凑调度/dtype三个未达标轴关闭
 updated: 2026-09-09
 ```
 
@@ -394,3 +394,10 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
 |chunked_sgmv_expand.py|`cec9fec2b67b3cd9c92cc83da01fd626eb3469ddbbe8795b05d708fd065e6059`|
 |chunked_sgmv_expand_enflame.py|`713ba9c207fb9d50493cda8c79ce7a4cf215bf527ac98c9b39cc82330ab0e408`|
 |chunked_sgmv_expand_kunlunxin.py|`ba0690d263dad46d5ea816a94b5d8e5f5a88c6ac9d39cf094062a91cbda856bb`|
+
+### E18 终态与最终保留（2026-09-09 12:50 CST）
+
+- `11776` 一次上传/提交，远端ZIP验签一致，8/8 valid，均值 **25.4674375**，未超过E17的25.5965。燧原0.300 vs0.2925，仅+2.56%，未过15%收益门；dtype轴关闭。
+- 其余逐芯：天数29.5875、沐曦21.618、海光54.0055、昆仑4.764、华为14.268、A50.9425、B28.254。完整最终响应 `e18-e887aab/raw-status-final.json`；未重投任何候选。
+- 本工作分支enflame源恢复到`cea2a0c` E17逐字节内容；generic/kunlunxin与E17相同，测试/runner/依赖逐文件SHA也与E17 release一致。因此最终保留已验证的同adapter合并，不留dtype试验为默认实现；没有给恢复提交新建ZIP或声称新source身份已上平台。
+- 本轮总表、最新榜单与提交来源见[结构尝试结果](../structural-attempts-20260909.md)。
