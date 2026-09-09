@@ -224,6 +224,9 @@ class ChunkedSgmvShrinkVariantsTest(unittest.TestCase):
             ([0, 12, 0, 12, 0], 512, 128),
             ([24, 12], 65, 80),
             ([63, 64, 65, 256], 128, 32),
+            # 32 short segments exceed any persistent grid cap, so the
+            # enflame tile-descriptor walk must wrap inside the kernel.
+            ([4] * 32, 512, 64),
         ):
             x, weights, bi = make_case(seg_lens, 3, K, N)
             ref = reference(x, weights, bi)
