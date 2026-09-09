@@ -133,7 +133,7 @@ def chunked_sgmv_expand(
     ):
         return output
 
-    # Coalesce repeated adapters so each uses one gather/GEMM/scatter.
+    # Coalesce repeated adapters before batching their gather/scatter.
     # Dot operands remain regular matrices; kernels carry no route metadata.
     seg_indptr = batch_info.seg_indptr.detach().cpu().tolist()
     weight_indices = batch_info.weight_indices.detach().cpu().tolist()
@@ -152,17 +152,29 @@ def chunked_sgmv_expand(
             continue
         adapter_segments.setdefault(w_idx, []).append((start, end))
 
+    if not adapter_segments:
+        return output
+
+    # Materialize all active rows once; each adapter still sees a regular GEMM.
+    row_parts = []
+    groups = []
+    cursor = 0
     for w_idx, segments in adapter_segments.items():
-        if len(segments) == 1:
-            start, end = segments[0]
-            rows = permutation[start:end].long()
-        else:
-            rows = torch.cat(
-                [permutation[start:end] for start, end in segments]
-            ).long()
+        group_start = cursor
+        for start, end in segments:
+            row_parts.append(permutation[start:end])
+            cursor += end - start
+        groups.append((w_idx, group_start, cursor))
+    rows = (
+        row_parts[0] if len(row_parts) == 1 else torch.cat(row_parts)
+    ).long()
+    packed_x = x.index_select(0, rows).float()
+    packed_out = output.index_select(0, rows).float()
+
+    for w_idx, start, end in groups:
         scaling = float(scalings[w_idx])
-        x_seg = x.index_select(0, rows).float()
-        seg_out = output.index_select(0, rows).float()
+        x_seg = packed_x[start:end]
+        seg_out = packed_out[start:end]
         for i in range(n_slices):
             o_start, o_end = int(slice_list[i]), int(slice_list[i + 1])
             if o_start == o_end:
@@ -175,7 +187,7 @@ def chunked_sgmv_expand(
                 o_end - o_start,
                 rank,
             )
-        output.index_copy_(0, rows, seg_out.to(base_output.dtype))
+    output.index_copy_(0, rows, packed_out.to(base_output.dtype))
     return output
 
 
