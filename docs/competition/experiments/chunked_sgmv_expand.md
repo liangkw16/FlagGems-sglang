@@ -6,9 +6,9 @@ operator: chunked_sgmv_expand
 batch: 4
 validity: valid
 platform: E11/11031八芯valid,21.6584375x;历史E5 best25.0048125x
-team_best_stage: e11r
-team_best_commit: 06a95c0
-team_best_speedup: 25.2635625
+team_best_stage: e12
+team_best_commit: d649a9d
+team_best_speedup: 25.36275
 sealed: no
 next: E11目标正确性通过但未晋级,保留E5守榜;不重投同字节,需新增目标性能证据再开轴
 updated: 2026-09-08
@@ -248,3 +248,13 @@ K ≤ BLOCK_K 单趟未触发（潜伏笔误，不影响已验 8/8 结果）。�
   海光 53.26 / A 50.33 晨窗高位，**25.0048→25.1925 新 TB**，距 42.98
   仍差 1.71x——夺回只能靠同量级慢窗命中（E5 重掷剩 1 次 + E11 身份）。
 - 跨芯知识：晨窗（06:2x）天数/海光/A 同窗齐高 = 慢窗可被传感器捕获。
+
+## E12 燧原 128-tile 探针：**TB 25.3628 但燧原假设证伪**（2026-09-09T09:15，sub 11694）
+
+- 单变量：燧原 vendor tile 64×64→128×128（m≥128 时）。**燧原 0.178
+  原地（0.177→0.178）——"薄 MMA/向量路径"假设证伪**；均值 25.36 新 TB
+  全部来自其他芯窗口（天数 30.1/海光 54.2/A 50.0）。
+- 燧原 0.18 地板的剩余解释：逐段 route/materialize + per-(segment,slice)
+  launch 风暴（GCU launch 开销主导）。修法=单 launch 批处理（设备端
+  tile→segment 映射，moe-fp8/T28 配方），属半日级重构，若做需明日
+  16:00 前完成载体。tile 轴关闭。

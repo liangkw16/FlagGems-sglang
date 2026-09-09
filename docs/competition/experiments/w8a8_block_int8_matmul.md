@@ -6,9 +6,9 @@ operator: w8a8_block_int8_matmul
 batch: 4
 validity: valid
 platform: e6r/11210八芯valid,258.04890833x team best(排名3);e7/11228 valid 253.07(B已修复)
-team_best_stage: e6r
-team_best_commit: 80bba3d
-team_best_speedup: 258.04890833
+team_best_stage: e9
+team_best_commit: d649a9d
+team_best_speedup: 261.84538333
 sealed: no
 next: e7字节(e6r组级+amd逐块B)为最优组合,均值差=华为窗口三连下行;水位回常态时以e7字节重掷(新ZIP身份,≤2次)
 updated: 2026-09-08
@@ -254,3 +254,13 @@ updated: 2026-09-08
   "正确可用、本题收益小"**；错译族条目标注为运行时版本相关。
 - 晋级门（昆仑 ≥150）未达，e8 不晋级；e8 字节（含 fp16 昆仑）与 e7
   等价最优，e8 重掷 1 次可用。
+
+## E9 generic stages=3：**8/8 valid 261.84538333 新 TB**（2026-09-09T09:17，sub 11695）
+
+- 单变量：generic `num_stages 2→3`（只影响沐曦/海光/A 三块组级受益芯；
+  四 vendor 各自 launch 参数不动）。**海光 778.41 历史新高（带 703-722
+  →+8%，stages 结构性兑现）**；昆仑 156.23（vendor 未动，fp16+窗口）、
+  A 377.8（带内高位）、沐曦 215.8（带内）、华为 375.5（窗口仍低）、
+  B 108.3（_amd 带内稳定）。
+- e9 字节为 T58 新最优（组级+stages3+B分派+昆仑fp16），剩 1 次重掷。
+- 排名看实时（旧 #4，榜首 616.8）。
