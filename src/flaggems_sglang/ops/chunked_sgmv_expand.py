@@ -46,22 +46,28 @@ def _chunked_sgmv_expand_kernel(
     BLOCK_S: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
+    USE_INT32: tl.constexpr,
 ):
-    x_stride_token = tl.cast(x_stride_token, tl.int64)
-    x_stride_rank = tl.cast(x_stride_rank, tl.int64)
-    weight_stride_lora = tl.cast(weight_stride_lora, tl.int64)
-    weight_stride_output = tl.cast(weight_stride_output, tl.int64)
-    weight_stride_rank = tl.cast(weight_stride_rank, tl.int64)
-    output_stride_token = tl.cast(output_stride_token, tl.int64)
-    output_stride_col = tl.cast(output_stride_col, tl.int64)
+    offset_dtype: tl.constexpr = tl.int32 if USE_INT32 else tl.int64
+    x_stride_token = tl.cast(x_stride_token, offset_dtype)
+    x_stride_rank = tl.cast(x_stride_rank, offset_dtype)
+    weight_stride_lora = tl.cast(weight_stride_lora, offset_dtype)
+    weight_stride_output = tl.cast(weight_stride_output, offset_dtype)
+    weight_stride_rank = tl.cast(weight_stride_rank, offset_dtype)
+    output_stride_token = tl.cast(output_stride_token, offset_dtype)
+    output_stride_col = tl.cast(output_stride_col, offset_dtype)
 
     batch_id = tl.program_id(2)
     slice_id = tl.program_id(1)
     segment_start = tl.load(seg_indptr_ptr + batch_id * seg_indptr_stride)
     segment_end = tl.load(seg_indptr_ptr + (batch_id + 1) * seg_indptr_stride)
     segment_length = segment_end - segment_start
-    out_start = tl.load(slice_offsets_ptr + slice_id * slice_offsets_stride)
-    out_end = tl.load(slice_offsets_ptr + (slice_id + 1) * slice_offsets_stride)
+    out_start = tl.load(
+        slice_offsets_ptr + slice_id * slice_offsets_stride
+    ).to(offset_dtype)
+    out_end = tl.load(
+        slice_offsets_ptr + (slice_id + 1) * slice_offsets_stride
+    ).to(offset_dtype)
     output_size = out_end - out_start
 
     num_output_blocks = tl.cdiv(max_out_dim, BLOCK_N)
@@ -73,8 +79,13 @@ def _chunked_sgmv_expand_kernel(
     if output_block * BLOCK_N >= output_size:
         return
 
-    weight_index = tl.load(weight_indices_ptr + batch_id * weight_indices_stride)
-    if tl.load(lora_ranks_ptr + weight_index * lora_ranks_stride) == 0:
+    weight_index = tl.load(
+        weight_indices_ptr + batch_id * weight_indices_stride
+    ).to(offset_dtype)
+    if (
+        tl.load(lora_ranks_ptr + weight_index.to(tl.int64) * lora_ranks_stride)
+        == 0
+    ):
         return
 
     token_offsets = token_block * BLOCK_S + tl.arange(0, BLOCK_S)
@@ -85,7 +96,7 @@ def _chunked_sgmv_expand_kernel(
         permutation_ptr + (segment_start + token_offsets) * permutation_stride,
         mask=token_mask,
         other=0,
-    )
+    ).to(offset_dtype)
 
     accumulator = tl.zeros((BLOCK_S, BLOCK_N), dtype=tl.float32)
     k_offsets = tl.arange(0, BLOCK_K)
@@ -116,7 +127,9 @@ def _chunked_sgmv_expand_kernel(
     )
     mask = token_mask[:, None] & output_mask[None, :]
     base = tl.load(output_ptrs, mask=mask, other=0.0).to(tl.float32)
-    scaling = tl.load(scalings_ptr + weight_index * scalings_stride).to(tl.float32)
+    scaling = tl.load(
+        scalings_ptr + weight_index.to(tl.int64) * scalings_stride
+    ).to(tl.float32)
     tl.store(
         output_ptrs,
         (base + accumulator * scaling).to(output_ptr.dtype.element_ty),
@@ -132,7 +145,12 @@ def chunked_sgmv_expand(
     rank = weights.shape[-1]
     if x.shape[1] != n_slices * rank:
         raise ValueError("x width must equal n_slices * rank")
-    if output.numel() == 0 or n_slices <= 0 or batch_info.bs == 0 or x.shape[0] == 0:
+    if (
+        output.numel() == 0
+        or n_slices <= 0
+        or batch_info.bs == 0
+        or x.shape[0] == 0
+    ):
         return output
 
     # The task's batch_info lists no max_len hint; use it when the
@@ -144,6 +162,16 @@ def chunked_sgmv_expand(
     if max_len == 0:
         return output
 
+    # Include masked tile tails in the address bound; keep wide-stride views
+    # on the original 64-bit path without inspecting any device values.
+    use_int32 = rank <= 32 and all(
+        sum(
+            (size + 128) * max(stride, 1)
+            for size, stride in zip(t.shape, t.stride())
+        )
+        < 2**31
+        for t in (x, weights, output)
+    )
     block_s = 64
     block_n = 128
     block_k = 32
@@ -177,6 +205,7 @@ def chunked_sgmv_expand(
         BLOCK_S=block_s,
         BLOCK_N=block_n,
         BLOCK_K=block_k,
+        USE_INT32=use_int32,
         num_warps=4,
         num_stages=3,
     )
