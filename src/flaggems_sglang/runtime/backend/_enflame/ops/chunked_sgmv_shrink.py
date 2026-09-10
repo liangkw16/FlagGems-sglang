@@ -128,6 +128,13 @@ def chunked_sgmv_shrink(x, weights, batch_info, num_slices=1):
     weight_indices = batch_info.weight_indices.detach().cpu().tolist()
     permutation = batch_info.permutation
 
+    # e12: group segments by adapter and run ONE gather + GEMM + scatter
+    # per adapter instead of per segment. Same math, same kernels, same
+    # compiler-safe regular-GEMM shape -- but the launch count drops
+    # from num_segments (hundreds for a batched mix) to num_adapters
+    # (typically <= 16), and each GEMM gets the adapter's full row set,
+    # which is both larger and denser than per-segment strips.
+    rows_by_adapter = {}
     for b in range(batch_info.bs):
         start, end = seg_indptr[b], seg_indptr[b + 1]
         if start == end:
@@ -135,7 +142,13 @@ def chunked_sgmv_shrink(x, weights, batch_info, num_slices=1):
         w_idx = weight_indices[b]
         if w_idx < 0:
             continue
-        rows = permutation[start:end].long()
+        rows_by_adapter.setdefault(w_idx, []).append((start, end))
+
+    for w_idx, spans in rows_by_adapter.items():
+        if len(spans) == 1:
+            rows = permutation[spans[0][0] : spans[0][1]].long()
+        else:
+            rows = torch.cat([permutation[s:e].long() for s, e in spans])
         x_seg = x.index_select(0, rows)
         out_seg = torch.empty(
             len(rows), N, dtype=torch.float32, device=x.device
