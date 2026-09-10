@@ -6,10 +6,10 @@ operator: clamp_position
 batch: 5
 validity: invalid_correctness
 platform: completed(12898,7/8)
-candidate_stage: s0
+candidate_stage: e1
 team_best_stage: -
 sealed: no
-next: 定位燧原 case 3 编译失败；核对 int64 路径，不盲目缩窄数据
+next: 提交 e1 燧原 vendor（int64 路径 lo/hi 词算法）；据逐芯结果迭代
 updated: 2026-09-11
 ```
 
@@ -104,3 +104,36 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 下一步：定位燧原 case 3 编译失败；核对 int64 路径，不盲目缩窄数据。
 
 [提交结果证据](../data/batch5-submissions-20260911.json)，SHA-256 `63418b87e9249bef72751df2a1778c52e6d679a5d313ecf18d8ed64b96c175dd`；原始 status `artifacts/competition/batch5-submit-20260911/60-status-033910.json`，SHA-256 `e249722ab8c475509882b7146132045ea0d03ac294022d2fdf7e0a429d3982c8`。
+
+## 2026-09-11 E1 燧原 vendor 候选（int64 换 lo/hi 词算法）
+
+- 根因定位：s0 恰好只有 int64 case（case 3）编译失败，int32 case 全过；
+  i32/i64 两份 TTIR 的算子集完全相同（subi/maxsi 都在）⇒ 毒点与元素类型
+  绑定。同批燧原通过的内核（kv_indices req_to_token 契约 int32）只做
+  i64 标量 load，从无 i64 向量 load。E1 vendor 把 int64 数据路径整体换成
+  **小端 (lo, hi) int32 词对算法**（wrapper 零拷贝 `view(torch.int32)`，
+  非数据缩窄——64 位补码代数逐位保持）：
+  `lo1 = lo - 1`；借位 `hi1 = where(lo == 0, hi - 1, hi)`（i32 回绕下
+  (hi1, lo1) 恰为 v-1 的真补码表示，hi1 符号位即 v-1 符号位）；
+  负号时两组词清零（两次掩码 store，`&` 已证构造）。
+  纯 Python 仿真 22 个边界值 + 20000 随机值全对（min_int64 溢出包绕与
+  torch 语义一致，远端 torch 测试实证）。int32 输入路径保留与 generic
+  逐字节相同的内核（燧原已证）。grid 封顶 24；不钉 num_warps。
+- source commit：`238a41eff945782708aa61177272fc5b601b6a86`（generic 字节不变）。
+- ZIP：`artifacts/competition/clamp_position/e1-238a41e/clamp_position.zip`；
+  5716 bytes；成员 generic + `clamp_position_enflame.py`
+  （SHA-256 `e221b7efe1be6e04a90d13ad3d81a26c4d05a4c688b6ce5397893d6c726ba35d`）。
+- ZIP SHA-256：`5d96abed5e02a2e24de1a11741718428be7bb93d745c7bdbb97a0fc5bd861ada`。
+- 源码 SHA-256：generic `fc637bc6d0bccd8a38d11100aa3589feda86568aa4fa8383aca7472001c9ed2b`
+  （与 s0 逐字节一致）；vendor `e221b7ef…`。
+- 回执：`artifacts/competition/batch5-enflame-fix-20260911/clamp_position-verification.json`；
+  SHA-256 `f90d2fb533210231d5249dd1cec8db200fdc3e8b2786a60d3021fce706fc12d3`。
+- 日志：`artifacts/competition/batch5-enflame-fix-20260911/clamp_position-verification.log`；
+  SHA-256 `173e0790531481508427122956009d9ca0d3ccf383089184a9fd65f15962523a`。
+- 完整 release（v2，`--proxy-vendor enflame`）：3 方法（含 int64 极值/stride/
+  尾块矩阵）/ 0 fail/err/skip；generic 22 次 + enflame vendor 22 次真实
+  kernel launch；代理 benchmark vendor≈generic+10%（仅燧原使用 vendor）。
+- 燧原目标 runtime 仍未验证（target-runtime-unverified）：GCU 编译门由平台裁决。
+- 残余风险：vendor 内单个 `tl.where(lo == 0, hi-1, hi)` 为 i32 select
+  （燧原实证仅有 fp select——apply_token_bitmask 2.85x）；若平台仍编译失败，
+  下一候选把它替换为 `.to(tl.int32)` 布尔转换或算术消除，单独隔离该变量。

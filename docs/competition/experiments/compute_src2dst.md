@@ -6,10 +6,10 @@ operator: compute_src2dst
 batch: 5
 validity: invalid_correctness
 platform: completed(12900,7/8)
-candidate_stage: s0
+candidate_stage: e1
 team_best_stage: -
 sealed: no
-next: 定位燧原 scatter 编译失败；先验证索引 lowering
+next: 提交 e1 燧原 vendor（ids 取小端 lo 词，全 int32 scatter）；据逐芯结果迭代
 updated: 2026-09-11
 ```
 
@@ -104,3 +104,30 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 下一步：定位燧原 scatter 编译失败；先验证索引 lowering。
 
 [提交结果证据](../data/batch5-submissions-20260911.json)，SHA-256 `63418b87e9249bef72751df2a1778c52e6d679a5d313ecf18d8ed64b96c175dd`；原始 status `artifacts/competition/batch5-submit-20260911/61-status-033914.json`，SHA-256 `a5efad83ff8f3604bbdd85e881b5a0647c052894d92794ad6d60f1e8b5b006bd`。
+
+## 2026-09-11 E1 燧原 vendor 候选（lo 词 scatter）
+
+- 根因定位：s0 的 TTIR 算子集是燧原通过的 kv_indices 的**严格子集**，
+  排除算子种类问题；契约强制 reorder_ids 为 int64（argsort 输出），
+  唯一特化即 i64 向量 load——与 clamp_position 仅 int64 case 失败互证。
+  E1 vendor 在 wrapper 做小端 lo 词视图
+  `reorder_ids.view(torch.int32)[0::2]`：reorder_ids 是 range(num_toks) 的
+  置换且契约保证 `0 <= num_toks <= 2**31`，lo 词即精确值——**可证无损**，
+  非盲目缩窄。kernel 全 int32：load 寻址形态与 clamp_position 燧原已过的
+  int32 case 相同；store 索引为 load 值 × runtime stride（decode_attention
+  经 load 的 int32 pages 寻址同型）。grid 封顶 24；不钉 num_warps。
+- source commit：`238a41eff945782708aa61177272fc5b601b6a86`（generic 字节不变）。
+- ZIP：`artifacts/competition/compute_src2dst/e1-238a41e/compute_src2dst.zip`；
+  4304 bytes；成员 generic + `compute_src2dst_enflame.py`
+  （SHA-256 `301cb0c4c63da9746227749f40dad3770265bec250b3863303e62fa3f5527364`）。
+- ZIP SHA-256：`102067c7f0816a5a9793527d84667fbb5429a702f831aebb4820fe5bc38fc2b8`。
+- 源码 SHA-256：generic `f59a3ffa8e3a463be40f7e70e8036b656a6df689899928689d073ba983215051`
+  （与 s0 逐字节一致）；vendor `301cb0c4…`。
+- 回执：`artifacts/competition/batch5-enflame-fix-20260911/compute_src2dst-verification.json`；
+  SHA-256 `1955490c79ff0ba987a9080812a711fb6f850514afebee5241a8834d6286863a`。
+- 日志：`artifacts/competition/batch5-enflame-fix-20260911/compute_src2dst-verification.log`；
+  SHA-256 `d6648889ca074a1d812892fee480f6d9640260a3ae3558783ba61bc0cceee79f`。
+- 完整 release（v2，`--proxy-vendor enflame`）：3 方法 / 0 fail/err/skip；
+  generic 19 次 + enflame vendor 19 次真实 kernel launch；代理 benchmark
+  vendor≈generic+20%（仅燧原使用 vendor）。
+- 燧原目标 runtime 仍未验证（target-runtime-unverified）：GCU 编译门由平台裁决。

@@ -4,12 +4,12 @@
 task: 62
 operator: concat_mla_k
 batch: 5
-validity: pending
-platform: evaluating(12897,7/8)
-candidate_stage: s0
+validity: invalid_correctness
+platform: completed(12897,7/8)
+candidate_stage: s0r
 team_best_stage: -
 sealed: no
-next: 只读跟进 12897 昆仑芯回调；不重投、不计算部分均值
+next: 提交 s0r 崩溃族重掷载体（内核语义与 s0 相同）；据逐芯结果迭代
 updated: 2026-09-11
 ```
 
@@ -109,3 +109,24 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 下一步：只读跟进 12897 昆仑芯回调；不重投、不计算部分均值。
 
 [提交结果证据](../data/batch5-submissions-20260911.json)，SHA-256 `63418b87e9249bef72751df2a1778c52e6d679a5d313ecf18d8ed64b96c175dd`；原始 status `artifacts/competition/batch5-submit-20260911/62-status-034229.json`，SHA-256 `6a47dc86e76134e17c1e2754ca9db72f2bf8069fa4775aa98b556fdbd1a70359`。
+
+## 2026-09-11 昆仑回调终态与 S0R 重掷载体
+
+- 12897 昆仑芯回调落地：`completed` / passed=False，raw_result errors 仅一条
+  「服务线程卡死自动恢复，请重新提交」，failed_cases 为 0——**昆仑评测器崩溃族**
+  指纹（T58 e6 → e6r 同字节 3 小时后通过的同型事件），非代码回归。
+  12897 终态 7/8，invalid_correctness。其余七芯读数：天数 2.6114 / 沐曦 0.9836 /
+  燧原 0.109（贴 0.1 门槛）/ 海光 3.1072 / 华为 0.2188 / A 1.7242 / B 1.8166。
+- s0r 载体：内核语义与 s0（7b53fde）完全相同，仅头部注释变化以铸造新字节。
+  source commit `3908f0cd05deb2218cc8d8d3a9090774144fa5fb`。
+- ZIP：`artifacts/competition/concat_mla_k/s0r-3908f0c/concat_mla_k.zip`；
+  2704 bytes；成员仅 `concat_mla_k.py`（SHA-256
+  `834c0fc37e476629a72446cdd2bede8b94a3b6fe344ae237c2167de9bc358047`）。
+- ZIP SHA-256：`a7d5f3ab56c9410f4dcac864d6c71ccdf1b23e4dc593d5bc5208c13ff5a4b764`。
+- 回执：`artifacts/competition/batch5-enflame-fix-20260911/concat_mla_k-s0r-verification.json`；
+  SHA-256 `2d141e4a32af178d40a80f3862d53d92abf8cc1ded21fb61100d45e46dc4f856`。
+- 完整 release（v2）：5 方法 / 0 fail/err/skip / 28 次 kernel launch，
+  绑定 3908f0c；重掷次数 1/2（崩溃族协议上限内）。
+- 已知风险：燧原 0.109x 贴门槛，重掷窗口读数若下滑跌破 0.1 该发无效
+  （当前 12897 本就无效，无净损失）；沐曦 0.9836、华为 0.2188 同样偏弱，
+  后续优化方向为 wrapper/launch 开销与 tile。
