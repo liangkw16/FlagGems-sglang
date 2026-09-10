@@ -10,7 +10,7 @@ team_best_stage: e3
 team_best_commit: 6e3a1c4e64304d017ded08cabb6445b9152776f2
 team_best_speedup: 14.1051875
 sealed: no
-next: e8资产重组(4f918ac,昆仑E5回植+燧原segment-owned+华为int32,release exit0+ZIP 29d12224)就绪;预注册门昆仑>=0.6/燧原>=1.5/华为>=2.5
+next: E8终态7/8(燧原PassManager,昆仑0.64兑现/华为int32未过门);去燧原包avg~13.9<TB,轴封存
 updated: 2026-09-10
 ```
 
@@ -255,3 +255,15 @@ is_team_best=max 保证零下行）。
   ≥2.5（int32 兑现线）任一未达即记该芯轴证伪；avg 超 14.105 则 TB。
 - 注意：华为 aclnnCat 间歇（E7）与本题 int32 改动无共享路径，若华为
   再现单 case 原生库错误，先按间歇处置不急于归因。
+
+
+## E8 终态（2026-09-10，sub 12357）：7/8，燧原 PassManager
+
+- 逐芯：天数 26.82/沐曦 6.64/海光 26.71/昆仑 **0.64**（E5 回植兑现，0.23→0.64 ✓）
+  /华为 2.14（int32 门 ≥2.5 未过，2.12→2.14 平）/A 30.06/B 17.61。
+- 燧原 correctness 失败：`Pipeline run failed: PassManager execution failed`
+  （case 0/1，selected_file 确认 segment-owned mirror 生效）——GCU 拒绝嵌套
+  runtime 循环形态；昆仑同字节可跑，燧原不行。
+- 处置：去燧原成员的包 avg ≈ 13.9 < TB 14.105，无发射价值；T46 轴封存，
+  除非出现燧原新结构证据（route/materialize 在本题未试，但 e3 时代燧原 0.37
+  即 per-token 形态，改 route/materialize 预期同 T48 量级 ~0.5，不构成 TB）。

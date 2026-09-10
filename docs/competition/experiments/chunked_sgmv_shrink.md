@@ -10,7 +10,7 @@ team_best_stage: e7
 team_best_commit: 094548df5da1075b8245b4af8ccddf024a319ae3
 team_best_speedup: 4.7489375
 sealed: no
-next: e5(fcf5997,精度门216组关闭+release exit0+ZIP 0417bfa2)与e9(3fba418,燧原tile描述表persistent,release exit0+ZIP c13a2f8b)双候选就绪;明日e5首发验tile几何,e9第二发验燧原
+next: e11(e16dfc9,燧原回滚e7字节+无metax,release进行中)待发;预期avg~5.30新TB;模板/批量化轴已证伪
 updated: 2026-09-10
 ```
 
@@ -244,3 +244,20 @@ matmul）按**题面容差**（fp32 1e-4 / fp16 1e-2 / bf16 1.5e-2）计 max err
 
 发射序（明日额度）：e5 首发（验 tile 几何，八芯归因）→ e9 第二发
 （在 e5 基线上验燧原批量化，燧原单芯归因）。
+
+
+## 决赛日执行轮 I（2026-09-10 上午，submissions 12356/12362）
+
+- **e5 终态（sub 12356，08:14）**：8/8 valid，avg **4.853375 新 team best**（+2.2%）。
+  逐芯：天数 4.25/沐曦 2.82/燧原 0.54/海光 6.66/昆仑 1.80/华为 **7.77**/A 7.70/B 7.30。
+  判读：走 generic 的六芯全部 +9~19%（tile 几何方向正确但幅度远低于代理 1.4–3.1x，
+  平台 shape 段短使 kernel 偏 launch 受限）；+30% 门未过。沐曦 5.31→2.82 回退归因
+  破案：**e7 包无 metax 成员（沐曦跑 e4 generic），metax vendor 是后来入树的**，
+  e5 包切换到该 vendor 后沐曦大跌——metax vendor 为净负资产。
+- **e10 终态（sub 12362，08:5x）**：7/8 invalid_correctness，燧原
+  `Pipeline run failed: PassManager execution failed`（selected_file 确认新 vendor 生效）
+  ——与 T47 e13 同族：**GCU 编译器拒绝 sgmv 族的批量化/间接单 launch GEMM**。
+  其余七芯全过且沐曦 6.41（metax 移除 + generic e5 兑现 +21%）。
+- **e11 预注册（commit `e16dfc9`，就绪待发）**：燧原 vendor 回滚 e7
+  route/materialize 平台已过字节，generic 保持 e5，无 metax。预期 = e10 七芯读数
+  + 燧原 ~0.54 → **avg ~5.30 新 TB**。门：8/8 valid 且 avg > 4.853。

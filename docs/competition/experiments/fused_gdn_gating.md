@@ -10,7 +10,7 @@ team_best_stage: e5
 team_best_commit: c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67
 team_best_speedup: 2.954625
 sealed: no
-next: e6燧原去钉launch参数(625be60,release exit0+ZIP d6da3cfc)就绪;预注册门燧原>=2.5(次名靶7.84)
+next: e6去pin证伪(sub12363,八芯平);TB保持e5r 3.03205;轴关闭
 updated: 2026-09-10
 ```
 
@@ -189,3 +189,9 @@ generic 多行共享 head 参数/exp，支持参数stride；总元素<16384且�
   （0 skip/xfail，exit 0）；canonical ZIP `e6-625be60`，SHA-256
   `d6da3cfc666d75705f82c5a0e2fee7b7e22fd25e3b52a1b0459d923b668a78ed`。
 - 预注册门：燧原 ≥2.5（当前 1.66，次名靶 7.84）。
+
+
+## E6 终态（2026-09-10，sub 12363）：valid 3.0172，去 pin 证伪
+
+- 燧原 1.66→1.61（噪声），八芯全平。去 num_warps 钉住在本题无效果（T19/T51
+  的 +38% 不迁移到 gdn gating）。轴关闭。TB 保持 e5r 3.03205。

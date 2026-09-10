@@ -10,7 +10,7 @@ team_best_stage: e4r
 team_best_commit: 16fe1d4
 team_best_speedup: 8.9578125
 sealed: no
-next: e5(0d4d758,燧原persistent,release exit0+ZIP 803cb28b)与e6(aec238a,generic合并launch/共享gather/int32,release exit0+ZIP 61c35716)双候选就绪;明日e5首发验燧原,e6第二发验generic面
+next: e7(bf3cf88,generic回e4+hygon/ascend路由e6kernel,release进行中)待发;海光20.4/华为2.98兑现,预期avg~10.27新TB
 updated: 2026-09-10
 ```
 
@@ -139,3 +139,19 @@ c2flow 21.19 逐芯健康（非慢窗产物）。按 `Δavg=(target-ours)/n` 估
 
 发射序：e5 首发（燧原单芯归因，验 persistent 假设）→ e6 第二发
 （generic 面，华为/海光/天数归因）。
+
+
+## 决赛日执行轮 I（2026-09-10 上午，submissions 12359/12361）
+
+- **e5 终态（sub 12359）**：8/8 valid 8.9828（+0.3%，噪声带）。燧原
+  0.567→0.56875——**persistent+pingpong+去pin 模板在 rope 类零效果**，
+  模板证伪第一例。燧原差距（vs c2flow 38.8）另有结构根源（疑 wrapper 侧
+  `_compute_positions` 或 gather 形态，未定位）。
+- **e6 终态（sub 12361）**：8/8 valid **8.4047（回退 -6%）**，但逐芯分裂决定性：
+  海光 10.57→**20.44（+93%）**、华为 2.55→**2.98（+17%）**（合并 launch + 共享
+  gather 的两个目标芯大兑现）；天数 16.2→12.4、沐曦 10.4→7.2、A 21.1→15.8、
+  B 9.8→7.1（-23~-30%，双 launch 形态在这些芯更优）。
+- **e7 预注册（commit `bf3cf88`，就绪待发）**：把分裂变成路由——generic 回滚
+  e4 字节（五芯偏好形态），新增 `_hygon`/`_ascend` vendor 携带 e6 kernel 原字节；
+  燧原/昆仑 vendor 不动。预期 avg ≈ **10.27 新 TB**（排名 8→前 5）。门：8/8 valid
+  且 avg > 8.958；海光 ≥15 且华为 ≥2.7 视为路由兑现。

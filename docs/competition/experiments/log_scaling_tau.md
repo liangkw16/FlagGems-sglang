@@ -9,7 +9,7 @@ platform: 8/8(e2,10747,2.36478125x首次有效)
 team_best_stage: e11
 team_best_speedup: 2.50278125
 sealed: no
-next: e12燧原persistent走访(38f8dbc,release exit0+ZIP 9cdb8501)就绪;预注册门燧原>=1.5(次名靶3.10)
+next: e12证伪(sub12364,八芯平);模板轴关闭2/2;TB保持e11 2.5028
 updated: 2026-09-10
 team_best_commit: d1d687d3974c8ceccb7c7bb491124edce6e0ea83
 ```
@@ -573,3 +573,10 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
   `9cdb8501103fb4d33c49e77245b5ead96e43df17f2210c96ecb093c546e61a7e`。
 - 预注册门：燧原 ≥1.5（当前 0.55，次名靶 3.10，P1 组内最大相对差）；
   其余七芯不低于噪声带。
+
+
+## E12 终态（2026-09-10，sub 12364）：valid 2.4764，persistent 模板第二证伪
+
+- 燧原 0.55→0.586（噪声级），八芯全平。SIP-capped persistent 走访对元素类
+  row-scale 同样无效。**模板轴正式关闭（2/2：T49 rope 类 + T57 元素类）**。
+  TB 保持 e11 2.5028。
