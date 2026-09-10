@@ -12,22 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Enflame vendor, round 3 (submission 12904 feedback). Rounds 1-2 pinned
-# the compile poison to int64 data paths; round 2's lo-word kernel (no
-# i64 load anywhere) still failed to compile, and the one construct it
-# still shared with the generic -- extending the loaded index to int64
-# before the scatter store -- is absent from every kernel that passed
-# Enflame: kv_indices derives store offsets from ranges and scalar loads,
-# decode_attention indexes through loaded int32 values kept in int32
-# arithmetic. This round keeps the scatter index in pure int32
-# (`out + src`, the exact store shape of clamp_position's passing int32
-# cases), while the load address keeps the proven int64 range math.
-# reorder_ids is a permutation of range(num_toks) and the contract
-# bounds 0 <= num_toks <= 2**31, so the little-endian low int32 word of
-# each element is exactly its value: the wrapper views the tensor to
-# int32 words (a zero-copy reinterpret with a proof of losslessness
-# from the contract, not data narrowing). Grid capped at 24 per the
-# 24-SIP vendor guidance; num_warps left to the backend default.
+# Enflame vendor, round 5. Four platform rounds established the GCU
+# ruleset: no int64 vector data loads (the generic's only specialization
+# never compiled), no extsi of a vector-loaded index (rounds 1/3), and no
+# raw unscaled addptr from a loaded index (round 2 compiled but scattered
+# to wrong addresses -- 99% mismatch with inf relative differences on the
+# uninitialized output). reorder_ids is a permutation of range(num_toks)
+# and the contract bounds 0 <= num_toks <= 2**31, so the wrapper views
+# the int64 tensor to its little-endian int32 low words (a zero-copy
+# reinterpret with a proof of losslessness from the contract) and the
+# kernel scatters through a loaded int32 index times a runtime int32
+# stride -- the exact gather dataflow decode_attention proved on GCU,
+# applied in the store direction. The load address keeps the proven
+# int64 range math. Grid capped at 24 per the 24-SIP vendor guidance;
+# num_warps left to the backend default.
 
 import torch
 import triton
@@ -44,12 +42,12 @@ def _compute_src2dst(ids, out, n, stride, os, BLOCK: tl.constexpr):
     ):
         dst = block * BLOCK + tl.arange(0, BLOCK)
         src = tl.load(ids + dst.to(tl.int64) * stride, dst < n, other=0)
-        # The stride multiply must survive: with os specialized to 1 the
-        # muli folds away and round 2's raw addptr compiled but scattered
-        # to wrong addresses on GCU (99% mismatch on an uninitialized
-        # buffer). extsi(load) -> muli(runtime stride) -> addptr is the
-        # dataflow kv_indices proved on GCU.
-        tl.store(out + src.to(tl.int64) * os, dst, dst < n)
+        # Round 3 taught the GCU ruleset: extending the loaded index to
+        # int64 fails make_gcuir (extsi of a vector load), and the raw
+        # i32 addptr compiled but scattered to wrong addresses. The one
+        # untried form mirrors decode_attention's proven gather exactly:
+        # a loaded int32 index times a runtime int32 stride.
+        tl.store(out + src * os, dst, dst < n)
 
 
 def compute_src2dst(reorder_ids, num_toks):
