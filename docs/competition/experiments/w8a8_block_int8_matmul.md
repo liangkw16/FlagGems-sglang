@@ -6,9 +6,9 @@ operator: w8a8_block_int8_matmul
 batch: 4
 validity: valid
 platform: e6r/11210八芯valid,258.04890833x team best(排名3);e7/11228 valid 253.07(B已修复)
-team_best_stage: e9
-team_best_commit: d649a9d
-team_best_speedup: 261.84538333
+team_best_stage: e9r2
+team_best_commit: dd8dca03dfe092c09afb5ad88de3d0f99207c155
+team_best_speedup: 266.20655
 sealed: no
 next: e7字节(e6r组级+amd逐块B)为最优组合,均值差=华为窗口三连下行;水位回常态时以e7字节重掷(新ZIP身份,≤2次)
 updated: 2026-09-08
@@ -270,3 +270,10 @@ updated: 2026-09-08
 
 - 华为 365.9（TB 读数 375.5），仍处低窗带。e9 字节重掷 1/2 剩余；尾窗视华为
   水位信号决定最后一掷。TB 保持 e9 **261.85**（排名 3）。
+
+## e9r2 终态（2026-09-10，sub 12426）：**266.207 新 TB**
+
+- 华为窗回 418.7（低窗带 365 后回升），沐曦 234.1。e9 字节低滚 1/2 剩余；
+  17:4x 以 e9r3 做最后一掷（今日额度不过夜）。
+- **e9r3 终掷（sub 12441，17:5x）**：261.50 未超（华为回落 388）。低滚 2/2，
+  路径关闭。**T58 收盘于 e9r2 266.207（排名 3）**。
