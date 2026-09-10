@@ -28,7 +28,7 @@
 | 45 | chunk_scaled_dot_kkt | invalid_threshold | 8/8正确(e15),昆仑0.063x<0.1;平均7.000125不计有效排名 | - -x | no | 新row/head epilogue代理正确但未提速;候选暂不晋级,昆仑仍需>=0.1目标证据 | 2026-09-08 | [chunk_scaled_dot_kkt](chunk_scaled_dot_kkt.md) |
 | 46 | chunked_embedding_lora_a | valid | 8/8(e3,14.1051875x);e7/11229 7/8华为aclnnCat内部错误 | e3 14.1051875x | no | E8终态7/8(燧原PassManager,昆仑0.64兑现/华为int32未过门);去燧原包avg~13.9<TB,轴封存 | 2026-09-10 | [chunked_embedding_lora_a](chunked_embedding_lora_a.md) |
 | 47 | chunked_sgmv_expand | valid | E11/11031八芯valid,21.6584375x;历史E5 best25.0048125x | e12 25.36275x | no | E11目标正确性通过但未晋级,保留E5守榜;不重投同字节,需新增目标性能证据再开轴 | 2026-09-08 | [chunked_sgmv_expand](chunked_sgmv_expand.md) |
-| 48 | chunked_sgmv_shrink | valid | 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor) | e11 5.200625x | no | e12(bfde90e,燧原adapter分组,release中)待发;门燧原>=1.5/avg>5.2006 | 2026-09-10 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
+| 48 | chunked_sgmv_shrink | valid | 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor) | e12 5.207x | no | e12收盘5.207(rank~5);燧原0.828(adapter分组+55%但未到门);结构面未定位,水位重掷可选 | 2026-09-10 | [chunked_sgmv_shrink](chunked_sgmv_shrink.md) |
 | 49 | ernie45_rope_fused | valid | e4/11245八芯valid,8.71115625x新team best | e7 10.13953125x | no | TB e7 10.1395(rank6);海光/华为路由已兑现;燧原0.61结构面未定位,无新弹药;可择机同字节重掷采样水位 | 2026-09-10 | [ernie45_rope_fused](ernie45_rope_fused.md) |
 | 50 | extend_attention | candidate-wip | 6/8(e4,昆仑conclusive封轴;华为数值不可修;燧原0.013x<门槛) | - -x | no | 逐阶段诊断已实现但插桩有观察效应;需要目标原失败重放,不再将两种失败形态称数值永久不可修 | 2026-09-08 | [extend_attention](extend_attention.md) |
 | 51 | fla_layernorm_gated | valid | e10/11204八芯valid,60.7192x新team best,实时rank1 | e10 60.7192x | no | 已登顶(燧原442.8极端水位+华为子块+10%同发兑现);守榜为主,华为子块结构知识可迁移 | 2026-09-08 | [fla_layernorm_gated](fla_layernorm_gated.md) |
