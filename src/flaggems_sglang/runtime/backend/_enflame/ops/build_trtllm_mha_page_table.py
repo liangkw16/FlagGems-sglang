@@ -12,28 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Enflame vendor: every case of submission 12896 died in make_gcuir
-# ("Pipeline run failed: PassManager execution failed") before numeric
-# comparison. Differential TTIR analysis against the batch-5 kernels that
-# passed Enflame (create_flashinfer_kv_indices, deepep_permute) leaves
-# four suspects this kernel was alone in using: vector loads of int64
-# elements (the proven killer of clamp_position's int64 case -- the same
-# backend loads i64 scalars happily), the ~ complement (arith.xori),
-# tl.where over two loads (arith.select on ints), and the int64->int32
-# value cast (arith.trunci). This vendor removes all four:
-#   * an int64 req_to_token is viewed to little-endian int32 words in the
-#     wrapper (zero-copy reinterpret; gathered slot values are token
-#     indices below the tensor's own numel bound, and the reference's
-#     .to(int32) makes int32 the semantic result width either way), so
-#     every data load/store stays int32;
-#   * the select becomes two masked stores (compute / copy-old);
-#   * the else-mask is spelled `page >= n_pages` instead of `~active`.
-# What remains is only the Enflame-proven set: scalar loads with .to(
-# tl.int64) (kv_indices), scalar int64 ceil-div (kv_indices cdiv),
-# vector arithmetic shift `slot >> SHIFT` and `&` masks
-# (apply_token_bitmask 2.85x on GCU), vector int32 comparisons, and
-# int64 address offsets. Grid capped at 24 per the 24-SIP vendor guidance;
-# num_warps left to the backend default.
+# Enflame vendor, round 3 (submission 12902 feedback). Round 2 proved the
+# i64-elimination compiles on GCU (first time past make_gcuir for this
+# task) but the two same-address masked stores left 64% wrong values, so
+# this round reduces the kernel to the exact shape of the batch-5 kernel
+# that passed Enflame at 121x (create_flashinfer_kv_indices): one masked
+# gather plus one masked store. The wrapper pre-fills the output with
+# page_table.clone() -- precisely what the reference itself does -- and
+# the kernel only overwrites the active pages with slot >> SHIFT.
+# Every construct is now Enflame-proven end to end: scalar loads with
+# .to(tl.int64) and scalar i64 ceil-division (kv_indices), vector
+# arithmetic shift (apply_token_bitmask 2.85x), andi of comparisons
+# (decode_attention masks), int32 data loads/stores with i64 address
+# offsets. An int64 req_to_token is still viewed to little-endian
+# int32 words (zero-copy; slot ids live below the tensor's own numel).
+# Grid capped at 24 per the 24-SIP vendor guidance; num_warps left to
+# the backend default.
 
 import torch
 import triton
@@ -48,7 +42,6 @@ def _build_page_table(
     pool,
     requests,
     lengths,
-    old,
     out,
     tasks,
     tiles,
@@ -70,12 +63,9 @@ def _build_page_table(
         length = tl.load(lengths + row * ls).to(tl.int64)
         n_pages = (length + PAGE_SIZE - 1) // PAGE_SIZE
         request = tl.load(requests + row * rs).to(tl.int64)
-        valid = page < columns
-        # n_pages can exceed columns (cache_seqlens beyond the table width),
-        # so every load/store mask must be bounded by valid exactly like
-        # the generic's single masked store.
-        active = valid & (page < n_pages)
-        inactive = valid & (page >= n_pages)
+        # n_pages can exceed columns (cache_seqlens beyond the table
+        # width), so the gather mask stays bounded by the row width.
+        active = (page < columns) & (page < n_pages)
         # WORD==2 addresses the low word of each int64 slot (little-endian);
         # WORD==1 is a native int32 pool. Positive divisors of 4096 are
         # powers of two, so the signed shift is floor division for the
@@ -85,9 +75,7 @@ def _build_page_table(
             active,
             other=0,
         )
-        previous = tl.load(old + row * os0 + page * os1, inactive, other=0)
-        tl.store(out + row * columns + page, slot >> SHIFT, active)
-        tl.store(out + row * columns + page, previous, inactive)
+        tl.store(out + row * os0 + page * os1, slot >> SHIFT, active)
 
 
 def build_trtllm_mha_page_table(
@@ -119,9 +107,9 @@ def build_trtllm_mha_page_table(
     )
     word = 2 if req_to_token.dtype == torch.int64 else 1
     ps0, ps1 = pool_elements.stride()
-    out = torch.empty(
-        page_table.shape, dtype=page_table.dtype, device=page_table.device
-    )
+    # The reference pre-fills with page_table.clone(); the kernel only
+    # overwrites the pages each request actually maps.
+    out = page_table.clone()
     n = out.numel()
     if n:
         tiles = triton.cdiv(out.shape[1], _BLOCK)
@@ -130,7 +118,6 @@ def build_trtllm_mha_page_table(
             pool,
             req_pool_indices,
             cache_seqlens,
-            page_table,
             out,
             tasks,
             tiles,
@@ -139,8 +126,8 @@ def build_trtllm_mha_page_table(
             ps1,
             req_pool_indices.stride(0),
             cache_seqlens.stride(0),
-            page_table.stride(0),
-            page_table.stride(1),
+            out.stride(0),
+            out.stride(1),
             WORD=word,
             PAGE_SIZE=page_size,
             SHIFT=page_size.bit_length() - 1,

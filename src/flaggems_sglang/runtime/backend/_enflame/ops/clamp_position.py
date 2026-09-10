@@ -12,26 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Enflame vendor: the generic kernel compiles on GCU for int32 inputs but
-# every int64 specialization dies in make_gcuir with "Pipeline run failed:
-# PassManager execution failed" before any numeric check (submission 12898,
-# case 3 only -- the int64 case). The batch-5 kernels that passed Enflame
-# (create_flashinfer_kv_indices, deepep_permute) never issue vector loads
-# of int64 elements: i64 appears only in scalar loads and address math,
-# matching the long-standing shape of this backend's passing vendor files
-# (decode_attention loads i64 scalars and casts to int32 immediately).
-# This vendor therefore never vector-loads i64: int64 tensors are viewed
-# as little-endian (lo, hi) int32 word pairs in the wrapper (a zero-copy
-# reinterpret, not data narrowing -- full 64-bit two's-complement algebra
-# is preserved exactly), and the kernel keeps every data-path load, store
-# and arithmetic op in int32. Only address offsets are int64, the proven
-# form. Constructs are restricted to the Enflame-proven set: vector
-# arith.cmpi/subi/shrsi (apply_token_bitmask 2.85x), vector arith.andi
-# (decode_attention masks), splat-constant stores (other=0 loads), and a
-# single tl.where (select proven on this backend by the same vendors).
-# Grid is capped at 24 programs per the vendor guidance (24 SIPs; larger
-# grids are pure scheduling overhead) and num_warps is left to the backend
-# default, both measured +38% median on GCU.
+# Enflame vendor, round 3 (submission 12903 feedback). Rounds 1-2 pinned
+# the compile poison to int64 data paths: the generic fails exactly its
+# int64 case and round 2's word-pair kernel (no i64 anywhere in the data
+# path) still failed to compile with exactly one construct the
+# same-round build_trtllm_mha_page_table vendor lacked -- an integer
+# tl.where. Every Enflame-passed kernel in the corpus selects on floats
+# only (apply_token_bitmask). This round removes the select entirely:
+# the wrapper pre-fills the output with zeros (the clamp(min=0) branch
+# materialized) and the kernel writes max(v-1, 0) via six masked stores
+# whose masks are andi/cmpi chains -- all proven on GCU by round 2's
+# compiled kernel and apply_token_bitmask. The positivity test needs no
+# 64-bit compare or borrow arithmetic: v >= 1 is exactly
+# (hi >= 0) & (max(lo, hi) != 0) (integer maxsi on i32 vectors passed
+# GCU in the generic's int32 cases), and int64 wrap-around semantics
+# for v == min_int64 (torch computes v-1 = max_int64) get their own
+# store pair. int64 tensors are viewed as little-endian (lo, hi) int32
+# word pairs in the wrapper (zero-copy reinterpret, full two's
+# complement algebra preserved). Grid capped at 24 per the 24-SIP
+# vendor guidance; num_warps left to the backend default.
 
 import torch
 import triton
@@ -55,11 +54,11 @@ def _clamp_position(x, out, n, stride, BLOCK: tl.constexpr):
 @triton.jit
 def _clamp_position64(words, outw, n, BLOCK: tl.constexpr):
     # words/outw are little-endian int32 views of int64 tensors: element k
-    # occupies words 2k (lo) and 2k+1 (hi). (v - 1) subtracts 1 from the lo
-    # word and borrows from hi exactly when lo == 0; i32 wraparound makes
-    # the pair the true two's-complement result, so the sign bit of the new
-    # hi word is the sign of v - 1 and max(v - 1, 0) zeroes both words when
-    # that sign is negative.
+    # occupies words 2k (lo) and 2k+1 (hi). Non-positive inputs keep the
+    # zero prefill. v >= 1 splits exactly into "lo != 0 under hi >= 0"
+    # (store (lo-1, hi), no borrow) and "lo == 0" where v >= 1 collapses
+    # to hi >= 1 (store (0xFFFFFFFF, hi-1), the borrow); v == min_int64
+    # wraps like torch's int64 subtraction to max_int64.
     for block in range(
         tl.program_id(0), tl.cdiv(n, BLOCK), tl.num_programs(0)
     ):
@@ -68,14 +67,15 @@ def _clamp_position64(words, outw, n, BLOCK: tl.constexpr):
         off = i.to(tl.int64) * 2
         lo = tl.load(words + off, m, other=0)
         hi = tl.load(words + off + 1, m, other=0)
-        lo1 = lo - 1
-        hi1 = tl.where(lo == 0, hi - 1, hi)
-        positive = hi1 >= 0
-        negative = hi1 < 0
-        tl.store(outw + off, lo1, m & positive)
-        tl.store(outw + off, 0, m & negative)
-        tl.store(outw + off + 1, hi1, m & positive)
-        tl.store(outw + off + 1, 0, m & negative)
+        keep_lo = m & (hi >= 0) & (lo != 0)
+        keep_hi = m & (hi >= 1) & (lo == 0)
+        wrapped = m & (hi < -2147483647) & (lo == 0)
+        tl.store(outw + off, lo - 1, keep_lo)
+        tl.store(outw + off + 1, hi, keep_lo)
+        tl.store(outw + off, -1, keep_hi)
+        tl.store(outw + off + 1, hi - 1, keep_hi)
+        tl.store(outw + off, -1, wrapped)
+        tl.store(outw + off + 1, 2147483647, wrapped)
 
 
 def _as_words(tensor):
@@ -89,20 +89,24 @@ def _as_words(tensor):
 def clamp_position(seq_lens):
     assert seq_lens.ndim == 1
     assert seq_lens.dtype in (torch.int32, torch.int64)
-    out = torch.empty(
-        seq_lens.shape, dtype=seq_lens.dtype, device=seq_lens.device
-    )
-    n = seq_lens.numel()
-    if n:
-        grid = (min(triton.cdiv(n, _BLOCK), _MAX_GRID),)
-        if seq_lens.dtype == torch.int64:
-            _clamp_position64[grid](
-                _as_words(seq_lens), _as_words(out), n, BLOCK=_BLOCK
-            )
-        else:
-            _clamp_position[grid](
-                seq_lens, out, n, seq_lens.stride(0), BLOCK=_BLOCK
-            )
+    if seq_lens.dtype == torch.int64:
+        out = torch.zeros(
+            seq_lens.shape, dtype=seq_lens.dtype, device=seq_lens.device
+        )
+        n = seq_lens.numel()
+        if n:
+            _clamp_position64[
+                (min(triton.cdiv(n, _BLOCK), _MAX_GRID),)
+            ](_as_words(seq_lens), _as_words(out), n, BLOCK=_BLOCK)
+    else:
+        out = torch.empty(
+            seq_lens.shape, dtype=seq_lens.dtype, device=seq_lens.device
+        )
+        n = seq_lens.numel()
+        if n:
+            _clamp_position[
+                (min(triton.cdiv(n, _BLOCK), _MAX_GRID),)
+            ](seq_lens, out, n, seq_lens.stride(0), BLOCK=_BLOCK)
     return out
 
 

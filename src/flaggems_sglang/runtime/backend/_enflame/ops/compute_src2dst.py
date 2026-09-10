@@ -12,23 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Enflame vendor: the generic kernel dies in make_gcuir ("Pipeline run
-# failed: PassManager execution failed") on every case of submission
-# 12900. The task contract fixes reorder_ids to int64 (argsort output),
-# so the generic's only specialization vector-loads int64 elements -- the
-# same construct that singles out the failing int64 case of clamp_position
-# (12898) while every kernel that passed Enflame in this batch (kv_indices,
-# deepep_permute) loads int64 scalars only. reorder_ids is a permutation of
-# range(num_toks) and the contract bounds 0 <= num_toks <= 2**31, so the
-# little-endian low int32 word of each element is exactly its value: the
-# wrapper views the tensor to int32 words (a zero-copy reinterpret with a
-# proof of losslessness from the contract, not data narrowing) and the
-# kernel scatters in pure int32. Every kernel construct is Enflame-proven:
-# the load address form matches clamp_position's passing int32 cases, the
-# store index is a loaded value times a runtime stride (decode_attention
-# gathers through loaded int32 pages the same way), and int64 survives
-# only in address offsets. Grid capped at 24 per the 24-SIP vendor
-# guidance; num_warps left to the backend default.
+# Enflame vendor, round 3 (submission 12904 feedback). Rounds 1-2 pinned
+# the compile poison to int64 data paths; round 2's lo-word kernel (no
+# i64 load anywhere) still failed to compile, and the one construct it
+# still shared with the generic -- extending the loaded index to int64
+# before the scatter store -- is absent from every kernel that passed
+# Enflame: kv_indices derives store offsets from ranges and scalar loads,
+# decode_attention indexes through loaded int32 values kept in int32
+# arithmetic. This round keeps the scatter index in pure int32
+# (`out + src`, the exact store shape of clamp_position's passing int32
+# cases), while the load address keeps the proven int64 range math.
+# reorder_ids is a permutation of range(num_toks) and the contract
+# bounds 0 <= num_toks <= 2**31, so the little-endian low int32 word of
+# each element is exactly its value: the wrapper views the tensor to
+# int32 words (a zero-copy reinterpret with a proof of losslessness
+# from the contract, not data narrowing). Grid capped at 24 per the
+# 24-SIP vendor guidance; num_warps left to the backend default.
 
 import torch
 import triton
@@ -39,13 +38,13 @@ _BLOCK = 256
 
 
 @triton.jit
-def _compute_src2dst(ids, out, n, stride, os, BLOCK: tl.constexpr):
+def _compute_src2dst(ids, out, n, stride, BLOCK: tl.constexpr):
     for block in range(
         tl.program_id(0), tl.cdiv(n, BLOCK), tl.num_programs(0)
     ):
         dst = block * BLOCK + tl.arange(0, BLOCK)
         src = tl.load(ids + dst.to(tl.int64) * stride, dst < n, other=0)
-        tl.store(out + src.to(tl.int64) * os, dst, dst < n)
+        tl.store(out + src, dst, dst < n)
 
 
 def compute_src2dst(reorder_ids, num_toks):
@@ -62,7 +61,7 @@ def compute_src2dst(reorder_ids, num_toks):
         ids = reorder_ids
     if num_toks:
         _compute_src2dst[(min(triton.cdiv(num_toks, _BLOCK), _MAX_GRID),)](
-            ids, out, num_toks, ids.stride(0), out.stride(0), BLOCK=_BLOCK
+            ids, out, num_toks, ids.stride(0), BLOCK=_BLOCK
         )
     return out
 
