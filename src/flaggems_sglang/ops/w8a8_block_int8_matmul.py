@@ -1,4 +1,4 @@
-# r2 water re-roll carrier of the e9 team-best bytes (evening window).
+# r3 water re-roll carrier of the e9r2 sub-12426 team-best bytes (final roll).
 # Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
