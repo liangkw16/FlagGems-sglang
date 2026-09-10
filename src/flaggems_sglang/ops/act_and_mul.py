@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Water-level reroll carrier e9w (2026-09-10): executable bytes are identical
+# Water-level reroll carrier e9x (2026-09-10, second evening sample): executable bytes are identical
 # to the e6 team-best (avg 3.25835). Only this comment differs, so the package
 # gets a fresh ZIP SHA-256 and can be resubmitted to sample the evaluator's
 # enflame water level, whose known jackpot window produced the current task
