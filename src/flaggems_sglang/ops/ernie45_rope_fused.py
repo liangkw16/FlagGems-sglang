@@ -1,4 +1,4 @@
-# r3 water re-roll carrier of the e7 sub-12366 team-best bytes.\n# Copyright 2026 FlagOS Contributors
+# r4 water re-roll carrier of the e7r2 sub-12399 team-best bytes (evening window).\n# Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
