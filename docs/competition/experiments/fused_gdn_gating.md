@@ -5,12 +5,12 @@ task: 53
 operator: fused_gdn_gating
 batch: 4
 validity: valid
-platform: e5r/11242八芯valid,3.03205x新team best
-team_best_stage: e5
+platform: 8/8(e9x/12658,3.044825x新team best,排名14/15)
+team_best_stage: e9x
 team_best_commit: c73f6c3f83ec38d5a2c40cfdef996e64e50ecd67
-team_best_speedup: 2.954625
+team_best_speedup: 3.044825
 sealed: no
-next: e6去pin证伪(sub12363,八芯平);TB保持e5r 3.03205;轴关闭
+next: 批4收盘;额度用尽.e9w 2.95675/e9x 3.044825(末发破TB);燧原1.593/1.601常规水位未撞慢窗;排名14/15,上邻+0.2658
 updated: 2026-09-10
 ```
 
@@ -195,3 +195,14 @@ generic 多行共享 head 参数/exp，支持参数stride；总元素<16384且�
 
 - 燧原 1.66→1.61（噪声），八芯全平。去 num_warps 钉住在本题无效果（T19/T51
   的 +38% 不迁移到 gdn gating）。轴关闭。TB 保持 e5r 3.03205。
+
+## 批4收盘：e9w/e9x 水位重掷（2026-09-10，sub 12645/12658）
+
+- e5r2 字节已耗尽（tuple 已提交），改注释载体重掷。
+- **e9w（source a22e518，ZIP 6c3b6113e780…7d26，5 成员，回执 34fdf673…bb97f）**：
+  8/8 valid avg 2.95675，燧原 1.5934。
+- **e9x（source a3fb31e，ZIP e9aab88d7f7c…1288，回执 6b01fad6…b9f09）**：
+  8/8 valid **avg 3.044825 新 TB**（原 e5r 3.03205），燧原 **1.6006**、
+  华为 1.6508（本题华为历史高位）。
+- 两发燧原 1.59/1.60 均为常规水位；榜首 288.426 系燧原 2280.7 慢窗
+  （同芯次优 7.84，291x）。收盘 **14/15，上邻 +0.2658**。

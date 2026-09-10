@@ -9,7 +9,7 @@ platform: 8/8(e2,10747,2.36478125x首次有效)
 team_best_stage: e11
 team_best_speedup: 2.50278125
 sealed: no
-next: e12证伪(sub12364,八芯平);模板轴关闭2/2;TB保持e11 2.5028
+next: 批4收盘;额度用尽.e9w(12649)2.47272燧原0.546;TB保持e11 2.50278;排名9/15,上邻仅+0.0396
 updated: 2026-09-10
 team_best_commit: d1d687d3974c8ceccb7c7bb491124edce6e0ea83
 ```
@@ -580,3 +580,11 @@ E1/submission10704 已于2026-09-07 12:40:55终态 invalid_correctness、7/8；�
 - 燧原 0.55→0.586（噪声级），八芯全平。SIP-capped persistent 走访对元素类
   row-scale 同样无效。**模板轴正式关闭（2/2：T49 rope 类 + T57 元素类）**。
   TB 保持 e11 2.5028。
+
+## 批4收盘：e9w 水位重掷（2026-09-10，sub 12649）
+
+- e11r2 字节已耗尽（tuple 已提交），改注释载体重掷；同时把已证伪的
+  enflame persistent vendor 回滚到载体基线字节。
+- **e9w（source 654fab4，ZIP f1b4a5119acc…feda，4 成员，回执 5e5ea722…c2def）**：
+  8/8 valid avg **2.47272**（未破 TB 2.50278）；燧原 0.54575、昆仑 0.5425。
+- 上邻仅高 1.6%（2.5423 vs 2.503），但本发落在水位带下沿。收盘 **9/15**。

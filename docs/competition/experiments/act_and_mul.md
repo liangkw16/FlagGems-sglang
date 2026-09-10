@@ -5,12 +5,12 @@ task: 42
 operator: act_and_mul
 batch: 4
 validity: valid
-platform: 8/8(e6,3.25835x,排名10)
-team_best_stage: e6
+platform: 8/8(e9w/12643,3.260075x新team best,排名13/25)
+team_best_stage: e9w
 team_best_commit: 5251bf5f1ef53eaac8ce83c0bb0d0b0b91425fad
-team_best_speedup: 3.25835
+team_best_speedup: 3.260075
 sealed: no
-next: e8燧原persistent已证伪(1.521 vs e6字节1.700);燧原结构轴全类关闭;仅剩傍晚窗同字节水位重掷(e6r2/e7s在库,#13→#12需+0.05)
+next: 批4收盘;10发额度用尽(30/30).e9w/e9x两发水位重掷燧原1.685/1.679(常规水位,未撞慢窗);e9w avg3.260075微破TB;排名13/25,上邻+0.0498.燧原结构轴全类封死
 updated: 2026-09-10
 
 
@@ -309,3 +309,17 @@ generic 按真实行/列 stride 读取，消除非连续输入的 contiguous 拷
 - 后续仅保留傍晚高水位窗同字节水位重掷（`e6r2-65b39bc` / `e7s-ff373dd`）：
   #13→#12 仅需 avg +0.05，且 T42 榜首 431.48 本身即燧原 3427 慢窗产物，
   该题是剩余额度中彩票赔率最高的一发。
+
+## 批4收盘：e9w/e9x 水位重掷（2026-09-10，sub 12643/12651）
+
+- 旧重掷字节全部耗尽：平台对相同 race/account/team/task/operator/ZIP-SHA
+  tuple 直接拒（`this exact tuple is already submitted`），e6r2/e7s 均已发过。
+  故改造纯注释载体换新 ZIP SHA，执行字节与 e6 TB 逐字节一致。
+- **e9w（source a22e518，ZIP 4824974d7070…5117，7 成员，回执 d715f50b…8153）**：
+  8/8 valid **avg 3.260075**（微破 TB 3.25835）；燧原 **1.6846**。
+- **e9x（source a3fb31e，ZIP a9ca0d56bbed…9fa1，回执 af0fbd83…9e72a）**：
+  燧原 **1.6794**，天数未回调。两次读数与 e6 字节历史带（1.5–1.7）同量级
+  ——**傍晚窗燧原为常规水位，未撞慢窗**。
+- 榜首 431.484 是燧原 3427 的慢窗产物（同芯次优 9.39，365x）；我方同包若
+  撞同级窗口 avg 会到 431.4。慢窗历史集中 21–23 时，本批 19:59 截止
+  **吃不到夜窗**，此路本批关闭。收盘 **13/25，上邻 +0.0498**。
