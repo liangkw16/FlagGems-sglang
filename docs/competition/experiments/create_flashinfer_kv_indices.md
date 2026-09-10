@@ -6,11 +6,11 @@ operator: create_flashinfer_kv_indices
 batch: 5
 validity: candidate-ready
 platform: not-submitted
-candidate_stage: s0
+candidate_stage: e1
 team_best_stage: -
 sealed: no
-next: S0 已通过提交前本地门禁；正式提交时重新进行实时 preflight
-updated: 2026-09-10
+next: E1 已验签；实时 preflight 后首次提交
+updated: 2026-09-11
 ```
 
 ## 契约与范围
@@ -64,3 +64,16 @@ updated: 2026-09-10
 python .agents/skills/flagos-operator-race/scripts/verify_release.py prepare create_flashinfer_kv_indices --source-commit 4836fe0378d6290cbcaa91958693e13ed1acdf3e --verification-commit 4836fe0378d6290cbcaa91958693e13ed1acdf3e --dependency tools/benchmark_batch5.py --directory /tmp/NEW_RELEASE_DIRECTORY
 timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/NEW_RELEASE_DIRECTORY
 ```
+
+## 2026-09-11 一轮优化后的待提交候选
+
+- 候选 `e1`；按 tile 调度优化晋级 E1。首次提交前候选就绪。
+- source commit：`29754c1dfcbc87c9b193e750145b668c8e35d852`；verification commit：`29754c1dfcbc87c9b193e750145b668c8e35d852`。
+- ZIP：`/Users/bytedance/ccc/flagos/artifacts/competition/create_flashinfer_kv_indices/e1-29754c1/create_flashinfer_kv_indices.zip`；2992 bytes；成员 `create_flashinfer_kv_indices.py`。
+- ZIP SHA-256：`6d9d37ebf39521f46697f8dc1b725c4bd6ad18e21c3fe7b6bc22e48bdb6c0ac8`。
+- 源码 SHA-256：`ce7c07d20f2a4c585e27757e13f2efb32c8069f08767aacc4bbca1647c2bbe96`。
+- 测试 SHA-256：`6a353892e59c29ca98efc7bfa4225c3f98d6424b85571cd7921a709aa95c5809`。
+- 回执：`artifacts/competition/batch5-optimize-20260911/release/create_flashinfer_kv_indices/verification.json`；SHA-256 `4e5229ce738bac8b177f44295dcdb7b78f5da10f851176f8d2462106276c96ba`。
+- 日志：`artifacts/competition/batch5-optimize-20260911/release/create_flashinfer_kv_indices/verification.log`；SHA-256 `04e747df25c1e016e2a5586f05fcd04942ef7912bcdebe0539d538ab2f02ce6f`。
+- 完整 release：4 个测试方法 / 28 条记录 / 16 次 kernel launch，全通过；NVIDIA 代理范围。
+- 优化和复现见[本轮报告](../optimization-batch5-20260911.md)；[完整证据](../data/batch5-optimization-20260911.json)，SHA-256 `87a560dd86ab7e9dfb9607f8f05a007060d48b3aab876b165bfc0fec591f77db`。

@@ -9,8 +9,8 @@ platform: not-submitted
 candidate_stage: s0
 team_best_stage: -
 sealed: no
-next: S0 已通过提交前本地门禁；正式提交时重新进行实时 preflight
-updated: 2026-09-10
+next: S0 已验签；实时 preflight 后首次提交
+updated: 2026-09-11
 ```
 
 ## 契约与范围
@@ -62,3 +62,16 @@ updated: 2026-09-10
 python .agents/skills/flagos-operator-race/scripts/verify_release.py prepare compute_src2dst --source-commit 4836fe0378d6290cbcaa91958693e13ed1acdf3e --verification-commit 4836fe0378d6290cbcaa91958693e13ed1acdf3e --dependency tools/benchmark_batch5.py --directory /tmp/NEW_RELEASE_DIRECTORY
 timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/NEW_RELEASE_DIRECTORY
 ```
+
+## 2026-09-11 一轮优化后的待提交候选
+
+- 候选 `s0`；本轮审查后保留既有 S0。首次提交前候选就绪。
+- source commit：`4836fe0378d6290cbcaa91958693e13ed1acdf3e`；verification commit：`4836fe0378d6290cbcaa91958693e13ed1acdf3e`。
+- ZIP：`/Users/bytedance/ccc/flagos/artifacts/competition/compute_src2dst/s0-4836fe0/compute_src2dst.zip`；1198 bytes；成员 `compute_src2dst.py`。
+- ZIP SHA-256：`607bc6f0bbfedcfe9783a7dd2dc0af606c0ed717a64094a10aae58f33909ea8e`。
+- 源码 SHA-256：`f59a3ffa8e3a463be40f7e70e8036b656a6df689899928689d073ba983215051`。
+- 测试 SHA-256：`1708ab05b089f1ad702294338a252e62f1ae41b40517ddd58bdda3603d166887`。
+- 回执：`artifacts/competition/batch5-development-20260910/release/compute_src2dst/verification.json`；SHA-256 `f53c9eec0f6b1d3688a73ff09e4b566d3b10c0fdc0614b9c22927cbf2fb78736`。
+- 日志：`artifacts/competition/batch5-development-20260910/release/compute_src2dst/verification.log`；SHA-256 `faf9c0481adc62bbce9bb3072a076c4b194dff095fac21cb4d5a62726ce482fa`。
+- 完整 release：3 个测试方法 / 32 条记录 / 19 次 kernel launch，全通过；NVIDIA 代理范围。
+- 优化和复现见[本轮报告](../optimization-batch5-20260911.md)；[完整证据](../data/batch5-optimization-20260911.json)，SHA-256 `87a560dd86ab7e9dfb9607f8f05a007060d48b3aab876b165bfc0fec591f77db`。

@@ -9,8 +9,8 @@ platform: not-submitted
 candidate_stage: s0
 team_best_stage: -
 sealed: no
-next: S0 已通过提交前本地门禁；正式提交时重新进行实时 preflight
-updated: 2026-09-10
+next: S0 已验签；实时 preflight 后首次提交
+updated: 2026-09-11
 ```
 
 ## 契约与范围
@@ -69,3 +69,16 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 最终版先扩位到 int64；新增共享 4 GiB 稀疏 storage 的 NoPE/RoPE 视图，
 实际元素偏移达到 2^31。5 个方法全部通过，包含该回归；最终 ZIP 只使用修复字节。
 初版回执保留于本轮 release/concat_mla_k/，不作为最终候选证据。
+
+## 2026-09-11 一轮优化后的待提交候选
+
+- 候选 `s0`；本轮审查后保留既有 S0。首次提交前候选就绪。
+- source commit：`7b53fdeb58878f8eeaf08eaabbde8bb38015e523`；verification commit：`7b53fdeb58878f8eeaf08eaabbde8bb38015e523`。
+- ZIP：`/Users/bytedance/ccc/flagos/artifacts/competition/concat_mla_k/s0-7b53fde/concat_mla_k.zip`；2422 bytes；成员 `concat_mla_k.py`。
+- ZIP SHA-256：`bb3d1f2f89cfe0a5b19c31e4f2ac9b66ee5ddc4c8a93d6f399b5c55c0f46396e`。
+- 源码 SHA-256：`484482bdd03e429de677294ba191474ee0411fb84505743731b43b3ed4a87738`。
+- 测试 SHA-256：`756fddfbd1d43e54a6dd7efa99f4f99d39b36beb32ca4f56ea34df5baade7f39`。
+- 回执：`artifacts/competition/batch5-development-20260910/release-t62-address/verification.json`；SHA-256 `25ab3c60c07f2c16859b1b438144f51bd61eef00f10dca8458149b9d2813c9f9`。
+- 日志：`artifacts/competition/batch5-development-20260910/release-t62-address/verification.log`；SHA-256 `59bc9109ee99dfaccf0d2ff7e31dced070ba4ce6181134f61af50d473ce0c751`。
+- 完整 release：5 个测试方法 / 60 条记录 / 28 次 kernel launch，全通过；NVIDIA 代理范围。
+- 优化和复现见[本轮报告](../optimization-batch5-20260911.md)；[完整证据](../data/batch5-optimization-20260911.json)，SHA-256 `87a560dd86ab7e9dfb9607f8f05a007060d48b3aab876b165bfc0fec591f77db`。

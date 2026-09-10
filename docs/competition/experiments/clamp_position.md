@@ -9,8 +9,8 @@ platform: not-submitted
 candidate_stage: s0
 team_best_stage: -
 sealed: no
-next: S0 已通过提交前本地门禁；正式提交时重新进行实时 preflight
-updated: 2026-09-10
+next: S0 已验签；实时 preflight 后首次提交
+updated: 2026-09-11
 ```
 
 ## 契约与范围
@@ -62,3 +62,16 @@ updated: 2026-09-10
 python .agents/skills/flagos-operator-race/scripts/verify_release.py prepare clamp_position --source-commit 4836fe0378d6290cbcaa91958693e13ed1acdf3e --verification-commit 4836fe0378d6290cbcaa91958693e13ed1acdf3e --dependency tools/benchmark_batch5.py --directory /tmp/NEW_RELEASE_DIRECTORY
 timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/NEW_RELEASE_DIRECTORY
 ```
+
+## 2026-09-11 一轮优化后的待提交候选
+
+- 候选 `s0`；本轮审查后保留既有 S0。首次提交前候选就绪。
+- source commit：`4836fe0378d6290cbcaa91958693e13ed1acdf3e`；verification commit：`4836fe0378d6290cbcaa91958693e13ed1acdf3e`。
+- ZIP：`/Users/bytedance/ccc/flagos/artifacts/competition/clamp_position/s0-4836fe0/clamp_position.zip`；1085 bytes；成员 `clamp_position.py`。
+- ZIP SHA-256：`506af23ed82335d1a93965436545c7c4bd646b09b5f589c642fcfadecc1e7209`。
+- 源码 SHA-256：`fc637bc6d0bccd8a38d11100aa3589feda86568aa4fa8383aca7472001c9ed2b`。
+- 测试 SHA-256：`fcfe27bc9c551018822dd8649ffa03ae8077f810d77596e078e94d270e3d8a15`。
+- 回执：`artifacts/competition/batch5-development-20260910/release/clamp_position/verification.json`；SHA-256 `ec3aa53405854fb342081f3dc9a60f1ab2b9d81fd2f8ed30444a782cf59adb96`。
+- 日志：`artifacts/competition/batch5-development-20260910/release/clamp_position/verification.log`；SHA-256 `8f9cc4892f5224d878a14add6b989ebfd03c73bef69d5bdcd79e858ab50dd5eb`。
+- 完整 release：3 个测试方法 / 45 条记录 / 22 次 kernel launch，全通过；NVIDIA 代理范围。
+- 优化和复现见[本轮报告](../optimization-batch5-20260911.md)；[完整证据](../data/batch5-optimization-20260911.json)，SHA-256 `87a560dd86ab7e9dfb9607f8f05a007060d48b3aab876b165bfc0fec591f77db`。

@@ -6,11 +6,11 @@ operator: build_trtllm_mha_page_table
 batch: 5
 validity: candidate-ready
 platform: not-submitted
-candidate_stage: s0
+candidate_stage: e1
 team_best_stage: -
 sealed: no
-next: S0 已通过提交前本地门禁；正式提交时重新进行实时 preflight
-updated: 2026-09-10
+next: E1 已验签；实时 preflight 后首次提交
+updated: 2026-09-11
 ```
 
 ## 契约与范围
@@ -62,3 +62,16 @@ updated: 2026-09-10
 python .agents/skills/flagos-operator-race/scripts/verify_release.py prepare build_trtllm_mha_page_table --source-commit 4836fe0378d6290cbcaa91958693e13ed1acdf3e --verification-commit 4836fe0378d6290cbcaa91958693e13ed1acdf3e --dependency tools/benchmark_batch5.py --directory /tmp/NEW_RELEASE_DIRECTORY
 timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/NEW_RELEASE_DIRECTORY
 ```
+
+## 2026-09-11 一轮优化后的待提交候选
+
+- 候选 `e1`；按 tile 调度优化晋级 E1。首次提交前候选就绪。
+- source commit：`29754c1dfcbc87c9b193e750145b668c8e35d852`；verification commit：`29754c1dfcbc87c9b193e750145b668c8e35d852`。
+- ZIP：`/Users/bytedance/ccc/flagos/artifacts/competition/build_trtllm_mha_page_table/e1-29754c1/build_trtllm_mha_page_table.zip`；2830 bytes；成员 `build_trtllm_mha_page_table.py`。
+- ZIP SHA-256：`432e1896094351992b41ce3dba289ec89780f200bbbb75100f31e18920b9fb9a`。
+- 源码 SHA-256：`92d3c574e999a0bfb718010aca583ef26aeeea5b05ff53a8962d636cbcade0a7`。
+- 测试 SHA-256：`558d5955014cd6e6c7eb0350e1aadd392b61867d12cefef7485ccda9cb6e554a`。
+- 回执：`artifacts/competition/batch5-optimize-20260911/release/build_trtllm_mha_page_table/verification.json`；SHA-256 `4ac4aa0c4eb0e8dbbb66a105f9417ce67ce1b1e019843f6fc3ffe681e0776b40`。
+- 日志：`artifacts/competition/batch5-optimize-20260911/release/build_trtllm_mha_page_table/verification.log`；SHA-256 `a616b02c5d58abde49ec9c7120ee6c91ab771a8bb97568fcead5054d0341e147`。
+- 完整 release：4 个测试方法 / 55 条记录 / 26 次 kernel launch，全通过；NVIDIA 代理范围。
+- 优化和复现见[本轮报告](../optimization-batch5-20260911.md)；[完整证据](../data/batch5-optimization-20260911.json)，SHA-256 `87a560dd86ab7e9dfb9607f8f05a007060d48b3aab876b165bfc0fec591f77db`。

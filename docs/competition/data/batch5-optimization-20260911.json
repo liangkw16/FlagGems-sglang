@@ -1,0 +1,2274 @@
+{
+  "observed_at": "2026-09-11T03:21:38.195847+08:00",
+  "scope": "one optimization round then first submission of six candidates",
+  "source_commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+  "screening_plan": {
+    "base_commit": "f5c03292f63f5dcc71351a6d3dd9b68f57631184",
+    "hypotheses": {
+      "59": "scalar row/tile indexing removes lane-wise division and repeated metadata loads",
+      "63": "split long ragged segments across grid axis 1, keep length-dependent tile stride",
+      "64": "parallel hidden tiles, keep input reuse across topk"
+    },
+    "promotion": "full correctness; paired AB/BA median >=1.05 on at least one representative load and >=0.95 on the other; no spills/shared memory, registers <=64; target all8 >=0.1 still unknown",
+    "files": {
+      "src/flaggems_sglang/ops/build_trtllm_mha_page_table.py": "92d3c574e999a0bfb718010aca583ef26aeeea5b05ff53a8962d636cbcade0a7",
+      "src/flaggems_sglang/ops/create_flashinfer_kv_indices.py": "ce7c07d20f2a4c585e27757e13f2efb32c8069f08767aacc4bbca1647c2bbe96",
+      "src/flaggems_sglang/ops/deepep_permute.py": "7857c235db4f253b025d9890b444215455bde6c8ea99bbe9cecd3f6a8d69fc1a",
+      "tests/test_build_trtllm_mha_page_table.py": "558d5955014cd6e6c7eb0350e1aadd392b61867d12cefef7485ccda9cb6e554a",
+      "tests/test_create_flashinfer_kv_indices.py": "6a353892e59c29ca98efc7bfa4225c3f98d6424b85571cd7921a709aa95c5809",
+      "tests/test_deepep_permute.py": "822d3de09ab6a8b32d228e30709cd3d2453a040663d38b8ba5bd264031297c84",
+      "tools/benchmark_batch5.py": "e9a4685713594ba7055d04c828c255897f82409a5b890efd28384e164c1c1ea0"
+    }
+  },
+  "screening_launch": {
+    "remote_directory": "/tmp/flagos-batch5-opt.z0PNb3",
+    "pid": 347270,
+    "pgid": 347270,
+    "started_at": "2026-09-10T19:17:44.698857+00:00",
+    "overall_timeout_seconds": 900,
+    "per_operator_timeout_seconds": 240
+  },
+  "release_launch": {
+    "remote_directory": "/tmp/flagos-batch5-e1.OseMUJ",
+    "pid": 347389,
+    "pgid": 347389,
+    "started_at": "2026-09-10T19:20:02.998271+00:00",
+    "overall_timeout_seconds": 2100,
+    "per_operator_timeout_seconds": 600
+  },
+  "leaderboards_before": {
+    "59": [
+      {
+        "rank": 1,
+        "team_id": 2329,
+        "team_name": "Nectar",
+        "is_mine": false,
+        "best_average_speedup": 23.90034375,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T22:50:40",
+        "first_valid_submitted_at": "2026-09-10T22:50:40",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 67.5705
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 14.5865
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 26.639
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 32.0615
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.9205
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 6.61075
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 22.048
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 19.766
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "team_id": 2106,
+        "team_name": "c2flow",
+        "is_mine": false,
+        "best_average_speedup": 19.50534375,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T21:13:58",
+        "first_valid_submitted_at": "2026-09-10T21:13:58",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 63.8645
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 13.3195
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.06525
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 29.05875
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.61825
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 5.59925
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 20.8415
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 20.67575
+          }
+        ]
+      }
+    ],
+    "60": [
+      {
+        "rank": 1,
+        "team_id": 2123,
+        "team_name": "EvokeAgent",
+        "is_mine": false,
+        "best_average_speedup": 2.28108333,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T23:59:40",
+        "first_valid_submitted_at": "2026-09-10T23:59:40",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.8515
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.348
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.59516667
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.51683333
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.03116667
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 8.06433333
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.393
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.44866667
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "team_id": 2329,
+        "team_name": "Nectar",
+        "is_mine": false,
+        "best_average_speedup": 1.29020833,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T23:30:23",
+        "first_valid_submitted_at": "2026-09-10T23:30:23",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.01233333
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.363
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.264
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.52066667
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.99666667
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.22483333
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.49983333
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.44033333
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "team_id": 2106,
+        "team_name": "c2flow",
+        "is_mine": false,
+        "best_average_speedup": 1.27047917,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T20:59:38",
+        "first_valid_submitted_at": "2026-09-10T20:59:38",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.72766667
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.33583333
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.58933333
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.49316667
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.00983333
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.16616667
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.43066667
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.41116667
+          }
+        ]
+      }
+    ],
+    "61": [
+      {
+        "rank": 1,
+        "team_id": 2329,
+        "team_name": "Nectar",
+        "is_mine": false,
+        "best_average_speedup": 2.2426,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T23:32:57",
+        "first_valid_submitted_at": "2026-09-10T23:32:57",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.0744
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.1722
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 5.4054
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.9856
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.2852
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.5646
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.6722
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.7812
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "team_id": 2123,
+        "team_name": "EvokeAgent",
+        "is_mine": false,
+        "best_average_speedup": 2.23065,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T21:09:45",
+        "first_valid_submitted_at": "2026-09-10T21:09:45",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.0156
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.3618
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 5.697
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.836
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.3614
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.1928
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.6936
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.687
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "team_id": 2106,
+        "team_name": "c2flow",
+        "is_mine": false,
+        "best_average_speedup": 1.9796,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T21:18:55",
+        "first_valid_submitted_at": "2026-09-10T21:16:29",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.0702
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.299
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.42
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.9742
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.3964
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.2782
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.7152
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.6836
+          }
+        ]
+      }
+    ],
+    "62": [
+      {
+        "rank": 1,
+        "team_id": 2123,
+        "team_name": "EvokeAgent",
+        "is_mine": false,
+        "best_average_speedup": 1.81415,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T21:07:01",
+        "first_valid_submitted_at": "2026-09-10T21:07:01",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.5858
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.7776
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.2346
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.0344
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9022
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.4712
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.7028
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.8046
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "team_id": 2329,
+        "team_name": "Nectar",
+        "is_mine": false,
+        "best_average_speedup": 1.463125,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T23:23:23",
+        "first_valid_submitted_at": "2026-09-10T23:23:23",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.6404
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.3368
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.1462
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.6322
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.124
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.267
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.7416
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.8168
+          }
+        ]
+      }
+    ],
+    "63": [
+      {
+        "rank": 1,
+        "team_id": 2329,
+        "team_name": "Nectar",
+        "is_mine": false,
+        "best_average_speedup": 201.797625,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T23:10:49",
+        "first_valid_submitted_at": "2026-09-10T22:06:39",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 511.2185
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 116.8415
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 44.22175
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 286.6485
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 11.19525
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 69.02075
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 267.93125
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 307.3035
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "team_id": 2123,
+        "team_name": "EvokeAgent",
+        "is_mine": false,
+        "best_average_speedup": 183.953125,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T20:59:54",
+        "first_valid_submitted_at": "2026-09-10T20:59:54",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 445.69375
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 144.253
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.8975
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 280.3585
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.7245
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 14.26625
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 282.3285
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 299.103
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "team_id": 2220,
+        "team_name": "GuanghuLab",
+        "is_mine": false,
+        "best_average_speedup": 135.62178125,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-11T02:55:36",
+        "first_valid_submitted_at": "2026-09-11T02:55:36",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 34.908
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 94.013
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 26.6935
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 258.69875
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.93825
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 201.328
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 211.84675
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 254.548
+          }
+        ]
+      },
+      {
+        "rank": 4,
+        "team_id": 2106,
+        "team_name": "c2flow",
+        "is_mine": false,
+        "best_average_speedup": 122.107875,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T21:02:24",
+        "first_valid_submitted_at": "2026-09-10T21:02:24",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 253.182
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 91.146
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 10.597
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 178.64375
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 6.38475
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 45.6265
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 195.81775
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 195.46525
+          }
+        ]
+      }
+    ],
+    "64": [
+      {
+        "rank": 1,
+        "team_id": 2123,
+        "team_name": "EvokeAgent",
+        "is_mine": false,
+        "best_average_speedup": 21.649025,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T21:02:09",
+        "first_valid_submitted_at": "2026-09-10T21:02:09",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 18.8414
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 11.0738
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 6.5306
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 15.2584
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.6074
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 100.305
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 10.7728
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 8.8028
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "team_id": 2329,
+        "team_name": "Nectar",
+        "is_mine": false,
+        "best_average_speedup": 7.61745,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T23:35:21",
+        "first_valid_submitted_at": "2026-09-10T22:26:54",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 17.1312
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 6.7576
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 5.5018
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 12.7074
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.1396
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.0316
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 8.7262
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 6.9442
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "team_id": 2440,
+        "team_name": "aiaijiaolvle",
+        "is_mine": false,
+        "best_average_speedup": 5.99955,
+        "expected_gpu_count": 8,
+        "passed_gpu_count": 8,
+        "best_submitted_at": "2026-09-10T23:07:55",
+        "first_valid_submitted_at": "2026-09-10T23:07:55",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 10.2824
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 5.1702
+          },
+          {
+            "gpu": "enflame",
+            "status": "completed",
+            "passed": true,
+            "speedup": 6.6842
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 8.5306
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9048
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 5.38
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 7.6218
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.4224
+          }
+        ]
+      }
+    ]
+  },
+  "records": [
+    {
+      "task": 59,
+      "operator": "build_trtllm_mha_page_table",
+      "batch": 5,
+      "stage": "e1",
+      "source_commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+      "verification_commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+      "platform_status": "not-submitted",
+      "target_runtime_status": "target-runtime-unverified",
+      "manifest": {
+        "status": "verified-existing",
+        "operator": "build_trtllm_mha_page_table",
+        "commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+        "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/build_trtllm_mha_page_table/e1-29754c1/build_trtllm_mha_page_table.zip",
+        "size": 2830,
+        "zip_sha256": "432e1896094351992b41ce3dba289ec89780f200bbbb75100f31e18920b9fb9a",
+        "canonical_zip_sha256": "432e1896094351992b41ce3dba289ec89780f200bbbb75100f31e18920b9fb9a",
+        "archive_members": [
+          "build_trtllm_mha_page_table.py"
+        ],
+        "members": [
+          {
+            "name": "build_trtllm_mha_page_table.py",
+            "source": "src/flaggems_sglang/ops/build_trtllm_mha_page_table.py",
+            "size": 2672,
+            "sha256": "92d3c574e999a0bfb718010aca583ef26aeeea5b05ff53a8962d636cbcade0a7"
+          }
+        ]
+      },
+      "bound_files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/build_trtllm_mha_page_table.py": "92d3c574e999a0bfb718010aca583ef26aeeea5b05ff53a8962d636cbcade0a7",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_build_trtllm_mha_page_table.py": "558d5955014cd6e6c7eb0350e1aadd392b61867d12cefef7485ccda9cb6e554a",
+        "tools/benchmark_batch5.py": "e9a4685713594ba7055d04c828c255897f82409a5b890efd28384e164c1c1ea0"
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "tests_run": 4,
+      "cases_recorded": 55,
+      "passed_tests": [
+        "tests.test_build_trtllm_mha_page_table.PageTableTest.test_empty_and_zero_lengths",
+        "tests.test_build_trtllm_mha_page_table.PageTableTest.test_page_sizes_and_sentinels",
+        "tests.test_build_trtllm_mha_page_table.PageTableTest.test_strides_and_index_dtypes",
+        "tests.test_build_trtllm_mha_page_table.PageTableTest.test_tiles_and_multiple_pages"
+      ],
+      "kernel_launches": 26,
+      "source_calls": 29,
+      "benchmark_results": {
+        "operator": "build_trtllm_mha_page_table",
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "source_sha256": "92d3c574e999a0bfb718010aca583ef26aeeea5b05ff53a8962d636cbcade0a7",
+        "baseline_sha256": "0b13b86253e8e07948c08426725d481614a0df5a4ed1937b9499ca98e5f2ca2b",
+        "reference_provider": "baseline",
+        "script_sha256": "e9a4685713594ba7055d04c828c255897f82409a5b890efd28384e164c1c1ea0",
+        "method": "wrapper-inclusive triton.testing.do_bench, five alternating AB/BA rounds; proxy shapes",
+        "cases": [
+          {
+            "shape_label": "8x128",
+            "median_speedup": 1.0662683683969147,
+            "candidate_median_ms": 0.004507692335233188,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.004836155884814533,
+                "candidate_ms": 0.0045355897522173245,
+                "speedup": 1.0662683683969147
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.004507692335233188,
+                "reference_ms": 0.004782451651689987,
+                "speedup": 1.0609534316060603
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.004855535521862968,
+                "candidate_ms": 0.004400615375906898,
+                "speedup": 1.103376484217805
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.004514666653285997,
+                "reference_ms": 0.004787282079446296,
+                "speedup": 1.0603843975860048
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.004867076966314552,
+                "candidate_ms": 0.00445723079610616,
+                "speedup": 1.091950852212193
+              }
+            ],
+            "compiled_resources": [
+              {
+                "provider": "reference",
+                "registers": 29,
+                "spills": 0,
+                "shared_bytes": 0
+              },
+              {
+                "provider": "candidate",
+                "registers": 38,
+                "spills": 0,
+                "shared_bytes": 0
+              }
+            ]
+          },
+          {
+            "shape_label": "64x2048",
+            "median_speedup": 1.008256552557462,
+            "candidate_median_ms": 0.008307612888635166,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.008305025636218488,
+                "candidate_ms": 0.008213538458594719,
+                "speedup": 1.0111385827295953
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.008246769221165242,
+                "reference_ms": 0.00832369231666701,
+                "speedup": 1.009327664378475
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.008319999983844658,
+                "candidate_ms": 0.008320410255318841,
+                "speedup": 0.9999506909561436
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.008307612888635166,
+                "reference_ms": 0.008376205131077232,
+                "speedup": 1.008256552557462
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.008329025639865834,
+                "candidate_ms": 0.00832676921839802,
+                "speedup": 1.0002709840285748
+              }
+            ],
+            "compiled_resources": [
+              {
+                "provider": "reference",
+                "registers": 29,
+                "spills": 0,
+                "shared_bytes": 0
+              },
+              {
+                "provider": "candidate",
+                "registers": 40,
+                "spills": 0,
+                "shared_bytes": 0
+              }
+            ]
+          }
+        ]
+      },
+      "remote_directory": "/tmp/flagos-batch5-e1.OseMUJ/build_trtllm_mha_page_table",
+      "verification_receipt_file": "artifacts/competition/batch5-optimize-20260911/release/build_trtllm_mha_page_table/verification.json",
+      "verification_receipt_sha256": "4ac4aa0c4eb0e8dbbb66a105f9417ce67ce1b1e019843f6fc3ffe681e0776b40",
+      "verification_input_file": "artifacts/competition/batch5-optimize-20260911/release/build_trtllm_mha_page_table/verification-input.json",
+      "verification_input_sha256": "0d467f2938b60d68d4c62e22c35874cb72b3ac4c25c37fdf94705b1e46d29c88",
+      "verification_log_file": "artifacts/competition/batch5-optimize-20260911/release/build_trtllm_mha_page_table/verification.log",
+      "verification_log_sha256": "a616b02c5d58abde49ec9c7120ee6c91ab771a8bb97568fcead5054d0341e147",
+      "benchmark_file": "artifacts/competition/batch5-optimize-20260911/screening/build_trtllm_mha_page_table/benchmark.json",
+      "benchmark_sha256": "8ecd729f320e204730ff052557bc62c8a509aed959492edfa7a7a05669b53c3e"
+    },
+    {
+      "task": 60,
+      "operator": "clamp_position",
+      "batch": 5,
+      "stage": "s0",
+      "source_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "verification_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "platform_status": "not-submitted",
+      "target_runtime_status": "target-runtime-unverified",
+      "manifest": {
+        "status": "verified-existing",
+        "operator": "clamp_position",
+        "commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+        "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/clamp_position/s0-4836fe0/clamp_position.zip",
+        "size": 1085,
+        "zip_sha256": "506af23ed82335d1a93965436545c7c4bd646b09b5f589c642fcfadecc1e7209",
+        "canonical_zip_sha256": "506af23ed82335d1a93965436545c7c4bd646b09b5f589c642fcfadecc1e7209",
+        "archive_members": [
+          "clamp_position.py"
+        ],
+        "members": [
+          {
+            "name": "clamp_position.py",
+            "source": "src/flaggems_sglang/ops/clamp_position.py",
+            "size": 953,
+            "sha256": "fc637bc6d0bccd8a38d11100aa3589feda86568aa4fa8383aca7472001c9ed2b"
+          }
+        ]
+      },
+      "bound_files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/clamp_position.py": "fc637bc6d0bccd8a38d11100aa3589feda86568aa4fa8383aca7472001c9ed2b",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_clamp_position.py": "fcfe27bc9c551018822dd8649ffa03ae8077f810d77596e078e94d270e3d8a15",
+        "tools/benchmark_batch5.py": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8"
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "tests_run": 3,
+      "cases_recorded": 45,
+      "passed_tests": [
+        "tests.test_clamp_position.ClampPositionTest.test_integer_limits",
+        "tests.test_clamp_position.ClampPositionTest.test_strided_and_repeated_calls",
+        "tests.test_clamp_position.ClampPositionTest.test_tile_boundaries_and_empty"
+      ],
+      "kernel_launches": 22,
+      "source_calls": 24,
+      "benchmark_results": {
+        "operator": "clamp_position",
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "source_sha256": "fc637bc6d0bccd8a38d11100aa3589feda86568aa4fa8383aca7472001c9ed2b",
+        "script_sha256": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8",
+        "method": "wrapper-inclusive triton.testing.do_bench, five alternating AB/BA rounds; proxy shapes",
+        "cases": [
+          {
+            "shape_label": "32",
+            "median_speedup": 1.1746519735810765,
+            "candidate_median_ms": 0.004259897369103363,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.005022843413234475,
+                "candidate_ms": 0.00425764094465054,
+                "speedup": 1.1797245184672898
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.004272820439953835,
+                "reference_ms": 0.005019076962549335,
+                "speedup": 1.1746519735810765
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.0050610955834246366,
+                "candidate_ms": 0.004284331113823755,
+                "speedup": 1.1813035568363486
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.004259897369103363,
+                "reference_ms": 0.004962051335053566,
+                "speedup": 1.1648288456531513
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.0049928205240016375,
+                "candidate_ms": 0.004253538404531681,
+                "speedup": 1.1738040307059017
+              }
+            ]
+          },
+          {
+            "shape_label": "32768",
+            "median_speedup": 1.2864296198225158,
+            "candidate_median_ms": 0.004886090390444283,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.006321342007046746,
+                "candidate_ms": 0.004764512906639049,
+                "speedup": 1.3267551438969456
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.004874871864628334,
+                "reference_ms": 0.006271179559497306,
+                "speedup": 1.2864296198225158
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.006295535557212368,
+                "candidate_ms": 0.004886090390444283,
+                "speedup": 1.2884607230198881
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.0049096258792785865,
+                "reference_ms": 0.006312464595201515,
+                "speedup": 1.2857323043378328
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.006266051380990598,
+                "candidate_ms": 0.004958974272132111,
+                "speedup": 1.2635781186048602
+              }
+            ]
+          }
+        ]
+      },
+      "remote_directory": "/tmp/flagos-batch5.POXFt3/clamp_position",
+      "verification_receipt_file": "artifacts/competition/batch5-development-20260910/release/clamp_position/verification.json",
+      "verification_receipt_sha256": "ec3aa53405854fb342081f3dc9a60f1ab2b9d81fd2f8ed30444a782cf59adb96",
+      "verification_input_file": "artifacts/competition/batch5-development-20260910/release/clamp_position/verification-input.json",
+      "verification_input_sha256": "cf9fd8793501cbd836c8be494e347b0f52183240e678a7bf3a77f83c90ac1051",
+      "verification_log_file": "artifacts/competition/batch5-development-20260910/release/clamp_position/verification.log",
+      "verification_log_sha256": "8f9cc4892f5224d878a14add6b989ebfd03c73bef69d5bdcd79e858ab50dd5eb",
+      "benchmark_file": "artifacts/competition/batch5-development-20260910/release/clamp_position/benchmark.json",
+      "benchmark_sha256": "cfd447d2ad66b8bb7054ed2b1b119d740d8c15ea5486516b7e19f937d72a4678"
+    },
+    {
+      "task": 61,
+      "operator": "compute_src2dst",
+      "batch": 5,
+      "stage": "s0",
+      "source_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "verification_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "platform_status": "not-submitted",
+      "target_runtime_status": "target-runtime-unverified",
+      "manifest": {
+        "status": "verified-existing",
+        "operator": "compute_src2dst",
+        "commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+        "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/compute_src2dst/s0-4836fe0/compute_src2dst.zip",
+        "size": 1198,
+        "zip_sha256": "607bc6f0bbfedcfe9783a7dd2dc0af606c0ed717a64094a10aae58f33909ea8e",
+        "canonical_zip_sha256": "607bc6f0bbfedcfe9783a7dd2dc0af606c0ed717a64094a10aae58f33909ea8e",
+        "archive_members": [
+          "compute_src2dst.py"
+        ],
+        "members": [
+          {
+            "name": "compute_src2dst.py",
+            "source": "src/flaggems_sglang/ops/compute_src2dst.py",
+            "size": 1064,
+            "sha256": "f59a3ffa8e3a463be40f7e70e8036b656a6df689899928689d073ba983215051"
+          }
+        ]
+      },
+      "bound_files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/compute_src2dst.py": "f59a3ffa8e3a463be40f7e70e8036b656a6df689899928689d073ba983215051",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_compute_src2dst.py": "1708ab05b089f1ad702294338a252e62f1ae41b40517ddd58bdda3603d166887",
+        "tools/benchmark_batch5.py": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8"
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "tests_run": 3,
+      "cases_recorded": 32,
+      "passed_tests": [
+        "tests.test_compute_src2dst.ComputeSrc2DstTest.test_permutations_and_boundaries",
+        "tests.test_compute_src2dst.ComputeSrc2DstTest.test_route_sort_inverse",
+        "tests.test_compute_src2dst.ComputeSrc2DstTest.test_strided_and_index_dtypes"
+      ],
+      "kernel_launches": 19,
+      "source_calls": 20,
+      "benchmark_results": {
+        "operator": "compute_src2dst",
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "source_sha256": "f59a3ffa8e3a463be40f7e70e8036b656a6df689899928689d073ba983215051",
+        "script_sha256": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8",
+        "method": "wrapper-inclusive triton.testing.do_bench, five alternating AB/BA rounds; proxy shapes",
+        "cases": [
+          {
+            "shape_label": "256",
+            "median_speedup": 1.4945390062181576,
+            "candidate_median_ms": 0.004181605148289329,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.006213367859562558,
+                "candidate_ms": 0.004313025556397266,
+                "speedup": 1.440605389028271
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.004244512747018001,
+                "reference_ms": 0.006343589862808585,
+                "speedup": 1.4945390062181576
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.006273025775161118,
+                "candidate_ms": 0.00415323081259162,
+                "speedup": 1.5103966184934337
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.004181605148289329,
+                "reference_ms": 0.006135384731281262,
+                "speedup": 1.467231963254879
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.006275487308485959,
+                "candidate_ms": 0.004157333390023082,
+                "speedup": 1.5094982094883465
+              }
+            ]
+          },
+          {
+            "shape_label": "131072",
+            "median_speedup": 1.3485146181126089,
+            "candidate_median_ms": 0.007660180744865248,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.010233846116954317,
+                "candidate_ms": 0.007649436019934141,
+                "speedup": 1.337856292971835
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.007646769335947166,
+                "reference_ms": 0.01037646446737551,
+                "speedup": 1.356973646190183
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.010361186997784723,
+                "candidate_ms": 0.007660180744865248,
+                "speedup": 1.3526034623569432
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.0077349744790878435,
+                "reference_ms": 0.010416309637648445,
+                "speedup": 1.3466508087143425
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.010409703195816087,
+                "candidate_ms": 0.007719384763055505,
+                "speedup": 1.3485146181126089
+              }
+            ]
+          }
+        ]
+      },
+      "remote_directory": "/tmp/flagos-batch5.POXFt3/compute_src2dst",
+      "verification_receipt_file": "artifacts/competition/batch5-development-20260910/release/compute_src2dst/verification.json",
+      "verification_receipt_sha256": "f53c9eec0f6b1d3688a73ff09e4b566d3b10c0fdc0614b9c22927cbf2fb78736",
+      "verification_input_file": "artifacts/competition/batch5-development-20260910/release/compute_src2dst/verification-input.json",
+      "verification_input_sha256": "155ef5baac32b9e2f396ab0c7f515774b9c4319660b86c035bc5136bac217e28",
+      "verification_log_file": "artifacts/competition/batch5-development-20260910/release/compute_src2dst/verification.log",
+      "verification_log_sha256": "faf9c0481adc62bbce9bb3072a076c4b194dff095fac21cb4d5a62726ce482fa",
+      "benchmark_file": "artifacts/competition/batch5-development-20260910/release/compute_src2dst/benchmark.json",
+      "benchmark_sha256": "42a4b02465f17e30967fb236965ca9bf131170cde3f26b6062725a3d3d144bae"
+    },
+    {
+      "task": 62,
+      "operator": "concat_mla_k",
+      "batch": 5,
+      "stage": "s0",
+      "source_commit": "7b53fdeb58878f8eeaf08eaabbde8bb38015e523",
+      "verification_commit": "7b53fdeb58878f8eeaf08eaabbde8bb38015e523",
+      "platform_status": "not-submitted",
+      "target_runtime_status": "target-runtime-unverified",
+      "manifest": {
+        "status": "verified-existing",
+        "operator": "concat_mla_k",
+        "commit": "7b53fdeb58878f8eeaf08eaabbde8bb38015e523",
+        "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/concat_mla_k/s0-7b53fde/concat_mla_k.zip",
+        "size": 2422,
+        "zip_sha256": "bb3d1f2f89cfe0a5b19c31e4f2ac9b66ee5ddc4c8a93d6f399b5c55c0f46396e",
+        "canonical_zip_sha256": "bb3d1f2f89cfe0a5b19c31e4f2ac9b66ee5ddc4c8a93d6f399b5c55c0f46396e",
+        "archive_members": [
+          "concat_mla_k.py"
+        ],
+        "members": [
+          {
+            "name": "concat_mla_k.py",
+            "source": "src/flaggems_sglang/ops/concat_mla_k.py",
+            "size": 2294,
+            "sha256": "484482bdd03e429de677294ba191474ee0411fb84505743731b43b3ed4a87738"
+          }
+        ]
+      },
+      "bound_files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/concat_mla_k.py": "484482bdd03e429de677294ba191474ee0411fb84505743731b43b3ed4a87738",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_concat_mla_k.py": "756fddfbd1d43e54a6dd7efa99f4f99d39b36beb32ca4f56ea34df5baade7f39",
+        "tools/benchmark_batch5.py": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8"
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "tests_run": 5,
+      "cases_recorded": 60,
+      "passed_tests": [
+        "tests.test_concat_mla_k.ConcatMLAKTest.test_empty",
+        "tests.test_concat_mla_k.ConcatMLAKTest.test_head_and_dimension_boundaries",
+        "tests.test_concat_mla_k.ConcatMLAKTest.test_large_column_stride",
+        "tests.test_concat_mla_k.ConcatMLAKTest.test_production_dimensions",
+        "tests.test_concat_mla_k.ConcatMLAKTest.test_strides_and_special_bits"
+      ],
+      "kernel_launches": 28,
+      "source_calls": 31,
+      "benchmark_results": {
+        "operator": "concat_mla_k",
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "source_sha256": "484482bdd03e429de677294ba191474ee0411fb84505743731b43b3ed4a87738",
+        "script_sha256": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8",
+        "method": "wrapper-inclusive triton.testing.do_bench, five alternating AB/BA rounds; proxy shapes",
+        "cases": [
+          {
+            "shape_label": "32x128x192",
+            "median_speedup": 1.6763140524956925,
+            "candidate_median_ms": 0.006362838784773504,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.010581194749706752,
+                "candidate_ms": 0.0063700646011819765,
+                "speedup": 1.661081231066855
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.006305445243995036,
+                "reference_ms": 0.010694400004802212,
+                "speedup": 1.696057866014613
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.01066611606868044,
+                "candidate_ms": 0.006362838784773504,
+                "speedup": 1.6763140524956925
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.006356232345945412,
+                "reference_ms": 0.010697766201111016,
+                "speedup": 1.6830357386062251
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.010611612860473895,
+                "candidate_ms": 0.006376935153981888,
+                "speedup": 1.6640615913818393
+              }
+            ]
+          },
+          {
+            "shape_label": "1024x128x192",
+            "median_speedup": 1.4572994843148739,
+            "candidate_median_ms": 0.11403007034597726,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.1660751689155147,
+                "candidate_ms": 0.11396090556745944,
+                "speedup": 1.4572994843148739
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.11423443607662036,
+                "reference_ms": 0.165833055129591,
+                "speedup": 1.4516905831999902
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.16605487758311155,
+                "candidate_ms": 0.11386240118223688,
+                "speedup": 1.4583820107336447
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.11403007034597726,
+                "reference_ms": 0.1659415323879117,
+                "speedup": 1.4552436202523642
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.166218564476607,
+                "candidate_ms": 0.11403282885921412,
+                "speedup": 1.4576378235939567
+              }
+            ]
+          }
+        ]
+      },
+      "remote_directory": "/tmp/flagos-t62-address.d9FYAR",
+      "verification_receipt_file": "artifacts/competition/batch5-development-20260910/release-t62-address/verification.json",
+      "verification_receipt_sha256": "25ab3c60c07f2c16859b1b438144f51bd61eef00f10dca8458149b9d2813c9f9",
+      "verification_input_file": "artifacts/competition/batch5-development-20260910/release-t62-address/verification-input.json",
+      "verification_input_sha256": "970324696aa7b4cd01c184f783ba44c7d4e7520be18d08b0f71f9d6effdf13b2",
+      "verification_log_file": "artifacts/competition/batch5-development-20260910/release-t62-address/verification.log",
+      "verification_log_sha256": "59bc9109ee99dfaccf0d2ff7e31dced070ba4ce6181134f61af50d473ce0c751",
+      "benchmark_file": "artifacts/competition/batch5-development-20260910/release-t62-address/benchmark.json",
+      "benchmark_sha256": "1f47b314a053788bcd84446d8babbe98b13f0d23280eb6a39b3bdff58b8c0c9b"
+    },
+    {
+      "task": 63,
+      "operator": "create_flashinfer_kv_indices",
+      "batch": 5,
+      "stage": "e1",
+      "source_commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+      "verification_commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+      "platform_status": "not-submitted",
+      "target_runtime_status": "target-runtime-unverified",
+      "manifest": {
+        "status": "verified-existing",
+        "operator": "create_flashinfer_kv_indices",
+        "commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+        "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/create_flashinfer_kv_indices/e1-29754c1/create_flashinfer_kv_indices.zip",
+        "size": 2992,
+        "zip_sha256": "6d9d37ebf39521f46697f8dc1b725c4bd6ad18e21c3fe7b6bc22e48bdb6c0ac8",
+        "canonical_zip_sha256": "6d9d37ebf39521f46697f8dc1b725c4bd6ad18e21c3fe7b6bc22e48bdb6c0ac8",
+        "archive_members": [
+          "create_flashinfer_kv_indices.py"
+        ],
+        "members": [
+          {
+            "name": "create_flashinfer_kv_indices.py",
+            "source": "src/flaggems_sglang/ops/create_flashinfer_kv_indices.py",
+            "size": 2832,
+            "sha256": "ce7c07d20f2a4c585e27757e13f2efb32c8069f08767aacc4bbca1647c2bbe96"
+          }
+        ]
+      },
+      "bound_files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/create_flashinfer_kv_indices.py": "ce7c07d20f2a4c585e27757e13f2efb32c8069f08767aacc4bbca1647c2bbe96",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_create_flashinfer_kv_indices.py": "6a353892e59c29ca98efc7bfa4225c3f98d6424b85571cd7921a709aa95c5809",
+        "tools/benchmark_batch5.py": "e9a4685713594ba7055d04c828c255897f82409a5b890efd28384e164c1c1ea0"
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "tests_run": 4,
+      "cases_recorded": 28,
+      "passed_tests": [
+        "tests.test_create_flashinfer_kv_indices.KVIndicesTest.test_empty_and_all_zero_segments",
+        "tests.test_create_flashinfer_kv_indices.KVIndicesTest.test_repeated_calls_preserve_changed_base",
+        "tests.test_create_flashinfer_kv_indices.KVIndicesTest.test_segments_offsets_and_tails",
+        "tests.test_create_flashinfer_kv_indices.KVIndicesTest.test_strides_and_index_dtypes"
+      ],
+      "kernel_launches": 16,
+      "source_calls": 18,
+      "benchmark_results": {
+        "operator": "create_flashinfer_kv_indices",
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "source_sha256": "ce7c07d20f2a4c585e27757e13f2efb32c8069f08767aacc4bbca1647c2bbe96",
+        "baseline_sha256": "0507dd1780757b11f1f253699c7927c63f915631f8d0b11c5ad7065fe3271688",
+        "reference_provider": "baseline",
+        "script_sha256": "e9a4685713594ba7055d04c828c255897f82409a5b890efd28384e164c1c1ea0",
+        "method": "wrapper-inclusive triton.testing.do_bench, five alternating AB/BA rounds; proxy shapes",
+        "cases": [
+          {
+            "shape_label": "1x8193",
+            "median_speedup": 1.910136268018609,
+            "candidate_median_ms": 0.006469948811289401,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.012322986846168836,
+                "candidate_ms": 0.0064902194415129,
+                "speedup": 1.8987011082165028
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.006469948811289401,
+                "reference_ms": 0.012358483876667771,
+                "speedup": 1.910136268018609
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.01234610546012654,
+                "candidate_ms": 0.00636902570617027,
+                "speedup": 1.9384606107282178
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.006448205223139853,
+                "reference_ms": 0.012445908685038292,
+                "speedup": 1.9301353251560982
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.012376052449195603,
+                "candidate_ms": 0.006522425867977642,
+                "speedup": 1.8974615733015527
+              }
+            ],
+            "compiled_resources": [
+              {
+                "provider": "reference",
+                "registers": 40,
+                "spills": 0,
+                "shared_bytes": 0
+              },
+              {
+                "provider": "candidate",
+                "registers": 34,
+                "spills": 0,
+                "shared_bytes": 0
+              }
+            ]
+          },
+          {
+            "shape_label": "32x1024",
+            "median_speedup": 1.104512707317772,
+            "candidate_median_ms": 0.00682756134098576,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.007501832275621353,
+                "candidate_ms": 0.006900512887976873,
+                "speedup": 1.0871412599912957
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.006942761349942415,
+                "reference_ms": 0.007697846167362654,
+                "speedup": 1.1087585730462277
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.007531897478307096,
+                "candidate_ms": 0.006826256467507054,
+                "speedup": 1.1033715938097095
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.00682756134098576,
+                "reference_ms": 0.007541128261110339,
+                "speedup": 1.104512707317772
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.007642632287235991,
+                "candidate_ms": 0.006720000077994206,
+                "speedup": 1.1372964581150977
+              }
+            ],
+            "compiled_resources": [
+              {
+                "provider": "reference",
+                "registers": 40,
+                "spills": 0,
+                "shared_bytes": 0
+              },
+              {
+                "provider": "candidate",
+                "registers": 30,
+                "spills": 0,
+                "shared_bytes": 0
+              }
+            ]
+          }
+        ]
+      },
+      "remote_directory": "/tmp/flagos-batch5-e1.OseMUJ/create_flashinfer_kv_indices",
+      "verification_receipt_file": "artifacts/competition/batch5-optimize-20260911/release/create_flashinfer_kv_indices/verification.json",
+      "verification_receipt_sha256": "4e5229ce738bac8b177f44295dcdb7b78f5da10f851176f8d2462106276c96ba",
+      "verification_input_file": "artifacts/competition/batch5-optimize-20260911/release/create_flashinfer_kv_indices/verification-input.json",
+      "verification_input_sha256": "58179e95a7d87357a24a3291458ddd5c27d1150b99e7d7b6a8a60dfaa8f3a089",
+      "verification_log_file": "artifacts/competition/batch5-optimize-20260911/release/create_flashinfer_kv_indices/verification.log",
+      "verification_log_sha256": "04e747df25c1e016e2a5586f05fcd04942ef7912bcdebe0539d538ab2f02ce6f",
+      "benchmark_file": "artifacts/competition/batch5-optimize-20260911/screening/create_flashinfer_kv_indices/benchmark.json",
+      "benchmark_sha256": "87a546ac9eaa95c0d4749f928c2e08b5d915b24d1f3283fbd5d4eb4b317c6f29"
+    },
+    {
+      "task": 64,
+      "operator": "deepep_permute",
+      "batch": 5,
+      "stage": "e1",
+      "source_commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+      "verification_commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+      "platform_status": "not-submitted",
+      "target_runtime_status": "target-runtime-unverified",
+      "manifest": {
+        "status": "verified-existing",
+        "operator": "deepep_permute",
+        "commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+        "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/deepep_permute/e1-29754c1/deepep_permute.zip",
+        "size": 1970,
+        "zip_sha256": "b33968d2510443859fc50f02926127bc85ba002425a4bf42228e4d812bbb32b1",
+        "canonical_zip_sha256": "b33968d2510443859fc50f02926127bc85ba002425a4bf42228e4d812bbb32b1",
+        "archive_members": [
+          "deepep_permute.py"
+        ],
+        "members": [
+          {
+            "name": "deepep_permute.py",
+            "source": "src/flaggems_sglang/ops/deepep_permute.py",
+            "size": 1838,
+            "sha256": "7857c235db4f253b025d9890b444215455bde6c8ea99bbe9cecd3f6a8d69fc1a"
+          }
+        ]
+      },
+      "bound_files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/deepep_permute.py": "7857c235db4f253b025d9890b444215455bde6c8ea99bbe9cecd3f6a8d69fc1a",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_deepep_permute.py": "822d3de09ab6a8b32d228e30709cd3d2453a040663d38b8ba5bd264031297c84",
+        "tools/benchmark_batch5.py": "e9a4685713594ba7055d04c828c255897f82409a5b890efd28384e164c1c1ea0"
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "tests_run": 5,
+      "cases_recorded": 64,
+      "passed_tests": [
+        "tests.test_deepep_permute.DeepEPPermuteTest.test_dtypes_and_cast",
+        "tests.test_deepep_permute.DeepEPPermuteTest.test_empty_and_all_invalid",
+        "tests.test_deepep_permute.DeepEPPermuteTest.test_special_values",
+        "tests.test_deepep_permute.DeepEPPermuteTest.test_strides_and_unused_topk_ids",
+        "tests.test_deepep_permute.DeepEPPermuteTest.test_topk_tiles_and_large_hidden"
+      ],
+      "kernel_launches": 35,
+      "source_calls": 38,
+      "benchmark_results": {
+        "operator": "deepep_permute",
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "source_sha256": "7857c235db4f253b025d9890b444215455bde6c8ea99bbe9cecd3f6a8d69fc1a",
+        "baseline_sha256": "14339eba6cd4d0848066f025495afaf111d647aaded8f46abb91783a15226560",
+        "reference_provider": "baseline",
+        "script_sha256": "e9a4685713594ba7055d04c828c255897f82409a5b890efd28384e164c1c1ea0",
+        "method": "wrapper-inclusive triton.testing.do_bench, five alternating AB/BA rounds; proxy shapes",
+        "cases": [
+          {
+            "shape_label": "8x4x4096",
+            "median_speedup": 1.5345980389416878,
+            "candidate_median_ms": 0.006535432334508626,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.010102379001871822,
+                "candidate_ms": 0.006652490377065635,
+                "speedup": 1.5185860375987357
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.006590348443076495,
+                "reference_ms": 0.010026597333225336,
+                "speedup": 1.521406253376299
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.009973818076435815,
+                "candidate_ms": 0.0064993032855131935,
+                "speedup": 1.5345980389416878
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.006535432334508626,
+                "reference_ms": 0.010054233701681936,
+                "speedup": 1.5384190650392335
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.010112623321255306,
+                "candidate_ms": 0.006446038769377816,
+                "speedup": 1.5688120538920365
+              }
+            ],
+            "compiled_resources": [
+              {
+                "provider": "reference",
+                "registers": 21,
+                "spills": 0,
+                "shared_bytes": 0
+              },
+              {
+                "provider": "candidate",
+                "registers": 19,
+                "spills": 0,
+                "shared_bytes": 0
+              }
+            ]
+          },
+          {
+            "shape_label": "512x4x4096",
+            "median_speedup": 1.0026617555162665,
+            "candidate_median_ms": 0.05868917706367724,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.058886400720587484,
+                "candidate_ms": 0.05847490429878235,
+                "speedup": 1.0070371457078846
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.05892823595444069,
+                "reference_ms": 0.058864119041849065,
+                "speedup": 0.9989119492285295
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.05867582159255868,
+                "candidate_ms": 0.058784711830042025,
+                "speedup": 0.9981476435948488
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.05868917706367724,
+                "reference_ms": 0.05884539330447162,
+                "speedup": 1.0026617555162665
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.059130588655962664,
+                "candidate_ms": 0.05865291919973162,
+                "speedup": 1.0081440014026315
+              }
+            ],
+            "compiled_resources": [
+              {
+                "provider": "reference",
+                "registers": 21,
+                "spills": 0,
+                "shared_bytes": 0
+              },
+              {
+                "provider": "candidate",
+                "registers": 19,
+                "spills": 0,
+                "shared_bytes": 0
+              }
+            ]
+          }
+        ]
+      },
+      "remote_directory": "/tmp/flagos-batch5-e1.OseMUJ/deepep_permute",
+      "verification_receipt_file": "artifacts/competition/batch5-optimize-20260911/release/deepep_permute/verification.json",
+      "verification_receipt_sha256": "e07bda65b5e89c95cfc4952cc9b9e52dbab17084ce5f892e3fca760cf8250e3c",
+      "verification_input_file": "artifacts/competition/batch5-optimize-20260911/release/deepep_permute/verification-input.json",
+      "verification_input_sha256": "312293ace64990749fb34ca5d6896dcf2146628cf38275e29516f8e3906abacc",
+      "verification_log_file": "artifacts/competition/batch5-optimize-20260911/release/deepep_permute/verification.log",
+      "verification_log_sha256": "274fe4cb929c2c7bf910f84d533bb083e2d58caefdf702a43240ddfaed206c09",
+      "benchmark_file": "artifacts/competition/batch5-optimize-20260911/screening/deepep_permute/benchmark.json",
+      "benchmark_sha256": "e5295e4fb71d89f5684dab6da9222882480b0372a5d2cf3b4525b708a6abfbc5"
+    }
+  ]
+}
