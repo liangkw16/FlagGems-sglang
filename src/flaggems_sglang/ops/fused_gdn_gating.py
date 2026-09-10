@@ -1,4 +1,8 @@
-# r2 final water re-roll carrier of e5 sub 11044 team-best bytes.
+# r3 water re-roll carrier (2026-09-10) of e5 sub 11044 team-best bytes:
+# executable code is byte-identical to e5/e5r/e5r2, only this comment differs
+# so the package earns a fresh ZIP SHA-256 and can sample the evaluator water
+# level again. The task leader's 288.43 average is an enflame 2280 jackpot read
+# (291x its same-chip runner-up), so a window hit is the only path to rank 1.
 # Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

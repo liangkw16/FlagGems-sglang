@@ -1,11 +1,5 @@
 # Enflame vendor: one program per batch row with the full head vector
 # (T51-proven enflame fix: no grid-stride loop, no runtime branch).
-#
-# e6: launch parameters unpinned -- leaving num_warps to the GCU backend
-# default has won twice on this chip (T19-E5, T51-E5, +38% each), and
-# batch-4 ops without an explicit num_warps carry a median enflame
-# speedup of 2.08 vs 0.73 for pinned ones.
-#
 # Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -98,6 +92,8 @@ def fused_gdn_gating(A_log, a, b, dt_bias, beta=1.0, threshold=20.0):
         beta=float(beta),
         threshold=float(threshold),
         H_PAD=h_pad,
+        num_warps=4,
+        num_stages=1,
     )
     return g, beta_output
 

@@ -18,14 +18,9 @@ import triton.language as tl
 
 # enflame vendor: whole-row BLOCK_COL 4096 (T24/T33/T39/T29 four-proof
 # enflame optimum; +42% on the T29 sister task).
-#
-# e8: the block walk is capped at the 24 SIPs and carries num_stages=3
-# on tl.range so the loop can pingpong -- the vendor guide states GCU
-# launch overhead is not hidden, so a grid of thousands of tiny
-# elementwise programs pays pure scheduling cost against 24 SIPs.
 
 _BLOCK_COL = 4096
-_GRID_CAP = 24
+_MAX_GRID = 65535
 
 
 @triton.jit
@@ -43,7 +38,7 @@ def _act_and_mul_kernel(
     num_col_blocks = tl.cdiv(half_width, BLOCK_COL)
     total_blocks = rows * num_col_blocks
     grid_size = tl.num_programs(0)
-    for block_id in tl.range(pid, total_blocks, grid_size, num_stages=3):
+    for block_id in range(pid, total_blocks, grid_size):
         row_id = block_id // num_col_blocks
         col_block = block_id - row_id * num_col_blocks
         col_offsets = col_block * BLOCK_COL + tl.arange(0, BLOCK_COL)
@@ -67,9 +62,7 @@ def _act_and_mul_kernel(
             # s * (1 - e^-2|y|) / (1 + e^-2|y|) so it saturates exactly
             # to +/-1 and never overflows, and no libdevice call is
             # involved (tl.math.erf crashes the kunlunxin compiler).
-            scaled = 0.7978845608028654 * (
-                gate + 0.044715 * gate * gate * gate
-            )
+            scaled = 0.7978845608028654 * (gate + 0.044715 * gate * gate * gate)
             exp_neg = tl.exp(-2.0 * tl.abs(scaled))
             ratio = (1.0 - exp_neg) / (1.0 + exp_neg)
             tanh_scaled = tl.where(scaled < 0.0, -ratio, ratio)
@@ -97,9 +90,7 @@ def act_and_mul(gateup_output, activation="silu", swiglu_limit=None):
     x = gateup_output.contiguous()
     last_dim = x.shape[-1]
     half_width = last_dim // 2
-    output = torch.empty(
-        x.shape[:-1] + (half_width,), dtype=x.dtype, device=x.device
-    )
+    output = torch.empty(x.shape[:-1] + (half_width,), dtype=x.dtype, device=x.device)
     if last_dim == 0:
         return output
     rows = x.numel() // last_dim
@@ -109,7 +100,7 @@ def act_and_mul(gateup_output, activation="silu", swiglu_limit=None):
     limit = float(swiglu_limit) if has_limit else 0.0
     num_col_blocks = triton.cdiv(half_width, _BLOCK_COL)
     total_blocks = rows * num_col_blocks
-    grid = (min(total_blocks, _GRID_CAP),)
+    grid = (min(total_blocks, _MAX_GRID),)
     _act_and_mul_kernel[grid](
         x,
         output,
