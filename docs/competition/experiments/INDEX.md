@@ -39,5 +39,11 @@
 | 56 | l2norm | valid | 8/8(e3,11062,3.20691667x新team best) | e3 3.20691667x | no | 批4收盘;额度用尽.e9w 3.16114/e9x(12659)3.17715;燧原1.2015/1.20675两次同水位,未撞慢窗;TB保持e3 3.20692;排名11/14,上邻仅+0.035 | 2026-09-10 | [l2norm](l2norm.md) |
 | 57 | log_scaling_tau | valid | 8/8(e2,10747,2.36478125x首次有效) | e11 2.50278125x | no | 批4收盘;额度用尽.e9w(12649)2.47272燧原0.546;TB保持e11 2.50278;排名9/15,上邻仅+0.0396 | 2026-09-10 | [log_scaling_tau](log_scaling_tau.md) |
 | 58 | w8a8_block_int8_matmul | valid | e6r/11210八芯valid,258.04890833x team best(排名3);e7/11228 valid 253.07(B已修复) | e9r2 266.20655x | no | e7字节(e6r组级+amd逐块B)为最优组合,均值差=华为窗口三连下行;水位回常态时以e7字节重掷(新ZIP身份,≤2次) | 2026-09-08 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
+| 59 | build_trtllm_mha_page_table | candidate-ready | not-submitted | - | no | S0 已通过提交前本地门禁；正式提交时重新进行实时 preflight | 2026-09-10 | [build_trtllm_mha_page_table](build_trtllm_mha_page_table.md) |
+| 60 | clamp_position | candidate-ready | not-submitted | - | no | S0 已通过提交前本地门禁；正式提交时重新进行实时 preflight | 2026-09-10 | [clamp_position](clamp_position.md) |
+| 61 | compute_src2dst | candidate-ready | not-submitted | - | no | S0 已通过提交前本地门禁；正式提交时重新进行实时 preflight | 2026-09-10 | [compute_src2dst](compute_src2dst.md) |
+| 62 | concat_mla_k | candidate-ready | not-submitted | - | no | S0 已通过提交前本地门禁；正式提交时重新进行实时 preflight | 2026-09-10 | [concat_mla_k](concat_mla_k.md) |
+| 63 | create_flashinfer_kv_indices | candidate-ready | not-submitted | - | no | S0 已通过提交前本地门禁；正式提交时重新进行实时 preflight | 2026-09-10 | [create_flashinfer_kv_indices](create_flashinfer_kv_indices.md) |
+| 64 | deepep_permute | candidate-ready | not-submitted | - | no | S0 已通过提交前本地门禁；正式提交时重新进行实时 preflight | 2026-09-10 | [deepep_permute](deepep_permute.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

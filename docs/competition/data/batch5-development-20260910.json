@@ -1,0 +1,1118 @@
+{
+  "created_at": "2026-09-10T23:56:51+08:00",
+  "scope": "six generic operators; local pre-submission release gates; no platform preflight/upload/submit",
+  "static_evidence": "artifacts/competition/batch5-development-20260910/final-static-checks.json",
+  "static_evidence_sha256": "795e1fe8ea853736683ce27ffe4d000bdeec68f430dbab23a6024198a7c4075f",
+  "initial_launch": {
+    "remote_directory": "/tmp/flagos-batch5.POXFt3",
+    "pid": 346101,
+    "pgid": 346101,
+    "started_at": "2026-09-10T15:46:45.436383+00:00",
+    "overall_timeout_seconds": 5400,
+    "per_operator_release_timeout_seconds": 600,
+    "per_operator_benchmark_timeout_seconds": 180
+  },
+  "t62_final_launch": {
+    "remote_directory": "/tmp/flagos-t62-address.d9FYAR",
+    "pid": 346545,
+    "pgid": 346545,
+    "started_at": "2026-09-10T15:50:26.878241+00:00",
+    "overall_timeout_seconds": 900,
+    "release_timeout_seconds": 600,
+    "benchmark_timeout_seconds": 180
+  },
+  "records": [
+    {
+      "task": 59,
+      "operator": "build_trtllm_mha_page_table",
+      "batch": 5,
+      "stage": "s0",
+      "source_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "verification_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "platform_status": "not-submitted",
+      "target_runtime_status": "target-runtime-unverified",
+      "manifest": {
+        "status": "verified-existing",
+        "operator": "build_trtllm_mha_page_table",
+        "commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+        "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/build_trtllm_mha_page_table/s0-4836fe0/build_trtllm_mha_page_table.zip",
+        "size": 2782,
+        "zip_sha256": "45ede2a69cea1900a3ac827a814cf4091fc59e4290163ab1f18a17ecca138450",
+        "canonical_zip_sha256": "45ede2a69cea1900a3ac827a814cf4091fc59e4290163ab1f18a17ecca138450",
+        "archive_members": [
+          "build_trtllm_mha_page_table.py"
+        ],
+        "members": [
+          {
+            "name": "build_trtllm_mha_page_table.py",
+            "source": "src/flaggems_sglang/ops/build_trtllm_mha_page_table.py",
+            "size": 2624,
+            "sha256": "0b13b86253e8e07948c08426725d481614a0df5a4ed1937b9499ca98e5f2ca2b"
+          }
+        ]
+      },
+      "bound_files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/build_trtllm_mha_page_table.py": "0b13b86253e8e07948c08426725d481614a0df5a4ed1937b9499ca98e5f2ca2b",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_build_trtllm_mha_page_table.py": "56acee3177490d4675aa3f3b824e9819604494113e0f111f352e4e6ab1cacd97",
+        "tools/benchmark_batch5.py": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8"
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "tests_run": 4,
+      "cases_recorded": 54,
+      "passed_tests": [
+        "tests.test_build_trtllm_mha_page_table.PageTableTest.test_empty_and_zero_lengths",
+        "tests.test_build_trtllm_mha_page_table.PageTableTest.test_page_sizes_and_sentinels",
+        "tests.test_build_trtllm_mha_page_table.PageTableTest.test_strides_and_index_dtypes",
+        "tests.test_build_trtllm_mha_page_table.PageTableTest.test_tiles_and_multiple_pages"
+      ],
+      "kernel_launches": 25,
+      "source_calls": 28,
+      "benchmark_results": {
+        "operator": "build_trtllm_mha_page_table",
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "source_sha256": "0b13b86253e8e07948c08426725d481614a0df5a4ed1937b9499ca98e5f2ca2b",
+        "script_sha256": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8",
+        "method": "wrapper-inclusive triton.testing.do_bench, five alternating AB/BA rounds; proxy shapes",
+        "cases": [
+          {
+            "shape_label": "8x128",
+            "median_speedup": 14.57324045715281,
+            "candidate_median_ms": 0.004858871842794216,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.0708095077155293,
+                "candidate_ms": 0.004858871842794216,
+                "speedup": 14.57324045715281
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.004979692354726677,
+                "reference_ms": 0.07135261549399449,
+                "speedup": 14.328719609810285
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.07113453455781209,
+                "candidate_ms": 0.004892102591932202,
+                "speedup": 14.54068740813478
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.004858666683177058,
+                "reference_ms": 0.0710843077645852,
+                "speedup": 14.630414556057492
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.07187150412982748,
+                "candidate_ms": 0.004794089221484532,
+                "speedup": 14.991690978077342
+              }
+            ]
+          },
+          {
+            "shape_label": "64x2048",
+            "median_speedup": 9.293338401201016,
+            "candidate_median_ms": 0.00835096773901774,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.07734399959445,
+                "candidate_ms": 0.008304615373699328,
+                "speedup": 9.313375287601882
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.008293948697451597,
+                "reference_ms": 0.07769181579351425,
+                "speedup": 9.367289167991343
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.07720959983192957,
+                "candidate_ms": 0.008370871804893399,
+                "speedup": 9.22360318393537
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.008389367740000448,
+                "reference_ms": 0.07706772501914556,
+                "speedup": 9.186356756265097
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.0776083691762044,
+                "candidate_ms": 0.00835096773901774,
+                "speedup": 9.293338401201016
+              }
+            ]
+          }
+        ]
+      },
+      "remote_directory": "/tmp/flagos-batch5.POXFt3/build_trtllm_mha_page_table",
+      "verification_receipt_file": "artifacts/competition/batch5-development-20260910/release/build_trtllm_mha_page_table/verification.json",
+      "verification_receipt_sha256": "d5f5e8ac19c18c37b0a1ff30334400279e5899ee6c419c3ee40fcf66e3beb1e3",
+      "verification_input_file": "artifacts/competition/batch5-development-20260910/release/build_trtllm_mha_page_table/verification-input.json",
+      "verification_input_sha256": "936fed45f9e88219189c0b30c0f07914eb746eaaeec78e94af0792337e4e5c0c",
+      "verification_log_file": "artifacts/competition/batch5-development-20260910/release/build_trtllm_mha_page_table/verification.log",
+      "verification_log_sha256": "4555b2407d0ece95d2aa57015857e2100e5e739f535a21119479c0de54da9912",
+      "benchmark_file": "artifacts/competition/batch5-development-20260910/release/build_trtllm_mha_page_table/benchmark.json",
+      "benchmark_sha256": "6ec15ea98b01ef91de136bebe3e781d985c60d686a103cced807b6fcf058502c"
+    },
+    {
+      "task": 60,
+      "operator": "clamp_position",
+      "batch": 5,
+      "stage": "s0",
+      "source_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "verification_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "platform_status": "not-submitted",
+      "target_runtime_status": "target-runtime-unverified",
+      "manifest": {
+        "status": "verified-existing",
+        "operator": "clamp_position",
+        "commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+        "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/clamp_position/s0-4836fe0/clamp_position.zip",
+        "size": 1085,
+        "zip_sha256": "506af23ed82335d1a93965436545c7c4bd646b09b5f589c642fcfadecc1e7209",
+        "canonical_zip_sha256": "506af23ed82335d1a93965436545c7c4bd646b09b5f589c642fcfadecc1e7209",
+        "archive_members": [
+          "clamp_position.py"
+        ],
+        "members": [
+          {
+            "name": "clamp_position.py",
+            "source": "src/flaggems_sglang/ops/clamp_position.py",
+            "size": 953,
+            "sha256": "fc637bc6d0bccd8a38d11100aa3589feda86568aa4fa8383aca7472001c9ed2b"
+          }
+        ]
+      },
+      "bound_files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/clamp_position.py": "fc637bc6d0bccd8a38d11100aa3589feda86568aa4fa8383aca7472001c9ed2b",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_clamp_position.py": "fcfe27bc9c551018822dd8649ffa03ae8077f810d77596e078e94d270e3d8a15",
+        "tools/benchmark_batch5.py": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8"
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "tests_run": 3,
+      "cases_recorded": 45,
+      "passed_tests": [
+        "tests.test_clamp_position.ClampPositionTest.test_integer_limits",
+        "tests.test_clamp_position.ClampPositionTest.test_strided_and_repeated_calls",
+        "tests.test_clamp_position.ClampPositionTest.test_tile_boundaries_and_empty"
+      ],
+      "kernel_launches": 22,
+      "source_calls": 24,
+      "benchmark_results": {
+        "operator": "clamp_position",
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "source_sha256": "fc637bc6d0bccd8a38d11100aa3589feda86568aa4fa8383aca7472001c9ed2b",
+        "script_sha256": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8",
+        "method": "wrapper-inclusive triton.testing.do_bench, five alternating AB/BA rounds; proxy shapes",
+        "cases": [
+          {
+            "shape_label": "32",
+            "median_speedup": 1.1746519735810765,
+            "candidate_median_ms": 0.004259897369103363,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.005022843413234475,
+                "candidate_ms": 0.00425764094465054,
+                "speedup": 1.1797245184672898
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.004272820439953835,
+                "reference_ms": 0.005019076962549335,
+                "speedup": 1.1746519735810765
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.0050610955834246366,
+                "candidate_ms": 0.004284331113823755,
+                "speedup": 1.1813035568363486
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.004259897369103363,
+                "reference_ms": 0.004962051335053566,
+                "speedup": 1.1648288456531513
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.0049928205240016375,
+                "candidate_ms": 0.004253538404531681,
+                "speedup": 1.1738040307059017
+              }
+            ]
+          },
+          {
+            "shape_label": "32768",
+            "median_speedup": 1.2864296198225158,
+            "candidate_median_ms": 0.004886090390444283,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.006321342007046746,
+                "candidate_ms": 0.004764512906639049,
+                "speedup": 1.3267551438969456
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.004874871864628334,
+                "reference_ms": 0.006271179559497306,
+                "speedup": 1.2864296198225158
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.006295535557212368,
+                "candidate_ms": 0.004886090390444283,
+                "speedup": 1.2884607230198881
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.0049096258792785865,
+                "reference_ms": 0.006312464595201515,
+                "speedup": 1.2857323043378328
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.006266051380990598,
+                "candidate_ms": 0.004958974272132111,
+                "speedup": 1.2635781186048602
+              }
+            ]
+          }
+        ]
+      },
+      "remote_directory": "/tmp/flagos-batch5.POXFt3/clamp_position",
+      "verification_receipt_file": "artifacts/competition/batch5-development-20260910/release/clamp_position/verification.json",
+      "verification_receipt_sha256": "ec3aa53405854fb342081f3dc9a60f1ab2b9d81fd2f8ed30444a782cf59adb96",
+      "verification_input_file": "artifacts/competition/batch5-development-20260910/release/clamp_position/verification-input.json",
+      "verification_input_sha256": "cf9fd8793501cbd836c8be494e347b0f52183240e678a7bf3a77f83c90ac1051",
+      "verification_log_file": "artifacts/competition/batch5-development-20260910/release/clamp_position/verification.log",
+      "verification_log_sha256": "8f9cc4892f5224d878a14add6b989ebfd03c73bef69d5bdcd79e858ab50dd5eb",
+      "benchmark_file": "artifacts/competition/batch5-development-20260910/release/clamp_position/benchmark.json",
+      "benchmark_sha256": "cfd447d2ad66b8bb7054ed2b1b119d740d8c15ea5486516b7e19f937d72a4678"
+    },
+    {
+      "task": 61,
+      "operator": "compute_src2dst",
+      "batch": 5,
+      "stage": "s0",
+      "source_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "verification_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "platform_status": "not-submitted",
+      "target_runtime_status": "target-runtime-unverified",
+      "manifest": {
+        "status": "verified-existing",
+        "operator": "compute_src2dst",
+        "commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+        "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/compute_src2dst/s0-4836fe0/compute_src2dst.zip",
+        "size": 1198,
+        "zip_sha256": "607bc6f0bbfedcfe9783a7dd2dc0af606c0ed717a64094a10aae58f33909ea8e",
+        "canonical_zip_sha256": "607bc6f0bbfedcfe9783a7dd2dc0af606c0ed717a64094a10aae58f33909ea8e",
+        "archive_members": [
+          "compute_src2dst.py"
+        ],
+        "members": [
+          {
+            "name": "compute_src2dst.py",
+            "source": "src/flaggems_sglang/ops/compute_src2dst.py",
+            "size": 1064,
+            "sha256": "f59a3ffa8e3a463be40f7e70e8036b656a6df689899928689d073ba983215051"
+          }
+        ]
+      },
+      "bound_files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/compute_src2dst.py": "f59a3ffa8e3a463be40f7e70e8036b656a6df689899928689d073ba983215051",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_compute_src2dst.py": "1708ab05b089f1ad702294338a252e62f1ae41b40517ddd58bdda3603d166887",
+        "tools/benchmark_batch5.py": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8"
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "tests_run": 3,
+      "cases_recorded": 32,
+      "passed_tests": [
+        "tests.test_compute_src2dst.ComputeSrc2DstTest.test_permutations_and_boundaries",
+        "tests.test_compute_src2dst.ComputeSrc2DstTest.test_route_sort_inverse",
+        "tests.test_compute_src2dst.ComputeSrc2DstTest.test_strided_and_index_dtypes"
+      ],
+      "kernel_launches": 19,
+      "source_calls": 20,
+      "benchmark_results": {
+        "operator": "compute_src2dst",
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "source_sha256": "f59a3ffa8e3a463be40f7e70e8036b656a6df689899928689d073ba983215051",
+        "script_sha256": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8",
+        "method": "wrapper-inclusive triton.testing.do_bench, five alternating AB/BA rounds; proxy shapes",
+        "cases": [
+          {
+            "shape_label": "256",
+            "median_speedup": 1.4945390062181576,
+            "candidate_median_ms": 0.004181605148289329,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.006213367859562558,
+                "candidate_ms": 0.004313025556397266,
+                "speedup": 1.440605389028271
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.004244512747018001,
+                "reference_ms": 0.006343589862808585,
+                "speedup": 1.4945390062181576
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.006273025775161118,
+                "candidate_ms": 0.00415323081259162,
+                "speedup": 1.5103966184934337
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.004181605148289329,
+                "reference_ms": 0.006135384731281262,
+                "speedup": 1.467231963254879
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.006275487308485959,
+                "candidate_ms": 0.004157333390023082,
+                "speedup": 1.5094982094883465
+              }
+            ]
+          },
+          {
+            "shape_label": "131072",
+            "median_speedup": 1.3485146181126089,
+            "candidate_median_ms": 0.007660180744865248,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.010233846116954317,
+                "candidate_ms": 0.007649436019934141,
+                "speedup": 1.337856292971835
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.007646769335947166,
+                "reference_ms": 0.01037646446737551,
+                "speedup": 1.356973646190183
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.010361186997784723,
+                "candidate_ms": 0.007660180744865248,
+                "speedup": 1.3526034623569432
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.0077349744790878435,
+                "reference_ms": 0.010416309637648445,
+                "speedup": 1.3466508087143425
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.010409703195816087,
+                "candidate_ms": 0.007719384763055505,
+                "speedup": 1.3485146181126089
+              }
+            ]
+          }
+        ]
+      },
+      "remote_directory": "/tmp/flagos-batch5.POXFt3/compute_src2dst",
+      "verification_receipt_file": "artifacts/competition/batch5-development-20260910/release/compute_src2dst/verification.json",
+      "verification_receipt_sha256": "f53c9eec0f6b1d3688a73ff09e4b566d3b10c0fdc0614b9c22927cbf2fb78736",
+      "verification_input_file": "artifacts/competition/batch5-development-20260910/release/compute_src2dst/verification-input.json",
+      "verification_input_sha256": "155ef5baac32b9e2f396ab0c7f515774b9c4319660b86c035bc5136bac217e28",
+      "verification_log_file": "artifacts/competition/batch5-development-20260910/release/compute_src2dst/verification.log",
+      "verification_log_sha256": "faf9c0481adc62bbce9bb3072a076c4b194dff095fac21cb4d5a62726ce482fa",
+      "benchmark_file": "artifacts/competition/batch5-development-20260910/release/compute_src2dst/benchmark.json",
+      "benchmark_sha256": "42a4b02465f17e30967fb236965ca9bf131170cde3f26b6062725a3d3d144bae"
+    },
+    {
+      "task": 62,
+      "operator": "concat_mla_k",
+      "batch": 5,
+      "stage": "s0",
+      "source_commit": "7b53fdeb58878f8eeaf08eaabbde8bb38015e523",
+      "verification_commit": "7b53fdeb58878f8eeaf08eaabbde8bb38015e523",
+      "platform_status": "not-submitted",
+      "target_runtime_status": "target-runtime-unverified",
+      "manifest": {
+        "status": "verified-existing",
+        "operator": "concat_mla_k",
+        "commit": "7b53fdeb58878f8eeaf08eaabbde8bb38015e523",
+        "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/concat_mla_k/s0-7b53fde/concat_mla_k.zip",
+        "size": 2422,
+        "zip_sha256": "bb3d1f2f89cfe0a5b19c31e4f2ac9b66ee5ddc4c8a93d6f399b5c55c0f46396e",
+        "canonical_zip_sha256": "bb3d1f2f89cfe0a5b19c31e4f2ac9b66ee5ddc4c8a93d6f399b5c55c0f46396e",
+        "archive_members": [
+          "concat_mla_k.py"
+        ],
+        "members": [
+          {
+            "name": "concat_mla_k.py",
+            "source": "src/flaggems_sglang/ops/concat_mla_k.py",
+            "size": 2294,
+            "sha256": "484482bdd03e429de677294ba191474ee0411fb84505743731b43b3ed4a87738"
+          }
+        ]
+      },
+      "bound_files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/concat_mla_k.py": "484482bdd03e429de677294ba191474ee0411fb84505743731b43b3ed4a87738",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_concat_mla_k.py": "756fddfbd1d43e54a6dd7efa99f4f99d39b36beb32ca4f56ea34df5baade7f39",
+        "tools/benchmark_batch5.py": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8"
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "tests_run": 5,
+      "cases_recorded": 60,
+      "passed_tests": [
+        "tests.test_concat_mla_k.ConcatMLAKTest.test_empty",
+        "tests.test_concat_mla_k.ConcatMLAKTest.test_head_and_dimension_boundaries",
+        "tests.test_concat_mla_k.ConcatMLAKTest.test_large_column_stride",
+        "tests.test_concat_mla_k.ConcatMLAKTest.test_production_dimensions",
+        "tests.test_concat_mla_k.ConcatMLAKTest.test_strides_and_special_bits"
+      ],
+      "kernel_launches": 28,
+      "source_calls": 31,
+      "benchmark_results": {
+        "operator": "concat_mla_k",
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "source_sha256": "484482bdd03e429de677294ba191474ee0411fb84505743731b43b3ed4a87738",
+        "script_sha256": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8",
+        "method": "wrapper-inclusive triton.testing.do_bench, five alternating AB/BA rounds; proxy shapes",
+        "cases": [
+          {
+            "shape_label": "32x128x192",
+            "median_speedup": 1.6763140524956925,
+            "candidate_median_ms": 0.006362838784773504,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.010581194749706752,
+                "candidate_ms": 0.0063700646011819765,
+                "speedup": 1.661081231066855
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.006305445243995036,
+                "reference_ms": 0.010694400004802212,
+                "speedup": 1.696057866014613
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.01066611606868044,
+                "candidate_ms": 0.006362838784773504,
+                "speedup": 1.6763140524956925
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.006356232345945412,
+                "reference_ms": 0.010697766201111016,
+                "speedup": 1.6830357386062251
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.010611612860473895,
+                "candidate_ms": 0.006376935153981888,
+                "speedup": 1.6640615913818393
+              }
+            ]
+          },
+          {
+            "shape_label": "1024x128x192",
+            "median_speedup": 1.4572994843148739,
+            "candidate_median_ms": 0.11403007034597726,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.1660751689155147,
+                "candidate_ms": 0.11396090556745944,
+                "speedup": 1.4572994843148739
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.11423443607662036,
+                "reference_ms": 0.165833055129591,
+                "speedup": 1.4516905831999902
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.16605487758311155,
+                "candidate_ms": 0.11386240118223688,
+                "speedup": 1.4583820107336447
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.11403007034597726,
+                "reference_ms": 0.1659415323879117,
+                "speedup": 1.4552436202523642
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.166218564476607,
+                "candidate_ms": 0.11403282885921412,
+                "speedup": 1.4576378235939567
+              }
+            ]
+          }
+        ]
+      },
+      "remote_directory": "/tmp/flagos-t62-address.d9FYAR",
+      "verification_receipt_file": "artifacts/competition/batch5-development-20260910/release-t62-address/verification.json",
+      "verification_receipt_sha256": "25ab3c60c07f2c16859b1b438144f51bd61eef00f10dca8458149b9d2813c9f9",
+      "verification_input_file": "artifacts/competition/batch5-development-20260910/release-t62-address/verification-input.json",
+      "verification_input_sha256": "970324696aa7b4cd01c184f783ba44c7d4e7520be18d08b0f71f9d6effdf13b2",
+      "verification_log_file": "artifacts/competition/batch5-development-20260910/release-t62-address/verification.log",
+      "verification_log_sha256": "59bc9109ee99dfaccf0d2ff7e31dced070ba4ce6181134f61af50d473ce0c751",
+      "benchmark_file": "artifacts/competition/batch5-development-20260910/release-t62-address/benchmark.json",
+      "benchmark_sha256": "1f47b314a053788bcd84446d8babbe98b13f0d23280eb6a39b3bdff58b8c0c9b"
+    },
+    {
+      "task": 63,
+      "operator": "create_flashinfer_kv_indices",
+      "batch": 5,
+      "stage": "s0",
+      "source_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "verification_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "platform_status": "not-submitted",
+      "target_runtime_status": "target-runtime-unverified",
+      "manifest": {
+        "status": "verified-existing",
+        "operator": "create_flashinfer_kv_indices",
+        "commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+        "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/create_flashinfer_kv_indices/s0-4836fe0/create_flashinfer_kv_indices.zip",
+        "size": 2782,
+        "zip_sha256": "a72813fa2eed3767f2f79a3a6d3fa2d9a3aad07ffc1186e04d944ed6f7bf9489",
+        "canonical_zip_sha256": "a72813fa2eed3767f2f79a3a6d3fa2d9a3aad07ffc1186e04d944ed6f7bf9489",
+        "archive_members": [
+          "create_flashinfer_kv_indices.py"
+        ],
+        "members": [
+          {
+            "name": "create_flashinfer_kv_indices.py",
+            "source": "src/flaggems_sglang/ops/create_flashinfer_kv_indices.py",
+            "size": 2622,
+            "sha256": "0507dd1780757b11f1f253699c7927c63f915631f8d0b11c5ad7065fe3271688"
+          }
+        ]
+      },
+      "bound_files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/create_flashinfer_kv_indices.py": "0507dd1780757b11f1f253699c7927c63f915631f8d0b11c5ad7065fe3271688",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_create_flashinfer_kv_indices.py": "3a5324770f4298207e893d77412fb65ac51a4926887c558b87ddfaf775ae5642",
+        "tools/benchmark_batch5.py": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8"
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "tests_run": 4,
+      "cases_recorded": 25,
+      "passed_tests": [
+        "tests.test_create_flashinfer_kv_indices.KVIndicesTest.test_empty_and_all_zero_segments",
+        "tests.test_create_flashinfer_kv_indices.KVIndicesTest.test_repeated_calls_preserve_changed_base",
+        "tests.test_create_flashinfer_kv_indices.KVIndicesTest.test_segments_offsets_and_tails",
+        "tests.test_create_flashinfer_kv_indices.KVIndicesTest.test_strides_and_index_dtypes"
+      ],
+      "kernel_launches": 13,
+      "source_calls": 15,
+      "benchmark_results": {
+        "operator": "create_flashinfer_kv_indices",
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "source_sha256": "0507dd1780757b11f1f253699c7927c63f915631f8d0b11c5ad7065fe3271688",
+        "script_sha256": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8",
+        "method": "wrapper-inclusive triton.testing.do_bench, five alternating AB/BA rounds; proxy shapes",
+        "cases": [
+          {
+            "shape_label": "1x8193",
+            "median_speedup": 2.7824251651434104,
+            "candidate_median_ms": 0.012375425017785793,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.03500084196658511,
+                "candidate_ms": 0.01239236621977457,
+                "speedup": 2.824387316018313
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.012431059008330301,
+                "reference_ms": 0.03434433806425249,
+                "speedup": 2.762784573803218
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.034464000029043415,
+                "candidate_ms": 0.012375425017785793,
+                "speedup": 2.784874053174919
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.012355346591790127,
+                "reference_ms": 0.03436732860086681,
+                "speedup": 2.78157543744691
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.03426659155741964,
+                "candidate_ms": 0.012315368616806441,
+                "speedup": 2.7824251651434104
+              }
+            ]
+          },
+          {
+            "shape_label": "32x1024",
+            "median_speedup": 112.91009356120696,
+            "candidate_median_ms": 0.007565948753975905,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.8622643777302333,
+                "candidate_ms": 0.007619487214236496,
+                "speedup": 113.16567027229218
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.007565948753975905,
+                "reference_ms": 0.85066895257859,
+                "speedup": 112.43387713028899
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.8510630671368089,
+                "candidate_ms": 0.007641393556109359,
+                "speedup": 111.37537425439588
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.007482838708787195,
+                "reference_ms": 0.8487680015109834,
+                "speedup": 113.42861105829584
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.8503114428631094,
+                "candidate_ms": 0.007530871829471718,
+                "speedup": 112.91009356120696
+              }
+            ]
+          }
+        ]
+      },
+      "remote_directory": "/tmp/flagos-batch5.POXFt3/create_flashinfer_kv_indices",
+      "verification_receipt_file": "artifacts/competition/batch5-development-20260910/release/create_flashinfer_kv_indices/verification.json",
+      "verification_receipt_sha256": "7c46aa0c45e86bfb1b849edf5301d7350136e2046f278aa59608fbbc4c5b711d",
+      "verification_input_file": "artifacts/competition/batch5-development-20260910/release/create_flashinfer_kv_indices/verification-input.json",
+      "verification_input_sha256": "a1e86882e4ec70390fe2dda91279612f32433a83baf00453a7af3608c216627f",
+      "verification_log_file": "artifacts/competition/batch5-development-20260910/release/create_flashinfer_kv_indices/verification.log",
+      "verification_log_sha256": "7a4d6b0e6d83d8fe9c0d8512b9517afc3ac8e45a69536f1c8a1836c7830dcd3e",
+      "benchmark_file": "artifacts/competition/batch5-development-20260910/release/create_flashinfer_kv_indices/benchmark.json",
+      "benchmark_sha256": "607b5c74a7ddd46cedfa7a359b3da49a63ef3e6e88dbc1d908aeb08347c23f4d"
+    },
+    {
+      "task": 64,
+      "operator": "deepep_permute",
+      "batch": 5,
+      "stage": "s0",
+      "source_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "verification_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "platform_status": "not-submitted",
+      "target_runtime_status": "target-runtime-unverified",
+      "manifest": {
+        "status": "verified-existing",
+        "operator": "deepep_permute",
+        "commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+        "artifact": "/Users/bytedance/ccc/flagos/artifacts/competition/deepep_permute/s0-4836fe0/deepep_permute.zip",
+        "size": 1952,
+        "zip_sha256": "16a88406cb5775a2ba4f71351aaea11260b4d22a6ac3f13e1febcd80be3db454",
+        "canonical_zip_sha256": "16a88406cb5775a2ba4f71351aaea11260b4d22a6ac3f13e1febcd80be3db454",
+        "archive_members": [
+          "deepep_permute.py"
+        ],
+        "members": [
+          {
+            "name": "deepep_permute.py",
+            "source": "src/flaggems_sglang/ops/deepep_permute.py",
+            "size": 1820,
+            "sha256": "14339eba6cd4d0848066f025495afaf111d647aaded8f46abb91783a15226560"
+          }
+        ]
+      },
+      "bound_files": {
+        ".agents/skills/flagos-operator-race/scripts/verify_release.py": "aba81a3eb7724d9dbe3a4ef02e5e7eb56731756b3d447835a0657b7292992a4d",
+        "src/flaggems_sglang/ops/deepep_permute.py": "14339eba6cd4d0848066f025495afaf111d647aaded8f46abb91783a15226560",
+        "tests/__init__.py": "5e0f5e7983a14fac2bc33cb09d3ecf3783e589228b3787e2a01d802e5538f1f6",
+        "tests/_op_variants.py": "17fe1043158e84dff5ad4a480b251b9eee9788b8907a6f167f939046604ec0e4",
+        "tests/test_deepep_permute.py": "3232b1c38f82804e83ab4d2d0983619b07257ea4430b7921a3e9bfa6bc76f925",
+        "tools/benchmark_batch5.py": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8"
+      },
+      "environment": {
+        "python": "3.12.13 (main, Aug  5 2026, 15:44:22) [Clang 22.1.3 ]",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "cuda": "13.0",
+        "hip": null,
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "scope": "nvidia-proxy",
+        "device_vendor": "nvidia"
+      },
+      "tests_run": 5,
+      "cases_recorded": 63,
+      "passed_tests": [
+        "tests.test_deepep_permute.DeepEPPermuteTest.test_dtypes_and_cast",
+        "tests.test_deepep_permute.DeepEPPermuteTest.test_empty_and_all_invalid",
+        "tests.test_deepep_permute.DeepEPPermuteTest.test_special_values",
+        "tests.test_deepep_permute.DeepEPPermuteTest.test_strides_and_unused_topk_ids",
+        "tests.test_deepep_permute.DeepEPPermuteTest.test_topk_tiles_and_large_hidden"
+      ],
+      "kernel_launches": 34,
+      "source_calls": 37,
+      "benchmark_results": {
+        "operator": "deepep_permute",
+        "device": "NVIDIA GeForce RTX 5070 Ti",
+        "torch": "2.13.0+cu130",
+        "triton": "3.7.1",
+        "source_sha256": "14339eba6cd4d0848066f025495afaf111d647aaded8f46abb91783a15226560",
+        "script_sha256": "aa7a7c4cc9d89aecaf4bd816e7024965d00c51bed8e06bd6cc950c28ab5d7af8",
+        "method": "wrapper-inclusive triton.testing.do_bench, five alternating AB/BA rounds; proxy shapes",
+        "cases": [
+          {
+            "shape_label": "8x4x4096",
+            "median_speedup": 5.429741354069994,
+            "candidate_median_ms": 0.01011989601319293,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.05668114296587786,
+                "candidate_ms": 0.010097454483439397,
+                "speedup": 5.6134091080914805
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.010161246656887717,
+                "reference_ms": 0.05517294118180871,
+                "speedup": 5.429741354069994
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.05435024819126094,
+                "candidate_ms": 0.010138425723679604,
+                "speedup": 5.36081731745777
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.01011989601319293,
+                "reference_ms": 0.054904705844819546,
+                "speedup": 5.425421938450982
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.05471649651762343,
+                "candidate_ms": 0.009998451545834541,
+                "speedup": 5.472497042846489
+              }
+            ]
+          },
+          {
+            "shape_label": "512x4x4096",
+            "median_speedup": 3.1446398181633985,
+            "candidate_median_ms": 0.058856534047259226,
+            "samples": [
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.185468196573824,
+                "candidate_ms": 0.058824770897626874,
+                "speedup": 3.152892799133812
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.0590788745769748,
+                "reference_ms": 0.18547984227245928,
+                "speedup": 3.13952903809626
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.18493390184583017,
+                "candidate_ms": 0.058856534047259226,
+                "speedup": 3.142113358175939
+              },
+              {
+                "order": [
+                  "candidate",
+                  "reference"
+                ],
+                "candidate_ms": 0.05875411832376438,
+                "reference_ms": 0.18536094064806022,
+                "speedup": 3.154858687975358
+              },
+              {
+                "order": [
+                  "reference",
+                  "candidate"
+                ],
+                "reference_ms": 0.1854760377731138,
+                "candidate_ms": 0.05898164766018882,
+                "speedup": 3.1446398181633985
+              }
+            ]
+          }
+        ]
+      },
+      "remote_directory": "/tmp/flagos-batch5.POXFt3/deepep_permute",
+      "verification_receipt_file": "artifacts/competition/batch5-development-20260910/release/deepep_permute/verification.json",
+      "verification_receipt_sha256": "e2f4f50ae5c16620fc9f5fd4699b856ee001b7913865015c0afb8b54e7a6c6ae",
+      "verification_input_file": "artifacts/competition/batch5-development-20260910/release/deepep_permute/verification-input.json",
+      "verification_input_sha256": "fc7b2bb8e7cfcf859631404ced451ad0a984e4651669c60cbccff6cc135bba22",
+      "verification_log_file": "artifacts/competition/batch5-development-20260910/release/deepep_permute/verification.log",
+      "verification_log_sha256": "2f7fafbd7a8f246d54ec1ef454a5e159ac9cdd5074a7acacb3e995fa458e0cdb",
+      "benchmark_file": "artifacts/competition/batch5-development-20260910/release/deepep_permute/benchmark.json",
+      "benchmark_sha256": "239f776c8cc989080a7cf5ae96a1292e4bf571180129a3143a3ffbf28c1c39f3"
+    }
+  ]
+}

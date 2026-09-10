@@ -23,7 +23,7 @@ T61 排列唯一；T64 的有效目的行唯一是路由置换前提，冲突目
 未公开：完整 benchmark shape、stride 范围、部分索引 dtype、T64 数据 dtype、
 实际芯片型号/编译器。代理额外覆盖非连续输入、int32/int64 索引、空维度、
 非整除 tile、页大小全部正约数，以及 T64 fp16/bf16/fp32 和输出类型转换；
-这些是验证假设，不是隐藏测试事实。所有地址乘法在 int64 域完成。
+这些是验证假设，不是隐藏测试事实。基于张量 stride 的地址乘法在 int64 域完成。
 
 固定复用来源：SGLang commit `8014d9d062c3cc5d393596ecdf2f7009191965df`。
 T59 `python/sglang/kernels/ops/kvcache/trtllm_mha_page_table.py`；
