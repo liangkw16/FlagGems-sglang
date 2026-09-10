@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# r1 water re-roll carrier of the e12 sub-12368 team-best bytes.
 # Enflame vendor (e6: retry): route/materialize with framework index_select and a
 # regular GEMM per segment (the generic metadata-indirect kernel fails on this
 # backend).
