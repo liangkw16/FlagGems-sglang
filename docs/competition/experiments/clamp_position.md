@@ -6,10 +6,10 @@ operator: clamp_position
 batch: 5
 validity: invalid_correctness
 platform: completed(12898,7/8)
-candidate_stage: e1
+candidate_stage: e2
 team_best_stage: -
 sealed: no
-next: 提交 e1 燧原 vendor（int64 路径 lo/hi 词算法）；据逐芯结果迭代
+next: 等待 E2 逐芯回调（整型 select 消除裁决）
 updated: 2026-09-11
 ```
 
@@ -137,3 +137,32 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 残余风险：vendor 内单个 `tl.where(lo == 0, hi-1, hi)` 为 i32 select
   （燧原实证仅有 fp select——apply_token_bitmask 2.85x）；若平台仍编译失败，
   下一候选把它替换为 `.to(tl.int32)` 布尔转换或算术消除，单独隔离该变量。
+
+## 2026-09-11 E1 平台提交（2026-09-11T06:46:34+08:00）
+
+- `e1` / daily_seq `8`。nonce：`d23f23520942e9558a4fa53cf7414f0d`。
+- 外部佐证（调研）：FlagTree 燧原编译器 `enable_i64` 默认 False +
+  `gcu64-type-verifier`（GCU300）与 i64 向量 load 毒点假说吻合；
+  FlagGems PR #5345 的 int64→int32 launcher downcast 是社区既定模式。
+- 逐芯结果：见下方跟进记录。
+
+## 2026-09-11 E1 平台终态（submission 12903）
+
+- 6 芯已过（等天数回调）：沐曦 1.14983333 / 海光 1.56216667 / 昆仑 0.90983333 /
+  华为 0.20566667 / A 1.4585 / B 1.436；燧原 vendor 被选中但**仍编译失败**
+  （case 3，vendor 第 99 行 launch）。
+- 与同日 59 题 vendor（编译成功）的构造差分：E1 clamp vendor 独有 **整型
+  `tl.where(lo == 0, hi-1, hi)`（i32 select）**——燧原语料中所有 tl.where
+  通过案例均为 fp 数据（apply_token_bitmask 2.85x），整型 select 无一通过
+  先例（draft_topk1 七结构全败亦含整型 where）。E2 消除 select：wrapper 零预填
+  （clamp(min=0) 的零分支物化），内核 6 次互斥掩码 store，正判据纯 cmpi/andi
+  （`hi>=0 & lo!=0` 与借位档 `hi>=1 & lo==0`、min_int64 包绕档
+  `hi<-2147483647 & lo==0`）；50k 边界+随机值仿真 0 失配。
+
+## 2026-09-11 E2 提交（2026-09-11T07:05:54+08:00，daily_seq 12）
+
+- source commit `10e38fe242b5dc35d773d62767209f92a199e3d6`；nonce `d2527340ae6254d5c8504faf79541fe2`。
+- ZIP `e2-10e38fe`，5883 bytes，SHA-256 `503ea8473f5fa1b10f62c64ce803c0325580b7f86529ee5da2722ca97114c527`。
+- 回执 `artifacts/competition/batch5-enflame-fix-20260911/release-r3/clamp_position/verification.json`，
+  SHA-256 `c4acb56402bf7e061b2beadd83a2f03c8769f66da1de21b7305c57a3505a3f58`；
+  3 方法 0 失败，generic 22 + enflame 22 次 launch。

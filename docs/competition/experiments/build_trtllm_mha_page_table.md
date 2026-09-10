@@ -6,10 +6,10 @@ operator: build_trtllm_mha_page_table
 batch: 5
 validity: invalid_correctness
 platform: completed(12896,7/8)
-candidate_stage: e2
+candidate_stage: e3
 team_best_stage: -
 sealed: no
-next: 提交 e2 燧原 vendor（去 i64 向量 load/xori/select/trunci）；据逐芯结果迭代
+next: 等待 E3 逐芯回调（燧原数值修复裁决）
 updated: 2026-09-11
 ```
 
@@ -140,3 +140,34 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   张量元素量级 < 2^31 取 lo 词（reference `.to(int32)` 亦为 int32 语义宽度），
   测试含 -4097 负 sentinel 通过；③若平台 59 用例 pool 实为 int32（则根因不在
   i64 load），E2 同时消除的 xori/select/trunci 仍覆盖其余嫌疑。
+
+## 2026-09-11 E2 平台提交（2026-09-11T06:44:10+08:00）
+
+- `e2` / daily_seq `7`。上传与正式 POST 各一次，无自动重试。
+- nonce：`e9a2944ca8fc4fb02015173fa13ca5e8`。
+- 外部佐证（调研）：FlagTree 燧原后端 `enable_i64: bool = False` 默认关闭，
+  GCU300 gcuir 管线第一步 `gcu64-type-verifier` 对含 i64 的 IR 直接 PassManager
+  失败；FlagGems PR #5345 对 int64 slot_mapping 的既定修复即 launcher 侧
+  int64→int32 downcast。与本轮 TTIR 差分结论（i64 向量数据 load 为毒点）一致。
+- 逐芯结果：见下方跟进记录。
+
+## 2026-09-11 E2 平台终态（submission 12902）
+
+- 7/8：天数 67.97675 / 沐曦 12.913 / 海光 27.3865 / 昆仑 2.16975 / 华为 9.72425 /
+  A 22.7605 / B 20.05925（七芯读数与 E1 一致，generic 字节不变的水位复现）。
+- **燧原 vendor 被选中（selected_file=`build_trtllm_mha_page_table_enflame.py`）
+  并首次通过 make_gcuir 编译**——i64 向量数据 load 消除即解除编译阻断的假设
+  得到平台实证。但数值失败：case 0 起断言 `82/128 (64.1%)` 元素失配
+  （最大绝对差 63345），GCU 专属 lowering 数值问题，代理 NVIDIA 同字节全绿。
+- 归因与下一步：E2 内核含两次同址掩码 store（active 计算值 / inactive 复制旧值）
+  与 `slot >> SHIFT`；kv_indices（121x 通过）是单 gather + 单掩码 store 形态。
+  E3 改为 wrapper `page_table.clone()` 预填（与 reference 完全一致的语义）+
+  内核单 active store，形态与 kv_images 完全对齐。
+
+## 2026-09-11 E3 提交（2026-09-11T07:03:25+08:00，daily_seq 11）
+
+- source commit `10e38fe242b5dc35d773d62767209f92a199e3d6`；nonce `d096a0a75c019134a5092260605a12fa`。
+- ZIP `e3-10e38fe`，8090 bytes，SHA-256 `0c1af160511ba9b7c5bc6c52371d04db41baa9e5bede9a7908ab4f74b95ed6bc`。
+- 回执 `artifacts/competition/batch5-enflame-fix-20260911/release-r3/build_trtllm_mha_page_table/verification.json`，
+  SHA-256 `880db0f4e2d327b6575c83ac954d27cde37d47376139231a6b667516308d5c88`；
+  4 方法 0 失败，generic 26 + enflame 26 次 launch。

@@ -39,9 +39,9 @@
 | 56 | l2norm | valid | 8/8(e3,11062,3.20691667x新team best) | e3 3.20691667x | no | 批4收盘;额度用尽.e9w 3.16114/e9x(12659)3.17715;燧原1.2015/1.20675两次同水位,未撞慢窗;TB保持e3 3.20692;排名11/14,上邻仅+0.035 | 2026-09-10 | [l2norm](l2norm.md) |
 | 57 | log_scaling_tau | valid | 8/8(e2,10747,2.36478125x首次有效) | e11 2.50278125x | no | 批4收盘;额度用尽.e9w(12649)2.47272燧原0.546;TB保持e11 2.50278;排名9/15,上邻仅+0.0396 | 2026-09-10 | [log_scaling_tau](log_scaling_tau.md) |
 | 58 | w8a8_block_int8_matmul | valid | e6r/11210八芯valid,258.04890833x team best(排名3);e7/11228 valid 253.07(B已修复) | e9r2 266.20655x | no | e7字节(e6r组级+amd逐块B)为最优组合,均值差=华为窗口三连下行;水位回常态时以e7字节重掷(新ZIP身份,≤2次) | 2026-09-08 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
-| 59 | build_trtllm_mha_page_table | invalid_correctness | completed(12896,7/8) | - | no | 提交 e2 燧原 vendor（去 i64 向量 load/xori/select/trunci）；据逐芯结果迭代 | 2026-09-11 | [build_trtllm_mha_page_table](build_trtllm_mha_page_table.md) |
-| 60 | clamp_position | invalid_correctness | completed(12898,7/8) | - | no | 提交 e1 燧原 vendor（int64 路径 lo/hi 词算法）；据逐芯结果迭代 | 2026-09-11 | [clamp_position](clamp_position.md) |
-| 61 | compute_src2dst | invalid_correctness | completed(12900,7/8) | - | no | 提交 e1 燧原 vendor（ids 取小端 lo 词，全 int32 scatter）；据逐芯结果迭代 | 2026-09-11 | [compute_src2dst](compute_src2dst.md) |
+| 59 | build_trtllm_mha_page_table | invalid_correctness | completed(12896,7/8) | - | no | 等待 E3 逐芯回调（燧原数值修复裁决） | 2026-09-11 | [build_trtllm_mha_page_table](build_trtllm_mha_page_table.md) |
+| 60 | clamp_position | invalid_correctness | completed(12898,7/8) | - | no | 等待 E2 逐芯回调（整型 select 消除裁决） | 2026-09-11 | [clamp_position](clamp_position.md) |
+| 61 | compute_src2dst | invalid_correctness | completed(12900,7/8) | - | no | 等待 E2 逐芯回调（i32 scatter 索引裁决） | 2026-09-11 | [compute_src2dst](compute_src2dst.md) |
 | 62 | concat_mla_k | invalid_correctness | completed(12897,7/8) | - | no | 提交 s0r 崩溃族重掷载体（内核语义与 s0 相同）；据逐芯结果迭代 | 2026-09-11 | [concat_mla_k](concat_mla_k.md) |
 | 63 | create_flashinfer_kv_indices | valid | completed(12894,8/8) | e1 121.8698125x | no | 保留 E1；后续优先定位昆仑和 wrapper 耗时 | 2026-09-11 | [create_flashinfer_kv_indices](create_flashinfer_kv_indices.md) |
 | 64 | deepep_permute | valid | completed(12895,8/8) | e1 6.7478x | no | 保留 E1；后续优先改善昆仑 0.2538x 的余量 | 2026-09-11 | [deepep_permute](deepep_permute.md) |

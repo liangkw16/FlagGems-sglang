@@ -6,10 +6,10 @@ operator: compute_src2dst
 batch: 5
 validity: invalid_correctness
 platform: completed(12900,7/8)
-candidate_stage: e1
+candidate_stage: e2
 team_best_stage: -
 sealed: no
-next: 提交 e1 燧原 vendor（ids 取小端 lo 词，全 int32 scatter）；据逐芯结果迭代
+next: 等待 E2 逐芯回调（i32 scatter 索引裁决）
 updated: 2026-09-11
 ```
 
@@ -131,3 +131,31 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   generic 19 次 + enflame vendor 19 次真实 kernel launch；代理 benchmark
   vendor≈generic+20%（仅燧原使用 vendor）。
 - 燧原目标 runtime 仍未验证（target-runtime-unverified）：GCU 编译门由平台裁决。
+
+## 2026-09-11 E1 平台提交（2026-09-11T06:49:00+08:00）
+
+- `e1` / daily_seq `9`。nonce：`a0572c3f2b737444bfba02a88cdccbfc`。
+- 外部佐证（调研）：FlagTree 燧原后端 i64 默认拒绝（enable_i64=False /
+  gcu64-type-verifier）；FlagGems enflame gcu300 的 index_put 等 190 个
+  override 普遍做 int64→int32 索引 downcast（含 int32 溢出边界测试），
+  lo 词 scatter 与社区方向一致。
+- 逐芯结果：见下方跟进记录。
+
+## 2026-09-11 E1 平台终态（submission 12904）
+
+- 7/8：天数 3.0042 / 沐曦 1.1592 / 海光 1.7732 / 昆仑 1.3104 / 华为 1.5536 /
+  A 1.6932 / B 1.7976（七芯与 S0 一致）。燧原 vendor 被选中但**仍编译失败**
+  （vendor 第 64 行 launch，全部 case）。
+- 与同日 59 题 vendor（编译成功）差分：E1 src2dst vendor 独有
+  **load 值 `src.to(tl.int64)` 扩位后作 store 索引**——燧原通过内核的 store
+  偏移全部来自 arange/标量 extsi（kv_indices），或保持 i32 算术（decode_attention
+  经 load 的 int32 pages 寻址）。E2 把 scatter 索引保持纯 i32（`out + src`，
+  clamp int32 case 燧原已过的 store 形态），load 寻址保持 i64 range 数学。
+
+## 2026-09-11 E2 提交（2026-09-11T07:08:16+08:00，daily_seq 13）
+
+- source commit `10e38fe242b5dc35d773d62767209f92a199e3d6`；nonce `ed0afee41889dbe0820d3edb73d6623e`。
+- ZIP `e2-10e38fe`，4163 bytes，SHA-256 `04191509d38cfb6bd3ee9806a92ab42abcafc3ef28ab83bc4cfbe39da1ca2662`。
+- 回执 `artifacts/competition/batch5-enflame-fix-20260911/release-r3/compute_src2dst/verification.json`，
+  SHA-256 `e25d95ef7f7119249b7142ee090a4abd5d4f1c7ac61e9377d7e74131344fe05d`；
+  3 方法 0 失败，generic 19 + enflame 19 次 launch。
