@@ -1,4 +1,5 @@
-# r4 water re-roll carrier (2026-09-10, second evening sample) of e3 sub 11062 team-best bytes:
+# r5 final water re-roll carrier (2026-09-10, last shot of batch 4) of e3
+# sub 11062 team-best bytes:
 # executable code is byte-identical to e3/e3r/e3r2, only this comment differs
 # so the package earns a fresh ZIP SHA-256 and can sample the evaluator water
 # level again. The task leader's 72.31 average is an enflame 551 jackpot read
