@@ -4,14 +4,17 @@
 task: 64
 operator: deepep_permute
 batch: 5
-validity: candidate-ready
-platform: not-submitted
+validity: valid
+platform: completed(12895,8/8)
 candidate_stage: e1
-team_best_stage: -
+team_best_stage: e1
+team_best_speedup: 6.7478
 sealed: no
-next: E1 已验签；实时 preflight 后首次提交
+next: 保留 E1；后续优先改善昆仑 0.2538x 的余量
 updated: 2026-09-11
 ```
+
+> 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
 
 ## 契约与范围
 
@@ -75,3 +78,26 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 日志：`artifacts/competition/batch5-optimize-20260911/release/deepep_permute/verification.log`；SHA-256 `274fe4cb929c2c7bf910f84d533bb083e2d58caefdf702a43240ddfaed206c09`。
 - 完整 release：5 个测试方法 / 64 条记录 / 35 次 kernel launch，全通过；NVIDIA 代理范围。
 - 优化和复现见[本轮报告](../optimization-batch5-20260911.md)；[完整证据](../data/batch5-optimization-20260911.json)，SHA-256 `87a560dd86ab7e9dfb9607f8f05a007060d48b3aab876b165bfc0fec591f77db`。
+
+## 2026-09-11 首次平台提交（2026-09-11T03:39:24.977852+08:00）
+
+- `e1` / submission `12895` / daily_seq `2`，提交于 `2026-09-11T03:27:13+08:00`。每候选上传与正式 POST 各一次，无自动重试。
+- nonce：`08f1a53b02603b388fdec2dbcaa75c1d`；上传 URL SHA-256：`5aeefb4e06b920d458d9d87323a9b8b95beb5db13a469e2fbf776e5919ad8cbc`。
+- 远端 ZIP 回读 verified，1970 bytes，SHA-256 `b33968d2510443859fc50f02926127bc85ba002425a4bf42228e4d812bbb32b1`，与本地候选逐字节一致。
+- 平台 `completed` / `valid`；正确性通过 8/8，完成 8/8；6.7478x；第 3/4 名。
+- 当次 status 额度：24/30，已用 6；observed_at `2026-09-11T03:39:24.977852+08:00`。排名查询时间 `2026-09-11T03:39:41.445754+08:00`。
+
+| 芯片 | 状态 | 正确性 | speedup |
+| --- | --- | --- | ---: |
+| tianshu | completed | 通过 | 16.1606 |
+| muxi | completed | 通过 | 5.5116 |
+| enflame | completed | 通过 | 2.5326 |
+| haiguang | completed | 通过 | 10.3318 |
+| kunlunxin | completed | 通过 | 0.2538 |
+| huawei | completed | 通过 | 3.7614 |
+| card_a | completed | 通过 | 8.4868 |
+| card_b | completed | 通过 | 6.9438 |
+
+下一步：保留 E1；后续优先改善昆仑 0.2538x 的余量。
+
+[提交结果证据](../data/batch5-submissions-20260911.json)，SHA-256 `63418b87e9249bef72751df2a1778c52e6d679a5d313ecf18d8ed64b96c175dd`；原始 status `artifacts/competition/batch5-submit-20260911/64-status-033924.json`，SHA-256 `4dbc91d328aaee717d6ec1a70041d1d9562e504ed39f8ae90979ea6abe302b3d`。

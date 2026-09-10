@@ -1,0 +1,871 @@
+{
+  "race": "782kzq4m",
+  "season": 2,
+  "batch": 5,
+  "team": "SoulCoder",
+  "observed_at": "2026-09-11T03:42:29.113201+08:00",
+  "quota": {
+    "remaining": 24,
+    "total": 30,
+    "used": 6
+  },
+  "submission_count": 6,
+  "upload_count": 6,
+  "automatic_retries": 0,
+  "remote_zip_verified": 6,
+  "rank_observed_at": "2026-09-11T03:39:41.445754+08:00",
+  "records": [
+    {
+      "task": 59,
+      "operator": "build_trtllm_mha_page_table",
+      "stage": "e1",
+      "source_commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+      "verification_commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+      "zip_sha256": "432e1896094351992b41ce3dba289ec89780f200bbbb75100f31e18920b9fb9a",
+      "zip_members": [
+        "build_trtllm_mha_page_table.py"
+      ],
+      "nonce": "337996912a6d31a71419fb5bfb4b4701",
+      "submission_id": 12896,
+      "daily_seq": 3,
+      "created_at": "2026-09-11T03:29:45",
+      "file_url_sha256": "de88f9887a2bc01c2a7944cffa7bbf5df537d3bb5470a3fda12065d3fbff0533",
+      "remote_verification": {
+        "expected_sha256": "432e1896094351992b41ce3dba289ec89780f200bbbb75100f31e18920b9fb9a",
+        "expected_size": 2830,
+        "sha256": "432e1896094351992b41ce3dba289ec89780f200bbbb75100f31e18920b9fb9a",
+        "size": 2830,
+        "status": "verified"
+      },
+      "observed_at": "2026-09-11T03:39:06.765926+08:00",
+      "quota": {
+        "remaining": 24,
+        "total": 30,
+        "used": 6
+      },
+      "status": "completed",
+      "validity": "invalid_correctness",
+      "passed_gpu_count": 7,
+      "terminal_gpu_count": 8,
+      "expected_gpu_count": 8,
+      "average_speedup": null,
+      "rank": null,
+      "ranked_teams": 2,
+      "gpu_results": [
+        {
+          "gpu": "tianshu",
+          "status": "completed",
+          "selected_file": "build_trtllm_mha_page_table.py",
+          "passed": true,
+          "speedup": 70.034,
+          "execution_time_ms": 28163,
+          "error": null
+        },
+        {
+          "gpu": "muxi",
+          "status": "completed",
+          "selected_file": "build_trtllm_mha_page_table.py",
+          "passed": true,
+          "speedup": 13.1595,
+          "execution_time_ms": 26532,
+          "error": null
+        },
+        {
+          "gpu": "enflame",
+          "status": "completed",
+          "selected_file": "build_trtllm_mha_page_table.py",
+          "passed": false,
+          "speedup": null,
+          "execution_time_ms": 6750,
+          "error": null
+        },
+        {
+          "gpu": "haiguang",
+          "status": "completed",
+          "selected_file": "build_trtllm_mha_page_table.py",
+          "passed": true,
+          "speedup": 27.05625,
+          "execution_time_ms": 8472,
+          "error": null
+        },
+        {
+          "gpu": "kunlunxin",
+          "status": "completed",
+          "selected_file": "build_trtllm_mha_page_table.py",
+          "passed": true,
+          "speedup": 2.1595,
+          "execution_time_ms": 9708,
+          "error": null
+        },
+        {
+          "gpu": "huawei",
+          "status": "completed",
+          "selected_file": "build_trtllm_mha_page_table.py",
+          "passed": true,
+          "speedup": 11.03625,
+          "execution_time_ms": 41636,
+          "error": null
+        },
+        {
+          "gpu": "card_a",
+          "status": "completed",
+          "selected_file": "build_trtllm_mha_page_table.py",
+          "passed": true,
+          "speedup": 22.861,
+          "execution_time_ms": 17389,
+          "error": null
+        },
+        {
+          "gpu": "card_b",
+          "status": "completed",
+          "selected_file": "build_trtllm_mha_page_table.py",
+          "passed": true,
+          "speedup": 19.973,
+          "execution_time_ms": 14379,
+          "error": null
+        }
+      ],
+      "preflight_file": "artifacts/competition/batch5-submit-20260911/59-preflight-337996912a6d31a71419fb5bfb4b4701.json",
+      "submit_file": "artifacts/competition/batch5-submit-20260911/59-submit-337996912a6d31a71419fb5bfb4b4701.json",
+      "submit_sha256": "00063434f3d46b6e402d5649c9e55ead954295bea945bb585c6e8a631014fd1a",
+      "status_file": "artifacts/competition/batch5-submit-20260911/59-status-033906.json",
+      "status_sha256": "a0f94d92c6db59dc52b9b183207144c1647d8d6fccfaa197de7d5b65aacf6061",
+      "failure": {
+        "gpu": "enflame",
+        "selected_file": "build_trtllm_mha_page_table.py",
+        "classification": "target compiler failure; triggering construct unresolved",
+        "artifact": "artifacts/competition/batch5-submit-20260911/59-enflame-failure.json",
+        "sha256": "e282727d3307c8722b0c0280d9ef51e379556102d5966942f61e20cdb56a08e2",
+        "errors": [],
+        "failed_cases": [
+          {
+            "test_name": "test_build_trtllm_mha_page_table[0]",
+            "params": {
+              "case_idx": 0
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          },
+          {
+            "test_name": "test_build_trtllm_mha_page_table[1]",
+            "params": {
+              "case_idx": 1
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          },
+          {
+            "test_name": "test_build_trtllm_mha_page_table[2]",
+            "params": {
+              "case_idx": 2
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          },
+          {
+            "test_name": "test_build_trtllm_mha_page_table[3]",
+            "params": {
+              "case_idx": 3
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          },
+          {
+            "test_name": "test_build_trtllm_mha_page_table[4]",
+            "params": {
+              "case_idx": 4
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          },
+          {
+            "test_name": "test_build_trtllm_mha_page_table[5]",
+            "params": {
+              "case_idx": 5
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          },
+          {
+            "test_name": "test_build_trtllm_mha_page_table[6]",
+            "params": {
+              "case_idx": 6
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          },
+          {
+            "test_name": "test_build_trtllm_mha_page_table[7]",
+            "params": {
+              "case_idx": 7
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          }
+        ]
+      }
+    },
+    {
+      "task": 60,
+      "operator": "clamp_position",
+      "stage": "s0",
+      "source_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "verification_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "zip_sha256": "506af23ed82335d1a93965436545c7c4bd646b09b5f589c642fcfadecc1e7209",
+      "zip_members": [
+        "clamp_position.py"
+      ],
+      "nonce": "1680e98c76e2acab2eb754d0c4d564e1",
+      "submission_id": 12898,
+      "daily_seq": 5,
+      "created_at": "2026-09-11T03:34:56",
+      "file_url_sha256": "a8070d2094812cbe8226aedf736656b1c93a0b0ab632d9040271d3390ab19345",
+      "remote_verification": {
+        "expected_sha256": "506af23ed82335d1a93965436545c7c4bd646b09b5f589c642fcfadecc1e7209",
+        "expected_size": 1085,
+        "sha256": "506af23ed82335d1a93965436545c7c4bd646b09b5f589c642fcfadecc1e7209",
+        "size": 1085,
+        "status": "verified"
+      },
+      "observed_at": "2026-09-11T03:39:10.201484+08:00",
+      "quota": {
+        "remaining": 24,
+        "total": 30,
+        "used": 6
+      },
+      "status": "completed",
+      "validity": "invalid_correctness",
+      "passed_gpu_count": 7,
+      "terminal_gpu_count": 8,
+      "expected_gpu_count": 8,
+      "average_speedup": null,
+      "rank": null,
+      "ranked_teams": 3,
+      "gpu_results": [
+        {
+          "gpu": "tianshu",
+          "status": "completed",
+          "selected_file": "clamp_position.py",
+          "passed": true,
+          "speedup": 1.73733333,
+          "execution_time_ms": 121566,
+          "error": null
+        },
+        {
+          "gpu": "muxi",
+          "status": "completed",
+          "selected_file": "clamp_position.py",
+          "passed": true,
+          "speedup": 1.1535,
+          "execution_time_ms": 26393,
+          "error": null
+        },
+        {
+          "gpu": "enflame",
+          "status": "completed",
+          "selected_file": "clamp_position.py",
+          "passed": false,
+          "speedup": null,
+          "execution_time_ms": 7342,
+          "error": null
+        },
+        {
+          "gpu": "haiguang",
+          "status": "completed",
+          "selected_file": "clamp_position.py",
+          "passed": true,
+          "speedup": 1.56733333,
+          "execution_time_ms": 6491,
+          "error": null
+        },
+        {
+          "gpu": "kunlunxin",
+          "status": "completed",
+          "selected_file": "clamp_position.py",
+          "passed": true,
+          "speedup": 0.9185,
+          "execution_time_ms": 9585,
+          "error": null
+        },
+        {
+          "gpu": "huawei",
+          "status": "completed",
+          "selected_file": "clamp_position.py",
+          "passed": true,
+          "speedup": 0.4135,
+          "execution_time_ms": 33853,
+          "error": null
+        },
+        {
+          "gpu": "card_a",
+          "status": "completed",
+          "selected_file": "clamp_position.py",
+          "passed": true,
+          "speedup": 1.38183333,
+          "execution_time_ms": 15072,
+          "error": null
+        },
+        {
+          "gpu": "card_b",
+          "status": "completed",
+          "selected_file": "clamp_position.py",
+          "passed": true,
+          "speedup": 1.44933333,
+          "execution_time_ms": 14143,
+          "error": null
+        }
+      ],
+      "preflight_file": "artifacts/competition/batch5-submit-20260911/60-preflight-1680e98c76e2acab2eb754d0c4d564e1.json",
+      "submit_file": "artifacts/competition/batch5-submit-20260911/60-submit-1680e98c76e2acab2eb754d0c4d564e1.json",
+      "submit_sha256": "4455de86149de7d5f850b7a9eca7a91c8af119b7b78c1c0f18758f5a3858fbd1",
+      "status_file": "artifacts/competition/batch5-submit-20260911/60-status-033910.json",
+      "status_sha256": "e249722ab8c475509882b7146132045ea0d03ac294022d2fdf7e0a429d3982c8",
+      "failure": {
+        "gpu": "enflame",
+        "selected_file": "clamp_position.py",
+        "classification": "target compiler failure; triggering construct unresolved",
+        "artifact": "artifacts/competition/batch5-submit-20260911/60-enflame-failure.json",
+        "sha256": "2a647cce72ff2f293da0adca92a6a5567fa3b37b4dcad45ebfbe3e4dc52d3c42",
+        "errors": [],
+        "failed_cases": [
+          {
+            "test_name": "test_clamp_position[3]",
+            "params": {
+              "case_idx": 3
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          }
+        ]
+      }
+    },
+    {
+      "task": 61,
+      "operator": "compute_src2dst",
+      "stage": "s0",
+      "source_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "verification_commit": "4836fe0378d6290cbcaa91958693e13ed1acdf3e",
+      "zip_sha256": "607bc6f0bbfedcfe9783a7dd2dc0af606c0ed717a64094a10aae58f33909ea8e",
+      "zip_members": [
+        "compute_src2dst.py"
+      ],
+      "nonce": "0349d4a4f3aa4521ef8ae8bdb8a1b0bb",
+      "submission_id": 12900,
+      "daily_seq": 6,
+      "created_at": "2026-09-11T03:37:33",
+      "file_url_sha256": "87fa9861195f0f4bcf841586f744a6bb159832bd9778a86de7cb9e1629e978fc",
+      "remote_verification": {
+        "expected_sha256": "607bc6f0bbfedcfe9783a7dd2dc0af606c0ed717a64094a10aae58f33909ea8e",
+        "expected_size": 1198,
+        "sha256": "607bc6f0bbfedcfe9783a7dd2dc0af606c0ed717a64094a10aae58f33909ea8e",
+        "size": 1198,
+        "status": "verified"
+      },
+      "observed_at": "2026-09-11T03:39:14.099324+08:00",
+      "quota": {
+        "remaining": 24,
+        "total": 30,
+        "used": 6
+      },
+      "status": "completed",
+      "validity": "invalid_correctness",
+      "passed_gpu_count": 7,
+      "terminal_gpu_count": 8,
+      "expected_gpu_count": 8,
+      "average_speedup": null,
+      "rank": null,
+      "ranked_teams": 3,
+      "gpu_results": [
+        {
+          "gpu": "tianshu",
+          "status": "completed",
+          "selected_file": "compute_src2dst.py",
+          "passed": true,
+          "speedup": 3.023,
+          "execution_time_ms": 68479,
+          "error": null
+        },
+        {
+          "gpu": "muxi",
+          "status": "completed",
+          "selected_file": "compute_src2dst.py",
+          "passed": true,
+          "speedup": 1.1614,
+          "execution_time_ms": 25822,
+          "error": null
+        },
+        {
+          "gpu": "enflame",
+          "status": "completed",
+          "selected_file": "compute_src2dst.py",
+          "passed": false,
+          "speedup": null,
+          "execution_time_ms": 6636,
+          "error": null
+        },
+        {
+          "gpu": "haiguang",
+          "status": "completed",
+          "selected_file": "compute_src2dst.py",
+          "passed": true,
+          "speedup": 1.8188,
+          "execution_time_ms": 7270,
+          "error": null
+        },
+        {
+          "gpu": "kunlunxin",
+          "status": "completed",
+          "selected_file": "compute_src2dst.py",
+          "passed": true,
+          "speedup": 1.2898,
+          "execution_time_ms": 9288,
+          "error": null
+        },
+        {
+          "gpu": "huawei",
+          "status": "completed",
+          "selected_file": "compute_src2dst.py",
+          "passed": true,
+          "speedup": 1.6266,
+          "execution_time_ms": 31382,
+          "error": null
+        },
+        {
+          "gpu": "card_a",
+          "status": "completed",
+          "selected_file": "compute_src2dst.py",
+          "passed": true,
+          "speedup": 1.6388,
+          "execution_time_ms": 14117,
+          "error": null
+        },
+        {
+          "gpu": "card_b",
+          "status": "completed",
+          "selected_file": "compute_src2dst.py",
+          "passed": true,
+          "speedup": 1.782,
+          "execution_time_ms": 14008,
+          "error": null
+        }
+      ],
+      "preflight_file": "artifacts/competition/batch5-submit-20260911/61-preflight-0349d4a4f3aa4521ef8ae8bdb8a1b0bb.json",
+      "submit_file": "artifacts/competition/batch5-submit-20260911/61-submit-0349d4a4f3aa4521ef8ae8bdb8a1b0bb.json",
+      "submit_sha256": "658827a968697d2877a869598ec1bb5c11e678d3092783efa2890172d1dca13e",
+      "status_file": "artifacts/competition/batch5-submit-20260911/61-status-033914.json",
+      "status_sha256": "a5efad83ff8f3604bbdd85e881b5a0647c052894d92794ad6d60f1e8b5b006bd",
+      "failure": {
+        "gpu": "enflame",
+        "selected_file": "compute_src2dst.py",
+        "classification": "target compiler failure; triggering construct unresolved",
+        "artifact": "artifacts/competition/batch5-submit-20260911/61-enflame-failure.json",
+        "sha256": "a839689fc76a4d0157d90ba7651c74260df80ff4383a6f6d2a385d9a05ac0409",
+        "errors": [],
+        "failed_cases": [
+          {
+            "test_name": "test_compute_src2dst[0]",
+            "params": {
+              "case_idx": 0
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          },
+          {
+            "test_name": "test_compute_src2dst[1]",
+            "params": {
+              "case_idx": 1
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          },
+          {
+            "test_name": "test_compute_src2dst[2]",
+            "params": {
+              "case_idx": 2
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          },
+          {
+            "test_name": "test_compute_src2dst[3]",
+            "params": {
+              "case_idx": 3
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          },
+          {
+            "test_name": "test_compute_src2dst[4]",
+            "params": {
+              "case_idx": 4
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          },
+          {
+            "test_name": "test_compute_src2dst[5]",
+            "params": {
+              "case_idx": 5
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          },
+          {
+            "test_name": "test_compute_src2dst[6]",
+            "params": {
+              "case_idx": 6
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          },
+          {
+            "test_name": "test_compute_src2dst[7]",
+            "params": {
+              "case_idx": 7
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          },
+          {
+            "test_name": "test_compute_src2dst[8]",
+            "params": {
+              "case_idx": 8
+            },
+            "error": "RuntimeError: Pipeline run failed: PassManager execution failed"
+          }
+        ]
+      }
+    },
+    {
+      "task": 62,
+      "operator": "concat_mla_k",
+      "stage": "s0",
+      "source_commit": "7b53fdeb58878f8eeaf08eaabbde8bb38015e523",
+      "verification_commit": "7b53fdeb58878f8eeaf08eaabbde8bb38015e523",
+      "zip_sha256": "bb3d1f2f89cfe0a5b19c31e4f2ac9b66ee5ddc4c8a93d6f399b5c55c0f46396e",
+      "zip_members": [
+        "concat_mla_k.py"
+      ],
+      "nonce": "18c5bff9bf55203d968c224b501fe54a",
+      "submission_id": 12897,
+      "daily_seq": 4,
+      "created_at": "2026-09-11T03:32:09",
+      "file_url_sha256": "011f6a1e8fcc0f0da62d0bb57577d40c62b8384bad25d47923041c7c50a1ddc5",
+      "remote_verification": {
+        "expected_sha256": "bb3d1f2f89cfe0a5b19c31e4f2ac9b66ee5ddc4c8a93d6f399b5c55c0f46396e",
+        "expected_size": 2422,
+        "sha256": "bb3d1f2f89cfe0a5b19c31e4f2ac9b66ee5ddc4c8a93d6f399b5c55c0f46396e",
+        "size": 2422,
+        "status": "verified"
+      },
+      "observed_at": "2026-09-11T03:42:29.113201+08:00",
+      "quota": {
+        "remaining": 24,
+        "total": 30,
+        "used": 6
+      },
+      "status": "evaluating",
+      "validity": "pending",
+      "passed_gpu_count": 7,
+      "terminal_gpu_count": 7,
+      "expected_gpu_count": 8,
+      "average_speedup": null,
+      "rank": null,
+      "ranked_teams": 2,
+      "gpu_results": [
+        {
+          "gpu": "tianshu",
+          "status": "completed",
+          "selected_file": "concat_mla_k.py",
+          "passed": true,
+          "speedup": 2.6114,
+          "execution_time_ms": 67961,
+          "error": null
+        },
+        {
+          "gpu": "muxi",
+          "status": "completed",
+          "selected_file": "concat_mla_k.py",
+          "passed": true,
+          "speedup": 0.9836,
+          "execution_time_ms": 25696,
+          "error": null
+        },
+        {
+          "gpu": "enflame",
+          "status": "completed",
+          "selected_file": "concat_mla_k.py",
+          "passed": true,
+          "speedup": 0.109,
+          "execution_time_ms": 9979,
+          "error": null
+        },
+        {
+          "gpu": "haiguang",
+          "status": "completed",
+          "selected_file": "concat_mla_k.py",
+          "passed": true,
+          "speedup": 3.1072,
+          "execution_time_ms": 6971,
+          "error": null
+        },
+        {
+          "gpu": "kunlunxin",
+          "status": "waiting_callback",
+          "selected_file": "concat_mla_k.py",
+          "passed": null,
+          "speedup": null,
+          "execution_time_ms": null,
+          "error": null
+        },
+        {
+          "gpu": "huawei",
+          "status": "completed",
+          "selected_file": "concat_mla_k.py",
+          "passed": true,
+          "speedup": 0.2188,
+          "execution_time_ms": 27527,
+          "error": null
+        },
+        {
+          "gpu": "card_a",
+          "status": "completed",
+          "selected_file": "concat_mla_k.py",
+          "passed": true,
+          "speedup": 1.7242,
+          "execution_time_ms": 14477,
+          "error": null
+        },
+        {
+          "gpu": "card_b",
+          "status": "completed",
+          "selected_file": "concat_mla_k.py",
+          "passed": true,
+          "speedup": 1.8166,
+          "execution_time_ms": 14037,
+          "error": null
+        }
+      ],
+      "preflight_file": "artifacts/competition/batch5-submit-20260911/62-preflight-18c5bff9bf55203d968c224b501fe54a.json",
+      "submit_file": "artifacts/competition/batch5-submit-20260911/62-submit-18c5bff9bf55203d968c224b501fe54a.json",
+      "submit_sha256": "95a5c07eed7aa412ed7bf0c3f364c7858787c2382c3e49773182eb56d1ac316a",
+      "status_file": "artifacts/competition/batch5-submit-20260911/62-status-034229.json",
+      "status_sha256": "6a47dc86e76134e17c1e2754ca9db72f2bf8069fa4775aa98b556fdbd1a70359"
+    },
+    {
+      "task": 63,
+      "operator": "create_flashinfer_kv_indices",
+      "stage": "e1",
+      "source_commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+      "verification_commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+      "zip_sha256": "6d9d37ebf39521f46697f8dc1b725c4bd6ad18e21c3fe7b6bc22e48bdb6c0ac8",
+      "zip_members": [
+        "create_flashinfer_kv_indices.py"
+      ],
+      "nonce": "354996b527cb2509ad98954ec2c8a424",
+      "submission_id": 12894,
+      "daily_seq": 1,
+      "created_at": "2026-09-11T03:24:44",
+      "file_url_sha256": "7169d86d386524a1ee8791689f55018b74d9eb46b7bcebc4424cd0166c5c49ad",
+      "remote_verification": {
+        "expected_sha256": "6d9d37ebf39521f46697f8dc1b725c4bd6ad18e21c3fe7b6bc22e48bdb6c0ac8",
+        "expected_size": 2992,
+        "sha256": "6d9d37ebf39521f46697f8dc1b725c4bd6ad18e21c3fe7b6bc22e48bdb6c0ac8",
+        "size": 2992,
+        "status": "verified"
+      },
+      "observed_at": "2026-09-11T03:39:21.318114+08:00",
+      "quota": {
+        "remaining": 24,
+        "total": 30,
+        "used": 6
+      },
+      "status": "completed",
+      "validity": "valid",
+      "passed_gpu_count": 8,
+      "terminal_gpu_count": 8,
+      "expected_gpu_count": 8,
+      "average_speedup": 121.8698125,
+      "rank": 5,
+      "ranked_teams": 5,
+      "gpu_results": [
+        {
+          "gpu": "tianshu",
+          "status": "completed",
+          "selected_file": "create_flashinfer_kv_indices.py",
+          "passed": true,
+          "speedup": 285.797,
+          "execution_time_ms": 63648,
+          "error": null
+        },
+        {
+          "gpu": "muxi",
+          "status": "completed",
+          "selected_file": "create_flashinfer_kv_indices.py",
+          "passed": true,
+          "speedup": 60.2795,
+          "execution_time_ms": 26594,
+          "error": null
+        },
+        {
+          "gpu": "enflame",
+          "status": "completed",
+          "selected_file": "create_flashinfer_kv_indices.py",
+          "passed": true,
+          "speedup": 21.708,
+          "execution_time_ms": 10303,
+          "error": null
+        },
+        {
+          "gpu": "haiguang",
+          "status": "completed",
+          "selected_file": "create_flashinfer_kv_indices.py",
+          "passed": true,
+          "speedup": 179.8935,
+          "execution_time_ms": 8352,
+          "error": null
+        },
+        {
+          "gpu": "kunlunxin",
+          "status": "completed",
+          "selected_file": "create_flashinfer_kv_indices.py",
+          "passed": true,
+          "speedup": 2.88025,
+          "execution_time_ms": 9510,
+          "error": null
+        },
+        {
+          "gpu": "huawei",
+          "status": "completed",
+          "selected_file": "create_flashinfer_kv_indices.py",
+          "passed": true,
+          "speedup": 66.19575,
+          "execution_time_ms": 37345,
+          "error": null
+        },
+        {
+          "gpu": "card_a",
+          "status": "completed",
+          "selected_file": "create_flashinfer_kv_indices.py",
+          "passed": true,
+          "speedup": 168.8675,
+          "execution_time_ms": 17376,
+          "error": null
+        },
+        {
+          "gpu": "card_b",
+          "status": "completed",
+          "selected_file": "create_flashinfer_kv_indices.py",
+          "passed": true,
+          "speedup": 189.337,
+          "execution_time_ms": 14451,
+          "error": null
+        }
+      ],
+      "preflight_file": "artifacts/competition/batch5-submit-20260911/63-preflight-354996b527cb2509ad98954ec2c8a424.json",
+      "submit_file": "artifacts/competition/batch5-submit-20260911/63-submit-354996b527cb2509ad98954ec2c8a424.json",
+      "submit_sha256": "cc7bbd81a417f242b068e62f67852067b4fe77885dc6af7c3791384a7d762096",
+      "status_file": "artifacts/competition/batch5-submit-20260911/63-status-033921.json",
+      "status_sha256": "6d245cc1336493d5d89fc97f9db0c3651e0c04798581ebf001de196c5355ee9c"
+    },
+    {
+      "task": 64,
+      "operator": "deepep_permute",
+      "stage": "e1",
+      "source_commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+      "verification_commit": "29754c1dfcbc87c9b193e750145b668c8e35d852",
+      "zip_sha256": "b33968d2510443859fc50f02926127bc85ba002425a4bf42228e4d812bbb32b1",
+      "zip_members": [
+        "deepep_permute.py"
+      ],
+      "nonce": "08f1a53b02603b388fdec2dbcaa75c1d",
+      "submission_id": 12895,
+      "daily_seq": 2,
+      "created_at": "2026-09-11T03:27:13",
+      "file_url_sha256": "5aeefb4e06b920d458d9d87323a9b8b95beb5db13a469e2fbf776e5919ad8cbc",
+      "remote_verification": {
+        "expected_sha256": "b33968d2510443859fc50f02926127bc85ba002425a4bf42228e4d812bbb32b1",
+        "expected_size": 1970,
+        "sha256": "b33968d2510443859fc50f02926127bc85ba002425a4bf42228e4d812bbb32b1",
+        "size": 1970,
+        "status": "verified"
+      },
+      "observed_at": "2026-09-11T03:39:24.977852+08:00",
+      "quota": {
+        "remaining": 24,
+        "total": 30,
+        "used": 6
+      },
+      "status": "completed",
+      "validity": "valid",
+      "passed_gpu_count": 8,
+      "terminal_gpu_count": 8,
+      "expected_gpu_count": 8,
+      "average_speedup": 6.7478,
+      "rank": 3,
+      "ranked_teams": 4,
+      "gpu_results": [
+        {
+          "gpu": "tianshu",
+          "status": "completed",
+          "selected_file": "deepep_permute.py",
+          "passed": true,
+          "speedup": 16.1606,
+          "execution_time_ms": 68028,
+          "error": null
+        },
+        {
+          "gpu": "muxi",
+          "status": "completed",
+          "selected_file": "deepep_permute.py",
+          "passed": true,
+          "speedup": 5.5116,
+          "execution_time_ms": 26075,
+          "error": null
+        },
+        {
+          "gpu": "enflame",
+          "status": "completed",
+          "selected_file": "deepep_permute.py",
+          "passed": true,
+          "speedup": 2.5326,
+          "execution_time_ms": 9585,
+          "error": null
+        },
+        {
+          "gpu": "haiguang",
+          "status": "completed",
+          "selected_file": "deepep_permute.py",
+          "passed": true,
+          "speedup": 10.3318,
+          "execution_time_ms": 7463,
+          "error": null
+        },
+        {
+          "gpu": "kunlunxin",
+          "status": "completed",
+          "selected_file": "deepep_permute.py",
+          "passed": true,
+          "speedup": 0.2538,
+          "execution_time_ms": 15714,
+          "error": null
+        },
+        {
+          "gpu": "huawei",
+          "status": "completed",
+          "selected_file": "deepep_permute.py",
+          "passed": true,
+          "speedup": 3.7614,
+          "execution_time_ms": 28903,
+          "error": null
+        },
+        {
+          "gpu": "card_a",
+          "status": "completed",
+          "selected_file": "deepep_permute.py",
+          "passed": true,
+          "speedup": 8.4868,
+          "execution_time_ms": 15820,
+          "error": null
+        },
+        {
+          "gpu": "card_b",
+          "status": "completed",
+          "selected_file": "deepep_permute.py",
+          "passed": true,
+          "speedup": 6.9438,
+          "execution_time_ms": 14271,
+          "error": null
+        }
+      ],
+      "preflight_file": "artifacts/competition/batch5-submit-20260911/64-preflight-08f1a53b02603b388fdec2dbcaa75c1d.json",
+      "submit_file": "artifacts/competition/batch5-submit-20260911/64-submit-08f1a53b02603b388fdec2dbcaa75c1d.json",
+      "submit_sha256": "e14cb33f57ffe41d4cbe2e4411a5048a11ae03249c6d6208055beb4018fb0bf5",
+      "status_file": "artifacts/competition/batch5-submit-20260911/64-status-033924.json",
+      "status_sha256": "4dbc91d328aaee717d6ec1a70041d1d9562e504ed39f8ae90979ea6abe302b3d"
+    }
+  ]
+}

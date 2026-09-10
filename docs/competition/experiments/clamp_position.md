@@ -4,14 +4,16 @@
 task: 60
 operator: clamp_position
 batch: 5
-validity: candidate-ready
-platform: not-submitted
+validity: invalid_correctness
+platform: completed(12898,7/8)
 candidate_stage: s0
 team_best_stage: -
 sealed: no
-next: S0 已验签；实时 preflight 后首次提交
+next: 定位燧原 case 3 编译失败；核对 int64 路径，不盲目缩窄数据
 updated: 2026-09-11
 ```
+
+> 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
 
 ## 契约与范围
 
@@ -75,3 +77,30 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 日志：`artifacts/competition/batch5-development-20260910/release/clamp_position/verification.log`；SHA-256 `8f9cc4892f5224d878a14add6b989ebfd03c73bef69d5bdcd79e858ab50dd5eb`。
 - 完整 release：3 个测试方法 / 45 条记录 / 22 次 kernel launch，全通过；NVIDIA 代理范围。
 - 优化和复现见[本轮报告](../optimization-batch5-20260911.md)；[完整证据](../data/batch5-optimization-20260911.json)，SHA-256 `87a560dd86ab7e9dfb9607f8f05a007060d48b3aab876b165bfc0fec591f77db`。
+
+## 2026-09-11 首次平台提交（2026-09-11T03:39:10.201484+08:00）
+
+- `s0` / submission `12898` / daily_seq `5`，提交于 `2026-09-11T03:34:56+08:00`。每候选上传与正式 POST 各一次，无自动重试。
+- nonce：`1680e98c76e2acab2eb754d0c4d564e1`；上传 URL SHA-256：`a8070d2094812cbe8226aedf736656b1c93a0b0ab632d9040271d3390ab19345`。
+- 远端 ZIP 回读 verified，1085 bytes，SHA-256 `506af23ed82335d1a93965436545c7c4bd646b09b5f589c642fcfadecc1e7209`，与本地候选逐字节一致。
+- 平台 `completed` / `invalid_correctness`；正确性通过 7/8，完成 8/8；未产生八芯均值；未入有效榜。
+- 当次 status 额度：24/30，已用 6；observed_at `2026-09-11T03:39:10.201484+08:00`。排名查询时间 `2026-09-11T03:39:41.445754+08:00`。
+
+| 芯片 | 状态 | 正确性 | speedup |
+| --- | --- | --- | ---: |
+| tianshu | completed | 通过 | 1.73733333 |
+| muxi | completed | 通过 | 1.1535 |
+| enflame | completed | 失败 | — |
+| haiguang | completed | 通过 | 1.56733333 |
+| kunlunxin | completed | 通过 | 0.9185 |
+| huawei | completed | 通过 | 0.4135 |
+| card_a | completed | 通过 | 1.38183333 |
+| card_b | completed | 通过 | 1.44933333 |
+
+燧原选择的文件为 `clamp_position.py`；case 3 均在 make_gcuir → Pipeline.run 报 `RuntimeError: Pipeline run failed: PassManager execution failed`。尚未执行到数值比较，触发构造未定位；相同错误文本不能证明三题同根因，也不证明平台基础设施故障。
+
+完整失败详情：`artifacts/competition/batch5-submit-20260911/60-enflame-failure.json`，SHA-256 `2a647cce72ff2f293da0adca92a6a5567fa3b37b4dcad45ebfbe3e4dc52d3c42`。
+
+下一步：定位燧原 case 3 编译失败；核对 int64 路径，不盲目缩窄数据。
+
+[提交结果证据](../data/batch5-submissions-20260911.json)，SHA-256 `63418b87e9249bef72751df2a1778c52e6d679a5d313ecf18d8ed64b96c175dd`；原始 status `artifacts/competition/batch5-submit-20260911/60-status-033910.json`，SHA-256 `e249722ab8c475509882b7146132045ea0d03ac294022d2fdf7e0a429d3982c8`。

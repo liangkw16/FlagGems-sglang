@@ -4,14 +4,16 @@
 task: 59
 operator: build_trtllm_mha_page_table
 batch: 5
-validity: candidate-ready
-platform: not-submitted
+validity: invalid_correctness
+platform: completed(12896,7/8)
 candidate_stage: e1
 team_best_stage: -
 sealed: no
-next: E1 已验签；实时 preflight 后首次提交
+next: 定位燧原 GCU IR 编译失败；最小复现后开发 vendor 候选
 updated: 2026-09-11
 ```
+
+> 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
 
 ## 契约与范围
 
@@ -75,3 +77,30 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 日志：`artifacts/competition/batch5-optimize-20260911/release/build_trtllm_mha_page_table/verification.log`；SHA-256 `a616b02c5d58abde49ec9c7120ee6c91ab771a8bb97568fcead5054d0341e147`。
 - 完整 release：4 个测试方法 / 55 条记录 / 26 次 kernel launch，全通过；NVIDIA 代理范围。
 - 优化和复现见[本轮报告](../optimization-batch5-20260911.md)；[完整证据](../data/batch5-optimization-20260911.json)，SHA-256 `87a560dd86ab7e9dfb9607f8f05a007060d48b3aab876b165bfc0fec591f77db`。
+
+## 2026-09-11 首次平台提交（2026-09-11T03:39:06.765926+08:00）
+
+- `e1` / submission `12896` / daily_seq `3`，提交于 `2026-09-11T03:29:45+08:00`。每候选上传与正式 POST 各一次，无自动重试。
+- nonce：`337996912a6d31a71419fb5bfb4b4701`；上传 URL SHA-256：`de88f9887a2bc01c2a7944cffa7bbf5df537d3bb5470a3fda12065d3fbff0533`。
+- 远端 ZIP 回读 verified，2830 bytes，SHA-256 `432e1896094351992b41ce3dba289ec89780f200bbbb75100f31e18920b9fb9a`，与本地候选逐字节一致。
+- 平台 `completed` / `invalid_correctness`；正确性通过 7/8，完成 8/8；未产生八芯均值；未入有效榜。
+- 当次 status 额度：24/30，已用 6；observed_at `2026-09-11T03:39:06.765926+08:00`。排名查询时间 `2026-09-11T03:39:41.445754+08:00`。
+
+| 芯片 | 状态 | 正确性 | speedup |
+| --- | --- | --- | ---: |
+| tianshu | completed | 通过 | 70.034 |
+| muxi | completed | 通过 | 13.1595 |
+| enflame | completed | 失败 | — |
+| haiguang | completed | 通过 | 27.05625 |
+| kunlunxin | completed | 通过 | 2.1595 |
+| huawei | completed | 通过 | 11.03625 |
+| card_a | completed | 通过 | 22.861 |
+| card_b | completed | 通过 | 19.973 |
+
+燧原选择的文件为 `build_trtllm_mha_page_table.py`；case 0, 1, 2, 3, 4, 5, 6, 7 均在 make_gcuir → Pipeline.run 报 `RuntimeError: Pipeline run failed: PassManager execution failed`。尚未执行到数值比较，触发构造未定位；相同错误文本不能证明三题同根因，也不证明平台基础设施故障。
+
+完整失败详情：`artifacts/competition/batch5-submit-20260911/59-enflame-failure.json`，SHA-256 `e282727d3307c8722b0c0280d9ef51e379556102d5966942f61e20cdb56a08e2`。
+
+下一步：定位燧原 GCU IR 编译失败；最小复现后开发 vendor 候选。
+
+[提交结果证据](../data/batch5-submissions-20260911.json)，SHA-256 `63418b87e9249bef72751df2a1778c52e6d679a5d313ecf18d8ed64b96c175dd`；原始 status `artifacts/competition/batch5-submit-20260911/59-status-033906.json`，SHA-256 `a0f94d92c6db59dc52b9b183207144c1647d8d6fccfaa197de7d5b65aacf6061`。
