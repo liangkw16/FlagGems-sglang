@@ -29,8 +29,8 @@ def _concat_mla_k(
     for task in range(tl.program_id(0), tasks, tl.num_programs(0)):
         token = (task // groups).to(tl.int64)
         h = (task % groups) * BH + tl.arange(0, BH)
-        n = tl.arange(0, BN)
-        r = tl.arange(0, BR)
+        n = tl.arange(0, BN).to(tl.int64)
+        r = tl.arange(0, BR).to(tl.int64)
         no = tl.load(
             nope
             + token * ns0

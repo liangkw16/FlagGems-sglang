@@ -91,12 +91,23 @@ class ConcatMLAKTest(unittest.TestCase):
         ):
             self.check(make_case(tokens, heads, nd, rd))
 
+    def test_large_column_stride(self):
+        # A legal sparse view whose element offset crosses signed int32.
+        storage = torch.empty(2**31 + 1, dtype=torch.bfloat16, device="cuda")
+        sparse = storage.as_strided((1, 1, 3), (1, 1, 2**30))
+        sparse.copy_(
+            torch.tensor([1, -2, 3], dtype=torch.bfloat16, device="cuda")
+        )
+        k = torch.zeros(1, 1, 6, dtype=torch.bfloat16, device="cuda")
+        self.check((k, sparse, sparse))
+
 
 RELEASE_REQUIRED_TESTS = [
     "ConcatMLAKTest.test_production_dimensions",
     "ConcatMLAKTest.test_head_and_dimension_boundaries",
     "ConcatMLAKTest.test_strides_and_special_bits",
     "ConcatMLAKTest.test_empty",
+    "ConcatMLAKTest.test_large_column_stride",
 ]
 
 
