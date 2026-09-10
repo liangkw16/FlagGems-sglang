@@ -1,3 +1,4 @@
+# r2 water re-roll carrier of the e21 sub-11241-era team-best bytes.
 # Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,96 +13,120 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# e22: the width-axis reduction form becomes the GENERIC. Per-chip
-# leaderboard intel: every qualified team above us reads muxi 10-13
-# and haiguang 12-16 while our scalar-FMA-strip generic reads 6.8 /
-# 10.9 - the five generic-served chips (tianshu/muxi/haiguang/A/B) were
-# the ones left on the old form. This is the platform-proven enflame
-# vendor kernel verbatim (T43 Codex P1b, ledger's 常胜结构 row):
-# wrapper concatenates state+x and pre-transposes weight to [W, D];
-# the kernel loads a [W_PAD, D_BLOCK] tile per output step and reduces
-# tl.sum(w * v, axis=0) instead of walking scalar FMA chains.
-
 import torch
 import triton
 import triton.language as tl
 
-_BLOCK_D = 512
+_BLOCK_D = 256
 _MAX_GRID = 65535
 
 
 @triton.jit
-def _ccu_width_reduce_kernel(
-    xcat_ptr,
-    wt_ptr,
+def _causal_conv1d_update_kernel(
+    x_ptr,
+    state_ptr,
+    weight_ptr,
     bias_ptr,
     out_ptr,
+    new_state_ptr,
     batch,
     dim,
     seqlen,
     state_len,
-    xcat_sb,
-    xcat_sd,
-    xcat_sp,
-    wt_stride_w,
-    wt_stride_d,
+    x_sb,
+    x_sd,
+    x_ss,
+    st_sb,
+    st_sd,
+    st_sl,
+    ns_sb,
+    ns_sd,
+    ns_sl,
     o_sb,
     o_sd,
     o_ss,
-    SEQLEN: tl.constexpr,
-    STATE_LEN: tl.constexpr,
     WIDTH: tl.constexpr,
-    W_PAD: tl.constexpr,
     HAS_BIAS: tl.constexpr,
     ACT_IS_SILU: tl.constexpr,
     BLOCK_D: tl.constexpr,
 ):
+    # One program owns a (batch, dim-block) strip and walks the small
+    # seqlen/state axes as scalar loops, so every load/store stays 1D
+    # (the T36 kunlunxin poison is 2D masked tiles + transcendental +
+    # axis-1 reduce in one compilation unit).
     pid = tl.program_id(0)
     dim_blocks = tl.cdiv(dim, BLOCK_D)
     total = batch * dim_blocks
     grid_size = tl.num_programs(0)
-
-    offs_w = tl.arange(0, W_PAD)
-    w_mask = offs_w < WIDTH
-    offs_d_base = tl.arange(0, BLOCK_D)
-
     for job in range(pid, total, grid_size):
         b = job // dim_blocks
         db = job - b * dim_blocks
-        offs_d = db * BLOCK_D + offs_d_base
+        offs_d = db * BLOCK_D + tl.arange(0, BLOCK_D)
         dmask = offs_d < dim
+        offs_d64 = offs_d.to(tl.int64)
+        x_base = x_ptr + b.to(tl.int64) * x_sb
+        s_base = state_ptr + b.to(tl.int64) * st_sb
+        o_base = out_ptr + b.to(tl.int64) * o_sb
+        n_base = new_state_ptr + b.to(tl.int64) * ns_sb
 
-        xcat_row = xcat_ptr + b * xcat_sb + offs_d * xcat_sd
-        wt_row = wt_ptr + offs_d * wt_stride_d
-
-        for t in tl.static_range(SEQLEN):
-            # Window start: the first of `width` consecutive positions
-            # ending at the new token t
-            win_start = t + state_len + 1 - WIDTH
-            p = win_start + offs_w  # [W_PAD] positions in x_cat
-            # 2D tile [W_PAD, BLOCK_D]
-            window = tl.load(
-                xcat_row + p[:, None] * xcat_sp,
-                mask=w_mask[:, None] & dmask[None, :],
-                other=0.0,
-            ).to(tl.float32)
-            wk = tl.load(
-                wt_row + offs_w[:, None] * wt_stride_w,
-                mask=w_mask[:, None] & dmask[None, :],
-                other=0.0,
-            ).to(tl.float32)
-            # Width-axis reduction: [W_PAD, BLOCK_D] -> [BLOCK_D]
-            acc = tl.sum(window * wk, axis=0)
-
+        for t in range(0, seqlen):
+            val = tl.zeros([BLOCK_D], dtype=tl.float32)
+            for k in tl.static_range(WIDTH):
+                # Window position in the virtual concat(state, x).
+                p = t + state_len + 1 - WIDTH + k
+                from_state = p < state_len
+                safe_s = tl.minimum(tl.maximum(p, 0), state_len - 1)
+                safe_x = tl.minimum(tl.maximum(p - state_len, 0), seqlen - 1)
+                s_v = tl.load(
+                    s_base + offs_d64 * st_sd + safe_s * st_sl,
+                    mask=dmask & from_state,
+                    other=0.0,
+                ).to(tl.float32)
+                x_v = tl.load(
+                    x_base + offs_d64 * x_sd + safe_x * x_ss,
+                    mask=dmask & (p >= state_len),
+                    other=0.0,
+                ).to(tl.float32)
+                v = tl.where(from_state, s_v, x_v)
+                wk = tl.load(
+                    weight_ptr + offs_d64 * WIDTH + k,
+                    mask=dmask,
+                    other=0.0,
+                ).to(tl.float32)
+                val += wk * v
             if HAS_BIAS:
-                acc += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(
+                val += tl.load(bias_ptr + offs_d, mask=dmask, other=0.0).to(
                     tl.float32
                 )
             if ACT_IS_SILU:
-                acc = acc * tl.sigmoid(acc)
+                # SiLU in the statement's exact form; stability rewrites
+                # fail the checker at large negative inputs.
+                val = val / (1.0 + tl.exp(-val))
             tl.store(
-                out_ptr + b * o_sb + offs_d * o_sd + t * o_ss,
-                acc.to(out_ptr.dtype.element_ty),
+                o_base + offs_d64 * o_sd + t * o_ss,
+                val.to(out_ptr.dtype.element_ty),
+                mask=dmask,
+            )
+
+        for i in range(0, state_len):
+            p = seqlen + i
+            from_state = p < state_len
+            safe_s = tl.minimum(tl.maximum(p, 0), state_len - 1)
+            safe_x = tl.minimum(tl.maximum(p - state_len, 0), seqlen - 1)
+            s_v = tl.load(
+                s_base + offs_d64 * st_sd + safe_s * st_sl,
+                mask=dmask & from_state,
+                other=0.0,
+            ).to(tl.float32)
+            x_v = tl.load(
+                x_base + offs_d64 * x_sd + safe_x * x_ss,
+                mask=dmask & (p >= state_len),
+                other=0.0,
+            ).to(tl.float32)
+            v = tl.where(from_state, s_v, x_v)
+            tl.store(
+                n_base + offs_d64 * ns_sd + i * ns_sl,
+                v.to(new_state_ptr.dtype.element_ty),
                 mask=dmask,
             )
 
@@ -110,57 +135,50 @@ def causal_conv1d_update(x, conv_state, weight, bias=None, activation="silu"):
     squeeze_out = x.dim() == 2
     if squeeze_out:
         x = x.unsqueeze(-1)
-    # Concatenate state+x along the time axis in the input dtype (data
-    # layout, not computation); mixed dtypes promote like the
-    # reference's leading .float() pair.
-    x_cat = torch.cat([conv_state, x], dim=-1).contiguous()
-    wt = weight.t().contiguous().float()  # [W, D]
+    x = x.contiguous()
+    state = conv_state.contiguous()
+    w = weight.contiguous()
     if bias is not None:
-        bias = bias.contiguous().float()
+        bias = bias.contiguous()
     batch, dim, seqlen = x.shape
-    state_len = conv_state.shape[-1]
-    width = weight.shape[1]
-    # Output lives in the input dtype: the kernel's single elementwise
-    # cast is the only output pass.
-    out = torch.empty(batch, dim, seqlen, dtype=x.dtype, device=x.device)
-    # new_state is the tail slice of the concatenation; same dtype is a
-    # zero-copy view, a promoted dtype materializes the cast copy.
-    new_state = x_cat[:, :, seqlen:].to(conv_state.dtype)
+    state_len = state.shape[-1]
+    width = w.shape[1]
+    out = torch.empty_like(x)
+    new_state = torch.empty_like(state)
     if batch * dim == 0:
         if squeeze_out:
             out = out.squeeze(-1)
         return out, new_state
-
-    w_pad = max(triton.next_power_of_2(width), 2)
     dim_blocks = triton.cdiv(dim, _BLOCK_D)
     total = batch * dim_blocks
     grid = (min(total, _MAX_GRID),)
-    _ccu_width_reduce_kernel[grid](
-        x_cat,
-        wt,
-        bias if bias is not None else x_cat,
+    _causal_conv1d_update_kernel[grid](
+        x,
+        state,
+        w,
+        bias if bias is not None else x,
         out,
+        new_state,
         batch,
         dim,
         seqlen,
         state_len,
-        x_cat.stride(0),
-        x_cat.stride(1),
-        x_cat.stride(2),
-        wt.stride(0),
-        wt.stride(1),
+        x.stride(0),
+        x.stride(1),
+        x.stride(2),
+        state.stride(0),
+        state.stride(1),
+        state.stride(2),
+        new_state.stride(0),
+        new_state.stride(1),
+        new_state.stride(2),
         out.stride(0),
         out.stride(1),
         out.stride(2),
-        SEQLEN=seqlen,
-        STATE_LEN=state_len,
         WIDTH=width,
-        W_PAD=w_pad,
         HAS_BIAS=bias is not None,
         ACT_IS_SILU=(activation in ("silu", "swish")),
         BLOCK_D=_BLOCK_D,
-        num_warps=4,
-        num_stages=1,
     )
     if squeeze_out:
         out = out.squeeze(-1)
