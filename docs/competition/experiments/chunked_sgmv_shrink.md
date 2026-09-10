@@ -6,9 +6,9 @@ operator: chunked_sgmv_shrink
 batch: 4
 validity: valid
 platform: 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor)
-team_best_stage: e12
-team_best_commit: bfde90eebbc3bcb4275a3d0de4468606414cd984
-team_best_speedup: 5.207
+team_best_stage: e12r
+team_best_commit: 74411e9c9646288e44cc6da2ad151e4e6ba02215
+team_best_speedup: 5.289875
 sealed: no
 next: e12收盘5.207(rank~5);燧原0.828(adapter分组+55%但未到门);结构面未定位,水位重掷可选
 updated: 2026-09-10
@@ -274,3 +274,6 @@ matmul）按**题面容差**（fp32 1e-4 / fp16 1e-2 / bf16 1.5e-2）计 max err
   燧原 0.5355→**0.828（+55%）**——adapter 分组方向确认，但量级未到 ≥1.5 门；
   其余七芯 e11 噪声带内。燧原剩余差距（vs RSI 35.5）不在 launch 数（段→adapter
   已减），结构面未定位。e12 字节为 T48 收盘基线。
+- **e12r 水位终态（sub 12395，14:0x）**：8/8 valid，avg **5.289875 新 TB**（+1.6%）。
+  华为窗回 7.52、A 7.81。**T48 收盘于 e12r 5.290（排名约 5）**；燧原 0.556
+  （adapter 分组读数 0.828 未复现，水位带 0.54-0.83）。

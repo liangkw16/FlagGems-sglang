@@ -6,9 +6,9 @@ operator: ernie45_rope_fused
 batch: 4
 validity: valid
 platform: e4/11245八芯valid,8.71115625x新team best
-team_best_stage: e7
-team_best_commit: bf3cf8867d907210695ca77386f4e39ed397cfa9
-team_best_speedup: 10.13953125
+team_best_stage: e7r2
+team_best_commit: 9ad8867bbadfc7e3c17c39a09e62848ad5c1a3f8
+team_best_speedup: 10.35265625
 sealed: no
 next: TB e7 10.1395(rank6);海光/华为路由已兑现;燧原0.61结构面未定位,无新弹药;可择机同字节重掷采样水位
 updated: 2026-09-10
@@ -170,3 +170,6 @@ c2flow 21.19 逐芯健康（非慢窗产物）。按 `Δavg=(target-ours)/n` 估
   tier-2 的优势不在 grid 并行（tile4 < tile1 反而更好，两代证伪后两代形态
   都不如 tile4）。路由 vendor 稳定（海光 19.6/华为 3.01）。
   **T49 收盘于 e7 10.1395（排名 6）**；剩余动作仅错峰水位重掷。
+- **e7r2 终态（sub 12399，14:1x）**：8/8 valid，avg **10.3527 新 TB**（+2.1%，
+  A 高窗 22.94）。距 rank5（ChipVoyager 10.58）0.23。e7 字节低滚预算剩 1，
+  尾窗可再采样一次。
