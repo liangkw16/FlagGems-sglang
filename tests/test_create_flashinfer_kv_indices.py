@@ -88,6 +88,8 @@ class KVIndicesTest(unittest.TestCase):
             with self.subTest(has_start=has_start):
                 self.check(make_case(has_start=has_start))
                 self.check(make_case(lengths=(8193,), has_start=has_start))
+                self.check(make_case(lengths=(32769,), has_start=has_start))
+        self.check(make_case(lengths=(0, 1, 513) * 43))
 
     def test_strides_and_index_dtypes(self):
         for dtype in (torch.int32, torch.int64):

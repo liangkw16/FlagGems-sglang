@@ -34,7 +34,9 @@ def _create_kv_indices(
         start = tl.full((), 0, tl.int64)
         if HAS_START:
             start = tl.load(starts + row_offset * ss).to(tl.int64)
-        for tile in range(tl.cdiv(length, BLOCK)):
+        for tile in range(
+            tl.program_id(1), tl.cdiv(length, BLOCK), tl.num_programs(1)
+        ):
             i = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
             value = tl.load(
                 pool + request * ps0 + (start + i) * ps1, i < length, other=0
@@ -69,7 +71,12 @@ def create_flashinfer_kv_indices(
         assert kv_start_idx.dtype in (torch.int32, torch.int64)
     out = kv_indices.clone()
     if batch and out.numel():
-        _create_kv_indices[(min(batch, 65535),)](
+        splits = min(
+            max(1, triton.cdiv(req_to_token.shape[1], 512)),
+            max(1, 128 // batch),
+            32,
+        )
+        _create_kv_indices[(min(batch, 65535), splits)](
             req_to_token,
             req_pool_indices,
             page_kernel_lens,

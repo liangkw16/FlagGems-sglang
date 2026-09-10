@@ -79,6 +79,7 @@ class DeepEPPermuteTest(unittest.TestCase):
             for hidden in (1, 511, 512, 513, 4096, 7168):
                 with self.subTest(topk=topk, hidden=hidden):
                     self.check(make_case(tokens=3, topk=topk, hidden=hidden))
+        self.check(make_case(tokens=8193, topk=1, hidden=4097))
 
     def test_strides_and_unused_topk_ids(self):
         for dtype in (torch.float16, torch.bfloat16, torch.float32):

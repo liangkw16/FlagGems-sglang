@@ -14,7 +14,8 @@ def _build_page_table(
     lengths,
     old,
     out,
-    total,
+    tasks,
+    tiles,
     columns,
     ps0,
     ps1,
@@ -26,16 +27,13 @@ def _build_page_table(
     SHIFT: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
-    for block in range(
-        tl.program_id(0), tl.cdiv(total, BLOCK), tl.num_programs(0)
-    ):
-        i = block * BLOCK + tl.arange(0, BLOCK)
-        row = (i // columns).to(tl.int64)
-        page = (i % columns).to(tl.int64)
-        valid = i < total
-        length = tl.load(lengths + row * ls, valid, other=0).to(tl.int64)
+    for task in range(tl.program_id(0), tasks, tl.num_programs(0)):
+        row = (task // tiles).to(tl.int64)
+        page = (task % tiles) * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
+        valid = page < columns
+        length = tl.load(lengths + row * ls).to(tl.int64)
         active = valid & (page < (length + PAGE_SIZE - 1) // PAGE_SIZE)
-        request = tl.load(requests + row * rs, active, other=0).to(tl.int64)
+        request = tl.load(requests + row * rs).to(tl.int64)
         slot = tl.load(
             pool + request * ps0 + page * PAGE_SIZE * ps1, active, other=0
         )
@@ -44,7 +42,7 @@ def _build_page_table(
         )
         # Positive divisors of 4096 are powers of two; signed shift is floor division.
         value = tl.where(active, slot >> SHIFT, previous)
-        tl.store(out + i, value, valid)
+        tl.store(out + row * columns + page, value, valid)
 
 
 def build_trtllm_mha_page_table(
@@ -68,13 +66,16 @@ def build_trtllm_mha_page_table(
     )
     n = out.numel()
     if n:
-        _build_page_table[(min(triton.cdiv(n, 256), 65535),)](
+        tiles = triton.cdiv(out.shape[1], 256)
+        tasks = out.shape[0] * tiles
+        _build_page_table[(min(tasks, 65535),)](
             req_to_token,
             req_pool_indices,
             cache_seqlens,
             page_table,
             out,
-            n,
+            tasks,
+            tiles,
             out.shape[1],
             *req_to_token.stride(),
             req_pool_indices.stride(0),

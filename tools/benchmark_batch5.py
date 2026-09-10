@@ -11,6 +11,7 @@ Shapes below are public-production examples or proxy assumptions, not platform c
 import argparse
 import hashlib
 import importlib
+import importlib.util
 import json
 import statistics
 import sys
@@ -55,9 +56,18 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--operator", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--baseline-source", type=Path)
     args = parser.parse_args()
     module = importlib.import_module(f"tests.test_{args.operator}")
     candidate = getattr(dict(module.MODULES)["generic"], args.operator)
+    baseline = module.reference
+    if args.baseline_source:
+        spec = importlib.util.spec_from_file_location(
+            "batch5_baseline", args.baseline_source
+        )
+        baseline_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(baseline_module)
+        baseline = getattr(baseline_module, args.operator)
     torch.manual_seed(5)
     results = []
     for label, inputs in cases(args.operator, module):
@@ -66,8 +76,11 @@ def main():
         torch.testing.assert_close(
             actual, expected, rtol=0, atol=0, equal_nan=True
         )
+        torch.testing.assert_close(
+            baseline(*inputs), expected, rtol=0, atol=0, equal_nan=True
+        )
         functions = {
-            "reference": lambda: module.reference(*inputs),
+            "reference": lambda: baseline(*inputs),
             "candidate": lambda: candidate(*inputs),
         }
         samples = []
@@ -85,6 +98,29 @@ def main():
             sample["speedup"] = sample["reference_ms"] / sample["candidate_ms"]
             assert sample["reference_ms"] > 0 and sample["candidate_ms"] > 0
             samples.append(sample)
+        resources = []
+
+        def record_kernel(frame, event, result):
+            if (
+                event == "return"
+                and frame.f_code.co_name == "run"
+                and hasattr(result, "n_regs")
+            ):
+                resources.append(
+                    {
+                        "provider": key,
+                        "registers": result.n_regs,
+                        "spills": result.n_spills,
+                        "shared_bytes": result.metadata.shared,
+                    }
+                )
+
+        try:
+            sys.setprofile(record_kernel)
+            for key, function in functions.items():
+                function()
+        finally:
+            sys.setprofile(None)
         result = {
             "shape_label": label,
             "median_speedup": statistics.median(s["speedup"] for s in samples),
@@ -92,6 +128,7 @@ def main():
                 s["candidate_ms"] for s in samples
             ),
             "samples": samples,
+            "compiled_resources": resources,
         }
         results.append(result)
         print(json.dumps(result), flush=True)
@@ -102,6 +139,12 @@ def main():
         "torch": torch.__version__,
         "triton": triton.__version__,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+        "baseline_sha256": (
+            hashlib.sha256(args.baseline_source.read_bytes()).hexdigest()
+            if args.baseline_source
+            else None
+        ),
+        "reference_provider": "baseline" if args.baseline_source else "torch",
         "script_sha256": hashlib.sha256(
             Path(__file__).read_bytes()
         ).hexdigest(),

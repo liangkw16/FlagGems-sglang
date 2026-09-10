@@ -12,7 +12,8 @@ def _deepep_permute(
     x,
     out,
     routes,
-    tokens,
+    tasks,
+    tiles,
     topk,
     hidden,
     xs0,
@@ -23,20 +24,18 @@ def _deepep_permute(
     rs1,
     BLOCK: tl.constexpr,
 ):
-    for token in range(tl.program_id(0), tokens, tl.num_programs(0)):
-        token_offset = token.to(tl.int64)
-        for tile in range(tl.cdiv(hidden, BLOCK)):
-            h = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
-            value = tl.load(
-                x + token_offset * xs0 + h * xs1, h < hidden, other=0
-            )
-            value = value.to(out.dtype.element_ty)
-            for slot in range(topk):
-                dst = tl.load(
-                    routes + token_offset * rs0 + slot.to(tl.int64) * rs1
-                ).to(tl.int64)
-                if dst >= 0:
-                    tl.store(out + dst * os0 + h * os1, value, h < hidden)
+    for task in range(tl.program_id(0), tasks, tl.num_programs(0)):
+        token_offset = (task // tiles).to(tl.int64)
+        tile = task % tiles
+        h = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
+        value = tl.load(x + token_offset * xs0 + h * xs1, h < hidden, other=0)
+        value = value.to(out.dtype.element_ty)
+        for slot in range(topk):
+            dst = tl.load(
+                routes + token_offset * rs0 + slot.to(tl.int64) * rs1
+            ).to(tl.int64)
+            if dst >= 0:
+                tl.store(out + dst * os0 + h * os1, value, h < hidden)
 
 
 def deepep_permute(input, gateup_input, src2dst, topk_ids, topk, hidden_size):
@@ -48,11 +47,14 @@ def deepep_permute(input, gateup_input, src2dst, topk_ids, topk, hidden_size):
     assert src2dst.dtype in (torch.int32, torch.int64)
     out = gateup_input.clone()
     if tokens and topk and hidden:
-        _deepep_permute[(min(tokens, 65535),)](
+        tiles = triton.cdiv(hidden, 512)
+        tasks = tokens * tiles
+        _deepep_permute[(min(tasks, 65535),)](
             input,
             out,
             src2dst,
-            tokens,
+            tasks,
+            tiles,
             topk,
             hidden,
             *input.stride(),

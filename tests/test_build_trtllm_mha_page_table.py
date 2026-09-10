@@ -91,6 +91,7 @@ class PageTableTest(unittest.TestCase):
                 args[2].fill_(columns)
                 self.check(args)
         self.check(make_case(bs=9, columns=1031, page_size=32))
+        self.check(make_case(bs=65537, columns=1, page_size=1))
 
     def test_strides_and_index_dtypes(self):
         for dtype in (torch.int32, torch.int64):
