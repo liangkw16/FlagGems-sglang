@@ -10,7 +10,7 @@ team_best_stage: e6
 team_best_commit: 5251bf5f1ef53eaac8ce83c0bb0d0b0b91425fad
 team_best_speedup: 3.25835
 sealed: no
-next: e8燧原persistent走访(0eab029,release exit0+ZIP 0607901c)就绪;预注册门燧原>=3(次名靶9.39)
+next: e8燧原persistent已证伪(1.521 vs e6字节1.700);燧原结构轴全类关闭;仅剩傍晚窗同字节水位重掷(e6r2/e7s在库,#13→#12需+0.05)
 updated: 2026-09-10
 
 
@@ -293,3 +293,19 @@ generic 按真实行/列 stride 读取，消除非连续输入的 contiguous 拷
   （0 skip/xfail，exit 0）；canonical ZIP `e8-0eab029`，SHA-256
   `0607901c1924d7a54e73710c1c4e5133e32d16b5f6c755007c65a8996f463869`。
 - 预注册门：燧原 ≥3（当前 1.70，次名靶 9.33）；其余七芯不低于噪声带。
+
+## e8 燧原 persistent 探针：**证伪，门未过**（2026-09-10T13:04，sub 12619）
+
+- 预注册门：燧原 ≥3（e6 字节 1.700，结构靶为同芯次优队 9.39）。**实测
+  1.521（-10.5%），门未过，候选不晋级**；TB 仍为 e6 3.25835。
+- 七芯即出（天数 `waiting_callback`）：沐曦 2.295 / **燧原 1.521** /
+  海光 5.067 / 昆仑 0.458 / 华为 2.265 / A 4.370 / B 3.109；
+  `selected_file` 确认 `act_and_mul_enflame.py` 生效，exec_ms 16987
+  （与历史同量级，非慢窗）。
+- 与同日 T56 e4（reduction 类 1.198）合并判决：**persistent/pingpong
+  模板对元素类二次证伪**，燧原结构轴全类永久关闭。
+- 证据：`e8-0eab029/validation/verification.json`（14 测 0 fail/skip、
+  exit 0）、`42-submit-status.json`。
+- 后续仅保留傍晚高水位窗同字节水位重掷（`e6r2-65b39bc` / `e7s-ff373dd`）：
+  #13→#12 仅需 avg +0.05，且 T42 榜首 431.48 本身即燧原 3427 慢窗产物，
+  该题是剩余额度中彩票赔率最高的一发。

@@ -10,7 +10,7 @@ team_best_stage: e3
 team_best_commit: c0384fada9d69aa95c51c08d2b85934ecaa3310c
 team_best_speedup: 3.20691667
 sealed: no
-next: e4新燧原persistent vendor(e4cc425,release exit0+ZIP ab7a6f5d)就绪;预注册门燧原>=3(次名靶7.31)
+next: e4燧原reduction persistent已平台证伪(1.198 vs generic 1.213);燧原结构轴全类关闭;仅剩傍晚窗同字节水位重掷(e3r2在库)
 updated: 2026-09-10
 
 
@@ -129,3 +129,21 @@ updated: 2026-09-10
   （0 skip/xfail，exit 0）；canonical ZIP `e4-e4cc425`，SHA-256
   `ab7a6f5dbe6090f01677e2ff8114fe67e832f8e18e96d3a2e0c4575fe649a19b`。
 - 预注册门：燧原 ≥3（当前 1.21，次名靶 7.31）。
+
+## e4 燧原 reduction persistent 探针：**证伪，门未过**（2026-09-10T13:01，sub 12617）
+
+- 预注册门：燧原 ≥3（现 1.213，结构靶为同芯次优队 7.31）。**实测 1.198
+  （-1.2%），门未过，候选不晋级**；TB 仍为 e3 3.20691667。
+- 8/8 valid，avg **3.17211458**（低于 TB 1.1%，属水位带内）。逐芯：
+  天数 6.700 / 沐曦 2.595 / **燧原 1.198** / 海光 4.530 / 昆仑 1.078 /
+  华为 1.435 / A 3.637 / B 4.206。
+- `selected_file` 确认 `l2norm_enflame.py` 实际生效（排除 vendor 未被
+  选中的假阴性）；exec_ms 燧原 14066，与 generic 同量级，非慢窗。
+- **判决：`grid=(24,)+tl.range(num_stages=3)+不钉 num_warps` 的 persistent
+  模板对 reduction 类（含 `tl.sum(axis=0)`）同样不生效。** 连同 T49（rope）、
+  T57/T42（元素）共 4 类算子 4 次平台实证，**燧原结构轴永久关闭**——
+  GCU 后端不把该形态识别为 persistent/pingpong，读数恒在噪声带内。
+- 证据：`e4-e4cc425/validation/verification.json`（9 测 0 fail/skip、exit 0）、
+  `56-submit-status.json`。剩余额度观测 8/30。
+- 后续仅保留傍晚高水位窗的同字节水位重掷（`e3r2-66fea2d`）守 #11 名次；
+  T56 榜首 72.31（燧原 551 慢窗产物）非结构可达。
