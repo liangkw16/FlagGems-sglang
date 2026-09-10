@@ -6,11 +6,11 @@ operator: chunked_sgmv_shrink
 batch: 4
 validity: valid
 platform: 8/8(e6,4.7198125x);e4=7/8(燧原评测机忙超时,同字节vendor)
-team_best_stage: e7
-team_best_commit: 094548df5da1075b8245b4af8ccddf024a319ae3
-team_best_speedup: 4.7489375
+team_best_stage: e12
+team_best_commit: bfde90eebbc3bcb4275a3d0de4468606414cd984
+team_best_speedup: 5.207
 sealed: no
-next: e11(e16dfc9,燧原回滚e7字节+无metax,release进行中)待发;预期avg~5.30新TB;模板/批量化轴已证伪
+next: e12收盘5.207(rank~5);燧原0.828(adapter分组+55%但未到门);结构面未定位,水位重掷可选
 updated: 2026-09-10
 ```
 
@@ -261,3 +261,16 @@ matmul）按**题面容差**（fp32 1e-4 / fp16 1e-2 / bf16 1.5e-2）计 max err
 - **e11 预注册（commit `e16dfc9`，就绪待发）**：燧原 vendor 回滚 e7
   route/materialize 平台已过字节，generic 保持 e5，无 metax。预期 = e10 七芯读数
   + 燧原 ~0.54 → **avg ~5.30 新 TB**。门：8/8 valid 且 avg > 4.853。
+
+- **e11 终态（sub 12365，09:4x）**：8/8 valid，avg **5.200625 新 team best**（+7.2%）。
+  逐芯：天数 4.21/沐曦 6.32（metax 移除兑现）/燧原 0.54/海光 6.78/昆仑 1.81/
+  华为 6.95/A 7.78/B 7.23。门（>4.853）通过。排名约第 5。
+- **e12 预注册（commit `bfde90e`，就绪待发）**：燧原 vendor 改 adapter 分组——
+  同 adapter 段拼接后一次 index_select→GEMM→index_copy_，launch 数从段数降到
+  adapter 数（≤16），kernel/dtype/tile 与 e11 逐字节相同，保持 GCU 唯一可编译的
+  规则 GEMM 形态。门：燧原 ≥1.5、其余七芯 e11 噪声带内、avg > 5.2006。
+
+- **e12 终态（sub 12368，10:0x）**：8/8 valid，avg **5.207 微幅新 TB**（+0.13%）。
+  燧原 0.5355→**0.828（+55%）**——adapter 分组方向确认，但量级未到 ≥1.5 门；
+  其余七芯 e11 噪声带内。燧原剩余差距（vs RSI 35.5）不在 launch 数（段→adapter
+  已减），结构面未定位。e12 字节为 T48 收盘基线。

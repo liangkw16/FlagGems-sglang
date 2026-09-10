@@ -6,11 +6,11 @@ operator: ernie45_rope_fused
 batch: 4
 validity: valid
 platform: e4/11245八芯valid,8.71115625x新team best
-team_best_stage: e4r
-team_best_commit: 16fe1d4
-team_best_speedup: 8.9578125
+team_best_stage: e7
+team_best_commit: bf3cf8867d907210695ca77386f4e39ed397cfa9
+team_best_speedup: 10.13953125
 sealed: no
-next: e7(bf3cf88,generic回e4+hygon/ascend路由e6kernel,release进行中)待发;海光20.4/华为2.98兑现,预期avg~10.27新TB
+next: TB e7 10.1395(rank6);海光/华为路由已兑现;燧原0.61结构面未定位,无新弹药;可择机同字节重掷采样水位
 updated: 2026-09-10
 ```
 
@@ -155,3 +155,13 @@ c2flow 21.19 逐芯健康（非慢窗产物）。按 `Δavg=(target-ours)/n` 估
   e4 字节（五芯偏好形态），新增 `_hygon`/`_ascend` vendor 携带 e6 kernel 原字节；
   燧原/昆仑 vendor 不动。预期 avg ≈ **10.27 新 TB**（排名 8→前 5）。门：8/8 valid
   且 avg > 8.958；海光 ≥15 且华为 ≥2.7 视为路由兑现。
+
+- **e7 终态（sub 12366，09:4x）**：8/8 valid，avg **10.1395 新 team best**（+13.2%）。
+  逐芯：天数 16.18/沐曦 8.95/燧原 0.61/海光 **20.73**（路由兑现，门 ≥15 ✓）/
+  昆仑 0.72/华为 **3.12**（门 ≥2.7 ✓）/A 20.90/B 9.91。排名 8→6。
+  路由假设（generic e4 五芯 + e6 kernel 海光/华为）完全兑现；
+  跨题知识：**合并 Q/K launch + 共享 cos/sin 在海光系 +93%、华为 +17%，
+  但天数/沐曦/A/B 反向 -23~-30%——按芯路由是必须的**。
+
+- **e7r 终态（sub 12371）**：10.1384 与 e7 同窗平读（间隔 40 分钟 = 重复抽同
+  一张票，符合水位模型）。TB 保持 e7 **10.1395**。
