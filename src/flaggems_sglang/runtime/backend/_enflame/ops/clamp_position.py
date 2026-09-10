@@ -51,31 +51,34 @@ def _clamp_position(x, out, n, stride, BLOCK: tl.constexpr):
         tl.store(out + i, tl.maximum(value, 0), i < n)
 
 
-@triton.jit
-def _clamp_position64(words, outw, n, BLOCK: tl.constexpr):
-    # words/outw are little-endian int32 views of int64 tensors: element k
-    # occupies words 2k (lo) and 2k+1 (hi). Non-positive inputs keep the
-    # zero prefill. v >= 1 splits exactly into "lo != 0 under hi >= 0"
-    # (store (lo-1, hi), no borrow) and "lo == 0" where v >= 1 collapses
-    # to hi >= 1 (store (0xFFFFFFFF, hi-1), the borrow); v == min_int64
-    # wraps like torch's int64 subtraction to max_int64.
+@triton.jit(do_not_specialize=["stride"])
+def _clamp_position64(
+    lo_in, hi_in, lo_out, hi_out, n, stride, BLOCK: tl.constexpr
+):
+    # lo_in/hi_in are the little-endian [0::2]/[1::2] int32 views of the
+    # int64 input; lo_out/hi_out the matching views of the output.
+    # Non-positive inputs keep the zero prefill. v >= 1 splits exactly
+    # into "lo != 0 under hi >= 0" (store (lo-1, hi), no borrow) and
+    # "lo == 0" where v >= 1 collapses to hi >= 1 (store (0xFFFFFFFF,
+    # hi-1), the borrow); v == min_int64 wraps like torch's int64
+    # subtraction to max_int64.
     for block in range(
         tl.program_id(0), tl.cdiv(n, BLOCK), tl.num_programs(0)
     ):
         i = block * BLOCK + tl.arange(0, BLOCK)
         m = i < n
-        off = i.to(tl.int64) * 2
-        lo = tl.load(words + off, m, other=0)
-        hi = tl.load(words + off + 1, m, other=0)
+        idx = i.to(tl.int64) * stride
+        lo = tl.load(lo_in + idx, m, other=0)
+        hi = tl.load(hi_in + idx, m, other=0)
         keep_lo = m & (hi >= 0) & (lo != 0)
         keep_hi = m & (hi >= 1) & (lo == 0)
         wrapped = m & (hi < -2147483647) & (lo == 0)
-        tl.store(outw + off, lo - 1, keep_lo)
-        tl.store(outw + off + 1, hi, keep_lo)
-        tl.store(outw + off, -1, keep_hi)
-        tl.store(outw + off + 1, hi - 1, keep_hi)
-        tl.store(outw + off, -1, wrapped)
-        tl.store(outw + off + 1, 2147483647, wrapped)
+        tl.store(lo_out + idx, lo - 1, keep_lo)
+        tl.store(hi_out + idx, hi, keep_lo)
+        tl.store(lo_out + idx, -1, keep_hi)
+        tl.store(hi_out + idx, hi - 1, keep_hi)
+        tl.store(lo_out + idx, -1, wrapped)
+        tl.store(hi_out + idx, 2147483647, wrapped)
 
 
 def _as_words(tensor):
@@ -95,18 +98,26 @@ def clamp_position(seq_lens):
         )
         n = seq_lens.numel()
         if n:
-            _clamp_position64[
-                (min(triton.cdiv(n, _BLOCK), _MAX_GRID),)
-            ](_as_words(seq_lens), _as_words(out), n, BLOCK=_BLOCK)
+            words_in = _as_words(seq_lens)
+            words_out = out.view(torch.int32)
+            _clamp_position64[(min(triton.cdiv(n, _BLOCK), _MAX_GRID),)](
+                words_in[0::2],
+                words_in[1::2],
+                words_out[0::2],
+                words_out[1::2],
+                n,
+                2,
+                BLOCK=_BLOCK,
+            )
     else:
         out = torch.empty(
             seq_lens.shape, dtype=seq_lens.dtype, device=seq_lens.device
         )
         n = seq_lens.numel()
         if n:
-            _clamp_position[
-                (min(triton.cdiv(n, _BLOCK), _MAX_GRID),)
-            ](seq_lens, out, n, seq_lens.stride(0), BLOCK=_BLOCK)
+            _clamp_position[(min(triton.cdiv(n, _BLOCK), _MAX_GRID),)](
+                seq_lens, out, n, seq_lens.stride(0), BLOCK=_BLOCK
+            )
     return out
 
 

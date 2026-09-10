@@ -37,14 +37,19 @@ _MAX_GRID = 24
 _BLOCK = 256
 
 
-@triton.jit
-def _compute_src2dst(ids, out, n, stride, BLOCK: tl.constexpr):
+@triton.jit(do_not_specialize=["os"])
+def _compute_src2dst(ids, out, n, stride, os, BLOCK: tl.constexpr):
     for block in range(
         tl.program_id(0), tl.cdiv(n, BLOCK), tl.num_programs(0)
     ):
         dst = block * BLOCK + tl.arange(0, BLOCK)
         src = tl.load(ids + dst.to(tl.int64) * stride, dst < n, other=0)
-        tl.store(out + src, dst, dst < n)
+        # The stride multiply must survive: with os specialized to 1 the
+        # muli folds away and round 2's raw addptr compiled but scattered
+        # to wrong addresses on GCU (99% mismatch on an uninitialized
+        # buffer). extsi(load) -> muli(runtime stride) -> addptr is the
+        # dataflow kv_indices proved on GCU.
+        tl.store(out + src.to(tl.int64) * os, dst, dst < n)
 
 
 def compute_src2dst(reorder_ids, num_toks):
@@ -61,7 +66,7 @@ def compute_src2dst(reorder_ids, num_toks):
         ids = reorder_ids
     if num_toks:
         _compute_src2dst[(min(triton.cdiv(num_toks, _BLOCK), _MAX_GRID),)](
-            ids, out, num_toks, ids.stride(0), BLOCK=_BLOCK
+            ids, out, num_toks, ids.stride(0), out.stride(0), BLOCK=_BLOCK
         )
     return out
 
