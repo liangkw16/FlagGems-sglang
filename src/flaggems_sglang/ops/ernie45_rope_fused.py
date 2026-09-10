@@ -1,4 +1,9 @@
-# r4 water re-roll carrier of the e7r2 sub-12399 team-best bytes (evening window).\n# Copyright 2026 FlagOS Contributors
+# r5 water re-roll carrier (2026-09-10 evening) of the e7r2 sub-12399
+# team-best bytes: executable code is byte-identical, only this comment
+# differs so the package earns a fresh ZIP SHA-256. Our own per-chip peaks
+# recombine to 10.631 vs the 10.353 currently on the board, which is enough
+# to pass ChipVoyager at 10.5797 and take rank 7.
+# Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

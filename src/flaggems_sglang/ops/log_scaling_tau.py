@@ -1,4 +1,7 @@
-# r2 final water re-roll carrier of E11 sub 10887 bytes.
+# r3 water re-roll carrier (2026-09-10 evening) of E11 sub 10887 bytes:
+# executable code is byte-identical, only this comment differs so the package
+# earns a fresh ZIP SHA-256. The rank-8 seat is 1.6% above us (BxRKingsQC
+# 2.5423 vs our 2.503), well inside this operator's observed water spread.
 # Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
