@@ -1,4 +1,4 @@
-# r2 water re-roll carrier of the e7 sub-12366 team-best bytes.\n# Copyright 2026 FlagOS Contributors
+# e8: per-head-program probe on the e4-form two-launch generic.\n# Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -77,7 +77,10 @@ def _ernie_rope_kernel(
         qh_mask = head_offsets < n_qh
         # x1: [HEADS_TILE, BLOCK_R] = q[token, head*hs + r]
         x1 = tl.load(
-            q_ptr + token * q_stride + head_offsets[:, None] * head_size + r[None, :],
+            q_ptr
+            + token * q_stride
+            + head_offsets[:, None] * head_size
+            + r[None, :],
             mask=qh_mask[:, None] & r_mask[None, :],
             other=0.0,
         ).to(tl.float32)
@@ -132,7 +135,10 @@ def _ernie_rope_kernel(
     else:
         kh_mask = head_offsets < n_kh
         x1 = tl.load(
-            k_ptr + token * k_stride + head_offsets[:, None] * head_size + r[None, :],
+            k_ptr
+            + token * k_stride
+            + head_offsets[:, None] * head_size
+            + r[None, :],
             mask=kh_mask[:, None] & r_mask[None, :],
             other=0.0,
         ).to(tl.float32)
@@ -209,7 +215,10 @@ def ernie45_rope_fused(
     wpos = positions[2].contiguous()
 
     block_r = max(triton.next_power_of_2(half_rd), 2)
-    heads_tile = 4
+    # e8: per-head programs (grid x4) probe - tier-2 leads tianshu/muxi/
+    # A/B by 40-60% over this two-launch tile-4 form; if the bench is
+    # decode-shaped (small T), the tile-4 grid under-parallelizes.
+    heads_tile = 1
 
     # Launch Q and K as separate grid calls sharing cos/sin loads
     grid_q = (num_tokens, triton.cdiv(n_qh, heads_tile))
