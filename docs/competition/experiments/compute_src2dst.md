@@ -159,3 +159,44 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 回执 `artifacts/competition/batch5-enflame-fix-20260911/release-r3/compute_src2dst/verification.json`，
   SHA-256 `e25d95ef7f7119249b7142ee090a4abd5d4f1c7ac61e9377d7e74131344fe05d`；
   3 方法 0 失败，generic 19 + enflame 19 次 launch。
+
+## 2026-09-11 E2/E3 终态与 E4 提交
+
+- E2（daily_seq 13，07:08）：燧原**首次编译通过**（i32 scatter 索引解除编译
+  阻断）但数值 99% 错——`out` 为 `torch.empty`，错误指纹（inf 相对差）表明
+  scatter 写错地址、未写元素留垃圾。其余七芯正常（天数 2.982 / 沐曦 1.147 /
+  海光 2.017 / 昆仑 1.2902 / 华为 1.6086 / A 1.6222 / B 1.7558）。
+- E3（daily_seq 15，07:19，extsi→i64 × runtime stride）：燧原**编译再次失败**
+  ——与 E1 合并实证：**向量 load 值的 extsi→i64 进 store 寻址是编译毒点**；
+  E2 的裸 i32 addptr 可编译但寻址错。
+- E4（daily_seq 18，07:35:16，commit `cbd35d8`）：唯一未试形态——纯 i32
+  `src * os`（runtime stride，do_not_specialize 防 1 特化折叠），镜像
+  decode_attention 已证 gather 数据流（load 值 × i32 stride 寻址）用于 store 方向。
+- 回执 `release-r5/compute_src2dst/verification.json`（SHA-256
+  `4cb1ee8501173f78c8feaf91e623d951604be7fd370d1832911069ac23555a59`，
+  3 方法 0 失败）；ZIP `e4-cbd35d8`，4415 bytes，SHA-256
+  `36718e763de533d434f020b1e200ae4b1dbeef6fed7a568541478c5ce2acdc97`。
+
+## 2026-09-11 E4 状态：燧原回调异常挂起
+
+- E4（daily_seq 18，07:35:16）：其余七芯全过（天数 2.992 / 沐曦 1.1564 /
+  海光 1.9016 / 昆仑 1.3104 / 华为 1.6078 / A 1.636 / B 1.7972）；
+  燧原 waiting_callback 挂起超 50 分钟（历轮 ~10 分钟出结果）——怀疑
+  `src * os` i32 scatter 在 GCU 运行时挂死或评测机窗口异常，等待终态。
+
+## 2026-09-11 E4R 终态与止损
+
+- E4R（daily_seq 22，08:20，commit `10fed92`）：燧原回调正常返回，
+  **数值失败与 E2 指纹完全相同**（99%、diff 494@idx7、inf 相对差@476）
+  ——`src * os`（i32 × runtime stride）与裸 i32 addptr 的 scatter 落点同样
+  错误；E4 当次的「服务线程卡死」确为评测器崩溃族而非内核挂死。
+  回执 `release-r8/compute_src2dst/verification.json`（SHA-256
+  `7d2fd8b23ab69673c59fb0a737c5ff7a28672cf00287ccab3f89871d3ab055c7`）；
+  ZIP `e4r-10fed92`，SHA-256
+  `824722fa72ca38c2640cf4278b1be418f76bd3939823834da450a510f327bbf8`。
+- **结论（GCU 规则集补充）**：数据依赖 scatter（load 值作 store 索引）在
+  extsi-i64 / 裸 i32 / i32×runtime stride 三种形态下分别为编译死/错址/错址
+  ——此 GCU 栈的 DMA store 不支持 load 索引寻址。重启候选方向：
+  `tl.atomic_xchg`（非 DMA lowering 路径）。
+- 七芯水位（E4R）：天数 3.0196 / 沐曦 1.171 / 海光 1.8468 / 昆仑 1.2956 /
+  华为 1.6166 / A 1.6326 / B 1.7718。

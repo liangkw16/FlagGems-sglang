@@ -130,3 +130,27 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 已知风险：燧原 0.109x 贴门槛，重掷窗口读数若下滑跌破 0.1 该发无效
   （当前 12897 本就无效，无净损失）；沐曦 0.9836、华为 0.2188 同样偏弱，
   后续优化方向为 wrapper/launch 开销与 tile。
+
+## 2026-09-11 S0R 平台提交（2026-09-11T06:51:26+08:00）
+
+- `s0r` / daily_seq `10`。nonce：`772eb61868a69bf91f3e452d737a1e75`。
+- 逐芯结果：见下方跟进记录。
+
+## 2026-09-11 S0R 终态与 S0R2 终投（daily_seq 20）
+
+- S0R（daily_seq 10）：昆仑芯再次崩溃族（同「服务线程卡死自动恢复」错误，
+  七芯第二次全过且读数稳定：燧原 0.11 / 华为 0.1134 / 沐曦 0.9906）。
+- S0R2（daily_seq 20，~08:0x，commit `bb6faed`）：崩溃族重掷 2/2（最后一次）。
+  回执 `release-r7/concat_mla_k/verification.json`（SHA-256
+  `b9d1e831db48f602dcd88637b68939acc3b5d3935dc7b3f78bd856e1bf371b69`）；
+  ZIP `s0r2-bb6faed`，2745 bytes，SHA-256
+  `eeea677c98ca2c400a46c46b631fdd047372ca35c8239a430a17d3f9199094ac`。
+- 弱芯观察：华为 0.2188→0.1134 水位波动大；燧原 0.109-0.11 贴门槛；
+  后续优化方向为 launch/wrapper 开销（task 语义为纯内存单趟拷贝）。
+
+## 2026-09-11 S0R2 观察中状态
+
+- 昆仑回调仍在等待（提交 08:08:25）。注意华为读数 0.0932 已跌破 0.1 门槛
+  （0.2188 → 0.1134 → 0.0932 三连降），即使昆仑恢复，本发大概率
+  invalid_threshold；华为窗口回暖后需要真正优化轮（wrapper/launch 开销轴）
+  而非重掷。崩溃族重掷额度已用尽（2/2）。

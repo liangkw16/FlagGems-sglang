@@ -4,12 +4,13 @@
 task: 59
 operator: build_trtllm_mha_page_table
 batch: 5
-validity: invalid_correctness
-platform: completed(12896,7/8)
-candidate_stage: e3
-team_best_stage: -
+validity: valid
+platform: completed(e3r,8/8)
+candidate_stage: e3r
+team_best_stage: e3r
+team_best_speedup: 23.4311875
 sealed: no
-next: 等待 E3 逐芯回调（燧原数值修复裁决）
+next: 保留 E3R；均值 23.43 距榜首 0.47，可择机冲（燧原 26.84 已超榜首同芯）
 updated: 2026-09-11
 ```
 
@@ -171,3 +172,31 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 回执 `artifacts/competition/batch5-enflame-fix-20260911/release-r3/build_trtllm_mha_page_table/verification.json`，
   SHA-256 `880db0f4e2d327b6575c83ac954d27cde37d47376139231a6b667516308d5c88`；
   4 方法 0 失败，generic 26 + enflame 26 次 launch。
+
+## 2026-09-11 E3 平台终态与 E3R 重掷（daily_seq 16）
+
+- E3（daily_seq 11，07:03）：**燧原 27.81525x 首次通过**；天数 68.63925 /
+  沐曦 12.9255 / 海光 26.8495 / 华为 10.25925 / A 21.7895 / B 20.03675 全过。
+  昆仑芯在评测器自身 XMLIR 栈崩溃（"No test results found (empty report)"，
+  error code -299）——generic 字节与 2.17x 通过轮完全一致，判**崩溃族**非代码回归。
+- 根因链沉淀（平台四轮实证）：E2 双同址掩码 store 形态在 GCU 编译通过但
+  数值 64% 错；E3 改 wrapper `page_table.clone()` 预填 + 单 gather 单掩码 store
+  （kv_indices 121x 已证形态）后数值全对且 27.82x（超榜一 Nectar 26.64x）。
+- E3R 载体（daily_seq 16，07:30:27）：内核语义与 E3 相同（注释载体
+  `cbd35d8`），重掷昆仑窗口；回执
+  `artifacts/competition/batch5-enflame-fix-20260911/release-r5/build_trtllm_mha_page_table/verification.json`
+  （SHA-256 `964308bcec6df32e1a452231a9ef01efcad0f08d34f1a19a6675e4d09b07972b`，
+  4 方法 0 失败）；ZIP `e3r-cbd35d8`，8442 bytes，
+  SHA-256 `99436cb19e8d41926d80847d1c101f8ea42af08c819f720a981812c5fd7bfc49`。
+  昆仑重掷计数 1/2。
+
+## 2026-09-11 E3R 平台终态：8/8 VALID（daily_seq 16，07:30:27）
+
+- **八芯全过，首次有效提交**：天数 68.40825 / 沐曦 12.965 / 燧原 26.83925 /
+  海光 24.8525 / 昆仑 2.159 / 华为 9.94025 / A 22.132 / B 20.153。
+  **平均 23.4311875x**（187.4495/8）。昆仑 XMLIR 崩溃族重掷 1 次即恢复。
+- 榜单对标：榜首 Nectar 23.90034375（燧原 26.639）、次席 c2flow 19.5053；
+  我方 23.43x 逼近榜首（差 0.47，约 2%），燧原单芯 26.84x **超过榜首同芯读数**。
+- 攻坚路径复盘（五轮平台实证，燧原 GCU 规则集已沉淀入 skill 硬事实表）：
+  generic i64 向量 load 编译死 → E2 消 i64 后双同址 store 数值错 →
+  E3 clone 预填 + 单 gather 单 store 全对 → E3R 昆仑崩溃重掷。

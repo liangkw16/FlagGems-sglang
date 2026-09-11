@@ -166,3 +166,51 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 回执 `artifacts/competition/batch5-enflame-fix-20260911/release-r3/clamp_position/verification.json`，
   SHA-256 `c4acb56402bf7e061b2beadd83a2f03c8769f66da1de21b7305c57a3505a3f58`；
   3 方法 0 失败，generic 22 + enflame 22 次 launch。
+
+## 2026-09-11 E2/E3 终态与 E4 提交
+
+- E2（daily_seq 12，07:05）：燧原仍编译失败；E3（daily_seq 14，07:17，
+  视图指针 + runtime stride）仍编译失败——**交错双 load 与指针形式均排除**，
+  毒点锁定在 store 侧（字面量值 store / 多分支 store / 3 项 andi 链）。
+  其余七芯读数正常（天数 1.8258 / 沐曦 1.1585 / 海光 1.496 / 昆仑 0.92017 /
+  华为 0.27733 / A 1.408 / B 1.44683）。
+- E4（daily_seq 17，07:32:53，commit `cbd35d8`）：换 **T49 precomputed-pos
+  结构资产**——wrapper 预计算 `borrow=(lo==0)`、`vpos=((x-1)>=0)`（torch int64
+  包绕语义与 reference 逐位一致，min_int64 包绕为 max 后仍正），内核变纯无分支
+  词算术 `(lo-1)*vpos`、`(hi-borrow)*vpos`：3 次 strided 向量 load（61-e2 已证
+  编译形态）+ 2 次单掩码 store，零字面量/零 select/零 extsi-of-load。
+- 回执 `release-r5/clamp_position/verification.json`（SHA-256
+  `af50946bc41cee97999572e2e1a4193429822ae0a669977192fc5bba2e047a49`，
+  3 方法 0 失败）；ZIP `e4-cbd35d8`，6018 bytes，SHA-256
+  `6a7af9ccd7e89fce298bfd9b624034d158bc49ecad5962a64f47ae37a01ac0df`。
+
+## 2026-09-11 E4 终态与 E5 提交
+
+- E4（daily_seq 17）：燧原**首次编译并运行**（precomputed-pos 无分支词算术），
+  但 store 落错地址（100% 失配，`torch.empty` 输出全垃圾）——常量缩放词偏移
+  （`i*2`、`+1`）与 61-e2 的错误地址失败同族。其余七芯正常。
+- E5（daily_seq 19，07:5x，commit `787586f`）：全部词偏移改走 runtime stride
+  或未缩放裸索引，hi 词独立 `[1::2]` 视图指针，双 store 共享已证寻址形态。
+  代理首版曾抓到真 bug（hi store 误写 `idx+word_stride` 到下一元素 lo 词），
+  修正后全矩阵通过。回执 `release-r7/clamp_position/verification.json`
+  （SHA-256 `247e902af575a529e915f9d649a2db10b66e1eff23a6132921d90c2cac6b5645`）；
+  ZIP `e5-787586f`，6507 bytes，SHA-256
+  `b48e5b33132b26fa0d044eb90db5fd8a85438a4a6c190380a2c610b3710d7091`。
+
+## 2026-09-11 E5/E6 终态与止损（六轮燧原攻坚收官）
+
+- E5（daily_seq 19）：燧原数值仍错（98.8%，253/256）。E6（daily_seq 21，
+  commit `10fed92`）：**纯连续双 elementwise 内核**（lo/hi 各一，寻址为
+  clamp-i32 generic 在 GCU 数值已证的逐字节形态，wrapper torch 交错组装）
+  仍 100% 错（diff 1150601971）。回执
+  `release-r8/clamp_position/verification.json`（SHA-256
+  `acac45d27c0859bc9bef30cf6d49fe39c91f48762c18a281ff6d647e93d2ecc2`）；
+  ZIP `e6-10fed92`，SHA-256
+  `c650c3b76aebca57494ebac1029c5fe632a4d778f894a57328fdb61311d5b75d`。
+- **止损判定**：E1–E6 覆盖了 select 消除、交错/视图双 load、runtime stride、
+  precomputed-pos、纯连续双内核全部形态轴，燧原 int64 case 始终无法数值通过
+  （其余七芯每轮全过，读数稳定 1.14–1.81x）。本日六发学费换取的完整 GCU
+  规则集已沉淀 skill 硬事实表；后续重启需外部证据（如 atomic 路线或他人
+  通过样例的构造泄露）。
+- 七芯参考水位（E6）：天数 1.79983 / 沐曦 1.1445 / 海光 1.52617 /
+  昆仑 0.91667 / 华为 0.267 / A 1.43667 / B 1.42183。
