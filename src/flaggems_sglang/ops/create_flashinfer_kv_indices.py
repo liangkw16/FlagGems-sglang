@@ -71,10 +71,13 @@ def create_flashinfer_kv_indices(
         assert kv_start_idx.dtype in (torch.int32, torch.int64)
     out = kv_indices.clone()
     if batch and out.numel():
+        # Target ~512 cooperating programs (the upstream SGLang AMD
+        # parallelization shape for long contexts): more token blocks per
+        # row and idle blocks fall through their zero-iteration loops.
         splits = min(
-            max(1, triton.cdiv(req_to_token.shape[1], 512)),
-            max(1, 128 // batch),
-            32,
+            max(1, triton.cdiv(req_to_token.shape[1], 256)),
+            max(1, 512 // batch),
+            512,
         )
         _create_kv_indices[(min(batch, 65535), splits)](
             req_to_token,
@@ -91,7 +94,7 @@ def create_flashinfer_kv_indices(
             kv_start_idx.stride(0) if kv_start_idx is not None else 0,
             out.stride(0),
             HAS_START=kv_start_idx is not None,
-            BLOCK=512,
+            BLOCK=256,
         )
     return out
 

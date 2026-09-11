@@ -12,7 +12,7 @@ import triton
 import triton.language as tl
 
 
-@triton.jit
+@triton.jit(do_not_specialize=["tasks", "heads", "groups", "nd", "rd"])
 def _concat_mla_k(
     nope,
     rope,
@@ -67,7 +67,9 @@ def concat_mla_k(k, k_nope, k_rope):
     assert k.dtype == k_nope.dtype == k_rope.dtype == torch.bfloat16
     out = torch.empty(k.shape, dtype=k.dtype, device=k.device)
     if out.numel():
-        groups = triton.cdiv(heads, 4)
+        # BH=16 quarters the program count per token (launch-bound shapes)
+        # while re-reading each token's rope row once per group.
+        groups = triton.cdiv(heads, 16)
         tasks = tokens * groups
         _concat_mla_k[(min(tasks, 65535),)](
             k_nope,
@@ -81,7 +83,7 @@ def concat_mla_k(k, k_nope, k_rope):
             *k_nope.stride(),
             k_rope.stride(0),
             k_rope.stride(2),
-            BH=4,
+            BH=16,
             BN=triton.next_power_of_2(max(1, nd)),
             BR=triton.next_power_of_2(max(1, rd)),
         )
