@@ -37,6 +37,8 @@ generic 基线 → 代理验证与执行回执 → 不可变 ZIP → 实时平�
 - `docs/competition/tasks/<batch>/<task>.md`：完整题面；
 - `docs/competition/reference-repositories.md`：固定 Git 引用和上游来源；
 - `docs/competition/strategy-batch2.md`：候选优先级和已知语义陷阱；
+- `docs/competition/session-mining-retrospective.md`：ZCode+Codex 全量会话挖掘的
+  跨批次经验（含 dot 操作数 dtype 镜像矩阵入口）；
 - `docs/competition/learning-path.md`：仅在题型学习、芯片调研或跨芯优化时读取
   对应章节和固定 backend 证据；
 - `docs/competition/experiments/<operator>.md`：该算子的实验账本。
@@ -160,6 +162,20 @@ platform/team_best/sealed/next/updated），是该任务唯一的人工状态真
 这些是第三方 skill，脚本运行拥有完整 agent 权限；首次调用某个 skill 前先
 快速审阅其脚本再执行。具体用法、协议和跨芯技术事实见
 [SkillHub 工具集成](references/skillhub-tools.md)。
+
+## 外部 agent 结论采信与多会话协作
+
+- codex-ask / codex-review 等外部 agent 的关键主张（改动了几条芯路径、某开关的
+  真实语义、上游实现细节）必须逐条对源码核实后才能写入账本或进入提交；实证：
+  声称改 2 条路径实为 3 条、`isCloseCoreTiling` 语义反转。核实以固定 commit 的
+  `git show` 或本地 diff 为准，不采信转述。
+- 全局性止损结论（"0 题值得重开""平台墙不可破"）系统性偏悲观：执行前必须有一条
+  外部事实校准——他队同窗口逐芯通过记录、平台工单回应或榜单逐芯数据；与崩溃族
+  协议的 T31 对照条款同构。
+- 多会话并行时提交权归账本：只读审计给出的"勿投"结论不阻断另一会话已授权的
+  发射；冲突以不可变提交记录与平台回执对账，事后补记，不回滚他人 intent。
+- skill 与门禁脚本的收口审计遵循"无 diff 不重审"：goal 续跑或例行收口只在存在
+  实际 diff 时产生 commit，重复审计不产生新提交，避免打断开发节奏。
 
 ## 阶段 A：从题面到 S0
 

@@ -240,6 +240,7 @@ for r in rows:
 | 评测机慢窗可爆两个数量级读数 | 燧原冻结字节 2.3–3.73（exec 8–11s）→ 442.8（exec 1299s）；慢窗下 reference 退化远超单融合 kernel | 水位彩票机制：最佳字节载体随时待发；读数合法但脆弱（同窗 E3 即 1830s 超时死）；exec_ms 与 speedup 强相关可作窗口判据 |
 | 昇腾 aclnn 原生库层错误 | `aclnnCat` 进程内错误（T46 tile8 探针，单 case，异步栈不可靠） | 无法区分候选触发 vs 平台间歇；单发探针止损，不据此改结构 |
 | fp16 张量核整数乘积精确域 | int8 操作数 fp16 精确（≤2048）但乘积 127×127=16129 超域；2936 万元素 1 个差 0.5088 vs 0.5 判负（T58 天数） | dot 操作数 dtype 兼容性逐题逐芯验证；失败先拉 raw_result 数失败元素量级再定方向 |
+| dot 操作数 dtype 镜像矩阵 | 天数 fp32-ieee dot **静默算错**（输出=未写内存，错误指纹恒定），须 fp16 操作数或 split-fp16；昆仑 fp16 操作数数值失败、fp32-ieee 可行，与天数恰好镜像；燧原 fp32 病理慢，fp16 dot 需 64/64/128+stages≥2；沐曦/国际 B 低精度 dot 反而回退 | generic 低精度 dot 必须配昆仑 fp32 回退 vendor；结论逐题验证不外推（T58 与 T12 相反）；完整矩阵见 [retrospective §2.8](../../../docs/competition/season2-retrospective.md) |
 | 燧原 grid 超发是跨题系统缺陷 | 厂商指南：GCU **启动开销无法被掩盖**，GridDim 超过硬件资源即纯调度开销，计算量小时尤甚；硬件仅 24 SIP，推荐 GridDim 6（GCU300/nw=4）或 24（GCU400/nw=8）。我方多题燧原 grid 为 1e3–1e4（超发 100–2700x），且 enflame vendor 普遍未开 pingpong | 改 persistent 形态：`grid=(min(tiles, 24),)` + `tl.range(pid, tiles, tl.num_programs(0), num_stages=3)`（`num_stages>=3` 才开 pingpong，2D 计算官方实测 +15%）；launch **不写** `num_warps` 让后端取默认（T19-E5/T51-E5 两次平台实证 +38%；2026-09-09 统计：未钉 warps 组燧原中位数 2.077 vs 钉住组 0.732）。GCU 的 BLOCK_SIZE 倾向远大于 GPU |
 | 姐妹题移植必须重核**维度角色** | T48 shrink 沿用 T47 expand 的 `BLOCK_N=128/BLOCK_K=32`，但两题归约维与输出维恰好互换：expand 归约=rank（小 8–64）、输出=out_dim（大 1e3）；shrink 归约=K_in（大 512–4096）、输出=rank（小 16–64）。结果 K 循环 16–128 趟（应 2–16）+ dot 空列填充 50–87%，表现为**八芯一致落后 3–8x** | **八芯同步落后 ⇒ generic 结构问题，与任何单芯 lowering 无关**，先查 tile 几何而非加 vendor。移植姐妹题 tile 参数前先写清每根轴的物理含义与量级；`BLOCK_N=max(16,next_pow2(输出维))`、`BLOCK_K` 走真实归约维 |
 | 燧原 GCU 拒绝 i64 数据流（编译层） | 批5 三题全部 `make_gcuir → Pipeline run failed`；TTIR 差分+逐轮平台实证（T59–T61 五轮）：**i64 向量数据 load**（clamp 恰只 int64 case 挂）、**向量 load 值 extsi→i64 进 store 寻址**（src2dst e1/e3）、多分支/字面量值 store（clamp e2/e3）均编译失败或写错地址 | i64 只用于**寻址算术**（arange/标量 extsi，kv_indices 121x 实证）；i64 数据在 wrapper 做**小端 word 视图**（`view(torch.int32)`，可证值域 < 2^31 时取 lo 词，FlagGems PR #5345 同型）或 T49 precomputed-pos（torch 预计算判定张量，kernel 纯乘法掩码）；scatter store 用 `src * stride` 纯 i32（decode_attention gather 镜像）；单 gather+单掩码 store+wrapper clone/零预填是 GCU 最稳形态（T59 27.82x）；对照源：FlagTree `enable_i64: bool = False` + `gcu64-type-verifier`（GCU300） |
@@ -317,6 +318,10 @@ vendor 文件必须自包含、保持同一函数签名并导出同一 `__all__`
 例如八芯均为 2×，改为 1×、4×、其余六芯 2×，平均由 2× 增至 2.125×，应保留候选。
 同字节方差重掷最多两次低滚后关闭该重载路径；
 每题提交预算默认按当批作战方案执行，用户明示解除时以最新指示为准。
+重复测量本身要过收益门：无预注册收益假设的同字节水位重掷只作防御储备，不因
+"额度不过夜"心理消耗；冲榜日按结构实验/必要复测/收盘回归三段预分配额度并写明
+调整理由（第 4 批教训：最后 10 发中 8 发重复测量仅换来 2 项小新高、零名次提升，
+14:40 即耗尽当日额度，计划与实际执行脱节）。
 
 ## 第 4 批全战役经验补充（2026-09-05 收盘）
 
