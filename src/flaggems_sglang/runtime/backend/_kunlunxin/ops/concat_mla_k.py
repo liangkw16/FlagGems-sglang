@@ -58,8 +58,15 @@ def _concat_mla_k_rows(
         d = tl.arange(0, D_PAD).to(tl.int64)
         nm = d < nd
         rm = (d >= nd) & (d < nd + rd)
-        no = tl.load(nope + token * ns0 + head * ns1 + d * ns2, nm, other=0)
-        ro = tl.load(rope + token * rs0 + (d - nd) * rs2, rm, other=0)
+        # Masked-off lanes keep in-bounds addresses: the rope offset would
+        # go negative for d < nd and the platform's Kunlun run showed
+        # garbage through masked lanes with negative computed offsets, so
+        # both loads clamp their offsets into the valid range (loaded
+        # values for masked lanes are other=0 regardless).
+        dn = tl.minimum(d, nd - 1)
+        dr = tl.maximum(tl.minimum(d, nd + rd - 1) - nd, 0)
+        no = tl.load(nope + token * ns0 + head * ns1 + dn * ns2, nm, other=0)
+        ro = tl.load(rope + token * rs0 + dr * rs2, rm, other=0)
         # row = token * heads + head, so the output row stride is the
         # head-dim stride (out.stride(1)), not the token stride.
         tl.store(out + row64 * os1 + d * os2, no, nm)
