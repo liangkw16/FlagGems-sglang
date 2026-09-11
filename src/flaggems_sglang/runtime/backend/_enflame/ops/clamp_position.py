@@ -50,28 +50,42 @@ def _clamp_position(x, out, n, stride, BLOCK: tl.constexpr):
         tl.store(out + i, tl.maximum(value, 0), i < n)
 
 
-@triton.jit
-def _clamp_position64(lo_in, hi_in, borrow, vpos, out, n, BLOCK: tl.constexpr):
+@triton.jit(do_not_specialize=["word_stride"])
+def _clamp_position64(
+    lo_in,
+    hi_in,
+    borrow,
+    vpos,
+    lo_out,
+    hi_out,
+    n,
+    word_stride,
+    BLOCK: tl.constexpr,
+):
     # lo_in/hi_in are the little-endian [0::2]/[1::2] int32 views of the
-    # int64 input; borrow/vpos are precomputed int32 0/1 tensors; out is
-    # the int32 word view of the output. Two's-complement subtraction of
-    # (lo, hi) - 1 is (lo - 1, hi - borrow) with i32 wraparound, and
+    # int64 input; borrow/vpos are precomputed int32 0/1 tensors; lo_out/
+    # hi_out the matching views of the output. Two's-complement subtraction
+    # of (lo, hi) - 1 is (lo - 1, hi - borrow) with i32 wraparound, and
     # multiplying both words by vpos zeroes the result exactly when the
     # reference clamps to zero (vpos follows torch's wrapped v - 1 sign,
-    # so min_int64 wraps to max_int64 and stays positive).
+    # so min_int64 wraps to max_int64 and stays positive). Round 5 taught
+    # that constant-scaled word offsets (i * 2, + 1) compile but land on
+    # wrong addresses on GCU; every offset here goes through an unscaled
+    # raw index or a runtime stride multiplier, mirroring the store
+    # addressing build_trtllm_mha_page_table proved at 26.8x.
     for block in range(
         tl.program_id(0), tl.cdiv(n, BLOCK), tl.num_programs(0)
     ):
         i = block * BLOCK + tl.arange(0, BLOCK)
         m = i < n
-        idx = i.to(tl.int64) * 2
         pos = i.to(tl.int64)
+        idx = pos * word_stride
         lo = tl.load(lo_in + idx, m, other=0)
         hi = tl.load(hi_in + idx, m, other=0)
         b = tl.load(borrow + pos, m, other=0)
         keep = tl.load(vpos + pos, m, other=0)
-        tl.store(out + idx, (lo - 1) * keep, m)
-        tl.store(out + idx + 1, (hi - b) * keep, m)
+        tl.store(lo_out + idx, (lo - 1) * keep, m)
+        tl.store(hi_out + idx, (hi - b) * keep, m)
 
 
 def _as_words(tensor):
@@ -92,6 +106,7 @@ def clamp_position(seq_lens):
         )
         if n:
             words = _as_words(seq_lens)
+            words_out = out.view(torch.int32)
             # borrow: lo word == 0; vpos: sign of torch's wrapped (v - 1).
             borrow = (words[0::2] == 0).to(torch.int32)
             vpos = (seq_lens - 1 >= 0).to(torch.int32)
@@ -100,8 +115,10 @@ def clamp_position(seq_lens):
                 words[1::2],
                 borrow,
                 vpos,
-                out.view(torch.int32),
+                words_out[0::2],
+                words_out[1::2],
                 n,
+                2,
                 BLOCK=_BLOCK,
             )
     else:
