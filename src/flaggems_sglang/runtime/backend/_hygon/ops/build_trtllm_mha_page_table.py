@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# e4r carrier (2026-09-11): e4 passed Enflame (27.30x) and lifted
+# haiguang 24.85 -> 29.64 with the vendor; the Kunlun evaluation died in
+# the evaluator's own XMLIR stack (empty report, error -299) with the
+# generic bytes unchanged from the 2.16x-passing rounds, so this carrier
+# re-rolls the same kernel semantics for a healthy Kunlun window.
 # Hygon vendor: the generic passes at 24.8-27.1x on this chip while the
 # leader reads 32.06, and closing the whole task gap needs only ~13% less
 # candidate time here. Codex consultation (gpt-6-astra/ultra) + the T17
