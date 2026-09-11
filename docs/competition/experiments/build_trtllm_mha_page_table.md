@@ -6,11 +6,11 @@ operator: build_trtllm_mha_page_table
 batch: 5
 validity: valid
 platform: completed(e4r,8/8)
-candidate_stage: e4r
+candidate_stage: e5
 team_best_stage: e4r
 team_best_speedup: 24.1284375
 sealed: no
-next: 保留 E4R（均值 24.13 超当时榜首 23.90）；盯榜首反击，弱轴昆仑 2.15
+next: 第四发 e5 _ascend vendor（华为 8.68→≈20 即重登第一）；前序 62-e4/61-e5r/63-e3
 updated: 2026-09-11
 ```
 
@@ -220,3 +220,22 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   `525b5b45e9eb0c6c131ade74933e7a3623a8cb30a2673995e0700ecf056bd8af`；
   回执 `release-r2/…`（SHA-256 `338331166fab30515820ad6f992feafe32758e4d58b9876e22e1ff4af935f5c8`，
   generic 26 + enflame 26 + hygon 26 次 launch）。
+
+## 2026-09-11 榜单反击：E5 `_ascend` vendor 候选就绪（待下一额度窗口）
+
+- 榜单复核（~10:40）：**被 GuanghuLab 反超**（其 25.4259 vs 我 24.1284，
+  Nectar 23.90 降至第三）。逐芯差分：我方领先燧原 +4.80 / A +2.81 /
+  海光 +0.45 / 昆仑 +0.29 / B +0.50；落后 **华为 -16.11（我 8.677 vs 其
+  24.788）**、天数 -3.03、沐曦 -0.08。华为单项为均值差 -1.30 的 1.55 倍。
+- E5（commit `169dd6e`）：新增 `_ascend` vendor——镜像 hygon 轮平台已证
+  的直接 2D（rows, page blocks）网格（无扁平 task/div/mod/grid-stride、
+  标量行元数据、单 gather + 单掩码 store；该形态海光 +22%），不钉
+  num_warps，BLOCK=256（1KB int32 tile，远低于昇腾 UB 预算）。
+  华为 8.68→≈20 即均值 +1.4 → ≈25.5 重登第一（GuanghuLab 25.43）。
+- 代理矩阵 4 方法 0 失败；回执 `release-next/build_trtllm_mha_page_table/verification.json`
+  （SHA-256 `64d0382f9740174b23e8f180fe25416386e72c04b4f106696817347f2759d3b4`，
+  generic 26 + ascend 26 + enflame 26 + hygon 26 launch）；
+  ZIP `e5-169dd6e`，16814 bytes（4 成员），SHA-256
+  `f9eab06b945e8d64a4e9598c81ec0fee9e32382e95a5bece07125c4354457ec8`。
+- 状态：候选就绪未提交（当日额度 30/30 用尽）；发射序调整为第四发
+  （前序：62-e4、61-e5r、63-e3）。
