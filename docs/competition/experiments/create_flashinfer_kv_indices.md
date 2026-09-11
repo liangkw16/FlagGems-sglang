@@ -6,11 +6,11 @@ operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
 platform: completed(12894,8/8)
-candidate_stage: e1
-team_best_stage: e1
-team_best_speedup: 121.8698125
+candidate_stage: e2
+team_best_stage: e2
+team_best_speedup: 132.099
 sealed: no
-next: 保留 E1；后续优先定位昆仑和 wrapper 耗时
+next: 保留 E2；后续 vendor 保燧原/沐曦/昆仑 BLOCK=512 修复 -58% 回退
 updated: 2026-09-11
 ```
 
@@ -103,3 +103,20 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 下一步：保留 E1；后续优先定位昆仑和 wrapper 耗时。
 
 [提交结果证据](../data/batch5-submissions-20260911.json)，SHA-256 `63418b87e9249bef72751df2a1778c52e6d679a5d313ecf18d8ed64b96c175dd`；原始 status `artifacts/competition/batch5-submit-20260911/63-status-033921.json`，SHA-256 `6d245cc1336493d5d89fc97f9db0c3651e0c04798581ebf001de196c5355ee9c`。
+
+## 2026-09-11 E2：BLOCK=256 + 目标 ~512 协同 program（8/8 新 team best）
+
+- 上游 SGLang AMD PR #37659 形态（2D (batch, token-block) 协同跨步、目标
+  ~512 program、空块零迭代早退）+ Codex 建议合并：BLOCK 512→256，
+  splits 上限 32→512（`512 // batch`），代理 L2 域不可分辨（全 11.7μs
+  launch-bound），平台大芯片可分辨。
+- 终态（daily_seq 25，09:07）：**8/8，平均 132.0990x 新 team best（+8.4%）**：
+  天数 337.699（+18%）/ 海光 199.39 / A 183.87 / B 202.23 / 华为 67.09 持平；
+  代价：沐曦 60.28→55.05、**燧原 21.71→9.01（-58%）**、昆仑 2.88→2.45。
+- ZIP `e2-1c0381c`，3206 bytes，SHA-256
+  `2b2c4f42248b534c38a1cced7edbcda2826cf53ec686b7bbded1d4cc368434ee`；
+  回执 `batch5-deepopt-20260911/release/create_flashinfer_kv_indices/verification.json`
+  （SHA-256 `09f7a29a0444f7724a8d4753f8e52ef4a0ed4c10d5605c1c1e21b85db566de45`）。
+- 后续：BLOCK=256 对窄带宽芯（燧原/沐曦/昆仑）回退、对大芯片增益——
+  下一候选 `_enflame`/`_kunlunxin`/`_metax` vendor 保 BLOCK=512+旧 splits，
+  预期均值 ≈137+（GuanghuLab 135.6 可超）。

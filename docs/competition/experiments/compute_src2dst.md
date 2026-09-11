@@ -200,3 +200,20 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   `tl.atomic_xchg`（非 DMA lowering 路径）。
 - 七芯水位（E4R）：天数 3.0196 / 沐曦 1.171 / 海光 1.8468 / 昆仑 1.2956 /
   华为 1.6166 / A 1.6326 / B 1.7718。
+
+## 2026-09-11 E5（2D 行段 scatter）：燧原评测器崩溃，内核未获裁决
+
+- 情报：FlagGems 燧原 gcu300 `index_put` 在 GCU 上成功 scatter 的形态 =
+  **2D 行段 store**（load 值 i32 × stride 作行基址 + arange(0,1) 列、
+  rank 折叠分支、全程无 extsi）——与我方三种失败的逐 lane 1D scatter 不同。
+- E5（daily_seq 27，09:55，commit `26eb3ac`）：`[BLOCK, 1]` 2D 行段 scatter
+  （纯 i32 索引算术）。燧原 waiting_callback 挂起约 1.5 小时后判
+  **「服务线程卡死自动恢复」评测器崩溃族**（与 E4 同指纹）——2D 形态在
+  GCU 挂死或评测机连续异常，内核未获数值裁决。其余七芯正常（天数 3.0112 /
+  沐曦 1.1632 / 海光 1.8674 / 昆仑 1.2924 / 华为 1.6286 / A 1.5972 / B 1.796）。
+- 回执 `batch5-deepopt-20260911/release/compute_src2dst/verification.json`
+  （SHA-256 `4a87d80c1a73c2b084175715e55976e5777f05c031bdd1731811be93d597dae7`）；
+  ZIP `e5-26eb3ac`，4698 bytes，SHA-256
+  `35421dd63107a4e6ade6df1291107a423c43b1e8c23fdb50d112011c67f0f014`。
+- 明日：E5 字节重掷一次区分「GCU 挂死 vs 评测机窗口」；仍崩则 2D 形态
+  也触发挂起，61 燧原轴与 60 一并封存等外部证据。

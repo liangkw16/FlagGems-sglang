@@ -5,12 +5,12 @@ task: 59
 operator: build_trtllm_mha_page_table
 batch: 5
 validity: valid
-platform: completed(e3r,8/8)
-candidate_stage: e3r
-team_best_stage: e3r
-team_best_speedup: 23.4311875
+platform: completed(e4r,8/8)
+candidate_stage: e4r
+team_best_stage: e4r
+team_best_speedup: 24.1284375
 sealed: no
-next: 保留 E3R；均值 23.43 距榜首 0.47，可择机冲（燧原 26.84 已超榜首同芯）
+next: 保留 E4R（均值 24.13 超当时榜首 23.90）；盯榜首反击，弱轴昆仑 2.15
 updated: 2026-09-11
 ```
 
@@ -200,3 +200,23 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 攻坚路径复盘（五轮平台实证，燧原 GCU 规则集已沉淀入 skill 硬事实表）：
   generic i64 向量 load 编译死 → E2 消 i64 后双同址 store 数值错 →
   E3 clone 预填 + 单 gather 单 store 全对 → E3R 昆仑崩溃重掷。
+
+## 2026-09-11 深度优化轮：E4/E4R —— 8/8 VALID 24.1284x 登顶
+
+- 情报：逐芯榜显示差距全在海光（我 24.85 vs 榜首 Nectar 32.06），填平需
+  海光耗时 −13.1%。Codex 咨询（gpt-6-astra/ultra）+ T17 先例（hygon
+  num_warps 4→2 +3.34%）→ 新增 `_hygon` vendor：直接 2D grid
+  （row=pid0, tile=pid1）去除 div/mod 与 grid-stride + num_warps=2 +
+  双 stride 对（old 读/out 写分离）。generic 字节不动。
+- E4（daily_seq 23，08:58）：**海光 24.85→29.6378（+19%）**，燧原 27.30 保持；
+  昆仑 XMLIR 崩溃族（generic 字节与 2.16x 通过轮一致）。
+  回执 `batch5-deepopt-20260911/release/build_trtllm_mha_page_table/verification.json`
+  （SHA-256 `1c48f8e09c5544edfe38589ddf743c9406fc5e6de5755cbb88451e570937b8e4`）。
+- E4R（daily_seq 29，10:14，载体 `dc3c2b5`）：**八芯全过**：
+  天数 68.367 / 沐曦 12.8375 / 燧原 28.0875 / 海光 30.207 / 昆仑 2.1485 /
+  华为 8.677 / A 22.46875 / B 20.23425。
+  **平均 24.1284375x = 新 team best，超过当时榜首 Nectar 23.9003 —— 升第一**。
+  ZIP `e4r-dc3c2b5`，12759 bytes，SHA-256
+  `525b5b45e9eb0c6c131ade74933e7a3623a8cb30a2673995e0700ecf056bd8af`；
+  回执 `release-r2/…`（SHA-256 `338331166fab30515820ad6f992feafe32758e4d58b9876e22e1ff4af935f5c8`，
+  generic 26 + enflame 26 + hygon 26 次 launch）。

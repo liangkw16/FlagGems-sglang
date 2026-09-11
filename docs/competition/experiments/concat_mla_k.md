@@ -5,11 +5,11 @@ task: 62
 operator: concat_mla_k
 batch: 5
 validity: invalid_correctness
-platform: completed(12897,7/8)
-candidate_stage: s0r
+platform: completed(e3,7/8)
+candidate_stage: e3
 team_best_stage: -
 sealed: no
-next: 提交 s0r 崩溃族重掷载体（内核语义与 s0 相同）；据逐芯结果迭代
+next: 昆仑 vendor 已过编译、数值垃圾逐位稳定；明日去 do_not_specialize 对照
 updated: 2026-09-11
 ```
 
@@ -154,3 +154,24 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   （0.2188 → 0.1134 → 0.0932 三连降），即使昆仑恢复，本发大概率
   invalid_threshold；华为窗口回暖后需要真正优化轮（wrapper/launch 开销轴）
   而非重掷。崩溃族重掷额度已用尽（2/2）。
+
+## 2026-09-11 深度优化轮：E1（BH16）/E2/E3（昆仑 vendor）——崩溃解除但数值未过
+
+- E1（daily_seq 24，09:01）：generic BH 4→16 + 形状参数 do_not_specialize
+  （昆仑/海光重编译风暴保险）。昆仑第 4 次崩溃族；其余读数待 E2 复测。
+- E2（daily_seq 28，10:11，commit `0abaf28`）：新增 `_kunlunxin` vendor
+  （每 program 一行的 flat 形态 + do_not_specialize）。**昆仑 XMLIR 崩溃
+  首次解除（vendor 编译并运行）**，但数值 99.2% 垃圾（3.17e38 量级）。
+  其余七芯大幅改善：**燧原 0.108→0.2328（+115%）**、华为 0.1594（回门槛上）、
+  沐曦 1.022、天数 2.2892、海光 1.9216。代理曾抓出行寻址真 bug
+  （`row64*os0` 误用 token stride，应为 head-dim stride），修复后全矩阵过。
+- E3（daily_seq 30，10:26，commit `312f441`）：掩码 lane 负偏移钳制——
+  昆仑仍 99% 垃圾且**垃圾值与 E2 逐位相同**（3.176854909925949e+38
+  @(0,81,146)）⇒ 负载根本未读到输入数据。头号嫌疑：**XMLIR 对
+  do_not_specialize 多参数的绑定/特化路径有错**（明日首查：去掉
+  do_not_specialize 对照）。七芯读数保持（燧原 0.2314 / 华为 0.1594）。
+- 回执：E2 `release-r2/concat_mla_k/…`（SHA-256
+  `6359b8843358eba43c45c592b11b218520f02366a81507da26ef29d71d8dae5b`）；
+  E3 `release-r3/…`（SHA-256
+  `fa021c4e01f53cc17ddf3bc7f25e29df656ef13aec8652a35a7c018d46237666`）。
+- 若昆仑修复：预期 8/8，均值 ≈ (2.29+1.02+0.23+1.92+K~0.9+0.16+1.61+1.65)/8 ≈ 1.22。
