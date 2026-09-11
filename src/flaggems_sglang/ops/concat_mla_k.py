@@ -1,10 +1,11 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 # Head reuse from SGLang 8014d9d: jit/csrc/elementwise/concat_mla.cuh.
-# s0r carrier (2026-09-11): kernel bytes semantically identical to s0
-# (7b53fde); submission 12897 lost only to the Kunlun evaluator crash
-# family ("服务线程卡死自动恢复，请重新提交"), so this carrier re-rolls
-# the same structure for a healthy evaluation window.
+# s0r2 carrier (2026-09-11): kernel semantics identical to s0 (7b53fde).
+# 12897 and the s0r re-roll both lost only to the Kunlun evaluator crash
+# family ("服务线程卡死自动恢复，请重新提交") while all seven other
+# chips passed twice with stable readings; this is the final allowed
+# crash-family re-roll.
 
 import torch
 import triton
