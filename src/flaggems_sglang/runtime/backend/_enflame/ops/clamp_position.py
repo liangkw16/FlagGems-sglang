@@ -50,42 +50,35 @@ def _clamp_position(x, out, n, stride, BLOCK: tl.constexpr):
         tl.store(out + i, tl.maximum(value, 0), i < n)
 
 
-@triton.jit(do_not_specialize=["word_stride"])
-def _clamp_position64(
-    lo_in,
-    hi_in,
-    borrow,
-    vpos,
-    lo_out,
-    hi_out,
-    n,
-    word_stride,
-    BLOCK: tl.constexpr,
-):
-    # lo_in/hi_in are the little-endian [0::2]/[1::2] int32 views of the
-    # int64 input; borrow/vpos are precomputed int32 0/1 tensors; lo_out/
-    # hi_out the matching views of the output. Two's-complement subtraction
-    # of (lo, hi) - 1 is (lo - 1, hi - borrow) with i32 wraparound, and
-    # multiplying both words by vpos zeroes the result exactly when the
-    # reference clamps to zero (vpos follows torch's wrapped v - 1 sign,
-    # so min_int64 wraps to max_int64 and stays positive). Round 5 taught
-    # that constant-scaled word offsets (i * 2, + 1) compile but land on
-    # wrong addresses on GCU; every offset here goes through an unscaled
-    # raw index or a runtime stride multiplier, mirroring the store
-    # addressing build_trtllm_mha_page_table proved at 26.8x.
+@triton.jit
+def _clamp_position_word(x, aux, out, n, BLOCK: tl.constexpr):
+    # Round 6: every GCU-safe element is contiguous and the addressing is
+    # the exact shape of the generic int32 kernel that passes GCU -- a raw
+    # index load `x + i * stride(1)` and a raw index store `out + i`. aux
+    # is vpos for the lo word and borrow for the hi word; the wrapper
+    # interleaves the two contiguous word results with torch copies.
     for block in range(
         tl.program_id(0), tl.cdiv(n, BLOCK), tl.num_programs(0)
     ):
         i = block * BLOCK + tl.arange(0, BLOCK)
         m = i < n
-        pos = i.to(tl.int64)
-        idx = pos * word_stride
-        lo = tl.load(lo_in + idx, m, other=0)
-        hi = tl.load(hi_in + idx, m, other=0)
-        b = tl.load(borrow + pos, m, other=0)
-        keep = tl.load(vpos + pos, m, other=0)
-        tl.store(lo_out + idx, (lo - 1) * keep, m)
-        tl.store(hi_out + idx, (hi - b) * keep, m)
+        value = tl.load(x + i.to(tl.int64), m, other=0)
+        keep = tl.load(aux + i.to(tl.int64), m, other=0)
+        tl.store(out + i, (value - 1) * keep, m)
+
+
+@triton.jit
+def _clamp_position_word_hi(x, borrow, vpos, out, n, BLOCK: tl.constexpr):
+    # (hi - borrow) * vpos for the hi word; the same proven shape.
+    for block in range(
+        tl.program_id(0), tl.cdiv(n, BLOCK), tl.num_programs(0)
+    ):
+        i = block * BLOCK + tl.arange(0, BLOCK)
+        m = i < n
+        value = tl.load(x + i.to(tl.int64), m, other=0)
+        b = tl.load(borrow + i.to(tl.int64), m, other=0)
+        keep = tl.load(vpos + i.to(tl.int64), m, other=0)
+        tl.store(out + i, (value - b) * keep, m)
 
 
 def _as_words(tensor):
@@ -107,20 +100,23 @@ def clamp_position(seq_lens):
         if n:
             words = _as_words(seq_lens)
             words_out = out.view(torch.int32)
-            # borrow: lo word == 0; vpos: sign of torch's wrapped (v - 1).
-            borrow = (words[0::2] == 0).to(torch.int32)
+            # Contiguous word streams; the kernels never see a strided
+            # address. borrow: lo word == 0; vpos: sign of torch's
+            # wrapped (v - 1), so min_int64 wraps to max_int64 and stays
+            # positive exactly like the reference.
+            lo_words = words[0::2].contiguous()
+            hi_words = words[1::2].contiguous()
+            borrow = (lo_words == 0).to(torch.int32)
             vpos = (seq_lens - 1 >= 0).to(torch.int32)
-            _clamp_position64[(min(triton.cdiv(n, _BLOCK), _MAX_GRID),)](
-                words[0::2],
-                words[1::2],
-                borrow,
-                vpos,
-                words_out[0::2],
-                words_out[1::2],
-                n,
-                2,
-                BLOCK=_BLOCK,
+            lo_out = torch.empty(n, dtype=torch.int32, device=out.device)
+            hi_out = torch.empty(n, dtype=torch.int32, device=out.device)
+            grid = (min(triton.cdiv(n, _BLOCK), _MAX_GRID),)
+            _clamp_position_word[grid](lo_words, vpos, lo_out, n, BLOCK=_BLOCK)
+            _clamp_position_word_hi[grid](
+                hi_words, borrow, vpos, hi_out, n, BLOCK=_BLOCK
             )
+            words_out[0::2].copy_(lo_out)
+            words_out[1::2].copy_(hi_out)
     else:
         out = torch.empty(
             seq_lens.shape, dtype=seq_lens.dtype, device=seq_lens.device

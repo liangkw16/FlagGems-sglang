@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# e4r carrier (2026-09-11): round 5's submission died in the evaluator
+# crash family on Enflame ("服务线程卡死自动恢复，请重新提交") after an
+# hour-long callback, so the kernel itself never got a verdict; this
+# carrier re-rolls the same bytes for one diagnostic re-read.
 # Enflame vendor, round 5. Four platform rounds established the GCU
 # ruleset: no int64 vector data loads (the generic's only specialization
 # never compiled), no extsi of a vector-loaded index (rounds 1/3), and no
