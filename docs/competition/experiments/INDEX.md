@@ -45,5 +45,11 @@
 | 62 | concat_mla_k | invalid_correctness | completed(e3,7/8) | - | no | 下一窗口首发 e4（去 do_not_specialize 对照） | 2026-09-11 | [concat_mla_k](concat_mla_k.md) |
 | 63 | create_flashinfer_kv_indices | valid | completed(12894,8/8) | e2 132.099x | no | 下一窗口第三发 e3 窄带宽 vendor（预期均值 ≈134.4） | 2026-09-11 | [create_flashinfer_kv_indices](create_flashinfer_kv_indices.md) |
 | 64 | deepep_permute | valid | completed(12895,8/8) | e1 6.7478x | no | 保留 E1；目标轴按均值增量排序为燧原 +0.371 > 海光 +0.297 > 沐曦 +0.156，昆仑仅 +0.081；clone 轴已被 1c0381c 测量证伪不复投（见 optimization-batch5-r2-20260911.md §4） | 2026-09-11 | [deepep_permute](deepep_permute.md) |
+| 65 | deepep_post_reorder | candidate-wip | not-submitted | - | no | 远端 GPU 恢复后补 release 回执；回执齐全即进入 09-12 窗口发射队列（把握序第 3） | 2026-09-11 | [deepep_post_reorder](deepep_post_reorder.md) |
+| 66 | dsv3_fused_a_gemm | candidate-wip | not-submitted | - | no | 远端 GPU 恢复后补 release 回执 + 代表形状测速（M≤16 skinny GEMM，权重读取为带宽瓶颈）；回执齐全进入发射队列（把握序第 5） | 2026-09-11 | [dsv3_fused_a_gemm](dsv3_fused_a_gemm.md) |
+| 67 | fill_padded_rows | candidate-wip | not-submitted | - | no | 远端 GPU 恢复后补 release 回执；六题共用一次传输串行执行；回执齐全即进入 09-12 窗口发射队列（把握序第 1） | 2026-09-11 | [fill_padded_rows](fill_padded_rows.md) |
+| 68 | fused_eh_norm | candidate-wip | not-submitted | - | no | 远端 GPU 恢复后补 release 回执；回执齐全即进入 09-12 窗口发射队列（把握序第 2） | 2026-09-11 | [fused_eh_norm](fused_eh_norm.md) |
+| 69 | fused_moe_dispatch_index | candidate-wip | not-submitted | - | no | 远端 GPU 恢复后补 release 回执；重点观察昆仑/燧原对 masked tl.atomic_add 的编译与执行；回执齐全进入发射队列（把握序第 4） | 2026-09-11 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
+| 70 | gate_topk | candidate-wip | not-submitted | - | no | 远端 GPU 恢复后补 release 回执（重点：tl.topk/tl.sort/tl.bitonic_merge 在代理 Triton 3.7.1 的编译与数值，tie-break 与 NaN 语义）；回执齐全进入发射队列（把握序第 6） | 2026-09-11 | [gate_topk](gate_topk.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

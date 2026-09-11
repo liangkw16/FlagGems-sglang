@@ -1,44 +1,44 @@
-<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/per_token_quant_int8 -->
+<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/dsv3_fused_a_gemm -->
 <!-- synced_at: 2026-09-12T00:03:19+08:00 -->
 
-# per_token_quant_int8 (quantization/per_token_quant_int8)
+# dsv3_fused_a_gemm (gemm/dsv3_fused_a_gemm)
 
 ## 任务描述
 
-逐 token（整行）INT8 量化：对输入矩阵的每一行计算一个基于绝对最大值的缩放因子，将该行量化为 int8 整数；输出量化后的整数矩阵和每行一个的 float32 缩放因子向量。
+DeepSeek-V3 fused QKV-A 下投影的 decode 形状：`out = mat_a @ mat_b`，num_tokens <= 16。
+这是 "fused A" GEMM —— 拼接的 `q_a_proj` + `kv_a_proj` 权重。在 min-latency batch
+下它是 attention 前处理中单次最重的权重读取，因此用手写的 skinny-M kernel 而非 cuBLAS。
 
 ## 接口签名
 
 ```python
-def reference(x)
+def reference(mat_a, mat_b)
 ```
 
 > 选手实现的函数签名需与上述 `reference(...)` 完全一致。
 
 ## 计算定义
 
-- 输入 `x`: `[M, N]`，任意浮点 dtype，连续存储
-- 输出：`(x_q: [M, N] int8, x_s: [M, 1] float32)`
-- 对每行 `row`：
-  - `scale = max(|x[row]|, 1e-10) / 127`
-  - `x_q[row] = clamp(round(x[row] / scale), -128, 127)`
-- 等价于以整行作为一个 group 调用 per-token-group 量化（`group_size = N`）
+- `mat_a`：`[num_tokens, hd_in]` bf16 row-major；hd_in 为 256 的倍数，num_tokens ∈ [1, 16]。
+- `mat_b`：`[hd_in, hd_out]` bf16 **列主序**（即 row-major `[hd_out, hd_in]` 权重的 `.t()`）；
+  hd_out 为 16 的倍数。
+- 计算流程：
+
+  ```
+  out = mat_a.float() @ mat_b.float()
+  ```
+
+  要求 SM90+。
 
 ## 正确性判别标准
 
-Per-dtype tolerance:
-- float32: `atol=1e-4, rtol=1e-4`
-- bfloat16: `atol=1.5e-2, rtol=1.5e-2`
-- float16: `atol=1e-2, rtol=1e-2`
+标准 per-dtype tolerance。
 
 ## 参考实现
 
 ```python
-from flaggems_reference.per_token_group_quant_int8 import reference as _group_reference
-
-
-def reference(x):
-    return _group_reference(x, group_size=x.shape[-1])
+def reference(mat_a, mat_b):
+    return (mat_a.float() @ mat_b.float()).to(mat_a.dtype)
 ```
 
 ## 评分标准
