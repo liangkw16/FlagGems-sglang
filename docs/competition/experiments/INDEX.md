@@ -40,10 +40,10 @@
 | 57 | log_scaling_tau | valid | 8/8(e2,10747,2.36478125x首次有效) | e11 2.50278125x | no | 批4收盘;额度用尽.e9w(12649)2.47272燧原0.546;TB保持e11 2.50278;排名9/15,上邻仅+0.0396 | 2026-09-10 | [log_scaling_tau](log_scaling_tau.md) |
 | 58 | w8a8_block_int8_matmul | valid | e6r/11210八芯valid,258.04890833x team best(排名3);e7/11228 valid 253.07(B已修复) | e9r2 266.20655x | no | e7字节(e6r组级+amd逐块B)为最优组合,均值差=华为窗口三连下行;水位回常态时以e7字节重掷(新ZIP身份,≤2次) | 2026-09-08 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
 | 59 | build_trtllm_mha_page_table | valid | completed(e4r,8/8) | e4r 24.1284375x | no | 第四发 e5 _ascend vendor（华为 8.68→≈20 即重登第一）；前序 62-e4/61-e5r/63-e3 | 2026-09-11 | [build_trtllm_mha_page_table](build_trtllm_mha_page_table.md) |
-| 60 | clamp_position | invalid_correctness | completed(12898,7/8) | - | no | 等待 E2 逐芯回调（整型 select 消除裁决） | 2026-09-11 | [clamp_position](clamp_position.md) |
+| 60 | clamp_position | invalid_correctness | completed(e7,7/8;燧原轴止损) | - | no | 燧原轴 E1–E7 七轮止损；重启需先过 E8 离线双击：无条件 i32 词对（全域含 INT64_MIN）+ kernel 签名 i64-free 审计（见 optimization-batch5-r2-20260911.md §5） | 2026-09-11 | [clamp_position](clamp_position.md) |
 | 61 | compute_src2dst | invalid_correctness | completed(12900,7/8) | - | no | 下一窗口第二发 e5r 重掷（区分 GCU 挂死 vs 评测机） | 2026-09-11 | [compute_src2dst](compute_src2dst.md) |
 | 62 | concat_mla_k | invalid_correctness | completed(e3,7/8) | - | no | 下一窗口首发 e4（去 do_not_specialize 对照） | 2026-09-11 | [concat_mla_k](concat_mla_k.md) |
 | 63 | create_flashinfer_kv_indices | valid | completed(12894,8/8) | e2 132.099x | no | 下一窗口第三发 e3 窄带宽 vendor（预期均值 ≈134.4） | 2026-09-11 | [create_flashinfer_kv_indices](create_flashinfer_kv_indices.md) |
-| 64 | deepep_permute | valid | completed(12895,8/8) | e1 6.7478x | no | 保留 E1；后续优先改善昆仑 0.2538x 的余量 | 2026-09-11 | [deepep_permute](deepep_permute.md) |
+| 64 | deepep_permute | valid | completed(12895,8/8) | e1 6.7478x | no | 保留 E1；目标轴按均值增量排序为燧原 +0.371 > 海光 +0.297 > 沐曦 +0.156，昆仑仅 +0.081；clone 轴已被 1c0381c 测量证伪不复投（见 optimization-batch5-r2-20260911.md §4） | 2026-09-11 | [deepep_permute](deepep_permute.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

@@ -10,7 +10,7 @@ candidate_stage: e1
 team_best_stage: e1
 team_best_speedup: 6.7478
 sealed: no
-next: 保留 E1；后续优先改善昆仑 0.2538x 的余量
+next: 保留 E1；目标轴按均值增量排序为燧原 +0.371 > 海光 +0.297 > 沐曦 +0.156，昆仑仅 +0.081；clone 轴已被 1c0381c 测量证伪不复投（见 optimization-batch5-r2-20260911.md §4）
 updated: 2026-09-11
 ```
 
@@ -98,6 +98,43 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 | card_a | completed | 通过 | 8.4868 |
 | card_b | completed | 通过 | 6.9438 |
 
-下一步：保留 E1；后续优先改善昆仑 0.2538x 的余量。
+下一步：保留 E1；目标轴按均值增量排序（见下方 R2 候选节），昆仑并非第一轴。
 
 [提交结果证据](../data/batch5-submissions-20260911.json)，SHA-256 `63418b87e9249bef72751df2a1778c52e6d679a5d313ecf18d8ed64b96c175dd`；原始 status `artifacts/competition/batch5-submit-20260911/64-status-033924.json`，SHA-256 `4dbc91d328aaee717d6ec1a70041d1d9562e504ed39f8ae90979ea6abe302b3d`。
+
+## 2026-09-11 R2 目标轴纠正（归因，替代上文"优先昆仑"口径）
+
+真实靶子是次席 **Nectar 7.61745**，不是榜首 EvokeAgent 21.649025——后者的
+81% 来自华为单芯 100.305，而第二名同芯仅 3.0316（差 33 倍，远超 20x 判据），
+是不可复现的窗口彩票。按"追平 Nectar 后的均值增量"排序：
+
+| 芯片 | 我方 | Nectar | 增量 | 占 0.86965 |
+| --- | ---: | ---: | ---: | ---: |
+| enflame | 2.5326 | 5.5018 | **+0.3711** | 42.7% |
+| haiguang | 10.3318 | 12.7074 | +0.2970 | 34.2% |
+| muxi | 5.5116 | 6.7576 | +0.1558 | 17.9% |
+| tianshu | 16.1606 | 17.1312 | +0.1213 | 13.9% |
+| card_a | 8.4868 | 8.7262 | +0.0299 | 3.4% |
+| card_b | 6.9438 | 6.9442 | +0.0001 | 0.0% |
+| kunlunxin | 0.2538 | 0.1396 | −0.0143（已反超） | — |
+| huawei | 3.7614 | 3.0316 | −0.0912（已反超） | — |
+
+即把昆仑从 0.2538 提到同题第三名 0.9048 只值 **+0.081**，而把燧原从 2.53
+提到同题最优 6.68 值 **+0.519**。**燧原第一轴、海光第二，昆仑可忽略。**
+
+## 2026-09-11 R2 待开发候选：燧原轴（预注册门，未开发）
+
+- 前置事实：`1c0381c` 新增的 `_enflame/ops/deepep_permute.py` 只是把 generic 的
+  clone+scatter 字节**冻结成载体，不含优化**，救不了 2.17x 的缺口。
+- C1（有他题同芯平台先例）：现 launch `min(tasks, 65535)` 改为按物理资源封顶
+  （燧原 24），循环体已是 grid-stride，仅改 cap 数值。
+- C2（假设）：现 kernel 的 `dst = tl.load(routes)` 后直接
+  `tl.store(out + dst * os0 + ...)`，正落在 T61 平台实证的毒点
+  "load 取值直接作 store 索引"上；按 T49 precomputed-pos 路线改写成 wrapper
+  预计算目的地地址张量、kernel 纯乘法掩码。
+- **clone 轴不复投**：上限虽为 1.43~2.13x，但 `1c0381c` 的 destination-gather
+  重写实测仅 0.35x、宽行变体 0.25~0.60x，两条均已被测量否掉。
+- 预注册门：燧原中位收益 **≥1.3x**（C1）或 **≥1.5x**（C2），其余七芯无回退
+  >5%；完整正确性通过。
+- 证据等级：C1 为他题同芯平台先例，C2 为**结构假设**。
+  详见 [r2 §4](../optimization-batch5-r2-20260911.md)。

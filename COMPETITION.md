@@ -13,6 +13,7 @@
 - [第四批逐芯调研与 17 题下一轮方案（09-07）](docs/competition/research-batch4-vendor-20260907.md)
 - [第四批方案实现、验证结果和候选 ZIP（09-08）](docs/competition/implementation-batch4-20260908.md)
 - [ZCode+Codex 全量会话挖掘复盘（09-11）](docs/competition/session-mining-retrospective.md)
+- [第五批第二轮优化方向、预注册晋级门与证据订正（09-11）](docs/competition/optimization-batch5-r2-20260911.md)
 - [第二批候选、产物哈希与提交队列](docs/competition/experiments/README.md)
 - [参考仓库与本地 Git 引用](docs/competition/reference-repositories.md)
 - 厂商 backend 源码缓存：`docs/competition/data/vendor-backends/`

@@ -132,3 +132,33 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   `814eb5c6ae5263fa0a2a67b453769c33884b7f80e4566c0dc007966d3a04ad90`，
   4 方法 0 失败，generic+3 vendor 各 16 launch）。
 - 状态：候选就绪未提交。
+
+## 2026-09-11 R2 待开发候选：去掉 wrapper 的 `kv_indices.clone()`（预注册门，未开发）
+
+- 假设：E1 对榜首 Nectar 的逐芯比值八芯里六芯挤在 **0.49~0.63**
+  （天数 0.559 / 沐曦 0.516 / 燧原 0.491 / 海光 0.628 / 国际 A 0.630 /
+  国际 B 0.616，例外华为 0.959）。跨芯一致的比值是**加性固定开销**特征，
+  而非算法差距。wrapper 的 `out = kv_indices.clone()` 流量为"读 N + 写 N"，
+  与紧随的 gather kernel 同量级，相加约为纯 kernel 两倍 ⇒ 预测比值 0.5。
+  旁证：`1c0381c` 为 T64 实测 "clone ceiling confirmed at 30-53%"。
+- 未写区的正确形态：参考实现与测试把 `kv_indptr[i+1]` 构造成
+  `kv_indptr[i] + len_i + 3`、`old` 长度 `pointers[-1] + 5`，所以未写区是
+  **每两行之间 3 个元素的空隙 + 末尾 5 个**，不是连续尾巴——"拷贝尾部"的写法
+  是错的。每行 program 已知道 `[indptr[r], indptr[r]+len_r)` 与 `indptr[r+1]`，
+  由同一 program 再拷 `[indptr[r]+len_r, indptr[r+1])` 即可；末行补到
+  `out.numel()`，另补 `[0, indptr[0])`。生产形状空隙为 0，补齐代价为零，
+  而 clone 的 2N 流量被整体省掉。产出用 `torch.empty_like`（测试断言
+  `data_ptr` 不同）。该改法**不改访问模式**，这是它与 T64 被证伪的
+  destination-gather 重写的本质区别（后者代理 0.35x）。
+- 预注册门：代理 wrapper-inclusive 实测 clone 占比 **≥25%**（任一代表负载
+  `1×8193` / `32×1024`）；完整正确性全过；spill/shared memory 为 0；
+  寄存器 ≤64。预期占比 30~50% 时均值 132.099→**185~260**。
+- 止损：实测占比 <25% 直接关闭 clone 轴，不投平台。
+- 同候选须一并处理：E2 起的 generic `splits = min(cdiv(width,256),
+  max(1, 512//batch), 512)` 落在 grid 轴 1，而燧原 `grid.y` 硬限 255；
+  `batch ≤ 2 且 width ≥ 65536` 时 splits 可达 256~512 会越界（E2 当次形状
+  未触发，隐患对仍走 generic 的五芯持续存在；E3 三芯 vendor 冻结 E1 字节
+  恰好绕开）。建议改用上游 `sgl-project/sglang#37659` 的
+  `max(1, min(ceil(width/8192), 512 // max(1, batch)))` 并加 `min(..., 255)` 守卫。
+- 证据等级：clone 占比与 2x 预测为**假设**，先做零额度代理测量再开发。
+  详见 [r2 §2](../optimization-batch5-r2-20260911.md)。

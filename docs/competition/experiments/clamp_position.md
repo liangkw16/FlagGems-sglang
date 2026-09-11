@@ -5,11 +5,11 @@ task: 60
 operator: clamp_position
 batch: 5
 validity: invalid_correctness
-platform: completed(12898,7/8)
-candidate_stage: e2
+platform: completed(e7,7/8;燧原轴止损)
+candidate_stage: e8（提案，未开发）
 team_best_stage: -
 sealed: no
-next: 等待 E2 逐芯回调（整型 select 消除裁决）
+next: 燧原轴 E1–E7 七轮止损；重启需先过 E8 离线双击：无条件 i32 词对（全域含 INT64_MIN）+ kernel 签名 i64-free 审计（见 optimization-batch5-r2-20260911.md §5）
 updated: 2026-09-11
 ```
 
@@ -228,3 +228,23 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   wrapper 构件）。重启条件：XMLIR view 语义的外部证据。
 - 七芯水位（E7）：天数 1.7995 / 沐曦 1.1355 / 海光 1.48533 / 昆仑 0.91233 /
   华为 0.22683 / A 1.4605 / B 1.46217。
+
+## 2026-09-11 R2 待开发候选：E8（预注册门，未开发）
+
+- 命题：E7 的 guard 是"值全落于 [0,2^31) 才走 i32"，而本条归因①自己写明
+  "平台 case 3 值域不含于 [0,2^31) ⇒ guard 必然落入 64 位路径"。两句合起来
+  意味着 **i32 路线迄今从未在失败用例上被执行过**——"i32 化失败"未被建立，
+  只是未被检验。
+- E8 形态：把 (lo,hi) 小端词对算法做成**无条件**路径（borrow 逻辑覆盖
+  `INT64_MIN` 等全域，不依赖值域 guard），同时把 kernel 签名做成 i64-free
+  （[r2 §6.1](../optimization-batch5-r2-20260911.md)：GCU verifier 只查签名的
+  64 位 pointee 指针与裸 i64 标量，函数体内 i64 寻址算术不受该 pass 影响）。
+- 预注册门（两道，先离线后平台）：①本地签名审计证明 kernel 无 `!tt.ptr<i64>`
+  且无 i64 标量参数；②逐元素对拍覆盖 `INT64_MIN`、负值、>2^31 全域并通过。
+  两道全过才占用 1 发平台额度。
+- 止损：若 E8 仍复现"不同内核实为相同垃圾"，停止内核改造，转查 wrapper 的
+  输出写覆盖是否存在空洞——这与"三种内核相同指纹"的常数性特征一致。
+- 归属待核：本条归因②把 `view(torch.int32)` 嫌疑记为"XMLIR 的 view 语义"，
+  但 T60 的失败芯是燧原，XMLIR 是昆仑运行时；重启前先确认重解释主体的归属，
+  避免按错误坐标系找根因。
+- 证据等级：命题与 E8 形态为**假设**；§6.1 的 verifier 语义为上游源码级事实。
