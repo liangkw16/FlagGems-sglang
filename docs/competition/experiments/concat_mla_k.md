@@ -6,10 +6,10 @@ operator: concat_mla_k
 batch: 5
 validity: invalid_correctness
 platform: completed(e3,7/8)
-candidate_stage: e3
+candidate_stage: e4
 team_best_stage: -
 sealed: no
-next: 昆仑 vendor 已过编译、数值垃圾逐位稳定；明日去 do_not_specialize 对照
+next: 下一窗口首发 e4（去 do_not_specialize 对照）
 updated: 2026-09-11
 ```
 
@@ -175,3 +175,15 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   E3 `release-r3/…`（SHA-256
   `fa021c4e01f53cc17ddf3bc7f25e29df656ef13aec8652a35a7c018d46237666`）。
 - 若昆仑修复：预期 8/8，均值 ≈ (2.29+1.02+0.23+1.92+K~0.9+0.16+1.61+1.65)/8 ≈ 1.22。
+
+## 2026-09-11 E4 候选就绪（待下一额度窗口）
+
+- 单变量对照 E3：**去掉 `do_not_specialize`**（E2/E3 平台昆仑读数逐位相同
+  垃圾 ⇒ 唯一共享嫌疑为 XMLIR 非特化多参数绑定；重编译风暴是缓存代价非
+  正确性问题）。代理全矩阵通过。
+- source commit `95e529200a163575d060284efc01cc76d419a9ee`；ZIP `e4-95e5292`，
+  7203 bytes，SHA-256 `545c629ec2f8d6556d5720b2d2de196b89ba1b231112691951cbbe2b42430e41`。
+- 回执 `release-next/concat_mla_k/verification.json`（SHA-256
+  `4c3f764767a735a794d88211161401ec2ffa184e6fb3860f693857fd477565f2`，
+  5 方法 0 失败，generic 28 + kunlun vendor 28 launch）。
+- 状态：候选就绪未提交（当日额度 30/30 用尽）。

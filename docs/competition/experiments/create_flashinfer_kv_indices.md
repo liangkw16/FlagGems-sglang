@@ -6,11 +6,11 @@ operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
 platform: completed(12894,8/8)
-candidate_stage: e2
+candidate_stage: e3
 team_best_stage: e2
 team_best_speedup: 132.099
 sealed: no
-next: 保留 E2；后续 vendor 保燧原/沐曦/昆仑 BLOCK=512 修复 -58% 回退
+next: 下一窗口第三发 e3 窄带宽 vendor（预期均值 ≈134.4）
 updated: 2026-09-11
 ```
 
@@ -120,3 +120,15 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 后续：BLOCK=256 对窄带宽芯（燧原/沐曦/昆仑）回退、对大芯片增益——
   下一候选 `_enflame`/`_kunlunxin`/`_metax` vendor 保 BLOCK=512+旧 splits，
   预期均值 ≈137+（GuanghuLab 135.6 可超）。
+
+## 2026-09-11 E3 候选就绪（窄带宽 vendor，待下一额度窗口）
+
+- `_enflame`/`_kunlunxin`/`_metax` vendor 冻结 E1 已证字节（BLOCK=512、
+  splits≤32），恢复 E2 回退的窄带宽芯（预期燧原 9.0→21.7、昆仑 2.45→2.88、
+  沐曦 55.1→60.3），大芯片保留 E2 新形态——预期均值 ≈134.4（vs E2 132.1）。
+- source commit `95e5292…`；ZIP `e3-95e5292`，13416 bytes（4 成员），
+  SHA-256 `ebb05e6a8353e5c08b0fddf4b37dce4451c479b65a7b9f72d094b8a7cb540486`。
+- 回执 `release-next/create_flashinfer_kv_indices/verification.json`（SHA-256
+  `814eb5c6ae5263fa0a2a67b453769c33884b7f80e4566c0dc007966d3a04ad90`，
+  4 方法 0 失败，generic+3 vendor 各 16 launch）。
+- 状态：候选就绪未提交。

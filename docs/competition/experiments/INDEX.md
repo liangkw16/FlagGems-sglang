@@ -41,9 +41,9 @@
 | 58 | w8a8_block_int8_matmul | valid | e6r/11210八芯valid,258.04890833x team best(排名3);e7/11228 valid 253.07(B已修复) | e9r2 266.20655x | no | e7字节(e6r组级+amd逐块B)为最优组合,均值差=华为窗口三连下行;水位回常态时以e7字节重掷(新ZIP身份,≤2次) | 2026-09-08 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
 | 59 | build_trtllm_mha_page_table | valid | completed(e4r,8/8) | e4r 24.1284375x | no | 保留 E4R（均值 24.13 超当时榜首 23.90）；盯榜首反击，弱轴昆仑 2.15 | 2026-09-11 | [build_trtllm_mha_page_table](build_trtllm_mha_page_table.md) |
 | 60 | clamp_position | invalid_correctness | completed(12898,7/8) | - | no | 等待 E2 逐芯回调（整型 select 消除裁决） | 2026-09-11 | [clamp_position](clamp_position.md) |
-| 61 | compute_src2dst | invalid_correctness | completed(12900,7/8) | - | no | 等待 E2 逐芯回调（i32 scatter 索引裁决） | 2026-09-11 | [compute_src2dst](compute_src2dst.md) |
-| 62 | concat_mla_k | invalid_correctness | completed(e3,7/8) | - | no | 昆仑 vendor 已过编译、数值垃圾逐位稳定；明日去 do_not_specialize 对照 | 2026-09-11 | [concat_mla_k](concat_mla_k.md) |
-| 63 | create_flashinfer_kv_indices | valid | completed(12894,8/8) | e2 132.099x | no | 保留 E2；后续 vendor 保燧原/沐曦/昆仑 BLOCK=512 修复 -58% 回退 | 2026-09-11 | [create_flashinfer_kv_indices](create_flashinfer_kv_indices.md) |
+| 61 | compute_src2dst | invalid_correctness | completed(12900,7/8) | - | no | 下一窗口第二发 e5r 重掷（区分 GCU 挂死 vs 评测机） | 2026-09-11 | [compute_src2dst](compute_src2dst.md) |
+| 62 | concat_mla_k | invalid_correctness | completed(e3,7/8) | - | no | 下一窗口首发 e4（去 do_not_specialize 对照） | 2026-09-11 | [concat_mla_k](concat_mla_k.md) |
+| 63 | create_flashinfer_kv_indices | valid | completed(12894,8/8) | e2 132.099x | no | 下一窗口第三发 e3 窄带宽 vendor（预期均值 ≈134.4） | 2026-09-11 | [create_flashinfer_kv_indices](create_flashinfer_kv_indices.md) |
 | 64 | deepep_permute | valid | completed(12895,8/8) | e1 6.7478x | no | 保留 E1；后续优先改善昆仑 0.2538x 的余量 | 2026-09-11 | [deepep_permute](deepep_permute.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

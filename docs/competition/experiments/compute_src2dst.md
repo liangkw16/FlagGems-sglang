@@ -9,7 +9,7 @@ platform: completed(12900,7/8)
 candidate_stage: e2
 team_best_stage: -
 sealed: no
-next: 等待 E2 逐芯回调（i32 scatter 索引裁决）
+next: 下一窗口第二发 e5r 重掷（区分 GCU 挂死 vs 评测机）
 updated: 2026-09-11
 ```
 
@@ -217,3 +217,12 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   `35421dd63107a4e6ade6df1291107a423c43b1e8c23fdb50d112011c67f0f014`。
 - 明日：E5 字节重掷一次区分「GCU 挂死 vs 评测机窗口」；仍崩则 2D 形态
   也触发挂起，61 燧原轴与 60 一并封存等外部证据。
+
+## 2026-09-11 E5R 候选就绪（待下一额度窗口）
+
+- E5 同字节注释载体重掷（区分 GCU 挂死 vs 评测机窗口；崩溃族重掷 1/2）。
+- source commit `95e5292…`；ZIP `e5r-95e5292`，5003 bytes，SHA-256
+  `94d7e1745051048988e36fbf9d4427c201aeb6e7394457bfb1c7210a6bfd9969`。
+- 回执 `release-next/compute_src2dst/verification.json`（SHA-256
+  `3361018b37f6fa032f2d15c33ca4e0608282fd4b27496b612731291ad02fdb0d`）。
+- 状态：候选就绪未提交。
