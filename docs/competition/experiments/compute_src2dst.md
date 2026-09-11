@@ -5,12 +5,12 @@ task: 61
 operator: compute_src2dst
 batch: 5
 validity: invalid_correctness
-platform: completed(12900,7/8)
-candidate_stage: e2
+platform: completed(13221,e5r,7/8)
+candidate_stage: e5r
 team_best_stage: -
 sealed: no
-next: 下一窗口第二发 e5r 重掷（区分 GCU 挂死 vs 评测机）
-updated: 2026-09-11
+next: 燧原 vendor 被选中且确定性输出整数垃圾（8.8s 完成执行，非挂死/非窗口）⇒ 第 3 种 scatter 寻址形态失败，燧原轴按预注册止损封存，仅 precomputed-pos 全新结构（T49 形态）可重开；七芯 1.07–3.01x 为最强未过线记录
+updated: 2026-09-12
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -226,3 +226,17 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 回执 `release-next/compute_src2dst/verification.json`（SHA-256
   `3361018b37f6fa032f2d15c33ca4e0608282fd4b27496b612731291ad02fdb0d`）。
 - 状态：候选就绪未提交。
+
+## 2026-09-12 E5R 平台结果（submission 13221，daily_seq 2）
+
+- 7/8（燧原失败）；七芯读数为历次最强：天数 3.012、沐曦 1.0712、
+  海光 1.907、昆仑 1.2864、华为 1.7086、A 1.6186、B 1.7828。
+- 燧原失败详情（raw_result）：`selected_file=compute_src2dst_enflame.py`
+  被选中，**执行完成（8771ms）后数值失配**——`[1]` 511 元素中 506 个错
+  （最大绝对差 494）、`[2]` 8192 中 8143 错。**不是挂死、不是窗口**：
+  2D 行段 scatter 在 GCU 上确定性写错地址。
+- 结论：e1/e3/e5r 三种 scatter 寻址形态在燧原全部失败（前两种编译失败/
+  毒点，本种确定性错值）。按预注册止损，61 燧原轴与 60 一并封存，
+  仅 precomputed-pos 全新结构（wrapper 预计算位置、kernel 纯掩码拷贝，
+  T49 已证形态）可重开。
+- 额度：发后 28/30。

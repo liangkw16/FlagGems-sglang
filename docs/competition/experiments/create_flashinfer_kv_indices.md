@@ -5,13 +5,13 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: completed(12894,8/8)
+platform: completed(13227,e3,8/8,131.98x)
 candidate_stage: e3
 team_best_stage: e2
 team_best_speedup: 132.099
 sealed: no
-next: 下一窗口第三发 e3 窄带宽 vendor（预期均值 ≈134.4）
-updated: 2026-09-11
+next: E3 兑现燧原 9.0→19.6，但沐曦 vendor 字节未回 E1 水位（53.7 vs 60.3）⇒ 沐曦差非（仅）形态驱动，窗口方差嫌疑；均值 131.98≈E2 132.10，team best 仍 E2；下一主轴=方向 A 去 wrapper clone（先零额度代理测 clone 占比 ≥25% 门）
+updated: 2026-09-12
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -162,3 +162,18 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   `max(1, min(ceil(width/8192), 512 // max(1, batch)))` 并加 `min(..., 255)` 守卫。
 - 证据等级：clone 占比与 2x 预测为**假设**，先做零额度代理测量再开发。
   详见 [r2 §2](../optimization-batch5-r2-20260911.md)。
+
+## 2026-09-12 E3 平台结果（submission 13227，daily_seq 3）
+
+- **8/8 valid，均值 131.9834**（未超 E2 team best 132.099，差 0.1%）。
+- 逐芯：天数 337.5025 / 沐曦 53.654 / 燧原 **19.608**（E2 9.01 → 恢复 ✓，
+  E1 为 21.71）/ 海光 201.1373 / 昆仑 2.7815（E2 2.45↑，E1 2.88）/
+  华为 65.3153 / A 181.3925 / B 194.4765。
+- 复盘：燧原/昆仑 vendor 冻结兑现；**沐曦（metax vendor）未回 E1 水位**
+  （53.65 vs E1 60.28、E2 55.05）——同字节跨窗差异 ~12% ⇒ 沐曦差主要
+  是窗口方差而非形态，"≈134.4" 预测中沐曦 +5 的成分不成立。A/B 亦较
+  E2 让 1~4%（同因）。
+- 结论：E3 与 E2 等价（均值差在窗口噪声内），team best 保留 E2 字节。
+  下一主轴回到 R2 方向 A（去 wrapper clone，代理先测占比），不再在
+  vendor 形态轴上加码。
+- 额度：发后 27/30。

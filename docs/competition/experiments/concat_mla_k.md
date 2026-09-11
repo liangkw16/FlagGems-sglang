@@ -5,12 +5,12 @@ task: 62
 operator: concat_mla_k
 batch: 5
 validity: invalid_correctness
-platform: completed(e3,7/8)
+platform: completed(13215,e4,7/8)
 candidate_stage: e4
 team_best_stage: -
 sealed: no
-next: 下一窗口首发 e4（去 do_not_specialize 对照）
-updated: 2026-09-11
+next: 昆仑 vendor 第 3 次同指纹数值垃圾（E2/E3/E4，99% 元素 ~3e38 未初始化读形态）；去 do_not_specialize 无效 ⇒ XMLIR 非特化绑定假设证伪；昆仑轴转根因分析，B1/B2 弱芯轴待昆仑定位后再排
+updated: 2026-09-12
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -208,3 +208,17 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 止损：若华为与燧原均 <1.05x，关闭该轴。
 - 证据等级：B1 为他题同芯平台实证，B2 为**假设**。详见
   [r2 §3](../optimization-batch5-r2-20260911.md)。
+
+## 2026-09-12 E4 平台结果（submission 13215，daily_seq 1）
+
+- 7/8（昆仑失败），燧原 0.2306 / 华为 0.1796 仍贴近门槛；其余读数
+  天数 2.287、沐曦 1.0258、海光 1.9032、A 1.6414、B 1.6284。
+- 昆仑失败详情（raw_result）：`test_concat_mla_k[0]` 99.0% 元素失配，
+  最大绝对差 3.18e38（bf16 近 max，未初始化读形态）；`[1]` 98.7% / 3.36e38。
+  与 E2/E3 垃圾同指纹 ⇒ **去 `do_not_specialize` 对照证伪**：非特化多参数
+  绑定不是根因。
+- 结论：昆仑 vendor（flat 行形态）在 XMLIR 上第 3 次同指纹数值垃圾，
+  按"两次同指纹止损"该轴停止重掷；下一步是根因分析（垃圾幅值指向
+  未初始化/越界读——排查 vendor 的行寻址与 indptr 语义在 XMLIR 的
+  lowering，或对照 generic 字节在昆仑跑 E1 前的原始读数）。
+- 额度：发前 30/30，发后 29/30（observed_at 2026-09-12T00:5x）。

@@ -5,13 +5,13 @@ task: 59
 operator: build_trtllm_mha_page_table
 batch: 5
 validity: valid
-platform: completed(e4r,8/8)
+platform: completed(13232,e5,7/8;team best e4r 24.1284x)
 candidate_stage: e5
 team_best_stage: e4r
 team_best_speedup: 24.1284375
 sealed: no
-next: 第四发 e5 _ascend vendor（华为 8.68→≈20 即重登第一）；前序 62-e4/61-e5r/63-e3
-updated: 2026-09-11
+next: e5 _ascend vendor 首触华为即 aclnnInplaceCopy 流同步超时（507035，aclnn 原生库层错误家族，T46 aclnnCat 同例：异步栈不可靠，单发探针止损）；按崩溃族协议注释载体重掷需用户当次明示授权，或先补昇腾侧验证；e4r 守榜（GuanghuLab 25.43 第一）
+updated: 2026-09-12
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -239,3 +239,21 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   `f9eab06b945e8d64a4e9598c81ec0fee9e32382e95a5bece07125c4354457ec8`。
 - 状态：候选就绪未提交（当日额度 30/30 用尽）；发射序调整为第四发
   （前序：62-e4、61-e5r、63-e3）。
+
+## 2026-09-12 E5 平台结果（submission 13232，daily_seq 4）
+
+- 7/8（华为失败）。其余七芯健康且 vendor 全部按预期被选中：
+  天数 69.6605、沐曦 12.95、燧原 27.4923、海光 30.0975、昆仑 2.1808、
+  A 22.4938、B 20.1123（对照 e4r：天数 68.4/海光 30.2/A 22.8/B 20.6，
+  基本持平）。
+- 华为失败详情（raw_result）：`selected_file=build_trtllm_mha_page_table_ascend.py`
+  被选中、执行完成（25153ms）后，比较阶段报
+  `AclrtSynchronizeStreamWithTimeout(copy_stream) error 507035` 与
+  `aclnnInplaceCopy inner error`。属**昇腾 aclnn 原生库层错误家族**
+  （T46 `aclnnCat` 同例，异步栈不可靠）：无法区分 vendor 触发 NPU 运行时
+  异常 vs 平台间歇。按硬事实表"单发探针止损，不据此改结构"处置。
+- 处置：e4r team best 24.1284x 守榜不受影响（本次 validity=invalid，不入榜）。
+  昇腾轴后续两条路：① 崩溃族注释载体重掷 1 发（需用户当次明示授权，
+  新 commit/新 ZIP + 自有 release 回执）；② 先取得昇腾侧真机验证再重投。
+  在两者其一之前不自动重试。
+- 额度：发后 26/30（observed_at 2026-09-12T01:0x）。
