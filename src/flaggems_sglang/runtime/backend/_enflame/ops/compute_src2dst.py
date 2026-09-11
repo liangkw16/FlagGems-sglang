@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# e5r carrier (2026-09-11): round 6's 2D row-segment scatter died in
+# the evaluator crash family ("服务线程卡死自动恢复，请重新提交") after a
+# ~1.5h callback, so the kernel never got a verdict; this carrier re-rolls
+# the same bytes once to separate a GCU hang from an evaluator window.
 # Enflame vendor, round 6. Five platform rounds established that on this
 # GCU stack a per-lane 1D scatter through a loaded index is unusable:
 # extending the loaded index to int64 fails make_gcuir (rounds 1/3), and

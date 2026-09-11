@@ -33,7 +33,13 @@ import triton.language as tl
 _MAX_GRID = 65535
 
 
-@triton.jit(do_not_specialize=["rows", "heads", "nd", "rd"])
+# e4 (2026-09-11): e2/e3 read bit-identical garbage on the platform's
+# Kunlun run while passing every proxy matrix, and the only shared
+# wrapper/kernel trait beyond the loads is the do_not_specialize
+# annotation -- XMLIR's unspecialized multi-argument binding is the
+# prime suspect, so this round removes it (single-variable change from
+# e3; the recompile-storm concern is a caching cost, not correctness).
+@triton.jit
 def _concat_mla_k_rows(
     nope,
     rope,
