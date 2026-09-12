@@ -295,3 +295,17 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 剩余轴（明日）：沐曦 82.0 vs 114.5（+4.1 均值）、海光 276 vs 348
   （+9.0，窗口+形态）、燧原 17.9 vs 39（+2.6）、天数 +1.7——全兑现
   即 ~207 争榜首。
+
+## 2026-09-12 E8：沐曦 vendor 换 generic 几何（候选就绪后提交）
+
+- 沐曦 82.0 vs 榜首 114.5，与 generic 形态的唯一剩余差异 = 几何
+  （vendor 冻结 BLOCK=512/splits≤32；generic 为 BLOCK=256/~512 program）。
+  E8：metax vendor 改为与 generic 代码一致（仅头注释不同），赌 E2 几何
+  在无 clone 后对沐曦由负转正。
+- source commit：`0bb8b16c9660e7f1162a26a5f95ebeb8dfd61171`。
+- ZIP：`e8-0bb8b16`，SHA-256 `13900cab2df13fc55054e7d02e8b82ff5e8a9f8dda3d5a0e37bc62772ee94f59`。
+- release 回执：`batch5-final2-20260912/create_flashinfer_kv_indices/verification.json`，
+  SHA-256 `806c58278fcf89bdcbaeeeac84dc98113bd827faa22207a43360da4d1859e5d8`；
+  4 方法 0 失败。（注：verification.log 与 e7 逐字节相同——runner 日志为
+  确定性内容，无时间戳，非拉错文件。）
+- 预注册：沐曦 ≥1.10x（82→90+）保留；回退则 team best 维持 e7 190.28。
