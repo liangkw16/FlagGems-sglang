@@ -5,13 +5,13 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: completed(12895,8/8)
-candidate_stage: e1
+platform: submitted(e2=C1,评测中;e1 8/8 6.7478x)
+candidate_stage: e2
 team_best_stage: e1
 team_best_speedup: 6.7478
 sealed: no
-next: 保留 E1；目标轴按均值增量排序为燧原 +0.371 > 海光 +0.297 > 沐曦 +0.156，昆仑仅 +0.081；clone 轴已被 1c0381c 测量证伪不复投（见 optimization-batch5-r2-20260911.md §4）
-updated: 2026-09-11
+next: e2（燧原 grid 封顶 24）已发射；预注册燧原 ≥1.3x（目标轴 2.53→6.68 次优，值均值 +0.371）
+updated: 2026-09-12
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -138,3 +138,19 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   >5%；完整正确性通过。
 - 证据等级：C1 为他题同芯平台先例，C2 为**结构假设**。
   详见 [r2 §4](../optimization-batch5-r2-20260911.md)。
+
+## 2026-09-12 E2 = C1（燧原 grid 物理封顶，候选就绪后提交）
+
+- R2 预注册 C1 兑现：`_enflame` vendor 启动 `min(tasks, 65535)` 改
+  `min(tasks, 24)`（24-SIP 物理宽度；超发 grid = 纯调度开销，T19-E5/
+  T51-E5 平台教训 +38% 中位）。循环体本为 grid-stride，单变量仅 cap。
+- source commit：`a70efbbfa7da447ab199eeab4e4863de6fc26b4d`。
+- ZIP：`artifacts/competition/deepep_permute/e2-a70efbb/deepep_permute.zip`，
+  SHA-256 `7b2425e0ebb4a0aa0906b70c8609705770094814aeca4327d3dd7e85366b0aab`；
+  成员 generic `7857c235…` + `_enflame` `5692986d…`。
+- release 回执（v2，绑定 a70efbb，proxy-vendor enflame）：
+  `artifacts/competition/batch5-t64c1-validate-20260912/deepep_permute/verification.json`，
+  SHA-256 `b2dc8ef1a6e22f120caef42c8199753215421ac832a7ac1c81e3b06f9aae5594`；
+  日志 SHA-256 `0a3b0036a54a35a779b9fb33509cee530292ea960f36483598c03e2cac63c288`；
+  5 方法 0 失败，generic 35 + enflame 35 launch。
+- 预注册门（R2 §4）：燧原中位收益 ≥1.3x；其余七芯 generic 字节不变。
