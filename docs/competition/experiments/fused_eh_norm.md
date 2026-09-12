@@ -5,12 +5,12 @@ task: 68
 operator: fused_eh_norm
 batch: 5
 validity: valid
-platform: submitted(e2,评测中;e1=13369 8/8 6.91475x TB)
+platform: completed(13377,e2,8/8,7.021875x team best)
 candidate_stage: e2
-team_best_stage: s0
+team_best_stage: e2
 team_best_speedup: 6.91475
 sealed: no
-next: e2（路径分裂复制 _metax/_iluvatar）已发射；预注册两芯 ≥1.05x；海光维持 e1 水位
+next: e2 valid 7.022 新 TB（天数+13%/沐曦+9.7% 过门）；榜差 0.24；剩余=海光回暖+燧原 1.98
 updated: 2026-09-12
 ```
 
@@ -115,3 +115,14 @@ updated: 2026-09-12
   + metax `a66edf31…`）。
 - release 回执（v2，绑定 76cb2ca，proxy-vendor×3）：`batch5-t68e2-validate-20260912/fused_eh_norm/verification.json`，SHA-256 `bfcbbd4311e336205ebc105e7d8552e7e9c0dbf6badd0d32dbac1b0df81dd0bb`；日志 SHA-256 `ef9d08c2870e33d97ad156e919073d89c31b23fd4e8c89603b4a98543e01cb97`；4 方法 0 失败，4 源各 15 launch。
 - 预注册：沐曦/天数中位收益 ≥1.05x 才保留；海光维持 e1 水位。
+
+## 2026-09-12 E2 平台终态：8/8 VALID（submission 13377）
+
+- **八芯全过，均值 7.021875x = 新 team best（e1 6.91475，+1.5%）**：
+  天数 **12.2661（`_iluvatar` 兑现，+13%）** / 沐曦 **6.8055（`_metax`
+  兑现，+9.7%）** / 海光 12.8831（`_hygon` 选中，较 e1 14.26 回落 9.7%，
+  判窗口方差——vendor 字节与 e1 相同）/ 燧原 1.9817 / 昆仑 1.0901 /
+  华为 3.6680 / A 9.2459 / B 8.2347。
+- 两预注册门（≥1.05x）：天数 ✓（1.13x）、沐曦 ✓（1.10x）。
+- 榜差 0.71（S0）→0.35（e1）→**0.24（e2）**；榜首 HAiWORLD 7.2622。
+  剩余轴：海光窗口回暖（e1 字节已证 14.26）+ 燧原 1.98（+0.26 缺口）。

@@ -5,7 +5,7 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: submitted(13375,e2=C1,评测中;e1 8/8 6.7478x)
+platform: submitted(13375,e2=C1,7/8已判;仅昆仑回调;燧原+5.5%未达1.3x门)
 candidate_stage: e2
 team_best_stage: e1
 team_best_speedup: 6.7478
@@ -159,3 +159,14 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 
 - 上传与正式 POST 各一次；state submitted。额度：发后 10/30。
 - 裁决点：燧原 ≥1.3x（2.53→3.3+）；其余七芯与 e1 水位一致。
+
+## 2026-09-12 E2=C1 平台结果（进行中）：燧原 +5.5%，未达预注册门
+
+- 已判 7/8（仅昆仑回调中）：燧原 **2.6708（e1 2.5326，+5.5%，`_enflame`
+  vendor 选中）——未达预注册 ≥1.3x 门**，grid 封顶轴按预注册关闭；
+  燧原真实缺口（同题次优 6.68）需结构轴（R2 已注册 C2 precomputed-pos：
+  wrapper 预计算目的地地址、kernel 纯乘法掩码，消"load 值作 store 索引"）。
+- 其余六芯与 e1 水位一致（±3.5% 内）：天数 15.8842 / 沐曦 5.4942 /
+  海光 10.3922 / 华为 3.8306 / A 8.1884 / B 6.8864。
+- 若昆仑维持 e1 水位（0.25x 量级），本发均值 ≈6.70，略低于 e1 6.7478
+  ——team best 预计保留 e1；本发价值=燧原 +5.5% 的正向确认。
