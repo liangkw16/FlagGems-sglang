@@ -5,11 +5,11 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: invalid_correctness
-platform: submitted(13332,e1,5/8;燧原PassManager/华为off-by-one/昆仑崩溃族)
+platform: submitted(13359,e2,评测中)
 candidate_stage: e2
 team_best_stage: -
 sealed: no
-next: e2 候选就绪待提交（纯 1D 原语收窄：标量专家循环+逐lane名次+T64式标量gather，去全部 2D 形态与向量gather；release 全绿）；裁决点=燧原是否解除 PassManager、华为 off-by-one 是否消失、昆仑新 ZIP 重掷
+next: e2 评测中（submission 13359）；裁决点=燧原是否解除 PassManager、华为 off-by-one 是否消失、昆仑新 ZIP 重掷
 updated: 2026-09-12
 ```
 
@@ -138,3 +138,9 @@ updated: 2026-09-12
 - 昇腾/燧原/昆仑目标 runtime 仍 target-runtime-unverified（NVIDIA 代理
   仅证数学与 JIT）；裁决权在平台。新 ZIP 身份在全芯全新评测，昆仑崩溃族
   窗口自然重掷。
+
+## 2026-09-12 E2 平台提交（submission 13359）
+
+- 上传与正式 POST 各一次，无自动重试；state submitted，评测排队中。
+- file_url SHA-256：`ab1996b9da873e72f9e02966f0f8a24eb0ff100ccb8d4d50a5f2b698370c14c0`。
+- 观察时额度：17/30（发后）。等待八芯逐芯回调。
