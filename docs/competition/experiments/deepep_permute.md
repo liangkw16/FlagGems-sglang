@@ -5,7 +5,7 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: submitted(e2=C1,评测中;e1 8/8 6.7478x)
+platform: submitted(13375,e2=C1,评测中;e1 8/8 6.7478x)
 candidate_stage: e2
 team_best_stage: e1
 team_best_speedup: 6.7478
@@ -154,3 +154,8 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   日志 SHA-256 `0a3b0036a54a35a779b9fb33509cee530292ea960f36483598c03e2cac63c288`；
   5 方法 0 失败，generic 35 + enflame 35 launch。
 - 预注册门（R2 §4）：燧原中位收益 ≥1.3x；其余七芯 generic 字节不变。
+
+## 2026-09-12 E2 平台提交（submission 13375）
+
+- 上传与正式 POST 各一次；state submitted。额度：发后 10/30。
+- 裁决点：燧原 ≥1.3x（2.53→3.3+）；其余七芯与 e1 水位一致。
