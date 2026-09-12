@@ -5,10 +5,19 @@
 # legalize masked tl.atomic_add (GCU300 PassManager failure) or whose runtime
 # degrades under atomic cursors (Ascend). Three deterministic kernels replace
 # the atomic cursor: per-block expert counts, an exclusive block prefix per
-# expert, and an in-block pairwise rank with a contiguous store at the input
-# position. Only compare/sum/vector-load/gather/contiguous-store primitives
-# are used - no atomics, no tl.cumsum (a known GCU compile poison), no
-# scatter. Shared verbatim by the _ascend and _kunlunxin vendors.
+# expert, and an in-order per-lane rank with a contiguous store at the input
+# position. E2 narrows every kernel to primitives this team has already
+# passed on GCU300 after e1 still failed PassManager there and miscounted
+# rank by one on Ascend: no atomics, no tl.cumsum (Kunlun/Enflame lowering
+# poison), no [BLOCK, E] or [BLOCK, BLOCK] 2D broadcast reductions (e1's
+# prime suspects), and no vector gather through a loaded index. kernel1
+# counts each expert with a scalar expert loop over a 1D compare/sum;
+# kernel3 walks the block lane by lane, extracts the lane's expert with a
+# 1D sum-select, gathers its exclusive base with the scalar
+# load-value-to-int64-addressing form deepep_permute passed at 2.53x, and
+# stores one contiguous scalar - the same runtime-branch discipline as
+# deepep_permute's `if dst >= 0`. Shared verbatim by the _ascend and
+# _kunlunxin vendors.
 
 import torch
 import triton
@@ -31,16 +40,18 @@ def _dispatch_counts(
     pid = tl.program_id(0)
     for block in range(pid, num_blocks, tl.num_programs(0)):
         offs = block * BLOCK + tl.arange(0, BLOCK)
-        e = tl.load(ids + offs.to(tl.int64), offs < n, other=-1).to(tl.int32)
+        lane_mask = offs < n
+        offs_rd = tl.where(lane_mask, offs, 0)
+        e = tl.load(ids + offs_rd.to(tl.int64), lane_mask, other=-1).to(
+            tl.int32
+        )
         e64 = block.to(tl.int64) * num_experts
         for e0 in range(0, num_experts, E_TILE):
-            lanes = e0 + tl.arange(0, E_TILE).to(tl.int64)
-            hits = tl.sum(e[:, None] == lanes[None, :].to(tl.int32), axis=0)
-            tl.store(
-                counts + e64 + lanes,
-                hits.to(tl.int32),
-                lanes < num_experts,
-            )
+            for j in tl.static_range(E_TILE):
+                expert = e0 + j
+                if expert < num_experts:
+                    hits = tl.sum((e == expert).to(tl.int32), axis=0)
+                    tl.store(counts + e64 + expert, hits)
 
 
 @triton.jit
@@ -84,23 +95,33 @@ def _dispatch_ranks(
     BLOCK: tl.constexpr,
 ):
     pid = tl.program_id(0)
+    idx = tl.arange(0, BLOCK)
     for block in range(pid, num_blocks, tl.num_programs(0)):
-        offs = block * BLOCK + tl.arange(0, BLOCK)
+        offs = block * BLOCK + idx
         lane_mask = offs < n
-        e = tl.load(ids + offs.to(tl.int64), lane_mask, other=-1).to(tl.int32)
-        # In-bucket rank of each valid lane within this block: count
-        # same-expert lanes that appear earlier. Padding lanes (-1) match
-        # each other but are never stored.
-        same = e[:, None] == e[None, :]
-        earlier = tl.arange(0, BLOCK)[None, :] < tl.arange(0, BLOCK)[:, None]
-        local_rank = tl.sum((same & earlier).to(tl.int32), axis=1)
-        base = tl.load(
-            prefix + block.to(tl.int64) * num_experts + e.to(tl.int64),
-            lane_mask & (e >= 0),
-            other=0,
+        offs_rd = tl.where(lane_mask, offs, 0)
+        e = tl.load(ids + offs_rd.to(tl.int64), lane_mask, other=-1).to(
+            tl.int32
         )
-        dst = e * m_max + base + local_rank
-        tl.store(src2dst + offs.to(tl.int64), dst, lane_mask & (e >= 0))
+        block64 = block.to(tl.int64)
+        for j in tl.static_range(BLOCK):
+            off = block * BLOCK + j
+            if off < n:
+                e_j = tl.load(ids + off.to(tl.int64)).to(tl.int32)
+                if e_j >= 0:
+                    # In-bucket order is free (src2dst is compared as a
+                    # per-bucket multiset), so the natural earlier-lane
+                    # rank is one valid assignment.
+                    rank = tl.sum(
+                        ((e == e_j) & (idx < j)).to(tl.int32), axis=0
+                    )
+                    base = tl.load(
+                        prefix + block64 * num_experts + e_j.to(tl.int64)
+                    )
+                    tl.store(
+                        src2dst + off.to(tl.int64),
+                        e_j * m_max + base + rank,
+                    )
 
 
 def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
