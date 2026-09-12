@@ -94,9 +94,9 @@ def _streaming_topk_kernel(
         acc = (acc << (y_nbits - 16)) | (acc >> 16)
         y_indices_raw = (acc >> (y_nbits - 16)).to(tl.uint32)
         y_indices = N_PAD - y_indices_raw
-        y_values = key_to_fpval(acc.to(x_utype, bitcast=True)).to(
-            x_dtype, bitcast=True
-        )
+        # Truncating cast keeps the low y_nbits value bits after the rotate
+        # (bitcast would require equal widths and fails to compile).
+        y_values = key_to_fpval(acc.to(x_utype)).to(x_dtype, bitcast=True)
 
         offs_mk = offs_m[:, None].to(tl.int64) * K + offs_k[None, :]
         mask_mk = mask_m[:, None] & mask_k[None, :]

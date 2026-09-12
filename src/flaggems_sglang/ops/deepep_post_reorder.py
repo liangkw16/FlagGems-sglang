@@ -73,27 +73,30 @@ def deepep_post_reorder(
     assert down_output.shape[0] == tokens * topk
     assert down_output.shape[1] == hidden
     assert src2dst.dtype in (torch.int32, torch.int64)
+    if not (tokens and topk and hidden):
+        # Reference accumulates zeros; a skipped launch must not return
+        # uninitialized memory (e.g. topk=0 with a non-empty output).
+        return torch.zeros_like(output)
     out = torch.empty_like(output)
-    if tokens and topk and hidden:
-        _deepep_post_reorder[(min(tokens, 65535),)](
-            down_output,
-            out,
-            src2dst,
-            topk_weights,
-            tokens,
-            topk,
-            hidden,
-            down_output.stride(0),
-            down_output.stride(1),
-            out.stride(0),
-            out.stride(1),
-            src2dst.stride(0),
-            src2dst.stride(1),
-            topk_weights.stride(0),
-            topk_weights.stride(1),
-            float(routed_scaling_factor),
-            BLOCK=512,
-        )
+    _deepep_post_reorder[(min(tokens, 65535),)](
+        down_output,
+        out,
+        src2dst,
+        topk_weights,
+        tokens,
+        topk,
+        hidden,
+        down_output.stride(0),
+        down_output.stride(1),
+        out.stride(0),
+        out.stride(1),
+        src2dst.stride(0),
+        src2dst.stride(1),
+        topk_weights.stride(0),
+        topk_weights.stride(1),
+        float(routed_scaling_factor),
+        BLOCK=512,
+    )
     return out
 
 
