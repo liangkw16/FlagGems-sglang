@@ -5,11 +5,11 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: invalid_correctness
-platform: submitted(13381,e4,评测中;e3=13362 7/8 昆仑崩溃族)
+platform: completed(13381,e4,7/8;昆仑崩溃族第4次,七芯356.25)
 candidate_stage: e4
 team_best_stage: -
 sealed: no
-next: e4（BLOCK 64→32 重掷）开发中；昆仑崩溃族新 ZIP 重评；性能后轴=华为 3.7→11、燧原 0.63→2.7
+next: 明日新 ZIP 再掷昆仑(候选改动=rank向量化/kernel2并行);七芯已过部分和356.25
 updated: 2026-09-12
 ```
 
@@ -236,3 +236,11 @@ updated: 2026-09-12
   → +16%，BLOCK=32 兑现）** / 海光 111.7322 / 华为 3.6156（exec 26min →
   12.5min，j 循环减半生效）/ A 71.0090 / B 54.3634。部分和 356.25。
 - 仅昆仑 waiting_callback（本日第三次撞该芯崩溃族窗口）。
+
+## 2026-09-12 E4 平台终态：7/8（昆仑崩溃族第四次）
+
+- 昆仑终态 exec 0ms 服务线程卡死（13362/13375/13381 三连 + T70 同窗）；
+  同期 T67 两发昆仑正常判决——按提交闪断而非全天停摆。七芯读数已记
+  （部分和 356.25，燧原 0.7242 +16% 为 e3/e4 结构性增益）。
+- 后续：明日健康窗口新 ZIP 再掷（下一真实改动候选=kernel3 rank 向量化
+  或 kernel2 每专家多 block 并行）；无变化不再同字节重掷。

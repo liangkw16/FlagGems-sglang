@@ -5,12 +5,12 @@ task: 59
 operator: build_trtllm_mha_page_table
 batch: 5
 validity: valid
-platform: submitted(13387,e7,评测中;team best e4r 24.1284x)
+platform: completed(13387,e7,8/8,23.9135x;未过1.2x门,轴关闭;TB e4r 24.1284x)
 candidate_stage: e7
 team_best_stage: e4r
 team_best_speedup: 24.1284375
 sealed: no
-next: e6 钳位解除华为 507035（假设证实）但 vendor 慢（7.40x<generic 8.68，exec 29.5s）；e7=昇腾性能形态（华为 7.4→≈20 即均值 ≈25.5 反超 GuanghuLab 25.43）；e4r 守榜
+next: e7 华为 7.35 零增益,昇腾 tile/store 轴关闭;TB e4r 24.1284 守榜(#2,榜首 25.43);重开需昇腾侧 profiling/KernelGen 证据
 updated: 2026-09-12
 ```
 
@@ -324,3 +324,13 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 
 - 上传与正式 POST 各一次；state submitted。额度：发后 6/30。
 - 裁决点：华为 ≥1.2x（8.7→10.4+，预注册保留门）；七芯水位不动。
+
+## 2026-09-12 E7 平台终态：8/8 valid 但未过门（submission 13387）
+
+- 八芯全过：天数 69.5842 / 沐曦 12.7892 / 燧原 27.1910 / 海光 30.6235 /
+  昆仑 2.1742 / **华为 7.3468（vs e6 7.4030，融合 store+宽 tile 零增益，
+  ≥1.2x 门未过）** / A 21.8403 / B 19.7587。均值 23.9135 < e4r 24.1284，
+  team best 保留 e4r。
+- **轴关闭**：华为 -16.11 缺口不在 tile 宽度/store 形态。剩余假设：
+  榜首华为形态是更深的算法差异（或窗口）；下一假设需要昇腾侧真机
+  profiling 或 KernelGen 通道证据再开。

@@ -5,12 +5,12 @@ task: 67
 operator: fill_padded_rows
 batch: 5
 validity: valid
-platform: completed(13367,e2,8/8,4.2969x team best)
-candidate_stage: e2
+platform: completed(13386,e3,8/8,4.23825x;三宽芯门全负,轴关闭;TB e2 4.2969x)
+candidate_stage: e3
 team_best_stage: e2
 team_best_speedup: 4.2969
 sealed: no
-next: e2 valid 4.2969x（+25%）；燧原毒点=分支内load已证实并沉淀；对榜首 8.32 仍差 3.9，天数/华为 exec 偏长为下一线索
+next: e3 列分块轴关闭(唯沐曦+24%);TB e2 4.2969 守榜(#8,榜首 8.32);宽 shape 结构待新证据
 updated: 2026-09-12
 ```
 
@@ -133,3 +133,29 @@ updated: 2026-09-12
   可迁移：燧原 vendor 的 load 一律顶层、分支只包 store。
 - 对榜首（EvokeAgent 8.3163）仍差 3.9；后续轴：天数/华为 exec 偏长
   （84s/30s）提示平台 shape 大，launch/tile 仍有空间。
+
+## 2026-09-12 E3：列分块 grid（冲榜轴，候选就绪后提交）
+
+- 逐芯情报（14:1x）：榜首 EvokeAgent/#2 zhaxi123 在宽 shape 芯全面
+  3-4x 领先——天数 18.4/22.3 vs 我 11.9、华为 17.5/7.0 vs 我 1.93、
+  燧原 5.7/5.6 vs 我 1.51；窄 shape 持平。结构性判读：e2 整行单
+  program（最多 8192 lane）串行+寄存器重，天数 exec 84s 佐证。
+- E3：grid 改 (rows, col_tiles)，BLOCK=min(next_pow2(n_cols),1024)，
+  每 program ≤1024 lane；load 保持分支外（燧原规则）。
+- source commit：`e27a0426574b65cabee1e45906eb07412f4b339a`。
+- ZIP：`e3-e27a042`，SHA-256 `956b6b4751e10877ddebd1e749a504e2abdc24f6f7bebf436f95ce1a08aeed64`，
+  单成员 `6eac741c…`。
+- release 回执：`batch5-t67e3-validate-20260912/fill_padded_rows/verification.json`，
+  SHA-256 `a7e0e26196fc57da173a63e8d0df2ea8e930a3a08adde6b6a38a54d8cd003fbe`；
+  日志 `7e4e132778103c37d9fe48da8fef36b1eaf3def2ff040606136515b24562ca52`；
+  4 方法 0 失败，25 launch。
+- 预注册：天数/华为/燧原中位 ≥1.3x；其余五芯无回退 >5%。
+
+## 2026-09-12 E3 平台终态：8/8 valid 但未过门（submission 13386）
+
+- 八芯全过：天数 11.3554（-4.5%）/ 沐曦 **3.3884（+24%）** / 燧原
+  1.5014（0%）/ 海光 5.9458 / 昆仑 0.6020 / 华为 1.6030（-17%）/
+  A 5.2440 / B 4.2660。均值 4.23825 < e2 4.2969，team best 保留 e2。
+- **预注册门（天数/华为/燧原中位 ≥1.3x）三芯全负，列分块轴关闭**：
+  榜首宽 shape 优势（天数 18-22/华为 17.5/燧原 5.6）不是列并行性；
+  沐曦 +24% 是唯一正信号（不同后端偏好）。宽 shape 结构待新证据。
