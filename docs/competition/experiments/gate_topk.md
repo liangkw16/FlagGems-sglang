@@ -5,11 +5,11 @@ task: 70
 operator: gate_topk
 batch: 5
 validity: invalid_correctness
-platform: submitted(13335,e1,5/8-judged;昆仑/燧原/华为回调未返回)
+platform: completed(13335,e1,5/8;燧原/昆仑/华为=exec0ms崩溃族未裁决)
 candidate_stage: e1
 team_best_stage: -
 sealed: no
-next: e1 昆仑 vendor（live-mask 迭代提取，T27 同形态）已发射；已判 5 芯通过；昆仑 vendor 是否编译+数值正确等回调（这是本题唯一真实失败芯）；燧原/华为今日多次崩溃族，新 ZIP 全芯重评
+next: e1 终态 5/8：三失败芯均 exec 0ms 崩溃族（12:20 同窗），kunlun vendor 被选中但未执行；下一步=新 ZIP 真实改动重评（燧原/华为可补迭代选择 vendor）或用户授权的同字节重掷
 updated: 2026-09-12
 ```
 
@@ -102,3 +102,15 @@ updated: 2026-09-12
   generic 29 + kunlun vendor 29 launch 全绿。
 - 已判 5 芯通过；昆仑（本题唯一真实失败芯）、燧原/华为（崩溃族未裁决）
   回调未返回，收齐后补记。
+
+## 2026-09-12 E1 回调终态（12:20 落定，13:5x 记账）：5/8，三芯均崩溃族
+
+- 燧原/昆仑/华为全部 `completed + passed=false + exec 0ms`（12:20:03-04
+  同窗落定）——服务线程卡死家族，内核未获裁决。昆仑 vendor
+  （`gate_topk_kunlunxin.py`）被选中但同样 exec 0ms，live-mask 迭代提取
+  的编译/数值仍未被平台检验。
+- 已过 5 芯读数：天数 3.5076 / 沐曦 2.2318 / 海光 3.4154 / A 1.7945 /
+  B 2.9266（对照 s0：3.49/2.19/3.66/1.80/2.95，窗口持平）。
+- 后续路径：①同字节重掷三芯 = 崩溃族协议，需用户当次明示授权；②新 ZIP
+  真实改动（如燧原/华为补迭代选择 vendor，或 kunlun vendor 微调）走
+  全新评测。今日三芯崩溃族窗口频发（T65/T69 各芯亦有），明日窗口优先。

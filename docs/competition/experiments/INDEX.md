@@ -50,6 +50,6 @@
 | 67 | fill_padded_rows | valid | submitted(13364,e1,评测中;s0 3.4329x) | s0 3.43285x | no | e1 单写融合（去 clone 双写）已发射；目标抬 pad 流量与 launch 轴，追榜首 8.3163 | 2026-09-12 | [fill_padded_rows](fill_padded_rows.md) |
 | 68 | fused_eh_norm | valid | completed(13301,s0,8/8,6.5562x) | s0 6.55616667x | no | S0 首发 8/8 valid（seq 6，榜首 HAiWORLD 7.17 差 0.61）；昆仑 1.2075 最薄；E1 列分块两遍式可试抬昆仑 | 2026-09-12 | [fused_eh_norm](fused_eh_norm.md) |
 | 69 | fused_moe_dispatch_index | invalid_correctness | submitted(13362,e3,评测中) | - | no | e3（标量每专家前缀扫描,消循环携带张量+整型where）已发射；裁决点=燧原 PassManager 是否解除、华为 off-by-one、昆仑窗口 | 2026-09-12 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
-| 70 | gate_topk | invalid_correctness | submitted(13335,e1,5/8-judged;昆仑/燧原/华为回调未返回) | - | no | e1 昆仑 vendor（live-mask 迭代提取，T27 同形态）已发射；已判 5 芯通过；昆仑 vendor 是否编译+数值正确等回调（这是本题唯一真实失败芯）；燧原/华为今日多次崩溃族，新 ZIP 全芯重评 | 2026-09-12 | [gate_topk](gate_topk.md) |
+| 70 | gate_topk | invalid_correctness | completed(13335,e1,5/8;燧原/昆仑/华为=exec0ms崩溃族未裁决) | - | no | e1 终态 5/8：三失败芯均 exec 0ms 崩溃族（12:20 同窗），kunlun vendor 被选中但未执行；下一步=新 ZIP 真实改动重评（燧原/华为可补迭代选择 vendor）或用户授权的同字节重掷 | 2026-09-12 | [gate_topk](gate_topk.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md
