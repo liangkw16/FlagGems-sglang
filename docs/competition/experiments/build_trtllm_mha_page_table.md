@@ -5,7 +5,7 @@ task: 59
 operator: build_trtllm_mha_page_table
 batch: 5
 validity: valid
-platform: completed(13232,e5,7/8;team best e4r 24.1284x)
+platform: submitted(13360,e6,评测中;team best e4r 24.1284x)
 candidate_stage: e6
 team_best_stage: e4r
 team_best_speedup: 24.1284375
@@ -280,3 +280,10 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   4 方法 0 失败，generic 26 + ascend 26 + enflame 26 + hygon 26 次 launch。
 - 昇腾真机仍 target-runtime-unverified（代理仅证数学/JIT）；裁决权在平台。
   预期：华为 8.68→≈20（e5 形态目标不变），七芯读数应与 e4r/e5 持平。
+
+## 2026-09-12 E6 平台提交（submission 13360，daily_seq ~14）
+
+- 上传与正式 POST 各一次，无自动重试；state submitted，13:12:21 入队评测。
+- 额度：发后 16/30（observed_at 13:12:5x）。
+- 裁决点：华为是否解除 507035（钳位假设验证）；其余七芯读数与 e4r/e5
+  水位对比（vendor 字节仅 ascend 变化）。
