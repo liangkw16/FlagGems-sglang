@@ -5,8 +5,8 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: submitted(13415,e6,评测中;TB e5 189.397x)
-candidate_stage: e6
+platform: submitted(13417,e7,评测中;TB e5 189.397x)
+candidate_stage: e7
 team_best_stage: e5
 team_best_speedup: 189.39746875
 sealed: no
@@ -256,3 +256,30 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 
 - 上传与正式 POST 各一次；state submitted。额度：发后 3/30（收盘余量）。
 - 裁决点：沐曦 ≥1.15x；燧原/昆仑水位；带宽五芯维持 e5。
+
+## 2026-09-12 E6 平台终态与 E7 修复（候选就绪后提交）
+
+- E6（13415）7/8：**沐曦 82.7060（+52%，vendor 刷新兑现）**、海光
+  299.9025（+11% 窗口）、昆仑 vendor 正常判决 2.7978、天数 511.73/
+  A 263.62/B 305.84/华为 65.12（窗口波动）；**燧原 PassManager**——
+  e6 vendor 的 `(i*m).to(int64)` 钳位 = **i64 向量乘法**，与 T67 e1
+  轮怀疑构造一致（本轮二次实证该族毒点）。
+- E7：燧原 vendor 标量标志改纯整型算术（`1 - min(row,1)` /
+  `1 - min(batch-1-row,1)`，去 bool→i64 cast），gap load 去钳位改裸
+  masked 偏移（燧原已证形态）；generic/metax/kunlunxin 字节不动。
+- source commit：`40f6d6478137468e955d7a085738fd36c7b32f88`。
+- ZIP：`e7-40f6d64`，SHA-256 `50012525b0a1308556d008566b13c161e3d264f2ca7db767e0dc610547fd0d82`；
+  仅 `_enflame` `357d3820…` 变化。
+- release 回执：`batch5-t63e7-validate-20260912/create_flashinfer_kv_indices/verification.json`，
+  SHA-256 `16660b573d43071aaad0e85346b1bf0259939e1f37ad985dfdb5ff2aae450c74`；
+  日志 `0cd2af829ff86b23283fe6c73e860cadfa1dc6968e552f311dcc08c4fc19e503`；
+  4 方法 0 失败。
+- 预期：燧原回 18-25 水平 ⇒ 七芯(e6 读数)+燧原 ≈ 均值 194+ 新 TB；
+  沐曦 82.7 仍低于榜首 114.5（后续轴）。
+
+## 2026-09-12 E7 平台提交（submission 13417）
+
+- 上传与正式 POST 各一次；state submitted。额度：发后 2/30（收盘存底，
+  今日首发到此为止）。
+- 裁决点：燧原 PassManager 解除（i64 向量乘毒点二次实证的修复）；其余
+  七芯 e6 水平。
