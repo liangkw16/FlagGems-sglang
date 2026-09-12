@@ -5,7 +5,7 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: invalid_correctness
-platform: completed(13362,e3,7/8;昆仑=崩溃族未裁决,七芯354.16)
+platform: submitted(13381,e4,评测中;e3=13362 7/8 昆仑崩溃族)
 candidate_stage: e4
 team_best_stage: -
 sealed: no
@@ -208,3 +208,24 @@ updated: 2026-09-12
   至今零执行记录。
 - 下一发 e4：BLOCK 64→32（kernel1/kernel3 j 循环长度减半，缓解华为
   26 分钟长跑的串行开销）——真实改动的全新评测自然重掷昆仑窗口。
+
+## 2026-09-12 E4：BLOCK 32 重掷（候选就绪后提交）
+
+- source commit：`fc765d8b74ada1448fd5d1ec0e0a95b13fbe0177`（三 vendor
+  同字节；generic/测试不变）。
+- ZIP：`artifacts/competition/fused_moe_dispatch_index/e4-fc765d8/fused_moe_dispatch_index.zip`，
+  SHA-256 `1443b56b87d94022b87a99f98c5d1ec96cd6e985be6f96d4b0cfbdc0346016da`；
+  4 成员（generic `de7fa148…` + 三 vendor `f5a7eb67…`）。
+- release 回执（v2，绑定 fc765d8，proxy-vendor×3）：
+  `batch5-t69e4-validate-20260912/fused_moe_dispatch_index/verification.json`，
+  SHA-256 `d5ffd449f830594251fea14bf177db75a26810b612ad264e5ec68e680ba88dcc`；
+  日志 SHA-256 `17931bb31304498d748d2ab30a233b8e30de8b3a1c6852f7ef477c4f866240c7`；
+  3 方法 0 失败，generic 6 + 每 vendor 18 launch。
+- 预期：七芯读数与 e3 同级（华为 kernel3 串行减半或提速）；昆仑窗口
+  重掷，K≥0.1 即 8/8 valid（部分和基准 354.16）。
+
+## 2026-09-12 E4 平台提交（submission 13381）
+
+- 上传与正式 POST 各一次；state submitted。额度：发后 8/30。
+- 裁决点：昆仑是否获得真实执行（K≥0.1 即 8/8 valid）；华为 kernel3
+  提速幅度。
