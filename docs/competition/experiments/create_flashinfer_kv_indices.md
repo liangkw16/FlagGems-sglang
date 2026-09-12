@@ -10,7 +10,7 @@ candidate_stage: e3
 team_best_stage: e2
 team_best_speedup: 132.099
 sealed: no
-next: E3 兑现燧原 9.0→19.6，但沐曦 vendor 字节未回 E1 水位（53.7 vs 60.3）⇒ 沐曦差非（仅）形态驱动，窗口方差嫌疑；均值 131.98≈E2 132.10，team best 仍 E2；下一主轴=方向 A 去 wrapper clone（先零额度代理测 clone 占比 ≥25% 门）
+next: clone 轴已按 AB 负结论关闭：代理实测 clone 占比 25.9%/26.7%（名义过 25% 门）但 e4(wrapper 去 clone) 对 e3 的 wrapper-inclusive AB 仅 1.011x/0.998x——wrapper 为 launch/CPU 开销主导，2N 流量不变现；e4 字节已回退不投；仅在出现"目标芯 kernel-GPU-bound"证据时重开
 updated: 2026-09-12
 ```
 
@@ -177,3 +177,15 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   下一主轴回到 R2 方向 A（去 wrapper clone，代理先测占比），不再在
   vendor 形态轴上加码。
 - 额度：发后 27/30。
+
+## 2026-09-12 clone 轴代理测量与 AB 负结论（零额度关轴）
+
+- 占比测量（RTX 5070 Ti，wrapper-inclusive）：`1×8193` clone 3.0µs /
+  全 11.7µs = **25.9%**；`32×1024` = **26.7%**——名义通过预注册 ≥25% 门。
+- 但 e4（去 clone + 空隙唯一归属 `pid1==0` + grid.y≤255 守卫，正确性
+  矩阵与 4 方法全绿）对 e3 字节的同负载 AB：**1.011x / 0.998x**。
+  原因：wrapper 为 launch/CPU 开销主导（11.7µs 中 GPU 工作被掩盖），
+  去掉 2N clone 流量不变现。
+- 处置：e4 工作树字节已回退、不投平台；预注册门的目的是预测 e4 收益，
+  AB 直接测得 ≈0 即按止损关闭。仅在目标芯出现 kernel-GPU-bound 证据
+  （逐芯 exec_ms 与 kernel 流量强相关）时重开。

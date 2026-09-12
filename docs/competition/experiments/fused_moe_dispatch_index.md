@@ -5,11 +5,11 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: invalid_correctness
-platform: completed(13303,s0,5/8)
-candidate_stage: s0
+platform: submitted(13332,e1,5/8-judged;昆仑回调未返回)
+candidate_stage: e1
 team_best_stage: -
 sealed: no
-next: 三芯失败各归其类：燧原=PassManager 编译失败（masked tl.atomic_add 合法化缺口）、华为=582s 后 reference 侧 RuntimeError、昆仑=崩溃族（服务线程卡死，非内核裁决）；五芯读数 36~120x 证明 atomic 形态跑通处极快；下一轴=无原子三段式 vendor（直方图+独占前缀和+确定性 scatter）覆盖燧原/华为（可试带昆仑），generic 保留
+next: e1 无原子三段式 vendor 裁决：燧原仍 PassManager 编译失败（vendor 内还有第二个 GCU300 毒点，最可疑 [64,64] 2D 归约）；华为首次真跑（72s）但 1/32 元素 off-by-one ⇒ 昇腾特有 lowering 缺陷（代理 280 小形状×4 源全绿）；下一版=纯 1D 算子变体（kernel1 标量专家循环、kernel3 以 1D tl.cumsum 替代 pairwise），昆仑回调后定完整图景
 updated: 2026-09-12
 ```
 
@@ -87,3 +87,24 @@ updated: 2026-09-12
   下一候选为**无原子三段式 vendor**（Triton 直方图计数 → 独占前缀和 →
   确定性 scatter），覆盖燧原/华为（可试带昆仑，若跑通则一并绕开崩溃族
   重掷问题），generic 保留五芯已证路径。
+
+## 2026-09-12 E1 平台结果（submission 13332，daily_seq 11）
+
+- 无原子三段式 vendor（`_enflame/_ascend/_kunlunxin`，commit 4cc7092，
+  ZIP `e1-4cc7092`，SHA-256
+  `788cc34d60c011f4f0a49b22d3cd54f378beea52de35adf935bbbe5c1ad8394a`；
+  回执 `batch5-e1-validate-20260912/fused_moe_dispatch_index/`，SHA-256
+  `3d8a2ee6791c9be95d21acd46e8950585b44cb6f5d9d7d80a412a0bef7e63513`，
+  generic 6 + 各 vendor 18 launch 全绿）。
+- **燧原仍失败**：`PassManager execution failed`，vendor 被选中——无原子
+  版仍有第二个 GCU300 编译毒点（候选嫌疑：kernel1/kernel3 的
+  `[64,64]` 2D 比较/归约 lowering）。
+- **华为首次真实执行**（exec 72306ms，vendor 选中）但 1/32 元素错，
+  最大绝对差 1 / 相对 0.5 ⇒ rank 或 masked_m 的 off-by-one。代理复现
+  失败：280 组小形状（含单块、E∈{1..100}、跨 tile 边界）× 4 源全部
+  与 reference 一致 ⇒ **昇腾特有 lowering 缺陷**。
+- 昆仑回调未返回。已判 5 芯通过。
+- 下一版预注册：纯 1D 算子变体——kernel1 改标量专家循环
+  （`for j in static_range(E_TILE): tl.sum(e == e0+j)`），kernel3 以
+  1D `tl.cumsum`（昇腾已证可编译仅慢）替代 pairwise 名次；燧原同步
+  受益于去 2D 形态。

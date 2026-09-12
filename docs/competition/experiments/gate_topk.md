@@ -5,11 +5,11 @@ task: 70
 operator: gate_topk
 batch: 5
 validity: invalid_correctness
-platform: submitted(13305,s0;昆仑无 tl.topk,燧原/华为回调未返回)
-candidate_stage: s0
+platform: submitted(13335,e1,5/8-judged;昆仑/燧原/华为回调未返回)
+candidate_stage: e1
 team_best_stage: -
 sealed: no
-next: 昆仑失败=XMLIR Triton fork 版本缺 tl.topk（AttributeError，非数值）；已完成 5 芯 indices 精确比较全过（平台 reference 确认遵循题面 tie 规则，本地 torch.topk 才是偏离方）；下一轴=去 tl.topk/tl.sort/tl.bitonic_merge 的昆仑 vendor（手工 bitonic 或 k 次迭代提取），燧原/华为回调后定 vendor 范围
+next: e1 昆仑 vendor（live-mask 迭代提取，T27 同形态）已发射；已判 5 芯通过；昆仑 vendor 是否编译+数值正确等回调（这是本题唯一真实失败芯）；燧原/华为今日多次崩溃族，新 ZIP 全芯重评
 updated: 2026-09-12
 ```
 
@@ -85,7 +85,20 @@ updated: 2026-09-12
   'topk'`——XMLIR 的 Triton fork 版本落后，无 tl.topk（版本缺口，非数值）。
 - 已过 5 芯（indices 精确比较全过 ⇒ 平台 reference 遵循题面 tie 规则）：
   天数 3.4901 / 沐曦 2.1890 / 海光 3.6598 / A 1.8043 / B 2.9476。
-  燧原/华为 waiting_callback 未收。
+  燧原/华为终态=崩溃族（`服务线程卡死自动恢复，请重新提交`，exec 0ms）
+  ——未获内核裁决；最终 5/8，唯一真实失败是昆仑版本缺口。
 - 结论：下一候选为**去 tl.topk/tl.sort/tl.bitonic_merge 的昆仑 vendor**
   （手工 bitonic 交换网络或 k 次迭代 max+掩码提取），燧原/华为回调后
   定 vendor 覆盖范围。
+
+## 2026-09-12 E1 平台提交（submission 13335，daily_seq 12）
+
+- 昆仑 vendor（commit 4cc7092，live-mask 迭代提取 + NaN-first 最小列号，
+  T27 昆仑已证 `tl.max + tl.min(tl.where)` 同形态；Codex 审查修正了
+  原始草稿的 -inf 重复选中与 NaN 永不选中两个缺陷）。ZIP `e1-4cc7092`，
+  SHA-256 `16d5ebafeea8a3f9ff7f6edeae75925c9221e0fd8d442aa6a0b905b72de3996b`；
+  回执 `batch5-e1-validate-20260912/gate_topk/`，SHA-256
+  `bfcf9d502ff4e5592bb6f90ce63d97ec82d5d0c0bfde8cfbd34e1f3346e3c672`，
+  generic 29 + kunlun vendor 29 launch 全绿。
+- 已判 5 芯通过；昆仑（本题唯一真实失败芯）、燧原/华为（崩溃族未裁决）
+  回调未返回，收齐后补记。
