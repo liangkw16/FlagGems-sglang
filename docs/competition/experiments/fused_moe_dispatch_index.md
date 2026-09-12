@@ -4,13 +4,13 @@
 task: 69
 operator: fused_moe_dispatch_index
 batch: 5
-validity: candidate-wip
-platform: not-submitted
+validity: invalid_correctness
+platform: completed(13303,s0,5/8)
 candidate_stage: s0
 team_best_stage: -
 sealed: no
-next: 远端 GPU 恢复后补 release 回执；重点观察昆仑/燧原对 masked tl.atomic_add 的编译与执行；回执齐全进入发射队列（把握序第 4）
-updated: 2026-09-11
+next: 三芯失败各归其类：燧原=PassManager 编译失败（masked tl.atomic_add 合法化缺口）、华为=582s 后 reference 侧 RuntimeError、昆仑=崩溃族（服务线程卡死，非内核裁决）；五芯读数 36~120x 证明 atomic 形态跑通处极快；下一轴=无原子三段式 vendor（直方图+独占前缀和+确定性 scatter）覆盖燧原/华为（可试带昆仑），generic 保留
+updated: 2026-09-12
 ```
 
 ## 契约与范围
@@ -64,3 +64,26 @@ updated: 2026-09-11
 1. S0 直投，首轮重点读昆仑/燧原编译结果。
 2. 若 atomic 芯失败：E1 无原子双 kernel（直方图 + 独占前缀和 + scatter），
    仅覆盖失败芯做 vendor 文件。
+
+## 2026-09-12 平台提交（submission 13303，daily_seq 8）
+
+- 回执（b4727f1，含 6 次 launch 的 atomic 路径）：
+  `batch5-ext6-validate-20260912/fused_moe_dispatch_index/`
+  （SHA-256 `c788579079acc54e32b8195bc66dd266d48ce0b8da557d23f4e7f8161a00828d`）。
+- **燧原失败**：`RuntimeError: Pipeline run failed: PassManager execution
+  failed`——masked `tl.atomic_add` 在 GCU300 无法合法化（编译层，与
+  FlagTree#1019 确认的 atomic_cas 缺口同族）。
+- **华为失败**：exec 582678ms 后 speedup 0.0，错误栈落在平台 reference
+  文件 `flaggems_reference/fused_moe_dispatch_index.py:23` 与 torch_npu
+  utils——atomic 形态拖垮 NPU 运行时后 reference 崩溃的嫌疑最大
+  （c2flow 8/8 通过证明 reference 本身可在华为运行）。
+- **昆仑失败（崩溃族）**：`服务线程卡死自动恢复，请重新提交`，
+  exec 0ms——昆仑评测器平台侧故障，非内核裁决，按崩溃族协议不计代码
+  止损、重掷需用户当次明示授权。
+- 已过 5 芯读数（atomic 路径跑通处非常快，reference 的 CPU tolist 循环
+  极慢）：海光 **119.737** / A 71.1100 / 天数 62.0734 / B 54.3222 /
+  沐曦 36.1954。
+- 结论：atomic 路线在燧原（编译）/华为（reference 侧崩溃）双双落定失败；
+  下一候选为**无原子三段式 vendor**（Triton 直方图计数 → 独占前缀和 →
+  确定性 scatter），覆盖燧原/华为（可试带昆仑，若跑通则一并绕开崩溃族
+  重掷问题），generic 保留五芯已证路径。

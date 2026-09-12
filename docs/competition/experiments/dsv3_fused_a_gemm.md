@@ -4,13 +4,14 @@
 task: 66
 operator: dsv3_fused_a_gemm
 batch: 5
-validity: candidate-wip
-platform: not-submitted
+validity: valid
+platform: completed(13304,s0,8/8,2.7359x)
 candidate_stage: s0
-team_best_stage: -
+team_best_stage: s0
+team_best_speedup: 2.735875
 sealed: no
-next: 远端 GPU 恢复后补 release 回执 + 代表形状测速（M≤16 skinny GEMM，权重读取为带宽瓶颈）；回执齐全进入发射队列（把握序第 5）
-updated: 2026-09-11
+next: S0 首发 8/8 valid（seq 9，榜首 EvokeAgent 4.12）；燧原 0.4102/天数 1.3362 偏低；E1=按逐芯读数单变量调 BLOCK_N/split-K
+updated: 2026-09-12
 ```
 
 ## 契约与范围
@@ -63,3 +64,12 @@ updated: 2026-09-11
 1. S0 直投（正确性把握高；性能首轮看逐芯）。
 2. E1：按平台逐芯读数决定 split-K（大卡）或 BLOCK_N 放大（弱芯），
    单变量各一发。
+
+## 2026-09-12 平台结果（submission 13304，daily_seq 9）
+
+- **8/8 valid，均值 2.735875x**。逐芯：天数 1.3362 / 沐曦 2.6654 /
+  燧原 0.4102 / 海光 4.8064 / 昆仑 2.7418 / 华为 1.8034 / A 2.2590 /
+  B 5.8646。榜首 EvokeAgent 4.1249。tl.dot 瘦 M 形态八芯全部正确。
+- 回执（b4727f1）：4 方法 0 失败、17 launch、23 组 shape；
+  `batch5-ext6-validate-20260912/dsv3_fused_a_gemm/`
+  （SHA-256 `e4f9c4ce0f3f104fc56dabe94f2292010cc69466743d67ca5dad630c7658230f`）。

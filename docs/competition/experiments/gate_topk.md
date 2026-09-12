@@ -4,13 +4,13 @@
 task: 70
 operator: gate_topk
 batch: 5
-validity: candidate-wip
-platform: not-submitted
+validity: invalid_correctness
+platform: submitted(13305,s0;昆仑无 tl.topk,燧原/华为回调未返回)
 candidate_stage: s0
 team_best_stage: -
 sealed: no
-next: 远端 GPU 恢复后补 release 回执（重点：tl.topk/tl.sort/tl.bitonic_merge 在代理 Triton 3.7.1 的编译与数值，tie-break 与 NaN 语义）；回执齐全进入发射队列（把握序第 6）
-updated: 2026-09-11
+next: 昆仑失败=XMLIR Triton fork 版本缺 tl.topk（AttributeError，非数值）；已完成 5 芯 indices 精确比较全过（平台 reference 确认遵循题面 tie 规则，本地 torch.topk 才是偏离方）；下一轴=去 tl.topk/tl.sort/tl.bitonic_merge 的昆仑 vendor（手工 bitonic 或 k 次迭代提取），燧原/华为回调后定 vendor 范围
+updated: 2026-09-12
 ```
 
 ## 契约与范围
@@ -71,3 +71,21 @@ updated: 2026-09-11
 2. E1：编译失败芯的 vendor 变体（手工 bitonic / 迭代提取）。
 3. 性能轴后置：BLOCK_SIZE_M=32 × 多行共享列扫描已在 S0 内；如需再提，
    参考 T38（sigmoid_gate_topk_renorm）历史经验。
+
+## 2026-09-12 平台提交（submission 13305，daily_seq 10）
+
+- 源 5573ffc（截断转换修复）；测试 oracle 修正 commit 436be25
+  （实测本机 torch.topk 在 CUDA 上违反题面 tie 规则约半数，改用 stable
+  argsort 推导规格索引）；ZIP `s0-5573ffc`，SHA-256
+  `1a99b9c8e55d7d4b33e50d60e2127e980e7cab9d8ca0333826397444c30c8f54`；
+  回执 `batch5-ext6-validate-20260912/gate_topk/`
+  （SHA-256 `2a717f129c8b78efc1b218479ff8d650c8d12673eeb72c18fee53167bfff36bb`，
+  5 方法 0 失败、29 launch）。
+- **昆仑失败**：`AttributeError: module 'triton.language' has no attribute
+  'topk'`——XMLIR 的 Triton fork 版本落后，无 tl.topk（版本缺口，非数值）。
+- 已过 5 芯（indices 精确比较全过 ⇒ 平台 reference 遵循题面 tie 规则）：
+  天数 3.4901 / 沐曦 2.1890 / 海光 3.6598 / A 1.8043 / B 2.9476。
+  燧原/华为 waiting_callback 未收。
+- 结论：下一候选为**去 tl.topk/tl.sort/tl.bitonic_merge 的昆仑 vendor**
+  （手工 bitonic 交换网络或 k 次迭代 max+掩码提取），燧原/华为回调后
+  定 vendor 覆盖范围。

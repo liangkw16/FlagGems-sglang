@@ -4,13 +4,13 @@
 task: 65
 operator: deepep_post_reorder
 batch: 5
-validity: candidate-wip
-platform: not-submitted
+validity: invalid_correctness
+platform: completed(13302,s0,7/8;昆仑=崩溃族非内核裁决)
 candidate_stage: s0
 team_best_stage: -
 sealed: no
-next: 远端 GPU 恢复后补 release 回执；回执齐全即进入 09-12 窗口发射队列（把握序第 3）
-updated: 2026-09-11
+next: 七芯真实通过且读数强（华为 16.8990/海光 16.6416/天数 14.1316/A 13.8796/B 7.7532/沐曦 6.2860/燧原 1.3252）；昆仑 exec 0ms 服务线程卡死=崩溃族，重掷需用户当次明示授权或平台工单健康 worker rerun；S0 源 5573ffc 含 topk=0 退化分支 zeros 修复
+updated: 2026-09-12
 ```
 
 ## 契约与范围
@@ -61,3 +61,16 @@ updated: 2026-09-11
 1. S0 直投。
 2. E1（未开发）：路由行向量化 + slot 常量化小循环展开。
 3. 与 T64 共享燧原 grid 封顶经验（若大 grid 形状出现）。
+
+## 2026-09-12 平台提交（submission 13302，daily_seq 7）
+
+- 源 5573ffc（含 topk=0 退化分支 zeros 修复）；ZIP `s0-5573ffc`，SHA-256
+  `af3f13539969f058bad1b9c93c977875c7e4e23e8112cc050ae3627f6009f67a`；
+  回执 `batch5-ext6-validate-20260912/deepep_post_reorder/`
+  （SHA-256 `09ee196654f1d1f232258ff672fcbad8fd51f6e84cb213960f41a9221a017f9e`，
+  4 方法 0 失败、33 launch）。
+- 七芯真实通过：天数 14.1316 / 沐曦 6.2860 / 燧原 1.3252 / 海光 16.6416 /
+  华为 16.8990 / A 13.8796 / B 7.7532。
+- **昆仑失败（崩溃族）**：exec 0ms，`服务线程卡死自动恢复，请重新提交`
+  ——平台侧故障非内核裁决，按崩溃族协议不计代码止损；注释载体重掷需
+  用户当次明示授权（≤2 发），首选平台工单健康 worker rerun。

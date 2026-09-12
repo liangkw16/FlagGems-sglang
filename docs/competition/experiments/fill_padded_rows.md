@@ -4,13 +4,14 @@
 task: 67
 operator: fill_padded_rows
 batch: 5
-validity: candidate-wip
-platform: not-submitted
+validity: valid
+platform: completed(13300,s0,8/8,3.4329x)
 candidate_stage: s0
-team_best_stage: -
+team_best_stage: s0
+team_best_speedup: 3.43285
 sealed: no
-next: 远端 GPU 恢复后补 release 回执；六题共用一次传输串行执行；回执齐全即进入 09-12 窗口发射队列（把握序第 1）
-updated: 2026-09-11
+next: S0 首发 8/8 valid（seq 5）；昆仑 0.5952 为最薄芯；E1 方向（列分块 grid-stride）仅在需要抬昆仑时开发
+updated: 2026-09-12
 ```
 
 ## 契约与范围
@@ -59,3 +60,12 @@ updated: 2026-09-11
 1. S0 直投（预期显著快于 reference 的 clone+index_put 链）。
 2. E1 候选（未开发）：若平台形状列数巨大，改 grid-stride 列循环降低
    BLOCK_COLS；先取平台逐芯数据再决定。
+
+## 2026-09-12 平台结果（submission 13300，daily_seq 5）
+
+- **8/8 valid，均值 3.43285x**（首发即过）。逐芯：天数 9.7498 / 沐曦
+  2.2450 / 燧原 1.3660 / 海光 4.8460 / 昆仑 0.5952 / 华为 1.3910 /
+  A 3.9498 / B 3.3200。
+- 回执（b4727f1，RTX 5070 Ti 代理）：4 方法 0 失败、25 次真实 launch、
+  14 组非空 shape；`artifacts/competition/batch5-ext6-validate-20260912/fill_padded_rows/`
+  （verification.json SHA-256 `ee29bb4668e9d52fcebf8587d1651242d1da0dfc77f76b21b562e005e0e8987c`）。

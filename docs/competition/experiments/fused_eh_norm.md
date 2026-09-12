@@ -4,13 +4,14 @@
 task: 68
 operator: fused_eh_norm
 batch: 5
-validity: candidate-wip
-platform: not-submitted
+validity: valid
+platform: completed(13301,s0,8/8,6.5562x)
 candidate_stage: s0
-team_best_stage: -
+team_best_stage: s0
+team_best_speedup: 6.55616667
 sealed: no
-next: 远端 GPU 恢复后补 release 回执；回执齐全即进入 09-12 窗口发射队列（把握序第 2）
-updated: 2026-09-11
+next: S0 首发 8/8 valid（seq 6，榜首 HAiWORLD 7.17 差 0.61）；昆仑 1.2075 最薄；E1 列分块两遍式可试抬昆仑
+updated: 2026-09-12
 ```
 
 ## 契约与范围
@@ -56,3 +57,12 @@ updated: 2026-09-11
 
 1. S0 直投。
 2. E1（未开发）：列分块两遍式，针对 BLOCK=8192 退化场景；先看平台逐芯。
+
+## 2026-09-12 平台结果（submission 13301，daily_seq 6）
+
+- **8/8 valid，均值 6.55616667x**。逐芯：天数 10.8214 / 沐曦 6.1777 /
+  燧原 2.0079 / 海光 10.9223 / 昆仑 1.2075 / 华为 3.9125 / A 9.1589 /
+  B 8.2411。榜首 HAiWORLD 7.1684（差 0.61）。
+- 回执（b4727f1）：4 方法 0 失败、15 launch、20 组 shape；
+  `batch5-ext6-validate-20260912/fused_eh_norm/`
+  （SHA-256 `c7b2c0c7a5d4c75947afa1fd10794de44c152a4e78a650361e804b64f592457b`）。
