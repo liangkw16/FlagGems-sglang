@@ -5,12 +5,12 @@ task: 68
 operator: fused_eh_norm
 batch: 5
 validity: valid
-platform: submitted(13443,e3,评测中;TB e2 7.021875x)
+platform: completed(13443,e3,8/8,7.05304167x team best)
 candidate_stage: e3
-team_best_stage: e2
-team_best_speedup: 6.91475
+team_best_stage: e3
+team_best_speedup: 7.05304167
 sealed: no
-next: e3（燧原两遍分块 vendor+全芯重掷）已发射=Top1 掷币（海光回暖+燧原补差 ⇒ 7.2+）
+next: e3 valid 7.053 新 TB（燧原两遍分块等值判关）；差 0.21（HAiWORLD 7.2622）；剩余=海光窗口全开（e1 已证 14.26）+燧原 1.93→2.24 未知轴
 updated: 2026-09-12
 ```
 
@@ -142,3 +142,13 @@ updated: 2026-09-12
   4 方法 0 失败，5 源 75 launch。
 - submission 13443（额度最后一发，30/30 用满）；裁决=海光 ≥13.5 且燧原
   vendor ≥1.8 ⇒ 均值冲 7.26 掷币 Top1。
+
+## 2026-09-12 E3 平台终态：8/8 VALID 7.0530x 新 team best（submission 13443）
+
+- **八芯全过，均值 7.05304167（e2 7.0219 → +0.03）**：天数 12.2519 /
+  沐曦 6.8378 / **燧原 1.9344（两遍分块 vendor 持平 generic 1.98——
+  +0.26 轴未兑现，寄存器减压收益 ≈ 额外读代价）** / 海光 13.1783
+  （窗口回暖一半）/ 昆仑 1.0913 / 华为 3.7159 / A 9.1642 / B 8.2504。
+- **Top1 掷币未中**：7.053 vs HAiWORLD 7.2622（差 0.21，#6/6）。
+  team best 仍前进一步；燧原两遍分块轴按等值判关。
+- 额度：本发为今日最后一发（30/30 用满）。

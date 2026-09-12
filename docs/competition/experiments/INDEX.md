@@ -48,7 +48,7 @@
 | 65 | deepep_post_reorder | invalid_correctness | completed(13302,s0,7/8;昆仑=崩溃族非内核裁决) | - | no | 七芯真实通过且读数强（华为 16.8990/海光 16.6416/天数 14.1316/A 13.8796/B 7.7532/沐曦 6.2860/燧原 1.3252）；昆仑 exec 0ms 服务线程卡死=崩溃族，重掷需用户当次明示授权或平台工单健康 worker rerun；S0 源 5573ffc 含 topk=0 退化分支 zeros 修复 | 2026-09-12 | [deepep_post_reorder](deepep_post_reorder.md) |
 | 66 | dsv3_fused_a_gemm | valid | completed(13371,e1,8/8,3.09395x team best) | e1 3.09395x | no | e1 valid 3.094（+13%，A+70%/沐曦+31%）；对榜首 4.12 差 1.0，燧原+2.1 为最大单芯缺口（tiny-GEMM 向量核方向已注册） | 2026-09-12 | [dsv3_fused_a_gemm](dsv3_fused_a_gemm.md) |
 | 67 | fill_padded_rows | valid | completed(13386,e3,8/8,4.23825x;三宽芯门全负,轴关闭;TB e2 4.2969x) | e2 4.2969x | no | e3 列分块轴关闭(唯沐曦+24%);TB e2 4.2969 守榜(#8,榜首 8.32);宽 shape 结构待新证据 | 2026-09-12 | [fill_padded_rows](fill_padded_rows.md) |
-| 68 | fused_eh_norm | valid | submitted(13443,e3,评测中;TB e2 7.021875x) | e2 6.91475x | no | e3（燧原两遍分块 vendor+全芯重掷）已发射=Top1 掷币（海光回暖+燧原补差 ⇒ 7.2+） | 2026-09-12 | [fused_eh_norm](fused_eh_norm.md) |
+| 68 | fused_eh_norm | valid | completed(13443,e3,8/8,7.05304167x team best) | e3 7.05304167x | no | e3 valid 7.053 新 TB（燧原两遍分块等值判关）；差 0.21（HAiWORLD 7.2622）；剩余=海光窗口全开（e1 已证 14.26）+燧原 1.93→2.24 未知轴 | 2026-09-12 | [fused_eh_norm](fused_eh_norm.md) |
 | 69 | fused_moe_dispatch_index | invalid_correctness | completed(13406,e5,7/8;昆仑第5连崩,工单首选) | - | no | 明日新 ZIP 再掷昆仑(候选改动=rank向量化/kernel2并行);七芯已过部分和356.25 | 2026-09-12 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
 | 70 | gate_topk | invalid_correctness | completed(13335,e1,5/8;燧原/昆仑/华为=exec0ms崩溃族未裁决) | - | no | e1 终态 5/8：三失败芯均 exec 0ms 崩溃族（12:20 同窗），kunlun vendor 被选中但未执行；下一步=新 ZIP 真实改动重评（燧原/华为可补迭代选择 vendor）或用户授权的同字节重掷 | 2026-09-12 | [gate_topk](gate_topk.md) |
 
