@@ -21,7 +21,12 @@
 # with the Ascend-appropriate defaults: one program per (row, page
 # block), scalar row metadata, one gather plus one masked store per
 # lane, no num_warps pin. BLOCK stays 256 (a 1KB int32 tile, far below
-# the 1572864-bit UB budget).
+# the 1572864-bit UB budget). E6 additionally clamps every memory op's
+# address into the row width: e5's first touch died with the 507035
+# aclnnInplaceCopy stream-sync timeout, the error family triton-ascend
+# issues #16275/#1490 attribute to masked-lane out-of-bounds addresses
+# being evaluated for real, and the e5 kernel addressed page_table and
+# req_to_token with unclamped out-of-range lanes.
 
 import torch
 import triton
@@ -53,6 +58,12 @@ def _build_page_table(
 ):
     row = tl.program_id(0).to(tl.int64)
     page = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
+    # Ascend evaluates masked-lane addresses for real (triton-ascend issues
+    # #1490/#16275 both surface as 507035 MTE illegal GM address), so every
+    # memory op addresses through a page clamped into the row width; the
+    # out-of-range tail is never stored, the clamp only keeps its address
+    # inside the buffers.
+    page_rd = tl.where(page < columns, page, 0)
     length = tl.load(lengths + row * ls).to(tl.int64)
     n_pages = (length + PAGE_SIZE - 1) // PAGE_SIZE
     request = tl.load(requests + row * rs).to(tl.int64)
@@ -63,11 +74,11 @@ def _build_page_table(
     # Positive divisors of 4096 are powers of two; signed shift is floor
     # division for the negative sentinel values the tests feed on purpose.
     slot = tl.load(
-        pool + request * ps0 + page * PAGE_SIZE * ps1, active, other=0
+        pool + request * ps0 + page_rd * PAGE_SIZE * ps1, active, other=0
     )
-    previous = tl.load(old + row * ps0l + page * ps1l, inactive, other=0)
-    tl.store(out + row * ps0o + page * ps1o, slot >> SHIFT, active)
-    tl.store(out + row * ps0o + page * ps1o, previous, inactive)
+    previous = tl.load(old + row * ps0l + page_rd * ps1l, inactive, other=0)
+    tl.store(out + row * ps0o + page_rd * ps1o, slot >> SHIFT, active)
+    tl.store(out + row * ps0o + page_rd * ps1o, previous, inactive)
 
 
 def build_trtllm_mha_page_table(
