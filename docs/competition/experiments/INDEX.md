@@ -48,7 +48,7 @@
 | 65 | deepep_post_reorder | invalid_correctness | completed(13302,s0,7/8;昆仑=崩溃族非内核裁决) | - | no | 七芯真实通过且读数强（华为 16.8990/海光 16.6416/天数 14.1316/A 13.8796/B 7.7532/沐曦 6.2860/燧原 1.3252）；昆仑 exec 0ms 服务线程卡死=崩溃族，重掷需用户当次明示授权或平台工单健康 worker rerun；S0 源 5573ffc 含 topk=0 退化分支 zeros 修复 | 2026-09-12 | [deepep_post_reorder](deepep_post_reorder.md) |
 | 66 | dsv3_fused_a_gemm | valid | completed(13304,s0,8/8,2.7359x) | s0 2.735875x | no | S0 首发 8/8 valid（seq 9，榜首 EvokeAgent 4.12）；燧原 0.4102/天数 1.3362 偏低；E1=按逐芯读数单变量调 BLOCK_N/split-K | 2026-09-12 | [dsv3_fused_a_gemm](dsv3_fused_a_gemm.md) |
 | 67 | fill_padded_rows | valid | submitted(13367,e2,评测中) | s0 3.43285x | no | e2（load 提出分支）已发射；裁决点=燧原 PassManager 是否解除 | 2026-09-12 | [fill_padded_rows](fill_padded_rows.md) |
-| 68 | fused_eh_norm | valid | submitted(e1,评测中;s0 8/8 6.5562x) | s0 6.55616667x | no | e1（_hygon 2D 路径分裂）已发射；海光扛 0.485/0.71 榜差（10.92 vs 14.80）；预注册海光 ≥1.10x 才保留 | 2026-09-12 | [fused_eh_norm](fused_eh_norm.md) |
+| 68 | fused_eh_norm | valid | submitted(13369,e1,评测中;s0 8/8 6.5562x) | s0 6.55616667x | no | e1（_hygon 2D 路径分裂）已发射；海光扛 0.485/0.71 榜差（10.92 vs 14.80）；预注册海光 ≥1.10x 才保留 | 2026-09-12 | [fused_eh_norm](fused_eh_norm.md) |
 | 69 | fused_moe_dispatch_index | invalid_correctness | submitted(13362,e3,评测中) | - | no | e3（标量每专家前缀扫描,消循环携带张量+整型where）已发射；裁决点=燧原 PassManager 是否解除、华为 off-by-one、昆仑窗口 | 2026-09-12 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
 | 70 | gate_topk | invalid_correctness | completed(13335,e1,5/8;燧原/昆仑/华为=exec0ms崩溃族未裁决) | - | no | e1 终态 5/8：三失败芯均 exec 0ms 崩溃族（12:20 同窗），kunlun vendor 被选中但未执行；下一步=新 ZIP 真实改动重评（燧原/华为可补迭代选择 vendor）或用户授权的同字节重掷 | 2026-09-12 | [gate_topk](gate_topk.md) |
 

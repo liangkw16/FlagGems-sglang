@@ -5,7 +5,7 @@ task: 68
 operator: fused_eh_norm
 batch: 5
 validity: valid
-platform: submitted(e1,评测中;s0 8/8 6.5562x)
+platform: submitted(13369,e1,评测中;s0 8/8 6.5562x)
 candidate_stage: e1
 team_best_stage: s0
 team_best_speedup: 6.55616667
@@ -83,3 +83,11 @@ updated: 2026-09-12
   `artifacts/competition/batch5-t68e1-validate-20260912/fused_eh_norm/verification.json`
   （SHA-256 见下方提交段）；4 方法 0 失败，generic 15 + hygon 15 launch。
 - 预注册：海光中位收益 ≥1.10x 才保留；其余七芯读数与 S0 窗口一致。
+
+## 2026-09-12 E1 平台提交（submission 13369）
+
+- 上传与正式 POST 各一次；state submitted。额度：发后 12/30。
+- 回执 SHA-256：`16e98305df74721afd66f8bfeb4531dee19570df5350a0981088a7a3a6aeb316`；
+  日志 `9df42acc60ef133ea48195ce194d1ea11b3da54373391443677689642aa777a2`。
+- 裁决点：海光 10.92→？（预注册 ≥1.10x 即 ~12.0+ 才保留）；其余七芯
+  应与 S0 窗口一致（generic 字节不变）。
