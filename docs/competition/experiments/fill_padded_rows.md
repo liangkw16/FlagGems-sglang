@@ -5,7 +5,7 @@ task: 67
 operator: fill_padded_rows
 batch: 5
 validity: valid
-platform: completed(13300,s0,8/8,3.4329x;e1 已发射)
+platform: submitted(13364,e1,评测中;s0 3.4329x)
 candidate_stage: e1
 team_best_stage: s0
 team_best_speedup: 3.43285
@@ -90,3 +90,8 @@ updated: 2026-09-12
   4 方法 0 失败，25 次 launch。
 - 预注册：正确性 8/8 保持；均值目标 > S0 3.4329（pad 占比大时结构收益
   接近减半流量；榜首 8.3163 的结构推断即单写形态）。
+
+## 2026-09-12 E1 平台提交（submission 13364）
+
+- 上传与正式 POST 各一次；state submitted。file_url SHA-256：
+  `63eee149c7b9b342…`（完整值见 status 快照）。额度：发后 14/30。
