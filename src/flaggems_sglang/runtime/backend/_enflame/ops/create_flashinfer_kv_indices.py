@@ -48,20 +48,20 @@ def _create_kv_indices(
         # regions the reference leaves untouched: the head before row 0,
         # the inter-row gaps and the tail past the last row (one region
         # per neighbouring program, zero iterations on gapless shapes).
-        # Scalar selects stay arithmetic - integer tl.where has no passing
-        # GCU300 precedent - and the added loads clamp their masked-lane
-        # addresses arithmetically for the Ascend 507035 discipline.
-        first = (row == 0).to(tl.int64)
-        last = (row_offset == batch - 1).to(tl.int64)
-        head_len = begin * first
+        # Scalar selects stay pure integer arithmetic (no bool->i64
+        # casts, no integer tl.where, no i64 vector multiplies - the
+        # clamp form e6 used is the T67-e1 GCU compile suspect), and the
+        # gap loads use plain masked offsets, the proven GCU form.
+        head_len = begin * (1 - tl.minimum(row, 1))
         gap_lo = begin + length
+        last = 1 - tl.minimum(batch - 1 - row, 1)
         gap_hi = next_begin + (out_numel - next_begin) * last
         for tile in range(
             tl.program_id(1), tl.cdiv(head_len, BLOCK), tl.num_programs(1)
         ):
             i = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
             m = i < head_len
-            value = tl.load(old + (i * m).to(tl.int64) * olds, m, other=0)
+            value = tl.load(old + i * olds, m, other=0)
             tl.store(out + i * os, value, m)
         gap = gap_hi - gap_lo
         for tile in range(
@@ -70,7 +70,7 @@ def _create_kv_indices(
             i = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
             m = i < gap
             off = gap_lo + i
-            value = tl.load(old + (off * m).to(tl.int64) * olds, m, other=0)
+            value = tl.load(old + off * olds, m, other=0)
             tl.store(out + off * os, value, m)
         for tile in range(
             tl.program_id(1), tl.cdiv(length, BLOCK), tl.num_programs(1)
