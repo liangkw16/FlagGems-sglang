@@ -5,7 +5,7 @@ task: 67
 operator: fill_padded_rows
 batch: 5
 validity: valid
-platform: submitted(e2,评测中;e1=13364 六芯过+18~38%,燧原分支内load毒点)
+platform: submitted(13367,e2,评测中)
 candidate_stage: e2
 team_best_stage: s0
 team_best_speedup: 3.43285
@@ -115,3 +115,9 @@ updated: 2026-09-12
   SHA-256 `7d93c4a6d18c84d735b7f8636a3daaca1e0871a3def93779f299a75aa1337f15`；
   日志 `5a97ffd409160759d5196902a18bba228921e9ee2a2292d517091419254e27c6`；
   4 方法 0 失败，25 launch。
+
+## 2026-09-12 E2 平台提交（submission 13367）
+
+- 上传与正式 POST 各一次；state submitted。额度：发后 13/30。
+- 裁决点：燧原分支内 load 毒点假设（编译）；其余七芯应保持 e1 的
+  +18~38% 水位。
