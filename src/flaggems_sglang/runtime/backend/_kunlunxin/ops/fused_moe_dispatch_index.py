@@ -24,7 +24,7 @@ import torch
 import triton
 import triton.language as tl
 
-_BLOCK = 64
+_BLOCK = 32
 _E_TILE = 64
 
 
