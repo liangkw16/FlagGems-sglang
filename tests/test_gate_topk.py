@@ -40,8 +40,17 @@ def make_case(
 @unittest.skipUnless(torch.cuda.is_available(), "requires CUDA/HIP")
 class GateTopkTest(unittest.TestCase):
     def check(self, args):
-        expected_values, expected_indices = reference(*args)
+        expected_values, _ = reference(*args)
+        # torch.topk tie order is NOT the contract on CUDA (measured: it
+        # returns the larger column first on bf16 ties about half the
+        # time). The task text defines tie-break = smaller column index,
+        # so derive the expected indices from a stable descending argsort.
         x = args[0]
+        k = args[1]
+        order = torch.argsort(x.float(), dim=-1, descending=True, stable=True)[
+            :, :k
+        ]
+        expected_indices = order.to(torch.int32)
         snapshot = x.clone()
         for name, module in MODULES:
             with self.subTest(module=name):
