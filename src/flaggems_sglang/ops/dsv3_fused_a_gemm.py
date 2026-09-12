@@ -79,7 +79,10 @@ def dsv3_fused_a_gemm(mat_a, mat_b):
             BLOCK_N=64,
             BLOCK_K=128,
             num_warps=4,
-            num_stages=2,
+            # Deeper K pipeline per the FlagGems M=16 tune table (top
+            # configs all run num_stages>=4); the ieee path is proxy-only
+            # coverage and its fp32 tiles overflow shared memory at 4.
+            num_stages=2 if mat_a.dtype == torch.float32 else 4,
         )
     return out
 
