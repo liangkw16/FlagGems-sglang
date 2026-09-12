@@ -5,8 +5,8 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: invalid_correctness
-platform: completed(13381,e4,7/8;昆仑崩溃族第4次,七芯356.25)
-candidate_stage: e4
+platform: submitted(13406,e5,评测中;e4=13381 7/8 昆仑第4崩)
+candidate_stage: e5
 team_best_stage: -
 sealed: no
 next: 明日新 ZIP 再掷昆仑(候选改动=rank向量化/kernel2并行);七芯已过部分和356.25
@@ -244,3 +244,23 @@ updated: 2026-09-12
   （部分和 356.25，燧原 0.7242 +16% 为 e3/e4 结构性增益）。
 - 后续：明日健康窗口新 ZIP 再掷（下一真实改动候选=kernel3 rank 向量化
   或 kernel2 每专家多 block 并行）；无变化不再同字节重掷。
+
+## 2026-09-12 E5：runtime range 替换 static_range 展开（候选就绪后提交）
+
+- 假设：燧原/华为 exec（19-46s / 12.5min）远超数据量数个量级 ⇒
+  **JIT 展开体积是读数瓶颈**（kernel1 的 64 宽 static_range 嵌运行时
+  tile 循环 + kernel3 的 32 lane 展开产生巨大 IR）。
+- E5：两处 static_range 改 runtime range，语义逐字节等价；全新 ZIP
+  身份第五次重掷昆仑窗口。
+- source commit：`1aff023f2d320a2062dedc289a2d7fcfbd450b7f`。
+- ZIP：`e5-1aff023`，SHA-256 `772f9f75c3a7da96c6ba290a9951c603d5c03f17142506f7d198a862bae39905`；
+  4 成员（generic 不变，三 vendor `7abe15c4…` 相同）。
+- release 回执：`batch5-t69e5-validate-20260912/fused_moe_dispatch_index/verification.json`，
+  SHA-256 `5108e5a4a6181e9b845f79ecf1c82aa51cbb758092c555f3f7e768aabb312dd4`；
+  日志 `c8a1f2cfc60bb041d5663263203a10d5eec685feb66ed67ffbde8d7d9df040ac`。
+- 预注册：燧原/华为 exec 显著缩短（≥2x）且读数 ≥e4 水位；昆仑过线即
+  8/8（部分和基准 356.25）。
+
+## 2026-09-12 E5 平台提交（submission 13406）
+
+- 上传与正式 POST 各一次；state submitted。额度：发后 4/30（留收盘余量）。
