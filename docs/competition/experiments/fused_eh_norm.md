@@ -5,12 +5,12 @@ task: 68
 operator: fused_eh_norm
 batch: 5
 validity: valid
-platform: completed(13377,e2,8/8,7.021875x team best)
-candidate_stage: e2
+platform: submitted(13443,e3,评测中;TB e2 7.021875x)
+candidate_stage: e3
 team_best_stage: e2
 team_best_speedup: 6.91475
 sealed: no
-next: e2 valid 7.022 新 TB（天数+13%/沐曦+9.7% 过门）；榜差 0.24；剩余=海光回暖+燧原 1.98
+next: e3（燧原两遍分块 vendor+全芯重掷）已发射=Top1 掷币（海光回暖+燧原补差 ⇒ 7.2+）
 updated: 2026-09-12
 ```
 
@@ -126,3 +126,19 @@ updated: 2026-09-12
 - 两预注册门（≥1.05x）：天数 ✓（1.13x）、沐曦 ✓（1.10x）。
 - 榜差 0.71（S0）→0.35（e1）→**0.24（e2）**；榜首 HAiWORLD 7.2622。
   剩余轴：海光窗口回暖（e1 字节已证 14.26）+ 燧原 1.98（+0.26 缺口）。
+
+## 2026-09-12 E3：燧原两遍分块 vendor + 全芯重掷（候选就绪后提交）
+
+- 目标：差 0.24 中的燧原 +0.26 轴（1.98 vs 榜首 2.24）+ 海光窗口回暖
+  （e1 已证 14.26）→ 7.02→7.2+ 掷币 Top1。
+- `_enflame` vendor：2048-lane 分块两遍式（sum 标量携带 = GCU 规则内；
+  额外一遍读为寄存器减压的代价，0.1 门槛有 20x 余量）；其余四源字节
+  不变，全芯全新评测。
+- source commit：`8776b60d848509f307e2016fcc91f71579141d25`；ZIP `e3-8776b60`，
+  SHA-256 `e7b7d597f58b0f84290ebde202409c077a235fa671c8d12c9523a3e314a4f7fe`；
+  5 成员（仅 `_enflame` `62fcb339…` 新增）。
+- release 回执：`batch5-final2-20260912/fused_eh_norm/verification.json`，
+  SHA-256 `18bebed8dec7b7defb79a93e80aaae46b2df1347bcb10f88fa693c5f2caa00fd`；
+  4 方法 0 失败，5 源 75 launch。
+- submission 13443（额度最后一发，30/30 用满）；裁决=海光 ≥13.5 且燧原
+  vendor ≥1.8 ⇒ 均值冲 7.26 掷币 Top1。
