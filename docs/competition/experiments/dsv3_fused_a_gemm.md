@@ -5,12 +5,12 @@ task: 66
 operator: dsv3_fused_a_gemm
 batch: 5
 validity: valid
-platform: submitted(13371,e1,评测中;s0 8/8 2.7359x)
+platform: completed(13371,e1,8/8,3.09395x team best)
 candidate_stage: e1
-team_best_stage: s0
-team_best_speedup: 2.735875
+team_best_stage: e1
+team_best_speedup: 3.09395
 sealed: no
-next: e1（bf16 num_stages 2→4）候选就绪；榜差分散 5 芯（燧原+2.14/海光+2.78/沐曦+2.51）为全局配置轴；燧原 dot 形态风险轴（<64）未动
+next: e1 valid 3.094（+13%，A+70%/沐曦+31%）；对榜首 4.12 差 1.0，燧原+2.1 为最大单芯缺口（tiny-GEMM 向量核方向已注册）
 updated: 2026-09-12
 ```
 
@@ -96,3 +96,13 @@ updated: 2026-09-12
 
 - 上传与正式 POST 各一次；state submitted。额度：发后 11/30。
 - 裁决点：均值 > 2.7359 才保留；燧原 0.4102 不破 0.1。
+
+## 2026-09-12 E1 平台终态：8/8 VALID（submission 13371，daily_seq 19）
+
+- **八芯全过，均值 3.09395x = 新 team best（S0 2.7359，+13%）**：
+  天数 1.3224（-1%）/ 沐曦 3.5048（+31%）/ 燧原 0.4212（+3%）/
+  海光 4.9248（+2%）/ 昆仑 2.7466（≈）/ 华为 2.0060（+11%）/
+  A 3.8324（+70%）/ B 5.9934（+2%）。主力增量=国际 A 与沐曦。
+- 深流水（bf16 s4）单变量兑现；燧原 0.42 仍为最薄芯（距 0.1 远，无
+  门槛风险）；对榜首 4.12 还差 1.0，下一轴待逐芯分解（燧原 +2.1 仍
+  为最大单芯缺口，tiny-GEMM 向量核形态是已注册方向）。
