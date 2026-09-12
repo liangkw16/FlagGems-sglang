@@ -5,12 +5,12 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: submitted(13417,e7,评测中;TB e5 189.397x)
+platform: completed(13417,e7,8/8,190.2775625x team best)
 candidate_stage: e7
-team_best_stage: e5
-team_best_speedup: 189.39746875
+team_best_stage: e7
+team_best_speedup: 190.2775625
 sealed: no
-next: e5 valid 189.40 新 TB(+43%,门 1.43x 过)；榜差 20；e6=三 vendor 刷新各自几何+无 clone（沐锡 +7.5/海光 +9.6/燧原 +2.6 潜力）
+next: e7 valid 190.28 新 TB；今日弧线 132→190（去 clone e5 + 沐锡 vendor e6/e7）；榜差 19.2（RSI 209.4）；明日轴=沐锡 +4.1/海光 +9.0/燧原 +2.6/天数 +1.7
 updated: 2026-09-12
 ```
 
@@ -283,3 +283,15 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   今日首发到此为止）。
 - 裁决点：燧原 PassManager 解除（i64 向量乘毒点二次实证的修复）；其余
   七芯 e6 水平。
+
+## 2026-09-12 E7 平台终态：8/8 VALID 190.28x 新 team best（submission 13417）
+
+- **八芯全过，均值 190.2775625（e5 189.40 → 再 +0.9）**：
+  天数 508.7548 / 沐曦 81.9895 / **燧原 17.9078（i64 向量乘毒点修复
+  即过，第三次平台实证该规则）** / 海光 276.1865 / 昆仑 2.8878 /
+  华为 76.6333 / A 248.4977 / B 309.3632。
+- **T63 今日弧线：132.10 → 189.40（e5 去 clone）→ 190.28（e7）**，
+  榜差 77.3 → **19.2**（RSI 209.44）。
+- 剩余轴（明日）：沐曦 82.0 vs 114.5（+4.1 均值）、海光 276 vs 348
+  （+9.0，窗口+形态）、燧原 17.9 vs 39（+2.6）、天数 +1.7——全兑现
+  即 ~207 争榜首。
