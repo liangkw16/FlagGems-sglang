@@ -5,12 +5,12 @@ task: 67
 operator: fill_padded_rows
 batch: 5
 validity: valid
-platform: submitted(13364,e1,评测中;s0 3.4329x)
-candidate_stage: e1
+platform: submitted(e2,评测中;e1=13364 六芯过+18~38%,燧原分支内load毒点)
+candidate_stage: e2
 team_best_stage: s0
 team_best_speedup: 3.43285
 sealed: no
-next: e1 单写融合（去 clone 双写）已发射；目标抬 pad 流量与 launch 轴，追榜首 8.3163
+next: e2（load 提出分支）已发射；裁决点=燧原 PassManager 是否解除
 updated: 2026-09-12
 ```
 
@@ -95,3 +95,23 @@ updated: 2026-09-12
 
 - 上传与正式 POST 各一次；state submitted。file_url SHA-256：
   `63eee149c7b9b342…`（完整值见 status 快照）。额度：发后 14/30。
+
+## 2026-09-12 E1 平台中间判决与 E2 修复
+
+- E1（13364）六芯已过且**全面快于 S0**：沐曦 2.6518（+18%）/ 海光
+  6.4892（+34%）/ 昆仑 0.5930（持平）/ 华为 1.6868（+21%）/ A 5.4350
+  （+38%）/ B 4.2746（+29%）；天数回调中。**燧原 PassManager 失败**
+  （exec 6523ms，vendor=generic 被选中）。
+- 根因定位：E1 相对 S0（燧原已过 1.3660）的独新构造 = **运行时标量分支
+  内嵌 masked 向量 load**。本仓燧原已证形态里 masked 向量 load 全部在
+  顶层（deepep_permute），分支内只有 store（fill S0/deepep_permute）。
+- E2（单变量）：copy load 提到分支外，行有效性并入 load mask
+  （`mask & (row < n_valid)`）；去掉算术钳位（裸 masked load 尾部小越界
+  在昇腾已证可过——T64 huawei 3.76x；且 i64 乘法钳位本身是第二未证构造）。
+- source commit：`a9c06b9f5e0bca8df598ad07e6e95d9cd7662962`。
+- ZIP：`e2-a9c06b9`，SHA-256 `4d4d356a20054af2049a064d0b32c5008196daa11e55b7ca08d4216dca5ed064`，
+  单成员 `ac9097fd…`。
+- release 回执：`batch5-t67e2-validate-20260912/fill_padded_rows/verification.json`，
+  SHA-256 `7d93c4a6d18c84d735b7f8636a3daaca1e0871a3def93779f299a75aa1337f15`；
+  日志 `5a97ffd409160759d5196902a18bba228921e9ee2a2292d517091419254e27c6`；
+  4 方法 0 失败，25 launch。
