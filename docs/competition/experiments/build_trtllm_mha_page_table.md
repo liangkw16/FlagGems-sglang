@@ -5,8 +5,8 @@ task: 59
 operator: build_trtllm_mha_page_table
 batch: 5
 validity: valid
-platform: completed(13360,e6,8/8,23.6813x;team best e4r 24.1284x)
-candidate_stage: e6
+platform: submitted(13387,e7,评测中;team best e4r 24.1284x)
+candidate_stage: e7
 team_best_stage: e4r
 team_best_speedup: 24.1284375
 sealed: no
@@ -301,3 +301,26 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   外部佐证 + 本轮平台实证），可迁移到其他题的昇腾 vendor。
 - 下一轴（e7，未开发）：昇腾 vendor 性能形态（tile 放大/单 store 融合/
   布局调整），目标华为 7.4→≈20 ⇒ 均值 24.1→≈25.5 反超 GuanghuLab 25.43。
+
+## 2026-09-12 E7：昇腾性能形态（冲榜轴，候选就绪后提交）
+
+- 情报（14:1x）：对榜首 GuanghuLab 逐芯，除华为外全部持平或领先
+  （燧原/海光/昆仑/A/B 我方反超），**榜差 1.30 = 华为单芯 -16.11 读数**
+  （8.68 vs 24.79，2.9x，不达 20x 彩票判据，判真结构+窗口混合）。
+- E7（`_ascend` 单变量束"昇腾形态"）：①双 masked store 融合为单 store
+  （整型 `tl.where` select——昇腾合法，禁令仅燧原）；②BLOCK 随表宽
+  自适应放大至 2048（8KB int32 ≪ UB 预算），AIV 向量核吃宽连续 slab。
+  generic/enflame/hygon 字节不动。
+- source commit：`f64e2718f35e44219216d9eadd0f2235cc43651c`。
+- ZIP：`e7-f64e271`，SHA-256 `4a7101783ced75da412e1baf7ea8d0f1c0421dc21af06923b403307084539927`；
+  4 成员（仅 `_ascend` `372f4f12…` 变化）。
+- release 回执：`batch5-t59e7-validate-20260912/build_trtllm_mha_page_table/verification.json`，
+  SHA-256 `4227082b19a045b6d6a171d9d5e939173160af03aae66b642967d05ff7ddc3ab`；
+  日志 `b2ed359450846a74a327aaeaeaca9ecf8acbf1d6e8a76a4cf98e318200f70057`；
+  4 方法 0 失败，4 源各 26 launch。
+- 预注册：华为 ≥1.2x（8.7→10.4+）才保留；七芯水位不动。
+
+## 2026-09-12 E7 平台提交（submission 13387）
+
+- 上传与正式 POST 各一次；state submitted。额度：发后 6/30。
+- 裁决点：华为 ≥1.2x（8.7→10.4+，预注册保留门）；七芯水位不动。
