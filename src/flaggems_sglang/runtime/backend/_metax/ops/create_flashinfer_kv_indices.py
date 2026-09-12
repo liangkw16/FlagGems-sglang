@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Adapted from SGLang 8014d9d kernels/ops/kvcache/kv_indices.py.
 
-# Metax (muxi) vendor: the e5 no-clone kernel in this chip's proven
-# geometry (BLOCK=512, splits capped at 32, 128//batch) - the round-3
-# leaderboard leaves muxi 54.5 vs the leader's 114.5 and the clone-free
-# generic just gained the big GPUs +36-57%, so the narrow-band chips take
-# the same traffic cut in their own shape.
+# Metax (muxi) vendor: code-identical to the e7 generic (no-clone
+# kernel, BLOCK=256, ~512 cooperating programs). E6/e7 proved the
+# no-clone cut on this chip (54.5 -> 82.7) with the round-1 frozen
+# geometry; the leader reads 114.5 and the only remaining delta to
+# the generic shape is the geometry itself, so this vendor now
+# tracks the generic instead of freezing round-1 bytes.
 
 import torch
 import triton
@@ -107,8 +108,12 @@ def create_flashinfer_kv_indices(
     if kv_start_idx is not None:
         assert kv_start_idx.ndim == 1 and kv_start_idx.numel() == batch
         assert kv_start_idx.dtype in (torch.int32, torch.int64)
-    # The wrapper clone is dropped (see the vendor header): the kernel
-    # restores the untouched regions itself, free on gapless shapes.
+    # E5 drops the wrapper clone (a full read+write of the output on top
+    # of the kernel's own traffic). The kernel now restores the untouched
+    # regions itself, which is free on gapless production shapes. The
+    # per-chip leaderboard reopening evidence: the leader sits 1.5-1.7x
+    # ahead on every bandwidth-bound chip while the proxy shapes that
+    # closed this axis in round 2 were launch-bound.
     out = torch.empty_like(kv_indices)
     if not (batch and out.numel()):
         out.copy_(kv_indices)
@@ -119,9 +124,9 @@ def create_flashinfer_kv_indices(
     # The 255 cap keeps grid.y under the Enflame hardware limit that
     # batch<=2 x wide-context shapes would otherwise cross.
     splits = min(
-        max(1, triton.cdiv(req_to_token.shape[1], 512)),
-        max(1, 128 // batch),
-        32,
+        max(1, triton.cdiv(req_to_token.shape[1], 256)),
+        max(1, 512 // batch),
+        255,
     )
     _create_kv_indices[(min(batch, 65535), splits)](
         req_to_token,
@@ -141,7 +146,7 @@ def create_flashinfer_kv_indices(
         out.stride(0),
         kv_indices.stride(0),
         HAS_START=kv_start_idx is not None,
-        BLOCK=512,
+        BLOCK=256,
     )
     return out
 
