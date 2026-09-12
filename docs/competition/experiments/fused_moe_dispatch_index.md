@@ -5,11 +5,11 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: invalid_correctness
-platform: submitted(13362,e3,评测中)
-candidate_stage: e3
+platform: completed(13362,e3,7/8;昆仑=崩溃族未裁决,七芯354.16)
+candidate_stage: e4
 team_best_stage: -
 sealed: no
-next: e3（标量每专家前缀扫描,消循环携带张量+整型where）已发射；裁决点=燧原 PassManager 是否解除、华为 off-by-one、昆仑窗口
+next: e4（BLOCK 64→32 重掷）开发中；昆仑崩溃族新 ZIP 重评；性能后轴=华为 3.7→11、燧原 0.63→2.7
 updated: 2026-09-12
 ```
 
@@ -198,3 +198,13 @@ updated: 2026-09-12
   仅昆仑 waiting_callback（vendor 已选中未执行，今日崩溃族窗口）。
 - 昆仑过线即 8/8：K≥0.1 即 valid；均值 =(354.16+K)/8，追平 c2flow
   52.48 需 K>65.7（大概率 #2，仍是本题第二支有效队伍）。
+
+## 2026-09-12 E3 平台终态：7/8（昆仑=崩溃族，未获裁决）
+
+- 昆仑终态 `completed + passed=false + exec 0ms`，错误原文「服务线程
+  卡死自动恢复，请重新提交」——vendor 被选中但从未执行，非内核裁决，
+  按崩溃族协议不计代码止损。七芯读数已记（部分和 354.16）。
+- 判决：e3 invalid_correctness（缺一芯不排名）。昆仑 vendor 的编译/数值
+  至今零执行记录。
+- 下一发 e4：BLOCK 64→32（kernel1/kernel3 j 循环长度减半，缓解华为
+  26 分钟长跑的串行开销）——真实改动的全新评测自然重掷昆仑窗口。
