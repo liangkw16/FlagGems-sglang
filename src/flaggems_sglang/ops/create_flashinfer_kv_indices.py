@@ -1,6 +1,6 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Adapted from SGLang 8014d9d: kernels/ops/kvcache/kv_indices.py.
+# Adapted from SGLang 8014d9d kernels/ops/kvcache/kv_indices.py.
 
 import torch
 import triton
@@ -14,8 +14,10 @@ def _create_kv_indices(
     lengths,
     indptr,
     starts,
+    old,
     out,
     batch,
+    out_numel,
     ps0,
     ps1,
     rs,
@@ -23,6 +25,7 @@ def _create_kv_indices(
     ips,
     ss,
     os,
+    olds,
     HAS_START: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
@@ -31,9 +34,38 @@ def _create_kv_indices(
         request = tl.load(requests + row_offset * rs).to(tl.int64)
         length = tl.load(lengths + row_offset * ls).to(tl.int64)
         begin = tl.load(indptr + row_offset * ips).to(tl.int64)
+        next_begin = tl.load(indptr + (row_offset + 1) * ips).to(tl.int64)
         start = tl.full((), 0, tl.int64)
         if HAS_START:
             start = tl.load(starts + row_offset * ss).to(tl.int64)
+        # The output is allocated empty, so this kernel also restores the
+        # regions the reference leaves untouched: the head before row 0,
+        # the inter-row gaps and the tail past the last row (one region
+        # per neighbouring program, zero iterations on gapless shapes).
+        # Scalar selects stay arithmetic - integer tl.where has no passing
+        # GCU300 precedent - and the added loads clamp their masked-lane
+        # addresses arithmetically for the Ascend 507035 discipline.
+        first = (row == 0).to(tl.int64)
+        last = (row_offset == batch - 1).to(tl.int64)
+        head_len = begin * first
+        gap_lo = begin + length
+        gap_hi = next_begin + (out_numel - next_begin) * last
+        for tile in range(
+            tl.program_id(1), tl.cdiv(head_len, BLOCK), tl.num_programs(1)
+        ):
+            i = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
+            m = i < head_len
+            value = tl.load(old + (i * m).to(tl.int64) * olds, m, other=0)
+            tl.store(out + i * os, value, m)
+        gap = gap_hi - gap_lo
+        for tile in range(
+            tl.program_id(1), tl.cdiv(gap, BLOCK), tl.num_programs(1)
+        ):
+            i = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
+            m = i < gap
+            off = gap_lo + i
+            value = tl.load(old + (off * m).to(tl.int64) * olds, m, other=0)
+            tl.store(out + off * os, value, m)
         for tile in range(
             tl.program_id(1), tl.cdiv(length, BLOCK), tl.num_programs(1)
         ):
@@ -69,33 +101,46 @@ def create_flashinfer_kv_indices(
     if kv_start_idx is not None:
         assert kv_start_idx.ndim == 1 and kv_start_idx.numel() == batch
         assert kv_start_idx.dtype in (torch.int32, torch.int64)
-    out = kv_indices.clone()
-    if batch and out.numel():
-        # Target ~512 cooperating programs (the upstream SGLang AMD
-        # parallelization shape for long contexts): more token blocks per
-        # row and idle blocks fall through their zero-iteration loops.
-        splits = min(
-            max(1, triton.cdiv(req_to_token.shape[1], 256)),
-            max(1, 512 // batch),
-            512,
-        )
-        _create_kv_indices[(min(batch, 65535), splits)](
-            req_to_token,
-            req_pool_indices,
-            page_kernel_lens,
-            kv_indptr,
-            kv_start_idx,
-            out,
-            batch,
-            *req_to_token.stride(),
-            req_pool_indices.stride(0),
-            page_kernel_lens.stride(0),
-            kv_indptr.stride(0),
-            kv_start_idx.stride(0) if kv_start_idx is not None else 0,
-            out.stride(0),
-            HAS_START=kv_start_idx is not None,
-            BLOCK=256,
-        )
+    # E5 drops the wrapper clone (a full read+write of the output on top
+    # of the kernel's own traffic). The kernel now restores the untouched
+    # regions itself, which is free on gapless production shapes. The
+    # per-chip leaderboard reopening evidence: the leader sits 1.5-1.7x
+    # ahead on every bandwidth-bound chip while the proxy shapes that
+    # closed this axis in round 2 were launch-bound.
+    out = torch.empty_like(kv_indices)
+    if not (batch and out.numel()):
+        out.copy_(kv_indices)
+        return out
+    # Target ~512 cooperating programs (the upstream SGLang AMD
+    # parallelization shape for long contexts): more token blocks per
+    # row and idle blocks fall through their zero-iteration loops.
+    # The 255 cap keeps grid.y under the Enflame hardware limit that
+    # batch<=2 x wide-context shapes would otherwise cross.
+    splits = min(
+        max(1, triton.cdiv(req_to_token.shape[1], 256)),
+        max(1, 512 // batch),
+        255,
+    )
+    _create_kv_indices[(min(batch, 65535), splits)](
+        req_to_token,
+        req_pool_indices,
+        page_kernel_lens,
+        kv_indptr,
+        kv_start_idx,
+        kv_indices,
+        out,
+        batch,
+        out.numel(),
+        *req_to_token.stride(),
+        req_pool_indices.stride(0),
+        page_kernel_lens.stride(0),
+        kv_indptr.stride(0),
+        kv_start_idx.stride(0) if kv_start_idx is not None else 0,
+        out.stride(0),
+        kv_indices.stride(0),
+        HAS_START=kv_start_idx is not None,
+        BLOCK=256,
+    )
     return out
 
 
