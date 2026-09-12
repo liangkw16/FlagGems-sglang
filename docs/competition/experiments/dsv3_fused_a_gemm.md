@@ -5,7 +5,7 @@ task: 66
 operator: dsv3_fused_a_gemm
 batch: 5
 validity: valid
-platform: completed(13304,s0,8/8,2.7359x;e1 就绪待发射)
+platform: submitted(13371,e1,评测中;s0 8/8 2.7359x)
 candidate_stage: e1
 team_best_stage: s0
 team_best_speedup: 2.735875
@@ -91,3 +91,8 @@ updated: 2026-09-12
   17 launch。
 - 发射条件：等 13367/13369 中任一终态落地后按序发射（全局 120s 间隔）；
   预注册=均值 > 2.7359 才保留，燧原 0.4102 不回退破 0.1。
+
+## 2026-09-12 E1 平台提交（submission 13371）
+
+- 上传与正式 POST 各一次；state submitted。额度：发后 11/30。
+- 裁决点：均值 > 2.7359 才保留；燧原 0.4102 不破 0.1。
