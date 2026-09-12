@@ -5,11 +5,11 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: invalid_correctness
-platform: submitted(13359,e2,评测中)
-candidate_stage: e2
+platform: submitted(e3,评测中;e2=13359 五芯过,燧原仍PassManager)
+candidate_stage: e3
 team_best_stage: -
 sealed: no
-next: e2 评测中（submission 13359）；裁决点=燧原是否解除 PassManager、华为 off-by-one 是否消失、昆仑新 ZIP 重掷
+next: e3（标量每专家前缀扫描,消循环携带张量+整型where）已发射；裁决点=燧原 PassManager 是否解除、华为 off-by-one、昆仑窗口
 updated: 2026-09-12
 ```
 
@@ -144,3 +144,28 @@ updated: 2026-09-12
 - 上传与正式 POST 各一次，无自动重试；state submitted，评测排队中。
 - file_url SHA-256：`ab1996b9da873e72f9e02966f0f8a24eb0ff100ccb8d4d50a5f2b698370c14c0`。
 - 观察时额度：17/30（发后）。等待八芯逐芯回调。
+
+## 2026-09-12 E3：标量每专家前缀扫描（候选就绪后提交）
+
+- E2 平台判决补充：燧原仍 PassManager（vendor 被选中，exec 8926ms）；
+  五芯通过（天数 63.29 / 沐曦 **41.14（较 e1 的 36.20 +14%）** / 海光
+  120.60 / A 71.54 / B 54.59）；华为/昆仑回调未返回时已入 e3 开发。
+- 根因收敛：e1/e2 唯一共有结构 = kernel2 的**循环携带张量扫描**（手写
+  串行 cumsum）——retrospective T14/T18/T21 实证该族在燧原/昆仑触发
+  Pipeline 失败；e2 新加的整型 `tl.where` 地址钳位亦无燧原通过先例
+  （clamp_position E1 证据）。
+- E3 改动：①kernel2 改**每专家一 program 的纯标量扫描**（标量 load/
+  store + 标量累加，无循环携带张量、无 masked 标量 load）；②kernel1
+  去尾部分支——counts/prefix 补齐到 `E_PAD=ceil(E/64)*64` 列，内层
+  static_range 无条件写全部列（padding 列恒 0）；③去掉 e2 的整型
+  where 钳位（deepep_permute 已证裸 masked 向量 load 形态）。
+  kernel3 保持 e2 形态（逐 lane 1D 名次 + T64 式标量 gather + 线性
+  标量 store + 运行时分支）。
+- source commit：`a7aa3d0097883214b8a94fb278f6ae1c7da50005`。
+- ZIP：`artifacts/competition/fused_moe_dispatch_index/e3-a7aa3d0/fused_moe_dispatch_index.zip`，
+  SHA-256 `1c5e434fac1e284ea769c52d44cbd63f10eef28dfd1db408a00e3d5c4075caf6`；
+  4 成员：generic `de7fa148…` + 三 vendor `41a94adc…`（逐字节相同）。
+- release 回执（v2，绑定 a7aa3d0，proxy-vendor×3）：
+  `artifacts/competition/batch5-e3-validate-20260912/fused_moe_dispatch_index/verification.json`，
+  SHA-256 `39de777a3c5f4aee19d1bd1ccb9a4c2d054e5af53d95d2016db6a19090196a3f`；
+  日志 SHA-256 `0e31e0111cc047e96c7947b949a0961800042f7f1c074179fb4768f6de24dc59`。
