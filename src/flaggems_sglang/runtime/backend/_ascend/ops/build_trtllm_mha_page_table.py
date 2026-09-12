@@ -32,7 +32,6 @@ import torch
 import triton
 import triton.language as tl
 
-_BLOCK = 256
 _MAX_TILES = 65535
 
 
@@ -77,8 +76,11 @@ def _build_page_table(
         pool + request * ps0 + page_rd * PAGE_SIZE * ps1, active, other=0
     )
     previous = tl.load(old + row * ps0l + page_rd * ps1l, inactive, other=0)
-    tl.store(out + row * ps0o + page_rd * ps1o, slot >> SHIFT, active)
-    tl.store(out + row * ps0o + page_rd * ps1o, previous, inactive)
+    # One fused store: an integer select is legal on Ascend (the no-int-
+    # tl.where rule is a GCU300 constraint) and halves the store count the
+    # e6 form paid 29.5s for.
+    merged = tl.where(active, slot >> SHIFT, previous)
+    tl.store(out + row * ps0o + page_rd * ps1o, merged, page < columns)
 
 
 def build_trtllm_mha_page_table(
@@ -102,7 +104,11 @@ def build_trtllm_mha_page_table(
     )
     n = out.numel()
     if n:
-        tiles = triton.cdiv(out.shape[1], _BLOCK)
+        # E7 widens the tile with the table (up to 2048 int32 = 8KB, far
+        # below the 1572864-bit UB budget): the AIV vector cores prefer
+        # fat contiguous slabs over many 256-lane programs.
+        block = min(max(256, triton.next_power_of_2(out.shape[1])), 2048)
+        tiles = triton.cdiv(out.shape[1], block)
         _build_page_table[(out.shape[0], min(tiles, _MAX_TILES))](
             req_to_token,
             req_pool_indices,
@@ -117,7 +123,7 @@ def build_trtllm_mha_page_table(
             *page_table.stride(),
             PAGE_SIZE=page_size,
             SHIFT=page_size.bit_length() - 1,
-            BLOCK=_BLOCK,
+            BLOCK=block,
         )
     return out
 
