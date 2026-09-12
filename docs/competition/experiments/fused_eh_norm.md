@@ -113,5 +113,5 @@ updated: 2026-09-12
   SHA-256 `697d640cbf4535010dd2e8f56f3e4c3a3bb7256a239a87f4eeec2fd66caa992a`；
   4 成员（generic `5a19180d…` + hygon `f95542db…` + iluvatar `2ddf0e54…`
   + metax `a66edf31…`）。
-- release 回执（v2，绑定 76cb2ca，proxy-vendor×3）：`batch5-t68e2-validate-20260912/fused_eh_norm/verification.json`；4 方法 0 失败，4 源各 15 launch。
+- release 回执（v2，绑定 76cb2ca，proxy-vendor×3）：`batch5-t68e2-validate-20260912/fused_eh_norm/verification.json`，SHA-256 `bfcbbd4311e336205ebc105e7d8552e7e9c0dbf6badd0d32dbac1b0df81dd0bb`；日志 SHA-256 `ef9d08c2870e33d97ad156e919073d89c31b23fd4e8c89603b4a98543e01cb97`；4 方法 0 失败，4 源各 15 launch。
 - 预注册：沐曦/天数中位收益 ≥1.05x 才保留；海光维持 e1 水位。
