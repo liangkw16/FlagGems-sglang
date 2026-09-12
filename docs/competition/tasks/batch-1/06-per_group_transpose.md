@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/per_group_transpose -->
-<!-- synced_at: 2026-09-12T00:03:19+08:00 -->
+<!-- synced_at: 2026-09-12T20:28:08+08:00 -->
 
 # per_group_transpose (quantization/per_group_transpose)
 

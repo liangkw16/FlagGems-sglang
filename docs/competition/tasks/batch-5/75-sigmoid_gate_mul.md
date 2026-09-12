@@ -1,34 +1,35 @@
-<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/moe_sum_reduce -->
+<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/sigmoid_gate_mul -->
 <!-- synced_at: 2026-09-12T20:28:08+08:00 -->
 
-# moe_sum_reduce (moe/moe_sum_reduce)
+# sigmoid_gate_mul (elementwise/sigmoid_gate_mul)
 
 ## 任务描述
 
-MoE sum reduction: reduces expert outputs by summing across the top-k dimension with routing weights applied.
+逐元素门控乘，同形操作数：`out = x * sigmoid(gate)`。
+kernel 是对 `x.numel()` 的扁平 1D 扫描，只要两个张量连续，任意 shape 均可。
 
 ## 接口签名
 
 ```python
-def reference(input, routed_scaling_factor)
+def reference(x, gate)
 ```
 
 > 选手实现的函数签名需与上述 `reference(...)` 完全一致。
 
 ## 计算定义
 
-- `input`: `[num_tokens, top_k, hidden_dim]`
-- `routed_scaling_factor`: scalar
-- `output = input.sum(dim=1) * routed_scaling_factor`
-- float32 累加，输出 cast 回输入 dtype
+- `x` 与 `gate` 同 shape 同 dtype。
+- 计算流程：
+
+  ```
+  out = x.float() * sigmoid(gate.float())
+  ```
+
+  fp32 计算，cast 回 `x.dtype` 存储。
 
 ## 正确性判别标准
 
-Per-dtype tolerance:
-- float32: `atol=1e-4, rtol=1e-4`
-- bfloat16: `atol=1.5e-2, rtol=1.5e-2`
-- float16: `atol=1e-2, rtol=1e-2`
-
+标准 per-dtype tolerance。
 
 ## 参考实现
 
@@ -36,8 +37,8 @@ Per-dtype tolerance:
 import torch
 
 
-def reference(input, routed_scaling_factor):
-    return input.float().sum(dim=1).mul(routed_scaling_factor).to(input.dtype)
+def reference(x, gate):
+    return (x.float() * torch.sigmoid(gate.float())).to(x.dtype)
 ```
 
 ## 评分标准

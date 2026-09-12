@@ -1,43 +1,49 @@
-<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/moe_sum_reduce -->
+<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/gelu_tanh_and_mul -->
 <!-- synced_at: 2026-09-12T20:28:08+08:00 -->
 
-# moe_sum_reduce (moe/moe_sum_reduce)
+# gelu_tanh_and_mul (activation_norm/gelu_tanh_and_mul)
 
 ## 任务描述
 
-MoE sum reduction: reduces expert outputs by summing across the top-k dimension with routing weights applied.
+tanh 近似的门控 GELU：`out = gelu_tanh(x[..., :d]) * x[..., d:]`，其中
+`gelu_tanh(v) = 0.5 * v * (1 + tanh(sqrt(2/pi) * (v + 0.044715 * v^3)))`。
+这是 `gelu_pytorch_tanh` 变体，与 erf 精确版的 `gelu_and_mul` 不同。
 
 ## 接口签名
 
 ```python
-def reference(input, routed_scaling_factor)
+def reference(input)
 ```
 
 > 选手实现的函数签名需与上述 `reference(...)` 完全一致。
 
 ## 计算定义
 
-- `input`: `[num_tokens, top_k, hidden_dim]`
-- `routed_scaling_factor`: scalar
-- `output = input.sum(dim=1) * routed_scaling_factor`
-- float32 累加，输出 cast 回输入 dtype
+- `input`：`[..., 2*d]` fp16/bf16，最后一维为偶数，沿最后一维对半拆开。
+- 计算流程：
+
+  ```
+  x1, x3 = input[..., :d], input[..., d:]
+  out = F.gelu(x1, approximate="tanh") * x3
+  ```
+
+  fp32 计算，cast 回输入 dtype。
 
 ## 正确性判别标准
 
-Per-dtype tolerance:
-- float32: `atol=1e-4, rtol=1e-4`
-- bfloat16: `atol=1.5e-2, rtol=1.5e-2`
-- float16: `atol=1e-2, rtol=1e-2`
-
+标准 per-dtype tolerance。
 
 ## 参考实现
 
 ```python
 import torch
+import torch.nn.functional as F
 
 
-def reference(input, routed_scaling_factor):
-    return input.float().sum(dim=1).mul(routed_scaling_factor).to(input.dtype)
+def reference(input):
+    d = input.shape[-1] // 2
+    x1, x3 = input[..., :d].float(), input[..., d:].float()
+    return (F.gelu(x1, approximate="tanh") * x3).to(input.dtype)
 ```
 
 ## 评分标准

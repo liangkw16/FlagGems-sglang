@@ -127,7 +127,7 @@ def main() -> None:
     all_tasks = [task for tasks in tasks_by_batch.values() for task in tasks]
     # platform keeps reshaping (batch counts grew and the overview lost
     # current_batch on 2026-08-29); warn instead of failing the sync
-    for batch_no, want in {1: 7, 2: 17, 3: 17, 4: 17, 5: 12}.items():
+    for batch_no, want in {1: 7, 2: 17, 3: 17, 4: 17, 5: 17}.items():
         got = len(tasks_by_batch.get(batch_no, []))
         if got != want:
             print(f"WARN: batch {batch_no} has {got} tasks (expected {want})")
