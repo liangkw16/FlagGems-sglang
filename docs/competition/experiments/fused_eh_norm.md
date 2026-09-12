@@ -5,12 +5,12 @@ task: 68
 operator: fused_eh_norm
 batch: 5
 validity: valid
-platform: submitted(13369,e1,评测中;s0 8/8 6.5562x)
+platform: completed(13369,e1,8/8,6.91475x team best)
 candidate_stage: e1
 team_best_stage: s0
-team_best_speedup: 6.55616667
+team_best_speedup: 6.91475
 sealed: no
-next: e1（_hygon 2D 路径分裂）已发射；海光扛 0.485/0.71 榜差（10.92 vs 14.80）；预注册海光 ≥1.10x 才保留
+next: e1 valid 6.91475x（海光 14.26 +31% 过预注册门）；榜差 0.71→0.35；剩余轴=沐曦+0.75/天数+0.61（非单芯主导）
 updated: 2026-09-12
 ```
 
@@ -91,3 +91,13 @@ updated: 2026-09-12
   日志 `9df42acc60ef133ea48195ce194d1ea11b3da54373391443677689642aa777a2`。
 - 裁决点：海光 10.92→？（预注册 ≥1.10x 即 ~12.0+ 才保留）；其余七芯
   应与 S0 窗口一致（generic 字节不变）。
+
+## 2026-09-12 E1 平台终态：8/8 VALID（submission 13369，daily_seq 18）
+
+- **八芯全过，均值 6.91475x = 新 team best（S0 6.5562，+5.5%）**：
+  **海光 14.2632（`_hygon` 被选中，S0 10.9223 → +31%，预注册 ≥1.10x 门
+  通过）** / 天数 10.8096 / 沐曦 6.2062 / 燧原 1.9993 / 昆仑 1.0861 /
+  华为 3.6104 / A 9.2596 / B 8.0836。
+- generic 字节未动，昆仑 -10%/华为 -8% 判窗口方差。榜差从 0.71 缩到
+  0.35（HAiWORLD 7.2622）；剩余轴：沐曦 +0.75 / 天数 +0.61（逐芯情报，
+  均非单芯主导，待下一杠杆）。

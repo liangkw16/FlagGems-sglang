@@ -5,12 +5,12 @@ task: 67
 operator: fill_padded_rows
 batch: 5
 validity: valid
-platform: submitted(13367,e2,评测中)
+platform: completed(13367,e2,8/8,4.2969x team best)
 candidate_stage: e2
-team_best_stage: s0
-team_best_speedup: 3.43285
+team_best_stage: e2
+team_best_speedup: 4.2969
 sealed: no
-next: e2（load 提出分支）已发射；裁决点=燧原 PassManager 是否解除
+next: e2 valid 4.2969x（+25%）；燧原毒点=分支内load已证实并沉淀；对榜首 8.32 仍差 3.9，天数/华为 exec 偏长为下一线索
 updated: 2026-09-12
 ```
 
@@ -121,3 +121,15 @@ updated: 2026-09-12
 - 上传与正式 POST 各一次；state submitted。额度：发后 13/30。
 - 裁决点：燧原分支内 load 毒点假设（编译）；其余七芯应保持 e1 的
   +18~38% 水位。
+
+## 2026-09-12 E2 平台终态：8/8 VALID（submission 13367，daily_seq 17）
+
+- **八芯全过，均值 4.2969x = 新 team best（S0 3.4329，+25%）**：
+  天数 11.8956 / 沐曦 2.7324 / 燧原 **1.5106（分支内 load 毒点假设证实，
+  S0 1.3660 → +11%）** / 海光 6.1164 / 昆仑 0.5854 / 华为 1.9286 /
+  A 5.4502 / B 4.1560。
+- 沉淀（GCU 规则集补充）：**运行时标量分支内嵌 masked 向量 load = 燧原
+  PassManager 编译毒点**；load 提到顶层（行有效性并入 mask）即解除。
+  可迁移：燧原 vendor 的 load 一律顶层、分支只包 store。
+- 对榜首（EvokeAgent 8.3163）仍差 3.9；后续轴：天数/华为 exec 偏长
+  （84s/30s）提示平台 shape 大，launch/tile 仍有空间。
