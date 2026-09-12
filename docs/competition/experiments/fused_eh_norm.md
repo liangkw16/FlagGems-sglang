@@ -5,12 +5,12 @@ task: 68
 operator: fused_eh_norm
 batch: 5
 validity: valid
-platform: completed(13301,s0,8/8,6.5562x)
-candidate_stage: s0
+platform: submitted(e1,评测中;s0 8/8 6.5562x)
+candidate_stage: e1
 team_best_stage: s0
 team_best_speedup: 6.55616667
 sealed: no
-next: S0 首发 8/8 valid（seq 6，榜首 HAiWORLD 7.17 差 0.61）；昆仑 1.2075 最薄；E1 列分块两遍式可试抬昆仑
+next: e1（_hygon 2D 路径分裂）已发射；海光扛 0.485/0.71 榜差（10.92 vs 14.80）；预注册海光 ≥1.10x 才保留
 updated: 2026-09-12
 ```
 
@@ -66,3 +66,20 @@ updated: 2026-09-12
 - 回执（b4727f1）：4 方法 0 失败、15 launch、20 组 shape；
   `batch5-ext6-validate-20260912/fused_eh_norm/`
   （SHA-256 `c7b2c0c7a5d4c75947afa1fd10794de44c152a4e78a650361e804b64f592457b`）。
+
+## 2026-09-12 E1：`_hygon` 2D 路径分裂 vendor（候选就绪后提交）
+
+- 逐芯榜单（13:4x）：榜首 HAiWORLD 7.2622，榜差 0.71 中 **0.485 集中在
+  海光**（我 10.9223 vs 14.7999）；昆仑/国际 B 我方反超，其余芯差
+  0.09~0.78。单杠杆 = 海光 vendor。
+- 形态（T59 海光 +22% 同款打法）：直接 2D 网格 `(tokens, 2)`，每 program
+  只算一路 RMSNorm（enorm 或 hnorm），程序内串行工作量减半、program 数
+  翻倍；BLOCK/num_warps=8/num_stages=1 与 generic 一致，generic 字节不动。
+- source commit：`19e45c369445ee5f07a1af9acf4b7d387c07a616`。
+- ZIP：`artifacts/competition/fused_eh_norm/e1-19e45c3/fused_eh_norm.zip`，
+  SHA-256 `7e29e09e2a8b859afb49b12ed1d17177d79915635bf1c1d0e2bb0db11195193d`；
+  成员 generic `5a19180d…` + `_hygon` `f95542db…`。
+- release 回执（v2，绑定 19e45c3，proxy-vendor hygon）：
+  `artifacts/competition/batch5-t68e1-validate-20260912/fused_eh_norm/verification.json`
+  （SHA-256 见下方提交段）；4 方法 0 失败，generic 15 + hygon 15 launch。
+- 预注册：海光中位收益 ≥1.10x 才保留；其余七芯读数与 S0 窗口一致。
