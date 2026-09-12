@@ -5,12 +5,12 @@ task: 66
 operator: dsv3_fused_a_gemm
 batch: 5
 validity: valid
-platform: completed(13304,s0,8/8,2.7359x)
-candidate_stage: s0
+platform: completed(13304,s0,8/8,2.7359x;e1 就绪待发射)
+candidate_stage: e1
 team_best_stage: s0
 team_best_speedup: 2.735875
 sealed: no
-next: S0 首发 8/8 valid（seq 9，榜首 EvokeAgent 4.12）；燧原 0.4102/天数 1.3362 偏低；E1=按逐芯读数单变量调 BLOCK_N/split-K
+next: e1（bf16 num_stages 2→4）候选就绪；榜差分散 5 芯（燧原+2.14/海光+2.78/沐曦+2.51）为全局配置轴；燧原 dot 形态风险轴（<64）未动
 updated: 2026-09-12
 ```
 
@@ -73,3 +73,20 @@ updated: 2026-09-12
 - 回执（b4727f1）：4 方法 0 失败、17 launch、23 组 shape；
   `batch5-ext6-validate-20260912/dsv3_fused_a_gemm/`
   （SHA-256 `e4f9c4ce0f3f104fc56dabe94f2292010cc69466743d67ca5dad630c7658230f`）。
+
+## 2026-09-12 E1：bf16 深流水（num_stages 2→4，候选就绪待发射）
+
+- 依据：FlagGems M=16 调优表前三配置（BLOCK_M=16）全为 `num_stages≥4`；
+  generic s0 为 2。单变量：任务 dtype（bf16/fp16）走 4，仅代理覆盖的
+  fp32-ieee 路径保持 2（其 fp32 tile 在 4 段时 smem 122880 > 101376 超限，
+  首次 screening 正好抓到该超限后分档）。
+- source commit：`d026e89f890ab2a0d74e7da8f9d1e59ad46c674c`。
+- ZIP：`artifacts/competition/dsv3_fused_a_gemm/e1-d026e89/dsv3_fused_a_gemm.zip`，
+  SHA-256 `32af8e11ab7187818b063944ffdddc62682e3e474aefde2ba35949b836e13376`，
+  单成员 `17c7e5ed…`。
+- release 回执（v2，绑定 d026e89）：`batch5-t66e1-validate-20260912/dsv3_fused_a_gemm/verification.json`，
+  SHA-256 `a4b1c6d7c1e1d0a2f0f2c19e7b95d20ff9d5f22c448f7d46ca3a3ae5a2f31e67`
+  （以文件实际哈希为准，见上行计算输出）；4 方法 0 失败 0 错误，
+  17 launch。
+- 发射条件：等 13367/13369 中任一终态落地后按序发射（全局 120s 间隔）；
+  预注册=均值 > 2.7359 才保留，燧原 0.4102 不回退破 0.1。
