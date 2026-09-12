@@ -5,12 +5,12 @@ task: 59
 operator: build_trtllm_mha_page_table
 batch: 5
 validity: valid
-platform: submitted(13360,e6,评测中;team best e4r 24.1284x)
+platform: completed(13360,e6,8/8,23.6813x;team best e4r 24.1284x)
 candidate_stage: e6
 team_best_stage: e4r
 team_best_speedup: 24.1284375
 sealed: no
-next: e6（_ascend 掩码地址钳位，根因=昇腾 masked-lane 越界地址 507035 族，triton-ascend #16275/#1490 外部佐证）候选就绪；华为 8.68→≈20 即均值 ≈25.5 重夺第一（GuanghuLab 25.43）；e4r 守榜
+next: e6 钳位解除华为 507035（假设证实）但 vendor 慢（7.40x<generic 8.68，exec 29.5s）；e7=昇腾性能形态（华为 7.4→≈20 即均值 ≈25.5 反超 GuanghuLab 25.43）；e4r 守榜
 updated: 2026-09-12
 ```
 
@@ -287,3 +287,17 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 额度：发后 16/30（observed_at 13:12:5x）。
 - 裁决点：华为是否解除 507035（钳位假设验证）；其余七芯读数与 e4r/e5
   水位对比（vendor 字节仅 ascend 变化）。
+
+## 2026-09-12 E6 平台终态：8/8 VALID（submission 13360，daily_seq 14）
+
+- **八芯全过**：天数 67.5145 / 沐曦 12.9470 / 燧原 27.5053 / 海光 31.0350 /
+  昆仑 2.2070 / **华为 7.4030（507035 解除，钳位假设证实）** /
+  A 21.5673 / B 19.2712。**平均 23.68128125x，valid**；
+  is_team_best=False（e4r 24.1284x 保持团队最佳，榜位不变）。
+- 华为 `selected_file=build_trtllm_mha_page_table_ascend.py`，exec 29557ms——
+  vendor 正确但慢（generic e4r 同芯 8.677）：昇腾性能轴未达预期
+  （e5 形态目标 ≈20 未兑现，2D grid+双 store 形态在该 NPU 上 29.5s）。
+- 沉淀：**掩码 lane 地址钳位 = 昇腾 507035 族的已证解法**（#16275/#1490
+  外部佐证 + 本轮平台实证），可迁移到其他题的昇腾 vendor。
+- 下一轴（e7，未开发）：昇腾 vendor 性能形态（tile 放大/单 store 融合/
+  布局调整），目标华为 7.4→≈20 ⇒ 均值 24.1→≈25.5 反超 GuanghuLab 25.43。
