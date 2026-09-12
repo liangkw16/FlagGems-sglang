@@ -5,7 +5,7 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: invalid_correctness
-platform: submitted(e3,评测中;e2=13359 五芯过,燧原仍PassManager)
+platform: submitted(13362,e3,评测中)
 candidate_stage: e3
 team_best_stage: -
 sealed: no
@@ -169,3 +169,10 @@ updated: 2026-09-12
   `artifacts/competition/batch5-e3-validate-20260912/fused_moe_dispatch_index/verification.json`，
   SHA-256 `39de777a3c5f4aee19d1bd1ccb9a4c2d054e5af53d95d2016db6a19090196a3f`；
   日志 SHA-256 `0e31e0111cc047e96c7947b949a0961800042f7f1c074179fb4768f6de24dc59`。
+
+## 2026-09-12 E3 平台提交（submission 13362，daily_seq 15）
+
+- 上传与正式 POST 各一次；state submitted，13:3x 入队。
+- file_url SHA-256：`2066e049…`（完整值见 status 快照）。额度：发后 15/30。
+- 裁决点：燧原 PassManager 是否解除（标量扫描假设）；华为 off-by-one；
+  昆仑窗口重掷。
