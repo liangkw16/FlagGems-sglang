@@ -5,11 +5,11 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: invalid_correctness
-platform: submitted(13332,e1,5/8-judged;昆仑回调未返回)
-candidate_stage: e1
+platform: submitted(13332,e1,5/8;燧原PassManager/华为off-by-one/昆仑崩溃族)
+candidate_stage: e2
 team_best_stage: -
 sealed: no
-next: e1 无原子三段式 vendor 裁决：燧原仍 PassManager 编译失败（vendor 内还有第二个 GCU300 毒点，最可疑 [64,64] 2D 归约）；华为首次真跑（72s）但 1/32 元素 off-by-one ⇒ 昇腾特有 lowering 缺陷（代理 280 小形状×4 源全绿）；下一版=纯 1D 算子变体（kernel1 标量专家循环、kernel3 以 1D tl.cumsum 替代 pairwise），昆仑回调后定完整图景
+next: e2 候选就绪待提交（纯 1D 原语收窄：标量专家循环+逐lane名次+T64式标量gather，去全部 2D 形态与向量gather；release 全绿）；裁决点=燧原是否解除 PassManager、华为 off-by-one 是否消失、昆仑新 ZIP 重掷
 updated: 2026-09-12
 ```
 
@@ -108,3 +108,33 @@ updated: 2026-09-12
   （`for j in static_range(E_TILE): tl.sum(e == e0+j)`），kernel3 以
   1D `tl.cumsum`（昇腾已证可编译仅慢）替代 pairwise 名次；燧原同步
   受益于去 2D 形态。
+
+## 2026-09-12 E2 候选就绪（纯 1D 原语收窄，待提交）
+
+- 对 E1 两处失败的针对性收窄（预注册方向的修正版）：**不用 `tl.cumsum`**
+  （retrospective 实证昆仑/燧原 cumsum 家族 lowering 毒点/瓶颈，共享
+  vendor 不能带）；全部 2D 广播归约拆除：
+  - kernel1：标量专家循环 `for j in tl.static_range(E_TILE)` + 1D
+    compare/sum，标量线性 store——e1 的 `[64,64]` 2D 比较归约消除。
+  - kernel3：逐 lane j 循环；1D 归约取本块内名次
+    （`sum((e == e_j) & (idx < j))`）；独占基址用**标量**
+    `load-value → .to(int64)` 寻址 gather（T64 deepep_permute 燧原 2.53x
+    已证形态）；标量线性 store + `if e_j >= 0` 运行时分支（T64 同款）。
+    e1 的 `[64,64]` pairwise 名次（华为 off-by-one 头号嫌疑）与
+    向量 gather-by-loaded-index（燧原未证形态）一并消除。
+  - kernel2 前缀和不变（1D 向量、线性访存，e1 五芯通过路径）。
+- source commit：`2866bda3963ebf5b833ff6eb4b3f6b345d1062c1`（generic 与
+  测试字节不变；三 vendor 逐字节相同）。
+- ZIP：`artifacts/competition/fused_moe_dispatch_index/e2-2866bda/fused_moe_dispatch_index.zip`，
+  18513 bytes，4 成员（generic `de7fa148…` + ascend/enflame/kunlunxin
+  各 `df0f2fb2c256f96269ae99c92ba0518c3fe11bc4a8936bf349bda1eee4adf336`）。
+- ZIP SHA-256：`8f1ef36c592fe1f4066e289e1eed70aab54fec35819fb436b76988176f24b685`。
+- release 回执（v2，绑定 2866bda，proxy-vendor×3）：
+  `artifacts/competition/batch5-e2-validate-20260912/fused_moe_dispatch_index/verification.json`，
+  SHA-256 `6477a48e0ea2b146d34a071bba0d6193ac1ae92e0ece52198f51be959cf967f9`；
+  完整日志 SHA-256 `209116819feb1d24134538dd3ac9d3e0f78505a62f465d03ab9c6de62ea3488f`。
+  3 方法 0 失败/错误/skip/xfail；generic 6 + 每 vendor 18 次真实 launch；
+  非空 shape 覆盖 [1,1]/[5,4]/[64,16]/[129,8]/[8193,8]。
+- 昇腾/燧原/昆仑目标 runtime 仍 target-runtime-unverified（NVIDIA 代理
+  仅证数学与 JIT）；裁决权在平台。新 ZIP 身份在全芯全新评测，昆仑崩溃族
+  窗口自然重掷。
