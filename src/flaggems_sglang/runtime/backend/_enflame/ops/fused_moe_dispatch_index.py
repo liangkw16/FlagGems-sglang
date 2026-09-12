@@ -43,10 +43,9 @@ def _dispatch_counts(
         offs = block * BLOCK + tl.arange(0, BLOCK)
         e = tl.load(ids + offs.to(tl.int64), offs < n, other=-1).to(tl.int32)
         base = block.to(tl.int64) * num_experts_pad
-        for e0 in range(0, num_experts_pad, E_TILE):
-            for j in tl.static_range(E_TILE):
-                hits = tl.sum((e == (e0 + j)).to(tl.int32), axis=0)
-                tl.store(counts + base + e0 + j, hits)
+        for expert in range(0, num_experts_pad):
+            hits = tl.sum((e == expert).to(tl.int32), axis=0)
+            tl.store(counts + base + expert, hits)
 
 
 @triton.jit
@@ -85,7 +84,7 @@ def _dispatch_ranks(
         offs = block * BLOCK + idx
         e = tl.load(ids + offs.to(tl.int64), offs < n, other=-1).to(tl.int32)
         base = block.to(tl.int64) * num_experts_pad
-        for j in tl.static_range(BLOCK):
+        for j in range(0, BLOCK):
             off = block * BLOCK + j
             if off < n:
                 e_j = tl.load(ids + off.to(tl.int64)).to(tl.int32)
