@@ -5,12 +5,12 @@ task: 67
 operator: fill_padded_rows
 batch: 5
 validity: valid
-platform: completed(13300,s0,8/8,3.4329x)
-candidate_stage: s0
+platform: completed(13300,s0,8/8,3.4329x;e1 已发射)
+candidate_stage: e1
 team_best_stage: s0
 team_best_speedup: 3.43285
 sealed: no
-next: S0 首发 8/8 valid（seq 5）；昆仑 0.5952 为最薄芯；E1 方向（列分块 grid-stride）仅在需要抬昆仑时开发
+next: e1 单写融合（去 clone 双写）已发射；目标抬 pad 流量与 launch 轴，追榜首 8.3163
 updated: 2026-09-12
 ```
 
@@ -69,3 +69,24 @@ updated: 2026-09-12
 - 回执（b4727f1，RTX 5070 Ti 代理）：4 方法 0 失败、25 次真实 launch、
   14 组非空 shape；`artifacts/competition/batch5-ext6-validate-20260912/fill_padded_rows/`
   （verification.json SHA-256 `ee29bb4668e9d52fcebf8587d1651242d1da0dfc77f76b21b562e005e0e8987c`）。
+
+## 2026-09-12 E1：单写融合（候选就绪后提交）
+
+- 结构改写（单变量）：去 wrapper `x.clone()`（读 N + 写 N，pad 行随后被
+  第二次覆写），改 `torch.empty` 出参 + 单 kernel **每元素只写一次**
+  （`row < n` 拷贝、否则填充，运行时标量分支 = T64 已证形态）。省
+  pad 行读 + pad 行双写 + 一次 launch。
+- 跨芯纪律：掩码地址用算术钳位 `cols * mask`（规避燧原无先例的整型
+  `tl.where` 与昇腾 masked-lane 越界地址求值 507035 族）；拷贝路径的
+  masked 向量 load 为全仓 8/8 已证形态。
+- source commit：`ff5c4aba4f06af8985d1b0d07fb95d8247058675`。
+- ZIP：`artifacts/competition/fill_padded_rows/e1-ff5c4ab/fill_padded_rows.zip`，
+  SHA-256 `96effba431c6e4037376968dfe8859269972eb7a0c8b42f7c7ad11dede4e8b6b`；
+  单成员 `fill_padded_rows.py` `59e21e9c…`。
+- release 回执（v2，绑定 ff5c4ab）：
+  `artifacts/competition/batch5-t67e1-validate-20260912/fill_padded_rows/verification.json`，
+  SHA-256 `302c3520b6a0917e9c971193555e4184705b66e3e14fc587495daada70280bde`；
+  日志 SHA-256 `3f71ba92598f6335e39151d1343b41169a68bed0d0ca5f3e419579fe59d1e20c`；
+  4 方法 0 失败，25 次 launch。
+- 预注册：正确性 8/8 保持；均值目标 > S0 3.4329（pad 占比大时结构收益
+  接近减半流量；榜首 8.3163 的结构推断即单写形态）。
