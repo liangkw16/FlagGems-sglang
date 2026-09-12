@@ -85,8 +85,9 @@ updated: 2026-09-12
   SHA-256 `32af8e11ab7187818b063944ffdddc62682e3e474aefde2ba35949b836e13376`，
   单成员 `17c7e5ed…`。
 - release 回执（v2，绑定 d026e89）：`batch5-t66e1-validate-20260912/dsv3_fused_a_gemm/verification.json`，
-  SHA-256 `a4b1c6d7c1e1d0a2f0f2c19e7b95d20ff9d5f22c448f7d46ca3a3ae5a2f31e67`
-  （以文件实际哈希为准，见上行计算输出）；4 方法 0 失败 0 错误，
+  SHA-256 `3490b6a71adec3ca8cc702127ef0a34124210e5bf3bad6d5ee95a796596bc99e`；
+  日志 SHA-256 `f864e4d5def72e0dc00d2688a36b465fd6e6661e233e7b2a6c66535126acde30`；
+  4 方法 0 失败 0 错误，
   17 launch。
 - 发射条件：等 13367/13369 中任一终态落地后按序发射（全局 120s 间隔）；
   预注册=均值 > 2.7359 才保留，燧原 0.4102 不回退破 0.1。
