@@ -5,12 +5,12 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: completed(13227,e3,8/8,131.98x)
-candidate_stage: e3
+platform: submitted(13405,e5,评测中;TB e2 132.099x)
+candidate_stage: e5
 team_best_stage: e2
 team_best_speedup: 132.099
 sealed: no
-next: clone 轴已按 AB 负结论关闭：代理实测 clone 占比 25.9%/26.7%（名义过 25% 门）但 e4(wrapper 去 clone) 对 e3 的 wrapper-inclusive AB 仅 1.011x/0.998x——wrapper 为 launch/CPU 开销主导，2N 流量不变现；e4 字节已回退不投；仅在出现"目标芯 kernel-GPU-bound"证据时重开
+next: e5（去 clone 重开,带宽域门 0.839 过）已发射；裁决=带宽芯中位 ≥1.15x；榜差 77.3（RSI 209.4 广泛 1.5-1.7x）
 updated: 2026-09-12
 ```
 
@@ -189,3 +189,32 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 处置：e4 工作树字节已回退、不投平台；预注册门的目的是预测 e4 收益，
   AB 直接测得 ≈0 即按止损关闭。仅在目标芯出现 kernel-GPU-bound 证据
   （逐芯 exec_ms 与 kernel 流量强相关）时重开。
+
+## 2026-09-12 E5：clone 轴重开（带宽域门通过，候选就绪后提交）
+
+- 重开依据：榜首 RSI 逐芯全面 1.5-1.7x（天数+23.1/海光+18.6/B+12.4/
+  A+10.5/沐曦+7.4 均值贡献）——量级吻合 clone 额外读+写一遍的流量；
+  R2 关闭所依据的代理 shape 为 launch-bound 域（e4 AB 仅 1.011x），
+  平台大芯为带宽 bound 域，负结论不可外推。
+- 带宽域门（width=131072, batch=8, gapless）：输出相等，wrapper
+  B/A=0.839（≥15% 门通过）。
+- 实现：`empty_like` 出参 + kernel 补拷未写区（行 0 头 [0,indptr[0])、
+  行间空隙 [indptr[r]+len, indptr[r+1])、末行尾到 numel；标量选择全
+  算术、补拷加载算术钳位、独立 old-stride 参数（strided 用例）、
+  batch=0 回退 copy_）；splits 加 255 封顶（燧原 grid.y 隐患，R2 注册）。
+  首轮 screening 抓到两真 bug（空 batch 垃圾出参、old/out stride 混用），
+  修复后 4 方法 0 失败，4 源 64 launch。
+- source commit：`a8db85930074b0aa9b7dca29153e2bc069f50aca`。
+- ZIP：`e5-a8db859`，SHA-256 `a7e75011e69133fddac184e36c45d241520ae26454ff281d381ffc5ea8e10d14`；
+  4 成员（generic `47f8f7cd…` 变化，三 vendor 不变）。
+- release 回执：`batch5-t63e5-validate-20260912/create_flashinfer_kv_indices/verification.json`，
+  SHA-256 `31908b089e58583dfc4e9535b5492babe2f960db6807036449f8fcfa693e72ac`；
+  日志 `092b51785a7a7981c3b4fb627926625d7e8b771ced4c71faf84ed34498851b6e`。
+- 预注册：带宽 bound 芯（天数/海光/A/B）中位 ≥1.15x；燧原 vendor 不回退
+  破 0.1；沐曦 vendor 读数对照。
+
+## 2026-09-12 E5 平台提交（submission 13405）
+
+- 上传与正式 POST 各一次；state submitted，15:3x 入队。额度：发后 5/30。
+- 裁决点：带宽 bound 芯（天数/海光/A/B）中位 ≥1.15x；燧原/昆仑/沐曦
+  vendor 读数不回退。
