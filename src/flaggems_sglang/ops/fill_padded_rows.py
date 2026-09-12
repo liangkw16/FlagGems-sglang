@@ -22,18 +22,20 @@ def _fill_padded_rows(
     n_valid = tl.load(num_non_padded_ptr).to(tl.int64)
     cols = tl.arange(0, BLOCK_COLS).to(tl.int64)
     mask = cols < n_cols
-    # Masked lanes still evaluate addresses on some backends; scaling the
-    # column to zero keeps every address inside the row (the row base is
-    # always valid because the grid is sized by n_rows).
-    cols_rd = cols * mask.to(tl.int64)
+    # The copy load stays outside the runtime branch: GCU300 has only ever
+    # legalized this team's masked vector loads at top level (deepep_permute
+    # form), while stores under scalar branches are proven (fill S0,
+    # deepep_permute). Pad rows mask the load out entirely.
+    value = tl.load(
+        x_ptr + row * stride_x + cols, mask=mask & (row < n_valid), other=0
+    )
     if row < n_valid:
-        value = tl.load(x_ptr + row * stride_x + cols_rd, mask=mask, other=0)
-        tl.store(out_ptr + row * stride_out + cols_rd, value, mask=mask)
+        tl.store(out_ptr + row * stride_out + cols, value, mask=mask)
     else:
         fill = tl.full(
             (BLOCK_COLS,), fill_value, dtype=out_ptr.dtype.element_ty
         )
-        tl.store(out_ptr + row * stride_out + cols_rd, fill, mask=mask)
+        tl.store(out_ptr + row * stride_out + cols, fill, mask=mask)
 
 
 def fill_padded_rows(x, num_token_non_padded, fill_value):
