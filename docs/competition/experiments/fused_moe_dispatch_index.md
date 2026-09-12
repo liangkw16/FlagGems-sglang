@@ -5,7 +5,7 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: invalid_correctness
-platform: submitted(13406,e5,评测中;e4=13381 7/8 昆仑第4崩)
+platform: completed(13406,e5,7/8;昆仑第5连崩,工单首选)
 candidate_stage: e5
 team_best_stage: -
 sealed: no
@@ -264,3 +264,11 @@ updated: 2026-09-12
 ## 2026-09-12 E5 平台提交（submission 13406）
 
 - 上传与正式 POST 各一次；state submitted。额度：发后 4/30（留收盘余量）。
+
+## 2026-09-12 E5 平台终态：7/8（昆仑崩溃族第五连崩）
+
+- 昆仑 exec 0ms 服务线程卡死——本题连续第五次，同期其他题昆仑正常
+  判决；工单路径（健康 worker rerun，不耗额度）升级为首选。
+- 七芯读数与 e4 持平：天数 63.37 / 沐曦 41.81 / 燧原 0.6772 / 海光
+  107.96 / 华为 3.7880（exec 12.5→9.5min，JIT 瘦身部分有效但非读数
+  主因，假设降级）/ A 66.06 / B 53.83。部分和 357.48。

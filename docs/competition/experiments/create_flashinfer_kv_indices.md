@@ -5,12 +5,12 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: submitted(13405,e5,评测中;TB e2 132.099x)
+platform: completed(13405,e5,8/8,189.39746875x team best)
 candidate_stage: e5
-team_best_stage: e2
-team_best_speedup: 132.099
+team_best_stage: e5
+team_best_speedup: 189.39746875
 sealed: no
-next: e5（去 clone 重开,带宽域门 0.839 过）已发射；裁决=带宽芯中位 ≥1.15x；榜差 77.3（RSI 209.4 广泛 1.5-1.7x）
+next: e5 valid 189.40 新 TB(+43%,门 1.43x 过)；榜差 20；e6=三 vendor 刷新各自几何+无 clone（沐锡 +7.5/海光 +9.6/燧原 +2.6 潜力）
 updated: 2026-09-12
 ```
 
@@ -218,3 +218,18 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 上传与正式 POST 各一次；state submitted，15:3x 入队。额度：发后 5/30。
 - 裁决点：带宽 bound 芯（天数/海光/A/B）中位 ≥1.15x；燧原/昆仑/沐曦
   vendor 读数不回退。
+
+## 2026-09-12 E5 平台终态：8/8 VALID 189.40x 新 team best（submission 13405）
+
+- **八芯全过，均值 189.39746875（e2 132.099，+43%）**：
+  天数 **508.2520（+50%）** / 沐曦 54.4725 / 燧原 18.2643 / 海光
+  **271.0018（+36%）** / 昆仑 2.7760 / 华为 **82.7750（+27%）** /
+  A **259.1422（+41%）** / B **318.4960（+57%）**。
+- 预注册门（带宽芯中位 ≥1.15x）以 **1.43x** 通过；clone=额外 2N 流量的
+  假设平台证实；R2 关闭判据（launch-bound 代理域）确认为错误域外推。
+- 榜差 77.3→**20.0**（RSI 209.44）。剩余缺口结构：沐曦 54 vs 115
+  （+7.5 均值潜力，`_metax` vendor 仍冻结带 clone 的 E1 字节）、
+  海光 271 vs 348（+9.6）、燧原 18 vs 39（+2.6）；天数/A/B 已接近或
+  反超。
+- 下一发 e6（已注册）：三 vendor 刷新为**各自几何 + 无 clone 的 e5
+  kernel**（BLOCK=512/splits≤32 保留，gap 补拷全燧原已证原语）。
