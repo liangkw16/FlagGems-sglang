@@ -170,3 +170,10 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   海光 10.3922 / 华为 3.8306 / A 8.1884 / B 6.8864。
 - 若昆仑维持 e1 水位（0.25x 量级），本发均值 ≈6.70，略低于 e1 6.7478
   ——team best 预计保留 e1；本发价值=燧原 +5.5% 的正向确认。
+
+## 2026-09-12 E2=C1 平台终态：7/8（昆仑=崩溃族，未获裁决）
+
+- 昆仑终态 `exec 0ms + 服务线程卡死`——vendor 未执行，非内核裁决。
+  e2 判 invalid_correctness（缺芯不排名）；e1 6.7478x 保持 team best。
+- 昆仑对 generic（e1 字节）09-11 曾正常通过 0.2538；后续新 ZIP（C2
+  precomputed-pos 已注册）自然重掷。
