@@ -5,12 +5,12 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: completed(13417,e7,8/8,190.2775625x team best)
-candidate_stage: e7
-team_best_stage: e7
-team_best_speedup: 190.2775625
+platform: completed(13442,e8,8/8,199.69521875x team best)
+candidate_stage: e8
+team_best_stage: e8
+team_best_speedup: 199.69521875
 sealed: no
-next: e7 valid 190.28 新 TB；今日弧线 132→190（去 clone e5 + 沐锡 vendor e6/e7）；榜差 19.2（RSI 209.4）；明日轴=沐锡 +4.1/海光 +9.0/燧原 +2.6/天数 +1.7
+next: e8 valid 199.70 新 TB；今日 132→199.70（+51%）榜差 9.7（RSI 209.4）；明日=燧原已证字节重掷（6.2→17.9 窗口）+沐锡 87→114+窗口轴
 updated: 2026-09-12
 ```
 
@@ -309,3 +309,15 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   4 方法 0 失败。（注：verification.log 与 e7 逐字节相同——runner 日志为
   确定性内容，无时间戳，非拉错文件。）
 - 预注册：沐曦 ≥1.10x（82→90+）保留；回退则 team best 维持 e7 190.28。
+
+## 2026-09-12 E8 平台终态：8/8 VALID 199.70x 新 team best（submission 13442）
+
+- **八芯全过，均值 199.69521875（e7 190.28 → +9.4）**：天数 554.1273
+  （+9% 窗口）/ 沐曦 **87.2903（+6.5%，几何换向兑现但低于 1.10x 门——
+  如实记录：均值增量主要来自天数/海光窗口 + muxi 小额）** / 燧原
+  6.1750（-65% 窗口回落，过线）/ 海光 **316.0890（+14% 窗口）** /
+  昆仑 2.7055 / 华为 72.9857 / A 250.0875 / B 308.1015。
+- **T63 今日总弧线：132.10 → 199.70（+51%），榜差 77.3 → 9.7**
+  （RSI 209.44）；明日轴：燧原 6.2→17.9 已证字节重掷（e7 读数）、
+  沐曦 87→114、海光/天数窗口。
+- 额度：本发后 1/30；T68 e3 已随后发射（13443）。
