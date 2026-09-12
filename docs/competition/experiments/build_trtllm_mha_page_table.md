@@ -6,11 +6,11 @@ operator: build_trtllm_mha_page_table
 batch: 5
 validity: valid
 platform: completed(13232,e5,7/8;team best e4r 24.1284x)
-candidate_stage: e5
+candidate_stage: e6
 team_best_stage: e4r
 team_best_speedup: 24.1284375
 sealed: no
-next: e5 _ascend vendor 首触华为即 aclnnInplaceCopy 流同步超时（507035，aclnn 原生库层错误家族，T46 aclnnCat 同例：异步栈不可靠，单发探针止损）；按崩溃族协议注释载体重掷需用户当次明示授权，或先补昇腾侧验证；e4r 守榜（GuanghuLab 25.43 第一）
+next: e6（_ascend 掩码地址钳位，根因=昇腾 masked-lane 越界地址 507035 族，triton-ascend #16275/#1490 外部佐证）候选就绪；华为 8.68→≈20 即均值 ≈25.5 重夺第一（GuanghuLab 25.43）；e4r 守榜
 updated: 2026-09-12
 ```
 
@@ -257,3 +257,26 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   新 commit/新 ZIP + 自有 release 回执）；② 先取得昇腾侧真机验证再重投。
   在两者其一之前不自动重试。
 - 额度：发后 26/30（observed_at 2026-09-12T01:0x）。
+
+## 2026-09-12 E6：`_ascend` vendor 掩码地址钳位（候选就绪后提交）
+
+- 根因假设（联网核实的外部证据）：e5 华为 507035（aclnnInplaceCopy 流同步
+  超时）属 triton-ascend 已知缺陷族——issue #16275（`tl.where` 双臂真实访存）
+  与 PR #1490（masked atomic 剥 mask）同报 507035（MTE illegal GM address）；
+  e5 vendor 的三处访存对 `page ≥ columns` 的 lane 均用未钳位地址（page_table
+  旧值读、pool gather、out store），masked lane 地址被真实求值即越界。
+- E6 改动（单变量）：全部访址改走 `page_rd = where(page < columns, page, 0)`；
+  in-range lane 语义逐字节不变，越界尾 lane 从不 store。generic/enflame/hygon
+  字节不动。
+- source commit：`dcff187106855312d7de87e3112322ddaf537ff5`。
+- ZIP：`artifacts/competition/build_trtllm_mha_page_table/e6-dcff187/build_trtllm_mha_page_table.zip`，
+  SHA-256 `f5c675be674f6e2c16fd7ff0a2598dc8426a92acd66b05ae3ae7b4f794af0ffd`；
+  4 成员：generic `92d3c574…`、`_ascend` `c7112f67…`（新）、`_enflame`
+  `aaba86ae…`、`_hygon` `cdd9e2cb…`（后三者中仅 ascend 变化）。
+- release 回执（v2，绑定 dcff187，proxy-vendor×3）：
+  `artifacts/competition/batch5-e6-validate-20260912/build_trtllm_mha_page_table/verification.json`，
+  SHA-256 `1b857fbeb85e332cb0c7cffdb7454550477924b1c5e1fbea89fa060048b07c51`；
+  日志 SHA-256 `aa2970bc735dfe1e224a4afc94813eade813e0764aab9d40c9ae74682cd7c2f6`；
+  4 方法 0 失败，generic 26 + ascend 26 + enflame 26 + hygon 26 次 launch。
+- 昇腾真机仍 target-runtime-unverified（代理仅证数学/JIT）；裁决权在平台。
+  预期：华为 8.68→≈20（e5 形态目标不变），七芯读数应与 e4r/e5 持平。
