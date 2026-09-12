@@ -56,7 +56,11 @@ def deepep_permute(input, gateup_input, src2dst, topk_ids, topk, hidden_size):
     if tokens and topk and hidden:
         tiles = triton.cdiv(hidden, 512)
         tasks = tokens * tiles
-        _deepep_permute[(min(tasks, 65535),)](
+        # C1 (R2 pre-registered): cap the grid at the GCU's physical
+        # scheduling width instead of 65535 - this stack's launch overhead
+        # cannot be hidden and oversized grids are pure scheduling cost
+        # (skill hard-facts: 24 SIPs). The kernel body already strides.
+        _deepep_permute[(min(tasks, 24),)](
             input,
             out,
             src2dst,
