@@ -5,8 +5,8 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: completed(13405,e5,8/8,189.39746875x team best)
-candidate_stage: e5
+platform: submitted(13415,e6,评测中;TB e5 189.397x)
+candidate_stage: e6
 team_best_stage: e5
 team_best_speedup: 189.39746875
 sealed: no
@@ -233,3 +233,26 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   反超。
 - 下一发 e6（已注册）：三 vendor 刷新为**各自几何 + 无 clone 的 e5
   kernel**（BLOCK=512/splits≤32 保留，gap 补拷全燧原已证原语）。
+
+## 2026-09-12 E6：窄带 vendor 刷新（候选就绪后提交）
+
+- e5 兑现后三 vendor 仍冻结带 clone 的 E1 字节：沐曦 54.5 vs 榜首 114.5
+  （+7.5 均值）、燧原 18.3 vs 39、昆仑 2.78 vs 4.16。
+- E6：e5 kernel（gap 补拷/算术选择/钳位 load/独立 old-stride/空 batch
+  回退）装入各 vendor 自证几何（BLOCK=512、splits≤32、128//batch）；
+  generic 字节不动。
+- source commit：`0054ddccf1832c983f5a4507fe37300ebfcf1195`。
+- ZIP：`e6-0054ddc`，SHA-256 `d97b9196173c93b3d83d4f8b6432582ff4ef79a466b3fbb5dbe6a930d655aed3`；
+  4 成员（generic 不变；enflame `bf738fee…`/kunlunxin `aee2e744…`/metax
+  `46826627…` 刷新）。
+- release 回执：`batch5-t63e6-validate-20260912/create_flashinfer_kv_indices/verification.json`，
+  SHA-256 `6c76aecea75c412126862a7f186e06fd40b19149e69228c05eb91e03a8f15769`；
+  日志 `a5041acec69708319e6be449e6ed420465ae7dae3dd2ecb0711b9aaed286ac34`；
+  4 方法 0 失败，4 源 64 launch。
+- 预注册：沐曦中位 ≥1.15x（54.5→62+）；燧原/昆仑不回退破水位；带宽
+  五芯维持 e5 水位。若全兑现均值 189→200+。
+
+## 2026-09-12 E6 平台提交（submission 13415）
+
+- 上传与正式 POST 各一次；state submitted。额度：发后 3/30（收盘余量）。
+- 裁决点：沐曦 ≥1.15x；燧原/昆仑水位；带宽五芯维持 e5。
