@@ -5,12 +5,12 @@ task: 68
 operator: fused_eh_norm
 batch: 5
 validity: valid
-platform: completed(13369,e1,8/8,6.91475x team best)
-candidate_stage: e1
+platform: submitted(e2,评测中;e1=13369 8/8 6.91475x TB)
+candidate_stage: e2
 team_best_stage: s0
 team_best_speedup: 6.91475
 sealed: no
-next: e1 valid 6.91475x（海光 14.26 +31% 过预注册门）；榜差 0.71→0.35；剩余轴=沐曦+0.75/天数+0.61（非单芯主导）
+next: e2（路径分裂复制 _metax/_iluvatar）已发射；预注册两芯 ≥1.05x；海光维持 e1 水位
 updated: 2026-09-12
 ```
 
@@ -101,3 +101,17 @@ updated: 2026-09-12
 - generic 字节未动，昆仑 -10%/华为 -8% 判窗口方差。榜差从 0.71 缩到
   0.35（HAiWORLD 7.2622）；剩余轴：沐曦 +0.75 / 天数 +0.61（逐芯情报，
   均非单芯主导，待下一杠杆）。
+
+## 2026-09-12 E2：路径分裂复制到沐曦/天数（候选就绪后提交）
+
+- e1 逐芯复盘后剩余榜差：沐曦 +0.75（6.21 vs 6.96）、天数 +0.61
+  （10.81 vs 11.42）为非单芯主导的次级缺口；海光已兑现 +31%。将同一
+  2D 路径分裂形态复制为 `_metax`（沐曦）与 `_iluvatar`（天数）vendor；
+  generic 与 `_hygon` 字节不动。
+- source commit：`76cb2cae80c9427df4f0bd50c53aef7c35bfc3b3`。
+- ZIP：`artifacts/competition/fused_eh_norm/e2-76cb2ca/fused_eh_norm.zip`，
+  SHA-256 `697d640cbf4535010dd2e8f56f3e4c3a3bb7256a239a87f4eeec2fd66caa992a`；
+  4 成员（generic `5a19180d…` + hygon `f95542db…` + iluvatar `2ddf0e54…`
+  + metax `a66edf31…`）。
+- release 回执（v2，绑定 76cb2ca，proxy-vendor×3）：`batch5-t68e2-validate-20260912/fused_eh_norm/verification.json`；4 方法 0 失败，4 源各 15 launch。
+- 预注册：沐曦/天数中位收益 ≥1.05x 才保留；海光维持 e1 水位。
