@@ -5,8 +5,8 @@ task: 74
 operator: seqlens_expand
 batch: 5
 validity: valid
-platform: submitted(13796,e1,评测中;TB s0 10.6444x)
-candidate_stage: e1
+platform: submitted(13804,e2,评测中;TB s0 10.6444x,e1=7/8昆仑闪断)
+candidate_stage: e2
 team_best_stage: -
 sealed: no
 next: S0 首发即 8/8 valid 10.6444x（天数 25.5/海光 14.6/A 12.5/B 10.6/燧原 6.8/华为 5.8/沐曦 7.6/昆仑 1.8）；c2flow 19.98 为靶；E1 按逐芯定轴
@@ -44,3 +44,16 @@ updated: 2026-09-13
   release 回执 SHA-256 `38662ae336ddab30deca33cca2fc719fd3d2b475601aee26c3818404ae1801a6`；
   3 方法 0 失败。
 - submission 13796；裁决点=全芯均匀差距是否收窄。
+
+## 2026-09-13 E1 终态与 E2 重掷（submission 13804）
+
+- E1（13796）7/8:七芯全过且 tile 正收益（天数 27.0782 +6% / 沐曦
+  8.2582 +8% / 其余持平），昆仑 exec 0ms 间歇崩溃（s0 时昆仑正常判过
+  1.8150 ⇒ 按提交闪断）。
+- E2：tile 维 255 封顶 + grid-stride（燧原 grid.y 硬限的真实加固）=
+  新 ZIP 身份重掷。
+- source commit：`40f82daea4780bdb9e99b4474e5546748ef7c117`；ZIP `e2-40f82da`，
+  SHA-256 `7c57ef034849d4c7b39d0beb19bf29bd84085f9da5209c6f6be613c5730db008`；
+  release 回执 SHA-256 `941cc373a8481dc0d5e8e9ac4e75ddd8231f6bef00035e84c7ccbe341b1df9df`。
+- submission 13804；裁决点=昆仑窗口 + 七芯 tile 增益兑现（均值预期
+  ≈11.2）。

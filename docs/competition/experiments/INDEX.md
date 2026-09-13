@@ -54,7 +54,7 @@
 | 71 | gelu_tanh_and_mul | valid | completed(13763,s0,8/8,2.57x) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
 | 72 | group_norm_silu | candidate-wip | submitted(13778,e2,评测中;s0/e1=7/8 昆仑 uni_sram) | - | no | e2 1D 形态触发崩溃族；E3 假设=2D+512 lane+num_warps=1 或去嵌套 1D | 2026-09-13 | [group_norm_silu](group_norm_silu.md) |
 | 73 | residual_gate_add | valid | completed(13764,s0,8/8,3.95x) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [residual_gate_add](residual_gate_add.md) |
-| 74 | seqlens_expand | valid | submitted(13796,e1,评测中;TB s0 10.6444x) | - | no | S0 首发即 8/8 valid 10.6444x（天数 25.5/海光 14.6/A 12.5/B 10.6/燧原 6.8/华为 5.8/沐曦 7.6/昆仑 1.8）；c2flow 19.98 为靶；E1 按逐芯定轴 | 2026-09-13 | [seqlens_expand](seqlens_expand.md) |
+| 74 | seqlens_expand | valid | submitted(13804,e2,评测中;TB s0 10.6444x,e1=7/8昆仑闪断) | - | no | S0 首发即 8/8 valid 10.6444x（天数 25.5/海光 14.6/A 12.5/B 10.6/燧原 6.8/华为 5.8/沐曦 7.6/昆仑 1.8）；c2flow 19.98 为靶；E1 按逐芯定轴 | 2026-09-13 | [seqlens_expand](seqlens_expand.md) |
 | 75 | sigmoid_gate_mul | valid | completed(13767,s0,8/8,2.54x) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md
