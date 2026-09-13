@@ -76,6 +76,44 @@ class ResidualGateAddTest(unittest.TestCase):
                 expected = reference(r, u, g)
                 self.assertTrue(torch.equal(actual, expected))
 
+    def test_cross_tile_broadcast_and_stride(self):
+        # E4 regression: 97 rows exceeds the 24-program cap (second
+        # grid-stride round); width 1025 is non-pow2 and 4100 crosses
+        # the 4096 block boundary; the broadcast gate must index by
+        # column on the 2D path.
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            with self.subTest(dtype=dtype):
+                shape = (97, 1025)
+                r = torch.randn(shape, dtype=dtype, device="cuda")
+                u = torch.randn(shape, dtype=dtype, device="cuda")
+                gb = torch.randn((1, 1025), dtype=dtype, device="cuda")
+                self.check((r, u, gb))
+                gs = torch.randn(shape, dtype=dtype, device="cuda")
+                self.check((r, u, gs))
+        for d in (4095, 4096, 4097):
+            with self.subTest(d=d):
+                r = torch.randn(33, d, dtype=torch.float32, device="cuda")
+                u = torch.randn(33, d, dtype=torch.float32, device="cuda")
+                g = torch.randn(33, d, dtype=torch.float32, device="cuda")
+                self.check((r, u, g))
+
+    def test_double_rounding_precision(self):
+        # fp16 1+2^-10 squared rounds; -(1+2^-9) + that rounds to exactly
+        # 0 - skipping the intermediate rounding yields 2^-20 instead.
+        r = torch.full(
+            (8, 64), -(1 + 2**-9), dtype=torch.float16, device="cuda"
+        )
+        u = torch.full((8, 64), 1 + 2**-10, dtype=torch.float16, device="cuda")
+        g = torch.full((8, 64), 1 + 2**-10, dtype=torch.float16, device="cuda")
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                actual = module.residual_gate_add(r, u, g)
+                expected = reference(r, u, g)
+                torch.testing.assert_close(
+                    actual, expected, rtol=1e-3, atol=1e-3
+                )
+                self.assertLessEqual(actual.abs().max().item(), 2**-19)
+
     def test_empty(self):
         self.check(make_case(shape=(0, 8)))
 
@@ -83,6 +121,8 @@ class ResidualGateAddTest(unittest.TestCase):
 RELEASE_REQUIRED_TESTS = [
     "ResidualGateAddTest.test_dtypes_and_broadcast",
     "ResidualGateAddTest.test_double_rounding",
+    "ResidualGateAddTest.test_cross_tile_broadcast_and_stride",
+    "ResidualGateAddTest.test_double_rounding_precision",
     "ResidualGateAddTest.test_empty",
 ]
 

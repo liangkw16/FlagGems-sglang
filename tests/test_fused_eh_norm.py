@@ -88,6 +88,26 @@ class FusedEHNormTest(unittest.TestCase):
     def test_strides(self):
         self.check(make_case(strided=True))
 
+    def test_multitile_stride_and_chunk_combos(self):
+        # E4 regression: the row grid-stride (tokens > 24) must reset the
+        # accumulators per row, and hidden > 4096 exercises multi-chunk
+        # inner loops - the two axes never co-occurred before.
+        for tokens in (25, 49):
+            for hidden in (4352, 8192):
+                for dtype in (torch.float16, torch.bfloat16):
+                    with self.subTest(
+                        tokens=tokens, hidden=hidden, dtype=dtype
+                    ):
+                        x = torch.randn(
+                            tokens, hidden, dtype=dtype, device="cuda"
+                        )
+                        prev = torch.randn(
+                            tokens, hidden, dtype=dtype, device="cuda"
+                        )
+                        w1 = torch.randn(hidden, dtype=dtype, device="cuda")
+                        w2 = torch.randn(hidden, dtype=dtype, device="cuda")
+                        self.check((x, prev, w1, w2, 1e-5))
+
     def test_zero_row_and_empty(self):
         e, h, ew, hw, eps = make_case(tokens=4, hidden=512)
         e[:, :] = 0
@@ -97,6 +117,7 @@ class FusedEHNormTest(unittest.TestCase):
 
 
 RELEASE_REQUIRED_TESTS = [
+    "FusedEHNormTest.test_multitile_stride_and_chunk_combos",
     "FusedEHNormTest.test_dtypes",
     "FusedEHNormTest.test_hidden_range_and_tokens",
     "FusedEHNormTest.test_strides",

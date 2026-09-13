@@ -1,29 +1,25 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Adapted from SGLang 8014d9d kernels/jit/csrc/elementwise/concat_mla.cuh.
 
-# Enflame vendor, e6: the batch-5 recipe for this chip's streaming
-# elementwise (BLOCK 4096 + 24-program grid cap + grid-stride, proved
-# +92~113% on T73/T75/T71). concat_mla_k is exactly that shape: each
-# output row is a 192-element copy assembled from two loads. The row
-# axis caps and strides; BLOCK covers the padded row width.
+# Enflame vendor, e6 revised per external review: the generic structure
+# byte-for-byte (BH=16 shares one rope read across 16 heads - the e6
+# draft's one-head-per-row form multiplied rope reads 16x), with the
+# single change the recipe actually contributes on this chip: the task
+# axis capped at the 24-SIP width (grid-stride body already present).
 
 import torch
 import triton
 import triton.language as tl
 
-_MAX_PROGS = 24
-_D_BLOCK = 256
-_D_PAD: tl.constexpr = 256
 
-
-@triton.jit
-def _concat_mla_k_rows(
+@triton.jit(do_not_specialize=["tasks", "heads", "groups", "nd", "rd"])
+def _concat_mla_k(
     nope,
     rope,
     out,
-    rows,
+    tasks,
     heads,
+    groups,
     nd,
     rd,
     ns0,
@@ -31,25 +27,35 @@ def _concat_mla_k_rows(
     ns2,
     rs0,
     rs2,
-    os1,
-    os2,
-    BLOCK: tl.constexpr,
+    BH: tl.constexpr,
+    BN: tl.constexpr,
+    BR: tl.constexpr,
 ):
-    for row in range(tl.program_id(0), rows, tl.num_programs(0)):
-        row64 = row.to(tl.int64)
-        token = row64 // heads
-        head = row64 % heads
-        base = row64 * os1
-        src = token * ns0 + head * ns1
-        d = tl.arange(0, BLOCK).to(tl.int64)
-        nm = d < nd
-        rm = (d >= nd) & (d < nd + rd)
-        dn = tl.minimum(d, nd - 1)
-        dr = tl.maximum(tl.minimum(d, nd + rd - 1) - nd, 0)
-        no = tl.load(nope + src + dn * ns2, nm, other=0)
-        ro = tl.load(rope + token * rs0 + dr * rs2, rm, other=0)
-        tl.store(out + base + d * os2, no, nm)
-        tl.store(out + base + d * os2, ro, rm)
+    for task in range(tl.program_id(0), tasks, tl.num_programs(0)):
+        token = (task // groups).to(tl.int64)
+        h = (task % groups) * BH + tl.arange(0, BH)
+        n = tl.arange(0, BN).to(tl.int64)
+        r = tl.arange(0, BR).to(tl.int64)
+        no = tl.load(
+            nope
+            + token * ns0
+            + h[:, None].to(tl.int64) * ns1
+            + n[None, :] * ns2,
+            (h[:, None] < heads) & (n[None, :] < nd),
+            other=0,
+        )
+        ro = tl.load(rope + token * rs0 + r * rs2, r < rd, other=0)
+        base = (token * heads + h.to(tl.int64)) * (nd + rd)
+        tl.store(
+            out + base[:, None] + n[None, :],
+            no,
+            (h[:, None] < heads) & (n[None, :] < nd),
+        )
+        tl.store(
+            out + base[:, None] + nd + r[None, :],
+            ro[None, :],
+            (h[:, None] < heads) & (r[None, :] < rd),
+        )
 
 
 def concat_mla_k(k, k_nope, k_rope):
@@ -61,21 +67,25 @@ def concat_mla_k(k, k_nope, k_rope):
     assert k.dtype == k_nope.dtype == k_rope.dtype == torch.bfloat16
     out = torch.empty(k.shape, dtype=k.dtype, device=k.device)
     if out.numel():
-        rows = tokens * heads
-        _concat_mla_k_rows[(min(rows, _MAX_PROGS),)](
+        # BH=16 quarters the program count per token (launch-bound shapes)
+        # while re-reading each token's rope row once per group.
+        groups = triton.cdiv(heads, 16)
+        tasks = tokens * groups
+        _concat_mla_k[(min(tasks, 24),)](
             k_nope,
             k_rope,
             out,
-            rows,
+            tasks,
             heads,
+            groups,
             nd,
             rd,
             *k_nope.stride(),
             k_rope.stride(0),
             k_rope.stride(2),
-            out.stride(1),
-            out.stride(2),
-            BLOCK=triton.next_power_of_2(max(1, dim)),
+            BH=16,
+            BN=triton.next_power_of_2(max(1, nd)),
+            BR=triton.next_power_of_2(max(1, rd)),
         )
     return out
 

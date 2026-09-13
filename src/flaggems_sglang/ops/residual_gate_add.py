@@ -55,9 +55,12 @@ def _residual_gate_add_flat(
         r = tl.load(r_ptr + offs, mask=m, other=0.0)
         u = tl.load(u_ptr + offs, mask=m, other=0.0)
         g = tl.load(g_ptr + offs, mask=m, other=0.0)
-        product = (u.to(tl.float32) * g.to(tl.float32)).to(
-            out_ptr.dtype.element_ty
-        )
+        # Multiply in the element dtype: an IEEE multiply is correctly
+        # rounded, which equals the exact-fp32-then-round-to-dtype the
+        # contract specifies. Going through fp32 explicitly lets the
+        # compiler fold the round-trip away (caught by the precision
+        # test: it skipped the intermediate rounding entirely).
+        product = u * g
         out = (r.to(tl.float32) + product.to(tl.float32)).to(
             out_ptr.dtype.element_ty
         )
