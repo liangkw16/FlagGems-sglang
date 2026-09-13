@@ -16,20 +16,22 @@ def _seqlens_expand(
     es,
     ss,
     os_,
+    qo_len,
     BLOCK: tl.constexpr,
 ):
     pid = tl.program_id(0)
-    tile = tl.program_id(1)
-    qo = tl.load(extend + pid * es)
-    kv = tl.load(seq + pid * ss)
-    # Clamp keeps DP-padded/idle rows safe for uint32 downstream readers
-    # (a negative length would read as ~4e9 tokens).
-    start = kv - qo + 1
-    offs = tile * BLOCK + tl.arange(0, BLOCK)
-    mask = offs < qo
-    base = tl.load(offsets + pid * os_)
-    values = tl.maximum(start + offs, 0)
-    tl.store(out + (base + offs).to(tl.int64), values, mask=mask)
+    tiles = tl.cdiv(qo_len, BLOCK)
+    for tile in range(tl.program_id(1), tiles, tl.num_programs(1)):
+        qo = tl.load(extend + pid * es)
+        kv = tl.load(seq + pid * ss)
+        # Clamp keeps DP-padded/idle rows safe for uint32 downstream
+        # readers (a negative length would read as ~4e9 tokens).
+        start = kv - qo + 1
+        offs = tile * BLOCK + tl.arange(0, BLOCK)
+        mask = offs < qo
+        base = tl.load(offsets + pid * os_)
+        values = tl.maximum(start + offs, 0)
+        tl.store(out + (base + offs).to(tl.int64), values, mask=mask)
 
 
 def seqlens_expand(extend_seq_lens, seq_lens, total_len, max_q_len):
@@ -50,8 +52,11 @@ def seqlens_expand(extend_seq_lens, seq_lens, total_len, max_q_len):
         # large (the per-chip gap to the leader is uniform). Tile the
         # request dimension like the kv_indices splits: fixed 1024-lane
         # blocks, one program per (request, tile).
+        # grid.y clamped to the Enflame hardware limit with a
+        # grid-stride over the remaining tiles.
         block = 1024
-        _seqlens_expand[(n, triton.cdiv(max(1, max_q_len), block))](
+        tiles = min(triton.cdiv(max(1, max_q_len), block), 255)
+        _seqlens_expand[(n, tiles)](
             extend_seq_lens,
             seq_lens,
             offsets,
@@ -59,6 +64,7 @@ def seqlens_expand(extend_seq_lens, seq_lens, total_len, max_q_len):
             extend_seq_lens.stride(0),
             seq_lens.stride(0),
             offsets.stride(0),
+            max_q_len,
             BLOCK=block,
         )
     return out
