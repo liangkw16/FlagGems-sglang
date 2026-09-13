@@ -25,30 +25,44 @@ def _deepep_post_reorder(
     ws0,
     ws1,
     scaling,
+    TOPK_PAD: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
     out_ty = out.dtype.element_ty
+    lane = tl.arange(0, TOPK_PAD)
     for token in range(tl.program_id(0), tokens, tl.num_programs(0)):
+        token64 = token.to(tl.int64)
+        # E1: the routing and weight rows load once per token instead of
+        # once per (hidden block, slot) - a masked vector load at top
+        # level (the kunlunxin-reliable form). Slot values come out via
+        # arithmetic selects (i32 lane multiply, no integer tl.where and
+        # no i64 vector ops: both are proven GCU300 poisons).
+        tmask = lane < topk
+        routes_vec = tl.load(
+            routes + token64 * rs0 + lane.to(tl.int64) * rs1,
+            mask=tmask,
+            other=-1,
+        ).to(tl.int32)
+        w_vec = tl.load(
+            weights + token64 * ws0 + lane.to(tl.int64) * ws1,
+            mask=tmask,
+            other=0.0,
+        ).to(tl.float32)
         for start in tl.range(0, hidden, BLOCK):
             cols = start + tl.arange(0, BLOCK).to(tl.int64)
             mask = cols < hidden
             acc = tl.zeros((BLOCK,), dtype=tl.float32)
             for slot in range(topk):
-                dst = tl.load(
-                    routes + token.to(tl.int64) * rs0 + slot.to(tl.int64) * rs1
-                ).to(tl.int64)
+                sel = (lane == slot).to(tl.int32)
+                dst = tl.sum(routes_vec * sel).to(tl.int64)
                 if dst >= 0:
-                    w = tl.load(
-                        weights
-                        + token.to(tl.int64) * ws0
-                        + slot.to(tl.int64) * ws1
-                    ).to(tl.float32)
+                    w = tl.sum(w_vec * sel.to(tl.float32))
                     row = tl.load(
                         down + dst * ds0 + cols * ds1, mask=mask, other=0.0
                     ).to(tl.float32)
                     acc += row * (w * scaling)
             tl.store(
-                out + token.to(tl.int64) * os0 + cols * os1,
+                out + token64 * os0 + cols * os1,
                 acc.to(out_ty),
                 mask=mask,
             )
@@ -95,6 +109,7 @@ def deepep_post_reorder(
         topk_weights.stride(0),
         topk_weights.stride(1),
         float(routed_scaling_factor),
+        TOPK_PAD=triton.next_power_of_2(max(1, topk)),
         BLOCK=512,
     )
     return out
