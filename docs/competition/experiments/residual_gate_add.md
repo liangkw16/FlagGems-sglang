@@ -5,8 +5,8 @@ task: 73
 operator: residual_gate_add
 batch: 5
 validity: valid
-platform: completed(13764,s0,8/8,3.95x)
-candidate_stage: s0
+platform: submitted(13872,e1,评测中;TB s0 3.952x)
+candidate_stage: e1
 team_best_stage: -
 sealed: no
 next: S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴
@@ -33,3 +33,13 @@ updated: 2026-09-13
 - screening 多轮门禁拦下并修复的缺陷已记录于提交说明；
   最终 release：0 失败/错误/skip，非空 kernel launch，NVIDIA 代理范围。
 - 所有八芯目标 `target-runtime-unverified`；裁决权在平台。
+
+## 2026-09-13 E1：同形 gate 扁平化（已发射 13872）
+
+- Codex 咨询建议：非广播 gate 改 flat 1D（免 2D grid 窄行浪费，免
+  %D），广播保持 2D——纯结构调整，双重舍入语义不变。
+- source commit：`dd043007f917f3406566167cc54240df4f719887`；ZIP `e1-dd04300`，
+  SHA-256 `2f2d64146c540cca957d13fc06a67a8c2ab6a5523063aad020210f7baaec020f`；
+  release 回执 `batch5-r5-20260913/residual_gate_add/verification.json`
+  SHA-256 `f301e7c62bae010808c13d6555bd8cd31ff35b46f60a77e6f95a5e33a5c2ae04`；
+  3 方法 0 失败。
