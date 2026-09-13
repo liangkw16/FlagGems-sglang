@@ -1,30 +1,19 @@
 # Copyright 2026 FlagOS Contributors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
+# Adapted from SGLang 8014d9d kernels/jit/csrc/elementwise/concat_mla.cuh.
 
-# Kunlunxin vendor: every concat_mla_k submission so far (s0, s0r, s0r2
-# and the BH=16 round) died in the Kunlun evaluator's XMLIR stack with
-# "服务线程卡死自动恢复" -- four deterministic crashes across two
-# kernel tunings, which moves this from the intermittent crash family to
-# a form-specific compiler fault. The shared shape of every crash is the
-# generic's 2D [BH, BN]/[BH, BR] tile with two segmented stores off one
-# base expression. This vendor flattens to the one-program-per-row shape
-# that Kunlun passes elsewhere on this platform (l2norm row blocks,
-# kv_indices row loops): each program copies one output row with a
-# single padded 1D range, two masked loads and two masked stores over
-# disjoint ranges, and grid-stride over rows. Shape scalars stay
-# unspecialized per the Kunlun recompile-storm guidance from the
-# FlagGems permute_copy vendor.
+# Kunlunxin vendor, round 5. Four deterministic-garbage rounds (s0 flat
+# 2D tile, s0r/s0r2 carriers, BH=16, and the two-clamped-loads row form)
+# all share one addressing recipe the FlagTree #1147 analysis condemns:
+# a single padded range over the non-power-of-2 row width (192 -> 256
+# with a dead lane zone) feeding two masked stores off one base, plus
+# the rope reload whose offset pattern repeats across every head of a
+# token - the stride-0 broadcast read that OffsetAnalysis misjudges as
+# Continuous before bursting past the wrap. This round adopts the
+# official FlagGems concat_and_cache_mla structure exactly: two fully
+# independent 1D segment loops with their own power-of-two blocks (the
+# k segment at 128 lanes, the rope segment at 64), no shared base
+# expression, no dead lanes, no in-kernel broadcast.
 
 import torch
 import triton
@@ -33,14 +22,8 @@ import triton.language as tl
 _MAX_GRID = 65535
 
 
-# e4 (2026-09-11): e2/e3 read bit-identical garbage on the platform's
-# Kunlun run while passing every proxy matrix, and the only shared
-# wrapper/kernel trait beyond the loads is the do_not_specialize
-# annotation -- XMLIR's unspecialized multi-argument binding is the
-# prime suspect, so this round removes it (single-variable change from
-# e3; the recompile-storm concern is a caching cost, not correctness).
 @triton.jit
-def _concat_mla_k_rows(
+def _concat_mla_k_segments(
     nope,
     rope,
     out,
@@ -55,28 +38,26 @@ def _concat_mla_k_rows(
     rs2,
     os1,
     os2,
-    D_PAD: tl.constexpr,
+    BLOCK_N: tl.constexpr,
+    BLOCK_R: tl.constexpr,
 ):
     for row in range(tl.program_id(0), rows, tl.num_programs(0)):
         row64 = row.to(tl.int64)
         token = row64 // heads
         head = row64 % heads
-        d = tl.arange(0, D_PAD).to(tl.int64)
-        nm = d < nd
-        rm = (d >= nd) & (d < nd + rd)
-        # Masked-off lanes keep in-bounds addresses: the rope offset would
-        # go negative for d < nd and the platform's Kunlun run showed
-        # garbage through masked lanes with negative computed offsets, so
-        # both loads clamp their offsets into the valid range (loaded
-        # values for masked lanes are other=0 regardless).
-        dn = tl.minimum(d, nd - 1)
-        dr = tl.maximum(tl.minimum(d, nd + rd - 1) - nd, 0)
-        no = tl.load(nope + token * ns0 + head * ns1 + dn * ns2, nm, other=0)
-        ro = tl.load(rope + token * rs0 + dr * rs2, rm, other=0)
-        # row = token * heads + head, so the output row stride is the
-        # head-dim stride (out.stride(1)), not the token stride.
-        tl.store(out + row64 * os1 + d * os2, no, nm)
-        tl.store(out + row64 * os1 + d * os2, ro, rm)
+        base = row64 * os1
+        src = token * ns0 + head * ns1
+        for i in range(0, nd, BLOCK_N):
+            offs = (i + tl.arange(0, BLOCK_N)).to(tl.int64)
+            m = offs < nd
+            no = tl.load(nope + src + offs * ns2, m, other=0)
+            tl.store(out + base + offs * os2, no, m)
+        rbase = token * rs0
+        for j in range(0, rd, BLOCK_R):
+            offs = (j + tl.arange(0, BLOCK_R)).to(tl.int64)
+            m = offs < rd
+            ro = tl.load(rope + rbase + offs * rs2, m, other=0)
+            tl.store(out + base + (nd + offs) * os2, ro, m)
 
 
 def concat_mla_k(k, k_nope, k_rope):
@@ -89,7 +70,7 @@ def concat_mla_k(k, k_nope, k_rope):
     out = torch.empty(k.shape, dtype=k.dtype, device=k.device)
     if out.numel():
         rows = tokens * heads
-        _concat_mla_k_rows[(min(rows, _MAX_GRID),)](
+        _concat_mla_k_segments[(min(rows, _MAX_GRID),)](
             k_nope,
             k_rope,
             out,
@@ -102,7 +83,8 @@ def concat_mla_k(k, k_nope, k_rope):
             k_rope.stride(2),
             out.stride(1),
             out.stride(2),
-            D_PAD=triton.next_power_of_2(max(1, dim)),
+            BLOCK_N=triton.next_power_of_2(max(1, nd)),
+            BLOCK_R=triton.next_power_of_2(max(1, rd)),
         )
     return out
 
