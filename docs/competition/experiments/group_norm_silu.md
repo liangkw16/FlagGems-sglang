@@ -9,7 +9,7 @@ platform: submitted(13778,e2,评测中;s0/e1=7/8 昆仑 uni_sram)
 candidate_stage: e2
 team_best_stage: -
 sealed: no
-next: S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴
+next: e2 1D 形态触发崩溃族；E3 假设=2D+512 lane+num_warps=1 或去嵌套 1D
 updated: 2026-09-13
 ```
 
@@ -62,3 +62,10 @@ updated: 2026-09-13
   SHA-256 `86e87f38d31d2048d050e6e7dc37fb4831ec8c779f9b57a345ab31eaf6a5dd25`；
   release 回执 SHA-256 `d5d1476c47f0ba3f1d3455e7d1d0d6a3656233c6fea030e7bfba676068efb087`。
 - submission 13778；裁决点=昆仑 uni_sram 是否解除。
+
+## 2026-09-13 E2 平台终态：7/8（昆仑崩溃族）
+
+- 昆仑 exec 0ms 服务线程卡死——1D 嵌套循环形态与 T69 同族触发
+  评测器崩溃（对照：s0/e1 的 2D 形态是真实 uni_sram 执行错，非崩溃）。
+- 下一假设（E3，未开发）：2D 形态 + 更小 tile（512 lane）+ num_warps=1；
+  或 1D 形态去嵌套（channel 展平进 spatial 一维）。

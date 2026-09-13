@@ -10,7 +10,7 @@ candidate_stage: e9
 team_best_stage: e8
 team_best_speedup: 199.69521875
 sealed: no
-next: e8 valid 199.70 新 TB；今日 132→199.70（+51%）榜差 9.7（RSI 209.4）；明日=燧原已证字节重掷（6.2→17.9 窗口）+沐锡 87→114+窗口轴
+next: e9 valid 171.73 未过 TB（燧原窗口回归 17.8 但 do_not_specialize 反伤大芯,轴关闭）；明日轴=沐锡 87→114/燧原已归位
 updated: 2026-09-12
 ```
 
@@ -333,3 +333,13 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   release 回执 SHA-256 `f6978627b6979826c832eaaabe714f6b1bc065b14cd4e0627ba771a7668c3b0a`；
   4 方法 0 失败。
 - submission 13780；裁决点=燧原回 17.9 水位 + 华为重编译税减免。
+
+## 2026-09-13 E9 平台终态：8/8 valid 171.73x（未过 TB，轴关闭）
+
+- 燧原窗口如预期回归（6.18 → **17.8373**，e7 字节水位）；但
+  **do_not_specialize 反伤健康编译器芯**：华为 72.99→23.41、天数
+  554→467、海光 316→246、沐曦 87→71、B 308→292（stride/对齐特化在
+  非 Ascend 栈上本就是代码gen收益）。均值 171.73 < e8 199.70，
+  **team best 保留 e8；do_not_specialize 轴关闭**。
+- 沉淀：重编译税理论只在昇腾成立，且代价由全 generic 芯共担——
+  若要再用应做成 _ascend 专属 vendor 而非 generic。

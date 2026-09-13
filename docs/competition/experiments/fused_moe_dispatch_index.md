@@ -9,7 +9,7 @@ platform: submitted(13769,e6,评测中;e5=7/8昆仑第5崩)
 candidate_stage: e6
 team_best_stage: -
 sealed: no
-next: 明日新 ZIP 再掷昆仑(候选改动=rank向量化/kernel2并行);七芯已过部分和356.25
+next: e6 kwargs 证伪（昆仑第6崩）；kernel 侧路径试尽，仅剩平台工单；七芯部分和 357.5 待命
 updated: 2026-09-12
 ```
 
@@ -286,3 +286,9 @@ updated: 2026-09-12
   SHA-256 `9063a912ade241842f46c956e7bafa55f1235835974b835f29b0f24357f07d4d`；
   3 方法 0 失败（generic 6 + enflame 18 + ascend 18 launch）。
 - submission 13769（09-13 08:0x）；裁决点=kwargs 是否解除昆仑崩溃。
+
+## 2026-09-13 E6 平台终态：7/8（kwargs 未救昆仑，第六连崩）
+
+- 昆仑终态 exec 0ms 服务线程卡死（此前 ~1h 的"执行中"为假象）。
+  kwargs 假设证伪。**六连崩后 kernel 侧路径全部试尽**：仅剩平台
+  工单（健康 worker rerun）。七芯部分和 357.5 保持待命。
