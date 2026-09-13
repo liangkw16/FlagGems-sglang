@@ -5,7 +5,7 @@ task: 65
 operator: deepep_post_reorder
 batch: 5
 validity: invalid_correctness
-platform: completed(13792,e2,7/8;昆仑=间歇崩溃,BLOCK字节已备好)
+platform: submitted(e3,评测中;e2=7/8 昆仑间歇崩溃)
 candidate_stage: e2
 team_best_stage: -
 sealed: no
@@ -111,3 +111,11 @@ updated: 2026-09-12
   e2 字节已备好（BLOCK=128/num_warps=1），新 ZIP 身份重掷即可。
 - 七芯 e2 水位：天数 12.07 / 沐曦 **9.24** / 燧原 1.56 / 海光 18.34 /
   华为 10.84 / A 11.93 / B 7.66（部分和 71.6）。
+
+## 2026-09-13 E3：BLOCK=256 + num_stages=1 重掷载体（已发射）
+
+- e2 字节（BLOCK=128）未获裁决即被间歇崩溃击中。E3 载体：BLOCK=256 +
+  num_stages=1（介于 uni_sram 上限 512 与 e2 之间）。
+- source commit：`e56175ab16644a1d271b49f5ff152106a16da61c`；ZIP `e3-e56175a`，
+  SHA-256 `b477288091e52bddc5c0972a0546af228176604bfe89c9a55908e86e7b5e5435`；
+  release 回执前缀 `09c3c36f`；4 方法 0 失败。

@@ -5,7 +5,7 @@ task: 72
 operator: group_norm_silu
 batch: 5
 validity: candidate-wip
-platform: submitted(13778,e2,评测中;s0/e1=7/8 昆仑 uni_sram)
+platform: submitted(e3,评测中;e2=7/8 昆仑崩溃族)
 candidate_stage: e2
 team_best_stage: -
 sealed: no
@@ -69,3 +69,12 @@ updated: 2026-09-13
   评测器崩溃（对照：s0/e1 的 2D 形态是真实 uni_sram 执行错，非崩溃）。
 - 下一假设（E3，未开发）：2D 形态 + 更小 tile（512 lane）+ num_warps=1；
   或 1D 形态去嵌套（channel 展平进 spatial 一维）。
+
+## 2026-09-13 E3：512-lane 2D tile + num_warps=1（已发射）
+
+- E2 的 1D 形态触发间歇崩溃 → E3 回 2D 形态但 tile 压到 512 lane +
+  num_warps=1（介于两个已知 uni_sram 失败点 8192/2048 之间）。
+- source commit：`c6ac0ca43675efef3d339f77c0386b11753b1ced`；ZIP `e3-c6ac0ca`，
+  SHA-256 `21a5ced869a6226f47aac06ca8b220135f36e448b19dc0f10143e757af81d4b3`；
+  release 回执 `batch5-unlock4-20260913/group_norm_silu/verification.json`
+  SHA-256 前缀 `c30415d8`；4 方法 0 失败。

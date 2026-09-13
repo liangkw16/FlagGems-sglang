@@ -5,7 +5,7 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: invalid_correctness
-platform: submitted(13769,e6,评测中;e5=7/8昆仑第5崩)
+platform: submitted(e7,评测中;e6=7/8 kwargs证伪)
 candidate_stage: e6
 team_best_stage: -
 sealed: no
@@ -292,3 +292,11 @@ updated: 2026-09-12
 - 昆仑终态 exec 0ms 服务线程卡死（此前 ~1h 的"执行中"为假象）。
   kwargs 假设证伪。**六连崩后 kernel 侧路径全部试尽**：仅剩平台
   工单（健康 worker rerun）。七芯部分和 357.5 保持待命。
+
+## 2026-09-13 E7：num_warps=1/num_stages=1 重掷（已发射）
+
+- 六连崩为间歇性（同窗 T62/T74 昆仑正常判）→ E7 在 kwargs 之上加钉
+  FlagGems 昆仑生产 launch 形态，全新 ZIP 身份重掷。
+- source commit：`267a1abfc4dcdbdc91c989680620e1de5d19a6d4`；ZIP `e7-267a1ab`，
+  SHA-256 `1e0428efe161faacb30d28e76a3d62343ef0ca5709548a193a4067c8e5dfbc82`；
+  release 回执前缀 `685f0412`；3 方法 0 失败。
