@@ -4,12 +4,12 @@
 task: 74
 operator: seqlens_expand
 batch: 5
-validity: candidate-wip
-platform: s0 候选就绪待提交
+validity: valid
+platform: completed(13762,s0,8/8,10.6444x)
 candidate_stage: s0
 team_best_stage: -
 sealed: no
-next: S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴
+next: S0 首发即 8/8 valid 10.6444x（天数 25.5/海光 14.6/A 12.5/B 10.6/燧原 6.8/华为 5.8/沐曦 7.6/昆仑 1.8）；c2flow 19.98 为靶；E1 按逐芯定轴
 updated: 2026-09-13
 ```
 

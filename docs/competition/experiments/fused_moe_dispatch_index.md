@@ -5,8 +5,8 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: invalid_correctness
-platform: completed(13406,e5,7/8;昆仑第5连崩,工单首选)
-candidate_stage: e5
+platform: submitted(13769,e6,评测中;e5=7/8昆仑第5崩)
+candidate_stage: e6
 team_best_stage: -
 sealed: no
 next: 明日新 ZIP 再掷昆仑(候选改动=rank向量化/kernel2并行);七芯已过部分和356.25
@@ -272,3 +272,17 @@ updated: 2026-09-12
 - 七芯读数与 e4 持平：天数 63.37 / 沐曦 41.81 / 燧原 0.6772 / 海光
   107.96 / 华为 3.7880（exec 12.5→9.5min，JIT 瘦身部分有效但非读数
   主因，假设降级）/ A 66.06 / B 53.83。部分和 357.48。
+
+## 2026-09-13 E6：昆仑 kwargs 重掷（候选就绪后提交）
+
+- 五连崩后首个有据动作：`_kunlunxin` 副本加
+  `isCloseOffsetAnalysis=True, isCloseUnrollControl=True` launch kwargs
+  （FlagGems fused_moe 生产同款；FlagTree #1147/#1053 的误判 pass 恰在
+  此二 pass）。燧原/华为 vendor 字节与 e5 一致；kwargs 为 XPU 专属，
+  代理不可执行——release 以 enflame/ascend 代理 + 昆仑 target-only 记录。
+- source commit：`3bd378afbe9e90fcae6843534c52ab798de16421`；ZIP `e6-3bd378a`，
+  SHA-256 `a53fc93bd6e9946e5d97e5fd70dc4030c95cfc92ccea7b39537f21b3b9319be1`。
+- release 回执：`batch5-t69e6-validate-20260913/fused_moe_dispatch_index/verification.json`，
+  SHA-256 `9063a912ade241842f46c956e7bafa55f1235835974b835f29b0f24357f07d4d`；
+  3 方法 0 失败（generic 6 + enflame 18 + ascend 18 launch）。
+- submission 13769（09-13 08:0x）；裁决点=kwargs 是否解除昆仑崩溃。
