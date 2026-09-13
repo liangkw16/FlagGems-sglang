@@ -23,17 +23,17 @@ def _group_norm_silu_1d(
     wbase = g_idx * group_channels
     total = group_channels * spatial
     sum_ = tl.zeros((), dtype=tl.float32)
-    for s0 in range(0, spatial, BLOCK_S):
-        rows = s0 + tl.arange(0, BLOCK_S)
-        m = rows < spatial
-        v = tl.load(x_ptr + base + rows, mask=m, other=0.0).to(tl.float32)
+    for o0 in range(0, total, BLOCK_S):
+        offs = o0 + tl.arange(0, BLOCK_S)
+        m = offs < total
+        v = tl.load(x_ptr + base + offs, mask=m, other=0.0).to(tl.float32)
         sum_ += tl.sum(v)
     mean = sum_ / total
     sumsq = tl.zeros((), dtype=tl.float32)
-    for s0 in range(0, spatial, BLOCK_S):
-        rows = s0 + tl.arange(0, BLOCK_S)
-        m = rows < spatial
-        v = tl.load(x_ptr + base + rows, mask=m, other=0.0).to(tl.float32)
+    for o0 in range(0, total, BLOCK_S):
+        offs = o0 + tl.arange(0, BLOCK_S)
+        m = offs < total
+        v = tl.load(x_ptr + base + offs, mask=m, other=0.0).to(tl.float32)
         d = (v - mean) * m.to(tl.float32)
         sumsq += tl.sum(d * d)
     var = sumsq / total
