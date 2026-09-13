@@ -1,16 +1,28 @@
 # Task 71 `gelu_tanh_and_mul` 实验记录
 
+
+## 2026-09-13 E3 平台终态：8/8 VALID 2.6748x 新 team best（配方第三证）
+
+- **enflame 1.484 → 1.7434（+17%）**；其余七芯持平/微升 → 均值
+  2.6748 新 TB，距榜首 c2flow 3.44 缩到 0.77（原 0.81）。
+- **配方分解定理（三题数据交叉）**：
+  - BLOCK 1024→4096：燧原 **+44~71%**（T71 e1 / T75 e1）
+  - 再叠加 grid 封顶 24：**+17~18%**（T71 e3 / T73 e2 均为仅封顶）
+  - 从 1024 直上 4096+封顶：**+92~113%**（T73 e3 / T75 e2）
+  - **不适用 scatter**（T61 e8:-7%）
+- 三新 TB 收官：T73 4.031 / T75 2.607 / T71 2.675。
+
 ```current
 task: 71
 operator: gelu_tanh_and_mul
 batch: 5
 validity: valid
-platform: submitted(13917,e3,评测中;TB e1 2.62646667x)
+platform: completed(13917,e3,8/8,2.674825x team best)
 candidate_stage: e3
-team_best_stage: e1
-team_best_speedup: 2.62646667
+team_best_stage: e3
+team_best_speedup: 2.674825
 sealed: no
-next: e3（燧原配方 4096+封顶）评测中；预期 enflame 1.484→~2.9、均值→2.8+
+next: e3 新 TB 2.675（配方第三证:封顶+4096 分解定理成立）；距榜首 0.77；明日复刻 T74/T63/T64/T68/T66/T67/T62
 updated: 2026-09-13
 ```
 
