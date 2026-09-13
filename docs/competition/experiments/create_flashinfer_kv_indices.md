@@ -5,8 +5,8 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: completed(13442,e8,8/8,199.69521875x team best)
-candidate_stage: e8
+platform: submitted(13780,e9,评测中;TB e8 199.695x)
+candidate_stage: e9
 team_best_stage: e8
 team_best_speedup: 199.69521875
 sealed: no
@@ -321,3 +321,15 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   （RSI 209.44）；明日轴：燧原 6.2→17.9 已证字节重掷（e7 读数）、
   沐曦 87→114、海光/天数窗口。
 - 额度：本发后 1/30；T68 e3 已随后发射（13443）。
+
+## 2026-09-13 E9：do_not_specialize + 全芯重掷（候选就绪后提交）
+
+- 依据：昇腾重编译风暴调研（triton-ascend #1480 修复前整型 16 整除
+  翻转/指针对齐翻转均全量重编译）——generic 全部运行时 int/stride 参数
+  加 do_not_specialize（vllm-ascend penalty.py 同款），消每 shape 编译
+  税；全新 ZIP 重掷燧原窗口（6.2 vs e7 已证 17.9）。
+- source commit：`d30d0ef9f5affa004b61da394be21760c6f09f93`；ZIP `e9-d30d0ef`，
+  SHA-256 `c37f5b2f0f739b934ad5bebf33b0b824ca9dca24dee147527f259d73dede5cdc`；
+  release 回执 SHA-256 `f6978627b6979826c832eaaabe714f6b1bc065b14cd4e0627ba771a7668c3b0a`；
+  4 方法 0 失败。
+- submission 13780；裁决点=燧原回 17.9 水位 + 华为重编译税减免。
