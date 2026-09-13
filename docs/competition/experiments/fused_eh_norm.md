@@ -1,5 +1,15 @@
 # Task 68 `fused_eh_norm` 实验记录
 
+
+## 2026-09-14 E4：燧原 row-loop 4096+封顶（候选就绪待发射）
+
+- 行归约 kernel 可用的配方轴：chunk 2048→4096 + grid 封 24 行步进
+  （一 program 走多 token）。其余四源字节不动。
+- source commit：`b4010e80ff717cec968d1e0bd893e3ea58813151`；ZIP `e4-b4010e8`，
+  SHA-256 `95e685ec66e49e50452720badc226a3ba10b4219cb0fe18e482ad9de9e3e1e1a`；
+  release 回执 SHA-256
+  `42afb4731c8013b9fb9a0dcc63f5a0a470001159c21eba443e738a4964c8a67b`。
+
 ```current
 task: 68
 operator: fused_eh_norm

@@ -27,6 +27,17 @@
   及 T71/T75 的 4096 证据一致）。
 - 榜首同芯 2.29 vs 我 1.955：差距收到 1.17x，仍差。
 
+
+## 2026-09-14 E4：flat-1D 燧原配方（候选就绪待发射）
+
+- e1 证明 flat-vs-2D 八芯中性 ⇒ 去掉 2D grid 窄行浪费是免费结构简化；
+  叠加配方（BLOCK 4096 + 封顶 24 grid-stride + 免除法 same-shape gate，
+  广播 gate 保留 modulo）。gap 0.27 的最后一推。
+- source commit：`b4010e80ff717cec968d1e0bd893e3ea58813151`；ZIP `e4-b4010e8`，
+  SHA-256 `d73405ed6970cdad60a95d859f9608c06cde92ae2e23cef5b49917f1723c3e94`；
+  release 回执 SHA-256
+  `9f69f3392246db211a59ad40ba753feffa0aeb37f9f916a85f0b7892c97ae87e`。
+
 ```current
 task: 73
 operator: residual_gate_add

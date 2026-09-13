@@ -1,5 +1,16 @@
 # Task 62 `concat_mla_k` 实验记录
 
+
+## 2026-09-14 E6：燧原 concat 配方 vendor（候选就绪待发射）
+
+- concat_mla_k 正是配方的 streaming elementwise 形态（192 元素行
+  两 load 一 store）：BLOCK 覆盖行宽，行轴封 24 步进。generic 与
+  昆仑两段式 vendor 字节不动。
+- source commit：`9f5da6ec34987c72dd782dd377f87244c23556fe`；ZIP `e6-9f5da6e`，
+  SHA-256 `90cef51ba50f4d8abb599f667c6014e1321e2c8fbb814b500f92da54e8d17b29`；
+  release 回执 SHA-256
+  `4e2f1f343eb003d0590d007725da0c07762044527d9895d0212b4fea7b6ad5bf`。
+
 ```current
 task: 62
 operator: concat_mla_k
