@@ -5,8 +5,8 @@ task: 71
 operator: gelu_tanh_and_mul
 batch: 5
 validity: valid
-platform: completed(13875,e1,8/8,2.62646667x team best)
-candidate_stage: e1
+platform: submitted(13898,e2,评测中;TB e1 2.626x)
+candidate_stage: e2
 team_best_stage: e1
 team_best_speedup: 2.62646667
 sealed: no
@@ -42,3 +42,15 @@ updated: 2026-09-13
   2.19→0.25（-89%，BLOCK=4096 对窄带芯过宽——与 T63 E2 的 BLOCK=256
   回退燧原同构：**BLOCK 增益与回退的芯片分界**）、燧原 2.95→1.48。
 - 后续：昆仑/燧原走 vendor 冻结 s0 BLOCK=1024（T63 vendor 模式）。
+
+## 2026-09-13 E2：燧原/昆仑 vendor 冻结 1024（已发射 13898）
+
+- e1 逐芯教训：4096 增益天数/华为/A,回退燧原(-50%)/昆仑(-89%)→
+  vendor 冻结 s0 BLOCK=1024 供此二芯,generic 4096 供其余。
+- source commit：`755d832cdb8660faea7aa07857b58888b6d81ed0`；ZIP `e2-755d832`，
+  SHA-256 `387c38819176b495d2502461fbc65462ee750c8cb1d57412094e1193fe17af4c`；
+  3 成员。release 回执 SHA-256
+  `9ec905365cbaf5a96c4ea28d61f2a7440c47c483821ba683a99e0adb7326fc99`；
+  4 方法 0 失败，3 源 45 launch。
+- submission 13898；裁决点=燧原回 2.9+ 昆仑回 2.0+（均值预期
+  2.63→2.95+,距榜首 3.44 缩到 0.5 内）。
