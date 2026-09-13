@@ -1,11 +1,26 @@
 # Task 73 `residual_gate_add` 实验记录
 
+
+## 2026-09-13 E2：enflame grid 封顶 24（已发射 13905）
+
+- 依据：skill 已证燧原超发系统缺陷（grid 1e3-1e4 vs 24 SIP，T19-E5/
+  T51-E5 +38% 中位）。vendor 行维封顶 24+grid-stride，列维自然块数，
+  免除法寻址（运行时向量整除=GCU/昆仑毒点）；BLOCK 随行宽自适应；
+  语义与 generic 完全一致（双重舍入保留）。
+- source commit：`037a3f4350493bec8f78d2cb197883c63899e09b`；ZIP `e2-037a3f4`，
+  SHA-256 `3896d122358cf09af96e8b77937679b9bc5ecbee99deabcc590dc23589ccb17b`；
+  release 回执 SHA-256
+  `3d41eed4f62dbd89305638606ea563a4e88114d28e3fe5c35308cfa356171701`；
+  3 方法 0 失败，generic 25 + enflame 25 launch。
+- submission 13905；裁决点=enflame 1.02 是否被抬升（+38% 门 ⇒ ≥1.4），
+  若 ≥2.3 即追平榜首同芯、均值 →4.11（#2），叠加窗口可争 #1。
+
 ```current
 task: 73
 operator: residual_gate_add
 batch: 5
 validity: valid
-platform: completed(13872,e1,8/8,3.903x;TB s0 3.952x)
+platform: submitted(13905,e2,评测中;TB s0 3.9518x)
 candidate_stage: e2
 team_best_stage: s0
 team_best_speedup: 3.9518
