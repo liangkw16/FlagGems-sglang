@@ -10,6 +10,14 @@
   release 回执 SHA-256
   `42afb4731c8013b9fb9a0dcc63f5a0a470001159c21eba443e738a4964c8a67b`。
 
+## 2026-09-14 E4（审查补测后，候选就绪待发射）
+
+- 审查确认无四层嵌套（两层：行步进×4 顺序 chunk 循环），建议保留
+  结构先补测——已加 tokens=25/49 × hidden=4352/8192 × fp16/bf16 组合
+  覆盖（行步进重置累加器 + 多 chunk 内层）。
+- source commit：`220aa32d18a1c3a4aca829b09b79e2e906471e43`；ZIP `e4-220aa32`，
+  SHA-256 `95e685ec66e49e50452720badc226a3ba10b4219cb0fe18e482ad9de9e3e1e1a`；
+  release 回执前缀 `aaca0ef3`；5 方法 0 失败。
 ```current
 task: 68
 operator: fused_eh_norm

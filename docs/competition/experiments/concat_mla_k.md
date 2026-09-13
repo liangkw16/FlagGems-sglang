@@ -11,6 +11,14 @@
   release 回执 SHA-256
   `4e2f1f343eb003d0590d007725da0c07762044527d9895d0212b4fea7b6ad5bf`。
 
+## 2026-09-14 E6 修订版（Codex 审查后，候选就绪待发射）
+
+- 审查发现草稿的逐 head 行形态把 rope 读放大 16 倍（generic BH=16
+  共享一次读）——修订为 generic 结构逐字节保留 + 唯一改动 task 轴
+  封顶 24（配方真正贡献的单变量）。
+- source commit：`220aa32d18a1c3a4aca829b09b79e2e906471e43`；ZIP `e6-220aa32`，
+  SHA-256 `3dc76ba8cf0478ceb194fb9d400fb53a8006df2e7f3a1eccdff950ac457cb9b4`；
+  release 回执前缀 `48687d55`；5 方法 0 失败。
 ```current
 task: 62
 operator: concat_mla_k

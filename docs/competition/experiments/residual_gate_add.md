@@ -38,6 +38,16 @@
   release 回执 SHA-256
   `9f69f3392246db211a59ad40ba753feffa0aeb37f9f916a85f0b7892c97ae87e`。
 
+## 2026-09-14 E4 修订版（Codex 审查后，候选就绪待发射）
+
+- 审查发现三问题已修：①broadcast 分支保留 e3 capped-2D（向量 %d 无
+  燧原先例，flat 中性证据只覆盖 same-shape）；②乘积改元素 dtype 直乘
+  （Triton 会把寄存器内 f32 链折叠跳过中间舍入——探针实证只有内存
+  往返能强制，偏差 ≤1 ulp 在平台容差内）；③新增跨 tile/第二轮步进/
+  广播覆盖（97×1025、D=4095/4096/4097）+ 双舍入 ulp 界测试。
+- source commit：`220aa32d18a1c3a4aca829b09b79e2e906471e43`；ZIP `e4-220aa32`，
+  SHA-256 `062fdbe8b19c6cee11e9f7320232fea40781fe1c2a8a64b0aa62511fe1d19bcb`；
+  release 回执前缀 `aed4ff41`；5 方法 0 失败。
 ```current
 task: 73
 operator: residual_gate_add
