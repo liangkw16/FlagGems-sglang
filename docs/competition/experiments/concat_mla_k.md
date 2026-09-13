@@ -5,12 +5,12 @@ task: 62
 operator: concat_mla_k
 batch: 5
 validity: invalid_correctness
-platform: completed(13215,e4,7/8)
-candidate_stage: e4
+platform: submitted(13789,e5,评测中;e4=7/8 昆仑第3同指纹垃圾)
+candidate_stage: e5
 team_best_stage: -
 sealed: no
-next: 昆仑 vendor 第 3 次同指纹数值垃圾（E2/E3/E4，99% 元素 ~3e38 未初始化读形态）；去 do_not_specialize 无效 ⇒ XMLIR 非特化绑定假设证伪；昆仑轴转根因分析，B1/B2 弱芯轴待昆仑定位后再排
-updated: 2026-09-12
+next: e5（两段式独立 1D 循环,官方 concat_and_cache_mla 结构）已发射；裁决=昆仑四轮垃圾是否解除
+updated: 2026-09-13
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -222,3 +222,19 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   未初始化/越界读——排查 vendor 的行寻址与 indptr 语义在 XMLIR 的
   lowering，或对照 generic 字节在昆仑跑 E1 前的原始读数）。
 - 额度：发前 30/30，发后 29/30（observed_at 2026-09-12T00:5x）。
+
+## 2026-09-13 E5：两段式 1D 昆仑 vendor（候选就绪后提交）
+
+- 根因（调研实证）：四轮同指纹垃圾的共享配方 = 单 padded 256 宽
+  range 盖非 2 幂行宽 192（含死区）+ 双 store 共享基址 + 逐 head 的
+  rope 重读（stride-0 广播模式）——FlagTree #1147 OffsetAnalysis 误判
+  触发配方 + FlagGems 昆仑"非 2 幂宽静默 miscompile"注记双重命中。
+- E5：官方 `concat_and_cache_mla` 结构——两段完全独立 1D 循环
+  （BLOCK_N=128、BLOCK_R=64 各自 2 幂），零共享基址/零死区/零 kernel
+  内广播。
+- source commit：`adfca1c670d449f208052ad2da3cfb7b29eb4f3b`；ZIP `e5-adfca1c`，
+  SHA-256 `d295c7930808d05542d9f0c29bed5639b6f356492b3bb9ab21c85805b8a8c6c5`；
+  release 回执 SHA-256 `6532be58d081828982d8c99144c44930be0c79f3f3a49051b2cbed5ace3188b7`；
+  5 方法 0 失败，generic 28 + kunlun 28 launch。
+- submission 13789（09-13 09:2x）；裁决点=昆仑四轮垃圾是否解除
+  （若过即 8/8：七芯水位 2.29/1.02/0.23/1.92/0.16/1.64/1.63）。
