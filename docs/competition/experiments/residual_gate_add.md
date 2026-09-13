@@ -20,12 +20,12 @@ task: 73
 operator: residual_gate_add
 batch: 5
 validity: valid
-platform: submitted(13905,e2,评测中;TB s0 3.9518x)
+platform: completed(13905,e2,8/8,3.930x;TB s0 3.9518x)
 candidate_stage: e2
 team_best_stage: s0
 team_best_speedup: 3.9518
 sealed: no
-next: e1 订正=扁平中性（此前回退归因系转录错误，已作废）；真实差距=enflame+1.27（窗口摆动3x）/海光+0.55/华为+0.47/昆仑+0.43；e2=enflame vendor grid 封顶重掷
+next: e2=grid封顶 enflame+18%（真实但有限）；e3=封顶+BLOCK4096 双杠杆（T71/T75 双证 4096 对燧原+44~71%）
 updated: 2026-09-13
 ```
 
@@ -78,7 +78,15 @@ gpu_results 逐项核对。
 
 **T73 真实差距结构**（vs Nectar 4.302，总差 0.35）：enflame +1.27
 （我 1.02 vs 2.29，最大项）、haiguang +0.55、huawei +0.47、kunlun +0.43、
-card_b +0.31、tianshu +0.09；muxi/card_a 我方领先。**燧原读数对同字节可
-摆动 3x**（T71 实证：s0 同字节 2.95 ↔ e2 1.03）——enflame 1.02 疑为坏
-窗口。e2 用真实改动（enflame vendor grid 封顶 24+grid-stride，skill
-已证 +38% 中位的超发修法）重掷。
+card_b +0.31、tianshu +0.09；muxi/card_a 我方领先。**燧原窗口摆动实证**（T63 跨提交 6.2↔21.7 为最强证据；
+T73 自身三次读数 1.017/1.008/1.197 较稳 ⇒ 差距更像结构性的）。
+e2 用真实改动（enflame vendor grid 封顶 24+grid-stride）重掷。
+
+## 2026-09-13 E2 平台终态：8/8 valid 3.930（enflame grid 封顶 +18%）
+
+- 真值：enflame **1.017→1.197（+17.6%,vendor 被选中）**、kunlun 0.234、
+  huawei 1.014、tianshu 6.88 → avg 3.9301 < TB 3.9518。
+- 结论：grid 封顶对燧原是**真实但有限的正向**（+18%，skill 声称 +38%
+  中位未完全兑现）；仍差榜首同芯 1.9x（2.29 vs 1.197）。
+- E3 假设：**封顶 + BLOCK 1024→4096**（T71/T75 双证 4096 对燧原
+  +44%~+71%），两杠杆叠加预期 enflame 1.5-1.8。
