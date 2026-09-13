@@ -5,12 +5,12 @@ task: 60
 operator: clamp_position
 batch: 5
 validity: invalid_correctness
-platform: completed(e7,7/8;燧原轴止损)
-candidate_stage: e8（提案，未开发）
+platform: submitted(13821,e8,评测中;e7=7/8 燧原轴七轮止损)
+candidate_stage: e8
 team_best_stage: -
 sealed: no
-next: 燧原轴 E1–E7 七轮止损；重启需先过 E8 离线双击：无条件 i32 词对（全域含 INT64_MIN）+ kernel 签名 i64-free 审计（见 optimization-batch5-r2-20260911.md §5）
-updated: 2026-09-11
+next: e8（无条件词对+签名审计,离线双击门已过）已发射；裁决=燧原 int64 case 是否解除
+updated: 2026-09-13
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -248,3 +248,17 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   但 T60 的失败芯是燧原，XMLIR 是昆仑运行时；重启前先确认重解释主体的归属，
   避免按错误坐标系找根因。
 - 证据等级：命题与 E8 形态为**假设**；§6.1 的 verifier 语义为上游源码级事实。
+
+## 2026-09-13 E8：无条件词对（离线双击门已过，已发射）
+
+- 预注册 E8 兑现：去 E7 值域 guard——i32 词对算法无条件执行（E7 的
+  guard 使 i32 路线从未在失败用例上跑过）；kernel 签名 i64-free
+  （int32 指针 + int 标量；gcu64-type-verifier 只走签名）。
+- 离线双击门：①全域 oracle（INT64_MIN/-2^31/-1/0/1/2^31/2^63-1 边界 +
+  20000 随机全域值）全部逐元素相等；②screening 3 方法 0 失败。
+- source commit：`5f1754af2d23a77aabf014db1fa81b4e304f54e0`；ZIP `e8-5f1754a`，
+  SHA-256 `0cbea4d6365e06beb94d18a9e1b5ef3cd4c8524f1d2232c48b7eaa0ca989958a`；
+  release 回执 `batch5-t60e8-20260913/clamp_position/verification.json`
+  SHA-256 `6938ea77cfeb263f0d5c6eada18d7f2cee6c6527effaebb272edd2fad3f39fc2`。
+- submission 13821；裁决点=燧原 int64 case 是否首次通过（七轮止损后
+  唯一预注册重开路径）。
