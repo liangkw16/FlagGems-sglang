@@ -130,6 +130,8 @@ def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
             E_TILE=_E_TILE,
             isCloseOffsetAnalysis=True,
             isCloseUnrollControl=True,
+            num_warps=1,
+            num_stages=1,
         )
         _dispatch_prefix[(min(num_experts, 65535),)](
             counts,
@@ -140,6 +142,8 @@ def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
             num_blocks,
             isCloseOffsetAnalysis=True,
             isCloseUnrollControl=True,
+            num_warps=1,
+            num_stages=1,
         )
         _dispatch_ranks[(min(num_blocks, 65535),)](
             flat,
@@ -152,6 +156,8 @@ def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
             BLOCK=_BLOCK,
             isCloseOffsetAnalysis=True,
             isCloseUnrollControl=True,
+            num_warps=1,
+            num_stages=1,
         )
     return masked_m, src2dst
 
