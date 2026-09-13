@@ -5,8 +5,8 @@ task: 65
 operator: deepep_post_reorder
 batch: 5
 validity: invalid_correctness
-platform: submitted(13790,e1,评测中;s0=7/8 昆仑崩溃族)
-candidate_stage: e1
+platform: submitted(13792,e2,评测中;e1=7/8 昆仑 uni_sram)
+candidate_stage: e2
 team_best_stage: -
 sealed: no
 next: 七芯真实通过且读数强（华为 16.8990/海光 16.6416/天数 14.1316/A 13.8796/B 7.7532/沐曦 6.2860/燧原 1.3252）；昆仑 exec 0ms 服务线程卡死=崩溃族，重掷需用户当次明示授权或平台工单健康 worker rerun；S0 源 5573ffc 含 topk=0 退化分支 zeros 修复
@@ -84,3 +84,20 @@ updated: 2026-09-12
   SHA-256 `70ccf24ec8426effa6e50ad8ec2267bc2a3de5654784fdbc8015121cbe8b1a7a`；
   release 回执 SHA-256 `e0a272cf2ffde7a8fdc21d701fcd71ac516d5a3b3cbf6cc9082397daa237c9e0`。
 - submission 13790；裁决点=昆仑窗口 + 七芯读数（部分和 76.9 基准）。
+
+## 2026-09-13 E1 平台终态：7/8（昆仑=uni_sram，真实执行非崩溃）
+
+- 七芯：天数 12.0866 / 沐曦 **6.7288（+7%）** / 燧原 **1.6032（+21%）** /
+  海光 **18.7770（+13%）** / 华为 10.5298（-38% 窗口）/ A 11.98 / B 7.59。
+- **昆仑 exec 10503ms 真实执行后 `OutOfResources: uni_sram`**——向量
+  载入形态脱离秒崩族；与 T72 同类，修法=昆仑 vendor 缩 BLOCK。
+- E2：`_kunlunxin` vendor（BLOCK=512→128、num_warps=1）。
+
+## 2026-09-13 E2：昆仑小 BLOCK vendor（候选就绪后提交）
+
+- source commit：`c3d3af0bbe48056a1efdee9f3faea262ac5aa877`；ZIP `e2-c3d3af0`，
+  SHA-256 `80775244042c0ce30f8d2ba025dcc41b5250925a6bd449d188aeb528becf2fde`；
+  release 回执 SHA-256 `d8ffe65cd688a0e3c0976ec406a8de95a6dbb6037a397246b823831cb9483843`；
+  4 方法 0 失败。
+- submission 13792；裁决点=昆仑 uni_sram 解除（过即 8/8：七芯 e1 水位
+  部分和 69.4 基准）。
