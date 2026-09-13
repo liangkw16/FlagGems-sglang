@@ -5,11 +5,12 @@ task: 75
 operator: sigmoid_gate_mul
 batch: 5
 validity: valid
-platform: completed(13767,s0,8/8,2.54x)
-candidate_stage: s0
-team_best_stage: -
+platform: completed(13878,e1,8/8,2.5107x;TB s0 2.538x)
+candidate_stage: e1
+team_best_stage: s0
+team_best_speedup: 2.538
 sealed: no
-next: S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴
+next: e1 4096 增益被昆仑/燧原回退抵消（差 s0 1%）；TB s0 守；同 T71 结论
 updated: 2026-09-13
 ```
 
@@ -33,3 +34,10 @@ updated: 2026-09-13
 - screening 多轮门禁拦下并修复的缺陷已记录于提交说明；
   最终 release：0 失败/错误/skip，非空 kernel launch，NVIDIA 代理范围。
 - 所有八芯目标 `target-runtime-unverified`；裁决权在平台。
+
+## 2026-09-13 E1：BLOCK 1024→4096（13878）8/8 valid 2.511
+
+- 低于 s0 TB 2.538（差 1%）：天数 +19%/A +83%/海光 +16%/沐曦 +17%，
+  但昆仑 0.23（贴门槛）/燧原 -6%。BLOCK=4096 对本题纯 sigmoid 门控
+  的收益被昆仑/燧原回退抵消。team best 保留 s0。
+- 与 T71 e1 同构结论：4096 在天数/华为/A 增益、昆仑/燧原回退。

@@ -5,11 +5,12 @@ task: 71
 operator: gelu_tanh_and_mul
 batch: 5
 validity: valid
-platform: completed(13763,s0,8/8,2.57x)
-candidate_stage: s0
-team_best_stage: -
+platform: completed(13875,e1,8/8,2.62646667x team best)
+candidate_stage: e1
+team_best_stage: e1
+team_best_speedup: 2.62646667
 sealed: no
-next: S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴
+next: e1 valid 2.626 新 TB（天数+46%/华为+276%）；昆仑/燧原回退→vendor 冻结 1024 可再提；榜首 3.44
 updated: 2026-09-13
 ```
 
@@ -33,3 +34,11 @@ updated: 2026-09-13
 - screening 多轮门禁拦下并修复的缺陷已记录于提交说明；
   最终 release：0 失败/错误/skip，非空 kernel launch，NVIDIA 代理范围。
 - 所有八芯目标 `target-runtime-unverified`；裁决权在平台。
+
+## 2026-09-13 E1：BLOCK 1024→4096（13875）8/8 valid 2.6265 新 TB
+
+- **新 team best 2.6265（s0 2.566）**：天数 **+46%（3.49→5.09）**/
+  华为 **+276%（0.50→1.88）**/A +72%/B +6%/海光 +8%；代价：昆仑
+  2.19→0.25（-89%，BLOCK=4096 对窄带芯过宽——与 T63 E2 的 BLOCK=256
+  回退燧原同构：**BLOCK 增益与回退的芯片分界**）、燧原 2.95→1.48。
+- 后续：昆仑/燧原走 vendor 冻结 s0 BLOCK=1024（T63 vendor 模式）。
