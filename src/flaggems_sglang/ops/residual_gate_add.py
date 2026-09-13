@@ -40,6 +40,30 @@ def _residual_gate_add(
     tl.store(out_ptr + base, out, mask=mask)
 
 
+@triton.jit
+def _residual_gate_add_flat(
+    r_ptr,
+    u_ptr,
+    g_ptr,
+    out_ptr,
+    n,
+    BLOCK: tl.constexpr,
+):
+    for pid in range(tl.program_id(0), tl.cdiv(n, BLOCK), tl.num_programs(0)):
+        offs = (pid * BLOCK + tl.arange(0, BLOCK)).to(tl.int64)
+        m = offs < n
+        r = tl.load(r_ptr + offs, mask=m, other=0.0)
+        u = tl.load(u_ptr + offs, mask=m, other=0.0)
+        g = tl.load(g_ptr + offs, mask=m, other=0.0)
+        product = (u.to(tl.float32) * g.to(tl.float32)).to(
+            out_ptr.dtype.element_ty
+        )
+        out = (r.to(tl.float32) + product.to(tl.float32)).to(
+            out_ptr.dtype.element_ty
+        )
+        tl.store(out_ptr + offs, out, mask=m)
+
+
 def residual_gate_add(residual, update, gate):
     assert residual.dim() >= 2
     assert residual.shape == update.shape
@@ -56,15 +80,28 @@ def residual_gate_add(residual, update, gate):
         assert gate.is_contiguous()
     out = torch.empty_like(residual)
     if rows and d:
-        _residual_gate_add[(rows, triton.cdiv(d, _BLOCK))](
-            residual,
-            update,
-            gate,
-            out,
-            d,
-            BROADCAST=broadcast,
-            BLOCK=_BLOCK,
-        )
+        if broadcast:
+            _residual_gate_add[(rows, triton.cdiv(d, _BLOCK))](
+                residual,
+                update,
+                gate,
+                out,
+                d,
+                BROADCAST=broadcast,
+                BLOCK=_BLOCK,
+            )
+        else:
+            # Same-shape gate: flat 1D avoids the (rows, d/BLOCK) grid
+            # wasting programs on narrow rows.
+            n = residual.numel()
+            _residual_gate_add_flat[(min(triton.cdiv(n, _BLOCK), 65535),)](
+                residual,
+                update,
+                gate,
+                out,
+                n,
+                BLOCK=_BLOCK,
+            )
     return out
 
 
