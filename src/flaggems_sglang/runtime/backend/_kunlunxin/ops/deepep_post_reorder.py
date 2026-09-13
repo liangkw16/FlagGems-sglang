@@ -115,7 +115,7 @@ def deepep_post_reorder(
         topk_weights.stride(1),
         float(routed_scaling_factor),
         TOPK_PAD=triton.next_power_of_2(max(1, topk)),
-        BLOCK=256,
+        BLOCK=64,
         num_warps=1,
         num_stages=1,
     )

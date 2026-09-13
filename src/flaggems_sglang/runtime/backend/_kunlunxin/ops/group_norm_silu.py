@@ -4,9 +4,9 @@
 
 # Kunlunxin vendor, E3: the S0 2D tile (8192-lane cap) and E1 (2048)
 # both hit OutOfResources: uni_sram on real executions; E2's 1D form
-# tripped the intermittent evaluator crash instead. E3 returns to the
-# 2D tile shape but caps tiles at 512 lanes and pins num_warps=1 -
-# between the two known-budget failure points.
+# tripped the intermittent evaluator crash instead. E4 drops to
+# BLOCK_S=64 outright: 8192/2048/512 all exceeded uni_sram on real
+# executions, so the budget is far smaller than any conventional tile.
 
 import torch
 import triton
@@ -109,7 +109,7 @@ def group_norm_silu(x, weight, bias, num_groups, eps):
     n_groups_total = xc.shape[0] * num_groups
     if n_groups_total and spatial:
         block_c = triton.next_power_of_2(group_channels)
-        block_s = min(triton.next_power_of_2(spatial), max(32, 512 // block_c))
+        block_s = min(triton.next_power_of_2(spatial), max(32, 64))
         _group_norm_silu[(min(n_groups_total, 65535),)](
             xc,
             weight,
