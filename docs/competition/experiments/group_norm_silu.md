@@ -5,8 +5,8 @@ task: 72
 operator: group_norm_silu
 batch: 5
 validity: candidate-wip
-platform: submitted(13774,e1,评测中;s0=7/8 昆仑 uni_sram)
-candidate_stage: e1
+platform: submitted(13778,e2,评测中;s0/e1=7/8 昆仑 uni_sram)
+candidate_stage: e2
 team_best_stage: -
 sealed: no
 next: S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴
@@ -52,3 +52,13 @@ updated: 2026-09-13
 - 2048-lane cap 后昆仑仍 `OutOfResources: uni_sram`（exec 8611ms 真实
   执行）——2D [C,S] tile 形态本身超预算。E2 改 1D 形态（仅空间维
   lane，channel 维标量循环 + num_warps=1）。
+
+## 2026-09-13 E2：纯 1D 昆仑 vendor（候选就绪后提交）
+
+- 2048-lane cap 仍 uni_sram ⇒ 任何 2D tile 都超预算。E2 改纯 1D：统计
+  循环扫全组（total 平铺，首轮 release 抓到只扫首 channel 的 bug 已修），
+  归一化段 channel 标量循环 + 空间维 lane，num_warps=1。
+- source commit：`0bce5d0b9ad5c7edca057e703614130c919cadb6`；ZIP `e2-0bce5d0`，
+  SHA-256 `86e87f38d31d2048d050e6e7dc37fb4831ec8c779f9b57a345ab31eaf6a5dd25`；
+  release 回执 SHA-256 `d5d1476c47f0ba3f1d3455e7d1d0d6a3656233c6fea030e7bfba676068efb087`。
+- submission 13778；裁决点=昆仑 uni_sram 是否解除。

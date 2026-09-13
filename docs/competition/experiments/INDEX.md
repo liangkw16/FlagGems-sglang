@@ -52,7 +52,7 @@
 | 69 | fused_moe_dispatch_index | invalid_correctness | submitted(13769,e6,评测中;e5=7/8昆仑第5崩) | - | no | 明日新 ZIP 再掷昆仑(候选改动=rank向量化/kernel2并行);七芯已过部分和356.25 | 2026-09-12 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
 | 70 | gate_topk | invalid_correctness | completed(13335,e1,5/8;燧原/昆仑/华为=exec0ms崩溃族未裁决) | - | no | e1 终态 5/8：三失败芯均 exec 0ms 崩溃族（12:20 同窗），kunlun vendor 被选中但未执行；下一步=新 ZIP 真实改动重评（燧原/华为可补迭代选择 vendor）或用户授权的同字节重掷 | 2026-09-12 | [gate_topk](gate_topk.md) |
 | 71 | gelu_tanh_and_mul | valid | completed(13763,s0,8/8,2.57x) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
-| 72 | group_norm_silu | candidate-wip | submitted(13774,e1,评测中;s0=7/8 昆仑 uni_sram) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [group_norm_silu](group_norm_silu.md) |
+| 72 | group_norm_silu | candidate-wip | submitted(13778,e2,评测中;s0/e1=7/8 昆仑 uni_sram) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [group_norm_silu](group_norm_silu.md) |
 | 73 | residual_gate_add | valid | completed(13764,s0,8/8,3.95x) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [residual_gate_add](residual_gate_add.md) |
 | 74 | seqlens_expand | valid | completed(13762,s0,8/8,10.6444x) | - | no | S0 首发即 8/8 valid 10.6444x（天数 25.5/海光 14.6/A 12.5/B 10.6/燧原 6.8/华为 5.8/沐曦 7.6/昆仑 1.8）；c2flow 19.98 为靶；E1 按逐芯定轴 | 2026-09-13 | [seqlens_expand](seqlens_expand.md) |
 | 75 | sigmoid_gate_mul | valid | completed(13767,s0,8/8,2.54x) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
