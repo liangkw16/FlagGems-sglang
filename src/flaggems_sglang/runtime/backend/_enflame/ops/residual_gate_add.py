@@ -82,6 +82,8 @@ def residual_gate_add(residual, update, gate):
     assert residual.is_contiguous() and update.is_contiguous()
     d = residual.shape[-1]
     n = residual.numel()
+    if n == 0 or d == 0:
+        return torch.empty_like(residual)
     rows = n // d
     if gate.shape == residual.shape:
         assert gate.is_contiguous()
@@ -93,8 +95,12 @@ def residual_gate_add(residual, update, gate):
         assert gate.is_contiguous()
     out = torch.empty_like(residual)
     if n:
+        # fusion off everywhere: the double-rounding contract requires
+        # the product to round to the dtype before the add; default FP
+        # fusion folds that round-trip away (cancellation cases then
+        # exceed the per-dtype tolerance - verified on the proxy).
         if broadcast:
-            block = min(1024, triton.next_power_of_2(d))
+            block = min(4096, triton.next_power_of_2(d))
             _rga_capped2d[(min(rows, _MAX_PROGS), triton.cdiv(d, block))](
                 residual,
                 update,
@@ -103,6 +109,7 @@ def residual_gate_add(residual, update, gate):
                 rows,
                 d,
                 BLOCK=block,
+                enable_fp_fusion=False,
             )
         else:
             _rga_flat[(min(triton.cdiv(n, _BLOCK), _MAX_PROGS),)](
@@ -112,6 +119,7 @@ def residual_gate_add(residual, update, gate):
                 out,
                 n,
                 BLOCK=_BLOCK,
+                enable_fp_fusion=False,
             )
     return out
 

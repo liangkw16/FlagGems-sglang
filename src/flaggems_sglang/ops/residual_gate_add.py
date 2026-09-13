@@ -72,6 +72,8 @@ def residual_gate_add(residual, update, gate):
     assert residual.shape == update.shape
     assert residual.is_contiguous() and update.is_contiguous()
     d = residual.shape[-1]
+    if residual.numel() == 0 or d == 0:
+        return torch.empty_like(residual)
     rows = residual.numel() // d
     if gate.shape == residual.shape:
         assert gate.is_contiguous()
@@ -82,29 +84,35 @@ def residual_gate_add(residual, update, gate):
         gate = gate.reshape(-1)
         assert gate.is_contiguous()
     out = torch.empty_like(residual)
-    if rows and d:
-        if broadcast:
-            _residual_gate_add[(rows, triton.cdiv(d, _BLOCK))](
-                residual,
-                update,
-                gate,
-                out,
-                d,
-                BROADCAST=broadcast,
-                BLOCK=_BLOCK,
-            )
-        else:
-            # Same-shape gate: flat 1D avoids the (rows, d/BLOCK) grid
-            # wasting programs on narrow rows.
-            n = residual.numel()
-            _residual_gate_add_flat[(min(triton.cdiv(n, _BLOCK), 65535),)](
-                residual,
-                update,
-                gate,
-                out,
-                n,
-                BLOCK=_BLOCK,
-            )
+    # The product must round to the tensor dtype before the residual
+    # add (the task's double-rounding contract). Triton's default FP
+    # fusion folds the register-level round-trip away - verified with
+    # cancellation cases that then EXCEED the per-dtype tolerance -
+    # so every launch disables the fusion.
+    if broadcast:
+        _residual_gate_add[(rows, triton.cdiv(d, _BLOCK))](
+            residual,
+            update,
+            gate,
+            out,
+            d,
+            BROADCAST=broadcast,
+            BLOCK=_BLOCK,
+            enable_fp_fusion=False,
+        )
+    else:
+        # Same-shape gate: flat 1D avoids the (rows, d/BLOCK) grid
+        # wasting programs on narrow rows.
+        n = residual.numel()
+        _residual_gate_add_flat[(min(triton.cdiv(n, _BLOCK), 65535),)](
+            residual,
+            update,
+            gate,
+            out,
+            n,
+            BLOCK=_BLOCK,
+            enable_fp_fusion=False,
+        )
     return out
 
 

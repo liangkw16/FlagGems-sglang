@@ -114,6 +114,32 @@ class ResidualGateAddTest(unittest.TestCase):
                 )
                 self.assertLessEqual(actual.abs().max().item(), 2**-19)
 
+    def test_rounding_cancellation_contract(self):
+        # Third-round review counterexamples: the exact products exceed
+        # the dtype mantissa and the residual cancels the rounded
+        # product to zero in eager. Without enable_fp_fusion=False the
+        # kernel skipped the intermediate rounding and EXCEEDED the
+        # per-dtype tolerance on all three dtypes (measured on the
+        # proxy). These now require the platform criterion to hold.
+        cases = [
+            (torch.float16, -4104.0, 64.0625, 1e-3),
+            (torch.bfloat16, -1040.0, 32.25, 1e-2),
+            (torch.float32, -64.03125, 8.001953125, 1e-6),
+        ]
+        for dt, r0, u0, atol in cases:
+            with self.subTest(dtype=dt):
+                r = torch.full((2, 64), r0, dtype=dt, device="cuda")
+                u = torch.full((2, 64), u0, dtype=dt, device="cuda")
+                gb = torch.full((1, 64), u0, dtype=dt, device="cuda")
+                for name, module in MODULES:
+                    with self.subTest(module=name):
+                        for g in (u, gb):
+                            actual = module.residual_gate_add(r, u, g)
+                            expected = reference(r, u, g)
+                            torch.testing.assert_close(
+                                actual, expected, rtol=1e-3, atol=atol
+                            )
+
     def test_empty(self):
         self.check(make_case(shape=(0, 8)))
 
@@ -123,6 +149,7 @@ RELEASE_REQUIRED_TESTS = [
     "ResidualGateAddTest.test_double_rounding",
     "ResidualGateAddTest.test_cross_tile_broadcast_and_stride",
     "ResidualGateAddTest.test_double_rounding_precision",
+    "ResidualGateAddTest.test_rounding_cancellation_contract",
     "ResidualGateAddTest.test_empty",
 ]
 
