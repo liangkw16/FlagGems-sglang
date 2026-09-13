@@ -5,11 +5,12 @@ task: 74
 operator: seqlens_expand
 batch: 5
 validity: valid
-platform: submitted(13804,e2,评测中;TB s0 10.6444x,e1=7/8昆仑闪断)
+platform: completed(13804,e2,8/8,10.5267x;TB s0 10.6444x)
 candidate_stage: e2
-team_best_stage: -
+team_best_stage: s0
+team_best_speedup: 10.6444
 sealed: no
-next: S0 首发即 8/8 valid 10.6444x（天数 25.5/海光 14.6/A 12.5/B 10.6/燧原 6.8/华为 5.8/沐曦 7.6/昆仑 1.8）；c2flow 19.98 为靶；E1 按逐芯定轴
+next: e2 8/8 valid（昆仑重掷成功）；tile 轴收益<窗口方差，收口；对榜首 c2flow 24.68 的差距需新结构
 updated: 2026-09-13
 ```
 
