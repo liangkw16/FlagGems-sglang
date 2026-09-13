@@ -15,17 +15,29 @@
 - submission 13905；裁决点=enflame 1.02 是否被抬升（+38% 门 ⇒ ≥1.4），
   若 ≥2.3 即追平榜首同芯、均值 →4.11（#2），叠加窗口可争 #1。
 
+
+## 2026-09-13 E3 平台终态：8/8 VALID 4.0308x 新 team best（燧原 +92%）
+
+- **enflame 1.017 → 1.9549（+92%！）**，其余七芯不变（vendor 只影响
+  燧原，读数逐项对齐 s0）→ 均值 4.0308 新 TB，距榜首 Nectar 4.302
+  缩到 0.271（原 0.35）。
+- **配方定型（二连证）**：燧原 elementwise = **grid 封顶 24 + BLOCK
+  4096**。T73 e2（仅封顶 1024）得 +18%；e3 叠加 4096 得 +92%
+  （4096 是主增益，封顶是辅助；与 skill "GCU BLOCK 倾向远大于 GPU"
+  及 T71/T75 的 4096 证据一致）。
+- 榜首同芯 2.29 vs 我 1.955：差距收到 1.17x，仍差。
+
 ```current
 task: 73
 operator: residual_gate_add
 batch: 5
 validity: valid
-platform: completed(13905,e2,8/8,3.930x;TB s0 3.9518x)
-candidate_stage: e2
-team_best_stage: s0
-team_best_speedup: 3.9518
+platform: completed(13910,e3,8/8,4.03084375x team best)
+candidate_stage: e3
+team_best_stage: e3
+team_best_speedup: 4.03084375
 sealed: no
-next: e2=grid封顶 enflame+18%（真实但有限）；e3=封顶+BLOCK4096 双杠杆（T71/T75 双证 4096 对燧原+44~71%）
+next: e3 新 TB 4.031（燧原 +92% 配方成立）；距榜首 0.271；配方复刻 T61/T71/T68/T62
 updated: 2026-09-13
 ```
 

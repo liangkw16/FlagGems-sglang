@@ -1,16 +1,26 @@
 # Task 75 `sigmoid_gate_mul` 实验记录
 
+
+## 2026-09-13 E2 平台终态：8/8 VALID 2.6065x 新 team best（燧原 +113%）
+
+- **enflame 0.827 → 1.7606（+113%！）**；tianshu 经 1024 vendor 恢复
+  （4.191→4.721，s0 4.769）；其余稳定。均值 2.6065 新 TB，距榜首
+  Albedo 3.054 缩到 0.45（原 0.52）。
+- **配方二连证**：燧原 elementwise = grid 封顶 24 + BLOCK 4096
+  （T73 e3 +92% / T75 e2 +113%）。含天数分芯 vendor（1024）的
+  "双赢组合"打法成立。
+
 ```current
 task: 75
 operator: sigmoid_gate_mul
 batch: 5
 validity: valid
-platform: completed(13878,e1,8/8,2.5107x;TB s0 2.538x)
-candidate_stage: e1
-team_best_stage: s0
-team_best_speedup: 2.538
+platform: completed(13912,e2,8/8,2.60653333x team best)
+candidate_stage: e2
+team_best_stage: e2
+team_best_speedup: 2.60653333
 sealed: no
-next: e1 订正=4096 对燧原+71%（此前回退记载系转录错误,已作废）；e2=燧原8192+昆仑no-loop
+next: e2 新 TB 2.607（燧原 +113%，天数 1024 vendor 双赢）；距榜首 0.45；配方复刻中
 updated: 2026-09-13
 ```
 
