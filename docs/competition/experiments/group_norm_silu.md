@@ -5,8 +5,8 @@ task: 72
 operator: group_norm_silu
 batch: 5
 validity: candidate-wip
-platform: submitted(e3,评测中;e2=7/8 昆仑崩溃族)
-candidate_stage: e2
+platform: submitted(e4,评测中;e3=7/8 昆仑uni_sram@512)
+candidate_stage: e4
 team_best_stage: -
 sealed: no
 next: e2 1D 形态触发崩溃族；E3 假设=2D+512 lane+num_warps=1 或去嵌套 1D
@@ -84,3 +84,11 @@ updated: 2026-09-13
 - 昆仑 exec 10524ms 真实执行后 uni_sram——**8192/2048/512 三档全超**，
   该栈 uni_sram 预算极小。E4 方向：BLOCK_S=64（FlagGems 注记 ≤32
   miscompile,64 为下限上方）或查 FlagGems 昆仑 softmax 的实际 BLOCK。
+
+## 2026-09-13 E4：BLOCK_S=64（已发射）
+
+- 512 仍超 uni_sram ⇒ E4 直接降到 64 lane（FlagGems ≤32 miscompile
+  下限上方）。
+- source commit：`ef6270e3229672dfdabd3399d793fab4c35b9b85`；ZIP `e4-ef6270e`，
+  SHA-256 `8d42e71140c0a3c39e6689ed7bba447452a00edc9daac7515ae3545ce359a162`；
+  release 回执 SHA-256 `d9f42f277fb181ea7c91f316a116ed1747a9e0726f72ddb9d57743833e5c5737`。

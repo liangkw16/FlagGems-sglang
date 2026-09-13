@@ -5,8 +5,8 @@ task: 65
 operator: deepep_post_reorder
 batch: 5
 validity: invalid_correctness
-platform: submitted(e3,评测中;e2=7/8 昆仑间歇崩溃)
-candidate_stage: e2
+platform: submitted(e4,评测中;e3=7/8 昆仑uni_sram@256)
+candidate_stage: e4
 team_best_stage: -
 sealed: no
 next: 昆仑=间歇崩溃+需小 BLOCK 双条件；新 ZIP 重掷待健康窗口（同晨 T62 e5 正常判）
@@ -124,3 +124,10 @@ updated: 2026-09-12
 
 - 昆仑 exec 7571ms 真实执行后 uni_sram——512(e1)/256(e3) 均超。
   E4 方向：BLOCK=64。
+
+## 2026-09-13 E4：BLOCK=64（已发射）
+
+- 256 仍超 ⇒ E4 降到 64。
+- source commit：`ef6270e3229672dfdabd3399d793fab4c35b9b85`；ZIP `e4-ef6270e`，
+  SHA-256 `1ba76ed7b231559f732f263967db8edb0afb26e7c783ac79e460763987d737d8`；
+  release 回执 SHA-256 `61decb1e55cdcaaae002f77c1cc400f0a192f330ed64de5275bd05b6af234a90`。
