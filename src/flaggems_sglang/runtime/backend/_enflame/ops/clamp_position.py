@@ -110,33 +110,25 @@ def clamp_position(seq_lens):
             # the guard's cost is one reduction plus a host sync, paid
             # only on this chip. Out-of-range inputs fall through to the
             # full 64-bit word kernels.
-            lo_words = words[0::2]
-            hi_words = words[1::2]
-            small = bool(torch.all((hi_words == 0) & (lo_words >= 0)).item())
+            # E8 (pre-registered): the word-pair algorithm is
+            # unconditional -- the E7 guard meant the i32 route never ran
+            # on the failing case, so "i32-ification fails" was never
+            # actually tested. Every kernel signature here is i64-free
+            # (int32 pointers and int scalars only); the word arithmetic
+            # covers the full int64 domain including INT64_MIN.
+            lo_c = words[0::2].contiguous()
+            hi_c = words[1::2].contiguous()
+            borrow = (lo_c == 0).to(torch.int32)
+            vpos = (seq_lens - 1 >= 0).to(torch.int32)
+            lo_out = torch.empty(n, dtype=torch.int32, device=out.device)
+            hi_out = torch.empty(n, dtype=torch.int32, device=out.device)
             grid = (min(triton.cdiv(n, _BLOCK), _MAX_GRID),)
-            if small:
-                lo_out = torch.empty(n, dtype=torch.int32, device=out.device)
-                _clamp_position[grid](
-                    lo_words.contiguous(), lo_out, n, 1, BLOCK=_BLOCK
-                )
-                words_out[0::2].copy_(lo_out)
-                words_out[1::2].zero_()
-            else:
-                # Full 64-bit path: branchless word arithmetic with
-                # torch-precomputed borrow/vpos (wrap semantics match the
-                # reference for every int64 input on the NVIDIA proxy).
-                lo_c = lo_words.contiguous()
-                hi_c = hi_words.contiguous()
-                borrow = (lo_c == 0).to(torch.int32)
-                vpos = (seq_lens - 1 >= 0).to(torch.int32)
-                lo_out = torch.empty(n, dtype=torch.int32, device=out.device)
-                hi_out = torch.empty(n, dtype=torch.int32, device=out.device)
-                _clamp_position_word[grid](lo_c, vpos, lo_out, n, BLOCK=_BLOCK)
-                _clamp_position_word_hi[grid](
-                    hi_c, borrow, vpos, hi_out, n, BLOCK=_BLOCK
-                )
-                words_out[0::2].copy_(lo_out)
-                words_out[1::2].copy_(hi_out)
+            _clamp_position_word[grid](lo_c, vpos, lo_out, n, BLOCK=_BLOCK)
+            _clamp_position_word_hi[grid](
+                hi_c, borrow, vpos, hi_out, n, BLOCK=_BLOCK
+            )
+            words_out[0::2].copy_(lo_out)
+            words_out[1::2].copy_(hi_out)
     else:
         out = torch.empty(
             seq_lens.shape, dtype=seq_lens.dtype, device=seq_lens.device
