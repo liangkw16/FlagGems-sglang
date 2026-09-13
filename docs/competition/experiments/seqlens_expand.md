@@ -5,8 +5,8 @@ task: 74
 operator: seqlens_expand
 batch: 5
 validity: valid
-platform: completed(13762,s0,8/8,10.6444x)
-candidate_stage: s0
+platform: submitted(13796,e1,评测中;TB s0 10.6444x)
+candidate_stage: e1
 team_best_stage: -
 sealed: no
 next: S0 首发即 8/8 valid 10.6444x（天数 25.5/海光 14.6/A 12.5/B 10.6/燧原 6.8/华为 5.8/沐曦 7.6/昆仑 1.8）；c2flow 19.98 为靶；E1 按逐芯定轴
@@ -33,3 +33,14 @@ updated: 2026-09-13
 - screening 多轮门禁拦下并修复的缺陷已记录于提交说明；
   最终 release：0 失败/错误/skip，非空 kernel launch，NVIDIA 代理范围。
 - 所有八芯目标 `target-runtime-unverified`；裁决权在平台。
+
+## 2026-09-13 E1：请求维 tile（候选就绪后提交）
+
+- S0 整请求单 program（BLOCK=next_pow2(max_q_len)）在请求少而 q_len 大
+  的 shape 欠填充（对榜首差距全芯均匀 +5~+48）。E1：kv_indices splits
+  同款 2D tile——固定 1024-lane，(request, tile) 每 program。
+- source commit：`114be7818888c9d8bfd1b36c7bb42845bc2c7fd4`；ZIP `e1-114be78`，
+  SHA-256 `85ae694a999dca3b9657d0815391102a4a69cf0e47f859f1ba7c3989ee0dc884`；
+  release 回执 SHA-256 `38662ae336ddab30deca33cca2fc719fd3d2b475601aee26c3818404ae1801a6`；
+  3 方法 0 失败。
+- submission 13796；裁决点=全芯均匀差距是否收窄。
