@@ -46,3 +46,9 @@ updated: 2026-09-13
   SHA-256 `1e430b40e9d733dfd25f3501d7d6878448929aedd98ca2c897ae762d4bedbc10`；
   4 方法 0 失败。
 - submission 13774；裁决点=昆仑 uni_sram 解除。
+
+## 2026-09-13 E1 平台终态：7/8（昆仑仍 uni_sram）
+
+- 2048-lane cap 后昆仑仍 `OutOfResources: uni_sram`（exec 8611ms 真实
+  执行）——2D [C,S] tile 形态本身超预算。E2 改 1D 形态（仅空间维
+  lane，channel 维标量循环 + num_warps=1）。

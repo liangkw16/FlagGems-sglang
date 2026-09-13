@@ -4,13 +4,14 @@
 task: 61
 operator: compute_src2dst
 batch: 5
-validity: invalid_correctness
-platform: completed(13221,e5r,7/8)
-candidate_stage: e5r
-team_best_stage: -
+validity: valid
+platform: completed(13772,e7,8/8,2.074025x)
+candidate_stage: e7
+team_best_stage: e7
+team_best_speedup: 2.074025
 sealed: no
-next: 燧原 vendor 被选中且确定性输出整数垃圾（8.8s 完成执行，非挂死/非窗口）⇒ 第 3 种 scatter 寻址形态失败，燧原轴按预注册止损封存，仅 precomputed-pos 全新结构（T49 形态）可重开；七芯 1.07–3.01x 为最强未过线记录
-updated: 2026-09-12
+next: e7 valid 2.074（燧原七轮破局=宿主int32降位+纯i32链）；榜首 RSI 2.421 差 0.35
+updated: 2026-09-13
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -240,3 +241,12 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   仅 precomputed-pos 全新结构（wrapper 预计算位置、kernel 纯掩码拷贝，
   T49 已证形态）可重开。
 - 额度：发后 28/30。
+
+## 2026-09-13 E7 平台终态：8/8 VALID 2.074025x（submission 13772）
+
+- **八芯全过**——七轮燧原攻坚收官：宿主 int32 降位 + 纯 i32 地址链
+  （FlagGems gcu300 scatter 纪律）首次通过；均值 2.074025。
+- 沉淀：GCU scatter 黄金法则 = **kernel 内零 int64 数据**（宿主降位）+
+  i32 计算偏移 + do_not_specialize 尺寸。
+- 榜首 RSI 2.421，差 0.35；七芯水位本就是未过线最强，性能轴后续按
+  逐芯读数定。
