@@ -7,7 +7,20 @@ import triton
 import triton.language as tl
 
 
-@triton.jit
+@triton.jit(
+    do_not_specialize=[
+        "batch",
+        "out_numel",
+        "ps0",
+        "ps1",
+        "rs",
+        "ls",
+        "ips",
+        "ss",
+        "os",
+        "olds",
+    ]
+)
 def _create_kv_indices(
     pool,
     requests,
