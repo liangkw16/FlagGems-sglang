@@ -10,7 +10,7 @@ candidate_stage: e1
 team_best_stage: s0
 team_best_speedup: 2.538
 sealed: no
-next: e1 4096 增益被昆仑/燧原回退抵消（差 s0 1%）；TB s0 守；同 T71 结论
+next: e1 订正=4096 对燧原+71%（此前回退记载系转录错误,已作废）；e2=燧原8192+昆仑no-loop
 updated: 2026-09-13
 ```
 
@@ -35,9 +35,13 @@ updated: 2026-09-13
   最终 release：0 失败/错误/skip，非空 kernel launch，NVIDIA 代理范围。
 - 所有八芯目标 `target-runtime-unverified`；裁决权在平台。
 
-## 2026-09-13 E1：BLOCK 1024→4096（13878）8/8 valid 2.511
+## 2026-09-13 E1：BLOCK 1024→4096（13878）8/8 valid 2.511（API 真值订正）
 
-- 低于 s0 TB 2.538（差 1%）：天数 +19%/A +83%/海光 +16%/沐曦 +17%，
-  但昆仑 0.23（贴门槛）/燧原 -6%。BLOCK=4096 对本题纯 sigmoid 门控
-  的收益被昆仑/燧原回退抵消。team best 保留 s0。
-- 与 T71 e1 同构结论：4096 在天数/华为/A 增益、昆仑/燧原回退。
+**真值**：s0(13767) enflame 0.827 / kunlun 0.295 / huawei 1.028 / tianshu 4.769
+（avg 2.5382）；e1(13878) enflame **1.417（+71%）** / kunlun 0.262 /
+huawei 1.369 / tianshu 4.191（avg 2.5107）。
+
+**订正结论**：4096 对燧原 **+71%**（与此前"回退"记载相反——同样是
+转录错误）；但天数 -12%（4.769→4.191）吃掉净收益，均略低于 TB。
+e2 假设：**燧原再推 8192 + 昆仑 no-loop 形态**（T61 no-loop 读 1.29
+vs 本题 0.26）。
