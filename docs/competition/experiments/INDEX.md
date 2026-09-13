@@ -53,7 +53,7 @@
 | 70 | gate_topk | invalid_correctness | completed(13335,e1,5/8;燧原/昆仑/华为=exec0ms崩溃族未裁决) | - | no | e1 终态 5/8：三失败芯均 exec 0ms 崩溃族（12:20 同窗），kunlun vendor 被选中但未执行；下一步=新 ZIP 真实改动重评（燧原/华为可补迭代选择 vendor）或用户授权的同字节重掷 | 2026-09-12 | [gate_topk](gate_topk.md) |
 | 71 | gelu_tanh_and_mul | valid | completed(13763,s0,8/8,2.57x) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
 | 72 | group_norm_silu | candidate-wip | completed(13818,e4,7/8;昆仑uni_sram@64,四档全超,kernel复杂度问题) | - | no | 昆仑 tile 降档轴封;重开=FlagGems 昆仑 softmax 实际形态研究或工单 | 2026-09-13 | [group_norm_silu](group_norm_silu.md) |
-| 73 | residual_gate_add | valid | submitted(13872,e1,评测中;TB s0 3.952x) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [residual_gate_add](residual_gate_add.md) |
+| 73 | residual_gate_add | valid | completed(13872,e1,8/8,3.903x;TB s0 3.952x) | s0 3.952x | no | e1 扁平轴判关（燧原/华为/昆仑 -71~-84%,2D 网格是这些栈正确形态）；TB s0 守榜；追 0.32 回 2D 路径内微调 | 2026-09-13 | [residual_gate_add](residual_gate_add.md) |
 | 74 | seqlens_expand | valid | completed(13804,e2,8/8,10.5267x;TB s0 10.6444x) | s0 10.6444x | no | e2 8/8 valid（昆仑重掷成功）；tile 轴收益<窗口方差，收口；对榜首 c2flow 24.68 的差距需新结构 | 2026-09-13 | [seqlens_expand](seqlens_expand.md) |
 | 75 | sigmoid_gate_mul | valid | completed(13767,s0,8/8,2.54x) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
 

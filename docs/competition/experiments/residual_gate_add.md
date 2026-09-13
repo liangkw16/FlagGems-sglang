@@ -5,11 +5,12 @@ task: 73
 operator: residual_gate_add
 batch: 5
 validity: valid
-platform: submitted(13872,e1,评测中;TB s0 3.952x)
+platform: completed(13872,e1,8/8,3.903x;TB s0 3.952x)
 candidate_stage: e1
-team_best_stage: -
+team_best_stage: s0
+team_best_speedup: 3.952
 sealed: no
-next: S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴
+next: e1 扁平轴判关（燧原/华为/昆仑 -71~-84%,2D 网格是这些栈正确形态）；TB s0 守榜；追 0.32 回 2D 路径内微调
 updated: 2026-09-13
 ```
 
@@ -43,3 +44,13 @@ updated: 2026-09-13
   release 回执 `batch5-r5-20260913/residual_gate_add/verification.json`
   SHA-256 `f301e7c62bae010808c13d6555bd8cd31ff35b46f60a77e6f95a5e33a5c2ae04`；
   3 方法 0 失败。
+
+## 2026-09-13 E1 平台终态：8/8 valid 3.903（低于 TB，扁平轴判关）
+
+- 八芯全过但均值 3.903 < s0 TB 3.952：天数 +94%（3.55→6.89）/沐曦
+  +22%/A +31%/海光 +59% 的扁平化收益被 **燧原 -75%（3.99→1.01）/
+  华为 -71%（3.81→1.09）/昆仑 -84%（1.42→0.23）** 完全吃掉。
+- 结论：**扁平 1D 在 GCU/昇腾/昆仑上大幅回退**（窄 tile 引发重编译
+  或调度恶化），2D 网格在这些栈上是正确形态。team best 保留 s0；
+  扁平轴关闭。T73 差 0.32 的追法回到 2D 路径内微调（BLOCK/num_warps
+  分档 vendor）。
