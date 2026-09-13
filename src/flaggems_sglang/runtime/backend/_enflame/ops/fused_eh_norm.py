@@ -24,7 +24,7 @@ import torch
 import triton
 import triton.language as tl
 
-_CHUNK = 2048
+_CHUNK = 4096
 
 
 @triton.jit
@@ -41,53 +41,59 @@ def _fused_eh_norm_enflame(
     ws0,
     hs0,
     os0,
+    tokens,
     hidden,
     eps,
     CHUNK: tl.constexpr,
 ):
-    row = tl.program_id(0).to(tl.int64)
-    ms = tl.zeros((), dtype=tl.float32)
-    for c0 in range(0, hidden, CHUNK):
-        cols = c0 + tl.arange(0, CHUNK).to(tl.int64)
-        m = cols < hidden
-        e = tl.load(embeds_ptr + row * es0 + cols * es1, mask=m, other=0.0).to(
-            tl.float32
-        )
-        ms += tl.sum(e * e, axis=0)
-    inv = tl.rsqrt(ms / hidden + eps)
-    for c0 in range(0, hidden, CHUNK):
-        cols = c0 + tl.arange(0, CHUNK).to(tl.int64)
-        m = cols < hidden
-        e = tl.load(embeds_ptr + row * es0 + cols * es1, mask=m, other=0.0).to(
-            tl.float32
-        )
-        ew = tl.load(enorm_ptr + cols * ws0, mask=m, other=0.0).to(tl.float32)
-        tl.store(
-            out_ptr + row * os0 + cols,
-            (e * inv * ew).to(out_ptr.dtype.element_ty),
-            mask=m,
-        )
-    ms_h = tl.zeros((), dtype=tl.float32)
-    for c0 in range(0, hidden, CHUNK):
-        cols = c0 + tl.arange(0, CHUNK).to(tl.int64)
-        m = cols < hidden
-        h = tl.load(prev_ptr + row * ps0 + cols * ps1, mask=m, other=0.0).to(
-            tl.float32
-        )
-        ms_h += tl.sum(h * h, axis=0)
-    inv_h = tl.rsqrt(ms_h / hidden + eps)
-    for c0 in range(0, hidden, CHUNK):
-        cols = c0 + tl.arange(0, CHUNK).to(tl.int64)
-        m = cols < hidden
-        h = tl.load(prev_ptr + row * ps0 + cols * ps1, mask=m, other=0.0).to(
-            tl.float32
-        )
-        hw = tl.load(hnorm_ptr + cols * hs0, mask=m, other=0.0).to(tl.float32)
-        tl.store(
-            out_ptr + row * os0 + hidden + cols,
-            (h * inv_h * hw).to(out_ptr.dtype.element_ty),
-            mask=m,
-        )
+    for row32 in range(tl.program_id(0), tokens, tl.num_programs(0)):
+        row = row32.to(tl.int64)
+        ms = tl.zeros((), dtype=tl.float32)
+        for c0 in range(0, hidden, CHUNK):
+            cols = c0 + tl.arange(0, CHUNK).to(tl.int64)
+            m = cols < hidden
+            e = tl.load(
+                embeds_ptr + row * es0 + cols * es1, mask=m, other=0.0
+            ).to(tl.float32)
+            ms += tl.sum(e * e, axis=0)
+        inv = tl.rsqrt(ms / hidden + eps)
+        for c0 in range(0, hidden, CHUNK):
+            cols = c0 + tl.arange(0, CHUNK).to(tl.int64)
+            m = cols < hidden
+            e = tl.load(
+                embeds_ptr + row * es0 + cols * es1, mask=m, other=0.0
+            ).to(tl.float32)
+            ew = tl.load(enorm_ptr + cols * ws0, mask=m, other=0.0).to(
+                tl.float32
+            )
+            tl.store(
+                out_ptr + row * os0 + cols,
+                (e * inv * ew).to(out_ptr.dtype.element_ty),
+                mask=m,
+            )
+        ms_h = tl.zeros((), dtype=tl.float32)
+        for c0 in range(0, hidden, CHUNK):
+            cols = c0 + tl.arange(0, CHUNK).to(tl.int64)
+            m = cols < hidden
+            h = tl.load(
+                prev_ptr + row * ps0 + cols * ps1, mask=m, other=0.0
+            ).to(tl.float32)
+            ms_h += tl.sum(h * h, axis=0)
+        inv_h = tl.rsqrt(ms_h / hidden + eps)
+        for c0 in range(0, hidden, CHUNK):
+            cols = c0 + tl.arange(0, CHUNK).to(tl.int64)
+            m = cols < hidden
+            h = tl.load(
+                prev_ptr + row * ps0 + cols * ps1, mask=m, other=0.0
+            ).to(tl.float32)
+            hw = tl.load(hnorm_ptr + cols * hs0, mask=m, other=0.0).to(
+                tl.float32
+            )
+            tl.store(
+                out_ptr + row * os0 + hidden + cols,
+                (h * inv_h * hw).to(out_ptr.dtype.element_ty),
+                mask=m,
+            )
 
 
 def fused_eh_norm(
@@ -105,7 +111,7 @@ def fused_eh_norm(
     )
     if tokens and hidden:
         chunk = min(triton.next_power_of_2(hidden), _CHUNK)
-        _fused_eh_norm_enflame[(tokens,)](
+        _fused_eh_norm_enflame[(min(tokens, 24),)](
             inputs_embeds,
             previous_hidden,
             enorm_weight,
@@ -118,6 +124,7 @@ def fused_eh_norm(
             enorm_weight.stride(0),
             hnorm_weight.stride(0),
             out.stride(0),
+            tokens,
             hidden,
             eps,
             CHUNK=chunk,
