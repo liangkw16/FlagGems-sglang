@@ -78,3 +78,9 @@ updated: 2026-09-13
   SHA-256 `21a5ced869a6226f47aac06ca8b220135f36e448b19dc0f10143e757af81d4b3`；
   release 回执 `batch5-unlock4-20260913/group_norm_silu/verification.json`
   SHA-256 前缀 `c30415d8`；4 方法 0 失败。
+
+## 2026-09-13 E3 平台终态：7/8（昆仑 uni_sram，512 lane 仍超）
+
+- 昆仑 exec 10524ms 真实执行后 uni_sram——**8192/2048/512 三档全超**，
+  该栈 uni_sram 预算极小。E4 方向：BLOCK_S=64（FlagGems 注记 ≤32
+  miscompile,64 为下限上方）或查 FlagGems 昆仑 softmax 的实际 BLOCK。

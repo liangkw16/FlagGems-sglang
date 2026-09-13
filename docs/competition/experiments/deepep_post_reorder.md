@@ -119,3 +119,8 @@ updated: 2026-09-12
 - source commit：`e56175ab16644a1d271b49f5ff152106a16da61c`；ZIP `e3-e56175a`，
   SHA-256 `b477288091e52bddc5c0972a0546af228176604bfe89c9a55908e86e7b5e5435`；
   release 回执前缀 `09c3c36f`；4 方法 0 失败。
+
+## 2026-09-13 E3 平台终态：7/8（昆仑 uni_sram，BLOCK=256 仍超）
+
+- 昆仑 exec 7571ms 真实执行后 uni_sram——512(e1)/256(e3) 均超。
+  E4 方向：BLOCK=64。
