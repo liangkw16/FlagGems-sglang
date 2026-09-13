@@ -1,15 +1,17 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 
-# Enflame vendor: the e1 BLOCK=4096 round proved wide blocks gain the
-# big chips (tianshu +46%, huawei +276%) but regress GCU 2.95->1.48.
-# This vendor freezes the s0 BLOCK_COL=1024 for this chip.
+# Enflame vendor, e3: the recipe proved twice on this chip's elementwise
+# ops (T73 e3 +92%, T75 e2 +113%) - BLOCK raised to 4096 with the grid
+# capped at the 24-SIP width and a grid-stride. (e2's frozen-1024 vendor
+# was a self-inflicted -31%; API truth showed 4096 is the gain.)
 
 import torch
 import triton
 import triton.language as tl
 
-_BLOCK_COL = 1024
+_BLOCK_COL = 4096
+_MAX_PROGS = 24
 _MAX_GRID = 65535
 
 
@@ -64,7 +66,9 @@ def gelu_tanh_and_mul(input):
     )
     rows = output.numel() // half_width if half_width else 0
     if rows and half_width:
-        _gelu_tanh_and_mul_kernel[(min(rows, _MAX_GRID),)](
+        _gelu_tanh_and_mul_kernel[
+            (min(rows * triton.cdiv(half_width, _BLOCK_COL), _MAX_PROGS),)
+        ](
             x,
             output,
             rows,
