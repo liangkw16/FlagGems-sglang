@@ -5,8 +5,8 @@ task: 65
 operator: deepep_post_reorder
 batch: 5
 validity: invalid_correctness
-platform: completed(13302,s0,7/8;昆仑=崩溃族非内核裁决)
-candidate_stage: s0
+platform: submitted(13790,e1,评测中;s0=7/8 昆仑崩溃族)
+candidate_stage: e1
 team_best_stage: -
 sealed: no
 next: 七芯真实通过且读数强（华为 16.8990/海光 16.6416/天数 14.1316/A 13.8796/B 7.7532/沐曦 6.2860/燧原 1.3252）；昆仑 exec 0ms 服务线程卡死=崩溃族，重掷需用户当次明示授权或平台工单健康 worker rerun；S0 源 5573ffc 含 topk=0 退化分支 zeros 修复
@@ -74,3 +74,13 @@ updated: 2026-09-12
 - **昆仑失败（崩溃族）**：exec 0ms，`服务线程卡死自动恢复，请重新提交`
   ——平台侧故障非内核裁决，按崩溃族协议不计代码止损；注释载体重掷需
   用户当次明示授权（≤2 发），首选平台工单健康 worker rerun。
+
+## 2026-09-13 E1：路由行向量化（候选就绪后提交）
+
+- S0 的路由/权重标量在每个 (hidden块, slot) 重读 → E1 提为每 token
+  一次 masked 向量载入（昆仑可靠形态），slot 值算术提取（i32 lane
+  乘法，避整型 where/i64 向量乘两大毒点）。全新 ZIP 重掷昆仑窗口。
+- source commit：`8b9f4820ae661e2417eeeda057bba0efa6a0ba38`；ZIP `e1-8b9f482`，
+  SHA-256 `70ccf24ec8426effa6e50ad8ec2267bc2a3de5654784fdbc8015121cbe8b1a7a`；
+  release 回执 SHA-256 `e0a272cf2ffde7a8fdc21d701fcd71ac516d5a3b3cbf6cc9082397daa237c9e0`。
+- submission 13790；裁决点=昆仑窗口 + 七芯读数（部分和 76.9 基准）。

@@ -4,12 +4,13 @@
 task: 62
 operator: concat_mla_k
 batch: 5
-validity: invalid_correctness
-platform: submitted(13789,e5,评测中;e4=7/8 昆仑第3同指纹垃圾)
+validity: valid
+platform: completed(13789,e5,8/8,1.1483x team best)
 candidate_stage: e5
-team_best_stage: -
+team_best_stage: e5
+team_best_speedup: 1.1483
 sealed: no
-next: e5（两段式独立 1D 循环,官方 concat_and_cache_mla 结构）已发射；裁决=昆仑四轮垃圾是否解除
+next: e5 valid 1.148 首 TB（两段式破昆仑四轮垃圾）；后续=燧原0.23/华为0.22弱芯轴（B1/B2 已注册）；榜首 1.814
 updated: 2026-09-13
 ```
 
@@ -238,3 +239,16 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   5 方法 0 失败，generic 28 + kunlun 28 launch。
 - submission 13789（09-13 09:2x）；裁决点=昆仑四轮垃圾是否解除
   （若过即 8/8：七芯水位 2.29/1.02/0.23/1.92/0.16/1.64/1.63）。
+
+## 2026-09-13 E5 平台终态：8/8 VALID 1.1483x 新 team best（submission 13789）
+
+- **八芯全过，四轮同指纹垃圾收官**：天数 2.2320 / 沐曦 1.0156 /
+  燧原 0.2330 / 海光 2.0290 / **昆仑 0.1840（两段式 vendor 被选中并
+  通过——单 padded range+共享基址+stride-0 广播 = 垃圾触发配方的
+  假设平台证实）** / 华为 0.2234 / A 1.6204 / B 1.6490。
+  均值 1.1483 = 首 team best。
+- 沉淀（昆仑垃圾黄金法则）：**两段独立 1D 循环 + 各自 2 幂块**，
+  禁单 padded range 盖非 2 幂宽、禁双 store 共享基址、禁 kernel 内
+  stride-0 广播读。
+- 后续轴：燧原 0.233/华为 0.223 贴门槛（B1 grid 封顶/B2 constexpr
+  去 mask 早已注册，昆仑定位后再排）；榜首 EvokeAgent 1.814。
