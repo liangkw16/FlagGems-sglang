@@ -5,11 +5,11 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: invalid_correctness
-platform: submitted(e7,评测中;e6=7/8 kwargs证伪)
+platform: completed(13809,e7,7/8;昆仑七连崩,轴终封仅剩工单)
 candidate_stage: e6
 team_best_stage: -
 sealed: no
-next: e6 kwargs 证伪（昆仑第6崩）；kernel 侧路径试尽，仅剩平台工单；七芯部分和 357.5 待命
+next: T69 昆仑轴终封;仅剩平台工单;七芯部分和 357.5 永久待命
 updated: 2026-09-12
 ```
 
@@ -300,3 +300,8 @@ updated: 2026-09-12
 - source commit：`267a1abfc4dcdbdc91c989680620e1de5d19a6d4`；ZIP `e7-267a1ab`，
   SHA-256 `1e0428efe161faacb30d28e76a3d62343ef0ca5709548a193a4067c8e5dfbc82`；
   release 回执前缀 `685f0412`；3 方法 0 失败。
+
+## 2026-09-13 E7 平台终态：7/8（昆仑第七连崩）
+
+- exec 0ms——kwargs+num_warps/stages 双钉无效。七连崩后 T69 昆仑轴
+  终封,仅剩工单。

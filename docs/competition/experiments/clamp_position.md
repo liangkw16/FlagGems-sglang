@@ -5,11 +5,11 @@ task: 60
 operator: clamp_position
 batch: 5
 validity: invalid_correctness
-platform: submitted(13821,e8,评测中;e7=7/8 燧原轴七轮止损)
+platform: completed(13821,e8,7/8;燧原轴八轮终封)
 candidate_stage: e8
 team_best_stage: -
 sealed: no
-next: e8（无条件词对+签名审计,离线双击门已过）已发射；裁决=燧原 int64 case 是否解除
+next: T60 燧原轴终封;重启需 torch-gcu view 缺陷外部证据或逐元素 torch 拆装合规确认
 updated: 2026-09-13
 ```
 
@@ -262,3 +262,19 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   SHA-256 `6938ea77cfeb263f0d5c6eada18d7f2cee6c6527effaebb272edd2fad3f39fc2`。
 - submission 13821；裁决点=燧原 int64 case 是否首次通过（七轮止损后
   唯一预注册重开路径）。
+
+## 2026-09-13 E8 平台终态：7/8（燧原 int64 case 仍 100% 垃圾，轴终封）
+
+- 燧原 vendor 被选中、真实执行 6457ms,case 3（int64）**100% 失配
+  （最大绝对差 1.13e9）**——无条件词对算法 + i64-free 签名 + 全域
+  oracle 三重门都没挡住。E8 是 R2 预注册的最后重开路径，至此
+  **T60 燧原轴正式终封**：八轮（E1-E8）穷尽了词对/预计算/连续内核/
+  guard/无条件全部形态轴,同一常数性垃圾贯穿始终。
+- 归因收敛（更新）：E7 归因②的"XMLIR view 语义"归属已订正为燧原
+  torch-gcu 运行时的 `view(torch.int32)` 重解释——这不是 kernel 可修
+  的,是**该栈的宿主侧字节重解释缺陷**。重启条件升级为:外部证据
+  （torch-gcu issue / 他队通过样例）或放弃 view 改用逐元素 torch 拆装
+  （两个 int32 tensor cat,非 view）——后者属"wrapper 纯 torch 数据
+  搬运",是否合规需确认。
+- 七芯水位（E7）:天数 1.7995 / 沐曦 1.1355 / 海光 1.48533 / 昆仑
+  0.91233 / 华为 0.22683 / A 1.4605 / B 1.46217。

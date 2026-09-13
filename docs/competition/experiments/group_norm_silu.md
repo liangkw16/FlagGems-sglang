@@ -5,11 +5,11 @@ task: 72
 operator: group_norm_silu
 batch: 5
 validity: candidate-wip
-platform: submitted(e4,评测中;e3=7/8 昆仑uni_sram@512)
+platform: completed(13818,e4,7/8;昆仑uni_sram@64,四档全超,kernel复杂度问题)
 candidate_stage: e4
 team_best_stage: -
 sealed: no
-next: e2 1D 形态触发崩溃族；E3 假设=2D+512 lane+num_warps=1 或去嵌套 1D
+next: 昆仑 tile 降档轴封;重开=FlagGems 昆仑 softmax 实际形态研究或工单
 updated: 2026-09-13
 ```
 
@@ -92,3 +92,12 @@ updated: 2026-09-13
 - source commit：`ef6270e3229672dfdabd3399d793fab4c35b9b85`；ZIP `e4-ef6270e`，
   SHA-256 `8d42e71140c0a3c39e6689ed7bba447452a00edc9daac7515ae3545ce359a162`；
   release 回执 SHA-256 `d9f42f277fb181ea7c91f316a116ed1747a9e0726f72ddb9d57743833e5c5737`。
+
+## 2026-09-13 E4 平台终态：7/8（昆仑 uni_sram@64——64 lane 也超）
+
+- **BLOCK_S=64 仍 uni_sram**（exec 7559ms 真实执行）——8192/2048/512/64
+  四档全超。该栈 group_norm 类的 uni_sram 预算不是 tile 宽度问题,
+  是**kernel 复杂度本身**（三遍循环+多个常驻向量）。T65 e4 BLOCK=64
+  撞间歇崩溃（exec 0ms）同窗。
+- 处置：T72 昆仑轴暂停 tile 降档(已到下限);重开条件=FlagGems 昆仑
+  softmax/group_norm 的实际可行形态研究,或工单。

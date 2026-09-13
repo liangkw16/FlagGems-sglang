@@ -5,11 +5,11 @@ task: 65
 operator: deepep_post_reorder
 batch: 5
 validity: invalid_correctness
-platform: submitted(e4,评测中;e3=7/8 昆仑uni_sram@256)
+platform: completed(13820,e4,7/8;昆仑间歇崩溃,BLOCK=64未获裁决)
 candidate_stage: e4
 team_best_stage: -
 sealed: no
-next: 昆仑=间歇崩溃+需小 BLOCK 双条件；新 ZIP 重掷待健康窗口（同晨 T62 e5 正常判）
+next: 昆仑=间歇窗口+uni_sram 双条件;新 ZIP 重掷待健康窗
 updated: 2026-09-12
 ```
 
@@ -131,3 +131,8 @@ updated: 2026-09-12
 - source commit：`ef6270e3229672dfdabd3399d793fab4c35b9b85`；ZIP `e4-ef6270e`，
   SHA-256 `1ba76ed7b231559f732f263967db8edb0afb26e7c783ac79e460763987d737d8`；
   release 回执 SHA-256 `61decb1e55cdcaaae002f77c1cc400f0a192f330ed64de5275bd05b6af234a90`。
+
+## 2026-09-13 E4 平台终态：7/8（昆仑间歇崩溃,BLOCK=64 未获裁决）
+
+- exec 0ms 服务线程卡死——BLOCK=64 的字节没被检验。T65 昆仑=e3
+  真实执行 uni_sram@256 + e4 秒崩,双条件窗口问题维持。
