@@ -6,11 +6,11 @@ operator: residual_gate_add
 batch: 5
 validity: valid
 platform: completed(13872,e1,8/8,3.903x;TB s0 3.952x)
-candidate_stage: e1
+candidate_stage: e2
 team_best_stage: s0
-team_best_speedup: 3.952
+team_best_speedup: 3.9518
 sealed: no
-next: e1 扁平轴判关（燧原/华为/昆仑 -71~-84%,2D 网格是这些栈正确形态）；TB s0 守榜；追 0.32 回 2D 路径内微调
+next: e1 订正=扁平中性（此前回退归因系转录错误，已作废）；真实差距=enflame+1.27（窗口摆动3x）/海光+0.55/华为+0.47/昆仑+0.43；e2=enflame vendor grid 封顶重掷
 updated: 2026-09-13
 ```
 
@@ -45,12 +45,25 @@ updated: 2026-09-13
   SHA-256 `f301e7c62bae010808c13d6555bd8cd31ff35b46f60a77e6f95a5e33a5c2ae04`；
   3 方法 0 失败。
 
-## 2026-09-13 E1 平台终态：8/8 valid 3.903（低于 TB，扁平轴判关）
+## 2026-09-13 E1 平台终态：8/8 valid 3.903（订正：扁平化中性，此前归因有误）
 
-- 八芯全过但均值 3.903 < s0 TB 3.952：天数 +94%（3.55→6.89）/沐曦
-  +22%/A +31%/海光 +59% 的扁平化收益被 **燧原 -75%（3.99→1.01）/
-  华为 -71%（3.81→1.09）/昆仑 -84%（1.42→0.23）** 完全吃掉。
-- 结论：**扁平 1D 在 GCU/昇腾/昆仑上大幅回退**（窄 tile 引发重编译
-  或调度恶化），2D 网格在这些栈上是正确形态。team best 保留 s0；
-  扁平轴关闭。T73 差 0.32 的追法回到 2D 路径内微调（BLOCK/num_warps
-  分档 vendor）。
+**数据订正**（API 真值回查）：
+- s0(13764)：tianshu 6.944 / muxi 5.372 / enflame 1.017 / haiguang 6.992 /
+  kunlunxin 0.233 / huawei 1.125 / card_a 5.765 / card_b 4.165（均 3.9518）
+- e1(13872)：tianshu 6.890 / muxi 4.789 / enflame 1.008 / haiguang 7.243 /
+  kunlunxin 0.232 / huawei 1.091 / card_a 5.793 / card_b 4.178（均 3.9031）
+
+此前账本把 s0 记为 enflame 3.99 / kunlun 1.42 / huawei 3.81 等，与 3.95
+均值不自洽——系转录错误。**真实结论：扁平 1D 与 2D 在八芯上无显著差异
+（±11% 内=窗口噪声），此前"扁平在 GCU/昇腾/昆仑回退"的跨芯规则作废**。
+
+**本条教训（数据完整性纪律）**：逐芯对比必须从 API 回读原值，不得用
+凭记忆转写的基线；"某形态在某芯回退 N%"的结论落账前须与 submission 的
+gpu_results 逐项核对。
+
+**T73 真实差距结构**（vs Nectar 4.302，总差 0.35）：enflame +1.27
+（我 1.02 vs 2.29，最大项）、haiguang +0.55、huawei +0.47、kunlun +0.43、
+card_b +0.31、tianshu +0.09；muxi/card_a 我方领先。**燧原读数对同字节可
+摆动 3x**（T71 实证：s0 同字节 2.95 ↔ e2 1.03）——enflame 1.02 疑为坏
+窗口。e2 用真实改动（enflame vendor grid 封顶 24+grid-stride，skill
+已证 +38% 中位的超发修法）重掷。
