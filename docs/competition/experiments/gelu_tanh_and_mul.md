@@ -5,12 +5,12 @@ task: 71
 operator: gelu_tanh_and_mul
 batch: 5
 validity: valid
-platform: submitted(13898,e2,评测中;TB e1 2.626x)
+platform: completed(13898,e2,8/8,2.621x;TB e1 2.62646667x)
 candidate_stage: e2
 team_best_stage: e1
 team_best_speedup: 2.62646667
 sealed: no
-next: e1 valid 2.626 新 TB（天数+46%/华为+276%）；昆仑/燧原回退→vendor 冻结 1024 可再提；榜首 3.44
+next: e2 vendor 冻结证伪（s0 读数=窗口方差非 BLOCK 形态）；TB e1 守；追 3.44 需窗口或新结构
 updated: 2026-09-13
 ```
 
@@ -54,3 +54,13 @@ updated: 2026-09-13
   4 方法 0 失败，3 源 45 launch。
 - submission 13898；裁决点=燧原回 2.9+ 昆仑回 2.0+（均值预期
   2.63→2.95+,距榜首 3.44 缩到 0.5 内）。
+
+## 2026-09-13 E2 平台终态：8/8 valid 2.621（未过 TB，vendor 冻结假设证伪）
+
+- **燧原 vendor 被选中但读数反而更低**（1.48→1.03，BLOCK=1024 未能
+  恢复 s0 的 2.95）；昆仑 vendor 同样（0.25→0.26，未回 s0 的 2.19）。
+  **s0 读数里的燧原 2.95/昆仑 2.19 不是 BLOCK 形态差异——是窗口
+  方差**（s0 单发窗口 vs e1/e2 双发窗口）。
+- 均值 2.621 ≈ e1 2.626（TB 不变）。**"冻结窄 BLOCK vendor"假设
+  证伪**——BLOCK=1024 与 4096 在这两芯的当前窗口下等价。
+- T71 轴收口：TB e1 2.626；追榜首 3.44 需窗口或新结构。
