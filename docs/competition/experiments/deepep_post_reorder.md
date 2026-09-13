@@ -5,11 +5,11 @@ task: 65
 operator: deepep_post_reorder
 batch: 5
 validity: invalid_correctness
-platform: submitted(13792,e2,评测中;e1=7/8 昆仑 uni_sram)
+platform: completed(13792,e2,7/8;昆仑=间歇崩溃,BLOCK字节已备好)
 candidate_stage: e2
 team_best_stage: -
 sealed: no
-next: 七芯真实通过且读数强（华为 16.8990/海光 16.6416/天数 14.1316/A 13.8796/B 7.7532/沐曦 6.2860/燧原 1.3252）；昆仑 exec 0ms 服务线程卡死=崩溃族，重掷需用户当次明示授权或平台工单健康 worker rerun；S0 源 5573ffc 含 topk=0 退化分支 zeros 修复
+next: 昆仑=间歇崩溃+需小 BLOCK 双条件；新 ZIP 重掷待健康窗口（同晨 T62 e5 正常判）
 updated: 2026-09-12
 ```
 
@@ -101,3 +101,13 @@ updated: 2026-09-12
   4 方法 0 失败。
 - submission 13792；裁决点=昆仑 uni_sram 解除（过即 8/8：七芯 e1 水位
   部分和 69.4 基准）。
+
+## 2026-09-13 E2 平台终态：7/8（昆仑=崩溃族，间歇性）
+
+- 昆仑终态 exec 0ms 服务线程卡死——**间歇性崩溃**：e1（BLOCK=512）
+  真实执行 10.5s 报 uni_sram，e2（BLOCK=128）秒崩。同晨 T62 e5 昆仑
+  vendor 正常判决 ⇒ 按提交闪断，非 kernel 确定性。
+- 结论：T65 昆仑需（a）小 BLOCK 过 uni_sram +（b）健康评测窗口双条件。
+  e2 字节已备好（BLOCK=128/num_warps=1），新 ZIP 身份重掷即可。
+- 七芯 e2 水位：天数 12.07 / 沐曦 **9.24** / 燧原 1.56 / 海光 18.34 /
+  华为 10.84 / A 11.93 / B 7.66（部分和 71.6）。
