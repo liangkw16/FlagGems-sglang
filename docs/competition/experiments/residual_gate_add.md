@@ -48,17 +48,35 @@
 - source commit：`220aa32d18a1c3a4aca829b09b79e2e906471e43`；ZIP `e4-220aa32`，
   SHA-256 `062fdbe8b19c6cee11e9f7320232fea40781fe1c2a8a64b0aa62511fe1d19bcb`；
   release 回执前缀 `aed4ff41`；5 方法 0 失败。
+
+## 2026-09-14 E4 终版（第三轮审查：双舍入契约强制执行）
+
+- 审查反例全部实证（12 分支超容差：fp16 0.0039>0.001 / bf16
+  0.0625>0.01 / fp32 3.8e-6>1e-6）——**此前"≤1 ulp 在容差内"的论证
+  不成立**（残差抵消放大）。修复：**全部 launch 加
+  `enable_fp_fusion=False`**（探针证明完全恢复契约，三 dtype 均回
+  eager 的 0）。同时：广播 capped-2d BLOCK 恢复 e3 的 4096 上限
+  （修订版曾回退到 1024——审查抓到的性能变量回归）；空维除零守卫；
+  消没矩阵进 required tests。
+- source commit：`ec213b44fb19f1fb45b5bc005fb79813d68049b9`；ZIP `e4-ec213b4`，
+  SHA-256 `695c3242ed6925624fdb4365918f937ab6c31d1f2320613c29e5fce29d7483ca`；
+  release 回执 SHA-256
+  `c5e8b3d2ae80b55d68b39254888949843a263ac6d14a3374321943392d456bfb`；
+  6 方法 0 失败。
+- 注意：generic 也变了（fusion-off 影响全部八芯）——不再"只影响燧原"，
+  平台回归风险由全芯共担；但契约语义正确性优先。
+
 ```current
 task: 73
 operator: residual_gate_add
 batch: 5
 validity: valid
-platform: completed(13910,e3,8/8,4.03084375x team best)
-candidate_stage: e3
+platform: submitted(pre-e4-final,候选就绪;TB e3 4.0308x)
+candidate_stage: e4
 team_best_stage: e3
 team_best_speedup: 4.03084375
 sealed: no
-next: e3 新 TB 4.031（燧原 +92% 配方成立）；距榜首 0.271；配方复刻 T61/T71/T68/T62
+next: e4 终版（fusion-off 契约修复+广播4096+空维守卫）就绪；gap 0.27 冲 Top1；generic 变更全芯共担回归风险
 updated: 2026-09-13
 ```
 

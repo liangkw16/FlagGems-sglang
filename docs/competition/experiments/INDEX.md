@@ -53,7 +53,7 @@
 | 70 | gate_topk | invalid_correctness | completed(13335,e1,5/8;燧原/昆仑/华为=exec0ms崩溃族未裁决) | - | no | e1 终态 5/8：三失败芯均 exec 0ms 崩溃族（12:20 同窗），kunlun vendor 被选中但未执行；下一步=新 ZIP 真实改动重评（燧原/华为可补迭代选择 vendor）或用户授权的同字节重掷 | 2026-09-12 | [gate_topk](gate_topk.md) |
 | 71 | gelu_tanh_and_mul | valid | completed(13917,e3,8/8,2.674825x team best) | e3 2.674825x | no | e3 新 TB 2.675（配方第三证:封顶+4096 分解定理成立）；距榜首 0.77；明日复刻 T74/T63/T64/T68/T66/T67/T62 | 2026-09-13 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
 | 72 | group_norm_silu | candidate-wip | completed(13818,e4,7/8;昆仑uni_sram@64,四档全超,kernel复杂度问题) | - | no | 昆仑 tile 降档轴封;重开=FlagGems 昆仑 softmax 实际形态研究或工单 | 2026-09-13 | [group_norm_silu](group_norm_silu.md) |
-| 73 | residual_gate_add | valid | completed(13910,e3,8/8,4.03084375x team best) | e3 4.03084375x | no | e3 新 TB 4.031（燧原 +92% 配方成立）；距榜首 0.271；配方复刻 T61/T71/T68/T62 | 2026-09-13 | [residual_gate_add](residual_gate_add.md) |
+| 73 | residual_gate_add | valid | submitted(pre-e4-final,候选就绪;TB e3 4.0308x) | e3 4.03084375x | no | e4 终版（fusion-off 契约修复+广播4096+空维守卫）就绪；gap 0.27 冲 Top1；generic 变更全芯共担回归风险 | 2026-09-13 | [residual_gate_add](residual_gate_add.md) |
 | 74 | seqlens_expand | valid | completed(13804,e2,8/8,10.5267x;TB s0 10.6444x) | s0 10.6444x | no | e2 8/8 valid（昆仑重掷成功）；tile 轴收益<窗口方差，收口；对榜首 c2flow 24.68 的差距需新结构 | 2026-09-13 | [seqlens_expand](seqlens_expand.md) |
 | 75 | sigmoid_gate_mul | valid | completed(13912,e2,8/8,2.60653333x team best) | e2 2.60653333x | no | e2 新 TB 2.607（燧原 +113%，天数 1024 vendor 双赢）；距榜首 0.45；配方复刻中 | 2026-09-13 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
 
