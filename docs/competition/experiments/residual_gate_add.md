@@ -4,8 +4,8 @@
 task: 73
 operator: residual_gate_add
 batch: 5
-validity: candidate-wip
-platform: submitted(s0,评测中)
+validity: valid
+platform: completed(13764,s0,8/8,3.95x)
 candidate_stage: s0
 team_best_stage: -
 sealed: no

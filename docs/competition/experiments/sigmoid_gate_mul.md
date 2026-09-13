@@ -4,8 +4,8 @@
 task: 75
 operator: sigmoid_gate_mul
 batch: 5
-validity: candidate-wip
-platform: submitted(13767,s0,评测中)
+validity: valid
+platform: completed(13767,s0,8/8,2.54x)
 candidate_stage: s0
 team_best_stage: -
 sealed: no

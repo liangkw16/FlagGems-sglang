@@ -51,10 +51,10 @@
 | 68 | fused_eh_norm | valid | completed(13443,e3,8/8,7.05304167x team best) | e3 7.05304167x | no | e3 valid 7.053 新 TB（燧原两遍分块等值判关）；差 0.21（HAiWORLD 7.2622）；剩余=海光窗口全开（e1 已证 14.26）+燧原 1.93→2.24 未知轴 | 2026-09-12 | [fused_eh_norm](fused_eh_norm.md) |
 | 69 | fused_moe_dispatch_index | invalid_correctness | submitted(13769,e6,评测中;e5=7/8昆仑第5崩) | - | no | 明日新 ZIP 再掷昆仑(候选改动=rank向量化/kernel2并行);七芯已过部分和356.25 | 2026-09-12 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
 | 70 | gate_topk | invalid_correctness | completed(13335,e1,5/8;燧原/昆仑/华为=exec0ms崩溃族未裁决) | - | no | e1 终态 5/8：三失败芯均 exec 0ms 崩溃族（12:20 同窗），kunlun vendor 被选中但未执行；下一步=新 ZIP 真实改动重评（燧原/华为可补迭代选择 vendor）或用户授权的同字节重掷 | 2026-09-12 | [gate_topk](gate_topk.md) |
-| 71 | gelu_tanh_and_mul | candidate-wip | submitted(s0,评测中) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
-| 72 | group_norm_silu | candidate-wip | submitted(s0,评测中) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [group_norm_silu](group_norm_silu.md) |
-| 73 | residual_gate_add | candidate-wip | submitted(s0,评测中) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [residual_gate_add](residual_gate_add.md) |
+| 71 | gelu_tanh_and_mul | valid | completed(13763,s0,8/8,2.57x) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
+| 72 | group_norm_silu | candidate-wip | submitted(13774,e1,评测中;s0=7/8 昆仑 uni_sram) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [group_norm_silu](group_norm_silu.md) |
+| 73 | residual_gate_add | valid | completed(13764,s0,8/8,3.95x) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [residual_gate_add](residual_gate_add.md) |
 | 74 | seqlens_expand | valid | completed(13762,s0,8/8,10.6444x) | - | no | S0 首发即 8/8 valid 10.6444x（天数 25.5/海光 14.6/A 12.5/B 10.6/燧原 6.8/华为 5.8/沐曦 7.6/昆仑 1.8）；c2flow 19.98 为靶；E1 按逐芯定轴 | 2026-09-13 | [seqlens_expand](seqlens_expand.md) |
-| 75 | sigmoid_gate_mul | candidate-wip | submitted(13767,s0,评测中) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
+| 75 | sigmoid_gate_mul | valid | completed(13767,s0,8/8,2.54x) | - | no | S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴 | 2026-09-13 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

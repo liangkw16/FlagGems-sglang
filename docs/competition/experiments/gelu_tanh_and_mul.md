@@ -4,8 +4,8 @@
 task: 71
 operator: gelu_tanh_and_mul
 batch: 5
-validity: candidate-wip
-platform: submitted(s0,评测中)
+validity: valid
+platform: completed(13763,s0,8/8,2.57x)
 candidate_stage: s0
 team_best_stage: -
 sealed: no

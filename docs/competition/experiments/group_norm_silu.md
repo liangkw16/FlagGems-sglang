@@ -5,8 +5,8 @@ task: 72
 operator: group_norm_silu
 batch: 5
 validity: candidate-wip
-platform: submitted(s0,评测中)
-candidate_stage: s0
+platform: submitted(13774,e1,评测中;s0=7/8 昆仑 uni_sram)
+candidate_stage: e1
 team_best_stage: -
 sealed: no
 next: S0 首发等窗口；目标 8/8 valid 后按逐芯读数定轴
@@ -33,3 +33,16 @@ updated: 2026-09-13
 - screening 多轮门禁拦下并修复的缺陷已记录于提交说明；
   最终 release：0 失败/错误/skip，非空 kernel launch，NVIDIA 代理范围。
 - 所有八芯目标 `target-runtime-unverified`；裁决权在平台。
+
+## 2026-09-13 E1：昆仑小 tile vendor（候选就绪后提交）
+
+- S0 判决：七芯过（含燧原/华为），**昆仑 `OutOfResources: uni_sram`**
+  ——[C,S] tile 超该栈 SRAM 预算（真实执行 7.5s 后报错，非崩溃族）。
+- E1：`_kunlunxin` vendor 同 kernel，tile 上限 8192→2048 lane
+  （BLOCK_S 下限 32，FlagGems 昆仑小 tile 注记）；generic 字节不动。
+- source commit：`8b539234fc8d130dc8698ce68b57982e2000ad46`；ZIP `e1-8b53923`，
+  SHA-256 `356e1012819dfc0bb4d553c569bb4d58300ef6d00bae76f594c09e3d8d25af09`。
+- release 回执：`batch5-t72e1-validate-20260913/group_norm_silu/verification.json`，
+  SHA-256 `1e430b40e9d733dfd25f3501d7d6878448929aedd98ca2c897ae762d4bedbc10`；
+  4 方法 0 失败。
+- submission 13774；裁决点=昆仑 uni_sram 解除。
