@@ -63,7 +63,7 @@ def residual_gate_add(residual, update, gate):
         assert gate.is_contiguous()
     out = torch.empty_like(residual)
     if rows and d:
-        block = min(1024, triton.next_power_of_2(d))
+        block = min(4096, triton.next_power_of_2(d))
         _residual_gate_add_capped[
             (min(rows, _MAX_ROWS), triton.cdiv(d, block))
         ](
