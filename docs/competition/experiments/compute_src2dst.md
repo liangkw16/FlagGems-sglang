@@ -1,16 +1,25 @@
 # Task 61 `compute_src2dst` 实验记录
 
+
+## 2026-09-13 E8：燧原配方复刻（4096+封顶 24）——不适用 scatter（未过 TB）
+
+- 真值：avg 2.0460 < TB 2.074；**enflame 3.8018 < 最佳 4.10（-7%）**，
+  其余芯持平。**配方（grid 封顶+BLOCK 4096）对 streaming elementwise
+  成立（T73 +92%/T75 +113%），对 scatter 无效**——散乱 store 需要
+  程序级并行，封顶 24 后并行度不足。边界已清晰。
+- 唯一残余轴：muxi 1.08 vs 榜首 2.72（2.5x），无已知形态证据。
+
 ```current
 task: 61
 operator: compute_src2dst
 batch: 5
 validity: valid
-platform: completed(13772,e7,8/8,2.074025x)
+platform: completed(13914,e8,8/8,2.046x;TB e7 2.074x)
 candidate_stage: e7
 team_best_stage: e7
 team_best_speedup: 2.074025
 sealed: no
-next: e7 valid 2.074（燧原七轮破局=宿主int32降位+纯i32链）；榜首 RSI 2.421 差 0.35
+next: e8 配方对 scatter 无效（3.80<4.10,边界清晰）；残余轴=muxi 2.5x 无证据；TB e7 2.074 守
 updated: 2026-09-13
 ```
 

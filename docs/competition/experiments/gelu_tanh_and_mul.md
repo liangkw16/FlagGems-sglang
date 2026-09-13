@@ -5,12 +5,12 @@ task: 71
 operator: gelu_tanh_and_mul
 batch: 5
 validity: valid
-platform: completed(13898,e2,8/8,2.621x;TB e1 2.62646667x)
-candidate_stage: e2
+platform: submitted(13917,e3,评测中;TB e1 2.62646667x)
+candidate_stage: e3
 team_best_stage: e1
 team_best_speedup: 2.62646667
 sealed: no
-next: BLOCK=4096 对燧原 +44%（API 真值订正,此前结论反转）；e3 假设=燧原 8192 + 昆仑 no-loop（T61 no-loop 读 1.29 vs 本题 0.25）
+next: e3（燧原配方 4096+封顶）评测中；预期 enflame 1.484→~2.9、均值→2.8+
 updated: 2026-09-13
 ```
 
@@ -52,3 +52,11 @@ vendor 反把燧原打回 1.028——**该 vendor 是自伤，应改回 4096**�
 vs 1.14（4.6x）——两芯均为结构性差距。TB 保持 e1 2.6265。
 **下一假设**：①燧原再推 BLOCK 8192（4096 已证正向）；②昆仑 no-loop
 形态（T61 的 no-loop 简单 1D 读 1.29 vs 本题 grid-stride 读 0.25）。
+
+## 2026-09-13 E3：燧原配方复刻（BLOCK 4096 + 封顶 24，已发射 13917）
+
+- 取代 e2 的冻结-1024 自伤 vendor；套用 T73 e3(+92%)/T75 e2(+113%)
+  双证配方。预期 enflame 1.484 → ~2.9（均值 →2.8+）。
+- source commit：`d7f0d6f83151a432bfbabd350814bbe2a817fb27`；ZIP `e3-d7f0d6f`，
+  SHA-256 `58531549a6fbac30b280d50d61aef6f090cd4bd1336011e9020570ee3cf576c8`；
+  release 回执 SHA-256 `b793d827900cdc8c53407e9a4ba51662ee5d85386f2fe6e9e946f2bbcb9c9b2d`。
