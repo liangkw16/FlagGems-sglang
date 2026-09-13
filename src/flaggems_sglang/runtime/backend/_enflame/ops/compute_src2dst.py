@@ -20,16 +20,20 @@ import torch
 import triton
 import triton.language as tl
 
-_BLOCK = 1024
+_BLOCK = 4096
+_MAX_PROGS = 24
 
 
 @triton.jit(do_not_specialize=["n"])
 def _compute_src2dst(reorder_ptr, out_ptr, n, BLOCK: tl.constexpr):
-    pid = tl.program_id(0)
-    offsets = pid * BLOCK + tl.arange(0, BLOCK)
-    mask = offsets < n
-    cur = tl.load(reorder_ptr + offsets, mask=mask, other=0).to(tl.int32)
-    tl.store(out_ptr + cur, offsets, mask=mask)
+    # E8: grid capped at the 24-SIP width with a grid-stride and
+    # BLOCK=4096 - the recipe that gave +92%/+113% on enflame for the
+    # T73/T75 elementwise tasks in the same window family.
+    for pid in range(tl.program_id(0), tl.cdiv(n, BLOCK), tl.num_programs(0)):
+        offsets = pid * BLOCK + tl.arange(0, BLOCK)
+        mask = offsets < n
+        cur = tl.load(reorder_ptr + offsets, mask=mask, other=0).to(tl.int32)
+        tl.store(out_ptr + cur, offsets, mask=mask)
 
 
 def compute_src2dst(reorder_ids, num_toks):
@@ -43,7 +47,7 @@ def compute_src2dst(reorder_ids, num_toks):
             if reorder_ids.dtype == torch.int64
             else reorder_ids.contiguous()
         )
-        _compute_src2dst[(triton.cdiv(num_toks, _BLOCK),)](
+        _compute_src2dst[(min(triton.cdiv(num_toks, _BLOCK), _MAX_PROGS),)](
             reorder,
             out,
             num_toks,
