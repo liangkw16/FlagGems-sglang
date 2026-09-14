@@ -114,3 +114,12 @@ vs 本题 0.26）。
   SHA-256 `4e218b82541b9c4dab96cc27fe7426941b3b418a785750e6b3ae74939115a125`。
 - 预注册晋级门：**燧原 ≥ 2.6**；未过则关闭"显式 cast 大税"假设，
   禁止批量迁移其它 vendor。
+
+## 2026-09-14 E5 平台状态：已提交，判决查询被 token 过期阻塞
+
+- submission 已成功（state=submitted，intent 记录 14597 区间、
+  file_url sha 198b2f69…）；随后 status 查询返回 HTTP 401（token
+  过期）。重新认证需邮箱/手机验证码，agent 无法自动完成。
+- 续接动作：用户重新 `platform_cli.py auth` 后以
+  `status --race 782kzq4m --batch 5 --task 75 --operator sigmoid_gate_mul`
+  读取 e5（i32 地址链探针）终态；预注册门 燧原 ≥2.6。
