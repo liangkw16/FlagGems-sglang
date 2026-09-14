@@ -259,3 +259,19 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   i32 计算偏移 + do_not_specialize 尺寸。
 - 榜首 RSI 2.421，差 0.35；七芯水位本就是未过线最强，性能轴后续按
   逐芯读数定。
+
+## 2026-09-14 E9 候选就绪：e7 字节恢复 + 宿主去零填充（待发射）
+
+- Codex 审查发现：燧原 vendor 用 `torch.zeros` 分配输出，而题面契约是
+  完整置换（每个位置必写一次）——零初始化是一整个白烧的设备写。
+- 载体 = **恢复 e7 字节**（e8 配方已被平台证伪：3.80<4.10）+ `zeros→empty`。
+  generic 七芯路径与 e7 完全同字节，读数应仅在窗口方差内波动。
+- source commit：`e5a9a069bb33`；verification commit：`754d91e02ae6`。
+- ZIP `e9-e5a9a06`，2 members（generic + enflame），SHA-256
+  `5e3df87636ff47f0d343264405a3837b0397e4a39be8dda5c8494d06c3c796bc`。
+- release 回执 `batch5-submit-20260914/compute_src2dst/verification.json`
+  SHA-256 `fea9029fe330ac62e89621f36bcf3a5d0c69214a2d0cfca5c8fab0f647db9288`
+  （release 模式、3 tests 0F0E0S、generic 19 次真实 launch；
+  enflame vendor target-runtime-unverified）。
+- 预注册晋级门：**燧原 ≥ 4.10（e7 水位）且均值 > TB 2.074**；燧原无增益
+  则轴关，均值门失败但七芯无异动即收盘。

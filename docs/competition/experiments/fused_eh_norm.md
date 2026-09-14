@@ -181,3 +181,20 @@ updated: 2026-09-12
 - **Top1 掷币未中**：7.053 vs HAiWORLD 7.2622（差 0.21，#6/6）。
   team best 仍前进一步；燧原两遍分块轴按等值判关。
 - 额度：本发为今日最后一发（30/30 用满）。
+
+## 2026-09-14 E5 候选就绪：仅去 24-program cap（待发射）
+
+- Codex 审查 + 官方 `_enflame/gcu400/ops/layernorm.py` 对账：行归约族用
+  flat grid（grid.x 上限 65535），不套 streaming 族的 24 cap；本 vendor
+  kernel 内已有行 grid-stride，可自适应任意 grid 宽度。
+- 载体 = e4 字节仅改 `min(tokens, 24)` → `min(tokens, 65535)`（单变量），
+  其余四源（generic/hygon/iluvatar/metax）字节不动。
+- source / verification commit：`754d91e02ae6`。
+- ZIP `e5-754d91e`，5 members，SHA-256
+  `78df07432437804cebcea79b9be36afaaf4249a74fd5f42ff9d9297491f77209`。
+- release 回执 `batch5-submit-20260914/fused_eh_norm/verification.json`
+  SHA-256 `dc831a5d6756c250174f1a785e3ae3f34c59df0452a70e4d7719c81ff854d1b1`
+  （release 模式、5 tests 0F0E0S、generic 23 次真实 launch；
+  四 vendor target-runtime-unverified）。
+- 预注册晋级门：**燧原 ≥ 1.93（e3 水位）且均值 > TB 7.089**；恢复量
+  预期 +0.04~0.05 均值（1.56→1.93 ≈ +0.046），不预期触及榜首 5.21 结构差。
