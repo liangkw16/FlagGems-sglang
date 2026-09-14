@@ -96,11 +96,13 @@ def group_norm_silu(x, weight, bias, num_groups, eps):
     out = torch.empty_like(xc)
     n_groups_total = xc.shape[0] * num_groups
     if n_groups_total and spatial:
+        # E7: BLOCK_HW ceiling raised to 2048 - the flat skeleton's first
+        # untried width step on this chip.
         # Master's proven ceiling: block_hw of 1024 lanes. The grid is
         # one program per (n, group) - same as generic and FlagGems
         # master; N * num_groups stays far below the 65535 grid limit
         # for every shape this operator serves.
-        block_hw = min(triton.next_power_of_2(spatial), 1024)
+        block_hw = min(triton.next_power_of_2(spatial), 2048)
         _group_norm_silu_kx[(n_groups_total,)](
             xc,
             w,
