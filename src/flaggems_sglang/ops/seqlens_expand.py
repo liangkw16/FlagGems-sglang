@@ -11,16 +11,24 @@ import triton.language as tl
 def _seqlens_expand(
     extend,
     seq,
-    offsets,
     out,
     es,
     ss,
-    os_,
     qo_len,
     BLOCK: tl.constexpr,
+    BLOCK_N: tl.constexpr,
 ):
     pid = tl.program_id(0)
     tiles = tl.cdiv(qo_len, BLOCK)
+    # Exclusive prefix sum of extend[0:pid], accumulated in fixed-width
+    # masked chunks: no constexpr depends on the request count, so one
+    # compiled variant serves every shape (and the separate zeros +
+    # torch.cumsum launches disappear - the whole op is one launch).
+    acc = tl.zeros([BLOCK_N], dtype=tl.int32)
+    for s0 in range(0, pid, BLOCK_N):
+        ridx = s0 + tl.arange(0, BLOCK_N)
+        acc += tl.load(extend + ridx, mask=ridx < pid, other=0)
+    base = tl.sum(acc)
     for tile in range(tl.program_id(1), tiles, tl.num_programs(1)):
         qo = tl.load(extend + pid * es)
         kv = tl.load(seq + pid * ss)
@@ -29,7 +37,6 @@ def _seqlens_expand(
         start = kv - qo + 1
         offs = tile * BLOCK + tl.arange(0, BLOCK)
         mask = offs < qo
-        base = tl.load(offsets + pid * os_)
         values = tl.maximum(start + offs, 0)
         tl.store(out + (base + offs).to(tl.int64), values, mask=mask)
 
@@ -43,10 +50,6 @@ def seqlens_expand(extend_seq_lens, seq_lens, total_len, max_q_len):
         total_len, dtype=torch.int32, device=extend_seq_lens.device
     )
     if n and total_len:
-        offsets = torch.zeros(
-            n + 1, dtype=torch.int32, device=extend_seq_lens.device
-        )
-        torch.cumsum(extend_seq_lens, dim=0, out=offsets[1:])
         # E1: the S0 whole-request form runs one program per request,
         # underfilling wide grids when requests are few but q_len is
         # large (the per-chip gap to the leader is uniform). Tile the
@@ -59,13 +62,12 @@ def seqlens_expand(extend_seq_lens, seq_lens, total_len, max_q_len):
         _seqlens_expand[(n, tiles)](
             extend_seq_lens,
             seq_lens,
-            offsets,
             out,
             extend_seq_lens.stride(0),
             seq_lens.stride(0),
-            offsets.stride(0),
             max_q_len,
             BLOCK=block,
+            BLOCK_N=block,
         )
     return out
 
