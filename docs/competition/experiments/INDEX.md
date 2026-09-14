@@ -50,7 +50,7 @@
 | 67 | fill_padded_rows | valid | completed(13386,e3,8/8,4.23825x;三宽芯门全负,轴关闭;TB e2 4.2969x) | e2 4.2969x | no | e3 列分块轴关闭(唯沐曦+24%);TB e2 4.2969 守榜(#8,榜首 8.32);宽 shape 结构待新证据 | 2026-09-12 | [fill_padded_rows](fill_padded_rows.md) |
 | 68 | fused_eh_norm | valid | completed(14589,e6,8/8,7.042x;TB e4 7.089x) | e4 7.08945833x | no | e6 split-row证伪(燧原0.87,饥饿假说假);TB e4 7.089守;燧原缺因未破,主攻降级 | 2026-09-14 | [fused_eh_norm](fused_eh_norm.md) |
 | 69 | fused_moe_dispatch_index | invalid_correctness | completed(13809,e7,7/8;昆仑七连崩,轴终封仅剩工单) | - | no | T69 昆仑轴终封;仅剩平台工单;七芯部分和 357.5 永久待命 | 2026-09-12 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
-| 70 | gate_topk | invalid_correctness | submitted(14849,e3r,评测中;华为vendor 0.3355过,昆仑队列1.5h+) | - | no | e3r 七芯已判(华为vendor过线),昆仑长尾队列中,终态回填;重掷额度已用尽 | 2026-09-12 | [gate_topk](gate_topk.md) |
+| 70 | gate_topk | invalid_correctness | submitted(14849,e3r,隔夜评测中;华为vendor 0.3355过,昆仑无失败指纹) | - | no | e3r 昆仑隔夜队列无失败指纹,终态回填;重掷额度已用尽,不再改字节 | 2026-09-12 | [gate_topk](gate_topk.md) |
 | 71 | gelu_tanh_and_mul | valid | completed(14573,e4,8/8,2.7109x 新TB) | e4 2.7109x | no | e4 no-loop昆仑0.304复制链失败(门0.5未过,链收口);TB 2.711守;昆仑真因/燧原8192待证 | 2026-09-14 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
 | 72 | group_norm_silu | valid | completed(14859,e8,8/8,2.5400x;昆仑4096 0.545抛物线;TB e6 2.6627x) | e6 2.66266667x | no | e8 昆仑宽度抛物线(0.49/0.53/0.55);TB e6 2.663守;明日联评2048 | 2026-09-14 | [group_norm_silu](group_norm_silu.md) |
 | 73 | residual_gate_add | valid | completed(14838,e6,8/8,4.0993x 新TB;昆仑4096 0.60) | e6 4.0993125x | no | e6 昆仑4096 0.60(+23%)新TB 4.099;宽度曲线双正,8192待信号;差榜首0.876 | 2026-09-14 | [residual_gate_add](residual_gate_add.md) |

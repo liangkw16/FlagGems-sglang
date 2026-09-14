@@ -5,11 +5,11 @@ task: 70
 operator: gate_topk
 batch: 5
 validity: invalid_correctness
-platform: submitted(14849,e3r,评测中;华为vendor 0.3355过,昆仑队列1.5h+)
+platform: submitted(14849,e3r,隔夜评测中;华为vendor 0.3355过,昆仑无失败指纹)
 candidate_stage: e3
 team_best_stage: -
 sealed: no
-next: e3r 七芯已判(华为vendor过线),昆仑长尾队列中,终态回填;重掷额度已用尽
+next: e3r 昆仑隔夜队列无失败指纹,终态回填;重掷额度已用尽,不再改字节
 updated: 2026-09-12
 ```
 
@@ -207,3 +207,8 @@ updated: 2026-09-12
 - 昆仑 waiting_callback 已超 1.5h（与 e3 的 3630s 挂死同长尾模式），
   终态落地后回填。e3r 为注释载体重掷 1/2，无论结果如何本季昆仑
   重掷额度已用尽。
+
+## 2026-09-15 00:40 T70 e3r 隔夜状态：仍评测中，无失败指纹
+
+- 昆仑 waiting_callback 持续（提交 23:51 起 >1h），无 SIGABRT/超时指纹。
+  状态如实记录；终态落地后回填本节与 CURRENT，不改字节不再重掷。
