@@ -3,21 +3,21 @@
 # Adapted from SGLang fd32226 kernels/ops/diffusion/norm/
 # group_norm_silu_triton.py.
 
-# Kunlunxin vendor, E5. E1/E3/E4 proved that shrinking the [C, S] tile
-# (8192/2048/512/64 lanes) never satisfied "uni_sram", and FlagTree #1126
-# shows that label is a wrapper around ANY make_ttxir pass failure - so
-# E5 abandons the 2D tile entirely and adopts the loop skeleton of
-# FlagGems master _kunlunxin/ops/native_group_norm.py, the only form
-# known to compile this op class on this stack: a FLAT 1D reduce over
-# the group's contiguous span with [BLOCK_HW] vector accumulators and a
-# single tl.sum at the end, then a per-channel normalize whose
-# GROUP_SIZE loop unrolls statically around scalar weight/bias loads
-# and contiguous BLOCK_HW stores (no idx // spatial gather anywhere).
-# Two deliberate deviations from master: variance stays centered about
-# the mean (E[x^2] - mean^2 cancels for large-mean groups - the
-# generic's regression matrix pins this), and silu is fused into the
-# normalize pass in fp32 with the output cast at the store, matching
-# the reference contract exactly.
+# Ascend vendor, e6: the flat skeleton that unlocked this op on Kunlunxin
+# (E5, submission 14528), ported onto the Ascend rule set. One program
+# owns one (n, group): a flat 1D reduce over the group's contiguous span
+# with [BLOCK_HW] vector accumulators and a single tl.sum at the end,
+# then a per-channel normalize whose GROUP_SIZE loop unrolls statically
+# around scalar weight/bias loads and contiguous BLOCK_HW block stores -
+# no 2D tile, no idx // spatial gather. Ascend-specific discipline:
+# BLOCK_HW stays <= 1024 lanes (UB budget), the centered-variance mask
+# is arithmetic (tl.where on the reduction is the known GCU poison and
+# triton-ascend #1610 wants the reduction axis on the fastest lane dim,
+# which a flat 1D span gives directly), silu runs in fp32 with the
+# output cast at the store, and eps is do_not_specialize'd. The padded
+# lanes of the centered pass are explicitly zeroed - a bare d * d would
+# add mean^2 per padded lane whenever num_elements is not a multiple of
+# BLOCK_HW. Variance stays centered about the mean on purpose.
 
 import torch
 import triton
@@ -25,7 +25,7 @@ import triton.language as tl
 
 
 @triton.jit(do_not_specialize=["eps"])
-def _group_norm_silu_kx(
+def _group_norm_silu_asc(
     x_ptr,
     w_ptr,
     b_ptr,
@@ -50,13 +50,6 @@ def _group_norm_silu_kx(
         sum_acc += x
     mean = tl.sum(sum_acc) / num_elements
 
-    # Centered second pass: (x - mean)^2 accumulated in vector form, one
-    # tl.sum at the end (E[x^2] - mean^2 is numerically unsafe here).
-    # Padded lanes load 0, so their raw d is -mean; the arithmetic mask
-    # zeroes their contribution (a bare sq_acc += d * d inflates the
-    # variance by mean^2 per padded lane whenever num_elements is not a
-    # multiple of BLOCK_HW - Codex caught this on the e5 carrier, whose
-    # benchmark shapes divide evenly and never tripped it).
     sq_acc = tl.zeros([BLOCK_HW], dtype=tl.float32)
     for off in range(0, num_elements, BLOCK_HW):
         idx = off + tl.arange(0, BLOCK_HW)
@@ -96,12 +89,8 @@ def group_norm_silu(x, weight, bias, num_groups, eps):
     out = torch.empty_like(xc)
     n_groups_total = xc.shape[0] * num_groups
     if n_groups_total and spatial:
-        # Master's proven ceiling: block_hw of 1024 lanes. The grid is
-        # one program per (n, group) - same as generic and FlagGems
-        # master; N * num_groups stays far below the 65535 grid limit
-        # for every shape this operator serves.
         block_hw = min(triton.next_power_of_2(spatial), 1024)
-        _group_norm_silu_kx[(n_groups_total,)](
+        _group_norm_silu_asc[(n_groups_total,)](
             xc,
             w,
             b,
