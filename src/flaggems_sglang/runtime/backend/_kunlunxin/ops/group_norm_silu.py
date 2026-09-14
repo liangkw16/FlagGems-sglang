@@ -1,98 +1,79 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Adapted from SGLang fd32226 kernels/ops/diffusion/norm/group_norm_silu_triton.py.
+# Adapted from SGLang fd32226 kernels/ops/diffusion/norm/
+# group_norm_silu_triton.py.
 
-# Kunlunxin vendor, E3: the S0 2D tile (8192-lane cap) and E1 (2048)
-# both hit OutOfResources: uni_sram on real executions; E2's 1D form
-# tripped the intermittent evaluator crash instead. E4 drops to
-# BLOCK_S=64 outright: 8192/2048/512 all exceeded uni_sram on real
-# executions, so the budget is far smaller than any conventional tile.
+# Kunlunxin vendor, E5. E1/E3/E4 proved that shrinking the [C, S] tile
+# (8192/2048/512/64 lanes) never satisfied "uni_sram", and FlagTree #1126
+# shows that label is a wrapper around ANY make_ttxir pass failure - so
+# E5 abandons the 2D tile entirely and adopts the loop skeleton of
+# FlagGems master _kunlunxin/ops/native_group_norm.py, the only form
+# known to compile this op class on this stack: a FLAT 1D reduce over
+# the group's contiguous span with [BLOCK_HW] vector accumulators and a
+# single tl.sum at the end, then a per-channel normalize whose
+# GROUP_SIZE loop unrolls statically around scalar weight/bias loads
+# and contiguous BLOCK_HW stores (no idx // spatial gather anywhere).
+# Two deliberate deviations from master: variance stays centered about
+# the mean (E[x^2] - mean^2 cancels for large-mean groups - the
+# generic's regression matrix pins this), and silu is fused into the
+# normalize pass in fp32 with the output cast at the store, matching
+# the reference contract exactly.
 
 import torch
 import triton
 import triton.language as tl
 
 
-@triton.jit
-def _group_norm_silu(
+@triton.jit(do_not_specialize=["eps"])
+def _group_norm_silu_kx(
     x_ptr,
     w_ptr,
     b_ptr,
     out_ptr,
-    G,
-    spatial,
+    num_groups,
     group_channels,
+    spatial,
     eps,
-    BLOCK_C: tl.constexpr,
-    BLOCK_S: tl.constexpr,
+    GROUP_SIZE: tl.constexpr,
+    BLOCK_HW: tl.constexpr,
 ):
     pid = tl.program_id(0)
-    g_idx = pid % G
-    base = pid.to(tl.int64) * group_channels * spatial
-    wbase = g_idx * group_channels
-    cols = tl.arange(0, BLOCK_C)
-    cm = cols < group_channels
-    # Loop-carried scalars only (the tensor-carry scan is the proven
-    # GCU300 PassManager poison); the [C, S] tile avoids per-element
-    # runtime division for the channel lookup entirely.
-    total = group_channels * spatial
-    # Variance is computed about the mean (a third pass) because
-    # E[x^2]-mean^2 cancels catastrophically for large-mean fp32 groups.
-    sum_ = tl.zeros((), dtype=tl.float32)
-    for s0 in range(0, spatial, BLOCK_S):
-        rows = s0 + tl.arange(0, BLOCK_S)
-        m = cm[:, None] & (rows[None, :] < spatial)
-        v = tl.load(
-            x_ptr
-            + base
-            + cols[:, None].to(tl.int64) * spatial
-            + rows[None, :],
-            mask=m,
-            other=0.0,
-        ).to(tl.float32)
-        sum_ += tl.sum(v)
-    mean = sum_ / total
-    sumsq = tl.zeros((), dtype=tl.float32)
-    for s0 in range(0, spatial, BLOCK_S):
-        rows = s0 + tl.arange(0, BLOCK_S)
-        m = cm[:, None] & (rows[None, :] < spatial)
-        v = tl.load(
-            x_ptr
-            + base
-            + cols[:, None].to(tl.int64) * spatial
-            + rows[None, :],
-            mask=m,
-            other=0.0,
-        ).to(tl.float32)
-        # Arithmetic mask (not tl.where) zeroes the padded lanes before
-        # the reduction - other=0.0 would contribute (0-mean)^2 here.
-        d = (v - mean) * m.to(tl.float32)
-        sumsq += tl.sum(d * d)
-    var = sumsq / total
-    inv = tl.rsqrt(var + eps)
-    w = tl.load(w_ptr + wbase + cols, mask=cm, other=0.0).to(tl.float32)
-    b = tl.load(b_ptr + wbase + cols, mask=cm, other=0.0).to(tl.float32)
-    for s0 in range(0, spatial, BLOCK_S):
-        rows = s0 + tl.arange(0, BLOCK_S)
-        m = cm[:, None] & (rows[None, :] < spatial)
-        v = tl.load(
-            x_ptr
-            + base
-            + cols[:, None].to(tl.int64) * spatial
-            + rows[None, :],
-            mask=m,
-            other=0.0,
-        ).to(tl.float32)
-        y = (v - mean) * inv * w[:, None] + b[:, None]
-        y = y * (1.0 / (1.0 + tl.exp(-y)))
-        tl.store(
-            out_ptr
-            + base
-            + cols[:, None].to(tl.int64) * spatial
-            + rows[None, :],
-            y.to(out_ptr.dtype.element_ty),
-            mask=m,
-        )
+    num_elements = group_channels * spatial
+    base = pid * num_elements
+    wbase = (pid % num_groups) * group_channels
+
+    sum_acc = tl.zeros([BLOCK_HW], dtype=tl.float32)
+    for off in range(0, num_elements, BLOCK_HW):
+        idx = off + tl.arange(0, BLOCK_HW)
+        m = idx < num_elements
+        x = tl.load(x_ptr + base + idx, mask=m, other=0.0).to(tl.float32)
+        sum_acc += x
+    mean = tl.sum(sum_acc) / num_elements
+
+    # Centered second pass: (x - mean)^2 accumulated in vector form, one
+    # tl.sum at the end (E[x^2] - mean^2 is numerically unsafe here).
+    sq_acc = tl.zeros([BLOCK_HW], dtype=tl.float32)
+    for off in range(0, num_elements, BLOCK_HW):
+        idx = off + tl.arange(0, BLOCK_HW)
+        m = idx < num_elements
+        x = tl.load(x_ptr + base + idx, mask=m, other=0.0).to(tl.float32)
+        d = x - mean
+        sq_acc += d * d
+    var = tl.sum(sq_acc) / num_elements
+    rstd = tl.rsqrt(var + eps)
+
+    for c in range(0, GROUP_SIZE):
+        w = tl.load(w_ptr + wbase + c).to(tl.float32)
+        b = tl.load(b_ptr + wbase + c).to(tl.float32)
+        cbase = base + c * spatial
+        for off in range(0, spatial, BLOCK_HW):
+            idx = off + tl.arange(0, BLOCK_HW)
+            m = idx < spatial
+            x = tl.load(x_ptr + cbase + idx, mask=m, other=0.0).to(tl.float32)
+            y = (x - mean) * rstd * w + b
+            y = y * (1.0 / (1.0 + tl.exp(-y)))
+            y = y.to(out_ptr.dtype.element_ty)
+            tl.store(out_ptr + cbase + idx, y, mask=m)
 
 
 def group_norm_silu(x, weight, bias, num_groups, eps):
@@ -101,6 +82,8 @@ def group_norm_silu(x, weight, bias, num_groups, eps):
     channels = x.shape[1]
     assert channels % num_groups == 0
     xc = x.contiguous()
+    w = weight.contiguous()
+    b = bias.contiguous()
     spatial = 1
     for s in xc.shape[2:]:
         spatial *= s
@@ -108,20 +91,22 @@ def group_norm_silu(x, weight, bias, num_groups, eps):
     out = torch.empty_like(xc)
     n_groups_total = xc.shape[0] * num_groups
     if n_groups_total and spatial:
-        block_c = triton.next_power_of_2(group_channels)
-        block_s = min(triton.next_power_of_2(spatial), max(32, 64))
-        _group_norm_silu[(min(n_groups_total, 65535),)](
+        # Master's proven ceiling: block_hw of 1024 lanes. The grid is
+        # one program per (n, group) - same as generic and FlagGems
+        # master; N * num_groups stays far below the 65535 grid limit
+        # for every shape this operator serves.
+        block_hw = min(triton.next_power_of_2(spatial), 1024)
+        _group_norm_silu_kx[(n_groups_total,)](
             xc,
-            weight,
-            bias,
+            w,
+            b,
             out,
             num_groups,
-            spatial,
             group_channels,
+            spatial,
             eps,
-            BLOCK_C=block_c,
-            BLOCK_S=block_s,
-            num_warps=1,
+            GROUP_SIZE=group_channels,
+            BLOCK_HW=block_hw,
         )
     return out.reshape(x.shape)
 
