@@ -3,13 +3,16 @@
 
 # Enflame vendor: the two proven levers combined - grid capped at the
 # 24-SIP width with a grid-stride, and BLOCK raised to 4096 (this chip
-# gained +71% at 4096 vs 1024 on this very task in e1).
+# gained +71% at 4096 vs 1024 on this very task in e1). E4 pushes the
+# only remaining width lever to 8192 (the recipe's BLOCK axis has been
+# monotonically positive on this chip, and the task leader's enflame
+# reading of 7.84 - vs our 1.76 - proves far more headroom exists).
 
 import torch
 import triton
 import triton.language as tl
 
-_BLOCK = 4096
+_BLOCK = 8192
 _MAX_PROGS = 24
 
 
