@@ -363,3 +363,20 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 处置：按预注册关闭"除法形态"轴。华为 20-28x 第二梯队（3 队）的
   形态差异在别处（gather 布局/行打包/原生路径），需新结构证据才重开；
   top1 主攻按队列转 T68（燧原 5 队 4-6x 结构实锤）。
+
+## 2026-09-14 E9 候选就绪：华为 4 行打包（Codex v3 队列槽 3，待发射）
+
+- 依据：华为第二高 28.46（zhaxi123）非孤立（3 队 ≥20，最新为今日提交）
+  ——存在值得调查的结构差距。现 Ascend 路径每 program 处理一行、
+  标量加载 request/length。
+- 载体 = e4r 其它芯 + **e7 Ascend 字节**（`>>` 形态，弃 e8 除法反例）
+  + 单变量行映射：4 行/program，request/length 沿行轴向量化加载，
+  gather/store 变 2D (4, BLOCK) 瓦片；页 BLOCK/clamp/移位/融合 store
+  全部冻结。
+- source / verification commit：`19626a3…`；ZIP `e9-19626a3`，
+  SHA-256 `f86bc3f092a64a13eb8a149b8a5626d05f0fe2ad6c1ff4882c0968a241379b22`。
+- release 回执 `batch5-submit-20260914/build_trtllm_mha_page_table_e9/verification.json`
+  SHA-256 `377a2da12feabf273288aa672b1004841a4db731ffb633508c4ca052928e37e5`
+  （--proxy-vendor ascend/hygon：ascend vendor 26 launch 全矩阵 0F0E0S，
+  含负 sentinel 回归）。
+- 预注册晋级门：**华为 ≥ 12 且均值 ≥ 24.33**；仅升 9-10 不追 8 行档。
