@@ -15,13 +15,13 @@ task: 75
 operator: sigmoid_gate_mul
 batch: 5
 validity: valid
-platform: completed(13912,e2,8/8,2.60653333x team best)
-candidate_stage: e2
-team_best_stage: e2
-team_best_speedup: 2.60653333
+platform: completed(14570,e3,8/8,2.69600833x 新TB)
+candidate_stage: e3
+team_best_stage: e3
+team_best_speedup: 2.69600833
 sealed: no
-next: e2 新 TB 2.607（燧原 +113%，天数 1024 vendor 双赢）；距榜首 0.45；配方复刻中
-updated: 2026-09-13
+next: e3 no-loop昆仑0.899新TB 2.696;下一轴=燧原8192(leader 7.84可达)
+updated: 2026-09-14
 ```
 
 ## 契约与实现（S0）
@@ -69,3 +69,14 @@ vs 本题 0.26）。
   （--proxy-vendor kunlunxin：vendor 17 次真实 launch 全矩阵 0F0E0S）。
 - 预注册晋级门：**昆仑 ≥ 0.50**；<0.35 则暂停 no-loop 复制链
   （T71/T73 不再跟发）。
+
+## 2026-09-14 E3 平台终态：8/8 VALID 2.696x 新 TB（submission 14570）——no-loop 假设验证
+
+- **昆仑 vendor 被选中、passed 0.8994**（generic 循环形态 0.263 →
+  3.4x）——no-loop 探针兑现，"runtime 循环形态是昆仑 streaming 低
+  读数主因"升级为单题实证；队列 6/7 号槽（T71/T73 昆仑）解锁。
+- 逐芯：天数 4.7862 / 沐曦 2.6003 / 燧原 1.7565 / 海光 4.0185 /
+  **昆仑 0.8994** / 华为 1.3183 / A 3.2262 / B 2.9627 → 均值 2.696
+  （前 TB 2.607）。榜首 GuanghuLab 3.688，差 0.99。
+- 下一轴：燧原 8192（队列 9 号，leader 7.84 证明可达）与昆仑带宽
+  剩余差距待逐芯榜单刷新后评估。
