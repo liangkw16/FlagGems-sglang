@@ -52,7 +52,7 @@
 | 69 | fused_moe_dispatch_index | invalid_correctness | completed(13809,e7,7/8;昆仑七连崩,轴终封仅剩工单) | - | no | T69 昆仑轴终封;仅剩平台工单;七芯部分和 357.5 永久待命 | 2026-09-12 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
 | 70 | gate_topk | invalid_correctness | completed(14556,e3,7/8;昆仑编译过但3630s挂死@0%util,转工单) | - | no | e1 终态 5/8：三失败芯均 exec 0ms 崩溃族（12:20 同窗），kunlun vendor 被选中但未执行；下一步=新 ZIP 真实改动重评（燧原/华为可补迭代选择 vendor）或用户授权的同字节重掷 | 2026-09-12 | [gate_topk](gate_topk.md) |
 | 71 | gelu_tanh_and_mul | valid | completed(14573,e4,8/8,2.7109x 新TB) | e4 2.7109x | no | e4 no-loop昆仑0.304复制链失败(门0.5未过,链收口);TB 2.711守;昆仑真因/燧原8192待证 | 2026-09-14 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
-| 72 | group_norm_silu | valid | completed(14528,e5,8/8,2.5686x 昆仑解锁0.502) | e5 2.56860417x | no | 昆仑 master 骨架解锁(0.502);燧原0.44/华为1.16偏低待逐芯vendor轴;差榜首0.46 | 2026-09-14 | [group_norm_silu](group_norm_silu.md) |
+| 72 | group_norm_silu | valid | completed(14726,e6,8/8,2.6627x 新TB;华为移植无增益) | e6 2.66266667x | no | e6 padding修复+华为移植无增益(轴停)新TB 2.663;燧原/华为缺因未破,差榜首1.28 | 2026-09-14 | [group_norm_silu](group_norm_silu.md) |
 | 73 | residual_gate_add | valid | completed(14379,e4,8/8,4.027x;TB e3 4.0308x) | e3 4.03084375x | no | e4 fusion-off 无回归（契约修复零代价）；TB e3 守；榜首金狐狸 4.388 差 0.357 需多芯叠加 | 2026-09-13 | [residual_gate_add](residual_gate_add.md) |
 | 74 | seqlens_expand | valid | completed(14535,e3,8/8,19.3101x 新TB) | e3 19.3101x | no | e3 前缀入kernel新TB 19.31（+81%,launch假说兑现）;残余轴=flat-grid并行度;差榜首7.05 | 2026-09-14 | [seqlens_expand](seqlens_expand.md) |
 | 75 | sigmoid_gate_mul | valid | completed(14598,e4,8/8,2.739325x 新TB) | e4 2.739325x | no | e5 i32无增益(2.149≈2.156),i64税假设关;TB e4 2.739守;燧原缺因待他队情报 | 2026-09-14 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |

@@ -5,12 +5,12 @@ task: 72
 operator: group_norm_silu
 batch: 5
 validity: valid
-platform: completed(14528,e5,8/8,2.5686x 昆仑解锁0.502)
-candidate_stage: e5
-team_best_stage: e5
-team_best_speedup: 2.56860417
+platform: completed(14726,e6,8/8,2.6627x 新TB;华为移植无增益)
+candidate_stage: e6
+team_best_stage: e6
+team_best_speedup: 2.66266667
 sealed: no
-next: 昆仑 master 骨架解锁(0.502);燧原0.44/华为1.16偏低待逐芯vendor轴;差榜首0.46
+next: e6 padding修复+华为移植无增益(轴停)新TB 2.663;燧原/华为缺因未破,差榜首1.28
 updated: 2026-09-14
 ```
 
@@ -154,3 +154,14 @@ updated: 2026-09-14
   修复后字节全矩阵通过）。
 - 预注册晋级门：昆仑保持 ≥0.1（修复不应回归）；**华为 ≥2.0 为继续
   研发门**（升位目标 ≥4.8）；均值不低于 2.56 TB 水位减窗口余量。
+
+## 2026-09-14 E6 平台终态：8/8 VALID 2.6627x 新TB（submission 14726）
+
+- **华为 ascend vendor 被选中、passed 1.1958**（generic 1.163，+3% 噪声）
+  ——门（≥2.0）未过，1D 骨架移植在华为无增益，按 Codex 规则停止
+  （无新瓶颈证据不再发）。c2flow 的 4.37 形态仍未破译。
+- **昆仑修复载体 0.491**（e5 的 0.502，噪声内）——padding 方差修复
+  正确性中性确认，TB 载体 hardened。
+- 其余芯窗口上行（muxi 2.96/2.46 +20%、海光 4.74/4.61、A 3.65/3.45、
+  B 3.74/3.75；天数 4.15/4.17、燧原 0.376/0.439）→ 均值 2.6627
+  > TB e5 2.5686，新 TB = e6。#4/6，榜首 Evoke 3.9446，差 1.28。
