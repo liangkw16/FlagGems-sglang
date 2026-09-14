@@ -6,8 +6,9 @@
 # mechanism that took T75's kunlun reading from 0.26 to 0.90 on this
 # same diffusion family. The broadcast path keeps the 2D (row, col
 # block) grid; the same-shape path launches exactly cdiv(n, BLOCK)
-# programs with straight-line bodies (no grid-stride). BLOCK stays
-# 1024 and the double-rounding contract keeps enable_fp_fusion=False:
+# programs with straight-line bodies (no grid-stride). E6 widens the
+# flat path to 4096 lanes (kunlun's one proven tuning axis) and the
+# double-rounding contract keeps enable_fp_fusion=False:
 # the product rounds to the tensor dtype before the residual add,
 # matching the eager chain (fp fusion folds that round-trip away and
 # blows the tolerance - caught by the cancellation cases).
@@ -16,7 +17,7 @@ import torch
 import triton
 import triton.language as tl
 
-_BLOCK = 1024
+_BLOCK = 4096
 
 
 @triton.jit
