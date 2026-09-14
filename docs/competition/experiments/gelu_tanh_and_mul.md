@@ -113,3 +113,15 @@ vs 1.14（4.6x）——两芯均为结构性差距。TB 保持 e1 2.6265。
   extra.libdevice 模块名与 tanh 符号的真实确认（KernelGen 或镜像内
   introspection）。
 - 额度：未消耗（两次均为代理拦截）。
+
+## 2026-09-14 E6 候选就绪：燧原 BLOCK 4096→8192（Codex v3 队列槽 2，解禁一发，待发射）
+
+- 解禁依据：本芯宽度轴单调（1024→4096 +71%）；同族 T75 4096→8192
+  +23%（虽未过其 2.2 门，方向性证据）。单变量=BLOCK_COL 4096→8192，
+  其余=TB e4 字节。
+- source / verification commit：`3db8540…`；ZIP `e6-3db8540`，
+  SHA-256 `9d4018cd0e8253b85797c172649225d339757905aa0d3a3180dd6fc9b0ca485f`。
+- release 回执 `batch5-submit-20260914/gelu_tanh_and_mul_e6/verification.json`
+  SHA-256 见账本 artifacts（enflame vendor 代理 0F0E0S）。
+- 预注册晋级门：**燧原 ≥ 2.10 且完整均值 ≥ 2.75**；未过停宽度轴，
+  不再 16384 梯度。
