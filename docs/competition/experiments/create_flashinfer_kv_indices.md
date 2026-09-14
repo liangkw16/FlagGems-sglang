@@ -5,13 +5,13 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: submitted(13780,e9,评测中;TB e8 199.695x)
+platform: completed(14590,e10,8/8,167.39x;TB e8 199.695x)
 candidate_stage: e9
 team_best_stage: e8
 team_best_speedup: 199.69521875
 sealed: no
-next: e9 valid 171.73 未过 TB（燧原窗口回归 17.8 但 do_not_specialize 反伤大芯,轴关闭）；明日轴=沐锡 87→114/燧原已归位
-updated: 2026-09-12
+next: e10 flat-grid燧原回17.5≈历史水位,无结构增益不追发;TB e8 199.70守;6队≥37x真因未破
+updated: 2026-09-14
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -361,3 +361,13 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   修复后字节）。
 - 预注册晋级门：**燧原 ≥ 22 且相对 17.9 水位有性能证据**；仅回到
   ~18 不算结构晋级、不追发。
+
+## 2026-09-14 E10 平台终态：8/8 VALID 167.39x < TB（submission 14590）——flat-grid 无结构增益
+
+- **燧原 vendor 被选中、passed 17.497**（前读 6.18，2.8x）——但同字节
+  历史水位即 17.9：预注册门（≥22 且超 17.9）未过，2D→1D 调度映射
+  不是燧原缺口的主因，本轮只是踩回正常水位窗。按预注册不追发。
+- 其余芯偏低窗（天数 392/554、海光 278/316、B 288/308；昆仑 vendor
+  2.81/2.71、华为 22.0/23.0）。TB 保持 e8 199.695（当时高水位窗）。
+- 残余轴：6 队 ≥37x 的真因仍未破译（c2flow 83），需新结构证据或
+  燧原侧 profiling；e10 字节保留为燧原已证载体。
