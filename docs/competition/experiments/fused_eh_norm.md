@@ -18,17 +18,28 @@
 - source commit：`220aa32d18a1c3a4aca829b09b79e2e906471e43`；ZIP `e4-220aa32`，
   SHA-256 `95e685ec66e49e50452720badc226a3ba10b4219cb0fe18e482ad9de9e3e1e1a`；
   release 回执前缀 `aaca0ef3`；5 方法 0 失败。
+
+## 2026-09-14 E4 平台终态：8/8 valid 7.0895x 新 team best
+
+- 海光 **13.9942（+6%，vendor 持续兑现）**/A +3%；燧原 row-loop
+  4096+封顶形态 **回退 -19%**（1.93→1.56——归约 kernel 的封顶与
+  elementwise 配方不同性：24 程序行步进损失行级并行）；沐曦 -6%
+  （窗口）。均值 7.0895 > e3 7.0530 新 TB（+0.5%）。
+- 沉淀：**配方适用边界补充——row-reduction kernel 封顶回退**（燧原
+  eh_norm 行归约需要行级并行度；与 streaming elementwise 区分）。
+- 榜首 c2flow 8.054 差 0.96；燧原榜首 5.21 vs 我 1.56（3.3x）。
+
 ```current
 task: 68
 operator: fused_eh_norm
 batch: 5
 validity: valid
-platform: completed(13443,e3,8/8,7.05304167x team best)
-candidate_stage: e3
-team_best_stage: e3
-team_best_speedup: 7.05304167
+platform: completed(14385,e4,8/8,7.08945833x team best)
+candidate_stage: e4
+team_best_stage: e4
+team_best_speedup: 7.08945833
 sealed: no
-next: e3 valid 7.053 新 TB（燧原两遍分块等值判关）；差 0.21（HAiWORLD 7.2622）；剩余=海光窗口全开（e1 已证 14.26）+燧原 1.93→2.24 未知轴
+next: e4 新 TB 7.089（海光 +6% 兑现；燧原 row-loop 封顶回退 -19%——归约 kernel 配方边界）；差榜首 0.96
 updated: 2026-09-12
 ```
 
