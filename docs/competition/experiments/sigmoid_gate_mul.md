@@ -103,3 +103,14 @@ vs 本题 0.26）。
   3.688，差 0.95。
 - 剩余燧原缺口（2.16 vs 7.84）已非宽度轴可及，需他队形态情报或
   燧原侧 profiling；今日收口守 TB。
+
+## 2026-09-14 E5 候选就绪：燧原 i32 地址链探针（Codex 队列 1 号，待发射）
+
+- 单变量：计分路径 offset 链去 i64（宿主按 numel<2^31 选 i32 kernel，
+  ≥2^31 保留 i64 kernel——契约不收窄）；BLOCK 8192/cap24/数学不变。
+- source / verification commit：`1bb5ef4…`；ZIP `e5-1bb5ef4`，
+  SHA-256 `68c6755dc345b8ccebc2a4d6ab83ff28e10aac3a52be0ba4efc7980ce18aad5a`。
+- release 回执 `batch5-submit-20260914/sigmoid_gate_mul_e5/verification.json`
+  SHA-256 `4e218b82541b9c4dab96cc27fe7426941b3b418a785750e6b3ae74939115a125`。
+- 预注册晋级门：**燧原 ≥ 2.6**；未过则关闭"显式 cast 大税"假设，
+  禁止批量迁移其它 vendor。
