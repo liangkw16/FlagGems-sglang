@@ -1,16 +1,17 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 
-# Enflame vendor, e3: the recipe proved twice on this chip's elementwise
-# ops (T73 e3 +92%, T75 e2 +113%) - BLOCK raised to 4096 with the grid
-# capped at the 24-SIP width and a grid-stride. (e2's frozen-1024 vendor
-# was a self-inflicted -31%; API truth showed 4096 is the gain.)
+# Enflame vendor, e6: the recipe (cap-24 grid-stride) with BLOCK raised
+# to 8192 - the width axis was monotonically positive on this chip
+# (1024->4096 +71% here in e3) and 4096->8192 just paid +23% on the
+# same-family T75 task. One isolated width probe, everything else
+# byte-identical to the e4 carrier.
 
 import torch
 import triton
 import triton.language as tl
 
-_BLOCK_COL = 4096
+_BLOCK_COL = 8192
 _MAX_PROGS = 24
 _MAX_GRID = 65535
 
@@ -43,14 +44,12 @@ def _gelu_tanh_and_mul_kernel(
             mask=col_mask,
             other=0.0,
         ).to(tl.float32)
-        # E5: the GCU stack's own tanh instead of the exp identity. The
-        # cross-chip exp-identity rule exists because tl.math.tanh is
-        # unverified on OTHER vendors' forks; FlagGems' production
-        # _enflame gelu calls the shim tanh on this very stack, so the
-        # vendor form is free to use it. A single hardware-ish tanh
-        # replaces two exp evaluations per element.
+        # tanh via the exp identity (tl.exp is the only transcendental
+        # verified on all eight chips; tl.math/libdevice tanh is not).
+        # Saturates safely: inner -> +inf gives tanh -> 1, -inf -> -1.
         inner = 0.7978845608028654 * gate * (1.0 + 0.044715 * gate * gate)
-        gelu = 0.5 * gate * (1.0 + tl.math.tanh(inner))
+        tanh_inner = 2.0 / (1.0 + tl.exp(-2.0 * inner)) - 1.0
+        gelu = 0.5 * gate * (1.0 + tanh_inner)
         tl.store(
             output_ptr + row_id.to(tl.int64) * half_width + col_offsets,
             (gelu * up).to(output_ptr.dtype.element_ty),
