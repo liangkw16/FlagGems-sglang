@@ -303,3 +303,28 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   昆仑 0.18/0.18、华为 0.19/0.16、A 1.63/1.69、B 1.64/1.64）。
 - 距榜首 Evoke 1.8141 还差 0.594；剩余缺口在燧原/昆仑/华为/muxi
   四芯（第二高组合 1.8664），按 v3 队列继续槽 4（燧原去 mask）等。
+
+## 2026-09-14 E8 候选就绪：燧原窄形状 constexpr 去 mask（v3 队列槽 4，待发射）
+
+- 登记在案的 B2：heads%16==0 且 nd/rd 恰满 2 幂块时全部掩码编译期
+  为真——NOMASK constexpr 路径去 mask；其它形状保留 e6 掩码路径，
+  契约不缩。生产形状（128/128/64）命中快路径。codex-review（commit
+  级）280 组边界检查无缺陷。
+- source / verification commit：`5a97279f…`；ZIP `e8-5a97279`，
+  SHA-256 `b9d5b5757a0f246e883f7eecc755ab253305f6bc5a0601406e979d8664ce1c54`。
+- release 回执 `batch5-submit-20260914-finale/concat_mla_k-t62e8/verification.json`
+  （enflame vendor 28 launch 0F0E0S）。
+- 预注册晋级门：**燧原 ≥ 0.40 且均值 ≥ 1.2301**；未过不再改该芯 mask。
+
+## 2026-09-14 E9 候选就绪：昆仑直线段化（待发射）
+
+- 单变量：wrapper 已保证 BLOCK_N/BLOCK_R = next_pow2(nd/rd) ≥ nd/rd，
+  内层两段循环各只跑一趟——删除脚手架，直线掩码射出语义等价；外层
+  行 grid-stride 保留（任意 tokens 正确）。段寻址/2 幂块/无共享基址
+  的 #1147 安全几何不变。
+- source / verification commit：`cb13618e…`；ZIP `e9-cb13618`，
+  SHA-256 `5754e59d0cb601aa2df3b49056e8fb6a03d87592080cd4e67e85053a4f93c392`。
+- release 回执 `batch5-submit-20260914-finale/concat_mla_k-t62e9/verification.json`
+  （kunlunxin vendor 28 launch 0F0E0S）。
+- 预注册晋级门：**昆仑 ≥ 0.40 且均值上行**；未过则昆仑 no-loop 假设
+  在本题关闭。

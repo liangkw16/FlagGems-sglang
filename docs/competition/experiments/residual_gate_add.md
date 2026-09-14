@@ -151,3 +151,19 @@ card_b +0.31、tianshu +0.09；muxi/card_a 我方领先。燧原窗口摆动实�
 - **E3 假设（双杠杆叠加）**：封顶 + BLOCK 1024→4096——T71（+44%）/
   T75（+71%）双证 4096 对燧原正向，两杠杆叠加预期 enflame 1.5-1.8，
   均值 →4.0-4.05。
+
+## 2026-09-14 E5 候选就绪：昆仑 no-loop 双路径 vendor（Codex 激进菜单，待发射）
+
+- 依据：T75 同 diffusion 族昆仑 no-loop 3.4x（0.26→0.90）；T73 昆仑
+  现 0.234 vs c2flow 1.264。载体 = 双路径都去 runtime 循环：
+  broadcast 保持 2D (row, col-block) 网格、同形路径恰好
+  cdiv(n,1024) 个 program 直线射出；BLOCK=1024、双重舍入契约
+  enable_fp_fusion=False 字节保留。Codex v3 限制：广播路径本无循环
+  不包装成实验，同形路径为独立重评（T71 反例后重新登记）。
+- source / verification commit：`ffa1d7fc…`；ZIP `e5-ffa1d7f`，
+  SHA-256 `704c351d92c87560ac03b970ee5b8170b63609b43e101a0e3c69b5fe27de4ee5`。
+- release 回执 `batch5-submit-20260914-finale/residual_gate_add-t73e5/verification.json`
+  SHA-256 见 artifacts（--proxy-vendor kunlunxin：vendor 41 launch
+  全矩阵 0F0E0S）。
+- 预注册晋级门：**昆仑 ≥ 0.65 且均值 ≥ 4.07**；失败则 T73 昆仑后续
+  链整体取消。

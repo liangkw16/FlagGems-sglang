@@ -131,3 +131,15 @@ vs 本题 0.26）。
   "显式 cast 大税"假设关闭，禁止向其它 vendor 批量迁移。
 - 均值 2.7366 与 e4 的 2.7393 在窗口噪声内；TB 保持 e4（2.7393）。
   收盘守榜。
+
+## 2026-09-14 E6 候选就绪：燧原 BLOCK 16384 豪赌（Codex 菜单 E，≤1 发，待发射）
+
+- 8192 的 +23% 是宽度轴最后余量；16384 一次封顶（MAX 32768 之内但
+  寄存器/UB 风险真实）。i32/i64 双 kernel 结构保持。
+- source / verification commit：`425ef069…`；ZIP `e6-425ef06`，
+  SHA-256 `65275bbcf4c35ea4932a802ff86cf88d0284173fc5caf37a869a7379fde2fbb3`。
+- release 回执 `batch5-submit-20260914-finale/sigmoid_gate_mul-t75e6/verification.json`
+  SHA-256 `2865607548ea871eac5125e2ae4fc4fa6a88aa188bc41ec17e08ddd6ec531f0f`
+  （enflame vendor 17 launch 0F0E0S）。
+- 预注册晋级门：**燧原 ≥ 3.6 且均值 > 2.9075**；编译/正确性失败或
+  不足以升位即封顶，不试 32768、不平推。
