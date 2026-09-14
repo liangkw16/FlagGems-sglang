@@ -97,3 +97,19 @@ vs 1.14（4.6x）——两芯均为结构性差距。TB 保持 e1 2.6265。
   B 3.15/3.16、沐曦 2.19/2.17）——TB 更新为 e4。
 - 榜首金狐狸 3.441，差 0.73；剩余轴：昆仑真因未破（0.30 vs 1.0）、
   燧原 8192 未试（leader 3.67）。
+
+## 2026-09-14 E5 探针夭折（代理失败神谕，零额度）：tanh 路线不可移植
+
+- 假设：官方 gcu400 gelu 用 shim tanh（FlagGems 生产在用），若 GCU
+  有原生 tanh 则可解释我方 exp 恒等式与燧原 3.7-4.1 聚集的差距。
+- 代理两次拦截：`tl.math.tanh` 在 Triton 3.7.1 编译错误（15 errors、
+  vendor 0 launch）；`tld.tanh` 的 JIT 语义解析路由到不存在的
+  `tl.math.tanh` 同样失败。FlagGems 自身的 shim 是 backend 注册的
+  `triton.language.extra.<extra>.libdevice` + 缺符号 exp 补丁——GCU
+  的模块名与原生 tanh 可用性无法在代理侧确认，且存在"Python 层
+  存在但 lower 为 None"的编译陷阱。
+- 处置：按 Codex 门"源码差异只剩已试过项则不提交"——燧原 tanh 轴
+  暂停，字节恢复 e4 载体（exp 恒等式）。重开条件=FlagTree-GCU 的
+  extra.libdevice 模块名与 tanh 符号的真实确认（KernelGen 或镜像内
+  introspection）。
+- 额度：未消耗（两次均为代理拦截）。
