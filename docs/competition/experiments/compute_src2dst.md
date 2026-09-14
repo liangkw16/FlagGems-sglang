@@ -14,13 +14,13 @@ task: 61
 operator: compute_src2dst
 batch: 5
 validity: valid
-platform: completed(13914,e8,8/8,2.046x;TB e7 2.074x)
-candidate_stage: e7
-team_best_stage: e7
-team_best_speedup: 2.074025
+platform: completed(14519,e9,8/8,2.099675x 新TB)
+candidate_stage: e9
+team_best_stage: e9
+team_best_speedup: 2.099675
 sealed: no
-next: e8 配方对 scatter 无效（3.80<4.10,边界清晰）；残余轴=muxi 2.5x 无证据；TB e7 2.074 守
-updated: 2026-09-13
+next: e9 新TB 2.0997（e7字节恢复+zeros→empty，燧原4.46）；残余轴=muxi 2.5x 无证据；守榜
+updated: 2026-09-14
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -275,3 +275,14 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   enflame vendor target-runtime-unverified）。
 - 预注册晋级门：**燧原 ≥ 4.10（e7 水位）且均值 > TB 2.074**；燧原无增益
   则轴关，均值门失败但七芯无异动即收盘。
+
+## 2026-09-14 E9 平台终态：8/8 VALID 2.099675x 新 TB（submission 14519）
+
+- **预注册双门全过**：均值 2.0997 > TB 2.074；**燧原 4.4636 ≥ 4.10**，
+  且较 e8 的 3.8018 +17.4%——e7 字节恢复 + zeros→empty 兑现。
+- 逐芯（vs e8）：天数 3.0326（3.1358）/ 沐曦 1.177（1.1548）/
+  **燧原 4.4636（3.8018）** / 海光 1.8508（1.8764）/ 昆仑 1.2908（1.289）/
+  华为 1.4996（1.6354）/ A 1.7186（1.6936）/ B 1.7644（1.7814）——
+  除燧原外均在窗口方差内，与"generic 同字节"预判一致。
+- 榜首 RSI 2.42，差距收窄至 ~0.32。残余轴仍只有 muxi（1.18 vs 2.72）。
+- 额度：发后 25/30（watch 实测）。
