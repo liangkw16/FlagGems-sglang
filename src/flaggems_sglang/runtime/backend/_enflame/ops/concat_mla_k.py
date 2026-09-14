@@ -1,8 +1,10 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 
-# Enflame vendor, e8: the registered B2 probe - constexpr de-mask under
-# a narrow-shape guard. When heads divides evenly by the 16-head tile
+# Enflame vendor, e10: the registered B2 de-mask plus today's cross-chip
+# evidence - the same task's hygon vendor gained +25% from BH 16->4
+# (submission 14686), so the tile here shrinks to 4 heads as well. When
+# heads divides evenly by the 4-head tile
 # and nd/rd exactly fill their power-of-two blocks, every load/store
 # mask is compile-time true; this vendor drops them on that path
 # (FlagTree's OffsetAnalysis treats per-lane bounds as burst-DMA
@@ -84,11 +86,11 @@ def concat_mla_k(k, k_nope, k_rope):
     assert k.dtype == k_nope.dtype == k_rope.dtype == torch.bfloat16
     out = torch.empty(k.shape, dtype=k.dtype, device=k.device)
     if out.numel():
-        groups = triton.cdiv(heads, 16)
+        groups = triton.cdiv(heads, 4)
         tasks = tokens * groups
         bn = triton.next_power_of_2(max(1, nd))
         br = triton.next_power_of_2(max(1, rd))
-        nomask = heads % 16 == 0 and nd == bn and rd == br
+        nomask = heads % 4 == 0 and nd == bn and rd == br
         _concat_mla_k[(min(tasks, 24),)](
             k_nope,
             k_rope,
@@ -102,7 +104,7 @@ def concat_mla_k(k, k_nope, k_rope):
             k_rope.stride(0),
             k_rope.stride(2),
             NOMASK=nomask,
-            BH=16,
+            BH=4,
             BN=bn,
             BR=br,
         )
