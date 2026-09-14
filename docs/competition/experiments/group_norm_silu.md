@@ -5,12 +5,12 @@ task: 72
 operator: group_norm_silu
 batch: 5
 validity: valid
-platform: completed(14845,e7,8/8,2.5626x;2048档微正未过门;TB e6 2.6627x)
-candidate_stage: e7
+platform: completed(14859,e8,8/8,2.5400x;昆仑4096 0.545抛物线;TB e6 2.6627x)
+candidate_stage: e8
 team_best_stage: e6
 team_best_speedup: 2.66266667
 sealed: no
-next: e7 昆仑2048 0.525(+7%)未过门回1024守;TB e6 2.663守;宽度轴停
+next: e8 昆仑宽度抛物线(0.49/0.53/0.55);TB e6 2.663守;明日联评2048
 updated: 2026-09-14
 ```
 
@@ -189,3 +189,12 @@ updated: 2026-09-14
   SHA-256 `4448588ea36b75403d4ea9f4f4ce484887746444a56b88db394e469965254677`。
 - release 回执 `batch5-submit-20260914-finale2/group_norm_silu-t72e8/verification.json`
   SHA-256 `6fc9d812b9014479f36c945d8f3daa53bfc0e80b5b87e4522d1933e5fca21aeb`。
+
+## 2026-09-14 E8 平台终态：8/8 VALID 2.5400x < TB（submission 14859）——4096 档回落
+
+- **昆仑 vendor 0.5452**（2048 的 0.525 → +4%，但 1024 的 0.491 →
+  +11% 峰值在中间）——宽度轴在本 skeleton 呈抛物线，4096 过头；
+  未过门（≥0.65）。均值 2.5400 < TB e6 2.6627。
+- TB 载体最终=e6（BLOCK_HW 1024+padding 修复+ascend 移植字节）；
+  昆仑宽度轴收官：1024（0.491）→2048（0.525）→4096（0.545），
+  边际递减，明日若再试唯一合理档=2048 与均值门联评。

@@ -52,7 +52,7 @@
 | 69 | fused_moe_dispatch_index | invalid_correctness | completed(13809,e7,7/8;昆仑七连崩,轴终封仅剩工单) | - | no | T69 昆仑轴终封;仅剩平台工单;七芯部分和 357.5 永久待命 | 2026-09-12 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
 | 70 | gate_topk | invalid_correctness | completed(14556,e3,7/8;昆仑编译过但3630s挂死@0%util,转工单) | - | no | e1 终态 5/8：三失败芯均 exec 0ms 崩溃族（12:20 同窗），kunlun vendor 被选中但未执行；下一步=新 ZIP 真实改动重评（燧原/华为可补迭代选择 vendor）或用户授权的同字节重掷 | 2026-09-12 | [gate_topk](gate_topk.md) |
 | 71 | gelu_tanh_and_mul | valid | completed(14573,e4,8/8,2.7109x 新TB) | e4 2.7109x | no | e4 no-loop昆仑0.304复制链失败(门0.5未过,链收口);TB 2.711守;昆仑真因/燧原8192待证 | 2026-09-14 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
-| 72 | group_norm_silu | valid | completed(14845,e7,8/8,2.5626x;2048档微正未过门;TB e6 2.6627x) | e6 2.66266667x | no | e7 昆仑2048 0.525(+7%)未过门回1024守;TB e6 2.663守;宽度轴停 | 2026-09-14 | [group_norm_silu](group_norm_silu.md) |
+| 72 | group_norm_silu | valid | completed(14859,e8,8/8,2.5400x;昆仑4096 0.545抛物线;TB e6 2.6627x) | e6 2.66266667x | no | e8 昆仑宽度抛物线(0.49/0.53/0.55);TB e6 2.663守;明日联评2048 | 2026-09-14 | [group_norm_silu](group_norm_silu.md) |
 | 73 | residual_gate_add | valid | completed(14838,e6,8/8,4.0993x 新TB;昆仑4096 0.60) | e6 4.0993125x | no | e6 昆仑4096 0.60(+23%)新TB 4.099;宽度曲线双正,8192待信号;差榜首0.876 | 2026-09-14 | [residual_gate_add](residual_gate_add.md) |
 | 74 | seqlens_expand | valid | completed(14535,e3,8/8,19.3101x 新TB) | e3 19.3101x | no | e3 前缀入kernel新TB 19.31（+81%,launch假说兑现）;残余轴=flat-grid并行度;差榜首7.05 | 2026-09-14 | [seqlens_expand](seqlens_expand.md) |
 | 75 | sigmoid_gate_mul | valid | completed(14773,e6,8/8,2.8277x 新TB;燧原16384 +30%) | e6 2.82765x | no | e6 16384燧原2.80(+30%)新TB 2.828;宽度曲线仍升但门未过封顶;32768留待解禁 | 2026-09-14 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
