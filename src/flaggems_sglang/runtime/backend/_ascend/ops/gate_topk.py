@@ -35,10 +35,22 @@ def _gate_topk_rows(
             mask=live,
             other=float("-inf"),
         ).to(tl.float32)
+        # torch.topk orders NaN greatest, strictly above +inf; mapping
+        # NaN to +inf alone would collide with a real +inf input, so
+        # selection is two-tier and branch-free: NaN candidates always
+        # beat non-NaN candidates, smallest column wins inside a tier,
+        # and the stored value reloads the original bits so NaN
+        # payloads survive exactly.
         key = tl.where(x != x, float("inf"), x)
         for j in tl.static_range(K):
             m = tl.max(tl.where(live, key, float("-inf")), axis=0)
-            col = tl.min(tl.where(live & (key == m), cols, N_PAD), axis=0)
+            cand = live & (key == m)
+            nan_cand = cand & (x != x)
+            rank = tl.where(
+                nan_cand, cols, tl.where(cand, cols + N_PAD, 2 * N_PAD)
+            )
+            rank_min = tl.min(rank, axis=0)
+            col = tl.where(rank_min >= N_PAD, rank_min - N_PAD, rank_min)
             dst = row * K + j
             tl.store(values_ptr + dst, tl.load(x_ptr + row * n_cols + col))
             tl.store(indices_ptr + dst, col.to(tl.int32))
