@@ -179,3 +179,13 @@ updated: 2026-09-14
   （≥0.65）；其余芯窗口回落（沐曦 2.44/2.96、海光 4.48/4.74），
   均值 2.5626 < TB e6 2.6627。宽度轴在该 skeleton 上边际小，回 1024
   守 TB；不再加宽。
+
+## 2026-09-14 E8 候选就绪：昆仑 BLOCK_HW 2048→4096（今日最后一发，待发射）
+
+- 昆仑宽度轴今日全正（T73 4096 +23%、T75 大涨、T72 2048 +7%）；
+  4096 为本 skeleton 未试档。代理 kunlunxin 全矩阵 0F0E0S。
+  门：**昆仑 ≥ 0.65**；未过回 1024 守。
+- source / verification commit：`a9b8444…`；ZIP `e8-a9b8444`，
+  SHA-256 `4448588ea36b75403d4ea9f4f4ce484887746444a56b88db394e469965254677`。
+- release 回执 `batch5-submit-20260914-finale2/group_norm_silu-t72e8/verification.json`
+  SHA-256 `6fc9d812b9014479f36c945d8f3daa53bfc0e80b5b87e4522d1933e5fca21aeb`。
