@@ -1,7 +1,8 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 
-# Kunlunxin vendor, e3: E2 gave this op's old form its first real
+# Kunlunxin vendor, e3r carrier (comment-only re-roll of the same
+# execution bytes): E2 gave this op's old form its first real
 # compile on the stack and it aborted (SIGABRT, compiler assert, 4s
 # into the verification phase). The old body branched at runtime
 # between two tl.min reductions and addressed rows through i64 - the
