@@ -72,3 +72,16 @@ vs 1.14（4.6x）——两芯均为结构性差距。TB 保持 e1 2.6265。
 - source commit：`d7f0d6f83151a432bfbabd350814bbe2a817fb27`；ZIP `e3-d7f0d6f`，
   SHA-256 `58531549a6fbac30b280d50d61aef6f090cd4bd1336011e9020570ee3cf576c8`；
   release 回执 SHA-256 `b793d827900cdc8c53407e9a4ba51662ee5d85386f2fe6e9e946f2bbcb9c9b2d`。
+
+## 2026-09-14 E4 候选就绪：昆仑 no-loop（队列 6 号，T75 正信号解锁，待发射）
+
+- 载体 = 保持本 op 已证的 BLOCK_COL=1024（4096 曾把昆仑打到 0.25），
+  去 runtime grid-stride 循环：flat grid=(rows×col_blocks)，一 program
+  一 tile；数学/fp32 契约与 generic 字节一致。单变量=T75 已验证的
+  去循环改动平移到本题。
+- source / verification commit：`39838fbf…`；ZIP `e4-39838fb`，
+  SHA-256 `a7895afe770b6ccc83a336f6989cbb902ce49878184fa2dbd5cd2e051965794e`。
+- release 回执 `batch5-submit-20260914/gelu_tanh_and_mul/verification.json`
+  SHA-256 `aeb717873dba19a0579837f7edc95bdd8bc5179fcb9727b6b80d7403d6758ea7`
+  （--proxy-vendor kunlunxin：vendor 15 次真实 launch，0F0E0S）。
+- 预注册晋级门：**昆仑 ≥ 0.50**；失败不推广至 T73（其 gate 分支另判）。
