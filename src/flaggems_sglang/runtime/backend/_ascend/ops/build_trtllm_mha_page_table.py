@@ -33,6 +33,7 @@ import triton
 import triton.language as tl
 
 _MAX_TILES = 65535
+_ROWS = 4
 
 
 @triton.jit
@@ -42,6 +43,7 @@ def _build_page_table(
     lengths,
     old,
     out,
+    num_rows,
     columns,
     ps0,
     ps1,
@@ -52,40 +54,63 @@ def _build_page_table(
     ps0l,
     ps1l,
     PAGE_SIZE: tl.constexpr,
+    SHIFT: tl.constexpr,
     BLOCK: tl.constexpr,
+    ROWS: tl.constexpr,
 ):
-    row = tl.program_id(0).to(tl.int64)
+    # E9 packs ROWS rows into one program: request/length metadata loads
+    # become a single vector per program instead of one scalar launch
+    # sequence per row, and the gather/store run as a 2D (ROWS, BLOCK)
+    # tile. Page BLOCK, the clamp, the shift form and the fused store
+    # are frozen from e7; only the row mapping changes.
+    rows = tl.program_id(0) * ROWS + tl.arange(0, ROWS).to(tl.int64)
     page = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
+    row_live = rows < num_rows
+    rows_safe = tl.where(row_live, rows, 0)
     # Ascend evaluates masked-lane addresses for real (triton-ascend issues
     # #1490/#16275 both surface as 507035 MTE illegal GM address), so every
     # memory op addresses through a page clamped into the row width; the
     # out-of-range tail is never stored, the clamp only keeps its address
     # inside the buffers.
-    page_rd = tl.where(page < columns, page, 0)
-    length = tl.load(lengths + row * ls).to(tl.int64)
+    page_rd = tl.where(page[None, :] < columns, page[None, :], 0)
+    length = tl.load(lengths + rows_safe * ls, mask=row_live, other=0).to(
+        tl.int64
+    )
     n_pages = (length + PAGE_SIZE - 1) // PAGE_SIZE
-    request = tl.load(requests + row * rs).to(tl.int64)
+    request = tl.load(requests + rows_safe * rs, mask=row_live, other=0).to(
+        tl.int64
+    )
     # n_pages can exceed columns (cache_seqlens beyond the table width),
     # so the gather mask stays bounded by the row width.
-    active = (page < columns) & (page < n_pages)
-    inactive = (page < columns) & (page >= n_pages)
-    slot = tl.load(
-        pool + request * ps0 + page_rd * PAGE_SIZE * ps1, active, other=0
+    active = (
+        row_live[:, None]
+        & (page[None, :] < columns)
+        & (page[None, :] < n_pages[:, None])
     )
-    previous = tl.load(old + row * ps0l + page_rd * ps1l, inactive, other=0)
-    # E8: bishengir lowers an explicit `slot >> SHIFT` to SCALAR execution
-    # (triton-ascend #1220, aiv_scalar_ratio 35% on the same shape class),
-    # so the quotient goes through the vector integer divider instead.
-    # Triton `//` truncates toward zero while the reference's shift is
-    # floor division, and the tests deliberately feed negative sentinel
-    # slots - restore floor for negative non-exact lanes branch-free.
-    q = slot // PAGE_SIZE
-    q = q - (((slot < 0) & (slot != q * PAGE_SIZE)).to(q.dtype))
+    inactive = (
+        row_live[:, None]
+        & (page[None, :] < columns)
+        & (page[None, :] >= n_pages[:, None])
+    )
+    # Positive divisors of 4096 are powers of two; signed shift is floor
+    # division for the negative sentinel values the tests feed on purpose.
+    slot = tl.load(
+        pool + request[:, None] * ps0 + page_rd * PAGE_SIZE * ps1,
+        active,
+        other=0,
+    )
+    previous = tl.load(
+        old + rows_safe[:, None] * ps0l + page_rd * ps1l, inactive, other=0
+    )
     # One fused store: an integer select is legal on Ascend (the no-int-
     # tl.where rule is a GCU300 constraint) and halves the store count the
     # e6 form paid 29.5s for.
-    merged = tl.where(active, q, previous)
-    tl.store(out + row * ps0o + page_rd * ps1o, merged, page < columns)
+    merged = tl.where(active, slot >> SHIFT, previous)
+    tl.store(
+        out + rows_safe[:, None] * ps0o + page_rd * ps1o,
+        merged,
+        row_live[:, None] & (page[None, :] < columns),
+    )
 
 
 def build_trtllm_mha_page_table(
@@ -114,12 +139,15 @@ def build_trtllm_mha_page_table(
         # fat contiguous slabs over many 256-lane programs.
         block = min(max(256, triton.next_power_of_2(out.shape[1])), 2048)
         tiles = triton.cdiv(out.shape[1], block)
-        _build_page_table[(out.shape[0], min(tiles, _MAX_TILES))](
+        _build_page_table[
+            (triton.cdiv(out.shape[0], _ROWS), min(tiles, _MAX_TILES))
+        ](
             req_to_token,
             req_pool_indices,
             cache_seqlens,
             page_table,
             out,
+            out.shape[0],
             out.shape[1],
             *req_to_token.stride(),
             req_pool_indices.stride(0),
@@ -127,7 +155,9 @@ def build_trtllm_mha_page_table(
             *out.stride(),
             *page_table.stride(),
             PAGE_SIZE=page_size,
+            SHIFT=page_size.bit_length() - 1,
             BLOCK=block,
+            ROWS=_ROWS,
         )
     return out
 
