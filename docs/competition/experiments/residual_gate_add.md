@@ -66,17 +66,25 @@
 - 注意：generic 也变了（fusion-off 影响全部八芯）——不再"只影响燧原"，
   平台回归风险由全芯共担；但契约语义正确性优先。
 
+
+## 2026-09-14 E4 平台终态：8/8 valid 4.027（低于 TB e3 4.031，fusion-off 无回归）
+
+- 燧原 2.0959（e3 1.955→+7%，flat 路径小幅增益）；天数 +5%；其余
+  持平——**fusion-off 对七芯无回归**（重要：契约修复零性能代价）。
+- 均值 4.0274 < e3 TB 4.0308（差 0.009，窗口噪声）。TB 保留 e3。
+- 榜首已通胀至金狐狸 4.388（差 0.357）；燧原榜首 2.95 vs 我 2.10。
+
 ```current
 task: 73
 operator: residual_gate_add
 batch: 5
 validity: valid
-platform: submitted(pre-e4-final,候选就绪;TB e3 4.0308x)
+platform: completed(14379,e4,8/8,4.027x;TB e3 4.0308x)
 candidate_stage: e4
 team_best_stage: e3
 team_best_speedup: 4.03084375
 sealed: no
-next: e4 终版（fusion-off 契约修复+广播4096+空维守卫）就绪；gap 0.27 冲 Top1；generic 变更全芯共担回归风险
+next: e4 fusion-off 无回归（契约修复零代价）；TB e3 守；榜首金狐狸 4.388 差 0.357 需多芯叠加
 updated: 2026-09-13
 ```
 
