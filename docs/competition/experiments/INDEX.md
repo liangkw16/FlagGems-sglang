@@ -55,6 +55,6 @@
 | 72 | group_norm_silu | valid | completed(14528,e5,8/8,2.5686x 昆仑解锁0.502) | e5 2.56860417x | no | 昆仑 master 骨架解锁(0.502);燧原0.44/华为1.16偏低待逐芯vendor轴;差榜首0.46 | 2026-09-14 | [group_norm_silu](group_norm_silu.md) |
 | 73 | residual_gate_add | valid | completed(14379,e4,8/8,4.027x;TB e3 4.0308x) | e3 4.03084375x | no | e4 fusion-off 无回归（契约修复零代价）；TB e3 守；榜首金狐狸 4.388 差 0.357 需多芯叠加 | 2026-09-13 | [residual_gate_add](residual_gate_add.md) |
 | 74 | seqlens_expand | valid | completed(14535,e3,8/8,19.3101x 新TB) | e3 19.3101x | no | e3 前缀入kernel新TB 19.31（+81%,launch假说兑现）;残余轴=flat-grid并行度;差榜首7.05 | 2026-09-14 | [seqlens_expand](seqlens_expand.md) |
-| 75 | sigmoid_gate_mul | valid | completed(14570,e3,8/8,2.69600833x 新TB) | e3 2.69600833x | no | e3 no-loop昆仑0.899新TB 2.696;下一轴=燧原8192(leader 7.84可达) | 2026-09-14 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
+| 75 | sigmoid_gate_mul | valid | completed(14598,e4,8/8,2.739325x 新TB) | e4 2.739325x | no | e4 8192燧原2.16(+23%)新TB 2.739;宽度轴封顶;剩余燧原缺口需形态情报 | 2026-09-14 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

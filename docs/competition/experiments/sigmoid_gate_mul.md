@@ -15,12 +15,12 @@ task: 75
 operator: sigmoid_gate_mul
 batch: 5
 validity: valid
-platform: completed(14570,e3,8/8,2.69600833x 新TB)
-candidate_stage: e3
-team_best_stage: e3
-team_best_speedup: 2.69600833
+platform: completed(14598,e4,8/8,2.739325x 新TB)
+candidate_stage: e4
+team_best_stage: e4
+team_best_speedup: 2.739325
 sealed: no
-next: e3 no-loop昆仑0.899新TB 2.696;下一轴=燧原8192(leader 7.84可达)
+next: e4 8192燧原2.16(+23%)新TB 2.739;宽度轴封顶;剩余燧原缺口需形态情报
 updated: 2026-09-14
 ```
 
@@ -92,3 +92,14 @@ vs 本题 0.26）。
   SHA-256 `6f90a0d96c6a4ac92d05a51d3656ca6133e145e1dc44e668129b46a9a87ca663`
   （--proxy-vendor enflame：vendor 17 launch 0F0E0S）。
 - 预注册晋级门：**燧原 ≥ 2.2**；无增益则宽度轴封顶（不平推 T71/T73）。
+
+## 2026-09-14 E4 平台终态：8/8 VALID 2.739x 新TB（submission 14598）——8192 边际为正但未过门
+
+- **燧原 2.1562**（4096 的 1.7565 → +23%）：宽度轴单调性延续但边际
+  递减，差预注册门（≥2.2）一线——按纪律**不平推 T71/T73 的 8192**，
+  宽度轴就此封顶。均值 2.739 > e3 的 2.696，TB 更新为 e4。
+- 逐芯：天数 4.7794 / 沐曦 2.6066 / **燧原 2.1562** / 海光 3.9015 /
+  昆仑 0.9003 / 华为 1.3999 / A 3.258 / B 2.9127。榜首 GuanghuLab
+  3.688，差 0.95。
+- 剩余燧原缺口（2.16 vs 7.84）已非宽度轴可及，需他队形态情报或
+  燧原侧 profiling；今日收口守 TB。
