@@ -66,3 +66,23 @@ updated: 2026-09-13
   沐曦（8.26→6.82）/海光（14.66→13.82）回落吃掉。
 - 处置：team best 保留 s0；tile 轴收益确认存在但量级 < 窗口方差，
   不再追加同轴发射。T74 保持 valid 在榜。
+
+## 2026-09-14 E3 候选就绪：前缀和进 kernel，3 launch → 1（待发射）
+
+- 发射前用逐芯榜单快照（`data/batch5-intel-20260914-afternoon.json`
+  SHA-256 `fa5706cf094eb0b6...`，observed 14:48）对账修正旧记录：
+  榜首 c2flow 26.356 vs 我方 10.644 并非"+5~48%"，而是**除昆仑外
+  七芯均匀 1.9~3.3x 落后**（天数 25.5/83.1、沐曦 7.6/16.1、燧原
+  6.8/18.3、海光 14.6/30.4、华为 5.8/12.9、A 12.5/28.3、B 10.6/20.1；
+  昆仑我方 1.815 反超 1.753）。昆仑例外 + 全芯等比 ⇒ 与"zeros+cumsum+
+  主核 3 次 launch vs 1 次"的 launch 开销假说相容（E1 已证 tile 轴
+  无关）；并行度假说与"昆仑不例外"矛盾，排除。
+- 载体 = 独占前缀和进 kernel（1024-lane 定宽 masked 块累加，无按
+  N 变化的 constexpr，单一编译产物），弃 torch.zeros+torch.cumsum，
+  wrapper 只剩一次 launch。grid/掩码/clamp 语义与 TB s0 字节一致。
+- source / verification commit：`ea248247…`；ZIP `e3-ea24824`，单成员，
+  SHA-256 `2f2edf06c5a4680a4a188f9cc7e5f39c8a9024914751e2b7b9f65e314fab78df`。
+- release 回执 `batch5-submit-20260914/seqlens_expand/verification.json`
+  SHA-256 `0f5c774de2e003ae161913431eb732555993450cb177f080c4416a495880e337`
+  （3 tests 0F0E0S，6 次真实 launch，无未执行源）。
+- 预注册晋级门：**均值 > TB s0 10.644**；单芯波动只在窗口方差内判读。
