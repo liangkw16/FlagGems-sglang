@@ -5,13 +5,13 @@ task: 59
 operator: build_trtllm_mha_page_table
 batch: 5
 validity: valid
-platform: completed(13387,e7,8/8,23.9135x;未过1.2x门,轴关闭;TB e4r 24.1284x)
-candidate_stage: e7
+platform: completed(14705,e9,8/8,23.406x;行打包华为4.29证伪;TB e4r 24.1284x)
+candidate_stage: e9
 team_best_stage: e4r
 team_best_speedup: 24.1284375
 sealed: no
-next: e7 华为 7.35 零增益,昇腾 tile/store 轴关闭;TB e4r 24.1284 守榜(#2,榜首 25.43);重开需昇腾侧 profiling/KernelGen 证据
-updated: 2026-09-12
+next: e9 行打包华为4.29(-51%)证伪,华为轴全关待新证据;TB e4r 24.128守
+updated: 2026-09-14
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -380,3 +380,17 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   （--proxy-vendor ascend/hygon：ascend vendor 26 launch 全矩阵 0F0E0S，
   含负 sentinel 回归）。
 - 预注册晋级门：**华为 ≥ 12 且均值 ≥ 24.33**；仅升 9-10 不追 8 行档。
+
+## 2026-09-14 E9 平台终态：8/8 VALID 23.406x < TB（submission 14705）——行打包形态证伪
+
+- **华为 vendor 被选中、passed 4.288**（e7 单行形态 8.68 → -51%）——
+  门（≥12）大败。2D (4, BLOCK) 行打包让 gather 地址布局踩了
+  triton-ascend #1610 类的 tile layout 限制（行轴与页轴混在同一
+  瓦片），单行标量元数据 + 1D 页 gather 仍是当前栈的正确形态。
+- 其余芯窗口内（天数 68.34/68.37、沐曦 11.52/12.84、燧原 27.59/
+  28.09、海光 30.56/30.21、昆仑 2.36/2.15、A 22.59/22.47、
+  B 20.00/20.23）。TB 保持 e4r 24.1284（#6/12）。
+- 处置：行打包轴关闭（4 行已负，不试 8 行）。华为轴累计关闭：
+  e6 tile/store、e7 宽 tile+融合 store（=TB 载体）、e8 向量除法、
+  e9 行打包。第二梯队 20-28x 的形态需要全新证据（原生路径/布局
+  假设），无证据不再投。
