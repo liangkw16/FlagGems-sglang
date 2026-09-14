@@ -2,6 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Adapted from SGLang 8014d9d kernels/jit/csrc/elementwise/concat_mla.cuh.
 
+# Kunlunxin vendor, e9. Round 5's two inner segment loops run exactly
+# one iteration each (the wrapper picks BLOCK_N/BLOCK_R as
+# next_power_of_2 of nd/rd, so a single masked shot covers the whole
+# segment); e9 removes that scaffolding and keeps only the outer row
+# grid-stride needed for arbitrary token counts. Segment addressing,
+# power-of-two blocks, and the absence of any shared base expression
+# stay exactly as round 5 - the FlagTree #1147-safe geometry.
+
 # Kunlunxin vendor, round 5. Four deterministic-garbage rounds (s0 flat
 # 2D tile, s0r/s0r2 carriers, BH=16, and the two-clamped-loads row form)
 # all share one addressing recipe the FlagTree #1147 analysis condemns:
@@ -47,17 +55,15 @@ def _concat_mla_k_segments(
         head = row64 % heads
         base = row64 * os1
         src = token * ns0 + head * ns1
-        for i in range(0, nd, BLOCK_N):
-            offs = (i + tl.arange(0, BLOCK_N)).to(tl.int64)
-            m = offs < nd
-            no = tl.load(nope + src + offs * ns2, m, other=0)
-            tl.store(out + base + offs * os2, no, m)
+        offs_n = tl.arange(0, BLOCK_N).to(tl.int64)
+        m_n = offs_n < nd
+        no = tl.load(nope + src + offs_n * ns2, m_n, other=0)
+        tl.store(out + base + offs_n * os2, no, m_n)
         rbase = token * rs0
-        for j in range(0, rd, BLOCK_R):
-            offs = (j + tl.arange(0, BLOCK_R)).to(tl.int64)
-            m = offs < rd
-            ro = tl.load(rope + rbase + offs * rs2, m, other=0)
-            tl.store(out + base + (nd + offs) * os2, ro, m)
+        offs_r = tl.arange(0, BLOCK_R).to(tl.int64)
+        m_r = offs_r < rd
+        ro = tl.load(rope + rbase + offs_r * rs2, m_r, other=0)
+        tl.store(out + base + (nd + offs_r) * os2, ro, m_r)
 
 
 def concat_mla_k(k, k_nope, k_rope):
