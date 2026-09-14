@@ -5,7 +5,7 @@ task: 70
 operator: gate_topk
 batch: 5
 validity: invalid_correctness
-platform: submitted(14556,e3,评测中;七芯已过,kunlun待判)
+platform: completed(14556,e3,7/8;昆仑编译过但3630s挂死@0%util,转工单)
 candidate_stage: e3
 team_best_stage: -
 sealed: no
@@ -177,3 +177,15 @@ updated: 2026-09-12
 - 昆仑 kunlun vendor 被选中，waiting_callback 已超 15 分钟未判
   （e2 的 SIGABRT 在 4s 内即判；本次长时间未崩是好信号，也可能在
   编译队列）。终态落地后回填本节与 CURRENT。
+
+## 2026-09-14 E3 平台终态：7/8（submission 14556）——昆仑编译过、执行挂死，转工单
+
+- 昆仑 kunlun vendor（无分支两级体）**编译通过**（e2 的 SIGABRT 消失，
+  结构改造有效），但**验证执行阶段 3630s/3600s 超时**：子进程 R 状态、
+  设备利用率 0%——平台自归因"疑似硬件/驱动卡死，可能不是用户代码
+  问题"。与 e1 的 0ms 卡死、e2 的 4s 断言构成三种不同指纹，昆仑轴
+  kernel 侧证据链完备（数值已在 CUDA 代理 29 calls 全过）。
+- 处置：按崩溃族协议同指纹不重掷；三种指纹+代理证据打包提平台工单，
+  等健康窗口以 e3 字节重评（≤2 次）。七芯读数：天数 3.4957 /
+  沐曦 2.1971 / 燧原 0.3638 / 海光 3.5482 / 华为 0.3603 / A 1.825 /
+  B 2.9635。validity 仍 invalid_correctness，未上榜不变。
