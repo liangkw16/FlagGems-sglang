@@ -154,3 +154,17 @@ updated: 2026-09-12
   无分支两级选择形态**（真实 GCU 已跑通该体）+ 代理 --proxy-vendor
   kunlunxin 补数值证据；同指纹绝不重掷，本改动是新字节+结构理由。
 - 额度：发后 22/30。
+
+## 2026-09-14 E3 候选就绪：昆仑 vendor 换 GCU 已证形态（待发射）
+
+- 载体 = 昆仑 vendor kernel 体与燧原 e2 字节**完全一致**（import 后
+  逐字节 diff 为空）：无分支两级选择、i32 寻址、grid-stride、不钉
+  warps；弃 runtime 标量分支包双路 tl.min 的旧体与 i64 行寻址。
+- 代理证据升级：`--proxy-vendor enflame/ascend/kunlunxin` 三 vendor
+  各 29 calls、0F0E0S——昆仑 vendor 数值在 CUDA 代理全矩阵通过。
+- source / verification commit：`7bfeef13…`；ZIP `e3-7bfeef1`，
+  SHA-256 `477de9f22d0c7d66a435b0942449aa685fe71a985893f41ab28e251a5687ea09`。
+- release 回执 `batch5-submit-20260914/gate_topk_e3/verification.json`
+  SHA-256 `7574df54e274ba123fe266b6a8d06df7136418e53d2183bd2328c10696e91f8a`。
+- 预注册晋级门：**8/8（仅昆仑待裁，七芯 e2 已过）**；昆仑再 SIGABRT
+  同类即按崩溃族收口（工单+健康窗，不再改字节）。
