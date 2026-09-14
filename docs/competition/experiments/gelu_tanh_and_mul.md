@@ -17,13 +17,13 @@ task: 71
 operator: gelu_tanh_and_mul
 batch: 5
 validity: valid
-platform: completed(13917,e3,8/8,2.674825x team best)
-candidate_stage: e3
-team_best_stage: e3
-team_best_speedup: 2.674825
+platform: completed(14573,e4,8/8,2.7109x 新TB)
+candidate_stage: e4
+team_best_stage: e4
+team_best_speedup: 2.7109
 sealed: no
-next: e3 新 TB 2.675（配方第三证:封顶+4096 分解定理成立）；距榜首 0.77；明日复刻 T74/T63/T64/T68/T66/T67/T62
-updated: 2026-09-13
+next: e4 no-loop昆仑0.304复制链失败(门0.5未过,链收口);TB 2.711守;昆仑真因/燧原8192待证
+updated: 2026-09-14
 ```
 
 ## 契约与实现（S0）
@@ -85,3 +85,15 @@ vs 1.14（4.6x）——两芯均为结构性差距。TB 保持 e1 2.6265。
   SHA-256 `aeb717873dba19a0579837f7edc95bdd8bc5179fcb9727b6b80d7403d6758ea7`
   （--proxy-vendor kunlunxin：vendor 15 次真实 launch，0F0E0S）。
 - 预注册晋级门：**昆仑 ≥ 0.50**；失败不推广至 T73（其 gate 分支另判）。
+
+## 2026-09-14 E4 平台终态：8/8 VALID 2.7109x 新TB（submission 14573）——no-loop 复制链失败
+
+- **昆仑 vendor passed 0.3043**（循环形态 0.2627，+16%）——预注册门
+  （≥0.50）未过。no-loop 假设在 T75（0.26→0.90, 3.4x）成立但**不
+  推广到 T71**（BLOCK 1024 / exp 超越函数 / 行结构差异需另证）；
+  按预注册不向 T73 跟发，昆仑 no-loop 复制链就此收口。
+- 均值 2.7109 微破 TB e3 2.6748（其余七芯窗口方差内：天数 5.19/5.12、
+  燧原 1.74/1.74、海光 3.94/3.88、华为 2.05/1.93、A 3.12/3.14、
+  B 3.15/3.16、沐曦 2.19/2.17）——TB 更新为 e4。
+- 榜首金狐狸 3.441，差 0.73；剩余轴：昆仑真因未破（0.30 vs 1.0）、
+  燧原 8192 未试（leader 3.67）。
