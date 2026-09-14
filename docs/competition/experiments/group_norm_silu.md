@@ -5,12 +5,12 @@ task: 72
 operator: group_norm_silu
 batch: 5
 validity: valid
-platform: completed(14726,e6,8/8,2.6627x 新TB;华为移植无增益)
-candidate_stage: e6
+platform: completed(14845,e7,8/8,2.5626x;2048档微正未过门;TB e6 2.6627x)
+candidate_stage: e7
 team_best_stage: e6
 team_best_speedup: 2.66266667
 sealed: no
-next: e6 padding修复+华为移植无增益(轴停)新TB 2.663;燧原/华为缺因未破,差榜首1.28
+next: e7 昆仑2048 0.525(+7%)未过门回1024守;TB e6 2.663守;宽度轴停
 updated: 2026-09-14
 ```
 
@@ -172,3 +172,10 @@ updated: 2026-09-14
   36 launch 0F0E0S。门：**昆仑 ≥ 0.65**；未过回 1024 守。
 - source / verification commit：`6c68935b…`；ZIP `e7-6c68935`，
   SHA-256 `6423c7a6ffb4a0b813acc4f8558c55933012f0ef65f65129fe1fbebc93a0d5be`。
+
+## 2026-09-14 E7 平台终态：8/8 VALID 2.5626x < TB（submission 14845）
+
+- **昆仑 vendor 0.525**（e6 的 0.491 → +7%）——2048 档微正但未过门
+  （≥0.65）；其余芯窗口回落（沐曦 2.44/2.96、海光 4.48/4.74），
+  均值 2.5626 < TB e6 2.6627。宽度轴在该 skeleton 上边际小，回 1024
+  守 TB；不再加宽。

@@ -79,12 +79,12 @@ task: 73
 operator: residual_gate_add
 batch: 5
 validity: valid
-platform: completed(14766,e5,8/8,4.0893x 新TB;昆仑no-loop 0.49)
-candidate_stage: e5
-team_best_stage: e5
-team_best_speedup: 4.08934375
+platform: completed(14838,e6,8/8,4.0993x 新TB;昆仑4096 0.60)
+candidate_stage: e6
+team_best_stage: e6
+team_best_speedup: 4.0993125
 sealed: no
-next: e5 no-loop昆仑0.49(+2.1x)新TB 4.089;昆仑剩余缺口待窗口;差榜首0.886
+next: e6 昆仑4096 0.60(+23%)新TB 4.099;宽度曲线双正,8192待信号;差榜首0.876
 updated: 2026-09-14
 ```
 
@@ -185,3 +185,10 @@ card_b +0.31、tianshu +0.09；muxi/card_a 我方领先。燧原窗口摆动实�
   0F0E0S。门：**昆仑 ≥ 0.65**；未过宽度轴停。
 - source / verification commit：`343f9d57…`；ZIP `e6-343f9d5`，
   SHA-256 `eff880664d2f7fac6223bbb6e475b7031d94402cf6b1a5c4e177a09c6227a034`。
+
+## 2026-09-14 E6 平台终态：8/8 VALID 4.0993x 新TB（submission 14838）
+
+- **昆仑 vendor passed 0.6033**（e5 的 0.4904 → +23%）——4096 档宽度
+  轴兑现，距 0.65 门仅 0.047。no-loop + 宽度曲线（1024→4096）双正，
+  下一档 8192 待明日信号。均值 4.0993 > e5 的 4.0893，新 TB = e6。
+- 其余芯窗口内。榜首 c2flow 4.9749，差 0.876。

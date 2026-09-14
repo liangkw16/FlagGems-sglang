@@ -32,12 +32,12 @@ task: 62
 operator: concat_mla_k
 batch: 5
 validity: valid
-platform: completed(14771,e9,8/8,1.2458x 新TB;e8/e9探针目标芯均平)
-candidate_stage: e9
+platform: completed(14847,e10,8/8,1.1908x;燧原BH4反降-47%;TB e9 1.2458x)
+candidate_stage: e10
 team_best_stage: e9
 team_best_speedup: 1.24575
 sealed: no
-next: e8去mask/e9直线段均平(双假设证伪);TB e9 1.2458(海光窗漂移);四芯缺口无杠杆
+next: e10 燧原BH4 0.15(-47%)跨芯平移证伪;TB e9 1.246守;收官仅守榜
 updated: 2026-09-14
 ```
 
@@ -347,3 +347,10 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   快路径与掩码回退双路）。门：**燧原 ≥ 0.40**；未过轴停。
 - source / verification commit：`d017032f…`；ZIP `e10-d017032`，
   SHA-256 `eca96c23e24fa0107adc2adbf3d4355b016b6d0c47be2a141ed663f2a9a7ced3`。
+
+## 2026-09-14 E10 平台终态：8/8 VALID 1.1908x < TB（submission 14847）
+
+- **燧原 BH4 passed 0.1474**（BH16 的 0.2802 → **-47%**）——海光 BH4
+  的 +25% 不可跨芯平移，燧原 tile 轴反向；轴停。BH16 载体守。
+- 均值 1.1908 < TB e9 1.2458。T62 四芯缺口全部无已建杠杆，收官期
+  仅守榜。
