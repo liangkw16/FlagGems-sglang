@@ -101,3 +101,24 @@ updated: 2026-09-13
   撞间歇崩溃（exec 0ms）同窗。
 - 处置：T72 昆仑轴暂停 tile 降档(已到下限);重开条件=FlagGems 昆仑
   softmax/group_norm 的实际可行形态研究,或工单。
+
+## 2026-09-14 E5 候选就绪：昆仑 vendor 采用 master native_group_norm 骨架（待发射）
+
+- 重新归因（FlagTree #1126 + FlagGems #6166 调研）：`uni_sram` 是
+  make_ttxir 任意 PassManager 失败的统一包装，"四档 tile 全超"不成立；
+  E2 的 1D 形态当时撞的是崩溃族而非本路径。
+- 载体 = 弃 [C,S] 2D tile，照 master `_kunlunxin/ops/native_group_norm.py`
+  骨架重写：扁平 1D 归约（[BLOCK_HW] 向量累加器 + 末尾单次 tl.sum，
+  BLOCK_HW=min(next_pow2(spatial),1024)）+ GROUP_SIZE constexpr 逐
+  channel 静态展开（标量 W/B + 连续 BLOCK_HW 块，无 idx//spatial
+  gather）。两处刻意偏离 master：方差保持三遍中心化（大均值回归钉死）；
+  silu 融入 normalize，fp32 全程、store 时才转输出 dtype。grid=
+  (N*group,) 与 generic/master 同形。eps do_not_specialize。
+- source / verification commit：`49a61251…`；ZIP `e5-49a6125`，
+  SHA-256 `bc02ad082f3a09bd3841fe04046a7d82854fc6a49ddef8f4391049fb0b629cae`。
+- release 回执 `batch5-submit-20260914/group_norm_silu/verification.json`
+  SHA-256 `e1be532eb0cb0bd2d69fb8ac82b0b9f5866694b09b637678ae72659767f64601`
+  （4 tests 0F0E0S 含 large_mean_small_var，generic 18 次真实 launch；
+  昆仑 vendor target-runtime-unverified，裁决在平台）。
+- 预注册晋级门：**昆仑通过（≥0.1 即 8/8）且七芯无回归**；判据=平台
+  逐芯读数，崩退则回 S0 字节守七芯。
