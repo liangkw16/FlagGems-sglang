@@ -80,3 +80,15 @@ vs 本题 0.26）。
   （前 TB 2.607）。榜首 GuanghuLab 3.688，差 0.99。
 - 下一轴：燧原 8192（队列 9 号，leader 7.84 证明可达）与昆仑带宽
   剩余差距待逐芯榜单刷新后评估。
+
+## 2026-09-14 E4 候选就绪：燧原 BLOCK 4096→8192（Codex 队列 9 号，待发射）
+
+- 单变量：配方宽度轴推到 8192（该轴在本芯单调为正：1024→4096 曾
+  +71%）；leader GuanghuLab 燧原 7.84 vs 我方 1.76 证明余量存在。
+  cap 保持 24。
+- source / verification commit：`e49a7a5…`；ZIP `e4-e49a7a5`，
+  SHA-256 `0afa3136ee787eb5a92336e6e94337fe5b4ced1a8ac3187b2837376b6f65a467`。
+- release 回执 `batch5-submit-20260914/sigmoid_gate_mul_e4/verification.json`
+  SHA-256 `6f90a0d96c6a4ac92d05a51d3656ca6133e145e1dc44e668129b46a9a87ca663`
+  （--proxy-vendor enflame：vendor 17 launch 0F0E0S）。
+- 预注册晋级门：**燧原 ≥ 2.2**；无增益则宽度轴封顶（不平推 T71/T73）。
