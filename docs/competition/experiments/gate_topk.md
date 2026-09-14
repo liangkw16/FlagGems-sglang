@@ -189,3 +189,13 @@ updated: 2026-09-12
   等健康窗口以 e3 字节重评（≤2 次）。七芯读数：天数 3.4957 /
   沐曦 2.1971 / 燧原 0.3638 / 海光 3.5482 / 华为 0.3603 / A 1.825 /
   B 2.9635。validity 仍 invalid_correctness，未上榜不变。
+
+## 2026-09-14 E3R 候选就绪：注释载体重掷（合规崩溃族重掷 1/2，待发射）
+
+- e3 字节（编译通过、代理数值全过）的注释载体重掷；执行代码零变化。
+  用户明确授权用掉今日额度并赌窗口。门：昆仑产生有效判决即达成
+  诊断目的；8/8 则任务首次 valid 上榜。
+- source / verification commit：`c3bf0369…`；ZIP `e3r-c3bf036`，
+  SHA-256 `bd82848b92ef51bb677dcc8234d4af4e233b2c946506c4d6485f667b11731cdb`。
+- release 回执 `batch5-submit-20260914-finale2/gate_topk-t70e3r/verification.json`
+  （kunlunxin vendor 58 launch 0F0E0S）。

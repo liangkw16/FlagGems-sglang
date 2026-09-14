@@ -339,3 +339,11 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 均值 1.2458（e9）> e7 的 1.2201 主要来自海光窗漂移（2.671 vs
   2.545）——TB 按规则更新为 e9（有效且均值最高）。两假设证伪，
   T62 的燧原/昆仑缺口继续无已建杠杆。
+
+## 2026-09-14 E10 候选就绪：燧原 tile 16→4 heads（海光 BH4 证据平移，待发射）
+
+- 今日同任务海光 BH4 +25%（e7 新TB）；燧原 vendor 同构 BH=16——
+  平移隔离实验。代理 enflame vendor 56 launch 0F0E0S（含 NOMASK
+  快路径与掩码回退双路）。门：**燧原 ≥ 0.40**；未过轴停。
+- source / verification commit：`d017032f…`；ZIP `e10-d017032`，
+  SHA-256 `eca96c23e24fa0107adc2adbf3d4355b016b6d0c47be2a141ed663f2a9a7ced3`。
