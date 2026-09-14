@@ -54,7 +54,7 @@
 | 71 | gelu_tanh_and_mul | valid | completed(13917,e3,8/8,2.674825x team best) | e3 2.674825x | no | e3 新 TB 2.675（配方第三证:封顶+4096 分解定理成立）；距榜首 0.77；明日复刻 T74/T63/T64/T68/T66/T67/T62 | 2026-09-13 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
 | 72 | group_norm_silu | valid | completed(14528,e5,8/8,2.5686x 昆仑解锁0.502) | e5 2.56860417x | no | 昆仑 master 骨架解锁(0.502);燧原0.44/华为1.16偏低待逐芯vendor轴;差榜首0.46 | 2026-09-14 | [group_norm_silu](group_norm_silu.md) |
 | 73 | residual_gate_add | valid | completed(14379,e4,8/8,4.027x;TB e3 4.0308x) | e3 4.03084375x | no | e4 fusion-off 无回归（契约修复零代价）；TB e3 守；榜首金狐狸 4.388 差 0.357 需多芯叠加 | 2026-09-13 | [residual_gate_add](residual_gate_add.md) |
-| 74 | seqlens_expand | valid | completed(13804,e2,8/8,10.5267x;TB s0 10.6444x) | s0 10.6444x | no | e2 8/8 valid（昆仑重掷成功）；tile 轴收益<窗口方差，收口；对榜首 c2flow 24.68 的差距需新结构 | 2026-09-13 | [seqlens_expand](seqlens_expand.md) |
+| 74 | seqlens_expand | valid | completed(14535,e3,8/8,19.3101x 新TB) | e3 19.3101x | no | e3 前缀入kernel新TB 19.31（+81%,launch假说兑现）;残余轴=flat-grid并行度;差榜首7.05 | 2026-09-14 | [seqlens_expand](seqlens_expand.md) |
 | 75 | sigmoid_gate_mul | valid | completed(13912,e2,8/8,2.60653333x team best) | e2 2.60653333x | no | e2 新 TB 2.607（燧原 +113%，天数 1024 vendor 双赢）；距榜首 0.45；配方复刻中 | 2026-09-13 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

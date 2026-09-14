@@ -5,13 +5,13 @@ task: 74
 operator: seqlens_expand
 batch: 5
 validity: valid
-platform: completed(13804,e2,8/8,10.5267x;TB s0 10.6444x)
-candidate_stage: e2
-team_best_stage: s0
-team_best_speedup: 10.6444
+platform: completed(14535,e3,8/8,19.3101x 新TB)
+candidate_stage: e3
+team_best_stage: e3
+team_best_speedup: 19.3101
 sealed: no
-next: e2 8/8 valid（昆仑重掷成功）；tile 轴收益<窗口方差，收口；对榜首 c2flow 24.68 的差距需新结构
-updated: 2026-09-13
+next: e3 前缀入kernel新TB 19.31（+81%,launch假说兑现）;残余轴=flat-grid并行度;差榜首7.05
+updated: 2026-09-14
 ```
 
 ## 契约与实现（S0）
