@@ -40,3 +40,15 @@ T75 e7（32768）submit 阶段网络异常 → uncertain；核查平台 50 条�
 3. 新一轮 codex-ask 盘点（00:32 快照已入 data/）。
 
 额度：09-15 已重置 30/30。截止 09-17 19:59，停止线 16/18/19 点。
+
+## OPSEC 处置（09-15 01:00）
+
+- 发现 `fork`（liangkw16/FlagGems-sglang，public fork）上存在研究分支
+  （research/season2-batch2 + 3 条 codex/batch4 + flagos-sglang-batch1），
+  与 08-26 事故同模式。
+- 处置：公开 fork 上全部研究分支已删除（仅剩 master=官方基线）；
+  新建 **私有仓库 liangkw16/flagos-research-private**，research/season2-batch2
+  与 master 已推入；本地 `private` remote 就位，后续 push 目标=private。
+- 遗留风险：公开 fork 的分支历史在被删除前可能已被缓存/索引
+  （batch4-era 分支自 09-07 起暴露，season2-batch2 今日暴露约 12 小时）；
+  需用户评估是否进一步处理（如联系 GitHub support 清缓存）。
