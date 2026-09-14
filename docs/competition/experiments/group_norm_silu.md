@@ -4,13 +4,14 @@
 task: 72
 operator: group_norm_silu
 batch: 5
-validity: candidate-wip
-platform: completed(13818,e4,7/8;昆仑uni_sram@64,四档全超,kernel复杂度问题)
-candidate_stage: e4
-team_best_stage: -
+validity: valid
+platform: completed(14528,e5,8/8,2.5686x 昆仑解锁0.502)
+candidate_stage: e5
+team_best_stage: e5
+team_best_speedup: 2.56860417
 sealed: no
-next: 昆仑 tile 降档轴封;重开=FlagGems 昆仑 softmax 实际形态研究或工单
-updated: 2026-09-13
+next: 昆仑 master 骨架解锁(0.502);燧原0.44/华为1.16偏低待逐芯vendor轴;差榜首0.46
+updated: 2026-09-14
 ```
 
 ## 契约与实现（S0）
@@ -122,3 +123,16 @@ updated: 2026-09-13
   昆仑 vendor target-runtime-unverified，裁决在平台）。
 - 预注册晋级门：**昆仑通过（≥0.1 即 8/8）且七芯无回归**；判据=平台
   逐芯读数，崩退则回 S0 字节守七芯。
+
+## 2026-09-14 E5 平台终态：8/8 VALID 2.5686x——昆仑解锁，任务首次有效（submission 14528）
+
+- **预注册门全过**：昆仑 `group_norm_silu_kunlunxin.py` 被选中、编译
+  通过、**passed speedup 0.502**（四轮 uni_sram 全败后首次过线）——
+  master 骨架（扁平 1D 归约 + constexpr channel 循环 + BLOCK_HW=1024）
+  证实可行，"uni_sram 预算"确为误导性包装（#1126 路径）。
+- 逐芯：天数 4.1687 / 沐曦 2.4638 / 燧原 0.4392 / 海光 4.6098 /
+  **昆仑 0.502** / 华为 1.163 / A 3.4537 / B 3.7487 → 均值 2.5686，
+  任务从 invalid_correctness 变 valid（榜首 c2flow 3.024，差 0.46）。
+- 七芯 generic 与 S0 同字节，读数均为窗口水位；燧原 0.439 与华为
+  1.163 偏低是窗口与形态叠加，后续按逐芯榜单再定 vendor 轴。
+- 额度：发后 24/30。
