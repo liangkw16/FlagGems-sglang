@@ -48,7 +48,7 @@
 | 65 | deepep_post_reorder | invalid_correctness | completed(13820,e4,7/8;昆仑间歇崩溃,BLOCK=64未获裁决) | - | no | 昆仑=间歇窗口+uni_sram 双条件;新 ZIP 重掷待健康窗 | 2026-09-12 | [deepep_post_reorder](deepep_post_reorder.md) |
 | 66 | dsv3_fused_a_gemm | valid | completed(13371,e1,8/8,3.09395x team best) | e1 3.09395x | no | e1 valid 3.094（+13%，A+70%/沐曦+31%）；对榜首 4.12 差 1.0，燧原+2.1 为最大单芯缺口（tiny-GEMM 向量核方向已注册） | 2026-09-12 | [dsv3_fused_a_gemm](dsv3_fused_a_gemm.md) |
 | 67 | fill_padded_rows | valid | completed(13386,e3,8/8,4.23825x;三宽芯门全负,轴关闭;TB e2 4.2969x) | e2 4.2969x | no | e3 列分块轴关闭(唯沐曦+24%);TB e2 4.2969 守榜(#8,榜首 8.32);宽 shape 结构待新证据 | 2026-09-12 | [fill_padded_rows](fill_padded_rows.md) |
-| 68 | fused_eh_norm | valid | completed(14522,e5,8/8,6.936x;TB e4 7.089x) | e4 7.08945833x | no | e5 去 cap 同窗无差异（1.53 vs 1.56,等值判关）；TB e4 7.089 守；差榜首 0.97 | 2026-09-14 | [fused_eh_norm](fused_eh_norm.md) |
+| 68 | fused_eh_norm | valid | completed(14589,e6,8/8,7.042x;TB e4 7.089x) | e4 7.08945833x | no | e6 split-row证伪(燧原0.87,饥饿假说假);TB e4 7.089守;燧原缺因未破,主攻降级 | 2026-09-14 | [fused_eh_norm](fused_eh_norm.md) |
 | 69 | fused_moe_dispatch_index | invalid_correctness | completed(13809,e7,7/8;昆仑七连崩,轴终封仅剩工单) | - | no | T69 昆仑轴终封;仅剩平台工单;七芯部分和 357.5 永久待命 | 2026-09-12 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
 | 70 | gate_topk | invalid_correctness | completed(14556,e3,7/8;昆仑编译过但3630s挂死@0%util,转工单) | - | no | e1 终态 5/8：三失败芯均 exec 0ms 崩溃族（12:20 同窗），kunlun vendor 被选中但未执行；下一步=新 ZIP 真实改动重评（燧原/华为可补迭代选择 vendor）或用户授权的同字节重掷 | 2026-09-12 | [gate_topk](gate_topk.md) |
 | 71 | gelu_tanh_and_mul | valid | completed(14573,e4,8/8,2.7109x 新TB) | e4 2.7109x | no | e4 no-loop昆仑0.304复制链失败(门0.5未过,链收口);TB 2.711守;昆仑真因/燧原8192待证 | 2026-09-14 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |

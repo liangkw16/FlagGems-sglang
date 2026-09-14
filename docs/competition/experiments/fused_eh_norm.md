@@ -34,12 +34,12 @@ task: 68
 operator: fused_eh_norm
 batch: 5
 validity: valid
-platform: completed(14522,e5,8/8,6.936x;TB e4 7.089x)
-candidate_stage: e5
+platform: completed(14589,e6,8/8,7.042x;TB e4 7.089x)
+candidate_stage: e6
 team_best_stage: e4
 team_best_speedup: 7.08945833
 sealed: no
-next: e5 去 cap 同窗无差异（1.53 vs 1.56,等值判关）；TB e4 7.089 守；差榜首 0.97
+next: e6 split-row证伪(燧原0.87,饥饿假说假);TB e4 7.089守;燧原缺因未破,主攻降级
 updated: 2026-09-14
 ```
 
@@ -231,3 +231,15 @@ updated: 2026-09-14
 - 预注册晋级门：**燧原 ≥ 2.0**（Codex 槽 2 门）；均值同时 > TB 7.089
   则进 top1 路径（追平 6.17 + 华为 2x ≈ 8.13）。燧原无增益则该形态
   关闭，T68 top1 主攻降级。
+
+## 2026-09-14 E6 平台终态：8/8 VALID 7.042x < TB（submission 14589）——split-row 形态证伪
+
+- **燧原 vendor 被选中、passed 0.874**——比行打包形态（1.56-1.98）
+  更差，预注册门（≥2.0）未过。"tokens 少 → 24 SIP 饥饿"假说证伪：
+  切片级并行没有兑现，两相额外 kernel 与偏积流量反而是净损失。
+- 其余七芯窗口内（天数 11.99/12.27、沐曦 6.74/6.45、海光 14.66/
+  13.99、华为 3.64/3.71、A 9.18/9.45、B 8.15/8.20、昆仑 1.11/1.08）。
+  TB 保持 e4 7.089。
+- 处置：split-row 形态关闭；燧原 4-6x 他队读数之因仍未破译（剩余
+  假设=慢窗水位或未知单遍形态），T68 top1 主攻按预注册降级，转
+  守榜 + 等逐芯情报刷新。
