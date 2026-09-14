@@ -5,11 +5,11 @@ task: 70
 operator: gate_topk
 batch: 5
 validity: invalid_correctness
-platform: completed(14556,e3,7/8;昆仑编译过但3630s挂死@0%util,转工单)
+platform: submitted(14849,e3r,评测中;华为vendor 0.3355过,昆仑队列1.5h+)
 candidate_stage: e3
 team_best_stage: -
 sealed: no
-next: e1 终态 5/8：三失败芯均 exec 0ms 崩溃族（12:20 同窗），kunlun vendor 被选中但未执行；下一步=新 ZIP 真实改动重评（燧原/华为可补迭代选择 vendor）或用户授权的同字节重掷
+next: e3r 七芯已判(华为vendor过线),昆仑长尾队列中,终态回填;重掷额度已用尽
 updated: 2026-09-12
 ```
 
@@ -199,3 +199,11 @@ updated: 2026-09-12
   SHA-256 `bd82848b92ef51bb677dcc8234d4af4e233b2c946506c4d6485f667b11731cdb`。
 - release 回执 `batch5-submit-20260914-finale2/gate_topk-t70e3r/verification.json`
   （kunlunxin vendor 58 launch 0F0E0S）。
+
+## 2026-09-14 E3R 状态：七芯已判（华为 vendor 首过 0.3355），昆仑队列中
+
+- 华为 ascend vendor 被选中、passed 0.3355（e2 的 0.3804 同水位）——
+  vendor 在两窗两判稳定。七芯与 e2/e3 一致。
+- 昆仑 waiting_callback 已超 1.5h（与 e3 的 3630s 挂死同长尾模式），
+  终态落地后回填。e3r 为注释载体重掷 1/2，无论结果如何本季昆仑
+  重掷额度已用尽。
