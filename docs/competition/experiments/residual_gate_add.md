@@ -192,3 +192,12 @@ card_b +0.31、tianshu +0.09；muxi/card_a 我方领先。燧原窗口摆动实�
   轴兑现，距 0.65 门仅 0.047。no-loop + 宽度曲线（1024→4096）双正，
   下一档 8192 待明日信号。均值 4.0993 > e5 的 4.0893，新 TB = e6。
 - 其余芯窗口内。榜首 c2flow 4.9749，差 0.876。
+
+## 2026-09-14 E7 候选就绪：昆仑 flat BLOCK 4096→8192（宽度曲线续推，待发射）
+
+- e5 no-loop 2.1x → e6 4096 +23% 双正曲线的下一档。代理 kunlunxin
+  vendor 全矩阵 0F0E0S。门：**昆仑 ≥ 0.65**；未过则宽度轴停在 4096。
+- source / verification commit：`934120a…`；ZIP `e7-934120a`，
+  SHA-256 `ba4ac2a777af4b04d264ec061b857493f0abff4fc478b7207fda07089a709b13`。
+- release 回执 `batch5-submit-20260914-finale2/residual_gate_add-t73e7/verification.json`
+  SHA-256 `c26a184e0468dfee65075d08bcbd0be19c5610476f4f2f6b99e80054d6fb15d2`。
