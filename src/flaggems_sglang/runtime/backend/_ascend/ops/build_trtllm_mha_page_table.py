@@ -52,7 +52,6 @@ def _build_page_table(
     ps0l,
     ps1l,
     PAGE_SIZE: tl.constexpr,
-    SHIFT: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
     row = tl.program_id(0).to(tl.int64)
@@ -70,16 +69,22 @@ def _build_page_table(
     # so the gather mask stays bounded by the row width.
     active = (page < columns) & (page < n_pages)
     inactive = (page < columns) & (page >= n_pages)
-    # Positive divisors of 4096 are powers of two; signed shift is floor
-    # division for the negative sentinel values the tests feed on purpose.
     slot = tl.load(
         pool + request * ps0 + page_rd * PAGE_SIZE * ps1, active, other=0
     )
     previous = tl.load(old + row * ps0l + page_rd * ps1l, inactive, other=0)
+    # E8: bishengir lowers an explicit `slot >> SHIFT` to SCALAR execution
+    # (triton-ascend #1220, aiv_scalar_ratio 35% on the same shape class),
+    # so the quotient goes through the vector integer divider instead.
+    # Triton `//` truncates toward zero while the reference's shift is
+    # floor division, and the tests deliberately feed negative sentinel
+    # slots - restore floor for negative non-exact lanes branch-free.
+    q = slot // PAGE_SIZE
+    q = q - (((slot < 0) & (slot != q * PAGE_SIZE)).to(q.dtype))
     # One fused store: an integer select is legal on Ascend (the no-int-
     # tl.where rule is a GCU300 constraint) and halves the store count the
     # e6 form paid 29.5s for.
-    merged = tl.where(active, slot >> SHIFT, previous)
+    merged = tl.where(active, q, previous)
     tl.store(out + row * ps0o + page_rd * ps1o, merged, page < columns)
 
 
@@ -122,7 +127,6 @@ def build_trtllm_mha_page_table(
             *out.stride(),
             *page_table.stride(),
             PAGE_SIZE=page_size,
-            SHIFT=page_size.bit_length() - 1,
             BLOCK=block,
         )
     return out
