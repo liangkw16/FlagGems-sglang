@@ -279,3 +279,17 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   stride-0 广播读。
 - 后续轴：燧原 0.233/华为 0.223 贴门槛（B1 grid 封顶/B2 constexpr
   去 mask 早已注册，昆仑定位后再排）；榜首 EvokeAgent 1.814。
+
+## 2026-09-14 E7 候选就绪：海光 BH 16→4 隔离探针（Codex v3 队列槽 1，待发射）
+
+- 依据：S0 BH=4 时海光读 3.11（历史最佳）；BH=16+dns 合并改动后海光
+  降至 ~2.0，今榜单 3 队 3.3-4.03。BH 非已证根因（当时与 dns 混杂），
+  本发是隔离实验：新建 _hygon vendor，与 generic 逐字节一致仅 BH=4、
+  groups=cdiv(heads,4)；generic/其它芯字节不动。
+- source / verification commit：`b60a46a…`；ZIP `e7-b60a46a`，
+  4 members（generic+enflame+hygon+kunlunxin），SHA-256
+  `e3eb9db890114178b8b2997e2076f4f93fb1b14e0173e95e359714362bacfae6`。
+- release 回执 `batch5-submit-20260914/concat_mla_k/verification.json`
+  SHA-256 `07a3522b1529441217cc4c6532ae4a55b01ddef1a2922973b63c83294505376b`
+  （--proxy-vendor hygon：vendor 28 launch 0F0E0S）。
+- 预注册晋级门：**海光 ≥ 2.60 且均值 ≥ 1.2144**；未过则 BH 轴停。
