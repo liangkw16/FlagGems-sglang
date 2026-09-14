@@ -343,3 +343,21 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   **team best 保留 e8；do_not_specialize 轴关闭**。
 - 沉淀：重编译税理论只在昇腾成立，且代价由全 generic 芯共担——
   若要再用应做成 _ascend 专属 vendor 而非 generic。
+
+## 2026-09-14 E10 候选就绪：燧原 flat-grid 探针（Codex 队列 12 号，待发射）
+
+- 依据：燧原 6 队 ≥37x（c2flow 83.1/Guanghu 69.6/Nectar 42.3/
+  xyzxyz 43.9/RSI 39.1/gmaewin 37.3），我方 6.18（同字节历史 17.9）
+  ——结构实锤。探针=单变量把 (row,split) 2D grid 摊平成 1D
+  grid-stride（BLOCK=512、split 数、head/gap/tail 语义、访存原语
+  全部不动），验证 2D 调度/lowering 是否瓶颈。
+- codex-review 抓获 P1 并修复：`splits` 实参错插在 strides 前，导致
+  ps0/ps1/os 整体错位越界写——发射前拦下。
+- source / verification commit：`8cf0ab27…`；ZIP `e10-8cf0ab2`，
+  SHA-256 `2ef2b24d64772dc9bc75df06f8d293217be175d717f95d4f8fa3966c30eceb11`。
+- release 回执 `batch5-submit-20260914/create_flashinfer_kv_indices/verification.json`
+  SHA-256 `81a5ff8aedfd1d58fec2559348ae777201ed53651efac6bb0071cfd6bc871ed8`
+  （--proxy-vendor enflame：vendor 16 次真实 launch 全矩阵 0F0E0S，
+  修复后字节）。
+- 预注册晋级门：**燧原 ≥ 22 且相对 17.9 水位有性能证据**；仅回到
+  ~18 不算结构晋级、不追发。

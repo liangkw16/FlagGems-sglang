@@ -211,3 +211,23 @@ updated: 2026-09-14
   不可复现，行归约-配方边界结论修正为：**封顶对该形态无害亦无益**。
   TB 保持 e4（14385）；去 cap 轴按等值判关，不再花额度。
 - 额度：发后 25/30。
+
+## 2026-09-14 E6 候选就绪：燧原 split-row 两相形态（Codex top1 队列 2 号，待发射）
+
+- 依据：15:39 榜单 5 队在燧原 4-6x（金狐狸 6.17/c2flow 5.21/Nectar
+  4.58/Evoke 4.26/HAiWORLD 3.96），我方全部行打包形态只有 1.5-2.0
+  ——计分 tokens 少时行级并行撑不满 24 SIP，结构实锤非彩票。
+- 载体 = 照官方 gcu400 mean 两相模板重写：phase1 以 24-program
+  grid-stride 算每 (row, 1024-lane 切片) 的平方和偏积（并行度随
+  hidden 缩放），phase2 折 7 个偏积得 rstd 后逐切片归一化写出；
+  num_stages=3 pingpong、不钉 num_warps；fp32 全程、store 转换不变。
+- codex-review（--uncommitted）修复记录：本候选无缺陷；同 diff 的
+  T63 vendor 被抓到 P1 实参错位（splits 位置）已修。
+- source / verification commit：`797b7ea1…`；ZIP `e6-797b7ea`，
+  SHA-256 `a8508d97fbfb4a9b6d8fb1f6ef47b6d8108fcd450a5a4ce07aae0666562312c8`。
+- release 回执 `batch5-submit-20260914/fused_eh_norm/verification.json`
+  SHA-256 `3989b87c7462bdfe7cd406ae15a94f5b031cf7d62c42e734ce5e6fca48133eaa`
+  （--proxy-vendor enflame：vendor 46 次真实 launch 全矩阵 0F0E0S）。
+- 预注册晋级门：**燧原 ≥ 2.0**（Codex 槽 2 门）；均值同时 > TB 7.089
+  则进 top1 路径（追平 6.17 + 华为 2x ≈ 8.13）。燧原无增益则该形态
+  关闭，T68 top1 主攻降级。
