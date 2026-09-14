@@ -32,13 +32,13 @@ task: 62
 operator: concat_mla_k
 batch: 5
 validity: valid
-platform: completed(14686,e7,8/8,1.2201x 新TB)
-candidate_stage: e7
-team_best_stage: e7
-team_best_speedup: 1.2201
+platform: completed(14771,e9,8/8,1.2458x 新TB;e8/e9探针目标芯均平)
+candidate_stage: e9
+team_best_stage: e9
+team_best_speedup: 1.24575
 sealed: no
-next: e7 海光BH4 2.545(+25%,差门0.055)新TB 1.2201;BH轴停;剩余四芯缺口按v3队列
-updated: 2026-09-13
+next: e8去mask/e9直线段均平(双假设证伪);TB e9 1.2458(海光窗漂移);四芯缺口无杠杆
+updated: 2026-09-14
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。

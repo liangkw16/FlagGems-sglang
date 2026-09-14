@@ -79,13 +79,13 @@ task: 73
 operator: residual_gate_add
 batch: 5
 validity: valid
-platform: completed(14379,e4,8/8,4.027x;TB e3 4.0308x)
-candidate_stage: e4
-team_best_stage: e3
-team_best_speedup: 4.03084375
+platform: completed(14766,e5,8/8,4.0893x 新TB;昆仑no-loop 0.49)
+candidate_stage: e5
+team_best_stage: e5
+team_best_speedup: 4.08934375
 sealed: no
-next: e4 fusion-off 无回归（契约修复零代价）；TB e3 守；榜首金狐狸 4.388 差 0.357 需多芯叠加
-updated: 2026-09-13
+next: e5 no-loop昆仑0.49(+2.1x)新TB 4.089;昆仑剩余缺口待窗口;差榜首0.886
+updated: 2026-09-14
 ```
 
 ## 契约与实现（S0）
