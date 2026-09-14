@@ -20,7 +20,7 @@ candidate_stage: e4
 team_best_stage: e4
 team_best_speedup: 2.739325
 sealed: no
-next: e4 8192燧原2.16(+23%)新TB 2.739;宽度轴封顶;剩余燧原缺口需形态情报
+next: e5 i32无增益(2.149≈2.156),i64税假设关;TB e4 2.739守;燧原缺因待他队情报
 updated: 2026-09-14
 ```
 
@@ -123,3 +123,11 @@ vs 本题 0.26）。
 - 续接动作：用户重新 `platform_cli.py auth` 后以
   `status --race 782kzq4m --batch 5 --task 75 --operator sigmoid_gate_mul`
   读取 e5（i32 地址链探针）终态；预注册门 燧原 ≥2.6。
+
+## 2026-09-14 E5 平台终态：8/8 VALID 2.7366x ≈ TB（submission 14614）——i64 税假设证伪
+
+- **燧原 vendor passed 2.1487**（e4 i64 形态 2.1562，-0.4% 噪声级）
+  ——预注册门（≥2.6）未过：GCU 上 i64 地址算术无显性 emulation 税，
+  "显式 cast 大税"假设关闭，禁止向其它 vendor 批量迁移。
+- 均值 2.7366 与 e4 的 2.7393 在窗口噪声内；TB 保持 e4（2.7393）。
+  收盘守榜。
