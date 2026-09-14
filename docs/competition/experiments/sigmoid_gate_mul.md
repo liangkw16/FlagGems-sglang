@@ -55,3 +55,17 @@ huawei 1.369 / tianshu 4.191（avg 2.5107）。
 转录错误）；但天数 -12%（4.769→4.191）吃掉净收益，均略低于 TB。
 e2 假设：**燧原再推 8192 + 昆仑 no-loop 形态**（T61 no-loop 读 1.29
 vs 本题 0.26）。
+
+## 2026-09-14 E3 候选就绪：昆仑 no-loop 探针（Codex top1 队列 3 号槽，待发射）
+
+- 逐芯榜单修正认知：T75 昆仑其余各队 0.78-0.86，我方 0.263；T61
+  "no-loop 已证"前提被 Codex 证伪（T61 generic 含 grid-stride）——
+  本发是降级后的未验证假设探针，单变量=去 runtime 循环（一 program
+  一 tile，BLOCK=4096、数学与 fp32 契约字节不变）。
+- source commit：`185170f1…`；ZIP `e3-185170f`，4 members，SHA-256
+  `09293f3a1dde27b21efac65715803d6d74fa00da337bad5596d52394fa880321`。
+- release 回执 `batch5-submit-20260914/sigmoid_gate_mul/verification.json`
+  SHA-256 `765dc87d3557c7a36559b0d7c856e18274072853042c27447bf842a1dca18b7a`
+  （--proxy-vendor kunlunxin：vendor 17 次真实 launch 全矩阵 0F0E0S）。
+- 预注册晋级门：**昆仑 ≥ 0.50**；<0.35 则暂停 no-loop 复制链
+  （T71/T73 不再跟发）。

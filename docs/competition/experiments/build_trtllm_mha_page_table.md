@@ -334,3 +334,20 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - **轴关闭**：华为 -16.11 缺口不在 tile 宽度/store 形态。剩余假设：
   榜首华为形态是更深的算法差异（或窗口）；下一假设需要昇腾侧真机
   profiling 或 KernelGen 通道证据再开。
+
+## 2026-09-14 E8 候选就绪：华为 `>>`→floor 修正向量除法（待发射）
+
+- 15:39 榜单：华为榜首 Albedo 79.05（孤立值，第二梯队 zhaxi123 28.5 /
+  GuanghuLab 24.8 / ShenCang 20.0），我方 8.68 垫底群。top1 需华为
+  ≥75.5（低概率），但 20x 级可升 #2-3。
+- 单变量载体：ascend vendor 的 `slot >> SHIFT` 换 `slot // PAGE_SIZE`
+  + 无分支 floor 修正（负非整除 lane 减 1）——机制=triton-ascend
+  #1220 的 bishengir 标量降级（aiv_scalar_ratio 35%）；floor 语义
+  已在代理 ascend vendor 全矩阵验证（含负 sentinel 回归，26 launches
+  0F0E0S）。其余字节（clamp/宽 tile/融合 store）不动。
+- source / verification commit：`295038de…`；ZIP `e8-295038d`，
+  SHA-256 `106ff721676a6393c9bbf62ec38511f04e6ee8ea742ad5af02b2ff65920d9e3d`。
+- release 回执 `batch5-submit-20260914/build_trtllm_mha_page_table/verification.json`
+  SHA-256 `4b93230d4007e5213a500e7a3d43ab2211010edff02a0d4954f4e4d90c79d6c7`。
+- 预注册晋级门：**华为 ≥ 10.5**；读数平稳无增益则关闭"除法形态"轴
+  （账本已有 tile/store 轴关闭记录），top1 主攻转向 T68。
