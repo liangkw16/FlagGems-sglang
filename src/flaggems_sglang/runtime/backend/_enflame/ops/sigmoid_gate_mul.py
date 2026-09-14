@@ -2,11 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Enflame vendor: the two proven levers combined - grid capped at the
-# 24-SIP width with a grid-stride, and BLOCK raised to 4096 (this chip
-# gained +71% at 4096 vs 1024 on this very task in e1). E4 pushes the
-# only remaining width lever to 8192 (the recipe's BLOCK axis has been
-# monotonically positive on this chip, and the task leader's enflame
-# reading of 7.84 - vs our 1.76 - proves far more headroom exists).
+# 24-SIP width with a grid-stride, and BLOCK raised to 8192 (1024 to
+# 4096 gained +71% on this very task; 4096 to 8192 another +23% in e4).
+# E5 tests the one remaining width-adjacent lever: the offset chain in
+# the scoring path stays in i32. T61's all-i32 vendor is the only one
+# of ours that converged to the leader on this chip, and every other
+# enflame gap we hold is 2-6x - if i64 address arithmetic carries an
+# emulation tax on GCU, this is where it shows. The wrapper picks the
+# i32 kernel by host-side numel metadata and keeps the i64 kernel for
+# inputs at or beyond 2^31, so the contract never narrows.
 
 import torch
 import triton
@@ -17,7 +21,18 @@ _MAX_PROGS = 24
 
 
 @triton.jit
-def _sigmoid_gate_mul(x_ptr, g_ptr, out_ptr, n, BLOCK: tl.constexpr):
+def _sigmoid_gate_mul32(x_ptr, g_ptr, out_ptr, n, BLOCK: tl.constexpr):
+    for pid in range(tl.program_id(0), tl.cdiv(n, BLOCK), tl.num_programs(0)):
+        offs = pid * BLOCK + tl.arange(0, BLOCK)
+        mask = offs < n
+        x = tl.load(x_ptr + offs, mask=mask, other=0.0).to(tl.float32)
+        g = tl.load(g_ptr + offs, mask=mask, other=0.0).to(tl.float32)
+        y = x * (1.0 / (1.0 + tl.exp(-g)))
+        tl.store(out_ptr + offs, y.to(out_ptr.dtype.element_ty), mask=mask)
+
+
+@triton.jit
+def _sigmoid_gate_mul64(x_ptr, g_ptr, out_ptr, n, BLOCK: tl.constexpr):
     for pid in range(tl.program_id(0), tl.cdiv(n, BLOCK), tl.num_programs(0)):
         offs = (pid * BLOCK + tl.arange(0, BLOCK)).to(tl.int64)
         mask = offs < n
@@ -33,7 +48,8 @@ def sigmoid_gate_mul(x, gate):
     n = x.numel()
     out = torch.empty_like(x)
     if n:
-        _sigmoid_gate_mul[(min(triton.cdiv(n, _BLOCK), _MAX_PROGS),)](
+        kern = _sigmoid_gate_mul32 if n < 2**31 else _sigmoid_gate_mul64
+        kern[(min(triton.cdiv(n, _BLOCK), _MAX_PROGS),)](
             x, gate, out, n, BLOCK=_BLOCK
         )
     return out
