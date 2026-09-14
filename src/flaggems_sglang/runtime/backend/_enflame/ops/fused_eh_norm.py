@@ -111,7 +111,12 @@ def fused_eh_norm(
     )
     if tokens and hidden:
         chunk = min(triton.next_power_of_2(hidden), _CHUNK)
-        _fused_eh_norm_enflame[(min(tokens, 24),)](
+        # E4 proved the streaming recipe's 24-program cap regresses this
+        # row-reduction form (-19%): row parallelism cannot be recovered by
+        # wider BLOCK. The in-kernel row grid-stride already adapts to any
+        # grid, so the cap is dropped back to the flat-grid width used by
+        # the vendor layernorm family; 65535 is the grid.x limit.
+        _fused_eh_norm_enflame[(min(tokens, 65535),)](
             inputs_embeds,
             previous_hidden,
             enorm_weight,
