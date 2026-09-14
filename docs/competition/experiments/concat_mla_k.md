@@ -19,17 +19,25 @@
 - source commit：`220aa32d18a1c3a4aca829b09b79e2e906471e43`；ZIP `e6-220aa32`，
   SHA-256 `3dc76ba8cf0478ceb194fb9d400fb53a8006df2e7f3a1eccdff950ac457cb9b4`；
   release 回执前缀 `48687d55`；5 方法 0 失败。
+
+## 2026-09-14 E6 平台终态：8/8 valid 1.1644x 新 team best
+
+- 燧原 0.233→0.2744（+19%，封顶兑现）；天数 +4%/A +4%；华为 -28%
+  （窗口）。均值 1.1644 > e5 1.1483 新 TB（+1.4%）。
+- 榜首 EvokeAgent 1.814 差 0.65；燧原榜首 1.23 vs 我 0.27——该题
+  燧原差距 4.5x，配方远不够，需要海光/天数多轴。
+
 ```current
 task: 62
 operator: concat_mla_k
 batch: 5
 validity: valid
-platform: completed(13789,e5,8/8,1.1483x team best)
-candidate_stage: e5
-team_best_stage: e5
-team_best_speedup: 1.1483
+platform: completed(14381,e6,8/8,1.1644x team best)
+candidate_stage: e6
+team_best_stage: e6
+team_best_speedup: 1.1644
 sealed: no
-next: e5 valid 1.148 首 TB（两段式破昆仑四轮垃圾）；后续=燧原0.23/华为0.22弱芯轴（B1/B2 已注册）；榜首 1.814
+next: e6 新 TB 1.1644（燧原 +19% 封顶兑现）；差榜首 0.65 需多轴（海光 2.0/天数）
 updated: 2026-09-13
 ```
 
