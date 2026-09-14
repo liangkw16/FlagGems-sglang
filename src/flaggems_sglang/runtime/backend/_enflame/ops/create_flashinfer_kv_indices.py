@@ -32,10 +32,18 @@ def _create_kv_indices(
     ss,
     os,
     olds,
+    splits,
     HAS_START: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
-    for row in range(tl.program_id(0), batch, tl.num_programs(0)):
+    # E10 flattens the (row, split) 2D grid into one 1D grid-stride:
+    # everything else - BLOCK=512, the split count, the head/gap/tail
+    # semantics, the load and store primitives - stays byte-identical.
+    # The probe tests whether the 2D launch geometry itself is what
+    # keeps this op at 6-18x while six teams read 37x+ on this chip.
+    for task in range(tl.program_id(0), batch * splits, tl.num_programs(0)):
+        row = task // splits
+        lane = task % splits
         row_offset = row.to(tl.int64)
         request = tl.load(requests + row_offset * rs).to(tl.int64)
         length = tl.load(lengths + row_offset * ls).to(tl.int64)
@@ -56,25 +64,19 @@ def _create_kv_indices(
         gap_lo = begin + length
         last = 1 - tl.minimum(batch - 1 - row, 1)
         gap_hi = next_begin + (out_numel - next_begin) * last
-        for tile in range(
-            tl.program_id(1), tl.cdiv(head_len, BLOCK), tl.num_programs(1)
-        ):
+        for tile in range(lane, tl.cdiv(head_len, BLOCK), splits):
             i = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
             m = i < head_len
             value = tl.load(old + i * olds, m, other=0)
             tl.store(out + i * os, value, m)
         gap = gap_hi - gap_lo
-        for tile in range(
-            tl.program_id(1), tl.cdiv(gap, BLOCK), tl.num_programs(1)
-        ):
+        for tile in range(lane, tl.cdiv(gap, BLOCK), splits):
             i = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
             m = i < gap
             off = gap_lo + i
             value = tl.load(old + off * olds, m, other=0)
             tl.store(out + off * os, value, m)
-        for tile in range(
-            tl.program_id(1), tl.cdiv(length, BLOCK), tl.num_programs(1)
-        ):
+        for tile in range(lane, tl.cdiv(length, BLOCK), splits):
             i = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
             value = tl.load(
                 pool + request * ps0 + (start + i) * ps1, i < length, other=0
@@ -123,7 +125,7 @@ def create_flashinfer_kv_indices(
         max(1, 128 // batch),
         32,
     )
-    _create_kv_indices[(min(batch, 65535), splits)](
+    _create_kv_indices[(min(batch * splits, 65535),)](
         req_to_token,
         req_pool_indices,
         page_kernel_lens,
@@ -140,6 +142,7 @@ def create_flashinfer_kv_indices(
         kv_start_idx.stride(0) if kv_start_idx is not None else 0,
         out.stride(0),
         kv_indices.stride(0),
+        splits,
         HAS_START=kv_start_idx is not None,
         BLOCK=512,
     )
