@@ -5,8 +5,8 @@ task: 70
 operator: gate_topk
 batch: 5
 validity: invalid_correctness
-platform: completed(13335,e1,5/8;燧原/昆仑/华为=exec0ms崩溃族未裁决)
-candidate_stage: e1
+platform: submitted(14556,e3,评测中;七芯已过,kunlun待判)
+candidate_stage: e3
 team_best_stage: -
 sealed: no
 next: e1 终态 5/8：三失败芯均 exec 0ms 崩溃族（12:20 同窗），kunlun vendor 被选中但未执行；下一步=新 ZIP 真实改动重评（燧原/华为可补迭代选择 vendor）或用户授权的同字节重掷
@@ -168,3 +168,12 @@ updated: 2026-09-12
   SHA-256 `7574df54e274ba123fe266b6a8d06df7136418e53d2183bd2328c10696e91f8a`。
 - 预注册晋级门：**8/8（仅昆仑待裁，七芯 e2 已过）**；昆仑再 SIGABRT
   同类即按崩溃族收口（工单+健康窗，不再改字节）。
+
+## 2026-09-14 E3 平台状态：评测中（submission 14556，七芯已过、昆仑待判）
+
+- 七芯终态读数：天数 3.4957 / 沐曦 2.1971 / 燧原 0.3638 / 海光 3.5482 /
+  华为 0.3603 / A 1.825 / B 2.9635——与 e2 同水位，替换体的数值正确性
+  在真实双芯再证。
+- 昆仑 kunlun vendor 被选中，waiting_callback 已超 15 分钟未判
+  （e2 的 SIGABRT 在 4s 内即判；本次长时间未崩是好信号，也可能在
+  编译队列）。终态落地后回填本节与 CURRENT。
