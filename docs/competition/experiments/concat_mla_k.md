@@ -32,12 +32,12 @@ task: 62
 operator: concat_mla_k
 batch: 5
 validity: valid
-platform: completed(14381,e6,8/8,1.1644x team best)
-candidate_stage: e6
-team_best_stage: e6
-team_best_speedup: 1.1644
+platform: completed(14686,e7,8/8,1.2201x 新TB)
+candidate_stage: e7
+team_best_stage: e7
+team_best_speedup: 1.2201
 sealed: no
-next: e6 新 TB 1.1644（燧原 +19% 封顶兑现）；差榜首 0.65 需多轴（海光 2.0/天数）
+next: e7 海光BH4 2.545(+25%,差门0.055)新TB 1.2201;BH轴停;剩余四芯缺口按v3队列
 updated: 2026-09-13
 ```
 
@@ -293,3 +293,13 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   SHA-256 `07a3522b1529441217cc4c6532ae4a55b01ddef1a2922973b63c83294505376b`
   （--proxy-vendor hygon：vendor 28 launch 0F0E0S）。
 - 预注册晋级门：**海光 ≥ 2.60 且均值 ≥ 1.2144**；未过则 BH 轴停。
+
+## 2026-09-14 E7 平台终态：8/8 VALID 1.2201x 新TB（submission 14686）
+
+- **海光 vendor 被选中、passed 2.545**（BH16 的 2.04 → +25%）——门
+  （≥2.60）差 0.055 未过，BH 轴按预注册停（不再试 BH=2 等梯度）。
+  均值门（≥1.2144）过：1.2201 > TB e6 1.1644，新 TB = e7。
+- 其余芯窗口内（天数 2.28/2.32、沐曦 1.03/1.02、燧原 0.28/0.27、
+  昆仑 0.18/0.18、华为 0.19/0.16、A 1.63/1.69、B 1.64/1.64）。
+- 距榜首 Evoke 1.8141 还差 0.594；剩余缺口在燧原/昆仑/华为/muxi
+  四芯（第二高组合 1.8664），按 v3 队列继续槽 4（燧原去 mask）等。
