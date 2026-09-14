@@ -136,3 +136,21 @@ updated: 2026-09-14
 - 七芯 generic 与 S0 同字节，读数均为窗口水位；燧原 0.439 与华为
   1.163 偏低是窗口与形态叠加，后续按逐芯榜单再定 vendor 轴。
 - 额度：发后 24/30。
+
+## 2026-09-14 E6 候选就绪：昆仑 padding 方差修复 + 华为 1D 骨架移植（Codex 激进菜单 B，待发射）
+
+- **Codex 激进审查抓到 TB 载体的静态可证缺陷**：e5 昆仑 vendor 第二遍
+  `sq_acc += d*d` 对 masked lane（x=0 → d=-mean）累进 mean²——
+  num_elements 非整除 BLOCK_HW 时方差被高估。平台 benchmark shape
+  整除未触发；本发修复（`tl.where(m, d*d, 0)` 算术掩码）。
+- 新增 _ascend vendor：同一 1D 扁平骨架移植到 Ascend 规则集
+  （BLOCK_HW≤1024、扁平 1D 满足 #1610 归约轴对 lane 轴、算术掩码、
+  fp32 silu、eps do_not_specialize），华为现读 1.16 vs c2flow 4.37。
+- source / verification commit：`ea4bfef4…`；ZIP `e6-ea4bfef`，
+  SHA-256 `617a38e0275173110618ad27343fdab99efa2ea8cd1294a48fde435f24545ac2`。
+- release 回执 `batch5-submit-20260914/group_norm_silu_e6/verification.json`
+  SHA-256 `ef6aea03ae2087d078779b5f3cbf7af0810ace68391640b54e8945c5d47ca8d5`
+  （--proxy-vendor ascend/kunlunxin：两 vendor 各 18 launch 0F0E0S，
+  修复后字节全矩阵通过）。
+- 预注册晋级门：昆仑保持 ≥0.1（修复不应回归）；**华为 ≥2.0 为继续
+  研发门**（升位目标 ≥4.8）；均值不低于 2.56 TB 水位减窗口余量。
