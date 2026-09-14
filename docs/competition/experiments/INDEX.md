@@ -55,6 +55,6 @@
 | 72 | group_norm_silu | valid | completed(14726,e6,8/8,2.6627x 新TB;华为移植无增益) | e6 2.66266667x | no | e6 padding修复+华为移植无增益(轴停)新TB 2.663;燧原/华为缺因未破,差榜首1.28 | 2026-09-14 | [group_norm_silu](group_norm_silu.md) |
 | 73 | residual_gate_add | valid | completed(14766,e5,8/8,4.0893x 新TB;昆仑no-loop 0.49) | e5 4.08934375x | no | e5 no-loop昆仑0.49(+2.1x)新TB 4.089;昆仑剩余缺口待窗口;差榜首0.886 | 2026-09-14 | [residual_gate_add](residual_gate_add.md) |
 | 74 | seqlens_expand | valid | completed(14535,e3,8/8,19.3101x 新TB) | e3 19.3101x | no | e3 前缀入kernel新TB 19.31（+81%,launch假说兑现）;残余轴=flat-grid并行度;差榜首7.05 | 2026-09-14 | [seqlens_expand](seqlens_expand.md) |
-| 75 | sigmoid_gate_mul | valid | completed(14598,e4,8/8,2.739325x 新TB) | e4 2.739325x | no | e5 i32无增益(2.149≈2.156),i64税假设关;TB e4 2.739守;燧原缺因待他队情报 | 2026-09-14 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
+| 75 | sigmoid_gate_mul | valid | completed(14773,e6,8/8,2.8277x 新TB;燧原16384 +30%) | e6 2.82765x | no | e6 16384燧原2.80(+30%)新TB 2.828;宽度曲线仍升但门未过封顶;32768留待解禁 | 2026-09-14 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

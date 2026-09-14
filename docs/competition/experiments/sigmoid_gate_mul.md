@@ -15,12 +15,12 @@ task: 75
 operator: sigmoid_gate_mul
 batch: 5
 validity: valid
-platform: completed(14598,e4,8/8,2.739325x 新TB)
-candidate_stage: e4
-team_best_stage: e4
-team_best_speedup: 2.739325
+platform: completed(14773,e6,8/8,2.8277x 新TB;燧原16384 +30%)
+candidate_stage: e6
+team_best_stage: e6
+team_best_speedup: 2.82765
 sealed: no
-next: e5 i32无增益(2.149≈2.156),i64税假设关;TB e4 2.739守;燧原缺因待他队情报
+next: e6 16384燧原2.80(+30%)新TB 2.828;宽度曲线仍升但门未过封顶;32768留待解禁
 updated: 2026-09-14
 ```
 
@@ -143,3 +143,15 @@ vs 本题 0.26）。
   （enflame vendor 17 launch 0F0E0S）。
 - 预注册晋级门：**燧原 ≥ 3.6 且均值 > 2.9075**；编译/正确性失败或
   不足以升位即封顶，不试 32768、不平推。
+
+## 2026-09-14 E6 平台终态：8/8 VALID 2.8277x 新TB（submission 14773）——16384 +30%
+
+- **燧原 vendor passed 2.7984**（8192 的 2.1562 → **+30%**，宽度曲线
+  仍在爬：1024→4096 +71% → 8192 +23% → 16384 +30%）——但差预注册
+  门（≥3.6 且均值 >2.9075）未过：按纪律**封顶，不试 32768、不平推
+  T71/T68**。均值 2.8277 > e5 2.7366，新 TB = e6。
+- 逐芯：天数 4.7847 / 沐曦 2.6221 / **燧原 2.7984** / 海光 4.0068 /
+  昆仑 0.9001 / 华为 1.3463 / A 3.2022 / B 2.9605。榜首 GuanghuLab
+  3.6884，差 0.861；其燧原 7.84 与我方 2.80 的剩余差距仍是未知形态。
+- 注：宽度轴收益递增而非递减是重要情报——若明日 consultation 解禁，
+  32768（官方 MAX_BLOCK_SIZE）是最后一个未试档位。
