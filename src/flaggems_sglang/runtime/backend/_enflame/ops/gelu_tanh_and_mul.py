@@ -43,12 +43,14 @@ def _gelu_tanh_and_mul_kernel(
             mask=col_mask,
             other=0.0,
         ).to(tl.float32)
-        # tanh via the exp identity (tl.exp is the only transcendental
-        # verified on all eight chips; tl.math/libdevice tanh is not).
-        # Saturates safely: inner -> +inf gives tanh -> 1, -inf -> -1.
+        # E5: the GCU stack's own tanh instead of the exp identity. The
+        # cross-chip exp-identity rule exists because tl.math.tanh is
+        # unverified on OTHER vendors' forks; FlagGems' production
+        # _enflame gelu calls the shim tanh on this very stack, so the
+        # vendor form is free to use it. A single hardware-ish tanh
+        # replaces two exp evaluations per element.
         inner = 0.7978845608028654 * gate * (1.0 + 0.044715 * gate * gate)
-        tanh_inner = 2.0 / (1.0 + tl.exp(-2.0 * inner)) - 1.0
-        gelu = 0.5 * gate * (1.0 + tanh_inner)
+        gelu = 0.5 * gate * (1.0 + tl.math.tanh(inner))
         tl.store(
             output_ptr + row_id.to(tl.int64) * half_width + col_offsets,
             (gelu * up).to(output_ptr.dtype.element_ty),
