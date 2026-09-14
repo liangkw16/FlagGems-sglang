@@ -17,7 +17,7 @@ import torch
 import triton
 import triton.language as tl
 
-_BLOCK = 4096
+_BLOCK = 8192
 
 
 @triton.jit
