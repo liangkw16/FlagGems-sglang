@@ -114,3 +114,26 @@ updated: 2026-09-12
 - 后续路径：①同字节重掷三芯 = 崩溃族协议，需用户当次明示授权；②新 ZIP
   真实改动（如燧原/华为补迭代选择 vendor，或 kunlun vendor 微调）走
   全新评测。今日三芯崩溃族窗口频发（T65/T69 各芯亦有），明日窗口优先。
+
+## 2026-09-14 E2 候选就绪：燧原/华为迭代选择 vendor，新 ZIP 重掷（待发射）
+
+- 依据：e1 三失败芯均为 exec 0ms 崩溃族（同窗 12:20），generic 的
+  `tl.topk/tl.bitonic_merge/tl.sort` 在燧原/华为栈无平台实证；昆仑
+  迭代 vendor（tl.max+tl.where 逐列、live-lane mask）当时被选中但未
+  获执行。E2 = 复用昆仑 vendor 字节 + 新增燧原/华为 vendor（同迭代
+  形态）成真实改动新 ZIP，触发崩溃族重评。
+- 新 vendor 设计（两芯同构）：逐行迭代 K 次 `tl.max + 两级无分支
+  rank 选择`——NaN 候选恒优先于非 NaN 候选（修复点：纯 +inf 键会与
+  真实 +inf 输入撞键，代理 test_special_values 18/72 失配后修正），
+  层内最小列 tie-break，store 重读原始比特保 NaN 载荷；i32 寻址
+  全程；grid-stride 行覆盖（coreDim≤65535）；不钉 num_warps。
+- 代理证据：`--proxy-vendor enflame/ascend` 让两 vendor 在 NVIDIA
+  代理跑完整数值矩阵（29 calls 各、0F0E0S），数值正确性已核，仅
+  目标芯性能/编译未验（target-runtime-unverified）。
+- source / verification commit：`ca0a5b1e…`；ZIP `e2-ca0a5b1`，
+  4 members，SHA-256
+  `9e20219838322cf6b6698a890bd722ab69d550a2505a21a61a830a997a61e48e`。
+- release 回执 `batch5-submit-20260914/gate_topk/verification.json`
+  SHA-256 `e93092497a6facba8fff7a9bf4273987bb537f557a7645616017ef2d59bd630a`。
+- 预注册晋级门：**8/8（燧原/华为/昆仑任一过线即改善 5/8 现状）**；
+  同指纹 exec 0ms 复现则按崩溃族协议收口（工单+健康窗重掷，≤2 次）。
