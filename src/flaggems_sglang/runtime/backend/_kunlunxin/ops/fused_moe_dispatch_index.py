@@ -32,16 +32,22 @@ def _dispatch_counts(
     num_blocks,
     BLOCK: tl.constexpr,
 ):
-    pid = tl.program_id(0)
-    for block in range(pid, num_blocks, tl.num_programs(0)):
-        base = block.to(tl.int64) * num_experts_pad
+    # E9: one program per expert with a register accumulator and a
+    # single store per (block, expert) cell. E8's in-branch global
+    # load-modify-store compiled fine but misexecuted on this backend
+    # (masked_m off by small deltas - dropped increments); the
+    # scalar-accumulator form matches kernel2 and the T65 e6-proven
+    # branch-counting shape, with no memory RMW anywhere.
+    e = tl.program_id(0)
+    for block in range(0, num_blocks):
+        hits = 0
         for j in range(0, BLOCK):
             off = block * BLOCK + j
             if off < n:
                 e_j = tl.load(ids + off.to(tl.int64)).to(tl.int32)
-                if e_j >= 0:
-                    slot = base + e_j
-                    tl.store(counts + slot, tl.load(counts + slot) + 1)
+                if e_j == e:
+                    hits += 1
+        tl.store(counts + block.to(tl.int64) * num_experts_pad + e, hits)
 
 
 @triton.jit
@@ -122,7 +128,7 @@ def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
             device=flat.device,
         )
         prefix = torch.empty_like(counts)
-        _dispatch_counts[(min(num_blocks, 65535),)](
+        _dispatch_counts[(min(num_experts, 65535),)](
             flat,
             counts,
             n,
