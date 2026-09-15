@@ -5,12 +5,12 @@ task: 65
 operator: deepep_post_reorder
 batch: 5
 validity: invalid_correctness
-platform: completed(13820,e4,7/8;昆仑间歇崩溃,BLOCK=64未获裁决)
-candidate_stage: e4
+platform: completed(15213,e5,7/8;昆仑=编译期SIGABRT@make_llir,非窗口非资源)
+candidate_stage: e5
 team_best_stage: -
 sealed: no
-next: 昆仑=间歇窗口+uni_sram 双条件;新 ZIP 重掷待健康窗
-updated: 2026-09-12
+next: BLOCK/重掷轴关闭;唯一剩余轴=结构性改写(操作组合触发编译器bug);七芯水位11.77/7.17/1.58/18.42/11.20/12.14/7.64待命
+updated: 2026-09-15
 ```
 
 ## 契约与范围
@@ -151,3 +151,23 @@ updated: 2026-09-12
 - ZIP SHA-256：`b35d54e83c0ac65aff6dda5be7b5329d981ebe697c76fd7fe3347b5dede48554`。
 - 门：昆仑产生有效判决；崩溃族再中即终封（同指纹两次）。
 - 阻塞：GPU 通道中断，release 回执待补；未 preflight、未耗额度。
+
+## 2026-09-15 16:20 E5 平台终态：7/8 —— 昆仑为编译期 SIGABRT（全新指纹，诊断突破）
+
+- submission 15213（15:50 发射，GPU 通道恢复当日）。七芯全部健康：
+  天数 11.773 / 沐曦 7.1714 / 燧原 1.5834 / 海光 18.42 /
+  华为 11.2014 / A 12.1396 / B 7.6418——与 e2 水位一致，七芯部分和
+  待命值不变。
+- **昆仑失败带完整堆栈（首次）**：`评测进程异常崩溃（运行 4s，退出码 1），
+  Fatal Python error: Aborted（SIGABRT，编译器内部错误）`，栈顶
+  `triton/backends/xpu/compiler.py:439 make_llir` → compile 全链。
+  非"服务线程卡死"崩溃族，非 uni_sram 资源超限。
+- **历史归因订正**：本仓缓存 compiler.py:363 证实 `uni_sram` 标签包装
+  pm.run 任意异常，而 make_llir 在 pm.run 内——e1（512）/e3（256）的
+  "真实执行 10.5s/7.5s 后 uni_sram"大概率同为编译期 abort（编译耗时
+  被计入 exec），BLOCK 大小自始不是病根。
+- 处置：崩溃族重掷 1/1 已消耗；BLOCK 轴正式关闭。剩余唯一轴=结构性
+  改写（更换触发 make_llir 断言的操作组合），无 assert 消息文本，
+  需按操作族逐一隔离；暂列明日评估，不再盲发。
+- 回执/日志：`artifacts/competition/batch5-verify-20260915/deepep_post_reorder/`
+  （release exit 0，generic+昆仑 vendor 各 33 launch）。

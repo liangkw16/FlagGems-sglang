@@ -45,7 +45,7 @@
 | 62 | concat_mla_k | valid | completed(14847,e10,8/8,1.1908x;燧原BH4反降-47%;TB e9 1.2458x) | e9 1.24575x | no | e10 燧原BH4 0.15(-47%)跨芯平移证伪;TB e9 1.246守;收官仅守榜 | 2026-09-14 | [concat_mla_k](concat_mla_k.md) |
 | 63 | create_flashinfer_kv_indices | valid | completed(14590,e10,8/8,167.39x;TB e8 199.695x) | e8 199.69521875x | no | e10 flat-grid燧原回17.5≈历史水位,无结构增益不追发;TB e8 199.70守;6队≥37x真因未破 | 2026-09-14 | [create_flashinfer_kv_indices](create_flashinfer_kv_indices.md) |
 | 64 | deepep_permute | valid | completed(13375,e2=C1,7/8;昆仑0ms卡死未裁决;grid封顶轴已关) | e1 6.7478x | no | 今日轴=vendor 地址/块宽单变量(门:华为≥5.65 或 燧原≥3.8);de-clone 降为条件项(先阶段计时证 clone 占比,且需逆路由 dst→src 才合法) | 2026-09-15 | [deepep_permute](deepep_permute.md) |
-| 65 | deepep_post_reorder | invalid_correctness | completed(13820,e4,7/8;昆仑间歇崩溃,BLOCK=64未获裁决) | - | no | 昆仑=间歇窗口+uni_sram 双条件;新 ZIP 重掷待健康窗 | 2026-09-12 | [deepep_post_reorder](deepep_post_reorder.md) |
+| 65 | deepep_post_reorder | invalid_correctness | completed(15213,e5,7/8;昆仑=编译期SIGABRT@make_llir,非窗口非资源) | - | no | BLOCK/重掷轴关闭;唯一剩余轴=结构性改写(操作组合触发编译器bug);七芯水位11.77/7.17/1.58/18.42/11.20/12.14/7.64待命 | 2026-09-15 | [deepep_post_reorder](deepep_post_reorder.md) |
 | 66 | dsv3_fused_a_gemm | valid | completed(13371,e1,8/8,3.09395x team best) | e1 3.09395x | no | e1 valid 3.094（+13%，A+70%/沐曦+31%）；对榜首 4.12 差 1.0，燧原+2.1 为最大单芯缺口（tiny-GEMM 向量核方向已注册） | 2026-09-12 | [dsv3_fused_a_gemm](dsv3_fused_a_gemm.md) |
 | 67 | fill_padded_rows | valid | completed(13386,e3,8/8,4.23825x;三宽芯门全负,轴关闭;TB e2 4.2969x) | e2 4.2969x | no | e3 列分块轴关闭(唯沐曦+24%);TB e2 4.2969 守榜(#8,榜首 8.32);宽 shape 结构待新证据 | 2026-09-12 | [fill_padded_rows](fill_padded_rows.md) |
 | 68 | fused_eh_norm | valid | completed(14589,e6,8/8,7.042x;TB e4 7.089x) | e4 7.08945833x | no | e6 split-row证伪(燧原0.87,饥饿假说假);TB e4 7.089守;燧原缺因未破,主攻降级 | 2026-09-14 | [fused_eh_norm](fused_eh_norm.md) |
@@ -55,6 +55,6 @@
 | 72 | group_norm_silu | valid | completed(14859,e8,8/8,2.5400x;昆仑4096 0.545抛物线;TB e6 2.6627x) | e6 2.66266667x | no | e8 昆仑宽度抛物线(0.49/0.53/0.55);TB e6 2.663守;明日联评2048 | 2026-09-14 | [group_norm_silu](group_norm_silu.md) |
 | 73 | residual_gate_add | valid | completed(14838,e6,8/8,4.0993x 新TB;昆仑4096 0.60) | e6 4.0993125x | no | e6 昆仑4096 0.60(+23%)新TB 4.099;宽度曲线双正,8192待信号;差榜首0.876 | 2026-09-14 | [residual_gate_add](residual_gate_add.md) |
 | 74 | seqlens_expand | valid | completed(14535,e3,8/8,19.3101x 新TB) | e3 19.3101x | no | e3 前缀入kernel新TB 19.31（+81%,launch假说兑现）;残余轴=flat-grid并行度;差榜首7.05 | 2026-09-14 | [seqlens_expand](seqlens_expand.md) |
-| 75 | sigmoid_gate_mul | valid | completed(14773,e6,8/8,2.8277x 新TB;燧原16384 +30%) | e6 2.82765x | no | e6 16384燧原2.80(+30%)新TB 2.828;宽度曲线仍升但门未过封顶;32768留待解禁 | 2026-09-14 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
+| 75 | sigmoid_gate_mul | valid | submitted(15215,e7r,评测中;uncertain解锁载体57573def,门燧原≥3.6且均值>2.9075) | e6 2.82765x | no | e7r=32768最后一档重发(评测中);门=燧原≥3.6且均值>2.9075,任何失败即最终封顶 | 2026-09-15 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

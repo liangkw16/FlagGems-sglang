@@ -171,3 +171,9 @@ updated: 2026-09-12
 - ZIP SHA-256：`018b18f8bec25ca536c3f189a0a6a3f4942742599a262e250a9a0ebfb8fea3c5`。
 - 预注册门：华为 ≥3.0 或 燧原 ≥3.0 或 天数 ≥15；ΔS 判优防窄行回退。
 - 阻塞：GPU 通道中断，release 回执待补；未 preflight、未耗额度。
+
+## 2026-09-15 16:30 E4 验证回执就绪（待明早首窗发射）
+
+- release 回执：`artifacts/competition/batch5-verify-20260915/fill_padded_rows/`
+  （exit 0，generic 25 次 launch，0 skip）。门不变：华为 ≥3.0 或
+  燧原 ≥3.0 或 天数 ≥15。

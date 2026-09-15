@@ -119,3 +119,13 @@ updated: 2026-09-14
 - ZIP SHA-256：`c0e2356ced2230411573f2b0ccfbf3812ce75ed8ee9379835518e7f9fd3d47c9`。
 - 预注册门：天数 ≥66 或 海光 ≥27；8/8 且均值 ≥19.0 才替换 TB e3 19.31。
 - 阻塞：GPU 通道中断，release 回执待补；未 preflight、未耗额度。
+
+## 2026-09-15 16:30 E4 验证回执就绪（含测试修复重跑）
+
+- 首轮 release 抓出两个**测试代码 bug**（kernel 未证伪）：strided 构造
+  误用 `stack(dim=0).flatten()`（拼接而非交错，-1 填充泄漏进断言）与
+  大 batch 用例 list+Tensor 相加；修复 commit `82b1eacd`（kernel 字节
+  不动，ZIP e4-45662b8 仍有效）。
+- 重跑回执：`artifacts/competition/batch5-verify-20260915/seqlens_expand/`
+  （exit 0，generic 11 次 launch，0 skip，5 方法含新增两回归）。
+  verification commit=`82b1eacd`。门不变：天数 ≥66 或 海光 ≥27。

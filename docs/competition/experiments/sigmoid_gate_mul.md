@@ -15,13 +15,13 @@ task: 75
 operator: sigmoid_gate_mul
 batch: 5
 validity: valid
-platform: completed(14773,e6,8/8,2.8277x 新TB;燧原16384 +30%)
-candidate_stage: e6
+platform: submitted(15215,e7r,评测中;uncertain解锁载体57573def,门燧原≥3.6且均值>2.9075)
+candidate_stage: e7r
 team_best_stage: e6
 team_best_speedup: 2.82765
 sealed: no
-next: e6 16384燧原2.80(+30%)新TB 2.828;宽度曲线仍升但门未过封顶;32768留待解禁
-updated: 2026-09-14
+next: e7r=32768最后一档重发(评测中);门=燧原≥3.6且均值>2.9075,任何失败即最终封顶
+updated: 2026-09-15
 ```
 
 ## 契约与实现（S0）
@@ -164,3 +164,17 @@ vs 本题 0.26）。
 - source / verification commit：`925b3548…`；ZIP `e7-925b354`，
   SHA-256 `f633e77483e88c561d1cd0562955a57ede1e066f067bf41cf70a63613bf47d00`。
 - 预注册晋级门：**燧原 ≥ 3.6 且均值 > 2.9075**；任何失败即最终封顶。
+
+## 2026-09-15 16:25 E7R 发射：uncertain intent 解锁 + 注释载体（评测中）
+
+- 09-14 e7 的 uncertain intent 阻塞同 tuple 新 nonce（预检实测确认）；
+  按"新 ZIP SHA"纪律制作注释载体 `57573def`（执行字节=e7 32768 档，
+  仅 enflame vendor 头注释 +4 行），ZIP `e7r-57573de`，
+  SHA-256 `0621440557408edeb4fc2778cb4fad7d9a1ed8c6f04710c0185e8539152739a9`。
+- release 回执重出（GPU 通道恢复当日）：
+  `artifacts/competition/batch5-verify-20260915/sigmoid_gate_mul/`
+  （exit 0，generic+燧原 vendor 各 17 launch，0 skip），回执 SHA-256
+  `4529e9df1c8aff1d48625866c694d940a8b41885d5a1a5244b37b5575b5c0912`。
+- submission **15215** 已提交（state=submitted，额度余 28）。
+  预注册门不变：**燧原 ≥3.6 且均值 >2.9075**；任何失败即最终封顶。
+- 旧 e7 uncertain intent 由平台侧自然超时/对账，不再操作。

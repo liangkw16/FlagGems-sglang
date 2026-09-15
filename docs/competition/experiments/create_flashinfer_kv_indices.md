@@ -391,3 +391,11 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   待补；未运行 preflight、未消耗额度。
 - e12（metax splits 512→2048，commit `50fdc779`）已开发，ZIP 待 e11
   燧原判决后再定基线（避免双变量耦合）。
+
+## 2026-09-15 16:30 E11/E12 验证回执就绪（GPU 通道恢复，待明早首窗发射）
+
+- E11 release 回执：`artifacts/competition/batch5-verify-20260915/create_flashinfer_kv_indices/`
+  （exit 0，generic 与燧原 vendor 各 16 次 launch，0 skip，NVIDIA 代理）。
+  燧原/metax/kunlun 目标 runtime 仍 target-runtime-unverified。
+- 发射序首位（明早 00:00 额度窗口）；判决后按"保留/回退"定 e12
+  （metax splits 512→2048，commit `50fdc779`）ZIP 基线。
