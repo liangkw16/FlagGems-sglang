@@ -5,13 +5,13 @@ task: 74
 operator: seqlens_expand
 batch: 5
 validity: valid
-platform: completed(14535,e3,8/8,19.3101x 新TB)
-candidate_stage: e3
-team_best_stage: e3
-team_best_speedup: 19.3101
+platform: completed(e4,8/8,20.1778x 新TB;海光28.78门兑现,沐曦+2.09)
+candidate_stage: e4
+team_best_stage: e4
+team_best_speedup: 20.1778
 sealed: no
-next: e3 前缀入kernel新TB 19.31（+81%,launch假说兑现）;残余轴=flat-grid并行度;差榜首7.05
-updated: 2026-09-14
+next: e4 两段式新TB 20.18(海光/沐曦/A +21%同向,大n路径兑现);残余轴=天数flat并行度(59.5未及66门);差榜首6.18
+updated: 2026-09-15
 ```
 
 ## 契约与实现（S0）
@@ -129,3 +129,14 @@ updated: 2026-09-14
 - 重跑回执：`artifacts/competition/batch5-verify-20260915/seqlens_expand/`
   （exit 0，generic 11 次 launch，0 skip，5 方法含新增两回归）。
   verification commit=`82b1eacd`。门不变：天数 ≥66 或 海光 ≥27。
+
+## 2026-09-15 16:55 E4 平台终态：8/8 VALID 20.1778x 新 TB（海光门兑现 +21%）
+
+- submission（e4，45662b8c）：天数 59.5166 / 沐曦 **11.8654（+2.09）** /
+  燧原 9.2032 / 海光 **28.7834（+5.07，门 ≥27 兑现）** / 昆仑 1.6826 /
+  华为 7.6296 / A **26.0222（+1.35）** / B 16.7192（-1.08）。
+- ΔS=+6.94/8：**均值 19.3101 → 20.1778，新 team best（e3→e4）**。
+  大 batch 两段式在沐曦/海光/A 三芯同向 +21% 量级——隐藏评测确含
+  大 n shape，scan 路径真实兑现；天数 59.5 未及 ≥66 门（-0.5 噪声级，
+  该芯未从两段式获益，后续 flat 并行度轴仍开放）。
+- es 漏乘修复随载体上线（非连续输入回归已在 suite 内）。

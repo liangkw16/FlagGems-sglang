@@ -5,13 +5,13 @@ task: 67
 operator: fill_padded_rows
 batch: 5
 validity: valid
-platform: completed(13386,e3,8/8,4.23825x;三宽芯门全负,轴关闭;TB e2 4.2969x)
-candidate_stage: e3
+platform: completed(e4,8/8,4.1965x;固定块轴零增益,重编译假说在本题证伪)
+candidate_stage: e4
 team_best_stage: e2
 team_best_speedup: 4.2969
 sealed: no
-next: e3 列分块轴关闭(唯沐曦+24%);TB e2 4.2969 守榜(#8,榜首 8.32);宽 shape 结构待新证据
-updated: 2026-09-12
+next: 固定BLOCK轴关闭;下一轴=num_warps/过特化(PR扫描模式,华为1.9vs17.5缺口形态未破);TB e2 4.2969 守
+updated: 2026-09-15
 ```
 
 ## 契约与范围
@@ -177,3 +177,14 @@ updated: 2026-09-12
 - release 回执：`artifacts/competition/batch5-verify-20260915/fill_padded_rows/`
   （exit 0，generic 25 次 launch，0 skip）。门不变：华为 ≥3.0 或
   燧原 ≥3.0 或 天数 ≥15。
+
+## 2026-09-15 16:55 E4 平台终态：8/8 VALID 4.1965x —— 固定块轴零增益
+
+- submission（e4，51b2030a）：天数 11.6308 / 沐曦 2.656 / 燧原 1.4618 /
+  海光 5.928 / 昆仑 0.615（+0.02）/ 华为 1.7632 / A 5.3884 / B 4.1284。
+- 与 TB e2 逐芯全在 ±0.3 噪声带内（华为 1.93→1.76、天数 11.9→11.63）；
+  预注册门（华为/燧原 ≥3.0 或天数 ≥15）远未触及。
+- **判定：next_power_of_2 七档编译变体不是 T67 缺口的驱动**——
+  固定单变体后读数无变化。重编译风暴假说在本题证伪；华为 1.9 vs
+  榜首 17.5 的缺口属于其他形态（PR 扫描的 num_warps/过特化轴待试）。
+  TB 保持 e2 4.2969。

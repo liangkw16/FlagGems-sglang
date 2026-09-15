@@ -5,13 +5,13 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: completed(14590,e10,8/8,167.39x;TB e8 199.695x)
-candidate_stage: e9
+platform: completed(e11,8/8,193.828x<TB;燧原18.08超历史水位未达22门)
+candidate_stage: e11
 team_best_stage: e8
 team_best_speedup: 199.69521875
 sealed: no
-next: e10 flat-grid燧原回17.5≈历史水位,无结构增益不追发;TB e8 199.70守;6队≥37x真因未破
-updated: 2026-09-14
+next: e11预偏移轴关闭(燧原18.08≈水位);TB e8 199.70守;e12回退enflame至e8字节再打包;下一轴=num_warps阶梯/沐曦splits
+updated: 2026-09-15
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -399,3 +399,16 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   燧原/metax/kunlun 目标 runtime 仍 target-runtime-unverified。
 - 发射序首位（明早 00:00 额度窗口）；判决后按"保留/回退"定 e12
   （metax splits 512→2048，commit `50fdc779`）ZIP 基线。
+
+## 2026-09-15 16:55 E11 平台终态：8/8 VALID 193.828x < TB；燧原 18.08 超历史水位未达门
+
+- submission（e11，35b5ce65）：燧原 **18.0765**（e8 在榜读数 6.17，
+  历史 watermark 17.5-17.9）——预偏移轴正信号但 **<22 继续门**；
+  沐曦 98.506（+11.2）/ 华为 82.808（+9.8）同向为正，天数 514.6（-39.5）/
+  海光 293.5（-22.6）/ A 238.8（-11.3）/ B 301.7（-6.4）快芯窗口回落。
+- ΔS=-5.87：**TB 保持 e8 199.695**；e11 均值 193.83 不替换。
+- 判定：预偏移在目标芯的净增益 ≈ 历史水位 ±1，未构成结构增益；
+  快芯读数回落与字节无因果（同字节 e8 曾读 554/316/250）。轴按
+  预注册关闭；e11 字节保留为燧原正向载体（后续单变量可叠加）。
+- e12（metax splits 2048）基线裁定：**回退 enflame 至 e8 字节、
+  仅保留 metax 改动**再打包（避免继承未达门的 e11 变化）。
