@@ -82,13 +82,18 @@ class SeqlensExpandTest(unittest.TestCase):
         # fused (n <= 1024) and scan (n > 1024) paths must honor es/ss.
         for qos in ((0, 1, 5, 128, 513), tuple((i % 37) + 1 for i in range(1500))):
             extend, seq, total, mq = make_case(qos=qos, seed=7)
+            # dim=1 interleaves [value, filler] so [::2] is a stride-2
+            # view carrying exactly the original values.
             ext_base = torch.stack(
-                [extend, torch.full_like(extend, -1)], dim=0
+                [extend, torch.full_like(extend, -1)], dim=1
             ).flatten()[::2]
             seq_base = torch.stack(
-                [seq, torch.full_like(seq, -1)], dim=0
+                [seq, torch.full_like(seq, -1)], dim=1
             ).flatten()[::2]
             assert ext_base.stride(0) == 2 and seq_base.stride(0) == 2
+            assert torch.equal(ext_base, extend) and torch.equal(
+                seq_base, seq
+            )
             self.check((ext_base, seq_base, total, mq))
 
     def test_large_batch_two_path(self):
@@ -97,7 +102,9 @@ class SeqlensExpandTest(unittest.TestCase):
         # play on both kernels.
         g = torch.Generator().manual_seed(11)
         qos = torch.randint(0, 700, (2050,), generator=g).tolist()
-        kvs = (qos + torch.randint(0, 64, (2050,), generator=g)).tolist()
+        kvs = (
+            torch.tensor(qos) + torch.randint(0, 64, (2050,), generator=g)
+        ).tolist()
         self.check(make_case(qos=qos, kvs=kvs, seed=11))
 
 
