@@ -76,6 +76,8 @@ def _rga_capped2d(
         tl.store(out_ptr + base, out, mask=mask)
 
 
+# E11 probe: num_warps=4 on both launches (single variable; enflame
+# 2.10 vs second-tier 5.01).
 def residual_gate_add(residual, update, gate):
     assert residual.dim() >= 2
     assert residual.shape == update.shape
@@ -110,6 +112,7 @@ def residual_gate_add(residual, update, gate):
                 d,
                 BLOCK=block,
                 enable_fp_fusion=False,
+                num_warps=4,
             )
         else:
             _rga_flat[(min(triton.cdiv(n, _BLOCK), _MAX_PROGS),)](
@@ -120,6 +123,7 @@ def residual_gate_add(residual, update, gate):
                 n,
                 BLOCK=_BLOCK,
                 enable_fp_fusion=False,
+                num_warps=4,
             )
     return out
 
