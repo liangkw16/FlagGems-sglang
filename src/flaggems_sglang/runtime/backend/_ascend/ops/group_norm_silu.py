@@ -74,6 +74,8 @@ def _group_norm_silu_asc(
             tl.store(out_ptr + cbase + idx, y, mask=m)
 
 
+# E7 probe: num_warps=8 launch pin (single variable vs e6 bytes;
+# huawei 1.20 vs EvokeAgent's 8.41 on this task).
 def group_norm_silu(x, weight, bias, num_groups, eps):
     assert x.ndim >= 2
     assert x.shape[1] == weight.numel() == bias.numel()
@@ -101,6 +103,7 @@ def group_norm_silu(x, weight, bias, num_groups, eps):
             eps,
             GROUP_SIZE=group_channels,
             BLOCK_HW=block_hw,
+            num_warps=8,
         )
     return out.reshape(x.shape)
 
