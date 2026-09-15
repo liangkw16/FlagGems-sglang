@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Adapted from SGLang 8014d9d kernels/ops/kvcache/kv_indices.py.
 
-# E13: BLOCK 512 -> 1024 - the field's enflame readers sit at 83-108
+# E14: BLOCK 1024 -> 2048 (e13 read 22.8 enflame, +3.3 over the
+# watermark - the ladder continues). E13: BLOCK 512 -> 1024 - the field's enflame readers sit at 83-108
 # while our watermark form reads 18-19.5; wider tiles cut the per-segment
 # loop iterations in half. Single variable vs the e8 bytes.
 # Enflame vendor: the e5 no-clone kernel in this chip's proven geometry
@@ -144,7 +145,7 @@ def create_flashinfer_kv_indices(
         out.stride(0),
         kv_indices.stride(0),
         HAS_START=kv_start_idx is not None,
-        BLOCK=1024,
+        BLOCK=2048,
     )
     return out
 
