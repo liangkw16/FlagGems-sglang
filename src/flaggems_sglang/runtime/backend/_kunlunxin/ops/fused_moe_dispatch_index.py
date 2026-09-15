@@ -1,24 +1,19 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 
-# Atomic-free fused_moe_dispatch_index for chips whose Triton stack cannot
-# legalize masked tl.atomic_add (GCU300 PassManager failure) or whose runtime
-# degrades under atomic cursors (Ascend). Three deterministic kernels replace
-# the atomic cursor: per-block expert counts, an exclusive block prefix per
-# expert, and an in-order per-lane rank with a contiguous store at the input
-# position. E3 removes the last loop-carried tensor: e1 and e2 both died in
-# GCU300 PassManager and the only structure they always shared is kernel2's
-# register-carried serial scan - the hand-rolled cumsum shape the batch-1/2
-# retrospective flags as a Pipeline-failure family on Enflame/Kunlun. The
-# prefix now runs one program per expert with a purely scalar accumulator
-# (scalar loads/stores only, no masked scalar loads). kernel1 lost its tail
-# branch by padding the counts/prefix rows to E_TILE multiples, and the int
-# tl.where address clamps added in e2 are gone - integer tl.where has no
-# passing precedent on GCU (clamp_position e1 evidence) and deepep_permute
-# passes with plain masked vector loads. kernel3 keeps the e2 form: lane-by-
-# lane walk, 1D rank reduction, scalar load-value-to-int64 gather (the
-# deepep_permute 2.53x form), contiguous scalar stores under runtime
-# branches. Shared verbatim by the _ascend and _kunlunxin vendors.
+# Kunlunxin vendor, e8: the seven-crash seal was set while the failures
+# were misread as infra windows. T65's unlock on 2026-09-15 isolated the
+# actual compiler landmine in this family - masked vector loads reduced
+# back to scalars via comparison masks + tl.sum (make_llir SIGABRT on
+# this backend). Both _dispatch_counts ("hits") and _dispatch_ranks
+# ("rank") used exactly that extraction form. E8 rewrites them as pure
+# scalar walks: scalar loads, runtime branches and scalar load-modify-
+# stores only - the forms T65 e6 passed with - while kernel2 (already
+# scalar) and the three-kernel decomposition stay untouched. The
+# isCloseOffsetAnalysis/isCloseUnrollControl kwargs are dropped so the
+# default passes run again now that the aborting construct is gone.
+# Branches are preferred over bool->int casts everywhere (no vector
+# casts, no integer tl.where, no reductions of any kind).
 
 import torch
 import triton
@@ -36,16 +31,17 @@ def _dispatch_counts(
     num_experts_pad,
     num_blocks,
     BLOCK: tl.constexpr,
-    E_TILE: tl.constexpr,
 ):
     pid = tl.program_id(0)
     for block in range(pid, num_blocks, tl.num_programs(0)):
-        offs = block * BLOCK + tl.arange(0, BLOCK)
-        e = tl.load(ids + offs.to(tl.int64), offs < n, other=-1).to(tl.int32)
         base = block.to(tl.int64) * num_experts_pad
-        for expert in range(0, num_experts_pad):
-            hits = tl.sum((e == expert).to(tl.int32), axis=0)
-            tl.store(counts + base + expert, hits)
+        for j in range(0, BLOCK):
+            off = block * BLOCK + j
+            if off < n:
+                e_j = tl.load(ids + off.to(tl.int64)).to(tl.int32)
+                if e_j >= 0:
+                    slot = base + e_j
+                    tl.store(counts + slot, tl.load(counts + slot) + 1)
 
 
 @triton.jit
@@ -79,10 +75,7 @@ def _dispatch_ranks(
     BLOCK: tl.constexpr,
 ):
     pid = tl.program_id(0)
-    idx = tl.arange(0, BLOCK)
     for block in range(pid, num_blocks, tl.num_programs(0)):
-        offs = block * BLOCK + idx
-        e = tl.load(ids + offs.to(tl.int64), offs < n, other=-1).to(tl.int32)
         base = block.to(tl.int64) * num_experts_pad
         for j in range(0, BLOCK):
             off = block * BLOCK + j
@@ -91,13 +84,20 @@ def _dispatch_ranks(
                 if e_j >= 0:
                     # In-bucket order is free (src2dst is compared as a
                     # per-bucket multiset), so the natural earlier-lane
-                    # rank is one valid assignment.
-                    rank = tl.sum(
-                        ((e == e_j) & (idx < j)).to(tl.int32), axis=0
-                    )
+                    # rank is one valid assignment. E8: scalar branch
+                    # counting replaces the (e == e_j) & (idx < j)
+                    # tl.sum reduction.
+                    rank = 0
+                    for k in range(0, j):
+                        e_k = tl.load(
+                            ids + (block * BLOCK + k).to(tl.int64)
+                        ).to(tl.int32)
+                        if e_k == e_j:
+                            rank += 1
                     start = tl.load(prefix + base + e_j.to(tl.int64))
                     tl.store(
-                        src2dst + off.to(tl.int64), e_j * m_max + start + rank
+                        src2dst + off.to(tl.int64),
+                        e_j * m_max + start + rank,
                     )
 
 
@@ -114,7 +114,9 @@ def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
     if n:
         num_experts_pad = triton.cdiv(num_experts, _E_TILE) * _E_TILE
         num_blocks = triton.cdiv(n, _BLOCK)
-        counts = torch.empty(
+        # zeros (not empty): the scalar counts walk only touches hit
+        # slots, so untouched (block, expert) cells must read as zero.
+        counts = torch.zeros(
             (num_blocks, num_experts_pad),
             dtype=torch.int32,
             device=flat.device,
@@ -127,9 +129,6 @@ def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
             num_experts_pad,
             num_blocks,
             BLOCK=_BLOCK,
-            E_TILE=_E_TILE,
-            isCloseOffsetAnalysis=True,
-            isCloseUnrollControl=True,
             num_warps=1,
             num_stages=1,
         )
@@ -140,8 +139,6 @@ def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
             num_experts,
             num_experts_pad,
             num_blocks,
-            isCloseOffsetAnalysis=True,
-            isCloseUnrollControl=True,
             num_warps=1,
             num_stages=1,
         )
@@ -154,8 +151,6 @@ def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
             num_blocks,
             m_max,
             BLOCK=_BLOCK,
-            isCloseOffsetAnalysis=True,
-            isCloseUnrollControl=True,
             num_warps=1,
             num_stages=1,
         )
