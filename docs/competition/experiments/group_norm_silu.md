@@ -198,3 +198,10 @@ updated: 2026-09-14
 - TB 载体最终=e6（BLOCK_HW 1024+padding 修复+ascend 移植字节）；
   昆仑宽度轴收官：1024（0.491）→2048（0.525）→4096（0.545），
   边际递减，明日若再试唯一合理档=2048 与均值门联评。
+
+## 2026-09-16 00:06 E7 uncertain：submit 阶段客户端异常，POST 未达
+
+- _ascend vendor num_warps=8 探针（ce3d59c）验证通过、preflight 过、
+  submit 阶段 platform_cli 异常退出，intent 停在 uncertain；
+  task 72 平台无今日记录、额度未扣（used 仅计他题）。处置待明早：
+  注释载体新 ZIP 重发（同 T75 e7r 模式），或放弃低优先探针。

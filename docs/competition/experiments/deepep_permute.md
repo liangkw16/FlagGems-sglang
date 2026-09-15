@@ -203,3 +203,8 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 燧原 2.75（e3 1024 读 3.01，-8.6%）：**阶梯峰=1024**。两发未达 3.8
   门，轴关闭。燧原 3.01 vs c2flow 12.3 的剩余为结构差（不属宽度族）。
   TB 保持 e1 6.748。
+
+## 2026-09-16 00:04 E5 发射（跨午夜，新额度）：华为 topk constexpr
+
+- _ascend vendor 新建（f8e1aec，generic 字节 + `topk: tl.constexpr` 单
+  变量，K 循环界静态折叠）。已提交评测中；门 华为 ≥5.65。

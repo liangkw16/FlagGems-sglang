@@ -189,3 +189,8 @@ vs 本题 0.26）。
   但递减）。32768=官方 MAX_BLOCK_SIZE，无下一档。
 - 残余：榜首 GuanghuLab 燧原 7.8（我方 3.3）为非宽度形态；下一轴待
   燧原结构性证据（K-tile/其他），明后日评估。
+
+## 2026-09-16 00:08 E9 发射（跨午夜）：华为 warps8 vendor
+
+- _ascend vendor 新建（389e637，generic 字节 + num_warps=8 单变量；
+  华为 1.3 vs Albedo 2.5）。已提交评测中；门 华为 ≥1.7。
