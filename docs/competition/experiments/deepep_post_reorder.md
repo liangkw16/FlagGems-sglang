@@ -5,11 +5,11 @@ task: 65
 operator: deepep_post_reorder
 batch: 5
 validity: valid
-platform: completed(e6,8/8,8.7338x 首次有效;昆仑0.3592过门,标量重写命中根因)
-candidate_stage: e6
-team_best_stage: -
+platform: completed(e7,8/8,9.7016x新TB;华为+43%标量形态;e8 BLOCK1024就绪待GPU回执)
+candidate_stage: e7
+team_best_stage: e7
 sealed: no
-next: e6解锁后燧原1.67为最弱轴(榜首15+,K-tile归约候选);昆仑0.36可随后续载体自然观测;守榜+燧原轴
+next: e8(BLOCK1024)待GPU恢复补验即发;燧原1.6/沐曦6.2仍最弱,榜首34-207形态未破
 updated: 2026-09-15
 ```
 
@@ -183,3 +183,14 @@ updated: 2026-09-15
   S0 形态标量 slot 读（BLOCK64/warps1/stages1/循环结构/累加序全保）
   即通过。Codex r6 咨询的差分嫌疑被平台直接证实。
 - 后续：燧原 1.67 为最弱轴（榜首 15+）；昆仑 0.36 健康窗水位。
+
+## 2026-09-15 21:30 E7 平台终态：8/8 VALID 9.7016x 新 TB；E8 就绪待回执（GPU 二次中断）
+
+- **E7（6ff7c868，generic 标量 slot 形态）**：华为 **11.50→16.45（+43%）**、
+  天数 11.8→14.2、A 11.8→13.3、B 7.76；沐曦 6.2 / 海光 17.7（-0.4）/
+  燧原 1.60（持平）。均值 **8.734→9.702 新 TB**（ΔS=+0.97）。门（≥15）
+  未达：标量化方向正确但 34-207 的榜首形态还有其他结构差。
+- **E8（29f76413，generic BLOCK 512→1024，同燧原阶梯族）**：commit/ZIP
+  就绪（SHA `29a49fb7…`），远端验证执行中 GPU 主机再次不可达
+  （192.168.5.204 超时，今日第二次），回执未取回；恢复后补验即发。
+- 额度：今日 18/30 已用。
