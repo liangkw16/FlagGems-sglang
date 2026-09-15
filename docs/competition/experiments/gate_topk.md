@@ -5,12 +5,12 @@ task: 70
 operator: gate_topk
 batch: 5
 validity: invalid_correctness
-platform: submitted(14849,e3r,隔夜评测中;华为vendor 0.3355过,昆仑无失败指纹)
-candidate_stage: e3
+platform: completed(14849,e3r,7/8;昆仑exec 3633491ms挂死后判失败,与e3同指纹)
+candidate_stage: e3r
 team_best_stage: -
 sealed: no
-next: e3r 昆仑隔夜队列无失败指纹,终态回填;重掷额度已用尽,不再改字节
-updated: 2026-09-12
+next: T70 昆仑八轮全灭(长尾挂死x3/断言/0ms卡死),本季终结;重掷额度已用尽,不再改字节
+updated: 2026-09-15
 ```
 
 ## 契约与范围
@@ -212,3 +212,15 @@ updated: 2026-09-12
 
 - 昆仑 waiting_callback 持续（提交 23:51 起 >1h），无 SIGABRT/超时指纹。
   状态如实记录；终态落地后回填本节与 CURRENT，不改字节不再重掷。
+
+## 2026-09-15 15:05 E3R 平台终态：7/8（昆仑长尾挂死判失败，与 e3 同指纹）
+
+- 只读 status 查询（额度未动，30/30）。e3r 七芯与 e2/e3 完全一致：
+  天数 3.5521 / 沐曦 2.2266 / 燧原 0.3537 / 海光 3.3973 /
+  **华为 vendor 0.3355（两窗两判稳定过 0.1 门）** / A 1.7886 / B 2.9402。
+- 昆仑 exec **3633491ms**（≈60.6 分钟）挂死后判失败——与 e3 的
+  3633739ms 同一长尾指纹；vendor 数值从未被昆仑裁决（CUDA 代理
+  29 calls 全过证据仍在）。
+- **T70 本季收口**：昆仑累计八轮全灭（e1 0ms 卡死 / e2 4s 断言 /
+  e3+e3r 长尾挂死 ×2 / 其余窗口崩溃），重掷额度已用尽。七芯水位
+  与工单证据保留，等平台侧回应；不改字节、不再投。

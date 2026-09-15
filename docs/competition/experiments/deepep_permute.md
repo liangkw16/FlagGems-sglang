@@ -5,13 +5,13 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: submitted(13375,e2=C1,7/8已判;仅昆仑回调;燧原+5.5%未达1.3x门)
+platform: completed(13375,e2=C1,7/8;昆仑0ms卡死未裁决;grid封顶轴已关)
 candidate_stage: e2
 team_best_stage: e1
 team_best_speedup: 6.7478
 sealed: no
-next: e2（燧原 grid 封顶 24）已发射；预注册燧原 ≥1.3x（目标轴 2.53→6.68 次优，值均值 +0.371）
-updated: 2026-09-12
+next: 今日轴=vendor 地址/块宽单变量(门:华为≥5.65 或 燧原≥3.8);de-clone 降为条件项(先阶段计时证 clone 占比,且需逆路由 dst→src 才合法)
+updated: 2026-09-15
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -177,3 +177,16 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   e2 判 invalid_correctness（缺芯不排名）；e1 6.7478x 保持 team best。
 - 昆仑对 generic（e1 字节）09-11 曾正常通过 0.2538；后续新 ZIP（C2
   precomputed-pos 已注册）自然重掷。
+
+## 2026-09-15 15:05 E2 昆仑终态回填 + 今日轴重定（Codex 修订采纳）
+
+- 只读 status 查询确认：昆仑终态 `exec 0ms + 服务线程卡死`（崩溃族，
+  vendor 未执行）——grid 封顶 24 未救昆仑，与 09-12 初判一致；e1
+  6.7478 保持 team best，e2 均值不排名（缺芯）。
+- **去 clone 方向降级为条件项**（2026-09-15 Codex 咨询 + 本地核实）：
+  单 kernel 混写全量复制与覆盖写在跨 program 无全局顺序，需先构建
+  逆路由 dst→src 才合法；且历史 destination-gather 代理仅 0.35x。
+  进入条件=阶段计时证明 clone 占比足够大 + 逆路由方案过目标芯
+  screening。
+- 今日轴：现有 scatter 的 vendor 地址/块宽单变量优化；预注册门
+  **华为 ≥5.65（3.76→+50%）或 燧原 ≥3.8（2.53→+50%）**，两芯分别判。
