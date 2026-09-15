@@ -5,12 +5,12 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: completed(13375,e2=C1,7/8;昆仑0ms卡死未裁决;grid封顶轴已关)
-candidate_stage: e2
-team_best_stage: e1
-team_best_speedup: 6.7478
+platform: completed(e5,8/8,7.1711x新TB;燧原真实水位6.7修正,华为constexpr关)
+candidate_stage: e5
+team_best_stage: e5
+team_best_speedup: 7.1711
 sealed: no
-next: 今日轴=vendor 地址/块宽单变量(门:华为≥5.65 或 燧原≥3.8);de-clone 降为条件项(先阶段计时证 clone 占比,且需逆路由 dst→src 才合法)
+next: 燧原结构差6.7→12.3(c2flow);华为3.1两轴已关待新证据;昆仑0.27
 updated: 2026-09-15
 ```
 
@@ -208,3 +208,11 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 
 - _ascend vendor 新建（f8e1aec，generic 字节 + `topk: tl.constexpr` 单
   变量，K 循环界静态折叠）。已提交评测中；门 华为 ≥5.65。
+
+## 2026-09-16 00:45 E5 平台终态：8/8 VALID 7.1711x 新 TB；燧原 6.67 待复判
+
+- 判决：天数 16.01 / 沐曦 5.56 / **燧原 6.666（e4 同字节读 2.75，
+  判为 e4 低窗——真实水位≈6.7，c2flow 12.3 为目标）** / 海光 10.20 /
+  昆仑 0.27 / 华为 3.09（topk constexpr 未达 5.65 门，≈持平偏下）/
+  A 8.67 / B 6.90；均值 **6.748→7.171 新 TB**（ΔS=+0.42）。
+- 华为 constexpr 轴关闭；燧原水位修正后剩余结构差 = 6.7→12.3。

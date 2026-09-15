@@ -440,3 +440,14 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - E16（e4f2461，新增 _ascend vendor num_warps=8，enflame 载体含 e15
   的 4096）：已发射；部分判决燧原 25.44 / 海光 324.4 / A 252.7 /
   B 302.4，四芯 waiting_callback。
+
+## 2026-09-16 00:45 E15/E16 平台终态：7/8 —— 昆仑基础设施窗（非字节问题）
+
+- 两发（23:06:20 同批）昆仑均为 collection 期 `error code -299
+  UNKNOWN ERROR`（XMLIR eager framework；pytest exit 2），**与 kernel
+  无关**——kunlun vendor 字节自 e8 起未变且此前多轮 2.7-2.8 通过。
+  判：基础设施窗口，双发同指纹。
+- 七芯读数（e15=e16 同载）：燧原 **25.44（4096，阶梯 22.8→24.9→
+  25.4 仍在升）**；华为 66.86（warps8 vendor 被选，vs e8 的 73.0 →
+  **warps8 轴无效**）；天数 519.0 / 海光 324.4 / A 252.7 / B 302.4。
+- 后续：燧原 8192 档值得追发（需昆仑健康窗+新 ZIP）；华为 warps8 关闭。

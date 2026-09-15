@@ -15,10 +15,10 @@ task: 75
 operator: sigmoid_gate_mul
 batch: 5
 validity: valid
-platform: completed(e7r,8/8,2.8865x新TB;燧原3.3 +18%但门差毫厘,宽度轴终封)
-candidate_stage: e7r
-team_best_stage: e6
-team_best_speedup: 2.82765
+platform: completed(e9,8/8,2.8967x;华为warps8无效关闭)
+candidate_stage: e9
+team_best_stage: e9
+team_best_speedup: 2.8967
 sealed: no
 next: 宽度轴全档扫完终封;TB e7r 2.8865守;残余=燧原3.3vs榜首7.8非宽度形态,待结构证据
 updated: 2026-09-15
@@ -194,3 +194,9 @@ vs 本题 0.26）。
 
 - _ascend vendor 新建（389e637，generic 字节 + num_warps=8 单变量；
   华为 1.3 vs Albedo 2.5）。已提交评测中；门 华为 ≥1.7。
+
+## 2026-09-16 00:45 E9 平台终态：8/8 VALID 2.8967x —— 华为 warps8 无效
+
+- 华为 1.278（vendor 被选，vs 1.3 持平）；均值 2.8967（+0.01 噪声级，
+  记为新 best 但非轴增益）。**华为 warps 轴关闭**；燧原 3.32 维持
+  e7r 水位。TB 2.897。
