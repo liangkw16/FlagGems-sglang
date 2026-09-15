@@ -55,6 +55,6 @@
 | 72 | group_norm_silu | valid | completed(14859,e8,8/8,2.5400x;昆仑4096 0.545抛物线;TB e6 2.6627x) | e6 2.66266667x | no | e8 昆仑宽度抛物线(0.49/0.53/0.55);TB e6 2.663守;明日联评2048 | 2026-09-14 | [group_norm_silu](group_norm_silu.md) |
 | 73 | residual_gate_add | valid | completed(14838,e6,8/8,4.0993x 新TB;昆仑4096 0.60) | e6 4.0993125x | no | e6 昆仑4096 0.60(+23%)新TB 4.099;宽度曲线双正,8192待信号;差榜首0.876 | 2026-09-14 | [residual_gate_add](residual_gate_add.md) |
 | 74 | seqlens_expand | valid | completed(e4,8/8,20.1778x 新TB;海光28.78门兑现,沐曦+2.09) | e4 20.1778x | no | e4 两段式新TB 20.18(海光/沐曦/A +21%同向,大n路径兑现);残余轴=天数flat并行度(59.5未及66门);差榜首6.18 | 2026-09-15 | [seqlens_expand](seqlens_expand.md) |
-| 75 | sigmoid_gate_mul | valid | submitted(15215,e7r,评测中;uncertain解锁载体57573def,门燧原≥3.6且均值>2.9075) | e6 2.82765x | no | e7r=32768最后一档重发(评测中);门=燧原≥3.6且均值>2.9075,任何失败即最终封顶 | 2026-09-15 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
+| 75 | sigmoid_gate_mul | valid | completed(e7r,8/8,2.8865x新TB;燧原3.3 +18%但门差毫厘,宽度轴终封) | e6 2.82765x | no | 宽度轴全档扫完终封;TB e7r 2.8865守;残余=燧原3.3vs榜首7.8非宽度形态,待结构证据 | 2026-09-15 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md
