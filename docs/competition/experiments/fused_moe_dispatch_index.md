@@ -305,3 +305,21 @@ updated: 2026-09-12
 
 - exec 0ms——kwargs+num_warps/stages 双钉无效。七连崩后 T69 昆仑轴
   终封,仅剩工单。
+
+## 2026-09-15 17:40 E8 重开发射：昆仑标量重写（T65 解锁先例解除终封）
+
+- **重开依据（新源码级结构证据）**：T65 e6 当日证实"masked 向量载入 +
+  比较掩码 + tl.sum 归约提取标量"在本后端触发 make_llir SIGABRT；
+  T69 昆仑 vendor 的 `_dispatch_counts`（hits）与 `_dispatch_ranks`
+  （rank）正是该形态。原七连崩终封是在误判为窗口问题的前提下做出。
+- commit `1244021d`：kernel1/3 全标量重写（标量 load、runtime 分支、
+  标量 load-modify-store/分支计数；kernel2 已是纯标量不动）；
+  counts 改 `torch.zeros` 初始化（标量版只写命中格）；去掉
+  isCloseOffsetAnalysis/isCloseUnrollControl kwargs 恢复默认 pass。
+- ZIP `e8-1244021`，SHA-256
+  `5f891bd571af61b3e4b345b388257bbe4c084ab7c7963758d80eb38f2c26d5d4`；
+  release 回执 `artifacts/competition/batch5-verify-20260915/t69e8/`
+  （exit 0，generic+昆仑 vendor 真实 launch，0 skip）。
+- 已提交（submission 待回填）。门：**昆仑产生有效判决且 ≥0.1**；
+  七芯部分和 357.5 待命，若昆仑 ~0.1-0.5 量级均值约 44+。
+- 若仍崩：按停损规则不再盲试，需要 assert 文本（T65 式完整堆栈）。
