@@ -47,16 +47,17 @@ def fill_padded_rows(x, num_token_non_padded, fill_value):
     if isinstance(fill_value, torch.Tensor):
         fill_value = fill_value.item()
     n_rows, n_cols = x.shape
-    # One kernel writes every output element exactly once: valid rows are
-    # copied from x and padded rows are filled in place, instead of cloning
-    # the whole tensor and overwriting the padding a second time. E3 tiles
-    # the columns (one program per (row, col-block), cap 1024 lanes) - the
-    # per-chip leaderboard shows the leaders 3-4x ahead exactly on the wide-
-    # shape chips (tianshu/huawei/enflame) while narrow shapes were at
-    # parity, and e2's whole-row form ran 84s on tianshu.
+    # One kernel writes every output element exactly once: valid rows
+    # are copied from x and padded rows are filled in place. E4
+    # single-variable axis: a fixed 1024-lane column block. The
+    # e2/e3 next_power_of_2(n_cols) ladder compiled up to seven
+    # BLOCK variants per dtype (and the whole-row e2 form ran 84s on
+    # tianshu - compile-dominated); one fixed masked block serves
+    # every width with a single compiled variant. Narrow rows pay
+    # masked lanes instead of per-shape recompiles.
     out = torch.empty((n_rows, n_cols), dtype=x.dtype, device=x.device)
     if n_rows and n_cols:
-        block = max(min(triton.next_power_of_2(n_cols), 1024), 16)
+        block = 1024
         _fill_padded_rows[(n_rows, triton.cdiv(n_cols, block))](
             x,
             out,
