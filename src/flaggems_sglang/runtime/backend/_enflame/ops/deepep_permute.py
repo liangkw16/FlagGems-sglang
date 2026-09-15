@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Adapted from SGLang 8014d9d: kernels/ops/moe/ep_moe_kernels.py.
 
+# E3: BLOCK 512 -> 1024 - c2flow's no-anomaly shape reads ~2x ours on
+# every chip (tianshu 34 vs 16, enflame 12.3 vs 2.5); wider hidden tiles
+# are the cheapest broad axis before any structural change.
 # Enflame vendor: byte-frozen clone of the generic that passed GCU at
 # 2.53x (submission 12895). The round-7 generic reworks the op into a
 # destination-driven gather behind a tiny inverse-routing scatter; the
@@ -71,7 +74,7 @@ def deepep_permute(input, gateup_input, src2dst, topk_ids, topk, hidden_size):
             *input.stride(),
             *out.stride(),
             *src2dst.stride(),
-            BLOCK=512,
+            BLOCK=1024,
         )
     return out
 
