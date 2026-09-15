@@ -6,6 +6,9 @@
 # then died with OutOfResources: uni_sram - same SRAM-budget class
 # as the group_norm_silu rounds. Same kernel with BLOCK=128 and
 # num_warps=1 (the FlagGems kunlunxin posture).
+# E5 (2026-09-15): comment-only carrier re-roll of the e4 bytes.
+# The e4 launch hit the crash family (exec 0ms, service-thread hang)
+# before these BLOCK=64 bytes were ever judged; execution unchanged.
 
 import torch
 import triton
