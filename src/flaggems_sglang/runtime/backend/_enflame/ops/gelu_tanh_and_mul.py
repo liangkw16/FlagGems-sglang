@@ -57,6 +57,8 @@ def _gelu_tanh_and_mul_kernel(
         )
 
 
+# E8 probe: num_warps=4 launch pin (single variable; enflame 1.74 vs
+# second-tier 3.67 on this task - the PR corpus's cheapest per-chip knob).
 def gelu_tanh_and_mul(input):
     x = input.contiguous()
     last_dim = x.shape[-1]
@@ -75,6 +77,7 @@ def gelu_tanh_and_mul(input):
             rows,
             half_width,
             BLOCK_COL=_BLOCK_COL,
+            num_warps=4,
         )
     return output
 
