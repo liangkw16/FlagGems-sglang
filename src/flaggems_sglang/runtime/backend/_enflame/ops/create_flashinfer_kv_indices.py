@@ -56,12 +56,6 @@ def _create_kv_indices(
         gap_lo = begin + length
         last = 1 - tl.minimum(batch - 1 - row, 1)
         gap_hi = next_begin + (out_numel - next_begin) * last
-        # E11 single-variable axis: scalar base pre-offset. Every vector
-        # address below is now base_ptr + i * stride with the scalar part
-        # folded into the pointer itself (the OffsetAnalysis-friendly
-        # linear form from the _kunlunxin softmax precedent) instead of
-        # (scalar + i) * stride inside the lane expression. BLOCK, splits
-        # and the load/store primitives stay byte-equivalent to e8.
         for tile in range(
             tl.program_id(1), tl.cdiv(head_len, BLOCK), tl.num_programs(1)
         ):
@@ -70,23 +64,22 @@ def _create_kv_indices(
             value = tl.load(old + i * olds, m, other=0)
             tl.store(out + i * os, value, m)
         gap = gap_hi - gap_lo
-        old_gap = old + gap_lo * olds
-        out_gap = out + gap_lo * os
         for tile in range(
             tl.program_id(1), tl.cdiv(gap, BLOCK), tl.num_programs(1)
         ):
             i = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
             m = i < gap
-            value = tl.load(old_gap + i * olds, m, other=0)
-            tl.store(out_gap + i * os, value, m)
-        pool_src = pool + request * ps0 + start * ps1
-        out_row = out + begin * os
+            off = gap_lo + i
+            value = tl.load(old + off * olds, m, other=0)
+            tl.store(out + off * os, value, m)
         for tile in range(
             tl.program_id(1), tl.cdiv(length, BLOCK), tl.num_programs(1)
         ):
             i = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
-            value = tl.load(pool_src + i * ps1, i < length, other=0)
-            tl.store(out_row + i * os, value, i < length)
+            value = tl.load(
+                pool + request * ps0 + (start + i) * ps1, i < length, other=0
+            )
+            tl.store(out + (begin + i) * os, value, i < length)
 
 
 def create_flashinfer_kv_indices(
