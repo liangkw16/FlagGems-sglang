@@ -114,6 +114,8 @@ def _eh_norm_normalize(
         )
 
 
+# E7 probe: num_warps=4 on both launches (single variable; enflame 1.56
+# vs second-tier 6.17 - largest single-chip gap of the night batch).
 def fused_eh_norm(
     inputs_embeds, previous_hidden, enorm_weight, hnorm_weight, eps
 ):
@@ -150,6 +152,7 @@ def fused_eh_norm(
             slices,
             BLOCK=_SLICE,
             num_stages=3,
+            num_warps=4,
         )
         _eh_norm_normalize[grid](
             inputs_embeds,
@@ -172,6 +175,7 @@ def fused_eh_norm(
             eps,
             BLOCK=_SLICE,
             num_stages=3,
+            num_warps=4,
         )
     return out
 
