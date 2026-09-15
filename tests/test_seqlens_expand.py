@@ -75,11 +75,38 @@ class SeqlensExpandTest(unittest.TestCase):
             )
         )
 
+    def test_strided_inputs(self):
+        # E4 regression: the fused kernel's prefix accumulation used to
+        # read extend without the element stride while the current-row
+        # load used it, so strided views produced wrong bases. Both the
+        # fused (n <= 1024) and scan (n > 1024) paths must honor es/ss.
+        for qos in ((0, 1, 5, 128, 513), tuple((i % 37) + 1 for i in range(1500))):
+            extend, seq, total, mq = make_case(qos=qos, seed=7)
+            ext_base = torch.stack(
+                [extend, torch.full_like(extend, -1)], dim=0
+            ).flatten()[::2]
+            seq_base = torch.stack(
+                [seq, torch.full_like(seq, -1)], dim=0
+            ).flatten()[::2]
+            assert ext_base.stride(0) == 2 and seq_base.stride(0) == 2
+            self.check((ext_base, seq_base, total, mq))
+
+    def test_large_batch_two_path(self):
+        # E4: n > 1024 takes the scan + expand-prefixed path; a mixed
+        # qos/kvs profile keeps clamps, zero-length rows and the tail in
+        # play on both kernels.
+        g = torch.Generator().manual_seed(11)
+        qos = torch.randint(0, 700, (2050,), generator=g).tolist()
+        kvs = (qos + torch.randint(0, 64, (2050,), generator=g)).tolist()
+        self.check(make_case(qos=qos, kvs=kvs, seed=11))
+
 
 RELEASE_REQUIRED_TESTS = [
     "SeqlensExpandTest.test_basic_and_negative_starts",
     "SeqlensExpandTest.test_tail_and_single",
     "SeqlensExpandTest.test_empty",
+    "SeqlensExpandTest.test_strided_inputs",
+    "SeqlensExpandTest.test_large_batch_two_path",
 ]
 
 
