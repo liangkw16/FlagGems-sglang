@@ -1,0 +1,76 @@
+# Copyright 2026 FlagOS Contributors
+# SPDX-License-Identifier: Apache-2.0
+# Adapted from SGLang 8014d9d kernels/ops/moe/fill_padded_rows.py.
+
+# Ascend vendor (e5 probe): byte-identical to the on-TB e2 kernel and
+# launch except that n_cols is a tl.constexpr. The tail mask
+# (cols < n_cols) and the output addressing then fold statically - the
+# shape/stride staticization path the batch-2/3 PR corpus uses on this
+# chip - without touching the row grid, the load/store forms or the
+# branch structure. E4 already falsified "number of BLOCK variants" as
+# this task's huawei gap (fixed single block read flat); this probe
+# tests the remaining staticization mechanism instead.
+
+import torch
+import triton
+import triton.language as tl
+
+
+@triton.jit
+def _fill_padded_rows(
+    x_ptr,
+    out_ptr,
+    num_non_padded_ptr,
+    n_cols: tl.constexpr,
+    fill_value,
+    stride_x,
+    stride_out,
+    BLOCK_COLS: tl.constexpr,
+):
+    row = tl.program_id(0).to(tl.int64)
+    n_valid = tl.load(num_non_padded_ptr).to(tl.int64)
+    cols = tl.arange(0, BLOCK_COLS).to(tl.int64)
+    mask = cols < n_cols
+    # The copy load stays outside the runtime branch: GCU300 has only ever
+    # legalized this team's masked vector loads at top level (deepep_permute
+    # form), while stores under scalar branches are proven (fill S0,
+    # deepep_permute). Pad rows mask the load out entirely.
+    value = tl.load(
+        x_ptr + row * stride_x + cols, mask=mask & (row < n_valid), other=0
+    )
+    if row < n_valid:
+        tl.store(out_ptr + row * stride_out + cols, value, mask=mask)
+    else:
+        fill = tl.full(
+            (BLOCK_COLS,), fill_value, dtype=out_ptr.dtype.element_ty
+        )
+        tl.store(out_ptr + row * stride_out + cols, fill, mask=mask)
+
+
+def fill_padded_rows(x, num_token_non_padded, fill_value):
+    assert x.ndim == 2 and x.stride(1) == 1
+    assert num_token_non_padded.numel() == 1
+    assert not num_token_non_padded.dtype.is_floating_point
+    assert num_token_non_padded.device == x.device
+    if isinstance(fill_value, torch.Tensor):
+        fill_value = fill_value.item()
+    n_rows, n_cols = x.shape
+    # One kernel writes every output element exactly once: valid rows are
+    # copied from x and padded rows are filled in place, instead of cloning
+    # the whole tensor and overwriting the padding a second time.
+    out = torch.empty((n_rows, n_cols), dtype=x.dtype, device=x.device)
+    if n_rows and n_cols:
+        _fill_padded_rows[(n_rows,)](
+            x,
+            out,
+            num_token_non_padded,
+            n_cols=n_cols,
+            fill_value=fill_value,
+            stride_x=x.stride(0),
+            stride_out=out.stride(0),
+            BLOCK_COLS=triton.next_power_of_2(n_cols),
+        )
+    return out
+
+
+__all__ = ["fill_padded_rows"]
