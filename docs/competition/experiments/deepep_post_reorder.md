@@ -4,12 +4,12 @@
 task: 65
 operator: deepep_post_reorder
 batch: 5
-validity: invalid_correctness
-platform: completed(15213,e5,7/8;昆仑=编译期SIGABRT@make_llir,非窗口非资源)
-candidate_stage: e5
+validity: valid
+platform: completed(e6,8/8,8.7338x 首次有效;昆仑0.3592过门,标量重写命中根因)
+candidate_stage: e6
 team_best_stage: -
 sealed: no
-next: BLOCK/重掷轴关闭;唯一剩余轴=结构性改写(操作组合触发编译器bug);七芯水位11.77/7.17/1.58/18.42/11.20/12.14/7.64待命
+next: e6解锁后燧原1.67为最弱轴(榜首15+,K-tile归约候选);昆仑0.36可随后续载体自然观测;守榜+燧原轴
 updated: 2026-09-15
 ```
 
@@ -171,3 +171,15 @@ updated: 2026-09-15
   需按操作族逐一隔离；暂列明日评估，不再盲发。
 - 回执/日志：`artifacts/competition/batch5-verify-20260915/deepep_post_reorder/`
   （release exit 0，generic+昆仑 vendor 各 33 launch）。
+
+## 2026-09-15 17:10 E6 平台终态：8/8 VALID 8.7338x —— 昆仑解锁，向量提取链确证为编译器 bug 根因
+
+- submission（e6，0f883760）。**昆仑 vendor 被选中、passed 0.3592**
+  （exec 14457ms 真实执行）——六轮失败后首次有效判决。
+- 七芯：天数 11.8174 / 沐曦 7.0206 / 燧原 1.6698 / 海光 18.0998 /
+  昆仑 **0.3592** / 华为 11.5022 / A 11.7876 / B 7.6136；均值 **8.7338**。
+- **根因闭环**：E1 引入"masked 向量载入 + one-hot(lane==slot)乘 +
+  tl.sum 归约提取标量"后昆仑连续编译期 SIGABRT（make_llir）；e6 恢复
+  S0 形态标量 slot 读（BLOCK64/warps1/stages1/循环结构/累加序全保）
+  即通过。Codex r6 咨询的差分嫌疑被平台直接证实。
+- 后续：燧原 1.67 为最弱轴（榜首 15+）；昆仑 0.36 健康窗水位。

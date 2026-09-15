@@ -412,3 +412,11 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   预注册关闭；e11 字节保留为燧原正向载体（后续单变量可叠加）。
 - e12（metax splits 2048）基线裁定：**回退 enflame 至 e8 字节、
   仅保留 metax 改动**再打包（避免继承未达门的 e11 变化）。
+
+## 2026-09-15 17:10 E12 平台终态：8/8 VALID 190.674x < TB —— metax splits 2048 大负向
+
+- submission（e12，f4ac6d58，enflame 已回退 e8 字节）。**沐曦 60.80525**
+  （e8 在榜 87.29 / e11 读 98.51）——2048 splits 预算在沐曦为强负向，
+  预注册门 ≥105 远未触及，轴证伪。燧原 19.53（水位）、天数 531.0、
+  海光 274.4、华为 76.8、A 252.2、B 308.0——快芯普遍低于 e8 窗口高位。
+- ΔS<0，TB 保持 e8 199.695。metax vendor 回退候选：回到 e8 字节。
