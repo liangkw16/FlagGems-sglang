@@ -2,13 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 # Adapted from SGLang 8014d9d kernels/ops/moe/ep_moe_kernels.py.
 
-# Kunlunxin vendor: the generic (BLOCK=512) ran 10.5s on this chip
-# then died with OutOfResources: uni_sram - same SRAM-budget class
-# as the group_norm_silu rounds. Same kernel with BLOCK=128 and
-# num_warps=1 (the FlagGems kunlunxin posture).
-# E5 (2026-09-15): comment-only carrier re-roll of the e4 bytes.
-# The e4 launch hit the crash family (exec 0ms, service-thread hang)
-# before these BLOCK=64 bytes were ever judged; execution unchanged.
+# Kunlunxin vendor, e6: the E1-E5 bytes all shared one construct this
+# chip never judged cleanly - the routing/weight rows loaded as masked
+# vectors and reduced back to scalars per (hidden block, slot) via a
+# one-hot (lane == slot) multiply + tl.sum. Every kunlun failure since
+# E1 was a compile-stage SIGABRT in make_llir (the "uni_sram" label
+# wraps arbitrary pm.run exceptions), and S0's plain scalar reads were
+# only ever lost to a crash window, never kernel-judged. E6 reverts the
+# extraction to scalar slot loads inside the slot loop; BLOCK=64,
+# num_warps=1, num_stages=1, the token/hidden loop structure and the
+# accumulation order all stay exactly as e4/e5.
 
 import torch
 import triton
@@ -33,38 +36,25 @@ def _deepep_post_reorder(
     ws0,
     ws1,
     scaling,
-    TOPK_PAD: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
     out_ty = out.dtype.element_ty
-    lane = tl.arange(0, TOPK_PAD)
     for token in range(tl.program_id(0), tokens, tl.num_programs(0)):
         token64 = token.to(tl.int64)
-        # E1: the routing and weight rows load once per token instead of
-        # once per (hidden block, slot) - a masked vector load at top
-        # level (the kunlunxin-reliable form). Slot values come out via
-        # arithmetic selects (i32 lane multiply, no integer tl.where and
-        # no i64 vector ops: both are proven GCU300 poisons).
-        tmask = lane < topk
-        routes_vec = tl.load(
-            routes + token64 * rs0 + lane.to(tl.int64) * rs1,
-            mask=tmask,
-            other=-1,
-        ).to(tl.int32)
-        w_vec = tl.load(
-            weights + token64 * ws0 + lane.to(tl.int64) * ws1,
-            mask=tmask,
-            other=0.0,
-        ).to(tl.float32)
         for start in tl.range(0, hidden, BLOCK):
             cols = start + tl.arange(0, BLOCK).to(tl.int64)
             mask = cols < hidden
             acc = tl.zeros((BLOCK,), dtype=tl.float32)
             for slot in range(topk):
-                sel = (lane == slot).to(tl.int32)
-                dst = tl.sum(routes_vec * sel).to(tl.int64)
+                # E6: plain scalar loads (the S0 form) replace the
+                # vector row load + one-hot/tl.sum extraction chain.
+                dst = tl.load(
+                    routes + token64 * rs0 + slot.to(tl.int64) * rs1
+                ).to(tl.int64)
                 if dst >= 0:
-                    w = tl.sum(w_vec * sel.to(tl.float32))
+                    w = tl.load(
+                        weights + token64 * ws0 + slot.to(tl.int64) * ws1
+                    ).to(tl.float32)
                     row = tl.load(
                         down + dst * ds0 + cols * ds1, mask=mask, other=0.0
                     ).to(tl.float32)
@@ -117,7 +107,6 @@ def deepep_post_reorder(
         topk_weights.stride(0),
         topk_weights.stride(1),
         float(routed_scaling_factor),
-        TOPK_PAD=triton.next_power_of_2(max(1, topk)),
         BLOCK=64,
         num_warps=1,
         num_stages=1,
