@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Adapted from SGLang 8014d9d kernels/ops/kvcache/kv_indices.py.
 
+# E15: BLOCK 2048 -> 4096 (e14 read 24.9, increments decelerating;
+# final rung tonight - quota expires at midnight).
 # E14: BLOCK 1024 -> 2048 (e13 read 22.8 enflame, +3.3 over the
 # watermark - the ladder continues). E13: BLOCK 512 -> 1024 - the field's enflame readers sit at 83-108
 # while our watermark form reads 18-19.5; wider tiles cut the per-segment
@@ -145,7 +147,7 @@ def create_flashinfer_kv_indices(
         out.stride(0),
         kv_indices.stride(0),
         HAS_START=kv_start_idx is not None,
-        BLOCK=2048,
+        BLOCK=4096,
     )
     return out
 
