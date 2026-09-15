@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Adapted from SGLang 8014d9d: kernels/ops/moe/ep_moe_kernels.py.
 
+# E4: BLOCK 1024 -> 2048 (e3 enflame 3.01, +19% - ladder continues).
 # E3: BLOCK 512 -> 1024 - c2flow's no-anomaly shape reads ~2x ours on
 # every chip (tianshu 34 vs 16, enflame 12.3 vs 2.5); wider hidden tiles
 # are the cheapest broad axis before any structural change.
@@ -74,7 +75,7 @@ def deepep_permute(input, gateup_input, src2dst, topk_ids, topk, hidden_size):
             *input.stride(),
             *out.stride(),
             *src2dst.stride(),
-            BLOCK=1024,
+            BLOCK=2048,
         )
     return out
 
