@@ -118,14 +118,15 @@ def create_flashinfer_kv_indices(
     if not (batch and out.numel()):
         out.copy_(kv_indices)
         return out
-    # Target ~512 cooperating programs (the upstream SGLang AMD
-    # parallelization shape for long contexts): more token blocks per
-    # row and idle blocks fall through their zero-iteration loops.
-    # The 255 cap keeps grid.y under the Enflame hardware limit that
-    # batch<=2 x wide-context shapes would otherwise cross.
+    # Target ~2048 cooperating programs. E12 single-variable axis: the
+    # round-1 512-program target leaves this chip underfilled (87 vs the
+    # leader's 137 and the 114-143 second tier on a bandwidth-bound
+    # gather), so the split budget quadruples while BLOCK and the kernel
+    # body stay byte-identical. The 255 grid.y cap still binds wide-
+    # context shapes.
     splits = min(
         max(1, triton.cdiv(req_to_token.shape[1], 256)),
-        max(1, 512 // batch),
+        max(1, 2048 // batch),
         255,
     )
     _create_kv_indices[(min(batch, 65535), splits)](
