@@ -5,12 +5,12 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: completed(e11,8/8,193.828x<TB;燧原18.08超历史水位未达22门)
-candidate_stage: e11
+platform: completed(e12,8/8,190.674x<TB;沐曦60.8负向,metax2048轴证伪)
+candidate_stage: e12
 team_best_stage: e8
 team_best_speedup: 199.69521875
 sealed: no
-next: e11预偏移轴关闭(燧原18.08≈水位);TB e8 199.70守;e12回退enflame至e8字节再打包;下一轴=num_warps阶梯/沐曦splits
+next: metax splits2048证伪(沐曦98.5→60.8大负);TB e8 199.70守;下一轴=燧原BLOCK1024/warps1、华为warps8或ps0 constexpr(单变量)
 updated: 2026-09-15
 ```
 
