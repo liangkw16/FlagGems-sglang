@@ -16,7 +16,7 @@ def _seqlens_expand(
     ss,
     qo_len,
     tasks,
-    tiles,
+    tiles: tl.constexpr,
     BLOCK: tl.constexpr,
     BLOCK_N: tl.constexpr,
 ):
@@ -82,7 +82,7 @@ def _seqlens_expand_p(
     ss,
     qo_len,
     tasks,
-    tiles,
+    tiles: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
     # E5 flat work mapping, scan-path variant (base from prefix[i]).
@@ -108,6 +108,9 @@ def seqlens_expand(extend_seq_lens, seq_lens, total_len, max_q_len):
         total_len, dtype=torch.int32, device=extend_seq_lens.device
     )
     if n and total_len:
+        # E6: tiles is constexpr so the per-program work decode
+        # (work // tiles, work % tiles) folds to shifts/multiplies
+        # instead of runtime integer division on every backend.
         block = 1024
         tiles = max(1, triton.cdiv(max_q_len, block))
         tasks = n * tiles
