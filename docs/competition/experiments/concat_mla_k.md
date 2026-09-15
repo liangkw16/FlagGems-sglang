@@ -354,3 +354,9 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   的 +25% 不可跨芯平移，燧原 tile 轴反向；轴停。BH16 载体守。
 - 均值 1.1908 < TB e9 1.2458。T62 四芯缺口全部无已建杠杆，收官期
   仅守榜。
+
+## 2026-09-15 23:20 夜间 warps 批扫终态：E11 负:燧原0.148(TB0.28减半);warps=4强负,轴关闭
+
+- 单变量=燧原 vendor 钉 num_warps=4（夜间批 T71/T73/T68/T62 四题）。
+  批量结论：燧原 warps 为逐题特性，非统一旋钮；本批 2 负 2 平，
+  轴关闭。TB 各自保持。

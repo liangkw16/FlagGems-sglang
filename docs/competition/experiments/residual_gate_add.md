@@ -201,3 +201,9 @@ card_b +0.31、tianshu +0.09；muxi/card_a 我方领先。燧原窗口摆动实�
   SHA-256 `ba4ac2a777af4b04d264ec061b857493f0abff4fc478b7207fda07089a709b13`。
 - release 回执 `batch5-submit-20260914-finale2/residual_gate_add-t73e7/verification.json`
   SHA-256 `c26a184e0468dfee65075d08bcbd0be19c5610476f4f2f6b99e80054d6fb15d2`。
+
+## 2026-09-15 23:20 夜间 warps 批扫终态：E11 平:燧原2.08≈TB2.10;warps轴无效
+
+- 单变量=燧原 vendor 钉 num_warps=4（夜间批 T71/T73/T68/T62 四题）。
+  批量结论：燧原 warps 为逐题特性，非统一旋钮；本批 2 负 2 平，
+  轴关闭。TB 各自保持。
