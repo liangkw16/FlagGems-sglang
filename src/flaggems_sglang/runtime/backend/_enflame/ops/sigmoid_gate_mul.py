@@ -11,6 +11,10 @@
 # emulation tax on GCU, this is where it shows. The wrapper picks the
 # i32 kernel by host-side numel metadata and keeps the i64 kernel for
 # inputs at or beyond 2^31, so the contract never narrows.
+# E7R (2026-09-15): comment-only carrier of the e7 32768-width bytes.
+# The e7 upload died mid-send (uncertain, POST never reached the
+# platform, quota untouched); a new ZIP SHA is required to escape the
+# blocked intent tuple. Execution bytes are unchanged.
 
 import torch
 import triton
