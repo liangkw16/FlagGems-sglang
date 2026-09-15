@@ -99,3 +99,23 @@ updated: 2026-09-14
 - 残余轴：flat-grid 并行度（请求少时的 (n,tiles) 欠填充）尚未动，
   留作下一单变量候选；本发先收盘守 TB。
 - 额度：发后 21/30（watch 实测待 T70 e3 后刷新）。
+
+## 2026-09-15 E4 候选就绪：es 漏乘修复 + 大 batch 两段式（验证通道中断）
+
+- commit `45662b8c`。两个成分：
+  1. **正确性修复（载体）**：融合 kernel 前缀累积 `extend + ridx` 漏乘
+     stride，与非连续 extend 视图交互时基址读错（当前行读 `pid*es` 一直
+     正确；隐藏评测用连续输入故在榜字节未败）。补回归
+     `test_strided_inputs`（stride-2 视图，5 元素走融合路径 + 1500 元素
+     走 scan 路径）。
+  2. **性能轴**：n>1024 走 `_seqlens_prefix`（单 program 分块
+     tl.cumsum+标量 carry，平台已证原语）+ `_seqlens_expand_p`
+     （base 改单标量 load），消除每 program O(pid) 前缀重算；
+     n≤1024 路径与 e3 字节级行为一致。
+- 新增 `test_large_batch_two_path`（n=2050 混合 qos/kvs）；
+  RELEASE_REQUIRED_TESTS 同步扩充。
+- ZIP：`artifacts/competition/seqlens_expand/e4-45662b8/`，5325 bytes，
+  仅 generic `seqlens_expand.py`（`c6612828…`）。
+- ZIP SHA-256：`c0e2356ced2230411573f2b0ccfbf3812ce75ed8ee9379835518e7f9fd3d47c9`。
+- 预注册门：天数 ≥66 或 海光 ≥27；8/8 且均值 ≥19.0 才替换 TB e3 19.31。
+- 阻塞：GPU 通道中断，release 回执待补；未 preflight、未耗额度。

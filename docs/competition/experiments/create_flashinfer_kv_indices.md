@@ -371,3 +371,23 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   2.81/2.71、华为 22.0/23.0）。TB 保持 e8 199.695（当时高水位窗）。
 - 残余轴：6 队 ≥37x 的真因仍未破译（c2flow 83），需新结构证据或
   燧原侧 profiling；e10 字节保留为燧原已证载体。
+
+## 2026-09-15 E11 候选就绪：燧原标量基址预偏移（验证通道中断，待 GPU 恢复）
+
+- 基线=在榜 e8 字节：先以 commit `201dbf10` 恢复工作树漂移
+  （撤销 e9 generic 去特化与 e10 flat-grid 探针；metax/kunlun vendor
+  与 e8 逐字节一致，仅 generic+enflame 漂移）。
+- e11 单变量（commit `35b5ce65`）：仅 `_enflame` vendor 的 gap/length
+  两段地址改为标量基址预偏移——`(gap_lo+i)*olds ≡ gap_lo*olds + i*olds`
+  纯代数重排，向量地址变为 `base_ptr + i*stride` 线性形式
+  （OffsetAnalysis 友好，昆仑 softmax 35x 先例）；BLOCK/splits/原语不动。
+- ZIP：`artifacts/competition/create_flashinfer_kv_indices/e11-35b5ce6/`，
+  22160 bytes，成员 generic `47f8f7cd…`（=e8）/ enflame `13815e57…`
+  （唯一变化）/ kunlunxin `aee2e744…`（=e8）/ metax `0707c402…`（=e8）。
+- ZIP SHA-256：`e131dae0a9cc21b515099d55b773b257e1cc8cf74f5925cd8866655f10dc5d4d`。
+- 预注册门（Codex 修订版）：**燧原 ≥22**（超过历史水位 17.9 才算结构
+  增益；不以 12 晋级）；ΔS=Σ(S_new−S_best)/8>0 判优。
+- 阻塞：远端 GPU（192.168.5.204/gpu-et）三路不可达，release 回执
+  待补；未运行 preflight、未消耗额度。
+- e12（metax splits 512→2048，commit `50fdc779`）已开发，ZIP 待 e11
+  燧原判决后再定基线（避免双变量耦合）。

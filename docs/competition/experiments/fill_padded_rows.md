@@ -159,3 +159,15 @@ updated: 2026-09-12
 - **预注册门（天数/华为/燧原中位 ≥1.3x）三芯全负，列分块轴关闭**：
   榜首宽 shape 优势（天数 18-22/华为 17.5/燧原 5.6）不是列并行性；
   沐曦 +24% 是唯一正信号（不同后端偏好）。宽 shape 结构待新证据。
+
+## 2026-09-15 E4 候选就绪：固定 1024 列块（验证通道中断）
+
+- commit `51b2030a`。单变量：`BLOCK_COLS` 由 `next_power_of_2(n_cols)`
+  （cap 1024，最多 7 档编译变体）改为固定 1024 掩码块——单一编译变体
+  服务所有列宽；kernel 本体不动。依据：e2 整行形态 tianshu 84s 为
+  编译主导；华为 1.93 vs 榜首 17.5 的缺口形态与重编译一致。
+- ZIP：`artifacts/competition/fill_padded_rows/e4-51b2030/`，2723 bytes，
+  仅 generic `fill_padded_rows.py`（`0f8c9b98…`）。
+- ZIP SHA-256：`018b18f8bec25ca536c3f189a0a6a3f4942742599a262e250a9a0ebfb8fea3c5`。
+- 预注册门：华为 ≥3.0 或 燧原 ≥3.0 或 天数 ≥15；ΔS 判优防窄行回退。
+- 阻塞：GPU 通道中断，release 回执待补；未 preflight、未耗额度。

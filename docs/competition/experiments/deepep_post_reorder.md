@@ -136,3 +136,18 @@ updated: 2026-09-12
 
 - exec 0ms 服务线程卡死——BLOCK=64 的字节没被检验。T65 昆仑=e3
   真实执行 uni_sram@256 + e4 秒崩,双条件窗口问题维持。
+
+## 2026-09-15 E5 候选就绪：注释载体（e4 BLOCK=64 字节从未被裁决）
+
+- commit `14417e2e`。e4 的昆仑发射撞崩溃族窗口（exec 0ms 服务线程
+  卡死），BLOCK=64 字节从未被检验；本次为注释载体重掷（崩溃族协议
+  1/1），执行零变化。
+- 诊断补充（09-15）：平台 API 对 e1/e3 两发真实执行后失败不返回任何
+  底层错误文本；本仓缓存昆仑 compiler.py:363 证实 `uni_sram` 标签包装
+  任意 pm.run 异常——该标签无诊断价值，重掷是剩余唯一动作。
+- ZIP：`artifacts/competition/deepep_post_reorder/e5-14417e2/`，7789
+  bytes，成员 generic `aa643d92…`（=e4）/ kunlunxin `62dae23e…`
+  （仅注释差异）。
+- ZIP SHA-256：`b35d54e83c0ac65aff6dda5be7b5329d981ebe697c76fd7fe3347b5dede48554`。
+- 门：昆仑产生有效判决；崩溃族再中即终封（同指纹两次）。
+- 阻塞：GPU 通道中断，release 回执待补；未 preflight、未耗额度。
