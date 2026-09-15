@@ -49,7 +49,7 @@
 | 66 | dsv3_fused_a_gemm | valid | completed(13371,e1,8/8,3.09395x team best) | e1 3.09395x | no | e1 valid 3.094（+13%，A+70%/沐曦+31%）；对榜首 4.12 差 1.0，燧原+2.1 为最大单芯缺口（tiny-GEMM 向量核方向已注册） | 2026-09-12 | [dsv3_fused_a_gemm](dsv3_fused_a_gemm.md) |
 | 67 | fill_padded_rows | valid | completed(e4,8/8,4.1965x;固定块轴零增益,重编译假说在本题证伪) | e2 4.2969x | no | 固定BLOCK轴关闭;下一轴=num_warps/过特化(PR扫描模式,华为1.9vs17.5缺口形态未破);TB e2 4.2969 守 | 2026-09-15 | [fill_padded_rows](fill_padded_rows.md) |
 | 68 | fused_eh_norm | valid | completed(14589,e6,8/8,7.042x;TB e4 7.089x) | e4 7.08945833x | no | e6 split-row证伪(燧原0.87,饥饿假说假);TB e4 7.089守;燧原缺因未破,主攻降级 | 2026-09-14 | [fused_eh_norm](fused_eh_norm.md) |
-| 69 | fused_moe_dispatch_index | invalid_correctness | completed(13809,e7,7/8;昆仑七连崩,轴终封仅剩工单) | - | no | T69 昆仑轴终封;仅剩平台工单;七芯部分和 357.5 永久待命 | 2026-09-12 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
+| 69 | fused_moe_dispatch_index | valid | completed(e9,8/8,43.6439x 首次有效;昆仑0.1016过门,标量重写+寄存器累加) | - | no | e9 解锁后昆仑 0.10 贴门(留观);燧原 0.756/华为 3.83 为弱轴;守榜 | 2026-09-15 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
 | 70 | gate_topk | invalid_correctness | completed(14849,e3r,7/8;昆仑exec 3633491ms挂死后判失败,与e3同指纹) | - | no | T70 昆仑八轮全灭(长尾挂死x3/断言/0ms卡死),本季终结;重掷额度已用尽,不再改字节 | 2026-09-15 | [gate_topk](gate_topk.md) |
 | 71 | gelu_tanh_and_mul | valid | completed(14573,e4,8/8,2.7109x 新TB) | e4 2.7109x | no | e4 no-loop昆仑0.304复制链失败(门0.5未过,链收口);TB 2.711守;昆仑真因/燧原8192待证 | 2026-09-14 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
 | 72 | group_norm_silu | valid | completed(14859,e8,8/8,2.5400x;昆仑4096 0.545抛物线;TB e6 2.6627x) | e6 2.66266667x | no | e8 昆仑宽度抛物线(0.49/0.53/0.55);TB e6 2.663守;明日联评2048 | 2026-09-14 | [group_norm_silu](group_norm_silu.md) |

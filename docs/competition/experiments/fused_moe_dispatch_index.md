@@ -4,13 +4,13 @@
 task: 69
 operator: fused_moe_dispatch_index
 batch: 5
-validity: invalid_correctness
-platform: completed(13809,e7,7/8;昆仑七连崩,轴终封仅剩工单)
-candidate_stage: e6
+validity: valid
+platform: completed(e9,8/8,43.6439x 首次有效;昆仑0.1016过门,标量重写+寄存器累加)
+candidate_stage: e9
 team_best_stage: -
 sealed: no
-next: T69 昆仑轴终封;仅剩平台工单;七芯部分和 357.5 永久待命
-updated: 2026-09-12
+next: e9 解锁后昆仑 0.10 贴门(留观);燧原 0.756/华为 3.83 为弱轴;守榜
+updated: 2026-09-15
 ```
 
 ## 契约与范围
@@ -323,3 +323,19 @@ updated: 2026-09-12
 - 已提交（submission 待回填）。门：**昆仑产生有效判决且 ≥0.1**；
   七芯部分和 357.5 待命，若昆仑 ~0.1-0.5 量级均值约 44+。
 - 若仍崩：按停损规则不再盲试，需要 assert 文本（T65 式完整堆栈）。
+
+## 2026-09-15 18:10 E8→E9 平台终态：8/8 VALID 43.6439x —— 昆仑解锁（今日第二题）
+
+- **E8（1244021d）**：标量重写后昆仑**首次编译并真实执行**（8 连崩
+  破局），但数值失配——`masked_m` 7/32 差 ±1。根因：kernel1 的分支内
+  全局 load-modify-store（`store(load()+1)`）在昆仑后端错误执行/丢增量
+  （NVIDIA 语义正确，我方 release 全过）。
+- **E9（e079237f）**：kernel1 改每 expert 一 program 的寄存器累加 +
+  每 (block, expert) 单次 store（kernel2 同构、T65 e6 已证形态），
+  全 kernel 无内存 RMW。
+- **终态 8/8**：天数 61.1946 / 沐曦 40.7292 / 燧原 0.7558 /
+  海光 121.343 / **昆仑 0.1016（贴门过线）** / 华为 3.828 /
+  A 67.548 / B 53.6512；均值 **43.6439**，首次有效上榜。
+- 经验沉淀（昆仑后端新事实）：①向量+tl.sum 提取 → make_llir SIGABRT
+  （T65）；②分支内全局 RMW → 丢增量（本例）；③安全形态=标量读 +
+  分支计数 + 寄存器累加 + 单次 store。
