@@ -77,6 +77,8 @@ def _concat_mla_k(
             )
 
 
+# E11 probe: num_warps=4 launch pin (single variable; enflame 0.28 vs
+# second-tier 1.23).
 def concat_mla_k(k, k_nope, k_rope):
     assert k.ndim == k_nope.ndim == k_rope.ndim == 3
     tokens, heads, dim = k.shape
@@ -107,6 +109,7 @@ def concat_mla_k(k, k_nope, k_rope):
             BH=4,
             BN=bn,
             BR=br,
+            num_warps=4,
         )
     return out
 
