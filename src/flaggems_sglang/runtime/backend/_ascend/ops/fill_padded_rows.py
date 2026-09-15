@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Adapted from SGLang 8014d9d kernels/ops/moe/fill_padded_rows.py.
 
-# Ascend vendor (e5 probe): byte-identical to the on-TB e2 kernel and
-# launch except that n_cols is a tl.constexpr. The tail mask
-# (cols < n_cols) and the output addressing then fold statically - the
-# shape/stride staticization path the batch-2/3 PR corpus uses on this
-# chip - without touching the row grid, the load/store forms or the
-# branch structure. E4 already falsified "number of BLOCK variants" as
-# this task's huawei gap (fixed single block read flat); this probe
-# tests the remaining staticization mechanism instead.
+# Ascend vendor (e6 probe): the e2 TB bytes with exactly one change -
+# the copy load's mask drops the (row < n_valid) predicate. Pad rows
+# then read their own x row (valid memory, values discarded - the else
+# branch still stores the fill) so the load stops being data-dependent
+# on the device counter. E5's n_cols constexpr was null and e4's fixed
+# block was null, so the remaining cheap hypothesis is the dynamic
+# predicate itself. 金狐狸 reads 45.6 on this chip, so the 9x gap is
+# reachable by structure we have not found yet.
 
 import torch
 import triton
@@ -21,7 +21,7 @@ def _fill_padded_rows(
     x_ptr,
     out_ptr,
     num_non_padded_ptr,
-    n_cols: tl.constexpr,
+    n_cols,
     fill_value,
     stride_x,
     stride_out,
@@ -31,13 +31,10 @@ def _fill_padded_rows(
     n_valid = tl.load(num_non_padded_ptr).to(tl.int64)
     cols = tl.arange(0, BLOCK_COLS).to(tl.int64)
     mask = cols < n_cols
-    # The copy load stays outside the runtime branch: GCU300 has only ever
-    # legalized this team's masked vector loads at top level (deepep_permute
-    # form), while stores under scalar branches are proven (fill S0,
-    # deepep_permute). Pad rows mask the load out entirely.
-    value = tl.load(
-        x_ptr + row * stride_x + cols, mask=mask & (row < n_valid), other=0
-    )
+    # E6: the load no longer carries (row < n_valid) - pad rows read
+    # their own (valid) x row and the value is discarded by the else
+    # branch, removing the data-dependent predicate from the mask.
+    value = tl.load(x_ptr + row * stride_x + cols, mask=mask, other=0)
     if row < n_valid:
         tl.store(out_ptr + row * stride_out + cols, value, mask=mask)
     else:
@@ -64,10 +61,10 @@ def fill_padded_rows(x, num_token_non_padded, fill_value):
             x,
             out,
             num_token_non_padded,
-            n_cols=n_cols,
-            fill_value=fill_value,
-            stride_x=x.stride(0),
-            stride_out=out.stride(0),
+            n_cols,
+            fill_value,
+            x.stride(0),
+            out.stride(0),
             BLOCK_COLS=triton.next_power_of_2(n_cols),
         )
     return out
