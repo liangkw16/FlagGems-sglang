@@ -559,8 +559,50 @@ class SeqlensExpandTest(unittest.TestCase):
                 out, output_search_reference(args), rtol=0, atol=0
             )
 
+    def test_actual_lengths_ignore_hint_all_paths(self):
+        # The reference ignores max_q_len: every path must write all rows.
+        # Poison only real allocations; all operator kernels still execute.
+        for n in (1, 5, 1025, 65537):
+            qos = [0] * n
+            qos[0], qos[-1] = 1025, 2051
+            if n > 1:
+                qos[1] = 33
+            ext, _, total, _ = make_case(qos=qos, kvs=qos)
+            seq = ext + 17
+            expected = output_search_reference((ext, seq, total, 0))
+            self.assertTrue(torch.all(expected > 0))
+            original_empty = torch.empty
+
+            def poisoned_empty(*args, **kwargs):
+                result = original_empty(*args, **kwargs)
+                result.fill_(-777)
+                return result
+
+            for hint in (0, 1, 33, 1024):
+                for name, module in MODULES:
+                    with self.subTest(module=name, n=n, hint=hint):
+                        snapshots = (ext.clone(), seq.clone())
+                        with mock.patch.object(
+                            module.torch, "empty", side_effect=poisoned_empty
+                        ):
+                            actual = module.seqlens_expand(
+                                ext, seq, total, hint
+                            )
+                        torch.testing.assert_close(
+                            actual, expected, rtol=0, atol=0
+                        )
+                        self.assertEqual(actual.dtype, torch.int32)
+                        self.assertEqual(actual.shape, (total,))
+                        torch.testing.assert_close(
+                            ext, snapshots[0], rtol=0, atol=0
+                        )
+                        torch.testing.assert_close(
+                            seq, snapshots[1], rtol=0, atol=0
+                        )
+
 
 RELEASE_REQUIRED_TESTS = [
+    "SeqlensExpandTest.test_actual_lengths_ignore_hint_all_paths",
     "SeqlensExpandTest.test_grouped_short_hint_and_strides",
     "SeqlensExpandTest.test_grouped_actual_lengths_ignore_short_hint",
     "SeqlensExpandTest.test_grouped_wide_prefix_small_allocation",

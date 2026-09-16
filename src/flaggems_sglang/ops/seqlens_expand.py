@@ -19,7 +19,6 @@ def _seqlens_expand(
     BLOCK_N: tl.constexpr,
 ):
     pid = tl.program_id(0)
-    tiles = tl.cdiv(qo_len, BLOCK)
     # Exclusive prefix sum of extend[0:pid], accumulated in fixed-width
     # masked chunks: no constexpr depends on the request count, so one
     # compiled variant serves every shape (and the separate zeros +
@@ -31,17 +30,19 @@ def _seqlens_expand(
     for s0 in range(0, pid, BLOCK_N):
         ridx = s0 + tl.arange(0, BLOCK_N)
         acc += tl.load(extend + ridx * es, mask=ridx < pid, other=0)
-    base = tl.sum(acc)
+    base = tl.sum(acc).to(tl.int64)
+    qo = tl.load(extend + pid * es)
+    kv = tl.load(seq + pid * ss)
+    # The hint only chooses the launch grid; actual rows bound the work.
+    tiles = tl.cdiv(qo.to(tl.int64), BLOCK)
     for tile in range(tl.program_id(1), tiles, tl.num_programs(1)):
-        qo = tl.load(extend + pid * es)
-        kv = tl.load(seq + pid * ss)
         # Clamp keeps DP-padded/idle rows safe for uint32 downstream
         # readers (a negative length would read as ~4e9 tokens).
         start = kv - qo + 1
         offs = tile * BLOCK + tl.arange(0, BLOCK)
         mask = offs < qo
-        values = tl.maximum(start + offs, 0)
-        tl.store(out + (base + offs).to(tl.int64), values, mask=mask)
+        values = tl.maximum(start + offs.to(tl.int32), 0)
+        tl.store(out + base + offs, values, mask=mask)
 
 
 @triton.jit
@@ -79,16 +80,16 @@ def _seqlens_expand_p(
     BLOCK: tl.constexpr,
 ):
     pid = tl.program_id(0)
-    tiles = tl.cdiv(qo_len, BLOCK)
-    base = tl.load(prefix + pid)
+    base = tl.load(prefix + pid).to(tl.int64)
+    qo = tl.load(extend + pid * es)
+    kv = tl.load(seq + pid * ss)
+    tiles = tl.cdiv(qo.to(tl.int64), BLOCK)
     for tile in range(tl.program_id(1), tiles, tl.num_programs(1)):
-        qo = tl.load(extend + pid * es)
-        kv = tl.load(seq + pid * ss)
         start = kv - qo + 1
         offs = tile * BLOCK + tl.arange(0, BLOCK)
         mask = offs < qo
-        values = tl.maximum(start + offs, 0)
-        tl.store(out + (base + offs).to(tl.int64), values, mask=mask)
+        values = tl.maximum(start + offs.to(tl.int32), 0)
+        tl.store(out + base + offs, values, mask=mask)
 
 
 @triton.jit
@@ -123,14 +124,14 @@ def _seqlens_expand_p_safe(
     BLOCK: tl.constexpr,
 ):
     # The capped fallback grid must cover every request and output tile.
-    tiles = tl.cdiv(tl.cast(qo_len, tl.int64), BLOCK)
     for pid in range(
         tl.program_id(0).to(tl.int64), tl.cast(n, tl.int64), tl.num_programs(0)
     ):
         base = tl.load(prefix + pid).to(tl.int64)
+        qo = tl.load(extend + pid * es)
+        kv = tl.load(seq + pid * ss)
+        tiles = tl.cdiv(qo.to(tl.int64), BLOCK)
         for tile in range(tl.program_id(1), tiles, tl.num_programs(1)):
-            qo = tl.load(extend + pid * es)
-            kv = tl.load(seq + pid * ss)
             start = kv - qo + 1
             offs = tile * BLOCK + tl.arange(0, BLOCK)
             mask = offs < qo
@@ -198,7 +199,7 @@ def seqlens_expand(extend_seq_lens, seq_lens, total_len, max_q_len):
         safe_grid = (min(n, 65535), min(tiles, 65535 // min(n, 65535)))
         safe_fallback = wide_prefix or n * tiles > 65535
         if n <= 1024 and not safe_fallback:
-            # Exact E4 small-N path; not a repeat of the rejected E7/E8 axes.
+            # E4 small-N layout with actual per-request loop bounds.
             _seqlens_expand[(n, tiles)](
                 extend_seq_lens,
                 seq_lens,
@@ -262,7 +263,7 @@ def seqlens_expand(extend_seq_lens, seq_lens, total_len, max_q_len):
                     BLOCK=block,
                 )
             else:
-                # Exact E4 normal-width, safe-grid long-Q path.
+                # E4 safe-grid layout with actual per-request loop bounds.
                 _seqlens_expand_p[(n, tiles)](
                     extend_seq_lens,
                     seq_lens,
