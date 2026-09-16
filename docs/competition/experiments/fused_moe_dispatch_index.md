@@ -6,12 +6,12 @@ operator: fused_moe_dispatch_index
 batch: 5
 validity: valid
 platform: completed(e12-relaxed/sub16139,8/8,51.072975x；TB仍E10,51.3375x,排名5)
-candidate_stage: e12-relaxed
+candidate_stage: e13-pair-ready
 team_best_stage: e10-generic-init
 team_best_commit: a01fb6344cfa9d9f92a88cd8d47d3d9db3d2ff1b
 team_best_speedup: 51.3375
 sealed: no
-next: E12八芯有效未超E10；全块排序/单warp本轮不晋级，后续聚合需先降低局部通信成本；18次额度
+next: E13两路聚合已通过E10同分布代理筛选及11方法四源码release，ZIP就绪未提交；目标芯仍未验证
 updated: 2026-09-16
 ```
 
@@ -609,3 +609,17 @@ SHA `14fb499d07b98e7676eb3e95a4ecacd9190a013181604e37a556259e36a0a591`。
 新增源码与重叠capacity/int32边界测试已入库。历史榜单最佳仍E10 51.3375、第5，剩18次额度。
 全块排序和单warp没有晋级，源码保留E12；下一步需要更低局部通信成本的聚合结构证据，
 不再沿本次两个失败配置重复提交，也不据此断言天数/海光榜差不可突破。
+
+## 2026-09-16 晚间 E13：两路寄存器聚合，开发验证完成、未提交
+
+- 新结构：每个256-route块采用两条128-route条带；同expert一次预留两个ticket，不同expert各自预留。无sort/scan/gather/shared histogram，保留负id写0、m_max0/1重叠桶所有权、非连续输入和专家大grid回归。wrapper及三个vendor源码均未改。
+- 预注册35个非周期主桶+6个旧分布control+2个empty，固定IID、token内distinct top-k、20%/80%混合热点、相同频数shuffle；五轮AB/BA，主GM≥1.03、每轮≥1.01、各非热点组≥0.99、零spill。旧周期uniform不参与主GM。完整计划和原始样本在 `artifacts/competition/t69-pair-20260916/` 与 `artifacts/competition/t69-pair-tb-20260916/`。
+- 对E12：主GM **1.0494666**，各轮1.042307–1.051643，IID1.016320/distinct1.020983/shuffle1.019717，无主桶<0.95。对团队最佳E10同一43桶复核：主GM **1.12869445**、算术均值1.13189760，各轮1.125933–1.132949，IID1.096447/distinct1.106652/shuffle1.117097，无主桶<0.95、零spill，两轮均过门。仅NVIDIA代理，不能推断八芯均分涨12.87%。
+- 实际IR：3个probe中E12/E10分别32/31寄存器、2048B共享、8个barrier；候选21寄存器、0共享、0barrier、0spill。ticket增量、掩码返回值与双条带store逐项审查；格式化前后candidate PTX指令相同（排除源码位置/debug）。两轮baseline/candidate均各10方法通过；新pair边界已接入正式必测清单。
+- source/verification commit `ea20af241b572d6669b3628683156ba1355cfb43`；源码SHA `cc61f445d11aab86d964ae426429b971c1ef18a0ecb7d43bd55806ecb8f368b1`，正式测试SHA `2f56bfdef27dcb3acf4394030202d874ebf244eedf434e1ca09fecce1a07dad7`。完整release **11/11**，0失败/错误/skip/xfail；generic真实launch138，Ascend/Enflame/Kunlun各414，均为RTX5070Ti数学代理。非NVIDIA目标runtime仍未验证，没有把代理折算成四芯通过。
+- 发布回执来自独立远端 `/tmp/flagos-t69-pair-release.SwWjWo`，后台PID396185，运行脚本及日志在 `artifacts/competition/t69-pair-release-20260916/`；Python3.12.13/Torch2.13.0+cu130/Triton3.7.1/driver610.57.04。所有stage与计时串行，无并行GPU干扰。
+- ZIP `artifacts/competition/fused_moe_dispatch_index/e13-pair-ea20af2/fused_moe_dispatch_index.zip`，19759 bytes，SHA-256 `478a1d3cb0651788524c94123e5fd412dcc2c876464721fb0f01ff8090547002`，generic+ascend+enflame+kunlunxin四成员。dry-run/final manifest、Git对象、全部成员、回执及相邻日志均验签。
+- `verification.json` SHA-256 `b429cf2987d89932a1579f180584ff01813f9ef130a817493659421a6b32f1cd`。
+- `verification.log` SHA-256 `fa51ed80f0ae28d098997bbb6d67a4c445e25c165e5a688b3ef9b307204f7844`。
+- `release-audit.json` SHA-256 `a565cb2c6c21e9f7baf625ecc878cb0548eca2c0bf814dbedb7df5711191f0e2`。
+- 当前完成开发、验证和打包；**未运行平台preflight、上传或提交**，平台TB与额度未因此改变。后续平台须按当时实时门禁执行，不能将本地候选就绪记成已上榜。

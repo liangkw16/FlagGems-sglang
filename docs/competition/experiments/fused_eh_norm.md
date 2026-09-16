@@ -39,7 +39,7 @@ candidate_stage: e8
 team_best_stage: e8
 team_best_speedup: 7.10215
 sealed: no
-next: e8仅+0.18%，燧原1.6814未达2.0门；停止本path分离轴，不重投
+next: 保留E8团队最佳；Ascend多行候选隔离留档，代理未提速；等待目标芯同源计时与IR
 updated: 2026-09-16
 ```
 
@@ -269,3 +269,15 @@ updated: 2026-09-16
 ## 2026-09-16 E8 平台终态：8/8 valid，7.10215x微升
 
 11:37:22单次提交15864（daily_seq6），upload/POST各一次，远端ZIP验签verified；11:40:42已8/8。逐芯天数12.61186667、沐曦6.80853333、燧原1.6814、海光13.55273333、昆仑1.0982、华为3.8108、A9.138、B8.11566667。均值7.08945833→7.10215（+0.1790%）新TB；目标燧原仅较1.56226667提升7.63%，未达2.0门，关闭本path分离轴。冻结源的芯片读数也变化，均分微升不全归因于代码。保留E8；不将代理1.30565x外推。证据 `artifacts/competition/top1-20260916/t68-e8-{preflight,submit,status}.json`，终态查询时额度24/30。
+
+## 2026-09-16 晚间：Ascend新结构隔离筛选，未晋级
+
+- 基线提交 `50b91047515f9c45dd7397303996b1a5e9e359da`；本轮只做开发筛选，无平台preflight/上传/提交。候选保存在 `artifacts/competition/t68-ascend-rowgroups-screening-20260916/bundle/`，不替换正式vendor。候选source SHA-256 `642df3afb2f6e1886adb91fcc963cdd6ca9c7eb5433d018e27eeaac8a82134b0`。
+- RTX5070Ti / driver610.57.04 / Python3.12.13 / Torch2.13.0+cu130 / Triton3.7.1。screening同源完整回归 8 方法，0失败/错误/skip；明确执行generic+Ascend数学代理。Ascend仍为 `target-runtime-unverified`，NVIDIA结果不构成目标芯否定证据。
+- 五轮交替wrapper-inclusive计时，20桶。候选相对generic几何均值：0.887450（候选）；BM1-flat 0.937139，BM1-cap 0.812031。没有正向性能证据，不晋级、不继续在NVIDIA扫配置；重开条件是Ascend同源实测或可绑定的目标编译产物。
+- 候选为BM4/2/1、Hconstexpr、每行独立fp32双RMS、权重广播、物理核cap及安全grid-stride。BM2仅16桶/BM4仅10桶，不能跨不同集合比较均值选配置。已有tokens65535/65536/65537及双方stride回归通过；未把宽上界数学审计记成实际运行。
+- 复现脚本、输入清单、回执、完整日志、逐桶逐轮原样本保留在上述目录；本轮未保存PTX或编译资源数据。screening不是release，不给旧ZIP或平台资格背书。
+- `verification.json` SHA-256 `1607c402559b2204b767b7369dc8c89e675b41d0c91b71c0f09f6d4f419176e9`。
+- `verification.log` SHA-256 `325144ff913b25eb10de56467f8edcff6736296e6fbfaea43ae15e0945d4f179`。
+- `benchmark.json` SHA-256 `3390c41102e0356c58e13b99f0fe4b15bc9faac29b9c1abd377159cadd598a9b`。
+- `run.log` SHA-256 `08c31659bbb12280a409b3e9f6031327ce7da8de3b1c76083373fb969989ebf7`。

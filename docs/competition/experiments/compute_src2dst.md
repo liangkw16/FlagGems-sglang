@@ -19,7 +19,7 @@ candidate_stage: e11
 team_best_stage: e11
 team_best_speedup: 2.138475
 sealed: no
-next: 保留e11新TB；Metax1.2486未达2.7门，停止直接加载/flat1024轴，转T66/T74
+next: 保留E11团队最佳；Ascend cap/tail候选仅隔离留档，代理未提速；等待Ascend同源运行证据
 updated: 2026-09-16
 ```
 
@@ -314,3 +314,15 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - submission **15835**，10:57:34；均值 **2.138475x**，较E9 +1.85%；远端ZIP回读verified，5206bytes/SHA与本地一致。nonce `662a23916f9823db729cd35ad44a5354` 终态submitted，禁止重投。
 - 逐芯：tianshu 3.004 / muxi 1.2486 / enflame 4.4408 / haiguang 1.8854 / kunlunxin 1.287 / huawei 1.7128 / card_a 1.7436 / card_b 1.7856。Metax选中文件 `compute_src2dst_metax.py`，正确性已补齐；1.2486低于2.7预注册门，假说停止。generic/Enflame冻结字节的变化不计为本次代码收益。
 - 状态原文 `artifacts/competition/top1-20260916/t61-e11-status.json` SHA-256 `577d9d9419bf0a3abc141877dc337d763710193b5f611ddb231a70dbdd1d182f`；提交原文 `artifacts/competition/top1-20260916/t61-e11-submit.json`。剩余额度 **27/30**。
+
+## 2026-09-16 晚间：Ascend新结构隔离筛选，未晋级
+
+- 基线提交 `50b91047515f9c45dd7397303996b1a5e9e359da`；本轮只做开发筛选，无平台preflight/上传/提交。候选保存在 `artifacts/competition/t61-ascend-20260916/bundle/`，不替换正式vendor。候选source SHA-256 `741c51fa8de5d6328f82e59078b2d40526953687f356c8992c8d570429c1979c`。
+- RTX5070Ti / driver610.57.04 / Python3.12.13 / Torch2.13.0+cu130 / Triton3.7.1。screening同源完整回归 5 方法，0失败/错误/skip；明确执行generic+Ascend数学代理。Ascend仍为 `target-runtime-unverified`，NVIDIA结果不构成目标芯否定证据。
+- 五轮交替wrapper-inclusive计时，16桶。候选相对generic几何均值：0.838433（仅cap）/0.832554（cap+完整块去mask）。没有正向性能证据，不晋级、不继续在NVIDIA扫配置；重开条件是Ascend同源实测或可绑定的目标编译产物。
+- 首轮每次查询driver设备属性带来约1.7ms宿主开销；已用按device-index的标准库缓存修复并重新完整运行。旧uncached计时只保留诊断，不参与上述结论。缓存后大N封顶回退，baseline/cap-only逐桶PTX相同；完整块去mask未产生稳定改善。物理地址保持原64位链。
+- 复现脚本、输入清单、回执、完整日志、逐桶逐轮原样本与资源记录保留在上述目录；screening不是release，不给旧ZIP或平台资格背书。
+- `verification.json` SHA-256 `d0ce7661e2830f551de753da21516d53d72206f286dc9c8b66223a63270ca61a`。
+- `verification.log` SHA-256 `9fc2da113f8aa25ff0198fa64730933a996d3d6a839d92d05f40bfaeee2fd259`。
+- `benchmark.json` SHA-256 `903ab68f3862056bf44a7171475a2139c324deff34e4958e52cb7da5b649ccd4`。
+- `run.log` SHA-256 `d992f044e551404b96b9f1ad3dff3d67b1e8243f70caeb92caa2c21f12d9de8c`。

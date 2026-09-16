@@ -6,11 +6,11 @@ operator: seqlens_expand
 batch: 5
 validity: valid
 platform: completed(e4,8/8,20.1778x 新TB;海光28.78门兑现,沐曦+2.09)
-candidate_stage: e4
+candidate_stage: e11-grouped-ready
 team_best_stage: e4
 team_best_speedup: 20.177775
 sealed: no
-next: E10块级merge筛选40主桶算术均值0.809017/GM0.722462未过门，不晋级；保留E4 TB与主树E6，后续凭新证据立项，整题不封存
+next: E11四请求group相对E4短q主桶mean1.261562/GM1.253914，15方法release通过，ZIP就绪未提交；目标芯未验证
 updated: 2026-09-16
 ```
 
@@ -279,3 +279,18 @@ updated: 2026-09-16
   阶段前后 GPU 快照均无其他 compute 进程；RTX5070Ti、driver610.57.04、
   Python3.12.13、Torch2.13.0+cu130、Triton3.7.1。所有回执身份与源/测试/
   计划/CSV、IR 裁决之间的 SHA 链均已复核，目标 runtime 仍未验证。
+
+## 2026-09-16 晚间 E11：短请求四行分组，开发验证完成、未提交
+
+- 固定团队最佳E4 `45662b8c403778e4b93b96ec90b4ca3306c6a03a` 为基线。`N>1024 && max_q_len<=32` 走4请求×32位置展开，一组按真实q最大值循环；hint不限制本路径写入。保留E4 prefix、小N/长q普通核；相对主树E6恢复E4二维调度，同时接入既有E9/E10宽prefix/安全grid路径，不把旧E6字节当团队最佳。
+- 新地址始终i64，结果值int32 wrap后signed clamp；大grid按请求/组步进。wide域包括total或stride物理地址超过int32等条件；该安全域小N可能由单launch变两次。普通fallback仍依赖原有max_q_len提示，不宣称修复所有既有hint契约缺口。
+- 冻结18个短q主桶+8个小N/长q/one-long控制，5轮AB/BA，wrapper含分配与prefix；门槛主算术均值≥1.03、每轮≥1.01、每控制中位数在[0.97,1.03]。实测主算术均值 **1.261561825**、GM **1.253914198**，每轮1.258086–1.266228，最差主桶1.055275，零回退、零control drift、零spill，过门。这是NVIDIA短q代理结果，不能解释成平台总分涨26.16%。
+- 15项候选回归与5项原E4回归均过；48份TTIR/TTGIR/LLVM/PTX绑定。短q group为34寄存器、0shared/0barrier、2次shuffle；前缀及长q控制四格式汇编逐字相同。没有二分、gather或merge co-rank。计时证据 `artifacts/competition/t74-grouped-20260916/`。
+- source/verification commit `6a516b2838857087ac657fd624d6fb31bbcdd895`，源码与筛选候选逐字一致，SHA `264b700cb67c1c287b4a494c8bca6745acd6e979f62293e134dfa41bf0565791`。正式测试SHA `5a6a6219f845d525c0ce0123c40c0b153a764f608953f63f49a14dfa85e747df`：保留15方法，补充非零输出的低报hint断言，Black格式化不改变AST。
+- 完整release **15/15**，0失败/错误/skip/xfail，入口136次、实际kernel launch189次；NVIDIA RTX5070Ti / driver610.57.04 / Python3.12.13 / Torch2.13.0+cu130 / Triton3.7.1。最大请求数65537已运行；超过8GB实际输出未执行，metadata mock仅为分派证明，不算设备数值执行。
+- 远端release `/tmp/flagos-t74-grouped-release.AoXLZH`，PID396344、600s上限；本地完整证据 `artifacts/competition/t74-grouped-release-20260916/`。初次screen传输文件名错误在启动Python入口前退出，未运行kernel；新隔离目录完成全部筛选，不将该传输错误计入候选正确性。
+- ZIP `artifacts/competition/seqlens_expand/e11-grouped-6a516b2/seqlens_expand.zip`，9181bytes、单generic成员，SHA-256 `725be3800805576c9ce8c99fc4744f62bfdb036ac3e64316585a6372027d1c5f`。dry-run/final manifest、Git字节、成员及release回执/相邻日志验签通过。
+- `verification.json` SHA-256 `92b5ba5fa82d2f3737cd8ee28cadb2f396ac40c3d4014e38c3a7cbd54eb771d1`。
+- `verification.log` SHA-256 `e04a25a6a68da9a6575c960360d8538234d9c18c3be57a13bb5dff89c8231bdb`。
+- `release-audit.json` SHA-256 `3b9aca64fb0fd904545e62512318c6f0e466e0397a61bf5fda1f7397a26a4543`。
+- 开发、验证和打包完成，**未运行平台preflight、上传或提交**；所有目标芯仍未取得本候选的实际运行证据，保留E4团队最佳记录。
