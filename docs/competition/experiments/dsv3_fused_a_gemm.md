@@ -6,11 +6,11 @@ operator: dsv3_fused_a_gemm
 batch: 5
 validity: valid
 platform: completed(13371,e1,8/8,3.09395x team best)
-candidate_stage: e1
+candidate_stage: e2
 team_best_stage: e1
 team_best_speedup: 3.09395
 sealed: no
-next: N32代理未达1.05门不提交；split-K=4独立结构轴筛选准备中，TB仍e1
+next: e2窄N split4 exact release 7/7通过，待单次live preflight提交；TB仍e1
 updated: 2026-09-16
 ```
 
@@ -113,3 +113,13 @@ updated: 2026-09-16
 - case中位speedup **1.01472<1.05**；最差0.99309；K7168/N2112下M1/2/8/16为0.9952/1.0032/1.0025/0.9975。小N有5–9%收益，但未构成全域提升证据。
 - N32寄存器72→56、共享内存61440→36864，资源下降未转化为大权重时间收益。源码/脚本/原始样本/环境见 `artifacts/competition/t66-n32-screen-20260916/`。不提交平台，保留N64；仅继续评估不同的split-K结构轴。
 - 本轮性能JSON SHA-256 `9b4aa031d4b4132424893907f8c6c345cebe573eb2c174b0dcbc8d852299b080`。
+
+## 2026-09-16 E2 窄输出 split-K：发布验证通过
+
+- 全域 split4 因 N2112/4096 回退未晋级。新候选仅 bf16/fp16、K≥4096、0<N≤512 分四路；M16/N64/K128、warps4/stages4 不变。复用 T27 `d44c85bad974cf2c920fc04cb145a9bc78b2f999` 的 fp32 workspace/有序归并，不使用原子。其余输入调用原 E1。
+- 单独预注册后重测 15 桶×5轮 AB/BA：6 affected 中位1.69721799、最差1.65976157，9 control最差1.00000000；通过affected≥1.10和各桶≥0.95。原始负结果保留 `t66-split4-screen-20260916/`；窄域证据 `artifacts/competition/t66-split4-narrow-screen-20260916/benchmark.json` SHA-256 `23c396e4e5936b30002f87075a34f60e09469e3868a4f902122808aabdb1ebd3`，完整日志 `a05f35e229e61fe59bed929cad01f327e7e30c62cb424c8c7f7209db44bbd096`。
+- source/verification commit：`99580f94ed01ce3835482fb911533c235ec1e62c`。源码SHA-256 `911b4746e0a162453e4e431e97e1c0e23fa2154bc2f9afddf3beb074f29b6cff` 与screening精确相同；测试SHA-256 `23e04f947091eec30799bbe94585475803ca6d043095fe9a65d576938cf5c5ac`。新增36个分派边界、M15双stride、部分和抵消/确定性回归。
+- NVIDIA exact release：**7/7方法、65入口调用、93实际kernel launch、0失败/跳过**；RTX5070Ti，Python3.12.13/Torch2.13.0+cu130/Triton3.7.1/CUDA13.0。回执 `artifacts/competition/t66e2-release-20260916/verification.json` SHA-256 `79cb743304bef983ec36b6568781e4e6732f706ad9bc7cf720b5ec057086d9b6`；相邻verification.log SHA-256 `defb71f41da1b6ec3c14f629039d05e37b5faf079bbeb838c07ba92bf4c6bf3f`。远端 `/tmp/flagos-t66e2-release.f47JRu`，PID387400，660秒总上限，EXIT0；重放包、run.sh、启动和环境记录均在回执目录。
+- ZIP `artifacts/competition/dsv3_fused_a_gemm/e2-99580f9/dsv3_fused_a_gemm.zip`，单成员 `dsv3_fused_a_gemm.py`，6210 bytes，SHA-256 `3b5e16450e33948c44f2ec01c08fe3aab37d21474c042305a88067472c317715`，与release前dry-run完全一致。py_compile/Black/isort/flake8通过。
+- 平台门：8/8且所有芯≥0.1、均值>3.09395才替换TB；≥3.40为后续投入信号，Top1需超过实时4.586175。一次结构试验，不重掷相同候选。其他芯为target-runtime-unverified，不将NVIDIA提升外推。
+- 透明限制：额外大K fp32诊断中，两组旧E1也未达自设1e-4容差；候选fp32与E1逐字节输出一致，该dtype不在公开bf16契约内。原始失败没有删除，亦未称其通过。

@@ -1,5 +1,7 @@
 # 第二批候选与提交队列
 
+第五批 T66 E2 窄域 split-K 已完成 exact release，T68 两路并行已过 screening；候选当前状态以各账本 CURRENT 为准。
+
 第五批最新[2026-09-16 Top1榜差与尝试队列](../top1-opportunities-20260916.md)：全75题实时快照、逐芯归因及本轮筛选结果；当前候选以各账本 CURRENT 和[生成索引](INDEX.md)为准。
 
 第五批一轮优化和首次提交见[2026-09-11 报告](../optimization-batch5-20260911.md)。
