@@ -15,29 +15,24 @@ def _seqlens_expand(
     es,
     ss,
     qo_len,
-    tasks,
-    tiles: tl.constexpr,
     BLOCK: tl.constexpr,
     BLOCK_N: tl.constexpr,
 ):
-    # E5: tile-first flat work mapping. Adjacent programs walk one
-    # request's contiguous output tiles (work = request * tiles + tile)
-    # instead of interleaving requests across the fastest axis of the
-    # old (n, tiles) 2D launch. The 1D grid is capped with a
-    # grid-stride so every backend's launch limits stay safe.
-    for work in range(tl.program_id(0), tasks, tl.num_programs(0)):
-        pid = work // tiles
-        tile = work % tiles
-        # Exclusive prefix sum of extend[0:pid], accumulated in
-        # fixed-width masked chunks: no constexpr depends on the
-        # request count, so one compiled variant serves every shape.
-        # E4: the prefix load multiplies the element stride (es) like
-        # every other extend access below.
-        acc = tl.zeros([BLOCK_N], dtype=tl.int32)
-        for s0 in range(0, pid, BLOCK_N):
-            ridx = s0 + tl.arange(0, BLOCK_N)
-            acc += tl.load(extend + ridx * es, mask=ridx < pid, other=0)
-        base = tl.sum(acc)
+    pid = tl.program_id(0)
+    tiles = tl.cdiv(qo_len, BLOCK)
+    # Exclusive prefix sum of extend[0:pid], accumulated in fixed-width
+    # masked chunks: no constexpr depends on the request count, so one
+    # compiled variant serves every shape (and the separate zeros +
+    # torch.cumsum launches disappear - the whole op is one launch).
+    # E4: the prefix load now multiplies the element stride (es) like
+    # every other extend access below - a strided view used to read the
+    # wrong elements here while the current-row load stayed correct.
+    acc = tl.zeros([BLOCK_N], dtype=tl.int32)
+    for s0 in range(0, pid, BLOCK_N):
+        ridx = s0 + tl.arange(0, BLOCK_N)
+        acc += tl.load(extend + ridx * es, mask=ridx < pid, other=0)
+    base = tl.sum(acc)
+    for tile in range(tl.program_id(1), tiles, tl.num_programs(1)):
         qo = tl.load(extend + pid * es)
         kv = tl.load(seq + pid * ss)
         # Clamp keeps DP-padded/idle rows safe for uint32 downstream
@@ -81,15 +76,12 @@ def _seqlens_expand_p(
     es,
     ss,
     qo_len,
-    tasks,
-    tiles: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
-    # E5 flat work mapping, scan-path variant (base from prefix[i]).
-    for work in range(tl.program_id(0), tasks, tl.num_programs(0)):
-        pid = work // tiles
-        tile = work % tiles
-        base = tl.load(prefix + pid)
+    pid = tl.program_id(0)
+    tiles = tl.cdiv(qo_len, BLOCK)
+    base = tl.load(prefix + pid)
+    for tile in range(tl.program_id(1), tiles, tl.num_programs(1)):
         qo = tl.load(extend + pid * es)
         kv = tl.load(seq + pid * ss)
         start = kv - qo + 1
@@ -97,6 +89,91 @@ def _seqlens_expand_p(
         mask = offs < qo
         values = tl.maximum(start + offs, 0)
         tl.store(out + (base + offs).to(tl.int64), values, mask=mask)
+
+
+@triton.jit
+def _seqlens_prefix_wide(
+    extend,
+    prefix,
+    n,
+    es,
+    BLOCK: tl.constexpr,
+):
+    # Rare metadata domain: physical output offsets cannot wrap at int32.
+    carry = tl.full((), 0, tl.int64)
+    for s0 in range(0, tl.cast(n, tl.int64), BLOCK):
+        ridx = s0 + tl.arange(0, BLOCK).to(tl.int64)
+        mask = ridx < n
+        values = tl.load(extend + ridx * es, mask=mask, other=0).to(tl.int64)
+        inclusive = tl.cumsum(values, axis=0)
+        tl.store(prefix + ridx, carry + inclusive - values, mask=mask)
+        carry += tl.sum(values, axis=0)
+
+
+@triton.jit
+def _seqlens_expand_p_safe(
+    extend,
+    seq,
+    prefix,
+    out,
+    es,
+    ss,
+    qo_len,
+    n,
+    BLOCK: tl.constexpr,
+):
+    # The capped fallback grid must cover every request and output tile.
+    tiles = tl.cdiv(tl.cast(qo_len, tl.int64), BLOCK)
+    for pid in range(
+        tl.program_id(0).to(tl.int64), tl.cast(n, tl.int64), tl.num_programs(0)
+    ):
+        base = tl.load(prefix + pid).to(tl.int64)
+        for tile in range(tl.program_id(1), tiles, tl.num_programs(1)):
+            qo = tl.load(extend + pid * es)
+            kv = tl.load(seq + pid * ss)
+            start = kv - qo + 1
+            offs = tile * BLOCK + tl.arange(0, BLOCK)
+            mask = offs < qo
+            # Values follow the reference's int32 wrap before clamp.
+            values = tl.maximum(start + offs.to(tl.int32), 0)
+            offset = base + offs
+            tl.store(out + offset, values, mask=mask)
+
+
+@triton.jit
+def _seqlens_expand_grouped(
+    extend,
+    seq,
+    prefix,
+    out,
+    es,
+    ss,
+    n,
+    groups,
+    GROUP: tl.constexpr,
+    BLOCK: tl.constexpr,
+):
+    rows = tl.arange(0, GROUP)
+    lanes = tl.arange(0, BLOCK).to(tl.int64)
+    for group in range(
+        tl.program_id(0).to(tl.int64),
+        tl.cast(groups, tl.int64),
+        tl.num_programs(0),
+    ):
+        req = group * GROUP + rows.to(tl.int64)
+        valid = req < n
+        qo = tl.load(extend + req * es, valid, other=0)
+        kv = tl.load(seq + req * ss, valid, other=0)
+        # Physical positions never wrap; values intentionally wrap int32.
+        base = tl.load(prefix + req, valid, other=0).to(tl.int64)
+        start = kv - qo + 1
+        # max_q_len is only a dispatch hint. Actual lengths bound all writes.
+        longest = tl.max(qo, axis=0).to(tl.int64)
+        for p0 in range(0, longest, BLOCK):
+            pos = p0 + lanes
+            mask = valid[:, None] & (pos[None, :] < qo[:, None])
+            values = tl.maximum(start[:, None] + pos[None, :].to(tl.int32), 0)
+            tl.store(out + base[:, None] + pos[None, :], values, mask)
 
 
 def seqlens_expand(extend_seq_lens, seq_lens, total_len, max_q_len):
@@ -108,53 +185,94 @@ def seqlens_expand(extend_seq_lens, seq_lens, total_len, max_q_len):
         total_len, dtype=torch.int32, device=extend_seq_lens.device
     )
     if n and total_len:
-        # E6: tiles is constexpr so the per-program work decode
-        # (work // tiles, work % tiles) folds to shifts/multiplies
-        # instead of runtime integer division on every backend.
         block = 1024
-        tiles = max(1, triton.cdiv(max_q_len, block))
-        tasks = n * tiles
-        grid = (min(tasks, 65535),)
-        # E4 threshold: small batches keep the fused single-launch
-        # kernel (per-program prefix accumulation is cheap there);
-        # large batches pay one scan launch to materialize prefix[i]
-        # once (haiguang/muxi/card_a +21% on the platform).
-        if n <= 1024:
-            _seqlens_expand[grid](
+        tiles = min(triton.cdiv(max(1, max_q_len), block), 255)
+        es, ss = extend_seq_lens.stride(0), seq_lens.stride(0)
+        int_max = 2**31 - 1
+        wide_prefix = (
+            total_len > int_max
+            or n > (int_max // block) * block
+            or (n - 1) * max(es, ss) > int_max
+            or max_q_len > int_max - (block - 1)
+        )
+        safe_grid = (min(n, 65535), min(tiles, 65535 // min(n, 65535)))
+        safe_fallback = wide_prefix or n * tiles > 65535
+        if n <= 1024 and not safe_fallback:
+            # Exact E4 small-N path; not a repeat of the rejected E7/E8 axes.
+            _seqlens_expand[(n, tiles)](
                 extend_seq_lens,
                 seq_lens,
                 out,
-                extend_seq_lens.stride(0),
-                seq_lens.stride(0),
+                es,
+                ss,
                 max_q_len,
-                tasks,
-                tiles,
                 BLOCK=block,
                 BLOCK_N=block,
             )
         else:
             prefix = torch.empty(
-                n, dtype=torch.int32, device=extend_seq_lens.device
-            )
-            _seqlens_prefix[(1,)](
-                extend_seq_lens,
-                prefix,
                 n,
-                extend_seq_lens.stride(0),
-                BLOCK=block,
+                dtype=torch.int64 if wide_prefix else torch.int32,
+                device=extend_seq_lens.device,
             )
-            _seqlens_expand_p[grid](
-                extend_seq_lens,
-                seq_lens,
-                prefix,
-                out,
-                extend_seq_lens.stride(0),
-                seq_lens.stride(0),
-                max_q_len,
-                tasks,
-                tiles,
-                BLOCK=block,
-            )
+            if wide_prefix:
+                _seqlens_prefix_wide[(1,)](
+                    extend_seq_lens,
+                    prefix,
+                    n,
+                    es,
+                    BLOCK=block,
+                )
+            else:
+                _seqlens_prefix[(1,)](
+                    extend_seq_lens,
+                    prefix,
+                    n,
+                    es,
+                    BLOCK=block,
+                )
+            if n > 1024 and max_q_len <= 32:
+                # ponytail: four-row groups serialize to their longest row;
+                # revisit the layout only if target measurements justify it.
+                groups = triton.cdiv(n, 4)
+                _seqlens_expand_grouped[(min(groups, 65535),)](
+                    extend_seq_lens,
+                    seq_lens,
+                    prefix,
+                    out,
+                    es,
+                    ss,
+                    n,
+                    groups,
+                    GROUP=4,
+                    BLOCK=32,
+                    num_warps=4,
+                )
+            elif safe_fallback:
+                # Existing E9 safety path, independent of grouped scheduling.
+                _seqlens_expand_p_safe[safe_grid](
+                    extend_seq_lens,
+                    seq_lens,
+                    prefix,
+                    out,
+                    es,
+                    ss,
+                    max_q_len,
+                    n,
+                    BLOCK=block,
+                )
+            else:
+                # Exact E4 normal-width, safe-grid long-Q path.
+                _seqlens_expand_p[(n, tiles)](
+                    extend_seq_lens,
+                    seq_lens,
+                    prefix,
+                    out,
+                    es,
+                    ss,
+                    max_q_len,
+                    BLOCK=block,
+                )
     return out
 
 
