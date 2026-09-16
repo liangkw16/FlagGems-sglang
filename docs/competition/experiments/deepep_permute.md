@@ -6,12 +6,12 @@ operator: deepep_permute
 batch: 5
 validity: valid
 platform: completed(e5,8/8,7.1711x新TB;燧原真实水位6.7修正,华为constexpr关)
-candidate_stage: e5
+candidate_stage: e6
 team_best_stage: e5
-team_best_speedup: 7.1711
+team_best_speedup: 7.17105
 sealed: no
-next: 燧原结构差6.7→12.3(c2flow);华为3.1两轴已关待新证据;昆仑0.27
-updated: 2026-09-15
+next: e6修正tiles/BLOCK错配，screening中位1.213x及exact release通过；待单次平台验证
+updated: 2026-09-16
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -216,3 +216,16 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   昆仑 0.27 / 华为 3.09（topk constexpr 未达 5.65 门，≈持平偏下）/
   A 8.67 / B 6.90；均值 **6.748→7.171 新 TB**（ΔS=+0.42）。
 - 华为 constexpr 轴关闭；燧原水位修正后剩余结构差 = 6.7→12.3。
+
+## 2026-09-16 E6：删除 Enflame 空任务，发布验证通过
+
+- TB E5 `f8e1aec19ae52a82070e48ffdc3fd72a81074011` 的Enflame实际BLOCK2048，但tiles仍按512计算；hidden4096每token8个task仅2个有效，其余仍读路由/走slot循环。仅以同一`_BLOCK=2048`导出tiles和launch，generic/Ascend逐字节冻结，clone/数学/stride/cap24不变。全第五批54源静态扫描未发现第二处同等确定的错配。
+- screening **6/6方法，generic/Ascend/Enflame各44真实launch**；12桶×5轮AB/BA受影响端到端中位1.2131x，大矩阵512×4×4096为1.9018x、kernel-only2.7603x；全部桶最差0.9969x、零spill/shared0、控制无回退。原始样本/脚本/环境/双端hash：`artifacts/competition/t64e6-preparation-20260916/`；results/screening.json SHA-256 `a5c700ae8509fd8d35455a43610c8e376a3c71d6321ee5b07c835dad5a3d8654`，日志 `8e0f16d7f2f9b827f54a5403aae2caa3eb13c669fa7a64b5d43d1fd8bbe8eae6`。
+- source/verification commit `1c9157a87f0a754463a87935e35396b951eefcd0`；Enflame SHA-256 `8537558942805522f7811ef81829974ee3c750f42b019b0f5da871a1f81f77f2`、test `870966b8f8b0eab0a0e270c193edaddc41cf25cefc7a70d500b32be4de0da10d`，与screening字节完全一致。新增几何工作量回归及511/512/513/2047/2048/2049/4095/4096/4097边界；不会用正确输出掩盖空task。py_compile/Black/isort/flake8通过。
+- NVIDIA exact release **6/6、0F0E0S、generic/Enflame各47入口/44实际launch**。回执 `artifacts/competition/t64e6-release-20260916/verification.json` SHA-256 `46462da4e0c1ae88216377bf28d6e8e6cd0337bcda2c5510f0333f6558600c7d`、相邻日志 `2d0c5481a1a0a2cbbb8fc90cdb3886063db9e231f89b6c50b7d6c1f69b83d272`。RTX5070Ti、Python3.12.13/Torch2.13.0+cu130/Triton3.7.1；远端`/tmp/flagos-t64e6-release.Vp3CP9`、PID387629、660秒总上限、EXIT0；重放包和命令同目录。Enflame target-runtime-unverified，Ascend未在本轮release执行但screening已完整代理覆盖且源码未改。
+- ZIP `artifacts/competition/deepep_permute/e6-1c9157a/deepep_permute.zip`，6930bytes，SHA-256 `b3bf732e3c31b36cbc15124371e98c61a33ad18b1770f75e1591531143bbc2ec`。三个成员SHA如下。
+- 平台预注册：8/8且各芯≥0.1，Enflame≥8.0为目标正信号（TB6.666）；均值>7.17105才换TB。单芯追平当前榜首只增加平均约0.676，不能宣称本修复足以从7.17到26.49登顶。一次候选一次判决。
+
+- `deepep_permute.py`：`7857c235db4f253b025d9890b444215455bde6c8ea99bbe9cecd3f6a8d69fc1a`
+- `deepep_permute_ascend.py`：`c032bc09a05cbeaa217e4fa03207eb08854d2ca6d2548298dd99c2aebcd8d5f1`
+- `deepep_permute_enflame.py`：`8537558942805522f7811ef81829974ee3c750f42b019b0f5da871a1f81f77f2`

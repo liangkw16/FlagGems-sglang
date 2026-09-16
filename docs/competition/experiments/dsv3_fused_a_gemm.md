@@ -4,13 +4,13 @@
 task: 66
 operator: dsv3_fused_a_gemm
 batch: 5
-validity: pending
-platform: evaluating(15861,e2;TB e1 8/8,3.09395x)
+validity: valid
+platform: completed(15861,e2,8/8,3.09855x新TB)
 candidate_stage: e2
-team_best_stage: e1
-team_best_speedup: 3.09395
+team_best_stage: e2
+team_best_speedup: 3.09855
 sealed: no
-next: e2已单次提交15861，评测中；等8芯终态再判门，TB仍e1
+next: e2仅+0.15%，未达3.40再投入门；停止窄N split4轴，不重投
 updated: 2026-09-16
 ```
 
@@ -127,3 +127,7 @@ updated: 2026-09-16
 ## 2026-09-16 E2 单次平台提交
 
 11:32:22，submission **15861**，daily_seq5；upload/正式POST各一次，状态submitted，远端ZIP SHA完全一致。发后额度25/30。记录 `artifacts/competition/top1-20260916/t66-e2-{preflight,submit,status}.json`；尚未全部出分，不能提前认定有效或计算正式平均。
+
+## 2026-09-16 E2 平台终态：8/8 valid，3.09855x微升
+
+submission15861已全部终态；天数1.3328、沐曦3.5158、燧原0.4202、海光5.0002、昆仑2.7482、华为1.8354、A4.014、B5.9218，全部≥0.1。均值3.09395→3.09855（+0.1487%），成为平台新TB但未达3.40进一步投入门；不把波动内微升归为split-K收益，NVIDIA受影响形状1.70x未体现在正式总分。保留E2，不再重投窄N split4；是否平台形状未覆盖分派范围目前未知。额度25/30（11:36:56状态快照），结果文件 `artifacts/competition/top1-20260916/t66-e2-status.json`。
