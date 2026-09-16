@@ -4,14 +4,14 @@
 task: 65
 operator: deepep_post_reorder
 batch: 5
-validity: pending
-platform: evaluating(15876,e10;TB e9 8/8,16.10245x)
+validity: valid
+platform: completed(15876,e10,8/8,26.917125x新TB)
 candidate_stage: e10
-team_best_stage: e9
-team_best: e9 16.10245x
-team_best_speedup: 16.10245
+team_best_stage: e10
+team_best: e10 26.917125x
+team_best_speedup: 26.917125
 sealed: no
-next: e10已单次提交15876，等八芯终态；不重投e9/e10
+next: e10均值+67.16%过20门；仅研究有独立源码/IR证据的新结构，不重投e10
 updated: 2026-09-16
 ```
 
@@ -231,3 +231,20 @@ updated: 2026-09-16
 ## 2026-09-16 E10 单次平台提交
 
 11:52:57，submission **15876**、daily_seq8，nonce `c1df0069070a982ee6e25dd671d4102f`。live preflight身份、题号、完整commit、test/receipt/ZIP哈希、成员和额度全部匹配后执行返回的一次性confirm命令；upload/POST各一次，state=submitted。远端ZIP回读7436bytes、SHA-256 `d1afa670187f6a24cca33c630a9df01fdc58bd04ce69d109e8ef9abec0fcf42b` verified。发前23/30，预计发后22/30，实际以status为准。TB仍E9，等待八芯结果；证据 `artifacts/competition/top1-20260916/t65-e10-{preflight,submit}.json`。
+
+## 2026-09-16 E10 平台终态：8/8，26.917125x，新TB +67.16%
+
+11:54:58只读核对submission15876：completed/valid，8/8全部通过，平均 **26.917125x**，比E9 **16.10245x提升67.16%**，超过20.0继续投入门。平台改善覆盖六个generic芯片；昆仑源码冻结，读数变化不归为代码收益。华为17.5128较E9 19.019回退约7.9%，仍为对榜首的最大缺口。禁止重复提交本候选。
+
+|芯片|E9|E10|
+|---|---:|---:|
+|tianshu|17.4662|31.4906|
+|muxi|12.5834|18.7902|
+|enflame|4.362|8.1668|
+|haiguang|36.0698|70.5854|
+|kunlunxin|0.353|0.376|
+|huawei|19.019|17.5128|
+|card_a|26.2802|48.852|
+|card_b|12.686|19.5632|
+
+状态证据 `artifacts/competition/top1-20260916/t65-e10-status.json`；剩余额度22/30。榜首69.07705仍需约156.63%，不能报告已经Top1；后续只能依据新结构证据筛选，原有BLOCK阶梯/同字节不重试。
