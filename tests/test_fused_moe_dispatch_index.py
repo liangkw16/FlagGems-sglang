@@ -192,6 +192,15 @@ class FusedMoeDispatchIndexTest(unittest.TestCase):
                 self.assertTrue(torch.all(dst[~valid] == 0))
                 torch.testing.assert_close(ids, snapshot, rtol=0, atol=0)
 
+    def test_overlapping_capacity_and_int32_edge(self):
+        ids = torch.tensor(
+            [[0, 1, 0], [1, 0, -1]], dtype=torch.int32, device="cuda"
+        )
+        for capacity in (0, 1):
+            self.check_ownership((ids, 2, capacity))
+        ids = torch.tensor([[1, 0, 1, 0]], dtype=torch.int32, device="cuda")
+        self.check_ownership((ids, 2, 2147483646))
+
     def test_expert_grid_boundaries(self):
         for experts in (65535, 65536, 65537):
             with self.subTest(experts=experts):
@@ -298,6 +307,7 @@ class FusedMoeDispatchIndexTest(unittest.TestCase):
 
 
 RELEASE_REQUIRED_TESTS = [
+    "FusedMoeDispatchIndexTest.test_overlapping_capacity_and_int32_edge",
     "FusedMoeDispatchIndexTest.test_basic_and_padding",
     "FusedMoeDispatchIndexTest.test_shapes_and_grid_edges",
     "FusedMoeDispatchIndexTest.test_empty",

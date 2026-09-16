@@ -24,7 +24,9 @@ def _fused_moe_dispatch_index(
         expert = tl.load(ids + offs.to(tl.int64), mask=mask, other=-1)
         valid = mask & (expert >= 0)
         expert_safe = tl.where(valid, expert, 0)
-        offset = tl.atomic_add(masked_m + expert_safe, 1, mask=valid)
+        offset = tl.atomic_add(
+            masked_m + expert_safe, 1, mask=valid, sem="relaxed"
+        )
         dst = expert_safe * m_max + offset
         tl.store(
             src2dst + offs.to(tl.int64), tl.where(valid, dst, 0), mask=mask
