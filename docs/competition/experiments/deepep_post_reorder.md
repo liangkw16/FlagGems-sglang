@@ -6,12 +6,12 @@ operator: deepep_post_reorder
 batch: 5
 validity: valid
 platform: completed(15876,e10,8/8,26.917125x新TB)
-candidate_stage: e10
+candidate_stage: e12
 team_best_stage: e10
 team_best: e10 26.917125x
 team_best_speedup: 26.917125
 sealed: no
-next: 保留e10 26.917125；华为诊断缺逐case数据/同源执行入口，待昇腾入口对照E9/E10；e11不重试
+next: e12修复混合权重dtype抵消错误，exact release通过待单次平台判决；e10为历史TB，e11不重试
 updated: 2026-09-16
 ```
 
@@ -271,3 +271,14 @@ updated: 2026-09-16
 - E9/E10与11条历史华为raw_result仅有空errors/failed_cases，无成功shape/dtype/stride/T_base/T_opt。华为分数-7.91945%贡献均值-0.188275，不能将execution_time_ms当kernel耗时或断言T_opt+8.60%。已检查官方前端实际调用链及CLI，范围内未找到额外只读明细入口；历史高值仍无法区分算法与窗口。
 - exact E9/E10只改变有界hidden-grid调度，逻辑hidden块/slot迭代数不变；实际目标访存与调度成本未知。E11筛选失败维持关闭。实时KernelGen鉴权正常，但公开schema无固定源码执行/IR/profile契约；项目未登记昇腾主机，现有runner仅CUDA/HIP。
 - 下一步取得已有授权昇腾入口或配对case导出，绑定上述不可变源码在同设备做reference/E9/E10对照与IR/profile归因，再决定是否新改代码。本轮未连接GPU、未修改源码、未preflight/上传/POST。
+
+## 2026-09-16 E12：修复权重舍入契约，发布就绪
+
+- 继续复核公开reference时发现确定性错误：reference要求权重先转`down_output.dtype`再转fp32，generic与昆仑E10直接转fp32。合法fp32权重配低精度down，在抵消输入上输出错误；与华为分数回退归因无关，不宣称提速。
+- 最小回归：T3/H65/K2，bf16 down两行±256、权重`[0.5005,0.4995]`；fp16 down±1024、权重`[0.5001,0.4999]`。权重和为1、各值非负且有限，先转down dtype均舍入0.5，reference全0；exact E10残差0.2048–0.2560，**每组195/195元素超0.03**，违反题面1%比例门。两dtype×两输出dtype×generic/昆仑共8条旧版失败、修复后全过；down/routes/weights均覆盖stride、输入不变和新输出。未改reference或放松公差。
+- 两实现只在唯一weight load后增加`.to(down.dtype.element_ty)`，随后仍转fp32、按原slot顺序累加；AST验证其他代码一致。固定SGLang `5f6dd44edc96779d4a15331637e26e73265ff6eb` 原版post-reorder也使用`.to(InDtype)`，Ascend caller在dispatch前cast到hidden dtype；不能用caller的预处理缩窄赛题输入。
+- 源码/验证commit **`134adc8e0f70f84bb5c3bc6aebc7b8f87d0cf0bc`**；generic SHA `4e13bc9262a11cf3f4006fd6cf6ecc69b1671a768e07eb68e9d2e4205bd4173d`，昆仑 SHA `e13a7000b3c034acc1a5b6b797e74855bb0b268818fa6fd0549ad2bdb40bf43d`，test SHA `db064bccc74773d00081b69a05660b2f76cfd0836885e8f4018bf2e0c128c6bc`。新增回归列入RELEASE_REQUIRED_TESTS，Black/isort/flake8/py_compile和独立审查通过。
+- 复现 `artifacts/competition/t65-weight-rounding-repro-20260916/`，result SHA `d05294ef756b17165a828c2a330e1c5a9fd4adeb0e9b05b5da87fbed1d4a9170`；旧版日志 `7d591fa11a647f1e0af083d324a4d7c86e33ac9064a4ddbf915144d1270cf9e8`，新版 `388da4fb68d118df11c2f18daaf1f34e3aec44742066da2ced844051a87f6052`。远端`/tmp/flagos-t65-weight-repro.5gowjO`、PID388985、timeout180、EXIT0。
+- exact release `artifacts/competition/t65e12-release-20260916/`：**10/10，0失败/错误/skip**，generic和昆仑代理均实际执行；源码/test与复现字节一致。回执SHA `1029d409db192911b5ca898680cf84142eb41e632b38537471a751131d5e6bea`，完整日志 `a5c4390fca4f02ba42d49ecd6ff51bb18f48103e39ca4633a9270d9cbb453252`。RTX5070Ti/Torch2.13.0+cu130/Triton3.7.1，远端`/tmp/flagos-t65e12-release.cBJvRB`、PID389061、timeout330、EXIT0。其他目标runtime仍未验证。
+- 不可变ZIP `artifacts/competition/deepep_post_reorder/e12-134adc8/deepep_post_reorder.zip`，7858bytes，成员`deepep_post_reorder.py`/`deepep_post_reorder_kunlunxin.py`；SHA **`1fa28320977280c8bcc9ff85d89642baabb6f9556694bd1685ce459897a8f569`**，与release前dry-run一致。
+- 本轮为必要正确性修复，完整release后进入一次平台判决，不以性能筛选否决契约修复。8/8且各芯≥0.1方为有效；TB按实际平台分数登记，E10保留历史成绩但不得再次发布已知有缺陷的字节。发前只读额度22/30；不把修复当作华为性能根因已解。
