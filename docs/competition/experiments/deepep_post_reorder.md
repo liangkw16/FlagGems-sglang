@@ -5,13 +5,13 @@ task: 65
 operator: deepep_post_reorder
 batch: 5
 validity: valid
-platform: queued(15913,e12;历史TB e10 26.917125x)
+platform: evaluating(15913,e12,5芯passed/3芯pending;历史TB e10 26.917125x)
 candidate_stage: e12
 team_best_stage: e10
 team_best: e10 26.917125x
 team_best_speedup: 26.917125
 sealed: no
-next: 15913等待15分钟后八芯仍queued，只读等待终态；主树E12修复，slot predication/e11关闭，不重发
+next: 15913已有5芯passed，燧原/海光retry_wait、昆仑waiting_callback；等待全部终态，不重发
 updated: 2026-09-16
 ```
 
@@ -308,3 +308,10 @@ updated: 2026-09-16
 ## 2026-09-16 13:33:40 E12 等待状态：八芯 queued，尚无判决
 
 按submit返回的URL哈希绑定watch连续只读等待900秒后退出124，共49份快照；最后一份submission15913仍queued、0/8终态、validity=pending、均值null，额度 **21/30**。这不是算子失败或通过，不能报告完整八芯闭环完成；一次性intent保持submitted，禁止重新上传/提交。`artifacts/competition/t65e12-release-20260916/platform-latest.json` SHA `20479cd9a97afdef5262cb050bec1917d29538e931190602699be5e98060d06f`，完整watch流 SHA `d5757c1d04d871927c590c62e7424218cdb69ec34029ffb30aaba795796098a7`。本地GPU作业均已结束，后续只需取该submission终态；主树E12保持契约修复，不回滚至E10缺陷字节。
+
+## 2026-09-16 14:20 E12 部分结果：5芯通过，3芯待终态
+
+- submission15913从queued进入evaluating；**尚非八芯有效提交**，average_speedup仍null。天数30.9596、沐曦17.885、华为15.8694、A48.967、B19.616均completed/passed；燧原与海光retry_wait，昆仑waiting_callback。它们是平台原提交内部状态，不是本任务重投；上传/正式提交仍各一次，余21/30。
+- 昆仑已分配validation_id，平台显示next_status_query_at=2026-09-16T16:10:45；回调何时完成未知，不把该时间当完成承诺。未手动触发评测重试或查询未知validation端点。
+- 实时榜单仍第10，历史TB E10 **26.917125**，榜首69.07705，差距未变。E12华为当前读数低于E10，但无同窗Tbase/Topt，不据此判定weight cast性能因果；主树继续保留已证实的正确性修复。
+- 最新单次只读快照 `artifacts/competition/top1-followup-20260916-1349/status-15913-closeout.json`，SHA `e662ee0c52c374738bbe0012b3bf2fda5e7d904926aa08109606fe92bb8294ce`；此前240秒有界watch共11个完整snapshot，超时124，SHA `94e0c542cf0255be94e702f86e099d82290eb08353428b8b8c5c44a69ca6af3c`。watch已结束，无后台监控承诺；不重复建立intent。

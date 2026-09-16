@@ -8,9 +8,9 @@ validity: valid
 platform: completed(e4,8/8,20.1778x 新TB;海光28.78门兑现,沐曦+2.09)
 candidate_stage: e4
 team_best_stage: e4
-team_best_speedup: 20.1778
+team_best_speedup: 20.177775
 sealed: no
-next: E5映射/E6constexpr/E7小batch前缀均未达门；保留e4，待新的跨芯结构证据
+next: E8空tile提前退出GM1.03028未达门，关闭；保留e4 TB，后续发布另须修复二维grid乘积上限
 updated: 2026-09-16
 ```
 
@@ -161,3 +161,13 @@ updated: 2026-09-16
 - RTX5070Ti：6/6、0失败/skip，16桶×5轮AB/BA，零spill；寄存器40（scan48），共享内存≤32B。受影响桶geomean **1.01099<1.05**，五轮aggregate1.00748–1.01465，controls0.99604–1.00214。只有n1024/qmax1025稳定+7.70%，不能当全域突破。
 - **未过预注册门，不生成release/平台intent**；主树恢复本轮前字节。原始源/测试/脚本/manifest/verification/benchmark/PID在 `artifacts/competition/t74e7-screening-20260916/`。
 - 本轮性能JSON SHA-256 `3a30a7d3dfc7b8c957fb4296ebeac3ca37f14520f40bf3e1b4df0e002462269d`。
+
+## 2026-09-16 E8 空 tile 提前退出：机制成立，筛选 NO-GO
+
+- 固定真实TB E4 `45662b8c403778e4b93b96ec90b4ca3306c6a03a`，generic SHA `c6612828e9344df00fbb49ed50bbbf6be7a5c18a8b099128ee622ac786a32eda`；当前主树E6不是TB，本轮未修改主树。SGLang固定 `5f6dd44edc96779d4a15331637e26e73265ff6eb` 的 `python/sglang/kernels/ops/attention/pad.py` 已在inactive位置提前return，再读取cumsum，作为成熟机制来源。
+- 单变量候选仅在small-n kernel前增加带stride的qo读取与 `pid.y*1024>=qo` 退出；其余源码逆变换逐字节等于E4，大n路径冻结。候选 SHA `6eb944844ca9bf2ed1fd7683d85eed86b208e773e5b84080ba9fc153709ea24d`；tests `d2fd334454d20cdb83b15f6c752b499dbf7693b7fa87dc3f1915f65ee5496d33`，plan `894e5f78db7cbd7b35635471c934a66214cb62bd0cbdb3fdf20394dac7ca8cc9`。
+- baseline与candidate同8方法全部通过；candidate 28入口/29实际launch，0失败/skip。保留原6方法，新增1024/2048空tile、stride2/storage_offset及qmax261119/261120/261121/522241，验证grid-stride后续tile255/510完整。回执 SHA `8a5d17fc2531337f8809aa7fa3ba9b267e4818ae7bcac944053c8f16c8894afa`，日志 `01c6d91f1b43974cf82007238c8a9ac3b426fd0833aa121e6b058b792a6bcbf4`。
+- n1024/qmax1025及n4/qmax522241的IR均证实guard支配prefix循环及load，inactive直接ret；两种runtime shape共用同一编译字节。寄存器40→38，0spill；IR报告 SHA `aad9456c47d2affbe27cf33d2b6a7158baf2be8ae572574955c0065136cd1f3d`，人工判决绑定 `d7e5685825b2b17145bfe306f7b549b0b8915add60a442131047f7b0b003ed9b`。
+- 原12主桶+4大n对照+8不均匀/全填充附加桶，5轮AB/BA共120对，未删样本。primary GM **1.0302765483<1.05**；五轮 **1.03555/1.00712/1.04273/1.00621/1.03737** 未全部≥1.03；最差主桶0.99540、附加0.96316，对照0.99643–1.00516，零spill。附加n1024/q8193高度不均匀桶1.70161不能替代整体门。**关闭，不生成ZIP、intent或平台提交。** 性能JSON SHA `61354f61bee9af336bb209e3491fdbe63d87407439e11ac3bff16822cba138e5`，日志 `fc158cd8c706320106752ad7ff8b468fbf93a1eaa5330cc7c8dbe243bcc47e2d`。
+- 新审查发现E4既有发布隐患：grid `(n,min(cdiv(qmax,1024),255))` 没有总数上限；258×255=65790、1024×65=66560超过同族已证实的Ascend65535。提前退出不减少launch coreDim，本轮无混合修复，后续候选须另改并重新验证，不能拿代理数学通过宣称目标launch安全。
+- 产物 `artifacts/competition/t74-empty-tile-screening-20260916/`，含完整源/测试/IR/原始CSV/hash。首次目录 `/tmp/flagos-t74-empty.rcLdnj`、PID389619在附属static文件哈希变化时退出1，尚未执行GPU，原包保存在precheck-attempt1；冻结后新目录 `/tmp/flagos-t74-empty.XLWzAB`，correctness/IR PID389639上限400秒、计时PID389752上限330秒，均EXIT0、作业结束、前后compute列表为空。RTX5070Ti/Python3.12.13/Torch2.13.0+cu130/Triton3.7.1；仅NVIDIA代理结论。

@@ -9,8 +9,8 @@ platform: completed(13821,e8,7/8;燧原轴八轮终封)
 candidate_stage: e8
 team_best_stage: -
 sealed: no
-next: T60 燧原轴终封;重启需 torch-gcu view 缺陷外部证据或逐元素 torch 拆装合规确认
-updated: 2026-09-13
+next: 新发现torch-gcu逻辑int64物理窄化证据；先核目标输入保真/布局和实际版本，不截断契约、不重投
+updated: 2026-09-16
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -278,3 +278,11 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   搬运",是否合规需确认。
 - 七芯水位（E7）:天数 1.7995 / 沐曦 1.1355 / 海光 1.48533 / 昆仑
   0.91233 / 华为 0.22683 / A 1.4605 / B 1.46217。
+
+## 2026-09-16 新外部证据：先区分物理窄化与 dtype-view，未重投
+
+- **订正历史归因强度**：此前“已确定宿主字节重解释缺陷”的表述超出证据；重复垃圾指纹只能定位公共前提，不能证明实际view dispatcher或平台runtime根因。
+- 官方 [torch-gcu固定源码](https://github.com/EnflameTechnology/torch-gcu/blob/f17a922ab48d82b4458b6c8c4c2dd8dc7a3fba5e/torch_gcu/csrc/gcu/gcu_hardware.h)：`gcu_hardware.h:38–58,77–101,113–125` 的普通S60/L600路径默认将Long映射Int并使用半itemsize偏移；显式int64开关及 `_tmp` L600路径不同。`gcu_empty_tensor.cpp:50–64` 实际按窄dtype分配，再扩大声明storage大小；`gcu_copy.cpp:329–352` 在CPU/GCU传输前先窄化host值。这是固定源码事实，**平台版本/设备/配置未知**。
+- 现有words wrapper假定一个逻辑int64对应两个连续物理32位词。如果平台走该narrow路径，假定失效，且读2N词可能超过实际4N字节分配；这与现象相容，尚未目标执行证实。公开view登记只证明shape-view，未锁定dtype-view实际派发。
+- 下一项有效验证是目标芯CPU→设备→CPU全域int64保真（含边界、stride/offset），随后仅安全读取前N个32位词区分布局，记录版本和dispatcher；不切换runtime环境，不把输入转int32绕开全域契约。NVIDIA代理无法回答该问题，当前无目标运行证据，不再发旧词对候选。
+- 固定原件、条件分析与安全probe计划：`artifacts/competition/t60-narrow-storage-audit-20260916/report.md`，SHA `39d72f7555814d8077c03a28b75fe6287702d2a130f47bd89b27cdd05f9ff4e9`；来源清单 SHA `8ff6a592e77ecc7bc024a2651f9dc5b5a8ae0f879ff6cedd626712c5fbe91f46`。本项只读源码审查，无新kernel/GPU/ZIP/提交。

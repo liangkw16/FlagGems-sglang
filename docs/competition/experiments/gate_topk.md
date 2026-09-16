@@ -6,11 +6,11 @@ operator: gate_topk
 batch: 5
 validity: invalid_correctness
 platform: completed(14849,e3r,7/8;昆仑exec 3633491ms挂死后判失败,与e3同指纹)
-candidate_stage: e3r
+candidate_stage: generic-key-fix-v2(local-only)
 team_best_stage: -
 sealed: no
-next: T70 昆仑八轮全灭(长尾挂死x3/断言/0ms卡死),本季终结;重掷额度已用尽,不再改字节
-updated: 2026-09-15
+next: generic零值/宽索引/NaN key修复已8/8代理通过；昆仑平台失败仍未解，不建立ZIP或提交intent
+updated: 2026-09-16
 ```
 
 ## 契约与范围
@@ -224,3 +224,16 @@ updated: 2026-09-15
 - **T70 本季收口**：昆仑累计八轮全灭（e1 0ms 卡死 / e2 4s 断言 /
   e3+e3r 长尾挂死 ×2 / 其余窗口崩溃），重掷额度已用尽。七芯水位
   与工单证据保留，等平台侧回应；不改字节、不再投。
+
+## 2026-09-16 Generic key 正确性修复：8/8代理通过，不重投昆仑
+
+- 固定SGLang旧 `8014d9d062c3cc5d393596ecdf2f7009191965df` 与新 `5f6dd44edc96779d4a15331637e26e73265ff6eb` 的同名源均保留这些key缺陷，不能借“最新上游”假定已修。源码推导见 `artifacts/competition/t60-narrow-storage-audit-20260916/report.md`；本轮进一步执行真实GPU反例。
+- 三个根因：①raw浮点位排序把+0置于-0之前，违反同值取小列；②`N_PAD-col`最大为N_PAD，N=65505时N_PAD=65536，固定16bit tag溢入value，可能解出越界index65536；③负号NaN key低于-inf，尾块padding可能胜过真实负NaN，NaN sign/payload之间也未按列号稳定排序。
+- **最终修复**：仅generic将正负零规范为同一排序key、所有NaN规范为最高unsigned key；N_PAD<65536使用16bit tag，否则32bit，并确保packed容器容纳value+index；最终values按选中index重读原始输入以保留zero/NaN位。wrapper增加与三vendor一致的 `k<=n_cols` 前置检查；三vendor执行字节冻结，核心运算仍为Triton。无PyTorch计算fallback。
+- source/test commit **`323c3c95e42e8788237fa95986f931bffa4e76f6`**，与实际screening字节逐一相等。generic SHA `21ef2331f8cbdd1a8a486c22b0000633c4fd9202723a18afcc1f1d26904393f4`；tests SHA `0ba890981ddd0cbbf91e142f55dd21ee2328c1ab9c8e4393e92fcf18d98d67d8`。此为screening模式证据，**不是release回执**，未生成ZIP/平台intent。
+- 保留原5项回归，新增3项：三dtype signed-zero与跨32列merge、65504/65505/65536/65537宽度与高位index/tie、21组NaN sign/payload/尾块组合及4个非法k/空列组合。indices硬编码或原stable oracle精确比较，原值和输入按字节核对；没有放松容差或删旧用例。
+- 原HEAD无gather generic SHA `2a2e399ff57f3284c75507bc7247717384b35b18ad628eb31f2831be71bbbd7e`：仅3新增方法均失败，共44个断言失败、0error/skip，47入口/44launch。最终候选 **8/8、0失败/error/skip**，generic/Ascend/Enflame/Kunlun代理路径各76入口/72实际launch。真实目标vendor runtime依然未验证，不能据此宣称八芯平台通过。
+- **提交前阻断记录**：V1只修zero/宽tag，7/7代理通过后，独立审计发现新增gather会把既有负NaN错误index升级为越界读取；V1未commit/未发布，其原件保留 `t70-key-fix-screening-20260916/`。V2加入根因修复与前置校验后重新完整取证。反例执行始终使用原HEAD无gather基线，未实际触发V1危险读取。
+- 最终产物 `artifacts/competition/t70-key-fix-v2-screening-20260916/`：baseline回执 SHA `b80601d6222c75a0909bd93044e88e4ce3197c373f633a7071e7ceed825344a5`，日志 `2d91345882cabdaf13b8c4ae817972897c73523e2e023a7a34c2863d54958257`；candidate回执 `7aaa1d59bb9371000d148e2adfa390acc4c7227d9445e91bc1defcb2804f8d40`，日志 `0a2765622e444b885766d410708a59e8f7e6ee0a8a3d81715870ef894d43ff93`；包 SHA `0636b29bcbd60c95b9a76caaa308c5a35b39f8c9a7299e7a8ca23766d8a32fbf`。
+- `/tmp/flagos-t70-keyfix-v2.RswpPA`、PID/PGID390117，整次timeout600（baseline180/candidate360），EXIT0；复用已结束V1编译缓存，路径单独落盘，不以缓存代替执行证据。NVIDIA RTX5070Ti/Python3.12.13/Torch2.13.0+cu130/Triton3.7.1，前后GPU compute列表为空，全部作业已结束。
+- **平台决策不变**：这三个generic问题均不解释原昆仑vendor的长尾挂死/断言。当前没有新增昆仑根因或目标执行证据，不借正确性修复为载体重投已关闭候选，额度未消耗，未声称Top1收益。
