@@ -6,11 +6,11 @@ operator: seqlens_expand
 batch: 5
 validity: valid
 platform: completed(e4,8/8,20.1778x 新TB;海光28.78门兑现,沐曦+2.09)
-candidate_stage: e12-hint-safe-development
+candidate_stage: e12-hint-safe-ready
 team_best_stage: e4
 team_best_speedup: 20.177775
 sealed: no
-next: E11因旧fallback低报hint漏写契约缺口暂停提交；E12按实际qo补循环边界并重新回归/计时/验签
+next: E12已修复全部fallback低报hint漏写，16方法release与新性能筛选通过，等待实时preflight单次提交
 updated: 2026-09-16
 ```
 
@@ -300,3 +300,20 @@ updated: 2026-09-16
 - 公开reference不读取max_q_len，题面没有为其规定下界。E11虽修复grouped路径，旧smallN/long-hint路径仍以hint限定迭代，静态反例N=1、q=1025、kv=1042、total=1025、hint=1会漏写最后一项；N=1025且hint=33也存在同类缺口。该问题为既有路径缺陷，已执行15方法通过不能覆盖此域。
 - E11不运行preflight/上传/提交；E12将三条fallback循环改由实际qo限定，hint只保留启动调度用途，补非零预期/poison回归并重新验证性能与release。旧ZIP、回执和筛选成绩保留历史身份，不为E12背书。
 - 22:21实时榜单我方E4为20.177775、第8，榜首26.821525；与T69共用上述逐芯快照。完成修复后正式晋级门仍为八芯正确、每芯≥0.1、均值>20.177775，未过门保留E4且不重发同一候选。
+
+## 2026-09-16 22:37 E12：实际长度边界修复，验证与打包完成
+
+- 最小根因修复：三个非group kernel按读取的实际qo计算i64 tile数并循环，hint只用于启动调度；地址保持i64、输出按int32 wrap后clamp。group、prefix和host wrapper算法未变。source/verification commit `ecda8d3775bbf8875f5ba8b4c5d42ec82de3863e`；源码SHA `58a135c85b6b8970eee9cbca9a03f68af83cd38d3cb848c26d373efee9dfdb59`，测试SHA `f7c5e2d6b7440c2f9a817954e034196bed5a72e453e6b0e5803f0b06abe70a05`。
+- 原15方法保留，新增公开入口test_actual_lengths_ignore_hint_all_paths：N=1/5/1025/65537、hint=0/1/33/1024、跨tile真实长度、非零预期和真实分配poison。旧E11逐字源码运行该方法，16子组合中12失败、0error/skip、16入口/24JIT；新版本全部通过。不是仅靠静态猜测，也未替换实际kernel执行。
+- 新预注册保留E4基线、原26桶及5轮AB/BA。18主桶mean≥1.03、每轮≥1.01；8个旧控制因fallback实际循环边界改变，预先改为各median≥0.97的语义对照，不再限制合法加速上限。实际mean **1.2597481395**、GM **1.2527069942**，最差主桶1.062019866，每轮最低1.257395498；对照范围0.988173733–1.383845286，无主桶回退/无spill。130原始配对样本由主任务独立复算一致；这些是NVIDIA代理结果，不外推平台均分。
+- 72份编译产物验签，三条改核有actual qo→i64 loop/address及int32值wrap证据；screening完整16/16（152入口/225JIT）和E4原5方法均通过。精确commit release另行 **16/16**、0fail/error/skip/xfail、152入口/213真实JIT；筛选/发布JIT计数分别记账。
+- NVIDIA RTX5070Ti / driver610.57.04 / Python3.12.13 / Torch2.13.0+cu130 / Triton3.7.1。远端旧复现 `/tmp/flagos-t74-e12-old.XYB8qC` PID396466，screen `/tmp/flagos-t74-e12-screen.pExTaH` PID396514、benchmark PID396623，release `/tmp/flagos-t74-e12-release.kZB4ng` PID396674；GPU阶段串行、前后无其他compute进程。所有非NVIDIA目标runtime仍未验证。
+- 不可变ZIP `artifacts/competition/seqlens_expand/e12-hint-safe-ecda8d3/seqlens_expand.zip`，9266bytes、单成员seqlens_expand.py（9134bytes），SHA-256 `529ff7c76c82bb6ea364b2ebc5249469f61d5daa5f1f977207e7161221053055`。dry-run/final、Git逐字、CRC、回执及完整日志均验签。E11未提交，其ZIP仍封存。
+- `artifacts/competition/t74-hint-safe-20260916/old-regression/reproduction.json` SHA-256 `2e91b7bf1ab6fc716bbfad9d02f316e2953ddb1576c24c1c4005df5b771c364b`。
+- `artifacts/competition/t74-hint-safe-20260916/screening/plan.json` SHA-256 `26dbe33ec0bcc2099b63fb5988bec7fd9a71ceaa70cf7d3ae5bb14fd24bf0aca`。
+- `artifacts/competition/t74-hint-safe-20260916/screening/benchmark.json` SHA-256 `63126753cbcd1cdd99f29b9c726714da5060f8bd02699d56fed11b1450a643cf`。
+- `artifacts/competition/t74-hint-safe-20260916/screening/raw-samples.csv` SHA-256 `5f986e73a062e50643dfd30fee21b509aef565501bf211d54c5fbce4b1332be8`。
+- `artifacts/competition/t74-hint-safe-20260916/release/verification.json` SHA-256 `e73d37d9cbca786b133ef524a5afb761eaba0ccad0e627259226587830adc3f4`。
+- `artifacts/competition/t74-hint-safe-20260916/release/verification.log` SHA-256 `a13c65e0b572573ff953bff59dba3752271a1e6cfb938181777ad0bf8f9a636c`。
+- `artifacts/competition/t74-hint-safe-20260916/release-audit.json` SHA-256 `1a6505e45947ad263bec5e4d553dedefff8b81d217b3c059d916832277593970`。
+- 正式实验仍以八芯正确、每芯≥0.1及均分>团队最佳E4 **20.177775** 为晋级门；假设短请求减少CTA、长hint路径减少空tile可提高总均分，影响范围及目标芯增幅待平台。只发一次，未过门保留E4、不重投相同ZIP。
