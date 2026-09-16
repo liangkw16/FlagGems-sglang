@@ -10,8 +10,8 @@ candidate_stage: e4
 team_best_stage: e4
 team_best_speedup: 20.1778
 sealed: no
-next: e4 两段式新TB 20.18(海光/沐曦/A +21%同向,大n路径兑现);残余轴=天数flat并行度(59.5未及66门);差榜首6.18
-updated: 2026-09-15
+next: E5映射/E6constexpr/E7小batch前缀均未达门；保留e4，待新的跨芯结构证据
+updated: 2026-09-16
 ```
 
 ## 契约与实现（S0）
@@ -154,3 +154,10 @@ updated: 2026-09-15
 - 19.797 < TB 20.178：天数 62.3（未及 66 门）、沐曦 -1.7、海光 -4.1。
   静态 work 解码不是天数缺口形态；TB 保持 e4。天数轴剩余=255 上限
   取消（需 flat 已过门，条件不满足，关闭）。
+
+## 2026-09-16 E7 小batch前缀候选：代理未过门，不发射
+
+- 从TB e4（45662b8c）单变量改写n≤1024前缀：动态循环改单次masked reduce，BLOCK_N按next_power_of_2(n)裁剪；大n scan/expand函数保持TB字节。源码与完整6项边界回归已留在隔离screening包。
+- RTX5070Ti：6/6、0失败/skip，16桶×5轮AB/BA，零spill；寄存器40（scan48），共享内存≤32B。受影响桶geomean **1.01099<1.05**，五轮aggregate1.00748–1.01465，controls0.99604–1.00214。只有n1024/qmax1025稳定+7.70%，不能当全域突破。
+- **未过预注册门，不生成release/平台intent**；主树恢复本轮前字节。原始源/测试/脚本/manifest/verification/benchmark/PID在 `artifacts/competition/t74e7-screening-20260916/`。
+- 本轮性能JSON SHA-256 `3a30a7d3dfc7b8c957fb4296ebeac3ca37f14520f40bf3e1b4df0e002462269d`。

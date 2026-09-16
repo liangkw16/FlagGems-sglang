@@ -5,13 +5,13 @@ task: 72
 operator: group_norm_silu
 batch: 5
 validity: valid
-platform: completed(14859,e8,8/8,2.5400x;昆仑4096 0.545抛物线;TB e6 2.6627x)
-candidate_stage: e8
+platform: completed(14859,e8,8/8,2.5400x;TB e6 2.66266667x)
+candidate_stage: e9-ready
 team_best_stage: e6
 team_best_speedup: 2.66266667
 sealed: no
-next: e8 昆仑宽度抛物线(0.49/0.53/0.55);TB e6 2.663守;明日联评2048
-updated: 2026-09-14
+next: e9 exact release三路径5/5已过，平台单发验证Ascend收益；旧uncertain不重试
+updated: 2026-09-16
 ```
 
 ## 契约与实现（S0）
@@ -205,3 +205,23 @@ updated: 2026-09-14
   submit 阶段 platform_cli 异常退出，intent 停在 uncertain；
   task 72 平台无今日记录、额度未扣（used 仅计他题）。处置待明早：
   注释载体新 ZIP 重发（同 T75 e7r 模式），或放弃低优先探针。
+
+## 2026-09-16 E9：小 group 一次读取，寄存器内中心化方差
+
+- 原因：旧Ascend形态三遍全局读；小group可一次读取后计算均值、中心化方差、affine和SiLU。复用FlagGems固定 `a7620cc191a0b42e040194622c5758b22a7a25dc` `src/flag_gems/ops/groupnorm.py:31-86` 成熟驻留结构，修正非2幂group channel mask。
+- 单变量比较基线=e6 `ea4bfef4`。本次恢复HEAD中昆仑4096→TB1024、去掉旧uncertain Ascend warps8漂移，其他路径回到TB；新变化仅Ascend padded group≤2048走驻留。大组保留原centered三遍，绝不改为E[x²]-mean²。
+- 上一节0.491→0.525→0.545是单调递增、边际递减，不是“抛物线/回落”；未过0.65门才是封轴依据。旧warps8 uncertain intent保留不动，E9是有实际结构差的新候选。
+- source commit `26fe22d9a1d0d22454723f34bbbdef9f97ea4a02`，测试补2047/2048/2049、非2幂group_channels、大均值100；Black25.12/isort/flake8/py_compile通过。
+- screening完整5/5、generic/ascend各34launch、0失败/skip；18桶×5 AB/BA，12affected中11桶≥1.15x。Cg20约1.97–2.13x，256elements约1.18–1.20x，Cg3约1.18–1.23x，2048 fp16/bf16约1.29–1.37x；2048 fp32约1.039x。6 controls 0.9936–1.0027，全部0spill，最多54regs/16B共享内存。
+- 原始screening `artifacts/competition/t72e9-screening-20260916/`，benchmark SHA-256 `77b0b1fef1edbbc24d3f52b9008cee1d8c11bae10244da117e2853a4f16d5e9f`；NVIDIA代理不代表Ascend性能。
+- 平台预注册：8/8且每芯≥0.1，华为≥2.0及均值>2.66266667才继续优化；华为8.414833是他队已观测目标，单芯达到它仍不足夺第一。未达2.0则关本小group轴，不重复投。
+
+### E9 不可变发布证据
+
+- source / verification commit `26fe22d9a1d0d22454723f34bbbdef9f97ea4a02`；ledger commit 为本节所属提交。测试SHA-256 `6e1eacafff5875a630b6cc0325085b2398532cf58e5d6852cfdcc647ffe288aa`。
+- exact release `artifacts/competition/t72e9-release-20260916/verification.json` SHA-256 `621cab2a951251992700ee458f6fbe8d2dadd4e3873754b37ad47d12669e129d`；日志SHA-256 `0b263914e4bcbe14f893bc705a93eefaacc6cacf9d0005740e4dde038f00457e`。5/5、generic/ascend/kunlunxin各34次kernel launch、无fail/error/skip；2047/2048/2049、Cg3和大均值均实际执行。
+- ZIP `/Users/bytedance/ccc/flagos/artifacts/competition/group_norm_silu/e9-26fe22d/group_norm_silu.zip`，14301 bytes，SHA-256 `ae8277fded564b3b1b7a2f42ca7e455d1e9856a5f205ead5cda65022aea6445e`。
+- 成员 `group_norm_silu.py` SHA-256 `690aa6bd15ed593fa76f8b412457aa9d4a1cec4d18d8ae7f0519b213f50bc229`。
+- 成员 `group_norm_silu_ascend.py` SHA-256 `85756844d064365b8d9b9135f13dcc2eeba58a1182d8220ee841685e36e4e377`。
+- 成员 `group_norm_silu_kunlunxin.py` SHA-256 `1e69e32091b08fe221304a3ab768f04a9af7e7a70e69cd62b3562edf35739672`。
+- 两vendor在NVIDIA代理执行，target-runtime-unverified；平台验证补齐，不与代理证据混用。

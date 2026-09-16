@@ -14,12 +14,12 @@ task: 61
 operator: compute_src2dst
 batch: 5
 validity: valid
-platform: completed(14519,e9,8/8,2.099675x 新TB)
-candidate_stage: e11-ready
-team_best_stage: e9
-team_best_speedup: 2.099675
+platform: completed(15835,e11,8/8,2.138475x新TB;Metax门未过)
+candidate_stage: e11
+team_best_stage: e11
+team_best_speedup: 2.138475
 sealed: no
-next: e11适用release3/3与不可变ZIP就绪；单发验证Metax flat1024直接加载形态
+next: 保留e11新TB；Metax1.2486未达2.7门，停止直接加载/flat1024轴，转T66/T74
 updated: 2026-09-16
 ```
 
@@ -308,3 +308,9 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 成员 `compute_src2dst_metax.py` SHA-256 `06585b64c2eba8febbd98d002428636d9fbbe0d24f80c7818baba70e167ea274`。
 - Metax真机 target-runtime-unverified；09-16实时KernelGen schema仍无固定候选字节执行接口，独立目标机无已授权记录。代理不能替代目标评测，平台将补齐证据。
 - 预注册门：Metax≥2.7、全部8芯≥0.1、均值>2.099675；未达不重复同候选，保留平台团队最佳。
+
+## 2026-09-16 E11 平台终态：8/8 valid，新TB但目标门未过
+
+- submission **15835**，10:57:34；均值 **2.138475x**，较E9 +1.85%；远端ZIP回读verified，5206bytes/SHA与本地一致。nonce `662a23916f9823db729cd35ad44a5354` 终态submitted，禁止重投。
+- 逐芯：tianshu 3.004 / muxi 1.2486 / enflame 4.4408 / haiguang 1.8854 / kunlunxin 1.287 / huawei 1.7128 / card_a 1.7436 / card_b 1.7856。Metax选中文件 `compute_src2dst_metax.py`，正确性已补齐；1.2486低于2.7预注册门，假说停止。generic/Enflame冻结字节的变化不计为本次代码收益。
+- 状态原文 `artifacts/competition/top1-20260916/t61-e11-status.json` SHA-256 `577d9d9419bf0a3abc141877dc337d763710193b5f611ddb231a70dbdd1d182f`；提交原文 `artifacts/competition/top1-20260916/t61-e11-submit.json`。剩余额度 **27/30**。

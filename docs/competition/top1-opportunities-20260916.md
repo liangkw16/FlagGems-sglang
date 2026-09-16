@@ -2,7 +2,7 @@
 
 快照：2026-09-16T10:46:00.850571+08:00；全75题，当前第五批17题开放，15题我方有效。截止 2026-09-17 19:59:59（平台字段）；今日起始额度28/30，共享120秒提交间隔。
 
-来源：平台 operator-tasks、逐题 leaderboard、quota 只读GET；[快照](data/top1-intel-20260916-live.json)，SHA-256 `9122f316d4459a326229c6a18fc4fd873e36cfabe9b352cbda8f4800600fe490`。保留全队逐芯读数，原始响应在 artifacts/competition/top1-20260916/leaderboards-raw.json，SHA见快照 raw_sha256。
+来源：平台 operator-tasks、逐题 leaderboard、quota 只读GET；[快照](data/top1-intel-20260916-live.json)，SHA-256 `6587e8b316da4846e453c6e12168af1e5ff5f3037e0ad986ed4b0cca86d637f5`。保留全队逐芯读数，原始响应在 artifacts/competition/top1-20260916/leaderboards-raw.json，SHA见快照 raw_sha256。
 
 顺序依据剩余可解释优化空间、榜差和已证伪历史；不是统计胜率。所需提升 = Top1 / 我方 - 1。绝对差按全部支持芯片的算术平均计算，缺失芯片不填零。
 
@@ -51,9 +51,16 @@
 
 优先完成T61→T66→T74的筛选与必要平台验证；源码研究可以并行，GPU严格串行，平台一次只建立一个新intent。有效正确性、immutable ZIP、完整release回执与live preflight必须全部通过；最低保留2次额度。无收益候选即时记负结果，旧轴不反复扫。
 
-- T61 E10：正确性release已验签；补做8case×5轮AB/BA后，int64 wrapper性能为generic的0.667–0.825倍，成本来自额外cast/contiguous。跳过E10发射，E11去转换筛选中。
-- T66：窄N候选准备中；晋级必须多轮有稳定收益且全正确性通过。
-- T74：仅n≤1024将动态前缀循环改单次masked reduce，归约宽度按n裁剪；n>1024对照保留TB e4结构，避免夹带失败的E5/E6。
+- T61 E10：额外cast/contiguous使代理负收益，未发射；E11已8/8有效但目标门失败，见下文。
+- T66：窄N未达门，继续split-K这一独立结构轴；晋级须稳定收益及完整正确性。
+- T74：小n单次前缀归约已筛选未达门，负结果及原始字节留证，不提交。
 - T71：native符号在cached FlagTree可见，但动态选择实际路径仍未验证，暂不发。
 
 执行结果会追加在本文与各算子CURRENT块；代理性能不能替代其他芯片的平台终态。
+
+## 已完成尝试
+
+- **T61 E11**：submission15835，8/8 valid，2.138475x新TB（+1.85%）；沐曦1.177→1.2486，未达2.7门，直接加载/flat1024假说停止，未复投E10/E11。其余增幅包含冻结芯读数变化，不归为代码收益。
+- **T66 N32**：完整正确性通过，12形状×5轮AB/BA，中位1.01472<1.05门；大权重K7168/N2112约0.995–1.003。不改默认N64、不花平台额度；下一步仅研究split-K并行度这一不同结构轴。
+- **T74 小batch前缀**：6/6正确性，16桶×5轮AB/BA；affected geomean1.01099未达1.05，controls稳定。仅一个大前缀桶+7.70%，不晋级、不发平台，恢复主树原字节。
+- **T72 小group驻留**：复用固定上游并补边界；5/5正确性、18桶×5轮AB/BA。12受影响桶11桶≥1.15，最高约2.13；6控制桶稳定、0spill，exact release后交平台验证。
