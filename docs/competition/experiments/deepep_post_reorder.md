@@ -5,13 +5,13 @@ task: 65
 operator: deepep_post_reorder
 batch: 5
 validity: valid
-platform: completed(15824,e9,8/8,16.10245x新TB)
-candidate_stage: e9
+platform: release-ready(e10;TB e9 8/8,16.10245x)
+candidate_stage: e10
 team_best_stage: e9
 team_best: e9 16.10245x
 team_best_speedup: 16.10245
 sealed: no
-next: 2048较1024均值+19.69%;当前11名/榜首69.07705,优先级低于T61/T66/T74;不重复提交e9
+next: e10 bounded hidden-grid已过screening与exact release，live preflight后一次提交；不重投e9
 updated: 2026-09-16
 ```
 
@@ -216,3 +216,14 @@ updated: 2026-09-16
 - 源码成员哈希：generic `ff8f63752563125523f71c7736449a2f642baccdc209608e758aabb349260db9`；昆仑 `80a428c5c005b54b3fe7019b091c413438a462ba2b68f08253cafb5a083ae5ab`。
 - 原始状态 `artifacts/competition/top1-20260916/t65-e9-status.json`，SHA-256 `c2e925fa9a364b7cf87670ef07afab6ad0fd02997458bd823110099ab8b4e8aa`；一次性 intent 状态 submitted。旧远端 ZIP 回读 unavailable，不重发上传。
 - 当前剩余额度 28/30（全账号共享）；宽度仍可能提分，但距离新榜首 +328.98%，按本轮Top1优先级后移。
+
+## 2026-09-16 E10：有界 hidden-grid 并行，发布就绪
+
+- 成熟来源：SGLang `5f6dd44edc96779d4a15331637e26e73265ff6eb` 的 `post_reorder_deepgemm_triton_kernel`，见[固定上游报告](../research-top1-upstream-refresh-20260916.md)。只将hidden块调度到grid.y，保留BLOCK2048、token/hidden双轴stride、slot顺序、fp32加权累加、scalar路由、所有stride和输出语义；昆仑逐字节冻结TB E9。
+- 首个独立轴cap候选虽筛选1.31996x，发布审查用T21 submission4274的昇腾coreDim114688失败证据阻断。新版本 `gy=min(cdiv(hidden,2048),255)`、`gx=min(tokens,max(1,65535//gy))` 保证总program≤65535；原字节不晋级、不上传。
+- 新screening `artifacts/competition/t65-hidden-grid-bounded-screening-20260916/`：9/9（8数值+1CPU元数据捕获）、0F0E0S，generic/冻结昆仑各56入口/50实际launch；TB同9方法通过。14affected×5轮geomean **1.323555**，轮次1.317674–1.329518，最差0.955736，6control为0.996791–1.019597，zero spill/shared0。T1024/H4097/K2保留fp16约4.4%、bf16约2.7%回退；T1/H2049/K1两桶全无效路由，不能当有效gather收益。
+- 新测试覆盖hidden2048/4096/255块边界、token65535/36/37、strided权重/topk16；T32768/H2049/K1实际数值测试验证grid(32767,2)下末token的stride覆盖。gy255巨型组合只做CPU wrapper元数据捕获，不宣称数值执行。screening receipt SHA-256 `4a57fb63411e9ee89f0a6038ce7d56e95ddee88720c8c3ee5e56cb4667d7cca8`；benchmark `7aab491ab97f94c492768e8be84d18fd8c8de6faca56cd3f09d86bb8854ac049`。
+- source/verification commit **`4713e8d6029dfbe953060999e573ce8b5afd9983`**。generic SHA-256 `efb06c8262bfacc1380686cffa33c5bb2629e3e1e38e43fc90c53cb2d1729549`；昆仑 `80a428c5c005b54b3fe7019b091c413438a462ba2b68f08253cafb5a083ae5ab`；test `cfc15209dd1cfecce6f75f86254453420ece2fceb84695f1d47d447d7cb943d0`。与新screening逐字节一致；py_compile/Black/isort/flake8与独立静态审查通过。
+- exact release `artifacts/competition/t65e10-release-20260916/`：9/9、0F0E0S，generic/昆仑各56入口/50实际launch。回执SHA-256 `1f09cb9b7a4ac90a420015eec3d962b54e26f585a86bcd71ee5290328ed4001a`；完整日志 `d3722b34e51af6cc2c4a4505e58462710774afc5811e7c4ee40514ddf89aa76b`。RTX5070Ti/Python3.12.13/Torch2.13.0+cu130/Triton3.7.1；远端 `/tmp/flagos-t65e10-release.NVcdmH`、PID388094、660秒上限、EXIT0，输入/输出双端验签通过。NVIDIA proxy，非NVIDIA目标runtime仍未验证，需八芯平台裁决。
+- 不可变ZIP `artifacts/competition/deepep_post_reorder/e10-4713e8d/deepep_post_reorder.zip`，7436bytes，SHA-256 **`d1afa670187f6a24cca33c630a9df01fdc58bd04ce69d109e8ef9abec0fcf42b`**；成员 `deepep_post_reorder.py` / `deepep_post_reorder_kunlunxin.py`，member hash如上。
+- **平台预注册**：8/8、每芯≥0.1、均值>16.10245才换TB；≥20.0为继续投入信号；榜首69.07705不能由代理1.32x推得。一次候选一次判决，不按结果改样本或门槛。
