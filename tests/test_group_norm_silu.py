@@ -103,6 +103,12 @@ class GroupNormSiluTest(unittest.TestCase):
     def test_empty(self):
         self.check(make_case((0, 8, 4), 4))
 
+    def test_zero_channels(self):
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            for shape in ((2, 0), (0, 0)):
+                with self.subTest(dtype=dtype, shape=shape):
+                    self.check(make_case(shape, 1, dtype))
+
     def test_affine_strides(self):
         for dtype in (torch.float16, torch.bfloat16, torch.float32):
             with self.subTest(dtype=dtype):
@@ -148,6 +154,7 @@ RELEASE_REQUIRED_TESTS = [
     "GroupNormSiluTest.test_groups_edges",
     "GroupNormSiluTest.test_resident_tile_boundaries",
     "GroupNormSiluTest.test_empty",
+    "GroupNormSiluTest.test_zero_channels",
     "GroupNormSiluTest.test_affine_strides",
     "GroupNormSiluTest.test_group_grid_boundaries",
 ]

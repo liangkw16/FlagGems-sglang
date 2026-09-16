@@ -95,7 +95,7 @@ def group_norm_silu(x, weight, bias, num_groups, eps):
     group_channels = channels // num_groups
     out = torch.empty_like(xc)
     n_groups_total = xc.shape[0] * num_groups
-    if n_groups_total and spatial:
+    if n_groups_total and spatial and group_channels:
         # Master's proven ceiling: block_hw of 1024 lanes. The grid is
         # one program per (n, group) - same as generic and FlagGems
         # master; N * num_groups stays far below the 65535 grid limit

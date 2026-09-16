@@ -125,7 +125,7 @@ def group_norm_silu(x, weight, bias, num_groups, eps):
     group_channels = channels // num_groups
     out = torch.empty_like(xc)
     n_groups_total = xc.shape[0] * num_groups
-    if n_groups_total and spatial:
+    if n_groups_total and spatial and group_channels:
         block_c = triton.next_power_of_2(group_channels)
         block_s = triton.next_power_of_2(spatial)
         if block_c * block_s <= 2048:
