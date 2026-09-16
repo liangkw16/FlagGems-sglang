@@ -28,8 +28,8 @@ def _deepep_post_reorder(
     BLOCK: tl.constexpr,
 ):
     out_ty = out.dtype.element_ty
-    # E8: BLOCK 512 -> 1024 (the same enflame ladder that paid on
-    # T63/T64; e7 huawei already +43% from the scalar form).
+    # E9: BLOCK 1024 -> 2048 (e8 paid +38% broad on every chip; the
+    # same ladder is still rising on the T63/T64 siblings).
     # E7: plain scalar slot loads inside the slot loop replace the E1
     # vector-row + one-hot/tl.sum extraction. That extraction form is a
     # compile-stage abort on kunlunxin (fixed in the e6 vendor) and a
@@ -102,7 +102,7 @@ def deepep_post_reorder(
         topk_weights.stride(0),
         topk_weights.stride(1),
         float(routed_scaling_factor),
-        BLOCK=1024,
+        BLOCK=2048,
     )
     return out
 
