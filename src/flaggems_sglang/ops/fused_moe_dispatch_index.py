@@ -26,7 +26,9 @@ def _fused_moe_dispatch_index(
         expert_safe = tl.where(valid, expert, 0)
         offset = tl.atomic_add(masked_m + expert_safe, 1, mask=valid)
         dst = expert_safe * m_max + offset
-        tl.store(src2dst + offs.to(tl.int64), dst, mask=valid)
+        tl.store(
+            src2dst + offs.to(tl.int64), tl.where(valid, dst, 0), mask=mask
+        )
 
 
 def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
@@ -37,7 +39,7 @@ def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
     masked_m = torch.zeros(
         num_local_experts, dtype=torch.int32, device=topk_ids.device
     )
-    src2dst = torch.zeros(num_toks, dtype=torch.int32, device=topk_ids.device)
+    src2dst = torch.empty(num_toks, dtype=torch.int32, device=topk_ids.device)
     if num_toks:
         _fused_moe_dispatch_index[(min(triton.cdiv(num_toks, 256), 65535),)](
             flat,
