@@ -5,12 +5,12 @@ task: 74
 operator: seqlens_expand
 batch: 5
 validity: valid
-platform: evaluating(e13-mask32/sub16356,6芯通过/昆仑同指纹编译失败/燧原待回；TB仍E4 20.177775)
-candidate_stage: e14-kunlun-flat-development
+platform: evaluating(e14-flat/sub16386,昆仑编译过但case8数值失败；TB仍E4 20.177775)
+candidate_stage: e14-kunlun-flat-submitted
 team_best_stage: e4
 team_best_speedup: 20.177775
 sealed: no
-next: E13排除仅改位宽方案；E14仅昆仑group改一维索引，验证二维layout新假说；E12/E13不重投
+next: E14昆仑出现新数值指纹，暂停group轴等目标IR/最小复现；剩余回调只读跟踪，推进T73/T63/T67
 updated: 2026-09-16
 ```
 
@@ -358,3 +358,26 @@ updated: 2026-09-16
 - 昆仑仍case8、175:65、TritonXPULegalize的arith.cmpi same-type错误，exec9335ms。已证比较IR从i64变i32仍触发相同后端指纹，停止仅改位宽轴，不继续cast变体。源结构不同于E12，仍不将两次结果解释为平台随机故障。
 - 下一E14结构假说仅作用昆仑：把4×32分组展平为128-lane，row=lane//32、col=lane%32，取消所有二维expand/broadcast；重复的每行qo/kv/base load与max归约数学等价，循环/物理地址保留i64、值int32。generic和测试冻结。先过真实probe/1D IR及16方法双源码exact release；若该结构仍同指纹，停止本轮继续提交，等待目标失败IR或后端修复。
 - `artifacts/competition/pair-grouped-platform-20260916/t74-e13-partial-status.json` SHA-256 `cb29ba714442eb304dc39334742e6d0d18cb3fc5129442585153cd57bb12297d`。
+
+## 2026-09-16 23:20 E14 一维分组发布门通过
+
+- source/verification commit `4fe898978ad91b755af97eca1f66aefc636839b6`，仅昆仑group由4×32二维变成128-lane一维；flat→row/col双射保证每个输出唯一写入，重复qo归约结果不变。generic/test仍冻结E12 SHA，vendor SHA `b1ba34de7a712fec22ca1ff6a3c43c65459543ea6b07fc3d5893415b0c07f075`。
+- 独立语义审查、三个真实probe及48份编译产物通过；vendor group无expand_dims或rank2张量，cmp tensor<128xi32>、寻址tensor<128xi64>，循环仍i64。30寄存器、16bytes shared、0spill；新增shared来自跨warp max，不声称零shared或性能收益。主任务独立复核全部IR哈希和Git字节。
+- exact release **16/16**，0fail/error/skip/xfail；generic与Kunlun代理各152入口/213JIT。远端 `/tmp/flagos-t74-e14-release.itrXqQ` PID397036、600s上限、exit0；NVIDIA RTX5070Ti / Torch2.13.0+cu130 / Triton3.7.1。完整INTMAX输出未分配，昆仑目标编译仍待平台。
+- ZIP `artifacts/competition/seqlens_expand/e14-kunlun-flat-4fe8989/seqlens_expand.zip`，18508bytes、成员seqlens_expand.py和seqlens_expand_kunlunxin.py，SHA-256 `260b601c1842f8b417359454da2d4702992d8438ba0a5c9013ada9420acde991`。主任务verify_receipt、CRC、成员及Git逐字验签再次通过。
+- `artifacts/competition/t74-kunlun-flat-20260916/release/verification.json` SHA-256 `dcb1a74114faa13b905ae745cdca847af7698c543513f250cfcff91d800f9866`。
+- `artifacts/competition/t74-kunlun-flat-20260916/release/verification.log` SHA-256 `227424601396bb8b59c122c897646e416a5c92c43df225836cd4916502b6599d`。
+- `artifacts/competition/t74-kunlun-flat-20260916/release-audit.json` SHA-256 `dbfff359b8bfe0c5e6d29b0c1b744d8738b420f229f74782cd43408b226f616a`。
+- 本候选仍按原预注册：昆仑实际编译/正确性通过、各芯≥0.1且八芯均值>20.177775才晋级；同编译指纹再现就停止本轮T74提交。不等其他题评测完成，按全局120秒间隔推进独立候选。
+
+## 2026-09-16 23:21 E14 单次提交
+
+- submission **16386**，`2026-09-16T23:21:14`，daily_seq16；nonce `a47ab246a5715923979f8383e90e6853` 状态submitted，upload/POST各一次。远端18508bytes与SHA完全匹配，remote_verification=verified。下一次账号提交最早23:23:14，评测与独立题目开发重叠。
+- `artifacts/competition/pair-grouped-platform-20260916/t74-e14-preflight.json` SHA-256 `3eec4eecfa40a0000c4cc8fccca9428578f60460aa79f63905ede926b7ae9728`。
+- `artifacts/competition/pair-grouped-platform-20260916/t74-e14-submit.json` SHA-256 `5974b8b2a3999bd11c1f6338c7e057a7e023d2b352dba1cfecd4be29aa7d2cf7`。
+
+## 2026-09-16 23:24 E14 昆仑目标结果：编译绕过，数值未通过
+
+- 观察 `2026-09-16T23:23:33.954375+08:00`：昆仑选中seqlens_expand_kunlunxin.py，已绕过前两版arith.cmpi编译错误，但case8输出 **23308/34859（66.9%）** 不同，最大绝对差8155。末尾actual [5624,2822,572]，expected [5624,5625,5626]。这是目标执行的新数值失败，不能用NVIDIA通过推断平台随机故障。
+- 未获得目标失败IR/精确输入前暂停本轮group结构；不继续同候选或任意cast试投。原stop规则的“同编译指纹”未触发，但新错误仍需独立根因证据，优先把并发工作用于T73/T63/T67。当前无完整有效分，E4最佳保留。
+- 实时额度 **14/30**；快照 `artifacts/competition/pair-grouped-platform-20260916/t74-e14-partial-status.json` SHA-256 `1b2c3f05abb0a219a7704582ac4797e9236af0af4166c736ab54675968d4bc4e`。

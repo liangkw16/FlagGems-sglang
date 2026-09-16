@@ -17,13 +17,13 @@ task: 71
 operator: gelu_tanh_and_mul
 batch: 5
 validity: valid
-platform: completed(14573,e4,8/8,2.7109x 新TB)
-candidate_stage: e4
-team_best_stage: e4
-team_best_speedup: 2.7109
+platform: completed(e8/sub15474,8/8,2.712425x实际TB)
+candidate_stage: enflame-group4-development
+team_best_stage: e8
+team_best_speedup: 2.712425
 sealed: no
-next: e4 no-loop昆仑0.304复制链失败(门0.5未过,链收口);TB 2.711守;昆仑真因/燧原8192待证
-updated: 2026-09-14
+next: 以实时TB E8为基线开发Enflame短行分组；旧width/warps/no-loop轴不重试，未验证E9 resolver不进入提交
+updated: 2026-09-16
 ```
 
 ## 契约与实现（S0）
@@ -141,3 +141,9 @@ vs 1.14（4.6x）——两芯均为结构性差距。TB 保持 e1 2.6265。
 - 单变量=燧原 vendor 钉 num_warps=4（夜间批 T71/T73/T68/T62 四题）。
   批量结论：燧原 warps 为逐题特性，非统一旋钮；本批 2 负 2 平，
   轴关闭。TB 各自保持。
+
+## 2026-09-16 23:28 真实TB对账与并行结构候选
+
+- live status确认E8/sub **15474**，2026-09-15T23:32:26，8/8、**2.712425**、is_team_best=true；对应source `06ba0bdf1f1db411ebfa0d2456956e4a684d0d12`，URL SHA `7f666e4314c898b7d7ec772ecdab38be894f45524aff95104908eebf508587c7` 与submitted intent一致。订正旧段“未换TB”：涨幅很小但平台确实更新了最佳。
+- 新候选只研究Enflame短行四行合并，保留E8其他成员、宽shape实现/参数/exp算式；不是重做8192或warps。主树未验证E9 runtime resolver不进入ZIP。发布前冻结shape矩阵与门并完整release，平台门为八芯有效均值>2.712425且燧原>1.88246667；尚未通过开发门。
+- 观察 `2026-09-16T23:28:06.035023+08:00` 额度 **13/30**；状态 `artifacts/competition/pair-grouped-platform-20260916/t71-before-parallel-status.json` SHA-256 `76326ba3f251a89cb1d896ff3a2a4592ddfd093b544a5599b21f2b4660cdc4a4`。

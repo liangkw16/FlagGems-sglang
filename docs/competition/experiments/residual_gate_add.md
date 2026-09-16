@@ -79,12 +79,12 @@ task: 73
 operator: residual_gate_add
 batch: 5
 validity: valid
-platform: completed(e11/sub15484,8/8,4.08910938x；TB仍E6 4.0993125x)
-candidate_stage: enflame-row-group-development
+platform: evaluating(e12-group4/sub16400；TB仍E6 4.0993125x)
+candidate_stage: e12-enflame-group4-submitted
 team_best_stage: e6
 team_best_speedup: 4.0993125
 sealed: no
-next: E7已投且昆仑0.6295未过0.65门，关闭宽度轴；开发燧原行分组新结构，其他芯冻结TB
+next: E12已单次提交16400，等待燧原及八芯结果；其他题并行，不重发相同候选
 updated: 2026-09-16
 ```
 
@@ -222,3 +222,22 @@ card_b +0.31、tianshu +0.09；muxi/card_a 我方领先。燧原窗口摆动实�
 - 实时查分与本地submitted intent交叉核实：E7早已于2026-09-14T23:42:41提交，submission **14856**，8/8、均分 **4.08110938**、昆仑 **0.6295**，未超E6均值且未达0.65门。intent `8972fdf47a1120ee91329a5e1d52ae03` 的commit934120a795ad2f6f15b12159515cdd15a48ee777、ZIP SHA ba4ac2a777af4b04d264ec061b857493f0abff4fc478b7207fda07089a709b13与该record file_url SHA完全匹配；旧“待发射”段仅保留历史，不再视为队列。
 - E11/sub15484于2026-09-15T23:39:58，8/8、4.08910938，燧原2.0805、昆仑0.631625；未超E6 **4.0993125**。8192宽度和燧原warps轴不重复。新候选仅研究Enflame广播行分组，具体门槛在执行前冻结，未通过发布门不提交。
 - 本次状态观察 `2026-09-16T23:11:43.998592+08:00`，账号额度 **15/30**。状态快照 `artifacts/competition/pair-grouped-platform-20260916/t73-before-parallel-status.json` SHA-256 `06b19907fde9bd38a9c228e3f1ae4f41299e6c53333e6ecb61b46b22156da637`。
+
+## 2026-09-16 23:25 E12 四行分组发布与平台预注册
+
+- 基线TB E6 `343f9d57e8cbb22f4b4d174a653622eea015b348`。仅Enflame广播rows≥4且d≤1024每轮处理4行，persistent最多24组；其他路径取TB，Kunlun回4096，去除主树E11已负的固定warps。载体恢复与新结构收益分别记账，不把恢复收益算进group4代理比值。
+- source/verification commit `fbb45de1e8166c5afb048e5b0e40bb886e1f8a13`；Enflame SHA `4ec73cae43ddec3754c6ef0ba453b22714213d9212293559d7a4d3010ef6de2a`；测试SHA `ca7c869dfe87c7c7230633fbdc531cbef6795420b6dd698d235d8462a41d29b6`。screen保留旧9方法并补4/24/96行边界与消没精度rows5尾组，共10方法。
+- 冻结18affected+8controls，5轮AB/BA，受影响wrapper中位≥1.05、每桶≥0.95、zero spill。实测主桶中位 **1.3234536077**，全桶最差 **0.9896907928**，零spill；主任务独立重算130pairs和screen→Git哈希通过。六份IR probe确认真实4×BLOCK，i64地址及half/bf16乘法原dtype舍入→fp32加法→输出截断，fusion=False。仅NVIDIA代理，不外推32.3%为平台总均分。
+- exact release **10/10**，0fail/error/skip/xfail；generic、Enflame、Kunlun各123入口/122实际JIT。远端 `/tmp/flagos-t73-e12-release.ejhnaM` PID397371、600s限时、EXIT0，RTX5070Ti / Torch2.13.0+cu130 / Triton3.7.1。主任务独立verify_receipt通过。
+- KernelGen实时tools/list成功，但sunrise generate流响应196秒无完整响应/job_id/绑定源码/测试，本地客户端已停止、远端作业未知；无重试，目标芯仍unverified，不阻塞独立完整发布证据。
+- ZIP `artifacts/competition/residual_gate_add/e12-enflame-group4-fbb45de/residual_gate_add.zip`，13188bytes，SHA-256 `f2611fe90f5c5f1a6c2ec04ff91bb9eade1c4cc518bccf5ee618be790b0aac80`；成员residual_gate_add.py/residual_gate_add_enflame.py/residual_gate_add_kunlunxin.py，CRC/成员/Git逐字验证通过。
+- `artifacts/competition/t73-group4-screening-20260916/screening.json` SHA-256 `901ba94dea9570a43bc1902ead8be0f65c361c1e92ffd1ae6feb5ef478cc20f7`。
+- `artifacts/competition/t73-group4-screening-20260916/release/verification.json` SHA-256 `5a94b04d1405c953015f5505e594f1f43a990a9cb47350dcf4fddd6b709cb55c`。
+- `artifacts/competition/t73-group4-screening-20260916/release/verification.log` SHA-256 `2d05388a0131c3e125734cac1e955ba2df571ff70afa595b1013260b701fd4e3`。
+- 平台假设：燧原减少短行循环/CTA开销，其他七芯用TB。晋级需八芯正确、每芯≥0.1、均分>**4.0993125**，且本轴燧原高于E6 **2.10325** 才视为机制兑现；本候选只提交一次，数值失败先定位，负收益不重复同轴。不为用尽额度重发。
+
+## 2026-09-16 23:26 E12 单次提交
+
+- submission **16400**，`2026-09-16T23:26:33`，daily_seq17，nonce `fd9a1c22005ce822d6c9654e00156891` 状态submitted，upload/POST各一次。远端ZIP13188bytes及SHA与本地完全匹配，remote_verification=verified；提交前实时额度14/30，提交后实时status待回。
+- `artifacts/competition/pair-grouped-platform-20260916/t73-e12-preflight.json` SHA-256 `79f0e0b2f670ba66d7a2a6c6d4fa6ef7769bb4f0db64072339a87c86e7bb8f0d`。
+- `artifacts/competition/pair-grouped-platform-20260916/t73-e12-submit.json` SHA-256 `949fd33c39de60243a689be83170119a003d9cf132e6c0910274a33143a57980`。
