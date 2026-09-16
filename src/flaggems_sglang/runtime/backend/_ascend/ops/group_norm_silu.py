@@ -25,6 +25,43 @@ import triton.language as tl
 
 
 @triton.jit(do_not_specialize=["eps"])
+def _group_norm_silu_small(
+    x_ptr,
+    w_ptr,
+    b_ptr,
+    out_ptr,
+    num_groups,
+    group_channels,
+    spatial,
+    eps,
+    BLOCK_C: tl.constexpr,
+    BLOCK_S: tl.constexpr,
+):
+    # Resident centered variance from FlagGems a7620cc1 ops/groupnorm.py.
+    pid = tl.program_id(0)
+    cols = tl.arange(0, BLOCK_C)
+    rows = tl.arange(0, BLOCK_S)
+    cm = cols < group_channels
+    mask = cm[:, None] & (rows[None, :] < spatial)
+    offsets = (
+        pid.to(tl.int64) * group_channels * spatial
+        + cols[:, None].to(tl.int64) * spatial
+        + rows[None, :]
+    )
+    x = tl.load(x_ptr + offsets, mask=mask, other=0.0).to(tl.float32)
+    total = group_channels * spatial
+    mean = tl.sum(x) / total
+    centered = tl.where(mask, x - mean, 0.0)
+    var = tl.sum(centered * centered) / total
+    wbase = (pid % num_groups) * group_channels
+    w = tl.load(w_ptr + wbase + cols, mask=cm, other=0.0).to(tl.float32)
+    b = tl.load(b_ptr + wbase + cols, mask=cm, other=0.0).to(tl.float32)
+    y = centered * tl.rsqrt(var + eps) * w[:, None] + b[:, None]
+    y = y * (1.0 / (1.0 + tl.exp(-y)))
+    tl.store(out_ptr + offsets, y.to(out_ptr.dtype.element_ty), mask=mask)
+
+
+@triton.jit(do_not_specialize=["eps"])
 def _group_norm_silu_asc(
     x_ptr,
     w_ptr,
@@ -74,8 +111,6 @@ def _group_norm_silu_asc(
             tl.store(out_ptr + cbase + idx, y, mask=m)
 
 
-# E7 probe: num_warps=8 launch pin (single variable vs e6 bytes;
-# huawei 1.20 vs EvokeAgent's 8.41 on this task).
 def group_norm_silu(x, weight, bias, num_groups, eps):
     assert x.ndim >= 2
     assert x.shape[1] == weight.numel() == bias.numel()
@@ -91,20 +126,35 @@ def group_norm_silu(x, weight, bias, num_groups, eps):
     out = torch.empty_like(xc)
     n_groups_total = xc.shape[0] * num_groups
     if n_groups_total and spatial:
-        block_hw = min(triton.next_power_of_2(spatial), 1024)
-        _group_norm_silu_asc[(n_groups_total,)](
-            xc,
-            w,
-            b,
-            out,
-            num_groups,
-            group_channels,
-            spatial,
-            eps,
-            GROUP_SIZE=group_channels,
-            BLOCK_HW=block_hw,
-            num_warps=8,
-        )
+        block_c = triton.next_power_of_2(group_channels)
+        block_s = triton.next_power_of_2(spatial)
+        if block_c * block_s <= 2048:
+            _group_norm_silu_small[(n_groups_total,)](
+                xc,
+                w,
+                b,
+                out,
+                num_groups,
+                group_channels,
+                spatial,
+                eps,
+                BLOCK_C=block_c,
+                BLOCK_S=block_s,
+            )
+        else:
+            block_hw = min(block_s, 1024)
+            _group_norm_silu_asc[(n_groups_total,)](
+                xc,
+                w,
+                b,
+                out,
+                num_groups,
+                group_channels,
+                spatial,
+                eps,
+                GROUP_SIZE=group_channels,
+                BLOCK_HW=block_hw,
+            )
     return out.reshape(x.shape)
 
 

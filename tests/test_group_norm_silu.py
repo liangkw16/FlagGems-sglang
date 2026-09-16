@@ -85,6 +85,20 @@ class GroupNormSiluTest(unittest.TestCase):
         self.check(make_case((3, 8, 5), 1))
         self.check(make_case((3, 8, 5), 8))
 
+    def test_resident_tile_boundaries(self):
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            for spatial in (2047, 2048, 2049):
+                with self.subTest(dtype=dtype, group_elements=spatial):
+                    self.check(make_case((2, 2, spatial), 2, dtype))
+            # Three channels per group: padded channel lanes must not
+            # read the next group's input or affine parameters.
+            for spatial in (511, 513):
+                with self.subTest(
+                    dtype=dtype, group_channels=3, spatial=spatial
+                ):
+                    self.check(make_case((2, 6, spatial), 2, dtype))
+        self.check(make_case((2, 6, 257), 2, torch.float32, off=100.0))
+
     def test_empty(self):
         self.check(make_case((0, 8, 4), 4))
 
@@ -93,6 +107,7 @@ RELEASE_REQUIRED_TESTS = [
     "GroupNormSiluTest.test_dtypes_and_shapes",
     "GroupNormSiluTest.test_large_mean_small_var",
     "GroupNormSiluTest.test_groups_edges",
+    "GroupNormSiluTest.test_resident_tile_boundaries",
     "GroupNormSiluTest.test_empty",
 ]
 
