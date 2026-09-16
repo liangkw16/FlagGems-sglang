@@ -360,3 +360,10 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 单变量=燧原 vendor 钉 num_warps=4（夜间批 T71/T73/T68/T62 四题）。
   批量结论：燧原 warps 为逐题特性，非统一旋钮；本批 2 负 2 平，
   轴关闭。TB 各自保持。
+
+## 2026-09-16 上游 streaming 假说的资源诊断：暂无寄存器瓶颈证据
+
+- 固定SGLang上游提供按head流式搬运，但当前BH16已复用RoPE；不再把复用本身当新优化。先对TB E9 generic exact源码SHA-256 `e16daeddbc96baebd37220160eb3acb4dd46f08cd58bf91f24044262c9149290`做5形状代理资源诊断，没有实现候选。
+- 生产T1/32/1024、heads128、NoPE128/RoPE64均为56regs、0spill、4096Bshared；非2幂17/129/65为72regs/0spill/0shared；生产列stride2为109regs/0spill/0shared。5/5逐字节复制正确性通过，非完整release，也未测速。PTX有标量16-bit load/store，生产路径有layout conversion与barrier；标量指令不等于内存事务未合并，不能据此宣称瓶颈或目标芯收益。
+- 因无spill且普通形状寄存器适中，本轮不凭猜测实现streaming，不重开BH/warps/mask失败轴、不消耗平台额度。TB保持E9 1.24575。
+- 证据 `artifacts/competition/t62-tb-resource-probe-20260916/`：resources.json SHA-256 `d4b61f6a4e112f1cc3fcce9405466daac95820a332fb660562e341c9860eb0af`；28产物/20IR完整hash manifest `result-sha256.json` SHA-256 `8e873e8eb3b070888df0a91efb022a6d2cc5f1a42e0fb6e0a8ac6399b9906c3b`；probe.log SHA-256 `494fd541aa3add10c1c47f696acbb54876fe45c5289385738ae2df7c7350186c`。远端 `/tmp/flagos-t62-resources.W4KCRH`，PID388231，180秒总限，EXIT0，双端验签、GPU释放。重放：原tar解包到新目录执行`timeout 180 bash run.sh`。
