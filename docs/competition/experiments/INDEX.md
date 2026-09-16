@@ -45,7 +45,7 @@
 | 62 | concat_mla_k | valid | completed(14847,e10,8/8,1.1908x;燧原BH4反降-47%;TB e9 1.2458x) | e9 1.24575x | no | e10 燧原BH4 0.15(-47%)跨芯平移证伪;TB e9 1.246守;收官仅守榜 | 2026-09-14 | [concat_mla_k](concat_mla_k.md) |
 | 63 | create_flashinfer_kv_indices | valid | completed(e12,8/8,190.674x<TB;沐曦60.8负向,metax2048轴证伪) | e8 199.69521875x | no | metax splits2048证伪(沐曦98.5→60.8大负);TB e8 199.70守;下一轴=燧原BLOCK1024/warps1、华为warps8或ps0 constexpr(单变量) | 2026-09-15 | [create_flashinfer_kv_indices](create_flashinfer_kv_indices.md) |
 | 64 | deepep_permute | valid | completed(15868,e6,8/8,6.94085x;TB e5 7.17105x) | e5 7.17105x | no | e6均值回退且Enflame4.7192未达8.0门，停止空task轴；TB仍e5，不重投 | 2026-09-16 | [deepep_permute](deepep_permute.md) |
-| 65 | deepep_post_reorder | valid | completed(15876,e10,8/8,26.917125x新TB) | e10 26.917125x | no | e10均值+67.16%过20门；仅研究有独立源码/IR证据的新结构，不重投e10 | 2026-09-16 | [deepep_post_reorder](deepep_post_reorder.md) |
+| 65 | deepep_post_reorder | valid | completed(15876,e10,8/8,26.917125x新TB) | e10 26.917125x | no | 保留e10 26.917125；e11 hidden-direct筛选失败已关闭，需目标华为新根因，不重复提交 | 2026-09-16 | [deepep_post_reorder](deepep_post_reorder.md) |
 | 66 | dsv3_fused_a_gemm | valid | completed(15861,e2,8/8,3.09855x新TB) | e2 3.09855x | no | e2仅+0.15%，未达3.40再投入门；停止窄N split4轴，不重投 | 2026-09-16 | [dsv3_fused_a_gemm](dsv3_fused_a_gemm.md) |
 | 67 | fill_padded_rows | valid | completed(e4,8/8,4.1965x;固定块轴零增益,重编译假说在本题证伪) | e2 4.2969x | no | 固定BLOCK轴关闭;下一轴=num_warps/过特化(PR扫描模式,华为1.9vs17.5缺口形态未破);TB e2 4.2969 守 | 2026-09-15 | [fill_padded_rows](fill_padded_rows.md) |
 | 68 | fused_eh_norm | valid | completed(15864,e8,8/8,7.10215x新TB) | e8 7.10215x | no | e8仅+0.18%，燧原1.6814未达2.0门；停止本path分离轴，不重投 | 2026-09-16 | [fused_eh_norm](fused_eh_norm.md) |

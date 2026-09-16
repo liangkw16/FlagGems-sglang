@@ -11,7 +11,7 @@ team_best_stage: e10
 team_best: e10 26.917125x
 team_best_speedup: 26.917125
 sealed: no
-next: e10均值+67.16%过20门；仅研究有独立源码/IR证据的新结构，不重投e10
+next: 保留e10 26.917125；e11 hidden-direct筛选失败已关闭，需目标华为新根因，不重复提交
 updated: 2026-09-16
 ```
 
@@ -255,3 +255,11 @@ updated: 2026-09-16
 - 原始证据 `artifacts/competition/t65-e10-hidden-ir-probe-20260916/`：resources.json SHA-256 `966e557e3890133bb6444a4c8286389ca06df4a4f87c5f80f647d3ff0c14d232`；日志 `99698512fd4ae467cf8992fb3f15f612a8c87236c99f218faf75ef92863951cd`。4形状各一次实际launch/数值通过；E10 kernelbody与先前候选相同，缓存asm的source-location仍可能指向旧路径，实际wrapper/source由输入双端hash另行绑定。NVIDIA证据，非昇腾收益证据。
 - 拟E11仅加constexpr `DIRECT_HIDDEN=(cdiv(hidden,2048)<=255)`：普通hidden直接执行同一数学，大hidden完整保留E10循环；grid总乘积限制、token stride、slot if、累加序、fp32、昆仑字节均冻结。slot predication因成熟主实现仍用if、无目标瓶颈且有NaN/Inf契约风险，本轮不做。
 - **筛选预注册**：原20桶全部是affected（含hidden≤2048，不按结果缩域），另加direct边界及hidden>522240 fallback control；5轮AB/BA，affected GM≥1.05、每轮≥1.03、每桶≥0.95，fallback control在0.97–1.03，0spill。完整9方法加E10逐位对比/最后有效slot/stride；未通过不发布。平台须8/8、每芯≥0.1、均值>26.917125才换TB，≥30为进一步投入信号。
+
+## 2026-09-16 E11 hidden-direct 筛选终态：NO-GO，保留E10
+
+- 原20桶全部纳入primary，4个direct边界secondary、4个大hidden fallback controls；28桶×5轮AB/BA完整结束。primary GM **0.9930499114** <1.05，5轮0.991333–0.996207均<1.03；最差T3/H4097/K2 fp16 **0.902643** <0.95。fallback controls0.995542–1.000959稳定，secondary均≥1.00166，0spill/0shared。按原门关闭，不挑域、不提交。
+- **10/10完整正确性**、baseline10/10；generic/昆仑各68公开入口、62实际launch。13补充逐字节对照+28性能形状逐字节对照全过；compiled TTGIR的direct从3层loop减为2，fallback双方仍3层，说明机制真实改变但未提供收益。尾形状寄存器从95/94降至48也未转化成性能改善。
+- 源码SHA-256 `a7b91f72a8531bca03be3d661cbb00c89b37f57944f0465d9ae548154c07c40e`，test `2f7147a3367551331cbf893d9a3384ca05af226aa99b69cf86aed13845b3de40`，benchmark脚本 `9d0d6d2126fb7a4c61fc6235a8090a75a0d9f09e6386b7f5ec6cd4d802df211e`，与预注册冻结字节一致；数学helper/旧fallback/旧token stride的AST逐节点一致，昆仑exact E10未变。未改主树、未commit候选、未打ZIP/建立intent/上传/POST。
+- 完整证据 `artifacts/competition/t65-e11-hidden-direct-screening-20260916/`：receipt SHA-256 `984e107f79165ac444664244232c669b27288b67f30c99a98d06afb1cd845694`，verification.log `af24b1a15633181a19c5093bfcf3c1525e1a7699272901d39151a3740a77bb85`，benchmark.json `1f198b7eef25d5d261d5e3f01f7577e8132944f05f6c1194bd44729a45718799`，screening-summary.json `13c523819d106678f578a62ae13aac81089909b4544e8613bd3f519bef0b131e`。140对原始样本CSV、16IR、全部双端hash保留。远端 `/tmp/flagos-t65e11-screen.AvE3F9`、PID388623、timeout600、EXIT0，GPU已释放。
+- 本轮保留平台E10 **26.917125x**；12:13榜单第10、榜首69.07705，仍需156.63%。余22/30，不为剩余预算强投失败候选。
