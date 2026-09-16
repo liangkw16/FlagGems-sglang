@@ -248,3 +248,10 @@ updated: 2026-09-16
 |card_b|12.686|19.5632|
 
 状态证据 `artifacts/competition/top1-20260916/t65-e10-status.json`；剩余额度22/30。榜首69.07705仍需约156.63%，不能报告已经Top1；后续只能依据新结构证据筛选，原有BLOCK阶梯/同字节不重试。
+
+## 2026-09-16 E10 后续独立根因：普通 hidden 的单次动态循环
+
+- exact E10四形状IR探针保留了hidden回边：例如T32/H8192/K8、grid.y=4，优化后TTGIR仍有`scf.for %start`，LLVM与PTX都有索引推进/比较/向后分支；40regs、0spill、0shared。上游SGLang固定SHA的DeepGemm版在918–919行直接以pid1*BLOCK取块，提供成熟来源。不是重试BLOCK/warps，也不删除token stride。
+- 原始证据 `artifacts/competition/t65-e10-hidden-ir-probe-20260916/`：resources.json SHA-256 `966e557e3890133bb6444a4c8286389ca06df4a4f87c5f80f647d3ff0c14d232`；日志 `99698512fd4ae467cf8992fb3f15f612a8c87236c99f218faf75ef92863951cd`。4形状各一次实际launch/数值通过；E10 kernelbody与先前候选相同，缓存asm的source-location仍可能指向旧路径，实际wrapper/source由输入双端hash另行绑定。NVIDIA证据，非昇腾收益证据。
+- 拟E11仅加constexpr `DIRECT_HIDDEN=(cdiv(hidden,2048)<=255)`：普通hidden直接执行同一数学，大hidden完整保留E10循环；grid总乘积限制、token stride、slot if、累加序、fp32、昆仑字节均冻结。slot predication因成熟主实现仍用if、无目标瓶颈且有NaN/Inf契约风险，本轮不做。
+- **筛选预注册**：原20桶全部是affected（含hidden≤2048，不按结果缩域），另加direct边界及hidden>522240 fallback control；5轮AB/BA，affected GM≥1.05、每轮≥1.03、每桶≥0.95，fallback control在0.97–1.03，0spill。完整9方法加E10逐位对比/最后有效slot/stride；未通过不发布。平台须8/8、每芯≥0.1、均值>26.917125才换TB，≥30为进一步投入信号。

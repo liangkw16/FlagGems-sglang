@@ -121,3 +121,5 @@ T65 E10平台预注册：8/8且每芯≥0.1、平均>16.10245才换TB；≥20.0�
 - T65 E10最新第10（此前第11），我方26.917125、榜首69.07705，差42.159925；华为差额贡献29.721875，占70.50%。即华为追到榜首同芯255.2878，均值也只有56.639，仍非Top1。继续核查成熟上游的hidden直线调度，先看exact E10 IR是否仍有无效单次循环，不直接试参。
 - T62 exact TB 5形状资源探针：生产56regs/0spill，非2幂72regs/0spill，列stride2 109regs/0spill；无足够证据支持寄存器压力突破，停止本轮streaming实现。标量PTX访存和layout转换只作线索，未计时不能判瓶颈。
 - T73 exact TB IR表明NVIDIA gate load仍位于persistent row循环内，最小外提候选进入独立预注册筛选；GCU工具链本身也有LICM，代理现象不代表目标芯必定缺优化。
+
+- T65 exact E10优化IR确认普通hidden的单次动态循环仍在，已为“仅移除hidden循环、超大hidden保留fallback”注册E11筛选；slot predication证据不足且引入额外无效路由NaN/Inf语义复杂度，本轮不做。原20桶全部纳入affected，不挑数据；平台预算剩1发优先保留给过筛的T65新结构。
