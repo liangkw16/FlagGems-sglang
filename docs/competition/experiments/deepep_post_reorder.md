@@ -11,7 +11,7 @@ team_best_stage: e10
 team_best: e10 26.917125x
 team_best_speedup: 26.917125
 sealed: no
-next: e12已提交15913待八芯终态；slot predication独立筛选中；不重试已提交候选或e11
+next: 15913等待15分钟后八芯仍queued，只读等待终态；主树E12修复，slot predication/e11关闭，不重发
 updated: 2026-09-16
 ```
 
@@ -289,3 +289,22 @@ updated: 2026-09-16
 - 证据位于 `artifacts/competition/t65e12-release-20260916/{preflight,submit,status-watch}.json`；status-watch为连续只读JSON记录流，以对应submission终态为准。exact release每路径60入口/54实际launch。
 - 独立性能方向只留slot route分支→masked数据流，基于修正dtype后的E12，保持hidden/token/slot循环、grid、BLOCK、launch参数、权重舍入与累加顺序；昆仑冻结E12。来源为SGLang未合并PR22426固定head `8ec0c4987bacdf8ad8d38006707add8c5acda207`，只提取掩码路由机制，不照搬Gluon/CUDA-only路径，也不借用其14x复合收益。
 - 预注册：先核对baseline IR保留路由分支且candidate真消分支，未成立即停；再保留原20primary桶及额外drop率/抵消/stride回归，5轮AB/BA，primary GM≥1.05、每轮≥1.03、每affected桶≥0.95、0spill才晋级。不是E11 hidden-loop重试；目标华为仍无同源开发通道。
+
+## 2026-09-16 13:32 slot predication 终态：机制成立，性能 NO-GO
+
+- 候选仅在独立目录 `artifacts/competition/t65-slot-predication-screening-20260916/`；generic SHA `be9ad2f593b4599069c9b0a4fc4b8b13b1e8e72c15a2a7b7af5138a18c0c3948`，tests SHA `3c2e40467bfd40c48ef4261c47383145b270097dbacb6a0c4017c33ec8bc8287`；昆仑冻结E12 `e13a7000b3c034acc1a5b6b797e74855bb0b268818fa6fd0549ad2bdb40bf43d`。逆变换AST证明仅route if→masked loads+select变化；plan SHA `e1be5f8701ea67f71eb9fd2bf0f47effb2274358c28e07f732ab5c6385c55073`，benchmark脚本 `d75793f1a6c8dc24850980a61f298b0ed66428e4946fab48e44564f385c023d0`。
+- **13/13回归通过**，generic/昆仑各91入口/85实际launch；baseline E12同13方法通过，88次输出逐位对照一致。原10方法/reference未变；新有限值18路由case与1顺序抵消case走原reference；另12非有限值case专门验证现有invalid-slot skip语义，明确记录literal reference会传播NaN，**这12项不计为literal-reference通过**。没有删失败样本或放松公差。
+- 三dtype T32/H4096/K4实际编译：TTGIR scf.if从1→0，三层动态循环不变；PTX中route load后的`setp.lt`→条件`bra`改成predicated weight/row load与`selp`保留acc。fp16/bf16总bra15→14、寄存器40不变；fp32 bra15→13、寄存器38→56，全部0spill。root按原始PTX逐项裁决后才开始计时，不能外推昇腾收益。
+- 完整 **32桶×5轮AB/BA**、160对原始计时，原20primary GM **0.9815065795**，5轮GM **0.980148–0.982863**，均未达到1.05/1.03门；最差T40/H4097/K4 fp16 drop100 **0.7618450742**，bf16 drop100 **0.7792973810**，drop30也约0.823/0.829。全部32桶与E12逐位一致、0spill；按原门关闭，不挑域，不提交。
+- receipt SHA `9dbb7a6ed624a26e558bc313966339c7bff510bab759962ab3c7b45d9a652b98`，verification.log `01a964803cd8eca6965eb9bb1e371ca6c5009f0ffabb99e1c92120e9ab849832`；IR probe `2bd215dab6fca1a978933fd3b640ce57299d1d4f533f0d0bf40fb3e8f80e0da7`，IR裁决 `7c23dc3b3de6ab2f275e4161bba06f1737a8333580b458a1bea34346746e291b`；benchmark `2625f31246389167fae9716639f2674eeaa7b1f6056cdaab9372f03ae43a62d4`。全部raw asm、JSON与CSV保留。远端`/tmp/flagos-t65-predication.ZcaUFk`，首段PID389223、次段PID389430，各timeout300/EXIT0，GPU已释放；主树仍E12，未建立性能候选intent/ZIP/上传。
+
+## 2026-09-16 KernelGen 与资源续查
+
+- 单次`generate_kernel(device=huawei)`于13:10:06–13:17:23返回，客户端未重试，服务内部报告attempts3；`passed=false`、`total_tests=0`、`NameError: torch is not defined`、全部计时null。实际覆盖未知，不把传输EXIT0当数值通过，也不把错误归到E10源码。
+- 返回torch_code与triton_code逐字节相同，独立reference丢失；返回结构只有已独立修复的weight cast，没有新性能机制。生成测试只含6shape×3dtype同dtype权重，遗漏mixed dtype/stride/关键边界；benchmark变量未定义。停止生成，不晋级、不额外GPU重测这个重复修正。
+- 原件 `artifacts/competition/t65-kernelgen-huawei-20260916-continue/`：request SHA `313e230a76078ebb593027f5b99a512db1cdd41161549fac18ffcf8a4a964c08`；raw response `ac9d22de54e1f935dc12d90f6ac8524c4311fcfc2ed72914d0c54683ba2deeee`；emitted source `5c307b64d21fac46fcbce091fa6e4141673269adcaa4b7e821d9f3b274a84777`，static review `c2c791226a24d59135cbe377487d35a1db80a8c069f6fd06b6319f49d62eb9c2`。
+- 已只读检查现有SSH主配置及3个显式Include，无遗漏的Ascend/Huawei/NPU别名或授权入口；未探测未知主机。增量资源审计 `artifacts/competition/t65-resource-followup-20260916/resource-followup.json` SHA `8dfe2c320ce9a4ed62211cd47c45ddc1b5aa3f6a7e5ecf572dc4047b6335d5d5`。仍缺昇腾同源诊断入口，不重新申请已正常的Token。
+
+## 2026-09-16 13:33:40 E12 等待状态：八芯 queued，尚无判决
+
+按submit返回的URL哈希绑定watch连续只读等待900秒后退出124，共49份快照；最后一份submission15913仍queued、0/8终态、validity=pending、均值null，额度 **21/30**。这不是算子失败或通过，不能报告完整八芯闭环完成；一次性intent保持submitted，禁止重新上传/提交。`artifacts/competition/t65e12-release-20260916/platform-latest.json` SHA `20479cd9a97afdef5262cb050bec1917d29538e931190602699be5e98060d06f`，完整watch流 SHA `d5757c1d04d871927c590c62e7424218cdb69ec34029ffb30aaba795796098a7`。本地GPU作业均已结束，后续只需取该submission终态；主树E12保持契约修复，不回滚至E10缺陷字节。
