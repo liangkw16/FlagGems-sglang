@@ -154,8 +154,9 @@ def _seqlens_expand_grouped(
     GROUP: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
-    rows = tl.arange(0, GROUP)
-    lanes = tl.arange(0, BLOCK).to(tl.int64)
+    flat = tl.arange(0, GROUP * BLOCK)
+    rows = flat // BLOCK
+    lanes = (flat % BLOCK).to(tl.int64)
     for group in range(
         tl.program_id(0).to(tl.int64),
         tl.cast(groups, tl.int64),
@@ -172,9 +173,9 @@ def _seqlens_expand_grouped(
         longest = tl.max(qo, axis=0).to(tl.int64)
         for p0 in range(0, longest, BLOCK):
             pos = p0 + lanes
-            mask = valid[:, None] & (pos[None, :].to(tl.int32) < qo[:, None])
-            values = tl.maximum(start[:, None] + pos[None, :].to(tl.int32), 0)
-            tl.store(out + base[:, None] + pos[None, :], values, mask)
+            mask = valid & (pos.to(tl.int32) < qo)
+            values = tl.maximum(start + pos.to(tl.int32), 0)
+            tl.store(out + base + pos, values, mask)
 
 
 def seqlens_expand(extend_seq_lens, seq_lens, total_len, max_q_len):
