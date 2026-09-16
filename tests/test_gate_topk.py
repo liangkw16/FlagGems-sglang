@@ -131,6 +131,168 @@ class GateTopkTest(unittest.TestCase):
         )
         self.check((x, 8))
 
+    def test_signed_zero_stable_indices_and_value_bits(self):
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            for cols, k in ((2, 1), (2, 2), (33, 32)):
+                x = torch.zeros((2, cols), dtype=dtype, device="cuda")
+                x[0, ::2] = -0.0
+                x[1, 1::2] = -0.0
+                expected_indices = torch.arange(
+                    k, dtype=torch.int32, device="cuda"
+                ).expand(2, k)
+                expected_values = x[:, :k].contiguous()
+                snapshot = x.clone()
+                for name, module in MODULES:
+                    with self.subTest(
+                        module=name, dtype=dtype, cols=cols, k=k
+                    ):
+                        values, indices = module.gate_topk(x, k)
+                        self.assertEqual(values.dtype, dtype)
+                        self.assertEqual(indices.dtype, torch.int32)
+                        torch.testing.assert_close(
+                            indices, expected_indices, rtol=0, atol=0
+                        )
+                        self.assertTrue(
+                            torch.equal(
+                                values.contiguous().view(torch.uint8),
+                                expected_values.view(torch.uint8),
+                            )
+                        )
+                        self.assertTrue(
+                            torch.equal(
+                                x.view(torch.uint8), snapshot.view(torch.uint8)
+                            )
+                        )
+
+    def test_packed_index_width_boundary(self):
+        # At 65505 columns, rounding to a 32-column tile gives N_PAD=65536.
+        # Its column-zero tag needs 17 bits and must not overlap value bits.
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            for cols in (65504, 65505, 65536, 65537):
+                x = torch.full((1, cols), -1.0, dtype=dtype, device="cuda")
+                x[0, 0] = 1.0
+                snapshot = x.clone()
+                for name, module in MODULES:
+                    with self.subTest(module=name, dtype=dtype, cols=cols):
+                        values, indices = module.gate_topk(x, 1)
+                        self.assertEqual(values.dtype, dtype)
+                        self.assertEqual(indices.dtype, torch.int32)
+                        torch.testing.assert_close(
+                            indices, torch.zeros_like(indices), rtol=0, atol=0
+                        )
+                        self.assertTrue(
+                            torch.equal(
+                                values.view(torch.uint8),
+                                x[:, :1].contiguous().view(torch.uint8),
+                            )
+                        )
+                        self.assertTrue(
+                            torch.equal(
+                                x.view(torch.uint8), snapshot.view(torch.uint8)
+                            )
+                        )
+        # Wide keys must still keep stable ties and indices above 65535.
+        x = torch.full((1, 65537), -1.0, dtype=torch.float32, device="cuda")
+        x[0, 0] = x[0, 1] = 1.0
+        x[0, -1] = 2.0
+        for name, module in MODULES:
+            with self.subTest(module=name, wide_ties=True):
+                values, indices = module.gate_topk(x, 3)
+                torch.testing.assert_close(
+                    indices,
+                    torch.tensor(
+                        [[65536, 0, 1]], dtype=torch.int32, device="cuda"
+                    ),
+                    rtol=0,
+                    atol=0,
+                )
+                torch.testing.assert_close(
+                    values, x[:, [65536, 0, 1]], rtol=0, atol=0
+                )
+
+    def test_nan_sign_payload_padding_and_stable_indices(self):
+        # Sort all NaNs as one numeric class, then by smaller column.
+        # Compare values as bytes so canonicalizing the sorting key cannot
+        # silently canonicalize a selected NaN sign or payload in the output.
+        formats = (
+            (torch.float16, torch.int16, 16, 0x7E01, 0x7E02, 0x7C00, 0xBC00),
+            (torch.bfloat16, torch.int16, 16, 0x7FC1, 0x7FC2, 0x7F80, 0xBF80),
+            (
+                torch.float32,
+                torch.int32,
+                32,
+                0x7FC00001,
+                0x7FC00002,
+                0x7F800000,
+                0xBF800000,
+            ),
+        )
+        for dtype, int_dtype, width, nan1, nan2, inf, minus_one in formats:
+            sign = 1 << (width - 1)
+            negative_nan1 = nan1 | sign
+            negative_nan2 = nan2 | sign
+            mixed = [negative_nan2, inf, nan1, inf | sign, nan2, negative_nan1]
+            cases = [
+                ("singleton", [negative_nan1], 1, [0]),
+                ("mixed_k1", mixed, 1, [0]),
+                ("mixed_k3", mixed, 3, [0, 2, 4]),
+            ]
+            for cols, nan_columns in ((31, (0, 15, 30)), (33, (0, 30, 32))):
+                raw = [minus_one] * cols
+                raw[1] = inf
+                raw[2] = inf | sign
+                for col, payload in zip(
+                    nan_columns, (negative_nan2, nan1, nan2)
+                ):
+                    raw[col] = payload
+                cases.append((f"tail{cols}_k1", raw, 1, [nan_columns[0]]))
+                cases.append((f"tail{cols}_k3", raw, 3, list(nan_columns)))
+            for case_name, raw, k, expected_columns in cases:
+                signed_raw = [
+                    value - (1 << width) if value & sign else value
+                    for value in raw
+                ]
+                x = torch.tensor(
+                    [signed_raw], dtype=int_dtype, device="cuda"
+                ).view(dtype)
+                snapshot = x.clone()
+                expected_indices = torch.tensor(
+                    [expected_columns], dtype=torch.int32, device="cuda"
+                )
+                expected_values = x[:, expected_columns].contiguous()
+                for name, module in MODULES:
+                    with self.subTest(
+                        module=name, dtype=dtype, case=case_name
+                    ):
+                        values, indices = module.gate_topk(x, k)
+                        self.assertEqual(values.dtype, dtype)
+                        self.assertEqual(indices.dtype, torch.int32)
+                        torch.testing.assert_close(
+                            indices, expected_indices, rtol=0, atol=0
+                        )
+                        self.assertTrue(
+                            torch.equal(
+                                values.contiguous().view(torch.uint8),
+                                expected_values.view(torch.uint8),
+                            )
+                        )
+                        self.assertTrue(
+                            torch.equal(
+                                x.view(torch.uint8), snapshot.view(torch.uint8)
+                            )
+                        )
+
+        # Reloading selected values must never launch for an impossible k.
+        # Match the existing vendor precondition, including empty rows/cols.
+        for rows, cols, k in ((1, 0, 1), (0, 0, 1), (1, 1, 2), (0, 1, 2)):
+            x = torch.empty((rows, cols), dtype=torch.float32, device="cuda")
+            for name, module in MODULES:
+                with self.subTest(
+                    module=name, invalid_shape=(rows, cols), k=k
+                ):
+                    with self.assertRaises(AssertionError):
+                        module.gate_topk(x, k)
+
 
 RELEASE_REQUIRED_TESTS = [
     "GateTopkTest.test_dtypes_and_k",
@@ -138,6 +300,9 @@ RELEASE_REQUIRED_TESTS = [
     "GateTopkTest.test_rows_and_grid_edges",
     "GateTopkTest.test_ties",
     "GateTopkTest.test_special_values",
+    "GateTopkTest.test_signed_zero_stable_indices_and_value_bits",
+    "GateTopkTest.test_packed_index_width_boundary",
+    "GateTopkTest.test_nan_sign_payload_padding_and_stable_indices",
 ]
 
 
