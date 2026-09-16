@@ -5,12 +5,12 @@ task: 74
 operator: seqlens_expand
 batch: 5
 validity: valid
-platform: e14/16386六芯过昆仑判负(不可能有效),燧原回调中;天数67.82平台兑现flat轴;TB仍E4 20.177775
+platform: evaluating(e14/sub16386,pending,6过1失败1待回；e12/e13已invalid_correctness；valid指TB E4)
 candidate_stage: e14-kunlun-flat-submitted
 team_best_stage: e4
 team_best_speedup: 20.177775
 sealed: no
-next: 昆仑1D case8段边界数值根因待目标IR/最小复现;天数67.82已证,有效化=E12 generic+修好昆仑;燧原回调只读跟踪
+next: 用户要求不再新提交；暂停group轴，保留E4最佳；E14仅记录已观察pending，不重发
 updated: 2026-09-17
 ```
 
@@ -385,6 +385,13 @@ updated: 2026-09-17
 ## 2026-09-17 00:1x E13 终态补记（sub 16356）与 E14 中间态（sub 16386）
 
 - **E13 终态：6/8 无效**。燧原 `执行超时 (3630s/3600s)`，R 状态子进程（超时墙上界，未获得数值裁决，暂不能区分 kernel 长运行 vs 评测窗；与昆仑崩溃族 1830s 指纹不同）；昆仑 `uni_sram OutOfResources: arith.cmpi`（4×32 二维分组形态，即 E14 要修的编译错）。六芯通过：天数 60.7254 / 沐曦 9.481 / 海光 27.2292 / 华为 8.22 / A 24.1268 / B 18.3906。
-- **E14 中间态（00:08 观察，仍在评）**：六芯通过——天数 **67.816（较 E13 +7.1、较 E4 TB 时代 59.5 +13.9%）**，**flat 工作映射 generic（E12 字节）在天数平台兑现**，距榜首 83.14 / 次优带 62-77 已进入次优带；沐曦 10.1148 / 海光 26.3862 / 华为 7.7114 / A 23.08 / B 18.391。昆仑已判负（case8 数值 66.9% 失配，23:24 已记）；燧原 waiting_callback 未回。**昆仑已终判 ⇒ E14 数学上不可能有效**，无论燧原结果；燧原回调只读跟踪，不据此行动。
+- **E14 中间态（00:08 观察，仍在评）**：六芯通过——天数 **67.816（较 E13 +7.1、较 E4 TB 时代 59.5 +13.9%）**，天数执行的是冻结的E12 generic，该读数不能归因于E14仅昆仑的flat改动，距榜首 83.14 / 次优带 62-77 已进入次优带；沐曦 10.1148 / 海光 26.3862 / 华为 7.7114 / A 23.08 / B 18.391。昆仑已判负（case8 数值 66.9% 失配，23:24 已记）；燧原 waiting_callback 未回。**昆仑已终判 ⇒ E14 数学上不可能有效**，无论燧原结果；燧原回调只读跟踪，不据此行动。
 - 失败详情快照：`artifacts/competition/pair-grouped-platform-20260916/` 内 e13/e14 partial-status JSON 已含上述 raw_result；本条为账本层补记，无新额度消耗。
-- 对今日窗口的含义：E12 generic（天数 67.8 已证）+ 修好的昆仑 vendor 是 T74 唯一可见的有效化路径；昆仑 1D 数值根因（case8 尾部 actual [5624,2822,572] vs expected [5624,5625,5626] 的段边界形态）需目标 IR/最小复现，不盲发。
+- 对今日窗口的含义：E12 generic天数已通过，昆仑仍需根因修复，燧原尚无本候选终态；不能据六芯通过推定修好昆仑即可八芯有效；昆仑 1D 数值根因（case8 尾部 actual [5624,2822,572] vs expected [5624,5625,5626] 的段边界形态）需目标 IR/最小复现，不盲发。
+
+
+## 2026-09-17 00:05 原始状态字段与停止提交
+
+- 用户明确“不再新提交”，本次只记录已经完成的GET观察。`validity: valid` 表示历史TB E4仍在榜，不表示E14有效；保留E4 20.177775x。
+- 观察 `2026-09-17T00:05:18.615601+08:00`：E12/sub16316和E13/sub16356均 `status=completed`、`validity=invalid_correctness`、terminal8/passed6；燧原completed/false，昆仑编译失败。E14/sub16386为 `status=evaluating`、`validity=pending`、terminal7/passed6；昆仑数值失败、燧原waiting_callback，平台next_status_query_at=01:21:17。三者average_speedup=null、is_team_best=false；另六芯通过。
+- 昆仑已失败意味着本次E14不满足全芯正确要求，但平台总状态仍pending；不伪写completed或有效均分。00:05摘要未保存原始完整响应，也不能从摘要重建原件。上节00:08补记是另一会话观察，不能把旧partial文件未经核对地当作它的终态原件。

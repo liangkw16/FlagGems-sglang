@@ -17,12 +17,12 @@ task: 71
 operator: gelu_tanh_and_mul
 batch: 5
 validity: valid
-platform: completed(16462,e10,8/8,2.781658x新TB;燧原2.04/昆仑0.87)
+platform: completed(e10/sub16462,8/8,2.78165833x新TB；e9/sub16473八芯2.78134167x未超过)
 candidate_stage: e10
 team_best_stage: e10
-team_best_speedup: 2.781658
+team_best_speedup: 2.78165833
 sealed: no
-next: e9 native-tanh平台关闭(16473,燧原1.88未动);宽度/warps/tanh轴全封;燧原2.04 vs 全场3.7-4.1结构差与榜首5.37需新证据
+next: 用户要求不再新提交；保留E10最佳，E9未提分；第15，追平Top1需92.97%
 updated: 2026-09-17
 ```
 
@@ -162,8 +162,14 @@ vs 1.14（4.6x）——两芯均为结构性差距。TB 保持 e1 2.6265。
 - `artifacts/competition/t71-group4-screening-20260916/release/verification.log` SHA-256 `76141549809231875d8e0d79276a1f504fda614250f6f70fad791f059cc6ed81`。
 - 平台目标沿用预注册：全部八芯正确且每芯≥0.1，均分>**2.712425**且Enflame>**1.88246667**。只提交一次；失败定位，不重复旧width/warps/native-tanh轴，也不把代理倍数当平台均值倍数。
 
-## 2026-09-17 00:0x E10/E9 平台终态补记（sub 16462 / 16473）：group4 新 TB 2.7817；native-tanh 轴平台关闭
+## 2026-09-17 00:02 E10/E9 平台终态对账（sub 16462 / 16473）
 
-- **E10 group4（sub 16462，`0d0cedb`，11:5x 发射）**：8/8 valid，均值 **2.781658 新 TB**（>E8 2.712425）。燧原 **2.041**（+8.5%，短行分组形态部分兑现）、**昆仑 0.8653**（0.30→0.87，+186%，昆仑 no-loop vendor 形态在平台窗口首次大规模兑现）、天数 5.1151 / 沐曦 2.1009 / 海光 3.9021 / 华为 1.9423 / A 3.1259 / B 3.1607。
-- **E9 native-tanh（sub 16473，`8c2d6ba`，11:5x 发射）**：8/8 valid，均值 2.781342 ≈ E10（-0.0003）。**燧原 1.8795 ≈ E8 1.8825（±0.2%）**——FlagGems 式 native tanh 解析链（活跃 backend 探测 + builtin 过滤 + 编译探针 + exp 恒等式兜底）在 GCU 平台未产生增益：解析未命中（GCU Triton 无带 builtin 标记的 tanh extern）或 native tanh 非 3.7-4.1 聚集的缺口形态。轴按平台证据关闭；解析链基础设施（防跨后端符号污染 + 防 stub 陷阱）保留在 `8c2d6ba` 的 vendor 字节中供后续题复用。
-- 同窗口读数对比注意：E9/E10 相邻发射（间隔 ~3 分钟），燧原 1.88 vs 2.04 的差为同窗可比，分组形态增益真实；昆仑 0.87 在两发同读，窗口一致。
+- **E10 group4**：source/verification `0d0cedb8a7b5e7d7d2d6604d1ae681a53e6bbd6c`，于 **2026-09-16 23:52:42** 提交16462、daily_seq19；nonce `fe883a4456be47aae2ccd75de7992726` 为submitted，上传和正式POST各一次，远端9040bytes与ZIP SHA完全匹配。首轮预检IAM GET超时在创建intent之前，第二轮成功后仅提交一次。
+- 8/8 valid，均分 **2.78165833，新TB +2.55245%**。逐芯 tianshu5.11513333 / muxi2.10086667 / enflame2.041 / haiguang3.90206667 / kunlunxin0.86533333 / huawei1.94226667 / card_a3.12593333 / card_b3.16066667。燧原相对E8 1.88246667提高约8.42%；昆仑字节冻结E8，0.30273333→0.86533333不能归因于本次group4或新no-loop改动。
+- **E9 native-tanh** 由并行会话于 **2026-09-16 23:59:59** 提交16473、daily_seq21；00:02:31只读GET确认8/8 valid、**2.78134167**，未超过E10。燧原1.87953333，未改善E8水位；本次平台数据不含实际命中哪个tanh分支的证据，不将解析未命中或目标符号缺失写成已证事实。
+- 两次提交相隔 **7分17秒**。E10燧原2.041高于E9的1.87953333是正向观察；缺少目标芯重复配对计时，不能只凭相邻提交排除窗口影响或证明稳定收益。保持E10团队最佳，不继续重投。
+- 00:05榜单第15，Top1 c2flow **5.36765**，追平需 **92.97%**。用户明确停止新提交。
+- `artifacts/competition/pair-grouped-platform-20260916/t71-e10-preflight-v2.json` SHA-256 `255b20c6ae8fb1a6c2dd70b7b0e2feb30ec9333cc5f91cad9845b88a67cf4ad5`。
+- `artifacts/competition/pair-grouped-platform-20260916/t71-e10-submit.json` SHA-256 `f39bebd73d0b69380d3637ae750ba969c35689b67a19f422d0bab26627961909`。
+- `artifacts/competition/pair-grouped-platform-20260916/t71-e10-final-status.json` SHA-256 `b53da825a4ef428dc5c64e5c6a5151b89d87ae99553f7a9e908b6ec85571b936`。
+- 完整status观察00:00:22.405134 +08，按submission_id16462提取E10终态；文件同时包含当时尚在评测的16473，不能把文件名当作所有记录均终态。该status确认新日额度30/30、已用0。

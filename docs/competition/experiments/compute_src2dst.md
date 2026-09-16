@@ -14,13 +14,13 @@ task: 61
 operator: compute_src2dst
 batch: 5
 validity: valid
-platform: completed(15835,e11,8/8,2.138475x新TB;e10/16468 metax wrapper-cast平台负向沐曦0.95)
+platform: completed(e10/sub16468,8/8,2.0929x；TB仍E11/sub15835,2.138475x)
 candidate_stage: e11
 team_best_stage: e11
 team_best_speedup: 2.138475
 sealed: no
-next: 保留E11团队最佳；Ascend cap/tail候选仅隔离留档，代理未提速；等待Ascend同源运行证据
-updated: 2026-09-16
+next: 用户要求不再新提交；保留E11团队最佳和已归档候选，只记录现有结果
+updated: 2026-09-17
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -327,9 +327,9 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - `benchmark.json` SHA-256 `903ab68f3862056bf44a7171475a2139c324deff34e4958e52cb7da5b649ccd4`。
 - `run.log` SHA-256 `d992f044e551404b96b9f1ad3dff3d67b1e8243f70caeb92caa2c21f12d9de8c`。
 
-## 2026-09-17 00:0x E10 平台终态补记（sub 16468）：metax wrapper-cast 形态平台负向
+## 2026-09-17 00:02 E10 平台终态补记（sub 16468）：metax wrapper-cast 形态平台负向
 
-- E10（`6b16ac12`，metax vendor = e7 int32 形态原样：wrapper `.to(torch.int32)` 降位 + 平铺 i32 scatter BLOCK1024）实际已按 12 发授权序列于 11:5x 唯一提交（sub 16468，额度 1 发）。与本节上文"本轮不 preflight E10"为并行会话时序重叠，结果如下。
+- E10（`6b16ac12`，metax vendor = e7 int32 形态原样：wrapper `.to(torch.int32)` 降位 + 平铺 i32 scatter BLOCK1024）由并行会话于 2026-09-16 23:57:19 唯一提交（sub 16468，daily_seq20）。与本节上文"本轮不 preflight E10"为并行会话时序重叠，结果如下。
 - 平台 8/8 valid：天数 3.0042 / **沐曦 0.9464（vendor 被选中，vs E9 generic 1.177 → -19.5%）** / 燧原 4.3924 / 海光 1.951 / 昆仑 1.363 / 华为 1.6554 / A 1.6494 / B 1.7814；均值 **2.0929 < TB 2.138475**（E11）。
 - 判定：wrapper-cast 平铺 i32 形态在沐曦为**平台实证负向**——沐曦缺口（1.18 vs 榜首 2.92-3.36）不是 int64 寻址税，轴关闭；与同日 NVIDIA 代理负结果（0.825-0.918 桶）方向一致，代理结论本轮得到平台背书。
 - 跨芯知识：e7 int32 形态是燧原专属解（GCU DMA store 不支持 load 索引寻址的替代），**不可跨芯外推**；沐曦对 wrapper 端 `.to(int32)` 设备端转换敏感（可测的额外设备工作）。

@@ -5,13 +5,13 @@ task: 67
 operator: fill_padded_rows
 batch: 5
 validity: valid
-platform: completed(e4,8/8,4.1965x;固定块轴零增益,重编译假说在本题证伪)
-candidate_stage: e4
+platform: completed(e6/sub15376,8/8,4.295475x；TB仍E2 4.2969)
+candidate_stage: e7-negative-safe-paused-unsubmitted
 team_best_stage: e2
 team_best_speedup: 4.2969
 sealed: no
-next: 固定BLOCK轴关闭;下一轴=num_warps/过特化(PR扫描模式,华为1.9vs17.5缺口形态未破);TB e2 4.2969 守
-updated: 2026-09-15
+next: 用户要求不再新提交；E7已过发布门但预检被间隔拦下，无intent/上传/提交，保留验签包
+updated: 2026-09-17
 ```
 
 ## 契约与范围
@@ -203,3 +203,37 @@ updated: 2026-09-15
   行谓词三连阴——华为 9 倍缺口（金狐狸 45.6 证明可及）需要结构级
   新证据（对照其 tianshu 20.7/燧原 4.7 同步领先，疑整 kernel 形态
   不同），本季不再投便宜探针。TB 保持 e2。
+
+## 2026-09-16 23:40 负计数修复与跨行布局首轮
+
+- 题面只有单元素整数约束，无非负下界；reference负数遵循Python切片。固定E2 `a9c06b9f5e0bca8df598ad07e6e95d9cd7662962` 真实GPU复现：n=-1在连续/stride2输入分别67/68元素错；n=-rows/-rows-1四个对照通过，六次非空真实入口/JIT。
+- 必要修复单独commit `600ef72ab7489100317a725ee96ad0a3a918ecb3`：generic与Ascend都恢复E2结构、device内scalar if归一化负起点；不host读取计数，maskedload仍在分支外。5方法双源码screen全过，各63入口/61JIT；源码SHA `b33d17b997e3072cb29029a965a1ee7424ba9f2fb45aa859b436b464380aa1f1`，测试SHA `1ed81b0d7224061d16a944b577e69f0b9d11fb17044c247c453caa4f66bbba0e`。generic改变属于契约修复，不能描述为仅vendor性能改动。
+- 新结构依据本地官方FlagGems a7620cc1 Ascend fill/masked_fill的全局offset填充/选择，将输出展平跨行合并。以修正版600ef72a为性能对照，Ascend BLOCK1024、全局gridstride、i64地址、N_COLS常除数；不是E5旧逐行constexpr轴。
+- 首轮全域flat：8方法正确性全过，包括负计数、跨行tail、强制grid1/2及CUDA graph内device-count重放。冻结18主桶+6宽行对照、五轮；主mean **1.8817546725**、GM **1.4365878134**，但最差主 **0.6097161030**、控 **0.8677507526**，未达0.97/0.95门，明确NO-GO，不能拿mean晋级。
+- 仅一轮后续双路径候选：rows≥4096且cols≤64走flat，其余走修复E2。保留全部24个旧桶，包括所有失败点；另加4095/4096/4097×63/64/65和31/48列边界。此轮门在计时前冻结，若仍回退就停止结构轴，仅保留必要正确性修复。Ascend目标runtime未验证。
+- `artifacts/competition/t67-flat-20260916/old-regression/reproduction.json` SHA-256 `c8ec704298c78d036590e3b4228c7bdfbae3c5519ad517e56b7c2a05b8a0fad3`。
+- `artifacts/competition/t67-flat-20260916/screening/benchmark.json` SHA-256 `cacfca637e9e27be9069eae65d2748ed27262cb1f43cc92f9d74da51197a3b97`。
+- `artifacts/competition/t67-flat-20260916/screening/ir-decision.json` SHA-256 `7dc3f7964296b21a44e213a007b12d78e4b082931e1d5ad1ea9c9eedc9d97338`。
+
+## 2026-09-16 23:48 保护版仍失败，仅发布必要正确性修复
+
+- 保留原24桶并补13边界，共37桶×5轮；8旧方法加边界方法共9，正确性全过。主mean **1.95461**、最差主 **0.99095**、控 **0.97454**，但新边界 **4097×63=0.90850<0.97**（邻接4096×63=1.10348），未过冻结门。停止本轮flat结构轴，不调门、不删case。
+- 正式vendor/test已恢复独立正确性commit `600ef72ab7489100317a725ee96ad0a3a918ecb3` 的5方法字节；E7 negative-safe只验证负切片语义修复，不引用任何flat速度作为提交依据。平台需八芯正确并各≥0.1；团队最佳分独立记账，必要修复不以代理提速为前提。
+- 同轮最新历史状态E6/sub15376均分4.295475，TB E2仍4.2969；状态 `artifacts/competition/pair-grouped-platform-20260916/t67-before-parallel-status.json` SHA-256 `16ab1c8cc5560bdf1df0e9595f3b32e4ef80057606141065ca484a6e7460aeca`。
+
+## 2026-09-16 23:52 E7 negative-safe 发布门通过
+
+- source/verification commit `600ef72ab7489100317a725ee96ad0a3a918ecb3`，仅E2结构+必要device负切片归一化，所有flat/guard实现撤出正式源码。generic及Ascend成员同SHA `b33d17b997e3072cb29029a965a1ee7424ba9f2fb45aa859b436b464380aa1f1`；测试SHA `1ed81b0d7224061d16a944b577e69f0b9d11fb17044c247c453caa4f66bbba0e`。
+- exact release **5/5**，0fail/error/skip/xfail；两源码各63入口/61真实JIT（合126/122）。远端 `/tmp/flagos-t67-negative-release.53ApWy` PID398199、EXIT0；NVIDIA RTX5070Ti / Torch2.13.0+cu130 / Triton3.7.1。主任务再次verify_receipt、CRC、Git/成员及ZIP验签通过，源测试已恢复commit字节。
+- ZIP `artifacts/competition/fill_padded_rows/e7-negative-safe-600ef72/fill_padded_rows.zip`，5106bytes，SHA-256 `6a6fa9fb51da18a0659f5021fa3e817f846593b0c7374e1b9c2b548e26707997`，成员fill_padded_rows.py/fill_padded_rows_ascend.py。目标芯未验证，KernelGen本轮共享服务无完整回报仅作通道限制，不记Ascend失败或成功。
+- `artifacts/competition/t67-flat-20260916/release/verification.json` SHA-256 `72aee23ed6f4ffb661d05508a574a9d152d40b7f32d4b419a6b48c7de8b62a71`。
+- `artifacts/competition/t67-flat-20260916/release/verification.log` SHA-256 `b6a6191ad051c115c40f12da1864792f644b548128e8475dc0d9ce1c1ae15389`。
+- `artifacts/competition/t67-flat-20260916/release-audit.json` SHA-256 `a5018d9779595b09b17b1806d3cb28b002c49e362a79237137c3b54e0d573b8a`。
+- 本次修复晋级要求八芯正确并各≥0.1，修复本身不要求比E2提速；团队最佳只有均分超过4.2969才更新。只提交一次，若目标编译/正确性失败按实际根因处理，不携带任何被淘汰的flat性能结论。
+
+
+## 2026-09-17 00:05 停止提交，保留 E7
+
+- E7预检仅GET，返回 `error: submission interval has 67s remaining`（退出码2），未生成nonce/intent、未上传、未正式提交。随后用户明确“查看进度，不再新提交”，不再重跑preflight，也不因跨日额度恢复而自动发射。
+- `artifacts/competition/pair-grouped-platform-20260916/t67-e7-preflight.stderr` SHA-256 `0fe93921dd1f1a0bbd77aedf0adf5b3c1a35e4e0f611b6922dcad15ef8f20b72`；对应JSON输出为空，不能当成功预检回执。
+- 00:02:31只读记录仍以E6/sub15376为最新，4.295475x；00:05榜单TB E2为4.2969x、第11，Top1金狐狸12.463525x，追平需190.06%。E7源/测试/ZIP与5方法回执保留，目标芯未验证；两版flat均未晋级。

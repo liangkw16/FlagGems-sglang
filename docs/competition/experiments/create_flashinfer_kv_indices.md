@@ -5,13 +5,13 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: completed(e12,8/8,190.674x<TB;沐曦60.8负向,metax2048轴证伪)
-candidate_stage: e12
+platform: completed(e17-vendor-mix/sub16442,8/8,197.5424375x；未超TB E8)
+candidate_stage: e17-validated-vendor-mix-complete
 team_best_stage: e8
 team_best_speedup: 199.69521875
 sealed: no
-next: metax splits2048证伪(沐曦98.5→60.8大负);TB e8 199.70守;下一轴=燧原BLOCK1024/warps1、华为warps8或ps0 constexpr(单变量)
-updated: 2026-09-15
+next: 用户要求不再新提交；E17未超E8，停止重复组合；保留199.69521875 TB
+updated: 2026-09-17
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -451,3 +451,38 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   25.4 仍在升）**；华为 66.86（warps8 vendor 被选，vs e8 的 73.0 →
   **warps8 轴无效**）；天数 519.0 / 海光 324.4 / A 252.7 / B 302.4。
 - 后续：燧原 8192 档值得追发（需昆仑健康窗+新 ZIP）；华为 warps8 关闭。
+
+## 2026-09-16 23:35 实时对账与空分片轴止损
+
+- 23:16:15实时记录明确：E15/sub **15451** 为8/8、均分 **194.127**，Enflame **25.39675**；E16/sub **15453** 为7/8，昆仑collection期0items / UNKNOWN ERROR -299，Enflame25.4395、Huawei66.86375。订正前节“两发都7/8”的历史汇总，现有终态按ID分别记账；TB仍E8 **199.69521875**。
+- 首候选仅将Enflame BLOCK4096却按512算splits的分母对齐4096。attempt1正确性6+6全过，零spill门在计时前拦下：baseline/candidate均255regs/2048shared/100spill，kernel AST及去调试信息后的TTIR/TTGIR/PTX一致。确认是E15既有spill后，在未有计时结果前重登记资源门“相对baseline不增加且代码体一致”，其他24桶/性能门不变。
+- attempt2保留完整24桶、5轮：affected GM **1.27484**、control1.0，但合法long-head **0.3125**、tail **0.2910**、gap **0.6139**、all-zero+gap **0.4937**，未达每桶≥0.90，NO-GO。省空CTA同时削弱head/gap/tail拷贝并行，不能只看池数据主桶。
+- 第二且最后结构改为按max(pool_width,out.numel())/4096估计splits，仍保持原24桶/11affected分组，不能删已经回退的保留区。attempt3 affected GM **1.0467595**、control **1.000865**，head1.25/tail1.4恢复，但long-gap **0.53333**、all-zero+gap **0.61418**仍失败：全局output numel会在batch4每行重复高估，grid从(4,8)膨胀到(4,32)/(4,27)。停止此grid轴。两轮6+6正确性皆过、资源与E15相同；未release/ZIP/preflight/提交。正式6路径已恢复开始ca112dbd字节，无候选残留。
+- `artifacts/competition/t63-splits-align-20260916/remote-attempt2/screening.json` SHA-256 `702ba8255598414934d14e57321344a1c8c3be2465280c7b37a007bad8daa573`。
+- `artifacts/competition/t63-splits-align-20260916/remote-attempt3/screening.json` SHA-256 `abff28cfccbb52e1180c3a8c9f9451a99a367b581bedbe7904e81ede30638a9c`。
+- 独立后续仅审计逐芯组合：其余芯取E8、Enflame取已平台有效E15原字节，不含新splits/Metax2048/Ascendwarps8。若同组合从未提交且完整发布门通过，可单发验证；理想均值增量(25.39675−6.175)/8=**2.40271875**，约到202.09794，仅为保持他芯不变的估算，不是测得成绩。
+
+## 2026-09-16 23:42 E17 已验证逐芯组合发布门通过
+
+- 独立审计15个实时submission与15份submitted intent逐一匹配，16个历史ZIP（含未投S0）中无同字节或AST等价成员组合。相对E8只将Enflame替换已平台有效E15的BLOCK4096原字节；相对主树恢复Metax E8、删除Ascend E16，generic/Kunlun保持E8。不是失败grid候选，也不是注释载体重投。
+- source/verification commit `8e92c7bc68c161aa6405f6ec316c8ea597b93ea7`；沿用6方法覆盖分片边界与长head/gap/tail，exact release **6/6**、0fail/error/skip/xfail，四源码各37入口/35真实JIT。所有成员取对应已通过芯的原始字节，因此不重做性能扫描；主任务verify_receipt及ZIP/Git/CRC再次验签通过。
+- ZIP `artifacts/competition/create_flashinfer_kv_indices/e17-validated-vendor-mix-8e92c7b/create_flashinfer_kv_indices.zip`，22070bytes，SHA-256 `b45e1c619c2a7634d124b1fa4d3ca519dea7b923eb26e8093c0a808dedc30ada`。成员create_flashinfer_kv_indices.py及_enflame/_kunlunxin/_metax.py，不含Ascend。测试SHA `2b48d0fb97beaddb778e69160bc0159cba3f12d5ae15785ef9150bf4fb71a794`。
+- 平台晋级：八芯正确且每芯≥0.1、均分>**199.69521875**；同时分开比较Enflame对E15 **25.39675**、Metax对E8 **87.29025**，不把其他芯窗口变化算成组合必然收益。条件估算 **202.0979375** 不是预测承诺。只发一次，无改善不重复同组合。
+- `artifacts/competition/t63-carrier-20260916/local-zip-audit.json` SHA-256 `942867145c58fa1410b8aeb62f58a203580aa10186f24e60f30581ab3b4b4bb0`。
+- `artifacts/competition/t63-carrier-20260916/intent-audit.json` SHA-256 `3f7dc610c0c9e26274445c923f2728d92e0163ae099e7b1c1a3c51adb020a8f7`。
+- `artifacts/competition/t63-carrier-20260916/combination-evidence.json` SHA-256 `e087616d33a77d96b5c91c241c85905a83996b9975dc16e9991d78c2fd9b69d8`。
+- `artifacts/competition/t63-carrier-20260916/release/verification.json` SHA-256 `5137e11e60a745aa5411965c56b15d8ec0f25a70d7b28af6fecced644c8b3c9e`。
+- `artifacts/competition/t63-carrier-20260916/release/verification.log` SHA-256 `a10f053519de4248378c56341df3d7161e395da238f694d9a9a7d65c10d96ae3`。
+
+## 2026-09-16 23:45 E17 单次提交
+
+- submission **16442**，`2026-09-16T23:45:15`，daily_seq18，nonce `1ff2bab2042a94a2435c0db8a7a78020` 状态submitted；upload/POST各一次。远端ZIP22070bytes及SHA完全匹配，remote_verification=verified。实时preflight提交前额度13/30；下一次账号提交不早于23:47:15。
+- `artifacts/competition/pair-grouped-platform-20260916/t63-e17-preflight.json` SHA-256 `4ae4046068d93fbb53b3fe92e65279b944cac9f76b9d225d3faaedc395c964dc`。
+- `artifacts/competition/pair-grouped-platform-20260916/t63-e17-submit.json` SHA-256 `76744cd09b959abfb8859dca3c0a7bb0458be51eb222012425376097d65a2428`。
+
+## 2026-09-16 23:48 E17 终态：八芯有效但未超TB
+
+- 观察 `2026-09-16T23:46:55.671631+08:00`，submission **16442** completed、8/8有效，均分 **197.5424375**，相对E8 **-1.078033%**，保留E8 **199.69521875**；剩余额度 **12/30**。
+- 逐芯 tianshu 507.05425 / muxi 92.95275 / enflame 23.496 / haiguang 322.10875 / kunlunxin 8.06675 / huawei 72.6185 / card_a 252.78 / card_b 301.2625。
+- Metax恢复后92.95275，Enflame23.496较E15 25.39675回落；天数507.05425低于E8 554.12725。组合的条件估算未兑现为总分增量，不将同字节芯片差异归因于未改算法，也不重复同组合。
+- 终态 `artifacts/competition/pair-grouped-platform-20260916/t63-e17-final-status.json` SHA-256 `564382f6ddfed2f6ade665ca81fa8e84bd19fb262cd01811b6f8140177b94899`。

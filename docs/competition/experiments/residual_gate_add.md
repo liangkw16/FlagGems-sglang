@@ -79,13 +79,13 @@ task: 73
 operator: residual_gate_add
 batch: 5
 validity: valid
-platform: evaluating(e12-group4/sub16400；TB仍E6 4.0993125x)
-candidate_stage: e12-enflame-group4-submitted
-team_best_stage: e6
-team_best_speedup: 4.0993125
+platform: completed(e12-group4/sub16400,8/8,4.1080625x新TB；排名7)
+candidate_stage: e12-enflame-group4-complete
+team_best_stage: e12-enflame-group4
+team_best_speedup: 4.1080625
 sealed: no
-next: E12已单次提交16400，等待燧原及八芯结果；其他题并行，不重发相同候选
-updated: 2026-09-16
+next: 用户要求不再新提交；保留E12新TB，第7且追平Top1需56.22%；停止group梯度
+updated: 2026-09-17
 ```
 
 ## 契约与实现（S0）
@@ -241,3 +241,11 @@ card_b +0.31、tianshu +0.09；muxi/card_a 我方领先。燧原窗口摆动实�
 - submission **16400**，`2026-09-16T23:26:33`，daily_seq17，nonce `fd9a1c22005ce822d6c9654e00156891` 状态submitted，upload/POST各一次。远端ZIP13188bytes及SHA与本地完全匹配，remote_verification=verified；提交前实时额度14/30，提交后实时status待回。
 - `artifacts/competition/pair-grouped-platform-20260916/t73-e12-preflight.json` SHA-256 `79f0e0b2f670ba66d7a2a6c6d4fa6ef7769bb4f0db64072339a87c86e7bb8f0d`。
 - `artifacts/competition/pair-grouped-platform-20260916/t73-e12-submit.json` SHA-256 `949fd33c39de60243a689be83170119a003d9cf132e6c0910274a33143a57980`。
+
+## 2026-09-16 23:32 E12 终态：八芯有效，微幅新TB
+
+- 观察 `2026-09-16T23:31:14.722130+08:00`：submission **16400** completed，8/8且每芯≥0.1，均分 **4.1080625**，is_team_best=true；相对E6 **+0.213450%**。该轻量GET只核记录，不重验全身份/额度；最近完整状态23:28:06剩13/30。
+- 逐芯 tianshu 6.883 / muxi 4.753125 / enflame 2.109875 / haiguang 7.182125 / kunlunxin 0.861625 / huawei 1.101375 / card_a 5.75175 / card_b 4.221625。
+- 燧原2.10325→2.109875，仅+0.315%；代理32.3%未在平台兑现。Kunlun同E6 4096字节却0.60325→0.861625，变化不能归给Enflame结构。虽然通过数值晋级门并刷新TB，不追加group梯度，不宣称已证明目标结构收益。
+- 最新榜单第7，榜首Nectar **6.41778125**，仍需 **56.2240%**；未新增Top1。榜单 `docs/competition/data/t73-e12-leaderboard-20260916.json` SHA-256 `ce7cf211b8c62ef61d32294c3ac924665dad5e00a434dc0a557300490ca9ee8a`。
+- 终态原件 `artifacts/competition/pair-grouped-platform-20260916/t73-light-233114.json` SHA-256 `aab99f4bc395c6fe4b761125af39f415f591c945b3fc14af13259d0129961144`。
