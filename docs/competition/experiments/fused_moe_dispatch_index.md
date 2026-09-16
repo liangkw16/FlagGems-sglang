@@ -623,3 +623,9 @@ SHA `14fb499d07b98e7676eb3e95a4ecacd9190a013181604e37a556259e36a0a591`。
 - `verification.log` SHA-256 `fa51ed80f0ae28d098997bbb6d67a4c445e25c165e5a688b3ef9b307204f7844`。
 - `release-audit.json` SHA-256 `a565cb2c6c21e9f7baf625ecc878cb0548eca2c0bf814dbedb7df5711191f0e2`。
 - 当前完成开发、验证和打包；**未运行平台preflight、上传或提交**，平台TB与额度未因此改变。后续平台须按当时实时门禁执行，不能将本地候选就绪记成已上榜。
+
+## 2026-09-16 22:21 E13 平台实验预注册
+
+- 用户继续既有闭环，按现有持续授权提交；仅本候选一次上传和一次正式提交。实时赛题为competing/can_submit，账号全局剩18/30，截止2026-09-17 19:59:59。22:20–22:21只读逐芯快照 `docs/competition/data/pair-grouped-leaderboard-20260916-before.json`，SHA-256 `f7441d24290931d2782ecfb3a5c080f01117a62c3f4f6a33d9efca36c79e764b`；我方51.3375、第5，榜首80.917125。
+- 正式晋级门：八芯正确、每芯≥0.1，且八芯算术均值>团队最佳E10的51.3375。假设为两路聚合降低generic五芯局部通信成本，三个vendor冻结；代理1.12869445仅支持方向，不直接外推平台均分。
+- 风险：昆仑冻结vendor在E11/E12只有0.1036/0.1032，接近0.1门；本次generic改动不改善它。目标runtime证据由本次平台补齐。若均分未过门，保留E10，不重投相同ZIP；若失败，先读raw_result/selected_file定位，不用注释载体重掷。

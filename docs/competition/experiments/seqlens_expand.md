@@ -6,11 +6,11 @@ operator: seqlens_expand
 batch: 5
 validity: valid
 platform: completed(e4,8/8,20.1778x 新TB;海光28.78门兑现,沐曦+2.09)
-candidate_stage: e11-grouped-ready
+candidate_stage: e12-hint-safe-development
 team_best_stage: e4
 team_best_speedup: 20.177775
 sealed: no
-next: E11四请求group相对E4短q主桶mean1.261562/GM1.253914，15方法release通过，ZIP就绪未提交；目标芯未验证
+next: E11因旧fallback低报hint漏写契约缺口暂停提交；E12按实际qo补循环边界并重新回归/计时/验签
 updated: 2026-09-16
 ```
 
@@ -294,3 +294,9 @@ updated: 2026-09-16
 - `verification.log` SHA-256 `e04a25a6a68da9a6575c960360d8538234d9c18c3be57a13bb5dff89c8231bdb`。
 - `release-audit.json` SHA-256 `3b9aca64fb0fd904545e62512318c6f0e466e0397a61bf5fda1f7397a26a4543`。
 - 开发、验证和打包完成，**未运行平台preflight、上传或提交**；所有目标芯仍未取得本候选的实际运行证据，保留E4团队最佳记录。
+
+## 2026-09-16 22:21 提交前复核：E11暂停，修复hint边界
+
+- 公开reference不读取max_q_len，题面没有为其规定下界。E11虽修复grouped路径，旧smallN/long-hint路径仍以hint限定迭代，静态反例N=1、q=1025、kv=1042、total=1025、hint=1会漏写最后一项；N=1025且hint=33也存在同类缺口。该问题为既有路径缺陷，已执行15方法通过不能覆盖此域。
+- E11不运行preflight/上传/提交；E12将三条fallback循环改由实际qo限定，hint只保留启动调度用途，补非零预期/poison回归并重新验证性能与release。旧ZIP、回执和筛选成绩保留历史身份，不为E12背书。
+- 22:21实时榜单我方E4为20.177775、第8，榜首26.821525；与T69共用上述逐芯快照。完成修复后正式晋级门仍为八芯正确、每芯≥0.1、均值>20.177775，未过门保留E4且不重发同一候选。
