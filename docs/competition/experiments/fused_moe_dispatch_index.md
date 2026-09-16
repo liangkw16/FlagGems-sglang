@@ -6,12 +6,12 @@ operator: fused_moe_dispatch_index
 batch: 5
 validity: valid
 platform: completed(e11-expert-grid/sub16063,8/8,49.699075x；TB仍E10,51.3375x,排名5)
-candidate_stage: e11-expert-grid
+candidate_stage: e12-relaxed-release-ready
 team_best_stage: e10-generic-init
 team_best_commit: a01fb6344cfa9d9f92a88cd8d47d3d9db3d2ff1b
 team_best_speedup: 51.3375
 sealed: no
-next: E11八芯有效并修复大E；后续以E11正确代码为基线，优先天数/海光主要榜差；不重投同候选
+next: E12 relaxed代理+7.02%、四源10/10 release通过，待单次提交；排序聚合独立筛选中
 updated: 2026-09-16
 ```
 
@@ -489,3 +489,52 @@ updated: 2026-09-16
 历史解释订正：上文旧实验中的`exec 0ms`不能单独证明平台故障或kernel未执行，
 `execution_time_ms`也不能当作纯kernel/JIT耗时；旧的循环形式泛化只作当时假设保留，
 不得覆盖后续已验证的标量循环事实。
+
+## 2026-09-16 E12：generic 原子票号改 relaxed，代理筛选与正式回归通过
+
+- 本轮重新读取T69实时逐芯榜，仍为E10 **51.3375、第5**，榜首80.917125；
+  剩余额度19/30。优先generic天数/海光，不撤回E11三份vendor大E修复。
+- 新访问[Triton atomic_add文档](https://triton-lang.org/main/python-api/generated/triton.language.atomic_add.html)
+  确认默认acq_rel，gpu为默认作用域。当前counter仅分配唯一票号，不用于发布其他内存；
+  输出每个输入slot独占写，外部消费在kernel完成后。因此只把generic原子改为
+  `sem="relaxed"`，scope、地址、mask、常量加1、BLOCK256和wrapper全部保留。
+  独立依赖审查未发现既往同轴候选；NVIDIA旧PTX确实保留acq_rel，非源码空改动。
+- 以E11正确代码（ledger HEAD559df772）作基线，generic源SHA
+  `b53af3d40707430d846f76ae37e27df3215c71776a8c6542f71dd0888b5845eb`。
+  筛选目录 `artifacts/competition/t69-atomic-aggregation-20260916/relaxed/`。
+  baseline/candidate均10方法通过（generic-only）；其中vendor内部测试在此未选择vendor，
+  不将其空循环计为vendor验证。新补 `m_max=0/1` 专家区间重叠和可表示int32末端，
+  原9方法完整保留，不假定不同专家的dst全局唯一。
+- 两个实际probe的TTGIR/PTX只有acq_rel→relaxed；仍1个Fill+1个Triton kernel，
+  保留8个既有layout barrier。寄存器31→32，shared2048B，0spill。
+  probe之后、计时之前root独立IR决定已写入 `ir-decision.json`。
+- **84主桶+4空输入control，5轮AB/BA，440对原始样本**：算术均值1.0702407957，
+  GM1.0688247595；五轮均值1.071486/1.070535/1.073349/1.066980/1.069718；
+  最差桶0.991818，未出现<0.95回退桶、control漂移或spill，通过原数字筛选门
+  （均值≥1.03、每轮≥1.01）。uniform/hot/pad分组均值1.07960/1.04582/1.08530。
+  这是RTX5070Ti/Triton3.7.1/Torch2.13.0+cu130代理的wrapper整体证据，不推算目标芯成绩。
+  benchmark SHA `c921d134c8c771ad76d1da68e15908730bba46bb3569c4f031b3bec606ffc247`；raw-samples SHA
+  `f73b73b0ef9e6b4dea26473cb3e99ae5489db910aba89a248e360e4cf59b660c`。筛选远端 `/tmp/flagos-t69-relaxed.POIhkW`，
+  precheck PID394268/390s、benchmark PID394368/930s，均EXIT0，前后无其他GPU计算进程。
+- **计划文本勘误**：复用的冻结plan仍残留旧初始化实验的“3/6方法、zeros2→1/总核3→2、
+  TB43.643925”说明；这些说明不成立，原文件保留。methods数组、源绑定和执行断言实际为
+  10/10、双方1Fill+1Triton；计时前IR决定也如实记录。数字性能门未改变，
+  正式新TB只能与当前51.3375比较，不使用旧值。独立审查与另存勘误保留该问题。
+- 正式source/verification commit `0af3c9708a1eef1592ac45773de64c1aa65e9569`，generic逐字节同筛选候选，SHA
+  `92132171969ca265a8c8e01d09e5128e72b5bc4e8be7a62ed96189810b78f6af`。
+  全部四源 **10/10，0失败/错误/skip**；各100次入口，包装器kernel
+  generic90 / 三vendor各270；裸核poison单独实际执行。
+  回执 `artifacts/competition/t69-atomic-aggregation-20260916/relaxed-release/verification.json` SHA
+  `3bca3f761ff620d657322c15d27b0fe0cbcb5d4ca5d7f8abfc4833a1a6dcd23e`；完整日志SHA
+  `379ef4d68445276b5251cf415577d204bbc6e93e6106c1c26f4a5c0b1e0975fa`。Git源码、测试/依赖和日志均已验签。
+  `/tmp/flagos-t69-relaxed-release.ZHXuPc`、PID394426，先release后sorted预检，
+  外层1340s、release900s，EXIT0。
+- 不可变ZIP `/Users/bytedance/ccc/flagos/artifacts/competition/fused_moe_dispatch_index/e12-relaxed-0af3c97/fused_moe_dispatch_index.zip`，18972字节，SHA
+  `7525cfebcdd0311d318b553054e1af82d6fb0e85fdd4390fdc30a248f34d1593`，四成员generic/ascend/enflame/kunlunxin，
+  dry-run与实际构建一致。目标runtime未验证，按授权执行实时preflight后单次提交。
+
+- 独立筛选复核 `relaxed/screen-review.json` SHA
+  `e3b2b9ecb6d49904ac7cbf12bdbb0708befd99515f8e32cf1387e70fffc25815`；
+  `relaxed/plan-errata.json` SHA
+  `04690826c9d905acc6cd21f2b7910a9b9fb8683413e20cd9cead7fabb3240bc7`。
+  回执允许进入exact-commit四源release；上面的正式release已实际完成并验签。
