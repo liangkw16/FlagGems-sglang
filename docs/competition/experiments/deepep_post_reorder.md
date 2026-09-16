@@ -4,14 +4,14 @@
 task: 65
 operator: deepep_post_reorder
 batch: 5
-validity: valid
-platform: release-ready(e10;TB e9 8/8,16.10245x)
+validity: pending
+platform: evaluating(15876,e10;TB e9 8/8,16.10245x)
 candidate_stage: e10
 team_best_stage: e9
 team_best: e9 16.10245x
 team_best_speedup: 16.10245
 sealed: no
-next: e10 bounded hidden-grid已过screening与exact release，live preflight后一次提交；不重投e9
+next: e10已单次提交15876，等八芯终态；不重投e9/e10
 updated: 2026-09-16
 ```
 
@@ -227,3 +227,7 @@ updated: 2026-09-16
 - exact release `artifacts/competition/t65e10-release-20260916/`：9/9、0F0E0S，generic/昆仑各56入口/50实际launch。回执SHA-256 `1f09cb9b7a4ac90a420015eec3d962b54e26f585a86bcd71ee5290328ed4001a`；完整日志 `d3722b34e51af6cc2c4a4505e58462710774afc5811e7c4ee40514ddf89aa76b`。RTX5070Ti/Python3.12.13/Torch2.13.0+cu130/Triton3.7.1；远端 `/tmp/flagos-t65e10-release.NVcdmH`、PID388094、660秒上限、EXIT0，输入/输出双端验签通过。NVIDIA proxy，非NVIDIA目标runtime仍未验证，需八芯平台裁决。
 - 不可变ZIP `artifacts/competition/deepep_post_reorder/e10-4713e8d/deepep_post_reorder.zip`，7436bytes，SHA-256 **`d1afa670187f6a24cca33c630a9df01fdc58bd04ce69d109e8ef9abec0fcf42b`**；成员 `deepep_post_reorder.py` / `deepep_post_reorder_kunlunxin.py`，member hash如上。
 - **平台预注册**：8/8、每芯≥0.1、均值>16.10245才换TB；≥20.0为继续投入信号；榜首69.07705不能由代理1.32x推得。一次候选一次判决，不按结果改样本或门槛。
+
+## 2026-09-16 E10 单次平台提交
+
+11:52:57，submission **15876**、daily_seq8，nonce `c1df0069070a982ee6e25dd671d4102f`。live preflight身份、题号、完整commit、test/receipt/ZIP哈希、成员和额度全部匹配后执行返回的一次性confirm命令；upload/POST各一次，state=submitted。远端ZIP回读7436bytes、SHA-256 `d1afa670187f6a24cca33c630a9df01fdc58bd04ce69d109e8ef9abec0fcf42b` verified。发前23/30，预计发后22/30，实际以status为准。TB仍E9，等待八芯结果；证据 `artifacts/competition/top1-20260916/t65-e10-{preflight,submit}.json`。
