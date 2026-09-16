@@ -5,12 +5,12 @@ task: 74
 operator: seqlens_expand
 batch: 5
 validity: valid
-platform: completed(e4,8/8,20.1778x 新TB;海光28.78门兑现,沐曦+2.09)
-candidate_stage: e12-hint-safe-ready
+platform: evaluating(e12-hint-safe/sub16316,6芯通过/昆仑编译失败/燧原待回；TB仍E4 20.177775)
+candidate_stage: e13-kunlun-mask32-ready
 team_best_stage: e4
 team_best_speedup: 20.177775
 sealed: no
-next: E12已修复全部fallback低报hint漏写，16方法release与新性能筛选通过，等待实时preflight单次提交
+next: E13昆仑mask32已通过16方法双源码release及IR/ZIP验签，等待实时preflight；E12不重投，燧原仍待回
 updated: 2026-09-16
 ```
 
@@ -317,3 +317,30 @@ updated: 2026-09-16
 - `artifacts/competition/t74-hint-safe-20260916/release/verification.log` SHA-256 `a13c65e0b572573ff953bff59dba3752271a1e6cfb938181777ad0bf8f9a636c`。
 - `artifacts/competition/t74-hint-safe-20260916/release-audit.json` SHA-256 `1a6505e45947ad263bec5e4d553dedefff8b81d217b3c059d916832277593970`。
 - 正式实验仍以八芯正确、每芯≥0.1及均分>团队最佳E4 **20.177775** 为晋级门；假设短请求减少CTA、长hint路径减少空tile可提高总均分，影响范围及目标芯增幅待平台。只发一次，未过门保留E4、不重投相同ZIP。
+
+## 2026-09-16 22:38 E12 单次提交及首个目标错误
+
+- submission **16316**，22:38:46，daily_seq14；nonce `5ae5261005e91dd8b781a09d67419aaa` 状态submitted，upload/POST各一次。远端ZIP 9266 bytes与SHA完全一致，验签verified，不重复发送。
+- 观察 `2026-09-16T22:43:38.106693+08:00`：6芯通过、昆仑编译失败、燧原waiting_callback，未有完整均分；账号剩16/30。已返回数值 tianshu 62.4136 / muxi 10.8598 / haiguang 26.1906 / huawei 7.9712 / card_a 24.426 / card_b 18.442。
+- 昆仑case8、selected_file=seqlens_expand.py、grid=(1024,)；实际失败位于grouped核175行mask的比较，TritonXPULegalize报 `arith.cmpi op requires all operands to have the same type`。外层OutOfResources(Required0,Limit0)是包装，非真实SRAM不足证据；该失败属于可定位lowering，非平台崩溃族。下一候选优先仅改昆仑vendor，generic保持字节，完整适用回归重跑。
+- `artifacts/competition/pair-grouped-platform-20260916/t74-preflight.json` SHA-256 `af23691b262c97aa3bb6a2453ce799c9952b4a678cc23b3eb61886d9d76f417b`。
+- `artifacts/competition/pair-grouped-platform-20260916/t74-submit.json` SHA-256 `fbc9333d8e2a937c3da02599d374b6e88a5d04ab4607fc0d4c0599a6da78c1a0`。
+- `artifacts/competition/pair-grouped-platform-20260916/t74-partial-status.json` SHA-256 `46c299bb07a395d582c7c919973b9ed314fe2f4826c94186ffe1c2bb9334c7fb`。
+
+## 2026-09-16 E13 昆仑规避方案预注册
+
+- 官方FlagTree固定commit `76201fd93a72c10faf488cfb0953c3fb1f842fac` 的 [semantic.py](https://github.com/flagos-ai/FlagTree/blob/76201fd93a72c10faf488cfb0953c3fb1f842fac/third_party/xpu/python/triton/language/semantic.py#L180-L217) 会先统一整数类型并broadcast；E12实导TTIR也已是同型tensor<4x32xi64> cmpi，不能归因为前端漏cast。 [Legalize.cpp](https://github.com/flagos-ai/FlagTree/blob/76201fd93a72c10faf488cfb0953c3fb1f842fac/third_party/xpu/lib/Dialect/TritonXPU/Transforms/Legalize.cpp#L238-L268) 会切shape并改类型/encoding；没有失败pass的IR，尚不能断言具体是位宽、shape还是encoding不一致。
+- E13仅新增自包含昆仑vendor，将group mask改为pos.to(int32)<qo；source commit `2899f9628b5a02b45c189c49e5b9701577adde42`。generic及测试保持ecda8d37逐字字节，existing loader自动纳入vendor；不改变其他七芯实现，也不把尚未返回的燧原记成已过。
+- 完整域证明：有效qo为非负int32、BLOCK固定32。last_p0=floor((max(qo)-1)/32)*32，最后向量last_p0+31≤INT_MAX；比较可用signed i32而不丢域。循环p0/longest及其最终自增、req/stride/base和physical pos均保留i64，输出值仍int32 wrap/clamp。>8GB输出未实测，不将数学证明记为设备执行。
+- 这是针对明确编译失败的兼容修复，不借此重掷E12，也不重用E12 ZIP身份。发布前要求16个完整方法覆盖generic+Kunlun代理，精确commit下IR确认比较确为i32、地址与循环仍i64；平台目标是昆仑通过并≥0.1，最终八芯有效且均值>20.177775才替换E4团队最佳。
+
+## 2026-09-16 22:56 E13 发布验证完成
+
+- source/verification commit `2899f9628b5a02b45c189c49e5b9701577adde42`；generic SHA `58a135c85b6b8970eee9cbca9a03f68af83cd38d3cb848c26d373efee9dfdb59`、vendor SHA `05d8271c66246aac93c7943f5dbcbdfa55b88248e9dfdf0fc540698d09f81c55`、test SHA `f7c5e2d6b7440c2f9a817954e034196bed5a72e453e6b0e5803f0b06abe70a05`。
+- 完整release **16/16**、0fail/error/skip/xfail，generic和Kunlun数学代理各152入口/213真实JIT（合304/426）。三组精确Git源码额外probe正确，48份IR表明vendor tensor<4x32xi32>比较、i64循环/物理地址；vendor group32寄存器、0shared/0spill，generic34寄存器未变。属于NVIDIA代理，昆仑实际lowering是否被绕开仍待平台；本兼容修复不声称新增性能收益。
+- 发布远端 `/tmp/flagos-t74-e13-release.hXf3jv` PID396850、600秒上限，EXIT0；先前screen `/tmp/flagos-t74-e13-screen.SfJsZ6` PID396792、180秒。GPU阶段串行、前后无其他compute。环境同E12。格式化后的源码已重新精确发布与导出IR，不拿旧格式前哈希为新ZIP背书。
+- ZIP `artifacts/competition/seqlens_expand/e13-kunlun-mask32-2899f96/seqlens_expand.zip`，18543bytes，SHA-256 `1f55af6ed1228b9130f95037d52b26ace27ed6bc5ea7d6887781358d7922e56e`，成员seqlens_expand.py / seqlens_expand_kunlunxin.py。规范manifest、CRC、Git成员、执行回执、相邻日志均验签，主任务再次独立verify_receipt通过。
+- `artifacts/competition/t74-kunlun-mask32-20260916/release/verification.json` SHA-256 `4a8d88e241e2da30dc05c4407fb01a29f16cce3509f4b6b0ee61fb8e4099912b`。
+- `artifacts/competition/t74-kunlun-mask32-20260916/release/verification.log` SHA-256 `0c95fb88dbae3e6e0dc104685a48fae1323735d44970cdfb458b90f0a3efbd53`。
+- `artifacts/competition/t74-kunlun-mask32-20260916/build.json` SHA-256 `e3d002063224328f2ccbfd434aca85db31fa4f5bdf64633d8a8bcd27f1fd7f3b`。
+- E12原watch在只读GET响应读取时TimeoutError退出，22:54重新启动只读查询仍等待响应；两个submitted状态不因此变更，也不自动重发。E13须实时preflight完整返回并通过才执行一次提交。
