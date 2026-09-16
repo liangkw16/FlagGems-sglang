@@ -49,9 +49,14 @@ def _deepep_post_reorder(
                     routes + token64 * rs0 + slot.to(tl.int64) * rs1
                 ).to(tl.int64)
                 if dst >= 0:
-                    w = tl.load(
-                        weights + token64 * ws0 + slot.to(tl.int64) * ws1
-                    ).to(tl.float32)
+                    # Reference rounds weights to the down-output dtype first.
+                    w = (
+                        tl.load(
+                            weights + token64 * ws0 + slot.to(tl.int64) * ws1
+                        )
+                        .to(down.dtype.element_ty)
+                        .to(tl.float32)
+                    )
                     row = tl.load(
                         down + dst * ds0 + cols * ds1, mask=mask, other=0.0
                     ).to(tl.float32)

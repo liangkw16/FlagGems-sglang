@@ -94,6 +94,39 @@ class DeepEPPostReorderTest(unittest.TestCase):
                 self.check(make_case(dtype=dtype, out_dtype=torch.bfloat16))
                 self.check(make_case(dtype=dtype, weights_dtype=torch.float32))
 
+    def test_weight_rounding_before_cancellation(self):
+        for dtype, amplitude, delta in (
+            (torch.bfloat16, 256.0, 0.0005),
+            (torch.float16, 1024.0, 0.0001),
+        ):
+            for out_dtype in (dtype, torch.float32):
+                args = list(
+                    make_case(
+                        tokens=3,
+                        topk=2,
+                        hidden=65,
+                        dtype=dtype,
+                        out_dtype=out_dtype,
+                        weights_dtype=torch.float32,
+                        scaling=1.0,
+                        strided=True,
+                    )
+                )
+                args[0][0::2].fill_(amplitude)
+                args[0][1::2].fill_(-amplitude)
+                args[2][:] = torch.arange(6, device="cuda").reshape(3, 2)
+                storage = torch.empty((7, 5), device="cuda")
+                args[4] = storage[1::2, 1::2]
+                args[4][:, 0] = 0.5 + delta
+                args[4][:, 1] = 0.5 - delta
+                with self.subTest(dtype=dtype, out_dtype=out_dtype):
+                    # Both weights round to 0.5 in down dtype. Skipping that
+                    # cast leaves a residual above the task's 0.03 tolerance.
+                    self.assertEqual(
+                        reference(*args).count_nonzero().item(), 0
+                    )
+                    self.check(tuple(args))
+
     def test_topk_tiles_and_large_hidden(self):
         for topk in (1, 2, 8):
             for hidden in (1, 511, 512, 513, 4096, 7168):
@@ -222,6 +255,7 @@ class DeepEPPostReorderGridTest(unittest.TestCase):
 
 RELEASE_REQUIRED_TESTS = [
     "DeepEPPostReorderTest.test_dtypes_and_cast",
+    "DeepEPPostReorderTest.test_weight_rounding_before_cancellation",
     "DeepEPPostReorderTest.test_topk_tiles_and_large_hidden",
     "DeepEPPostReorderTest.test_strides",
     "DeepEPPostReorderTest.test_empty_and_all_invalid",
