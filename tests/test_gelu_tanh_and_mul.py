@@ -68,11 +68,45 @@ class GeluTanhAndMulTest(unittest.TestCase):
         x[:, 2] = -float("inf")
         self.check((x,))
 
+    def test_grouped_row_and_dispatch_boundaries(self):
+        cases = (
+            (3, 64),
+            (4, 63),
+            (5, 65),
+            (23, 256),
+            (24, 256),
+            (25, 256),
+            (95, 1023),
+            (96, 1024),
+            (97, 1025),
+        )
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            for rows, d in cases:
+                with self.subTest(dtype=dtype, rows=rows, d=d):
+                    self.check((make_case((rows, 2 * d), dtype),))
+
+    def test_wide_tile_boundaries(self):
+        for dtype in (torch.float16, torch.bfloat16):
+            for d in (8191, 8192, 8193):
+                with self.subTest(dtype=dtype, d=d):
+                    self.check((make_case((25, 2 * d), dtype),))
+
+    def test_noncontiguous_and_zero_width(self):
+        for dtype in (torch.float16, torch.bfloat16):
+            x = make_case((130, 5), dtype).T
+            self.assertFalse(x.is_contiguous())
+            self.check((x,))
+            self.check((make_case((3, 5, 260), dtype)[..., ::2],))
+            self.check((torch.empty(5, 0, device="cuda", dtype=dtype),))
+
     def test_empty(self):
         self.check((torch.empty(0, 8, dtype=torch.float32, device="cuda"),))
 
 
 RELEASE_REQUIRED_TESTS = [
+    "GeluTanhAndMulTest.test_grouped_row_and_dispatch_boundaries",
+    "GeluTanhAndMulTest.test_wide_tile_boundaries",
+    "GeluTanhAndMulTest.test_noncontiguous_and_zero_width",
     "GeluTanhAndMulTest.test_dtypes_and_widths",
     "GeluTanhAndMulTest.test_wide_range",
     "GeluTanhAndMulTest.test_special_values",
