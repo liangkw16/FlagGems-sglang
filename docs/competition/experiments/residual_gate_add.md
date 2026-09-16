@@ -207,3 +207,12 @@ card_b +0.31、tianshu +0.09；muxi/card_a 我方领先。燧原窗口摆动实�
 - 单变量=燧原 vendor 钉 num_warps=4（夜间批 T71/T73/T68/T62 四题）。
   批量结论：燧原 warps 为逐题特性，非统一旋钮；本批 2 负 2 平，
   轴关闭。TB 各自保持。
+
+## 2026-09-16 广播 gate 外提：机制成立，筛选未过门，不晋级
+
+- 从TB E6 `343f9d57` 冻结全部成员，只将Enflame广播路径的cols/mask/gate load移到row循环前；保留cap24、BLOCK4096及原默认warps、fp16/bf16乘法中间舍入、fp32加法、fusion=False、same-shape路径和所有wrapper语义。不是历史E11 warps4轴；本轮没有改主树。
+- 成熟同芯来源为前批PR #50循环外weight/bias驻留；exact TB的6形状TTGIR/PTX确认gate载入未外提，候选6/6又确认load在rowloop之前，机制确实改变。GCU编译器也有LICM，NVIDIA现象不能代替目标GCU代码生成证据。
+- **9/9正确性、0F0E0S**，generic/Enflame/昆仑每源89实际launch，覆盖broadcast、same-shape、尾块、精度抵消、empty、alias与特殊浮点。32桶×5轮wrapper AB/BA：18affected中位 **1.003498x**、几何均值 **1.029655x**，均未达1.05；14controls保留、全桶最差0.984615，zero spill。**NO-GO**，不挑大shape缩域，不晋级、不打ZIP、不提交平台，TB仍E6 4.0993125。
+- 候选Enflame SHA-256 `9127fb02cdbf5d2c86835be962f9c8d614afb103f7d3aff08a15ab6119c2259a`，test `aeaf4c6322f88de34825ef2d2c1fdffbc3001145d9ac71112c4ac136343f245b`。输入、完整32桶与24份IR在 `artifacts/competition/t73-gate-hoist-screening-20260916/`；screening.json SHA-256 `885a799ded6ce8c772e560c82baea291c1e1df73467e7226fbff955103914db4`；日志 `c698970074b23886595442dfedff975e11c2dc860b80570ad7dab0920c9ff56c`；analysis.json含逐IR指针来源/行号审查。
+- 前两次取证脚本中止，不是数值失败：rows=1时gate与residual同shape，wrapper实际选flat，但runner误抓capped2d。早期“热缓存返回None”诊断已更正；attempt1/attempt2各9桶及9/9原件保留。最终按真实shape穷举32桶（22capped2d/10flat），只修资源抓取，source/test/门/样本不变；完整最终轮独立裁决，不拼接前两轮样本。
+- 最终远端 `/tmp/flagos-t73-hoist-final.XLAryQ`、PID388539、timeout600、EXIT0，输入/全部输出双端验签，GPU已释放。最终script SHA-256 `2a209ce19ce392d165a0fe08fcc6c01a36dcc60e7a486e66e69a0ec90d5ac99f`，tar `20102fb55ad84ade5856a3f40b753f1ed6fa7a1d2fc587978d16e77dade0631d`。

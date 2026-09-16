@@ -123,3 +123,5 @@ T65 E10平台预注册：8/8且每芯≥0.1、平均>16.10245才换TB；≥20.0�
 - T73 exact TB IR表明NVIDIA gate load仍位于persistent row循环内，最小外提候选进入独立预注册筛选；GCU工具链本身也有LICM，代理现象不代表目标芯必定缺优化。
 
 - T65 exact E10优化IR确认普通hidden的单次动态循环仍在，已为“仅移除hidden循环、超大hidden保留fallback”注册E11筛选；slot predication证据不足且引入额外无效路由NaN/Inf语义复杂度，本轮不做。原20桶全部纳入affected，不挑数据；平台预算剩1发优先保留给过筛的T65新结构。
+
+- **T73 gate外提最终NO-GO**：6/6新IR确认外提生效，9/9正确性；32桶×5轮中18affected中位1.003498、GM1.029655<1.05，全桶最差0.984615且0spill。机制成立但性能不足，不晋级、不耗额度。两次runner误选rows1实际flat分支的中止已留证并更正，最终完整32桶单独裁决，不拼接或改门。
