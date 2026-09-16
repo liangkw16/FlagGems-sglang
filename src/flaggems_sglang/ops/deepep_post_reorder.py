@@ -38,7 +38,9 @@ def _deepep_post_reorder(
     # BLOCK, launch shape and the accumulation order are unchanged.
     for token in range(tl.program_id(0), tokens, tl.num_programs(0)):
         token64 = token.to(tl.int64)
-        for start in tl.range(0, hidden, BLOCK):
+        for start in tl.range(
+            tl.program_id(1) * BLOCK, hidden, tl.num_programs(1) * BLOCK
+        ):
             cols = start + tl.arange(0, BLOCK).to(tl.int64)
             mask = cols < hidden
             acc = tl.zeros((BLOCK,), dtype=tl.float32)
@@ -85,7 +87,9 @@ def deepep_post_reorder(
         # uninitialized memory (e.g. topk=0 with a non-empty output).
         return torch.zeros_like(output)
     out = torch.empty_like(output)
-    _deepep_post_reorder[(min(tokens, 65535),)](
+    grid_y = min(triton.cdiv(hidden, 2048), 255)
+    grid_x = min(tokens, max(1, 65535 // grid_y))
+    _deepep_post_reorder[(grid_x, grid_y)](
         down_output,
         out,
         src2dst,

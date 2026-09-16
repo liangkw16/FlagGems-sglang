@@ -4,13 +4,13 @@
 task: 64
 operator: deepep_permute
 batch: 5
-validity: pending
-platform: evaluating(15868,e6;TB e5 8/8,7.17105x)
+validity: valid
+platform: completed(15868,e6,8/8,6.94085x;TB e5 7.17105x)
 candidate_stage: e6
 team_best_stage: e5
 team_best_speedup: 7.17105
 sealed: no
-next: e6已单次提交15868，等待八芯终态；TB仍e5
+next: e6均值回退且Enflame4.7192未达8.0门，停止空task轴；TB仍e5，不重投
 updated: 2026-09-16
 ```
 
@@ -233,3 +233,9 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 ## 2026-09-16 E6 单次平台提交
 
 11:40:46，submission15868、daily_seq7；upload/正式POST各一次、state=submitted，远端ZIP字节验签一致。发后额度23/30；结果待八芯终态。证据 `artifacts/competition/top1-20260916/t64-e6-{preflight,submit}.json`。
+
+## 2026-09-16 E6 平台终态：有效但回退，停止本轴
+
+11:44:15只读核对：submission15868 completed/valid，8/8通过，均值 **6.94085x** <TB7.17105。Enflame **4.7192** <8.0预注册门，较TB6.666回退；NVIDIA代理删除空任务的收益未迁移到本次目标平台。保留TB E5，不重投，不以代理收益替代八芯结果。
+
+逐芯：tianshu15.6062 / muxi5.4702 / enflame4.7192 / haiguang10.2958 / kunlunxin0.2602 / huawei3.7268 / card_a8.5892 / card_b6.8592。实际状态见 `artifacts/competition/top1-20260916/t64-e6-status.json`；账号额度23/30。
