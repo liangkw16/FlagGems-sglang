@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import unittest
+from unittest import mock
 
 import torch
 import torch.nn.functional as F
@@ -102,6 +103,44 @@ class GroupNormSiluTest(unittest.TestCase):
     def test_empty(self):
         self.check(make_case((0, 8, 4), 4))
 
+    def test_affine_strides(self):
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            with self.subTest(dtype=dtype):
+                w = torch.randn(13, device="cuda", dtype=dtype)[1::2]
+                b = torch.randn(20, device="cuda", dtype=dtype)[2::3]
+                self.assertEqual(w.stride(), (2,))
+                self.assertEqual(b.stride(), (3,))
+                x = torch.randn((2, 6, 17), device="cuda", dtype=dtype)
+                self.check((x, w, b, 2, 1e-5))
+                backing = torch.randn(409, device="cuda", dtype=dtype)
+                x = backing[1::2].reshape(2, 6, 17)
+                self.assertFalse(x.is_contiguous())
+                self.check((x, w, b, 2, 1e-5))
+
+    def test_group_grid_boundaries(self):
+        for groups in (65535, 65536, 65537):
+            with self.subTest(groups=groups):
+                x = (
+                    torch.tensor(
+                        [-1.0, 1.0], device="cuda", dtype=torch.float32
+                    )
+                    .repeat(groups)
+                    .reshape(groups, 1, 2)
+                )
+                w = torch.tensor([0.75], device="cuda")
+                b = torch.tensor([0.125], device="cuda")
+                # An unwritten tail must fail even if allocator contents
+                # happen to match the expected output.
+                original_empty_like = torch.empty_like
+                with mock.patch.object(
+                    torch,
+                    "empty_like",
+                    side_effect=lambda *a, **kw: original_empty_like(
+                        *a, **kw
+                    ).fill_(float("nan")),
+                ):
+                    self.check((x, w, b, 1, 1e-5))
+
 
 RELEASE_REQUIRED_TESTS = [
     "GroupNormSiluTest.test_dtypes_and_shapes",
@@ -109,6 +148,8 @@ RELEASE_REQUIRED_TESTS = [
     "GroupNormSiluTest.test_groups_edges",
     "GroupNormSiluTest.test_resident_tile_boundaries",
     "GroupNormSiluTest.test_empty",
+    "GroupNormSiluTest.test_affine_strides",
+    "GroupNormSiluTest.test_group_grid_boundaries",
 ]
 
 
