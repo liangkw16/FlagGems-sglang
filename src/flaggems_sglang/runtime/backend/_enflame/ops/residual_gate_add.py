@@ -76,8 +76,23 @@ def _rga_capped2d(
         tl.store(out_ptr + base, out, mask=mask)
 
 
-# E11 probe: num_warps=4 on both launches (single variable; enflame
-# 2.10 vs second-tier 5.01).
+@triton.jit
+def _rga_grouped4(r_ptr, u_ptr, g_ptr, out_ptr, rows, d, BLOCK: tl.constexpr):
+    cols = tl.arange(0, BLOCK)
+    for group in range(tl.program_id(0), tl.cdiv(rows, 4), tl.num_programs(0)):
+        row = group.to(tl.int64) * 4 + tl.arange(0, 4)
+        mask = (row[:, None] < rows) & (cols[None, :] < d)
+        base = row[:, None] * d + cols[None, :]
+        r = tl.load(r_ptr + base, mask=mask, other=0.0)
+        u = tl.load(u_ptr + base, mask=mask, other=0.0)
+        g = tl.load(g_ptr + cols, mask=cols < d, other=0.0)
+        product = u * g[None, :]
+        out = (r.to(tl.float32) + product.to(tl.float32)).to(
+            out_ptr.dtype.element_ty
+        )
+        tl.store(out_ptr + base, out, mask=mask)
+
+
 def residual_gate_add(residual, update, gate):
     assert residual.dim() >= 2
     assert residual.shape == update.shape
@@ -101,7 +116,18 @@ def residual_gate_add(residual, update, gate):
         # the product to round to the dtype before the add; default FP
         # fusion folds that round-trip away (cancellation cases then
         # exceed the per-dtype tolerance - verified on the proxy).
-        if broadcast:
+        if broadcast and d <= 1024 and rows >= 4:
+            _rga_grouped4[(min(triton.cdiv(rows, 4), _MAX_PROGS),)](
+                residual,
+                update,
+                gate,
+                out,
+                rows,
+                d,
+                BLOCK=triton.next_power_of_2(d),
+                enable_fp_fusion=False,
+            )
+        elif broadcast:
             block = min(4096, triton.next_power_of_2(d))
             _rga_capped2d[(min(rows, _MAX_PROGS), triton.cdiv(d, block))](
                 residual,
@@ -112,7 +138,6 @@ def residual_gate_add(residual, update, gate):
                 d,
                 BLOCK=block,
                 enable_fp_fusion=False,
-                num_warps=4,
             )
         else:
             _rga_flat[(min(triton.cdiv(n, _BLOCK), _MAX_PROGS),)](
@@ -123,7 +148,6 @@ def residual_gate_add(residual, update, gate):
                 n,
                 BLOCK=_BLOCK,
                 enable_fp_fusion=False,
-                num_warps=4,
             )
     return out
 

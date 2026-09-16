@@ -127,30 +127,105 @@ class ResidualGateAddTest(unittest.TestCase):
             (torch.float32, -64.03125, 8.001953125, 1e-6),
         ]
         for dt, r0, u0, atol in cases:
-            with self.subTest(dtype=dt):
-                r = torch.full((2, 64), r0, dtype=dt, device="cuda")
-                u = torch.full((2, 64), u0, dtype=dt, device="cuda")
-                gb = torch.full((1, 64), u0, dtype=dt, device="cuda")
-                for name, module in MODULES:
-                    with self.subTest(module=name):
-                        for g in (u, gb):
-                            actual = module.residual_gate_add(r, u, g)
-                            expected = reference(r, u, g)
-                            torch.testing.assert_close(
-                                actual, expected, rtol=1e-3, atol=atol
-                            )
+            for rows in (2, 5):
+                with self.subTest(dtype=dt):
+                    r = torch.full((rows, 64), r0, dtype=dt, device="cuda")
+                    u = torch.full((rows, 64), u0, dtype=dt, device="cuda")
+                    gb = torch.full((1, 64), u0, dtype=dt, device="cuda")
+                    for name, module in MODULES:
+                        with self.subTest(module=name):
+                            for g in (u, gb):
+                                actual = module.residual_gate_add(r, u, g)
+                                expected = reference(r, u, g)
+                                torch.testing.assert_close(
+                                    actual, expected, rtol=1e-3, atol=atol
+                                )
+
+    def test_grouped_row_and_dispatch_boundaries(self):
+        shapes = (
+            (3, 64),
+            (4, 63),
+            (5, 65),
+            (23, 256),
+            (24, 256),
+            (25, 256),
+            (95, 1023),
+            (96, 1024),
+            (97, 1025),
+        )
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            for shape in shapes:
+                with self.subTest(dtype=dtype, shape=shape):
+                    self.check(make_case(shape, dtype, True))
 
     def test_empty(self):
         self.check(make_case(shape=(0, 8)))
 
+    def test_persistent_broadcast_boundaries(self):
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            for rows in (24, 25):
+                for width in (4095, 4096, 4097):
+                    with self.subTest(dtype=dtype, rows=rows, width=width):
+                        self.check(make_case((rows, width), dtype, True))
+            self.check(make_case((97, 8193), dtype, True))
+
+    def test_broadcast_alias_and_fresh_output(self):
+        # Input aliases are legal: only the freshly allocated output is written.
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            r = torch.randn((97, 4097), dtype=dtype, device="cuda")
+            for update in (r, r.clone()):
+                for gate in (r[:1], update[:1]):
+                    args = (r, update, gate)
+                    self.check(args)
+                    for name, module in MODULES:
+                        with self.subTest(dtype=dtype, module=name):
+                            out = module.residual_gate_add(*args)
+                            self.assertEqual(out.shape, r.shape)
+                            self.assertTrue(out.is_contiguous())
+                            for value in args:
+                                self.assertNotEqual(
+                                    out.data_ptr(), value.data_ptr()
+                                )
+
+    def test_persistent_broadcast_special_values(self):
+        for dtype in (torch.float16, torch.bfloat16, torch.float32):
+            r, u, g = make_case((97, 4097), dtype, True)
+            special = torch.tensor(
+                [float("nan"), float("inf"), -float("inf"), 0.0, -0.0, 1.0],
+                dtype=dtype,
+                device="cuda",
+            )
+            for value in (r, u, g):
+                value.reshape(-1)[: special.numel()] = special
+            expected = reference(r, u, g)
+            snapshots = [value.clone() for value in (r, u, g)]
+            for name, module in MODULES:
+                with self.subTest(dtype=dtype, module=name):
+                    actual = module.residual_gate_add(r, u, g)
+                    torch.testing.assert_close(
+                        actual,
+                        expected,
+                        rtol=TOL[dtype][0],
+                        atol=TOL[dtype][1],
+                        equal_nan=True,
+                    )
+                    for value, before in zip((r, u, g), snapshots):
+                        torch.testing.assert_close(
+                            value, before, rtol=0, atol=0, equal_nan=True
+                        )
+
 
 RELEASE_REQUIRED_TESTS = [
+    "ResidualGateAddTest.test_grouped_row_and_dispatch_boundaries",
     "ResidualGateAddTest.test_dtypes_and_broadcast",
     "ResidualGateAddTest.test_double_rounding",
     "ResidualGateAddTest.test_cross_tile_broadcast_and_stride",
     "ResidualGateAddTest.test_double_rounding_precision",
     "ResidualGateAddTest.test_rounding_cancellation_contract",
     "ResidualGateAddTest.test_empty",
+    "ResidualGateAddTest.test_persistent_broadcast_boundaries",
+    "ResidualGateAddTest.test_broadcast_alias_and_fresh_output",
+    "ResidualGateAddTest.test_persistent_broadcast_special_values",
 ]
 
 
