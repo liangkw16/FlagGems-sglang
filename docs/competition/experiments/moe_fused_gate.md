@@ -5,14 +5,14 @@ task: 31
 operator: moe_fused_gate
 batch: 3
 validity: invalid_correctness
-platform: E9 sub8270 7/8;Kunlun 1833723ms 同指纹(第16例)
+platform: E9 sub8270 7/8;Kunlun 1833723ms 同指纹(第16例);本轮契约修复7/7 NVIDIA代理通过,未提交
 team_best_stage: e7(=e6字节载体)
 team_best_commit: f093ae8
 team_best_speedup: 七芯~7.73
 blockers: 四微核全拆仍同指纹;崩溃面不在源码复杂度层,超出本地可达
 sealed: yes
-next: 永久封存;仅平台工单回应+他队结构公开或昆仑修复后以 e7 载体单发重验
-updated: 2026-09-02
+next: 契约修复7/7 NVIDIA代理通过但未提交；昆仑平台封存及原重启条件保留，不重投旧候选
+updated: 2026-09-16
 ```
 
 状态:S0 候选就绪
@@ -391,3 +391,53 @@ compile-worker 崩溃。三阶段同候选封存，禁止重试。
   修复后以 e7 载体(`f093ae8`)单发重验;不再做本地结构迭代。
 - 七芯资产价值:E9 七芯读数与 E8 一致,证明四微核结构本身跨芯
   健壮;若未来昆仑恢复,候选可复用,无需重新开发。
+
+## 2026-09-16 契约正确性修复（NVIDIA 代理通过，未提交平台）
+
+- 修复 generic 的两个分组选择错误：求组内 top-2 时只排除一个确定的
+  最大值索引，避免把并列最大值全部删掉；组分数相等时加入组索引次序，
+  保证恰好保留 `topk_group` 个组。Kunlun 三阶段 vendor 字节保持不变。
+- 扩展原 `test_kunlun_grouped_edges` 到 generic：selector
+  `[3,3,0,0,4,1.5,0,0]` 的首组 top-2 和应为 6，大于第二组 5.5；
+  softmax selector `[10,0,6,6]` 应选第二组。旧 generic 在两例均失败。
+  新增 `test_group_score_ties_keep_exact_group_count`，三组得分均为 6，
+  检查三 dtype、`topk_group=1/2` 下选中组数与 expert 去重；不强求
+  reference 未保证的并列组次序。全部原测试保留，REQUIRED 共 7 方法。
+- 红测两方法分别有 **2、6 个失败子例**，全部发生于旧 generic，
+  无 errors/skip；修复后同一测试及完整 suite **7/7 通过**。
+- 本轮只修复这些确定的数学契约缺口。历史 E9/sub8270 的 7/8、
+  昆仑 1830s compile-worker 崩溃、原封存及重新验证条件全部保留，
+  不能据此宣称昆仑问题已解决或获得八芯有效成绩。
+
+### 固定身份与执行回执
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `1f42fa750ff5115ac0d6c378d0356015fd4910d9`（同一 Git commit） |
+| test SHA-256 | `1ea66666d3cdaf01f47851129d71b3d9adcaf1fa49f4fd000d6a4ff82dccb47e` |
+| release 回执 | `artifacts/competition/contract-fixes-20260916/moe_fused_gate/verification.json` |
+| receipt SHA-256 | `037f8996a77966a131d457683fc9588434d931ab13ae5b0a84a1418e1ab817ac` |
+| verification.log SHA-256 | `656edb457eb244d103ea07f02c66c380a76c176fd391bf7f70c20d372ba00e62` |
+| RED 原始日志 | `artifacts/competition/contract-fixes-20260916/red.log` |
+| RED log SHA-256 | `df6af6773f9e4edba387fdd592de87544cd49597e3414868d79444aece5e3843` |
+
+| 执行源码 | SHA-256 | source_calls | kernel_launches |
+| --- | --- | ---: | ---: |
+| `generic` | `2b55cf52869139312774e0306cdc054d92dfdaf01dd7fd79dc444d37be8ff416` | 62 | 61 |
+| `_kunlunxin` | `907e9aaf201423515b622af941677e7e4d1cbe9c0b5d78cbd33967094e5a9926` | 62 | 186 |
+
+红测源码均逐字节取自 `8323997c2ba2080d4ea9b435f775f30e0f15d722`，
+配本次 release 同字节测试；日志中的 `EXPECTED_BASELINE_FAILURE` 是
+独立旧版反例的预期失败记录，不是 release 的 unittest expectedFailure。
+修复回执 `mode=release`、`scope=nvidia-proxy`、`device_vendor=nvidia`；
+环境为 RTX 5070 Ti / Python 3.12.13 / torch 2.13.0+cu130 / Triton 3.7.1 /
+CUDA 13.0。全部 expected tests 实际通过，failures/errors/skipped/
+expected_failures/unexpected_successes 均为 0，`exit_code=0`，
+`unexecuted_sources=[]`；计数来自回执的入口调用和实际 kernel launch，
+不把测试方法数或代理源码数当作芯片数。
+
+`proxy_vendors` 为 `kunlunxin`；这些 vendor 均为
+`target-runtime-unverified`，完整在 NVIDIA 执行不代表其目标芯通过。
+源码/测试/依赖与 Git 对象、原始日志与回执 SHA 已在本地逐项复核，
+完整回执保留 runner 和依赖哈希。本轮仅有正确性证据，没有性能测量、
+新平台提交或新成绩；历史平台结果、TB、ZIP 与 PR 记录保持原样。

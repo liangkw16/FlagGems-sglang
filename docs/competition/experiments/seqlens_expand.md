@@ -10,7 +10,7 @@ candidate_stage: e4
 team_best_stage: e4
 team_best_speedup: 20.177775
 sealed: no
-next: E9输出二分全40主桶GM0.90510未达门，关闭；保留e4 TB，隔离候选保留grid/宽地址修复，未发布
+next: E10块级merge筛选40主桶算术均值0.809017/GM0.722462未过门，不晋级；保留E4 TB与主树E6，后续凭新证据立项，整题不封存
 updated: 2026-09-16
 ```
 
@@ -183,3 +183,99 @@ updated: 2026-09-16
 - **60桶×5轮、300对原始样本完整结束**，未删旧24桶；40个所有largeN桶为primary，20smallN为control。primary GM **0.9051021966<1.05**，五轮0.905234/0.904805/0.906419/0.906296/0.905326均<1.03；最差balanced N8192/qcap8193 **0.3516096084<0.95**。controls0.976434–1.027871在门内，200条资源记录均0spill。
 - 同total三分布追加矩阵中，qcap1/8/1025/8193各9桶GM依次1.08577/1.18338/0.95406/0.57282；短输出最高1.50024不能抵消长输出退化。逐输出二分增加的访存/比较随输出长度增长，与观察方向相容，但没有profile证明其是唯一瓶颈。**按原门关闭，不挑域、不改阈值、不生成release/ZIP/intent或提交。**
 - 性能JSON SHA `95432659a8cd1a7009ec7f438b3a2be38e4e475e1ef43886390dc90abc06ef85`，log `c1a2d7e5ee9e8f29d9c8b7fd202eb93c2a1f3e211a12b4e647ed62d7d28ae912`，CSV `881fe8fdee1998d04ce97d9a1f25bb0e0d6951c18da3007ecdfead5bee5a1387`。最终远端`/tmp/flagos-t74-output.9Splfl`，correctness/IR PID390584上限400秒、benchmark PID390697上限630秒，均EXIT0；前后GPU无其他compute进程，已释放。RTX5070Ti/driver610.57.04/Python3.12.13/Torch2.13.0+cu130/Triton3.7.1。全部源/输入哈希/IR/日志在上述artifact目录；仅NVIDIA代理证据，未消费平台额度。
+
+## 2026-09-16 E10 块级 merge-path：完整筛选未过门，不晋级
+
+- 本轮只读榜单快照时间 **16:23:18 CST**：我方第 **8**，E4
+  **20.177775**；榜首 EvokeAgent **26.821525**，均分差 **6.64375**
+  （需 +32.93%）。天数与燧原分别贡献 3.4805、1.703175 的均分差。
+  快照为 `artifacts/competition/contract-fixes-20260916/platform-t74.json`，
+  SHA `b05be2a52a2badd2c71f2e24fa19e02312d119b85067dc207d461385f2bf92e8`。
+  分数差只用于确定研究重点，不能反推隐藏 shape、耗时或瓶颈。
+- 精确基线仍是有效 TB E4
+  `45662b8c403778e4b93b96ec90b4ca3306c6a03a`，已核对 Git blob 与原 E4
+  ZIP 成员。隔离候选将 exclusive prefix 与隐式输出位置稳定合并，
+  每个 256 项对角线块做两次标量 co-rank，块内最多载入 256 个请求前缀；
+  0/1 边界直接展开，多边界才做 9 轮局部 gather 搜索。总任务数为
+  `ceil((N+total_len)/256)`，封顶 65535 后 grid-stride；重复前缀保持
+  right-bound 语义。普通小 N 核和大 N prefix 保留 E4，独立继承 E9 的
+  grid/宽地址安全路径，结果仍先 int32 wrap 再 clamp。未分配超过 8GB
+  输出，宽路径实际覆盖仍限于既有 metadata 与小规模执行回归。
+- 所有产物位于 `artifacts/competition/t74-block-expand-screening-20260916/`。
+  本轮未修改主树算子或正式测试，主树 E6 未被候选覆盖；候选由以下文件
+  SHA 绑定，不能冒称为已发布 source commit 或正式 release。
+
+| 输入身份 | SHA-256 |
+| --- | --- |
+| `baseline.py` | `c6612828e9344df00fbb49ed50bbbf6be7a5c18a8b099128ee622ac786a32eda` |
+| `candidate.py` | `5850ace3eb04838099b03e4c9b576673a6e7f14ca718381419651c5870cea517` |
+| `test_candidate.py` | `561f735f2ef235cb10547416954caf5cd43933a850abea11e7366ff7d9620d54` |
+| `screen.py` | `1ced8094b3b83400ab68f12187cd0430f6d1b670c85d6f4c1ce667b363e6c494` |
+| `plan.json` | `bacca18966cb83a07eb8c4bfc6a0d4ea00e5b1e2aa964b378b45f439b0158dfd` |
+| `fixture_basis.py` | `5f9382e0416f0ba97196f35578915c6129b06f479bfc15df496bf114bc9b79fb` |
+
+- **首轮失败完整保留**：`attempt1/` 对应远端
+  `/tmp/flagos-t74-block-merge.ePfPqk`、PID **392777**。baseline 5 法、
+  candidate 12 法均通过，short probe 已运行；long probe 的原始
+  N4096/q8193 fixture 超过未改变的 8,389,632 元素上限，在生成 fixture
+  时断言退出，`precheck.exit=1`，未开始长 probe 或性能计时。这是探针
+  构造错误，不是候选数值或性能裁决。
+  原计划 SHA `4dd65d324d622342a3081f842282211f8e544c78cfc27cdd4a7f94b17246d388`；
+  原 correctness 回执 `43ab3e0c0bee1c2eab19183cac1263275d398746e57075254c2fa425ac048bea`；
+  原失败 probe log `c4a3b1e7faf6d231d19800f6a57d64af9bd36b22e6cfbb4bd2c993f182c0bc85`。
+  修正仅让 long probe 精确复用已登记的
+  `concentrated-n4096-qcap8193`（total **4,194,816**），并在 check 阶段
+  校验两项 probe；candidate、测试及完整 60 个性能桶不变。旧回执只
+  证明旧 harness，新计划重新冻结并完整重跑。
+- **最终正确性**：baseline 原 **5/5**、candidate 完整 **12/12**，
+  均 0 failure/error/skip。保留原五法 AST 与 E9 全部 12 法，涵盖重复
+  前缀/零 q、长零串、256±1、N65535±1、非连续与 stride0、整数回绕、
+  尾部 grid-stride 和宽前缀；全部性能桶另做精确整数校验。Black/isort/
+  flake8/py_compile 通过；CPU 模型 87,400 例只属算法模型证据。
+  `correctness.json` 与 `probe.json` 明确是 **screening 回执**，不是
+  官方或项目正式 release 回执，NVIDIA 通过不代表其他芯片通过。
+- **IR 判别先于计时**：root 人工裁决绑定 source、baseline、probe SHA。
+  N4096 的两条标量 co-rank 链各 13 轮，全局 midpoint load 为标量；
+  多边界路径一次载入 256 项局部前缀，再做固定 9 轮 gather。对应 PTX
+  每轮重新写共享内存并使用两个 `bar.sync`，此分支共 **18 个 barrier**。
+  无输出块跳过 gather/store，0/1 边界分支绕过 gather；长 q 的该分支
+  仍支付每块两次 co-rank。merge 为 **38 registers、0 spill、1024 B
+  shared**；prefix 为 40 registers、0 spill、32 B shared，与 baseline
+  汇编相同。两项 probe 的 32 个汇编文件 SHA 已逐项复核；短 probe
+  缓存中的历史 debug 路径不影响已绑定的实际源字节。
+- **完整 60 桶 × 5 轮，300 对原始样本**，40 个大 N 主桶、20 个小 N
+  对照，未删桶或改阈值。完整 wrapper 计入分配与 prefix，warmup20ms/
+  rep50ms，按 AB/BA/AB/BA/AB 采样。主桶中位比值的算术均值
+  **0.8090173429862597**，GM **0.7224616817620629**；五轮算术均值
+  **0.807958 / 0.810288 / 0.810306 / 0.806205 / 0.809824**。
+  均未达到预注册的总体 ≥1.03、每轮 ≥1.01。最差主桶
+  `balanced-n8192-qcap8193` 为 **0.2095481045**；对照中位比值
+  **0.975941–1.024399**，均在 [0.97,1.03] 内，200 条资源记录全部
+  0 spill。算术均值、GM、300 行 CSV 和逐轮样本已独立重算对账。
+- 同 total 的 qcap1/8/1025/8193 四组各 9 桶，算术均值依次
+  **1.06271 / 1.15462 / 0.69085 / 0.36438**。短输出局部收益未能抵消
+  长输出退化；额外 co-rank、局部 gather 的共享存储/同步与测量方向
+  相容，但未做 profile，不能断言它们是唯一瓶颈。**本候选不晋级，
+  不生成 ZIP、平台 intent 或正式提交，不消费额度**；保留 E4 TB。
+  本结论只否决已测候选，不永久关闭整题，也不把代理均值当平台分数。
+
+| 最终证据 | SHA-256 |
+| --- | --- |
+| `correctness.json` | `baaa57d6ae02286a0153fac8084ac915b3e559bd2c4eeba0e29ce8b65fd5f877` |
+| `correctness.log` | `d0810fc4d9b9036856d3a702858f1cad70b827bcb8c687a6084ca61f7d5fcebd` |
+| `probe.json` | `53563b4beddf02d941fca7b187752106db21a0b71127ee2e629a8505d322a18c` |
+| `probe.log` | `3e2b2beca28a8ff8773dc668102d64a76f8e6abcbeaf84df0bcc23e2e14f781a` |
+| `ir-decision.json` | `831997223e7b3bba684de459583abb42e79d6f37e53f10ce9005e4d92a518033` |
+| `benchmark.json` | `f531da6d3ec0d1b527cfb17c97d467a3134c2b73eeee1f31b675cba009e8b19f` |
+| `benchmark.log` | `fee81a64f4133456261bde37b7d7a15b6b8232db9ef2660d352b0230c6eccf2d` |
+| `raw-samples.csv` | `e60704a06772df8c9c780b8d37c9c4dbe7dff2ac73451603d9d5d34325526e20` |
+
+- 最终远端 `/tmp/flagos-t74-block-merge.3c5uVG`：正确性/IR PID
+  **392888**（外层550秒，内层正确性400秒、probe120秒），benchmark PID
+  **392970**（外层660秒、计时总上限630秒）。预检与 benchmark wrapper
+  均 **EXIT0**，最终正确性、probe、完整性能三个阶段均成功结束。
+  `launch.json` SHA `a3d61d62dfcfc68a297172981764a23715394bd94ab86d408bce8249061f288e`，
+  `benchmark-launch.json` SHA `8bf60df81b303a81172013c942e123307bfbdfde3722d65e11382ad4dabba97d`。
+  阶段前后 GPU 快照均无其他 compute 进程；RTX5070Ti、driver610.57.04、
+  Python3.12.13、Torch2.13.0+cu130、Triton3.7.1。所有回执身份与源/测试/
+  计划/CSV、IR 裁决之间的 SHA 链均已复核，目标 runtime 仍未验证。

@@ -5,13 +5,13 @@ task: 58
 operator: w8a8_block_int8_matmul
 batch: 4
 validity: valid
-platform: e6r/11210八芯valid,258.04890833x team best(排名3);e7/11228 valid 253.07(B已修复)
+platform: 最新e9r3/sub12441八芯valid 261.50x;TB e9r2/sub12426 266.20655x;本轮契约修复8/8 NVIDIA代理通过,未提交
 team_best_stage: e9r2
 team_best_commit: dd8dca03dfe092c09afb5ad88de3d0f99207c155
 team_best_speedup: 266.20655
 sealed: no
-next: e7字节(e6r组级+amd逐块B)为最优组合,均值差=华为窗口三连下行;水位回常态时以e7字节重掷(新ZIP身份,≤2次)
-updated: 2026-09-08
+next: 非2幂量化组修复8/8 NVIDIA代理通过，未提交；保留e9r2 TB，旧重掷轴已关闭，目标芯未验证
+updated: 2026-09-16
 ```
 
 
@@ -277,3 +277,60 @@ updated: 2026-09-08
   17:4x 以 e9r3 做最后一掷（今日额度不过夜）。
 - **e9r3 终掷（sub 12441，17:5x）**：261.50 未超（华为回落 388）。低滚 2/2，
   路径关闭。**T58 收盘于 e9r2 266.207（排名 3）**。
+
+## 2026-09-16 契约正确性修复（NVIDIA 代理通过，未提交平台）
+
+- generic/Iluvatar 将 `GROUP_STEPS` 改为向上取整，并同时 mask K
+  总边界与量化组边界；保持原逐组累加。AMD/Ascend/Enflame/Kunlun
+  按组枚举 K tile，保持原逐 tile 缩放顺序，避免 tile 跨组误用 scale。
+  Kunlun 的 N tile 同样在组内枚举，保留 scalar scale 索引；六路径对
+  小组使用至少 16 的合法 dot tile。没有改变各 vendor 的 dot dtype。
+- 独立精确回归：全 1 输入、K=192/group_k=96、两组缩放乘积 1/8，
+  正确结果为 864，旧 generic/Iluvatar 为 576、其余逐 tile 路径为 640；
+  N=193/group_n=96/K=32 的第 96–127 列应为 64，旧 Kunlun 为 32。
+  两轴合并尾部例使用 N=K=193。旧源码跨六路径共 **39 个失败子例**
+  （generic/AMD/Ascend/Enflame/Iluvatar 各 6，Kunlun 9），无 errors/skip。
+- 新增两项 REQUIRED 回归，另覆盖 group 1、3/5、17/33、65/127、
+  96、129，95/96/97 边界及带 storage offset 的 A/B/As/Bs 双维 stride；
+  未使用区域以 int8 127/scale NaN 填充，检查输入不变。原 6 方法 AST
+  完全保留，完整 **8/8 通过**，六源码均实际执行。
+- 纠正早期 S0/E6 说明：`largest_pow2 <= group_k` 不保证整除，题面
+  没有“量化组必须是 2 的幂”约束。已有平台成绩不是这些新增边界的证明。
+  历史 e9r2/sub12426 TB `266.20655x`、e9r3 终态及关闭的重掷轴保留。
+
+### 固定身份与执行回执
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `723b7eb7be9fbf76fe2be6e7e8ed0de100f02541`（同一 Git commit） |
+| test SHA-256 | `356526e36bddb84be7180619f32f91c612b8fbf01726c02e3687efd55d79bebb` |
+| release 回执 | `artifacts/competition/contract-fixes-wave2-20260916/w8a8_block_int8_matmul/verification.json` |
+| receipt SHA-256 | `7f64b418d2090f30cfbc6a13de9302f86941783995d1e8b653817227cbe23580` |
+| verification.log SHA-256 | `354289d4dc4b943b3a8a4b10ebf1e77c9ebe522d92e8baef325ed774d66a9af8` |
+| RED 原始日志 | `artifacts/competition/contract-fixes-wave2-20260916/red.log` |
+| RED log SHA-256 | `530d2cdb34a58c9892e6d45fc4eba77376335153d93a56a4502c956508e2bde1` |
+
+| 执行源码 | SHA-256 | source_calls | kernel_launches |
+| --- | --- | ---: | ---: |
+| `generic` | `97af893685e142f3e46e8af4a98e464929062ada1d0dfb41802e1683a08d3bf8` | 59 | 58 |
+| `_amd` | `391c46fd12605cc4bae639797bd64091cc4165440dcde1d0b512d429d6c71f0c` | 48 | 48 |
+| `_ascend` | `dfb07256f8e24e60ca52f63e06d38a7488d1eb03c25a3e3a65df3371afa02f3c` | 48 | 48 |
+| `_enflame` | `8923e1f344c8f4397837f4eb8122747b6dacf56dec33c750331d82ae95c4b508` | 48 | 48 |
+| `_iluvatar` | `9226c2125f641084f2d1d3ce71e2ad00eaacd5cf6f919bc8078b8c2f946b0565` | 48 | 48 |
+| `_kunlunxin` | `145a99b25ff39b8050b05d2098f834f988cccc3c06cfffe16aabe568b807f9e1` | 48 | 48 |
+
+红测源码均逐字节取自 `8323997c2ba2080d4ea9b435f775f30e0f15d722`，
+配本次 release 同字节测试；日志中的 `EXPECTED_BASELINE_FAILURE` 是
+独立旧版反例的预期失败记录，不是 release 的 unittest expectedFailure。
+修复回执 `mode=release`、`scope=nvidia-proxy`、`device_vendor=nvidia`；
+环境为 RTX 5070 Ti / Python 3.12.13 / torch 2.13.0+cu130 / Triton 3.7.1 /
+CUDA 13.0。全部 expected tests 实际通过，failures/errors/skipped/
+expected_failures/unexpected_successes 均为 0，`exit_code=0`，
+`unexecuted_sources=[]`；计数来自回执的入口调用和实际 kernel launch，
+不把测试方法数或代理源码数当作芯片数。
+
+`proxy_vendors` 为 `amd`, `ascend`, `enflame`, `iluvatar`, `kunlunxin`；这些 vendor 均为
+`target-runtime-unverified`，完整在 NVIDIA 执行不代表其目标芯通过。
+源码/测试/依赖与 Git 对象、原始日志与回执 SHA 已在本地逐项复核，
+完整回执保留 runner 和依赖哈希。本轮仅有正确性证据，没有性能测量、
+新平台提交或新成绩；历史平台结果、TB、ZIP 与 PR 记录保持原样。

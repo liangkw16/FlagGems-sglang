@@ -6,13 +6,13 @@
 | Task | 算子 | 有效性 | 平台 | 团队最佳 | 封存 | 下一步 | 更新 | 账本 |
 | ---: | --- | --- | --- | --- | --- | --- | --- | --- |
 | 25 | draft_topk1 | invalid | 6/8 | e6c | yes | 需外部证据(他人通过样例/平台澄清)才可重启 | 2026-08-31 | [draft_topk1](draft_topk1.md) |
-| 26 | fused_moe_router_cudacore | invalid | 6/8 | e5-e8(等价) | yes | 平台 Q&A 澄清或他人华为方案公开 | 2026-08-31 | [fused_moe_router_cudacore](fused_moe_router_cudacore.md) |
-| 27 | fused_moe_router_tensorcore | valid | 8/8(e9,1.039975x) | e9 1.016425x | yes | 昆仑需约6.5772x才登顶,无可信路径;转T36 | 2026-09-01 | [fused_moe_router_tensorcore](fused_moe_router_tensorcore.md) |
+| 26 | fused_moe_router_cudacore | invalid | 6/8;本轮契约修复9/9 NVIDIA代理通过,未提交 | e5-e8(等价) | yes | padding remask修复9/9 NVIDIA代理通过，未提交；华为case7与昆仑旧风险仍待独立目标证据 | 2026-09-16 | [fused_moe_router_cudacore](fused_moe_router_cudacore.md) |
+| 27 | fused_moe_router_tensorcore | valid | 8/8(e9,1.039975x);本轮契约修复12/12 NVIDIA代理通过,未提交 | e9 1.039975x | yes | padding remask修复12/12 NVIDIA代理通过，未提交；保留历史e9成绩及封存状态，目标芯待验证 | 2026-09-16 | [fused_moe_router_tensorcore](fused_moe_router_tensorcore.md) |
 | 28 | gate_up_lora_b | valid | 8/8(e14,14.98025x) | e14 14.98025x | yes | 采样两连 TB(e13 14.4435/e14 14.98025);封存,明日 1-2 发守榜采样 | 2026-09-02 | [gate_up_lora_b](gate_up_lora_b.md) |
 | 29 | gelu_and_mul | valid | 8/8(e9,2.805042x) | e9 2.805042x | yes | exact-erf 官方实现与 minimax 数值边界复核;预期收益远不足66.68%榜差,封存 | 2026-09-02 | [gelu_and_mul](gelu_and_mul.md) |
 | 30 | interleaved_rope | valid | 8/8(s1,25.9236875x) | s1 25.9236875x | yes | 实时榜首37.7641;一读一写下界已达,MCP/官方实现复核无可信46.17%路径 | 2026-09-02 | [interleaved_rope](interleaved_rope.md) |
-| 31 | moe_fused_gate | invalid_correctness | E9 sub8270 7/8;Kunlun 1833723ms 同指纹(第16例) | e7(=e6字节载体) 七芯~7.73x | yes | 永久封存;仅平台工单回应+他队结构公开或昆仑修复后以 e7 载体单发重验 | 2026-09-02 | [moe_fused_gate](moe_fused_gate.md) |
-| 32 | moe_fused_mul_sum | valid | 8/8 | S0 4.4829x | yes | e5 三框架独立reduce同构;流量理想上限仅+22.7%,无法解释433%榜差 | 2026-09-01 | [moe_fused_mul_sum](moe_fused_mul_sum.md) |
+| 31 | moe_fused_gate | invalid_correctness | E9 sub8270 7/8;Kunlun 1833723ms 同指纹(第16例);本轮契约修复7/7 NVIDIA代理通过,未提交 | e7(=e6字节载体) 七芯~7.73x | yes | 契约修复7/7 NVIDIA代理通过但未提交；昆仑平台封存及原重启条件保留，不重投旧候选 | 2026-09-16 | [moe_fused_gate](moe_fused_gate.md) |
+| 32 | moe_fused_mul_sum | valid | 8/8;本轮契约修复10/10 NVIDIA代理通过,未提交 | S0 4.4829x | yes | top_k=0契约修复10/10 NVIDIA代理通过，未提交；保留S0平台TB和既有性能轴结论 | 2026-09-16 | [moe_fused_mul_sum](moe_fused_mul_sum.md) |
 | 33 | per_token_group_quant_int8 | valid | 8/8(e14,5.582775x) | e14 5.582775x | yes | e13 官方 constexpr/direct/subwarp/M8 家族全未过门;仅新 vendor subgroup 证据可重开 | 2026-09-02 | [per_token_group_quant_int8](per_token_group_quant_int8.md) |
 | 34 | per_token_quant_int8 | valid | 8/8 | e1 4.7131x | yes | e4 persistent cap与SGLang launch参数均不过5%全矩阵门;已知轴尽 | 2026-09-01 | [per_token_quant_int8](per_token_quant_int8.md) |
 | 35 | rotary_embedding | valid | 8/8(E10,7.047975x,team best) | e10 7.047975x | yes | 封存;仅燧原水位恢复信号时以 E10 字节重载(≤2 发,E10 ZIP 已验签在库) | 2026-09-02 | [rotary_embedding](rotary_embedding.md) |
@@ -38,7 +38,7 @@
 | 55 | hc_head | invalid_correctness | 7/8(e1,10668已终态;昆仑compile_worker Aborted,归因未定) | - -x | no | 独立进程和逐核取证工具已实现;需要昆仑同worker/runtime重放,崩溃归因未定,停止盲投 | 2026-09-08 | [hc_head](hc_head.md) |
 | 56 | l2norm | valid | 8/8(e3,11062,3.20691667x新team best) | e3 3.20691667x | no | 批4收盘;额度用尽.e9w 3.16114/e9x(12659)3.17715;燧原1.2015/1.20675两次同水位,未撞慢窗;TB保持e3 3.20692;排名11/14,上邻仅+0.035 | 2026-09-10 | [l2norm](l2norm.md) |
 | 57 | log_scaling_tau | valid | 8/8(e2,10747,2.36478125x首次有效) | e11 2.50278125x | no | 批4收盘;额度用尽.e9w(12649)2.47272燧原0.546;TB保持e11 2.50278;排名9/15,上邻仅+0.0396 | 2026-09-10 | [log_scaling_tau](log_scaling_tau.md) |
-| 58 | w8a8_block_int8_matmul | valid | e6r/11210八芯valid,258.04890833x team best(排名3);e7/11228 valid 253.07(B已修复) | e9r2 266.20655x | no | e7字节(e6r组级+amd逐块B)为最优组合,均值差=华为窗口三连下行;水位回常态时以e7字节重掷(新ZIP身份,≤2次) | 2026-09-08 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
+| 58 | w8a8_block_int8_matmul | valid | 最新e9r3/sub12441八芯valid 261.50x;TB e9r2/sub12426 266.20655x;本轮契约修复8/8 NVIDIA代理通过,未提交 | e9r2 266.20655x | no | 非2幂量化组修复8/8 NVIDIA代理通过，未提交；保留e9r2 TB，旧重掷轴已关闭，目标芯未验证 | 2026-09-16 | [w8a8_block_int8_matmul](w8a8_block_int8_matmul.md) |
 | 59 | build_trtllm_mha_page_table | valid | completed(14705,e9,8/8,23.406x;行打包华为4.29证伪;TB e4r 24.1284x) | e4r 24.1284375x | no | e9 行打包华为4.29(-51%)证伪,华为轴全关待新证据;TB e4r 24.128守 | 2026-09-14 | [build_trtllm_mha_page_table](build_trtllm_mha_page_table.md) |
 | 60 | clamp_position | invalid_correctness | completed(13821,e8,7/8;燧原轴八轮终封) | - | no | 新发现torch-gcu逻辑int64物理窄化证据；先核目标输入保真/布局和实际版本，不截断契约、不重投 | 2026-09-16 | [clamp_position](clamp_position.md) |
 | 61 | compute_src2dst | valid | completed(15835,e11,8/8,2.138475x新TB;Metax门未过) | e11 2.138475x | no | 保留e11新TB；Metax1.2486未达2.7门，停止直接加载/flat1024轴，转T66/T74 | 2026-09-16 | [compute_src2dst](compute_src2dst.md) |
@@ -49,12 +49,12 @@
 | 66 | dsv3_fused_a_gemm | valid | completed(15861,e2,8/8,3.09855x新TB) | e2 3.09855x | no | e2仅+0.15%，未达3.40再投入门；停止窄N split4轴，不重投 | 2026-09-16 | [dsv3_fused_a_gemm](dsv3_fused_a_gemm.md) |
 | 67 | fill_padded_rows | valid | completed(e4,8/8,4.1965x;固定块轴零增益,重编译假说在本题证伪) | e2 4.2969x | no | 固定BLOCK轴关闭;下一轴=num_warps/过特化(PR扫描模式,华为1.9vs17.5缺口形态未破);TB e2 4.2969 守 | 2026-09-15 | [fill_padded_rows](fill_padded_rows.md) |
 | 68 | fused_eh_norm | valid | completed(15864,e8,8/8,7.10215x新TB) | e8 7.10215x | no | e8仅+0.18%，燧原1.6814未达2.0门；停止本path分离轴，不重投 | 2026-09-16 | [fused_eh_norm](fused_eh_norm.md) |
-| 69 | fused_moe_dispatch_index | valid | completed(e9,8/8,43.6439x 首次有效;昆仑0.1016过门,标量重写+寄存器累加) | - | no | e9 解锁后昆仑 0.10 贴门(留观);燧原 0.756/华为 3.83 为弱轴;守榜 | 2026-09-15 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
+| 69 | fused_moe_dispatch_index | valid | completed(e10-generic-init/sub16056,8/8,51.3375x新TB,排名5) | e10-generic-init 51.3375x | no | E10八芯51.3375新TB；独立修复vendor大E截断，local-bucket仅代理机制成立暂不混投 | 2026-09-16 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
 | 70 | gate_topk | invalid_correctness | completed(14849,e3r,7/8;昆仑exec 3633491ms挂死后判失败,与e3同指纹) | - | no | generic零值/宽索引/NaN key修复已8/8代理通过；昆仑平台失败仍未解，不建立ZIP或提交intent | 2026-09-16 | [gate_topk](gate_topk.md) |
 | 71 | gelu_tanh_and_mul | valid | completed(14573,e4,8/8,2.7109x 新TB) | e4 2.7109x | no | e4 no-loop昆仑0.304复制链失败(门0.5未过,链收口);TB 2.711守;昆仑真因/燧原8192待证 | 2026-09-14 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
 | 72 | group_norm_silu | valid | completed(15841,e9,8/8,2.48429167x;TB e6 2.66266667x) | e6 2.66266667x | no | 大group分块两轮control未过门，停止本轮；正确性修复8/8已入库未提交，保留e6 TB与旧uncertain | 2026-09-16 | [group_norm_silu](group_norm_silu.md) |
 | 73 | residual_gate_add | valid | completed(14838,e6,8/8,4.0993x 新TB;昆仑4096 0.60) | e6 4.0993125x | no | e6 昆仑4096 0.60(+23%)新TB 4.099;宽度曲线双正,8192待信号;差榜首0.876 | 2026-09-14 | [residual_gate_add](residual_gate_add.md) |
-| 74 | seqlens_expand | valid | completed(e4,8/8,20.1778x 新TB;海光28.78门兑现,沐曦+2.09) | e4 20.177775x | no | E9输出二分全40主桶GM0.90510未达门，关闭；保留e4 TB，隔离候选保留grid/宽地址修复，未发布 | 2026-09-16 | [seqlens_expand](seqlens_expand.md) |
+| 74 | seqlens_expand | valid | completed(e4,8/8,20.1778x 新TB;海光28.78门兑现,沐曦+2.09) | e4 20.177775x | no | E10块级merge筛选40主桶算术均值0.809017/GM0.722462未过门，不晋级；保留E4 TB与主树E6，后续凭新证据立项，整题不封存 | 2026-09-16 | [seqlens_expand](seqlens_expand.md) |
 | 75 | sigmoid_gate_mul | valid | completed(e9,8/8,2.8967x;华为warps8无效关闭) | e9 2.89671667x | no | Ascend direct候选代理1.01924x未达1.05且fp16稳定回退，不提交；TB保持e9 | 2026-09-16 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

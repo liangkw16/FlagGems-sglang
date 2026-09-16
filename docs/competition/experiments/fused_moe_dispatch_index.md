@@ -5,12 +5,14 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: valid
-platform: completed(e9,8/8,43.6439x 首次有效;昆仑0.1016过门,标量重写+寄存器累加)
-candidate_stage: e9
-team_best_stage: -
+platform: completed(e10-generic-init/sub16056,8/8,51.3375x新TB,排名5)
+candidate_stage: e10-generic-init
+team_best_stage: e10-generic-init
+team_best_commit: a01fb6344cfa9d9f92a88cd8d47d3d9db3d2ff1b
+team_best_speedup: 51.3375
 sealed: no
-next: e9 解锁后昆仑 0.10 贴门(留观);燧原 0.756/华为 3.83 为弱轴;守榜
-updated: 2026-09-15
+next: E10八芯51.3375新TB；独立修复vendor大E截断，local-bucket仅代理机制成立暂不混投
+updated: 2026-09-16
 ```
 
 ## 契约与范围
@@ -339,3 +341,83 @@ updated: 2026-09-15
 - 经验沉淀（昆仑后端新事实）：①向量+tl.sum 提取 → make_llir SIGABRT
   （T65）；②分支内全局 RMW → 丢增量（本例）；③安全形态=标量读 +
   分支计数 + 寄存器累加 + 单次 store。
+
+## 2026-09-16 E10 generic 初始化融合：8/8有效，51.3375x新TB、排名5
+
+- 16:33:53 只读榜单确认 E9 仍为有效 TB：**43.643925，第 6**；榜首
+  EvokeAgent 80.917125。天数、海光分别贡献均分差 18.612125、7.37465。
+  快照 `artifacts/competition/contract-fixes-20260916/platform-t69.json`
+  的路径与哈希已绑定筛选计划；这些分数不能反推隐藏 shape 或设备耗时。
+- 最小变量：generic 的 `src2dst=torch.zeros` 改 `empty`，现有 atomic 核
+  对全部 inbounds slot 写 `where(valid,dst,0)`。计数清零、atomic mask、
+  grid-stride 和三份 vendor 字节不变，没有增加单 CTA 初始化或跨程序同步。
+  基线来自 E9 `e079237f16094894b0c2b3ba013f73e92d09aae5`，generic 的
+  Git 源、ZIP 成员与已执行 release 哈希三方一致。
+- 筛选目录：`artifacts/competition/t69-generic-init-screening-20260916/`。
+  baseline 原 3 方法、candidate 6 方法全部通过，0 失败/错误/skip；保留原测试，
+  新增 per-expert ownership、padding、非连续输入、强制 grid=1/2、poison 输出
+  与前后哨兵。`correctness.json` SHA-256：
+  `965c641c9f5c7b8c094e552f7e237b8eddc951b94e0b3976d3de206797ba47b4`。
+- 两个 probe 的真实 CUDA profiler 事件均确认 **Fill 核 2→1，总 GPU 核 3→2**；
+  双方仍各执行一个 Triton 路由核。根任务已核对 TTGIR/PTX：输出 store 覆盖 padding，
+  atomic mask 不变，无新增 barrier；寄存器 34→31，0 spill，shared 均为 2048 B。
+  `probe.json` SHA `b7bf9ec3fcfcbb5ee5009841091d0dc0482f776ed1b963503a36f073aa137625`；
+  `ir-decision.json` SHA `dda6601b31ad163262b4b229dadfd3d07d8b16bf0bdce6143c7a8d40224fb383`。
+- **84 主桶＋4 空输入 controls，5 轮 AB/BA，共 440 对原始样本**完整结束。
+  主桶中位数比值算术平均 **1.0974858566**、GM **1.0961482729**；逐轮算术均值
+  1.0835832910–1.1122761541，最差主桶 1.0203289748，无回退、无 control 漂移，
+  所有资源记录 0 spill，达到预注册代理筛选门。`benchmark.json` SHA：
+  `f488a1841bd376a6234d82dce8e950805dbea5aae329168b5c0b84ae00be94d8`；
+  `raw-samples.csv` SHA：`b8caf6e8754909198fda009e5fd586d5f2545a3a3aaab251ae38ff786f22810d`。
+  这是 RTX 5070 Ti / Torch 2.13.0+cu130 / Triton 3.7.1 的包装器整体证据，
+  **不代表天数、沐曦、海光、A、B 五条 generic 目标芯路径的收益或平台均分**。
+- 晋级 source commit：`a01fb6344cfa9d9f92a88cd8d47d3d9db3d2ff1b`。
+  generic 与筛选候选逐字节一致，SHA：
+  `b53af3d40707430d846f76ae37e27df3215c71776a8c6542f71dd0888b5845eb`；
+  正式测试改接 `load_operator_modules`，SHA：
+  `f9d35cffc42a2533a9ecaa6882c6b22a2c2d64f2ead0168b60f67f64a4f5fc7b`，
+  不把旧筛选测试回执冒充正式四源回归。ZIP 已构建为
+  `artifacts/competition/fused_moe_dispatch_index/e10-generic-init-a01fb63/fused_moe_dispatch_index.zip`，
+  SHA **`80c2cbdfea2e02bd47bd72dad815762af1a635c8e51adae0268ff13732bcbdc8`**；
+  四成员为 generic、ascend、enflame、kunlunxin，后三者保持 E9 字节。
+- 正式 release：source / verification 均为上述 `a01fb634`，**6/6、0失败/错误/skip**；
+  generic / Ascend / Enflame / Kunlun 各78次入口，包装器内实际kernel分别76/228/228/228。
+  回执 `artifacts/competition/t69-generic-init-release-20260916/verification.json`，SHA
+  `9055f7fa366e8899cd327db20bbc660e0cd8a6ce903cc7f1cc17d2eef1ba4896`；日志 SHA
+  `88fdc2e83ba76b8fbbc5d0660857f90cf91f4874da6861ee3fc048855b58446e`。
+  已逐项对照 Git source/test/依赖与实际日志；裸核 poison 回归直接执行，未计入上述包装器 launch 数。
+  远端 `/tmp/flagos-t69-init-release.onj1HZ`、PID393468，外层930秒/内层900秒，EXIT0；
+  NVIDIA代理不替代目标芯验证。前后无其他compute进程。
+- 16:50:09 **单次上传和提交成功，submission 16056、daily_seq=10、state=submitted**。
+  preflight现场额度21/30，提交后20/30。nonce绑定
+  `48db81a7ec2d7c79a14ec9724a6b8466`，file URL SHA
+  `82948c01336d69290d37141b7b5edf6dea347203201516935c39a77c580a41e0`。
+  提交工具的附加远端验签最初缺少可信host配置；随后仅对已返回的官方对象存储URL做只读GET，
+  17793字节与ZIP SHA完整一致（`remote-zip-verification.json`）；没有重传或重提。
+- **16:52:11 终态：8/8、valid、is_team_best=true，均分51.3375**，比E9
+  43.643925增加 **17.6281%**；实时榜单排名6→5，榜首仍80.917125。
+  天数76.9982、沐曦45.7358、燧原0.7568、海光134.7284、昆仑0.1016、
+  华为3.8250、A80.7688、B67.7854。五条generic路径均上涨；三份vendor字节
+  未变，回调保持有效。主核融合输出初始化的收益已在本次平台评测兑现。
+  `platform-final.json` SHA
+  `7d4bc3f6bc595015bc15829308c51d1b1b6a9ba00271922d54297125190f6665`；
+  `leaderboard-final.json` SHA
+  `1939fe66de6e1b3a8a416567a1ab040938c51cab2bf81efbeb684d8d5b69e9cd`。
+  两文件均位于本轮release目录；新TB为E10，下一候选必须据此重新选择基线。
+- 提交后独立审查发现旧vendor的expert grid截断：题面未限制E上界，
+  E=65536、ids=[[65535]]时旧每expert单program路径没有expert grid-stride。
+  该缺口不在已执行回归覆盖中，不能用本次八芯评测通过推断该未覆盖域正确；正在另立修复与旧版失败回归。
+  原E10候选状态只读跟踪，不以此重试同一次提交。
+
+## 2026-09-16 local-bucket 独立筛选：仅昆仑基线达到机制门
+
+- 独立目录 `artifacts/competition/t69-local-bucket-screening-20260916/` 的
+  6 桶×5 轮 NVIDIA 代理结果：相对 E9 Kunlun vendor 的 GM **4.1885537003**，
+  相对 Enflame vendor 的 GM **1.4544346206**。按事先登记的 GM≥2 机制门，
+  仅前者支持继续 IR/目标芯探查；不能称为昆仑或燧原硬件实测收益，也不外推平台分数。
+- `benchmark-kunlunxin.json` SHA：
+  `55dea1dc2e8a77a95d3c428d1b3dcc19b443cb577a4b8100138c2cde750cbace`；
+  `benchmark-enflame.json` SHA：
+  `aec9cee97b8cfe6c4e4b99ef609908cd13f65d1ecb4ad4ee777668e17ee3d748`。
+  当前处于 IR 审查，**未修改正式 vendor、未做该候选 release、未提交平台**，
+  与 E10 generic 初始化候选分别记录。

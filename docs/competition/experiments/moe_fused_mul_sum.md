@@ -5,12 +5,12 @@ task: 32
 operator: moe_fused_mul_sum
 batch: 3
 validity: valid
-platform: 8/8
+platform: 8/8;本轮契约修复10/10 NVIDIA代理通过,未提交
 team_best_stage: S0
 team_best_speedup: 4.4829
 sealed: yes
-next: e5 三框架独立reduce同构;流量理想上限仅+22.7%,无法解释433%榜差
-updated: 2026-09-01
+next: top_k=0契约修复10/10 NVIDIA代理通过，未提交；保留S0平台TB和既有性能轴结论
+updated: 2026-09-16
 ```
 
 ## S0：generic baseline
@@ -418,3 +418,50 @@ SHA-256 与 canonical ZIP 完全一致(`verified`)。
 多 token 宽瓦片代理 -4%；唯一可理论 4–8x 的 EP-drop skip 已在 E4 平台
 决定性证伪并导致多芯回退。不存在合规 >2x 新结构，本轮不连 GPU、不改源码、
 不消耗额度；`23.9013x` 继续判定为不可复现的历史高水位产物。
+
+## 2026-09-16 契约正确性修复（NVIDIA 代理通过，未提交平台）
+
+- generic 原先把 `top_k=0` 与空输出一起提前返回，非空 `[T,D]`
+  输出因此残留 `torch.empty` 内容。只删除这一提前返回条件；已有 Triton
+  kernel 在零次 K 循环后实际写零，T=0/D=0 的空输出分支保持原样。
+- 新增 `test_zero_topk_overwrites_output_allocation`：把输出分配预置为
+  NaN，覆盖 `(2,0,D)`、D=511/512/513、三 dtype，以及普通、is_ep、
+  expert_map 三分支，共 27 个子例。检查返回原输出对象且完整覆写为
+  reference 的零值；原 9 方法保留，REQUIRED 共 10 方法。
+- 旧源码 **27/27 子例数值断言失败**，无 errors/skip；修复后同一回归
+  及完整 suite **10/10 通过**。这也纠正了早期账本中“top_k=0 已由
+  kernel 写零”的描述：旧 wrapper 实际提前返回，不能靠分配器偶然给零验证。
+- 历史 S0/sub6351 的 8/8、`4.4829x` 仍是平台 TB；本轮没有性能
+  测量，不改变 E1/E4/E5 等历史实验读数或把空 K 修复视为冲榜收益。
+
+### 固定身份与执行回执
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `1f42fa750ff5115ac0d6c378d0356015fd4910d9`（同一 Git commit） |
+| test SHA-256 | `348f65695d10ce71e03692e32059193c8557fd706919dd54e63af2b9c3af2b8d` |
+| release 回执 | `artifacts/competition/contract-fixes-20260916/moe_fused_mul_sum/verification.json` |
+| receipt SHA-256 | `4a6c35fb23c31614da82a82aff3a82638ec7be575932e75cc84684bb724cf13b` |
+| verification.log SHA-256 | `319e7db3aa80672e110bd86c8624bb74d8eefd196ba1c80244009fb0cb3e891f` |
+| RED 原始日志 | `artifacts/competition/contract-fixes-20260916/red.log` |
+| RED log SHA-256 | `df6af6773f9e4edba387fdd592de87544cd49597e3414868d79444aece5e3843` |
+
+| 执行源码 | SHA-256 | source_calls | kernel_launches |
+| --- | --- | ---: | ---: |
+| `generic` | `56741cd959ce88a12f5d2363ea78f14d56bfc3c45226b2f8f75d7d809ef697ba` | 65 | 63 |
+
+红测源码均逐字节取自 `8323997c2ba2080d4ea9b435f775f30e0f15d722`，
+配本次 release 同字节测试；日志中的 `EXPECTED_BASELINE_FAILURE` 是
+独立旧版反例的预期失败记录，不是 release 的 unittest expectedFailure。
+修复回执 `mode=release`、`scope=nvidia-proxy`、`device_vendor=nvidia`；
+环境为 RTX 5070 Ti / Python 3.12.13 / torch 2.13.0+cu130 / Triton 3.7.1 /
+CUDA 13.0。全部 expected tests 实际通过，failures/errors/skipped/
+expected_failures/unexpected_successes 均为 0，`exit_code=0`，
+`unexecuted_sources=[]`；计数来自回执的入口调用和实际 kernel launch，
+不把测试方法数或代理源码数当作芯片数。
+
+`proxy_vendors=[]`，本次只执行 generic；回执无 vendor 待验证文件，
+仍不代表 generic 已在其余七芯获得验证。
+源码/测试/依赖与 Git 对象、原始日志与回执 SHA 已在本地逐项复核，
+完整回执保留 runner 和依赖哈希。本轮仅有正确性证据，没有性能测量、
+新平台提交或新成绩；历史平台结果、TB、ZIP 与 PR 记录保持原样。

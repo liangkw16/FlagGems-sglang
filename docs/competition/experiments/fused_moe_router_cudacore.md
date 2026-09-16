@@ -5,12 +5,12 @@ task: 26
 operator: fused_moe_router_cudacore
 batch: 3
 validity: invalid
-platform: 6/8
+platform: 6/8;本轮契约修复9/9 NVIDIA代理通过,未提交
 team_best_stage: e5-e8(等价)
 blockers: 华为 case7 参考 matmul 舍入;昆仑崩溃族
 sealed: yes
-next: 平台 Q&A 澄清或他人华为方案公开
-updated: 2026-08-31
+next: padding remask修复9/9 NVIDIA代理通过，未提交；华为case7与昆仑旧风险仍待独立目标证据
+updated: 2026-09-16
 ```
 
 状态:S0 候选就绪,待额度重置后提交(排在 29→30→25(e1)→28→27 之后)
@@ -254,3 +254,55 @@ MLIRCompilationError),kunlunxin 评测中。E2 vendor 计划同 T27。
   split-K/e8 FMA);燧原 0.1898x、其余芯通过;昆仑随平台故障。
 - 今日最好成绩:6/8(e5–e8 等价);T26 重启条件:case7 数据特征
   澄清(平台 Q&A)或他人华为通过方案公开。
+
+## 2026-09-16 契约正确性修复（NVIDIA 代理通过，未提交平台）
+
+- generic、Ascend、Iluvatar 的 softcap/bias 之后各增加一次 expert
+  mask，恢复 padding logits 为 `-inf`，再做 softmax/top-k。GEMM、
+  split-K、累加与既有平局策略均未改动。
+- 根因：softcap 会把原先 `-inf` 的 padding 变为有限值；实际 expert
+  带负 bias 时，padding 既可能抢占 top-k，也可能污染归一化分母。
+  新增 `test_softcap_keeps_padded_experts_masked`，零 x/weight、
+  `bias=-10-arange(E)`，覆盖三 dtype、(rows,E)=(1,3)/(33,65)、
+  cap=0/1/-1、topk=2。旧三路径在非零 cap 下各 **12 个失败子例**，
+  合计 36，无 errors/skip；修复后完整 **9/9 通过**。
+- 原测试扩展到全部三源码，固定随机种子；保留原形状/非连续/70000 行
+  grid fold，并对精确平局检查正确 expert 集合与不重复。REQUIRED 含
+  全部 9 方法，不能用 generic 单路径通过替代 vendor 执行。
+- **华为 case_idx=7、E=256/topk=8 的历史 ids 失配未据此关闭**：
+  本轮 padding 反例是独立缺口，NVIDIA 代理也不能复现目标华为 matmul
+  的舍入行为。历史 6/8、昆仑崩溃族、E5–E8 平台记录及重启条件保留。
+
+### 固定身份与执行回执
+
+| 项目 | 值 |
+| --- | --- |
+| source / verification commit | `50371ffedd037c5b54005b68ea4370a29ebd81d9`（同一 Git commit） |
+| test SHA-256 | `7caba1260301dd3c6edad9ca64bfdc7dc2535ee080d35d29f6c408246783ff52` |
+| release 回执 | `artifacts/competition/contract-fixes-wave2-20260916/fused_moe_router_cudacore/verification.json` |
+| receipt SHA-256 | `3fcb24759b04c5531373e39aff22cb2b007bf8255f46aace9be860e24a8e3d64` |
+| verification.log SHA-256 | `2fb94a5a75a1090b11ed94bdfb0b17e94ce08e5cec6a255f966c7d35cccb5677` |
+| RED 原始日志 | `artifacts/competition/contract-fixes-wave2-20260916/red.log` |
+| RED log SHA-256 | `530d2cdb34a58c9892e6d45fc4eba77376335153d93a56a4502c956508e2bde1` |
+
+| 执行源码 | SHA-256 | source_calls | kernel_launches |
+| --- | --- | ---: | ---: |
+| `generic` | `e9fa8d9fb09b281fd764f69e5d394c19a4d994a73de3694954120b39a0068064` | 326 | 650 |
+| `_ascend` | `028a92e43209c08bb6fa0dea5c27b9f94ab74cc2d043ae0debc2c9ac29c04cf0` | 326 | 650 |
+| `_iluvatar` | `4920aafd418c1cffe099f003f81405557d8163f18280e5c0fd63fd6bf30e94ab` | 326 | 650 |
+
+红测源码均逐字节取自 `8323997c2ba2080d4ea9b435f775f30e0f15d722`，
+配本次 release 同字节测试；日志中的 `EXPECTED_BASELINE_FAILURE` 是
+独立旧版反例的预期失败记录，不是 release 的 unittest expectedFailure。
+修复回执 `mode=release`、`scope=nvidia-proxy`、`device_vendor=nvidia`；
+环境为 RTX 5070 Ti / Python 3.12.13 / torch 2.13.0+cu130 / Triton 3.7.1 /
+CUDA 13.0。全部 expected tests 实际通过，failures/errors/skipped/
+expected_failures/unexpected_successes 均为 0，`exit_code=0`，
+`unexecuted_sources=[]`；计数来自回执的入口调用和实际 kernel launch，
+不把测试方法数或代理源码数当作芯片数。
+
+`proxy_vendors` 为 `ascend`, `iluvatar`；这些 vendor 均为
+`target-runtime-unverified`，完整在 NVIDIA 执行不代表其目标芯通过。
+源码/测试/依赖与 Git 对象、原始日志与回执 SHA 已在本地逐项复核，
+完整回执保留 runner 和依赖哈希。本轮仅有正确性证据，没有性能测量、
+新平台提交或新成绩；历史平台结果、TB、ZIP 与 PR 记录保持原样。
