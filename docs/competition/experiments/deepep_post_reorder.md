@@ -11,7 +11,7 @@ team_best_stage: e10
 team_best: e10 26.917125x
 team_best_speedup: 26.917125
 sealed: no
-next: 保留e10 26.917125；e11 hidden-direct筛选失败已关闭，需目标华为新根因，不重复提交
+next: 保留e10 26.917125；华为诊断缺逐case数据/同源执行入口，待昇腾入口对照E9/E10；e11不重试
 updated: 2026-09-16
 ```
 
@@ -263,3 +263,11 @@ updated: 2026-09-16
 - 源码SHA-256 `a7b91f72a8531bca03be3d661cbb00c89b37f57944f0465d9ae548154c07c40e`，test `2f7147a3367551331cbf893d9a3384ca05af226aa99b69cf86aed13845b3de40`，benchmark脚本 `9d0d6d2126fb7a4c61fc6235a8090a75a0d9f09e6386b7f5ec6cd4d802df211e`，与预注册冻结字节一致；数学helper/旧fallback/旧token stride的AST逐节点一致，昆仑exact E10未变。未改主树、未commit候选、未打ZIP/建立intent/上传/POST。
 - 完整证据 `artifacts/competition/t65-e11-hidden-direct-screening-20260916/`：receipt SHA-256 `984e107f79165ac444664244232c669b27288b67f30c99a98d06afb1cd845694`，verification.log `af24b1a15633181a19c5093bfcf3c1525e1a7699272901d39151a3740a77bb85`，benchmark.json `1f198b7eef25d5d261d5e3f01f7577e8132944f05f6c1194bd44729a45718799`，screening-summary.json `13c523819d106678f578a62ae13aac81089909b4544e8613bd3f519bef0b131e`。140对原始样本CSV、16IR、全部双端hash保留。远端 `/tmp/flagos-t65e11-screen.AvE3F9`、PID388623、timeout600、EXIT0，GPU已释放。
 - 本轮保留平台E10 **26.917125x**；12:13榜单第10、榜首69.07705，仍需156.63%。余22/30，不为剩余预算强投失败候选。
+
+## 2026-09-16 12:26 华为诊断：缺成功用例明细与开发执行入口
+
+- [诊断报告](../t65-huawei-diagnosis-20260916.md)及[新快照](../data/t65-huawei-diagnosis-20260916.json)（SHA-256 `20d6220582728897291288c3c234e3eafd955e2ddde92482b4cdad068aa3d02b`）。实时T65仍第10/26.917125，榜首69.07705，额度22/30；本次只读查询，无新候选/提交。
+- 华为前三为255.2878/207.1470/122.7448，非单队孤例；我方17.5128同芯第9。剔除华为后七芯均值28.2606仍第10，第一42.475514，还需50.30%；即华为追到255.2878，八芯反事实均值也仅56.639。这是分数算术，不是可达性预测或运行时占比。
+- E9/E10与11条历史华为raw_result仅有空errors/failed_cases，无成功shape/dtype/stride/T_base/T_opt。华为分数-7.91945%贡献均值-0.188275，不能将execution_time_ms当kernel耗时或断言T_opt+8.60%。已检查官方前端实际调用链及CLI，范围内未找到额外只读明细入口；历史高值仍无法区分算法与窗口。
+- exact E9/E10只改变有界hidden-grid调度，逻辑hidden块/slot迭代数不变；实际目标访存与调度成本未知。E11筛选失败维持关闭。实时KernelGen鉴权正常，但公开schema无固定源码执行/IR/profile契约；项目未登记昇腾主机，现有runner仅CUDA/HIP。
+- 下一步取得已有授权昇腾入口或配对case导出，绑定上述不可变源码在同设备做reference/E9/E10对照与IR/profile归因，再决定是否新改代码。本轮未连接GPU、未修改源码、未preflight/上传/POST。
