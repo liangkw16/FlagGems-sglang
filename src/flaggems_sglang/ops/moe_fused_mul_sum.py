@@ -85,7 +85,7 @@ def moe_fused_mul_sum(
     output = torch.empty(
         (num_tokens, hidden_dim), dtype=inputs.dtype, device=inputs.device
     )
-    if num_tokens == 0 or hidden_dim == 0 or top_k == 0:
+    if num_tokens == 0 or hidden_dim == 0:
         return output
 
     scale = (

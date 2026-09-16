@@ -15,6 +15,7 @@
 import importlib.util
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import torch
 
@@ -70,6 +71,22 @@ TOLERANCES = {
     torch.bfloat16: 1.5e-2,
     torch.float32: 1e-4,
 }
+
+RELEASE_REQUIRED_TESTS = [
+    f"MoeFusedMulSumTest.{name}"
+    for name in (
+        "test_all_dtypes_plain_sum_match_reference",
+        "test_scale_none_matches_reference",
+        "test_expert_map_masking_drops_invalid_experts",
+        "test_is_ep_masking_drops_negative_ids",
+        "test_vendor_matrix_heavy_ep_drop_and_plain_parity",
+        "test_noncontiguous_input_uses_all_strides",
+        "test_block_boundaries_all_dtypes",
+        "test_empty_dimensions_and_zero_topk_match_reference",
+        "test_zero_topk_overwrites_output_allocation",
+        "test_platform_scale_qwen_moe_shape",
+    )
+]
 
 
 def reference(
@@ -365,6 +382,59 @@ class MoeFusedMulSumTest(unittest.TestCase):
                 torch.testing.assert_close(
                     inputs, original, atol=0.0, rtol=0.0
                 )
+
+    def test_zero_topk_overwrites_output_allocation(self):
+        modules = {"generic": MODULE, **VENDOR_MODULES}
+        original_empty = torch.empty
+        for dtype in TOLERANCES:
+            for hidden_dim in (511, 512, 513):
+                inputs = torch.empty(
+                    (2, 0, hidden_dim), device="cuda", dtype=dtype
+                )
+                weights = torch.empty((2, 0), device="cuda")
+                ids = torch.empty((2, 0), device="cuda", dtype=torch.int32)
+                expert_map = torch.empty(
+                    (0,), device="cuda", dtype=torch.int32
+                )
+                expected = reference(inputs, weights)
+                for name, module in modules.items():
+                    for kwargs in (
+                        {},
+                        {"topk_ids": ids, "is_ep": True},
+                        {"topk_ids": ids, "expert_map": expert_map},
+                    ):
+                        with self.subTest(
+                            name=name,
+                            dtype=dtype,
+                            hidden_dim=hidden_dim,
+                            is_ep=kwargs.get("is_ep", False),
+                            has_map="expert_map" in kwargs,
+                        ):
+                            output = torch.full_like(expected, float("nan"))
+
+                            def poisoned_empty(size, *args, **kwargs):
+                                if (
+                                    size == (2, hidden_dim)
+                                    and kwargs.get("dtype") == dtype
+                                ):
+                                    return output
+                                return original_empty(size, *args, **kwargs)
+
+                            # Poison zeros left by the allocator so the old
+                            # early return fails deterministically.
+                            with patch.object(
+                                module.torch,
+                                "empty",
+                                side_effect=poisoned_empty,
+                            ):
+                                actual = module.moe_fused_mul_sum(
+                                    inputs, weights, **kwargs
+                                )
+                            self.assertIs(actual, output)
+                            self.assertEqual(actual.dtype, dtype)
+                            torch.testing.assert_close(
+                                actual, expected, atol=0.0, rtol=0.0
+                            )
 
 
 if __name__ == "__main__":

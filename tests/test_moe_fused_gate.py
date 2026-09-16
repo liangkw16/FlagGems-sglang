@@ -21,6 +21,19 @@ from tests._op_variants import load_operator_modules
 
 MODULES = load_operator_modules("moe_fused_gate")
 
+RELEASE_REQUIRED_TESTS = [
+    f"TestMoeFusedGate.{name}"
+    for name in (
+        "test_matrix",
+        "test_grouped",
+        "test_shapes_and_order",
+        "test_kunlun_grouped_edges",
+        "test_group_score_ties_keep_exact_group_count",
+        "test_nonpow2_and_large",
+        "test_empty",
+    )
+]
+
 
 def reference(
     scores,
@@ -191,33 +204,28 @@ class TestMoeFusedGate(unittest.TestCase):
                 )
 
     def test_kunlun_grouped_edges(self):
-        mod = dict(MODULES)["kunlunxin"]
-
+        # Originally a Kunlun regression; generic must obey the same contract.
         scores = torch.zeros(1, 8, device="cuda")
         selector = torch.tensor(
             [3.0, 3.0, 0.0, 0.0, 4.0, 1.5, 0.0, 0.0],
             device="cuda",
         )
-        _, indices = mod.moe_fused_gate(
-            scores,
-            selector - 0.5,
-            topk=1,
-            renormalize=False,
-            num_expert_group=2,
-            topk_group=1,
-        )
-        self.assertLess(indices[0, 0].item(), 4)
+        for variant, mod in MODULES:
+            with self.subTest(variant=variant, case="duplicate_maximum"):
+                weights, indices = mod.moe_fused_gate(
+                    scores,
+                    selector - 0.5,
+                    topk=1,
+                    renormalize=False,
+                    num_expert_group=2,
+                    topk_group=1,
+                )
+                self.assertIn(indices[0, 0].item(), (0, 1))
+                torch.testing.assert_close(
+                    weights, torch.full_like(weights, 0.5)
+                )
 
         scores = torch.tensor([[10.0, 0.0, 6.0, 6.0]], device="cuda")
-        weights, indices = mod.moe_fused_gate(
-            scores,
-            torch.zeros(4, device="cuda"),
-            topk=1,
-            scoring_func="softmax",
-            renormalize=False,
-            num_expert_group=2,
-            topk_group=1,
-        )
         ref_weights, _ = reference(
             scores,
             torch.zeros(4, device="cuda"),
@@ -227,8 +235,51 @@ class TestMoeFusedGate(unittest.TestCase):
             num_expert_group=2,
             topk_group=1,
         )
-        self.assertIn(indices[0, 0].item(), (2, 3))
-        torch.testing.assert_close(weights, ref_weights)
+        for variant, mod in MODULES:
+            with self.subTest(variant=variant, case="softmax_selector"):
+                weights, indices = mod.moe_fused_gate(
+                    scores,
+                    torch.zeros(4, device="cuda"),
+                    topk=1,
+                    scoring_func="softmax",
+                    renormalize=False,
+                    num_expert_group=2,
+                    topk_group=1,
+                )
+                self.assertIn(indices[0, 0].item(), (2, 3))
+                torch.testing.assert_close(weights, ref_weights)
+
+    def test_group_score_ties_keep_exact_group_count(self):
+        # All three group sums are six, but their best experts differ. Keeping
+        # every tied group incorrectly routes experts from too many groups.
+        selector = torch.tensor(
+            [4.0, 2.0, 3.5, 2.5, 3.25, 2.75], device="cuda"
+        )
+        for dtype in (torch.float32, torch.float16, torch.bfloat16):
+            scores = torch.zeros(1, 6, device="cuda", dtype=dtype)
+            for topk_group in (1, 2):
+                for variant, mod in MODULES:
+                    with self.subTest(
+                        dtype=dtype, groups=topk_group, variant=variant
+                    ):
+                        weights, indices = mod.moe_fused_gate(
+                            scores,
+                            selector - 0.5,
+                            topk=2 * topk_group,
+                            renormalize=False,
+                            num_expert_group=3,
+                            topk_group=topk_group,
+                        )
+                        ids = indices[0].tolist()
+                        self.assertEqual(len(set(ids)), 2 * topk_group)
+                        self.assertTrue(all(0 <= idx < 6 for idx in ids))
+                        # torch.topk does not specify which tied groups win.
+                        self.assertEqual(
+                            len({idx // 2 for idx in ids}), topk_group
+                        )
+                        torch.testing.assert_close(
+                            weights, torch.full_like(weights, 0.5)
+                        )
 
     def test_nonpow2_and_large(self):
         with self.subTest("N=96"):

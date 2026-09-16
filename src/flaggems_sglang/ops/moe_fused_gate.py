@@ -99,13 +99,28 @@ def _moe_fused_gate_kernel(
                 in_group = (experts >= lo) & (experts < hi)
                 vals = tl.where(in_group, biased, -float("inf"))
                 m1 = tl.max(vals, axis=0)
+                first_index = tl.min(
+                    tl.where(in_group & (vals == m1), experts, BLOCK_E),
+                    axis=0,
+                )
                 m2 = tl.max(
-                    tl.where(vals == m1, -float("inf"), vals),
+                    tl.where(experts == first_index, -float("inf"), vals),
                     axis=0,
                 )
                 g_score = tl.where(g_idx == g, m1 + m2, g_score)
+            # Break equal group scores by index so exactly TOPK_GROUP survive.
             better = tl.sum(
-                (g_score[None, :] > g_score[:, None]).to(tl.int32), axis=1
+                (
+                    (g_idx[None, :] < NUM_GROUPS)
+                    & (
+                        (g_score[None, :] > g_score[:, None])
+                        | (
+                            (g_score[None, :] == g_score[:, None])
+                            & (g_idx[None, :] < g_idx[:, None])
+                        )
+                    )
+                ).to(tl.int32),
+                axis=1,
             )
             keep_flat = tl.zeros((BLOCK_E,), dtype=tl.int1)
             for g in tl.static_range(NUM_GROUPS):
