@@ -5,13 +5,13 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: valid
-platform: completed(e11-expert-grid/sub16063,8/8,49.699075x；TB仍E10,51.3375x,排名5)
-candidate_stage: e12-relaxed-release-ready
+platform: completed(e12-relaxed/sub16139,8/8,51.072975x；TB仍E10,51.3375x,排名5)
+candidate_stage: warp1-screening
 team_best_stage: e10-generic-init
 team_best_commit: a01fb6344cfa9d9f92a88cd8d47d3d9db3d2ff1b
 team_best_speedup: 51.3375
 sealed: no
-next: E12 relaxed代理+7.02%、四源10/10 release通过，待单次提交；排序聚合独立筛选中
+next: E12八芯51.072975未超TB；排序聚合大面积回退暂不晋级；单warp布局方案正在固定矩阵测速
 updated: 2026-09-16
 ```
 
@@ -538,3 +538,42 @@ updated: 2026-09-16
   `relaxed/plan-errata.json` SHA
   `04690826c9d905acc6cd21f2b7910a9b9fb8683413e20cd9cead7fabb3240bc7`。
   回执允许进入exact-commit四源release；上面的正式release已实际完成并验签。
+
+- **19:37:26 单次上传/提交成功，submission16139、daily_seq12**；nonce
+  `5e4c5e2791b3899fdee3ab28071eda39`，额度19/30→18/30。服务器ZIP下载验签一致，
+  18972字节与已绑定SHA匹配，没有重传/重提。file URL SHA
+  `e2103404094a7a44e30eeda5cc2afc45ba49942d82f91a0ed60b27afdf25bef5`。
+- **19:39:06 平台8/8、valid，均分51.072975，is_team_best=false**；
+  天数77.6478/沐曦41.2886/燧原0.7408/海光135.823/昆仑0.1032/
+  华为3.6496/A82.2514/B67.0794。榜单仍E10 51.3375、第5。
+  代理+7.02%不能直接换算平台收益；本次未创新TB，不重投此候选。
+  `relaxed-release/platform-final.json` SHA `af1ac4979b6274a1bb6df3338e1716e8e11292417ac2f9cb2fe1c2be762965a9`；
+  `relaxed-release/leaderboard-final.json` SHA `2a61964fddccb68cca19c01e149923b2b9c6a1c865850d8e59feff527fd4170d`。
+
+## 2026-09-16 单核排序聚合：数字短名单门通过，分布性回退后暂不晋级
+
+- 与E12独立，从E11默认acq_rel generic出发；i64打包expert+原lane排序，前向max/
+  反向min两scan求段边界，仅段首atomic预约整个段，再gather起点并scatter回原slot。
+  保留单路由核/计数zeros、BLOCK256与grid-stride，未引入global scratch或vendor改动。
+  候选 `sorted/candidate.py` SHA `1629a375ede139af6d4331c3421e6908ae32d9080636c818fea151a6380fc8d1`。
+  CPU模型不替代GPU；实际generic双方10/10通过，含forced grid/poison、高E、空和padding、
+  小m_max重叠、int32末端与stride，vendor内部方法不算该筛选覆盖。
+- 新取回16份IR与profiler验签；段首mask、segment_count、masked返回清零后gather、
+  原slot store都保持。外层只有scalar induction，无tensor iter_args。
+  PTX barrier **8→33**、shuffle0→144、register31→96，shared2048B、0spill。
+  按冻结输入推导（非硬件计数）small-pad请求171→18；large-uniform E256每tile全不同，
+  请求65544→65544，付出排序却不减少atomic。
+  `sorted/ir-review.json` SHA `537a3d0ae9fa62c1b6f8b3c8095ad18f415f7c1fb78777ca1d639771f84c4e88`。
+- 复用plan的陈旧说明另存 `sorted/plan-supplement.json`，在**计时之前**明确实际
+  10/10、1Fill+1Triton、当前TB51.3375及资源可行性上限；数值短名单门与88桶不变，
+  不覆盖原冻结文件。资源上限在已看IR后、计时前声明，不伪称probe前注册。
+  supplement SHA `44753413ae3cd7d780ea5647fd798ab945bfc82d70a528d60a09190063405f43`。
+- 84主桶+4control、5轮440对完成：算术均值 **1.1023310446**，GM **0.9935606129**；
+  五轮均值1.100563–1.103773，确实达到数字短名单门。但**64/84桶低于0.95**，
+  最差0.780519；uniform/hot/pad组均值0.99788/1.37162/0.93749。
+  热点大N最好3.8855倍拉高均值；无control漂移、无spill，不能删去回退桶重新算收益。
+  缺乏隐藏分布与目标收益证据，暂不将此无条件排序替换泛化到generic；不是因单桶回退自动否决，
+  也不是声称数字门失败。没有该方案release、ZIP或平台提交。
+  benchmark SHA `09d58d2b43d7e337e1cb4d65a71fbb55748d445cfcfefef3a4ba80c733c97b35`；raw SHA `7b94582554b9549d9de1e7219ea88d36ac352fc875d0416a0e1e189d2ce60a6f`。
+  决策 SHA `34f7feb15cde203f1e793d5132294e4d9036a2d55659b2259e489d05ac05b61c`。远端 `/tmp/flagos-t69-relaxed-release.ZHXuPc/sorted`，
+  PID394579、930s上限、EXIT0，前后无其他GPU计算进程。
