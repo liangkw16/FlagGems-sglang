@@ -4,13 +4,13 @@
 task: 66
 operator: dsv3_fused_a_gemm
 batch: 5
-validity: valid
-platform: completed(13371,e1,8/8,3.09395x team best)
+validity: pending
+platform: evaluating(15861,e2;TB e1 8/8,3.09395x)
 candidate_stage: e2
 team_best_stage: e1
 team_best_speedup: 3.09395
 sealed: no
-next: e2窄N split4 exact release 7/7通过，待单次live preflight提交；TB仍e1
+next: e2已单次提交15861，评测中；等8芯终态再判门，TB仍e1
 updated: 2026-09-16
 ```
 
@@ -123,3 +123,7 @@ updated: 2026-09-16
 - ZIP `artifacts/competition/dsv3_fused_a_gemm/e2-99580f9/dsv3_fused_a_gemm.zip`，单成员 `dsv3_fused_a_gemm.py`，6210 bytes，SHA-256 `3b5e16450e33948c44f2ec01c08fe3aab37d21474c042305a88067472c317715`，与release前dry-run完全一致。py_compile/Black/isort/flake8通过。
 - 平台门：8/8且所有芯≥0.1、均值>3.09395才替换TB；≥3.40为后续投入信号，Top1需超过实时4.586175。一次结构试验，不重掷相同候选。其他芯为target-runtime-unverified，不将NVIDIA提升外推。
 - 透明限制：额外大K fp32诊断中，两组旧E1也未达自设1e-4容差；候选fp32与E1逐字节输出一致，该dtype不在公开bf16契约内。原始失败没有删除，亦未称其通过。
+
+## 2026-09-16 E2 单次平台提交
+
+11:32:22，submission **15861**，daily_seq5；upload/正式POST各一次，状态submitted，远端ZIP SHA完全一致。发后额度25/30。记录 `artifacts/competition/top1-20260916/t66-e2-{preflight,submit,status}.json`；尚未全部出分，不能提前认定有效或计算正式平均。

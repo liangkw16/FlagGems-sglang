@@ -35,12 +35,12 @@ operator: fused_eh_norm
 batch: 5
 validity: valid
 platform: completed(14589,e6,8/8,7.042x;TB e4 7.089x)
-candidate_stage: e6
+candidate_stage: e8
 team_best_stage: e4
 team_best_speedup: 7.08945833
 sealed: no
-next: e6 split-row证伪(燧原0.87,饥饿假说假);TB e4 7.089守;燧原缺因未破,主攻降级
-updated: 2026-09-14
+next: e8单launch双path筛选1.30565x且exact release 7/7通过；待平台一次验证，TB仍e4
+updated: 2026-09-16
 ```
 
 ## 契约与范围
@@ -249,3 +249,19 @@ updated: 2026-09-14
 - 单变量=燧原 vendor 钉 num_warps=4（夜间批 T71/T73/T68/T62 四题）。
   批量结论：燧原 warps 为逐题特性，非统一旋钮；本批 2 负 2 平，
   轴关闭。TB 各自保持。
+
+## 2026-09-16 E8：独立 e/h 路径并行，发布验证通过
+
+- 从TB E4 `220aa32d18a1c3a4aca829b09b79e2e906471e43` 独立分叉：仅将grid改为`(min(tokens,24),2)`，第二维选择e/h路径；保留cap24行步进、CHUNK4096、两遍读取、fp32顺序与warps8/stages1。不是历史E6两kernel split-row，不混入当前HEAD负候选。generic/Hygon/Iluvatar/Metax逐字节等于TB。
+- 复用本仓固定Hygon `19e45c369445ee5f07a1af9acf4b7d387c07a616` 路径映射；不直接搬其无界grid。完整7方法含双输入/权重stride与tokens65535/65536/65537，screening baseline与generic/Enflame均通过。24桶×5轮AB/BA：14 primary桶几何均值1.30565015，五轮1.29871674–1.31365468，最差1.04206063；10个row-stride secondary桶1.26693–1.84899，后者也是受影响路径而非control。max40regs/32B shared/0spill。
+- screening证据 `artifacts/competition/t68-path-split-cap24-screening-20260916/`：benchmark SHA-256 `6ddb744d3efc6a39c63caf05ef07c8686f7f5f9562684762051c981dda60a3b5`；verification SHA-256 `62f3b11d53e2e7e6e876eb20407e95d71aec46b51baa2f16b6327d978b36a468`。完整日志/原始样本/输入输出SHA在目录。
+- source/verification commit `2f64c03f543b8f83d9234a684dbd8e091e3c008f`；候选Enflame SHA-256 `d5f8a4995d5cbb28ab385f169051be9e6bac6e0c8c27dadfb60e58e0ce77e515`、test SHA-256 `f9c02d2f392fdf3cfb99c16edbf93d5a4808973c77247f8af916a0ac314267f9`，与screening完全一致。py_compile/Black/isort/flake8通过。
+- exact release **7/7、0F0E0S，generic/Enflame各29次入口、28次kernel launch**，RTX5070Ti/Python3.12.13/Torch2.13.0+cu130/Triton3.7.1。目录 `artifacts/competition/t68e8-release-20260916/`：verification SHA-256 `93598ab6a0ffaaa59594c4c45df8dde8bf69c8a3bbcd8ca851fbf84b14706ab9`，日志 `7a1170059f45e5aeb002d932c9d94f051c71807d32a04b0ecf63c53ece06c93d`。远端`/tmp/flagos-t68e8-release.C6Lg36`、PID387571、660秒总上限、EXIT0，重放包/命令/启动记录保留。Enflame target-runtime-unverified；其他未改vendor未在本轮release代理执行。
+- ZIP `artifacts/competition/fused_eh_norm/e8-2f64c03/fused_eh_norm.zip`，SHA-256 `7c78a2686cb77cbfe391187a6d9679f7cd5d70c0e99269a66b07a357ca2cce4d`，17738 bytes；成员仅generic+enflame+hygon+iluvatar+metax，逐成员完整SHA如下。
+- 平台晋级预注册：8/8且各芯≥0.1，均值>7.08945833才替换TB；Enflame≥2.0才算目标假说正信号。实时Top1为10.40585833，本改动尚无单步夺冠证据；一次提交判决，不重复同字节候选。
+
+- `fused_eh_norm.py`：`5a19180d9b5257c43d194bbb6df804b53ba849cf6e5679c3ce1a4c303397caaf`
+- `fused_eh_norm_enflame.py`：`d5f8a4995d5cbb28ab385f169051be9e6bac6e0c8c27dadfb60e58e0ce77e515`
+- `fused_eh_norm_hygon.py`：`f95542dbcc1ca8fb4a2b30c66998ee7f954042cd50776b636faf98a209d048a5`
+- `fused_eh_norm_iluvatar.py`：`2ddf0e54364ac27483e52e7ebeeaa6ba89243e548fe30dfa247007fc1aab9f48`
+- `fused_eh_norm_metax.py`：`a66edf313a8c1db370057ae6b22143202b1bfdd306779380b7a83a1f250d6b89`
