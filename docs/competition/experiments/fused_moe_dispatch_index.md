@@ -6,12 +6,12 @@ operator: fused_moe_dispatch_index
 batch: 5
 validity: valid
 platform: completed(e10-generic-init/sub16056,8/8,51.3375x新TB,排名5)
-candidate_stage: e10-generic-init
+candidate_stage: e11-expert-grid-release-ready
 team_best_stage: e10-generic-init
 team_best_commit: a01fb6344cfa9d9f92a88cd8d47d3d9db3d2ff1b
 team_best_speedup: 51.3375
 sealed: no
-next: E10八芯51.3375新TB；独立修复vendor大E截断，local-bucket仅代理机制成立暂不混投
+next: E11大E修复9/9四源回归与普通域IR核对通过，待一次性preflight提交；TB仍E10
 updated: 2026-09-16
 ```
 
@@ -421,3 +421,45 @@ updated: 2026-09-16
   `aec9cee97b8cfe6c4e4b99ef609908cd13f65d1ecb4ad4ee777668e17ee3d748`。
   当前处于 IR 审查，**未修改正式 vendor、未做该候选 release、未提交平台**，
   与 E10 generic 初始化候选分别记录。
+
+- 补充完整 IR 已完成：5 个输入、15 次实际候选 launch（含 E257），60 份 asm
+  全部验签，0 spill。histogram 实际为 **shared atomic，无 global atomic**；
+  i64 sort 为比较交换网络；maxscan 为局部扫描，prefix 只有 scalar i32 累加。
+  `full-ir-review.json` SHA
+  `9748af4976eb0159833cb6bc13228fadd7bbe6eafbae32c38c5fc0ccb0d41ce1`。
+  T70 历史只证明昆仑缺 `tl.topk`，不能据此认定 `tl.sort` 不支持；
+  共享原子同步、i64 sort、scan/gather 组合及大 E 资源在目标芯仍未知，保持候选隔离。
+
+## 2026-09-16 E11：修复 vendor 专家 grid 截断，正式回归完成
+
+- 根因：Ascend/Enflame 的 prefix、Kunlun 的 counts/prefix 只覆盖
+  `min(E,65535)` 个专家。E=65536、`ids=[[65535]]` 时末专家计数漏写；
+  这是公开契约缺口，不能由 E10 八芯有效推断正确。
+- 改动只有三份 vendor 和回归测试；新增 constexpr `EXPERT_TILES=ceil(E/grid)`，
+  以 `pid + tile*grid` 唯一覆盖全部专家，末 tile 防越界。普通 E≤65535 的
+  tiles=1；E=0 的 grid=1、tiles=0，不解引用空 counts/prefix。generic 保留 E10 字节。
+  source / verification commit：`521b0656ff113d2f25cee4130c29fcf81baea6d5`。
+- 新增高专家编号、E=0/空输入/全 padding、强制 grid=1/2 的 poisoned counts/prefix；
+  旧 6 方法 AST 全部保留，现 9 项 REQUIRED。旧源 `a01fb634` 配新公开入口
+  `test_expert_grid_boundaries` 实测 **9 个 counts 失败子例**，没有用私有签名错误冒充 RED。
+  RED 日志 `artifacts/competition/t69-expert-grid-20260916/red.log` SHA `04a54de874ac7c582895f1ac63c74ac960e1ccb5999ff34ff7c7edfafbc43686`。
+- 独立静态审查无新增阻断，`expert-grid-review.json` SHA
+  `449fd1e0f05448120d1643bf22fae48ce0667cb01fb374743c59d8ec0adbe6de`。
+- 远端 `/tmp/flagos-t69-expert-grid.7cHdYa`、PID393640，输入 28 文件启动前验签；
+  RED/IR/release 顺序后台执行，总 timeout1540 秒，结束 **EXIT0**，前后 GPU 无其他计算进程。
+  release **9/9，0失败/错误/skip**，四源各94次入口；包装器内实际核
+  generic84 / Ascend252 / Enflame252 / Kunlun252；裸核 poison 回归另行真实执行。
+  回执 `artifacts/competition/t69-expert-grid-20260916/release/verification.json` SHA
+  `b0887c6e08a59a2e914e718d0f4bbcea98593c9b8d6e14e994a75f8807fcfa64`；完整日志 SHA
+  `08ecfe72e6784244704436ee01e293d896beb724a0ed2234bcc9eb8b3906e5ee`。已复核 Git blob、测试、依赖、回执和日志。
+- 普通域 IR：E32/E64 × n1032/n8192 × Enflame/Kunlun，共24对核、48次实际launch；
+  Ascend与Enflame源字节相同。20对去调试元数据后 TTGIR/PTX 完全一致；
+  其余4对仅昆仑 counts 新增未使用形参、参数编号平移及常量声明顺序变化，
+  无新增 GPU 循环、分支或读写，寄存器/0spill/shared全保持。新外层 tile loop
+  在普通域消除；这不是目标芯性能保证，昆仑旧0.1016贴门风险仍需平台裁决。
+  `normal-ir/comparison.json` SHA `ab3db075e49449e23ce8185a212ec797b49c576aaa8037df26e492fc48930e6d`。
+- 正式 ZIP：`artifacts/competition/fused_moe_dispatch_index/e11-expert-grid-521b065/fused_moe_dispatch_index.zip`，
+  18935字节，SHA `f58e1dfd107fb57696dea225130f87bd725ec6c1ec8724ab834d99d79464d5be`，
+  四成员 generic/ascend/enflame/kunlunxin。测试 SHA
+  `e37b9554930e30ac8e34bf3f3d8dfc5e820109603a0de18aa3b2d7dd7fd9c21c`。
+  NVIDIA代理通过；目标runtime尚未验证，按既有授权执行实时preflight及单次提交。
