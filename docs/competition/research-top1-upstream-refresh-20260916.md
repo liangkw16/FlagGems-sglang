@@ -37,7 +37,7 @@ SGLang main 的 [`post_reorder_deepgemm_triton_kernel`:902–945](https://github
 
 ### 最小适配
 
-只改 generic 的 hidden 映射：grid `(min(tokens,65535), min(cdiv(hidden,2048),255))`，每个 program 在自己的 hidden 起点按 `num_programs(1)*2048` 步进，保持 token 原 cap 与 row-stride。hidden≤2048 是同工作量控制组；更大 hidden 是 affected。第二维封顶并保留步进，避免把公开未限定的 hidden 变成硬件 grid.y 越界。
+只改 generic 的 hidden 映射：令 `gy=min(cdiv(hidden,2048),255)`、`gx=min(tokens,max(1,65535//gy))`，grid为`(gx,gy)`，保留token与hidden双轴步进。hidden≤2048是同工作量控制组；更大hidden是affected。**11:40发布审查订正**：只分别封顶x/y不足；T21 submission4274的grid(4096,28)在昇腾报coreDim114688>65535，须将总program数控制在65535内。原独立封顶候选仅有screening，已阻断发布并保留负向安全审计事实，不能将其1.32x用于新字节背书。
 
 保留当前 BLOCK2048、slot 顺序、fp32 累加、`row * (w * scaling)` 顺序、所有 stride、输出新分配、空维度、topk=0 和全 -1 语义；昆仑 vendor 字节不动。不同时加入上游的资源探测、NUM_STAGES3、scale 后移或 Gluon。题面 reference 将权重先转换成 down dtype；新测试继续按题面 reference 对比，不能用上游 float32 权重 reference 替换。
 

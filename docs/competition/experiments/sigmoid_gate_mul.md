@@ -18,10 +18,10 @@ validity: valid
 platform: completed(e9,8/8,2.8967x;华为warps8无效关闭)
 candidate_stage: e9
 team_best_stage: e9
-team_best_speedup: 2.8967
+team_best_speedup: 2.89671667
 sealed: no
-next: 宽度轴全档扫完终封;TB e7r 2.8865守;残余=燧原3.3vs榜首7.8非宽度形态,待结构证据
-updated: 2026-09-15
+next: Ascend direct候选代理1.01924x未达1.05且fp16稳定回退，不提交；TB保持e9
+updated: 2026-09-16
 ```
 
 ## 契约与实现（S0）
@@ -200,3 +200,10 @@ vs 本题 0.26）。
 - 华为 1.278（vendor 被选，vs 1.3 持平）；均值 2.8967（+0.01 噪声级，
   记为新 best 但非轴增益）。**华为 warps 轴关闭**；燧原 3.32 维持
   e7r 水位。TB 2.897。
+
+## 2026-09-16 Ascend bounded direct：筛选失败，零平台额度
+
+- 固定前批PR78 `077fdc3a0d8d7af02b8b84f131e20399c962c1d3`、PR56 `9e36df5e4bfe146982bf8fa4b1f98bb496fe952c` 的成熟direct/fallback形式：从TB E9 `389e637e42560c791e68ff81d2b32f6b9fe49770`分叉，仅Ascend在grid≤65535移除loop，超大输入保留原persistent；BLOCK4096/warps8/数学与其他四源不变。候选SHA-256 `5922f0b3dfb0aab202a4d9316d28664a1ca13dd13d44bf57509637d113166ee1`。
+- IR硬门通过：6/6 inspected基线保留1个循环、direct为0；5/5必需方法通过。27桶×5轮AB/BA端到端几何均值 **1.01924<1.05**，每轮最低1.01195<1.02，最差 **0.903817<0.95**。fp16 n4194305五轮均0.9019–0.9063，n270369中位0.923641，属稳定回退；kernel-only整体1.01118。fp16 direct出现2 spills（baseline0），只记NVIDIA lowering线索，不外推昇腾。
+- 全部原始IR、timings、环境、正确性和资源证据已取回验签于 `artifacts/competition/t75-direct-preparation-20260916/`；benchmark SHA-256 `0ba26557af4cdcac7eebaa68114ab66b75e9b839e2d8441f4c1748aaddec5b35`，日志 `36bd20c7eeac978925ddf942cf596b3dbd5c8858d38bdb6f1d4a61198ba4beb5`。远端`/tmp/flagos-t75-direct.IMTSF2`、PID387860、timeout600、EXIT0，GPU已释放。
+- 未晋升源码/测试、未建ZIP/intent、未上传或提交。保持TB E9=2.89671667。关闭本次全dtype direct候选；不事后排除fp16、改门或继续扫宽度来掩盖失败。

@@ -4,13 +4,13 @@
 task: 64
 operator: deepep_permute
 batch: 5
-validity: valid
-platform: completed(e5,8/8,7.1711x新TB;燧原真实水位6.7修正,华为constexpr关)
+validity: pending
+platform: evaluating(15868,e6;TB e5 8/8,7.17105x)
 candidate_stage: e6
 team_best_stage: e5
 team_best_speedup: 7.17105
 sealed: no
-next: e6修正tiles/BLOCK错配，screening中位1.213x及exact release通过；待单次平台验证
+next: e6已单次提交15868，等待八芯终态；TB仍e5
 updated: 2026-09-16
 ```
 
@@ -229,3 +229,7 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - `deepep_permute.py`：`7857c235db4f253b025d9890b444215455bde6c8ea99bbe9cecd3f6a8d69fc1a`
 - `deepep_permute_ascend.py`：`c032bc09a05cbeaa217e4fa03207eb08854d2ca6d2548298dd99c2aebcd8d5f1`
 - `deepep_permute_enflame.py`：`8537558942805522f7811ef81829974ee3c750f42b019b0f5da871a1f81f77f2`
+
+## 2026-09-16 E6 单次平台提交
+
+11:40:46，submission15868、daily_seq7；upload/正式POST各一次、state=submitted，远端ZIP字节验签一致。发后额度23/30；结果待八芯终态。证据 `artifacts/competition/top1-20260916/t64-e6-{preflight,submit}.json`。

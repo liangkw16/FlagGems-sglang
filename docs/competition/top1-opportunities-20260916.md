@@ -98,3 +98,14 @@ T66 预注册：只在bf16/fp16、K≥4096且0<N≤512启用四路fp32部分和+
 T64审计发现Enflame BLOCK=2048而tiles仍cdiv(hidden,512)，多余任务全mask但继续route循环。这是计算任务数修复，区别于已尝试的宽度/warps；需先完整回归及五轮配对验证。
 
 本轮KernelGen实时schema仍只有生成/改写工具，无固定本地源码执行入口；另无已登记可用独立目标主机。保留target-runtime-unverified，不把服务重新生成的代码计为本候选同源验证。
+
+## 11:40 后续结构试验
+
+- T66 E2已8/8有效3.09855x（原3.09395，仅+0.15%），未达3.40继续投入门；NVIDIA窄shape1.70x不代表平台分布收益，不复投。
+- T64明确空task修复screening受影响中位1.2131x、大矩阵1.9018x；exact release6/6，已进入一次提交闭环。T68 path并行screening1.30565x、release7/7，submission15864评测中。
+- 上游复扫新增T65已合入的hidden分块并行来源，原映射筛选1.31996x但被跨芯发布审查挡下：昇腾限制grid乘积65535，不能只分别cap两轴。修正wrapper并补tokens×hidden组合边界后作为新候选重测，原字节不提交。
+- T75有界direct/no-loop正在按IR硬门筛选：先确认基线循环未被编译器消除，否则停止该轴。
+- 有成熟上游来源且新预注册筛选通过时，结构实验预算从3扩到最多5发，覆盖T65/T75；仍至少保留2次。额度不用于旧字节/关闭轴重掷。
+- 扫描与复用依据：[前批PR报告](research-top1-pr-refresh-20260916.md)、[vLLM/SGLang固定源码报告](research-top1-upstream-refresh-20260916.md)。
+
+- T75筛选终态：IR确认旧loop存在且direct消除，但27桶端到端1.01924x未达1.05，fp16最差0.903817且2spill；不晋升/不提交。T68平台8/8、7.10215x微升，燧原1.6814未达2.0门，停止本轴。

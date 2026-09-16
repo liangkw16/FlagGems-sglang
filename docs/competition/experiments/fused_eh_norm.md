@@ -34,12 +34,12 @@ task: 68
 operator: fused_eh_norm
 batch: 5
 validity: valid
-platform: completed(14589,e6,8/8,7.042x;TB e4 7.089x)
+platform: completed(15864,e8,8/8,7.10215x新TB)
 candidate_stage: e8
-team_best_stage: e4
-team_best_speedup: 7.08945833
+team_best_stage: e8
+team_best_speedup: 7.10215
 sealed: no
-next: e8单launch双path筛选1.30565x且exact release 7/7通过；待平台一次验证，TB仍e4
+next: e8仅+0.18%，燧原1.6814未达2.0门；停止本path分离轴，不重投
 updated: 2026-09-16
 ```
 
@@ -265,3 +265,7 @@ updated: 2026-09-16
 - `fused_eh_norm_hygon.py`：`f95542dbcc1ca8fb4a2b30c66998ee7f954042cd50776b636faf98a209d048a5`
 - `fused_eh_norm_iluvatar.py`：`2ddf0e54364ac27483e52e7ebeeaa6ba89243e548fe30dfa247007fc1aab9f48`
 - `fused_eh_norm_metax.py`：`a66edf313a8c1db370057ae6b22143202b1bfdd306779380b7a83a1f250d6b89`
+
+## 2026-09-16 E8 平台终态：8/8 valid，7.10215x微升
+
+11:37:22单次提交15864（daily_seq6），upload/POST各一次，远端ZIP验签verified；11:40:42已8/8。逐芯天数12.61186667、沐曦6.80853333、燧原1.6814、海光13.55273333、昆仑1.0982、华为3.8108、A9.138、B8.11566667。均值7.08945833→7.10215（+0.1790%）新TB；目标燧原仅较1.56226667提升7.63%，未达2.0门，关闭本path分离轴。冻结源的芯片读数也变化，均分微升不全归因于代码。保留E8；不将代理1.30565x外推。证据 `artifacts/competition/top1-20260916/t68-e8-{preflight,submit,status}.json`，终态查询时额度24/30。
