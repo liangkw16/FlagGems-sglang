@@ -40,7 +40,7 @@ def reference(A, B, As, Bs, block_size, output_dtype):
 
 
 def make_case(M, N, K, block_n=128, block_k=128, dtype=torch.float16, seed=0):
-    # Platform contract: int8 operands, fp32 scales; dtype param is output dtype.
+    # Contract: int8 operands, fp32 scales; dtype is the output dtype.
     g = torch.Generator().manual_seed(seed)
     A_int = torch.randint(
         -128, 128, (M, K), dtype=torch.int8, generator=g
@@ -144,6 +144,86 @@ class W8A8VariantsTest(unittest.TestCase):
                         out.float(), ref.float(), atol=1e-2, rtol=1e-2
                     )
 
+    def test_non_power_of_two_group_regressions(self):
+        # Ones and power-of-two scales give exact, independently known sums.
+        # K=192 catches dropped or cross-scaled K tiles; N=193 isolates the
+        # Kunlun scalar N scale; K=N=193 also exercises both final groups.
+        cases = (
+            (1, 192, 32, 96, [1, 2], [[1, 4]], [864]),
+            (193, 32, 96, 32, [1], [[1], [2], [4]], [32, 64, 128]),
+            (
+                193,
+                193,
+                96,
+                96,
+                [1, 2, 4],
+                [[1, 2, 4], [2, 4, 8], [4, 8, 16]],
+                [496, 992, 1984],
+            ),
+        )
+        for n, k, bn, bk, a_scales, b_scales, sums in cases:
+            A = torch.ones((1, k), dtype=torch.int8, device="cuda")
+            B = torch.ones((n, k), dtype=torch.int8, device="cuda")
+            As = torch.tensor([a_scales], dtype=torch.float32, device="cuda")
+            Bs = torch.tensor(b_scales, dtype=torch.float32, device="cuda")
+            for dtype in (torch.float16, torch.bfloat16, torch.float32):
+                expected = torch.tensor(sums, dtype=dtype, device="cuda")
+                expected = expected.repeat_interleave(bn)[:n].reshape(1, n)
+                args = (A, B, As, Bs, [bn, bk], dtype)
+                torch.testing.assert_close(
+                    reference(*args), expected, atol=0, rtol=0
+                )
+                for name, module in self.MODULES:
+                    with self.subTest(module=name, n=n, k=k, dtype=dtype):
+                        actual = module.w8a8_block_int8_matmul(*args)
+                        torch.testing.assert_close(
+                            actual, expected, atol=0, rtol=0
+                        )
+
+    def test_non_power_of_two_groups_tails_and_strides(self):
+        cases = (
+            (1, 3, 3, 1, 1),
+            (2, 5, 7, 3, 5),
+            (3, 35, 67, 17, 33),
+            (2, 95, 95, 96, 96),
+            (2, 96, 96, 96, 96),
+            (2, 97, 97, 96, 96),
+            (3, 131, 255, 65, 127),
+            (2, 259, 259, 129, 129),
+        )
+        for m, n, k, bn, bk in cases:
+            for dtype in (torch.float16, torch.bfloat16, torch.float32):
+                original = make_case(m, n, k, bn, bk, dtype, seed=58)
+                inputs = []
+                for tensor in original[:4]:
+                    rows, cols = tensor.shape
+                    backing = torch.full(
+                        (2 * rows + 1, 2 * cols + 1),
+                        127 if tensor.dtype == torch.int8 else float("nan"),
+                        dtype=tensor.dtype,
+                        device=tensor.device,
+                    )
+                    view = backing[1 : 2 * rows + 1 : 2, 1 : 2 * cols + 1 : 2]
+                    view.copy_(tensor)
+                    inputs.append(view)
+                args = (*inputs, [bn, bk], dtype)
+                expected = reference(*args)
+                for name, module in self.MODULES:
+                    with self.subTest(
+                        module=name,
+                        shape=(m, n, k),
+                        groups=(bn, bk),
+                        dtype=dtype,
+                    ):
+                        actual = module.w8a8_block_int8_matmul(*args)
+                        torch.testing.assert_close(
+                            actual, expected, atol=1e-2, rtol=1e-2
+                        )
+                        for tensor, before in zip(inputs, original[:4]):
+                            torch.testing.assert_close(
+                                tensor, before, atol=0, rtol=0
+                            )
+
 
 RELEASE_REQUIRED_TESTS = [
     "W8A8Test.test_basic",
@@ -152,6 +232,8 @@ RELEASE_REQUIRED_TESTS = [
     "W8A8Test.test_empty",
     "W8A8VariantsTest.test_int8_group_and_tile_tails",
     "W8A8VariantsTest.test_variants_match_reference",
+    "W8A8VariantsTest.test_non_power_of_two_group_regressions",
+    "W8A8VariantsTest.test_non_power_of_two_groups_tails_and_strides",
 ]
 
 

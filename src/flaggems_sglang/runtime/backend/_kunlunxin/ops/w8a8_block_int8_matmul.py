@@ -14,12 +14,12 @@
 
 # Kunlunxin vendor for w8a8_block_int8_matmul.
 # s0 generic crashed the kunlunxin compiler (PassManager::run failed) — the
-# only per-lane vector integer division was `offs_n // group_n`. Since
-# BLOCK_N divides group_n (both powers of two, BLOCK_N <= group_n), the n
-# group index is constant across the tile: compute it as a scalar from
-# pid_n. Same math, no vector idiv.
+# only per-lane vector integer division was `offs_n // group_n`. Tile
+# each N scale group separately so its scale index remains scalar, including
+# non-power-of-two groups and their masked final tiles.
 # e8r re-roll of the e8 sub-11640 bytes (fp16 dot verified correct on the
-# platform, +4.4% on this chip). e8 probe: the historical fp16-operand dot miscompile family traces to the
+# platform, +4.4% on this chip). The historical fp16-operand dot
+# miscompile family traces to the
 # SDNN int<->float DMA dequant-scale bug fixed in xpu-sdnn-objects
 # v0.3.6.6.1 (FlagTree #1099, verified int8 dot on KL3), and the current
 # XPU stack ships v0.3.6.8.0 (FlagTree #1124). This backend never ran the
@@ -56,39 +56,51 @@ def _w8a8_block_matmul_kunlunxin_kernel(
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
+    GROUP_STEPS: tl.constexpr,
+    N_GROUP_STEPS: tl.constexpr,
 ):
     pid_m = tl.program_id(0)
     pid_n = tl.program_id(1)
     offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
-    offs_n = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+    n_group = pid_n // N_GROUP_STEPS
+    n_in_group = (pid_n % N_GROUP_STEPS) * BLOCK_N + tl.arange(0, BLOCK_N)
+    offs_n = n_group * group_n + n_in_group
     offs_k = tl.arange(0, BLOCK_K)
     m_mask = offs_m < M
-    n_mask = offs_n < N
+    n_mask = (offs_n < N) & (n_in_group < group_n)
 
     accumulator = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
-    for k_start in range(0, K, BLOCK_K):
-        k_mask = (k_start + offs_k) < K
+    # Enumerate tiles within each scale group, including its partial tile.
+    # The final group contributes only tiles containing actual K elements.
+    k_tiles = (K // group_k) * GROUP_STEPS + tl.cdiv(K % group_k, BLOCK_K)
+    for k_tile in range(0, k_tiles):
+        k_group = k_tile // GROUP_STEPS
+        k_in_group = (k_tile % GROUP_STEPS) * BLOCK_K + offs_k
+        k_start = k_group * group_k + (k_tile % GROUP_STEPS) * BLOCK_K
+        k_mask = ((k_start + offs_k) < K) & (k_in_group < group_k)
         a = tl.load(
-            a_ptr + offs_m[:, None] * a_stride_m + (k_start + offs_k)[None, :] * a_stride_k,
+            a_ptr
+            + offs_m[:, None] * a_stride_m
+            + (k_start + offs_k)[None, :] * a_stride_k,
             mask=m_mask[:, None] & k_mask[None, :],
             other=0.0,
         ).to(tl.float16)
         b = tl.load(
-            b_ptr + offs_n[None, :] * b_stride_n + (k_start + offs_k)[:, None] * b_stride_k,
+            b_ptr
+            + offs_n[None, :] * b_stride_n
+            + (k_start + offs_k)[:, None] * b_stride_k,
             mask=n_mask[None, :] & k_mask[:, None],
             other=0.0,
         ).to(tl.float16)
         acc_k = tl.dot(a, b)
-        k_group = k_start // group_k
-        n_group = (pid_n * BLOCK_N) // group_n
         a_s = tl.load(
             as_ptr + offs_m * as_stride_m + k_group * as_stride_k,
             mask=m_mask,
             other=0.0,
         ).to(tl.float32)
-        b_s = tl.load(bs_ptr + n_group * bs_stride_n + k_group * bs_stride_k).to(
-            tl.float32
-        )
+        b_s = tl.load(
+            bs_ptr + n_group * bs_stride_n + k_group * bs_stride_k
+        ).to(tl.float32)
         accumulator += acc_k * a_s[:, None] * b_s
 
     tl.store(
@@ -113,10 +125,17 @@ def w8a8_block_int8_matmul(A, B, As, Bs, block_size, output_dtype):
 
     group_n, group_k = int(block_size[0]), int(block_size[1])
     block_m = 64
-    block_n = min(_largest_pow2_leq(group_n, 64), triton.next_power_of_2(max(N, 16)))
-    block_k = _largest_pow2_leq(group_k, 64)
+    block_n = min(
+        max(_largest_pow2_leq(group_n, 64), 16),
+        triton.next_power_of_2(max(N, 16)),
+    )
+    block_k = max(_largest_pow2_leq(group_k, 64), 16)
 
-    grid = (triton.cdiv(M, block_m), triton.cdiv(N, block_n))
+    n_group_steps = triton.cdiv(group_n, block_n)
+    n_tiles = (N // group_n) * n_group_steps + triton.cdiv(
+        N % group_n, block_n
+    )
+    grid = (triton.cdiv(M, block_m), n_tiles)
     _w8a8_block_matmul_kunlunxin_kernel[grid](
         A,
         B,
@@ -141,6 +160,8 @@ def w8a8_block_int8_matmul(A, B, As, Bs, block_size, output_dtype):
         BLOCK_M=block_m,
         BLOCK_N=block_n,
         BLOCK_K=block_k,
+        GROUP_STEPS=triton.cdiv(group_k, block_k),
+        N_GROUP_STEPS=n_group_steps,
         num_warps=4,
         num_stages=2,
     )

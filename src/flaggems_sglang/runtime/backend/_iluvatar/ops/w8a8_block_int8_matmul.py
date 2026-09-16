@@ -77,7 +77,9 @@ def _w8a8_block_matmul_kernel(
         acc_k = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
         for kk in range(GROUP_STEPS):
             k_base = g * group_k + kk * BLOCK_K
-            k_mask = (k_base + offs_k) < K
+            k_mask = ((k_base + offs_k) < K) & (
+                (kk * BLOCK_K + offs_k) < group_k
+            )
             a = tl.load(
                 a_ptr
                 + offs_m[:, None] * a_stride_m
@@ -126,11 +128,13 @@ def w8a8_block_int8_matmul(A, B, As, Bs, block_size, output_dtype):
         return C
 
     group_n, group_k = int(block_size[0]), int(block_size[1])
-    # BLOCK_K must divide group_k so one k-iteration stays inside one scale
-    # group; power-of-two block sizes make any pow2 <= group_k a divisor.
+    # Keep dot tiles legal for small groups; kernel masks quantization tails.
     block_m = 64
-    block_n = min(_largest_pow2_leq(group_n, 64), triton.next_power_of_2(max(N, 16)))
-    block_k = _largest_pow2_leq(group_k, 64)
+    block_n = min(
+        max(_largest_pow2_leq(group_n, 64), 16),
+        triton.next_power_of_2(max(N, 16)),
+    )
+    block_k = max(_largest_pow2_leq(group_k, 64), 16)
 
     grid = (triton.cdiv(M, block_m), triton.cdiv(N, block_n))
     _w8a8_block_matmul_kernel[grid](
@@ -157,7 +161,7 @@ def w8a8_block_int8_matmul(A, B, As, Bs, block_size, output_dtype):
         BLOCK_M=block_m,
         BLOCK_N=block_n,
         BLOCK_K=block_k,
-        GROUP_STEPS=group_k // block_k,
+        GROUP_STEPS=triton.cdiv(group_k, block_k),
         num_warps=4,
         num_stages=2,
     )
