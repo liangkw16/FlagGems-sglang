@@ -5,13 +5,13 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: valid
-platform: completed(e10-generic-init/sub16056,8/8,51.3375x新TB,排名5)
-candidate_stage: e11-expert-grid-release-ready
+platform: completed(e11-expert-grid/sub16063,8/8,49.699075x；TB仍E10,51.3375x,排名5)
+candidate_stage: e11-expert-grid
 team_best_stage: e10-generic-init
 team_best_commit: a01fb6344cfa9d9f92a88cd8d47d3d9db3d2ff1b
 team_best_speedup: 51.3375
 sealed: no
-next: E11大E修复9/9四源回归与普通域IR核对通过，待一次性preflight提交；TB仍E10
+next: E11八芯有效并修复大E；后续以E11正确代码为基线，优先天数/海光主要榜差；不重投同候选
 updated: 2026-09-16
 ```
 
@@ -407,7 +407,7 @@ updated: 2026-09-16
 - 提交后独立审查发现旧vendor的expert grid截断：题面未限制E上界，
   E=65536、ids=[[65535]]时旧每expert单program路径没有expert grid-stride。
   该缺口不在已执行回归覆盖中，不能用本次八芯评测通过推断该未覆盖域正确；正在另立修复与旧版失败回归。
-  原E10候选状态只读跟踪，不以此重试同一次提交。
+  原E10候选状态只读跟踪，不以此重试同一次提交。该缺口随后由下述E11修复。
 
 ## 2026-09-16 local-bucket 独立筛选：仅昆仑基线达到机制门
 
@@ -419,7 +419,7 @@ updated: 2026-09-16
   `55dea1dc2e8a77a95d3c428d1b3dcc19b443cb577a4b8100138c2cde750cbace`；
   `benchmark-enflame.json` SHA：
   `aec9cee97b8cfe6c4e4b99ef609908cd13f65d1ecb4ad4ee777668e17ee3d748`。
-  当前处于 IR 审查，**未修改正式 vendor、未做该候选 release、未提交平台**，
+  完整 IR 审查已完成，目标验证待定；**未修改正式 vendor、未做该候选 release、未提交平台**，
   与 E10 generic 初始化候选分别记录。
 
 - 补充完整 IR 已完成：5 个输入、15 次实际候选 launch（含 E257），60 份 asm
@@ -436,7 +436,7 @@ updated: 2026-09-16
   `min(E,65535)` 个专家。E=65536、`ids=[[65535]]` 时末专家计数漏写；
   这是公开契约缺口，不能由 E10 八芯有效推断正确。
 - 改动只有三份 vendor 和回归测试；新增 constexpr `EXPERT_TILES=ceil(E/grid)`，
-  以 `pid + tile*grid` 唯一覆盖全部专家，末 tile 防越界。普通 E≤65535 的
+  以 `pid + tile*grid` 唯一覆盖全部专家，末 tile 防越界。普通 0<E≤65535 的
   tiles=1；E=0 的 grid=1、tiles=0，不解引用空 counts/prefix。generic 保留 E10 字节。
   source / verification commit：`521b0656ff113d2f25cee4130c29fcf81baea6d5`。
 - 新增高专家编号、E=0/空输入/全 padding、强制 grid=1/2 的 poisoned counts/prefix；
@@ -463,3 +463,29 @@ updated: 2026-09-16
   四成员 generic/ascend/enflame/kunlunxin。测试 SHA
   `e37b9554930e30ac8e34bf3f3d8dfc5e820109603a0de18aa3b2d7dd7fd9c21c`。
   NVIDIA代理通过；目标runtime尚未验证，按既有授权执行实时preflight及单次提交。
+
+- 第二位审查者独立核对28冻结文件、8份Git绑定源、192份原始/归一化IR及48份diff；
+  完整代码对应后结论相同，`normal-ir-review.json` SHA
+  `f652658345c0261ba04d75ebd5fa9926f0b79e8d542d9765dfb1e507bcfd248d`。
+  NVIDIA四个普通域shape未观察到新增GPU工作；新增参数的主机封装成本未单独计时。
+- **17:08:25 单次上传及正式提交成功**：submission16063、daily_seq11，
+  nonce `cfa195eb2ab3db145165fd4c8032a6c0`；现场额度20/30→19/30。
+  返回对象存储ZIP已只读下载验签，18935字节与上述SHA完全一致；状态submitted，未重试。
+  file URL SHA `d6f838d0b6de80d380ba23a6f5f7978f44d21db43bef3d14531f0c996e7b26ad`。
+- **17:09:52 终态8/8、valid，均分49.699075，is_team_best=false**。
+  天数74.2028、沐曦40.4208、燧原0.7950、海光134.5978、昆仑0.1036、
+  华为3.7254、A77.3418、B66.4054。三份改动vendor均通过；均值比E10低，
+  不记为性能提升，不重投同候选。generic字节未变但平台读数有变化，
+  此次两次平台分数不能用于量化大E修复的因果性能影响。
+  大E公开回归在NVIDIA执行通过；平台没有暴露shape，八芯有效不能证明其隐藏测试覆盖大E。
+  `platform-final.json` SHA `5c9e1b05d58d9cc5b73f00da022d218f60d0cc96e54d0c2db14486ace30b1a95`；
+  `leaderboard-final.json` SHA `b7145d1db919315f7797e11673de506312421b3ff460e7d30f0c8c77c7263bdc`。
+  这两份文件均在 `artifacts/competition/t69-expert-grid-20260916/`。
+- 2026-09-16T17:10:46.144535+08:00 实时榜单仍为 **E10 51.3375、第5**；榜首80.917125，
+  差29.579625。天数贡献16.636675、海光5.701475，二者合占均分差75.5187%；
+  后续突破优先研究这两条generic路径，不能把昆仑代理4.19倍直接当冲Top1依据。
+  平台保留历史E10为TB；**后续实现从已修复的E11源码出发**，不为保留旧TB撤回正确性修复。
+
+历史解释订正：上文旧实验中的`exec 0ms`不能单独证明平台故障或kernel未执行，
+`execution_time_ms`也不能当作纯kernel/JIT耗时；旧的循环形式泛化只作当时假设保留，
+不得覆盖后续已验证的标量循环事实。
