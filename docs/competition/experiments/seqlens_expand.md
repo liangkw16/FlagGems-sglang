@@ -5,13 +5,13 @@ task: 74
 operator: seqlens_expand
 batch: 5
 validity: valid
-platform: evaluating(e14-flat/sub16386,昆仑编译过但case8数值失败；TB仍E4 20.177775)
+platform: e14/16386六芯过昆仑判负(不可能有效),燧原回调中;天数67.82平台兑现flat轴;TB仍E4 20.177775
 candidate_stage: e14-kunlun-flat-submitted
 team_best_stage: e4
 team_best_speedup: 20.177775
 sealed: no
-next: E14昆仑出现新数值指纹，暂停group轴等目标IR/最小复现；剩余回调只读跟踪，推进T73/T63/T67
-updated: 2026-09-16
+next: 昆仑1D case8段边界数值根因待目标IR/最小复现;天数67.82已证,有效化=E12 generic+修好昆仑;燧原回调只读跟踪
+updated: 2026-09-17
 ```
 
 ## 契约与实现（S0）
@@ -381,3 +381,10 @@ updated: 2026-09-16
 - 观察 `2026-09-16T23:23:33.954375+08:00`：昆仑选中seqlens_expand_kunlunxin.py，已绕过前两版arith.cmpi编译错误，但case8输出 **23308/34859（66.9%）** 不同，最大绝对差8155。末尾actual [5624,2822,572]，expected [5624,5625,5626]。这是目标执行的新数值失败，不能用NVIDIA通过推断平台随机故障。
 - 未获得目标失败IR/精确输入前暂停本轮group结构；不继续同候选或任意cast试投。原stop规则的“同编译指纹”未触发，但新错误仍需独立根因证据，优先把并发工作用于T73/T63/T67。当前无完整有效分，E4最佳保留。
 - 实时额度 **14/30**；快照 `artifacts/competition/pair-grouped-platform-20260916/t74-e14-partial-status.json` SHA-256 `1b2c3f05abb0a219a7704582ac4797e9236af0af4166c736ab54675968d4bc4e`。
+
+## 2026-09-17 00:1x E13 终态补记（sub 16356）与 E14 中间态（sub 16386）
+
+- **E13 终态：6/8 无效**。燧原 `执行超时 (3630s/3600s)`，R 状态子进程（超时墙上界，未获得数值裁决，暂不能区分 kernel 长运行 vs 评测窗；与昆仑崩溃族 1830s 指纹不同）；昆仑 `uni_sram OutOfResources: arith.cmpi`（4×32 二维分组形态，即 E14 要修的编译错）。六芯通过：天数 60.7254 / 沐曦 9.481 / 海光 27.2292 / 华为 8.22 / A 24.1268 / B 18.3906。
+- **E14 中间态（00:08 观察，仍在评）**：六芯通过——天数 **67.816（较 E13 +7.1、较 E4 TB 时代 59.5 +13.9%）**，**flat 工作映射 generic（E12 字节）在天数平台兑现**，距榜首 83.14 / 次优带 62-77 已进入次优带；沐曦 10.1148 / 海光 26.3862 / 华为 7.7114 / A 23.08 / B 18.391。昆仑已判负（case8 数值 66.9% 失配，23:24 已记）；燧原 waiting_callback 未回。**昆仑已终判 ⇒ E14 数学上不可能有效**，无论燧原结果；燧原回调只读跟踪，不据此行动。
+- 失败详情快照：`artifacts/competition/pair-grouped-platform-20260916/` 内 e13/e14 partial-status JSON 已含上述 raw_result；本条为账本层补记，无新额度消耗。
+- 对今日窗口的含义：E12 generic（天数 67.8 已证）+ 修好的昆仑 vendor 是 T74 唯一可见的有效化路径；昆仑 1D 数值根因（case8 尾部 actual [5624,2822,572] vs expected [5624,5625,5626] 的段边界形态）需目标 IR/最小复现，不盲发。

@@ -54,7 +54,7 @@
 | 71 | gelu_tanh_and_mul | valid | completed(16462,e10,8/8,2.781658x新TB;燧原2.04/昆仑0.87) | e10 2.781658x | no | e9 native-tanh平台关闭(16473,燧原1.88未动);宽度/warps/tanh轴全封;燧原2.04 vs 全场3.7-4.1结构差与榜首5.37需新证据 | 2026-09-17 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
 | 72 | group_norm_silu | valid | completed(15841,e9,8/8,2.48429167x;TB e6 2.66266667x) | e6 2.66266667x | no | 大group分块两轮control未过门，停止本轮；正确性修复8/8已入库未提交，保留e6 TB与旧uncertain | 2026-09-16 | [group_norm_silu](group_norm_silu.md) |
 | 73 | residual_gate_add | valid | completed(e12-group4/sub16400,8/8,4.1080625x新TB；排名7) | e12-enflame-group4 4.1080625x | no | E12微升0.21345%新TB但燧原仅+0.315%，未见稳健结构增益；停止group梯度，保留E12 | 2026-09-16 | [residual_gate_add](residual_gate_add.md) |
-| 74 | seqlens_expand | valid | evaluating(e14-flat/sub16386,昆仑编译过但case8数值失败；TB仍E4 20.177775) | e4 20.177775x | no | E14昆仑出现新数值指纹，暂停group轴等目标IR/最小复现；剩余回调只读跟踪，推进T73/T63/T67 | 2026-09-16 | [seqlens_expand](seqlens_expand.md) |
+| 74 | seqlens_expand | valid | e14/16386六芯过昆仑判负(不可能有效),燧原回调中;天数67.82平台兑现flat轴;TB仍E4 20.177775 | e4 20.177775x | no | 昆仑1D case8段边界数值根因待目标IR/最小复现;天数67.82已证,有效化=E12 generic+修好昆仑;燧原回调只读跟踪 | 2026-09-17 | [seqlens_expand](seqlens_expand.md) |
 | 75 | sigmoid_gate_mul | valid | completed(e9,8/8,2.8967x;华为warps8无效关闭) | e9 2.89671667x | no | Ascend direct候选代理1.01924x未达1.05且fp16稳定回退，不提交；TB保持e9 | 2026-09-16 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md
