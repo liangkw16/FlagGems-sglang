@@ -56,15 +56,17 @@ def _dispatch_prefix(
     num_experts,
     num_experts_pad,
     num_blocks,
+    EXPERT_TILES: tl.constexpr,
 ):
-    e = tl.program_id(0)
-    if e < num_experts:
-        run = 0
-        for block in range(0, num_blocks):
-            off = block.to(tl.int64) * num_experts_pad + e
-            tl.store(prefix + off, run)
-            run += tl.load(counts + off)
-        tl.store(masked_m + e, run)
+    for tile in range(EXPERT_TILES):
+        e = tl.program_id(0) + tile * tl.num_programs(0)
+        if e < num_experts:
+            run = 0
+            for block in range(0, num_blocks):
+                off = block.to(tl.int64) * num_experts_pad + e
+                tl.store(prefix + off, run)
+                run += tl.load(counts + off)
+            tl.store(masked_m + e, run)
 
 
 @triton.jit
@@ -114,6 +116,8 @@ def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
     if n:
         num_experts_pad = triton.cdiv(num_experts, _E_TILE) * _E_TILE
         num_blocks = triton.cdiv(n, _BLOCK)
+        expert_grid = max(1, min(num_experts, 65535))
+        expert_tiles = triton.cdiv(num_experts, expert_grid)
         counts = torch.empty(
             (num_blocks, num_experts_pad),
             dtype=torch.int32,
@@ -129,13 +133,14 @@ def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
             BLOCK=_BLOCK,
             E_TILE=_E_TILE,
         )
-        _dispatch_prefix[(min(num_experts, 65535),)](
+        _dispatch_prefix[(expert_grid,)](
             counts,
             prefix,
             masked_m,
             num_experts,
             num_experts_pad,
             num_blocks,
+            EXPERT_TILES=expert_tiles,
         )
         _dispatch_ranks[(min(num_blocks, 65535),)](
             flat,

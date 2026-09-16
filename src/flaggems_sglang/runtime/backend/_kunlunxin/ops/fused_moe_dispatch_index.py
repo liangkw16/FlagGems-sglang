@@ -28,9 +28,11 @@ def _dispatch_counts(
     ids,
     counts,
     n,
+    num_experts,
     num_experts_pad,
     num_blocks,
     BLOCK: tl.constexpr,
+    EXPERT_TILES: tl.constexpr,
 ):
     # E9: one program per expert with a register accumulator and a
     # single store per (block, expert) cell. E8's in-branch global
@@ -38,16 +40,20 @@ def _dispatch_counts(
     # (masked_m off by small deltas - dropped increments); the
     # scalar-accumulator form matches kernel2 and the T65 e6-proven
     # branch-counting shape, with no memory RMW anywhere.
-    e = tl.program_id(0)
-    for block in range(0, num_blocks):
-        hits = 0
-        for j in range(0, BLOCK):
-            off = block * BLOCK + j
-            if off < n:
-                e_j = tl.load(ids + off.to(tl.int64)).to(tl.int32)
-                if e_j == e:
-                    hits += 1
-        tl.store(counts + block.to(tl.int64) * num_experts_pad + e, hits)
+    for tile in range(EXPERT_TILES):
+        e = tl.program_id(0) + tile * tl.num_programs(0)
+        if EXPERT_TILES == 1 or e < num_experts:
+            for block in range(0, num_blocks):
+                hits = 0
+                for j in range(0, BLOCK):
+                    off = block * BLOCK + j
+                    if off < n:
+                        e_j = tl.load(ids + off.to(tl.int64)).to(tl.int32)
+                        if e_j == e:
+                            hits += 1
+                tl.store(
+                    counts + block.to(tl.int64) * num_experts_pad + e, hits
+                )
 
 
 @triton.jit
@@ -58,15 +64,17 @@ def _dispatch_prefix(
     num_experts,
     num_experts_pad,
     num_blocks,
+    EXPERT_TILES: tl.constexpr,
 ):
-    e = tl.program_id(0)
-    if e < num_experts:
-        run = 0
-        for block in range(0, num_blocks):
-            off = block.to(tl.int64) * num_experts_pad + e
-            tl.store(prefix + off, run)
-            run += tl.load(counts + off)
-        tl.store(masked_m + e, run)
+    for tile in range(EXPERT_TILES):
+        e = tl.program_id(0) + tile * tl.num_programs(0)
+        if e < num_experts:
+            run = 0
+            for block in range(0, num_blocks):
+                off = block.to(tl.int64) * num_experts_pad + e
+                tl.store(prefix + off, run)
+                run += tl.load(counts + off)
+            tl.store(masked_m + e, run)
 
 
 @triton.jit
@@ -120,6 +128,8 @@ def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
     if n:
         num_experts_pad = triton.cdiv(num_experts, _E_TILE) * _E_TILE
         num_blocks = triton.cdiv(n, _BLOCK)
+        expert_grid = max(1, min(num_experts, 65535))
+        expert_tiles = triton.cdiv(num_experts, expert_grid)
         # zeros (not empty): the scalar counts walk only touches hit
         # slots, so untouched (block, expert) cells must read as zero.
         counts = torch.zeros(
@@ -128,23 +138,26 @@ def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
             device=flat.device,
         )
         prefix = torch.empty_like(counts)
-        _dispatch_counts[(min(num_experts, 65535),)](
+        _dispatch_counts[(expert_grid,)](
             flat,
             counts,
             n,
+            num_experts,
             num_experts_pad,
             num_blocks,
             BLOCK=_BLOCK,
+            EXPERT_TILES=expert_tiles,
             num_warps=1,
             num_stages=1,
         )
-        _dispatch_prefix[(min(num_experts, 65535),)](
+        _dispatch_prefix[(expert_grid,)](
             counts,
             prefix,
             masked_m,
             num_experts,
             num_experts_pad,
             num_blocks,
+            EXPERT_TILES=expert_tiles,
             num_warps=1,
             num_stages=1,
         )
