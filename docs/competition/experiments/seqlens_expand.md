@@ -10,7 +10,7 @@ candidate_stage: e4
 team_best_stage: e4
 team_best_speedup: 20.177775
 sealed: no
-next: E8空tile提前退出GM1.03028未达门，关闭；保留e4 TB，后续发布另须修复二维grid乘积上限
+next: E9输出二分全40主桶GM0.90510未达门，关闭；保留e4 TB，隔离候选保留grid/宽地址修复，未发布
 updated: 2026-09-16
 ```
 
@@ -171,3 +171,15 @@ updated: 2026-09-16
 - 原12主桶+4大n对照+8不均匀/全填充附加桶，5轮AB/BA共120对，未删样本。primary GM **1.0302765483<1.05**；五轮 **1.03555/1.00712/1.04273/1.00621/1.03737** 未全部≥1.03；最差主桶0.99540、附加0.96316，对照0.99643–1.00516，零spill。附加n1024/q8193高度不均匀桶1.70161不能替代整体门。**关闭，不生成ZIP、intent或平台提交。** 性能JSON SHA `61354f61bee9af336bb209e3491fdbe63d87407439e11ac3bff16822cba138e5`，日志 `fc158cd8c706320106752ad7ff8b468fbf93a1eaa5330cc7c8dbe243bcc47e2d`。
 - 新审查发现E4既有发布隐患：grid `(n,min(cdiv(qmax,1024),255))` 没有总数上限；258×255=65790、1024×65=66560超过同族已证实的Ascend65535。提前退出不减少launch coreDim，本轮无混合修复，后续候选须另改并重新验证，不能拿代理数学通过宣称目标launch安全。
 - 产物 `artifacts/competition/t74-empty-tile-screening-20260916/`，含完整源/测试/IR/原始CSV/hash。首次目录 `/tmp/flagos-t74-empty.rcLdnj`、PID389619在附属static文件哈希变化时退出1，尚未执行GPU，原包保存在precheck-attempt1；冻结后新目录 `/tmp/flagos-t74-empty.XLWzAB`，correctness/IR PID389639上限400秒、计时PID389752上限330秒，均EXIT0、作业结束、前后compute列表为空。RTX5070Ti/Python3.12.13/Torch2.13.0+cu130/Triton3.7.1；仅NVIDIA代理结论。
+
+## 2026-09-16 E9 输出位置二分：完整筛选 NO-GO
+
+- 14:47实时榜单：我方第6、E4 **20.177775**，榜首26.355675，仍需+30.62%。总均值差6.1779中天数贡献2.95345、燧原1.133175、华为0.654425；这些是榜单分数差，不能反推设备耗时。快照 `artifacts/competition/t74-output-search-screening-20260916/platform-start.json`，SHA `b021e7dedb86ee3f2f1bd2c5b415efb69f9294fb68f2295a36d53e8d67c1dfdb`。
+- 从真实TB E4 `45662b8c403778e4b93b96ec90b4ca3306c6a03a`（generic `c6612828e9344df00fbb49ed50bbbf6be7a5c18a8b099128ee622ac786a32eda`）派生。普通大N保留E4前缀核，然后按256连续输出位置分块，对exclusive prefix作right upper_bound定位请求；重复prefix正确跳过空请求。来源为 [FlagGems固定searchsorted](https://github.com/flagos-ai/FlagGems/blob/2cbcecbf0d2dcb24f0686b95b2683bb2516c072e/src/flag_gems/ops/searchsorted.py#L57-L96)。E4普通smallN/prefix两个函数逐字节不变；未重试E5/E6映射或E8提前退出。
+- 独立安全改动把旧2D grid总数约束为65535，并为fallback增加row/tile grid-stride。总长、请求计数、stride乘法或cdiv加法超int32安全域时，使用独立int64 prefix/地址，结果仍int32 wrap后clamp。它们不影响60个性能桶的工作划分。超过8GB的实际输出未分配：宽前缀用 `[INTMAX,1,1]` 与跨1024的少量输入实跑，极端wrapper路由用25项metadata捕获；目标芯宽scratch/lowering仍未验证。代码仅在隔离candidate中，主树E6未被替换。
+- 首次 `/tmp/flagos-t74-output.VM9gPf`、PID390500：12方法中4个错误，根因为Triton将total_len=1特化成Python常量后不能调用`.to`。未开始IR/性能。原bundle、回执和完整日志保存在`attempt1/`；receipt SHA `7cf8125fbc84b2c86973ea6f3bb2767cdb7788395c6a6acf77223d9c72f46a12`，log `fac0fa70cd1584603d5c8902a9a6d687b595729676ff476230d533810f549db1`。仅把3个新kernel的4处metadata cast改成`tl.cast`，保留失败用例并追加wide n1/q1回归后，重新冻结全部身份。
+- 最终source SHA **`c0760c43d9c158e3dc390a34c1a3eb5eda21f2a172855aea46d2cfe4274f7083`**，test **`8510e06c8102d210a27881241c615514e5bfcb5873229c5d20b67695469229b2`**；plan `fda50aca03ab7f64d9030d3de07746e23e4d9c5e628cf68844a8b87a3207f0eb`。Black79/isort80/flake8/py_compile通过；原5测试AST保留。**12/12，0失败/错误/skip，74入口记录、73真实launch**；包含N1025/2048/4096/65535/65536/65537、单输出、256±1、stride0/2/3和storage offset、整数极值、双维尾步进。baseline只运行原5方法与全部性能形状，不宣称通过新安全回归。
+- receipt `588a74ca20c58d2de2b05ad153f31fc331da237cc9b6d071c044b767ae0c8211`，verification.log `2e7efff4c7a84efc513b99e6c8e9afab38e6e8992901f09a27dedb2e10af2d5a`。q8/q8193编译产物确认输出一维grid-stride、13轮masked upper_bound及连续store；expand寄存器40→32、0spill，prefix40regs/32Bshared不变。probe SHA `222df13ce84cbe4a009f2e04f586bfd29e1b001cd1835cff4203c7b8544c4893`，root逐项IR裁决 `681b9cf537cedaada1af4b005911b5a74dca69bed6affdf3249d0c067c567a4a`，之后才开始计时。缓存的baseline asm source-location可指向历史目录，实际baseline.py由双端SHA绑定。
+- **60桶×5轮、300对原始样本完整结束**，未删旧24桶；40个所有largeN桶为primary，20smallN为control。primary GM **0.9051021966<1.05**，五轮0.905234/0.904805/0.906419/0.906296/0.905326均<1.03；最差balanced N8192/qcap8193 **0.3516096084<0.95**。controls0.976434–1.027871在门内，200条资源记录均0spill。
+- 同total三分布追加矩阵中，qcap1/8/1025/8193各9桶GM依次1.08577/1.18338/0.95406/0.57282；短输出最高1.50024不能抵消长输出退化。逐输出二分增加的访存/比较随输出长度增长，与观察方向相容，但没有profile证明其是唯一瓶颈。**按原门关闭，不挑域、不改阈值、不生成release/ZIP/intent或提交。**
+- 性能JSON SHA `95432659a8cd1a7009ec7f438b3a2be38e4e475e1ef43886390dc90abc06ef85`，log `c1a2d7e5ee9e8f29d9c8b7fd202eb93c2a1f3e211a12b4e647ed62d7d28ae912`，CSV `881fe8fdee1998d04ce97d9a1f25bb0e0d6951c18da3007ecdfead5bee5a1387`。最终远端`/tmp/flagos-t74-output.9Splfl`，correctness/IR PID390584上限400秒、benchmark PID390697上限630秒，均EXIT0；前后GPU无其他compute进程，已释放。RTX5070Ti/driver610.57.04/Python3.12.13/Torch2.13.0+cu130/Triton3.7.1。全部源/输入哈希/IR/日志在上述artifact目录；仅NVIDIA代理证据，未消费平台额度。

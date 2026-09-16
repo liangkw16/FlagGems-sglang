@@ -45,7 +45,7 @@
 | 62 | concat_mla_k | valid | completed(14847,e10,8/8,1.1908x;燧原BH4反降-47%;TB e9 1.2458x) | e9 1.24575x | no | e10 燧原BH4 0.15(-47%)跨芯平移证伪;TB e9 1.246守;收官仅守榜 | 2026-09-14 | [concat_mla_k](concat_mla_k.md) |
 | 63 | create_flashinfer_kv_indices | valid | completed(e12,8/8,190.674x<TB;沐曦60.8负向,metax2048轴证伪) | e8 199.69521875x | no | metax splits2048证伪(沐曦98.5→60.8大负);TB e8 199.70守;下一轴=燧原BLOCK1024/warps1、华为warps8或ps0 constexpr(单变量) | 2026-09-15 | [create_flashinfer_kv_indices](create_flashinfer_kv_indices.md) |
 | 64 | deepep_permute | valid | completed(15868,e6,8/8,6.94085x;TB e5 7.17105x) | e5 7.17105x | no | e6均值回退且Enflame4.7192未达8.0门，停止空task轴；TB仍e5，不重投 | 2026-09-16 | [deepep_permute](deepep_permute.md) |
-| 65 | deepep_post_reorder | valid | evaluating(15913,e12,5芯passed/3芯pending;历史TB e10 26.917125x) | e10 26.917125x | no | 15913已有5芯passed，燧原/海光retry_wait、昆仑waiting_callback；等待全部终态，不重发 | 2026-09-16 | [deepep_post_reorder](deepep_post_reorder.md) |
+| 65 | deepep_post_reorder | valid | completed(15913,e12,7/8,invalid_correctness;昆仑collection设备错误;历史TB e10 26.917125x) | e10 26.917125x | no | E12终态7/8，昆仑收集测试失败；保留权重契约修复，需目标执行新证据后再迭代，不重发15913 | 2026-09-16 | [deepep_post_reorder](deepep_post_reorder.md) |
 | 66 | dsv3_fused_a_gemm | valid | completed(15861,e2,8/8,3.09855x新TB) | e2 3.09855x | no | e2仅+0.15%，未达3.40再投入门；停止窄N split4轴，不重投 | 2026-09-16 | [dsv3_fused_a_gemm](dsv3_fused_a_gemm.md) |
 | 67 | fill_padded_rows | valid | completed(e4,8/8,4.1965x;固定块轴零增益,重编译假说在本题证伪) | e2 4.2969x | no | 固定BLOCK轴关闭;下一轴=num_warps/过特化(PR扫描模式,华为1.9vs17.5缺口形态未破);TB e2 4.2969 守 | 2026-09-15 | [fill_padded_rows](fill_padded_rows.md) |
 | 68 | fused_eh_norm | valid | completed(15864,e8,8/8,7.10215x新TB) | e8 7.10215x | no | e8仅+0.18%，燧原1.6814未达2.0门；停止本path分离轴，不重投 | 2026-09-16 | [fused_eh_norm](fused_eh_norm.md) |
@@ -54,7 +54,7 @@
 | 71 | gelu_tanh_and_mul | valid | completed(14573,e4,8/8,2.7109x 新TB) | e4 2.7109x | no | e4 no-loop昆仑0.304复制链失败(门0.5未过,链收口);TB 2.711守;昆仑真因/燧原8192待证 | 2026-09-14 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
 | 72 | group_norm_silu | valid | completed(15841,e9,8/8,2.48429167x;TB e6 2.66266667x) | e6 2.66266667x | no | e9华为1.1215<2.0门，小group驻留轴关闭；保留e6 TB，旧uncertain不重试 | 2026-09-16 | [group_norm_silu](group_norm_silu.md) |
 | 73 | residual_gate_add | valid | completed(14838,e6,8/8,4.0993x 新TB;昆仑4096 0.60) | e6 4.0993125x | no | e6 昆仑4096 0.60(+23%)新TB 4.099;宽度曲线双正,8192待信号;差榜首0.876 | 2026-09-14 | [residual_gate_add](residual_gate_add.md) |
-| 74 | seqlens_expand | valid | completed(e4,8/8,20.1778x 新TB;海光28.78门兑现,沐曦+2.09) | e4 20.177775x | no | E8空tile提前退出GM1.03028未达门，关闭；保留e4 TB，后续发布另须修复二维grid乘积上限 | 2026-09-16 | [seqlens_expand](seqlens_expand.md) |
+| 74 | seqlens_expand | valid | completed(e4,8/8,20.1778x 新TB;海光28.78门兑现,沐曦+2.09) | e4 20.177775x | no | E9输出二分全40主桶GM0.90510未达门，关闭；保留e4 TB，隔离候选保留grid/宽地址修复，未发布 | 2026-09-16 | [seqlens_expand](seqlens_expand.md) |
 | 75 | sigmoid_gate_mul | valid | completed(e9,8/8,2.8967x;华为warps8无效关闭) | e9 2.89671667x | no | Ascend direct候选代理1.01924x未达1.05且fp16稳定回退，不提交；TB保持e9 | 2026-09-16 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

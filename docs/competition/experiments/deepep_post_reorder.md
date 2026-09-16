@@ -5,13 +5,13 @@ task: 65
 operator: deepep_post_reorder
 batch: 5
 validity: valid
-platform: evaluating(15913,e12,5芯passed/3芯pending;历史TB e10 26.917125x)
+platform: completed(15913,e12,7/8,invalid_correctness;昆仑collection设备错误;历史TB e10 26.917125x)
 candidate_stage: e12
 team_best_stage: e10
 team_best: e10 26.917125x
 team_best_speedup: 26.917125
 sealed: no
-next: 15913已有5芯passed，燧原/海光retry_wait、昆仑waiting_callback；等待全部终态，不重发
+next: E12终态7/8，昆仑收集测试失败；保留权重契约修复，需目标执行新证据后再迭代，不重发15913
 updated: 2026-09-16
 ```
 
@@ -315,3 +315,16 @@ updated: 2026-09-16
 - 昆仑已分配validation_id，平台显示next_status_query_at=2026-09-16T16:10:45；回调何时完成未知，不把该时间当完成承诺。未手动触发评测重试或查询未知validation端点。
 - 实时榜单仍第10，历史TB E10 **26.917125**，榜首69.07705，差距未变。E12华为当前读数低于E10，但无同窗Tbase/Topt，不据此判定weight cast性能因果；主树继续保留已证实的正确性修复。
 - 最新单次只读快照 `artifacts/competition/top1-followup-20260916-1349/status-15913-closeout.json`，SHA `e662ee0c52c374738bbe0012b3bf2fda5e7d904926aa08109606fe92bb8294ce`；此前240秒有界watch共11个完整snapshot，超时124，SHA `94e0c542cf0255be94e702f86e099d82290eb08353428b8b8c5c44a69ca6af3c`。watch已结束，无后台监控承诺；不重复建立intent。
+
+## 2026-09-16 14:47 E12 更新：昆仑收集测试失败，另两芯待终态
+
+- 原 submission **15913** 的文件 URL 哈希仍为 `3023e148ad28af32c098092ad8d9065e764f00aeaa72f8b46d1f76047295a10a`，未上传/提交新候选。平台 status=dispatching、validity=pending、average_speedup=null，6芯终态中5芯passed；燧原retry_wait、海光dispatching。历史TB E10仍26.917125、名次10，实时榜首69.07705；余21/30。
+- 昆仑 validation `25d3ad022b03` 已 completed/passed=false。raw_result 是 `No test results found (empty report)`；pytest在构造 `_case(1)`、将输入搬到设备时返回 `RuntimeError -299`，日志有 `A kernel exception has occurred`、收集0项并以exit2中止。此处没有候选公开入口执行证据，不能归因于本次weight cast，也不能把NVIDIA数学通过替代目标芯结果；设备错误的责任归属仍未知。
+- 天数30.9596、沐曦17.885、华为15.8694、A48.967、B19.616与上次相同。尚未取得剩余两芯终态，不把这条pending提交计为有效或最终无效，不重复提交或主动重启平台评测。
+- 原始快照 `artifacts/competition/t74-output-search-screening-20260916/platform-start.json`，SHA `b021e7dedb86ee3f2f1bd2c5b415efb69f9294fb68f2295a36d53e8d67c1dfdb`；绑定文件身份的昆仑原始错误 `t65-kunlun-result.json`，SHA `ad9b84d2ccf749abd35afe3101ac8de7cdcb17ec29afbdd0b27dac21127a60cd`。本节仅更新既有提交观察，不建立新intent。
+
+## 2026-09-16 15:05 E12 平台终态：7/8，invalid_correctness
+
+- 同一submission15913现为completed，8/8终态，7芯passed；平台正式判定 **invalid_correctness**，average_speedup=null。新完成燧原9.0242、海光79.1944均通过，其余5通过芯片读数未变；昆仑仍为上节的测试收集阶段设备错误，0项测试，不伪称是算子数值失配。
+- 快照 `artifacts/competition/t74-output-search-screening-20260916/platform-closeout.json`，observed_at=2026-09-16T15:05:50.512258+08:00，SHA `4b7cb56f0451d924d6c2c0296145d8af0edbe3fbf52be5a242b2fe594deb4ee7`；已再次绑定原file_url哈希。上传/正式提交仍各一次，余21/30，未重试。
+- 历史平台TB仍E10 26.917125；主树保留E12已证明必要的weight舍入修复，不回滚有缺陷字节。此次八芯判决已收齐，但未达到8芯合格闭环；新的昆仑迭代须先获得目标运行/设备健康证据，不用同字节重发掩盖失败。
