@@ -52,7 +52,7 @@
 | 69 | fused_moe_dispatch_index | valid | completed(e9,8/8,43.6439x 首次有效;昆仑0.1016过门,标量重写+寄存器累加) | - | no | e9 解锁后昆仑 0.10 贴门(留观);燧原 0.756/华为 3.83 为弱轴;守榜 | 2026-09-15 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
 | 70 | gate_topk | invalid_correctness | completed(14849,e3r,7/8;昆仑exec 3633491ms挂死后判失败,与e3同指纹) | - | no | T70 昆仑八轮全灭(长尾挂死x3/断言/0ms卡死),本季终结;重掷额度已用尽,不再改字节 | 2026-09-15 | [gate_topk](gate_topk.md) |
 | 71 | gelu_tanh_and_mul | valid | completed(14573,e4,8/8,2.7109x 新TB) | e4 2.7109x | no | e4 no-loop昆仑0.304复制链失败(门0.5未过,链收口);TB 2.711守;昆仑真因/燧原8192待证 | 2026-09-14 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
-| 72 | group_norm_silu | valid | completed(14859,e8,8/8,2.5400x;TB e6 2.66266667x) | e6 2.66266667x | no | e9 exact release三路径5/5已过，平台单发验证Ascend收益；旧uncertain不重试 | 2026-09-16 | [group_norm_silu](group_norm_silu.md) |
+| 72 | group_norm_silu | valid | completed(15841,e9,8/8,2.48429167x;TB e6 2.66266667x) | e6 2.66266667x | no | e9华为1.1215<2.0门，小group驻留轴关闭；保留e6 TB，旧uncertain不重试 | 2026-09-16 | [group_norm_silu](group_norm_silu.md) |
 | 73 | residual_gate_add | valid | completed(14838,e6,8/8,4.0993x 新TB;昆仑4096 0.60) | e6 4.0993125x | no | e6 昆仑4096 0.60(+23%)新TB 4.099;宽度曲线双正,8192待信号;差榜首0.876 | 2026-09-14 | [residual_gate_add](residual_gate_add.md) |
 | 74 | seqlens_expand | valid | completed(e4,8/8,20.1778x 新TB;海光28.78门兑现,沐曦+2.09) | e4 20.1778x | no | E5映射/E6constexpr/E7小batch前缀均未达门；保留e4，待新的跨芯结构证据 | 2026-09-16 | [seqlens_expand](seqlens_expand.md) |
 | 75 | sigmoid_gate_mul | valid | completed(e9,8/8,2.8967x;华为warps8无效关闭) | e9 2.8967x | no | 宽度轴全档扫完终封;TB e7r 2.8865守;残余=燧原3.3vs榜首7.8非宽度形态,待结构证据 | 2026-09-15 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |

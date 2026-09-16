@@ -5,12 +5,12 @@ task: 72
 operator: group_norm_silu
 batch: 5
 validity: valid
-platform: completed(14859,e8,8/8,2.5400x;TB e6 2.66266667x)
-candidate_stage: e9-ready
+platform: completed(15841,e9,8/8,2.48429167x;TB e6 2.66266667x)
+candidate_stage: e9-completed
 team_best_stage: e6
 team_best_speedup: 2.66266667
 sealed: no
-next: e9 exact release三路径5/5已过，平台单发验证Ascend收益；旧uncertain不重试
+next: e9华为1.1215<2.0门，小group驻留轴关闭；保留e6 TB，旧uncertain不重试
 updated: 2026-09-16
 ```
 
@@ -225,3 +225,10 @@ updated: 2026-09-16
 - 成员 `group_norm_silu_ascend.py` SHA-256 `85756844d064365b8d9b9135f13dcc2eeba58a1182d8220ee841685e36e4e377`。
 - 成员 `group_norm_silu_kunlunxin.py` SHA-256 `1e69e32091b08fe221304a3ab768f04a9af7e7a70e69cd62b3562edf35739672`。
 - 两vendor在NVIDIA代理执行，target-runtime-unverified；平台验证补齐，不与代理证据混用。
+
+### E9 平台终态：8/8 valid，目标收益未迁移
+
+- 2026-09-16 11:11:52单次提交，nonce `b15b70ed1b3a808dba141019d5234708`，submission **15841**；上传远端回读14301 bytes及SHA-256与immutable ZIP一致。未重试旧uncertain。
+- 11:12:52状态：8/8 valid，均值 **2.48429167x** < TB E6 **2.66266667x**。华为选中 `group_norm_silu_ascend.py`，**1.1215 < 2.0**，预注册继续门失败；代理小group收益未迁移，关闭这一轴，不复投。
+- 逐芯：天数3.85983333、沐曦2.45116667、燧原0.43833333、海光4.235、昆仑0.4915、华为1.1215、A3.50983333、B3.76716667。冻结路径的读数变化不能归因为新Ascend代码。
+- 原始preflight/submit/status：`artifacts/competition/top1-20260916/t72-e9-{preflight,submit,status}.json`。实时额度26/30，平台最佳仍E6；需要新的目标芯瓶颈证据才重开。
