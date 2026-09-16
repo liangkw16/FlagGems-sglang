@@ -5,13 +5,13 @@ task: 65
 operator: deepep_post_reorder
 batch: 5
 validity: valid
-platform: completed(15876,e10,8/8,26.917125x新TB)
+platform: queued(15913,e12;历史TB e10 26.917125x)
 candidate_stage: e12
 team_best_stage: e10
 team_best: e10 26.917125x
 team_best_speedup: 26.917125
 sealed: no
-next: e12修复混合权重dtype抵消错误，exact release通过待单次平台判决；e10为历史TB，e11不重试
+next: e12已提交15913待八芯终态；slot predication独立筛选中；不重试已提交候选或e11
 updated: 2026-09-16
 ```
 
@@ -282,3 +282,10 @@ updated: 2026-09-16
 - exact release `artifacts/competition/t65e12-release-20260916/`：**10/10，0失败/错误/skip**，generic和昆仑代理均实际执行；源码/test与复现字节一致。回执SHA `1029d409db192911b5ca898680cf84142eb41e632b38537471a751131d5e6bea`，完整日志 `a5c4390fca4f02ba42d49ecd6ff51bb18f48103e39ca4633a9270d9cbb453252`。RTX5070Ti/Torch2.13.0+cu130/Triton3.7.1，远端`/tmp/flagos-t65e12-release.cBJvRB`、PID389061、timeout330、EXIT0。其他目标runtime仍未验证。
 - 不可变ZIP `artifacts/competition/deepep_post_reorder/e12-134adc8/deepep_post_reorder.zip`，7858bytes，成员`deepep_post_reorder.py`/`deepep_post_reorder_kunlunxin.py`；SHA **`1fa28320977280c8bcc9ff85d89642baabb6f9556694bd1685ce459897a8f569`**，与release前dry-run一致。
 - 本轮为必要正确性修复，完整release后进入一次平台判决，不以性能筛选否决契约修复。8/8且各芯≥0.1方为有效；TB按实际平台分数登记，E10保留历史成绩但不得再次发布已知有缺陷的字节。发前只读额度22/30；不把修复当作华为性能根因已解。
+
+## 2026-09-16 13:18 E12 单次提交与后续结构筛选
+
+- E12 submission **15913**，daily_seq9；nonce `4001ec8cf4d029ac9e9ef9236206ef2a`。live preflight tuple与上述source/test/receipt/ZIP完全匹配，upload/POST各一次，state=submitted。上传后回读7858bytes、SHA `1fa28320977280c8bcc9ff85d89642baabb6f9556694bd1685ce459897a8f569` verified；13:18:59只读状态仍queued，实际剩余额度 **21/30**。未把入队计为通过，E10仍历史平台TB。
+- 证据位于 `artifacts/competition/t65e12-release-20260916/{preflight,submit,status-watch}.json`；status-watch为连续只读JSON记录流，以对应submission终态为准。exact release每路径60入口/54实际launch。
+- 独立性能方向只留slot route分支→masked数据流，基于修正dtype后的E12，保持hidden/token/slot循环、grid、BLOCK、launch参数、权重舍入与累加顺序；昆仑冻结E12。来源为SGLang未合并PR22426固定head `8ec0c4987bacdf8ad8d38006707add8c5acda207`，只提取掩码路由机制，不照搬Gluon/CUDA-only路径，也不借用其14x复合收益。
+- 预注册：先核对baseline IR保留路由分支且candidate真消分支，未成立即停；再保留原20primary桶及额外drop率/抵消/stride回归，5轮AB/BA，primary GM≥1.05、每轮≥1.03、每affected桶≥0.95、0spill才晋级。不是E11 hidden-loop重试；目标华为仍无同源开发通道。
