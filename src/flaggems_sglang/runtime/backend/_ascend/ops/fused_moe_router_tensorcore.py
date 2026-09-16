@@ -124,6 +124,7 @@ def _router_softmax_top2_kernel(
             )
             logits += bias
 
+        logits = tl.where(expert_mask, logits, -float("inf"))
         best_value = tl.max(logits, axis=0)
         best_index = tl.min(
             tl.where(logits == best_value, experts, n_experts), axis=0

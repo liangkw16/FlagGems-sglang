@@ -44,6 +44,9 @@ TOLERANCES = {
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class FusedMoeRouterTensorcoreTest(unittest.TestCase):
+    def setUp(self):
+        torch.manual_seed(0)
+
     def _check(self, module, x, w, topk, cap, bias):
         actual_w, actual_ids = module.fused_moe_router_tensorcore(
             x, w, topk, cap, bias
@@ -165,12 +168,17 @@ class FusedMoeRouterTensorcoreTest(unittest.TestCase):
                 self.assertLess(weights.sum().item(), 1.0)
 
     def test_kunlun_softcap_keeps_padded_experts_masked(self):
-        x = torch.zeros(1, 64, device="cuda")
-        w = torch.zeros(3, 64, device="cuda")
-        bias = torch.tensor([-10.0, -11.0, -12.0], device="cuda")
-        for name, module in MODULES:
-            if name == "kunlunxin":
-                self._check(module, x, w, 2, 1.0, bias)
+        for dtype in (torch.float32, torch.float16, torch.bfloat16):
+            for rows, experts in ((1, 3), (33, 65)):
+                x = torch.zeros(rows, 64, device="cuda", dtype=dtype)
+                w = torch.zeros(experts, 64, device="cuda", dtype=dtype)
+                bias = -10.0 - torch.arange(experts, device="cuda")
+                for cap in (0.0, 1.0, -1.0):
+                    for name, module in MODULES:
+                        with self.subTest(
+                            module=name, dtype=dtype, experts=experts, cap=cap
+                        ):
+                            self._check(module, x, w, 2, cap, bias)
 
     def test_non_contiguous_inputs(self):
         x_base = torch.randn(8, 512, device="cuda")
@@ -215,6 +223,21 @@ class FusedMoeRouterTensorcoreTest(unittest.TestCase):
             with self.subTest(module=name):
                 self._check(module, x, w, 2, 0.0, None)
 
+
+RELEASE_REQUIRED_TESTS = [
+    "FusedMoeRouterTensorcoreTest.test_dtype_shape_matrix_match_reference",
+    "FusedMoeRouterTensorcoreTest.test_large_hidden_and_rows",
+    "FusedMoeRouterTensorcoreTest.test_platform_case7_regression",
+    "FusedMoeRouterTensorcoreTest.test_near_tie_order",
+    "FusedMoeRouterTensorcoreTest.test_exact_tie_informational",
+    "FusedMoeRouterTensorcoreTest.test_single_expert",
+    "FusedMoeRouterTensorcoreTest.test_softcap_bias_order_and_global_softmax",
+    "FusedMoeRouterTensorcoreTest.test_kunlun_softcap_keeps_padded_experts_masked",
+    "FusedMoeRouterTensorcoreTest.test_non_contiguous_inputs",
+    "FusedMoeRouterTensorcoreTest.test_inputs_not_modified",
+    "FusedMoeRouterTensorcoreTest.test_empty_rows",
+    "FusedMoeRouterTensorcoreTest.test_row_grid_fold_path",
+]
 
 if __name__ == "__main__":
     unittest.main()

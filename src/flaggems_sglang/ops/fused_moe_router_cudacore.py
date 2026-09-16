@@ -129,6 +129,7 @@ def _router_softmax_topk_kernel(
             )
             logits += bias[None, :]
 
+        logits = tl.where(expert_mask[None, :], logits, -float("inf"))
         best_value = tl.max(logits, axis=1)
         denom = tl.sum(tl.exp(logits - best_value[:, None]), axis=1)
 

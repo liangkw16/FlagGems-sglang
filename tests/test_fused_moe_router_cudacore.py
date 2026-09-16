@@ -12,26 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import importlib.util
 import unittest
-from pathlib import Path
 
 import torch
 
-MODULE_PATH = (
-    Path(__file__).parents[1]
-    / "src"
-    / "flaggems_sglang"
-    / "ops"
-    / "fused_moe_router_cudacore.py"
-)
-SPEC = importlib.util.spec_from_file_location(
-    "fused_moe_router_cudacore_module", MODULE_PATH
-)
-if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"cannot load {MODULE_PATH}")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+from tests._op_variants import load_operator_modules
+
+MODULES = load_operator_modules("fused_moe_router_cudacore")
 
 
 def reference(x, router_weight, topk, moe_softcapping, correction_bias=None):
@@ -57,15 +44,24 @@ TOLERANCES = {
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires a CUDA device")
 class FusedMoeRouterCudacoreTest(unittest.TestCase):
+    def setUp(self):
+        torch.manual_seed(0)
+
     def _check(self, x, w, topk, cap, bias):
-        actual_w, actual_ids = MODULE.fused_moe_router_cudacore(
-            x, w, topk, cap, bias
-        )
         exp_w, exp_ids = reference(x, w, topk, cap, bias)
-        self.assertEqual(actual_w.shape, exp_w.shape)
-        torch.testing.assert_close(actual_ids, exp_ids, atol=0, rtol=0)
-        atol, rtol = TOLERANCES[x.dtype]
-        torch.testing.assert_close(actual_w, exp_w, atol=atol, rtol=rtol)
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                actual_w, actual_ids = module.fused_moe_router_cudacore(
+                    x, w, topk, cap, bias
+                )
+                self.assertEqual(actual_w.shape, exp_w.shape)
+                self.assertEqual(actual_w.dtype, exp_w.dtype)
+                self.assertEqual(actual_ids.dtype, exp_ids.dtype)
+                torch.testing.assert_close(actual_ids, exp_ids, atol=0, rtol=0)
+                atol, rtol = TOLERANCES[x.dtype]
+                torch.testing.assert_close(
+                    actual_w, exp_w, atol=atol, rtol=rtol
+                )
         return actual_ids
 
     def test_dtype_shape_topk_matrix_match_reference(self):
@@ -132,10 +128,21 @@ class FusedMoeRouterCudacoreTest(unittest.TestCase):
         x[:, 0] = 1.0
         w[3, 0] = 5.0
         w[6, 0] = 5.0
-        ids = MODULE.fused_moe_router_cudacore(x, w, 2, 0.0, None)[1]
-        for row in range(4):
-            self.assertIn(ids[row, 0].item(), (3, 6))
-            self.assertIn(ids[row, 1].item(), (3, 6))
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                ids = module.fused_moe_router_cudacore(x, w, 2, 0.0, None)[1]
+                for row in range(4):
+                    self.assertEqual(set(ids[row].tolist()), {3, 6})
+
+    def test_softcap_keeps_padded_experts_masked(self):
+        for dtype in (torch.float32, torch.float16, torch.bfloat16):
+            for rows, experts in ((1, 3), (33, 65)):
+                x = torch.zeros(rows, 64, device="cuda", dtype=dtype)
+                w = torch.zeros(experts, 64, device="cuda", dtype=dtype)
+                bias = -10.0 - torch.arange(experts, device="cuda")
+                for cap in (0.0, 1.0, -1.0):
+                    with self.subTest(dtype=dtype, experts=experts, cap=cap):
+                        self._check(x, w, 2, cap, bias)
 
     def test_non_contiguous_inputs(self):
         x_base = torch.randn(8, 512, device="cuda")
@@ -159,9 +166,13 @@ class FusedMoeRouterCudacoreTest(unittest.TestCase):
     def test_empty_rows(self):
         x = torch.randn(0, 128, device="cuda")
         w = torch.randn(8, 128, device="cuda")
-        out_w, out_ids = MODULE.fused_moe_router_cudacore(x, w, 2, 0.0, None)
-        self.assertEqual(out_w.shape, (0, 2))
-        self.assertEqual(out_ids.shape, (0, 2))
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                out_w, out_ids = module.fused_moe_router_cudacore(
+                    x, w, 2, 0.0, None
+                )
+                self.assertEqual(out_w.shape, (0, 2))
+                self.assertEqual(out_ids.shape, (0, 2))
 
     def test_row_grid_fold_path(self):
         rows = 70000
@@ -170,6 +181,18 @@ class FusedMoeRouterCudacoreTest(unittest.TestCase):
         self.assertGreater(rows, 65535)
         self._check(x, w, 2, 0.0, None)
 
+
+RELEASE_REQUIRED_TESTS = [
+    "FusedMoeRouterCudacoreTest.test_dtype_shape_topk_matrix_match_reference",
+    "FusedMoeRouterCudacoreTest.test_large_hidden_and_rows",
+    "FusedMoeRouterCudacoreTest.test_near_tie_order",
+    "FusedMoeRouterCudacoreTest.test_exact_tie_informational",
+    "FusedMoeRouterCudacoreTest.test_softcap_keeps_padded_experts_masked",
+    "FusedMoeRouterCudacoreTest.test_non_contiguous_inputs",
+    "FusedMoeRouterCudacoreTest.test_inputs_not_modified",
+    "FusedMoeRouterCudacoreTest.test_empty_rows",
+    "FusedMoeRouterCudacoreTest.test_row_grid_fold_path",
+]
 
 if __name__ == "__main__":
     unittest.main()
