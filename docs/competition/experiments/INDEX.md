@@ -53,8 +53,8 @@
 | 70 | gate_topk | invalid_correctness | completed(14849,e3r,7/8;昆仑exec 3633491ms挂死后判失败,与e3同指纹) | - | no | generic零值/宽索引/NaN key修复已8/8代理通过；昆仑平台失败仍未解，不建立ZIP或提交intent | 2026-09-16 | [gate_topk](gate_topk.md) |
 | 71 | gelu_tanh_and_mul | valid | completed(14573,e4,8/8,2.7109x 新TB) | e4 2.7109x | no | e4 no-loop昆仑0.304复制链失败(门0.5未过,链收口);TB 2.711守;昆仑真因/燧原8192待证 | 2026-09-14 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
 | 72 | group_norm_silu | valid | completed(15841,e9,8/8,2.48429167x;TB e6 2.66266667x) | e6 2.66266667x | no | 大group分块两轮control未过门，停止本轮；正确性修复8/8已入库未提交，保留e6 TB与旧uncertain | 2026-09-16 | [group_norm_silu](group_norm_silu.md) |
-| 73 | residual_gate_add | valid | completed(14838,e6,8/8,4.0993x 新TB;昆仑4096 0.60) | e6 4.0993125x | no | e6 昆仑4096 0.60(+23%)新TB 4.099;宽度曲线双正,8192待信号;差榜首0.876 | 2026-09-14 | [residual_gate_add](residual_gate_add.md) |
-| 74 | seqlens_expand | valid | evaluating(e12-hint-safe/sub16316,6芯通过/昆仑编译失败/燧原待回；TB仍E4 20.177775) | e4 20.177775x | no | E13昆仑mask32已通过16方法双源码release及IR/ZIP验签，等待实时preflight；E12不重投，燧原仍待回 | 2026-09-16 | [seqlens_expand](seqlens_expand.md) |
+| 73 | residual_gate_add | valid | completed(e11/sub15484,8/8,4.08910938x；TB仍E6 4.0993125x) | e6 4.0993125x | no | E7已投且昆仑0.6295未过0.65门，关闭宽度轴；开发燧原行分组新结构，其他芯冻结TB | 2026-09-16 | [residual_gate_add](residual_gate_add.md) |
+| 74 | seqlens_expand | valid | evaluating(e13-mask32/sub16356,6芯通过/昆仑同指纹编译失败/燧原待回；TB仍E4 20.177775) | e4 20.177775x | no | E13排除仅改位宽方案；E14仅昆仑group改一维索引，验证二维layout新假说；E12/E13不重投 | 2026-09-16 | [seqlens_expand](seqlens_expand.md) |
 | 75 | sigmoid_gate_mul | valid | completed(e9,8/8,2.8967x;华为warps8无效关闭) | e9 2.89671667x | no | Ascend direct候选代理1.01924x未达1.05且fp16稳定回退，不提交；TB保持e9 | 2026-09-16 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

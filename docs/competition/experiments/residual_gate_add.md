@@ -79,13 +79,13 @@ task: 73
 operator: residual_gate_add
 batch: 5
 validity: valid
-platform: completed(14838,e6,8/8,4.0993x 新TB;昆仑4096 0.60)
-candidate_stage: e6
+platform: completed(e11/sub15484,8/8,4.08910938x；TB仍E6 4.0993125x)
+candidate_stage: enflame-row-group-development
 team_best_stage: e6
 team_best_speedup: 4.0993125
 sealed: no
-next: e6 昆仑4096 0.60(+23%)新TB 4.099;宽度曲线双正,8192待信号;差榜首0.876
-updated: 2026-09-14
+next: E7已投且昆仑0.6295未过0.65门，关闭宽度轴；开发燧原行分组新结构，其他芯冻结TB
+updated: 2026-09-16
 ```
 
 ## 契约与实现（S0）
@@ -216,3 +216,9 @@ card_b +0.31、tianshu +0.09；muxi/card_a 我方领先。燧原窗口摆动实�
 - 候选Enflame SHA-256 `9127fb02cdbf5d2c86835be962f9c8d614afb103f7d3aff08a15ab6119c2259a`，test `aeaf4c6322f88de34825ef2d2c1fdffbc3001145d9ac71112c4ac136343f245b`。输入、完整32桶与24份IR在 `artifacts/competition/t73-gate-hoist-screening-20260916/`；screening.json SHA-256 `885a799ded6ce8c772e560c82baea291c1e1df73467e7226fbff955103914db4`；日志 `c698970074b23886595442dfedff975e11c2dc860b80570ad7dab0920c9ff56c`；analysis.json含逐IR指针来源/行号审查。
 - 前两次取证脚本中止，不是数值失败：rows=1时gate与residual同shape，wrapper实际选flat，但runner误抓capped2d。早期“热缓存返回None”诊断已更正；attempt1/attempt2各9桶及9/9原件保留。最终按真实shape穷举32桶（22capped2d/10flat），只修资源抓取，source/test/门/样本不变；完整最终轮独立裁决，不拼接前两轮样本。
 - 最终远端 `/tmp/flagos-t73-hoist-final.XLAryQ`、PID388539、timeout600、EXIT0，输入/全部输出双端验签，GPU已释放。最终script SHA-256 `2a209ce19ce392d165a0fe08fcc6c01a36dcc60e7a486e66e69a0ec90d5ac99f`，tar `20102fb55ad84ade5856a3f40b753f1ed6fa7a1d2fc587978d16e77dade0631d`。
+
+## 2026-09-16 23:12 历史提交对账与并行候选
+
+- 实时查分与本地submitted intent交叉核实：E7早已于2026-09-14T23:42:41提交，submission **14856**，8/8、均分 **4.08110938**、昆仑 **0.6295**，未超E6均值且未达0.65门。intent `8972fdf47a1120ee91329a5e1d52ae03` 的commit934120a795ad2f6f15b12159515cdd15a48ee777、ZIP SHA ba4ac2a777af4b04d264ec061b857493f0abff4fc478b7207fda07089a709b13与该record file_url SHA完全匹配；旧“待发射”段仅保留历史，不再视为队列。
+- E11/sub15484于2026-09-15T23:39:58，8/8、4.08910938，燧原2.0805、昆仑0.631625；未超E6 **4.0993125**。8192宽度和燧原warps轴不重复。新候选仅研究Enflame广播行分组，具体门槛在执行前冻结，未通过发布门不提交。
+- 本次状态观察 `2026-09-16T23:11:43.998592+08:00`，账号额度 **15/30**。状态快照 `artifacts/competition/pair-grouped-platform-20260916/t73-before-parallel-status.json` SHA-256 `06b19907fde9bd38a9c228e3f1ae4f41299e6c53333e6ecb61b46b22156da637`。

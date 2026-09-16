@@ -5,12 +5,12 @@ task: 74
 operator: seqlens_expand
 batch: 5
 validity: valid
-platform: evaluating(e12-hint-safe/sub16316,6芯通过/昆仑编译失败/燧原待回；TB仍E4 20.177775)
-candidate_stage: e13-kunlun-mask32-ready
+platform: evaluating(e13-mask32/sub16356,6芯通过/昆仑同指纹编译失败/燧原待回；TB仍E4 20.177775)
+candidate_stage: e14-kunlun-flat-development
 team_best_stage: e4
 team_best_speedup: 20.177775
 sealed: no
-next: E13昆仑mask32已通过16方法双源码release及IR/ZIP验签，等待实时preflight；E12不重投，燧原仍待回
+next: E13排除仅改位宽方案；E14仅昆仑group改一维索引，验证二维layout新假说；E12/E13不重投
 updated: 2026-09-16
 ```
 
@@ -344,3 +344,17 @@ updated: 2026-09-16
 - `artifacts/competition/t74-kunlun-mask32-20260916/release/verification.log` SHA-256 `0c95fb88dbae3e6e0dc104685a48fae1323735d44970cdfb458b90f0a3efbd53`。
 - `artifacts/competition/t74-kunlun-mask32-20260916/build.json` SHA-256 `e3d002063224328f2ccbfd434aca85db31fa4f5bdf64633d8a8bcd27f1fd7f3b`。
 - E12原watch在只读GET响应读取时TimeoutError退出，22:54重新启动只读查询仍等待响应；两个submitted状态不因此变更，也不自动重发。E13须实时preflight完整返回并通过才执行一次提交。
+
+## 2026-09-16 23:00 E13 单次提交
+
+- 实时preflight恢复并全部通过；submission **16356**，23:00:50，daily_seq15，nonce `8b0135dceb47200f85f8253adf744265` 状态submitted。upload/POST各一次，远端ZIP18543bytes及SHA完全匹配，remote_verification=verified。
+- 本次是新增昆仑源码的兼容修复，非E12相同ZIP重投；E12已提交记录保持原状。提交前quota剩16/30，本次消耗1次，提交后实时额度待status确认。
+- `artifacts/competition/pair-grouped-platform-20260916/t74-e13-preflight.json` SHA-256 `0eea595a3b2766e46c823f6308c2237667824bf4068b85e38a741103d442cdf4`。
+- `artifacts/competition/pair-grouped-platform-20260916/t74-e13-submit.json` SHA-256 `3d206a53bef77522f27ab9cfce07dcb20d95566421e25ac8bcf01044f9136dc3`。
+
+## 2026-09-16 23:02 E13 目标结果：位宽规避未通过
+
+- `2026-09-16T23:04:37.481775+08:00` 观察：16356已有6芯通过、昆仑失败、燧原waiting_callback，未有完整均分；最新额度 **15/30**。selected_file明确为seqlens_expand_kunlunxin.py，因此不是vendor漏选。
+- 昆仑仍case8、175:65、TritonXPULegalize的arith.cmpi same-type错误，exec9335ms。已证比较IR从i64变i32仍触发相同后端指纹，停止仅改位宽轴，不继续cast变体。源结构不同于E12，仍不将两次结果解释为平台随机故障。
+- 下一E14结构假说仅作用昆仑：把4×32分组展平为128-lane，row=lane//32、col=lane%32，取消所有二维expand/broadcast；重复的每行qo/kv/base load与max归约数学等价，循环/物理地址保留i64、值int32。generic和测试冻结。先过真实probe/1D IR及16方法双源码exact release；若该结构仍同指纹，停止本轮继续提交，等待目标失败IR或后端修复。
+- `artifacts/competition/pair-grouped-platform-20260916/t74-e13-partial-status.json` SHA-256 `cb29ba714442eb304dc39334742e6d0d18cb3fc5129442585153cd57bb12297d`。
