@@ -108,6 +108,21 @@ class FusedEHNormTest(unittest.TestCase):
                         w2 = torch.randn(hidden, dtype=dtype, device="cuda")
                         self.check((x, prev, w1, w2, 1e-5))
 
+    def test_both_paths_column_strides(self):
+        # Independent path dispatch must use each input and weight stride.
+        for dtype in (torch.float16, torch.bfloat16):
+            e = torch.randn(3, 1536, dtype=dtype, device="cuda")[:, ::2]
+            h = torch.randn(6, 1536, dtype=dtype, device="cuda")[::2, 1::2]
+            ew = torch.randn(1536, dtype=dtype, device="cuda")[::2]
+            hw = torch.randn(1536, dtype=dtype, device="cuda")[1::2]
+            self.check((e, h, ew, hw, 1e-6))
+
+    def test_grid_row_count_boundaries(self):
+        # The capped path grid must cover rows beyond grid.x's 65535
+        # hardware ceiling without launching an oversized grid.
+        for tokens in (65535, 65536, 65537):
+            self.check(make_case(tokens=tokens, hidden=512))
+
     def test_zero_row_and_empty(self):
         e, h, ew, hw, eps = make_case(tokens=4, hidden=512)
         e[:, :] = 0
@@ -117,6 +132,8 @@ class FusedEHNormTest(unittest.TestCase):
 
 
 RELEASE_REQUIRED_TESTS = [
+    "FusedEHNormTest.test_grid_row_count_boundaries",
+    "FusedEHNormTest.test_both_paths_column_strides",
     "FusedEHNormTest.test_multitile_stride_and_chunk_combos",
     "FusedEHNormTest.test_dtypes",
     "FusedEHNormTest.test_hidden_range_and_tokens",
