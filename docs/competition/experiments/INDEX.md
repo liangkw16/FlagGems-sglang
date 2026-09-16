@@ -49,7 +49,7 @@
 | 66 | dsv3_fused_a_gemm | valid | completed(15861,e2,8/8,3.09855x新TB) | e2 3.09855x | no | e2仅+0.15%，未达3.40再投入门；停止窄N split4轴，不重投 | 2026-09-16 | [dsv3_fused_a_gemm](dsv3_fused_a_gemm.md) |
 | 67 | fill_padded_rows | valid | completed(e4,8/8,4.1965x;固定块轴零增益,重编译假说在本题证伪) | e2 4.2969x | no | 固定BLOCK轴关闭;下一轴=num_warps/过特化(PR扫描模式,华为1.9vs17.5缺口形态未破);TB e2 4.2969 守 | 2026-09-15 | [fill_padded_rows](fill_padded_rows.md) |
 | 68 | fused_eh_norm | valid | completed(15864,e8,8/8,7.10215x新TB) | e8 7.10215x | no | e8仅+0.18%，燧原1.6814未达2.0门；停止本path分离轴，不重投 | 2026-09-16 | [fused_eh_norm](fused_eh_norm.md) |
-| 69 | fused_moe_dispatch_index | valid | completed(e12-relaxed/sub16139,8/8,51.072975x；TB仍E10,51.3375x,排名5) | e10-generic-init 51.3375x | no | E12八芯51.072975未超TB；排序聚合大面积回退暂不晋级；单warp布局方案正在固定矩阵测速 | 2026-09-16 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
+| 69 | fused_moe_dispatch_index | valid | completed(e12-relaxed/sub16139,8/8,51.072975x；TB仍E10,51.3375x,排名5) | e10-generic-init 51.3375x | no | E12八芯有效未超E10；全块排序/单warp本轮不晋级，后续聚合需先降低局部通信成本；18次额度 | 2026-09-16 | [fused_moe_dispatch_index](fused_moe_dispatch_index.md) |
 | 70 | gate_topk | invalid_correctness | completed(14849,e3r,7/8;昆仑exec 3633491ms挂死后判失败,与e3同指纹) | - | no | generic零值/宽索引/NaN key修复已8/8代理通过；昆仑平台失败仍未解，不建立ZIP或提交intent | 2026-09-16 | [gate_topk](gate_topk.md) |
 | 71 | gelu_tanh_and_mul | valid | completed(14573,e4,8/8,2.7109x 新TB) | e4 2.7109x | no | e4 no-loop昆仑0.304复制链失败(门0.5未过,链收口);TB 2.711守;昆仑真因/燧原8192待证 | 2026-09-14 | [gelu_tanh_and_mul](gelu_tanh_and_mul.md) |
 | 72 | group_norm_silu | valid | completed(15841,e9,8/8,2.48429167x;TB e6 2.66266667x) | e6 2.66266667x | no | 大group分块两轮control未过门，停止本轮；正确性修复8/8已入库未提交，保留e6 TB与旧uncertain | 2026-09-16 | [group_norm_silu](group_norm_silu.md) |

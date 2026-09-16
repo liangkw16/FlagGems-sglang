@@ -6,12 +6,12 @@ operator: fused_moe_dispatch_index
 batch: 5
 validity: valid
 platform: completed(e12-relaxed/sub16139,8/8,51.072975x；TB仍E10,51.3375x,排名5)
-candidate_stage: warp1-screening
+candidate_stage: e12-relaxed
 team_best_stage: e10-generic-init
 team_best_commit: a01fb6344cfa9d9f92a88cd8d47d3d9db3d2ff1b
 team_best_speedup: 51.3375
 sealed: no
-next: E12八芯51.072975未超TB；排序聚合大面积回退暂不晋级；单warp布局方案正在固定矩阵测速
+next: E12八芯有效未超E10；全块排序/单warp本轮不晋级，后续聚合需先降低局部通信成本；18次额度
 updated: 2026-09-16
 ```
 
@@ -569,7 +569,7 @@ updated: 2026-09-16
   不覆盖原冻结文件。资源上限在已看IR后、计时前声明，不伪称probe前注册。
   supplement SHA `44753413ae3cd7d780ea5647fd798ab945bfc82d70a528d60a09190063405f43`。
 - 84主桶+4control、5轮440对完成：算术均值 **1.1023310446**，GM **0.9935606129**；
-  五轮均值1.100563–1.103773，确实达到数字短名单门。但**64/84桶低于0.95**，
+  五轮均值1.100563–1.103773，确实达到数字短名单门。但**64/84桶速度比低于0.95**（69/84低于1），
   最差0.780519；uniform/hot/pad组均值0.99788/1.37162/0.93749。
   热点大N最好3.8855倍拉高均值；无control漂移、无spill，不能删去回退桶重新算收益。
   缺乏隐藏分布与目标收益证据，暂不将此无条件排序替换泛化到generic；不是因单桶回退自动否决，
@@ -577,3 +577,35 @@ updated: 2026-09-16
   benchmark SHA `09d58d2b43d7e337e1cb4d65a71fbb55748d445cfcfefef3a4ba80c733c97b35`；raw SHA `7b94582554b9549d9de1e7219ea88d36ac352fc875d0416a0e1e189d2ce60a6f`。
   决策 SHA `34f7feb15cde203f1e793d5132294e4d9036a2d55659b2259e489d05ac05b61c`。远端 `/tmp/flagos-t69-relaxed-release.ZHXuPc/sorted`，
   PID394579、930s上限、EXIT0，前后无其他GPU计算进程。
+
+## 2026-09-16 单warp布局：同步点减半，实际性能未过门
+
+- 从已四源release/平台有效的E12 `0af3c9708a1eef1592ac45773de64c1aa65e9569`出发，
+  唯一改动为generic wrapper `num_warps=1`；kernel/BLOCK256/relaxed原子/三vendor不变。
+  历史generic未测试该轴，过去warps1只涉及Kunlun vendor。
+  `warp1/candidate.py` SHA `fe52497b1fe5d046e6b877d089243b538ab0878998c60d78ad0eb198bb566b52`；
+  `warp1/plan.json` SHA `c6bf39be300be5bf25c1963b28b3303b3a923ae4cc91301918411cdc6ef77c3d`，本次重新构建完整计划，无旧初始化说明混入。
+- generic双方10/10，原方法保留且poison/grid1/2明确分别跑warp1与4；该实验未晋级，
+  扩展测试保留在screening产物。16份实际IR/profiler独立验签，reqntid128→32，
+  四次layout转换仍在、barrier8→4、shuffle仍0；register32→62、shared2048B、0spill。
+  静态atomic2→8是每线程处理量变化，128×2=32×8，未减少动态原子请求。
+  candidate部分IR调试路径为baseline.py：两者kernel本体完全相同，forced baseline warp1
+  先编译触发编译缓存复用；实际public caller与kernel block32共同核实候选配置，不是结果缓存。
+  IR审查 SHA `2b806b879e07e0325bd6ef7db95052da250cfbdadb3d3255e6a719380d4290bd`。
+- 84主桶+4control、5轮440对全部完成。算术均值 **0.9668489988**、GM0.9664182139，
+  五轮0.965222–0.968846；最差0.908831，26/84低于0.95；control无漂移、全部0spill。
+  uniform/hot/pad分组均值0.96967/0.96576/0.96512，**数字晋级门失败**。
+  不把barrier减少等同速度提升，也不单独归因到寄存器或线程数；未做该候选release/ZIP/提交。
+  benchmark SHA `102cf4a4f564676a192089d54d2e765395d49de1ef765d478c70f1dc088d76af`；raw SHA `e61d119124d700cba5500f4d5d7eae125bb05c2c56f5ca1919d06e47f9dac6d4`；
+  决策 SHA `66ffc09b392ec59c87158cc72d848e16b0aa97b383edeff14baf52208536d830`。
+  `/tmp/flagos-t69-warp1.dvpSMz`：precheck PID394642/390s，benchmark PID394737/930s，
+  均EXIT0，前后无其他GPU计算进程。原子聚合、relaxed、warp1分别计时，未拼接三份收益。
+
+三组各440对原始样本经独立复算，哈希、逐桶/逐轮统计与control全部吻合。
+复核产物 `artifacts/competition/t69-atomic-aggregation-20260916/screening-closeout-review.json`，
+SHA `14fb499d07b98e7676eb3e95a4ecacd9190a013181604e37a556259e36a0a591`。
+
+本轮闭环：三条候选完成固定矩阵筛选，只有relaxed进入正式提交16139（8/8、51.072975）；
+新增源码与重叠capacity/int32边界测试已入库。历史榜单最佳仍E10 51.3375、第5，剩18次额度。
+全块排序和单warp没有晋级，源码保留E12；下一步需要更低局部通信成本的聚合结构证据，
+不再沿本次两个失败配置重复提交，也不据此断言天数/海光榜差不可突破。
