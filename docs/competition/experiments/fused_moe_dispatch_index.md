@@ -5,13 +5,13 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: valid
-platform: completed(e12-relaxed/sub16139,8/8,51.072975x；TB仍E10,51.3375x,排名5)
-candidate_stage: e13-pair-ready
+platform: completed(e13-pair/sub16291,8/8,50.9577x；TB仍E10,51.3375x,排名5)
+candidate_stage: e13-pair
 team_best_stage: e10-generic-init
 team_best_commit: a01fb6344cfa9d9f92a88cd8d47d3d9db3d2ff1b
 team_best_speedup: 51.3375
 sealed: no
-next: E13两路聚合已通过E10同分布代理筛选及11方法四源码release，ZIP就绪未提交；目标芯仍未验证
+next: E13八芯有效但50.9577未超E10，代理收益未兑现；保留E10，不重投同候选，需目标逐case/编译证据再迭代
 updated: 2026-09-16
 ```
 
@@ -629,3 +629,18 @@ SHA `14fb499d07b98e7676eb3e95a4ecacd9190a013181604e37a556259e36a0a591`。
 - 用户继续既有闭环，按现有持续授权提交；仅本候选一次上传和一次正式提交。实时赛题为competing/can_submit，账号全局剩18/30，截止2026-09-17 19:59:59。22:20–22:21只读逐芯快照 `docs/competition/data/pair-grouped-leaderboard-20260916-before.json`，SHA-256 `f7441d24290931d2782ecfb3a5c080f01117a62c3f4f6a33d9efca36c79e764b`；我方51.3375、第5，榜首80.917125。
 - 正式晋级门：八芯正确、每芯≥0.1，且八芯算术均值>团队最佳E10的51.3375。假设为两路聚合降低generic五芯局部通信成本，三个vendor冻结；代理1.12869445仅支持方向，不直接外推平台均分。
 - 风险：昆仑冻结vendor在E11/E12只有0.1036/0.1032，接近0.1门；本次generic改动不改善它。目标runtime证据由本次平台补齐。若均分未过门，保留E10，不重投相同ZIP；若失败，先读raw_result/selected_file定位，不用注释载体重掷。
+
+## 2026-09-16 22:23 E13 单次提交
+
+- submission **16291**，22:23:04，daily_seq13；nonce `5d251e7f9fa91a16b6624801d4f7b19c` 为submitted。只执行一次上传与正式POST；远端ZIP 19759 bytes，SHA与本地一致，remote_verification=verified。
+- 22:23:22回执3/8完成且通过，其余评测中；该时点账号剩17/30。watch绑定本次file_url SHA和前一提交时间，不将旧终态误记为本次结果。
+- `artifacts/competition/pair-grouped-platform-20260916/t69-preflight.json` SHA-256 `c8a37b4e00c4cf803f5b02950113b26540521f217134f204655501d2b6b92b08`。
+- `artifacts/competition/pair-grouped-platform-20260916/t69-submit.json` SHA-256 `77c403658cd21ba3a878d043f363720940a562b924fb3f4c71bef528b0f06c18`。
+
+## 2026-09-16 22:24 E13 终态：8/8 valid，未超团队最佳
+
+- submission **16291**，daily_seq13；终态观察 `2026-09-16T22:24:38.214395+08:00`，八芯正确且均≥0.1，均值 **50.9577x**，较E10 51.3375为 **-0.7398%**；未过预注册晋级门，保留E10团队最佳，榜单仍第5。实时榜首80.917125，冲榜仍需从团队最佳提升57.617969%。
+- 逐芯：tianshu 72.5046 / muxi 46.1618 / enflame 0.7374 / haiguang 134.87 / kunlunxin 0.1024 / huawei 3.6246 / card_a 83.6002 / card_b 66.0606。平台selected_file与四成员路由一致；昆仑0.1024距门槛余量仍小。
+- generic五芯有涨有落，NVIDIA主GM提升12.87%未在本次平台均分兑现；三个冻结vendor读数也变化，不能把逐芯变化全部归因于P2。停止本候选重复提交，下一轮须先取得目标shape/编译资源或可验证的新结构证据，不以同字节重掷代替优化。
+- `artifacts/competition/pair-grouped-platform-20260916/t69-final-status.json` SHA-256 `ab20a8f1a230ab5d9be592e0a237e51d1ea5185a86122e8f66bdbcd8025a6970`；账号剩 **17/30**，本次只消耗1次。
+- 终态后榜单 `docs/competition/data/t69-e13-leaderboard-20260916.json` SHA-256 `864bf4563745ca4d303260c776d8697ed20d2d7708fd5684f111a5c26a52ea3b`。
