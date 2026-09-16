@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import unittest
+from unittest.mock import patch
 
 import torch
 
@@ -104,6 +105,43 @@ class DeepEPPermuteTest(unittest.TestCase):
         args[1].fill_(37)
         self.check(args)
 
+    def test_launch_geometry_and_tile_boundaries(self):
+        enflame = dict(MODULES).get("enflame")
+        recorded = []
+
+        class LaunchRecorder:
+            def __init__(self, kernel):
+                self.kernel = kernel
+
+            def __getitem__(self, grid):
+                launch = self.kernel[grid]
+
+                def call(*args, **kwargs):
+                    recorded.append((grid, args[3], args[4], kwargs["BLOCK"]))
+                    return launch(*args, **kwargs)
+
+                return call
+
+        for hidden in (511, 512, 513, 2047, 2048, 2049, 4095, 4096, 4097):
+            with self.subTest(hidden=hidden):
+                args = make_case(tokens=7, topk=3, hidden=hidden)
+                if enflame is None:
+                    self.check(args)
+                    continue
+                recorded.clear()
+                with patch.object(
+                    enflame,
+                    "_deepep_permute",
+                    LaunchRecorder(enflame._deepep_permute),
+                ):
+                    self.check(args)
+                self.assertEqual(len(recorded), 1)
+                grid, tasks, tiles, block = recorded[0]
+                expected_tiles = (hidden + block - 1) // block
+                self.assertEqual(tiles, expected_tiles)
+                self.assertEqual(tasks, args[0].shape[0] * expected_tiles)
+                self.assertEqual(grid, (min(tasks, 24),))
+
     def test_special_values(self):
         args = make_case(dtype=torch.float32)
         args[0][:, :4] = torch.tensor(
@@ -118,6 +156,7 @@ RELEASE_REQUIRED_TESTS = [
     "DeepEPPermuteTest.test_strides_and_unused_topk_ids",
     "DeepEPPermuteTest.test_empty_and_all_invalid",
     "DeepEPPermuteTest.test_special_values",
+    "DeepEPPermuteTest.test_launch_geometry_and_tile_boundaries",
 ]
 
 

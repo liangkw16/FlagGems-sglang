@@ -17,6 +17,8 @@ import torch
 import triton
 import triton.language as tl
 
+_BLOCK = 2048
+
 
 @triton.jit
 def _deepep_permute(
@@ -58,7 +60,7 @@ def deepep_permute(input, gateup_input, src2dst, topk_ids, topk, hidden_size):
     assert src2dst.dtype in (torch.int32, torch.int64)
     out = gateup_input.clone()
     if tokens and topk and hidden:
-        tiles = triton.cdiv(hidden, 512)
+        tiles = triton.cdiv(hidden, _BLOCK)
         tasks = tokens * tiles
         # C1 (R2 pre-registered): cap the grid at the GCU's physical
         # scheduling width instead of 65535 - this stack's launch overhead
@@ -75,7 +77,7 @@ def deepep_permute(input, gateup_input, src2dst, topk_ids, topk, hidden_size):
             *input.stride(),
             *out.stride(),
             *src2dst.stride(),
-            BLOCK=2048,
+            BLOCK=_BLOCK,
         )
     return out
 
