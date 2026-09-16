@@ -6,11 +6,11 @@ operator: group_norm_silu
 batch: 5
 validity: valid
 platform: completed(15841,e9,8/8,2.48429167x;TB e6 2.66266667x)
-candidate_stage: e9-completed
+candidate_stage: e10-screening-no-go;correctness-fixes-verified-unsubmitted
 team_best_stage: e6
 team_best_speedup: 2.66266667
 sealed: no
-next: e9华为1.1215<2.0门，小group驻留轴关闭；保留e6 TB，旧uncertain不重试
+next: 大group分块两轮control未过门，停止本轮；正确性修复8/8已入库未提交，保留e6 TB与旧uncertain
 updated: 2026-09-16
 ```
 
@@ -232,3 +232,52 @@ updated: 2026-09-16
 - 11:12:52状态：8/8 valid，均值 **2.48429167x** < TB E6 **2.66266667x**。华为选中 `group_norm_silu_ascend.py`，**1.1215 < 2.0**，预注册继续门失败；代理小group收益未迁移，关闭这一轴，不复投。
 - 逐芯：天数3.85983333、沐曦2.45116667、燧原0.43833333、海光4.235、昆仑0.4915、华为1.1215、A3.50983333、B3.76716667。冻结路径的读数变化不能归因为新Ascend代码。
 - 原始preflight/submit/status：`artifacts/competition/top1-20260916/t72-e9-{preflight,submit,status}.json`。实时额度26/30，平台最佳仍E6；需要新的目标芯瓶颈证据才重开。
+
+
+## 2026-09-16 E10 大 group 分块：最终 NO-GO，未提交
+
+- 15:39:35 最新只读榜单：第 **6**，TB E6 **2.66266667**，Top1 **4.78075**，仍需 **79.55%**。华为我方1.19583333、榜首10.82666667；仅华为变化要超过约18.1405才能补齐总均值差。NVIDIA新形状加速比不能代入未知平台shape分布。
+- 快照 `artifacts/competition/t72-chunk-welford-screening-20260916/platform-closeout.json`，SHA-256 `ac7cd378c99b36cd975b003619cef9221b4f9dbc0a718a9e28ef1d6b71159fa2`；额度 **21/30**，无新增submission，旧warps8 uncertain不动、不重试。
+- 实验仅在隔离artifact中。基线使用真正TB E6 commit `ea4bfef45bcba72508471299163e5dd756d6ee40`，Ascend SHA `5123aaab2daba4867ff20368a20bc3a4095b2efdac9d1e2613240f73f46b5125`；未拿主树E9驻留小group充当baseline。
+- 固定一手来源：[SGLang分块调度](https://github.com/sgl-project/sglang/blob/6b33338242f8ce85cd66bac96a396a4ddf05da9e/python/sglang/kernels/ops/diffusion/norm/group_norm_silu_triton.py) 的大group阈值262144；[PyTorch Welford combine](https://github.com/pytorch/pytorch/blob/449b1768410104d3ed79d3bcfe4ba1d65c7f22c0/aten/src/ATen/native/SharedReduceOps.h#L117-L134) 的真实count/中心化M2合并。未照搬raw-moment方差。
+- 固定BLOCK1024：chunk内一次读x生成count/mean/centered M2；bounded Welford合并；再读x执行affine+SiLU，三次launch。普通路径保留E6；NG>65535或总元素>INT32_MAX走安全fallback，不把这些分支计作性能收益。
+- 预注册42桶×5 AB/BA：24大group主桶（8形状×3dtype，NG1/4/32）+18旧控制桶。门=主桶GM≥1.10、每轮GM≥1.05、每主桶中位≥0.95、每控制桶0.97–1.03、0spill；wrapper-inclusive含分配和三launch，未删桶/缩域/改门。
+
+### 逐次证据与停止原因
+
+1. Attempt1 首轮11方法出现5个generic失败：capped grid遗漏NG65536/65537尾组；stride2/3的weight/bias当连续内存读取。旧generic缺陷，Ascend新路径及Kunlun通过。修复generic后再验证，原错误/输入/log完整封存在 `attempt1/`；未以删除失败测试推进。
+2. Attempt2：11/11、原baseline5/5；24主桶GM **9.319334329**、最差 **2.189843455**，132个compiled resource全部0spill。控制桶 `old-256-float32` 中位 **0.965540651<0.97**，因此整体NO-GO。该控制桶两实现TTIR/TTGIR/LLVM/PTX一致，但AB/BA方向不同，不能证明是numel调用唯一导致；完整输入和结果封存在 `attempt2/`。
+3. 仅作一行等价wrapper修正：`xc.numel()`→`n_groups_total*group_elements`，合法C%G=0时均为N*C*spatial，Python整数无溢出；预先限定只做一次完整复测。generic/test/Kunlun不动，42桶和门不动。
+4. Attempt3：11/11、generic/Ascend/Kunlun实际launch=64/104/64，IR32份assembly逐字节等同已审的Attempt2；完整210配对样本，24主桶GM **9.322860919**、五轮 **9.339955/9.326119/9.322414/9.318287/9.334115**、最差 **2.188505282**、0spill。但 `old-256-bfloat16` 中位 **0.969377347<0.97**；其余控制均在门内。最终 **NO-GO**，不因差距很小放宽门，不再反复跑到通过。
+
+最终性能候选身份与完整记录：
+
+|证据|SHA-256|
+|---|---|
+|Ascend源码|`4fa9951da5fd95e03f5809a614d971e8f1687bb91852967631000d3e65af6576`|
+|候选11方法测试|`7ea12edce8055e3bc4380cc018eef538fd82878eb5db3644e184abedb8edac2e`|
+|冻结benchmark脚本|`65f08bba2404fbe5f104e6aa5e049889b7f7e84d51b902482a38d2947db84b09`|
+|最终plan|`c80d7fcafda4dc765b880f8915c8681f817dea44be6d86844700cb87c04ee6d5`|
+|screening回执|`561ed699f3df230497f3fbf9238bcb9ab31060c4c776cdb8423acf6dd7656cb9`|
+|screening完整log|`92080798fcbe081b1b893effdfb03268c01db9aeee571cd7f9e90604e21af1fc`|
+|IR probe|`b5e01c45c322c7e6c4d76f4a3798a063f41cb56baf4fe69cb17d62cb7e79a012`|
+|IR人工判定|`1c9c44e66467dca81c8ecf4d497a5b8e6013888a9e20064dd883f5cfb93dcc21`|
+|benchmark结果|`84401e3cb3e2f0df4b5b357c870aa995e3b6a7cb1db0d796345678f894f22661`|
+|210条原始CSV|`4eebc07d2b1fe3a3fad0249c225a72ae316ec0aea47b283fd7b9e48e77b32081`|
+|benchmark完整log|`c72d206847e005f68357494c4f59cc9960e8e2518650ef622bfd848659021db7`|
+
+Artifact根为 `artifacts/competition/t72-chunk-welford-screening-20260916/`。最终远端 `/tmp/flagos-t72-chunk.BBYNwC`：正确性/IR PID391177、性能PID391264均EXIT0，GPU前后空闲，完整输入验签通过。EXIT0表示运行结束，不表示性能门通过。独立review核对全部42桶和210 CSV；没有性能source commit、ZIP、preflight或上传。
+
+### 独立落地的正确性修复
+
+性能候选未晋级，不妨碍修复已经重现的契约错误：
+
+- commit `76692f67`：generic新增int64行grid-stride，保留原组内计算；weight/bias先contiguous。增加NG65535/65536/65537、NaN预填防漏写、三dtype非连续affine/输入偏移的回归；原5方法和check helper AST不变。
+- 后续审查发现遗留C=0：真实Torch2.13的2D `(2,0)`/`(0,0)` reference可正常返回；旧generic在launch前8192//0。commit **`fc87f50871cacafeaa69025c409ec756490ce10e`** 在三个wrapper的launch guard仅增加`and group_channels`，补三dtype×两shape回归。Ascend保留主树E9算法，Kunlun保留旧算法，各仅改空通道guard；未夹带失败的分块性能候选。
+- 精确Git对象生成的完整**8/8**回归通过：每个实现50入口调用、43真实launch，0fail/error/skip；source/test/helper/runner及日志SHA全验签。GPU RTX5070Ti，Python3.12.13、Torch2.13.0+cu130、Triton3.7.1、CUDA13.0、driver610.57.04。远端 `/tmp/flagos-t72-correctness.9MWvFd`，PID391359，timeout330，EXIT0。
+- 回执 `artifacts/competition/t72-generic-correctness-20260916/release/verification.json` SHA **`d68cd8f22866e484313aa03d21fb1988b87c894196ee94537462a079ee3d6b89`**；log SHA **`75b9253dff694d6e48534fb80510cbb92bf09877fbf02d5451fa5bfdb0deda25`**。
+- generic SHA `a8d9ecb2a1420e83018af6c7218d8d6e476f33ae5286402c7e303ed06dee71c0`；Ascend SHA `5d0c91d9250721a5ea63218793d8ff44992498bba510c64e411181e5d55a6ef4`；Kunlun SHA `8979677d92dd552d8880a5695742d60d0f120fd0fae56b7367b9ee1c17e86dee`；8方法test SHA `908b4f07ad663119b8db63e06cc94b37721596d9808422ba52cff538a6ee912c`。
+- 本8方法对应独立正确性变更，不能冒充隔离候选的11方法release；隔离11方法及所有失败记录仍保留。C0在性能候选里尚未修复，该候选也不能以旧11/11作为完整契约背书。
+- 只生成了源码dry-run manifest，**没有创建ZIP或提交平台**。两个代码commit均已push到private研究分支；所有目标芯仍`target-runtime-unverified`。普通路径的目标grid/address限制未由本次NVIDIA回归解决；后续若另起发布候选须补其实际覆盖，不继承失败候选的安全fallback证据。
+
+本轮停止该性能尝试，TB仍E6，未达Top1；重开需要独立目标芯瓶颈/编译证据，不能沿用本次噪声边缘control反复抽样。
