@@ -1,0 +1,336 @@
+{
+ "observed_at": "2026-09-17T00:02:20.069753+08:00",
+ "tasks": {
+  "T59": {
+   "operator": "build_trtllm_mha_page_table",
+   "top": {
+    "team": "c2flow",
+    "avg": 39.00240625
+   },
+   "mine": {
+    "rank": 8,
+    "avg": 24.1284375,
+    "gpus": {
+     "tianshu": 68.367,
+     "muxi": 12.8375,
+     "enflame": 28.0875,
+     "haiguang": 30.207,
+     "kunlunxin": 2.1485,
+     "huawei": 8.677,
+     "card_a": 22.46875,
+     "card_b": 20.23425
+    }
+   }
+  },
+  "T60": {
+   "operator": "clamp_position",
+   "top": {
+    "team": "c2flow",
+    "avg": 3.83877083
+   },
+   "mine": null
+  },
+  "T61": {
+   "operator": "compute_src2dst",
+   "top": {
+    "team": "c2flow",
+    "avg": 2.9209
+   },
+   "mine": {
+    "rank": 6,
+    "avg": 2.138475,
+    "gpus": {
+     "tianshu": 3.004,
+     "muxi": 1.2486,
+     "enflame": 4.4408,
+     "haiguang": 1.8854,
+     "kunlunxin": 1.287,
+     "huawei": 1.7128,
+     "card_a": 1.7436,
+     "card_b": 1.7856
+    }
+   }
+  },
+  "T62": {
+   "operator": "concat_mla_k",
+   "top": {
+    "team": "EvokeAgent",
+    "avg": 2.15775
+   },
+   "mine": {
+    "rank": 12,
+    "avg": 1.24575,
+    "gpus": {
+     "tianshu": 2.2962,
+     "muxi": 1.0176,
+     "enflame": 0.2802,
+     "haiguang": 2.671,
+     "kunlunxin": 0.1822,
+     "huawei": 0.209,
+     "card_a": 1.6594,
+     "card_b": 1.6504
+    }
+   }
+  },
+  "T63": {
+   "operator": "create_flashinfer_kv_indices",
+   "top": {
+    "team": "EvokeAgent",
+    "avg": 353.24240625
+   },
+   "mine": {
+    "rank": 10,
+    "avg": 199.69521875,
+    "gpus": {
+     "tianshu": 554.12725,
+     "muxi": 87.29025,
+     "enflame": 6.175,
+     "haiguang": 316.089,
+     "kunlunxin": 2.7055,
+     "huawei": 72.98575,
+     "card_a": 250.0875,
+     "card_b": 308.1015
+    }
+   }
+  },
+  "T64": {
+   "operator": "deepep_permute",
+   "top": {
+    "team": "EvokeAgent",
+    "avg": 28.90735
+   },
+   "mine": {
+    "rank": 14,
+    "avg": 7.17105,
+    "gpus": {
+     "tianshu": 16.0098,
+     "muxi": 5.5638,
+     "enflame": 6.666,
+     "haiguang": 10.2028,
+     "kunlunxin": 0.2656,
+     "huawei": 3.085,
+     "card_a": 8.6716,
+     "card_b": 6.9038
+    }
+   }
+  },
+  "T65": {
+   "operator": "deepep_post_reorder",
+   "top": {
+    "team": "c2flow",
+    "avg": 70.88945
+   },
+   "mine": {
+    "rank": 12,
+    "avg": 26.917125,
+    "gpus": {
+     "tianshu": 31.4906,
+     "muxi": 18.7902,
+     "enflame": 8.1668,
+     "haiguang": 70.5854,
+     "kunlunxin": 0.376,
+     "huawei": 17.5128,
+     "card_a": 48.852,
+     "card_b": 19.5632
+    }
+   }
+  },
+  "T66": {
+   "operator": "dsv3_fused_a_gemm",
+   "top": {
+    "team": "c2flow",
+    "avg": 5.46285
+   },
+   "mine": {
+    "rank": 7,
+    "avg": 3.09855,
+    "gpus": {
+     "tianshu": 1.3328,
+     "muxi": 3.5158,
+     "enflame": 0.4202,
+     "haiguang": 5.0002,
+     "kunlunxin": 2.7482,
+     "huawei": 1.8354,
+     "card_a": 4.014,
+     "card_b": 5.9218
+    }
+   }
+  },
+  "T67": {
+   "operator": "fill_padded_rows",
+   "top": {
+    "team": "金狐狸",
+    "avg": 12.463525
+   },
+   "mine": {
+    "rank": 11,
+    "avg": 4.2969,
+    "gpus": {
+     "tianshu": 11.8956,
+     "muxi": 2.7324,
+     "enflame": 1.5106,
+     "haiguang": 6.1164,
+     "kunlunxin": 0.5854,
+     "huawei": 1.9286,
+     "card_a": 5.4502,
+     "card_b": 4.156
+    }
+   }
+  },
+  "T68": {
+   "operator": "fused_eh_norm",
+   "top": {
+    "team": "c2flow",
+    "avg": 18.283125
+   },
+   "mine": {
+    "rank": 8,
+    "avg": 7.10215,
+    "gpus": {
+     "tianshu": 12.61186667,
+     "muxi": 6.80853333,
+     "enflame": 1.6814,
+     "haiguang": 13.55273333,
+     "kunlunxin": 1.0982,
+     "huawei": 3.8108,
+     "card_a": 9.138,
+     "card_b": 8.11566667
+    }
+   }
+  },
+  "T69": {
+   "operator": "fused_moe_dispatch_index",
+   "top": {
+    "team": "c2flow",
+    "avg": 82.741675
+   },
+   "mine": {
+    "rank": 5,
+    "avg": 51.3375,
+    "gpus": {
+     "tianshu": 76.9982,
+     "muxi": 45.7358,
+     "enflame": 0.7568,
+     "haiguang": 134.7284,
+     "kunlunxin": 0.1016,
+     "huawei": 3.825,
+     "card_a": 80.7688,
+     "card_b": 67.7854
+    }
+   }
+  },
+  "T70": {
+   "operator": "gate_topk",
+   "top": {
+    "team": "金狐狸",
+    "avg": 18.8799875
+   },
+   "mine": null
+  },
+  "T71": {
+   "operator": "gelu_tanh_and_mul",
+   "top": {
+    "team": "c2flow",
+    "avg": 5.36765
+   },
+   "mine": {
+    "rank": 15,
+    "avg": 2.78165833,
+    "gpus": {
+     "tianshu": 5.11513333,
+     "muxi": 2.10086667,
+     "enflame": 2.041,
+     "haiguang": 3.90206667,
+     "kunlunxin": 0.86533333,
+     "huawei": 1.94226667,
+     "card_a": 3.12593333,
+     "card_b": 3.16066667
+    }
+   }
+  },
+  "T72": {
+   "operator": "group_norm_silu",
+   "top": {
+    "team": "c2flow",
+    "avg": 4.78075
+   },
+   "mine": {
+    "rank": 6,
+    "avg": 2.66266667,
+    "gpus": {
+     "tianshu": 4.1515,
+     "muxi": 2.96183333,
+     "enflame": 0.376,
+     "haiguang": 4.73883333,
+     "kunlunxin": 0.491,
+     "huawei": 1.19583333,
+     "card_a": 3.65,
+     "card_b": 3.73633333
+    }
+   }
+  },
+  "T73": {
+   "operator": "residual_gate_add",
+   "top": {
+    "team": "Nectar",
+    "avg": 6.41778125
+   },
+   "mine": {
+    "rank": 7,
+    "avg": 4.1080625,
+    "gpus": {
+     "tianshu": 6.883,
+     "muxi": 4.753125,
+     "enflame": 2.109875,
+     "haiguang": 7.182125,
+     "kunlunxin": 0.861625,
+     "huawei": 1.101375,
+     "card_a": 5.75175,
+     "card_b": 4.221625
+    }
+   }
+  },
+  "T74": {
+   "operator": "seqlens_expand",
+   "top": {
+    "team": "c2flow",
+    "avg": 26.8919
+   },
+   "mine": {
+    "rank": 8,
+    "avg": 20.177775,
+    "gpus": {
+     "tianshu": 59.5166,
+     "muxi": 11.8654,
+     "enflame": 9.2032,
+     "haiguang": 28.7834,
+     "kunlunxin": 1.6826,
+     "huawei": 7.6296,
+     "card_a": 26.0222,
+     "card_b": 16.7192
+    }
+   }
+  },
+  "T75": {
+   "operator": "sigmoid_gate_mul",
+   "top": {
+    "team": "c2flow",
+    "avg": 5.969425
+   },
+   "mine": {
+    "rank": 11,
+    "avg": 2.89671667,
+    "gpus": {
+     "tianshu": 4.79586667,
+     "muxi": 2.70293333,
+     "enflame": 3.3222,
+     "haiguang": 4.005,
+     "kunlunxin": 0.9022,
+     "huawei": 1.27826667,
+     "card_a": 3.22493333,
+     "card_b": 2.94233333
+    }
+   }
+  }
+ }
+}

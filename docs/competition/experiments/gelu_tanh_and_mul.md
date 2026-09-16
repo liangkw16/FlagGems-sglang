@@ -17,13 +17,13 @@ task: 71
 operator: gelu_tanh_and_mul
 batch: 5
 validity: valid
-platform: completed(e8/sub15474,8/8,2.712425x实际TB)
-candidate_stage: enflame-group4-development
-team_best_stage: e8
-team_best_speedup: 2.712425
+platform: completed(16462,e10,8/8,2.781658x新TB;燧原2.04/昆仑0.87)
+candidate_stage: e10
+team_best_stage: e10
+team_best_speedup: 2.781658
 sealed: no
-next: 以实时TB E8为基线开发Enflame短行分组；旧width/warps/no-loop轴不重试，未验证E9 resolver不进入提交
-updated: 2026-09-16
+next: e9 native-tanh平台关闭(16473,燧原1.88未动);宽度/warps/tanh轴全封;燧原2.04 vs 全场3.7-4.1结构差与榜首5.37需新证据
+updated: 2026-09-17
 ```
 
 ## 契约与实现（S0）
@@ -147,3 +147,23 @@ vs 1.14（4.6x）——两芯均为结构性差距。TB 保持 e1 2.6265。
 - live status确认E8/sub **15474**，2026-09-15T23:32:26，8/8、**2.712425**、is_team_best=true；对应source `06ba0bdf1f1db411ebfa0d2456956e4a684d0d12`，URL SHA `7f666e4314c898b7d7ec772ecdab38be894f45524aff95104908eebf508587c7` 与submitted intent一致。订正旧段“未换TB”：涨幅很小但平台确实更新了最佳。
 - 新候选只研究Enflame短行四行合并，保留E8其他成员、宽shape实现/参数/exp算式；不是重做8192或warps。主树未验证E9 runtime resolver不进入ZIP。发布前冻结shape矩阵与门并完整release，平台门为八芯有效均值>2.712425且燧原>1.88246667；尚未通过开发门。
 - 观察 `2026-09-16T23:28:06.035023+08:00` 额度 **13/30**；状态 `artifacts/competition/pair-grouped-platform-20260916/t71-before-parallel-status.json` SHA-256 `76326ba3f251a89cb1d896ff3a2a4592ddfd093b544a5599b21f2b4660cdc4a4`。
+
+## 2026-09-16 23:44 E10 短行分组发布门通过
+
+- 基线真实TB E8 `06ba0bdf1f1db411ebfa0d2456956e4a684d0d12`，只Enflame rows≥4且0<half_width≤1024合并4行，减少固定8192-lane短行掩码浪费与逐行循环；宽路径/其他芯逐字冻结E8。主树未验证E9动态resolver移除，不携带探针/fallback；数学表达式与运算顺序仍E8 exp恒等式。
+- source/verification commit `0d0cedb8a7b5e7d7d2d6604d1ae681a53e6bbd6c`。独立冻结18affected+8controls、5轮AB/BA，门主中位≥1.05、每桶≥0.95、zero spill；实测主中位 **2.6857767624**、GM **3.32658055**、全桶最差 **0.9987995107**，五轮主中位2.678–2.698。主任务独立复算130pairs与Git/SHA通过。T73平台仅微涨是反例，不用它给本题目标芯背书。
+- 六份IR probe真实4×BLOCK、FP32 exp原算序/i64地址，零spill/shared；宽kernel AST/哈希与E8一致。原4方法保留，增加group/8192边界、非连续与零宽，共7方法。exact release **7/7**，0fail/error/skip/xfail，generic/Enflame/Kunlun各55入口/52真实JIT；NVIDIA代理，Enflame目标仍未验证。
+- ZIP `artifacts/competition/gelu_tanh_and_mul/e10-enflame-group4-0d0cedb/gelu_tanh_and_mul.zip`，9040bytes，SHA-256 `f522c23147d8ba4851961cf3c58b047a5b0a781e884d4c7589378f5fcee5b489`，成员gelu_tanh_and_mul.py及_enflame/_kunlunxin.py；主任务验签receipt/CRC/Git/成员再过。测试SHA `a7ec5422922ebbfc97cd682f1e2cd9adfe03e7780e3cefbfd34dbb9e13db8d7b`。
+- `src/flaggems_sglang/ops/gelu_tanh_and_mul.py` SHA-256 `2e620ac3e4fa9c7964b02f2f034f311fdde3fb0ccee36994c1b43c588ee4d7cb`。
+- `src/flaggems_sglang/runtime/backend/_enflame/ops/gelu_tanh_and_mul.py` SHA-256 `16b3e71a036b739cd6274c2048addd11161bc7d3da390630978542aa42687170`。
+- `src/flaggems_sglang/runtime/backend/_kunlunxin/ops/gelu_tanh_and_mul.py` SHA-256 `b2dc4c7706bd0d5fd3c93d7d56fc6dbd2551280350ce6c50321d3b445f3c4112`。
+- `artifacts/competition/t71-group4-screening-20260916/screening.json` SHA-256 `0dc05a9aece19849f20c22f1a40e6679db5f05a4ce5af3e7aa183e2e9d84e042`。
+- `artifacts/competition/t71-group4-screening-20260916/release/verification.json` SHA-256 `c17e78c6ad64ecd204b76e3c19415494f349bfa8a7dbb923dd40cd882d54972c`。
+- `artifacts/competition/t71-group4-screening-20260916/release/verification.log` SHA-256 `76141549809231875d8e0d79276a1f504fda614250f6f70fad791f059cc6ed81`。
+- 平台目标沿用预注册：全部八芯正确且每芯≥0.1，均分>**2.712425**且Enflame>**1.88246667**。只提交一次；失败定位，不重复旧width/warps/native-tanh轴，也不把代理倍数当平台均值倍数。
+
+## 2026-09-17 00:0x E10/E9 平台终态补记（sub 16462 / 16473）：group4 新 TB 2.7817；native-tanh 轴平台关闭
+
+- **E10 group4（sub 16462，`0d0cedb`，11:5x 发射）**：8/8 valid，均值 **2.781658 新 TB**（>E8 2.712425）。燧原 **2.041**（+8.5%，短行分组形态部分兑现）、**昆仑 0.8653**（0.30→0.87，+186%，昆仑 no-loop vendor 形态在平台窗口首次大规模兑现）、天数 5.1151 / 沐曦 2.1009 / 海光 3.9021 / 华为 1.9423 / A 3.1259 / B 3.1607。
+- **E9 native-tanh（sub 16473，`8c2d6ba`，11:5x 发射）**：8/8 valid，均值 2.781342 ≈ E10（-0.0003）。**燧原 1.8795 ≈ E8 1.8825（±0.2%）**——FlagGems 式 native tanh 解析链（活跃 backend 探测 + builtin 过滤 + 编译探针 + exp 恒等式兜底）在 GCU 平台未产生增益：解析未命中（GCU Triton 无带 builtin 标记的 tanh extern）或 native tanh 非 3.7-4.1 聚集的缺口形态。轴按平台证据关闭；解析链基础设施（防跨后端符号污染 + 防 stub 陷阱）保留在 `8c2d6ba` 的 vendor 字节中供后续题复用。
+- 同窗口读数对比注意：E9/E10 相邻发射（间隔 ~3 分钟），燧原 1.88 vs 2.04 的差为同窗可比，分组形态增益真实；昆仑 0.87 在两发同读，窗口一致。
