@@ -33,22 +33,27 @@ def make_case(
     has_start=True,
     strided=False,
     dtype=torch.int32,
+    context=None,
+    head=1,
+    gap=3,
+    tail=5,
 ):
     bs = len(lengths)
     starts = [i % 17 for i in range(bs)]
-    context = max(lengths, default=0) + 17
+    if context is None:
+        context = max(lengths, default=0) + 17
     pool = torch.randint(
         -(2**30), 2**30, (5, context), dtype=torch.int32, device="cuda"
     )
-    pointers = [1]
+    pointers = [head]
     for n in lengths:
-        pointers.append(pointers[-1] + n + 3)
+        pointers.append(pointers[-1] + n + gap)
     vectors = [
         torch.tensor(values, dtype=dtype, device="cuda")
         for values in ([i % 5 for i in range(bs)], lengths, pointers, starts)
     ]
     old = torch.randint(
-        -10000, 10000, (pointers[-1] + 5,), dtype=torch.int32, device="cuda"
+        -10000, 10000, (pointers[-1] + tail,), dtype=torch.int32, device="cuda"
     )
     if strided:
         pool = pool.t().contiguous().t()
@@ -122,12 +127,45 @@ class KVIndicesTest(unittest.TestCase):
         args[0].fill_(-17)
         self.check(args)
 
+    def test_split_geometry_boundaries(self):
+        for width in (1, 511, 512, 513, 4095, 4096, 4097, 8191, 8192, 8193):
+            with self.subTest(width=width):
+                self.check(
+                    make_case(lengths=(width,), has_start=False, context=width)
+                )
+        for batch in (31, 32, 33, 127, 128, 129, 257):
+            with self.subTest(batch=batch):
+                self.check(
+                    make_case(
+                        lengths=(513,) * batch, context=530, has_start=True
+                    )
+                )
+
+    def test_long_preserved_regions(self):
+        # These regions can exceed the pool width. Every split must stride
+        # through all its old-buffer tiles after the split count shrinks.
+        for strided in (False, True):
+            with self.subTest(strided=strided):
+                self.check(
+                    make_case(
+                        lengths=(17, 0, 29),
+                        context=4096,
+                        head=8193,
+                        gap=16385,
+                        tail=32769,
+                        strided=strided,
+                        dtype=torch.int64,
+                    )
+                )
+
 
 RELEASE_REQUIRED_TESTS = [
     "KVIndicesTest.test_segments_offsets_and_tails",
     "KVIndicesTest.test_strides_and_index_dtypes",
     "KVIndicesTest.test_empty_and_all_zero_segments",
     "KVIndicesTest.test_repeated_calls_preserve_changed_base",
+    "KVIndicesTest.test_split_geometry_boundaries",
+    "KVIndicesTest.test_long_preserved_regions",
 ]
 
 
