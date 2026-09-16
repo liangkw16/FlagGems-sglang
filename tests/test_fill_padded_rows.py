@@ -71,6 +71,24 @@ class FillPaddedRowsTest(unittest.TestCase):
             with self.subTest(n_dtype=n_dtype):
                 self.check(make_case(n_valid=4, n_dtype=n_dtype))
 
+    def test_negative_slice_counts(self):
+        for strided in (False, True):
+            for n_dtype in (torch.int32, torch.int64):
+                counts = (-1, -9, -10, 0, 4, 9, 14)
+                counts += (torch.iinfo(n_dtype).min, torch.iinfo(n_dtype).max)
+                for n_valid in counts:
+                    with self.subTest(
+                        strided=strided, n_dtype=n_dtype, n_valid=n_valid
+                    ):
+                        self.check(
+                            make_case(
+                                cols=17,
+                                strided=strided,
+                                n_valid=n_valid,
+                                n_dtype=n_dtype,
+                            )
+                        )
+
     def test_strides_and_widths(self):
         for cols in (1, 511, 512, 513, 4096, 7168):
             with self.subTest(cols=cols):
@@ -86,6 +104,7 @@ class FillPaddedRowsTest(unittest.TestCase):
 RELEASE_REQUIRED_TESTS = [
     "FillPaddedRowsTest.test_dtypes_and_fill_values",
     "FillPaddedRowsTest.test_boundary_counts",
+    "FillPaddedRowsTest.test_negative_slice_counts",
     "FillPaddedRowsTest.test_strides_and_widths",
     "FillPaddedRowsTest.test_empty",
 ]

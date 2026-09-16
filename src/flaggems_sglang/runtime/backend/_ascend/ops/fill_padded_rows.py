@@ -1,15 +1,6 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Adapted from SGLang 8014d9d kernels/ops/moe/fill_padded_rows.py.
-
-# Ascend vendor (e6 probe): the e2 TB bytes with exactly one change -
-# the copy load's mask drops the (row < n_valid) predicate. Pad rows
-# then read their own x row (valid memory, values discarded - the else
-# branch still stores the fill) so the load stops being data-dependent
-# on the device counter. E5's n_cols constexpr was null and e4's fixed
-# block was null, so the remaining cheap hypothesis is the dynamic
-# predicate itself. 金狐狸 reads 45.6 on this chip, so the 9x gap is
-# reachable by structure we have not found yet.
+# Adapted from SGLang 8014d9d: kernels/ops/moe/fill_padded_rows.py.
 
 import torch
 import triton
@@ -21,6 +12,7 @@ def _fill_padded_rows(
     x_ptr,
     out_ptr,
     num_non_padded_ptr,
+    n_rows,
     n_cols,
     fill_value,
     stride_x,
@@ -28,13 +20,20 @@ def _fill_padded_rows(
     BLOCK_COLS: tl.constexpr,
 ):
     row = tl.program_id(0).to(tl.int64)
-    n_valid = tl.load(num_non_padded_ptr).to(tl.int64)
+    count = tl.load(num_non_padded_ptr)
+    n_valid = tl.minimum(count, n_rows).to(tl.int64)
+    # Match Python slice start, including negative and out-of-range counts.
+    if n_valid < 0:
+        n_valid = tl.maximum(n_valid + n_rows, 0)
     cols = tl.arange(0, BLOCK_COLS).to(tl.int64)
     mask = cols < n_cols
-    # E6: the load no longer carries (row < n_valid) - pad rows read
-    # their own (valid) x row and the value is discarded by the else
-    # branch, removing the data-dependent predicate from the mask.
-    value = tl.load(x_ptr + row * stride_x + cols, mask=mask, other=0)
+    # The copy load stays outside the runtime branch: GCU300 has only ever
+    # legalized this team's masked vector loads at top level (deepep_permute
+    # form), while stores under scalar branches are proven (fill S0,
+    # deepep_permute). Pad rows mask the load out entirely.
+    value = tl.load(
+        x_ptr + row * stride_x + cols, mask=mask & (row < n_valid), other=0
+    )
     if row < n_valid:
         tl.store(out_ptr + row * stride_out + cols, value, mask=mask)
     else:
@@ -61,6 +60,7 @@ def fill_padded_rows(x, num_token_non_padded, fill_value):
             x,
             out,
             num_token_non_padded,
+            n_rows,
             n_cols,
             fill_value,
             x.stride(0),
