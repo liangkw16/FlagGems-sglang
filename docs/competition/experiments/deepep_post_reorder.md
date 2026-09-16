@@ -5,11 +5,13 @@ task: 65
 operator: deepep_post_reorder
 batch: 5
 validity: valid
-platform: completed(e8,8/8,13.4538x新TB;BLOCK1024全芯+38%)
-candidate_stage: e8
-team_best_stage: e8
+platform: completed(15824,e9,8/8,16.10245x新TB)
+candidate_stage: e9
+team_best_stage: e9
+team_best: e9 16.10245x
+team_best_speedup: 16.10245
 sealed: no
-next: e9 BLOCK2048明确追发(阶梯广谱兑现中);燧原3.0/沐曦10.1,榜首58.6
+next: 2048较1024均值+19.69%;当前11名/榜首69.07705,优先级低于T61/T66/T74;不重复提交e9
 updated: 2026-09-16
 ```
 
@@ -203,3 +205,14 @@ updated: 2026-09-16
 - 标量形态（e7）+ BLOCK 1024（e8）复合阶梯成立；**下一档 2048 是
   明确追发项**（T63/T64 同族曲线仍在升）。
 - 当日 T65 轨迹：0 → 8.73（解锁）→ 9.70（标量）→ **13.45（BLOCK）**。
+
+## 2026-09-16 实时对账：E9 已提交且终态有效，禁止重投
+
+- 本轮只读核对既有 submission **15824**（10:39:45），8/8、valid、均值 **16.10245x**，较 E8 13.4538 **+19.69%**；10:46 榜单第 **11**，榜首 **69.07705x**。此前提交事实不归功于本轮新发射。
+- 逐芯：tianshu 17.4662 / muxi 12.5834 / enflame 4.362 / haiguang 36.0698 / kunlunxin 0.353 / huawei 19.019 / card_a 26.2802 / card_b 12.686。
+- source / verification commit：`aa06d46d4b278e585795997b4e3e6a406e909dbe`；ledger commit 为本节所属提交。
+- ZIP `artifacts/competition/deepep_post_reorder/e9-aa06d46/deepep_post_reorder.zip`，SHA-256 `614240444e83066136fa20dff3fe33f243f44e3f8dfe8215ce0ad7c452d55b12`；成员 `deepep_post_reorder.py` / `deepep_post_reorder_kunlunxin.py`。
+- release 回执 `artifacts/competition/batch5-verify-20260916/deepep_post_reorder/verification.json`，SHA-256 `cf46ee647098f116a055ef440df72bd55a32d192f98585fe3be5b5be0e67c819`；4 tests、零失败/skip，generic 与昆仑代理实际执行；昆仑真机证据由本次平台8/8补齐。日志 SHA-256 `9c4b30917d8f5ff37ad5857cbc68b91d1c4d0b4c8ab46cdfa5d3a4d51ed1784e`。
+- 源码成员哈希：generic `ff8f63752563125523f71c7736449a2f642baccdc209608e758aabb349260db9`；昆仑 `80a428c5c005b54b3fe7019b091c413438a462ba2b68f08253cafb5a083ae5ab`。
+- 原始状态 `artifacts/competition/top1-20260916/t65-e9-status.json`，SHA-256 `c2e925fa9a364b7cf87670ef07afab6ad0fd02997458bd823110099ab8b4e8aa`；一次性 intent 状态 submitted。旧远端 ZIP 回读 unavailable，不重发上传。
+- 当前剩余额度 28/30（全账号共享）；宽度仍可能提分，但距离新榜首 +328.98%，按本轮Top1优先级后移。

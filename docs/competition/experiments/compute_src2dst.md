@@ -15,12 +15,12 @@ operator: compute_src2dst
 batch: 5
 validity: valid
 platform: completed(14519,e9,8/8,2.099675x 新TB)
-candidate_stage: e9
+candidate_stage: e11-ready
 team_best_stage: e9
 team_best_speedup: 2.099675
 sealed: no
-next: e9 新TB 2.0997（e7字节恢复+zeros→empty，燧原4.46）；残余轴=muxi 2.5x 无证据；守榜
-updated: 2026-09-14
+next: e11适用release3/3与不可变ZIP就绪；单发验证Metax flat1024直接加载形态
+updated: 2026-09-16
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -286,3 +286,25 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   除燧原外均在窗口方差内，与"generic 同字节"预判一致。
 - 榜首 RSI 2.42，差距收窄至 ~0.32。残余轴仍只有 muxi（1.18 vs 2.72）。
 - 额度：发后 25/30（watch 实测）。
+
+## 2026-09-16 Top1 差距与 E10 淘汰式筛选
+
+- 实时 10:46：第6名，TB 2.099675，榜首2.606375，需 +24.13%。沐曦1.177→3.3554、燧原4.4636→5.8054两芯同时追平全榜已证水平，仅得2.539700，仍差0.066675；不能把单芯修复宣称为登顶方案。
+- E10 source/verification `6b16ac1260e2f54887e026ce3010b351553d2d40`，只新增metax；release 3/3、0失败/skip，generic/metax各19次真实launch；回执 `artifacts/competition/batch5-verify-20260916/compute_src2dst/verification.json` SHA-256 `97d89f7c2b4ee5c7c31853765b01bcc89cd24b2ff81e5e9943ab9273b6ce3626`，本轮已执行完整本地验签。
+- 不可变 ZIP `artifacts/competition/compute_src2dst/e10-6b16ac1/compute_src2dst.zip`，5837 bytes，SHA-256 `89f1b1ce369a455a23fa7e7d44f36350fb9410d021ab86ddac9122cd45e72a79`；成员generic/enflame/metax，完整成员哈希由规范打包器可重现。
+- 本轮补五轮 AB/BA、wrapper-inclusive、8个case（int64/int32 × n256/131072 × contiguous/stride2），远端RTX5070Ti、无竞争进程、180秒上限。int64连续候选/基线速度比0.825/0.749，stride2为0.683/0.667；int32连续1.000/0.918，stride2为0.735/0.713。27寄存器/0spill/8192共享内存，generic18–22寄存器/0spill/0–2048共享内存。
+- 原始样本、脚本、源码哈希、命令、PID保留 `artifacts/competition/t61e10-perf-20260916/`。结论仅是NVIDIA代理负结果：host cast/contiguous额外设备工作可测，不冒称Metax性能已证伪；为避免低价值试投，本轮不preflight E10。
+- 下一候选 E11：保持Metax flat1024，直接读取原索引并在kernel内转int32寻址，支持原stride；移除wrapper转换。预注册：适用正确性全部通过，代理相对E10有稳定收益后才进入平台；平台沐曦≥2.7且八芯均值>2.099675晋级，全部芯≥0.1。若目标无收益则关本假说，保留E9。
+
+## 2026-09-16 E11 候选就绪：去除 Metax wrapper 转换
+
+- source / verification commit `cee98e52e87e77074d2d9a8eb612375d02c2e71c`；ledger commit 为本节所属提交。保留flat1024，直接读取原int64/int32索引，读取地址保留64位stride计算，store索引转int32；generic及enflame字节冻结。
+- 完整screening3/3，五轮AB/BA：相对E10，int64连续n256/131072为1.2145/1.2399x，stride2为1.4499/1.4916x；相对generic约0.998/0.928（连续）、0.999/0.998（stride2）。代理只证明消除多余转换有益，不能宣称已经胜generic或Metax；目标专属单发依据为两队同芯2.92/3.3554的外部可达证据和新的flat/i32形态。
+- screening原始样本 `artifacts/competition/t61e11-screening-20260916/`；相同source SHA `06585b64c2eba8febbd98d002428636d9fbbe0d24f80c7818baba70e167ea274`。
+- exact release `artifacts/competition/t61e11-release-20260916/verification.json`，SHA-256 `a2c073a2c99780f2b8faca8800c6f715593ab7a073e93643e96178480ec8d66a`；日志SHA-256 `0a844cca87cce8e2495507ceb0af5c573fa843ae3c9cfbfb464e9fe3131ec706`。3/3、0失败/skip，generic/metax各19真实launch，RTX5070Ti；源码/测试/runner/Git对象/日志已验签。black25.12/isort/flake8通过。
+- 测试SHA-256 `1708ab05b089f1ad702294338a252e62f1ae41b40517ddd58bdda3603d166887`；ZIP `artifacts/competition/compute_src2dst/e11-cee98e5/compute_src2dst.zip`，5206 bytes，SHA-256 `2d87e2fbc07b40790968cf22148376042edf8e5c52816500195bf8ed1616c4cc`。
+- 成员 `compute_src2dst.py` SHA-256 `f59a3ffa8e3a463be40f7e70e8036b656a6df689899928689d073ba983215051`。
+- 成员 `compute_src2dst_enflame.py` SHA-256 `2dbf3510c513687777efb04222007ecf276aeaafd739e7da684e74d038a736d8`。
+- 成员 `compute_src2dst_metax.py` SHA-256 `06585b64c2eba8febbd98d002428636d9fbbe0d24f80c7818baba70e167ea274`。
+- Metax真机 target-runtime-unverified；09-16实时KernelGen schema仍无固定候选字节执行接口，独立目标机无已授权记录。代理不能替代目标评测，平台将补齐证据。
+- 预注册门：Metax≥2.7、全部8芯≥0.1、均值>2.099675；未达不重复同候选，保留平台团队最佳。
