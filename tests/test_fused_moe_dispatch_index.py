@@ -128,6 +128,24 @@ class FusedMoeDispatchIndexTest(unittest.TestCase):
             ids.fill_(16)
             self.check_ownership((ids, 17, n + 1))
 
+    def test_pair_patterns_and_tails(self):
+        pairs = ((3, 3), (3, 5), (-1, 3), (3, -2), (-1, -2), (0, 0))
+        for n in (1, 127, 128, 129, 255, 256, 257, 513):
+            values = [-1] * n
+            for base in range(0, n, 256):
+                for lane in range(128):
+                    a, b = pairs[lane % len(pairs)]
+                    if base + lane < n:
+                        values[base + lane] = a
+                    if base + lane + 128 < n:
+                        values[base + lane + 128] = b
+            ids = torch.tensor(
+                values, dtype=torch.int32, device="cuda"
+            ).reshape(n, 1)
+            for capacity in (0, 1, n + 1):
+                with self.subTest(n=n, capacity=capacity):
+                    self.check_ownership((ids, 7, capacity))
+
     def test_forced_gridstride_poisoned_output(self):
         for n in (255, 256, 257, 1025, 65544):
             for grid in (1, 2):
@@ -312,6 +330,7 @@ RELEASE_REQUIRED_TESTS = [
     "FusedMoeDispatchIndexTest.test_shapes_and_grid_edges",
     "FusedMoeDispatchIndexTest.test_empty",
     "FusedMoeDispatchIndexTest.test_owned_padding_and_extremes",
+    "FusedMoeDispatchIndexTest.test_pair_patterns_and_tails",
     "FusedMoeDispatchIndexTest.test_forced_gridstride_poisoned_output",
     "FusedMoeDispatchIndexTest.test_noncontiguous_ownership",
     "FusedMoeDispatchIndexTest.test_expert_grid_boundaries",
