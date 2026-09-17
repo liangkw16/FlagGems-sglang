@@ -1,39 +1,31 @@
 # Copyright 2026 FlagOS Contributors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-# Ascend vendor: the generic passes Huawei at only 8.7-10.0x while the
-# leader reads 24.8 -- the single chip carrying the whole remaining task
-# gap. The hygon round proved the direct 2D (rows, page blocks) grid
-# with no flattened task, no div/mod and no grid-stride loop on this
-# platform (+22% on Hygon), and the upstream SGLang kernel uses exactly
-# this shape, so this vendor mirrors the platform-proven hygon bytes
-# with the Ascend-appropriate defaults: one program per (row, page
-# block), scalar row metadata, one gather plus one masked store per
-# lane, no num_warps pin. BLOCK stays 256 (a 1KB int32 tile, far below
-# the 1572864-bit UB budget). E6 additionally clamps every memory op's
-# address into the row width: e5's first touch died with the 507035
-# aclnnInplaceCopy stream-sync timeout, the error family triton-ascend
-# issues #16275/#1490 attribute to masked-lane out-of-bounds addresses
-# being evaluated for real, and the e5 kernel addressed page_table and
-# req_to_token with unclamped out-of-range lanes.
+# SPDX-License-Identifier: Apache-2.0
+# Ascend vendor: persistent launch kept close to the physical Vector
+# Core count (Ascend vector_operator.md: GPU-style huge grids pay
+# repeated dispatch overhead on NPUs - decode_attention template).
+# Replaces the falsified e9 row-packing bytes: the kernel is the e4r
+# generic form (single gather + single masked store, slot >> SHIFT)
+# with only the launch grid capped at num_vectorcore; the task
+# grid-stride loop already lives in the kernel body.
 
 import torch
 import triton
 import triton.language as tl
+import triton.runtime.driver as driver
 
-_MAX_TILES = 65535
-_ROWS = 4
+_DEFAULT_VECTOR_CORES = 40
+
+
+def _get_num_vector_cores(device_index):
+    properties = driver.active.utils.get_device_properties(device_index)
+    return int(properties.get("num_vectorcore", _DEFAULT_VECTOR_CORES))
+
+
+def _worker_count(tensor):
+    index = getattr(getattr(tensor, "device", None), "index", None)
+    if index is None:
+        return _DEFAULT_VECTOR_CORES
+    return _get_num_vector_cores(index)
 
 
 @triton.jit
@@ -43,74 +35,31 @@ def _build_page_table(
     lengths,
     old,
     out,
-    num_rows,
+    tasks,
+    tiles,
     columns,
     ps0,
     ps1,
     rs,
     ls,
-    ps0o,
-    ps1o,
-    ps0l,
-    ps1l,
+    os0,
+    os1,
     PAGE_SIZE: tl.constexpr,
     SHIFT: tl.constexpr,
     BLOCK: tl.constexpr,
-    ROWS: tl.constexpr,
 ):
-    # E9 packs ROWS rows into one program: request/length metadata loads
-    # become a single vector per program instead of one scalar launch
-    # sequence per row, and the gather/store run as a 2D (ROWS, BLOCK)
-    # tile. Page BLOCK, the clamp, the shift form and the fused store
-    # are frozen from e7; only the row mapping changes.
-    rows = tl.program_id(0) * ROWS + tl.arange(0, ROWS).to(tl.int64)
-    page = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
-    row_live = rows < num_rows
-    rows_safe = tl.where(row_live, rows, 0)
-    # Ascend evaluates masked-lane addresses for real (triton-ascend issues
-    # #1490/#16275 both surface as 507035 MTE illegal GM address), so every
-    # memory op addresses through a page clamped into the row width; the
-    # out-of-range tail is never stored, the clamp only keeps its address
-    # inside the buffers.
-    page_rd = tl.where(page[None, :] < columns, page[None, :], 0)
-    length = tl.load(lengths + rows_safe * ls, mask=row_live, other=0).to(
-        tl.int64
-    )
-    n_pages = (length + PAGE_SIZE - 1) // PAGE_SIZE
-    request = tl.load(requests + rows_safe * rs, mask=row_live, other=0).to(
-        tl.int64
-    )
-    # n_pages can exceed columns (cache_seqlens beyond the table width),
-    # so the gather mask stays bounded by the row width.
-    active = (
-        row_live[:, None]
-        & (page[None, :] < columns)
-        & (page[None, :] < n_pages[:, None])
-    )
-    inactive = (
-        row_live[:, None]
-        & (page[None, :] < columns)
-        & (page[None, :] >= n_pages[:, None])
-    )
-    # Positive divisors of 4096 are powers of two; signed shift is floor
-    # division for the negative sentinel values the tests feed on purpose.
-    slot = tl.load(
-        pool + request[:, None] * ps0 + page_rd * PAGE_SIZE * ps1,
-        active,
-        other=0,
-    )
-    previous = tl.load(
-        old + rows_safe[:, None] * ps0l + page_rd * ps1l, inactive, other=0
-    )
-    # One fused store: an integer select is legal on Ascend (the no-int-
-    # tl.where rule is a GCU300 constraint) and halves the store count the
-    # e6 form paid 29.5s for.
-    merged = tl.where(active, slot >> SHIFT, previous)
-    tl.store(
-        out + rows_safe[:, None] * ps0o + page_rd * ps1o,
-        merged,
-        row_live[:, None] & (page[None, :] < columns),
-    )
+    for task in range(tl.program_id(0), tasks, tl.num_programs(0)):
+        row = (task // tiles).to(tl.int64)
+        page = (task % tiles) * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
+        valid = page < columns
+        length = tl.load(lengths + row * ls).to(tl.int64)
+        active = valid & (page < (length + PAGE_SIZE - 1) // PAGE_SIZE)
+        request = tl.load(requests + row * rs).to(tl.int64)
+        slot = tl.load(pool + request * ps0 + page * PAGE_SIZE * ps1, active, other=0)
+        previous = tl.load(old + row * os0 + page * os1, valid & ~active, other=0)
+        # Divisors of 4096 are powers of two; signed shift floors.
+        value = tl.where(active, slot >> SHIFT, previous)
+        tl.store(out + row * columns + page, value, valid)
 
 
 def build_trtllm_mha_page_table(
@@ -118,15 +67,9 @@ def build_trtllm_mha_page_table(
 ):
     assert req_to_token.ndim == page_table.ndim == 2
     assert req_pool_indices.ndim == cache_seqlens.ndim == 1
-    assert (
-        req_pool_indices.numel()
-        == cache_seqlens.numel()
-        == page_table.shape[0]
-    )
+    assert req_pool_indices.numel() == cache_seqlens.numel() == page_table.shape[0]
     assert page_table.dtype == torch.int32
-    assert (
-        isinstance(page_size, int) and page_size > 0 and 4096 % page_size == 0
-    )
+    assert isinstance(page_size, int) and page_size > 0 and 4096 % page_size == 0
     for tensor in (req_to_token, req_pool_indices, cache_seqlens):
         assert tensor.dtype in (torch.int32, torch.int64)
     out = torch.empty(
@@ -134,30 +77,24 @@ def build_trtllm_mha_page_table(
     )
     n = out.numel()
     if n:
-        # E7 widens the tile with the table (up to 2048 int32 = 8KB, far
-        # below the 1572864-bit UB budget): the AIV vector cores prefer
-        # fat contiguous slabs over many 256-lane programs.
-        block = min(max(256, triton.next_power_of_2(out.shape[1])), 2048)
-        tiles = triton.cdiv(out.shape[1], block)
-        _build_page_table[
-            (triton.cdiv(out.shape[0], _ROWS), min(tiles, _MAX_TILES))
-        ](
+        tiles = triton.cdiv(out.shape[1], 256)
+        tasks = out.shape[0] * tiles
+        _build_page_table[(min(tasks, _worker_count(out)),)](
             req_to_token,
             req_pool_indices,
             cache_seqlens,
             page_table,
             out,
-            out.shape[0],
+            tasks,
+            tiles,
             out.shape[1],
             *req_to_token.stride(),
             req_pool_indices.stride(0),
             cache_seqlens.stride(0),
-            *out.stride(),
             *page_table.stride(),
             PAGE_SIZE=page_size,
             SHIFT=page_size.bit_length() - 1,
-            BLOCK=block,
-            ROWS=_ROWS,
+            BLOCK=256,
         )
     return out
 

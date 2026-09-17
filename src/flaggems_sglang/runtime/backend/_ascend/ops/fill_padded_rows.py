@@ -1,14 +1,34 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Adapted from SGLang 8014d9d: kernels/ops/moe/fill_padded_rows.py.
+# Ascend vendor: persistent launch kept close to the physical Vector
+# Core count (Ascend vector_operator.md: GPU-style huge grids pay
+# repeated dispatch overhead on NPUs - decode_attention template).
+# The generic runs one program per row; this vendor strides rows in
+# an inner loop and hoists the device-side row count out of it. The
+# per-row math and the top-level masked load are identical.
 
 import torch
 import triton
 import triton.language as tl
+import triton.runtime.driver as driver
+
+_DEFAULT_VECTOR_CORES = 40
+
+
+def _get_num_vector_cores(device_index):
+    properties = driver.active.utils.get_device_properties(device_index)
+    return int(properties.get("num_vectorcore", _DEFAULT_VECTOR_CORES))
+
+
+def _worker_count(tensor):
+    index = getattr(getattr(tensor, "device", None), "index", None)
+    if index is None:
+        return _DEFAULT_VECTOR_CORES
+    return _get_num_vector_cores(index)
 
 
 @triton.jit
-def _fill_padded_rows(
+def _fill_padded_rows_persistent(
     x_ptr,
     out_ptr,
     num_non_padded_ptr,
@@ -19,7 +39,6 @@ def _fill_padded_rows(
     stride_out,
     BLOCK_COLS: tl.constexpr,
 ):
-    row = tl.program_id(0).to(tl.int64)
     count = tl.load(num_non_padded_ptr)
     n_valid = tl.minimum(count, n_rows).to(tl.int64)
     # Match Python slice start, including negative and out-of-range counts.
@@ -27,20 +46,20 @@ def _fill_padded_rows(
         n_valid = tl.maximum(n_valid + n_rows, 0)
     cols = tl.arange(0, BLOCK_COLS).to(tl.int64)
     mask = cols < n_cols
-    # The copy load stays outside the runtime branch: GCU300 has only ever
-    # legalized this team's masked vector loads at top level (deepep_permute
-    # form), while stores under scalar branches are proven (fill S0,
-    # deepep_permute). Pad rows mask the load out entirely.
-    value = tl.load(
-        x_ptr + row * stride_x + cols, mask=mask & (row < n_valid), other=0
-    )
-    if row < n_valid:
-        tl.store(out_ptr + row * stride_out + cols, value, mask=mask)
-    else:
-        fill = tl.full(
-            (BLOCK_COLS,), fill_value, dtype=out_ptr.dtype.element_ty
+    for row in range(tl.program_id(0), n_rows, tl.num_programs(0)):
+        row64 = row.to(tl.int64)
+        # The copy load stays outside the runtime branch (GCU proven
+        # form, see generic); pad rows mask the load out entirely.
+        value = tl.load(
+            x_ptr + row64 * stride_x + cols,
+            mask=mask & (row64 < n_valid),
+            other=0,
         )
-        tl.store(out_ptr + row * stride_out + cols, fill, mask=mask)
+        if row64 < n_valid:
+            tl.store(out_ptr + row64 * stride_out + cols, value, mask=mask)
+        else:
+            fill = tl.full((BLOCK_COLS,), fill_value, dtype=out_ptr.dtype.element_ty)
+            tl.store(out_ptr + row64 * stride_out + cols, fill, mask=mask)
 
 
 def fill_padded_rows(x, num_token_non_padded, fill_value):
@@ -51,12 +70,9 @@ def fill_padded_rows(x, num_token_non_padded, fill_value):
     if isinstance(fill_value, torch.Tensor):
         fill_value = fill_value.item()
     n_rows, n_cols = x.shape
-    # One kernel writes every output element exactly once: valid rows are
-    # copied from x and padded rows are filled in place, instead of cloning
-    # the whole tensor and overwriting the padding a second time.
     out = torch.empty((n_rows, n_cols), dtype=x.dtype, device=x.device)
     if n_rows and n_cols:
-        _fill_padded_rows[(n_rows,)](
+        _fill_padded_rows_persistent[(min(n_rows, _worker_count(x)),)](
             x,
             out,
             num_token_non_padded,

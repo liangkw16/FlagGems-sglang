@@ -70,17 +70,13 @@ def _create_kv_indices(
             value = tl.load(old + i * olds, m, other=0)
             tl.store(out + i * os, value, m)
         gap = gap_hi - gap_lo
-        for tile in range(
-            tl.program_id(1), tl.cdiv(gap, BLOCK), tl.num_programs(1)
-        ):
+        for tile in range(tl.program_id(1), tl.cdiv(gap, BLOCK), tl.num_programs(1)):
             i = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
             m = i < gap
             off = gap_lo + i
             value = tl.load(old + off * olds, m, other=0)
             tl.store(out + off * os, value, m)
-        for tile in range(
-            tl.program_id(1), tl.cdiv(length, BLOCK), tl.num_programs(1)
-        ):
+        for tile in range(tl.program_id(1), tl.cdiv(length, BLOCK), tl.num_programs(1)):
             i = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
             value = tl.load(
                 pool + request * ps0 + (start + i) * ps1, i < length, other=0
@@ -98,9 +94,7 @@ def create_flashinfer_kv_indices(
 ):
     assert req_to_token.ndim == 2 and kv_indices.ndim == 1
     batch = req_pool_indices.numel()
-    assert (
-        req_pool_indices.ndim == page_kernel_lens.ndim == kv_indptr.ndim == 1
-    )
+    assert req_pool_indices.ndim == page_kernel_lens.ndim == kv_indptr.ndim == 1
     assert page_kernel_lens.numel() == batch and kv_indptr.numel() == batch + 1
     for tensor in (
         req_to_token,
@@ -127,9 +121,13 @@ def create_flashinfer_kv_indices(
     splits = min(
         max(1, triton.cdiv(req_to_token.shape[1], 512)),
         max(1, 128 // batch),
-        32,
+        4,
     )
-    _create_kv_indices[(min(batch, 65535), splits)](
+    # GCU recipe: keep the launch at the 24-SIP physical width (grid
+    # oversubscription is pure dispatch overhead on GCU) and enable the
+    # pingpong pipeline via num_stages >= 3; no num_warps pin.
+    grid_x = min(batch, max(1, 24 // splits))
+    _create_kv_indices[(grid_x, splits)](
         req_to_token,
         req_pool_indices,
         page_kernel_lens,
@@ -148,6 +146,7 @@ def create_flashinfer_kv_indices(
         kv_indices.stride(0),
         HAS_START=kv_start_idx is not None,
         BLOCK=4096,
+        num_stages=3,
     )
     return out
 

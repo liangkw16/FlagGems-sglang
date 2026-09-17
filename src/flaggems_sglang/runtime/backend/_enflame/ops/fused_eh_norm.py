@@ -51,20 +51,18 @@ def _fused_eh_norm_enflame(
             for c0 in range(0, hidden, CHUNK):
                 cols = c0 + tl.arange(0, CHUNK).to(tl.int64)
                 m = cols < hidden
-                e = tl.load(
-                    embeds_ptr + row * es0 + cols * es1, mask=m, other=0.0
-                ).to(tl.float32)
+                e = tl.load(embeds_ptr + row * es0 + cols * es1, mask=m, other=0.0).to(
+                    tl.float32
+                )
                 ms += tl.sum(e * e, axis=0)
             inv = tl.rsqrt(ms / hidden + eps)
             for c0 in range(0, hidden, CHUNK):
                 cols = c0 + tl.arange(0, CHUNK).to(tl.int64)
                 m = cols < hidden
-                e = tl.load(
-                    embeds_ptr + row * es0 + cols * es1, mask=m, other=0.0
-                ).to(tl.float32)
-                ew = tl.load(enorm_ptr + cols * ws0, mask=m, other=0.0).to(
+                e = tl.load(embeds_ptr + row * es0 + cols * es1, mask=m, other=0.0).to(
                     tl.float32
                 )
+                ew = tl.load(enorm_ptr + cols * ws0, mask=m, other=0.0).to(tl.float32)
                 tl.store(
                     out_ptr + row * os0 + cols,
                     (e * inv * ew).to(out_ptr.dtype.element_ty),
@@ -75,20 +73,18 @@ def _fused_eh_norm_enflame(
             for c0 in range(0, hidden, CHUNK):
                 cols = c0 + tl.arange(0, CHUNK).to(tl.int64)
                 m = cols < hidden
-                h = tl.load(
-                    prev_ptr + row * ps0 + cols * ps1, mask=m, other=0.0
-                ).to(tl.float32)
+                h = tl.load(prev_ptr + row * ps0 + cols * ps1, mask=m, other=0.0).to(
+                    tl.float32
+                )
                 ms_h += tl.sum(h * h, axis=0)
             inv_h = tl.rsqrt(ms_h / hidden + eps)
             for c0 in range(0, hidden, CHUNK):
                 cols = c0 + tl.arange(0, CHUNK).to(tl.int64)
                 m = cols < hidden
-                h = tl.load(
-                    prev_ptr + row * ps0 + cols * ps1, mask=m, other=0.0
-                ).to(tl.float32)
-                hw = tl.load(hnorm_ptr + cols * hs0, mask=m, other=0.0).to(
+                h = tl.load(prev_ptr + row * ps0 + cols * ps1, mask=m, other=0.0).to(
                     tl.float32
                 )
+                hw = tl.load(hnorm_ptr + cols * hs0, mask=m, other=0.0).to(tl.float32)
                 tl.store(
                     out_ptr + row * os0 + hidden + cols,
                     (h * inv_h * hw).to(out_ptr.dtype.element_ty),
@@ -96,9 +92,7 @@ def _fused_eh_norm_enflame(
                 )
 
 
-def fused_eh_norm(
-    inputs_embeds, previous_hidden, enorm_weight, hnorm_weight, eps
-):
+def fused_eh_norm(inputs_embeds, previous_hidden, enorm_weight, hnorm_weight, eps):
     assert inputs_embeds.ndim == 2
     tokens, hidden = inputs_embeds.shape
     assert previous_hidden.shape == (tokens, hidden)
@@ -128,8 +122,7 @@ def fused_eh_norm(
             hidden,
             eps,
             CHUNK=chunk,
-            num_warps=8,
-            num_stages=1,
+            num_stages=3,
         )
     return out
 
