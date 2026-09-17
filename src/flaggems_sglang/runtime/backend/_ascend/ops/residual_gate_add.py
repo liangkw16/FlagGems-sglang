@@ -1,3 +1,5 @@
+# Carrier e14: window re-roll 1/2 of the e13 bytes (identical
+# execution; new archive identity only).
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 # Ascend vendor: persistent launch kept close to the physical Vector
