@@ -5,13 +5,13 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: completed(15868,e6,8/8,6.94085x;TB e5 7.17105x)
-candidate_stage: e6
+platform: submitted(e7-pending;TB e5 7.17105x)
+candidate_stage: e7
 team_best_stage: e5
 team_best_speedup: 7.17105
 sealed: no
-next: e6均值回退且Enflame4.7192未达8.0门，停止空task轴；TB仍e5，不重投
-updated: 2026-09-16
+next: E7去clone三段式+Ascend persistent已提交待八芯终态；预注册门：8/8有效且均值>7.17105，华为≥6.2为persistent轴正信号
+updated: 2026-09-17
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -239,3 +239,13 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 11:44:15只读核对：submission15868 completed/valid，8/8通过，均值 **6.94085x** <TB7.17105。Enflame **4.7192** <8.0预注册门，较TB6.666回退；NVIDIA代理删除空任务的收益未迁移到本次目标平台。保留TB E5，不重投，不以代理收益替代八芯结果。
 
 逐芯：tianshu15.6062 / muxi5.4702 / enflame4.7192 / haiguang10.2958 / kunlunxin0.2602 / huawei3.7268 / card_a8.5892 / card_b6.8592。实际状态见 `artifacts/competition/top1-20260916/t64-e6-status.json`；账号额度23/30。
+
+## 2026-09-17 E7：去 clone 三段式 + Ascend persistent vendor + Kunlunxin 冻结，已提交
+
+- 选题主证（冲 Top1 依据）：09-17 逐芯快照（`data/leaderboard-batch5-perchip-20260917.json`，SHA `2247249c…`）中 T64 是全批唯一"同芯次优可证总分 37.371 > 榜首 28.907"的题；EvokeAgent 榜首无彩票芯（华为 110.29 vs 次优 100.91 两队同量级）。我方 TB E5 7.171（rank 14/17），六 generic 芯普遍 ~2x 落后。
+- 根因假设：wrapper 的 `gateup_input.clone()` 使总流量 ≈ (1+3K)·T·H，去 clone 后理想 ≈ (1+K)·T·H，K=8 时代理理论上限 ~2.8x——与他队全芯 ~2x 结构差吻合。
+- 结构（`a6921555`）：generic 改三段式——`_cover_rows`（TOPK 静态展开标量读路由，covered[dst]=1，int32 防 cmpi 类型混用）→ `_scatter_rows`（静态展开 slot 循环 + 路由基址提升）→ `_fill_rows`（covered==0 的行从 gateup 回填）；≤20MB 输出走与旧 TB 逐字节同构的 `_scatter_legacy`+clone 双路径分发（代理上小 shape 三段式因 2 次额外 launch 回退至 0.70x，双路径后回到 1.00x）。`_ascend` 重写：同一结构 + `num_vectorcore`（fallback 40）persistent grid（昇腾官方 vector_operator.md"大 grid 重复 dispatch 开销"+ decode_attention 已证模板，此前华为轴从未有真实代码尝试——E5 探针实为字节相同空操作）。`_kunlunxin` 新增：改前 generic 单 kernel 字节冻结（防 static_range/covered 形态在 XMLIR 的未知风险，保 0.266 有效余量）。`_enflame` 字节不变（E6 版，SHA `85375589…`；E5 版 tiles 错配虽平台分更高但被几何断言测试锁定，留 E8 评估）。
+- screening（RTX 5070 Ti，torch 2.13.0+cu130/triton 3.7.1）：unittest 6/6 全绿（generic/ascend/kunlunxin/enflame 四路径全过，含 strided/empty/special/几何）；wrapper-inclusive 5 轮 AB/BA 中位：T4096×K8×H7168 pad0 **2.208x**、pad20 **2.066x**、T1024×K8×H4096 1.477x、T8193×K1×H4097 1.344x、双路径后小 shape 1.001x/1.014x 零回退。证据：`artifacts/competition/t64e7-screening-20260917/`（run.log `621e50da…`、run2.log `4a580c64…`、bench 脚本 `c7cf5110…`）。
+- release（v2，source=verification commit `a6921555439f734d265ea732d6362f2aac8850ed`）：6/6 全过 0F/E/S/X，RELEASE_REQUIRED 全在；四源执行，真实 launch generic/ascend 各 46、enflame/kunlunxin 各 44；exit 0。回执 `artifacts/competition/t64e7-release-20260917/verification.json` SHA-256 `01879fc2288336dfab05815e01f5b0e1cb725c101d94f7bbe0247d40e97bf127`、日志 `04cb35b4c86d5277e51c84b32a1bd61240639aec28c9a6fb428077a36ae3dd00`；远端 `/tmp/flagos-t64-e7-run`。ascend/enflame/kunlunxin target-runtime-unverified（无授权目标机；平台八芯即终审）。py_compile/Black/isort/flake8 全过。
+- ZIP：`artifacts/competition/deepep_permute/e7-a692155/deepep_permute.zip`，16243 bytes，SHA-256 `77615803203cc4278dbfed2405837e331ccbc60ae164d1b51421b3af13334f1e`（=canonical）。成员：generic `9666063e…`、ascend `5252283b…`、enflame `85375589…`（E6 冻结）、kunlunxin `ee84a2f7…`。
+- 预注册门（提交前立此存照）：8/8 有效且各芯 ≥0.1；均值 > 7.17105 才换 TB；华为 ≥6.2 判 persistent 轴正信号（→E8 梯度）；燧原走 E6 冻结字节，读数漂移不归因代码。一次候选一次判决。
