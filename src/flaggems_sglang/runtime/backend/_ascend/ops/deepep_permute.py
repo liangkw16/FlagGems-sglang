@@ -57,82 +57,37 @@ def _scatter_legacy(
 
 
 @triton.jit
-def _cover_rows(
+def _build_inv(
     routes,
-    covered,
+    inv,
     tokens,
     topk,
     rs0,
     rs1,
     TOPK: tl.constexpr,
 ):
+    # E9 gather layout: record the source token for every destination
+    # row; the main pass then only gathers rows and stores contiguously
+    # (no scatter stores - Ascend vector cores favor gathered loads).
     for token in range(tl.program_id(0), tokens, tl.num_programs(0)):
         base = routes + token * rs0
         for slot in tl.static_range(TOPK):
             dst = tl.load(base + slot * rs1)
             if dst >= 0:
-                tl.store(covered + dst, 1)
+                tl.store(inv + dst, token)
 
 
 @triton.jit
-def _scatter_rows(
+def _gather_rows(
     x,
+    gateup,
+    inv,
     out,
-    routes,
-    tokens,
+    tasks,
     tiles,
     hidden,
     xs0,
     xs1,
-    os0,
-    os1,
-    rs0,
-    rs1,
-    BLOCK: tl.constexpr,
-    TOPK: tl.constexpr,
-    SUB: tl.constexpr,
-):
-    # Official 004-gather_scatter shape (portable subset): each program
-    # owns one contiguous token slice and batches SUB rows into a
-    # [SUB, BLOCK] tile so the per-slot store is one wide 2-D op
-    # instead of SUB row stores; masked destination addresses are
-    # clamped to row 0 (Ascend evaluates masked-lane addresses).
-    pid = tl.program_id(0)
-    chunk = (tokens + tl.num_programs(0) - 1) // tl.num_programs(0)
-    begin = pid * chunk
-    end = tl.minimum(begin + chunk, tokens)
-    for sub in range(begin, end, SUB):
-        tok = sub + tl.arange(0, SUB)
-        tmask = tok < end
-        tok64 = tok.to(tl.int64)
-        for tile in range(0, tiles):
-            h = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
-            hmask = h < hidden
-            value = tl.load(
-                x + tok64[:, None] * xs0 + h[None, :] * xs1,
-                mask=tmask[:, None] & hmask[None, :],
-                other=0,
-            ).to(out.dtype.element_ty)
-            for slot in tl.static_range(TOPK):
-                dst = tl.load(
-                    routes + tok64 * rs0 + slot * rs1, mask=tmask, other=-1
-                ).to(tl.int64)
-                safe = tl.where(dst >= 0, dst, 0)
-                tl.store(
-                    out + safe[:, None] * os0 + h[None, :] * os1,
-                    value,
-                    mask=(dst[:, None] >= 0) & tmask[:, None] & hmask[None, :],
-                )
-
-
-@triton.jit
-def _fill_rows(
-    gateup,
-    out,
-    covered,
-    tasks,
-    tiles,
-    hidden,
     gs0,
     gs1,
     os0,
@@ -141,9 +96,17 @@ def _fill_rows(
 ):
     for task in range(tl.program_id(0), tasks, tl.num_programs(0)):
         row = (task // tiles).to(tl.int64)
-        if tl.load(covered + row) == 0:
-            tile = task % tiles
-            h = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
+        tile = task % tiles
+        h = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
+        src = tl.load(inv + row).to(tl.int64)
+        if src >= 0:
+            value = tl.load(x + src * xs0 + h * xs1, h < hidden, other=0)
+            tl.store(
+                out + row * os0 + h * os1,
+                value.to(out.dtype.element_ty),
+                h < hidden,
+            )
+        else:
             value = tl.load(gateup + row * gs0 + h * gs1, h < hidden, other=0)
             tl.store(out + row * os0 + h * os1, value, h < hidden)
 
@@ -177,40 +140,27 @@ def deepep_permute(input, gateup_input, src2dst, topk_ids, topk, hidden_size):
         )
         return out
     out = torch.empty_like(gateup_input)
-    covered = torch.zeros(tokens * topk, dtype=torch.int32, device=gateup_input.device)
-    _cover_rows[(min(tokens, workers),)](
+    rows = tokens * topk
+    inv = torch.full((rows,), -1, dtype=torch.int32, device=gateup_input.device)
+    _build_inv[(min(tokens, workers),)](
         src2dst,
-        covered,
+        inv,
         tokens,
         topk,
         *src2dst.stride(),
         TOPK=topk,
     )
-    tiles = triton.cdiv(hidden, 2048)
-    _scatter_rows[(min(tokens, workers),)](
+    tiles = triton.cdiv(hidden, 512)
+    tasks = rows * tiles
+    _gather_rows[(min(tasks, workers),)](
         input,
+        gateup_input,
+        inv,
         out,
-        src2dst,
-        tokens,
+        tasks,
         tiles,
         hidden,
         *input.stride(),
-        *out.stride(),
-        *src2dst.stride(),
-        BLOCK=2048,
-        TOPK=topk,
-        SUB=4,
-    )
-    rows = tokens * topk
-    fill_tiles = triton.cdiv(hidden, 512)
-    fill_tasks = rows * fill_tiles
-    _fill_rows[(min(fill_tasks, workers),)](
-        gateup_input,
-        out,
-        covered,
-        fill_tasks,
-        fill_tiles,
-        hidden,
         *gateup_input.stride(),
         *out.stride(),
         BLOCK=512,
