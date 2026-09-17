@@ -11,11 +11,14 @@
 
 ## 2. 当前批次与时间
 
-第一批共 7 题，已停止提交并进入评审。第二批共 17 题，API 给出的窗口为：
+> 本节 2026-09-17 更新；动态以 `data/race-overview.json` 的 `current_batch` 与比赛页为准。
 
-- 开发/提交：2026-08-20 20:00 至 **2026-08-27 19:59:59**。
-- 专家评审：2026-08-28 至 2026-09-03。
-- 入选方案 PR：2026-09-04 至 2026-09-10。
+- 已发布五批共 75 题（第一批 7、第二至五批各 17）。**第五批（Task 59–75）提交窗口
+  2026-09-10 20:00 至 2026-09-17 19:59:59 已关闭**，进入专家评审。
+- 第一至四批均已停止提交、处于评审/PR 阶段；逐题终态以
+  [实验账本 INDEX](experiments/INDEX.md) 为准。
+- 各批共用同一套窗口纪律（以第二批为例：开发/提交 2026-08-20 20:00 至
+  2026-08-27 19:59:59；专家评审 08-28 至 09-03；入选方案 PR 09-04 至 09-10）。
 
 上传组件把截止日渲染成 `23:59`，与赛题 API 和赛制倒计时的 `19:59:59` 不一致。按更严格的 **19:59:59** 执行，建议最晚 19:00 前完成最终提交。
 
@@ -44,7 +47,7 @@ KernelGen 的 `passed=true, total_tests=0` 记为“服务端报告通过，覆�
 按预期 `Delta S = sum(Delta S_i) / n` 评估收益。此策略由评分公式推导：不能只按某芯
 相对提升百分比、只追最慢芯，或要求每芯都超过 1 才提交。测量不确定性仍需记录。
 
-当前 24 题都支持 8 类芯片：天数智芯、沐曦、燧原、海光、昆仑芯、华为、国际通用芯片 A、国际通用芯片 B。
+已发布 75 题均支持同一组 8 类芯片：天数智芯、沐曦、燧原、海光、昆仑芯、华为、国际通用芯片 A、国际通用芯片 B。
 
 ## 4. ZIP 提交规范
 
@@ -131,7 +134,7 @@ src/flaggems_sglang/
 
 ## 7. 本地仓库与 CI 注意事项
 
-- 当前公开远端分支只有 `master` 和 `flagos-sglang-batch1`，尚无第二批官方分支或标签。
+- 调研快照（2026-08-23）：当时公开远端分支只有 `master` 和 `flagos-sglang-batch1`；此后官方仓库已合入多批 PR（第三/四批时代已有 #42–#58），当前分支/PR 以官方仓库 Pulls 页和 [reference-repositories.md](reference-repositories.md) 为准。
 - GitHub Actions 只在 `master` push 或以 `master` 为 base 的 PR 上运行；单独 push topic branch 不触发。
 - 现有 selector 对新增第二批 generic/vendor 文件通常找不到测试，PR CI 很可能只验证风格，不能代替比赛隐藏 harness。
 - benchmark 步骤允许失败，不会证明性能达标；最终正确性和加速比仍以比赛平台的 8 芯片结果为准。
@@ -149,19 +152,18 @@ git show origin/flagos-sglang-batch1:tests/test_chunk_local_cumsum_scalar.py
 ```text
 docs/competition/
 ├── README.md                 # 本文：要求和提交规范
-├── task-index.md             # 两批赛题与动态榜单快照
-├── strategy-batch2.md        # 第二批开发优先级与复用线索
-├── operator-atlas.md         # 已发布 24 题功能、原理、契约与容差图谱
+├── task-index.md             # 五批赛题与动态榜单快照
+├── strategy-batch2.md        # 第二批开发优先级与复用线索（历史）
+├── operator-atlas.md         # 前两批 24 题功能、原理、契约与容差图谱
 ├── learning-path.md          # 题型学习和八芯固定资料入口
 ├── chip-landscape.md         # 八芯公开规格与编译期约束（源码可证）
-├── cross-chip-optimization-plan.md  # 跨芯极致优化方案与候选假设
+├── cross-chip-optimization-plan.md  # 跨芯极致优化方案（第二批历史稿）
 ├── reference-repositories.md # 已抓取 Git refs 与固定上游链接
 ├── data/race-overview.json   # 公开赛程、芯片目录和全局统计
 ├── data/task-catalog.json    # 清洗后的公开结构化数据
 ├── data/vendor-backends/     # 厂商 backend 源码只读缓存 + SHA-256 manifest
 └── tasks/
-    ├── batch-1/*.md          # 第一批 7 道完整题面/参考实现
-    └── batch-2/*.md          # 第二批 17 道完整题面/参考实现
+    └── batch-{1..5}/*.md     # 五批完整题面/参考实现（7+17+17+17+17）
 ```
 
 资料来源：

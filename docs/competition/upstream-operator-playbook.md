@@ -20,7 +20,11 @@ CUDA 的 TMA、PDL、`cp.async`、`.ca`、SM-count 和固定 warp=32 只作为�
 思想参考。比赛 generic 只能迁移 online softmax、split-KV、GQA KV 复用、
 expert/token 分组、状态驻留和 epilogue fusion 等算法层。
 
-## 当前行动优先级
+## 当前行动优先级（2026-08-31 快照，已过期）
+
+> 下述动词为当日时态：T27/T28 后来 8/8 valid 封存、T31 invalid_correctness
+> 封存、T33 已封存 e14 5.5828x。逐题当前状态一律以
+> [实验状态索引](experiments/INDEX.md) 为准，本节仅作当时决策留档。
 
 1. T27/T28/T31/T36/T38/T41 已有七芯候选；平台或工单出现明确信号后，
    复用封存候选做一次验证，不继续盲改 generic。

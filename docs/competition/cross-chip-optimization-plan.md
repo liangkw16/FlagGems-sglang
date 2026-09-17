@@ -19,6 +19,13 @@
 > 制定时间：2026-08-24。依据：5 个已平台 8/8 算子的逐芯结果、17 份实验账本的
 > 全部已尝试记录，以及 [`data/vendor-backends/`](data/vendor-backends/README.md)
 > 缓存的固定 commit backend 源码。本文只给可执行假设，不含未验证的性能承诺。
+>
+> **历史稿警示（2026-09-17 补）**：本文多处以"通用策略"口吻给出的配方已被
+> 第四/五批平台证据系统性修正——燧原"S0 必带 BLOCK≥4096 / grid cap 12 /
+> warps≤4"的 launch 钉论断被证伪（任何 launch 钉 -46~-47%，纯净 launch 默认
+> 最优）；华为"capped grid-stride 结构问题已解决"仅为条件配方（10 题谱系见
+> 复盘 §15.2）。适用边界以
+> [season2-retrospective.md](season2-retrospective.md) §14.4/§15.2 为准。
 
 ## 1. 瓶颈量化：三芯吃掉全部排名
 

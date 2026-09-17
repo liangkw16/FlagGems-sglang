@@ -3,20 +3,28 @@
 本工作区已基于官方 `FlagGems-sglang` 仓库整理成可直接开发和检索的资料包。
 
 - [比赛要求、提交规范与资料入口](docs/competition/README.md)
-- [第一批、第二批赛题索引](docs/competition/task-index.md)
-- [第二批快速开发策略](docs/competition/strategy-batch2.md)
-- [已发布 24 题算子功能与原理图谱](docs/competition/operator-atlas.md)
-- [41 题上游实现与八芯优化打法](docs/competition/upstream-operator-playbook.md)
-- [题型学习与八芯资料入口](docs/competition/learning-path.md)
-- [跨芯极致优化方案](docs/competition/cross-chip-optimization-plan.md)
-- [八芯公开规格与编译期约束](docs/competition/chip-landscape.md)
-- [第四批逐芯调研与 17 题下一轮方案（09-07）](docs/competition/research-batch4-vendor-20260907.md)
-- [第四批方案实现、验证结果和候选 ZIP（09-08）](docs/competition/implementation-batch4-20260908.md)
-- [ZCode+Codex 全量会话挖掘复盘（09-11）](docs/competition/session-mining-retrospective.md)
-- [第五批第二轮优化方向、预注册晋级门与证据订正（09-11）](docs/competition/optimization-batch5-r2-20260911.md)
-- [第五批扩题至 12 题后的全批优化方案与新六题 S0（09-11 R3）](docs/competition/optimization-batch5-r3-20260911.md)
-- [第二批候选、产物哈希与提交队列](docs/competition/experiments/README.md)
+- [全五批赛题索引与动态榜单快照](docs/competition/task-index.md)
+- **第五批终局三件套（09-17 收官口径）**：
+  [终日作战与逐发判决](docs/competition/optimization-batch5-finalday-20260917.md)、
+  [终局榜与下一赛季开题情报](docs/competition/batch5-final-review-20260917.md)、
+  [全季复盘与跨芯知识库](docs/competition/season2-retrospective.md)
+- [第二批候选、产物哈希与提交队列](docs/competition/experiments/README.md)（顶部为 09-17 终局收口）
 - [参考仓库与本地 Git 引用](docs/competition/reference-repositories.md)
+- 历史作战文档（按文件名日期归档，状态均已过期，逐题真相见
+  [生成索引](docs/competition/experiments/INDEX.md)）：
+  [第二批策略（08-23）](docs/competition/strategy-batch2.md)、
+  [前两批 24 题图谱](docs/competition/operator-atlas.md)、
+  [41 题上游打法（08-31 快照）](docs/competition/upstream-operator-playbook.md)、
+  [第三批打法速查（08-29）](docs/competition/batch3-upstream-playbook.md)、
+  [跨芯优化方案（第二批历史稿，边界以复盘 §14/§15 为准）](docs/competition/cross-chip-optimization-plan.md)、
+  [题型学习与八芯资料入口](docs/competition/learning-path.md)、
+  [八芯公开规格与编译期约束](docs/competition/chip-landscape.md)、
+  [第四批逐芯调研（09-07）](docs/competition/research-batch4-vendor-20260907.md)、
+  [第四批实现与候选 ZIP（09-08）](docs/competition/implementation-batch4-20260908.md)、
+  [会话挖掘复盘（09-11）](docs/competition/session-mining-retrospective.md)、
+  [第五批 R2（09-11）](docs/competition/optimization-batch5-r2-20260911.md)、
+  [第五批 R3（09-11）](docs/competition/optimization-batch5-r3-20260911.md)、
+  以及 09-12~09-16 的 r4/status/strategy/leaderboard/top1 系列过程文档
 - 厂商 backend 源码缓存：`docs/competition/data/vendor-backends/`
 - 完整题面：`docs/competition/tasks/`
 - 结构化赛题数据：`docs/competition/data/task-catalog.json`
