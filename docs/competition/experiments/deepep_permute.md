@@ -5,7 +5,7 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: submitted(e8-pending;TB e7 7.47225x)
+platform: completed(16586,e8,8/8,7.23865x<TB;保e7)
 candidate_stage: e8
 team_best_stage: e7
 team_best_speedup: 7.47225
@@ -266,3 +266,7 @@ submission 16570（daily_seq 1）completed/valid，8/8 全过，均值 **7.47225
 - release v2（commit `3dae9c4052375e183c783ae678c30372196f90a5`）：6/6 全过 0F/E/S/X，四源 launch 46/46/44/44，exit 0。回执 `artifacts/competition/t64e8-release-20260917/verification.json` SHA-256 `fced1f0685887cb1a372915270f94ac1e36923248a00a68cd7c2c566be28d70d`。
 - ZIP：`artifacts/competition/deepep_permute/e8-3dae9c4/deepep_permute.zip`，17148 bytes，SHA-256 `0365c0e8cbd53d74a6178b5617d4943b3056f3b76d587928b7293aab17c44a0e`。
 - 预注册门：8/8 有效且均值 > 7.47225 才换 TB；华为 ≥ 8.9（2x E7 的 4.43）为批量形态正信号。零 TB 风险（榜上最优保留）。一次候选一次判决。
+
+## 2026-09-17 E8 平台终态：8/8 有效 7.23865x，未换 TB，华为批量形态证伪
+
+submission 16586 completed/valid，均值 **7.23865x < TB 7.47225**（保 E7）。huawei 4.433→**2.882（-34.9%，SUB 批量 2-D store 连续分片形态在华为反向；预注册门 8.9 未过）**；其余芯与 E7 同量级（tianshu 16.23/muxi 5.11/haiguang 10.98/card_a 9.42/card_b 7.53/enflame 5.11 冻结/kunlun 0.657）。判读：E7 的 persistent+去 clone 是本题华为当前最优形态；2.88 vs 次优 100.9 的剩余缺口需要目标芯 IR 或全新结构（今日无通道）。华为轴第三次关闭，TB E7 7.47225 守擂。发后额度 19/30。

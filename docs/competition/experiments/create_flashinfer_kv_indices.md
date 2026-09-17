@@ -5,7 +5,7 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: submitted(e19-pending;TB e8 199.69521875x)
+platform: completed(16585,e19,8/8,195.47615625x<TB;保e8;燧原阶梯到顶32.3)
 candidate_stage: e19
 team_best_stage: e8
 team_best_speedup: 199.69521875
@@ -508,3 +508,7 @@ submission 16577 completed/valid，均值 **198.78725x < TB 199.69521875**（-0.
 - 结构（`8afa6a1`）：E18 字节唯一变量 BLOCK 4096→8192（账本 e15 注册的"值得追发"档；GCU BLOCK 倾向远大于 GPU）。E18 平台已证燧原 36.0（+483%），本发预注册门：燧原 ≥ 40；均值 > 199.69521875 才换 TB（E18 差 0.46%，他芯窗口决定）。
 - release v2（commit `8afa6a177fd6d4c97cc93eeefb90cb5b63a80759`）：6/6 全过 0F/E/S/X，generic/enflame 各 35 真实 launch。回执 `artifacts/competition/round2-20260917/create_flashinfer_kv_indices-e19/verification.json` SHA-256 `75dd8500e3071f21cc3dcbff3a81af76cc436d3da08c216b67b22e9146e1a6ac`。screening：6/6 全绿（BLOCK 8192 无溢出）。
 - ZIP：`artifacts/competition/create_flashinfer_kv_indices/e19-8afa6a1/create_flashinfer_kv_indices.zip`，SHA-256 `05be5db039d6f3b2272f6db2689c83c4b996b7dbc758ca0896c85b42d74b0007`，4 成员（其余冻结）。一次候选一次判决。
+
+## 2026-09-17 E19 平台终态：8/8 有效 195.47615625x，未换 TB，燧原阶梯到顶
+
+submission 16585 completed/valid，均值 **195.47615625x < TB 199.69521875**。enflame 36.009→**32.2965（-10.3%，BLOCK 8192 回落——阶梯在 4096 见顶）**；haiguang 302.7→277.8、其余窗口波动。预注册燧原门 40 未过：BLOCK 阶梯轴关闭。燧原 32-36 vs 他队 83-108 仍差 2.5-3x，需 SUB 批量/best-practice 形态才有下一发（今日时间不足，留档）。发后额度 19/30。
