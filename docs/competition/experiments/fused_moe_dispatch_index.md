@@ -5,7 +5,7 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: valid
-platform: submitted(e14-pending;TB E10 51.3375x)
+platform: completed(16658,e14,6/8,invalid;muxi/card_b数值+tianshu反降;保E10)
 candidate_stage: e14
 team_best_stage: e10-generic-init
 team_best_commit: a01fb6344cfa9d9f92a88cd8d47d3d9db3d2ff1b
@@ -652,3 +652,7 @@ SHA `14fb499d07b98e7676eb3e95a4ecacd9190a013181604e37a556259e36a0a591`。
 - screening：11/11 全绿（含 pair 模式、边界 65537、强制 grid=1/2、poison 哨兵）；release v2（commit `2be796b1cbb0c050a82ccb3aa5a9a0d12d6e7f84`）：11/11 全过 0F/E/S/X，generic 138 / 三 vendor 各 414 真实 launch，exit 0。回执 `artifacts/competition/round4-20260917/fused_moe_dispatch_index/verification.json` SHA-256 `d6242bf3aaa0e03f422d881ec5366dd90ff7545385e3b4f1edd023b50fb45fd1`。
 - ZIP：`e14-2be796b`，SHA-256 `5fd836d86ab44082af09da5a5b7a4f8ba2401ac3e4d183fdad1a43e6d3cc8138`，4 成员。
 - 预注册门：8/8 有效且各芯 ≥0.1（昆仑走冻结 vendor 0.10 不受影响）；天数 ≥ 120 或均值 > 51.3375 换 TB 为聚合正信号。一次候选一次判决。
+
+## 2026-09-17 E14 平台终态：6/8 invalid_correctness——聚合假设证伪
+
+submission 16658：muxi/card_b **数值失败**（masked_m 计数偏差，[16,256] 2-D cumsum/sum 在沐曦与 AMD 的 lowering 数值不可靠——与 dot-dtype 镜像矩阵同类的后端特异性）；**tianshu 77→66.6 反降 13.5%**——"逐 lane 标量原子是瓶颈"假设证伪（he队 206 另有结构）。haiguang 85.10(+9%)/card_a 85.03(+5%) 小幅受益。TB E10 51.3375 保全。本题今日关闭：聚合方向不重试，天数轴需新结构证据。

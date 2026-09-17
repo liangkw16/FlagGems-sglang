@@ -131,3 +131,7 @@ updated: 2026-09-16
 ## 2026-09-16 E2 平台终态：8/8 valid，3.09855x微升
 
 submission15861已全部终态；天数1.3328、沐曦3.5158、燧原0.4202、海光5.0002、昆仑2.7482、华为1.8354、A4.014、B5.9218，全部≥0.1。均值3.09395→3.09855（+0.1487%），成为平台新TB但未达3.40进一步投入门；不把波动内微升归为split-K收益，NVIDIA受影响形状1.70x未体现在正式总分。保留E2，不再重投窄N split4；是否平台形状未覆盖分派范围目前未知。额度25/30（11:36:56状态快照），结果文件 `artifacts/competition/top1-20260916/t66-e2-status.json`。
+
+## 2026-09-17 E3 平台终态：7/8 invalid_correctness——昆仑在未变 generic 字节上编译失败（平台侧）
+
+submission 16645：kunlun `OutOfResources: uni_sram … 'linalg.matmul' op inferred input/output operand #2 … dim #0 to be 1, but found 16`（generic 字节与 09-16 八芯通过的 E2 完全一致——**平台昆仑栈对同字节形态的编译判定发生变化**，与 T74 E12/E13 的 arith.cmpi 同族）。enflame vendor 首读 0.4374（GCU 配方对 GEMM 无增益）。TB E2 3.09855 保全。处置：属崩溃族"平台侧故障"，注释载体重掷需用户当次授权；昆仑专形态无证据不盲打。

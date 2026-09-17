@@ -281,3 +281,7 @@ Artifact根为 `artifacts/competition/t72-chunk-welford-screening-20260916/`。�
 - 只生成了源码dry-run manifest，**没有创建ZIP或提交平台**。两个代码commit均已push到private研究分支；所有目标芯仍`target-runtime-unverified`。普通路径的目标grid/address限制未由本次NVIDIA回归解决；后续若另起发布候选须补其实际覆盖，不继承失败候选的安全fallback证据。
 
 本轮停止该性能尝试，TB仍E6，未达Top1；重开需要独立目标芯瓶颈/编译证据，不能沿用本次噪声边缘control反复抽样。
+
+## 2026-09-17 E11 平台终态：8/8 有效 2.46666667x，未换 TB
+
+submission 16653 completed/valid。enflame 0.376→**0.459（+22.1%，grid cap 24 有小正信号但远低于次优 1.67）**；huawei 1.196（_ascend e9 字节窗口 -1.5%）；其余 generic 字节窗口（tianshu 4.088/-1.5% 等）。均值 2.4667 < TB 2.6627 保 e6。燧原轴：grid cap 不足，剩 tl.range+stages3 管线化假设（未证，时间不足今日不投）。

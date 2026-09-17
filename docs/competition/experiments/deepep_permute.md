@@ -5,10 +5,10 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: submitted(e11-pending)
+platform: completed(16639,e11,8/8,8.2269x新TB;BLOCK2048兑现)
 candidate_stage: e11
-team_best_stage: e10
-team_best_speedup: 7.818425
+team_best_stage: e11
+team_best_speedup: 8.2269
 sealed: no
 next: 华为4.433未过6.2门不重掷；下一华为轴候选=官方gather/scatter best-practice形态(SUB_BLOCK_SIZE/insert_slice)，需先落结构再一发判决
 updated: 2026-09-17
@@ -307,3 +307,7 @@ submission 16605 completed/valid，均值 **7.818425x > 7.79705 换 TB**（+0.27
 ## 2026-09-17 E11 状态：send 阶段被本地超时中断，未提交，intent 卡 sending
 
 preflight 全过后 submit 在上传阶段被本地 2 分钟命令超时杀死；status 复核**无提交记录、额度未消耗**（POST 未达服务器），CLI 状态机对未决 sending intent 拒绝重发（防双发），手工改写 intent 需用户明示授权。候选封存：ZIP `e11-633d7bc`（SHA `b2ae310e…`）、回执与账本齐备；若获授权可归档 intent 后重走 preflight 单发。
+
+## 2026-09-17 E11 重发与平台终态：8/8 有效，新 TB 8.2269x
+
+send 中断处置：status 复核无记录/额度未扣后，经用户明示授权归档 sending intent（`.git/flagos-platform/archived/6c8ace86…`），重走 preflight 单发 **16639**。终态：均值 **8.2269x > 7.818425 换 TB**（+5.21%）。逐芯（vs E10）：muxi 5.391→**7.588(+40.7%)** / enflame 4.814→5.783(冻结字节窗口+20%) / haiguang 11.637→**13.035(+12.0%)** / card_a 10.116 / card_b 8.144 / tianshu 16.261 / huawei 4.235 / kunlun 0.654。BLOCK 512→2048 阶梯兑现（预注册"六芯中位 ≥+3%"过门）。下一档 4096 立即追发（e12）。发后额度 13/30。
