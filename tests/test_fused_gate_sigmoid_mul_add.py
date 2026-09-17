@@ -32,7 +32,8 @@ def make_case(
         )
     ]
     if strided:
-        args = [x.t().contiguous().t() for x in (args[0], args[2], args[3])]
+        for i in (0, 2, 3):
+            args[i] = args[i].t().contiguous().t()
     return tuple(args)
 
 
