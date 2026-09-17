@@ -49,9 +49,9 @@ def _scatter_legacy(
         value = tl.load(x + token_offset * xs0 + h * xs1, h < hidden, other=0)
         value = value.to(out.dtype.element_ty)
         for slot in range(topk):
-            dst = tl.load(
-                routes + token_offset * rs0 + slot.to(tl.int64) * rs1
-            ).to(tl.int64)
+            dst = tl.load(routes + token_offset * rs0 + slot.to(tl.int64) * rs1).to(
+                tl.int64
+            )
             if dst >= 0:
                 tl.store(out + dst * os0 + h * os1, value, h < hidden)
 
@@ -79,7 +79,7 @@ def _scatter_rows(
     x,
     out,
     routes,
-    tasks,
+    tokens,
     tiles,
     hidden,
     xs0,
@@ -90,18 +90,39 @@ def _scatter_rows(
     rs1,
     BLOCK: tl.constexpr,
     TOPK: tl.constexpr,
+    SUB: tl.constexpr,
 ):
-    for task in range(tl.program_id(0), tasks, tl.num_programs(0)):
-        token_offset = (task // tiles).to(tl.int64)
-        tile = task % tiles
-        h = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
-        value = tl.load(x + token_offset * xs0 + h * xs1, h < hidden, other=0)
-        value = value.to(out.dtype.element_ty)
-        base = routes + token_offset * rs0
-        for slot in tl.static_range(TOPK):
-            dst = tl.load(base + slot * rs1).to(tl.int64)
-            if dst >= 0:
-                tl.store(out + dst * os0 + h * os1, value, h < hidden)
+    # Official 004-gather_scatter shape (portable subset): each program
+    # owns one contiguous token slice and batches SUB rows into a
+    # [SUB, BLOCK] tile so the per-slot store is one wide 2-D op
+    # instead of SUB row stores; masked destination addresses are
+    # clamped to row 0 (Ascend evaluates masked-lane addresses).
+    pid = tl.program_id(0)
+    chunk = (tokens + tl.num_programs(0) - 1) // tl.num_programs(0)
+    begin = pid * chunk
+    end = tl.minimum(begin + chunk, tokens)
+    for sub in range(begin, end, SUB):
+        tok = sub + tl.arange(0, SUB)
+        tmask = tok < end
+        tok64 = tok.to(tl.int64)
+        for tile in range(0, tiles):
+            h = tile * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
+            hmask = h < hidden
+            value = tl.load(
+                x + tok64[:, None] * xs0 + h[None, :] * xs1,
+                mask=tmask[:, None] & hmask[None, :],
+                other=0,
+            ).to(out.dtype.element_ty)
+            for slot in tl.static_range(TOPK):
+                dst = tl.load(
+                    routes + tok64 * rs0 + slot * rs1, mask=tmask, other=-1
+                ).to(tl.int64)
+                safe = tl.where(dst >= 0, dst, 0)
+                tl.store(
+                    out + safe[:, None] * os0 + h[None, :] * os1,
+                    value,
+                    mask=(dst[:, None] >= 0) & tmask[:, None] & hmask[None, :],
+                )
 
 
 @triton.jit
@@ -156,9 +177,7 @@ def deepep_permute(input, gateup_input, src2dst, topk_ids, topk, hidden_size):
         )
         return out
     out = torch.empty_like(gateup_input)
-    covered = torch.zeros(
-        tokens * topk, dtype=torch.int32, device=gateup_input.device
-    )
+    covered = torch.zeros(tokens * topk, dtype=torch.int32, device=gateup_input.device)
     _cover_rows[(min(tokens, workers),)](
         src2dst,
         covered,
@@ -167,29 +186,30 @@ def deepep_permute(input, gateup_input, src2dst, topk_ids, topk, hidden_size):
         *src2dst.stride(),
         TOPK=topk,
     )
-    tiles = triton.cdiv(hidden, 512)
-    tasks = tokens * tiles
-    _scatter_rows[(min(tasks, workers),)](
+    tiles = triton.cdiv(hidden, 2048)
+    _scatter_rows[(min(tokens, workers),)](
         input,
         out,
         src2dst,
-        tasks,
+        tokens,
         tiles,
         hidden,
         *input.stride(),
         *out.stride(),
         *src2dst.stride(),
-        BLOCK=512,
+        BLOCK=2048,
         TOPK=topk,
+        SUB=4,
     )
     rows = tokens * topk
-    fill_tasks = rows * tiles
+    fill_tiles = triton.cdiv(hidden, 512)
+    fill_tasks = rows * fill_tiles
     _fill_rows[(min(fill_tasks, workers),)](
         gateup_input,
         out,
         covered,
         fill_tasks,
-        tiles,
+        fill_tiles,
         hidden,
         *gateup_input.stride(),
         *out.stride(),
