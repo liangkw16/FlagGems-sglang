@@ -5,8 +5,8 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: completed(16605,e10,8/8,7.818425x微幅新TB;燧原gather无增益;全轴收官)
-candidate_stage: e10
+platform: submitted(e11-pending)
+candidate_stage: e11
 team_best_stage: e10
 team_best_speedup: 7.818425
 sealed: no
@@ -296,3 +296,10 @@ submission 16599 completed/valid，均值 **7.79705x > 7.47225 换 TB**（+4.35%
 submission 16605 completed/valid，均值 **7.818425x > 7.79705 换 TB**（+0.27%，generic 芯窗口整体微升）。enflame 4.740→**4.814（+1.6%，预注册门 6 未过——去 clone gather 在 GCU 与 clone+scatter 打平，轴关闭）**；huawei 4.011（E9 冻结字节窗口）；tianshu 17.44/card_a 10.04/card_b 8.57/haiguang 11.64/muxi 5.39/kunlun 0.655。
 
 **T64 当日终局**：TB 7.17105 → **7.818425**（+9.02%），rank 14 → 预计 9；四发（E7 去 clone 三段式 / E8 SUB 批量 / E9 逆映射 gather / E10 燧原 gather）全部 8/8 有效零浪费。Top1（28.91）未达：锁死在华为 4.0-4.4 vs 次优 100.9 的 25x 缺口——persistent（+44% 最优）、SUB 批量（-35%）、gather（-7%）三板斧穷尽，`tl.insert_slice` 不在 Triton 3.7.1 主线（官方完整形态无法代理验证），他队形态需目标芯 IR 才能破译。发后额度 17/30。
+
+## 2026-09-17 E11：gather BLOCK 512→2048 阶梯（generic+ascend），已提交
+
+- 结构（`633d7bc2a72882d888f925ae86596c072e653328`）：E9 gather 唯一变量 BLOCK 512→2048（generic+`_ascend`；家族 BLOCK 阶梯历史连涨：T63 512→4096 六档、本题燧原 512→2048 +19%）。enflame/kunlunxin 冻结；≤20MB legacy 路径不动。
+- release v2：6/6 全过 0F/E/S/X，四源 launch。回执 `artifacts/competition/round3-20260917/deepep_permute/verification.json` SHA-256 `0e95a92d804ba1da0a8d0f02572a9db662f36b9cf2bb090e10b1de4b32a2590f`。
+- ZIP：`e11-633d7bc`，SHA-256 `b2ae310ef13cd4e8751217b870dae4e6c5dd6ff4d8d120390be6a74361a9e06e`，4 成员。
+- 预注册门：8/8 有效且均值 > 7.818425 换 TB；六芯（generic+华为）中位 ≥ +3% 为阶梯正信号。

@@ -14,8 +14,8 @@ task: 61
 operator: compute_src2dst
 batch: 5
 validity: valid
-platform: completed(e10/sub16468,8/8,2.0929x；TB仍E11/sub15835,2.138475x)
-candidate_stage: e11
+platform: submitted(e12-pending)
+candidate_stage: e12
 team_best_stage: e11
 team_best_speedup: 2.138475
 sealed: no
@@ -333,3 +333,10 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 平台 8/8 valid：天数 3.0042 / **沐曦 0.9464（vendor 被选中，vs E9 generic 1.177 → -19.5%）** / 燧原 4.3924 / 海光 1.951 / 昆仑 1.363 / 华为 1.6554 / A 1.6494 / B 1.7814；均值 **2.0929 < TB 2.138475**（E11）。
 - 判定：wrapper-cast 平铺 i32 形态在沐曦为**平台实证负向**——沐曦缺口（1.18 vs 榜首 2.92-3.36）不是 int64 寻址税，轴关闭；与同日 NVIDIA 代理负结果（0.825-0.918 桶）方向一致，代理结论本轮得到平台背书。
 - 跨芯知识：e7 int32 形态是燧原专属解（GCU DMA store 不支持 load 索引寻址的替代），**不可跨芯外推**；沐曦对 wrapper 端 `.to(int32)` 设备端转换敏感（可测的额外设备工作）。
+
+## 2026-09-17 E12：Ascend persistent vendor（第三轮快炮），已提交
+
+- 结构（`633d7bc2a72882d888f925ae86596c072e653328`）：新增 `_ascend` = generic 字节 + grid 封顶 NVC（flat scatter 已有 stride 循环，launch-only；散布家族 persistent +44~+97% 配方）。其余成员冻结。
+- release v2：3/3 全过 0F/E/S/X，ascend 真实 launch。回执 `artifacts/competition/round3-20260917/compute_src2dst/verification.json` SHA-256 `3daf18ed98df223e05c6ea4d2d9d4bb654b28a9b39a7dcc6a4d3b8cf55f89a83`。
+- ZIP：`e12-633d7bc`，SHA-256 `2341d9ce2aec371fc16576e0ce1c25df53636d307c0b464dfbe091c7a65268f6`，4 成员。
+- 预注册门：8/8 有效且均值 > 2.138475 换 TB；华为 ≥ 2.4（+40%，T64 家族对照）为正信号。

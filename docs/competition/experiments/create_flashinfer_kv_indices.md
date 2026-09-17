@@ -5,8 +5,8 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: completed(16585,e19,8/8,195.47615625x<TB;保e8;燧原阶梯到顶32.3)
-candidate_stage: e19
+platform: submitted(e20-pending)
+candidate_stage: e20
 team_best_stage: e8
 team_best_speedup: 199.69521875
 sealed: no
@@ -512,3 +512,10 @@ submission 16577 completed/valid，均值 **198.78725x < TB 199.69521875**（-0.
 ## 2026-09-17 E19 平台终态：8/8 有效 195.47615625x，未换 TB，燧原阶梯到顶
 
 submission 16585 completed/valid，均值 **195.47615625x < TB 199.69521875**。enflame 36.009→**32.2965（-10.3%，BLOCK 8192 回落——阶梯在 4096 见顶）**；haiguang 302.7→277.8、其余窗口波动。预注册燧原门 40 未过：BLOCK 阶梯轴关闭。燧原 32-36 vs 他队 83-108 仍差 2.5-3x，需 SUB 批量/best-practice 形态才有下一发（今日时间不足，留档）。发后额度 19/30。
+
+## 2026-09-17 E20：Ascend persistent vendor（第三轮主发），已提交
+
+- 结构（`633d7bc2a72882d888f925ae86596c072e653328`）：新增 `_ascend` = generic 字节 + persistent launch（axis1 封顶 8、axis0 = NVC//axis1、双轴 kernel 内 stride 不变；copy/gather 家族 persistent 配方）。其余成员（enflame E19/kunlunxin/metax）冻结。
+- release v2：6/6 全过 0F/E/S/X，generic/ascend 各 35 真实 launch。回执 `artifacts/competition/round3-20260917/create_flashinfer_kv_indices/verification.json` SHA-256 `9fdefe7f3c8a49460f8848998d1cb66fd4ad75135755a86d941b3d1a0397f61`。
+- ZIP：`e20-633d7bc`，SHA-256 `d821fcc4065f645c2e2dd87605eb3a000cd5b2f0d5daa1b880a67967c8201b58`，5 成员。
+- 预注册门：8/8 有效且均值 > 199.69521875 换 TB（E18/E19 窗口下他芯回落，华为 68→92+ 可补 +3）；华为 ≥ 90 为 persistent 正信号。
