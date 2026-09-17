@@ -5,10 +5,10 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: submitted(e12-pending;TB e11 8.2269x)
+platform: completed(16669,e12,8/8,8.28935x新TB;阶梯封顶)
 candidate_stage: e12
-team_best_stage: e11
-team_best_speedup: 8.2269
+team_best_stage: e12
+team_best_speedup: 8.28935
 sealed: no
 next: 华为4.433未过6.2门不重掷；下一华为轴候选=官方gather/scatter best-practice形态(SUB_BLOCK_SIZE/insert_slice)，需先落结构再一发判决
 updated: 2026-09-17
@@ -315,3 +315,7 @@ send 中断处置：status 复核无记录/额度未扣后，经用户明示授�
 ## 2026-09-17 E12：gather BLOCK 4096 阶梯追发，已提交
 
 - E11 阶梯兑现后按"阶梯仍在涨"证据追发 4096（generic+`_ascend` 唯一变量；enflame/kunlunxin 冻结）。release v2（commit 见 ZIP）全过；回执 `artifacts/competition/t64e12-release-20260917/verification.json`。预注册门：8/8 有效且均值 > 8.2269 换 TB；≥2 芯 +3% 为正信号，否则阶梯封顶。
+
+## 2026-09-17 E12 平台终态：8/8 有效，新 TB 8.28935x；阶梯封顶
+
+submission 16669 completed/valid，均值 **8.28935x > 8.2269 换 TB**（+0.76%）。逐芯（vs E11）：huawei 4.235→**4.977(+17.5%)** / muxi 7.588→7.924(+4.4%) / card_b 8.473 / haiguang 13.064 / tianshu 16.313 / kunlun 0.658 / enflame 4.973（冻结字节窗口回落）。阶梯增益 512→2048→4096 = +5.2%→+0.76% **封顶**。T64 当日终局：TB 7.17105→**8.28935**（+15.6%），rank 14→9；发后额度 10/30。

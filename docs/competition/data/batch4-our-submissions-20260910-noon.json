@@ -1,0 +1,4067 @@
+{
+  "42": {
+    "operator": "act_and_mul",
+    "rows": [
+      {
+        "submission_id": 11653,
+        "created_at": "2026-09-09T07:02:39",
+        "validity": "valid",
+        "avg": 3.20375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 14,
+        "file_name": "act_and_mul.zip",
+        "chips": {
+          "tianshu": 6.1858,
+          "muxi": 2.3222,
+          "enflame": 1.6864,
+          "haiguang": 5.1266,
+          "kunlunxin": 0.4536,
+          "huawei": 2.3492,
+          "card_a": 4.4192,
+          "card_b": 3.087
+        }
+      },
+      {
+        "submission_id": 11644,
+        "created_at": "2026-09-09T06:32:45",
+        "validity": "valid",
+        "avg": 3.216075,
+        "pass_n": 8,
+        "best": false,
+        "seq": 5,
+        "file_name": "act_and_mul.zip",
+        "chips": {
+          "tianshu": 5.9436,
+          "muxi": 2.3204,
+          "enflame": 1.679,
+          "haiguang": 4.97,
+          "kunlunxin": 0.456,
+          "huawei": 2.401,
+          "card_a": 4.5062,
+          "card_b": 3.4524
+        }
+      },
+      {
+        "submission_id": 11241,
+        "created_at": "2026-09-08T16:52:10",
+        "validity": "valid",
+        "avg": 3.215975,
+        "pass_n": 8,
+        "best": false,
+        "seq": 26,
+        "file_name": "act_and_mul.zip",
+        "chips": {
+          "tianshu": 6.187,
+          "muxi": 2.2662,
+          "enflame": 1.686,
+          "haiguang": 5.084,
+          "kunlunxin": 0.452,
+          "huawei": 2.403,
+          "card_a": 4.2336,
+          "card_b": 3.416
+        }
+      },
+      {
+        "submission_id": 11048,
+        "created_at": "2026-09-08T07:49:22",
+        "validity": "valid",
+        "avg": 3.149675,
+        "pass_n": 8,
+        "best": false,
+        "seq": 7,
+        "file_name": "act_and_mul.zip",
+        "chips": {
+          "tianshu": 6.2124,
+          "muxi": 2.3144,
+          "enflame": 1.681,
+          "haiguang": 4.933,
+          "kunlunxin": 0.458,
+          "huawei": 2.2184,
+          "card_a": 4.2852,
+          "card_b": 3.095
+        }
+      },
+      {
+        "submission_id": 10344,
+        "created_at": "2026-09-06T01:16:15",
+        "validity": "valid",
+        "avg": 3.25835,
+        "pass_n": 8,
+        "best": true,
+        "seq": 14,
+        "file_name": "act_and_mul.zip",
+        "chips": {
+          "tianshu": 6.1856,
+          "muxi": 2.2642,
+          "enflame": 1.6996,
+          "haiguang": 5.1182,
+          "kunlunxin": 0.4482,
+          "huawei": 2.333,
+          "card_a": 4.597,
+          "card_b": 3.421
+        }
+      },
+      {
+        "submission_id": 10336,
+        "created_at": "2026-09-06T00:55:35",
+        "validity": "valid",
+        "avg": 3.2315,
+        "pass_n": 8,
+        "best": false,
+        "seq": 8,
+        "file_name": "act_and_mul.zip",
+        "chips": {
+          "tianshu": 6.2288,
+          "muxi": 2.4722,
+          "enflame": 1.6002,
+          "haiguang": 5.1106,
+          "kunlunxin": 0.45,
+          "huawei": 2.0762,
+          "card_a": 4.532,
+          "card_b": 3.382
+        }
+      },
+      {
+        "submission_id": 10324,
+        "created_at": "2026-09-06T00:20:07",
+        "validity": "valid",
+        "avg": 3.232525,
+        "pass_n": 8,
+        "best": false,
+        "seq": 2,
+        "file_name": "act_and_mul.zip",
+        "chips": {
+          "tianshu": 6.2294,
+          "muxi": 2.4724,
+          "enflame": 1.685,
+          "haiguang": 4.9546,
+          "kunlunxin": 0.4548,
+          "huawei": 2.3884,
+          "card_a": 4.2156,
+          "card_b": 3.46
+        }
+      },
+      {
+        "submission_id": 9451,
+        "created_at": "2026-09-04T11:06:49",
+        "validity": "valid",
+        "avg": 3.2424,
+        "pass_n": 8,
+        "best": false,
+        "seq": 14,
+        "file_name": "act_and_mul.zip",
+        "chips": {
+          "tianshu": 6.2234,
+          "muxi": 2.501,
+          "enflame": 1.6742,
+          "haiguang": 5.0706,
+          "kunlunxin": 0.454,
+          "huawei": 2.2858,
+          "card_a": 4.2766,
+          "card_b": 3.4536
+        }
+      },
+      {
+        "submission_id": 9431,
+        "created_at": "2026-09-04T09:42:43",
+        "validity": "valid",
+        "avg": 3.248925,
+        "pass_n": 8,
+        "best": false,
+        "seq": 12,
+        "file_name": "act_and_mul.zip",
+        "chips": {
+          "tianshu": 6.2052,
+          "muxi": 2.4006,
+          "enflame": 1.6716,
+          "haiguang": 5.067,
+          "kunlunxin": 0.456,
+          "huawei": 2.258,
+          "card_a": 4.2998,
+          "card_b": 3.6332
+        }
+      },
+      {
+        "submission_id": 9416,
+        "created_at": "2026-09-04T08:58:24",
+        "validity": "valid",
+        "avg": 3.1647,
+        "pass_n": 8,
+        "best": false,
+        "seq": 10,
+        "file_name": "act_and_mul.zip",
+        "chips": {
+          "tianshu": 6.214,
+          "muxi": 2.4552,
+          "enflame": 1.682,
+          "haiguang": 4.9688,
+          "kunlunxin": 0.4548,
+          "huawei": 1.668,
+          "card_a": 4.238,
+          "card_b": 3.6368
+        }
+      },
+      {
+        "submission_id": 9370,
+        "created_at": "2026-09-04T01:09:05",
+        "validity": "valid",
+        "avg": 3.066825,
+        "pass_n": 8,
+        "best": false,
+        "seq": 1,
+        "file_name": "act_and_mul.zip",
+        "chips": {
+          "tianshu": 6.2234,
+          "muxi": 2.2476,
+          "enflame": 0.969,
+          "haiguang": 4.9658,
+          "kunlunxin": 0.279,
+          "huawei": 1.6714,
+          "card_a": 4.538,
+          "card_b": 3.6404
+        }
+      }
+    ]
+  },
+  "43": {
+    "operator": "causal_conv1d_update",
+    "rows": [
+      {
+        "submission_id": 12417,
+        "created_at": "2026-09-10T09:54:12",
+        "validity": "valid",
+        "avg": 2.5084375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 17,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 2.836,
+          "muxi": 3.653,
+          "enflame": 0.477,
+          "haiguang": 3.907,
+          "kunlunxin": 1.594,
+          "huawei": 0.3755,
+          "card_a": 2.8805,
+          "card_b": 4.3445
+        }
+      },
+      {
+        "submission_id": 12369,
+        "created_at": "2026-09-10T08:51:09",
+        "validity": "valid",
+        "avg": 6.5635625,
+        "pass_n": 8,
+        "best": false,
+        "seq": 11,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.6825,
+          "muxi": 6.8105,
+          "enflame": 0.477,
+          "haiguang": 10.909,
+          "kunlunxin": 1.6065,
+          "huawei": 0.392,
+          "card_a": 8.2545,
+          "card_b": 10.3765
+        }
+      },
+      {
+        "submission_id": 11811,
+        "created_at": "2026-09-09T15:09:12",
+        "validity": "valid",
+        "avg": 7.1471875,
+        "pass_n": 8,
+        "best": true,
+        "seq": 30,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 15.165,
+          "muxi": 9.5985,
+          "enflame": 0.4765,
+          "haiguang": 11.0995,
+          "kunlunxin": 1.61,
+          "huawei": 0.4435,
+          "card_a": 8.5525,
+          "card_b": 10.232
+        }
+      },
+      {
+        "submission_id": 11807,
+        "created_at": "2026-09-09T14:59:20",
+        "validity": "valid",
+        "avg": 6.562625,
+        "pass_n": 8,
+        "best": false,
+        "seq": 29,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 15.4095,
+          "muxi": 9.4845,
+          "enflame": 0.4705,
+          "haiguang": 6.5665,
+          "kunlunxin": 1.59,
+          "huawei": 0.395,
+          "card_a": 8.351,
+          "card_b": 10.234
+        }
+      },
+      {
+        "submission_id": 11652,
+        "created_at": "2026-09-09T06:58:43",
+        "validity": "valid",
+        "avg": 6.6005625,
+        "pass_n": 8,
+        "best": false,
+        "seq": 13,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.694,
+          "muxi": 7.0205,
+          "enflame": 0.476,
+          "haiguang": 10.887,
+          "kunlunxin": 1.589,
+          "huawei": 0.3545,
+          "card_a": 8.0275,
+          "card_b": 10.756
+        }
+      },
+      {
+        "submission_id": 11649,
+        "created_at": "2026-09-09T06:48:45",
+        "validity": "valid",
+        "avg": 6.5924375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 10,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.646,
+          "muxi": 7.034,
+          "enflame": 0.4755,
+          "haiguang": 10.5345,
+          "kunlunxin": 1.564,
+          "huawei": 0.3635,
+          "card_a": 8.588,
+          "card_b": 10.534
+        }
+      },
+      {
+        "submission_id": 11643,
+        "created_at": "2026-09-09T06:29:49",
+        "validity": "valid",
+        "avg": 6.573625,
+        "pass_n": 8,
+        "best": false,
+        "seq": 4,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.681,
+          "muxi": 7.022,
+          "enflame": 0.4705,
+          "haiguang": 10.6755,
+          "kunlunxin": 1.231,
+          "huawei": 0.39,
+          "card_a": 8.6235,
+          "card_b": 10.4955
+        }
+      },
+      {
+        "submission_id": 11237,
+        "created_at": "2026-09-08T16:46:45",
+        "validity": "valid",
+        "avg": 6.560375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 24,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.6665,
+          "muxi": 7.01,
+          "enflame": 0.4755,
+          "haiguang": 11.186,
+          "kunlunxin": 1.233,
+          "huawei": 0.428,
+          "card_a": 7.9655,
+          "card_b": 10.5185
+        }
+      },
+      {
+        "submission_id": 11156,
+        "created_at": "2026-09-08T12:26:40",
+        "validity": "valid",
+        "avg": 6.5364375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 16,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.519,
+          "muxi": 7.055,
+          "enflame": 0.4775,
+          "haiguang": 10.75,
+          "kunlunxin": 1.2355,
+          "huawei": 0.3565,
+          "card_a": 8.4875,
+          "card_b": 10.4105
+        }
+      },
+      {
+        "submission_id": 11154,
+        "created_at": "2026-09-08T12:22:13",
+        "validity": "valid",
+        "avg": 6.3951875,
+        "pass_n": 8,
+        "best": false,
+        "seq": 15,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.671,
+          "muxi": 7.042,
+          "enflame": 0.483,
+          "haiguang": 10.973,
+          "kunlunxin": 0.343,
+          "huawei": 0.3845,
+          "card_a": 7.794,
+          "card_b": 10.471
+        }
+      },
+      {
+        "submission_id": 11152,
+        "created_at": "2026-09-08T12:15:57",
+        "validity": "valid",
+        "avg": 6.4323125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 14,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.4845,
+          "muxi": 7.038,
+          "enflame": 0.4735,
+          "haiguang": 10.7805,
+          "kunlunxin": 1.2195,
+          "huawei": 0.319,
+          "card_a": 7.7945,
+          "card_b": 10.349
+        }
+      },
+      {
+        "submission_id": 11148,
+        "created_at": "2026-09-08T12:10:40",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 13,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.693,
+          "muxi": 6.9795,
+          "enflame": 0.4775,
+          "haiguang": 10.857,
+          "kunlunxin": 1.235,
+          "huawei": null,
+          "card_a": 8.2215,
+          "card_b": 10.176
+        }
+      },
+      {
+        "submission_id": 10826,
+        "created_at": "2026-09-07T18:21:07",
+        "validity": "valid",
+        "avg": 6.5374375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 21,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.7745,
+          "muxi": 7.0585,
+          "enflame": 0.3265,
+          "haiguang": 10.938,
+          "kunlunxin": 0.406,
+          "huawei": 0.3895,
+          "card_a": 8.828,
+          "card_b": 10.5785
+        }
+      },
+      {
+        "submission_id": 10824,
+        "created_at": "2026-09-07T18:12:45",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 20,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.667,
+          "muxi": 6.994,
+          "enflame": null,
+          "haiguang": 10.935,
+          "kunlunxin": 0.4075,
+          "huawei": 0.3775,
+          "card_a": 8.8665,
+          "card_b": 10.443
+        }
+      },
+      {
+        "submission_id": 10789,
+        "created_at": "2026-09-07T16:51:09",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 17,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.4375,
+          "muxi": 7.0025,
+          "enflame": null,
+          "haiguang": 11.382,
+          "kunlunxin": 0.406,
+          "huawei": 0.484,
+          "card_a": 8.0865,
+          "card_b": 10.47
+        }
+      },
+      {
+        "submission_id": 10745,
+        "created_at": "2026-09-07T14:45:23",
+        "validity": "valid",
+        "avg": 6.5204375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 11,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.6185,
+          "muxi": 7.013,
+          "enflame": 0.3255,
+          "haiguang": 11.299,
+          "kunlunxin": 0.409,
+          "huawei": 0.3775,
+          "card_a": 8.452,
+          "card_b": 10.669
+        }
+      },
+      {
+        "submission_id": 10706,
+        "created_at": "2026-09-07T12:28:30",
+        "validity": "valid",
+        "avg": 6.545875,
+        "pass_n": 8,
+        "best": false,
+        "seq": 9,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.7035,
+          "muxi": 7.0445,
+          "enflame": 0.326,
+          "haiguang": 11.177,
+          "kunlunxin": 0.407,
+          "huawei": 0.3435,
+          "card_a": 8.837,
+          "card_b": 10.5285
+        }
+      },
+      {
+        "submission_id": 10341,
+        "created_at": "2026-09-06T01:10:24",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 12,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.71,
+          "muxi": 7.023,
+          "enflame": null,
+          "haiguang": 10.9445,
+          "kunlunxin": null,
+          "huawei": 0.3945,
+          "card_a": 8.559,
+          "card_b": 10.6055
+        }
+      },
+      {
+        "submission_id": 10338,
+        "created_at": "2026-09-06T01:04:50",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 10,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.513,
+          "muxi": 6.9915,
+          "enflame": 0.3255,
+          "haiguang": 11.092,
+          "kunlunxin": null,
+          "huawei": 0.4165,
+          "card_a": 8.6235,
+          "card_b": 10.633
+        }
+      },
+      {
+        "submission_id": 10337,
+        "created_at": "2026-09-06T00:59:42",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 9,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.344,
+          "muxi": 7.0085,
+          "enflame": null,
+          "haiguang": 10.81,
+          "kunlunxin": null,
+          "huawei": 0.386,
+          "card_a": 8.163,
+          "card_b": 10.0325
+        }
+      },
+      {
+        "submission_id": 10332,
+        "created_at": "2026-09-06T00:45:57",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 6,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.701,
+          "muxi": 7.0065,
+          "enflame": null,
+          "haiguang": 10.6815,
+          "kunlunxin": null,
+          "huawei": 0.388,
+          "card_a": 7.9655,
+          "card_b": 10.5465
+        }
+      },
+      {
+        "submission_id": 10329,
+        "created_at": "2026-09-06T00:34:58",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 4,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.148,
+          "muxi": 7.0195,
+          "enflame": 0.3265,
+          "haiguang": 10.581,
+          "kunlunxin": null,
+          "huawei": 0.4565,
+          "card_a": 8.993,
+          "card_b": 10.642
+        }
+      },
+      {
+        "submission_id": 9852,
+        "created_at": "2026-09-05T01:30:51",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 2,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.135,
+          "muxi": 7.0595,
+          "enflame": 0.325,
+          "haiguang": 11.1645,
+          "kunlunxin": null,
+          "huawei": 0.4435,
+          "card_a": 7.7355,
+          "card_b": 10.48
+        }
+      },
+      {
+        "submission_id": 9561,
+        "created_at": "2026-09-04T18:53:19",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 28,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.703,
+          "muxi": 6.964,
+          "enflame": 0.0165,
+          "haiguang": 10.6975,
+          "kunlunxin": null,
+          "huawei": 0.0625,
+          "card_a": 8.284,
+          "card_b": 10.6215
+        }
+      },
+      {
+        "submission_id": 9559,
+        "created_at": "2026-09-04T18:41:57",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 27,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.695,
+          "muxi": 7.0155,
+          "enflame": null,
+          "haiguang": 10.5875,
+          "kunlunxin": null,
+          "huawei": 0.069,
+          "card_a": 7.963,
+          "card_b": 10.3615
+        }
+      },
+      {
+        "submission_id": 9550,
+        "created_at": "2026-09-04T17:51:56",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 26,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.685,
+          "muxi": 6.969,
+          "enflame": 0.0305,
+          "haiguang": 10.9335,
+          "kunlunxin": null,
+          "huawei": 0.0675,
+          "card_a": 8.6115,
+          "card_b": 10.5465
+        }
+      },
+      {
+        "submission_id": 9522,
+        "created_at": "2026-09-04T16:23:21",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 25,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.477,
+          "muxi": 7.0015,
+          "enflame": 0.001,
+          "haiguang": 10.95,
+          "kunlunxin": null,
+          "huawei": 0.074,
+          "card_a": 8.088,
+          "card_b": 10.6045
+        }
+      },
+      {
+        "submission_id": 9520,
+        "created_at": "2026-09-04T16:12:04",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 24,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.723,
+          "muxi": 6.983,
+          "enflame": 0.001,
+          "haiguang": 11.34,
+          "kunlunxin": null,
+          "huawei": null,
+          "card_a": 8.8955,
+          "card_b": 10.537
+        }
+      },
+      {
+        "submission_id": 9422,
+        "created_at": "2026-09-04T09:11:49",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 11,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.723,
+          "muxi": 7.0445,
+          "enflame": null,
+          "haiguang": 10.859,
+          "kunlunxin": null,
+          "huawei": 0.0255,
+          "card_a": 9.002,
+          "card_b": 10.6205
+        }
+      },
+      {
+        "submission_id": 9372,
+        "created_at": "2026-09-04T01:11:46",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 2,
+        "file_name": "causal_conv1d_update.zip",
+        "chips": {
+          "tianshu": 13.728,
+          "muxi": 6.7885,
+          "enflame": 0.0265,
+          "haiguang": 11.096,
+          "kunlunxin": null,
+          "huawei": 0.0555,
+          "card_a": 8.3215,
+          "card_b": 10.497
+        }
+      }
+    ]
+  },
+  "44": {
+    "operator": "chain_speculative_sampling",
+    "rows": [
+      {
+        "submission_id": 10037,
+        "created_at": "2026-09-05T13:16:14",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 0,
+        "best": false,
+        "seq": 19,
+        "file_name": "chain_speculative_sampling.zip",
+        "chips": {
+          "tianshu": null,
+          "muxi": null,
+          "enflame": null,
+          "haiguang": null,
+          "kunlunxin": null,
+          "huawei": null,
+          "card_a": null,
+          "card_b": null
+        }
+      }
+    ]
+  },
+  "45": {
+    "operator": "chunk_scaled_dot_kkt",
+    "rows": [
+      {
+        "submission_id": 11248,
+        "created_at": "2026-09-08T17:19:16",
+        "validity": "invalid_threshold",
+        "avg": 7.148625,
+        "pass_n": 8,
+        "best": false,
+        "seq": 30,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.812,
+          "muxi": 5.634,
+          "enflame": 1.634,
+          "haiguang": 14.7855,
+          "kunlunxin": 0.063,
+          "huawei": 0.252,
+          "card_a": 21.409,
+          "card_b": 7.5995
+        }
+      },
+      {
+        "submission_id": 10778,
+        "created_at": "2026-09-07T16:31:22",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 14,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.827,
+          "muxi": 5.4525,
+          "enflame": 1.6375,
+          "haiguang": 14.8165,
+          "kunlunxin": null,
+          "huawei": 0.252,
+          "card_a": 21.426,
+          "card_b": 7.518
+        }
+      },
+      {
+        "submission_id": 10705,
+        "created_at": "2026-09-07T12:24:11",
+        "validity": "invalid_threshold",
+        "avg": 7.000125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 8,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.824,
+          "muxi": 5.156,
+          "enflame": 1.636,
+          "haiguang": 16.069,
+          "kunlunxin": 0.063,
+          "huawei": 0.2555,
+          "card_a": 19.241,
+          "card_b": 7.7565
+        }
+      },
+      {
+        "submission_id": 10348,
+        "created_at": "2026-09-06T01:37:06",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 16,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.8095,
+          "muxi": 5.1775,
+          "enflame": 1.623,
+          "haiguang": 14.8405,
+          "kunlunxin": null,
+          "huawei": 0.252,
+          "card_a": 19.2665,
+          "card_b": 7.563
+        }
+      },
+      {
+        "submission_id": 10345,
+        "created_at": "2026-09-06T01:19:27",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 15,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.7905,
+          "muxi": 5.668,
+          "enflame": null,
+          "haiguang": 14.7945,
+          "kunlunxin": 0.063,
+          "huawei": 0.2525,
+          "card_a": 19.1895,
+          "card_b": 7.7085
+        }
+      },
+      {
+        "submission_id": 10343,
+        "created_at": "2026-09-06T01:13:06",
+        "validity": "invalid_threshold",
+        "avg": 6.81075,
+        "pass_n": 8,
+        "best": false,
+        "seq": 13,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.8075,
+          "muxi": 5.217,
+          "enflame": 1.6345,
+          "haiguang": 14.7215,
+          "kunlunxin": 0.048,
+          "huawei": 0.253,
+          "card_a": 19.1905,
+          "card_b": 7.614
+        }
+      },
+      {
+        "submission_id": 10339,
+        "created_at": "2026-09-06T01:07:34",
+        "validity": "invalid_threshold",
+        "avg": 6.8721875,
+        "pass_n": 8,
+        "best": false,
+        "seq": 11,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.805,
+          "muxi": 5.435,
+          "enflame": 1.626,
+          "haiguang": 14.82,
+          "kunlunxin": 0.048,
+          "huawei": 0.2535,
+          "card_a": 19.2175,
+          "card_b": 7.7725
+        }
+      },
+      {
+        "submission_id": 10333,
+        "created_at": "2026-09-06T00:49:59",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 7,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.809,
+          "muxi": 5.1775,
+          "enflame": null,
+          "haiguang": 14.84,
+          "kunlunxin": 0.0105,
+          "huawei": 0.253,
+          "card_a": 21.138,
+          "card_b": 7.748
+        }
+      },
+      {
+        "submission_id": 10331,
+        "created_at": "2026-09-06T00:42:16",
+        "validity": "invalid_threshold",
+        "avg": 7.1099375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 5,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.7955,
+          "muxi": 5.3295,
+          "enflame": 1.6365,
+          "haiguang": 14.736,
+          "kunlunxin": 0.01,
+          "huawei": 0.252,
+          "card_a": 21.4315,
+          "card_b": 7.6885
+        }
+      },
+      {
+        "submission_id": 10328,
+        "created_at": "2026-09-06T00:32:18",
+        "validity": "invalid_threshold",
+        "avg": 7.0194375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 3,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.807,
+          "muxi": 5.648,
+          "enflame": 1.6225,
+          "haiguang": 16.0555,
+          "kunlunxin": 0.0095,
+          "huawei": 0.252,
+          "card_a": 19.241,
+          "card_b": 7.52
+        }
+      },
+      {
+        "submission_id": 9850,
+        "created_at": "2026-09-05T01:28:13",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 1,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.663,
+          "muxi": 5.659,
+          "enflame": 1.6345,
+          "haiguang": 14.7175,
+          "kunlunxin": null,
+          "huawei": 0.2535,
+          "card_a": 19.2385,
+          "card_b": 7.737
+        }
+      },
+      {
+        "submission_id": 9565,
+        "created_at": "2026-09-04T19:28:12",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 30,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.8095,
+          "muxi": 5.322,
+          "enflame": null,
+          "haiguang": 14.689,
+          "kunlunxin": null,
+          "huawei": 0.0455,
+          "card_a": 19.2355,
+          "card_b": 7.749
+        }
+      },
+      {
+        "submission_id": 9564,
+        "created_at": "2026-09-04T19:15:31",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 29,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.828,
+          "muxi": 5.626,
+          "enflame": 1.6325,
+          "haiguang": 14.867,
+          "kunlunxin": null,
+          "huawei": null,
+          "card_a": 19.2565,
+          "card_b": 7.461
+        }
+      },
+      {
+        "submission_id": 9504,
+        "created_at": "2026-09-04T14:55:43",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 22,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.6585,
+          "muxi": 5.218,
+          "enflame": 1.6355,
+          "haiguang": 14.7315,
+          "kunlunxin": null,
+          "huawei": 0.045,
+          "card_a": 19.206,
+          "card_b": 7.637
+        }
+      },
+      {
+        "submission_id": 9491,
+        "created_at": "2026-09-04T13:46:26",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 20,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.8245,
+          "muxi": 5.43,
+          "enflame": 1.6225,
+          "haiguang": 16.0055,
+          "kunlunxin": null,
+          "huawei": null,
+          "card_a": 19.2465,
+          "card_b": 7.5595
+        }
+      },
+      {
+        "submission_id": 9484,
+        "created_at": "2026-09-04T13:06:41",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 5,
+        "best": false,
+        "seq": 19,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.661,
+          "muxi": 5.45,
+          "enflame": null,
+          "haiguang": 14.767,
+          "kunlunxin": null,
+          "huawei": null,
+          "card_a": 21.4135,
+          "card_b": 7.764
+        }
+      },
+      {
+        "submission_id": 9415,
+        "created_at": "2026-09-04T08:42:16",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 9,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.81,
+          "muxi": 5.2185,
+          "enflame": null,
+          "haiguang": 14.833,
+          "kunlunxin": null,
+          "huawei": 0.031,
+          "card_a": 19.259,
+          "card_b": 7.7635
+        }
+      },
+      {
+        "submission_id": 9375,
+        "created_at": "2026-09-04T01:17:46",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 4,
+        "file_name": "chunk_scaled_dot_kkt.zip",
+        "chips": {
+          "tianshu": 5.8115,
+          "muxi": 5.4355,
+          "enflame": null,
+          "haiguang": 14.777,
+          "kunlunxin": null,
+          "huawei": 0.031,
+          "card_a": 19.246,
+          "card_b": 7.9035
+        }
+      }
+    ]
+  },
+  "46": {
+    "operator": "chunked_embedding_lora_a",
+    "rows": [
+      {
+        "submission_id": 12357,
+        "created_at": "2026-09-10T08:16:30",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 2,
+        "file_name": "chunked_embedding_lora_a.zip",
+        "chips": {
+          "tianshu": 26.816,
+          "muxi": 6.637,
+          "enflame": null,
+          "haiguang": 26.71,
+          "kunlunxin": 0.64,
+          "huawei": 2.1375,
+          "card_a": 30.0575,
+          "card_b": 17.6085
+        }
+      },
+      {
+        "submission_id": 11647,
+        "created_at": "2026-09-09T06:41:17",
+        "validity": "valid",
+        "avg": 13.9934375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 8,
+        "file_name": "chunked_embedding_lora_a.zip",
+        "chips": {
+          "tianshu": 26.561,
+          "muxi": 6.61,
+          "enflame": 0.242,
+          "haiguang": 26.9805,
+          "kunlunxin": 0.233,
+          "huawei": 2.081,
+          "card_a": 31.6755,
+          "card_b": 17.5645
+        }
+      },
+      {
+        "submission_id": 11229,
+        "created_at": "2026-09-08T16:23:26",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 22,
+        "file_name": "chunked_embedding_lora_a.zip",
+        "chips": {
+          "tianshu": 16.825,
+          "muxi": 6.8635,
+          "enflame": 0.4135,
+          "haiguang": 28.428,
+          "kunlunxin": 0.6325,
+          "huawei": null,
+          "card_a": 30.4175,
+          "card_b": 17.398
+        }
+      },
+      {
+        "submission_id": 10349,
+        "created_at": "2026-09-06T01:39:28",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 17,
+        "file_name": "chunked_embedding_lora_a.zip",
+        "chips": {
+          "tianshu": 18.59,
+          "muxi": 6.9725,
+          "enflame": null,
+          "haiguang": 27.7295,
+          "kunlunxin": 0.6325,
+          "huawei": 1.4795,
+          "card_a": 30.6435,
+          "card_b": 17.5995
+        }
+      },
+      {
+        "submission_id": 9479,
+        "created_at": "2026-09-04T12:38:32",
+        "validity": "valid",
+        "avg": 13.76875,
+        "pass_n": 8,
+        "best": false,
+        "seq": 18,
+        "file_name": "chunked_embedding_lora_a.zip",
+        "chips": {
+          "tianshu": 26.755,
+          "muxi": 6.9615,
+          "enflame": 0.241,
+          "haiguang": 26.575,
+          "kunlunxin": 0.6375,
+          "huawei": 2.085,
+          "card_a": 29.696,
+          "card_b": 17.199
+        }
+      },
+      {
+        "submission_id": 9473,
+        "created_at": "2026-09-04T12:28:23",
+        "validity": "valid",
+        "avg": 14.0178125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 17,
+        "file_name": "chunked_embedding_lora_a.zip",
+        "chips": {
+          "tianshu": 26.8385,
+          "muxi": 6.8725,
+          "enflame": 0.2735,
+          "haiguang": 26.4965,
+          "kunlunxin": 0.6835,
+          "huawei": 1.4895,
+          "card_a": 31.72,
+          "card_b": 17.7685
+        }
+      },
+      {
+        "submission_id": 9452,
+        "created_at": "2026-09-04T11:18:44",
+        "validity": "valid",
+        "avg": 14.1051875,
+        "pass_n": 8,
+        "best": true,
+        "seq": 15,
+        "file_name": "chunked_embedding_lora_a.zip",
+        "chips": {
+          "tianshu": 26.7455,
+          "muxi": 6.844,
+          "enflame": 0.3685,
+          "haiguang": 29.462,
+          "kunlunxin": 0.2295,
+          "huawei": 2.116,
+          "card_a": 29.445,
+          "card_b": 17.631
+        }
+      },
+      {
+        "submission_id": 9447,
+        "created_at": "2026-09-04T10:52:16",
+        "validity": "valid",
+        "avg": 13.998125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 13,
+        "file_name": "chunked_embedding_lora_a.zip",
+        "chips": {
+          "tianshu": 26.724,
+          "muxi": 5.4445,
+          "enflame": 0.334,
+          "haiguang": 27.505,
+          "kunlunxin": 0.227,
+          "huawei": 2.127,
+          "card_a": 31.8545,
+          "card_b": 17.769
+        }
+      },
+      {
+        "submission_id": 9381,
+        "created_at": "2026-09-04T01:36:05",
+        "validity": "valid",
+        "avg": 12.5165625,
+        "pass_n": 8,
+        "best": false,
+        "seq": 6,
+        "file_name": "chunked_embedding_lora_a.zip",
+        "chips": {
+          "tianshu": 26.704,
+          "muxi": 4.8065,
+          "enflame": 0.246,
+          "haiguang": 19.9505,
+          "kunlunxin": 0.2315,
+          "huawei": 1.9265,
+          "card_a": 29.349,
+          "card_b": 16.9185
+        }
+      },
+      {
+        "submission_id": 9374,
+        "created_at": "2026-09-04T01:15:27",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 3,
+        "file_name": "chunked_embedding_lora_a.zip",
+        "chips": {
+          "tianshu": 26.778,
+          "muxi": 4.919,
+          "enflame": null,
+          "haiguang": 20.354,
+          "kunlunxin": 0.2325,
+          "huawei": 2.0755,
+          "card_a": 30.2205,
+          "card_b": 17.439
+        }
+      }
+    ]
+  },
+  "47": {
+    "operator": "chunked_sgmv_expand",
+    "rows": [
+      {
+        "submission_id": 11795,
+        "created_at": "2026-09-09T14:11:10",
+        "validity": "valid",
+        "avg": 25.9073125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 28,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 29.193,
+          "muxi": 21.583,
+          "enflame": 0.2875,
+          "haiguang": 54.4345,
+          "kunlunxin": 5.6795,
+          "huawei": 15.4135,
+          "card_a": 52.6225,
+          "card_b": 28.045
+        }
+      },
+      {
+        "submission_id": 11793,
+        "created_at": "2026-09-09T14:03:52",
+        "validity": "valid",
+        "avg": 25.9625625,
+        "pass_n": 8,
+        "best": true,
+        "seq": 27,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 29.5625,
+          "muxi": 24.549,
+          "enflame": 0.293,
+          "haiguang": 54.971,
+          "kunlunxin": 5.9585,
+          "huawei": 13.693,
+          "card_a": 50.972,
+          "card_b": 27.7015
+        }
+      },
+      {
+        "submission_id": 11788,
+        "created_at": "2026-09-09T13:51:07",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 25,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": null,
+          "muxi": 19.2515,
+          "enflame": 0.245,
+          "haiguang": 54.364,
+          "kunlunxin": 4.7465,
+          "huawei": 10.782,
+          "card_a": 52.374,
+          "card_b": 30.423
+        }
+      },
+      {
+        "submission_id": 11776,
+        "created_at": "2026-09-09T12:48:48",
+        "validity": "valid",
+        "avg": 25.4674375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 24,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 29.5875,
+          "muxi": 21.618,
+          "enflame": 0.3,
+          "haiguang": 54.0055,
+          "kunlunxin": 4.764,
+          "huawei": 14.268,
+          "card_a": 50.9425,
+          "card_b": 28.254
+        }
+      },
+      {
+        "submission_id": 11771,
+        "created_at": "2026-09-09T12:37:44",
+        "validity": "valid",
+        "avg": 25.5965,
+        "pass_n": 8,
+        "best": false,
+        "seq": 22,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 28.9565,
+          "muxi": 21.697,
+          "enflame": 0.2925,
+          "haiguang": 55.875,
+          "kunlunxin": 4.8525,
+          "huawei": 13.766,
+          "card_a": 50.053,
+          "card_b": 29.2795
+        }
+      },
+      {
+        "submission_id": 11769,
+        "created_at": "2026-09-09T12:25:42",
+        "validity": "valid",
+        "avg": 24.897,
+        "pass_n": 8,
+        "best": false,
+        "seq": 21,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 29.76,
+          "muxi": 21.653,
+          "enflame": 0.147,
+          "haiguang": 52.4575,
+          "kunlunxin": 3.708,
+          "huawei": 13.1735,
+          "card_a": 49.458,
+          "card_b": 28.819
+        }
+      },
+      {
+        "submission_id": 11764,
+        "created_at": "2026-09-09T12:04:39",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 19,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 28.7435,
+          "muxi": 21.4795,
+          "enflame": 0.01,
+          "haiguang": 53.829,
+          "kunlunxin": null,
+          "huawei": 14.752,
+          "card_a": 50.5255,
+          "card_b": 28.662
+        }
+      },
+      {
+        "submission_id": 11756,
+        "created_at": "2026-09-09T11:40:06",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 18,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 29.8005,
+          "muxi": 21.482,
+          "enflame": null,
+          "haiguang": 54.1775,
+          "kunlunxin": null,
+          "huawei": 14.726,
+          "card_a": 51.2565,
+          "card_b": 29.115
+        }
+      },
+      {
+        "submission_id": 11728,
+        "created_at": "2026-09-09T10:54:19",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 17,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 29.633,
+          "muxi": 21.7175,
+          "enflame": null,
+          "haiguang": 52.1945,
+          "kunlunxin": null,
+          "huawei": 15.588,
+          "card_a": 50.871,
+          "card_b": 28.057
+        }
+      },
+      {
+        "submission_id": 11694,
+        "created_at": "2026-09-09T09:15:18",
+        "validity": "valid",
+        "avg": 25.36275,
+        "pass_n": 8,
+        "best": false,
+        "seq": 15,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 30.143,
+          "muxi": 21.546,
+          "enflame": 0.178,
+          "haiguang": 54.23,
+          "kunlunxin": 3.734,
+          "huawei": 14.4815,
+          "card_a": 49.991,
+          "card_b": 28.5985
+        }
+      },
+      {
+        "submission_id": 11651,
+        "created_at": "2026-09-09T06:55:01",
+        "validity": "valid",
+        "avg": 25.2635625,
+        "pass_n": 8,
+        "best": false,
+        "seq": 12,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 29.5805,
+          "muxi": 21.7815,
+          "enflame": 0.177,
+          "haiguang": 53.9975,
+          "kunlunxin": 3.7585,
+          "huawei": 14.9025,
+          "card_a": 50.297,
+          "card_b": 27.614
+        }
+      },
+      {
+        "submission_id": 11641,
+        "created_at": "2026-09-09T06:24:37",
+        "validity": "valid",
+        "avg": 25.1925,
+        "pass_n": 8,
+        "best": false,
+        "seq": 2,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 29.074,
+          "muxi": 21.9115,
+          "enflame": 0.1655,
+          "haiguang": 53.257,
+          "kunlunxin": 3.7685,
+          "huawei": 14.659,
+          "card_a": 50.326,
+          "card_b": 28.3785
+        }
+      },
+      {
+        "submission_id": 11031,
+        "created_at": "2026-09-08T01:49:42",
+        "validity": "valid",
+        "avg": 21.6584375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 1,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 29.757,
+          "muxi": 21.5455,
+          "enflame": 0.1725,
+          "haiguang": 24.629,
+          "kunlunxin": 3.716,
+          "huawei": 13.8335,
+          "card_a": 50.9785,
+          "card_b": 28.6355
+        }
+      },
+      {
+        "submission_id": 10175,
+        "created_at": "2026-09-05T20:11:25",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 28,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 29.0055,
+          "muxi": 21.511,
+          "enflame": 0.1385,
+          "haiguang": 53.7135,
+          "kunlunxin": null,
+          "huawei": 15.61,
+          "card_a": 50.05,
+          "card_b": 29.1445
+        }
+      },
+      {
+        "submission_id": 10164,
+        "created_at": "2026-09-05T19:37:13",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 27,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 29.233,
+          "muxi": 21.953,
+          "enflame": null,
+          "haiguang": 53.9745,
+          "kunlunxin": 3.7395,
+          "huawei": 14.531,
+          "card_a": 49.316,
+          "card_b": 28.8965
+        }
+      },
+      {
+        "submission_id": 9512,
+        "created_at": "2026-09-04T15:30:23",
+        "validity": "valid",
+        "avg": 25.0048125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 23,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 29.056,
+          "muxi": 22.404,
+          "enflame": 0.178,
+          "haiguang": 53.271,
+          "kunlunxin": 3.717,
+          "huawei": 13.7365,
+          "card_a": 49.0125,
+          "card_b": 28.6635
+        }
+      },
+      {
+        "submission_id": 9502,
+        "created_at": "2026-09-04T14:53:01",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 21,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 28.7105,
+          "muxi": 21.9725,
+          "enflame": null,
+          "haiguang": 54.1915,
+          "kunlunxin": 3.7365,
+          "huawei": 14.783,
+          "card_a": 50.1925,
+          "card_b": 30.6995
+        }
+      },
+      {
+        "submission_id": 9467,
+        "created_at": "2026-09-04T12:09:38",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 16,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 28.8205,
+          "muxi": 25.0755,
+          "enflame": 0.2515,
+          "haiguang": 53.5505,
+          "kunlunxin": null,
+          "huawei": 14.4175,
+          "card_a": 49.9735,
+          "card_b": 29.172
+        }
+      },
+      {
+        "submission_id": 9414,
+        "created_at": "2026-09-04T08:39:38",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 8,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 29.738,
+          "muxi": 21.7515,
+          "enflame": 0.2485,
+          "haiguang": 55.3695,
+          "kunlunxin": null,
+          "huawei": 15.6055,
+          "card_a": 48.6245,
+          "card_b": 28.7775
+        }
+      },
+      {
+        "submission_id": 9383,
+        "created_at": "2026-09-04T01:47:12",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 7,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 27.01,
+          "muxi": 22.4005,
+          "enflame": 0.2545,
+          "haiguang": 53.9905,
+          "kunlunxin": null,
+          "huawei": 13.2835,
+          "card_a": 50.138,
+          "card_b": 29.391
+        }
+      },
+      {
+        "submission_id": 9376,
+        "created_at": "2026-09-04T01:20:28",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 5,
+        "file_name": "chunked_sgmv_expand.zip",
+        "chips": {
+          "tianshu": 29.489,
+          "muxi": 21.64,
+          "enflame": null,
+          "haiguang": 55.865,
+          "kunlunxin": null,
+          "huawei": 13.5175,
+          "card_a": 49.5485,
+          "card_b": 27.337
+        }
+      }
+    ]
+  },
+  "48": {
+    "operator": "chunked_sgmv_shrink",
+    "rows": [
+      {
+        "submission_id": 12395,
+        "created_at": "2026-09-10T09:30:32",
+        "validity": "valid",
+        "avg": 5.289875,
+        "pass_n": 8,
+        "best": true,
+        "seq": 15,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 4.1955,
+          "muxi": 6.36,
+          "enflame": 0.5555,
+          "haiguang": 6.793,
+          "kunlunxin": 1.7835,
+          "huawei": 7.523,
+          "card_a": 7.813,
+          "card_b": 7.2955
+        }
+      },
+      {
+        "submission_id": 12368,
+        "created_at": "2026-09-10T08:48:24",
+        "validity": "valid",
+        "avg": 5.207,
+        "pass_n": 8,
+        "best": false,
+        "seq": 10,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 4.1845,
+          "muxi": 6.4035,
+          "enflame": 0.828,
+          "haiguang": 6.719,
+          "kunlunxin": 1.7825,
+          "huawei": 6.9545,
+          "card_a": 7.6925,
+          "card_b": 7.0915
+        }
+      },
+      {
+        "submission_id": 12365,
+        "created_at": "2026-09-10T08:38:18",
+        "validity": "valid",
+        "avg": 5.200625,
+        "pass_n": 8,
+        "best": false,
+        "seq": 8,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 4.2095,
+          "muxi": 6.32,
+          "enflame": 0.5355,
+          "haiguang": 6.776,
+          "kunlunxin": 1.81,
+          "huawei": 6.9485,
+          "card_a": 7.78,
+          "card_b": 7.2255
+        }
+      },
+      {
+        "submission_id": 12362,
+        "created_at": "2026-09-10T08:25:44",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 5,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 4.208,
+          "muxi": 6.4115,
+          "enflame": null,
+          "haiguang": 6.8615,
+          "kunlunxin": 1.769,
+          "huawei": 7.3735,
+          "card_a": 7.838,
+          "card_b": 7.303
+        }
+      },
+      {
+        "submission_id": 12356,
+        "created_at": "2026-09-10T08:13:57",
+        "validity": "valid",
+        "avg": 4.853375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 1,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 4.248,
+          "muxi": 2.82,
+          "enflame": 0.5385,
+          "haiguang": 6.655,
+          "kunlunxin": 1.796,
+          "huawei": 7.7675,
+          "card_a": 7.704,
+          "card_b": 7.298
+        }
+      },
+      {
+        "submission_id": 11775,
+        "created_at": "2026-09-09T12:41:15",
+        "validity": "valid",
+        "avg": 4.8135625,
+        "pass_n": 8,
+        "best": false,
+        "seq": 23,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 3.828,
+          "muxi": 5.3525,
+          "enflame": 0.897,
+          "haiguang": 6.306,
+          "kunlunxin": 2.424,
+          "huawei": 5.893,
+          "card_a": 7.008,
+          "card_b": 6.8
+        }
+      },
+      {
+        "submission_id": 11767,
+        "created_at": "2026-09-09T12:22:36",
+        "validity": "valid",
+        "avg": 4.460625,
+        "pass_n": 8,
+        "best": false,
+        "seq": 20,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 3.728,
+          "muxi": 4.972,
+          "enflame": 0.326,
+          "haiguang": 5.8125,
+          "kunlunxin": 1.752,
+          "huawei": 5.5255,
+          "card_a": 6.7085,
+          "card_b": 6.8605
+        }
+      },
+      {
+        "submission_id": 11170,
+        "created_at": "2026-09-08T12:52:50",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 17,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 6.391,
+          "muxi": 9.1925,
+          "enflame": 0.56,
+          "haiguang": 17.174,
+          "kunlunxin": null,
+          "huawei": 15.395,
+          "card_a": 12.482,
+          "card_b": 10.4835
+        }
+      },
+      {
+        "submission_id": 10808,
+        "created_at": "2026-09-07T17:43:08",
+        "validity": "valid",
+        "avg": 4.7489375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 18,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 3.7705,
+          "muxi": 5.305,
+          "enflame": 0.528,
+          "haiguang": 6.223,
+          "kunlunxin": 1.785,
+          "huawei": 6.622,
+          "card_a": 7.132,
+          "card_b": 6.626
+        }
+      },
+      {
+        "submission_id": 10670,
+        "created_at": "2026-09-07T10:31:19",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 5,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 3.7745,
+          "muxi": 5.353,
+          "enflame": null,
+          "haiguang": 6.304,
+          "kunlunxin": 1.7745,
+          "huawei": 6.7605,
+          "card_a": 7.1885,
+          "card_b": 6.789
+        }
+      },
+      {
+        "submission_id": 10406,
+        "created_at": "2026-09-06T08:09:04",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 1,
+        "best": false,
+        "seq": 22,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": null,
+          "muxi": null,
+          "enflame": null,
+          "haiguang": null,
+          "kunlunxin": 1.796,
+          "huawei": null,
+          "card_a": null,
+          "card_b": null
+        }
+      },
+      {
+        "submission_id": 10404,
+        "created_at": "2026-09-06T07:50:26",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 2,
+        "best": false,
+        "seq": 20,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": null,
+          "muxi": null,
+          "enflame": 0.5325,
+          "haiguang": null,
+          "kunlunxin": 1.7935,
+          "huawei": null,
+          "card_a": null,
+          "card_b": null
+        }
+      },
+      {
+        "submission_id": 10111,
+        "created_at": "2026-09-05T16:42:59",
+        "validity": "valid",
+        "avg": 4.7198125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 21,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 3.8545,
+          "muxi": 5.31,
+          "enflame": 0.58,
+          "haiguang": 5.999,
+          "kunlunxin": 1.794,
+          "huawei": 6.5395,
+          "card_a": 6.983,
+          "card_b": 6.6985
+        }
+      },
+      {
+        "submission_id": 10002,
+        "created_at": "2026-09-05T10:45:32",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 17,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 3.7405,
+          "muxi": 5.388,
+          "enflame": null,
+          "haiguang": 6.0855,
+          "kunlunxin": 1.767,
+          "huawei": 6.262,
+          "card_a": 7.0435,
+          "card_b": 6.6935
+        }
+      },
+      {
+        "submission_id": 9998,
+        "created_at": "2026-09-05T10:14:28",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 16,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 3.728,
+          "muxi": 5.233,
+          "enflame": null,
+          "haiguang": 6.0825,
+          "kunlunxin": 1.793,
+          "huawei": 6.364,
+          "card_a": 7.0845,
+          "card_b": 6.6275
+        }
+      },
+      {
+        "submission_id": 9986,
+        "created_at": "2026-09-05T09:38:23",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 13,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 3.742,
+          "muxi": 5.3405,
+          "enflame": null,
+          "haiguang": 6.54,
+          "kunlunxin": 1.7695,
+          "huawei": 6.259,
+          "card_a": 7.084,
+          "card_b": 6.769
+        }
+      },
+      {
+        "submission_id": 9946,
+        "created_at": "2026-09-05T06:55:05",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 11,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 3.749,
+          "muxi": 5.3445,
+          "enflame": null,
+          "haiguang": 6.1495,
+          "kunlunxin": 1.764,
+          "huawei": 6.2165,
+          "card_a": 7.15,
+          "card_b": 6.664
+        }
+      },
+      {
+        "submission_id": 9879,
+        "created_at": "2026-09-05T02:38:33",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 7,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 3.72,
+          "muxi": 5.28,
+          "enflame": 0.5825,
+          "haiguang": 6.22,
+          "kunlunxin": null,
+          "huawei": 6.726,
+          "card_a": 6.956,
+          "card_b": 6.634
+        }
+      },
+      {
+        "submission_id": 9865,
+        "created_at": "2026-09-05T02:05:26",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 3,
+        "file_name": "chunked_sgmv_shrink.zip",
+        "chips": {
+          "tianshu": 3.719,
+          "muxi": 5.2365,
+          "enflame": null,
+          "haiguang": 6.158,
+          "kunlunxin": null,
+          "huawei": 6.089,
+          "card_a": 7.0055,
+          "card_b": 6.747
+        }
+      }
+    ]
+  },
+  "49": {
+    "operator": "ernie45_rope_fused",
+    "rows": [
+      {
+        "submission_id": 12424,
+        "created_at": "2026-09-10T10:01:07",
+        "validity": "valid",
+        "avg": 10.270125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 18,
+        "file_name": "ernie45_rope_fused.zip",
+        "chips": {
+          "tianshu": 16.17225,
+          "muxi": 10.48325,
+          "enflame": 0.6125,
+          "haiguang": 18.6815,
+          "kunlunxin": 0.6695,
+          "huawei": 3.0915,
+          "card_a": 22.58,
+          "card_b": 9.8705
+        }
+      },
+      {
+        "submission_id": 12399,
+        "created_at": "2026-09-10T09:32:56",
+        "validity": "valid",
+        "avg": 10.35265625,
+        "pass_n": 8,
+        "best": true,
+        "seq": 16,
+        "file_name": "ernie45_rope_fused.zip",
+        "chips": {
+          "tianshu": 16.407,
+          "muxi": 9.0425,
+          "enflame": 0.55975,
+          "haiguang": 20.1845,
+          "kunlunxin": 0.65375,
+          "huawei": 3.0875,
+          "card_a": 22.94175,
+          "card_b": 9.9445
+        }
+      },
+      {
+        "submission_id": 12373,
+        "created_at": "2026-09-10T09:13:21",
+        "validity": "valid",
+        "avg": 8.74603125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 14,
+        "file_name": "ernie45_rope_fused.zip",
+        "chips": {
+          "tianshu": 11.9005,
+          "muxi": 6.3745,
+          "enflame": 0.568,
+          "haiguang": 19.632,
+          "kunlunxin": 0.67325,
+          "huawei": 3.0135,
+          "card_a": 19.518,
+          "card_b": 8.2885
+        }
+      },
+      {
+        "submission_id": 12371,
+        "created_at": "2026-09-10T08:59:21",
+        "validity": "valid",
+        "avg": 10.1384375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 13,
+        "file_name": "ernie45_rope_fused.zip",
+        "chips": {
+          "tianshu": 16.135,
+          "muxi": 9.05125,
+          "enflame": 0.60725,
+          "haiguang": 20.7835,
+          "kunlunxin": 0.669,
+          "huawei": 3.02375,
+          "card_a": 21.01125,
+          "card_b": 9.8265
+        }
+      },
+      {
+        "submission_id": 12366,
+        "created_at": "2026-09-10T08:40:32",
+        "validity": "valid",
+        "avg": 10.13953125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 9,
+        "file_name": "ernie45_rope_fused.zip",
+        "chips": {
+          "tianshu": 16.18475,
+          "muxi": 8.9455,
+          "enflame": 0.61225,
+          "haiguang": 20.72725,
+          "kunlunxin": 0.719,
+          "huawei": 3.11825,
+          "card_a": 20.8975,
+          "card_b": 9.91175
+        }
+      },
+      {
+        "submission_id": 12361,
+        "created_at": "2026-09-10T08:22:54",
+        "validity": "valid",
+        "avg": 8.4046875,
+        "pass_n": 8,
+        "best": false,
+        "seq": 4,
+        "file_name": "ernie45_rope_fused.zip",
+        "chips": {
+          "tianshu": 12.43375,
+          "muxi": 7.22325,
+          "enflame": 0.5675,
+          "haiguang": 20.44375,
+          "kunlunxin": 0.66825,
+          "huawei": 2.9785,
+          "card_a": 15.83725,
+          "card_b": 7.08525
+        }
+      },
+      {
+        "submission_id": 12359,
+        "created_at": "2026-09-10T08:18:55",
+        "validity": "valid",
+        "avg": 8.98278125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 3,
+        "file_name": "ernie45_rope_fused.zip",
+        "chips": {
+          "tianshu": 16.2285,
+          "muxi": 10.359,
+          "enflame": 0.56875,
+          "haiguang": 10.5665,
+          "kunlunxin": 0.6695,
+          "huawei": 2.5465,
+          "card_a": 21.135,
+          "card_b": 9.7885
+        }
+      },
+      {
+        "submission_id": 11648,
+        "created_at": "2026-09-09T06:44:18",
+        "validity": "valid",
+        "avg": 8.9578125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 9,
+        "file_name": "ernie45_rope_fused.zip",
+        "chips": {
+          "tianshu": 15.65825,
+          "muxi": 8.9975,
+          "enflame": 0.567,
+          "haiguang": 10.482,
+          "kunlunxin": 0.66475,
+          "huawei": 2.4565,
+          "card_a": 22.86775,
+          "card_b": 9.96875
+        }
+      },
+      {
+        "submission_id": 11245,
+        "created_at": "2026-09-08T17:00:24",
+        "validity": "valid",
+        "avg": 8.71115625,
+        "pass_n": 8,
+        "best": false,
+        "seq": 28,
+        "file_name": "ernie45_rope_fused.zip",
+        "chips": {
+          "tianshu": 16.08325,
+          "muxi": 8.8965,
+          "enflame": 0.57325,
+          "haiguang": 9.50925,
+          "kunlunxin": 0.667,
+          "huawei": 2.43625,
+          "card_a": 21.61225,
+          "card_b": 9.9115
+        }
+      },
+      {
+        "submission_id": 10667,
+        "created_at": "2026-09-07T10:21:47",
+        "validity": "valid",
+        "avg": 8.58253125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 2,
+        "file_name": "ernie45_rope_fused.zip",
+        "chips": {
+          "tianshu": 16.09675,
+          "muxi": 8.78025,
+          "enflame": 0.6265,
+          "haiguang": 8.945,
+          "kunlunxin": 0.66425,
+          "huawei": 2.5365,
+          "card_a": 21.11125,
+          "card_b": 9.89975
+        }
+      },
+      {
+        "submission_id": 10035,
+        "created_at": "2026-09-05T13:13:38",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 18,
+        "file_name": "ernie45_rope_fused.zip",
+        "chips": {
+          "tianshu": 16.2605,
+          "muxi": 8.98475,
+          "enflame": 0.5765,
+          "haiguang": 9.3175,
+          "kunlunxin": null,
+          "huawei": 2.46975,
+          "card_a": 21.54125,
+          "card_b": 9.8735
+        }
+      },
+      {
+        "submission_id": 9993,
+        "created_at": "2026-09-05T09:53:38",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 15,
+        "file_name": "ernie45_rope_fused.zip",
+        "chips": {
+          "tianshu": 16.2445,
+          "muxi": 8.849,
+          "enflame": 0.55225,
+          "haiguang": 9.33275,
+          "kunlunxin": null,
+          "huawei": 2.47925,
+          "card_a": 22.1365,
+          "card_b": 9.88325
+        }
+      },
+      {
+        "submission_id": 9988,
+        "created_at": "2026-09-05T09:41:07",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 14,
+        "file_name": "ernie45_rope_fused.zip",
+        "chips": {
+          "tianshu": 16.166,
+          "muxi": 8.862,
+          "enflame": null,
+          "haiguang": 9.0655,
+          "kunlunxin": null,
+          "huawei": 2.74,
+          "card_a": 21.1675,
+          "card_b": 9.84975
+        }
+      }
+    ]
+  },
+  "50": {
+    "operator": "extend_attention",
+    "rows": [
+      {
+        "submission_id": 10280,
+        "created_at": "2026-09-05T22:48:09",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 30,
+        "file_name": "extend_attention.zip",
+        "chips": {
+          "tianshu": 0.319,
+          "muxi": 0.58625,
+          "enflame": 0.01325,
+          "haiguang": 1.34675,
+          "kunlunxin": null,
+          "huawei": null,
+          "card_a": 1.38125,
+          "card_b": 1.0745
+        }
+      },
+      {
+        "submission_id": 10141,
+        "created_at": "2026-09-05T18:39:38",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 24,
+        "file_name": "extend_attention.zip",
+        "chips": {
+          "tianshu": 0.31825,
+          "muxi": 0.727,
+          "enflame": 0.013,
+          "haiguang": 1.32425,
+          "kunlunxin": null,
+          "huawei": null,
+          "card_a": 1.3955,
+          "card_b": 1.07325
+        }
+      },
+      {
+        "submission_id": 10125,
+        "created_at": "2026-09-05T17:03:24",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 5,
+        "best": false,
+        "seq": 23,
+        "file_name": "extend_attention.zip",
+        "chips": {
+          "tianshu": 0.318,
+          "muxi": 0.5875,
+          "enflame": null,
+          "haiguang": 1.331,
+          "kunlunxin": null,
+          "huawei": null,
+          "card_a": 1.38475,
+          "card_b": 1.068
+        }
+      },
+      {
+        "submission_id": 10114,
+        "created_at": "2026-09-05T16:45:35",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 5,
+        "best": false,
+        "seq": 22,
+        "file_name": "extend_attention.zip",
+        "chips": {
+          "tianshu": 0.32075,
+          "muxi": 0.5935,
+          "enflame": null,
+          "haiguang": 1.342,
+          "kunlunxin": null,
+          "huawei": null,
+          "card_a": 1.4015,
+          "card_b": 1.067
+        }
+      },
+      {
+        "submission_id": 10069,
+        "created_at": "2026-09-05T15:17:16",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 5,
+        "best": false,
+        "seq": 20,
+        "file_name": "extend_attention.zip",
+        "chips": {
+          "tianshu": 0.31025,
+          "muxi": 0.604,
+          "enflame": null,
+          "haiguang": 1.3655,
+          "kunlunxin": null,
+          "huawei": null,
+          "card_a": 1.39725,
+          "card_b": 1.06825
+        }
+      }
+    ]
+  },
+  "51": {
+    "operator": "fla_layernorm_gated",
+    "rows": [
+      {
+        "submission_id": 11204,
+        "created_at": "2026-09-08T14:58:36",
+        "validity": "valid",
+        "avg": 60.7192,
+        "pass_n": 8,
+        "best": true,
+        "seq": 19,
+        "file_name": "fla_layernorm_gated.zip",
+        "chips": {
+          "tianshu": 11.3126,
+          "muxi": 4.5796,
+          "enflame": 442.8042,
+          "haiguang": 7.9608,
+          "kunlunxin": 0.9672,
+          "huawei": 2.5348,
+          "card_a": 8.4304,
+          "card_b": 7.164
+        }
+      },
+      {
+        "submission_id": 11124,
+        "created_at": "2026-09-08T11:17:22",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 10,
+        "file_name": "fla_layernorm_gated.zip",
+        "chips": {
+          "tianshu": 9.1732,
+          "muxi": 4.5712,
+          "enflame": 2.299,
+          "haiguang": 7.7266,
+          "kunlunxin": null,
+          "huawei": 2.2568,
+          "card_a": 8.326,
+          "card_b": 6.878
+        }
+      },
+      {
+        "submission_id": 11032,
+        "created_at": "2026-09-08T01:52:34",
+        "validity": "valid",
+        "avg": 5.721075,
+        "pass_n": 8,
+        "best": false,
+        "seq": 2,
+        "file_name": "fla_layernorm_gated.zip",
+        "chips": {
+          "tianshu": 11.2122,
+          "muxi": 4.7748,
+          "enflame": 2.3324,
+          "haiguang": 8.6432,
+          "kunlunxin": 1.0292,
+          "huawei": 2.3638,
+          "card_a": 8.3158,
+          "card_b": 7.0972
+        }
+      },
+      {
+        "submission_id": 10924,
+        "created_at": "2026-09-07T21:41:47",
+        "validity": "valid",
+        "avg": 5.816325,
+        "pass_n": 8,
+        "best": false,
+        "seq": 30,
+        "file_name": "fla_layernorm_gated.zip",
+        "chips": {
+          "tianshu": 11.4872,
+          "muxi": 4.4776,
+          "enflame": 3.7314,
+          "haiguang": 7.9938,
+          "kunlunxin": 0.9644,
+          "huawei": 2.3028,
+          "card_a": 8.428,
+          "card_b": 7.1454
+        }
+      },
+      {
+        "submission_id": 10877,
+        "created_at": "2026-09-07T19:39:46",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 27,
+        "file_name": "fla_layernorm_gated.zip",
+        "chips": {
+          "tianshu": 11.1728,
+          "muxi": 4.476,
+          "enflame": 2.3602,
+          "haiguang": 6.9598,
+          "kunlunxin": null,
+          "huawei": 2.482,
+          "card_a": 8.2492,
+          "card_b": 7.1592
+        }
+      },
+      {
+        "submission_id": 10873,
+        "created_at": "2026-09-07T19:31:04",
+        "validity": "valid",
+        "avg": 5.386175,
+        "pass_n": 8,
+        "best": false,
+        "seq": 26,
+        "file_name": "fla_layernorm_gated.zip",
+        "chips": {
+          "tianshu": 9.215,
+          "muxi": 4.858,
+          "enflame": 2.3282,
+          "haiguang": 7.9994,
+          "kunlunxin": 0.9636,
+          "huawei": 2.357,
+          "card_a": 8.2822,
+          "card_b": 7.086
+        }
+      },
+      {
+        "submission_id": 10746,
+        "created_at": "2026-09-07T14:48:28",
+        "validity": "valid",
+        "avg": 5.195325,
+        "pass_n": 8,
+        "best": false,
+        "seq": 12,
+        "file_name": "fla_layernorm_gated.zip",
+        "chips": {
+          "tianshu": 9.235,
+          "muxi": 3.7252,
+          "enflame": 2.3446,
+          "haiguang": 7.9656,
+          "kunlunxin": 0.9616,
+          "huawei": 2.3488,
+          "card_a": 8.0856,
+          "card_b": 6.8962
+        }
+      },
+      {
+        "submission_id": 10385,
+        "created_at": "2026-09-06T04:37:47",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 19,
+        "file_name": "fla_layernorm_gated.zip",
+        "chips": {
+          "tianshu": 9.2822,
+          "muxi": 4.3918,
+          "enflame": null,
+          "haiguang": 8.133,
+          "kunlunxin": 0.9682,
+          "huawei": 2.6182,
+          "card_a": 8.1964,
+          "card_b": 6.873
+        }
+      },
+      {
+        "submission_id": 10276,
+        "created_at": "2026-09-05T22:45:11",
+        "validity": "valid",
+        "avg": 5.3939,
+        "pass_n": 8,
+        "best": false,
+        "seq": 29,
+        "file_name": "fla_layernorm_gated.zip",
+        "chips": {
+          "tianshu": 9.3464,
+          "muxi": 4.5654,
+          "enflame": 2.7712,
+          "haiguang": 8.1772,
+          "kunlunxin": 0.9634,
+          "huawei": 2.3386,
+          "card_a": 8.2054,
+          "card_b": 6.7836
+        }
+      },
+      {
+        "submission_id": 9944,
+        "created_at": "2026-09-05T06:50:09",
+        "validity": "valid",
+        "avg": 5.390025,
+        "pass_n": 8,
+        "best": false,
+        "seq": 9,
+        "file_name": "fla_layernorm_gated.zip",
+        "chips": {
+          "tianshu": 9.2092,
+          "muxi": 4.5702,
+          "enflame": 2.3398,
+          "haiguang": 7.742,
+          "kunlunxin": 0.9444,
+          "huawei": 2.5212,
+          "card_a": 8.726,
+          "card_b": 7.0674
+        }
+      },
+      {
+        "submission_id": 9867,
+        "created_at": "2026-09-05T02:12:21",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 5,
+        "file_name": "fla_layernorm_gated.zip",
+        "chips": {
+          "tianshu": 9.314,
+          "muxi": 4.4856,
+          "enflame": null,
+          "haiguang": 7.7132,
+          "kunlunxin": 0.9482,
+          "huawei": 2.4098,
+          "card_a": 7.978,
+          "card_b": 6.9964
+        }
+      }
+    ]
+  },
+  "52": {
+    "operator": "fused_dual_residual_rmsnorm",
+    "rows": [
+      {
+        "submission_id": 10743,
+        "created_at": "2026-09-07T14:42:51",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 10,
+        "file_name": "fused_dual_residual_rmsnorm.zip",
+        "chips": {
+          "tianshu": 8.37006667,
+          "muxi": 3.762,
+          "enflame": null,
+          "haiguang": 9.29186667,
+          "kunlunxin": null,
+          "huawei": 3.22833333,
+          "card_a": 6.99346667,
+          "card_b": 8.1058
+        }
+      },
+      {
+        "submission_id": 10322,
+        "created_at": "2026-09-06T00:12:24",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 1,
+        "file_name": "fused_dual_residual_rmsnorm.zip",
+        "chips": {
+          "tianshu": 8.5836,
+          "muxi": 5.24253333,
+          "enflame": null,
+          "haiguang": 8.7104,
+          "kunlunxin": null,
+          "huawei": 3.74266667,
+          "card_a": 8.17126667,
+          "card_b": 7.9668
+        }
+      },
+      {
+        "submission_id": 10151,
+        "created_at": "2026-09-05T18:54:47",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 26,
+        "file_name": "fused_dual_residual_rmsnorm.zip",
+        "chips": {
+          "tianshu": 8.62406667,
+          "muxi": 5.17133333,
+          "enflame": null,
+          "haiguang": 8.99893333,
+          "kunlunxin": null,
+          "huawei": 3.28133333,
+          "card_a": 8.20146667,
+          "card_b": 7.98986667
+        }
+      },
+      {
+        "submission_id": 10143,
+        "created_at": "2026-09-05T18:42:00",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 6,
+        "best": false,
+        "seq": 25,
+        "file_name": "fused_dual_residual_rmsnorm.zip",
+        "chips": {
+          "tianshu": 8.62406667,
+          "muxi": 5.25453333,
+          "enflame": null,
+          "haiguang": 8.95606667,
+          "kunlunxin": null,
+          "huawei": 3.48113333,
+          "card_a": 7.9106,
+          "card_b": 8.08993333
+        }
+      },
+      {
+        "submission_id": 9950,
+        "created_at": "2026-09-05T07:07:20",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 5,
+        "best": false,
+        "seq": 12,
+        "file_name": "fused_dual_residual_rmsnorm.zip",
+        "chips": {
+          "tianshu": 8.6026,
+          "muxi": 5.41853333,
+          "enflame": null,
+          "haiguang": 9.246,
+          "kunlunxin": null,
+          "huawei": 3.48566667,
+          "card_a": 8.13926667,
+          "card_b": null
+        }
+      },
+      {
+        "submission_id": 9945,
+        "created_at": "2026-09-05T06:52:36",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 5,
+        "best": false,
+        "seq": 10,
+        "file_name": "fused_dual_residual_rmsnorm.zip",
+        "chips": {
+          "tianshu": 8.564,
+          "muxi": 3.78433333,
+          "enflame": null,
+          "haiguang": 8.8826,
+          "kunlunxin": null,
+          "huawei": 3.36386667,
+          "card_a": 6.98,
+          "card_b": null
+        }
+      },
+      {
+        "submission_id": 9888,
+        "created_at": "2026-09-05T02:52:27",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 5,
+        "best": false,
+        "seq": 8,
+        "file_name": "fused_dual_residual_rmsnorm.zip",
+        "chips": {
+          "tianshu": null,
+          "muxi": 5.0592,
+          "enflame": null,
+          "haiguang": 10.49246667,
+          "kunlunxin": null,
+          "huawei": 3.31326667,
+          "card_a": 8.40606667,
+          "card_b": 7.99393333
+        }
+      }
+    ]
+  },
+  "53": {
+    "operator": "fused_gdn_gating",
+    "rows": [
+      {
+        "submission_id": 12363,
+        "created_at": "2026-09-10T08:28:20",
+        "validity": "valid",
+        "avg": 3.01725,
+        "pass_n": 8,
+        "best": false,
+        "seq": 6,
+        "file_name": "fused_gdn_gating.zip",
+        "chips": {
+          "tianshu": 4.7794,
+          "muxi": 2.76,
+          "enflame": 1.606,
+          "haiguang": 4.3648,
+          "kunlunxin": 0.7176,
+          "huawei": 1.6114,
+          "card_a": 4.0284,
+          "card_b": 4.2704
+        }
+      },
+      {
+        "submission_id": 11791,
+        "created_at": "2026-09-09T14:00:58",
+        "validity": "valid",
+        "avg": 2.1853,
+        "pass_n": 8,
+        "best": false,
+        "seq": 26,
+        "file_name": "fused_gdn_gating.zip",
+        "chips": {
+          "tianshu": 2.4556,
+          "muxi": 2.7996,
+          "enflame": 1.5984,
+          "haiguang": 2.9408,
+          "kunlunxin": 0.7122,
+          "huawei": 1.5522,
+          "card_a": 2.77,
+          "card_b": 2.6536
+        }
+      },
+      {
+        "submission_id": 11645,
+        "created_at": "2026-09-09T06:35:21",
+        "validity": "valid",
+        "avg": 2.973675,
+        "pass_n": 8,
+        "best": false,
+        "seq": 6,
+        "file_name": "fused_gdn_gating.zip",
+        "chips": {
+          "tianshu": 4.7338,
+          "muxi": 2.7842,
+          "enflame": 1.6078,
+          "haiguang": 4.3248,
+          "kunlunxin": 0.7204,
+          "huawei": 1.4992,
+          "card_a": 3.7978,
+          "card_b": 4.3214
+        }
+      },
+      {
+        "submission_id": 11242,
+        "created_at": "2026-09-08T16:55:17",
+        "validity": "valid",
+        "avg": 3.03205,
+        "pass_n": 8,
+        "best": true,
+        "seq": 27,
+        "file_name": "fused_gdn_gating.zip",
+        "chips": {
+          "tianshu": 4.8042,
+          "muxi": 2.7994,
+          "enflame": 1.6632,
+          "haiguang": 4.3748,
+          "kunlunxin": 0.7158,
+          "huawei": 1.6094,
+          "card_a": 4.0408,
+          "card_b": 4.2488
+        }
+      },
+      {
+        "submission_id": 11044,
+        "created_at": "2026-09-08T07:19:09",
+        "validity": "valid",
+        "avg": 2.954625,
+        "pass_n": 8,
+        "best": false,
+        "seq": 3,
+        "file_name": "fused_gdn_gating.zip",
+        "chips": {
+          "tianshu": 4.7802,
+          "muxi": 2.751,
+          "enflame": 1.601,
+          "haiguang": 4.3194,
+          "kunlunxin": 0.7158,
+          "huawei": 1.4678,
+          "card_a": 3.6912,
+          "card_b": 4.3106
+        }
+      },
+      {
+        "submission_id": 10672,
+        "created_at": "2026-09-07T10:37:42",
+        "validity": "valid",
+        "avg": 2.1267,
+        "pass_n": 8,
+        "best": false,
+        "seq": 6,
+        "file_name": "fused_gdn_gating.zip",
+        "chips": {
+          "tianshu": 2.4364,
+          "muxi": 2.7402,
+          "enflame": 1.5856,
+          "haiguang": 2.9286,
+          "kunlunxin": 0.7162,
+          "huawei": 1.3676,
+          "card_a": 2.6012,
+          "card_b": 2.6378
+        }
+      },
+      {
+        "submission_id": 10669,
+        "created_at": "2026-09-07T10:27:53",
+        "validity": "valid",
+        "avg": 2.014025,
+        "pass_n": 8,
+        "best": false,
+        "seq": 4,
+        "file_name": "fused_gdn_gating.zip",
+        "chips": {
+          "tianshu": 2.452,
+          "muxi": 1.3402,
+          "enflame": 1.605,
+          "haiguang": 2.763,
+          "kunlunxin": 0.7286,
+          "huawei": 1.654,
+          "card_a": 2.9108,
+          "card_b": 2.6586
+        }
+      },
+      {
+        "submission_id": 10384,
+        "created_at": "2026-09-06T04:35:22",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 18,
+        "file_name": "fused_gdn_gating.zip",
+        "chips": {
+          "tianshu": 2.434,
+          "muxi": 1.3396,
+          "enflame": null,
+          "haiguang": 3.1538,
+          "kunlunxin": 0.7182,
+          "huawei": 1.29,
+          "card_a": 2.446,
+          "card_b": 2.7264
+        }
+      },
+      {
+        "submission_id": 9877,
+        "created_at": "2026-09-05T02:34:43",
+        "validity": "valid",
+        "avg": 1.769075,
+        "pass_n": 8,
+        "best": false,
+        "seq": 6,
+        "file_name": "fused_gdn_gating.zip",
+        "chips": {
+          "tianshu": 2.3302,
+          "muxi": 1.34,
+          "enflame": 0.17,
+          "haiguang": 2.9784,
+          "kunlunxin": 0.7168,
+          "huawei": 1.261,
+          "card_a": 2.6526,
+          "card_b": 2.7036
+        }
+      },
+      {
+        "submission_id": 9866,
+        "created_at": "2026-09-05T02:08:02",
+        "validity": "invalid_threshold",
+        "avg": 1.7086375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 4,
+        "file_name": "fused_gdn_gating.zip",
+        "chips": {
+          "tianshu": 2.8814,
+          "muxi": 1.3148,
+          "enflame": 0.165,
+          "haiguang": 2.7854,
+          "kunlunxin": 0.0625,
+          "huawei": 1.1936,
+          "card_a": 2.5324,
+          "card_b": 2.734
+        }
+      }
+    ]
+  },
+  "54": {
+    "operator": "fused_norm_rope_stacked",
+    "rows": [
+      {
+        "submission_id": 11046,
+        "created_at": "2026-09-08T07:42:52",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 5,
+        "best": false,
+        "seq": 5,
+        "file_name": "fused_norm_rope_stacked.zip",
+        "chips": {
+          "tianshu": 14.98675,
+          "muxi": 4.689,
+          "enflame": null,
+          "haiguang": 17.26575,
+          "kunlunxin": null,
+          "huawei": null,
+          "card_a": 12.79225,
+          "card_b": 7.121
+        }
+      },
+      {
+        "submission_id": 10414,
+        "created_at": "2026-09-06T08:58:31",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 5,
+        "best": false,
+        "seq": 29,
+        "file_name": "fused_norm_rope_stacked.zip",
+        "chips": {
+          "tianshu": 14.9235,
+          "muxi": 4.7855,
+          "enflame": null,
+          "haiguang": 17.1825,
+          "kunlunxin": null,
+          "huawei": null,
+          "card_a": 12.9255,
+          "card_b": 7.1125
+        }
+      },
+      {
+        "submission_id": 10413,
+        "created_at": "2026-09-06T08:53:45",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 5,
+        "best": false,
+        "seq": 28,
+        "file_name": "fused_norm_rope_stacked.zip",
+        "chips": {
+          "tianshu": 14.93175,
+          "muxi": 4.7385,
+          "enflame": null,
+          "haiguang": 16.69075,
+          "kunlunxin": null,
+          "huawei": null,
+          "card_a": 13.056,
+          "card_b": 7.209
+        }
+      },
+      {
+        "submission_id": 10409,
+        "created_at": "2026-09-06T08:43:01",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 0,
+        "best": false,
+        "seq": 24,
+        "file_name": "fused_norm_rope_stacked.zip",
+        "chips": {
+          "tianshu": null,
+          "muxi": null,
+          "enflame": null,
+          "haiguang": null,
+          "kunlunxin": null,
+          "huawei": null,
+          "card_a": null,
+          "card_b": null
+        }
+      }
+    ]
+  },
+  "55": {
+    "operator": "hc_head",
+    "rows": [
+      {
+        "submission_id": 10782,
+        "created_at": "2026-09-07T16:38:41",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 15,
+        "file_name": "hc_head.zip",
+        "chips": {
+          "tianshu": 1.38375,
+          "muxi": 1.0945,
+          "enflame": 0.2995,
+          "haiguang": 2.14075,
+          "kunlunxin": null,
+          "huawei": 2.95575,
+          "card_a": 2.149,
+          "card_b": 9.096
+        }
+      },
+      {
+        "submission_id": 10668,
+        "created_at": "2026-09-07T10:24:53",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 3,
+        "file_name": "hc_head.zip",
+        "chips": {
+          "tianshu": 1.37975,
+          "muxi": 1.098,
+          "enflame": 0.2995,
+          "haiguang": 2.156,
+          "kunlunxin": null,
+          "huawei": 3.153,
+          "card_a": 2.1815,
+          "card_b": 9.088
+        }
+      },
+      {
+        "submission_id": 10411,
+        "created_at": "2026-09-06T08:48:03",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 26,
+        "file_name": "hc_head.zip",
+        "chips": {
+          "tianshu": 1.5935,
+          "muxi": 1.225,
+          "enflame": 0.257,
+          "haiguang": 3.21975,
+          "kunlunxin": null,
+          "huawei": 2.038,
+          "card_a": 0.9675,
+          "card_b": 4.446
+        }
+      }
+    ]
+  },
+  "56": {
+    "operator": "l2norm",
+    "rows": [
+      {
+        "submission_id": 11646,
+        "created_at": "2026-09-09T06:38:17",
+        "validity": "valid",
+        "avg": 3.18536458,
+        "pass_n": 8,
+        "best": false,
+        "seq": 7,
+        "file_name": "l2norm.zip",
+        "chips": {
+          "tianshu": 6.64291667,
+          "muxi": 2.63283333,
+          "enflame": 1.20508333,
+          "haiguang": 4.59775,
+          "kunlunxin": 1.07641667,
+          "huawei": 1.53083333,
+          "card_a": 3.56841667,
+          "card_b": 4.22866667
+        }
+      },
+      {
+        "submission_id": 11247,
+        "created_at": "2026-09-08T17:16:41",
+        "validity": "valid",
+        "avg": 3.10370833,
+        "pass_n": 8,
+        "best": false,
+        "seq": 29,
+        "file_name": "l2norm.zip",
+        "chips": {
+          "tianshu": 6.67725,
+          "muxi": 2.53316667,
+          "enflame": 1.19166667,
+          "haiguang": 4.19933333,
+          "kunlunxin": 1.07608333,
+          "huawei": 1.33841667,
+          "card_a": 3.6,
+          "card_b": 4.21375
+        }
+      },
+      {
+        "submission_id": 11062,
+        "created_at": "2026-09-08T08:32:03",
+        "validity": "valid",
+        "avg": 3.20691667,
+        "pass_n": 8,
+        "best": true,
+        "seq": 9,
+        "file_name": "l2norm.zip",
+        "chips": {
+          "tianshu": 6.68241667,
+          "muxi": 2.59433333,
+          "enflame": 1.213,
+          "haiguang": 4.62766667,
+          "kunlunxin": 1.07966667,
+          "huawei": 1.53991667,
+          "card_a": 3.65333333,
+          "card_b": 4.265
+        }
+      },
+      {
+        "submission_id": 11045,
+        "created_at": "2026-09-08T07:21:43",
+        "validity": "valid",
+        "avg": 3.13796875,
+        "pass_n": 8,
+        "best": false,
+        "seq": 4,
+        "file_name": "l2norm.zip",
+        "chips": {
+          "tianshu": 6.62225,
+          "muxi": 2.55158333,
+          "enflame": 1.271,
+          "haiguang": 4.597,
+          "kunlunxin": 0.578,
+          "huawei": 1.63733333,
+          "card_a": 3.6325,
+          "card_b": 4.21408333
+        }
+      },
+      {
+        "submission_id": 10665,
+        "created_at": "2026-09-07T10:18:44",
+        "validity": "valid",
+        "avg": 3.10772917,
+        "pass_n": 8,
+        "best": false,
+        "seq": 1,
+        "file_name": "l2norm.zip",
+        "chips": {
+          "tianshu": 6.68358333,
+          "muxi": 2.58925,
+          "enflame": 1.19058333,
+          "haiguang": 4.56766667,
+          "kunlunxin": 0.58516667,
+          "huawei": 1.40675,
+          "card_a": 3.63383333,
+          "card_b": 4.205
+        }
+      },
+      {
+        "submission_id": 10405,
+        "created_at": "2026-09-06T07:57:10",
+        "validity": "valid",
+        "avg": 3.10497917,
+        "pass_n": 8,
+        "best": false,
+        "seq": 21,
+        "file_name": "l2norm.zip",
+        "chips": {
+          "tianshu": 6.65858333,
+          "muxi": 2.54433333,
+          "enflame": 1.19316667,
+          "haiguang": 4.54133333,
+          "kunlunxin": 0.57816667,
+          "huawei": 1.37791667,
+          "card_a": 3.73333333,
+          "card_b": 4.213
+        }
+      }
+    ]
+  },
+  "57": {
+    "operator": "log_scaling_tau",
+    "rows": [
+      {
+        "submission_id": 12364,
+        "created_at": "2026-09-10T08:30:49",
+        "validity": "valid",
+        "avg": 2.476375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 7,
+        "file_name": "log_scaling_tau.zip",
+        "chips": {
+          "tianshu": 4.14575,
+          "muxi": 2.72375,
+          "enflame": 0.586,
+          "haiguang": 4.6475,
+          "kunlunxin": 0.53775,
+          "huawei": 1.1855,
+          "card_a": 3.31725,
+          "card_b": 2.6675
+        }
+      },
+      {
+        "submission_id": 11642,
+        "created_at": "2026-09-09T06:27:12",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 3,
+        "file_name": "log_scaling_tau.zip",
+        "chips": {
+          "tianshu": null,
+          "muxi": 2.69725,
+          "enflame": 0.5575,
+          "haiguang": 4.6805,
+          "kunlunxin": 0.5435,
+          "huawei": 1.094,
+          "card_a": 3.299,
+          "card_b": 2.62675
+        }
+      },
+      {
+        "submission_id": 11239,
+        "created_at": "2026-09-08T16:49:21",
+        "validity": "valid",
+        "avg": 2.46528125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 25,
+        "file_name": "log_scaling_tau.zip",
+        "chips": {
+          "tianshu": 4.11625,
+          "muxi": 2.76225,
+          "enflame": 0.5465,
+          "haiguang": 4.73,
+          "kunlunxin": 0.543,
+          "huawei": 1.133,
+          "card_a": 3.20525,
+          "card_b": 2.686
+        }
+      },
+      {
+        "submission_id": 10887,
+        "created_at": "2026-09-07T19:55:22",
+        "validity": "valid",
+        "avg": 2.50278125,
+        "pass_n": 8,
+        "best": true,
+        "seq": 29,
+        "file_name": "log_scaling_tau.zip",
+        "chips": {
+          "tianshu": 4.13025,
+          "muxi": 2.764,
+          "enflame": 0.55225,
+          "haiguang": 4.7035,
+          "kunlunxin": 0.54175,
+          "huawei": 1.35375,
+          "card_a": 3.2675,
+          "card_b": 2.70925
+        }
+      },
+      {
+        "submission_id": 10881,
+        "created_at": "2026-09-07T19:44:30",
+        "validity": "valid",
+        "avg": 2.45078125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 28,
+        "file_name": "log_scaling_tau.zip",
+        "chips": {
+          "tianshu": 4.1425,
+          "muxi": 2.629,
+          "enflame": 0.5515,
+          "haiguang": 4.672,
+          "kunlunxin": 0.544,
+          "huawei": 1.0615,
+          "card_a": 3.3285,
+          "card_b": 2.67725
+        }
+      },
+      {
+        "submission_id": 10840,
+        "created_at": "2026-09-07T18:43:22",
+        "validity": "invalid_correctness",
+        "avg": 2.30046875,
+        "pass_n": 6,
+        "best": false,
+        "seq": 25,
+        "file_name": "log_scaling_tau.zip",
+        "chips": {
+          "tianshu": 4.09375,
+          "muxi": 3.13975,
+          "enflame": 0.0,
+          "haiguang": 4.65825,
+          "kunlunxin": 0.54175,
+          "huawei": 0.0,
+          "card_a": 3.33475,
+          "card_b": 2.6355
+        }
+      },
+      {
+        "submission_id": 10836,
+        "created_at": "2026-09-07T18:36:17",
+        "validity": "invalid_correctness",
+        "avg": 2.2735625,
+        "pass_n": 6,
+        "best": false,
+        "seq": 24,
+        "file_name": "log_scaling_tau.zip",
+        "chips": {
+          "tianshu": 4.11725,
+          "muxi": 2.714,
+          "enflame": 0.0,
+          "haiguang": 4.7325,
+          "kunlunxin": 0.54525,
+          "huawei": 0.0,
+          "card_a": 3.38325,
+          "card_b": 2.69625
+        }
+      },
+      {
+        "submission_id": 10830,
+        "created_at": "2026-09-07T18:27:35",
+        "validity": "invalid_correctness",
+        "avg": 0.06771875,
+        "pass_n": 1,
+        "best": false,
+        "seq": 23,
+        "file_name": "log_scaling_tau.zip",
+        "chips": {
+          "tianshu": 0.0,
+          "muxi": 0.0,
+          "enflame": 0.0,
+          "haiguang": 0.0,
+          "kunlunxin": 0.54175,
+          "huawei": 0.0,
+          "card_a": 0.0,
+          "card_b": 0.0
+        }
+      },
+      {
+        "submission_id": 10828,
+        "created_at": "2026-09-07T18:23:52",
+        "validity": "valid",
+        "avg": 2.40753125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 22,
+        "file_name": "log_scaling_tau.zip",
+        "chips": {
+          "tianshu": 4.08925,
+          "muxi": 2.74125,
+          "enflame": 0.552,
+          "haiguang": 4.80825,
+          "kunlunxin": 0.54175,
+          "huawei": 0.703,
+          "card_a": 3.1425,
+          "card_b": 2.68225
+        }
+      },
+      {
+        "submission_id": 10817,
+        "created_at": "2026-09-07T17:53:24",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 0,
+        "best": false,
+        "seq": 19,
+        "file_name": "log_scaling_tau.zip",
+        "chips": {
+          "tianshu": null,
+          "muxi": null,
+          "enflame": null,
+          "haiguang": null,
+          "kunlunxin": null,
+          "huawei": null,
+          "card_a": null,
+          "card_b": null
+        }
+      },
+      {
+        "submission_id": 10786,
+        "created_at": "2026-09-07T16:47:43",
+        "validity": "valid",
+        "avg": 2.401375,
+        "pass_n": 8,
+        "best": false,
+        "seq": 16,
+        "file_name": "log_scaling_tau.zip",
+        "chips": {
+          "tianshu": 4.0935,
+          "muxi": 2.705,
+          "enflame": 0.55425,
+          "haiguang": 4.81275,
+          "kunlunxin": 0.539,
+          "huawei": 0.49025,
+          "card_a": 3.31625,
+          "card_b": 2.7
+        }
+      },
+      {
+        "submission_id": 10747,
+        "created_at": "2026-09-07T14:51:08",
+        "validity": "valid",
+        "avg": 2.36478125,
+        "pass_n": 8,
+        "best": false,
+        "seq": 13,
+        "file_name": "log_scaling_tau.zip",
+        "chips": {
+          "tianshu": 4.03225,
+          "muxi": 2.72075,
+          "enflame": 0.56775,
+          "haiguang": 4.77725,
+          "kunlunxin": 0.5345,
+          "huawei": 0.39675,
+          "card_a": 3.22175,
+          "card_b": 2.66725
+        }
+      },
+      {
+        "submission_id": 10704,
+        "created_at": "2026-09-07T12:20:45",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 7,
+        "file_name": "log_scaling_tau.zip",
+        "chips": {
+          "tianshu": 4.0595,
+          "muxi": 2.683,
+          "enflame": 0.54675,
+          "haiguang": 4.7875,
+          "kunlunxin": null,
+          "huawei": 0.473,
+          "card_a": 3.19225,
+          "card_b": 2.63825
+        }
+      },
+      {
+        "submission_id": 10410,
+        "created_at": "2026-09-06T08:45:28",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 25,
+        "file_name": "log_scaling_tau.zip",
+        "chips": {
+          "tianshu": 3.97325,
+          "muxi": 2.70875,
+          "enflame": null,
+          "haiguang": 4.70175,
+          "kunlunxin": 0.53125,
+          "huawei": 0.4735,
+          "card_a": 3.32225,
+          "card_b": 2.608
+        }
+      }
+    ]
+  },
+  "58": {
+    "operator": "w8a8_block_int8_matmul",
+    "rows": [
+      {
+        "submission_id": 12441,
+        "created_at": "2026-09-10T10:17:30",
+        "validity": "valid",
+        "avg": 261.49905,
+        "pass_n": 8,
+        "best": false,
+        "seq": 20,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": 76.41386667,
+          "muxi": 244.1692,
+          "enflame": 6.42126667,
+          "haiguang": 751.13386667,
+          "kunlunxin": 138.99413333,
+          "huawei": 388.31333333,
+          "card_a": 377.47353333,
+          "card_b": 109.0732
+        }
+      },
+      {
+        "submission_id": 12426,
+        "created_at": "2026-09-10T10:03:26",
+        "validity": "valid",
+        "avg": 266.20655,
+        "pass_n": 8,
+        "best": true,
+        "seq": 19,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": 77.04853333,
+          "muxi": 234.1402,
+          "enflame": 6.0774,
+          "haiguang": 764.0256,
+          "kunlunxin": 141.4664,
+          "huawei": 418.74473333,
+          "card_a": 378.46813333,
+          "card_b": 109.6814
+        }
+      },
+      {
+        "submission_id": 12370,
+        "created_at": "2026-09-10T08:56:53",
+        "validity": "valid",
+        "avg": 259.73866667,
+        "pass_n": 8,
+        "best": false,
+        "seq": 12,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": 78.2428,
+          "muxi": 227.13906667,
+          "enflame": 6.1798,
+          "haiguang": 772.8104,
+          "kunlunxin": 144.36533333,
+          "huawei": 365.89146667,
+          "card_a": 374.65213333,
+          "card_b": 108.62833333
+        }
+      },
+      {
+        "submission_id": 11695,
+        "created_at": "2026-09-09T09:17:44",
+        "validity": "valid",
+        "avg": 261.84538333,
+        "pass_n": 8,
+        "best": false,
+        "seq": 16,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": 76.54753333,
+          "muxi": 215.81826667,
+          "enflame": 6.12126667,
+          "haiguang": 778.40846667,
+          "kunlunxin": 156.2342,
+          "huawei": 375.46106667,
+          "card_a": 377.83173333,
+          "card_b": 108.34053333
+        }
+      },
+      {
+        "submission_id": 11650,
+        "created_at": "2026-09-09T06:52:01",
+        "validity": "valid",
+        "avg": 256.83006667,
+        "pass_n": 8,
+        "best": false,
+        "seq": 11,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": 76.85166667,
+          "muxi": 218.9382,
+          "enflame": 6.14573333,
+          "haiguang": 739.04093333,
+          "kunlunxin": 143.99366667,
+          "huawei": 391.01286667,
+          "card_a": 369.8258,
+          "card_b": 108.83166667
+        }
+      },
+      {
+        "submission_id": 11640,
+        "created_at": "2026-09-09T06:22:02",
+        "validity": "valid",
+        "avg": 256.37993333,
+        "pass_n": 8,
+        "best": false,
+        "seq": 1,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": 77.0974,
+          "muxi": 248.4432,
+          "enflame": 6.34053333,
+          "haiguang": 702.50586667,
+          "kunlunxin": 145.76753333,
+          "huawei": 383.7836,
+          "card_a": 379.00253333,
+          "card_b": 108.0988
+        }
+      },
+      {
+        "submission_id": 11236,
+        "created_at": "2026-09-08T16:43:23",
+        "validity": "valid",
+        "avg": 251.3835,
+        "pass_n": 8,
+        "best": false,
+        "seq": 23,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": 76.46933333,
+          "muxi": 225.61086667,
+          "enflame": 6.29013333,
+          "haiguang": 693.2238,
+          "kunlunxin": 142.692,
+          "huawei": 389.89393333,
+          "card_a": 367.40566667,
+          "card_b": 109.48226667
+        }
+      },
+      {
+        "submission_id": 11228,
+        "created_at": "2026-09-08T16:20:34",
+        "validity": "valid",
+        "avg": 253.06811667,
+        "pass_n": 8,
+        "best": false,
+        "seq": 21,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": 79.5646,
+          "muxi": 241.7424,
+          "enflame": 6.4416,
+          "haiguang": 710.5328,
+          "kunlunxin": 139.14466667,
+          "huawei": 372.4518,
+          "card_a": 370.67573333,
+          "card_b": 103.99133333
+        }
+      },
+      {
+        "submission_id": 11210,
+        "created_at": "2026-09-08T15:24:46",
+        "validity": "valid",
+        "avg": 258.04890833,
+        "pass_n": 8,
+        "best": false,
+        "seq": 20,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": 76.56726667,
+          "muxi": 257.01633333,
+          "enflame": 6.09833333,
+          "haiguang": 721.8732,
+          "kunlunxin": 142.12526667,
+          "huawei": 410.69453333,
+          "card_a": 365.74006667,
+          "card_b": 84.27626667
+        }
+      },
+      {
+        "submission_id": 11202,
+        "created_at": "2026-09-08T14:55:46",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 18,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": 76.847,
+          "muxi": 219.2148,
+          "enflame": 6.21573333,
+          "haiguang": 703.92673333,
+          "kunlunxin": null,
+          "huawei": 404.4904,
+          "card_a": 372.23053333,
+          "card_b": 85.77793333
+        }
+      },
+      {
+        "submission_id": 11143,
+        "created_at": "2026-09-08T12:00:04",
+        "validity": "valid",
+        "avg": 250.64599167,
+        "pass_n": 8,
+        "best": false,
+        "seq": 12,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": 74.9456,
+          "muxi": 207.84833333,
+          "enflame": 6.1566,
+          "haiguang": 644.8202,
+          "kunlunxin": 139.58386667,
+          "huawei": 445.5572,
+          "card_a": 376.9108,
+          "card_b": 109.34533333
+        }
+      },
+      {
+        "submission_id": 11129,
+        "created_at": "2026-09-08T11:35:34",
+        "validity": "valid",
+        "avg": 184.956525,
+        "pass_n": 8,
+        "best": false,
+        "seq": 11,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": 74.30906667,
+          "muxi": 114.25993333,
+          "enflame": 6.12073333,
+          "haiguang": 461.73546667,
+          "kunlunxin": 142.88553333,
+          "huawei": 391.817,
+          "card_a": 263.19426667,
+          "card_b": 25.3302
+        }
+      },
+      {
+        "submission_id": 11049,
+        "created_at": "2026-09-08T07:53:08",
+        "validity": "valid",
+        "avg": 220.752425,
+        "pass_n": 8,
+        "best": false,
+        "seq": 8,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": 74.0796,
+          "muxi": 221.62646667,
+          "enflame": 4.78806667,
+          "haiguang": 655.5562,
+          "kunlunxin": 140.39253333,
+          "huawei": 195.9134,
+          "card_a": 362.59006667,
+          "card_b": 111.07306667
+        }
+      },
+      {
+        "submission_id": 11047,
+        "created_at": "2026-09-08T07:46:46",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 6,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": null,
+          "muxi": 265.48726667,
+          "enflame": 4.62626667,
+          "haiguang": 667.81266667,
+          "kunlunxin": 139.108,
+          "huawei": 190.01273333,
+          "card_a": 364.69713333,
+          "card_b": 111.38033333
+        }
+      },
+      {
+        "submission_id": 10412,
+        "created_at": "2026-09-06T08:51:15",
+        "validity": "valid",
+        "avg": 122.66158333,
+        "pass_n": 8,
+        "best": false,
+        "seq": 27,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": 74.442,
+          "muxi": 145.1676,
+          "enflame": 4.4806,
+          "haiguang": 358.8604,
+          "kunlunxin": 142.02933333,
+          "huawei": 185.7916,
+          "card_a": 62.84093333,
+          "card_b": 7.6802
+        }
+      },
+      {
+        "submission_id": 10408,
+        "created_at": "2026-09-06T08:40:34",
+        "validity": "invalid_correctness",
+        "avg": null,
+        "pass_n": 7,
+        "best": false,
+        "seq": 23,
+        "file_name": "w8a8_block_int8_matmul.zip",
+        "chips": {
+          "tianshu": 74.56126667,
+          "muxi": 147.504,
+          "enflame": 4.60373333,
+          "haiguang": 367.1298,
+          "kunlunxin": null,
+          "huawei": 177.38866667,
+          "card_a": 61.72886667,
+          "card_b": 7.96086667
+        }
+      }
+    ]
+  }
+}
