@@ -300,6 +300,6 @@ submission 16605 completed/valid，均值 **7.818425x > 7.79705 换 TB**（+0.27
 ## 2026-09-17 E11：gather BLOCK 512→2048 阶梯（generic+ascend），已提交
 
 - 结构（`633d7bc2a72882d888f925ae86596c072e653328`）：E9 gather 唯一变量 BLOCK 512→2048（generic+`_ascend`；家族 BLOCK 阶梯历史连涨：T63 512→4096 六档、本题燧原 512→2048 +19%）。enflame/kunlunxin 冻结；≤20MB legacy 路径不动。
-- release v2：6/6 全过 0F/E/S/X，四源 launch。回执 `artifacts/competition/round3-20260917/deepep_permute/verification.json` SHA-256 `0e95a92d804ba1da0a8d0f02572a9db662f36b9cf2bb090e10b1de4b32a2590f`。
+- release v2：6/6 全过 0F/E/S/X，四源 launch。回执 `artifacts/competition/round3-20260917/deepep_permute/verification.json` SHA-256 `0e95a92d804ba1da649b84b02dc02874bf9c4b656cc13e4be7504fbb35cd81bb`。
 - ZIP：`e11-633d7bc`，SHA-256 `b2ae310ef13cd4e8751217b870dae4e6c5dd6ff4d8d120390be6a74361a9e06e`，4 成员。
 - 预注册门：8/8 有效且均值 > 7.818425 换 TB；六芯（generic+华为）中位 ≥ +3% 为阶梯正信号。

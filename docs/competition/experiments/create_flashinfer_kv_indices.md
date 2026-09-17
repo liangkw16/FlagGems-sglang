@@ -516,6 +516,6 @@ submission 16585 completed/valid，均值 **195.47615625x < TB 199.69521875**。
 ## 2026-09-17 E20：Ascend persistent vendor（第三轮主发），已提交
 
 - 结构（`633d7bc2a72882d888f925ae86596c072e653328`）：新增 `_ascend` = generic 字节 + persistent launch（axis1 封顶 8、axis0 = NVC//axis1、双轴 kernel 内 stride 不变；copy/gather 家族 persistent 配方）。其余成员（enflame E19/kunlunxin/metax）冻结。
-- release v2：6/6 全过 0F/E/S/X，generic/ascend 各 35 真实 launch。回执 `artifacts/competition/round3-20260917/create_flashinfer_kv_indices/verification.json` SHA-256 `9fdefe7f3c8a49460f8848998d1cb66fd4ad75135755a86d941b3d1a0397f61`。
+- release v2：6/6 全过 0F/E/S/X，generic/ascend 各 35 真实 launch。回执 `artifacts/competition/round3-20260917/create_flashinfer_kv_indices/verification.json` SHA-256 `9fdefe7f3c8a4946a51f162afea3bcb9e45f0f95d812b9a006c70a4bbb35b24c`。
 - ZIP：`e20-633d7bc`，SHA-256 `d821fcc4065f645c2e2dd87605eb3a000cd5b2f0d5daa1b880a67967c8201b58`，5 成员。
 - 预注册门：8/8 有效且均值 > 199.69521875 换 TB（E18/E19 窗口下他芯回落，华为 68→92+ 可补 +3）；华为 ≥ 90 为 persistent 正信号。

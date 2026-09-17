@@ -337,6 +337,6 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 ## 2026-09-17 E12：Ascend persistent vendor（第三轮快炮），已提交
 
 - 结构（`633d7bc2a72882d888f925ae86596c072e653328`）：新增 `_ascend` = generic 字节 + grid 封顶 NVC（flat scatter 已有 stride 循环，launch-only；散布家族 persistent +44~+97% 配方）。其余成员冻结。
-- release v2：3/3 全过 0F/E/S/X，ascend 真实 launch。回执 `artifacts/competition/round3-20260917/compute_src2dst/verification.json` SHA-256 `3daf18ed98df223e05c6ea4d2d9d4bb654b28a9b39a7dcc6a4d3b8cf55f89a83`。
+- release v2：3/3 全过 0F/E/S/X，ascend 真实 launch。回执 `artifacts/competition/round3-20260917/compute_src2dst/verification.json` SHA-256 `3daf18ed98df223ef7425ef44d8d667717a3b7105356c809c2ce64ac5ac30d76`。
 - ZIP：`e12-633d7bc`，SHA-256 `2341d9ce2aec371fc16576e0ce1c25df53636d307c0b464dfbe091c7a65268f6`，4 成员。
 - 预注册门：8/8 有效且均值 > 2.138475 换 TB；华为 ≥ 2.4（+40%，T64 家族对照）为正信号。
