@@ -6,6 +6,8 @@ import torch
 import triton
 import triton.language as tl
 
+_E_TILE = 16
+
 
 @triton.jit
 def _fused_moe_dispatch_index(
@@ -17,39 +19,47 @@ def _fused_moe_dispatch_index(
     num_experts,
     BLOCK: tl.constexpr,
 ):
+    # Warp-aggregated atomics (moe_align-style): one vector atomic per
+    # (block, expert-tile) reserves the whole tile's tickets, and the
+    # per-lane rank comes from an in-register one-hot cumsum - the
+    # per-lane scalar atomic of the E13 pair form is the tianshu
+    # bottleneck hypothesis (77 vs the field's 206-210). Signature and
+    # grid-stride contract are unchanged (forced-grid poison test).
     pid = tl.program_id(0)
-    lanes = tl.arange(0, BLOCK // 2)
+    lanes = tl.arange(0, BLOCK)
+    etiles = tl.arange(0, 16)
     for block in range(pid, tl.cdiv(num_toks, BLOCK), tl.num_programs(0)):
         base = block.to(tl.int64) * BLOCK
-        offs0 = base + lanes
-        offs1 = offs0 + BLOCK // 2
-        mask0 = offs0 < num_toks
-        mask1 = offs1 < num_toks
-        expert0 = tl.load(ids + offs0, mask0, other=-1)
-        expert1 = tl.load(ids + offs1, mask1, other=-1)
-        valid0 = mask0 & (expert0 >= 0)
-        valid1 = mask1 & (expert1 >= 0)
-        same = valid0 & valid1 & (expert0 == expert1)
-        safe0 = tl.where(valid0, expert0, 0)
-        safe1 = tl.where(valid1, expert1, 0)
-        # Two striped routes share a logical lane; no cross-lane collective.
-        ticket0 = tl.atomic_add(
-            masked_m + safe0,
-            1 + same.to(tl.int32),
-            mask=valid0,
-            sem="relaxed",
+        offs = base + lanes
+        mask = offs < num_toks
+        expert = tl.load(ids + offs, mask=mask, other=-1)
+        valid = mask & (expert >= 0)
+        safe = tl.where(valid, expert, 0)
+        acc_base = tl.zeros((BLOCK,), dtype=tl.int32)
+        acc_rank = tl.zeros((BLOCK,), dtype=tl.int32)
+        for e0 in range(0, num_experts, 16):
+            e_ids = e0 + etiles
+            e_ok = e_ids < num_experts
+            onehot = (
+                (expert[None, :] == e_ids[:, None]) & valid[None, :] & e_ok[:, None]
+            )
+            counts = tl.sum(onehot.to(tl.int32), axis=1)
+            offsets = tl.atomic_add(masked_m + e_ids, counts, mask=e_ok, sem="relaxed")
+            # Inclusive prefix along the block gives each lane its
+            # within-tile rank (minus one for the exclusive ticket).
+            pref = tl.cumsum(onehot.to(tl.int32), axis=1)
+            sel = (e_ids[:, None] == safe[None, :]).to(tl.int32)
+            lane_rank = tl.sum(pref * sel, axis=0)
+            lane_base = tl.sum(offsets[:, None] * sel, axis=0)
+            hit = valid & (expert >= e0) & (expert < e0 + 16)
+            acc_rank = tl.where(hit, lane_rank - 1, acc_rank)
+            acc_base = tl.where(hit, lane_base, acc_base)
+        dst = safe.to(tl.int64) * m_max + (acc_base + acc_rank).to(tl.int64)
+        tl.store(
+            src2dst + offs,
+            tl.where(valid, dst, 0).to(tl.int32),
+            mask,
         )
-        ticket0 = tl.where(valid0, ticket0, 0)
-        issue1 = valid1 & ~same
-        ticket1 = tl.atomic_add(
-            masked_m + safe1, 1, mask=issue1, sem="relaxed"
-        )
-        ticket1 = tl.where(issue1, ticket1, 0)
-        ticket1 = tl.where(same, ticket0 + 1, ticket1)
-        dst0 = safe0 * m_max + ticket0
-        dst1 = safe1 * m_max + ticket1
-        tl.store(src2dst + offs0, tl.where(valid0, dst0, 0), mask0)
-        tl.store(src2dst + offs1, tl.where(valid1, dst1, 0), mask1)
 
 
 def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
@@ -57,9 +67,8 @@ def fused_moe_dispatch_index(topk_ids, num_local_experts, m_max):
     assert topk_ids.dtype == torch.int32
     flat = topk_ids.reshape(-1)
     num_toks = flat.numel()
-    masked_m = torch.zeros(
-        num_local_experts, dtype=torch.int32, device=topk_ids.device
-    )
+    assert num_local_experts >= 0
+    masked_m = torch.zeros(num_local_experts, dtype=torch.int32, device=topk_ids.device)
     src2dst = torch.empty(num_toks, dtype=torch.int32, device=topk_ids.device)
     if num_toks:
         _fused_moe_dispatch_index[(min(triton.cdiv(num_toks, 256), 65535),)](
