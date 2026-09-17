@@ -5,7 +5,7 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: submitted(e20-pending)
+platform: completed(16619,e20,8/8,198.33x<TB;保e8)
 candidate_stage: e20
 team_best_stage: e8
 team_best_speedup: 199.69521875
@@ -519,3 +519,7 @@ submission 16585 completed/valid，均值 **195.47615625x < TB 199.69521875**。
 - release v2：6/6 全过 0F/E/S/X，generic/ascend 各 35 真实 launch。回执 `artifacts/competition/round3-20260917/create_flashinfer_kv_indices/verification.json` SHA-256 `9fdefe7f3c8a4946a51f162afea3bcb9e45f0f95d812b9a006c70a4bbb35b24c`。
 - ZIP：`e20-633d7bc`，SHA-256 `d821fcc4065f645c2e2dd87605eb3a000cd5b2f0d5daa1b880a67967c8201b58`，5 成员。
 - 预注册门：8/8 有效且均值 > 199.69521875 换 TB（E18/E19 窗口下他芯回落，华为 68→92+ 可补 +3）；华为 ≥ 90 为 persistent 正信号。
+
+## 2026-09-17 E20 平台终态：8/8 有效 198.33090625x，未换 TB，华为 persistent 无增益
+
+submission 16619 completed/valid。huawei 73.20125（`_ascend` persistent 首发 readings vs generic 窗口 68.3-73.2——**无 persistent 增益**，预注册门 90 未过；本题已宽 copy 形态与 T61 同为配方反例）。enflame 38.177（E19 字节窗口回摆 32.3→38.2）/tianshu 558.7（窗口高位）/kunlun 7.859。均值 198.33 < TB 199.695 保底。轴关闭。

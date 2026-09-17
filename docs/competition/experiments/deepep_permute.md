@@ -303,3 +303,7 @@ submission 16605 completed/valid，均值 **7.818425x > 7.79705 换 TB**（+0.27
 - release v2：6/6 全过 0F/E/S/X，四源 launch。回执 `artifacts/competition/round3-20260917/deepep_permute/verification.json` SHA-256 `0e95a92d804ba1da649b84b02dc02874bf9c4b656cc13e4be7504fbb35cd81bb`。
 - ZIP：`e11-633d7bc`，SHA-256 `b2ae310ef13cd4e8751217b870dae4e6c5dd6ff4d8d120390be6a74361a9e06e`，4 成员。
 - 预注册门：8/8 有效且均值 > 7.818425 换 TB；六芯（generic+华为）中位 ≥ +3% 为阶梯正信号。
+
+## 2026-09-17 E11 状态：send 阶段被本地超时中断，未提交，intent 卡 sending
+
+preflight 全过后 submit 在上传阶段被本地 2 分钟命令超时杀死；status 复核**无提交记录、额度未消耗**（POST 未达服务器），CLI 状态机对未决 sending intent 拒绝重发（防双发），手工改写 intent 需用户明示授权。候选封存：ZIP `e11-633d7bc`（SHA `b2ae310e…`）、回执与账本齐备；若获授权可归档 intent 后重走 preflight 单发。

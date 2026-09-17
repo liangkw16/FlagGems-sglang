@@ -14,7 +14,7 @@ task: 61
 operator: compute_src2dst
 batch: 5
 validity: valid
-platform: submitted(e12-pending)
+platform: completed(16621,e12,8/8,2.0998x<TB;保E11)
 candidate_stage: e12
 team_best_stage: e11
 team_best_speedup: 2.138475
@@ -340,3 +340,7 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - release v2：3/3 全过 0F/E/S/X，ascend 真实 launch。回执 `artifacts/competition/round3-20260917/compute_src2dst/verification.json` SHA-256 `3daf18ed98df223ef7425ef44d8d667717a3b7105356c809c2ce64ac5ac30d76`。
 - ZIP：`e12-633d7bc`，SHA-256 `2341d9ce2aec371fc16576e0ce1c25df53636d307c0b464dfbe091c7a65268f6`，4 成员。
 - 预注册门：8/8 有效且均值 > 2.138475 换 TB；华为 ≥ 2.4（+40%，T64 家族对照）为正信号。
+
+## 2026-09-17 E12 平台终态：8/8 有效 2.099825x，低于 TB 保留 E11
+
+submission 16621 completed/valid。huawei 1.3836（`_ascend` persistent vs TB 1.713 **-19.1%**，预注册门 2.4 大幅未过——窄 lane flat scatter 是 persistent 配方反例，与 T65 归约反例合并入配方边界）。均值 2.0998 < TB 2.138475 保 E11。轴关闭。
