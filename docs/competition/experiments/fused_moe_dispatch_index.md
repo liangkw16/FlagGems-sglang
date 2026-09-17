@@ -5,14 +5,14 @@ task: 69
 operator: fused_moe_dispatch_index
 batch: 5
 validity: valid
-platform: completed(e13-pair/sub16291,8/8,50.9577x；TB仍E10,51.3375x,排名5)
-candidate_stage: e13-pair
+platform: submitted(e14-pending;TB E10 51.3375x)
+candidate_stage: e14
 team_best_stage: e10-generic-init
 team_best_commit: a01fb6344cfa9d9f92a88cd8d47d3d9db3d2ff1b
 team_best_speedup: 51.3375
 sealed: no
 next: E13八芯有效但50.9577未超E10，代理收益未兑现；保留E10，不重投同候选，需目标逐case/编译证据再迭代
-updated: 2026-09-16
+updated: 2026-09-17
 ```
 
 ## 契约与范围
@@ -644,3 +644,11 @@ SHA `14fb499d07b98e7676eb3e95a4ecacd9190a013181604e37a556259e36a0a591`。
 - generic五芯有涨有落，NVIDIA主GM提升12.87%未在本次平台均分兑现；三个冻结vendor读数也变化，不能把逐芯变化全部归因于P2。停止本候选重复提交，下一轮须先取得目标shape/编译资源或可验证的新结构证据，不以同字节重掷代替优化。
 - `artifacts/competition/pair-grouped-platform-20260916/t69-final-status.json` SHA-256 `ab20a8f1a230ab5d9be592e0a237e51d1ea5185a86122e8f66bdbcd8025a6970`；账号剩 **17/30**，本次只消耗1次。
 - 终态后榜单 `docs/competition/data/t69-e13-leaderboard-20260916.json` SHA-256 `864bf4563745ca4d303260c776d8697ed20d2d7708fd5684f111a5c26a52ea3b`。
+
+## 2026-09-17 E14：warp 聚合原子 generic（moe_align 式），已提交
+
+- 动机：天数轴 77 vs 他队 206-210（单轴 +129 分，rank5→3 潜在）；假设瓶颈为逐 lane 标量原子。
+- 结构（`2be796b1`）：单 kernel 签名/网格契约不变（强制 grid 毒哨兵测试锁定）——每 (block, expert-tile[16]) 一次向量 `tl.atomic_add(masked_m+e_ids, counts)` 取全 tile 基址，块内名次用 [16,BLOCK] one-hot `tl.cumsum`（轴1）+ 掩码归约提取；e-tile 运行界循环（越界 e_ids 全掩码）；昆仑/昇腾/燧原 vendor 字节冻结（"向量+tl.sum" 昆仑毒点不波及）。
+- screening：11/11 全绿（含 pair 模式、边界 65537、强制 grid=1/2、poison 哨兵）；release v2（commit `2be796b1cbb0c050a82ccb3aa5a9a0d12d6e7f84`）：11/11 全过 0F/E/S/X，generic 138 / 三 vendor 各 414 真实 launch，exit 0。回执 `artifacts/competition/round4-20260917/fused_moe_dispatch_index/verification.json` SHA-256 `d6242bf3aaa0e03f422d881ec5366dd90ff7545385e3b4f1edd023b50fb45fd1`。
+- ZIP：`e14-2be796b`，SHA-256 `5fd836d86ab44082af09da5a5b7a4f8ba2401ac3e4d183fdad1a43e6d3cc8138`，4 成员。
+- 预注册门：8/8 有效且各芯 ≥0.1（昆仑走冻结 vendor 0.10 不受影响）；天数 ≥ 120 或均值 > 51.3375 换 TB 为聚合正信号。一次候选一次判决。
