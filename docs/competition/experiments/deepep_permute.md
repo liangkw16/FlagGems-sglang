@@ -5,8 +5,8 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: completed(16639,e11,8/8,8.2269x新TB;BLOCK2048兑现)
-candidate_stage: e11
+platform: submitted(e12-pending;TB e11 8.2269x)
+candidate_stage: e12
 team_best_stage: e11
 team_best_speedup: 8.2269
 sealed: no
@@ -311,3 +311,7 @@ preflight 全过后 submit 在上传阶段被本地 2 分钟命令超时杀死�
 ## 2026-09-17 E11 重发与平台终态：8/8 有效，新 TB 8.2269x
 
 send 中断处置：status 复核无记录/额度未扣后，经用户明示授权归档 sending intent（`.git/flagos-platform/archived/6c8ace86…`），重走 preflight 单发 **16639**。终态：均值 **8.2269x > 7.818425 换 TB**（+5.21%）。逐芯（vs E10）：muxi 5.391→**7.588(+40.7%)** / enflame 4.814→5.783(冻结字节窗口+20%) / haiguang 11.637→**13.035(+12.0%)** / card_a 10.116 / card_b 8.144 / tianshu 16.261 / huawei 4.235 / kunlun 0.654。BLOCK 512→2048 阶梯兑现（预注册"六芯中位 ≥+3%"过门）。下一档 4096 立即追发（e12）。发后额度 13/30。
+
+## 2026-09-17 E12：gather BLOCK 4096 阶梯追发，已提交
+
+- E11 阶梯兑现后按"阶梯仍在涨"证据追发 4096（generic+`_ascend` 唯一变量；enflame/kunlunxin 冻结）。release v2（commit 见 ZIP）全过；回执 `artifacts/competition/t64e12-release-20260917/verification.json`。预注册门：8/8 有效且均值 > 8.2269 换 TB；≥2 芯 +3% 为正信号，否则阶梯封顶。

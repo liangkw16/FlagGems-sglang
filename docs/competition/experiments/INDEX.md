@@ -44,7 +44,7 @@
 | 61 | compute_src2dst | valid | completed(16621,e12,8/8,2.0998x<TB;保E11) | e11 2.138475x | no | 用户要求不再新提交；保留E11团队最佳和已归档候选，只记录现有结果 | 2026-09-17 | [compute_src2dst](compute_src2dst.md) |
 | 62 | concat_mla_k | valid | completed(14847,e10,8/8,1.1908x;燧原BH4反降-47%;TB e9 1.2458x) | e9 1.24575x | no | e10 燧原BH4 0.15(-47%)跨芯平移证伪;TB e9 1.246守;收官仅守榜 | 2026-09-14 | [concat_mla_k](concat_mla_k.md) |
 | 63 | create_flashinfer_kv_indices | valid | completed(16619,e20,8/8,198.33x<TB;保e8) | e8 199.69521875x | no | 用户要求不再新提交；E17未超E8，停止重复组合；保留199.69521875 TB | 2026-09-17 | [create_flashinfer_kv_indices](create_flashinfer_kv_indices.md) |
-| 64 | deepep_permute | valid | completed(16639,e11,8/8,8.2269x新TB;BLOCK2048兑现) | e11 8.2269x | no | 华为4.433未过6.2门不重掷；下一华为轴候选=官方gather/scatter best-practice形态(SUB_BLOCK_SIZE/insert_slice)，需先落结构再一发判决 | 2026-09-17 | [deepep_permute](deepep_permute.md) |
+| 64 | deepep_permute | valid | submitted(e12-pending;TB e11 8.2269x) | e11 8.2269x | no | 华为4.433未过6.2门不重掷；下一华为轴候选=官方gather/scatter best-practice形态(SUB_BLOCK_SIZE/insert_slice)，需先落结构再一发判决 | 2026-09-17 | [deepep_permute](deepep_permute.md) |
 | 65 | deepep_post_reorder | valid | completed(16572,e13,8/8,26.54165x<TB;保E10) | e10 26.917125x | no | E12终态7/8，昆仑收集测试失败；保留权重契约修复，需目标执行新证据后再迭代，不重发15913 | 2026-09-17 | [deepep_post_reorder](deepep_post_reorder.md) |
 | 66 | dsv3_fused_a_gemm | valid | completed(15861,e2,8/8,3.09855x新TB) | e2 3.09855x | no | e2仅+0.15%，未达3.40再投入门；停止窄N split4轴，不重投 | 2026-09-16 | [dsv3_fused_a_gemm](dsv3_fused_a_gemm.md) |
 | 67 | fill_padded_rows | valid | completed(16579,e8,8/8,4.43975x新TB;华为+30.5%) | e8 4.43975x | no | 用户要求不再新提交；E7已过发布门但预检被间隔拦下，无intent/上传/提交，保留验签包 | 2026-09-17 | [fill_padded_rows](fill_padded_rows.md) |
