@@ -43,7 +43,7 @@
 | 60 | clamp_position | invalid_correctness | completed(13821,e8,7/8;燧原轴八轮终封) | - | no | 新发现torch-gcu逻辑int64物理窄化证据；先核目标输入保真/布局和实际版本，不截断契约、不重投 | 2026-09-16 | [clamp_position](clamp_position.md) |
 | 61 | compute_src2dst | valid | completed(16621,e12,8/8,2.0998x<TB;保E11) | e11 2.138475x | no | 用户要求不再新提交；保留E11团队最佳和已归档候选，只记录现有结果 | 2026-09-17 | [compute_src2dst](compute_src2dst.md) |
 | 62 | concat_mla_k | valid | completed(16759,e13,8/8,1.1991x<TB;保e12 1.270875x;收官) | e9 1.24575x | no | e10 燧原BH4 0.15(-47%)跨芯平移证伪;TB e9 1.246守;收官仅守榜 | 2026-09-17 | [concat_mla_k](concat_mla_k.md) |
-| 63 | create_flashinfer_kv_indices | valid | submitted(e21-pending;TB e8 199.69521875x) | e8 199.69521875x | no | 用户要求不再新提交；E17未超E8，停止重复组合；保留199.69521875 TB | 2026-09-17 | [create_flashinfer_kv_indices](create_flashinfer_kv_indices.md) |
+| 63 | create_flashinfer_kv_indices | valid | completed(16785,e21,8/8,189.85x<TB;窗口体制降温判负;保e8;终局) | e8 199.69521875x | no | 用户要求不再新提交；E17未超E8，停止重复组合；保留199.69521875 TB | 2026-09-17 | [create_flashinfer_kv_indices](create_flashinfer_kv_indices.md) |
 | 64 | deepep_permute | valid | completed(16690,e14,8/8,8.302425x<TB;保e13 8.73395x;全题收官) | e13 8.73395x | no | 华为4.433未过6.2门不重掷；下一华为轴候选=官方gather/scatter best-practice形态(SUB_BLOCK_SIZE/insert_slice)，需先落结构再一发判决 | 2026-09-17 | [deepep_permute](deepep_permute.md) |
 | 65 | deepep_post_reorder | valid | completed(16572,e13,8/8,26.54165x<TB;保E10) | e10 26.917125x | no | E12终态7/8，昆仑收集测试失败；保留权重契约修复，需目标执行新证据后再迭代，不重发15913 | 2026-09-17 | [deepep_post_reorder](deepep_post_reorder.md) |
 | 66 | dsv3_fused_a_gemm | valid | completed(15861,e2,8/8,3.09855x新TB) | e2 3.09855x | no | e2仅+0.15%，未达3.40再投入门；停止窄N split4轴，不重投 | 2026-09-16 | [dsv3_fused_a_gemm](dsv3_fused_a_gemm.md) |
