@@ -183,3 +183,32 @@ generic 单遍 atomic（E13 pair-lane）在 tianshu 77；他队 206-210。业界
 - T69 榜首 c2flow 82.74（tianshu 206.11/kunlun 2.86/huawei 20.88）；EvokeAgent 80.92
   （enflame 24.62/kunlun 7.84/tianshu 210.09）。
 - T63 我方 TB=E8 199.70（燧原 6.18 为 E8 窗口值；E15 字节燧原最好 25.40）。
+
+## 8. 当日执行与判决（2026-09-17 15:20 收盘记录）
+
+9 发结构实验全部 8/8 有效（零无效提交），6 个新 TB、2 个保底、1 个微幅：
+
+| 发 | 题 | 结构 | 终态 |
+|---|---|---|---|
+| E7 16570 | T64 | 去 clone 三段式 + ascend persistent + kunlunxin 冻结 | **新 TB 7.47225（rank 14→10）**，华为 +44% |
+| E13 16572 | T65 | ascend persistent（归约 kernel） | 26.54 < TB，保 E10；华为 -19% |
+| E10 16574 | T75 | ascend persistent | 微幅新 TB 2.89673；华为 +16% |
+| E13 16575 | T73 | ascend persistent（broadcast 加 stride） | **新 TB 4.26670（rank 7→5）**，华为 +97% |
+| E9 16576 | T68 | enflame GCU 配方（去钉+stages3） | **新 TB 7.20041**，燧原 +39% |
+| E18 16577 | T63 | enflame persistent24+stages3 | 198.79 差 0.46% 保底；**燧原 6.18→36.0** |
+| E10 16578 | T59 | ascend persistent（e4r 形态） | 23.88 < TB 保 e4r；华为 +2.9% 门未过 |
+| E8 16579 | T67 | ascend persistent flat | **新 TB 4.43975**，华为 +30% |
+| E11 16582 | T71 | ascend persistent | **新 TB 2.84881**，华为 +19% |
+| E19 16585 | T63 | enflame BLOCK 8192 | 195.48 < TB；燧原 32.3 阶梯到顶 |
+| E8 16586 | T64 | ascend SUB 批量 2-D store | 7.24 < TB 保 E7；华为 -35% 证伪 |
+
+（11 发含并行会话 2 发；本会话 9 发。）
+
+**配方判决（跨题复用结论）**：
+1. `num_vectorcore` persistent（launch 级）对逐元素/行散布 kernel 稳定正收益（华为 +16%~+97%），对 slot 循环归约 kernel 无效甚至负向（T65 -19%）。
+2. GCU 配方（去 warps 钉 + num_stages=3 + grid≤24）在 T68 (+39%) 与 T63 燧原 (+483%) 双双兑现，历史第三、四次平台实证。
+3. 去 clone 三段式在 T64 平台兑现 +4.2%（代理 2.2x 只部分迁移）；双路径分发消除小 shape 回退。
+4. SUB 批量 2-D store（官方 004 教程可移植子集）在 T64 华为反向 (-35%)——该形态的收益依赖 insert_slice/extract_slice 完整版或多行 UB 组装，纯 2-D scatter store 不等价。
+5. 华为结构性大缺口（T64 2.9 vs 100.9、T65 14 vs 245、T59 8.9 vs 82）今日三板斧（persistent/行打包/批量 store）全部尝试完毕，需目标芯 IR 或授权主机才能再进一步。
+
+额度：19/30 剩余；本会话产物 commits `a6921555..c144004c` 全部已推送。
