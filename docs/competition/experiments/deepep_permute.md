@@ -249,3 +249,7 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - release（v2，source=verification commit `a6921555439f734d265ea732d6362f2aac8850ed`）：6/6 全过 0F/E/S/X，RELEASE_REQUIRED 全在；四源执行，真实 launch generic/ascend 各 46、enflame/kunlunxin 各 44；exit 0。回执 `artifacts/competition/t64e7-release-20260917/verification.json` SHA-256 `01879fc2288336dfab05815e01f5b0e1cb725c101d94f7bbe0247d40e97bf127`、日志 `04cb35b4c86d5277e51c84b32a1bd61240639aec28c9a6fb428077a36ae3dd00`；远端 `/tmp/flagos-t64-e7-run`。ascend/enflame/kunlunxin target-runtime-unverified（无授权目标机；平台八芯即终审）。py_compile/Black/isort/flake8 全过。
 - ZIP：`artifacts/competition/deepep_permute/e7-a692155/deepep_permute.zip`，16243 bytes，SHA-256 `77615803203cc4278dbfed2405837e331ccbc60ae164d1b51421b3af13334f1e`（=canonical）。成员：generic `9666063e…`、ascend `5252283b…`、enflame `85375589…`（E6 冻结）、kunlunxin `ee84a2f7…`。
 - 预注册门（提交前立此存照）：8/8 有效且各芯 ≥0.1；均值 > 7.17105 才换 TB；华为 ≥6.2 判 persistent 轴正信号（→E8 梯度）；燧原走 E6 冻结字节，读数漂移不归因代码。一次候选一次判决。
+
+## 2026-09-17 E7 单次平台提交
+
+12:24 前后，submission **16570**（upload/正式 POST 各一次，state=submitted，远端 ZIP 验签一致）；watch 绑定 file_url_sha256 `9ad1e3dd…`。发后额度 30→29/30。预注册门见上节；八芯终态待回，结果另节记录。
