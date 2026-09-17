@@ -1,6 +1,23 @@
 # 第二批候选与提交队列
 
-## 2026-09-17 17:45 终局收口（第五批窗口当日 19:59 关闭）
+## 2026-09-17 21:50 第六批开题：五个 s0 候选就绪待发（额度 0/30，09-18 首发）
+
+- T76–T81 开窗 20:00；本会话完成五题 generic + 测试 + NVIDIA 代理 release
+  5/5 通过 + s0 ZIP 打包（[strategy-batch6](../strategy-batch6.md) D1 计划）。
+- 当前状态唯一真相：各账本 CURRENT 块 + [INDEX](INDEX.md)。
+
+| 候选 | ZIP（单成员 generic） | release | 状态 |
+| --- | --- | --- | --- |
+| [T76 add3](add3.md) | s0-370923b | 3 测试/9 launch ✓ | 就绪，09-18 首发 |
+| [T78 concat_and_cast_mha_k](concat_and_cast_mha_k.md) | s0-370923b | 4 测试/37 launch ✓ | 就绪，09-18 首发 |
+| [T79 create_flashmla_kv_indices](create_flashmla_kv_indices.md) | s0-370923b | 7 测试/37 launch ✓ | 就绪，第一优先 |
+| [T80 fixup_zero_kv](fixup_zero_kv.md) | s0-370923b | 6 测试/16 launch ✓ | 就绪，09-18 首发 |
+| [T81 fused_gate_sigmoid_mul_add](fused_gate_sigmoid_mul_add.md) | s0-370923b | 5 测试/22 launch ✓ | 就绪，09-18 首发 |
+
+- T77 compute_position 未开发：燧原 int64 输出物理布局（A/B 假设）需目标机
+  探针裁决后才定稿 wrapper（不耗额度），见 strategy-batch6 §T77。
+
+## 2026-09-17 17:45 终局收口（第五批窗口当日 19:59 关闭，历史）
 
 - 当日 **30/30 额度用尽**（本会话 28 发 + 并行会话 2 发）：26 发 8/8 有效、
   2 发平台侧无效、零自伤（T63 e21 为有效但窗口判负、低于 TB 保底）；

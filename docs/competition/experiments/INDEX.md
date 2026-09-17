@@ -56,5 +56,10 @@
 | 73 | residual_gate_add | valid | completed(16809,e14-carrier,8/8,4.23922x<TB;窗口回落) | e13 4.26670312x | no | E13华为persistent兑现+97%新TB；下一梯度需新结构证据(单轴persistent或BLOCK)再发 | 2026-09-17 | [residual_gate_add](residual_gate_add.md) |
 | 74 | seqlens_expand | valid | evaluating(e14/sub16386,pending,6过1失败1待回；e12/e13已invalid_correctness；valid指TB E4) | e4 20.177775x | no | 用户要求不再新提交；暂停group轴，保留E4最佳；E14仅记录已观察pending，不重发 | 2026-09-17 | [seqlens_expand](seqlens_expand.md) |
 | 75 | sigmoid_gate_mul | valid | completed(16574,e10,8/8,2.89673333x微幅新TB;华为+15.6%) | e10 2.89673333x | no | Ascend direct候选代理1.01924x未达1.05且fp16稳定回退，不提交；TB e10 2.89673微幅新TB守 | 2026-09-17 | [sigmoid_gate_mul](sigmoid_gate_mul.md) |
+| 76 | add3 | candidate-ready | none(s0 release 5/5 通过 NVIDIA 代理;额度 0/30,09-18 首发) | - | no | 窗口 09-24 19:59;D1 首发 s0 后按逐芯回执开 e 轴 | 2026-09-17 | [add3](add3.md) |
+| 78 | concat_and_cast_mha_k | candidate-ready | none(s0 release 5/5 通过 NVIDIA 代理;额度 0/30,09-18 首发) | - | no | 窗口 09-24 19:59;D1 首发 s0 后按逐芯回执开 e 轴 | 2026-09-17 | [concat_and_cast_mha_k](concat_and_cast_mha_k.md) |
+| 79 | create_flashmla_kv_indices | candidate-ready | none(s0 release 5/5 通过 NVIDIA 代理;额度 0/30,09-18 首发) | - | no | 窗口 09-24 19:59;D1 首发 s0 后按逐芯回执开 e 轴 | 2026-09-17 | [create_flashmla_kv_indices](create_flashmla_kv_indices.md) |
+| 80 | fixup_zero_kv | candidate-ready | none(s0 release 5/5 通过 NVIDIA 代理;额度 0/30,09-18 首发) | - | no | 窗口 09-24 19:59;D1 首发 s0 后按逐芯回执开 e 轴 | 2026-09-17 | [fixup_zero_kv](fixup_zero_kv.md) |
+| 81 | fused_gate_sigmoid_mul_add | candidate-ready | none(s0 release 5/5 通过 NVIDIA 代理;额度 0/30,09-18 首发) | - | no | 窗口 09-24 19:59;D1 首发 s0 后按逐芯回执开 e 轴 | 2026-09-17 | [fused_gate_sigmoid_mul_add](fused_gate_sigmoid_mul_add.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md
