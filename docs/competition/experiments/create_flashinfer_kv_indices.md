@@ -486,3 +486,11 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 逐芯 tianshu 507.05425 / muxi 92.95275 / enflame 23.496 / haiguang 322.10875 / kunlunxin 8.06675 / huawei 72.6185 / card_a 252.78 / card_b 301.2625。
 - Metax恢复后92.95275，Enflame23.496较E15 25.39675回落；天数507.05425低于E8 554.12725。组合的条件估算未兑现为总分增量，不将同字节芯片差异归因于未改算法，也不重复同组合。
 - 终态 `artifacts/competition/pair-grouped-platform-20260916/t63-e17-final-status.json` SHA-256 `564382f6ddfed2f6ade665ca81fa8e84bd19fb262cd01811b6f8140177b94899`。
+
+## 2026-09-17 E18：Enflame GCU 配方（persistent24+stages3），已提交
+
+- 结构（`f8357985`，第二轮收割）：`_enflame` GCU 官方配方：grid 乘积封顶 24（splits cap 32→4 + grid_x=24//splits）+ num_stages=3 + 无 warps 钉（E15 字节基础）。其余成员字节冻结；本题为已证配方家族单变量投放。
+- screening（RTX 5070 Ti）：unittest 6 项全绿；black/flake8 过。
+- release v2（commit `f83579853cc0163321fd11e6301a1ad61d46eb58`）：6 项全过 0F/E/S/X，changed-vendor 真实 launch 35 次，exit 0。回执 `artifacts/competition/round2-20260917/create_flashinfer_kv_indices/verification.json` SHA-256 `672879bf64baac16ed3063125edd29b96ce7ab0d1f961bd5ff402e86b45cf583`。目标芯 target-runtime-unverified。
+- ZIP：`artifacts/competition/create_flashinfer_kv_indices/e18-f835798/create_flashinfer_kv_indices.zip（22270B）`，SHA-256 `1a084f0a16ffc16b251fd63e612d70cc32e51184e736fa81eec7850943fa84cb`，4 成员（kunlunxin/metax 冻结）。
+- 预注册门：8/8 有效且均值 > 199.69521875；燧原（E8 窗口 6.18 / E15 字节最好 25.4） ≥ 35 为正信号。一次候选一次判决。

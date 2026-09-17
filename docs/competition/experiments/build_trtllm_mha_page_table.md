@@ -394,3 +394,11 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
   e6 tile/store、e7 宽 tile+融合 store（=TB 载体）、e8 向量除法、
   e9 行打包。第二梯队 20-28x 的形态需要全新证据（原生路径/布局
   假设），无证据不再投。
+
+## 2026-09-17 E10：Ascend persistent（e4r 形态+NVC 封顶），已提交
+
+- 结构（`f8357985`，第二轮收割）：重写 `_ascend`（替换 e9 证伪行打包字节）：e4r generic 形态 + grid 封顶 NVC（T64 家族 +44% 对照）。其余成员字节冻结；本题为已证配方家族单变量投放。
+- screening（RTX 5070 Ti）：unittest 4 项全绿；black/flake8 过。
+- release v2（commit `f83579853cc0163321fd11e6301a1ad61d46eb58`）：4 项全过 0F/E/S/X，changed-vendor 真实 launch 26 次，exit 0。回执 `artifacts/competition/round2-20260917/build_trtllm_mha_page_table/verification.json` SHA-256 `262c48de3c6da34234497b5360e008e71d759e3400ca84eec51d9aaa84fbc6df`。目标芯 target-runtime-unverified。
+- ZIP：`artifacts/competition/build_trtllm_mha_page_table/e10-f835798/build_trtllm_mha_page_table.zip（16311B）`，SHA-256 `bb17558eb399537fa55c76b3914890499c976017762a157f761d8b203c1cdcef`，4 成员（enflame/hygon 冻结）。
+- 预注册门：8/8 有效且均值 > 24.1284375；华为（8.68 起） ≥ 12 为正信号。一次候选一次判决。

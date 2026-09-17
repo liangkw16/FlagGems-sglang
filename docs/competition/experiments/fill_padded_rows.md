@@ -237,3 +237,11 @@ updated: 2026-09-17
 - E7预检仅GET，返回 `error: submission interval has 67s remaining`（退出码2），未生成nonce/intent、未上传、未正式提交。随后用户明确“查看进度，不再新提交”，不再重跑preflight，也不因跨日额度恢复而自动发射。
 - `artifacts/competition/pair-grouped-platform-20260916/t67-e7-preflight.stderr` SHA-256 `0fe93921dd1f1a0bbd77aedf0adf5b3c1a35e4e0f611b6922dcad15ef8f20b72`；对应JSON输出为空，不能当成功预检回执。
 - 00:02:31只读记录仍以E6/sub15376为最新，4.295475x；00:05榜单TB E2为4.2969x、第11，Top1金狐狸12.463525x，追平需190.06%。E7源/测试/ZIP与5方法回执保留，目标芯未验证；两版flat均未晋级。
+
+## 2026-09-17 E8：Ascend persistent vendor，已提交
+
+- 结构（`f8357985`，第二轮收割）：新增 `_ascend` persistent vendor（行 stride 循环 + count 提升，逐元素家族，对照 T73 +97%）。其余成员字节冻结；本题为已证配方家族单变量投放。
+- screening（RTX 5070 Ti）：unittest 5 项全绿；black/flake8 过。
+- release v2（commit `f83579853cc0163321fd11e6301a1ad61d46eb58`）：5 项全过 0F/E/S/X，changed-vendor 真实 launch 61 次，exit 0。回执 `artifacts/competition/round2-20260917/fill_padded_rows/verification.json` SHA-256 `29751e8cb0bf5ff4f8ae357eb02bb876fd284bf2abf73ba8f8f574d796f6479b`。目标芯 target-runtime-unverified。
+- ZIP：`artifacts/competition/fill_padded_rows/e8-f835798/fill_padded_rows.zip（5677B）`，SHA-256 `e028168913e8e0f2172c07e9b9a7d2a7524dc9e0e948d74654f4934984deaba1`，2 成员。
+- 预注册门：8/8 有效且均值 > 4.2969；华为（1.93 起） ≥ 3.9 为正信号。一次候选一次判决。

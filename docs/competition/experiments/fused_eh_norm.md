@@ -281,3 +281,11 @@ updated: 2026-09-16
 - `verification.log` SHA-256 `325144ff913b25eb10de56467f8edcff6736296e6fbfaea43ae15e0945d4f179`。
 - `benchmark.json` SHA-256 `3390c41102e0356c58e13b99f0fe4b15bc9faac29b9c1abd377159cadd598a9b`。
 - `run.log` SHA-256 `08c31659bbb12280a409b3e9f6031327ce7da8de3b1c76083373fb969989ebf7`。
+
+## 2026-09-17 E9：Enflame GCU 配方（去钉+stages3），已提交
+
+- 结构（`f8357985`，第二轮收割）：`_enflame` GCU 官方配方：去 num_warps=8 钉、num_stages 1→3 开 pingpong（T19/T51 两次平台 +38% 配方）。其余成员字节冻结；本题为已证配方家族单变量投放。
+- screening（RTX 5070 Ti）：unittest 7 项全绿；black/flake8 过。
+- release v2（commit `f83579853cc0163321fd11e6301a1ad61d46eb58`）：7 项全过 0F/E/S/X，changed-vendor 真实 launch 28 次，exit 0。回执 `artifacts/competition/round2-20260917/fused_eh_norm/verification.json` SHA-256 `a0da237ecd78b252cd2103776f04fe9d399cbeae0b62c5e5825d85b651646c13`。目标芯 target-runtime-unverified。
+- ZIP：`artifacts/competition/fused_eh_norm/e9-f835798/fused_eh_norm.zip（17631B）`，SHA-256 `fceb2b67300cfa0b6548d3169618943349b1a64f0b190f28b0157edf8f815471`，5 成员（hygon/iluvatar/metax 冻结）。
+- 预注册门：8/8 有效且均值 > 7.10215；燧原（1.68 起） ≥ 2.2 为正信号。一次候选一次判决。

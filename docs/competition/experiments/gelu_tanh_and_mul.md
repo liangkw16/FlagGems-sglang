@@ -173,3 +173,11 @@ vs 1.14（4.6x）——两芯均为结构性差距。TB 保持 e1 2.6265。
 - `artifacts/competition/pair-grouped-platform-20260916/t71-e10-submit.json` SHA-256 `f39bebd73d0b69380d3637ae750ba969c35689b67a19f422d0bab26627961909`。
 - `artifacts/competition/pair-grouped-platform-20260916/t71-e10-final-status.json` SHA-256 `b53da825a4ef428dc5c64e5c6a5151b89d87ae99553f7a9e908b6ec85571b936`。
 - 完整status观察00:00:22.405134 +08，按submission_id16462提取E10终态；文件同时包含当时尚在评测的16473，不能把文件名当作所有记录均终态。该status确认新日额度30/30、已用0。
+
+## 2026-09-17 E11：Ascend persistent vendor，已提交
+
+- 结构（`f8357985`，第二轮收割）：新增 `_ascend` persistent vendor（grid 封顶 NVC，body 已有 stride 循环，launch-only）。其余成员字节冻结；本题为已证配方家族单变量投放。
+- screening（RTX 5070 Ti）：unittest 7 项全绿；black/flake8 过。
+- release v2（commit `f83579853cc0163321fd11e6301a1ad61d46eb58`）：7 项全过 0F/E/S/X，changed-vendor 真实 launch 52 次，exit 0。回执 `artifacts/competition/round2-20260917/gelu_tanh_and_mul/verification.json` SHA-256 `55f10fde8a75a592edf365afb4edff68d37a743850b811f06e16c48a27e65728`。目标芯 target-runtime-unverified。
+- ZIP：`artifacts/competition/gelu_tanh_and_mul/e11-f835798/gelu_tanh_and_mul.zip（12159B）`，SHA-256 `8f112e005479bac32c3824e4df83fbc112adbc8401c53734d40c12eab18a0a95`，4 成员（enflame/kunlunxin 冻结）。
+- 预注册门：8/8 有效且均值 > 2.78165833；华为（1.94 起） ≥ 3.9 为正信号。一次候选一次判决。
