@@ -5,8 +5,8 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: completed(16785,e21,8/8,189.85x<TB;窗口体制降温判负;保e8;终局)
-candidate_stage: e21
+platform: completed(16795,e22-carrier,8/8,198.94378x<TB差0.38%;窗口重掷2/2关闭)
+candidate_stage: e22
 team_best_stage: e8
 team_best_speedup: 199.69521875
 sealed: no
@@ -533,3 +533,7 @@ submission 16619 completed/valid。huawei 73.20125（`_ascend` persistent 首发
 ## 2026-09-17 E21 平台终态：8/8 有效 189.848625x，窗口算术失败保底；T63 终局
 
 submission 16785 completed/valid，均值 **189.848625x < TB 199.69521875**（保 e8）。判据芯全守住：kunlun 7.857 ✓ / enflame 38.5695（4096 档兑现）✓ / huawei 76.901 ✓；但 **muxi 92→70.3(-24%)/haiguang 300→267(-11%)/tianshu 558→513(-8%)/card_b 310→293(-5.5%) 四芯窗口同步回落**，抵消全部收益。判读：窗口体制整体降温，非单芯抖动——按预注册判负且不做第二次重掷（低滚 1/2 即停）。TB 199.69521875 守住，T63 终局：燧原轴当日 6.18→38.6（+524%）为最大成果但均值被窗口体制压平。
+
+## 2026-09-17 E22 载体终态：8/8 有效 198.94378125x，差 0.38% 保底
+
+窗口重掷 2/2（用户额度指令）：kunlun **8.236**/enflame 35.2/muxi 94.5 判据芯仍高，但 tianshu 512/card_b 299 略低于 e21 预期，合计差 0.75 分未换 TB。低滚 2/2，窗口路径关闭。

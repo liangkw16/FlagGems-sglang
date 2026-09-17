@@ -5,8 +5,8 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: completed(16690,e14,8/8,8.302425x<TB;保e13 8.73395x;全题收官)
-candidate_stage: e14
+platform: completed(16798,e15-carrier,8/8,8.47025x<TB;muxi单芯新高8.16)
+candidate_stage: e15
 team_best_stage: e13
 team_best_speedup: 8.73395
 sealed: no
@@ -333,3 +333,7 @@ submission 16677 completed/valid，均值 **8.73395x > 8.28935 换 TB**（+5.37%
 submission 16690 completed/valid，均值 **8.302425x < TB 8.73395**（保 e13）。enflame 7.0924→5.525（-22.1%，8192 过峰）。阶梯终值：燧原 512(平)→4096(**+42.6%**)→8192(-22%)；generic 512→2048(+5.2%)→4096(+0.76%)。
 
 **T64 全日终局**：TB 7.17105 → **8.73395（+21.82%）**，rank 14→9；八发（E7/E8/E9/E10/E11/E12/E13/E14）全部完整闭环，其中六发换 TB。剩余缺口：华为 4.85 vs 次优 100.9（可移植形态穷尽）、燧原 7.09 vs 次优 12.07（4096 峰后无新档）。额度 8/30 剩余，按纪律封枪。
+
+## 2026-09-17 E15 载体终态：8/8 有效 8.47025x，保底
+
+窗口重掷 1/2：muxi **8.1638（单芯新高，超 e13 的 7.924）**，但 enflame 5.554（vs e13 窗口 7.09）回落，合计 8.470 < TB 8.73395。低滚 1/2。

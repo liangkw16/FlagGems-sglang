@@ -79,8 +79,8 @@ task: 73
 operator: residual_gate_add
 batch: 5
 validity: valid
-platform: completed(16575,e13,8/8,4.26670312x新TB)
-candidate_stage: e13
+platform: completed(16809,e14-carrier,8/8,4.23922x<TB;窗口回落)
+candidate_stage: e14
 team_best_stage: e13
 team_best_speedup: 4.26670312
 sealed: no
@@ -264,3 +264,7 @@ card_b +0.31、tianshu +0.09；muxi/card_a 我方领先。燧原窗口摆动实�
 ## 2026-09-17 E13 平台终态：8/8 有效，新 TB 4.26670312x
 
 submission 16575 completed/valid，8/8，均值 **4.26670312x > 4.1080625 换 TB**（+3.86%）。逐芯（vs E12 TB）：huawei 1.101→**2.169875（+97.2%，persistent 配方第二题兑现）**；card_a 5.80725(+1.0%)/card_b 4.31225(+2.1%)/muxi 4.83425(+1.7%)/tianshu 6.940625(+0.8%)/haiguang 7.11475(-0.9%)/enflame 2.091125(冻结字节)/kunlun 0.8635(冻结)。预注册华为门 2.2 差 1.4% 未正式过门，方向成立。
+
+## 2026-09-17 E14 载体终态：8/8 有效 4.23921875x，保底
+
+窗口重掷 1/2：huawei 2.015（vs banked 2.17）回落，4.239 < TB 4.2667。低滚 1/2。
