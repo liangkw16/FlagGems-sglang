@@ -5,8 +5,8 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: completed(16586,e8,8/8,7.23865x<TB;保e7)
-candidate_stage: e8
+platform: submitted(e9-pending;TB e7 7.47225x)
+candidate_stage: e9
 team_best_stage: e7
 team_best_speedup: 7.47225
 sealed: no
@@ -270,3 +270,12 @@ submission 16570（daily_seq 1）completed/valid，8/8 全过，均值 **7.47225
 ## 2026-09-17 E8 平台终态：8/8 有效 7.23865x，未换 TB，华为批量形态证伪
 
 submission 16586 completed/valid，均值 **7.23865x < TB 7.47225**（保 E7）。huawei 4.433→**2.882（-34.9%，SUB 批量 2-D store 连续分片形态在华为反向；预注册门 8.9 未过）**；其余芯与 E7 同量级（tianshu 16.23/muxi 5.11/haiguang 10.98/card_a 9.42/card_b 7.53/enflame 5.11 冻结/kunlun 0.657）。判读：E7 的 persistent+去 clone 是本题华为当前最优形态；2.88 vs 次优 100.9 的剩余缺口需要目标芯 IR 或全新结构（今日无通道）。华为轴第三次关闭，TB E7 7.47225 守擂。发后额度 19/30。
+
+## 2026-09-17 E9：逆映射 gather 形态（generic+ascend 同步换结构），已提交
+
+- 重盘点结论（15:40 快照 `data/leaderboard-batch5-perchip-20260917-evening.json`，SHA `bde5f234…`）：T64 仍为全批唯一可达 Top1（同芯次优可证 37.371 = 榜首 28.907 的 1.29x；次接近的 T65/T75/T61 为 0.97/0.95/0.99 且需超越次优，无杠杆）。剩余额度聚焦本题。
+- 结构（`9518b55`）：E7 三段式（cover→scatter→fill）改为两段 gather——`_build_inv`（inv[dst]=token，int32，torch.full(-1) 初始化）+ `_gather_rows`（每输出行读 inv，t≥0 从 x[t] gather、否则从 gateup[r] 回填；**纯行连续 store，零 scatter store**）。动机：昇腾向量核对 gather 加载友好、对 scatter store 不友好（官方 004 教程存在理由；T63-e1 "单 gather+单掩码 store 是最稳形态"跨题旁证）。账本旧"destination-gather 0.35x"是内核内搜索变体，非 inv-map 版。generic（card_a/b/海光/沐曦/天数）与 `_ascend`（persistent grid）同批换装——每芯恰见一个结构变量；`_enflame`/`_kunlunxin` 字节冻结；≤20MB 双路径保留。
+- screening（RTX 5070 Ti）：6/6 全绿；wrapper 基准与 E7 完全持平（大 shape 2.21x/2.07x，小 shape 1.00x——gather≈scatter 于 NVIDIA 符合预期，赌注纯在昇腾）。
+- release v2（commit `9518b55a4e65c2e1bc710fb45f3fbe1f2a513071`）：6/6 全过 0F/E/S/X，四源 launch 45/45/44/44，exit 0。回执 `artifacts/competition/t64e9-release-20260917/verification.json` SHA-256 `d7b47fb09a52fb164073808f2ccf94bb6b0d87b317dd7be26c2dabc233c9493d`。
+- ZIP：`artifacts/competition/deepep_permute/e9-9518b55/deepep_permute.zip`，SHA-256 `3a54cf7f9e9e033afd3071ed83dae0ea7c3d4c765b60d550762c9a4cc21e8f8f`，4 成员（enflame/kunlunxin 冻结）。
+- 预注册门：8/8 有效且均值 > 7.47225 才换 TB；华为 ≥ 8.9（2x）为 gather 形态正信号（→则评估 generic 侧兑现）。零 TB 风险。一次候选一次判决。
