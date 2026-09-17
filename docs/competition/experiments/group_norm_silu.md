@@ -5,13 +5,13 @@ task: 72
 operator: group_norm_silu
 batch: 5
 validity: valid
-platform: submitted(e12-pending;TB e6 2.66266667x)
+platform: completed(16770,e12,8/8,2.428125x<TB;保e6;燧原配方元素试尽)
 candidate_stage: e12
 team_best_stage: e6
 team_best_speedup: 2.66266667
 sealed: no
 next: 大group分块两轮control未过门，停止本轮；正确性修复8/8已入库未提交，保留e6 TB与旧uncertain
-updated: 2026-09-16
+updated: 2026-09-17
 ```
 
 ## 契约与实现（S0）
@@ -288,3 +288,7 @@ submission 16653 completed/valid。enflame 0.376→**0.459（+22.1%，grid cap 2
 ## 2026-09-17 E12：燧原 while→tl.range(num_stages=3) 管线化，已提交
 
 - 最后一个未试配方元素：scalar-carried while 转 pipelined tl.range（num_stages≥3 开 GCU pingpong；T68 两阶段循环 +39% 同族先例；tensor-carry 才是 GCU 毒点，scalar-carried 安全）。grid cap 24 与其余成员冻结（E11 基座）。release v2（commit `8427c5eb16d28a77516db4cc4c6a86908a053cfd`）全过，回执 SHA-256 `74c5344c773e6b4bfe7671f368cecf0d903115e70c876f2dc2b33438869d8b89`。ZIP `e12-8427c5e` SHA `e23328b3f2c92830b56f17b450bfd4266f6d449da916c78c8a293b25beb047b8`。门：8/8 且均值 > 2.66266667 换 TB；燧原 ≥ 0.8 为正信号。
+
+## 2026-09-17 E12 平台终态：8/8 有效 2.428125x，低于 TB；燧原配方元素全试尽
+
+submission 16770 completed/valid，均值 **2.428125x < TB 2.66266667**（保 e6）。enflame 0.45866667——**tl.range(num_stages=3) 管线化零效果**（与 E11 只加 grid cap 的 0.459 完全同读数；GCU pingpong 不在该 scalar 循环形态上生效）。燧原 0.46 vs 次优 1.67 的缺口非配方问题，是结构问题（无更多证据线索）。TB 守住。
