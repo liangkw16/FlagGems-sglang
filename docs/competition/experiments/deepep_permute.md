@@ -5,10 +5,10 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: submitted(e10-pending;TB e9 7.79705x)
+platform: completed(16605,e10,8/8,7.818425x微幅新TB;燧原gather无增益;全轴收官)
 candidate_stage: e10
-team_best_stage: e9
-team_best_speedup: 7.79705
+team_best_stage: e10
+team_best_speedup: 7.818425
 sealed: no
 next: 华为4.433未过6.2门不重掷；下一华为轴候选=官方gather/scatter best-practice形态(SUB_BLOCK_SIZE/insert_slice)，需先落结构再一发判决
 updated: 2026-09-17
@@ -290,3 +290,9 @@ submission 16599 completed/valid，均值 **7.79705x > 7.47225 换 TB**（+4.35%
 - screening：6/6 全绿（四路径）；release v2（commit `3e2439e975e43fdde07896c473a1d4568d025e4c`）：6/6 全过 0F/E/S/X，四源 launch 45/45/45/44，exit 0。回执 `artifacts/competition/t64e10-release-20260917/verification.json` SHA-256 `1549d7c542736e2e262edf06ecefdc1917f66d151d7c3a6eaf9481ec33510c3b`。
 - ZIP：`artifacts/competition/deepep_permute/e10-3e2439e/deepep_permute.zip`，SHA-256 `5d97364a291a5ed6212e690a07c357e60df84e5fd35a683416196bd09bf0b6ce`，4 成员。
 - 预注册门：8/8 有效且均值 > 7.79705 才换 TB；燧原 ≥ 6（vs 冻结字节窗口 4.7-5.2）为 gather+配方正信号。零 TB 风险。一次候选一次判决。
+
+## 2026-09-17 E10 平台终态：8/8 有效，微幅新 TB 7.818425x；燧原 gather 无增益，全轴收官
+
+submission 16605 completed/valid，均值 **7.818425x > 7.79705 换 TB**（+0.27%，generic 芯窗口整体微升）。enflame 4.740→**4.814（+1.6%，预注册门 6 未过——去 clone gather 在 GCU 与 clone+scatter 打平，轴关闭）**；huawei 4.011（E9 冻结字节窗口）；tianshu 17.44/card_a 10.04/card_b 8.57/haiguang 11.64/muxi 5.39/kunlun 0.655。
+
+**T64 当日终局**：TB 7.17105 → **7.818425**（+9.02%），rank 14 → 预计 9；四发（E7 去 clone 三段式 / E8 SUB 批量 / E9 逆映射 gather / E10 燧原 gather）全部 8/8 有效零浪费。Top1（28.91）未达：锁死在华为 4.0-4.4 vs 次优 100.9 的 25x 缺口——persistent（+44% 最优）、SUB 批量（-35%）、gather（-7%）三板斧穷尽，`tl.insert_slice` 不在 Triton 3.7.1 主线（官方完整形态无法代理验证），他队形态需目标芯 IR 才能破译。发后额度 17/30。
