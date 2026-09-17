@@ -5,10 +5,10 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: submitted(e9-pending;TB e7 7.47225x)
+platform: completed(16599,e9,8/8,7.79705x新TB;generic gather全面+3~14%)
 candidate_stage: e9
-team_best_stage: e7
-team_best_speedup: 7.47225
+team_best_stage: e9
+team_best_speedup: 7.79705
 sealed: no
 next: 华为4.433未过6.2门不重掷；下一华为轴候选=官方gather/scatter best-practice形态(SUB_BLOCK_SIZE/insert_slice)，需先落结构再一发判决
 updated: 2026-09-17
@@ -279,3 +279,7 @@ submission 16586 completed/valid，均值 **7.23865x < TB 7.47225**（保 E7）�
 - release v2（commit `9518b55a4e65c2e1bc710fb45f3fbe1f2a513071`）：6/6 全过 0F/E/S/X，四源 launch 45/45/44/44，exit 0。回执 `artifacts/competition/t64e9-release-20260917/verification.json` SHA-256 `d7b47fb09a52fb164073808f2ccf94bb6b0d87b317dd7be26c2dabc233c9493d`。
 - ZIP：`artifacts/competition/deepep_permute/e9-9518b55/deepep_permute.zip`，SHA-256 `3a54cf7f9e9e033afd3071ed83dae0ea7c3d4c765b60d550762c9a4cc21e8f8f`，4 成员（enflame/kunlunxin 冻结）。
 - 预注册门：8/8 有效且均值 > 7.47225 才换 TB；华为 ≥ 8.9（2x）为 gather 形态正信号（→则评估 generic 侧兑现）。零 TB 风险。一次候选一次判决。
+
+## 2026-09-17 E9 平台终态：8/8 有效，新 TB 7.79705x；华为可移植形态穷尽
+
+submission 16599 completed/valid，均值 **7.79705x > 7.47225 换 TB**（+4.35%）。逐芯（vs E7）：generic 侧 gather 全面正收益——card_b 7.525→**8.584(+14.0%)** / card_a 9.420→**10.255(+8.9%)** / tianshu 16.23→**17.30(+6.6%)** / muxi 5.110→**5.431(+6.3%)** / haiguang 10.98→**11.29(+2.8%)**；huawei 4.433→4.120（-7.1%，预注册门 8.9 未过——gather 不敌 scatter，与 SUB 批量结论合并：华为 portable 形态三板斧穷尽，persistent(+44%) 为最优）；kunlun 0.658 冻结；enflame 4.740 冻结字节窗口。发后额度 18/30。
