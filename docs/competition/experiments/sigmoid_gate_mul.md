@@ -215,3 +215,7 @@ vs 本题 0.26）。
 - release v2（source=verification commit `842a81694a9fed9530ea5ada88343eea3415ccfc`）：3 项全过 0F/E/S/X，generic/ascend 各 17 真实 launch，exit 0。回执 `artifacts/competition/persist-batch-20260917/sigmoid_gate_mul-verification.json` SHA-256 `55791111169a8b305b5938781ce3f33fb28c12ddf52674332a5c9cc5f6505ef0`。ascend target-runtime-unverified。
 - ZIP：`artifacts/competition/sigmoid_gate_mul/e10-842a816/sigmoid_gate_mul.zip（8841 bytes）`，SHA-256 `d1d8c4ab9090f05454dc4f062c0d06bbdde396958f46e75686c5059adcd2c141`，5（generic/ascend/enflame/iluvatar/kunlunxin；后四与 e9 冻结集合一致） 成员。
 - 预注册门：8/8 有效且均值 > 2.89671667；华为 ≥ 2.6 为 persistent 轴正信号。一次候选一次判决。
+
+## 2026-09-17 E10 单次平台提交
+
+12:26，submission **16574**（daily_seq 3），evaluating；发后额度 27/30。八芯终态另节记录。

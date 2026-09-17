@@ -336,3 +336,7 @@ updated: 2026-09-17
 - release v2（source=verification commit `842a81694a9fed9530ea5ada88343eea3415ccfc`）：10 项全过 0F/E/S/X，generic/ascend 各 54 真实 launch，exit 0。回执 `artifacts/competition/persist-batch-20260917/deepep_post_reorder-verification.json` SHA-256 `ff68b95f84475bb5ecc535cecaa8df4e4d56ea9640a21b0c1efb819b08468fd3`。ascend target-runtime-unverified。
 - ZIP：`artifacts/competition/deepep_post_reorder/e13-842a816/deepep_post_reorder.zip（12169 bytes）`，SHA-256 `1cc19c5a5924dc1e155fd32310a24b4cd1ec14465076d87282b40f651a8f70be`，3（generic=E12语义字节/ascend/kunlunxin=E10冻结） 成员。
 - 预注册门：8/8 有效且均值 > 26.917125；华为 ≥ 35 为 persistent 轴正信号。一次候选一次判决。
+
+## 2026-09-17 E13 单次平台提交
+
+12:22，submission **16572**（daily_seq 2），evaluating；发后额度 28/30。八芯终态另节记录。

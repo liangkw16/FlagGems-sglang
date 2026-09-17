@@ -257,3 +257,7 @@ card_b +0.31、tianshu +0.09；muxi/card_a 我方领先。燧原窗口摆动实�
 - release v2（source=verification commit `842a81694a9fed9530ea5ada88343eea3415ccfc`）：10 项全过 0F/E/S/X，generic/ascend 各 122 真实 launch，exit 0。回执 `artifacts/competition/persist-batch-20260917/residual_gate_add-verification.json` SHA-256 `42321ce90f61cd86d99b73483998937ce136efe0ca360257271865a064ad19a8`。ascend target-runtime-unverified。
 - ZIP：`artifacts/competition/residual_gate_add/e13-842a816/residual_gate_add.zip（17911 bytes）`，SHA-256 `0a24695db00c06f54e3cecbb7c08249edcdf7744cc4d048b2f4bda608a550136`，4（generic/ascend/enflame/kunlunxin；enflame/kunlunxin 为 E12 冻结字节） 成员。
 - 预注册门：8/8 有效且均值 > 4.1080625；华为 ≥ 2.2 为 persistent 轴正信号。一次候选一次判决。
+
+## 2026-09-17 E13 单次平台提交
+
+12:29，submission **16575**（daily_seq 4），evaluating；发后额度 26/30。八芯终态另节记录。
