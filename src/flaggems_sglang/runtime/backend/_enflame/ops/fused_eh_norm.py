@@ -1,3 +1,5 @@
+# Carrier e10: window re-roll 1/2 of the e9 bytes (identical
+# execution; new archive identity only).
 # Copyright 2026 FlagOS Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
