@@ -5,7 +5,7 @@ task: 65
 operator: deepep_post_reorder
 batch: 5
 validity: valid
-platform: submitted(e13-pending;TB e10 26.917125x)
+platform: completed(16572,e13,8/8,26.54165x<TB;保E10)
 candidate_stage: e13
 team_best_stage: e10
 team_best: e10 26.917125x
@@ -340,3 +340,6 @@ updated: 2026-09-17
 ## 2026-09-17 E13 单次平台提交
 
 12:22，submission **16572**（daily_seq 2），evaluating；发后额度 28/30。八芯终态另节记录。
+## 2026-09-17 E13 平台终态：8/8 有效但低于 TB，保留 E10
+
+submission 16572 completed/valid，8/8，均值 **26.54165x < TB 26.917125**，不换 TB。逐芯（vs E10 TB）：huawei 17.513→**14.1384（-19.3%，persistent 轴负向）**；其余七芯与 E10/E12 同字节量级（haiguang 70.584/tianshu 30.8036/muxi 18.7734/card_a 49.2028/enflame 8.5384(+4.5%)/card_b 19.9366/kunlun 0.356 冻结漂移）。判读：persistent 对本题"slot 循环归约"形态无效（对照 T64 散布 +44%/T73 逐元素 +97%），40-program 双轴切分反而劣化；华为 245-279x 他队形态仍未破译。轴关闭，需全新结构证据（官方 gather/scatter best-practice 或目标芯 IR）。

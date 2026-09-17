@@ -15,10 +15,10 @@ task: 75
 operator: sigmoid_gate_mul
 batch: 5
 validity: valid
-platform: submitted(e10-pending;TB e9 2.89671667x)
+platform: completed(16574,e10,8/8,2.89673333x微幅新TB;华为+15.6%)
 candidate_stage: e10
-team_best_stage: e9
-team_best_speedup: 2.89671667
+team_best_stage: e10
+team_best_speedup: 2.89673333
 sealed: no
 next: Ascend direct候选代理1.01924x未达1.05且fp16稳定回退，不提交；TB保持e9
 updated: 2026-09-17
@@ -219,3 +219,6 @@ vs 本题 0.26）。
 ## 2026-09-17 E10 单次平台提交
 
 12:26，submission **16574**（daily_seq 3），evaluating；发后额度 27/30。八芯终态另节记录。
+## 2026-09-17 E10 平台终态：8/8 有效，微幅新 TB 2.89673333x
+
+submission 16574 completed/valid，8/8，均值 **2.89673333x**（+0.0006%，名义换 TB）。逐芯（vs e9 TB）：huawei 1.278→**1.47693333（+15.6%）**，其余七芯冻结字节窗口漂移（-3%~+1.4%）相互抵消。华为预注册门 2.6 未过：persistent 在本题只给弱正信号，他队 16-20x 缺口需其他结构。轴按门关闭，不重掷。
