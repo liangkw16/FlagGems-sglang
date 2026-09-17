@@ -5,8 +5,8 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: completed(16669,e12,8/8,8.28935x新TB;阶梯封顶)
-candidate_stage: e12
+platform: submitted(e13-pending;TB e12 8.28935x)
+candidate_stage: e13
 team_best_stage: e12
 team_best_speedup: 8.28935
 sealed: no
@@ -319,3 +319,7 @@ send 中断处置：status 复核无记录/额度未扣后，经用户明示授�
 ## 2026-09-17 E12 平台终态：8/8 有效，新 TB 8.28935x；阶梯封顶
 
 submission 16669 completed/valid，均值 **8.28935x > 8.2269 换 TB**（+0.76%）。逐芯（vs E11）：huawei 4.235→**4.977(+17.5%)** / muxi 7.588→7.924(+4.4%) / card_b 8.473 / haiguang 13.064 / tianshu 16.313 / kunlun 0.658 / enflame 4.973（冻结字节窗口回落）。阶梯增益 512→2048→4096 = +5.2%→+0.76% **封顶**。T64 当日终局：TB 7.17105→**8.28935**（+15.6%），rank 14→9；发后额度 10/30。
+
+## 2026-09-17 E13：燧原 gather BLOCK 4096（阶梯交叉应用），已提交
+
+- e12 封梯后唯一剩余单变量：`_enflame` 宽路径 gather 512→4096（generic/华为已证档位 + GCU"BLOCK 倾向远大于 GPU"；generic/ascend/kunlunxin 冻结）。release v2（commit `28c5df9e4e26b918fd7b6ec0cb3790284ae0a767`）全过，回执 SHA-256 `d9e5bd300e467e0d1b6fe31c7a5e2074a403795e4c9765aa8fa007fdee2e3bda`。ZIP `e13-28c5df9` SHA `000cff091e80c96317da8c0eb3e980db779f4a24d9ab47a1ee2531e831716b8f`。门：8/8 且均值 > 8.28935；燧原 ≥ 6.5 为正信号。
