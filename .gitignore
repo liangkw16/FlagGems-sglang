@@ -36,3 +36,12 @@ tests/*.json
 
 # Runtime logs referenced by SHA-256 in competition ledgers
 log/
+
+# Local tooling / research scratch (not part of the competition ledger truth)
+.claude/
+.codex-tmp/
+agent/
+external-repos/
+sglang-learning-materials/
+skills-lock.json
+rel-*/
