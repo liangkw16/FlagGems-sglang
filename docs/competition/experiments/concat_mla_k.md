@@ -32,13 +32,13 @@ task: 62
 operator: concat_mla_k
 batch: 5
 validity: valid
-platform: completed(14847,e10,8/8,1.1908x;燧原BH4反降-47%;TB e9 1.2458x)
-candidate_stage: e10
+platform: submitted(e12-pending;TB e9 1.24575x)
+candidate_stage: e12
 team_best_stage: e9
 team_best_speedup: 1.24575
 sealed: no
 next: e10 燧原BH4 0.15(-47%)跨芯平移证伪;TB e9 1.246守;收官仅守榜
-updated: 2026-09-14
+updated: 2026-09-17
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -367,3 +367,9 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 生产T1/32/1024、heads128、NoPE128/RoPE64均为56regs、0spill、4096Bshared；非2幂17/129/65为72regs/0spill/0shared；生产列stride2为109regs/0spill/0shared。5/5逐字节复制正确性通过，非完整release，也未测速。PTX有标量16-bit load/store，生产路径有layout conversion与barrier；标量指令不等于内存事务未合并，不能据此宣称瓶颈或目标芯收益。
 - 因无spill且普通形状寄存器适中，本轮不凭猜测实现streaming，不重开BH/warps/mask失败轴、不消耗平台额度。TB保持E9 1.24575。
 - 证据 `artifacts/competition/t62-tb-resource-probe-20260916/`：resources.json SHA-256 `d4b61f6a4e112f1cc3fcce9405466daac95820a332fb660562e341c9860eb0af`；28产物/20IR完整hash manifest `result-sha256.json` SHA-256 `8e873e8eb3b070888df0a91efb022a6d2cc5f1a42e0fb6e0a8ac6399b9906c3b`；probe.log SHA-256 `494fd541aa3add10c1c47f696acbb54876fe45c5289385738ae2df7c7350186c`。远端 `/tmp/flagos-t62-resources.W4KCRH`，PID388231，180秒总限，EXIT0，双端验签、GPU释放。重放：原tar解包到新目录执行`timeout 180 bash run.sh`。
+
+## 2026-09-17 E12：Ascend persistent + 燧原去钉/stages3（收官轮双配方），已提交
+
+- 结构（`5f7ed745`）：新增 `_ascend`（generic 字节 + NVC 封顶，launch-only；纯拷贝族 persistent 强先验）+ `_enflame` 去掉 E11 证伪的 num_warps=4 钉（回到 E9 语义）并补 num_stages=3（唯一未试配方元素）；hygon/kunlunxin 冻结。
+- release v2（commit `5f7ed7459f2505adfa457b504dc0d53ebb452c6e`）全过；回执 `artifacts/competition/t62e12-release-20260917/verification.json` SHA-256 `81a81652eab3a39cef3ec17f10504ae02f6c5ec5f141714c2ea99d61a2f2e6ec`。ZIP `e12-5f7ed74` SHA `79e1cd05ae883cf8d4543d43202ff93ec28a0cfa0feda815102eba35d3b42e55`，5 成员。
+- 预注册门：8/8 有效且均值 > 1.24575 换 TB；华为 ≥ 0.5 或燧原 ≥ 0.5 为正信号。一次候选一次判决。
