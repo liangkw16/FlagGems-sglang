@@ -32,8 +32,8 @@ task: 62
 operator: concat_mla_k
 batch: 5
 validity: valid
-platform: submitted(e12-pending;TB e9 1.24575x)
-candidate_stage: e12
+platform: submitted(e13-pending;TB e12 1.270875x)
+candidate_stage: e13
 team_best_stage: e9
 team_best_speedup: 1.24575
 sealed: no
@@ -373,3 +373,11 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 - 结构（`5f7ed745`）：新增 `_ascend`（generic 字节 + NVC 封顶，launch-only；纯拷贝族 persistent 强先验）+ `_enflame` 去掉 E11 证伪的 num_warps=4 钉（回到 E9 语义）并补 num_stages=3（唯一未试配方元素）；hygon/kunlunxin 冻结。
 - release v2（commit `5f7ed7459f2505adfa457b504dc0d53ebb452c6e`）全过；回执 `artifacts/competition/t62e12-release-20260917/verification.json` SHA-256 `81a81652eab3a39cef3ec17f10504ae02f6c5ec5f141714c2ea99d61a2f2e6ec`。ZIP `e12-5f7ed74` SHA `79e1cd05ae883cf8d4543d43202ff93ec28a0cfa0feda815102eba35d3b42e55`，5 成员。
 - 预注册门：8/8 有效且均值 > 1.24575 换 TB；华为 ≥ 0.5 或燧原 ≥ 0.5 为正信号。一次候选一次判决。
+
+## 2026-09-17 E12 平台终态：8/8 有效，新 TB 1.270875x；燧原 stages 反向
+
+submission 16754 completed/valid，均值 **1.270875x > 1.24575 换 TB**（+2.02%）。huawei 0.209→**0.2842（+35.9%，persistent 拷贝族兑现，未过 0.5 门）**；enflame 0.2822→**0.1514（-46.4%，stages=3 与 E11 warps 钉同型劣化——E9 纯净 launch 才是已证最优）**；haiguang 2.9108（hygon 冻结字节窗口+7%）/tianshu 2.3166/card_a 1.6642/card_b 1.6384/muxi 1.019/kunlun 0.1824。E13 修正：燧原回 E9 纯净 launch、保留华为 persistent。
+
+## 2026-09-17 E13：燧原回 E9 纯净 launch（去 stages），华为 persistent 保留，已提交
+
+- E12 判决后的单变量修正：`_enflame` 去 num_stages=3（E11/E12 两证任何 launch 钉都使燧原劣化 ~50%，E9 纯净 launch 是已证最优）；`_ascend` persistent 与其余成员冻结。release v2（commit `dbef39b4a786009badb3ebf617a110cb9ec45aa3`）全过，回执 SHA-256 `fa67452a5b34209e94b4019528a98273c679926fcf4e8786e3215191c14ce365`。ZIP `e13-dbef39b` SHA `ea8e830ccad6db7c06c92a2a0572f7c9125163a36ef6eca9b0c14238820d9101`。门：8/8 且均值 > 1.270875；燧原 ≥ 0.25 恢复 E9 水平。

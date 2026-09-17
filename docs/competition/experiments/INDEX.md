@@ -42,7 +42,7 @@
 | 59 | build_trtllm_mha_page_table | valid | completed(16578,e10,8/8,23.87921875x<TB;保e4r) | e4r 24.1284375x | no | e9 行打包华为4.29(-51%)证伪,华为轴全关待新证据;TB e4r 24.128守 | 2026-09-17 | [build_trtllm_mha_page_table](build_trtllm_mha_page_table.md) |
 | 60 | clamp_position | invalid_correctness | completed(13821,e8,7/8;燧原轴八轮终封) | - | no | 新发现torch-gcu逻辑int64物理窄化证据；先核目标输入保真/布局和实际版本，不截断契约、不重投 | 2026-09-16 | [clamp_position](clamp_position.md) |
 | 61 | compute_src2dst | valid | completed(16621,e12,8/8,2.0998x<TB;保E11) | e11 2.138475x | no | 用户要求不再新提交；保留E11团队最佳和已归档候选，只记录现有结果 | 2026-09-17 | [compute_src2dst](compute_src2dst.md) |
-| 62 | concat_mla_k | valid | submitted(e12-pending;TB e9 1.24575x) | e9 1.24575x | no | e10 燧原BH4 0.15(-47%)跨芯平移证伪;TB e9 1.246守;收官仅守榜 | 2026-09-17 | [concat_mla_k](concat_mla_k.md) |
+| 62 | concat_mla_k | valid | submitted(e13-pending;TB e12 1.270875x) | e9 1.24575x | no | e10 燧原BH4 0.15(-47%)跨芯平移证伪;TB e9 1.246守;收官仅守榜 | 2026-09-17 | [concat_mla_k](concat_mla_k.md) |
 | 63 | create_flashinfer_kv_indices | valid | completed(16619,e20,8/8,198.33x<TB;保e8) | e8 199.69521875x | no | 用户要求不再新提交；E17未超E8，停止重复组合；保留199.69521875 TB | 2026-09-17 | [create_flashinfer_kv_indices](create_flashinfer_kv_indices.md) |
 | 64 | deepep_permute | valid | completed(16690,e14,8/8,8.302425x<TB;保e13 8.73395x;全题收官) | e13 8.73395x | no | 华为4.433未过6.2门不重掷；下一华为轴候选=官方gather/scatter best-practice形态(SUB_BLOCK_SIZE/insert_slice)，需先落结构再一发判决 | 2026-09-17 | [deepep_permute](deepep_permute.md) |
 | 65 | deepep_post_reorder | valid | completed(16572,e13,8/8,26.54165x<TB;保E10) | e10 26.917125x | no | E12终态7/8，昆仑收集测试失败；保留权重契约修复，需目标执行新证据后再迭代，不重发15913 | 2026-09-17 | [deepep_post_reorder](deepep_post_reorder.md) |
