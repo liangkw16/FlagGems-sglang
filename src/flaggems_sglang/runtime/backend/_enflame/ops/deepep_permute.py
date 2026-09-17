@@ -156,7 +156,7 @@ def deepep_permute(input, gateup_input, src2dst, topk_ids, topk, hidden_size):
         *src2dst.stride(),
         TOPK=topk,
     )
-    tiles = triton.cdiv(hidden, 8192)
+    tiles = triton.cdiv(hidden, 4096)
     tasks = rows * tiles
     _gather_rows[(min(tasks, 24),)](
         input,
