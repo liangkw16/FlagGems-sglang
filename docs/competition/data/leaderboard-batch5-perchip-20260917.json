@@ -1,0 +1,9028 @@
+{
+ "observed_at": "2026-09-17T10:57:03",
+ "race": "782kzq4m",
+ "tasks": {
+  "59_build_trtllm_mha_page_table": [
+   {
+    "rank": 1,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 39.00240625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T21:13:58",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 70.9515
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 14.879
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 33.83825
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 31.7265
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.17875
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 114.481
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 23.46175
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 20.5025
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "Albedo",
+    "is_mine": false,
+    "best_average_speedup": 33.0000625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T11:41:18",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 72.1205
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 14.907
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 20.0395
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 31.53375
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.84775
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 81.985
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 21.37225
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 20.19475
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 28.73478125,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T00:21:31",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 81.3345
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 14.733
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 12.744
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 30.683
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.2545
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 44.845
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 22.38125
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 20.903
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "zhaxi123",
+    "is_mine": false,
+    "best_average_speedup": 27.62584375,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T01:55:37",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 71.63025
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 15.016
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 32.2285
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 28.68625
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.83575
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 28.456
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 22.88125
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 20.27275
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "ShenCangBule",
+    "is_mine": false,
+    "best_average_speedup": 27.10409375,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T15:02:51",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 69.67875
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 17.445
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 29.70125
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 31.114
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.213
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 23.55275
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 22.7675
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 20.3605
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 26.226375,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T09:53:52",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 72.0295
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 15.1015
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 25.93375
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 30.31125
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.152
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 20.49075
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 23.8755
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 19.91675
+     }
+    ]
+   },
+   {
+    "rank": 7,
+    "team_name": "RSI",
+    "is_mine": false,
+    "best_average_speedup": 26.0810625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T14:19:25",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 78.0115
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 14.666
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 30.05725
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 29.191
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.34
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 12.24075
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 22.159
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 19.983
+     }
+    ]
+   },
+   {
+    "rank": 8,
+    "team_name": "SoulCoder",
+    "is_mine": true,
+    "best_average_speedup": 24.1284375,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T07:30:27",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 68.367
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 12.8375
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 28.0875
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 30.207
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.1485
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 8.677
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 22.46875
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 20.23425
+     }
+    ]
+   },
+   {
+    "rank": 9,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 23.91990625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T22:50:40",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 69.86275
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 14.5805
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 26.73075
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 30.4715
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.115
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 7.77625
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 20.85475
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 18.96775
+     }
+    ]
+   },
+   {
+    "rank": 10,
+    "team_name": "avraing",
+    "is_mine": false,
+    "best_average_speedup": 19.73875,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T15:11:31",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 57.69275
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 12.16225
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 22.70725
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 20.99975
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.16925
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 9.5045
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 17.60325
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 15.071
+     }
+    ]
+   },
+   {
+    "rank": 11,
+    "team_name": "saisei",
+    "is_mine": false,
+    "best_average_speedup": 19.69,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T20:04:20",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 58.07275
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 12.369
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 22.395
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 22.45375
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.16175
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 8.42375
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 16.4615
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 15.1825
+     }
+    ]
+   },
+   {
+    "rank": 12,
+    "team_name": "komojake",
+    "is_mine": false,
+    "best_average_speedup": 19.63290625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T11:36:21",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 57.5755
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 11.8465
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 22.1585
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 22.37
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.17025
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 8.60225
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 17.495
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 14.84525
+     }
+    ]
+   },
+   {
+    "rank": 13,
+    "team_name": "chen59841",
+    "is_mine": false,
+    "best_average_speedup": 16.9785,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T16:18:04",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 57.76025
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 11.81225
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 5.64625
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 19.60675
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.183
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 7.60425
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 15.9155
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 15.29975
+     }
+    ]
+   },
+   {
+    "rank": 14,
+    "team_name": "killgame",
+    "is_mine": false,
+    "best_average_speedup": 13.47609375,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T14:57:15",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 34.2615
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 8.96825
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 21.795
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 11.87025
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.11
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 4.0635
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 12.59375
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 14.1465
+     }
+    ]
+   }
+  ],
+  "60_clamp_position": [
+   {
+    "rank": 1,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 3.83877083,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T20:59:38",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.84683333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.35333333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.6415
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.51166667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.00916667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 20.4375
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.4465
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.46366667
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 3.74364583,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T23:59:40",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.62316667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.36516667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.65
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.47633333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.022
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 20.08783333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.33016667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.3945
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 1.35154167,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T03:12:33",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.88733333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.34466667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.62716667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.50866667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.02083333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.4765
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.49466667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.4525
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 1.33114583,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T23:30:23",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.80383333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.36233333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.90716667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.51116667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.99283333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.245
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.37616667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.45066667
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "RSI",
+    "is_mine": false,
+    "best_average_speedup": 1.30804167,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T15:28:15",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.97133333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.385
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.4675
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.44433333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.01933333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.3295
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.38816667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.45916667
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "killgame",
+    "is_mine": false,
+    "best_average_speedup": 1.30372917,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T01:50:47",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.88616667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.35283333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.4645
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.54166667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.01833333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.28383333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.44066667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.44183333
+     }
+    ]
+   },
+   {
+    "rank": 7,
+    "team_name": "AICity",
+    "is_mine": false,
+    "best_average_speedup": 1.29675,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T22:16:38",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.84233333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.36283333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.47166667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.5365
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.01783333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.345
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.37233333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.4255
+     }
+    ]
+   },
+   {
+    "rank": 8,
+    "team_name": "HAiWORLD",
+    "is_mine": false,
+    "best_average_speedup": 1.2091875,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T12:03:02",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.839
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.31466667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.00066667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.42983333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.0035
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.25966667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.40083333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.42533333
+     }
+    ]
+   },
+   {
+    "rank": 9,
+    "team_name": "saisei",
+    "is_mine": false,
+    "best_average_speedup": 1.16741667,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T21:09:05",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.843
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.35233333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.46283333
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.442
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.02016667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.31933333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.43466667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.465
+     }
+    ]
+   }
+  ],
+  "61_compute_src2dst": [
+   {
+    "rank": 1,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 2.9209,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T21:16:29",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 3.3074
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.9524
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 5.7824
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.9168
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.3766
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 4.1218
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.7648
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 2.145
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 2.647275,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T21:09:45",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 3.2844
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.3578
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 5.5004
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.979
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.3804
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 4.281
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.5814
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.8138
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "RSI",
+    "is_mine": false,
+    "best_average_speedup": 2.5718,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T14:39:48",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 3.2154
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.254
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 5.5258
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.9106
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.3746
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.719
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.7696
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.8054
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 2.3053,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T23:32:57",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 3.0554
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.3342
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 5.6418
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 2.041
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.292
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.6616
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.6142
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.8022
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 2.233125,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T11:54:38",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 3.209
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.3306
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 4.9888
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 2.0184
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.3796
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.5326
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.6324
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.7736
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "SoulCoder",
+    "is_mine": true,
+    "best_average_speedup": 2.138475,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T08:11:34",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 3.004
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.2486
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 4.4408
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.8854
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.287
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.7128
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.7436
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.7856
+     }
+    ]
+   },
+   {
+    "rank": 7,
+    "team_name": "AICity",
+    "is_mine": false,
+    "best_average_speedup": 1.7863,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T23:08:02",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.762
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.0464
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 4.941
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.4042
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.3516
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.236
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.2184
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.3308
+     }
+    ]
+   },
+   {
+    "rank": 8,
+    "team_name": "HAiWORLD",
+    "is_mine": false,
+    "best_average_speedup": 1.7722,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T12:05:10",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 3.0852
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.3822
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.9962
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.9898
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.3498
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.7848
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.7286
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.861
+     }
+    ]
+   }
+  ],
+  "62_concat_mla_k": [
+   {
+    "rank": 1,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 2.15775,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T21:07:01",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 2.902
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.5942
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.2478
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.456
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.9144
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 3.219
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.7336
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 2.195
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "金狐狸",
+    "is_mine": false,
+    "best_average_speedup": 2.02915,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T08:23:16",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 2.4918
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.6212
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.9608
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 2.7082
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.7802
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.1352
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.7284
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.8074
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 1.88345,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T22:46:59",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 2.7512
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.6356
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.2302
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.8988
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.4468
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.5086
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.744
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.8524
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "RSI",
+    "is_mine": false,
+    "best_average_speedup": 1.72825,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T14:59:12",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 2.6216
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.6306
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.2058
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.5254
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.9238
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.5064
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.703
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.7094
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "ZZZZZZ",
+    "is_mine": false,
+    "best_average_speedup": 1.721,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T01:09:40",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 2.4838
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.5934
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.0004
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.3556
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.0022
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.039
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.6814
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.6122
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "gmaewin",
+    "is_mine": false,
+    "best_average_speedup": 1.58415,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T14:36:54",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 2.5342
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.6202
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.3392
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.7876
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.2044
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.652
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.7312
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.8044
+     }
+    ]
+   },
+   {
+    "rank": 7,
+    "team_name": "HAiWORLD",
+    "is_mine": false,
+    "best_average_speedup": 1.51855,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T14:02:14",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 2.6054
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.7634
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.4
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.1938
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.1834
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.4636
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.7132
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.8256
+     }
+    ]
+   },
+   {
+    "rank": 8,
+    "team_name": "ersacome",
+    "is_mine": false,
+    "best_average_speedup": 1.50395,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T18:02:42",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 2.48
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.63
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.1958
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.4572
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.2056
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.5338
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.754
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.7752
+     }
+    ]
+   },
+   {
+    "rank": 9,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 1.4796,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T23:23:23",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 2.659
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.4006
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.283
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.5346
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.1236
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.2572
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.746
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.8328
+     }
+    ]
+   },
+   {
+    "rank": 10,
+    "team_name": "SegPulse",
+    "is_mine": false,
+    "best_average_speedup": 1.4746,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T15:27:38",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 2.3708
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.5992
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.2388
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.5326
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.2184
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.3662
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.7266
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.7442
+     }
+    ]
+   },
+   {
+    "rank": 11,
+    "team_name": "Weweawaeaw2132",
+    "is_mine": false,
+    "best_average_speedup": 1.3617,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T15:02:36",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 2.3548
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.58
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.3012
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 2.8996
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.2048
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.3096
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.676
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.5676
+     }
+    ]
+   },
+   {
+    "rank": 12,
+    "team_name": "SoulCoder",
+    "is_mine": true,
+    "best_average_speedup": 1.24575,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T09:05:28",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 2.2962
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.0176
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.2802
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 2.671
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.1822
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.209
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.6594
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.6504
+     }
+    ]
+   },
+   {
+    "rank": 13,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 1.222875,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T10:44:10",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 2.6902
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.3234
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.1492
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 2.4814
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.163
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.3862
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.2434
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.3462
+     }
+    ]
+   }
+  ],
+  "63_create_flashinfer_kv_indices": [
+   {
+    "rank": 1,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 353.24240625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T20:59:54",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 483.44925
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 127.1865
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 104.4415
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 302.66875
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 7.10025
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1255.97325
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 248.8535
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 296.26625
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 222.497875,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T21:02:24",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 551.05325
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 137.36275
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 83.09125
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 333.65125
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 12.9825
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 91.948
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 274.625
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 295.269
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "cgzhou",
+    "is_mine": false,
+    "best_average_speedup": 219.11734375,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T10:02:57",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 529.54325
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 115.17225
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 108.59025
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 337.978
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 12.28375
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 92.07025
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 270.7125
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 286.5885
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "hbmu9306",
+    "is_mine": false,
+    "best_average_speedup": 215.26165625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T20:55:23",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 567.3415
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 113.24425
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 31.89525
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 289.978
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 3.0425
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 137.75275
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 278.94925
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 299.88975
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 211.6574375,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T02:55:36",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 500.1525
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 111.94125
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 61.29475
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 246.265
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 12.78775
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 210.5105
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 263.75625
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 286.5515
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "RSI",
+    "is_mine": false,
+    "best_average_speedup": 209.43959375,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T14:48:45",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 522.26825
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 114.5325
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 39.08525
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 348.49225
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 4.16375
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 77.38425
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 268.0155
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 301.575
+     }
+    ]
+   },
+   {
+    "rank": 7,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 207.1170625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T22:06:39",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 504.83825
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 143.23775
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 42.286
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 271.619
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 11.52575
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 95.50675
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 278.8195
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 309.1035
+     }
+    ]
+   },
+   {
+    "rank": 8,
+    "team_name": "gmaewin",
+    "is_mine": false,
+    "best_average_speedup": 201.75040625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T23:08:18",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 487.0565
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 113.10575
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 37.3325
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 299.12475
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 3.732
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 171.9205
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 218.72325
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 283.008
+     }
+    ]
+   },
+   {
+    "rank": 9,
+    "team_name": "xyzxyz",
+    "is_mine": false,
+    "best_average_speedup": 201.725125,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T17:14:59",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 544.90925
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 107.78575
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 44.7545
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 310.0465
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 8.46575
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 70.04
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 247.0655
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 280.73375
+     }
+    ]
+   },
+   {
+    "rank": 10,
+    "team_name": "SoulCoder",
+    "is_mine": true,
+    "best_average_speedup": 199.69521875,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T03:24:44",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 554.12725
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 87.29025
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 6.175
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 316.089
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.7055
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 72.98575
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 250.0875
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 308.1015
+     }
+    ]
+   },
+   {
+    "rank": 11,
+    "team_name": "transbit",
+    "is_mine": false,
+    "best_average_speedup": 189.254625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T23:33:15",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 457.36525
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 117.606
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 9.24375
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 275.93725
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 4.5885
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 88.10975
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 267.79325
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 293.39325
+     }
+    ]
+   },
+   {
+    "rank": 12,
+    "team_name": "killgame",
+    "is_mine": false,
+    "best_average_speedup": 129.75603125,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T02:00:45",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 296.53675
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 70.434
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 20.21825
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 177.13925
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 11.94025
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 81.97125
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 181.07275
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 198.73575
+     }
+    ]
+   },
+   {
+    "rank": 13,
+    "team_name": "iluvivy",
+    "is_mine": false,
+    "best_average_speedup": 120.15490625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T22:43:17",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 344.017
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 52.72475
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 9.25575
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 153.71975
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 6.43125
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 55.49125
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 166.7815
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 172.818
+     }
+    ]
+   },
+   {
+    "rank": 14,
+    "team_name": "xiaojuz12",
+    "is_mine": false,
+    "best_average_speedup": 27.48615625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T16:06:22",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 31.26175
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 24.7805
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 23.765
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 20.50175
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 10.421
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 30.1555
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 34.14475
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 44.859
+     }
+    ]
+   },
+   {
+    "rank": 15,
+    "team_name": "SunMoon2",
+    "is_mine": false,
+    "best_average_speedup": 27.294,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T14:16:16",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 31.6535
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 28.37875
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 16.49775
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 24.97175
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 8.979
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 27.67025
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 35.095
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 45.106
+     }
+    ]
+   },
+   {
+    "rank": 16,
+    "team_name": "comicxii",
+    "is_mine": false,
+    "best_average_speedup": 26.36309375,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T16:25:12",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 31.37125
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 24.02425
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 18.09025
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 20.5395
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 9.06575
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 28.4035
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 34.61675
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 44.7935
+     }
+    ]
+   },
+   {
+    "rank": 17,
+    "team_name": "saisei",
+    "is_mine": false,
+    "best_average_speedup": 25.46784375,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T20:29:02",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 31.22275
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 24.0895
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 10.687
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 20.6055
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 6.67875
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 31.1115
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 34.21275
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 45.135
+     }
+    ]
+   },
+   {
+    "rank": 18,
+    "team_name": "komojake",
+    "is_mine": false,
+    "best_average_speedup": 25.449375,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T11:46:45",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 31.722
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 24.5205
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 10.82
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 20.396
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 6.763
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 30.59075
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 34.21675
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 44.566
+     }
+    ]
+   },
+   {
+    "rank": 19,
+    "team_name": "OpeGoodn",
+    "is_mine": false,
+    "best_average_speedup": 23.99575,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T14:31:53",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 31.91975
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 24.40125
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 4.6935
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 20.5505
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 3.98675
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 26.37325
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 33.83425
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 46.20675
+     }
+    ]
+   }
+  ],
+  "64_deepep_permute": [
+   {
+    "rank": 1,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 28.90735,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T21:02:09",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 34.0042
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 16.2816
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 15.4772
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 23.8362
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.5612
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 110.2894
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 16.8654
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 12.9436
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "金狐狸",
+    "is_mine": false,
+    "best_average_speedup": 26.486775,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T08:18:27",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 30.8456
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 14.9674
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 12.0746
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 22.1474
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.4928
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 100.914
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 16.5636
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 12.8888
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "gonzhanshishenmeganjue",
+    "is_mine": false,
+    "best_average_speedup": 23.23925,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T21:24:47",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 14.7746
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 7.016
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 134.4262
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 9.074
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.101
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 5.2892
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 8.2142
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 6.0188
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "aiaijiaolvle",
+    "is_mine": false,
+    "best_average_speedup": 18.275925,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T23:07:55",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 15.032
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 6.4536
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 94.6674
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 8.9206
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.0968
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 5.8604
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 8.3962
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.7804
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 16.26225,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T22:17:56",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 34.3446
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 16.009
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 12.317
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 22.2538
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.6674
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 15.0428
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 16.173
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 12.2904
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 13.594275,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T12:06:22",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 29.0556
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 14.4492
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 5.9032
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 21.2514
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.4382
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 10.585
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 14.2212
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 11.8504
+     }
+    ]
+   },
+   {
+    "rank": 7,
+    "team_name": "transbit",
+    "is_mine": false,
+    "best_average_speedup": 13.3882,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T23:26:06",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 33.3948
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 15.2472
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.405
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 20.5426
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.2664
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 9.4004
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 15.1674
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 12.6818
+     }
+    ]
+   },
+   {
+    "rank": 8,
+    "team_name": "RSI",
+    "is_mine": false,
+    "best_average_speedup": 11.75335,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T20:54:16",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 28.012
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 11.569
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 4.3416
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 18.5274
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.6946
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 5.4388
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 13.2112
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 11.2322
+     }
+    ]
+   },
+   {
+    "rank": 9,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 7.61745,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-10T22:26:54",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 17.1312
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 6.7576
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 5.5018
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 12.7074
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.1396
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 3.0316
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 8.7262
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 6.9442
+     }
+    ]
+   },
+   {
+    "rank": 10,
+    "team_name": "comicxii",
+    "is_mine": false,
+    "best_average_speedup": 7.460075,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T16:22:49",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 16.4622
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 6.7812
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 5.4748
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 9.8944
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.1854
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 4.481
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 8.581
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 6.8206
+     }
+    ]
+   },
+   {
+    "rank": 11,
+    "team_name": "iluvivy",
+    "is_mine": false,
+    "best_average_speedup": 7.391675,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T23:06:01",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 18.2042
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 6.0494
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.7218
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 11.3734
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.2622
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 4.516
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 8.9652
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 7.0412
+     }
+    ]
+   },
+   {
+    "rank": 12,
+    "team_name": "komojake",
+    "is_mine": false,
+    "best_average_speedup": 7.3042,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T11:49:11",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 17.2228
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 6.6642
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.5244
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 10.6332
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.948
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 4.0114
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 8.5698
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 6.8598
+     }
+    ]
+   },
+   {
+    "rank": 13,
+    "team_name": "saisei",
+    "is_mine": false,
+    "best_average_speedup": 7.23435,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T20:34:18",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 17.264
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 6.6966
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.5372
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 10.359
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.944
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 3.7614
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 8.6108
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 6.7018
+     }
+    ]
+   },
+   {
+    "rank": 14,
+    "team_name": "SoulCoder",
+    "is_mine": true,
+    "best_average_speedup": 7.17105,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T03:27:13",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 16.0098
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 5.5638
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 6.666
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 10.2028
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.2656
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 3.085
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 8.6716
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 6.9038
+     }
+    ]
+   },
+   {
+    "rank": 15,
+    "team_name": "OpeGoodn",
+    "is_mine": false,
+    "best_average_speedup": 6.688875,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T14:12:19",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 10.4304
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 4.5734
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 14.1814
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 6.0514
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.1252
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 5.5172
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 6.3364
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.2956
+     }
+    ]
+   },
+   {
+    "rank": 16,
+    "team_name": "killgame",
+    "is_mine": false,
+    "best_average_speedup": 5.6918,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T10:08:39",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 12.101
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 5.032
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.295
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 6.6464
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.2794
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 5.2024
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 7.1246
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.8536
+     }
+    ]
+   },
+   {
+    "rank": 17,
+    "team_name": "HAiWORLD",
+    "is_mine": false,
+    "best_average_speedup": 5.51155,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T10:11:24",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 11.1268
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 4.5216
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.8856
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 7.754
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.2028
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 4.6694
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 8.051
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 6.8812
+     }
+    ]
+   }
+  ],
+  "65_deepep_post_reorder": [
+   {
+    "rank": 1,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 70.88945,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T20:52:36",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 51.8894
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 25.782
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 27.2218
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 84.644
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 5.4432
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 279.5356
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 63.8914
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 28.7082
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 70.397475,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T20:22:23",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 57.0264
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 26.0026
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 35.6554
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 100.9116
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 5.0748
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 244.7464
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 69.6746
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 24.088
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "金狐狸",
+    "is_mine": false,
+    "best_average_speedup": 45.183825,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T23:52:39",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 25.2196
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 29.856
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 9.6182
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 95.6122
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 3.881
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 122.7448
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 53.0184
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 21.5204
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "RSI",
+    "is_mine": false,
+    "best_average_speedup": 36.2678,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T19:51:46",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 39.9746
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 26.2324
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 20.8758
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 86.3214
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 5.0444
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 24.1942
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 66.3484
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 21.1512
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "transbit",
+    "is_mine": false,
+    "best_average_speedup": 35.40615,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-17T01:08:22",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 42.3546
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 23.4994
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.5924
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 89.575
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 3.302
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 30.5384
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 68.2374
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 23.15
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "gonzhanshishenmeganjue",
+    "is_mine": false,
+    "best_average_speedup": 34.71715,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T21:06:19",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 31.4592
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 22.9138
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 54.4592
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 79.3068
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 3.3648
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 22.6852
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 42.5778
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 20.9704
+     }
+    ]
+   },
+   {
+    "rank": 7,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 33.949675,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T21:51:27",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 45.9324
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 15.3096
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 8.8414
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 95.032
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.7572
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 14.7944
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 66.8706
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 23.0598
+     }
+    ]
+   },
+   {
+    "rank": 8,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 33.045575,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T16:28:50",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 24.8062
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 26.3954
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 25.3034
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 92.8422
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.206
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 21.4328
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 49.3536
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 23.025
+     }
+    ]
+   },
+   {
+    "rank": 9,
+    "team_name": "saisei",
+    "is_mine": false,
+    "best_average_speedup": 30.591475,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T20:37:27",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 39.201
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 21.1246
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 6.263
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 84.8382
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 3.282
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 17.1342
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 52.0522
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 20.8366
+     }
+    ]
+   },
+   {
+    "rank": 10,
+    "team_name": "iluvivy",
+    "is_mine": false,
+    "best_average_speedup": 30.53285,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T22:48:12",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 40.025
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 17.0408
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.4112
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 85.5726
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.9668
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 14.4354
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 63.9954
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 18.8156
+     }
+    ]
+   },
+   {
+    "rank": 11,
+    "team_name": "comicxii",
+    "is_mine": false,
+    "best_average_speedup": 30.26565,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T16:20:34",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 32.344
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 22.2466
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 10.6436
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 82.0488
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 4.4524
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 19.9038
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 49.779
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 20.707
+     }
+    ]
+   },
+   {
+    "rank": 12,
+    "team_name": "aiaijiaolvle",
+    "is_mine": false,
+    "best_average_speedup": 30.16305,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T21:38:55",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 31.0804
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 22.4352
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 15.5924
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 83.276
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 4.0634
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 22.5962
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 41.8668
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 20.394
+     }
+    ]
+   },
+   {
+    "rank": 13,
+    "team_name": "SoulCoder",
+    "is_mine": true,
+    "best_average_speedup": 26.917125,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T17:09:01",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 31.4906
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 18.7902
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 8.1668
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 70.5854
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.376
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 17.5128
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 48.852
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 19.5632
+     }
+    ]
+   },
+   {
+    "rank": 14,
+    "team_name": "killgame",
+    "is_mine": false,
+    "best_average_speedup": 18.3233,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T01:50:28",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 21.6642
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 17.2696
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.6482
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 35.1082
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 3.8566
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 22.0912
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 28.5968
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 14.3516
+     }
+    ]
+   },
+   {
+    "rank": 15,
+    "team_name": "OpeGoodn",
+    "is_mine": false,
+    "best_average_speedup": 14.055925,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T14:14:50",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 16.5734
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 10.8594
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.0368
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 25.205
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 3.0066
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 21.7224
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 20.563
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 11.4808
+     }
+    ]
+   },
+   {
+    "rank": 16,
+    "team_name": "zhangjinglin173",
+    "is_mine": false,
+    "best_average_speedup": 1.009675,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T20:40:11",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.0004
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 0.9996
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.9992
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.0
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.0774
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.0
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.0002
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.0006
+     }
+    ]
+   }
+  ],
+  "66_dsv3_fused_a_gemm": [
+   {
+    "rank": 1,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 5.46285,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T20:11:21",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.0952
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 5.7956
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.923
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 7.51
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.7454
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 3.3996
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 4.1634
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 12.0706
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 4.733475,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T20:24:23",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.4378
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 6.0838
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.1134
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 7.919
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.9748
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 3.3968
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.9154
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 6.0268
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "RSI",
+    "is_mine": false,
+    "best_average_speedup": 4.025825,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T20:08:06",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 2.3872
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 5.2558
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.0878
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 6.905
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.7216
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 2.9232
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 4.3008
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.6252
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 3.422075,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T20:32:14",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.3822
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.9272
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.7876
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 6.0928
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.4418
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 2.0536
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 4.1168
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 6.5746
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "金狐狸",
+    "is_mine": false,
+    "best_average_speedup": 3.401375,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T11:20:21",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.314
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 4.522
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.4878
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 6.5062
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.6552
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 3.379
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 4.1576
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.1892
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "killgame",
+    "is_mine": false,
+    "best_average_speedup": 3.103825,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T01:41:01",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.3262
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.6266
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.4516
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 5.2244
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.751
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.9674
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.5904
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.893
+     }
+    ]
+   },
+   {
+    "rank": 7,
+    "team_name": "SoulCoder",
+    "is_mine": true,
+    "best_average_speedup": 3.09855,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T09:11:56",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.3328
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.5158
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.4202
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 5.0002
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.7482
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.8354
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 4.014
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.9218
+     }
+    ]
+   },
+   {
+    "rank": 8,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 2.9695,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T01:37:19",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.8772
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 4.1424
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.5512
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.5698
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.6308
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.7866
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 4.0274
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.1706
+     }
+    ]
+   },
+   {
+    "rank": 9,
+    "team_name": "determine",
+    "is_mine": false,
+    "best_average_speedup": 2.499875,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T15:32:35",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.6162
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.8464
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.2234
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 2.1956
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.7396
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.8162
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.6506
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.911
+     }
+    ]
+   },
+   {
+    "rank": 10,
+    "team_name": "HAiWORLD",
+    "is_mine": false,
+    "best_average_speedup": 2.341675,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T23:36:35",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.4504
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.0598
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.3456
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.188
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.5498
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 2.0938
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 2.6934
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.3526
+     }
+    ]
+   },
+   {
+    "rank": 11,
+    "team_name": "OpeGoodn",
+    "is_mine": false,
+    "best_average_speedup": 2.28565,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T14:22:59",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.4554
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.1076
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.2832
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.3176
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.5572
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.591
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 2.5724
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.4008
+     }
+    ]
+   }
+  ],
+  "67_fill_padded_rows": [
+   {
+    "rank": 1,
+    "team_name": "金狐狸",
+    "is_mine": false,
+    "best_average_speedup": 12.463525,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T08:35:04",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 20.5794
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 4.0744
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 4.6582
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 8.19
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.2202
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 48.8558
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 7.0108
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.1194
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 8.316325,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T20:26:24",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 18.3842
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.8248
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 5.6826
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 8.6152
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.2032
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 17.5402
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 6.25
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.0304
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "zhaxi123",
+    "is_mine": false,
+    "best_average_speedup": 7.87885,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T00:32:01",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 22.262
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 4.0082
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 5.5634
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 10.7612
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.1082
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 7.0314
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 7.2286
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.0678
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "ersacome",
+    "is_mine": false,
+    "best_average_speedup": 7.654625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T19:14:31",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 23.6356
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.946
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 5.8088
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 8.4586
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.1982
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 5.7608
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 7.1216
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.3074
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 7.292175,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T20:02:44",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 17.4312
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.7828
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 6.1506
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 8.958
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.1758
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 9.2496
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 6.5656
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.0238
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "gmaewin",
+    "is_mine": false,
+    "best_average_speedup": 7.270025,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T13:29:34",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 21.2766
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.8538
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 6.1172
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 8.7496
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.2338
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 4.8532
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 6.9644
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.1116
+     }
+    ]
+   },
+   {
+    "rank": 7,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 6.80485,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T00:03:23",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 21.2326
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.7394
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 8.4532
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.7938
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 6.2652
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 6.9714
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.3162
+     }
+    ]
+   },
+   {
+    "rank": 8,
+    "team_name": "RSI",
+    "is_mine": false,
+    "best_average_speedup": 5.925475,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T19:55:45",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 19.1266
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.7182
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.1144
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 7.7912
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.2124
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 2.379
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 6.2306
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.8314
+     }
+    ]
+   },
+   {
+    "rank": 9,
+    "team_name": "HAiWORLD",
+    "is_mine": false,
+    "best_average_speedup": 5.61765,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T22:27:44",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 16.3574
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.753
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.5336
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 8.5816
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.6824
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 2.5436
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 6.6036
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.886
+     }
+    ]
+   },
+   {
+    "rank": 10,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 5.123975,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T22:56:17",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 13.8906
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.2144
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 5.5518
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 6.2032
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.587
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 2.913
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.4764
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.1554
+     }
+    ]
+   },
+   {
+    "rank": 11,
+    "team_name": "transbit",
+    "is_mine": false,
+    "best_average_speedup": 4.661475,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-17T08:47:35",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 11.7498
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.9512
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.0392
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 6.429
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.6368
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 4.012
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.9016
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.5722
+     }
+    ]
+   },
+   {
+    "rank": 12,
+    "team_name": "SoulCoder",
+    "is_mine": true,
+    "best_average_speedup": 4.2969,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T09:01:36",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 11.8956
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.7324
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.5106
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 6.1164
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.5854
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.9286
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.4502
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.156
+     }
+    ]
+   },
+   {
+    "rank": 13,
+    "team_name": "OpeGoodn",
+    "is_mine": false,
+    "best_average_speedup": 4.2432,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T13:58:21",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 11.2718
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.7756
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.4748
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 6.556
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.4444
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.7146
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.4014
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.307
+     }
+    ]
+   },
+   {
+    "rank": 14,
+    "team_name": "iluvivy",
+    "is_mine": false,
+    "best_average_speedup": 3.892275,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T14:13:00",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 10.3198
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.944
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.4412
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 6.1742
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.621
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.9678
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.3814
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.2888
+     }
+    ]
+   },
+   {
+    "rank": 15,
+    "team_name": "killgame",
+    "is_mine": false,
+    "best_average_speedup": 3.2689,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T01:44:02",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 9.2784
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.0192
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.9286
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.5246
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.6208
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.532
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 4.2364
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.0112
+     }
+    ]
+   }
+  ],
+  "68_fused_eh_norm": [
+   {
+    "rank": 1,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 18.283125,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T20:05:04",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 13.52933333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 8.5322
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 31.40633333
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 14.34306667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.13493333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 57.63993333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 9.7258
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 9.9534
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "zhaxi123",
+    "is_mine": false,
+    "best_average_speedup": 12.02585833,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T23:54:59",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 11.75053333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 7.2582
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 41.7206
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 13.5414
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.1116
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 4.15213333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 8.7216
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 7.9508
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 10.814875,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T20:40:39",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 15.4198
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 8.82746667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 7.02866667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 15.7936
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.2956
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 19.601
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 9.92206667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 8.6308
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "金狐狸",
+    "is_mine": false,
+    "best_average_speedup": 8.56046667,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T10:44:17",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 10.99686667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 6.763
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 6.2142
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 13.00386667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.10293333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 10.232
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 9.8646
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 10.30626667
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 7.82131667,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T20:06:08",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 11.8544
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 7.57806667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 4.5266
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 14.49046667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.09153333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 4.5658
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 10.12446667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 8.3392
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "HAiWORLD",
+    "is_mine": false,
+    "best_average_speedup": 7.66793333,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T22:49:35",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 12.52433333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 7.06746667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.9596
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 15.22213333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.11166667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 3.98173333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 9.1412
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 8.33533333
+     }
+    ]
+   },
+   {
+    "rank": 7,
+    "team_name": "transbit",
+    "is_mine": false,
+    "best_average_speedup": 7.49665834,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-17T08:39:33",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 12.72553333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 7.61766667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.21066667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 14.36706667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.11846667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 3.333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 10.0374
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 8.56346667
+     }
+    ]
+   },
+   {
+    "rank": 8,
+    "team_name": "RSI",
+    "is_mine": false,
+    "best_average_speedup": 7.30049167,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T20:10:09",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 11.44453333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 7.10966667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.9456
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 13.53666667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.17093333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 3.93046667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 9.90933333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 8.35673333
+     }
+    ]
+   },
+   {
+    "rank": 9,
+    "team_name": "OpeGoodn",
+    "is_mine": false,
+    "best_average_speedup": 7.23455,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-17T06:37:48",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 10.411
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 6.19726667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.89913333
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 15.51933333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.1594
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 3.951
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 9.602
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 8.13726667
+     }
+    ]
+   },
+   {
+    "rank": 10,
+    "team_name": "SoulCoder",
+    "is_mine": true,
+    "best_average_speedup": 7.10215,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T09:04:36",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 12.61186667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 6.80853333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.6814
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 13.55273333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.0982
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 3.8108
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 9.138
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 8.11566667
+     }
+    ]
+   },
+   {
+    "rank": 11,
+    "team_name": "killgame",
+    "is_mine": false,
+    "best_average_speedup": 6.77865,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T01:35:49",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 11.42973333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 6.7306
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.93846667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 11.61126667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.1408
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 4.2654
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 8.8648
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 8.24813333
+     }
+    ]
+   },
+   {
+    "rank": 12,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 6.66161667,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T00:41:22",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 9.7606
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 6.4774
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.78813333
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 13.1674
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.7994
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 4.04553333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 9.07446667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 8.18
+     }
+    ]
+   },
+   {
+    "rank": 13,
+    "team_name": "iluvivy",
+    "is_mine": false,
+    "best_average_speedup": 5.21025833,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T22:08:35",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 8.5356
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 4.14133333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.02886667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 8.79286667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.82666667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 4.26853333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 7.22246667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 6.86573333
+     }
+    ]
+   }
+  ],
+  "69_fused_moe_dispatch_index": [
+   {
+    "rank": 1,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 82.741675,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T20:34:44",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 206.1104
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 55.503
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 8.9718
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 158.9724
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 2.8622
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 20.88
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 129.9974
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 78.6362
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 80.917125,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T16:01:22",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 210.0916
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 47.2516
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 24.6152
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 180.3402
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 7.8388
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 7.873
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 95.1092
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 74.2174
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 63.108025,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T13:10:39",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 134.3724
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 51.1496
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.3648
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 137.1614
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.069
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 6.9028
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 103.525
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 68.3192
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "金狐狸",
+    "is_mine": false,
+    "best_average_speedup": 54.12595,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T02:09:01",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 81.412
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 49.4018
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.6726
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 139.4284
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.6934
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 11.0362
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 80.5986
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 67.7646
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "SoulCoder",
+    "is_mine": true,
+    "best_average_speedup": 51.3375,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T17:34:50",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 76.9982
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 45.7358
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.7568
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 134.7284
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.1016
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 3.825
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 80.7688
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 67.7854
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 50.30275,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T13:00:36",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 69.7958
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 48.7984
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.605
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 130.9324
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.2216
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 5.8388
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 80.1582
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 65.0718
+     }
+    ]
+   }
+  ],
+  "70_gate_topk": [
+   {
+    "rank": 1,
+    "team_name": "金狐狸",
+    "is_mine": false,
+    "best_average_speedup": 18.8799875,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T01:10:25",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.0417
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.7973
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 126.6734
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 5.1164
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.388
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.5811
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.7839
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.6581
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 3.7512375,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-11T20:47:13",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 7.5153
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 4.0243
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.9822
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 6.7358
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.7555
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.9943
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 4.1041
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.8984
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 3.6239125,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T15:20:39",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 8.152
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 4.0169
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.0605
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 5.6598
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.691
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.9396
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.7501
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.7214
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "gmaewin",
+    "is_mine": false,
+    "best_average_speedup": 2.8308375,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T16:18:26",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.2376
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.4672
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.2811
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 6.4438
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.2749
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.3691
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.5814
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.9916
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 1.8473125,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T01:00:25",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 3.1276
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.5689
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.647
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 2.9843
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.3079
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.247
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 2.6609
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.2349
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "killgame",
+    "is_mine": false,
+    "best_average_speedup": 1.004,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T15:00:52",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.0038
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.0
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.9988
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 0.9915
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.9971
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.0053
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.0138
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.0217
+     }
+    ]
+   }
+  ],
+  "71_gelu_tanh_and_mul": [
+   {
+    "rank": 1,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 5.36765,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T20:08:00",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.5954
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.12613333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 4.04366667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.92866667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.20486667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 14.55186667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 4.068
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.4226
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 4.40741667,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T15:24:07",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.58953333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.2344
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 4.36113333
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.965
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.43986667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 7.3194
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.864
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.486
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "金狐狸",
+    "is_mine": false,
+    "best_average_speedup": 3.8927,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T11:13:47",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.18726667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.89673333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 6.4694
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.26486667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.98646667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.9882
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.9418
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.40686667
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 3.46875,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T02:14:08",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.54633333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.7364
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 4.08406667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.39866667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.01706667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 2.11093333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.59246667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.26406667
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "RSI",
+    "is_mine": false,
+    "best_average_speedup": 3.457025,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T22:23:33",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.86166667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.97813333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.76826667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.50293333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.17666667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 2.11926667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.8932
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.35606667
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "ersacome",
+    "is_mine": false,
+    "best_average_speedup": 3.4229,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T20:33:43",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.15313333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.87953333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 4.03046667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.56346667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.99846667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.503
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.8324
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.42273333
+     }
+    ]
+   },
+   {
+    "rank": 7,
+    "team_name": "HAiWORLD",
+    "is_mine": false,
+    "best_average_speedup": 3.09655,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T23:40:14",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.35646667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.7936
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.53613333
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.2322
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.03953333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.86086667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.657
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.2966
+     }
+    ]
+   },
+   {
+    "rank": 8,
+    "team_name": "transbit",
+    "is_mine": false,
+    "best_average_speedup": 3.08458333,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T23:48:05",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.46013333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.93366667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.844
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.54286667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.87706667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.69173333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.9286
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.3986
+     }
+    ]
+   },
+   {
+    "rank": 9,
+    "team_name": "191980",
+    "is_mine": false,
+    "best_average_speedup": 3.0466,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T23:55:28",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.91026667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.77273333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.87973333
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.18326667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.83366667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.55546667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.84273333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.39493333
+     }
+    ]
+   },
+   {
+    "rank": 10,
+    "team_name": "OpeGoodn",
+    "is_mine": false,
+    "best_average_speedup": 2.97758333,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T15:05:38",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.56173333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.04773333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.96446667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.58393333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.8824
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.4976
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.89133333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.39146667
+     }
+    ]
+   },
+   {
+    "rank": 11,
+    "team_name": "Albedo",
+    "is_mine": false,
+    "best_average_speedup": 2.882,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T21:37:38",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.2866
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.78546667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.5426
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.9296
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.2978
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.7784
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.95713333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.4784
+     }
+    ]
+   },
+   {
+    "rank": 12,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 2.85666667,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T21:39:38",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.16933333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.17773333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.7352
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.1592
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.63473333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.53293333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.89066667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.55353333
+     }
+    ]
+   },
+   {
+    "rank": 13,
+    "team_name": "killgame",
+    "is_mine": false,
+    "best_average_speedup": 2.81020833,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T00:21:31",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.54573333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.67713333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.99853333
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.99926667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.45966667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.63286667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.8292
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.33926667
+     }
+    ]
+   },
+   {
+    "rank": 14,
+    "team_name": "iluvivy",
+    "is_mine": false,
+    "best_average_speedup": 2.79569167,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T21:02:50",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.16886667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.3608
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.9502
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.28626667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.868
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 2.16393333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.42133333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.14613333
+     }
+    ]
+   },
+   {
+    "rank": 15,
+    "team_name": "SoulCoder",
+    "is_mine": true,
+    "best_average_speedup": 2.78165833,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T07:57:59",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.11513333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.10086667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.041
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.90206667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.86533333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.94226667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.12593333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.16066667
+     }
+    ]
+   },
+   {
+    "rank": 16,
+    "team_name": "AICity",
+    "is_mine": false,
+    "best_average_speedup": 2.74550833,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T14:39:49",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.0774
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.791
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.13453333
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.24673333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.46186667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.17433333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.74533333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.33286667
+     }
+    ]
+   },
+   {
+    "rank": 17,
+    "team_name": "cgzhou",
+    "is_mine": false,
+    "best_average_speedup": 2.51113333,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T11:37:44",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.83246667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.32426667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.1086
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.17166667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.4344
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.9722
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.77646667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.469
+     }
+    ]
+   }
+  ],
+  "72_group_norm_silu": [
+   {
+    "rank": 1,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 4.78075,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T20:21:01",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.61166667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.41233333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.69683333
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 5.35516667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.932
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 10.82666667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 4.41366667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.99766667
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 4.38741667,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T20:36:21",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.5775
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.06433333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.66516667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.74783333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.9715
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 9.21316667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 4.5295
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.33033333
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 3.15322917,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T02:50:46",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.58683333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.95366667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.24433333
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.817
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.54633333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.34016667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 4.53666667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.20083333
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "RSI",
+    "is_mine": false,
+    "best_average_speedup": 3.0438125,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T22:26:31",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.1095
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.04683333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.765
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.98533333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.9285
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.29183333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.99766667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.22583333
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "goodluck",
+    "is_mine": false,
+    "best_average_speedup": 3.0095,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T00:42:53",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.8375
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.405
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.1205
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.57933333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.68916667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.28883333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 4.06783333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.08783333
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "SoulCoder",
+    "is_mine": true,
+    "best_average_speedup": 2.66266667,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T14:41:13",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.1515
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.96183333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.376
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.73883333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.491
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.19583333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.65
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.73633333
+     }
+    ]
+   },
+   {
+    "rank": 7,
+    "team_name": "Albedo",
+    "is_mine": false,
+    "best_average_speedup": 2.3776875,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T08:30:00",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.38883333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.67933333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.65816667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.90683333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.41266667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.47016667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.18883333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.31666667
+     }
+    ]
+   },
+   {
+    "rank": 8,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 1.91683333,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T22:05:08",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 3.2595
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.5405
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.94283333
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 2.56883333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.19383333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.22033333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 2.79466667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 2.81416667
+     }
+    ]
+   },
+   {
+    "rank": 9,
+    "team_name": "iluvivy",
+    "is_mine": false,
+    "best_average_speedup": 1.08727083,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T13:23:54",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 1.43416667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 1.103
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.17366667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 1.60166667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.586
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.70933333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 1.64666667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 1.44366667
+     }
+    ]
+   }
+  ],
+  "73_residual_gate_add": [
+   {
+    "rank": 1,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 6.41778125,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T21:05:48",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.651
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 5.7765
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 18.29125
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 7.46175
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.6625
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 2.205875
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.83175
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.461625
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 6.38482812,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T17:03:58",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 8.68375
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 5.840375
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 5.181125
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 7.65175
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.25425
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 11.3245
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.969125
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.17375
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 4.97490625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T20:05:52",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 7.8935
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 5.19025
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 5.009
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 7.48475
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.264625
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 2.629875
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.792
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.53525
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "金狐狸",
+    "is_mine": false,
+    "best_average_speedup": 4.72571875,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T15:58:06",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.9775
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 4.994
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 4.334375
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 7.073875
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.642125
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 2.147875
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.741125
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.894875
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "killgame",
+    "is_mine": false,
+    "best_average_speedup": 4.18035938,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T20:13:25",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.70175
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 5.032875
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.447
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 6.926625
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.719
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.754875
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.303
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 5.55775
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "OpeGoodn",
+    "is_mine": false,
+    "best_average_speedup": 4.1515625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T11:34:38",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 7.024625
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 5.951375
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.915375
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 7.574125
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.570375
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.98325
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.700375
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.493
+     }
+    ]
+   },
+   {
+    "rank": 7,
+    "team_name": "SoulCoder",
+    "is_mine": true,
+    "best_average_speedup": 4.1080625,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T08:00:19",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.883
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 4.753125
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.109875
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 7.182125
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.861625
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.101375
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.75175
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.221625
+     }
+    ]
+   },
+   {
+    "rank": 8,
+    "team_name": "Sweetdeath",
+    "is_mine": false,
+    "best_average_speedup": 4.01854688,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-17T10:14:27",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 7.04175
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 5.086375
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.909375
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 7.373875
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.4675
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.003625
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.810875
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.455
+     }
+    ]
+   },
+   {
+    "rank": 9,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 3.94996875,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T03:16:36",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 7.044
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 4.693
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.93725
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 7.4505
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.24975
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.966875
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.72
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.538375
+     }
+    ]
+   },
+   {
+    "rank": 10,
+    "team_name": "AICity",
+    "is_mine": false,
+    "best_average_speedup": 3.88098438,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T12:22:19",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.396375
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 5.45925
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.1105
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 6.96825
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.207625
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.177125
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.528625
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.200125
+     }
+    ]
+   },
+   {
+    "rank": 11,
+    "team_name": "transbit",
+    "is_mine": false,
+    "best_average_speedup": 3.79045312,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-17T09:06:56",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.87675
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 4.5155
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.71925
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 6.771375
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.563
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.863875
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.57
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.443875
+     }
+    ]
+   },
+   {
+    "rank": 12,
+    "team_name": "Albedo",
+    "is_mine": false,
+    "best_average_speedup": 3.66192188,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T23:22:17",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 7.021625
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 5.146375
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.302875
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 7.22025
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.342125
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.643625
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 4.128875
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.489625
+     }
+    ]
+   },
+   {
+    "rank": 13,
+    "team_name": "cgzhou",
+    "is_mine": false,
+    "best_average_speedup": 3.60403125,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T11:21:42",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 6.488125
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.735125
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.0135
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 5.399125
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.387
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.945
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 5.751875
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.1125
+     }
+    ]
+   }
+  ],
+  "74_seqlens_expand": [
+   {
+    "rank": 1,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 26.8919,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T20:10:10",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 85.2256
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 14.7002
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 19.7098
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 31.7112
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.7712
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 12.8628
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 28.2718
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 20.8826
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 26.821525,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T20:32:50",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 87.3606
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 14.9536
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 22.8286
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 32.5402
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.8374
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 8.2128
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 27.2768
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 19.5622
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "cgzhou",
+    "is_mine": false,
+    "best_average_speedup": 22.21945,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T14:58:32",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 70.253
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 13.7956
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 13.1252
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 26.4872
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.3408
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 6.7044
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 27.3218
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 19.7276
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "HAiWORLD",
+    "is_mine": false,
+    "best_average_speedup": 21.50685,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T00:40:11",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 69.8932
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 12.4748
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 10.6066
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 24.6962
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.1246
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 7.8668
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 26.612
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 18.7806
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "金狐狸",
+    "is_mine": false,
+    "best_average_speedup": 21.019975,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T12:16:44",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 62.5768
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 12.9088
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 8.7716
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 30.9976
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.508
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 8.1654
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 23.0322
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 20.1994
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 20.63405,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T00:28:42",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 65.8842
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 12.1666
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 8.9548
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 26.178
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.4138
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 9.481
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 24.3214
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 16.6726
+     }
+    ]
+   },
+   {
+    "rank": 7,
+    "team_name": "Albedo",
+    "is_mine": false,
+    "best_average_speedup": 20.2093125,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T23:12:53",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 77.2462
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 4.2966
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 10.1112
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 28.2062
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.4035
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 9.3
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 18.9156
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 13.1952
+     }
+    ]
+   },
+   {
+    "rank": 8,
+    "team_name": "SoulCoder",
+    "is_mine": true,
+    "best_average_speedup": 20.177775,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T07:54:37",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 59.5166
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 11.8654
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 9.2032
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 28.7834
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.6826
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 7.6296
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 26.0222
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 16.7192
+     }
+    ]
+   },
+   {
+    "rank": 9,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 19.305875,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T12:56:52",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 58.9668
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 11.0932
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 9.4966
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 26.2236
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.9346
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 7.3794
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 22.1798
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 17.173
+     }
+    ]
+   },
+   {
+    "rank": 10,
+    "team_name": "OpeGoodn",
+    "is_mine": false,
+    "best_average_speedup": 12.69035,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-17T06:41:58",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 34.8158
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 9.4346
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 6.3216
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 15.3736
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.746
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 7.1004
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 15.7768
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 10.954
+     }
+    ]
+   },
+   {
+    "rank": 11,
+    "team_name": "transbit",
+    "is_mine": false,
+    "best_average_speedup": 12.48985,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-17T07:56:28",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 15.6504
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 4.0134
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 23.234
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 16.699
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.7724
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 7.8434
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 17.965
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 12.7412
+     }
+    ]
+   },
+   {
+    "rank": 12,
+    "team_name": "killgame",
+    "is_mine": false,
+    "best_average_speedup": 9.388,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T10:18:19",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 28.2252
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 6.5926
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 5.3496
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 11.3542
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.7538
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 2.3188
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 11.739
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 8.7708
+     }
+    ]
+   }
+  ],
+  "75_sigmoid_gate_mul": [
+   {
+    "rank": 1,
+    "team_name": "c2flow",
+    "is_mine": false,
+    "best_average_speedup": 5.969425,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T20:03:25",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.16086667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.15013333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 10.49686667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.04933333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.98606667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 16.06426667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.8378
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.01006667
+     }
+    ]
+   },
+   {
+    "rank": 2,
+    "team_name": "EvokeAgent",
+    "is_mine": false,
+    "best_average_speedup": 5.732225,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T11:22:27",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.43853333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.20753333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.7794
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.3112
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 1.1314
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 20.28826667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.7554
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.94606667
+     }
+    ]
+   },
+   {
+    "rank": 3,
+    "team_name": "GuanghuLab",
+    "is_mine": false,
+    "best_average_speedup": 3.68839167,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T23:31:30",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.17606667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.155
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 7.84273333
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.0584
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.8542
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.64373333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.688
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.089
+     }
+    ]
+   },
+   {
+    "rank": 4,
+    "team_name": "金狐狸",
+    "is_mine": false,
+    "best_average_speedup": 3.252575,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T15:52:05",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.92053333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.03653333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.70386667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.80453333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.85
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.99186667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.7742
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.93906667
+     }
+    ]
+   },
+   {
+    "rank": 5,
+    "team_name": "Albedo",
+    "is_mine": false,
+    "best_average_speedup": 3.222925,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T22:13:13",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.95113333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.9552
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.6048
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.0166
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.91833333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 2.48046667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.7786
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.07826667
+     }
+    ]
+   },
+   {
+    "rank": 6,
+    "team_name": "Nectar",
+    "is_mine": false,
+    "best_average_speedup": 3.125075,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T20:49:23",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.79446667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.46126667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.5616
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.0072
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.78226667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.46933333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.83473333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.08973333
+     }
+    ]
+   },
+   {
+    "rank": 7,
+    "team_name": "HAiWORLD",
+    "is_mine": false,
+    "best_average_speedup": 3.082325,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-12T23:38:05",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 5.18573333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.0338
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.40886667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.91526667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.86306667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.28946667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.79306667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.16933333
+     }
+    ]
+   },
+   {
+    "rank": 8,
+    "team_name": "Beatrice",
+    "is_mine": false,
+    "best_average_speedup": 3.06123333,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T15:38:40",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.84653333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.54513333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.546
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.9542
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.7852
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.991
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.731
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.0908
+     }
+    ]
+   },
+   {
+    "rank": 9,
+    "team_name": "killgame",
+    "is_mine": false,
+    "best_average_speedup": 2.96353333,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T23:24:54",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.78213333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.04813333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.769
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.916
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.8624
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.3994
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.9026
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 4.0286
+     }
+    ]
+   },
+   {
+    "rank": 10,
+    "team_name": "OpeGoodn",
+    "is_mine": false,
+    "best_average_speedup": 2.89825833,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T10:37:19",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.83713333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.1146
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.6826
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.90386667
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.78093333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.9978
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.8004
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.06873333
+     }
+    ]
+   },
+   {
+    "rank": 11,
+    "team_name": "SoulCoder",
+    "is_mine": true,
+    "best_average_speedup": 2.89671667,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-13T08:05:20",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.79586667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.70293333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 3.3222
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 4.005
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.9022
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.27826667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.22493333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 2.94233333
+     }
+    ]
+   },
+   {
+    "rank": 12,
+    "team_name": "AICity",
+    "is_mine": false,
+    "best_average_speedup": 2.73550833,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T15:08:22",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.49686667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.23726667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 1.83693333
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.84713333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.82206667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.89706667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.72846667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.01826667
+     }
+    ]
+   },
+   {
+    "rank": 13,
+    "team_name": "Sweetdeath",
+    "is_mine": false,
+    "best_average_speedup": 2.679925,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-14T10:12:20",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.8286
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.07473333
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.89006667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.9136
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.78273333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.95493333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.91853333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.0762
+     }
+    ]
+   },
+   {
+    "rank": 14,
+    "team_name": "transbit",
+    "is_mine": false,
+    "best_average_speedup": 2.65154167,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-17T01:23:15",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.81006667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 3.05826667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.887
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.9332
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.76973333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.9138
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.73053333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.10973333
+     }
+    ]
+   },
+   {
+    "rank": 15,
+    "team_name": "iluvivy",
+    "is_mine": false,
+    "best_average_speedup": 2.61511667,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-15T21:13:52",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.64326667
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.59786667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 0.89413333
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 3.90353333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.78073333
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 1.46433333
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.63726667
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 2.9998
+     }
+    ]
+   },
+   {
+    "rank": 16,
+    "team_name": "cgzhou",
+    "is_mine": false,
+    "best_average_speedup": 2.53033333,
+    "passed_gpu_count": 8,
+    "first_valid_submitted_at": "2026-09-16T11:15:56",
+    "gpu_results": [
+     {
+      "gpu": "tianshu",
+      "speedup": 4.57313333
+     },
+     {
+      "gpu": "muxi",
+      "speedup": 2.39926667
+     },
+     {
+      "gpu": "enflame",
+      "speedup": 2.20946667
+     },
+     {
+      "gpu": "haiguang",
+      "speedup": 2.87433333
+     },
+     {
+      "gpu": "kunlunxin",
+      "speedup": 0.48206667
+     },
+     {
+      "gpu": "huawei",
+      "speedup": 0.74006667
+     },
+     {
+      "gpu": "card_a",
+      "speedup": 3.75793333
+     },
+     {
+      "gpu": "card_b",
+      "speedup": 3.2064
+     }
+    ]
+   }
+  ]
+ }
+}

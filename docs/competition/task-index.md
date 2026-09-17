@@ -1,6 +1,6 @@
 # 第二届 FlagOS 算子赛题索引
 
-> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-09-12T20:28:08+08:00`。
+> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-09-17T10:55:10+08:00`。
 > 状态和榜单会变化，运行 `python tools/sync_flagos_season2_docs.py` 更新。
 
 ## 第 1 批
@@ -85,20 +85,20 @@
 
 | 题号 | 算子 | 状态 | 提交/队伍 | 达标队伍 | 当前第一 | 平均加速比 |
 | ---: | --- | --- | ---: | ---: | --- | ---: |
-| 59 | [build_trtllm_mha_page_table](tasks/batch-5/59-build_trtllm_mha_page_table.md) | competing | 51/12 | 7 | Albedo | 29.5148x |
-| 60 | [clamp_position](tasks/batch-5/60-clamp_position.md) | competing | 42/11 | 6 | EvokeAgent | 2.2811x |
-| 61 | [compute_src2dst](tasks/batch-5/61-compute_src2dst.md) | competing | 45/12 | 6 | RSI | 2.4208x |
-| 62 | [concat_mla_k](tasks/batch-5/62-concat_mla_k.md) | competing | 84/15 | 8 | EvokeAgent | 1.8141x |
-| 63 | [create_flashinfer_kv_indices](tasks/batch-5/63-create_flashinfer_kv_indices.md) | competing | 48/9 | 7 | RSI | 209.4396x |
-| 64 | [deepep_permute](tasks/batch-5/64-deepep_permute.md) | competing | 70/8 | 7 | EvokeAgent | 21.6490x |
-| 65 | [deepep_post_reorder](tasks/batch-5/65-deepep_post_reorder.md) | competing | 64/17 | 6 | EvokeAgent | 58.6088x |
-| 66 | [dsv3_fused_a_gemm](tasks/batch-5/66-dsv3_fused_a_gemm.md) | competing | 22/8 | 5 | EvokeAgent | 4.1249x |
-| 67 | [fill_padded_rows](tasks/batch-5/67-fill_padded_rows.md) | competing | 91/12 | 9 | EvokeAgent | 8.3163x |
-| 68 | [fused_eh_norm](tasks/batch-5/68-fused_eh_norm.md) | competing | 23/9 | 6 | HAiWORLD | 7.2622x |
-| 69 | [fused_moe_dispatch_index](tasks/batch-5/69-fused_moe_dispatch_index.md) | competing | 76/16 | 3 | 金狐狸 | 54.1260x |
-| 70 | [gate_topk](tasks/batch-5/70-gate_topk.md) | competing | 50/14 | 3 | 金狐狸 | 18.8800x |
-| 71 | [gelu_tanh_and_mul](tasks/batch-5/71-gelu_tanh_and_mul.md) | competing | 3/3 | 1 | c2flow | 3.4402x |
-| 72 | [group_norm_silu](tasks/batch-5/72-group_norm_silu.md) | competing | 7/5 | 1 | c2flow | 3.0241x |
-| 73 | [residual_gate_add](tasks/batch-5/73-residual_gate_add.md) | competing | 2/2 | 1 | c2flow | 4.2432x |
-| 74 | [seqlens_expand](tasks/batch-5/74-seqlens_expand.md) | competing | 2/2 | 1 | c2flow | 19.9769x |
-| 75 | [sigmoid_gate_mul](tasks/batch-5/75-sigmoid_gate_mul.md) | competing | 1/1 | 1 | c2flow | 2.9319x |
+| 59 | [build_trtllm_mha_page_table](tasks/batch-5/59-build_trtllm_mha_page_table.md) | competing | 230/33 | 14 | c2flow | 39.0024x |
+| 60 | [clamp_position](tasks/batch-5/60-clamp_position.md) | competing | 247/39 | 9 | c2flow | 3.8388x |
+| 61 | [compute_src2dst](tasks/batch-5/61-compute_src2dst.md) | competing | 138/27 | 8 | c2flow | 2.9209x |
+| 62 | [concat_mla_k](tasks/batch-5/62-concat_mla_k.md) | competing | 328/39 | 13 | EvokeAgent | 2.1578x |
+| 63 | [create_flashinfer_kv_indices](tasks/batch-5/63-create_flashinfer_kv_indices.md) | competing | 254/27 | 19 | EvokeAgent | 353.2424x |
+| 64 | [deepep_permute](tasks/batch-5/64-deepep_permute.md) | competing | 326/27 | 17 | EvokeAgent | 28.9074x |
+| 65 | [deepep_post_reorder](tasks/batch-5/65-deepep_post_reorder.md) | competing | 352/42 | 16 | c2flow | 70.8894x |
+| 66 | [dsv3_fused_a_gemm](tasks/batch-5/66-dsv3_fused_a_gemm.md) | competing | 114/24 | 11 | c2flow | 5.4629x |
+| 67 | [fill_padded_rows](tasks/batch-5/67-fill_padded_rows.md) | competing | 225/30 | 15 | 金狐狸 | 12.4635x |
+| 68 | [fused_eh_norm](tasks/batch-5/68-fused_eh_norm.md) | competing | 204/28 | 13 | c2flow | 18.2831x |
+| 69 | [fused_moe_dispatch_index](tasks/batch-5/69-fused_moe_dispatch_index.md) | competing | 181/27 | 6 | c2flow | 82.7417x |
+| 70 | [gate_topk](tasks/batch-5/70-gate_topk.md) | competing | 122/23 | 6 | 金狐狸 | 18.8800x |
+| 71 | [gelu_tanh_and_mul](tasks/batch-5/71-gelu_tanh_and_mul.md) | competing | 214/26 | 17 | c2flow | 5.3677x |
+| 72 | [group_norm_silu](tasks/batch-5/72-group_norm_silu.md) | competing | 349/42 | 9 | c2flow | 4.7808x |
+| 73 | [residual_gate_add](tasks/batch-5/73-residual_gate_add.md) | competing | 117/17 | 13 | Nectar | 6.4178x |
+| 74 | [seqlens_expand](tasks/batch-5/74-seqlens_expand.md) | competing | 155/17 | 12 | c2flow | 26.8919x |
+| 75 | [sigmoid_gate_mul](tasks/batch-5/75-sigmoid_gate_mul.md) | competing | 180/28 | 16 | c2flow | 5.9694x |

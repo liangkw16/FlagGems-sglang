@@ -1,6 +1,6 @@
 {
   "race_id": "782kzq4m",
-  "fetched_at": "2026-09-12T20:28:08+08:00",
+  "fetched_at": "2026-09-17T10:55:10+08:00",
   "tasks": [
     {
       "tid": "s2t1op001",
@@ -1817,12 +1817,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 51,
-      "participating_team_count": 12,
-      "current_leader_team_name": "Albedo",
-      "current_best_speedup": 29.51478125,
+      "submission_count": 230,
+      "participating_team_count": 33,
+      "current_leader_team_name": "c2flow",
+      "current_best_speedup": 39.00240625,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 7
+      "threshold_team_count": 14
     },
     {
       "tid": "s2t1op060",
@@ -1848,12 +1848,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 42,
-      "participating_team_count": 11,
-      "current_leader_team_name": "EvokeAgent",
-      "current_best_speedup": 2.28108333,
+      "submission_count": 247,
+      "participating_team_count": 39,
+      "current_leader_team_name": "c2flow",
+      "current_best_speedup": 3.83877083,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 6
+      "threshold_team_count": 9
     },
     {
       "tid": "s2t1op061",
@@ -1879,12 +1879,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 45,
-      "participating_team_count": 12,
-      "current_leader_team_name": "RSI",
-      "current_best_speedup": 2.420825,
+      "submission_count": 138,
+      "participating_team_count": 27,
+      "current_leader_team_name": "c2flow",
+      "current_best_speedup": 2.9209,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 6
+      "threshold_team_count": 8
     },
     {
       "tid": "s2t1op062",
@@ -1910,12 +1910,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 84,
-      "participating_team_count": 15,
+      "submission_count": 328,
+      "participating_team_count": 39,
       "current_leader_team_name": "EvokeAgent",
-      "current_best_speedup": 1.81415,
+      "current_best_speedup": 2.15775,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 8
+      "threshold_team_count": 13
     },
     {
       "tid": "s2t1op063",
@@ -1941,12 +1941,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 48,
-      "participating_team_count": 9,
-      "current_leader_team_name": "RSI",
-      "current_best_speedup": 209.43959375,
+      "submission_count": 254,
+      "participating_team_count": 27,
+      "current_leader_team_name": "EvokeAgent",
+      "current_best_speedup": 353.24240625,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 7
+      "threshold_team_count": 19
     },
     {
       "tid": "s2t1op064",
@@ -1972,12 +1972,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 70,
-      "participating_team_count": 8,
+      "submission_count": 326,
+      "participating_team_count": 27,
       "current_leader_team_name": "EvokeAgent",
-      "current_best_speedup": 21.649025,
+      "current_best_speedup": 28.90735,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 7
+      "threshold_team_count": 17
     },
     {
       "tid": "s2t1op065",
@@ -2003,12 +2003,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 64,
-      "participating_team_count": 17,
-      "current_leader_team_name": "EvokeAgent",
-      "current_best_speedup": 58.608775,
+      "submission_count": 352,
+      "participating_team_count": 42,
+      "current_leader_team_name": "c2flow",
+      "current_best_speedup": 70.88945,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 6
+      "threshold_team_count": 16
     },
     {
       "tid": "s2t1op066",
@@ -2034,12 +2034,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 22,
-      "participating_team_count": 8,
-      "current_leader_team_name": "EvokeAgent",
-      "current_best_speedup": 4.124925,
+      "submission_count": 114,
+      "participating_team_count": 24,
+      "current_leader_team_name": "c2flow",
+      "current_best_speedup": 5.46285,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 5
+      "threshold_team_count": 11
     },
     {
       "tid": "s2t1op067",
@@ -2065,12 +2065,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 91,
-      "participating_team_count": 12,
-      "current_leader_team_name": "EvokeAgent",
-      "current_best_speedup": 8.316325,
+      "submission_count": 225,
+      "participating_team_count": 30,
+      "current_leader_team_name": "金狐狸",
+      "current_best_speedup": 12.463525,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 9
+      "threshold_team_count": 15
     },
     {
       "tid": "s2t1op068",
@@ -2096,12 +2096,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 23,
-      "participating_team_count": 9,
-      "current_leader_team_name": "HAiWORLD",
-      "current_best_speedup": 7.262225,
+      "submission_count": 204,
+      "participating_team_count": 28,
+      "current_leader_team_name": "c2flow",
+      "current_best_speedup": 18.283125,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 6
+      "threshold_team_count": 13
     },
     {
       "tid": "s2t1op069",
@@ -2127,12 +2127,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 76,
-      "participating_team_count": 16,
-      "current_leader_team_name": "金狐狸",
-      "current_best_speedup": 54.12595,
+      "submission_count": 181,
+      "participating_team_count": 27,
+      "current_leader_team_name": "c2flow",
+      "current_best_speedup": 82.741675,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 3
+      "threshold_team_count": 6
     },
     {
       "tid": "s2t1op070",
@@ -2158,12 +2158,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 50,
-      "participating_team_count": 14,
+      "submission_count": 122,
+      "participating_team_count": 23,
       "current_leader_team_name": "金狐狸",
       "current_best_speedup": 18.8799875,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 3
+      "threshold_team_count": 6
     },
     {
       "tid": "s2t1op071",
@@ -2189,12 +2189,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 3,
-      "participating_team_count": 3,
+      "submission_count": 214,
+      "participating_team_count": 26,
       "current_leader_team_name": "c2flow",
-      "current_best_speedup": 3.440225,
+      "current_best_speedup": 5.36765,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 1
+      "threshold_team_count": 17
     },
     {
       "tid": "s2t1op072",
@@ -2220,12 +2220,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 7,
-      "participating_team_count": 5,
+      "submission_count": 349,
+      "participating_team_count": 42,
       "current_leader_team_name": "c2flow",
-      "current_best_speedup": 3.0240625,
+      "current_best_speedup": 4.78075,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 1
+      "threshold_team_count": 9
     },
     {
       "tid": "s2t1op073",
@@ -2251,12 +2251,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 2,
-      "participating_team_count": 2,
-      "current_leader_team_name": "c2flow",
-      "current_best_speedup": 4.24315625,
+      "submission_count": 117,
+      "participating_team_count": 17,
+      "current_leader_team_name": "Nectar",
+      "current_best_speedup": 6.41778125,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 1
+      "threshold_team_count": 13
     },
     {
       "tid": "s2t1op074",
@@ -2282,12 +2282,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 2,
-      "participating_team_count": 2,
+      "submission_count": 155,
+      "participating_team_count": 17,
       "current_leader_team_name": "c2flow",
-      "current_best_speedup": 19.976925,
+      "current_best_speedup": 26.8919,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 1
+      "threshold_team_count": 12
     },
     {
       "tid": "s2t1op075",
@@ -2313,12 +2313,12 @@
       "status": "submitting",
       "competition_status": "competing",
       "speedup_threshold": 0.1,
-      "submission_count": 1,
-      "participating_team_count": 1,
+      "submission_count": 180,
+      "participating_team_count": 28,
       "current_leader_team_name": "c2flow",
-      "current_best_speedup": 2.93193334,
+      "current_best_speedup": 5.969425,
       "current_leader_passed_gpu_count": 8,
-      "threshold_team_count": 1
+      "threshold_team_count": 16
     }
   ]
 }
