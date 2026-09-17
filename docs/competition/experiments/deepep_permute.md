@@ -5,12 +5,12 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: submitted(e7-pending;TB e5 7.17105x)
+platform: completed(16570,e7,8/8,7.47225x新TB)
 candidate_stage: e7
-team_best_stage: e5
-team_best_speedup: 7.17105
+team_best_stage: e7
+team_best_speedup: 7.47225
 sealed: no
-next: E7去clone三段式+Ascend persistent已提交待八芯终态；预注册门：8/8有效且均值>7.17105，华为≥6.2为persistent轴正信号
+next: 华为4.433未过6.2门不重掷；下一华为轴候选=官方gather/scatter best-practice形态(SUB_BLOCK_SIZE/insert_slice)，需先落结构再一发判决
 updated: 2026-09-17
 ```
 
@@ -253,3 +253,9 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 ## 2026-09-17 E7 单次平台提交
 
 12:24 前后，submission **16570**（upload/正式 POST 各一次，state=submitted，远端 ZIP 验签一致）；watch 绑定 file_url_sha256 `9ad1e3dd…`。发后额度 30→29/30。预注册门见上节；八芯终态待回，结果另节记录。
+
+## 2026-09-17 E7 平台终态：8/8 有效，新 TB 7.47225x
+
+submission 16570（daily_seq 1）completed/valid，8/8 全过，均值 **7.47225x > 7.17105 换 TB**（+4.2%）。逐芯（vs E5 TB）：tianshu 16.3698(+2.2%) / muxi 5.1076(-8.2%) / enflame 5.2084(E6冻结字节) / haiguang 10.612(+4.0%) / kunlunxin **0.6532(+145.7%，冻结旧字节纯窗口漂移，不归因代码)** / huawei **4.433(+43.7%，persistent 轴正信号但未过 6.2 预注册门)** / card_a 9.5174(+9.7%) / card_b 7.8766(+14.1%)。发后额度 29/30。证据 `artifacts/competition/t64e7-release-20260917/status-16570.json`。
+
+判读：去 clone 三段式平台兑现远低于代理 2.2x（平台 +4~14%）；预注册华为门未过 ⇒ 不做同字节重掷，华为轴（4.43 vs 次优 100.91）需新结构证据——候选为昇腾官方 best-practice 的 gather/scatter 形态（外层任务按 vector core 分割 + hidden 按 UB 分 BLOCK_X + SUB_BLOCK_SIZE 批量小任务 + insert/extract_slice），见 `vendor-backends/ascend/vector_operator.md` 复杂向量算子一节与 triton-ascend-ops 004/006 教程。平台 shape 与 20MB 双路径阈值的交互未知（无逐 case 耗时），调阈值属盲调不立项。
