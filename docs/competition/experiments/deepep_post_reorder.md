@@ -5,14 +5,14 @@ task: 65
 operator: deepep_post_reorder
 batch: 5
 validity: valid
-platform: completed(15913,e12,7/8,invalid_correctness;昆仑collection设备错误;历史TB e10 26.917125x)
-candidate_stage: e12
+platform: submitted(e13-pending;TB e10 26.917125x)
+candidate_stage: e13
 team_best_stage: e10
 team_best: e10 26.917125x
 team_best_speedup: 26.917125
 sealed: no
 next: E12终态7/8，昆仑收集测试失败；保留权重契约修复，需目标执行新证据后再迭代，不重发15913
-updated: 2026-09-16
+updated: 2026-09-17
 ```
 
 ## 契约与范围
@@ -328,3 +328,11 @@ updated: 2026-09-16
 - 同一submission15913现为completed，8/8终态，7芯passed；平台正式判定 **invalid_correctness**，average_speedup=null。新完成燧原9.0242、海光79.1944均通过，其余5通过芯片读数未变；昆仑仍为上节的测试收集阶段设备错误，0项测试，不伪称是算子数值失配。
 - 快照 `artifacts/competition/t74-output-search-screening-20260916/platform-closeout.json`，observed_at=2026-09-16T15:05:50.512258+08:00，SHA `4b7cb56f0451d924d6c2c0296145d8af0edbe3fbf52be5a242b2fe594deb4ee7`；已再次绑定原file_url哈希。上传/正式提交仍各一次，余21/30，未重试。
 - 历史平台TB仍E10 26.917125；主树保留E12已证明必要的weight舍入修复，不回滚有缺陷字节。此次八芯判决已收齐，但未达到8芯合格闭环；新的昆仑迭代须先获得目标运行/设备健康证据，不用同字节重发掩盖失败。
+
+## 2026-09-17 E13：Ascend persistent vendor，已提交
+
+- 结构（`842a8169`）：仅新增/重写 `_ascend` vendor = generic kernel 字节不变 + persistent launch（`num_vectorcore`，fallback 40；T64 E7 已证载体形态，华为 +44%）。其余成员字节冻结。host 侧 `_worker_count` 仅对 TensorMetadata mock 缺 device 做默认值护栏（T65 grid 测试需要），非计算 fallback。
+- screening（RTX 5070 Ti）：unittest 10 项全绿；black/isort/flake8 过。
+- release v2（source=verification commit `842a81694a9fed9530ea5ada88343eea3415ccfc`）：10 项全过 0F/E/S/X，generic/ascend 各 54 真实 launch，exit 0。回执 `artifacts/competition/persist-batch-20260917/deepep_post_reorder-verification.json` SHA-256 `ff68b95f84475bb5ecc535cecaa8df4e4d56ea9640a21b0c1efb819b08468fd3`。ascend target-runtime-unverified。
+- ZIP：`artifacts/competition/deepep_post_reorder/e13-842a816/deepep_post_reorder.zip（12169 bytes）`，SHA-256 `1cc19c5a5924dc1e155fd32310a24b4cd1ec14465076d87282b40f651a8f70be`，3（generic=E12语义字节/ascend/kunlunxin=E10冻结） 成员。
+- 预注册门：8/8 有效且均值 > 26.917125；华为 ≥ 35 为 persistent 轴正信号。一次候选一次判决。

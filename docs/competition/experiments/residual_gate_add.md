@@ -79,8 +79,8 @@ task: 73
 operator: residual_gate_add
 batch: 5
 validity: valid
-platform: completed(e12-group4/sub16400,8/8,4.1080625x新TB；排名7)
-candidate_stage: e12-enflame-group4-complete
+platform: submitted(e13-pending;TB e12 4.1080625x)
+candidate_stage: e13
 team_best_stage: e12-enflame-group4
 team_best_speedup: 4.1080625
 sealed: no
@@ -249,3 +249,11 @@ card_b +0.31、tianshu +0.09；muxi/card_a 我方领先。燧原窗口摆动实�
 - 燧原2.10325→2.109875，仅+0.315%；代理32.3%未在平台兑现。Kunlun同E6 4096字节却0.60325→0.861625，变化不能归给Enflame结构。虽然通过数值晋级门并刷新TB，不追加group梯度，不宣称已证明目标结构收益。
 - 最新榜单第7，榜首Nectar **6.41778125**，仍需 **56.2240%**；未新增Top1。榜单 `docs/competition/data/t73-e12-leaderboard-20260916.json` SHA-256 `ce7cf211b8c62ef61d32294c3ac924665dad5e00a434dc0a557300490ca9ee8a`。
 - 终态原件 `artifacts/competition/pair-grouped-platform-20260916/t73-light-233114.json` SHA-256 `aab99f4bc395c6fe4b761125af39f415f591c945b3fc14af13259d0129961144`。
+
+## 2026-09-17 E13：Ascend persistent vendor（broadcast 路径加行 stride 循环），已提交
+
+- 结构（`842a8169`）：仅新增/重写 `_ascend` vendor = generic kernel 字节不变 + persistent launch（`num_vectorcore`，fallback 40；T64 E7 已证载体形态，华为 +44%）。其余成员字节冻结。host 侧 `_worker_count` 仅对 TensorMetadata mock 缺 device 做默认值护栏（T65 grid 测试需要），非计算 fallback。
+- screening（RTX 5070 Ti）：unittest 10 项全绿；black/isort/flake8 过。
+- release v2（source=verification commit `842a81694a9fed9530ea5ada88343eea3415ccfc`）：10 项全过 0F/E/S/X，generic/ascend 各 122 真实 launch，exit 0。回执 `artifacts/competition/persist-batch-20260917/residual_gate_add-verification.json` SHA-256 `42321ce90f61cd86d99b73483998937ce136efe0ca360257271865a064ad19a8`。ascend target-runtime-unverified。
+- ZIP：`artifacts/competition/residual_gate_add/e13-842a816/residual_gate_add.zip（17911 bytes）`，SHA-256 `0a24695db00c06f54e3cecbb7c08249edcdf7744cc4d048b2f4bda608a550136`，4（generic/ascend/enflame/kunlunxin；enflame/kunlunxin 为 E12 冻结字节） 成员。
+- 预注册门：8/8 有效且均值 > 4.1080625；华为 ≥ 2.2 为 persistent 轴正信号。一次候选一次判决。

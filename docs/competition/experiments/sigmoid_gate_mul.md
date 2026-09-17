@@ -15,13 +15,13 @@ task: 75
 operator: sigmoid_gate_mul
 batch: 5
 validity: valid
-platform: completed(e9,8/8,2.8967x;华为warps8无效关闭)
-candidate_stage: e9
+platform: submitted(e10-pending;TB e9 2.89671667x)
+candidate_stage: e10
 team_best_stage: e9
 team_best_speedup: 2.89671667
 sealed: no
 next: Ascend direct候选代理1.01924x未达1.05且fp16稳定回退，不提交；TB保持e9
-updated: 2026-09-16
+updated: 2026-09-17
 ```
 
 ## 契约与实现（S0）
@@ -207,3 +207,11 @@ vs 本题 0.26）。
 - IR硬门通过：6/6 inspected基线保留1个循环、direct为0；5/5必需方法通过。27桶×5轮AB/BA端到端几何均值 **1.01924<1.05**，每轮最低1.01195<1.02，最差 **0.903817<0.95**。fp16 n4194305五轮均0.9019–0.9063，n270369中位0.923641，属稳定回退；kernel-only整体1.01118。fp16 direct出现2 spills（baseline0），只记NVIDIA lowering线索，不外推昇腾。
 - 全部原始IR、timings、环境、正确性和资源证据已取回验签于 `artifacts/competition/t75-direct-preparation-20260916/`；benchmark SHA-256 `0ba26557af4cdcac7eebaa68114ab66b75e9b839e2d8441f4c1748aaddec5b35`，日志 `36bd20c7eeac978925ddf942cf596b3dbd5c8858d38bdb6f1d4a61198ba4beb5`。远端`/tmp/flagos-t75-direct.IMTSF2`、PID387860、timeout600、EXIT0，GPU已释放。
 - 未晋升源码/测试、未建ZIP/intent、未上传或提交。保持TB E9=2.89671667。关闭本次全dtype direct候选；不事后排除fp16、改门或继续扫宽度来掩盖失败。
+
+## 2026-09-17 E10：Ascend persistent vendor，已提交
+
+- 结构（`842a8169`）：仅新增/重写 `_ascend` vendor = generic kernel 字节不变 + persistent launch（`num_vectorcore`，fallback 40；T64 E7 已证载体形态，华为 +44%）。其余成员字节冻结。host 侧 `_worker_count` 仅对 TensorMetadata mock 缺 device 做默认值护栏（T65 grid 测试需要），非计算 fallback。
+- screening（RTX 5070 Ti）：unittest 3 项全绿；black/isort/flake8 过。
+- release v2（source=verification commit `842a81694a9fed9530ea5ada88343eea3415ccfc`）：3 项全过 0F/E/S/X，generic/ascend 各 17 真实 launch，exit 0。回执 `artifacts/competition/persist-batch-20260917/sigmoid_gate_mul-verification.json` SHA-256 `55791111169a8b305b5938781ce3f33fb28c12ddf52674332a5c9cc5f6505ef0`。ascend target-runtime-unverified。
+- ZIP：`artifacts/competition/sigmoid_gate_mul/e10-842a816/sigmoid_gate_mul.zip（8841 bytes）`，SHA-256 `d1d8c4ab9090f05454dc4f062c0d06bbdde396958f46e75686c5059adcd2c141`，5（generic/ascend/enflame/iluvatar/kunlunxin；后四与 e9 冻结集合一致） 成员。
+- 预注册门：8/8 有效且均值 > 2.89671667；华为 ≥ 2.6 为 persistent 轴正信号。一次候选一次判决。
