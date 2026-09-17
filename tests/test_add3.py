@@ -61,14 +61,26 @@ class Add3Test(unittest.TestCase):
                 )
 
     def test_special_values_and_cancellation(self):
-        base = torch.randn(64, dtype=torch.bfloat16, device="cuda")
+        # numel must stay a multiple of 16 (the task contract), so the
+        # special lanes are padded with ordinary values.
         special = torch.tensor(
-            [float("nan"), float("inf"), -float("inf"), -0.0, 0.0, 1.0],
+            [
+                float("nan"),
+                float("inf"),
+                -float("inf"),
+                -0.0,
+                0.0,
+                1.0,
+                2.0,
+                -2.0,
+            ]
+            * 2,
             dtype=torch.bfloat16,
             device="cuda",
         )
-        self.check([special, -special, base[:6]])
-        # (+inf) + (-inf) and (large) + (-large) round-trip the pair.
+        base = torch.randn(16, dtype=torch.bfloat16, device="cuda")
+        self.check([special, -special, base])
+        # (+inf) + (+inf) and (large) + (-large) round-trip the pair.
         big = torch.full((64,), 3.0e38, dtype=torch.bfloat16, device="cuda")
         self.check([big, big, -big])
         self.check([big, -big, big])

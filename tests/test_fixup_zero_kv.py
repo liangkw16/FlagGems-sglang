@@ -20,16 +20,26 @@ def reference(out, lse, kv_lens, cum_seq_lens, max_seq_len):
     return out_c, lse_c
 
 
-def make_case(kv_lens=(4, 0, 7, 0, 0), dtype=torch.bfloat16, heads=8, vdim=16):
+def make_case(
+    kv_lens=(4, 0, 7, 0, 0),
+    tok_lens=None,
+    dtype=torch.bfloat16,
+    heads=8,
+    vdim=16,
+):
+    # cum_seq_lens is the TOKEN boundary vector and is independent of
+    # kv_lens: a zero-KV request still owns output rows (its q tokens).
+    if tok_lens is None:
+        tok_lens = [n + 2 for n in kv_lens]
     cum = [0]
-    for n in kv_lens:
+    for n in tok_lens:
         cum.append(cum[-1] + n)
     total = cum[-1]
     out = torch.randn(total, heads, vdim, dtype=dtype, device="cuda")
     lse = torch.randn(total, heads, dtype=torch.float32, device="cuda")
     lens = torch.tensor(kv_lens, dtype=torch.int32, device="cuda")
     cum_t = torch.tensor(cum, dtype=torch.int32, device="cuda")
-    span = max(kv_lens, default=0)
+    span = max(tok_lens, default=0)
     return out, lse, lens, cum_t, span
 
 
@@ -54,8 +64,9 @@ class FixupZeroKVTest(unittest.TestCase):
                     torch.testing.assert_close(
                         bits(value), bits(before), rtol=0, atol=0
                     )
-                for got in actual:
-                    self.assertNotEqual(got.data_ptr(), args[0].data_ptr())
+                for got, want in zip(actual, (args[0], args[1])):
+                    if want.numel():
+                        self.assertNotEqual(got.data_ptr(), want.data_ptr())
 
     def test_mixed_zero_and_nonzero(self):
         for dtype in (torch.bfloat16, torch.float16):
@@ -70,9 +81,17 @@ class FixupZeroKVTest(unittest.TestCase):
         self.check(make_case(kv_lens=(0, 2, 0, 0, 9, 0)))
 
     def test_segment_length_boundaries(self):
-        for lengths in ((7, 8, 9), (1,), (16, 15, 17), (8, 8, 8, 8)):
-            with self.subTest(lengths=lengths):
-                self.check(make_case(kv_lens=lengths))
+        for tok_lens in ((7, 8, 9), (1,), (16, 15, 17), (8, 8, 8, 8)):
+            with self.subTest(tok_lens=tok_lens):
+                self.check(
+                    make_case(
+                        kv_lens=(0,) * len(tok_lens), tok_lens=tok_lens
+                    )
+                )
+        # Zero-KV requests with zero q tokens and long mixed neighbours.
+        self.check(
+            make_case(kv_lens=(5, 0, 3, 0, 2), tok_lens=(9, 0, 17, 1, 5))
+        )
 
     def test_lying_max_seq_len(self):
         # max_seq_len is advisory: an understated span must not lose
@@ -88,7 +107,8 @@ class FixupZeroKVTest(unittest.TestCase):
         args[0][0, 0, :4] = torch.tensor(
             [float("nan"), float("inf"), -float("inf"), -0.0], device="cuda"
         ).to(args[0].dtype)
-        args[1][3, :4] = torch.tensor(
+        total = args[1].shape[0]
+        args[1][total - 1, :4] = torch.tensor(
             [float("nan"), float("inf"), -0.0, 1.0], device="cuda"
         )
         self.check(args)
