@@ -22,7 +22,7 @@ candidate_stage: e11
 team_best_stage: e11
 team_best_speedup: 2.84880833
 sealed: no
-next: 用户要求不再新提交；保留E10最佳，E9未提分；第15，追平Top1需92.97%
+next: 收官;E11 2.84881新TB(华为+19.2%)守榜;终局第13,榜首6.095,追平需+113.9%
 updated: 2026-09-17
 ```
 

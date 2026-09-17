@@ -34,10 +34,10 @@ batch: 5
 validity: valid
 platform: completed(16759,e13,8/8,1.1991x<TB;保e12 1.270875x;收官)
 candidate_stage: e13
-team_best_stage: e9
-team_best_speedup: 1.24575
+team_best_stage: e12
+team_best_speedup: 1.270875
 sealed: no
-next: e10 燧原BH4 0.15(-47%)跨芯平移证伪;TB e9 1.246守;收官仅守榜
+next: e10 BH4/e11 warps4/e12 stages3燧原launch钉族全证伪;E12华为persistent+35.9%兑现新TB,E13 1.1991<TB;TB e12 1.270875守,收官仅守榜
 updated: 2026-09-17
 ```
 

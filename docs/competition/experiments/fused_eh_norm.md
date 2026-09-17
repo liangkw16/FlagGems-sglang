@@ -39,7 +39,7 @@ candidate_stage: e10
 team_best_stage: e9
 team_best_speedup: 7.20040833
 sealed: no
-next: 保留E8团队最佳；Ascend多行候选隔离留档，代理未提速；等待目标芯同源计时与IR
+next: 保留E9团队最佳；Ascend多行候选隔离留档，代理未提速；等待目标芯同源计时与IR
 updated: 2026-09-17
 ```
 

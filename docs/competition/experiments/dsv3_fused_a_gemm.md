@@ -5,13 +5,13 @@ task: 66
 operator: dsv3_fused_a_gemm
 batch: 5
 validity: valid
-platform: completed(15861,e2,8/8,3.09855x新TB)
-candidate_stage: e2
+platform: completed(15861,e2,8/8,3.09855x新TB);E3/16645 7/8昆仑对未变generic字节编译判定翻转,归平台侧,TB保全
+candidate_stage: e3
 team_best_stage: e2
 team_best_speedup: 3.09855
 sealed: no
-next: e2仅+0.15%，未达3.40再投入门；停止窄N split4轴，不重投
-updated: 2026-09-16
+next: e2仅+0.15%，未达3.40再投入门；窄N split4轴停；09-17昆仑同字节编译漂移与T74 arith.cmpi同族,重开需工单/版本证据
+updated: 2026-09-17
 ```
 
 ## 契约与范围

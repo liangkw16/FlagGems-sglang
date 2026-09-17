@@ -20,7 +20,7 @@ candidate_stage: e10
 team_best_stage: e10
 team_best_speedup: 2.89673333
 sealed: no
-next: Ascend direct候选代理1.01924x未达1.05且fp16稳定回退，不提交；TB保持e9
+next: Ascend direct候选代理1.01924x未达1.05且fp16稳定回退，不提交；TB e10 2.89673微幅新TB守
 updated: 2026-09-17
 ```
 

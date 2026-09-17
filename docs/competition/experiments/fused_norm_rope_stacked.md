@@ -11,7 +11,7 @@ team_best_speedup: -
 sealed: yes
 next: 三种结构(fused/row/three-kernel)均败于同三芯;重开需目标芯输入或他队公开PR,不再盲投
 updated: 2026-09-08
-
+```
 
 ## S0 单遍融合 kernel（2026-09-06，远端 GPU 全过）
 
