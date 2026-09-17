@@ -1,3 +1,5 @@
+# Carrier e22: window re-roll 2/2 of the e21 bytes (identical
+# execution; new archive identity only).
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 # Adapted from SGLang 8014d9d kernels/ops/kvcache/kv_indices.py.
