@@ -7,6 +7,13 @@
 > 提交窗口 2026-09-17 20:00 → 09-24 19:59:59；评审 09-25 → 09-30。
 > 今日额度 30/30 已在 batch5 收官日用尽（status 实测 `remaining=0`），
 > 首批提交最早 09-18。实时数字以平台为准。
+>
+> **修订记录**：2026-09-17 晚经 codex-ask（gpt-6-astra，high effort）独立
+> 评审后逐条核实修订——修正 T76/T78 配方与事实引用、T77 窄化机制表述与
+> 探针设计（对齐 `artifacts/competition/t60-narrow-storage-audit-20260916/`）、
+> T78/T79 exact 语义、T80 门槛芯与 grid 方案、T81 分裂触发与榜差数字；
+> Codex 的"PR #31284 Ascend 阈值为 256"一条与本会话抓取的 PR diff 文本
+> （"Ascend NPU crosses ~bs 50"）矛盾且其无网络访问，按证据弃用。
 
 ## 总判断
 
@@ -32,10 +39,10 @@
 | ---: | ---: | --- | --- | ---: | --- | ---: | --- |
 | 1 | 79 | create_flashmla_kv_indices | HAiWORLD 187.47x | 3 | T63 全套（generic+4 vendor，逐芯配方齐） | ~190x | 我方 T63 banked 逐芯等效 ≈199x，直移即争第一 |
 | 2 | 78 | concat_and_cast_mha_k | c2flow 1.2760x | 1 | T62 e12 字节 + cast | ~1.27x | 榜首≈我方 T62 TB；燧原 gap（0.15→0.96）与华为 persistent 是已证增项 |
-| 3 | 81 | fused_gate_sigmoid_mul_add | c2flow 4.4852x | 7 | T53 多行结构 + T75 sigmoid 族配方 | ~4.0x | 7 队拥挤但榜首仅 +3.7% 于次席；华为 2.0-2.5 有结构性上行假设 |
+| 3 | 81 | fused_gate_sigmoid_mul_add | c2flow 4.4852x | 7 | T53 多行结构 + T75 sigmoid 族配方 | ~4.0x | 7 队拥挤但榜首仅 +1.95% 于次席；华为 2.0-2.5 有结构性上行假设（方向性） |
 | 4 | 80 | fixup_zero_kv | HAiWORLD 139.95x | 3 | 上游 CUDA 直接对照移植 | ~100x+ | kernel 极简、正确性风险低；比拼最小 launch 开销 |
 | 5 | 77 | compute_position | c2flow 1296.06x | 1 | 上游 striped kernel（PR #31284）+ T60/T61 燧原 i64 情报 | 有效性待验 | 过正确性墙即 #2；燧原 i64 未定验前不投 |
-| 6 | 76 | add3 | GuanghuLab 1.1611x | 9 | T61 燧原 streaming 配方 | ~1.0x | 9 队全过、分差 0.03，纯挤水分；低成本顺手打 |
+| 6 | 76 | add3 | GuanghuLab 1.1611x | 9 | T73/T75 燧原 streaming 配方（T61 为 scatter 反例） | ~1.0x | 9 队全过、分差 0.03，纯挤水分；低成本顺手打 |
 
 排序依据：期望名次增量 × 我方资产确定性 ÷ 风险。T76 虽排序末位但开发成本
 最低，可与 T80 同日并行出 s0。
@@ -44,10 +51,13 @@
 
 ## T79 create_flashmla_kv_indices（第一优先）
 
-**契约**：`reference(req_to_token, req_pool_indices, page_kernel_lens, kv_start_idx, kv_indices, page_size)`；
+**契约**：`reference(req_to_token, req_pool_indices, page_kernel_lens, kv_start_idx, page_size)`；
 每 page 一个 entry：`slot = req_to_token[pool_i, kv_start_i + p*page_size]`，
-`kv_indices[i,p] = slot // page_size`；kv_indices 2D `[bs, max_pages]` int32
-**原地写入**（clone 自 reference 语义）。exact。
+`kv_indices[i,p] = slot // page_size`；kv_indices 2D `[bs, max_pages]` int32。
+题面文字写"原地写入"但 reference 实际 `clone()` 后**返回新张量**——以
+reference 为准：clone 基底、只覆写每行前 `ceil(len/page_size)` 个 page，
+**行尾保留原 kv_indices 值**（这是 2D 行尾保留问题，不能直接套 T63 的
+indptr 间隙恢复代码）。exact。
 
 **上游**：`create_flashmla_kv_indices_triton`
 （`kernels/ops/kvcache/kv_indices.py` @ `92d831d`）：grid `(bs, page_blocks)`，
@@ -70,14 +80,18 @@ banked：燧原 38.6 vs 51.3（差 1.3x）、华为 ~73 vs 92.5（差 1.3x）、
 **纯直移估算 ≈ 190x 已过榜首**；昆仑轴是最大增量项（+1.2 avg）。
 
 **s0/e1 计划**：T63 generic 改 per-page 步长 gather（`offset*p * page_size`
-寻址 + `// page_size` store，page_size 走 constexpr 特化），保留 gap 恢复写；
-先 NVIDIA 代理 exact 回归（含非整除 page、kv_start 非零、max_pages 截断），
-vendor 直接带 T63 四件套。预注册门：8/8 且均值 ≥170 才算直移兑现，≥187.5
-争第一。
+寻址 + `// page_size` store，page_size 走 constexpr 特化），**输出基底改为
+clone + 每行有效 page 覆写、行尾保留**；先 NVIDIA 代理 exact 回归（含非整除
+page、kv_start=None 与非零、零长度行、非连续 stride、行尾非零哨兵、
+max_pages 不足容量行为——reference 对容量不足会直接赋值形状不匹配报错，
+不能未经证据把"静默截断"当契约），vendor 直接带 T63 四件套。预注册门：
+8/8 且均值 ≥170 才算直移兑现，≥187.5 争第一。
 
-**风险**：`slot // page_size` 若 page_size 非 constexpr 且非 2 幂，昆仑向量
-除法有 PassManager 前科（T58）——page_size 必须 constexpr 特化或标量化；
-bs×max_pages 的 2D 原地写要求 gap 恢复逻辑与 T63 同型。
+**风险**：`slot // page_size` 若 slot 允许负值，Triton 整数 `//` 向零截断
+与 Python 向下取整不同（`-1//3` 应为 -1）——token slot 域按非负假设，
+回归矩阵加负值哨兵确认题面不会出负 slot，若出现需 floor 修正；
+page_size 非 constexpr 且非 2 幂时昆仑向量除法有 PassManager 前科
+（T58）——page_size 必须 constexpr 特化或标量化。
 
 ## T78 concat_and_cast_mha_k（第二优先）
 
@@ -90,9 +104,12 @@ exact。
 `concat_ops.py` 同源。与 T62 唯一差异是 store cast。
 
 **我方资产（T62 终局）**：TB e12 1.270875x。e12 = `_ascend` persistent
-（华为 0.284，+35.9%）+ 纯净 launch `_enflame` + hygon/kunlun 冻结；逐芯
+（华为 0.284，+35.9%）+ `_enflame` 为 E9 语义（去 warps 钉）**加
+num_stages=3**（注：纯净 launch 是 e13 形态；e12/e13 燧原 0.151/0.209 均
+低于 e9 的 0.28，T62 燧原轴从未回到 e9 水位）+ hygon/kunlun 冻结；逐芯
 华为 0.284 / 昆仑 0.182 / 燧原 0.151 / 沐曦 1.019 / 海光 2.911 / 天数
-2.317 / A 1.664 / B 1.638。
+2.317 / A 1.664 / B 1.638。**e12 是团队最佳总分，不等于各芯最佳结构
+组合**——T78 直移起步后仍按芯单变量重扫。
 
 **差距与靶子**（榜首 c2flow 1.2760）：华为 0.245 / 昆仑 0.284 / 燧原 0.960 /
 天数 2.419 / 沐曦 0.951 / 海光 1.956 / A 1.625 / B 1.767。与 T62 e12 逐芯
@@ -101,14 +118,22 @@ gather/copy 族 BLOCK 阶梯与 persistent24 配方（T78 输出 dtype cast 改�
 store 宽度，BLOCK 阶梯需重扫 512→4096）。华为 persistent 上行已证
 （0.28→0.33 仍在涨）；昆仑 0.28 vs 我方 0.18 亦有小差距。
 
-**s0/e1 计划**：T62 e12 字节 + store 前显式 `.to(k.dtype)`（Triton 按指针
-元素类型 cast），s0 即 ~1.25；e1 起燧原轴单变量扫 BLOCK 阶梯（预注册门：
-燧原 ≥0.5、均值 >1.28 换发）。dtype 组合未公开——本地代理按
-（bf16→bf16 / fp16→fp16 / fp32→bf16）三种做 exact 回归，平台首个回执后
-再确认实际组合。
+**s0/e1 计划**：T62 e12 字节 + store 前显式 cast（按**输出指针元素类型**
+cast，不能把 `torch.dtype` 对象当 Triton dtype 用）；**先解除
+`src/flaggems_sglang/ops/concat_mla_k.py:67` 的"三输入必须同为 bf16"
+断言**（generic 与全部 vendor 都要解，仅改 store 不够），s0 即 ~1.25；
+e1 起燧原轴单变量扫 BLOCK 阶梯（预注册门：燧原 ≥0.5、均值 >1.28 换发）。
+dtype 组合未公开——本地代理矩阵至少覆盖：fp32→bf16/fp16 降精度、
+bf16↔fp16 互转、NoPE/RoPE 混合 dtype、舍入中点值、溢出、NaN/Inf 传递，
+平台首个回执后再收窄。
 
-**风险**：exact + cast 意味着若 k.dtype 精度低于输入，题目必然保证值可精确
-表示（否则无解）；不要自作聪明做 round-to-nearest 之外的舍入。
+**风险与门槛**：exact 比较的对象是 reference 执行
+`torch.cat(...).to(k.dtype)` 的结果——cast 按同一舍入规则匹配即可，
+**不要求输入值在目标 dtype 下可精确表示**（此前"无解"表述作废）；
+不要自作聪明做 round-to-nearest 之外的舍入，也不要用混合 dtype 的
+`tl.where` 合并分支（Triton fp16/bf16 提升规则可能引入额外降精度）。
+**门槛优先于均值**：T62 历史上华为 0.0932 跌破 0.1 一次、燧原 0.109/
+昆仑 0.18 长期贴线——先保证这三芯余量（≥0.2），再追燧原 0.96 的结构差。
 
 ## T81 fused_gate_sigmoid_mul_add（第三优先）
 
@@ -128,21 +153,28 @@ gate_weight 载入；天数 +96%、海光 +47% 的已证增益形态）；T75 si
 
 **差距与靶子**（榜首 c2flow 4.4852）：华为 2.04 / 昆仑 0.99 / 燧原 3.89 /
 天数 6.53 / 沐曦 4.57 / 海光 7.44 / A 5.60 / B 4.83。次席 HAiWORLD 4.399
-（华为 2.454 最高、燧原 1.42 最低）。7 队挤在 2.86-4.49。
-**华为上行假设**：T75 同族题他队华为 16-20x（我方 1.48x）——单遍全融合
-kernel + persistent 在 Ascend 的结构空间未被本榜 exploitation（榜首仅 2.0-
-2.5）；若 T75 的他队华为结构可移植，+8-16x 单芯 = +1-2 avg。燧原轴
+（榜首仅 **+1.95%**；华为 2.454 最高、燧原 1.42 最低）。7 队挤在 2.86-4.49。
+**华为上行假设（仅方向，非可得增量）**：T75 sigmoid 族他队华为 16-20x、
+我方 1.48x——单遍全融合 + persistent 在 Ascend 的结构空间本榜尚未见
+exploitation（榜首仅 2.0-2.5）；**T75 与本题 reference 形态不同，该数字
+不可外推为保证**，只能作为华为轴值得优先探的结构方向。燧原轴
 （3.89 榜首 vs 次优 2.20）亦有 1.8x 缺口。
 
-**s0/e1 计划**：单 kernel 双趟（趟1 行点积累加 fp32，趟2 load final+shared
-FMA store），B_ROWS 多行/program（T53 形态）；s0 目标 8/8 + ≥3.5。e 轴
-顺序：华为 persistent vendor → 燧原（去钉 launch / BLOCK）→ 多行宽度。
-**两趟 vs 双 kernel 分裂**：hidden 行 10KB 级 L2 可容，首版两趟单 kernel；
-若代理显示第二趟 hidden 重读是瓶颈，再试 dot-kernel + fma-kernel 分裂。
+**s0/e1 计划**：单 kernel 两阶段（阶段 1 行点积 fp32 累加——hidden 只读
+一次；阶段 2 load final+shared FMA store），**首版一 program 一行**、全
+fp32 中间量（乘、累加、sigmoid、FMA 的舍入位置照 reference，首版不引入
+未验证的乘加收缩），s0 目标 8/8 + ≥3.5。e 轴顺序：华为 persistent
+vendor → 燧原（去钉 launch / BLOCK）→ 多行宽度（T53 多行是逐元素布局的
+增益证据，**不能直接证明本题归约形态多行正确/高效**；且复盘记录过二维
+`tl.sum/cumsum` 的后端错误，多行版要带独立对照）。**双 kernel 分裂的触发
+条件修正**：单 kernel 方案 hidden 只读一次、阶段 2 不再读 hidden，不存在
+"重读瓶颈"；真正该触发分裂的证据是寄存器/UB 压力、spill、长行串行化、
+或 token 数太少导致输出阶段并行度不足——比较时计入额外 launch 与中间
+gate 张量成本。
 
-**风险**：fp32 累加顺序影响容差内逐位（sum 顺序与 reference 不同即可，
-有容差）；sigmoid 用 `tl.sigmoid`（T51 已证 Ascend 可用 `1/(1+exp(-x))`
-等价形态，若数值差异大再换）。
+**风险**：容差内仍要控制抵消误差——测试矩阵覆盖严重抵消（正负相消的
+行点积）、gate 近零、sigmoid 饱和（|gate|>20）、输出抵消；sigmoid 用
+`tl.sigmoid`（T51 已证 Ascend 可用等价形态，若数值差异大再换）。
 
 ## T80 fixup_zero_kv（第四优先）
 
@@ -160,17 +192,28 @@ sync 开销。
 天数 218 / 沐曦 195 / 海光 248 / A 265 / B 133。三队分差 105→140 由弱芯
 拉开（华为 1.9→51.6 = 27 倍、昆仑 1.1→3.2）。**华为又是最大杠杆**：零填充
 是 streaming store 族，T62/T64 已证 Ascend persistent 对 copy 族 +35-44%。
-昆仑 0.1 门槛风险真实存在（hbmu 0.2456 贴地）——tiny-kernel launch 开销
-主导，wrapper 必须极薄（clone + 单 launch，无任何额外 torch op）。
+**门槛风险芯是燧原不是昆仑**：cgzhou 燧原 0.1924 是全榜距 0.1 最近的读数
+（昆仑最低 0.2456）——tiny-kernel launch 开销主导，wrapper 必须极薄
+（clone×2 + 单 kernel = 3 次 launch，clone 本身也是成本）。
 
-**s0 计划**：wrapper `out.clone()` + `lse.clone()` + 单 kernel：grid
-`(bs, cdiv(max_seq_len, BLOCK_T))` 每程序早退 + BLOCK_V 向量清零 + lse
--inf。**燧原 grid.y≤255：bs 放 grid.x、token 块放 grid.y**（或折叠）。
-预注册门：8/8 且 ≥100；华为轴 persistent vendor 为 e1。
+**s0 计划**：wrapper `out.clone()` + `lse.clone()` + 单 kernel：每程序早退
+（`kv_lens>0`）+ BLOCK_V 向量清零 + lse -inf（**lse 的索引与 store mask
+按 [total_tokens, H] 独立处理，不随 V lane 重复写**；未触碰段的 NaN/原值
+必须保留）。**grid 方案**：燧原 grid.y≤255 且 grid.x 也有上限——2D
+`(bs, token_blocks)` 若 `ceil(max_seq_len/BLOCK_T)>255` 仍越界，首版直接
+**一维展开**（`grid=(bs * token_blocks_max,)` kernel 内拆下标）或 y 封顶 +
+kernel 内 token 块循环。**`max_seq_len` 只是分派提示**：reference 不使用它，
+段界以 `cum_seq_lens` 为准（kernel 内按 cum 循环上界），不信任 host 侧
+max_seq_len 覆盖所有 token。预注册门：8/8 且 ≥100；华为轴 persistent
+vendor 为 e1。**后续融合机会**：`empty_like` 替代 clone、kernel 内对
+零 KV 段写常量、非零段从原张量拷贝——单 launch 完成 clone+修补（去掉
+显式 clone ≠ 改原地写，仍返回新张量）。
 
 **风险**：clone 是全量拷贝（与 reference 同价），不要试图跳过 clone 改
 原地写——judge 对比的是返回张量，原地写会污染输入侧基准；`-inf` 写入用
-`float('-inf')` 常量，勿用 `tl.where` 分支形态。
+`float('-inf')` 常量；`tl.where` 谨慎仅限有复现证据的后端形态，不作跨芯
+通用禁令。测试矩阵：全零/全非零/混合 KV、空段、batch 与 token 块数各跨
+255/256 边界。
 
 ## T77 compute_position（第五优先，先验证后投）
 
@@ -180,31 +223,49 @@ sync 开销。
 精确整数。prefix 可为空（`has_prefix=False` 时 p=0）。
 
 **上游**：`position.py` @ `6ed9843` 原版（grid=(bs,) 串行 O(bs²) 前缀和，
-"slow for large bs"）；**PR #31284 striped kernel**：≤64 stripes ×
-ROWS_PER_STRIPE，串行链封顶 O(min(bs,64)²)，H200 交叉点 bs=1024、
-**Ascend 交叉点 ~bs=50**（few-core，对本批八芯正合适）。
+"slow for large bs"，main 无 striped）；**PR #31284（OPEN，head
+`454f6bb`）striped kernel**：≤64 stripes × ROWS_PER_STRIPE（超 64 stripes
+后 `rows_per_stripe = cdiv(bs, 64)` 自动扩行覆盖，不会丢行），串行链封顶
+O(min(bs,64)²)。PR 注释称 H200 交叉点 bs=1024、"Ascend NPU crosses ~bs 50"
+（作者环境注释，非本赛题平台实测，分派阈值需我方自调）。
 
 **差距与靶子**（榜首 c2flow 1296.06x，唯一有效队）：昆仑 33.96 / 燧原
 71.0 / 华为 354 / 天数 3268 / 沐曦 739 / 海光 1772 / A 2121 / B 2009。
-15 发 8 队仅 1 队有效 → **正确性墙**，而非速度墙。过墙即 #2，且 1296x
+16 发 8 队仅 1 队有效（20:50 索引口径；次数≠失败数，部分提交可能仍在
+评测）→ **正确性墙**，而非速度墙。过墙即 #2，且 1296x
 巨分使任何名次都有账面价值。
 
 **瓶颈判定——燧原 int64**：positions 是 int64 输出。GCU 签名级 i64 禁令
 （`gcu64-type-verifier` 拒绝 `!tt.ptr<i64>`，T60 八轮/T59-T61 七轮实证）
 意味着 kernel 签名必须 i64-free：wrapper 以 int32 view 传 positions。
-**两种物理论假设**：
-- A（标准）：逻辑 int64 = 2×int32 词，store (val, 0) 对；
-- B（torch-gcu 物理窄化，T60 新证据：`gcu_hardware.h` Long→Int 映射 +
-  半 itemsize 偏移 + 按窄 dtype 分配）：物理上每元素仅 4 字节，int32 view
-  的 numel 是 N（逻辑）而非 2N，按 **同 numel 单词写** 才落位——T60 E8 的
-  2-词写 100% 失配（最大差 1.13e9）恰与假设 B 相容。
-未定验前不投。**首验路径**：燧原目标机（或 KernelGen）跑 int64 保真探针
-（CPU→GCU→CPU 全域含 stride/offset），一次性裁决 A/B；裁决后 wrapper 定稿。
+**T60 固定源码审计**（`artifacts/competition/t60-narrow-storage-audit-20260916/`，
+torch-gcu `f17a922`）已证：`gcu_empty_tensor.cpp:50-64` int64 常规路径
+**物理按半 itemsize 分配 4N 字节、StorageImpl 元数据仍宣称 8N**；
+dtype-view 无特化注册、平台 dispatcher 未查明。因此两种物理布局假设：
+- A（标准双词）：物理 8N 字节，元素 i 的词在 view 下标 2i/2i+1；
+- B（narrow packed）：物理 4N 字节，元素 i 物理槽位=字节偏移 4i，即
+  **view 下标 i**（view 元数据按 itemsize 比例仍报 2N 个元素——元数据
+  长度与物理分配无关，写 2N 下标会越物理界）。T60 E8 的 2-词写 100%
+  失配（最大差 1.13e9）与 B 相容。
+未裁决前不投。**探针设计（对齐审计报告，输出向）**：
+1. 先记录平台 torch/torch-gcu 版本、设备 major（S60/L600 决定 narrow
+   行为）、`TORCH_GCU_ENABLE_INT64_AND_UINT64` 状态与 `aten::view.dtype`
+   实际 dispatcher；
+2. 物理布局判别：设备 int64 `[1,2,3,4]` → `view(int32)` 后**只读前 4 个
+   int32**（两种假设下都在已分配 16 字节内）：A 应为 `[1,0,2,0]`，B 应为
+   `[1,2,3,4]`；不做任何写；
+3. **输出路线探针**（T77 的 int64 在输出侧，T60 的输入保真探针不覆盖）：
+   新分配 int64 输出 → Triton 按 A/B 各写一版 → CPU 读回比对；
+4. **输出值域探针**：用 T77 合法输入域（int32 prefix/seq）测
+   `prefix≈INT32_MAX, seq_len=2` 等可跨 2^31 的输出——A 布局高词非零，
+   B 布局下该值域物理不可表示，需按判别结果确认题面实际 shape 不会
+   落进该区间。
 其余七芯用标准 i64 签名 kernel（tl store int64 无碍）+ vendor 仅燧原。
 
 **s0 计划**（七芯先行）：striped kernel 直移（ROWS_PER_STRIPE=16、
 BLOCK_TOKENS=512、≤64 stripes；小 bs 走原版单程序路径），本地 exact 回归
-覆盖 bs=1/2/空 prefix/巨 bs（≥1024 交叉点两侧）/非整除 BLOCK_TOKENS。
+覆盖 bs=1/2/1023/1024/1025/空 prefix/巨 bs（≥交叉点两侧）/零长度段/
+非整除 BLOCK_TOKENS，positions 与 start 分别断言。
 昆仑向量 `//` 无此题（无除法）；cumsum 串行链标量累加即可。
 
 ## T76 add3（第六优先，低成本顺手）
@@ -218,19 +279,28 @@ PDL 是 NVIDIA 专属，**generic 不许带**）。
 
 **靶子**（榜首 GuanghuLab 1.1611，9 队全 8/8）：华为 0.417 / 昆仑 0.730 /
 燧原 1.197 / 天数 1.655 / 沐曦 1.276 / 海光 1.360 / A 1.378 / B 1.277。
-全榜分差 0.91→1.16，**无结构分化，纯挤水分**。理论：reference 2 kernel
-12B/elem，融合后 8B/elem，上限 ~1.5x；天数 1.65 已贴顶。
+全榜分差 0.91→1.16，**无结构分化，纯挤水分**。参考模型：reference 2 kernel
+约 12B/elem、融合后 8B/elem——同带宽假设下约 1.5x，**是简化模型推算不是
+硬上限**（天数 1.65 已高于它，说明带宽假设各芯并不成立）；华为全员 ≤0.462
+另有结构性原因待查。
 
-**瓶颈**：华为全员 <0.5（killgame 0.462 最高）——Ascend 上融合 Triton 反而
-慢于两条 torch add，疑 bf16 逐元素向量化宽度/launch 差，需 `_ascend`
-vendor 专项（vectorcore 数量适配 + persistent copy 族配方）；
-昆仑 0.73-0.82、燧原 0.44-1.20 分化大。**我方 T61 燧原 streaming 配方
-（grid 封顶 24 + BLOCK 4096）直移**。
+**瓶颈**：华为全员 <0.5（killgame 0.4623 最高，0.1444 最低——9 队有效
+不等于无门槛风险）——Ascend 上融合 Triton 反而慢于两条 torch add，疑
+bf16 逐元素向量化宽度/launch 差，需 `_ascend` vendor 专项（vectorcore
+数量适配 + persistent copy 族配方）；昆仑 0.73-0.82、燧原 0.44-1.20
+分化大。**燧原 streaming elementwise 配方的正例是 T73（+92%）/T75
+（+113%）**——T61 E8 已证该配方对 scatter 无效（-7%），引用时勿错位；
+add3 属 streaming elementwise，配方适用。
 
-**s0 计划**：flat 单 kernel，`t=(a.f32+b.f32).bf16; out=(t.f32+c.f32).bf16`
-显式双舍入；BLOCK 1024、grid-stride；numel%16 保证向量化安全。本地用
-`(a.bf16+b.bf16)+c.bf16` 的 torch 双算子做 exact 对照 + 容差对照双跑。
-e1 起华为/昆仑 vendor。预注册门：均值 >1.17 才值得继续投轴。
+**s0 计划**：flat 单 kernel，`t=(a.f32+b.f32).to(bf16); out=(t.f32+c.f32)
+.to(bf16)` 显式双舍入（downcast 显式 rtne，与 torch eager 每算子 fp32 计
+算后按 RTNE 出 bf16 的语义对齐）；BLOCK 1024、grid-stride；**numel%16 只
+保证 16 元素向量化安全，BLOCK=1024 的尾块 mask 仍必需**。本地用
+`(a.bf16+b.bf16)+c.bf16` 的 torch 双算子做 exact 对照 + 容差对照双跑，
+并加入**双舍入 vs 单舍入的最小反例**（`a=1, b=1/256, c=-1`：双舍入=0、
+fp32 单舍入=1/256，防止实现意外融合成单舍入仍骗过宽松容差的错觉——
+题面明令禁止单舍入）。e1 起华为/昆仑 vendor。预注册门：均值 >1.17
+才值得继续投轴。
 
 ---
 
@@ -244,19 +314,27 @@ e1 起华为/昆仑 vendor。预注册门：均值 >1.17 才值得继续投轴�
 | 天数/海光/A/B | 无短板 | 冻结 generic 字节即可 | 慢窗 ±25% 读数波动，判读以同窗他芯为准 |
 | 沐曦 | T79 164 领先我方 93 | T63 metax 2048 曾回退，banked 92-93 即水位 | 低精度 dot 回退（勿外推） |
 
-## 额度与日程（09-18 起 7 天 × 30 发）
+## 额度与日程（09-18 起 7 天 × 30 发，全局共享）
 
-- **D1（09-18）**：T79 s0+T63 vendor 直移首发（预计 2-3 发）；T78 s0
-  （T62 e12+cast，1 发）；T81 s0（1-2 发）；T80 s0（1 发）。目标当日 4 题
-  8/8 进榜。
-- **D2**：燧原目标机 T77 int64 保真探针（不耗额度）→ 裁决 A/B 后 T77 s0；
-  T78 燧原 BLOCK 阶梯轴；T79 昆仑轴。
-- **D3-D5**：单变量轴逐题推进（华为 persistent vendors ×4 题、T81 多行/
-  双 kernel 对比、T76 s0 顺手）。
-- **D6-D7（09-23/24）**：冲榜 + 收盘回归，各题保留 ≥2 发防御额度；
-  09-24 19:59 硬截止前完成最后一轮 banked-TB 守榜。
-- 全程遵守：每发预注册晋级门 + 止损；崩窗族/慢窗判读按 retrospective 协议，
-  不连续重掷。
+每日额度为**上限而非必须消耗的指标**：没有新假设就不必用满；已有 banked
+TB 不需要例行重投"守榜"；保留额度当日有效、不跨日累计。
+
+- **D1（09-18，预算 ≤12 发）**：T79 s0+T63 vendor 直移首发（2-3 发）；
+  T78 s0（T62 e12+cast，1 发）；T81 s0（1-2 发）；T80 s0（1 发）；T76 就绪
+  即发。目标当日 4-5 题 8/8 进榜，取得真实逐芯基线。
+- **D2（预算 ≤18 发）**：燧原目标机 T77 探针（不耗额度，见 T77 节）→
+  裁决 A/B 后 T77 s0 条件首发；修 D1 暴露的正确性/0.1 缺口；T78 燧原
+  BLOCK 阶梯轴；T79 昆仑轴。
+- **D3-D5（每日 ≤24 发，留 6 发当日应急）**：按本队同题
+  `Δ平均分/开发成本` 排序单变量推进（华为 persistent vendors ×4 题、
+  T81 多行对照、T76 vendor）。
+- **D6-D7（每日 ≤18 发，留 12 发缓冲）**：有证据的最后优化与必要修复；
+  D7 按排队/回调时长**提前停风险候选**（评测往返可能 >1h），最终有效
+  候选尽量在 09-24 18:00 前提交完毕。
+- 全程遵守：每发预注册晋级门 + 止损；崩窗族/慢窗判读按 retrospective
+  协议，不连续重掷。**慢窗注意**：T77/T78 各只有 1 队在榜，缺同芯对照，
+  首轮回执的逐芯读数与执行时长要与他题同窗横向对照后再下结构性结论，
+  不用固定"±25%"概括所有窗口变化。
 
 ## 未决问题（开题前必答）
 
@@ -275,4 +353,7 @@ e1 起华为/昆仑 vendor。预注册门：均值 >1.17 才值得继续投轴�
 - 姐妹题账本：`experiments/concat_mla_k.md`、`create_flashinfer_kv_indices.md`、
   `sigmoid_gate_mul.md`、`clamp_position.md`、`compute_src2dst.md`、
   `fused_gdn_gating.md`；跨批教训 `season2-retrospective.md`。
-- PR #31284（striped compute_position）、#37525（fixup_zero_kv JIT 预建）。
+- PR #31284（striped compute_position，OPEN，head `454f6bb`，striped 函数体
+  在本会话 PR diff 中完整取得）、#37525（fixup_zero_kv JIT 预建）。
+- T60 窄化审计：`artifacts/competition/t60-narrow-storage-audit-20260916/
+  report.md`（torch-gcu `f17a922` 固定源码，T77 探针设计的证据基础）。
