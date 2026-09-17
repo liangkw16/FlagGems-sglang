@@ -32,7 +32,7 @@ task: 62
 operator: concat_mla_k
 batch: 5
 validity: valid
-platform: submitted(e13-pending;TB e12 1.270875x)
+platform: completed(16759,e13,8/8,1.1991x<TB;保e12 1.270875x;收官)
 candidate_stage: e13
 team_best_stage: e9
 team_best_speedup: 1.24575
@@ -381,3 +381,7 @@ submission 16754 completed/valid，均值 **1.270875x > 1.24575 换 TB**（+2.02
 ## 2026-09-17 E13：燧原回 E9 纯净 launch（去 stages），华为 persistent 保留，已提交
 
 - E12 判决后的单变量修正：`_enflame` 去 num_stages=3（E11/E12 两证任何 launch 钉都使燧原劣化 ~50%，E9 纯净 launch 是已证最优）；`_ascend` persistent 与其余成员冻结。release v2（commit `dbef39b4a786009badb3ebf617a110cb9ec45aa3`）全过，回执 SHA-256 `fa67452a5b34209e94b4019528a98273c679926fcf4e8786e3215191c14ce365`。ZIP `e13-dbef39b` SHA `ea8e830ccad6db7c06c92a2a0572f7c9125163a36ef6eca9b0c14238820d9101`。门：8/8 且均值 > 1.270875；燧原 ≥ 0.25 恢复 E9 水平。
+
+## 2026-09-17 E13 平台终态：8/8 有效 1.1991x，低于 TB；T62 收官
+
+submission 16759 completed/valid，均值 **1.1991x < TB 1.270875**（保 e12）。燧原 0.1514→0.2094（部分恢复，未回 E9 的 0.28——纯净 launch 对照也不稳定，判读窗口主导）；huawei 0.2842→**0.3316（+16.7%，persistent 持续正）**；haiguang 2.9108→2.13（hygon 冻结字节，窗口 -26.8% 主导均值回落）。TB 1.270875 守住。T62 收官：当日 +2.02%，燧原/华为真实结构缺口（0.21-0.33 vs 次优 3.96/1.14）未破译。额度 6/30 剩余。
