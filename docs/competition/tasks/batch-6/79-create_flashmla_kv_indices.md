@@ -1,26 +1,24 @@
-<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/create_flashinfer_kv_indices -->
+<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/create_flashmla_kv_indices -->
 <!-- synced_at: 2026-09-17T20:50:10+08:00 -->
 
-# create_flashinfer_kv_indices (kvcache/create_flashinfer_kv_indices)
+# create_flashmla_kv_indices (kvcache/create_flashmla_kv_indices)
 
 ## 任务描述
 
-将每个请求的 token slots 从 `req_to_token` pool 扁平化到 FlashInfer paged attention 消费的 ragged `kv_indices` buffer。
+构建 FlashMLA block table：不按 token 输出，而是每 page 一个 entry，读每个 page 边界处的 token slot 并除以 page size。
 
 ## 接口签名
 
 ```python
-def reference(req_to_token, req_pool_indices, page_kernel_lens, kv_indptr, kv_start_idx, kv_indices)
+def reference(req_to_token, req_pool_indices, page_kernel_lens, kv_start_idx, kv_indices, page_size)
 ```
 
-> 选手实现的函数签名需与上述 `reference(...)` 完全一致。
+> 选手实现的函数签名需与上述完全一致。
 
 ## 计算定义
 
-- 对请求 i：`beg = kv_indptr[i]`，`kv_indices[beg : beg + len_i] = req_to_token[req_pool_indices[i], kv_start_i : kv_start_i + len_i]`
-- `len_i = page_kernel_lens[i]`，`kv_start_i = kv_start_idx[i]`（未提供时为 0）
-- `req_to_token`: `[max_batch, max_context_len]` int32；`kv_indptr`: `[bs + 1]` int32 前缀偏移
-- `kv_start_idx` 可为 `None`
+- 对 page p（`p < ceil(len_i / page_size)`）：`slot = req_to_token[req_pool_indices[i], kv_start_i + p * page_size]`，`kv_indices[i, p] = slot // page_size`
+- `kv_indices` 是 2D `[bs, max_pages]` int32 block table，原地写入
 
 ## 正确性判别标准
 
@@ -30,15 +28,16 @@ exact（整数运算）
 
 ```python
 def reference(
-    req_to_token, req_pool_indices, page_kernel_lens, kv_indptr, kv_start_idx, kv_indices
+    req_to_token, req_pool_indices, page_kernel_lens, kv_start_idx, kv_indices, page_size
 ):
     out = kv_indices.clone()
     for i in range(req_pool_indices.shape[0]):
-        beg = int(kv_indptr[i])
         n = int(page_kernel_lens[i])
         start = int(kv_start_idx[i]) if kv_start_idx is not None else 0
         pool = int(req_pool_indices[i])
-        out[beg : beg + n] = req_to_token[pool, start : start + n]
+        num_pages = (n + page_size - 1) // page_size
+        slots = req_to_token[pool, start : start + num_pages * page_size : page_size]
+        out[i, :num_pages] = slots // page_size
     return out
 ```
 

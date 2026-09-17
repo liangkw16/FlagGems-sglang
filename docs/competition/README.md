@@ -152,7 +152,8 @@ git show origin/flagos-sglang-batch1:tests/test_chunk_local_cumsum_scalar.py
 ```text
 docs/competition/
 ├── README.md                 # 本文：要求和提交规范
-├── task-index.md             # 五批赛题与动态榜单快照
+├── task-index.md             # 六批赛题与动态榜单快照
+├── strategy-batch6.md        # 第六批开题调研与作战方案（进行中）
 ├── strategy-batch2.md        # 第二批开发优先级与复用线索（历史）
 ├── operator-atlas.md         # 前两批 24 题功能、原理、契约与容差图谱
 ├── learning-path.md          # 题型学习和八芯固定资料入口

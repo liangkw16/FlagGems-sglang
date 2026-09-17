@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/moe_fused_gate -->
-<!-- synced_at: 2026-09-17T10:55:10+08:00 -->
+<!-- synced_at: 2026-09-17T20:50:10+08:00 -->
 
 # moe_fused_gate (moe/moe_fused_gate)
 

@@ -13,6 +13,7 @@
 
 | 族 | 时间顺序（旧 → 新） |
 | --- | --- |
+| `leaderboard-batch6-perchip-20260917*.json` | 无后缀（20:51，开题快照，T76–T81 逐芯） |
 | `leaderboard-batch5-perchip-20260917*.json` | 无后缀（10:57）→ `-evening`（13:32，注意"evening"名不副实）→ `-final`（17:00，终局口径） |
 | `top1-intel-20260916*` | `-live` → `-refresh2` → `-final` |
 | `batch5-intel-20260914*` | `-afternoon` → `-evening` → `-late` → `-night` → `-night2` |

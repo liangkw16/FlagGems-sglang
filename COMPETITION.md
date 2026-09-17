@@ -3,7 +3,10 @@
 本工作区已基于官方 `FlagGems-sglang` 仓库整理成可直接开发和检索的资料包。
 
 - [比赛要求、提交规范与资料入口](docs/competition/README.md)
-- [全五批赛题索引与动态榜单快照](docs/competition/task-index.md)
+- [全六批赛题索引与动态榜单快照](docs/competition/task-index.md)
+- **第六批开题（09-17，进行中）**：
+  [作战方案与逐题调研](docs/competition/strategy-batch6.md)（T76–T81，
+  窗口至 09-24 19:59）
 - **第五批终局三件套（09-17 收官口径）**：
   [终日作战与逐发判决](docs/competition/optimization-batch5-finalday-20260917.md)、
   [终局榜与下一赛季开题情报](docs/competition/batch5-final-review-20260917.md)、

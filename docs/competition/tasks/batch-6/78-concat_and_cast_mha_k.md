@@ -1,33 +1,28 @@
-<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/fused_rmsnorm -->
+<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/concat_and_cast_mha_k -->
 <!-- synced_at: 2026-09-17T20:50:10+08:00 -->
 
-# fused_rmsnorm (activation_norm/fused_rmsnorm)
+# concat_and_cast_mha_k (kvcache/concat_and_cast_mha_k)
 
 ## 任务描述
 
-Fused RMS normalization: `x * rsqrt(mean(x^2) + eps) * weight`, computed in fp32 and cast back.
+Triton 版 `concat_mla_k`：从 per-head NoPE 部分和 broadcast 单头 RoPE 部分构建 MHA key 张量，store 时隐式 dtype cast（目标可能是低精度 cache）。
 
 ## 接口签名
 
 ```python
-def reference(x, weight, eps)
+def reference(k, k_nope, k_rope)
 ```
 
-> 选手实现的函数签名需与上述 `reference(...)` 完全一致。
+> 选手实现的函数签名需与上述完全一致。
 
 ## 计算定义
 
-- `rms = sqrt(mean(x^2, dim=-1) + eps)`
-- `out = (x / rms) * weight`
-- 中间计算使用 float32，输出 cast 回输入 dtype
+- `k[t, h, :nope_dim] = k_nope[t, h, :]`；`k[t, h, nope_dim:] = k_rope[t, 0, :]`
+- 三个张量都是 3D；`k.shape[1] == k_nope.shape[1]`，`k_rope.shape[1] == 1`，`k.shape[-1] == k_nope.shape[-1] + k_rope.shape[-1]`
 
 ## 正确性判别标准
 
-Per-dtype tolerance:
-- float32: `atol=1e-4, rtol=1e-4`
-- bfloat16: `atol=1.5e-2, rtol=1.5e-2`
-- float16: `atol=1e-2, rtol=1e-2`
-
+exact（纯数据搬运）
 
 ## 参考实现
 
@@ -35,11 +30,10 @@ Per-dtype tolerance:
 import torch
 
 
-def reference(x, weight, eps):
-    x32 = x.float()
-    rms = torch.sqrt((x32 * x32).mean(dim=-1, keepdim=True) + eps)
-    out = (x32 / rms) * weight.float()
-    return out.to(x.dtype)
+def reference(k, k_nope, k_rope):
+    num_heads = k.shape[1]
+    rope = k_rope.expand(-1, num_heads, -1)
+    return torch.cat([k_nope, rope], dim=-1).to(k.dtype)
 ```
 
 ## 评分标准
