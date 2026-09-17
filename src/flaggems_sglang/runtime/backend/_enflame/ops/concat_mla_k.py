@@ -109,7 +109,6 @@ def concat_mla_k(k, k_nope, k_rope):
             BH=4,
             BN=bn,
             BR=br,
-            num_stages=3,
         )
     return out
 
