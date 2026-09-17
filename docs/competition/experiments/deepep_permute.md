@@ -5,8 +5,8 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: completed(16570,e7,8/8,7.47225x新TB)
-candidate_stage: e7
+platform: submitted(e8-pending;TB e7 7.47225x)
+candidate_stage: e8
 team_best_stage: e7
 team_best_speedup: 7.47225
 sealed: no
@@ -259,3 +259,10 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 submission 16570（daily_seq 1）completed/valid，8/8 全过，均值 **7.47225x > 7.17105 换 TB**（+4.2%）。逐芯（vs E5 TB）：tianshu 16.3698(+2.2%) / muxi 5.1076(-8.2%) / enflame 5.2084(E6冻结字节) / haiguang 10.612(+4.0%) / kunlunxin **0.6532(+145.7%，冻结旧字节纯窗口漂移，不归因代码)** / huawei **4.433(+43.7%，persistent 轴正信号但未过 6.2 预注册门)** / card_a 9.5174(+9.7%) / card_b 7.8766(+14.1%)。发后额度 29/30。证据 `artifacts/competition/t64e7-release-20260917/status-16570.json`。
 
 判读：去 clone 三段式平台兑现远低于代理 2.2x（平台 +4~14%）；预注册华为门未过 ⇒ 不做同字节重掷，华为轴（4.43 vs 次优 100.91）需新结构证据——候选为昇腾官方 best-practice 的 gather/scatter 形态（外层任务按 vector core 分割 + hidden 按 UB 分 BLOCK_X + SUB_BLOCK_SIZE 批量小任务 + insert/extract_slice），见 `vendor-backends/ascend/vector_operator.md` 复杂向量算子一节与 triton-ascend-ops 004/006 教程。平台 shape 与 20MB 双路径阈值的交互未知（无逐 case 耗时），调阈值属盲调不立项。
+
+## 2026-09-17 E8：Ascend 官方 004-gather_scatter 可移植形态（连续分片+SUB 批量 2-D store），已提交
+
+- 结构（`3dae9c40`）：仅 `_ascend` vendor 的 scatter 段重写——每 program 持有连续 token 分片（chunk=cdiv(tokens,NPC)），SUB=4 行批量装载 [SUB,BLOCK=2048] 瓦片，per-slot 一次宽 2-D store；masked 目的地址钳位行 0（昇腾会求值 masked lane 地址，T59 e6 已证）；fill 段独立 512 基准 tiles。开发中修掉两个 bug：fill 误用 2048 基准 tiles（12.5% 列失配）与 launch 传参 tiles/fill_tiles 混用（CUDA IMA，CUDA_LAUNCH_BLOCKING 定位）。generic/enflame/kunlunxin 字节与 E7 冻结。
+- release v2（commit `3dae9c4052375e183c783ae678c30372196f90a5`）：6/6 全过 0F/E/S/X，四源 launch 46/46/44/44，exit 0。回执 `artifacts/competition/t64e8-release-20260917/verification.json` SHA-256 `fced1f0685887cb1a372915270f94ac1e36923248a00a68cd7c2c566be28d70d`。
+- ZIP：`artifacts/competition/deepep_permute/e8-3dae9c4/deepep_permute.zip`，17148 bytes，SHA-256 `0365c0e8cbd53d74a6178b5617d4943b3056f3b76d587928b7293aab17c44a0e`。
+- 预注册门：8/8 有效且均值 > 7.47225 才换 TB；华为 ≥ 8.9（2x E7 的 4.43）为批量形态正信号。零 TB 风险（榜上最优保留）。一次候选一次判决。
