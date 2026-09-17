@@ -5,8 +5,8 @@ task: 72
 operator: group_norm_silu
 batch: 5
 validity: valid
-platform: completed(15841,e9,8/8,2.48429167x;TB e6 2.66266667x)
-candidate_stage: e10-screening-no-go;correctness-fixes-verified-unsubmitted
+platform: submitted(e12-pending;TB e6 2.66266667x)
+candidate_stage: e12
 team_best_stage: e6
 team_best_speedup: 2.66266667
 sealed: no
@@ -285,3 +285,6 @@ Artifact根为 `artifacts/competition/t72-chunk-welford-screening-20260916/`。�
 ## 2026-09-17 E11 平台终态：8/8 有效 2.46666667x，未换 TB
 
 submission 16653 completed/valid。enflame 0.376→**0.459（+22.1%，grid cap 24 有小正信号但远低于次优 1.67）**；huawei 1.196（_ascend e9 字节窗口 -1.5%）；其余 generic 字节窗口（tianshu 4.088/-1.5% 等）。均值 2.4667 < TB 2.6627 保 e6。燧原轴：grid cap 不足，剩 tl.range+stages3 管线化假设（未证，时间不足今日不投）。
+## 2026-09-17 E12：燧原 while→tl.range(num_stages=3) 管线化，已提交
+
+- 最后一个未试配方元素：scalar-carried while 转 pipelined tl.range（num_stages≥3 开 GCU pingpong；T68 两阶段循环 +39% 同族先例；tensor-carry 才是 GCU 毒点，scalar-carried 安全）。grid cap 24 与其余成员冻结（E11 基座）。release v2（commit `8427c5eb16d28a77516db4cc4c6a86908a053cfd`）全过，回执 SHA-256 `74c5344c773e6b4bfe7671f368cecf0d903115e70c876f2dc2b33438869d8b89`。ZIP `e12-8427c5e` SHA `e23328b3f2c92830b56f17b450bfd4266f6d449da916c78c8a293b25beb047b8`。门：8/8 且均值 > 2.66266667 换 TB；燧原 ≥ 0.8 为正信号。
