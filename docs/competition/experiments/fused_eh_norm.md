@@ -34,13 +34,13 @@ task: 68
 operator: fused_eh_norm
 batch: 5
 validity: valid
-platform: completed(15864,e8,8/8,7.10215x新TB)
-candidate_stage: e8
-team_best_stage: e8
-team_best_speedup: 7.10215
+platform: completed(16576,e9,8/8,7.20040833x新TB;燧原+39%)
+candidate_stage: e9
+team_best_stage: e9
+team_best_speedup: 7.20040833
 sealed: no
 next: 保留E8团队最佳；Ascend多行候选隔离留档，代理未提速；等待目标芯同源计时与IR
-updated: 2026-09-16
+updated: 2026-09-17
 ```
 
 ## 契约与范围

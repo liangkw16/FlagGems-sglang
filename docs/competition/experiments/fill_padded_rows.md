@@ -5,10 +5,10 @@ task: 67
 operator: fill_padded_rows
 batch: 5
 validity: valid
-platform: completed(e6/sub15376,8/8,4.295475x；TB仍E2 4.2969)
-candidate_stage: e7-negative-safe-paused-unsubmitted
-team_best_stage: e2
-team_best_speedup: 4.2969
+platform: completed(16579,e8,8/8,4.43975x新TB;华为+30.5%)
+candidate_stage: e8
+team_best_stage: e8
+team_best_speedup: 4.43975
 sealed: no
 next: 用户要求不再新提交；E7已过发布门但预检被间隔拦下，无intent/上传/提交，保留验签包
 updated: 2026-09-17
@@ -249,3 +249,7 @@ updated: 2026-09-17
 ## 2026-09-17 E8 单次平台提交
 
 submission **16579**，evaluating；八芯终态另节记录。
+
+## 2026-09-17 E8 平台终态：8/8 有效，新 TB 4.43975x
+
+submission 16579 completed/valid，均值 **4.43975x > 4.2969 换 TB**（+3.33%）。逐芯（vs E2 TB）：huawei 1.929→**2.518（+30.5%，方向正但未过 3.9 门）**；card_a 5.489(+0.7%)/kunlun 0.603(+3.2%)/tianshu 11.526(-3.1%)/muxi 2.657(-2.7%)/enflame 1.298(-14.1%，generic 未动，窗口)。他队华为 17.5-48.9 缺口仍大。

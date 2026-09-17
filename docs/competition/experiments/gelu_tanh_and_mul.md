@@ -17,10 +17,10 @@ task: 71
 operator: gelu_tanh_and_mul
 batch: 5
 validity: valid
-platform: completed(e10/sub16462,8/8,2.78165833x新TB；e9/sub16473八芯2.78134167x未超过)
-candidate_stage: e10
-team_best_stage: e10
-team_best_speedup: 2.78165833
+platform: completed(16582,e11,8/8,2.84880833x新TB;华为+19.2%)
+candidate_stage: e11
+team_best_stage: e11
+team_best_speedup: 2.84880833
 sealed: no
 next: 用户要求不再新提交；保留E10最佳，E9未提分；第15，追平Top1需92.97%
 updated: 2026-09-17
@@ -185,3 +185,7 @@ vs 1.14（4.6x）——两芯均为结构性差距。TB 保持 e1 2.6265。
 ## 2026-09-17 E11 单次平台提交
 
 submission **16582**，evaluating；八芯终态另节记录。
+
+## 2026-09-17 E11 平台终态：8/8 有效，新 TB 2.84880833x
+
+submission 16582 completed/valid，均值 **2.84880833x > 2.78165833 换 TB**（+2.42%）。逐芯（vs E10 TB）：huawei 1.942→**2.31473（+19.2%，未过 3.9 门，方向正）**；其余冻结字节/窗口（enflame 2.057/haiguang 3.922/tianshu 5.197）。华为 he队 7.3-14.6 缺口仍在。

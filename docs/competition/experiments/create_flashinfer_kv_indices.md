@@ -5,8 +5,8 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: completed(e17-vendor-mix/sub16442,8/8,197.5424375x；未超TB E8)
-candidate_stage: e17-validated-vendor-mix-complete
+platform: completed(16577,e18,8/8,198.78725x<TB差0.46%;燧原36.0解锁)
+candidate_stage: e18
 team_best_stage: e8
 team_best_speedup: 199.69521875
 sealed: no
@@ -498,3 +498,7 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 ## 2026-09-17 E18 单次平台提交
 
 submission **16577**，evaluating；八芯终态另节记录。
+
+## 2026-09-17 E18 平台终态：8/8 有效 198.78725x，差 0.46% 未换 TB，燧原轴解锁
+
+submission 16577 completed/valid，均值 **198.78725x < TB 199.69521875**（-0.46%，其他芯窗口整体小幅回落）。逐芯（vs E8 TB）：enflame 6.175→**36.009（+483%，预注册门 35 过；GCU persistent+stages3 配方）**；kunlunxin 2.706→8.018（冻结字节窗口）；muxi 92.57(+6.1%)/card_a 257.5(+3.0%)/card_b 307.7(-0.1%)；tianshu 517.4(-6.6%)/haiguang 302.7(-4.2%)/huawei 68.3(-6.4%) 回落。**燧原轴从 25.4（E15 阶梯顶）跃至 36.0**；下一梯度 = BLOCK 8192 阶梯（账本已注册"值得追发"），他队 83-108 仍未破译。

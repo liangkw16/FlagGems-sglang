@@ -5,13 +5,13 @@ task: 59
 operator: build_trtllm_mha_page_table
 batch: 5
 validity: valid
-platform: completed(14705,e9,8/8,23.406x;行打包华为4.29证伪;TB e4r 24.1284x)
-candidate_stage: e9
+platform: completed(16578,e10,8/8,23.87921875x<TB;保e4r)
+candidate_stage: e10
 team_best_stage: e4r
 team_best_speedup: 24.1284375
 sealed: no
 next: e9 行打包华为4.29(-51%)证伪,华为轴全关待新证据;TB e4r 24.128守
-updated: 2026-09-14
+updated: 2026-09-17
 ```
 
 > 下方 S0 开发记录是 2026-09-10 快照；当前平台结果见 CURRENT 和文末提交记录。
@@ -406,3 +406,7 @@ timeout 600 /home/kevin/notebook/.venv/bin/python /tmp/NEW_RELEASE_DIRECTORY/.ag
 ## 2026-09-17 E10 单次平台提交
 
 submission **16578**，evaluating；八芯终态另节记录。
+
+## 2026-09-17 E10 平台终态：8/8 有效 23.87921875x，低于 TB 保留 e4r
+
+submission 16578 completed/valid，均值 **23.87921875x < TB 24.1284375**。huawei 8.677→8.933（+2.9%，预注册门 12 未过——persistent 对本题主导缺口无效）；其余芯窗口回落（tianshu 67.4/enflame 27.0/haiguang 27.6）。华为轴第三次关闭：行打包(e9)、persistent(e10) 均证伪，他队 82-114x 需 best-practice gather 形态或目标芯 IR。
