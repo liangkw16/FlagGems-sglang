@@ -5,8 +5,8 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: completed(16599,e9,8/8,7.79705x新TB;generic gather全面+3~14%)
-candidate_stage: e9
+platform: submitted(e10-pending;TB e9 7.79705x)
+candidate_stage: e10
 team_best_stage: e9
 team_best_speedup: 7.79705
 sealed: no
@@ -283,3 +283,10 @@ submission 16586 completed/valid，均值 **7.23865x < TB 7.47225**（保 E7）�
 ## 2026-09-17 E9 平台终态：8/8 有效，新 TB 7.79705x；华为可移植形态穷尽
 
 submission 16599 completed/valid，均值 **7.79705x > 7.47225 换 TB**（+4.35%）。逐芯（vs E7）：generic 侧 gather 全面正收益——card_b 7.525→**8.584(+14.0%)** / card_a 9.420→**10.255(+8.9%)** / tianshu 16.23→**17.30(+6.6%)** / muxi 5.110→**5.431(+6.3%)** / haiguang 10.98→**11.29(+2.8%)**；huawei 4.433→4.120（-7.1%，预注册门 8.9 未过——gather 不敌 scatter，与 SUB 批量结论合并：华为 portable 形态三板斧穷尽，persistent(+44%) 为最优）；kunlun 0.658 冻结；enflame 4.740 冻结字节窗口。发后额度 18/30。
+
+## 2026-09-17 E10：燧原去 clone gather 形态（GCU 配方），已提交
+
+- 结构（`3e2439e`）：仅 `_enflame` 宽路径换装——E9 的 `_build_inv`+`_gather_rows`（"单 gather+单掩码 store" GCU 最稳形态，T63-e1 平台实证；标量 scatter store 与 legacy kernel 同型已证）+ GCU 配方 launch（grid≤24、num_stages=3、无 warps 钉）。≤20MB 保留 legacy clone 路径（几何测试锁 `_deepep_permute` 小路径，测试字节不变）。generic/ascend/kunlunxin 与 E9 冻结。
+- screening：6/6 全绿（四路径）；release v2（commit `3e2439e975e43fdde07896c473a1d4568d025e4c`）：6/6 全过 0F/E/S/X，四源 launch 45/45/45/44，exit 0。回执 `artifacts/competition/t64e10-release-20260917/verification.json` SHA-256 `1549d7c542736e2e262edf06ecefdc1917f66d151d7c3a6eaf9481ec33510c3b`。
+- ZIP：`artifacts/competition/deepep_permute/e10-3e2439e/deepep_permute.zip`，SHA-256 `5d97364a291a5ed6212e690a07c357e60df84e5fd35a683416196bd09bf0b6ce`，4 成员。
+- 预注册门：8/8 有效且均值 > 7.79705 才换 TB；燧原 ≥ 6（vs 冻结字节窗口 4.7-5.2）为 gather+配方正信号。零 TB 风险。一次候选一次判决。
