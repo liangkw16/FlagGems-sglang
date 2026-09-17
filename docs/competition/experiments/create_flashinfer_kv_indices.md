@@ -5,8 +5,8 @@ task: 63
 operator: create_flashinfer_kv_indices
 batch: 5
 validity: valid
-platform: completed(16619,e20,8/8,198.33x<TB;保e8)
-candidate_stage: e20
+platform: submitted(e21-pending;TB e8 199.69521875x)
+candidate_stage: e21
 team_best_stage: e8
 team_best_speedup: 199.69521875
 sealed: no
@@ -523,3 +523,9 @@ submission 16585 completed/valid，均值 **195.47615625x < TB 199.69521875**。
 ## 2026-09-17 E20 平台终态：8/8 有效 198.33090625x，未换 TB，华为 persistent 无增益
 
 submission 16619 completed/valid。huawei 73.20125（`_ascend` persistent 首发 readings vs generic 窗口 68.3-73.2——**无 persistent 增益**，预注册门 90 未过；本题已宽 copy 形态与 T61 同为配方反例）。enflame 38.177（E19 字节窗口回摆 32.3→38.2）/tianshu 558.7（窗口高位）/kunlun 7.859。均值 198.33 < TB 199.695 保底。轴关闭。
+
+## 2026-09-17 E21：燧原回 4096 峰档（e20 基座），窗口算术预注册，已提交
+
+- 榜差复查发现：T63 有 7 队挤在 TB 199.695 上方 10% 内（一发动多名次），且近三发窗口读数远高于 banked E8 窗口——**昆仑 7.86/8.02/7.86 连续三发（banked 2.71）、燧原 36.0/32.3/38.2（banked 6.18）**。
+- 结构（`b5edc2f8`）：e20 基座（ascend persistent + 其余冻结）唯一变量 = 燧原 BLOCK 8192→4096（E18 同窗族已证 4096=36.0 > 8192=32.3）。release v2 全过，回执 `artifacts/competition/t63e21-release-20260917/verification.json` SHA-256 `17dfd8f992fe596d88c49e04d4846ca5cef60cc6a63fed0edd24f4392623c969`。ZIP `e21-b5edc2f` SHA `5cf6d19e60bbde32fc673f5d71dc822114d545b13450dd681893cc31148480f9`，5 成员。
+- 预注册门：8/8 有效且均值 > 199.69521875 换 TB（窗口算术预期 205±5：tianshu 558 + muxi 92 + enflame 38-40 + haiguang 300±16 + kunlun 7.9 + huawei 73 + card_a 255 + card_b 310）；窗口判据失效（昆仑/燧原回落至 E8 水平）则判负封窗。一次候选一次判决。
