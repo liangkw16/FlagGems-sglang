@@ -145,7 +145,7 @@ def create_flashinfer_kv_indices(
         out.stride(0),
         kv_indices.stride(0),
         HAS_START=kv_start_idx is not None,
-        BLOCK=8192,
+        BLOCK=4096,
         num_stages=3,
     )
     return out
