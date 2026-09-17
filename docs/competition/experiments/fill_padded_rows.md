@@ -245,3 +245,7 @@ updated: 2026-09-17
 - release v2（commit `f83579853cc0163321fd11e6301a1ad61d46eb58`）：5 项全过 0F/E/S/X，changed-vendor 真实 launch 61 次，exit 0。回执 `artifacts/competition/round2-20260917/fill_padded_rows/verification.json` SHA-256 `29751e8cb0bf5ff4f8ae357eb02bb876fd284bf2abf73ba8f8f574d796f6479b`。目标芯 target-runtime-unverified。
 - ZIP：`artifacts/competition/fill_padded_rows/e8-f835798/fill_padded_rows.zip（5677B）`，SHA-256 `e028168913e8e0f2172c07e9b9a7d2a7524dc9e0e948d74654f4934984deaba1`，2 成员。
 - 预注册门：8/8 有效且均值 > 4.2969；华为（1.93 起） ≥ 3.9 为正信号。一次候选一次判决。
+
+## 2026-09-17 E8 单次平台提交
+
+submission **16579**，evaluating；八芯终态另节记录。

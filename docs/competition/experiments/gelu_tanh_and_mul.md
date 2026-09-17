@@ -181,3 +181,7 @@ vs 1.14（4.6x）——两芯均为结构性差距。TB 保持 e1 2.6265。
 - release v2（commit `f83579853cc0163321fd11e6301a1ad61d46eb58`）：7 项全过 0F/E/S/X，changed-vendor 真实 launch 52 次，exit 0。回执 `artifacts/competition/round2-20260917/gelu_tanh_and_mul/verification.json` SHA-256 `55f10fde8a75a592edf365afb4edff68d37a743850b811f06e16c48a27e65728`。目标芯 target-runtime-unverified。
 - ZIP：`artifacts/competition/gelu_tanh_and_mul/e11-f835798/gelu_tanh_and_mul.zip（12159B）`，SHA-256 `8f112e005479bac32c3824e4df83fbc112adbc8401c53734d40c12eab18a0a95`，4 成员（enflame/kunlunxin 冻结）。
 - 预注册门：8/8 有效且均值 > 2.78165833；华为（1.94 起） ≥ 3.9 为正信号。一次候选一次判决。
+
+## 2026-09-17 E11 单次平台提交
+
+submission **16582**，evaluating；八芯终态另节记录。

@@ -289,3 +289,7 @@ updated: 2026-09-16
 - release v2（commit `f83579853cc0163321fd11e6301a1ad61d46eb58`）：7 项全过 0F/E/S/X，changed-vendor 真实 launch 28 次，exit 0。回执 `artifacts/competition/round2-20260917/fused_eh_norm/verification.json` SHA-256 `a0da237ecd78b252cd2103776f04fe9d399cbeae0b62c5e5825d85b651646c13`。目标芯 target-runtime-unverified。
 - ZIP：`artifacts/competition/fused_eh_norm/e9-f835798/fused_eh_norm.zip（17631B）`，SHA-256 `fceb2b67300cfa0b6548d3169618943349b1a64f0b190f28b0157edf8f815471`，5 成员（hygon/iluvatar/metax 冻结）。
 - 预注册门：8/8 有效且均值 > 7.10215；燧原（1.68 起） ≥ 2.2 为正信号。一次候选一次判决。
+
+## 2026-09-17 E9 单次平台提交
+
+submission **16576**，evaluating；八芯终态另节记录。
