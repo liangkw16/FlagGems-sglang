@@ -32,8 +32,19 @@ def make_case(
         )
     ]
     if strided:
-        for i in (0, 2, 3):
-            args[i] = args[i].t().contiguous().t()
+        # Row-gap strides keep the inner dim contiguous (the kernel's
+        # contract); the transpose trick would break stride(1) == 1.
+        strided_args = []
+        for i, x in enumerate(args):
+            if x.ndim == 2:
+                buffer = torch.zeros(
+                    x.shape[0] * 2, x.shape[1], dtype=x.dtype, device=x.device
+                )
+                buffer[1::2] = x
+                strided_args.append(buffer[1::2])
+            else:
+                strided_args.append(x)
+        args = strided_args
     return tuple(args)
 
 
@@ -96,14 +107,17 @@ class FusedGateSigmoidMulAddTest(unittest.TestCase):
     def test_cancellation_and_tails(self):
         # Row 0: severe cancellation in the fp32 dot; rows 1-2 cross the
         # BLOCK_H tail with a hidden width no tile divides.
-        args = make_case(rows=3, hidden=1535, seed=7)
+        args = list(
+            make_case(rows=3, hidden=1535, seed=7)
+        )
+        args[0] = args[0].clone()
         args[0][0] = torch.linspace(
             -1.0, 1.0, 1535, dtype=args[0].dtype, device="cuda"
         )
         args[1] = torch.linspace(
             1.0, -1.0, 1535, dtype=args[1].dtype, device="cuda"
         )
-        self.check(args)
+        self.check(tuple(args))
 
     def test_nan_propagation(self):
         args = make_case(rows=2, hidden=256)
