@@ -4,12 +4,12 @@
 task: 80
 operator: fixup_zero_kv
 batch: 6
-validity: candidate(7/8,昆仑未过)
-platform: completed(17218,s0,7/8,昆仑PassManager编译错;七芯读数健康)
-candidate_stage: s0
-team_best_stage: -
+validity: valid
+platform: completed(17224,e1,8/8,136.0378x首个有效,#2距榜首2.8%)
+candidate_stage: e1
+team_best_stage: e1
 sealed: no
-next: 昆仑 flat-1D vendor e1(修 ConvertTritonXPUToLLVM packing mismatch:lse/out 的 2D broadcast store 改纯 1D,参照 T53 向量化 flat 已证形态);修后即 8/8 首个有效,华为 162.7/燧原 19.9 已反超榜首 51.6/6.0
+next: 昆仑轴关闭(9.23 flat-1D 兑现,远超榜首3.2);缺口=沐曦 100→195/海光 188→248/A 226→265;华为164.7/燧原23.3/天数238/B 138.6 反超榜首;e2 候选=沐曦 vendor 或 clone+修补单 launch 融合
 updated: 2026-09-18
 ```
 
@@ -51,3 +51,17 @@ updated: 2026-09-18
 - 状态：7/8, 昆仑编译错；均值 -。
 - 逐芯：天数 238.62 / 沐曦 95.06 / 燧原 19.90 / 海光 198.22 / 昆仑 None(编译错) / 华为 162.67 / A 223.75 / B 134.52。
 - 昆仑全部 9 case 同指纹 `size mismatch when packing elements for LLVM struct expected 8 but got 1`（fixup_zero_kv.py:54 lse 2D store），ConvertTritonXPUToLLVM 阶段——代码侧可修，非崩溃族。
+
+## 2026-09-18 E1 平台终态：昆仑 flat-1D vendor 修复兑现，8/8 首个有效 136.04x #2
+
+- 结构（`7757a41c`）：新增 `_kunlunxin` vendor——lse/out 全部改纯 1D store
+  （每 token 行 flat span + 分块 mask），替换 generic 的 2D broadcast store
+  （昆仑 `ConvertTritonXPUToLLVM` packing mismatch 根因）。release v2 双路径
+  （generic 16 + kunlun vendor 16 launch）全过；ZIP `e1-7757a41` SHA-256
+  `39cea4f138e7417e0fb86c1e7fe3afa63ff4c22539507bdfcacc9ffdb2183b43`，2 成员。
+- submission **17224** completed/valid，8/8，均值 **136.0378x**（vs 榜首
+  HAiWORLD 139.95 差 2.8%）。逐芯：天数 238.23 / 沐曦 100.42 / 燧原 23.28 /
+  海光 187.58 / **昆仑 9.23（vendor 修复，s0 编译错→榜首档 3.2 的 2.9 倍）** /
+  **华为 164.68（榜首 51.6 的 3.2 倍）** / A 226.31 / B 138.58。
+- 反超榜首的芯：华为/燧原/天数/B/昆仑；缺口：沐曦（100 vs 195）、
+  海光（188 vs 248）、A（226 vs 265）。
