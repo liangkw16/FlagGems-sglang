@@ -1,3 +1,5 @@
+# Carrier e15: window re-roll 1/2 of the e13 bytes (identical
+# execution; new archive identity only).
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 # Adapted from SGLang 8014d9d: kernels/ops/moe/ep_moe_kernels.py.
@@ -167,7 +169,7 @@ def deepep_permute(input, gateup_input, src2dst, topk_ids, topk, hidden_size):
         *input.stride(),
         *gateup_input.stride(),
         *out.stride(),
-        BLOCK=8192,
+        BLOCK=4096,
         num_stages=3,
     )
     return out
