@@ -27,7 +27,10 @@ def _group_norm_silu(
     pid = tl.cast(tl.program_id(0), tl.int64)
     step = tl.cast(tl.num_programs(0), tl.int64)
     groups = tl.cast(n_groups_total, tl.int64)
-    while pid < groups:
+    # e12: the scalar-carried while becomes a pipelined tl.range
+    # (num_stages>=3 engages the GCU pingpong; scalar carries are the
+    # proven-safe form, tensor-carry scans remain the poison).
+    for pid in tl.range(pid, groups, step, num_stages=3):
         g_idx = pid % G
         base = pid.to(tl.int64) * group_channels * spatial
         wbase = g_idx * group_channels
