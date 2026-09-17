@@ -5,10 +5,10 @@ task: 64
 operator: deepep_permute
 batch: 5
 validity: valid
-platform: submitted(e13-pending;TB e12 8.28935x)
-candidate_stage: e13
-team_best_stage: e12
-team_best_speedup: 8.28935
+platform: completed(16690,e14,8/8,8.302425x<TB;保e13 8.73395x;全题收官)
+candidate_stage: e14
+team_best_stage: e13
+team_best_speedup: 8.73395
 sealed: no
 next: 华为4.433未过6.2门不重掷；下一华为轴候选=官方gather/scatter best-practice形态(SUB_BLOCK_SIZE/insert_slice)，需先落结构再一发判决
 updated: 2026-09-17
@@ -323,3 +323,13 @@ submission 16669 completed/valid，均值 **8.28935x > 8.2269 换 TB**（+0.76%�
 ## 2026-09-17 E13：燧原 gather BLOCK 4096（阶梯交叉应用），已提交
 
 - e12 封梯后唯一剩余单变量：`_enflame` 宽路径 gather 512→4096（generic/华为已证档位 + GCU"BLOCK 倾向远大于 GPU"；generic/ascend/kunlunxin 冻结）。release v2（commit `28c5df9e4e26b918fd7b6ec0cb3790284ae0a767`）全过，回执 SHA-256 `d9e5bd300e467e0d1b6fe31c7a5e2074a403795e4c9765aa8fa007fdee2e3bda`。ZIP `e13-28c5df9` SHA `000cff091e80c96317da8c0eb3e980db779f4a24d9ab47a1ee2531e831716b8f`。门：8/8 且均值 > 8.28935；燧原 ≥ 6.5 为正信号。
+
+## 2026-09-17 E13 平台终态：8/8 有效，新 TB 8.73395x；燧原阶梯陡升
+
+submission 16677 completed/valid，均值 **8.73395x > 8.28935 换 TB**（+5.37%）。enflame 4.973→**7.0924（+42.6%，预注册门 6.5 大幅超过）**；tianshu 17.709/card_a 10.238/haiguang 13.083/card_b 8.341/muxi 7.902/huawei 4.848/kunlun 0.659。阶梯判读：燧原 512(平)→4096(+43%) 刚起且陡 → 追最后一档 8192（e14）。发后额度 9/30。
+
+## 2026-09-17 E14 平台终态：8/8 有效 8.302425x，低于 TB；燧原阶梯 4096 见峰，全题收官
+
+submission 16690 completed/valid，均值 **8.302425x < TB 8.73395**（保 e13）。enflame 7.0924→5.525（-22.1%，8192 过峰）。阶梯终值：燧原 512(平)→4096(**+42.6%**)→8192(-22%)；generic 512→2048(+5.2%)→4096(+0.76%)。
+
+**T64 全日终局**：TB 7.17105 → **8.73395（+21.82%）**，rank 14→9；八发（E7/E8/E9/E10/E11/E12/E13/E14）全部完整闭环，其中六发换 TB。剩余缺口：华为 4.85 vs 次优 100.9（可移植形态穷尽）、燧原 7.09 vs 次优 12.07（4096 峰后无新档）。额度 8/30 剩余，按纪律封枪。
