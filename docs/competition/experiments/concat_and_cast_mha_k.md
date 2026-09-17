@@ -4,13 +4,13 @@
 task: 78
 operator: concat_and_cast_mha_k
 batch: 6
-validity: candidate-ready
-platform: none(s0 release 5/5 通过 NVIDIA 代理;额度 0/30,09-18 首发)
+validity: valid
+platform: completed(17210,s0,8/8,1.07345x)
 candidate_stage: s0
-team_best_stage: -
+team_best_stage: s0
 sealed: no
-next: 窗口 09-24 19:59;D1 首发 s0 后按逐芯回执开 e 轴
-updated: 2026-09-17
+next: 燧原 0.3716→0.96 BLOCK 阶梯轴(主战场)+海光 1.55→2.91(T62e12水位)+华为 persistent vendor;min 0.2464 门槛余量充足
+updated: 2026-09-18
 ```
 
 ## 契约与实现（S0）
@@ -43,3 +43,9 @@ updated: 2026-09-17
 - 验证三轮教训已固化在测试侧：numel%16 契约、token 边界与 kv_lens 解耦、
   归约噪声容差、行内连续 stride 构造。
 - 八芯目标 `target-runtime-unverified`（NVIDIA 代理证据），裁决权在平台。
+
+## 2026-09-18 S0 平台首回执（submission 17210，observed_at 01:0x +08）
+
+- 状态：8/8 valid；均值 1.07345。
+- 逐芯：天数 2.049 / 沐曦 0.9992 / 燧原 0.3716 / 海光 1.5462 / 昆仑 0.281 / 华为 0.2464 / A 1.535 / B 1.5592。
+- 与 T62 e12 逐芯对照：燧原 0.151→0.372(+146%)、昆仑 0.182→0.281 改善；海光 2.911→1.546(-47%)、天数 2.317→2.049 回落——cast 改变 store 宽度或窗口；与榜首 c2flow 差距=燧原 0.59+海光 0.41+天数 0.37。

@@ -14,6 +14,7 @@
 | [T80 fixup_zero_kv](fixup_zero_kv.md) | s0-370923b | 6 测试/16 launch ✓ | 就绪，09-18 首发 |
 | [T81 fused_gate_sigmoid_mul_add](fused_gate_sigmoid_mul_add.md) | s0-370923b | 5 测试/22 launch ✓ | 就绪，09-18 首发 |
 
+- **01:05 D1 首轮回执**：T79 8/8 **173.364x #2**（华为 97.54 反超榜首）；T78 8/8 1.073x；T81 8/8 3.002x（~#7，海光结构缺口）；T76 8/8 0.992x（~#8）；T80 **7/8 昆仑编译错**（ConvertTritonXPUToLLVM packing mismatch，lse 2D broadcast store）——flat-1D vendor 修复轴已排。额度 25/30 剩余。
 - T77 compute_position 未开发：燧原 int64 输出物理布局（A/B 假设）需目标机
   探针裁决后才定稿 wrapper（不耗额度），见 strategy-batch6 §T77。
 

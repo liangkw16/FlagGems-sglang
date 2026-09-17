@@ -4,13 +4,13 @@
 task: 80
 operator: fixup_zero_kv
 batch: 6
-validity: candidate-ready
-platform: none(s0 release 5/5 通过 NVIDIA 代理;额度 0/30,09-18 首发)
+validity: candidate(7/8,昆仑未过)
+platform: completed(17218,s0,7/8,昆仑PassManager编译错;七芯读数健康)
 candidate_stage: s0
 team_best_stage: -
 sealed: no
-next: 窗口 09-24 19:59;D1 首发 s0 后按逐芯回执开 e 轴
-updated: 2026-09-17
+next: 昆仑 flat-1D vendor e1(修 ConvertTritonXPUToLLVM packing mismatch:lse/out 的 2D broadcast store 改纯 1D,参照 T53 向量化 flat 已证形态);修后即 8/8 首个有效,华为 162.7/燧原 19.9 已反超榜首 51.6/6.0
+updated: 2026-09-18
 ```
 
 ## 契约与实现（S0）
@@ -45,3 +45,9 @@ updated: 2026-09-17
 - 验证三轮教训已固化在测试侧：numel%16 契约、token 边界与 kv_lens 解耦、
   归约噪声容差、行内连续 stride 构造。
 - 八芯目标 `target-runtime-unverified`（NVIDIA 代理证据），裁决权在平台。
+
+## 2026-09-18 S0 平台首回执（submission 17218，observed_at 01:0x +08）
+
+- 状态：7/8, 昆仑编译错；均值 -。
+- 逐芯：天数 238.62 / 沐曦 95.06 / 燧原 19.90 / 海光 198.22 / 昆仑 None(编译错) / 华为 162.67 / A 223.75 / B 134.52。
+- 昆仑全部 9 case 同指纹 `size mismatch when packing elements for LLVM struct expected 8 but got 1`（fixup_zero_kv.py:54 lse 2D store），ConvertTritonXPUToLLVM 阶段——代码侧可修，非崩溃族。

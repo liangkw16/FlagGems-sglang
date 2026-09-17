@@ -4,13 +4,13 @@
 task: 76
 operator: add3
 batch: 6
-validity: candidate-ready
-platform: none(s0 release 5/5 通过 NVIDIA 代理;额度 0/30,09-18 首发)
+validity: valid
+platform: completed(17220,s0,8/8,0.99170833x;9队档0.91-1.16居~#8)
 candidate_stage: s0
-team_best_stage: -
+team_best_stage: s0
 sealed: no
-next: 窗口 09-24 19:59;D1 首发 s0 后按逐芯回执开 e 轴
-updated: 2026-09-17
+next: 华为0.296/燧原0.438/昆仑0.640 三弱轴 vendor(T73/T75 streaming 配方正例);min 0.2956 门槛无虞;均值>1.17才值得续投
+updated: 2026-09-18
 ```
 
 ## 契约与实现（S0）
@@ -43,3 +43,9 @@ updated: 2026-09-17
 - 验证三轮教训已固化在测试侧：numel%16 契约、token 边界与 kv_lens 解耦、
   归约噪声容差、行内连续 stride 构造。
 - 八芯目标 `target-runtime-unverified`（NVIDIA 代理证据），裁决权在平台。
+
+## 2026-09-18 S0 平台首回执（submission 17220，observed_at 01:0x +08）
+
+- 状态：8/8 valid；均值 0.99170833。
+- 逐芯：天数 1.4622 / 沐曦 1.1103 / 燧原 0.4382 / 海光 1.3677 / 昆仑 0.6405 / 华为 0.2956 / A 1.3511 / B 1.2681。
+- 首回执与榜首 GuanghuLab 1.1611 对照：天数 1.46 vs 1.66、A 1.35 vs 1.38 接近；差距集中在华为（0.30 vs 0.42）、燧原（0.44 vs 1.20）、昆仑（0.64 vs 0.73）。

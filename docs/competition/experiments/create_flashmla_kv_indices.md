@@ -4,13 +4,13 @@
 task: 79
 operator: create_flashmla_kv_indices
 batch: 6
-validity: candidate-ready
-platform: none(s0 release 5/5 通过 NVIDIA 代理;额度 0/30,09-18 首发)
+validity: valid
+platform: completed(17209,s0,8/8,173.3643125x,#2;榜首HAiWORLD 187.47)
 candidate_stage: s0
-team_best_stage: -
+team_best_stage: s0
 sealed: no
-next: 窗口 09-24 19:59;D1 首发 s0 后按逐芯回执开 e 轴
-updated: 2026-09-17
+next: 燧原 34.6→51.3(T63 GCU persistent24+stages3+BLOCK4096 配方 vendor)+沐曦 120→164+昆仑 15.4→17.8;华为 97.5 已反超榜首 92.5
+updated: 2026-09-18
 ```
 
 ## 契约与实现（S0）
@@ -45,3 +45,9 @@ updated: 2026-09-17
 - 验证三轮教训已固化在测试侧：numel%16 契约、token 边界与 kv_lens 解耦、
   归约噪声容差、行内连续 stride 构造。
 - 八芯目标 `target-runtime-unverified`（NVIDIA 代理证据），裁决权在平台。
+
+## 2026-09-18 S0 平台首回执（submission 17209，observed_at 01:0x +08）
+
+- 状态：8/8 valid, #2/4；均值 173.3643125。
+- 逐芯：天数 340.72 / 沐曦 120.46 / 燧原 34.61 / 海光 284.95 / 昆仑 15.42 / 华为 97.54 / A 309.56 / B 183.64。
+- 首发即 #2（次席 cgzhou 171.25 仅高 2.1）。对榜首逐芯：华为 +5.0 / 天数 -9.0 / 海光 -19.0 / A -12.1 / B -15.0 / 沐曦 -43.7 / 燧原 -16.7 / 昆仑 -2.4。燧原与沐曦两轴合计可 +7.5 均值。

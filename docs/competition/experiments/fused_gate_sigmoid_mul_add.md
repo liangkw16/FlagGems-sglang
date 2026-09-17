@@ -4,13 +4,13 @@
 task: 81
 operator: fused_gate_sigmoid_mul_add
 batch: 6
-validity: candidate-ready
-platform: none(s0 release 5/5 通过 NVIDIA 代理;额度 0/30,09-18 首发)
+validity: valid
+platform: completed(17213,s0,8/8,3.002075x,~#7/8;榜首c2flow 4.4852)
 candidate_stage: s0
-team_best_stage: -
+team_best_stage: s0
 sealed: no
-next: 窗口 09-24 19:59;D1 首发 s0 后按逐芯回执开 e 轴
-updated: 2026-09-17
+next: 海光 3.50→7.44 主缺口(2.1x)+燧原 1.08→3.89+沐曦 2.85→4.57:单行两阶段并行度不足,下一发多行/program(B_ROWS)重构建 mem-level parallelism(T53 +96% 天数先例);昆仑 0.731 贴近他队 0.69-0.99 档
+updated: 2026-09-18
 ```
 
 ## 契约与实现（S0）
@@ -44,3 +44,9 @@ updated: 2026-09-17
 - 验证三轮教训已固化在测试侧：numel%16 契约、token 边界与 kv_lens 解耦、
   归约噪声容差、行内连续 stride 构造。
 - 八芯目标 `target-runtime-unverified`（NVIDIA 代理证据），裁决权在平台。
+
+## 2026-09-18 S0 平台首回执（submission 17213，observed_at 01:0x +08）
+
+- 状态：8/8 valid, ~#7/8；均值 3.002075。
+- 逐芯：天数 5.3907 / 沐曦 2.8475 / 燧原 1.0784 / 海光 3.5045 / 昆仑 0.7309 / 华为 2.2013 / A 4.405 / B 3.8584。
+- s0 未达 3.5 预注册门。逐行两阶段在带宽芯全面落后（海光 -53%、燧原 -72%），结构轴优先于 vendor 轴。
