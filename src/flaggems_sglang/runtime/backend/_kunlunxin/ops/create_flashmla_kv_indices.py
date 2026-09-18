@@ -1,18 +1,9 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Adapted from SGLang 92d831d kernels/ops/kvcache/kv_indices.py
-# (create_flashmla_kv_indices_triton).
-#
-# E4 reorganises the work: one program owns exactly one output page-
-# block of one row (static grid axis 1 = cdiv(width, BLOCK_P)); every
-# output element has a single writer - lanes below the row's page count
-# gather and fold the token slot, lanes above copy the preserved tail
-# from the input tensor. The dynamic tile loops of the earlier form
-# (each program striding over scattered valid tiles plus a separate
-# tail loop) disappear; this targets the Ascend control-flow overhead
-# behind the unexplained 93.7 vs 182.6 huawei gap. i64 stays in
-# addressing only; scalar selects stay arithmetic; masked lanes use
-# plain masked offsets (GCU-proven forms from the T63 family).
+# Kunlun vendor for create_flashmla_kv_indices: the e3-proven dynamic-
+# tile-loop form (submission 17316 kunlun 17.59). The e4 static form's
+# two complementary-masked stores to one pointer produced garbage on
+# XPU (17332, 8/8 cases) - this chip keeps the loop organisation.
 
 import torch
 import triton
@@ -42,6 +33,14 @@ def _create_flashmla_kv_indices(
     PAGE_SIZE: tl.constexpr,
     BLOCK_P: tl.constexpr,
 ):
+    # One entry per page instead of per token: gather the token slot at
+    # every page boundary and fold it to a page id. The output is
+    # allocated empty, so each row's program also restores the untouched
+    # page columns past its valid prefix (the reference clones the base
+    # tensor and only overwrites out[i, :num_pages]). i64 stays in the
+    # addressing arithmetic only; scalar selects stay arithmetic (no
+    # bool->i64 casts, no integer tl.where) and masked lanes use plain
+    # masked offsets - the GCU-proven forms from the T63 family.
     for row in range(tl.program_id(0), batch, tl.num_programs(0)):
         row64 = row.to(tl.int64)
         request = tl.load(requests + row64 * rs).to(tl.int64)
@@ -50,27 +49,26 @@ def _create_flashmla_kv_indices(
         if HAS_START:
             start = tl.load(starts + row64 * ss).to(tl.int64)
         num_pages = (length + PAGE_SIZE - 1) // PAGE_SIZE
-        p = tl.program_id(1) * BLOCK_P + tl.arange(0, BLOCK_P).to(tl.int64)
-        m_valid = p < num_pages
-        # Fully-masked tiles exist by design in the static grid, and
-        # their masked lanes must clamp addresses arithmetically - the
-        # Ascend 507035 vector-core crash discipline from the T63
-        # generic (no bool->i64 casts, plain integer multiplies).
-        cv = m_valid.to(tl.int64)
-        slot = tl.load(
-            pool
-            + request * ps0
-            + (start + p * cv * PAGE_SIZE) * ps1,
-            m_valid,
+        for tile in range(
+            tl.program_id(1), tl.cdiv(num_pages, BLOCK_P), tl.num_programs(1)
+        ):
+            p = tile * BLOCK_P + tl.arange(0, BLOCK_P).to(tl.int64)
+            m = p < num_pages
+            slot = tl.load(
+                pool + request * ps0 + (start + p * PAGE_SIZE) * ps1,
+            m,
             other=0,
-        )
-        tl.store(out + row64 * os0 + p * os1, slot // PAGE_SIZE, m_valid)
-        m_tail = (p >= num_pages) & (p < width)
-        ct = m_tail.to(tl.int64)
-        value = tl.load(
-            old + row64 * olds0 + (p * ct) * olds1, m_tail, other=0
-        )
-        tl.store(out + row64 * os0 + p * os1, value, m_tail)
+            )
+            tl.store(out + row64 * os0 + p * os1, slot // PAGE_SIZE, m)
+        tail = width - num_pages
+        for tile in range(
+            tl.program_id(1), tl.cdiv(tail, BLOCK_P), tl.num_programs(1)
+        ):
+            j = tile * BLOCK_P + tl.arange(0, BLOCK_P).to(tl.int64)
+            m = j < tail
+            off = num_pages + j
+            value = tl.load(old + row64 * olds0 + off * olds1, m, other=0)
+            tl.store(out + row64 * os0 + off * os1, value, m)
 
 
 def create_flashmla_kv_indices(
@@ -99,19 +97,22 @@ def create_flashmla_kv_indices(
     assert isinstance(page_size, int) and page_size >= 1
     # slot ids are token-table entries (non-negative in the harness's
     # domain); Triton integer division truncates toward zero, which
-    # equals the reference's floor division there.
+    # equals the reference's floor division there and differs only for
+    # negative slots, which the production table never contains.
     out = torch.empty_like(kv_indices)
     if not (batch and width and out.numel()):
         out.copy_(kv_indices)
         return out
-    # Static page-block grid: one tile per program (grid.y keeps the
-    # Enflame 255 cap - wider tables fall back to the dynamic vendor
-    # forms); rows grid-stride on axis 0.
-    tiles = triton.cdiv(width, 256)
-    # The static per-tile grid must cover the whole table; grid.y is
-    # capped at 255 on Enflame-class devices.
-    assert tiles <= 255
-    _create_flashmla_kv_indices[(min(batch, 2048), tiles)](
+    # Row-parallel grid with per-row page-tile splits; grid.y keeps the
+    # Enflame 255 cap and grid.x a conservative bound (rows grid-stride
+    # beyond it), so the single generic launch stays inside every
+    # supported chip's launch envelope.
+    splits = min(
+        max(1, triton.cdiv(width, 256)),
+        max(1, 512 // batch),
+        255,
+    )
+    _create_flashmla_kv_indices[(min(batch, 2048), splits)](
         req_to_token,
         req_pool_indices,
         page_kernel_lens,
