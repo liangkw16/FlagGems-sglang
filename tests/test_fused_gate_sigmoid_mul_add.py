@@ -88,6 +88,9 @@ class FusedGateSigmoidMulAddTest(unittest.TestCase):
                 (128, 1025),
                 (513, 5120),
                 (2049, 7168),
+                (128, 8191),
+                (128, 8192),
+                (128, 8193),
             ):
                 with self.subTest(dtype=dtype, rows=rows, hidden=hidden):
                     self.check(
