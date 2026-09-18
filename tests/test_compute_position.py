@@ -110,6 +110,7 @@ class ComputePositionTest(unittest.TestCase):
 RELEASE_REQUIRED_TESTS = [
     "ComputePositionTest.test_basic_and_boundaries",
     "ComputePositionTest.test_large_batch_striped",
+    "ComputePositionTest.test_int32_boundary_prefix",
     "ComputePositionTest.test_all_zero_and_empty",
 ]
 
