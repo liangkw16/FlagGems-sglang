@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/chain_speculative_sampling -->
-<!-- synced_at: 2026-09-17T20:50:10+08:00 -->
+<!-- synced_at: 2026-09-19T00:20:51+08:00 -->
 
 # chain_speculative_sampling (sampling_grammar/chain_speculative_sampling)
 

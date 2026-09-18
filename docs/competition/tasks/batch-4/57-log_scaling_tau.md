@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/log_scaling_tau -->
-<!-- synced_at: 2026-09-17T20:50:10+08:00 -->
+<!-- synced_at: 2026-09-19T00:20:51+08:00 -->
 
 # log_scaling_tau (attention/log_scaling_tau)
 

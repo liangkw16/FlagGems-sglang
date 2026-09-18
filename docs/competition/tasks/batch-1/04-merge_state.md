@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/merge_state -->
-<!-- synced_at: 2026-09-17T20:50:10+08:00 -->
+<!-- synced_at: 2026-09-19T00:20:51+08:00 -->
 
 # merge_state (attention/merge_state)
 
