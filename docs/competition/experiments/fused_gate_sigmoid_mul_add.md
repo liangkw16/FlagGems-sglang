@@ -5,11 +5,11 @@ task: 81
 operator: fused_gate_sigmoid_mul_add
 batch: 6
 validity: valid
-platform: completed(17355,e5,8/8,3.90445x新TB;静态展开+27%)
-candidate_stage: e5
-team_best_stage: e5
+platform: completed(17372,e6,8/8,3.94720833x新TB;燧原vendor静态化+26%过门)
+candidate_stage: e6
+team_best_stage: e6
 sealed: no
-next: 静态展开轴大兑现(海光+77%/沐曦+43%/天数+22%/A+24%,华为持平);同机制待迁移=T80 hv循环+T81昆仑vendor(runtime loop);vs真实靶c2flow 5.10差距31%;双累加链轴(B)待代理筛选
+next: 燧原静态化过门(1.56→1.96,+26%);昆仑轴判负关闭(0.733<门0.88,1D store近memory-bound与T80同理);静态机制三连兑现(TB 3.07→3.90→3.95);剩余=T81-B双链(代理前置)/T78维度特化(IR前置)/燧原vs c2flow 4.4仍2.2x
 updated: 2026-09-18
 ```
 
@@ -118,3 +118,15 @@ updated: 2026-09-18
   平台兑现远超代理（+27% vs 代理中位 ~10%——平台编译器对 runtime 循环
   的成本高于 NVIDIA）。同机制待迁移：T80 generic 的 hv 循环、T81 昆仑
   vendor 的 runtime 循环。
+
+## 2026-09-18 E6 平台终态：vendor 静态化第三连兑现，TB 3.94720833
+
+- 结构（`991a2878`，重规划轴 1+2 一发覆盖）：燧原/昆仑两 vendor 同步
+  HDIM constexpr + static_range（generic e5 字节不变）；测试矩阵补
+  8191/8192/8193（燧原 cap 两侧）。release 三路径全过；ZIP `e6-991a287`。
+- submission **17372** completed/valid，8/8，均值 **3.94720833 新 TB**
+  （+1.1%）。逐芯判决：**燧原 1.556→1.956（+26%，≥1.80 门过 ✓）**；
+  昆仑 0.728→0.733（+0.6%，<0.88 门——**昆仑轴判负关闭**：1D store 循环
+  近 memory-bound，与 T80 HV 中性同理）；A 5.29→5.43；其余窗口持平。
+- 静态机制三连：TB 3.07→3.90（e5 generic）→3.95（e6 vendor）。燧原对
+  c2flow 4.4 的差距 2.8x→2.2x。
