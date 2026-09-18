@@ -5,11 +5,11 @@ task: 81
 operator: fused_gate_sigmoid_mul_add
 batch: 6
 validity: valid
-platform: completed(17213,s0,8/8,3.002075x,~#7/8;榜首c2flow 4.4852)
-candidate_stage: s0
+platform: completed(17271,e1,8/8,2.0064x<TB;保s0 3.002;多行轴证伪)
+candidate_stage: e1
 team_best_stage: s0
 sealed: no
-next: 海光 3.50→7.44 主缺口(2.1x)+燧原 1.08→3.89+沐曦 2.85→4.57:单行两阶段并行度不足,下一发多行/program(B_ROWS)重构建 mem-level parallelism(T53 +96% 天数先例);昆仑 0.731 贴近他队 0.69-0.99 档
+next: 多行轴关闭(带宽芯-41~-49%,gate_weight 复用无益,瓶颈=并发流数);昆仑 vendor s0 字节 0.730 稳定;新假设=两 kernel(GEMV 点积+纯流 FMA)需先过代理 benchmark 证据门,不盲投
 updated: 2026-09-18
 ```
 
@@ -50,3 +50,23 @@ updated: 2026-09-18
 - 状态：8/8 valid, ~#7/8；均值 3.002075。
 - 逐芯：天数 5.3907 / 沐曦 2.8475 / 燧原 1.0784 / 海光 3.5045 / 昆仑 0.7309 / 华为 2.2013 / A 4.405 / B 3.8584。
 - s0 未达 3.5 预注册门。逐行两阶段在带宽芯全面落后（海光 -53%、燧原 -72%），结构轴优先于 vendor 轴。
+
+## 2026-09-18 E1 平台终态：多行 2D tile 证伪，8/8 但均值 2.0064 < TB 保 s0
+
+- 结构（`0420600f`）：generic B_ROWS=4 × BLOCK_H=512 2D tile + `_kunlunxin`
+  vendor 保留 s0 1D 逐行字节（XPU packing 预防）。release 双路径 22+22
+  launch 全过；ZIP `e1-0420600` SHA-256
+  `c57d31b6b11ae7492132f3c5389020e136de18b67e49e6bc07594819c222b7e8`。
+- submission **17271** completed/valid，8/8，均值 **2.0064x < TB s0 3.0021**
+  （保 s0）。逐芯（vs s0）：天数 5.39→2.96（-45%）/ 海光 3.50→1.78
+  （-49%）/ 沐曦 2.85→1.68（-41%）/ A 4.41→2.96 / B 3.86→2.77——带宽芯
+  全线大幅回退；昆仑 0.7298（vendor=s0 字节，读数稳定 ✓）/ 华为 2.18
+  （持平）。
+- 判读：**多行复用在本题为负结构**。T53 的多行收益来自 gate_weight 重读
+  摊销（其权重按 program 全量重载）；本题 gate_weight 仅 [hidden]（~10KB，
+  L2 常驻），摊销收益趋零，而 program 数÷4 直接砍掉内存级并行。与 T53
+  经验边界互补：**多行适用性=权重重读成本÷并发损失，逐题验证**。
+- 新假设（未投）：两 kernel 分裂——K1 批量 GEMV 点积（tensor-core/分块
+  归约）+ K2 纯流 FMA（全 grid elementwise）；触发条件=代理 benchmark 先
+  证 K1+K2 wrapper 总耗时 < 单 kernel 两阶段。燧原轴另有 BLOCK 阶梯假设
+  （单趟全宽 dot，GCU 偏好）待同门验证。
