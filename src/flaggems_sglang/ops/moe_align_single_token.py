@@ -32,8 +32,9 @@ def _moe_align_single_token(
     rank = tl.zeros((TOPK,), dtype=tl.int32)
     for j in tl.static_range(0, TOPK):
         other = tl.load(topk + j)
-        rank += (ids > other).to(tl.int32) * (offs != j).to(tl.int32)
-        rank += (ids == other).to(tl.int32) * (offs < j).to(tl.int32)
+        if j < k_numel:
+            rank += (ids > other).to(tl.int32)
+            rank += (ids == other).to(tl.int32) * (offs < j).to(tl.int32)
     tl.store(expert_ids + rank, ids, mk)
     sentinel_fill = tl.full((BLOCK,), k_numel, dtype=tl.int32)
     for base in range(0, total, BLOCK):
