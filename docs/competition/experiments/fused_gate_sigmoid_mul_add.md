@@ -5,11 +5,11 @@ task: 81
 operator: fused_gate_sigmoid_mul_add
 batch: 6
 validity: valid
-platform: completed(17326,e4,8/8,3.07044167x新TB;燧原full-row vendor+42%组合兑现)
-candidate_stage: e4
-team_best_stage: e4
+platform: completed(17355,e5,8/8,3.90445x新TB;静态展开+27%)
+candidate_stage: e5
+team_best_stage: e5
 sealed: no
-next: 燧原轴部分兑现(1.078→1.534,full-row tile;generic须保1024因沐曦/海光掩码浪费-31/-38%);剩余结构缺口=燧原vs c2flow 4.4/沐曦2.9vs5.7/海光3.4vs7.4/天数5.5vs8.5;榜首5.15结构未破译
+next: 静态展开轴大兑现(海光+77%/沐曦+43%/天数+22%/A+24%,华为持平);同机制待迁移=T80 hv循环+T81昆仑vendor(runtime loop);vs真实靶c2flow 5.10差距31%;双累加链轴(B)待代理筛选
 updated: 2026-09-18
 ```
 
@@ -103,3 +103,18 @@ updated: 2026-09-18
 - 判读：**同结构按 chip 分化第二次实证**（融合 vs 分离于 T80 之后）——
   GCU 偏好单趟宽 tile（T63 阶梯同源），沐曦/海光偏好紧凑 1024 循环。
   四结构档案：s0+燧原宽 vendor（现 TB）> s0 > e1 多行 > e2 双kernel。
+
+## 2026-09-18 E5 平台终态：HDIM constexpr 静态展开，TB 3.90445（+27.3%）
+
+- 结构（`292fdca3`，重规划轴 A）：`hdim` 移出 do_not_specialize 改
+  `HDIM: tl.constexpr` + `tl.static_range`——hidden 循环全展开、整除时尾
+  掩码折叠。代理门通过（受影响形状 +7.6~112%，控制形状回退 ≤0.7%）。
+- submission **17355** completed/valid，8/8，均值 **3.90445 新 TB**
+  （vs 3.0704，+27.3%）。逐芯（vs e4 TB）：**海光 3.43→6.08（+77%）/
+  沐曦 2.88→4.13（+43%）/ A 4.28→5.29（+24%）/ 天数 5.55→6.75（+22%）/
+  B 3.93→4.48（+14%）**；华为 2.22 持平；燧原 1.56（vendor 保持）；
+  昆仑 0.728（vendor 稳定）。
+- 判读：**控制流开销是 T81 带宽芯缺口的第二主因**（仅次于结构本身），
+  平台兑现远超代理（+27% vs 代理中位 ~10%——平台编译器对 runtime 循环
+  的成本高于 NVIDIA）。同机制待迁移：T80 generic 的 hv 循环、T81 昆仑
+  vendor 的 runtime 循环。
