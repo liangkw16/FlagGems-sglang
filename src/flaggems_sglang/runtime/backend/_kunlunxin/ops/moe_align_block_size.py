@@ -1,17 +1,18 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# kunlunxin vendor for moe_align_block_size: the atomic-cursor scatter
-# breaks this backend (uni_sram: atomic_rmw destroyed-but-used plus resource overflow), so a single deterministic program
-# does everything - sentinel fill, per-expert scan with an exclusive
-# tl.cumsum for in-chunk placement (no atomics), expert blocks and the
-# post-pad count. Complexity matches the reference (O(E * numel)).
+# Kunlun vendor for moe_align_block_size: XPU rejects both the atomic
+# cursor ('atomic_rmw destroyed but still has uses') and tl.cumsum
+# ('tt.scan explicitly illegal'), so a single program places every
+# element with pure scalar loops - no vectors, no atomics, no scans.
+# Complexity matches the reference (O(E * numel) on-device vs Python).
 
 import torch
 import triton
 import triton.language as tl
 
 
-@triton.jit(do_not_specialize=["numel", "num_routed", "block_size", "buf_numel"])
+@triton.jit(do_not_specialize=["numel", "num_routed", "block_size",
+                               "buf_numel"])
 def _moe_align(
     flat,
     sorted_ids,
@@ -23,24 +24,19 @@ def _moe_align(
     buf_numel,
     BLOCK: tl.constexpr,
 ):
-    fill = tl.full((BLOCK,), numel, dtype=tl.int32)
     for base in range(0, buf_numel, BLOCK):
         o = base + tl.arange(0, BLOCK)
-        tl.store(sorted_ids + o, fill, o < buf_numel)
+        v = tl.full((BLOCK,), numel, dtype=tl.int32)
+        tl.store(sorted_ids + o, v, o < buf_numel)
     offset = 0
     for e in range(0, num_routed):
-        carry = tl.zeros((), dtype=tl.int32)
-        for base in range(0, numel, BLOCK):
-            offs = base + tl.arange(0, BLOCK)
-            m = offs < numel
-            v = tl.load(flat + offs, m, other=-1)
-            hit = (v == e) & m
-            h = hit.to(tl.int32)
-            pref = tl.cumsum(h, axis=0) - h
-            tl.store(sorted_ids + offset + carry + pref, offs, hit)
-            carry += tl.sum(h, axis=0)
-        n = carry
-        aligned = ((n + block_size - 1) // block_size) * block_size
+        count = 0
+        for i in range(0, numel):
+            v = tl.load(flat + i)
+            if v == e:
+                tl.store(sorted_ids + offset + count, i)
+                count += 1
+        aligned = ((count + block_size - 1) // block_size) * block_size
         beg = offset // block_size
         for b in range(0, aligned // block_size):
             tl.store(expert_ids + beg + b, e)

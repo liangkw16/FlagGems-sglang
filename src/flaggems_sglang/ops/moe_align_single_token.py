@@ -21,6 +21,7 @@ def _moe_align_single_token(
     total,
     TOPK: tl.constexpr,
     KREAL: tl.constexpr,
+    BLOCK_SZ: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
     offs = tl.arange(0, TOPK)
@@ -43,7 +44,7 @@ def _moe_align_single_token(
     for base in range(0, total, BLOCK):
         o = base + tl.arange(0, BLOCK)
         tl.store(sorted_ids + o, sentinel_fill, o < total)
-    tl.store(sorted_ids + rank * (total // k_numel), offs, mk)
+    tl.store(sorted_ids + rank * BLOCK_SZ, offs, mk)
     tl.store(num_post, total)
 
 
@@ -67,6 +68,7 @@ def moe_align_single_token(topk_ids, block_size):
         topk * block_size,
         TOPK=triton.next_power_of_2(max(1, topk)),
         KREAL=topk,
+        BLOCK_SZ=block_size,
         BLOCK=1024,
     )
     return sorted_ids, expert_ids, num_post
