@@ -5,11 +5,11 @@ task: 81
 operator: fused_gate_sigmoid_mul_add
 batch: 6
 validity: valid
-platform: completed(17311,e2,8/8,2.56x<TB;保s0 3.002;双kernel分裂亦证伪)
-candidate_stage: e2
-team_best_stage: s0
+platform: completed(17326,e4,8/8,3.07044167x新TB;燧原full-row vendor+42%组合兑现)
+candidate_stage: e4
+team_best_stage: e4
 sealed: no
-next: 双kernel分裂亦证伪(-11~-44%,extra launch+gate 中间量成本>相位并行收益,华为-44%与GCU同理);s0 单kernel两阶段=三结构最优,结构轴关闭;榜首5.1结构未破译,重开需新证据
+next: 燧原轴部分兑现(1.078→1.534,full-row tile;generic须保1024因沐曦/海光掩码浪费-31/-38%);剩余结构缺口=燧原vs c2flow 4.4/沐曦2.9vs5.7/海光3.4vs7.4/天数5.5vs8.5;榜首5.15结构未破译
 updated: 2026-09-18
 ```
 
@@ -89,3 +89,17 @@ updated: 2026-09-18
   （上游 PR/他队泄露/逐芯分布）。
 - 基准期发现并修复：重写时丢失 sigmoid 的 bug 被代理基准 correctness
   交叉校验拦下（K2 曾直接乘原始点积）。
+
+## 2026-09-18 E3/E4 平台终态：full-row 燧原 +42%，组合 TB 3.07044167
+
+- E3（17322，`7e80f5b3`）：generic 与燧原 vendor 同改整行 tile
+  （BLOCK_H=min(8192,next_pow2(hdim))）。**燧原 1.078→1.5696（+46%）**、
+  B +3%/A +5.5%；但沐曦 2.85→1.96（-31%）、海光 3.50→2.18（-38%）——
+  5120/7168 宽度下 8192 tile 的掩码 lane 浪费 37-60%。均值 2.755 < TB。
+- E4（17326，`54d3cd8b`）：generic 回 s0 1024 循环，燧原 vendor 保留宽
+  tile——组合判决：**均值 3.07044167 新 TB**（+2.3%）。逐芯：天数 5.55 /
+  沐曦 2.88 / 燧原 **1.5344（+42% vs s0）** / 海光 3.43 / 昆仑 0.729（vendor
+  稳定）/ 华为 2.23 / A 4.28 / B 3.93。
+- 判读：**同结构按 chip 分化第二次实证**（融合 vs 分离于 T80 之后）——
+  GCU 偏好单趟宽 tile（T63 阶梯同源），沐曦/海光偏好紧凑 1024 循环。
+  四结构档案：s0+燧原宽 vendor（现 TB）> s0 > e1 多行 > e2 双kernel。
