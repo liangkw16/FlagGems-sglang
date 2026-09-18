@@ -38,10 +38,12 @@ def _moe_align_single_token(
                 rank += 1
         tl.store(expert_ids + rank, mine)
         tl.store(sorted_ids + rank * BLOCK_SZ, pid)
+    # Sentinel fill skips the block heads (rank * BLOCK_SZ) - the
+    # slot programs own those elements; no ordering between programs.
     for base in range(pid * BLOCK, total, nprog * BLOCK):
         o = base + tl.arange(0, BLOCK)
         v = tl.full((BLOCK,), k_numel, dtype=tl.int32)
-        tl.store(sorted_ids + o, v, o < total)
+        tl.store(sorted_ids + o, v, (o % BLOCK_SZ) != 0)
     if pid == 0:
         tl.store(num_post, total)
 
