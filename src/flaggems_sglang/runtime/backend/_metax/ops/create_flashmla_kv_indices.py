@@ -1,7 +1,10 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Adapted from SGLang 92d831d kernels/ops/kvcache/kv_indices.py
-# (create_flashmla_kv_indices_triton).
+# Metax vendor for create_flashmla_kv_indices: the e3-proven dynamic-
+# loop generic with BLOCK_P 256->512 and the split denominator matched
+# (512) - the round-5 axis 4 targeting muxi 122 vs 163-201. Reference
+# domain: FlagGems _metax gather configs list 256..2048; single
+# variable, warps stay default.
 
 import torch
 import triton
@@ -106,7 +109,7 @@ def create_flashmla_kv_indices(
     # beyond it), so the single generic launch stays inside every
     # supported chip's launch envelope.
     splits = min(
-        max(1, triton.cdiv(width, 256)),
+        max(1, triton.cdiv(width, 512)),
         max(1, 512 // batch),
         255,
     )
@@ -127,7 +130,7 @@ def create_flashmla_kv_indices(
         *kv_indices.stride(),
         HAS_START=kv_start_idx is not None,
         PAGE_SIZE=page_size,
-        BLOCK_P=256,
+        BLOCK_P=512,
     )
     return out
 
