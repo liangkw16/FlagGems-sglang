@@ -456,3 +456,66 @@ RELEASE_REQUIRED_TESTS（本轮核实修复）。
 | 09-22 | 8 | 6 | 无正信号轴关闭 |
 | 09-23 | 4 | 8 | 修复+条件窗口复测 |
 | 09-24 | 2 | 8 | 已验证候选收尾 |
+
+## 2026-09-18 D1 晚第五轮重规划（codex-ask，三条本地订正已核实落实）
+
+> 仓库定位：FlagGems/FlagTree 是**缩小候选空间的源码证据**，不是可搬运
+> 参数库；tune_configs.yaml 是候选集合非已测最优。已核对固定版本：
+> FlagGems `4fa0bc9`、FlagTree `96ebc12`（与赛事安装版本未对齐，结论
+> 均为待验假设）。
+
+### Top-5 候选轴（预注册门，每轴首发单判决）
+
+1. **T80 e7 沐曦 8-warp vendor**（1 发）：从当前完整修复版仅撤 generic
+   warps 钉 + metax vendor 承接；门：沐曦耗时 -10% 或 speedup ≥210。
+2. **T81 燧原单波行路径消外层循环**（1+1）：`rows` 出 do_not_specialize
+   或单波分派，grid/tile/warps 不变；IR 确认循环消失；门：燧原 ≥2.4
+   或耗时 -15%。参照 FlagGems `_enflame/gcu300/ops/rms_norm.py` 单行
+   program 结构（已核实其不读 autotune 表）。
+3. **T78 一维连续输出 tile**（1+1）：海光/沐曦 vendor 先行；门：≥2 形状
+   wrapper ≥10%，平台海光 ≥1.82 或沐曦 ≥1.21。参照 `_hygon/utils/
+   pointwise_dynamic.py`、FlagTree hcu LoadStoreOpToLLVM。
+4. **T79 沐曦动态页块**（1+1）：e3 基座重建后单测 BLOCK_P=512（split
+   分母同步）；门：沐曦 ≥145 或耗时 -15%。参照 `_metax/ops/
+   index_select.py` 配置域。
+5. **T79 华为 affine/SIMT**（条件 0→1+1）：需赛事 Ascend 编译器选项
+   兼容证据 + 最小编译对照；无证据不投。参照 `_ascend/ops/gather_*.py`
+   （其 shared_mem_dynamic_size/enable_simt_reorder 需同栈验证）。
+
+### 检索命令（固定版本只读 checkout）
+
+```bash
+rg -n 'get_tuned_config|get_heuristic_config|autotune|num_warps|BLOCK_' \
+  src/flag_gems/runtime/backend/{_enflame,_metax,_ascend}
+rg -n 'getVectorSize|getContiguity|getMaskAlignment' third_party/metax third_party/enflame
+rg -n 'gcu64|enable_i64|ENABLE_I64_CHECK|make_gcuir' third_party/enflame
+```
+
+### T77 裁决（源码边界 + 探针已修正）
+
+FlagTree 只能证明编译层限制（verifier 查签名），**不能推出 allocator
+物理布局**——A/B 仍需运行时探针。本轮已修正探针的越界风险（stage3/4
+分配按双布局安全定尺）与 stage4 高词注记。安全顺序：环境记录 → 输入
+前 4 词只读 → **新分配输出**双假设写读（分配 8 元素保证两布局均界内）
+→ 布局裁决后才做 T77 算术与 INT32_MAX 边界。09-20 晚无同栈证据即
+暂停，不拿额度盲判。
+
+### autotune 与经验边界
+
+赛制未禁标准 Triton autotune 但未验证评测兼容性——**提交固定配置或
+少量元数据分派，不在评测时展开搜索**（上游 gather 生成 72 组配置 +
+长 warmup 的教训）。D1 规律不作硬件定律：静态展开收益可能含常量
+传播/掩码消除；warps 改变布局与调度而非仅线程数。
+
+### 六日预算（上限含修复复测）
+
+| 日期 | 上限 | 主工作 |
+| --- | ---: | --- |
+| 09-19 | 16 | T80 e7、T81 燧原/T78/T79 沐曦筛选、T77 半天 |
+| 09-20 | 16 | 正信号确认、T77 晚间终裁 |
+| 09-21 | 12 | vendor 组合、T79 华为条件首验 |
+| 09-22 | 8 | 关轴、正确性收口 |
+| 09-23 | 6 | 修复+条件窗口复测 |
+| 09-24 | 4 | 收尾验签，不守榜重交 |
+
+总上限 62 发（非消耗目标）；停点公式沿用。
