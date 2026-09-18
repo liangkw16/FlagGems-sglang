@@ -38,7 +38,7 @@ def _compute_position(
         offset = tl.arange(0, BLOCK_TOKENS) + i * BLOCK_TOKENS
         tl.store(
             positions + cumsum_start + offset,
-            prefix_len + offset,
+            prefix_len.to(tl.int64) + offset,
             mask=offset < seq_len,
         )
     tl.store(starts + pid, cumsum_start)
@@ -75,7 +75,7 @@ def _compute_position_striped(
             token_offsets = offsets + tile * BLOCK_TOKENS
             tl.store(
                 positions + cumsum_start + token_offsets,
-                prefix_len + token_offsets,
+                prefix_len.to(tl.int64) + token_offsets,
                 mask=token_offsets < seq_len,
             )
         cumsum_start += seq_len

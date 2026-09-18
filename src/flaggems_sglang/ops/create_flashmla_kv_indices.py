@@ -106,7 +106,7 @@ def create_flashmla_kv_indices(
     # beyond it), so the single generic launch stays inside every
     # supported chip's launch envelope.
     splits = min(
-        max(1, triton.cdiv(width, 128)),
+        max(1, triton.cdiv(width, 256)),
         max(1, 512 // batch),
         255,
     )

@@ -86,6 +86,22 @@ class ComputePositionTest(unittest.TestCase):
             make_case(lengths=[513] * 65, has_prefix=False)
         )
 
+    def test_int32_boundary_prefix(self):
+        # prefix + arange must be computed beyond the int32 domain:
+        # 2**31-4 + [0..4] crosses 2**31 on the last lanes.
+        bs = 70  # striped path
+        prefix = [0] * bs
+        prefix[0] = 2**31 - 4
+        lengths = [5] + [1] * (bs - 1)
+        args = list(make_case(lengths=lengths, has_prefix=True))
+        args[0] = torch.tensor(prefix, dtype=torch.int32, device="cuda")
+        self.check(tuple(args))
+        args2 = list(make_case(lengths=(5,), has_prefix=True))
+        args2[0] = torch.tensor(
+            [2**31 - 4], dtype=torch.int32, device="cuda"
+        )
+        self.check(tuple(args2))
+
     def test_all_zero_and_empty(self):
         for lengths in ((), (0, 0, 0), (0, 1, 0)):
             self.check(make_case(lengths=lengths))

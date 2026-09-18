@@ -80,6 +80,18 @@ class FixupZeroKVTest(unittest.TestCase):
         self.check(make_case(kv_lens=(0,)))
         self.check(make_case(kv_lens=(0, 2, 0, 0, 9, 0)))
 
+    def test_non_power_of_two_heads(self):
+        # BLOCK_H rounds up to the next power of two; the unmasked
+        # lanes must not overrun into the neighbouring token's row.
+        for heads in (3, 5, 7):
+            with self.subTest(heads=heads):
+                self.check(
+                    make_case(kv_lens=(0, 4), tok_lens=(3, 6), heads=heads)
+                )
+                self.check(
+                    make_case(kv_lens=(2, 0), tok_lens=(5, 4), heads=heads)
+                )
+
     def test_segment_length_boundaries(self):
         for tok_lens in ((7, 8, 9), (1,), (16, 15, 17), (8, 8, 8, 8)):
             with self.subTest(tok_lens=tok_lens):
