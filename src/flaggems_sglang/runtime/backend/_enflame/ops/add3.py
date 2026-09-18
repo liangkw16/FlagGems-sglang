@@ -33,8 +33,10 @@ def add3(a, b, c):
     assert numel % 16 == 0
     out = torch.empty_like(a)
     if numel:
-        _add3[(min(triton.cdiv(numel, 4096), 24),)](
-            a, b, c, out, numel, BLOCK=4096, num_stages=3
+        # E2: BLOCK ladder one rung past the T63 peak (4096) - add3 is
+        # pure streaming, unlike T63's gather; gate enflame >= 0.9.
+        _add3[(min(triton.cdiv(numel, 8192), 24),)](
+            a, b, c, out, numel, BLOCK=8192, num_stages=3
         )
     return out
 
