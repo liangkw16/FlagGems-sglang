@@ -57,9 +57,8 @@ def moe_align_single_token(topk_ids, block_size):
     )
     expert_ids = torch.empty(topk, dtype=torch.int32, device=device)
     num_post = torch.empty(1, dtype=torch.int32, device=device)
-    _moe_align_single_token[(max(topk, min(4096, triton.cdiv(
-        topk * block_size, 1024
-    )),)](
+    fill_progs = min(4096, triton.cdiv(topk * block_size, 1024))
+    _moe_align_single_token[(max(topk, fill_progs),)](
         topk_ids,
         sorted_ids,
         expert_ids,
