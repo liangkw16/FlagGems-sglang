@@ -26,8 +26,14 @@ def _moe_align_single_token(
     mk = offs < k_numel
     ids = tl.load(topk + offs, mk, other=2147483647)
     # rank[i] = number of ids smaller than ids[i]; distinct ids make
-    # this a permutation of 0..k-1 without any sort call.
-    rank = tl.sum((ids[:, None] > ids[None, :]).to(tl.int32), axis=1)
+    # this a permutation of 0..k-1 without any sort call. The scalar-
+    # loop form avoids the [TOPK, TOPK] 2D compare tensor (uni_sram
+    # overflow on XPU, linalg conversion failure on Ascend).
+    rank = tl.zeros((TOPK,), dtype=tl.int32)
+    for j in tl.static_range(0, TOPK):
+        other = tl.load(topk + j)
+        rank += (ids > other).to(tl.int32) * (offs != j).to(tl.int32)
+        rank += (ids == other).to(tl.int32) * (offs < j).to(tl.int32)
     tl.store(expert_ids + rank, ids, mk)
     sentinel_fill = tl.full((BLOCK,), k_numel, dtype=tl.int32)
     for base in range(0, total, BLOCK):

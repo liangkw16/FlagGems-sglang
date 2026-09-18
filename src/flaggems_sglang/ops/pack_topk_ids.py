@@ -20,11 +20,12 @@ def _pack_topk_ids(topk_ids, topk_weights, out, numel, BLOCK: tl.constexpr):
         m = offs < numel
         ids = tl.load(topk_ids + offs, m, other=0)
         w = tl.load(topk_weights + offs, m, other=0.0)
+        # bf16 bits via the exact f32 widening: the bf16 pattern is the
+        # high half of the widened float's bit pattern (the direct
+        # f32->i16 bitcast is rejected by the XPU backend).
+        wf = w.to(tl.bfloat16).to(tl.float32)
         bits = (
-            w.to(tl.bfloat16)
-            .to(tl.int16, bitcast=True)
-            .to(tl.int32)
-            & 0xFFFF
+            (wf.to(tl.int32, bitcast=True) >> 16) & 0xFFFF
         )
         tl.store(out + offs, (ids << 16) | bits, m)
 
