@@ -41,14 +41,14 @@ def moe_topk_sum(x, out):
     assert x.dtype == out.dtype == torch.bfloat16
     assert x.is_contiguous() and out.is_contiguous()
     if rows and hdim:
-        splits = min(max(1, triton.cdiv(hdim, 1024)), 255)
+        splits = min(max(1, triton.cdiv(hdim, 2048)), 255)
         _moe_topk_sum[(min(rows, 2048), splits)](
             x,
             out,
             rows,
             hdim,
             TOPK=topk,
-            BLOCK=1024,
+            BLOCK=2048,
         )
     return out
 
