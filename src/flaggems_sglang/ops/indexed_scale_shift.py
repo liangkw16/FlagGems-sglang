@@ -41,10 +41,23 @@ def _indexed_scale_shift(
                 shift + idx * ss0 + offs, m, other=0.0
             ).to(tl.float32)
             one_plus = (1.0 + sc).to(tl.bfloat16).to(tl.float32)
-            scaled = (xv * one_plus).to(tl.bfloat16).to(tl.float32)
             tl.store(
                 out + base * os0 + offs,
-                (scaled + sh).to(out.dtype.element_ty),
+                (xv * one_plus).to(out.dtype.element_ty),
+                m,
+            )
+        for h0 in tl.static_range(0, HDIM, BLOCK):
+            offs = h0 + tl.arange(0, BLOCK)
+            m = offs < HDIM
+            sv = tl.load(out + base * os0 + offs, m, other=0.0).to(
+                tl.float32
+            )
+            sh = tl.load(
+                shift + idx * ss0 + offs, m, other=0.0
+            ).to(tl.float32)
+            tl.store(
+                out + base * os0 + offs,
+                (sv + sh).to(out.dtype.element_ty),
                 m,
             )
 

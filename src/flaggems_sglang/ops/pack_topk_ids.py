@@ -38,12 +38,12 @@ def pack_topk_ids(topk_ids, topk_weights):
     out = torch.empty_like(topk_ids)
     numel = topk_ids.numel()
     if numel:
-        _pack_topk_ids[(min(triton.cdiv(numel, 1024), 2048),)](
+        _pack_topk_ids[(min(triton.cdiv(numel, 4096), 2048),)](
             topk_ids,
             topk_weights,
             out,
             numel,
-            BLOCK=1024,
+            BLOCK=4096,
         )
     return out
 
