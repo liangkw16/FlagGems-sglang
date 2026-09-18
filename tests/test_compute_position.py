@@ -37,11 +37,11 @@ def make_case(lengths=(0, 1, 511, 512, 513, 1025), has_prefix=True):
         for values in ([prefix], [lengths])
     ]
     total = int(sum(lengths))
-    return (
-        vectors[0] if has_prefix else torch.empty(0, torch.int32, device="cuda"),
-        vectors[1],
-        total,
-    )
+    if has_prefix:
+        prefix_arg = vectors[0]
+    else:
+        prefix_arg = torch.empty(0, torch.int32, device="cuda")
+    return (prefix_arg, vectors[1], total)
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "requires CUDA/HIP")
