@@ -4,6 +4,9 @@
 # per-row form (grid-stride rows, single BLOCK_H sweep per phase). The
 # e1 generic widened to 2D row tiles, whose broadcast stores hit the
 # XPU LLVM packing bug family documented on T80.
+
+import torch
+import triton
 import triton.language as tl
 
 
