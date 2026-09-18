@@ -183,3 +183,13 @@ updated: 2026-09-18
   e7 单链（三形状七轮交替）：ratio 1.001-1.024 **平手**——静态展开后
   累加依赖链不是 NVIDIA 代理上的瓶颈。门（≥2 形状 ≥10%）未过，
   按纪律不消耗平台额度。轴关闭（无新证据不重开）。
+
+## 2026-09-18 晚 E11 候选就绪（提交前验证完成，待额度刷新首发）
+
+- 结构：燧原单波消外层循环（round-5 轴2）。预注册门：燧原≥2.4或耗时-15%;均值>4.3452换TB。
+- source/verification commit `8ec9e828c7e4f05e0131feda09853ae77f31b5ce`；release 回执
+  `artifacts/competition/b6-e11-ready-20260918/fused_gate_sigmoid_mul_add/verification.json`（6成员,6路径x31launch,5测试）。
+- ZIP `artifacts/competition/fused_gate_sigmoid_mul_add/e11-*/fused_gate_sigmoid_mul_add.zip`：
+  SHA-256 `13bc12c9420198347e7c7931c77e08f9d3a5b8ec466f84abb8b1965b218d56b8`；test SHA-256 `0cc7c7af52c87ca0e3b6ec7e74c8b71f3d582ce3967204e6551da0e0f242efc2`；回执 SHA-256 `5f8691620c853108b43bc45d7c5eb787d2e49fd4e1a3990f46e3c8a297b4e675`。
+- 发射参数齐备（commit/zip/sha/test/receipt 五元组已核对），午夜额度
+  刷新后按第五轮排序直接 preflight→submit。

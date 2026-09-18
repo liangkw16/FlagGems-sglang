@@ -100,3 +100,13 @@ updated: 2026-09-18
 - 新增跨芯硬事实：(1) 静态 grid 的整块掩空 tile 必须钳位 masked load
   地址（华为 507035）；(2) 同指针双互补掩码 store 在昆仑产生全量垃圾
   （与 2D broadcast store 同族）。两者均已入踩坑表候选。
+
+## 2026-09-18 晚 E6 候选就绪（提交前验证完成，待额度刷新首发）
+
+- 结构：e3基座+metax BLOCK_P=512（round-5 轴4）。预注册门：沐曦≥145或耗时-15%;8/8且均值≥170。
+- source/verification commit `d4c96bbb4327379d7ed99df89a0759b09ca69b0d`；release 回执
+  `artifacts/competition/b6-e6-ready-20260918/create_flashmla_kv_indices/verification.json`（4成员,4路径x37launch,7测试）。
+- ZIP `artifacts/competition/create_flashmla_kv_indices/e6-*/create_flashmla_kv_indices.zip`：
+  SHA-256 `3f114c49d61d9c5ad1adb56cbaca90301d7fef506559c9a9801bd0af62bc87e8`；test SHA-256 `9083d94d1727394865a7b4e6046472b0fc84fef3864538c544409044350a0612`；回执 SHA-256 `62aa4e8fbe69f95d4233b2c73e9efcf46d7737650be377ede361c2109d0f1689`。
+- 发射参数齐备（commit/zip/sha/test/receipt 五元组已核对），午夜额度
+  刷新后按第五轮排序直接 preflight→submit。

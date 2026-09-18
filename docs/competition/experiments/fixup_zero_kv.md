@@ -128,3 +128,13 @@ updated: 2026-09-18
 - e7 实施口径：从**当前完整修复版**（含 gap/batch=0/HV）仅撤掉 generic
   的 `num_warps=8`，并把该配置放进新增 metax vendor——不是整文件回滚
   e5。
+
+## 2026-09-18 晚 E7 候选就绪（提交前验证完成，待额度刷新首发）
+
+- 结构：沐曦 warps=8 组合（e6 判决拆分）。预注册门：沐曦耗时-10%或≥210;均值>200.92换TB。
+- source/verification commit `c6cf443188e44968213ba09b33c11385b786dd04`；release 回执
+  `artifacts/competition/b6-e7-ready-20260918/fixup_zero_kv/verification.json`（4成员(generic/enflame/kunlunxin/metax),4路径x24launch,9测试）。
+- ZIP `artifacts/competition/fixup_zero_kv/e7-*/fixup_zero_kv.zip`：
+  SHA-256 `fa95bc2c01874db50f3809d5273f67866c8348ef883b6f815ecf235113c00c50`；test SHA-256 `34c41446af5b8700a1a42f96b24b4b2b7ea7de44ea77b1e0d6f3441d716f9abf`；回执 SHA-256 `bbc31a1e0d4274cd52e7104ada7bf8b427e2caaea73358b08930668326a33276`。
+- 发射参数齐备（commit/zip/sha/test/receipt 五元组已核对），午夜额度
+  刷新后按第五轮排序直接 preflight→submit。
