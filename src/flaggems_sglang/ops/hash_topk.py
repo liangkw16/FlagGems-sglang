@@ -35,6 +35,7 @@ def _hash_topk(
         # masks use the REAL widths; TOPK/NSHARED are only pow2 pads
         # (masking with the pad reads past the table row and gathers
         # out-of-range expert ids).
+        width = topk_real + nshared_real
         offs = tl.arange(0, TOPK)
         mk = offs < topk_real
         eids = tl.load(tid2eid + token * ts0 + offs, mk, other=0).to(
@@ -53,18 +54,18 @@ def _hash_topk(
         w = tl.sqrt(sp)
         total = tl.sum(tl.where(mk, w, 0.0), axis=0)
         wn = w / total
-        tl.store(out_weights + base * (TOPK + NSHARED) + offs, wn, mk)
-        tl.store(out_ids + base * (TOPK + NSHARED) + offs, eids, mk)
+        tl.store(out_weights + base * width + offs, wn, mk)
+        tl.store(out_ids + base * width + offs, eids, mk)
         shared = tl.arange(0, NSHARED) + topk_real
         msh = (shared - topk_real) < nshared_real
         tl.store(
-            out_weights + base * (TOPK + NSHARED) + shared,
+            out_weights + base * width + shared,
             tl.full((NSHARED,), 0.0, tl.float32) + inv_scale,
             msh,
         )
         tl.store(
-            out_ids + base * (TOPK + NSHARED) + shared,
-            num_routed + (shared - TOPK),
+            out_ids + base * width + shared,
+            num_routed + (shared - topk_real),
             msh,
         )
 

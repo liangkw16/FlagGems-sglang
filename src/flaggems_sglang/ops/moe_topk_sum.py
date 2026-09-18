@@ -28,7 +28,9 @@ def _moe_topk_sum(x, out, rows, hdim, TOPK: tl.constexpr,
                     other=0.0,
                 ).to(tl.float32)
             tl.store(
-                out + base + offs, acc.to(out.dtype.element_ty), m
+                out + row.to(tl.int64) * hdim + offs,
+                acc.to(out.dtype.element_ty),
+                m,
             )
 
 
