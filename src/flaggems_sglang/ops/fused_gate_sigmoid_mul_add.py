@@ -81,11 +81,14 @@ def fused_gate_sigmoid_mul_add(
     assert shared_output.stride(1) == 1 and final_hidden_states.stride(1) == 1
     out = torch.empty_like(final_hidden_states)
     if rows and hdim:
-        # E4: the generic returns to the s0-proven 1024-lane loop (the
-        # e3 full-row tile lifted enflame +46% but wasted 31-38% on the
-        # masked lanes of muxi/haiguang); the wide form lives on only
-        # in the enflame vendor.
-        block_h = 1024
+        # E7 (upstream PR #26856 form): one full-row tile per phase with
+        # the num_warps formula max(min(next_pow2(cdiv(hdim,256)),32),4)
+        # - the e3 full-tile regression on muxi/hygon is reinterpreted
+        # as warps starvation (4 warps for 8192 lanes), not tile width.
+        block_h = triton.next_power_of_2(max(1, hdim))
+        warps = max(
+            min(triton.next_power_of_2(triton.cdiv(hdim, 256)), 32), 4
+        )
         _fused_gate_sigmoid_mul_add[(min(rows, 2048),)](
             hidden_states,
             gate_weight,
@@ -100,6 +103,7 @@ def fused_gate_sigmoid_mul_add(
             out.stride(0),
             HDIM=hdim,
             BLOCK_H=block_h,
+            num_warps=warps,
         )
     return out
 
