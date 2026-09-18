@@ -5,11 +5,11 @@ task: 81
 operator: fused_gate_sigmoid_mul_add
 batch: 6
 validity: valid
-platform: completed(17271,e1,8/8,2.0064x<TB;保s0 3.002;多行轴证伪)
-candidate_stage: e1
+platform: completed(17311,e2,8/8,2.56x<TB;保s0 3.002;双kernel分裂亦证伪)
+candidate_stage: e2
 team_best_stage: s0
 sealed: no
-next: 多行轴关闭(带宽芯-41~-49%,gate_weight 复用无益,瓶颈=并发流数);昆仑 vendor s0 字节 0.730 稳定;新假设=两 kernel(GEMV 点积+纯流 FMA)需先过代理 benchmark 证据门,不盲投
+next: 双kernel分裂亦证伪(-11~-44%,extra launch+gate 中间量成本>相位并行收益,华为-44%与GCU同理);s0 单kernel两阶段=三结构最优,结构轴关闭;榜首5.1结构未破译,重开需新证据
 updated: 2026-09-18
 ```
 
@@ -70,3 +70,22 @@ updated: 2026-09-18
   归约）+ K2 纯流 FMA（全 grid elementwise）；触发条件=代理 benchmark 先
   证 K1+K2 wrapper 总耗时 < 单 kernel 两阶段。燧原轴另有 BLOCK 阶梯假设
   （单趟全宽 dot，GCU 偏好）待同门验证。
+
+## 2026-09-18 E2 平台终态：双 kernel 分裂证伪，8/8 但均值 2.56 < TB 保 s0
+
+- 结构（`11e5693e`）：K1 纯行点积（grid=rows）+ K2 纯流 FMA（sigmoid 在
+  K2 内），每相满格并行；`_enflame` vendor 保 s0 单 kernel 字节（GCU 双
+  launch 开销风险），`_kunlunxin` vendor 不变。代理 AB 基准平手
+  （0.97-1.02，三形状五轮交替）。release 三路径 44+22+22 launch 全过；
+  ZIP `e2-11e5693`。
+- submission **17311** completed/valid，8/8，均值 **2.55998333x < TB s0
+  3.0021**（保）。逐芯（vs s0）：天数 5.39→4.71 / 沐曦 2.85→2.46 /
+  海光 3.50→3.12 / A 4.41→3.79 / B 3.86→3.36 / **华为 2.20→1.22（-44%）**；
+  燧原 1.074（vendor 字节稳定 ✓）/ 昆仑 0.732（稳定 ✓）。
+- 判读：**并发假设在此形态亦证伪**——额外 launch + gate 中间量的成本
+  超过相位并行收益；Ascend 双 launch 惩罚与 GCU 同型（T80 昆仑 2D、
+  T81 华为双launch 互证）。s0 单 kernel 两阶段在 {s0, 多行, 双kernel}
+  三结构中最优。榜首 5.1（c2flow，燧原 4.4）结构未破译，重开需新证据
+  （上游 PR/他队泄露/逐芯分布）。
+- 基准期发现并修复：重写时丢失 sigmoid 的 bug 被代理基准 correctness
+  交叉校验拦下（K2 曾直接乘原始点积）。
