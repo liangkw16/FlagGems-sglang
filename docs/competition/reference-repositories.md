@@ -76,3 +76,17 @@ git fetch community '+refs/heads/*:refs/remotes/community/*'
     布局参考。
   - T30:上游仅 diffusion/NPU fused rope,无通用参考。
 - 社区仓库(AizanSousuke)停在 batch-2,无三批内容。
+
+## 2026-09-18 kernel 优化参考仓库清单（batch6 剩余轴定向）
+
+| 仓库 | 价值 | 对应缺口 |
+| --- | --- | --- |
+| `flagos-ai/FlagGems`（1121★） | 上游算子库含**全 vendor 目录**：`_enflame`（gcu300/gcu400 分档 + `tune_configs.yaml`/`core_shapes.yaml`/heuristics）、`_ascend`（30+ 特化 op）、`_kunlunxin`/`_metax`/`_hygon` 等 15 backend | T81 燧原 1.96→4.4、T78 海光/沐曦、T79 华为/沐曦 的现成 vendor 配方 |
+| `flagos-ai/FlagTree`（352★） | 多后端 Triton 编译器，`third_party/` 全厂商 lowering 源（enflame/xpu/metax/hcu/mthreads/thead/tsingmicro） | T77 GCU i64 布局、各芯线程上限/warpsize/launch 约束的源码证据 |
+| `flagos-ai/FlagAttention`（310★） | Triton 显存高效 attention 算子集 | T79/T80 家族结构参考 |
+| `flagos-ai/awesome-LLM-driven-kernel-generation`（310★） | LLM 内核生成综述 | KernelGen 路线选型 |
+| `flagos-ai/FlagPerf`（379★） | AI 芯片基准平台 | 跨芯性能方法论 |
+| `gpu-mode/lectures`（6611★） | 内核优化讲座全集（CUTLASS/Triton/调度） | 通用手法（warps/stages/persistent） |
+| `ScalingIntelligence/KernelBench`（1247★） | Torch→CUDA/ Triton kernel 基准 | 形状驱动优化练习 |
+| `EnflameTechnology/vllm-gcu`（38★） | GCU vllm 移植 kernel | 燧原惯用法对照 |
+| `flashinfer-ai/flashinfer`（6440★，已跟踪） | concat_mla 等源 | T78 |
