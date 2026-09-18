@@ -2,8 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Adapted from SGLang d4ad368 kernels/ops/moe/fused_moe_triton_kernels.py
 # (the FUSE_GATE row-dot path): gate = sum(hidden * gate_weight, -1) in
-# fp32, then final + sigmoid(gate) * shared per row. Phase one reads
-# hidden once; phase two never re-reads it.
+# fp32, then final + sigmoid(gate) * shared per row. E1 moves from the
+# s0 one-row-per-program form to B_ROWS row tiles (the T53 multi-row
+# reuse that lifted its bandwidth chips ~2x): 2D tiles amortise the
+# gate_weight reads and widen the memory-level parallelism; phase one
+# reads hidden once and phase two never re-reads it. Kunlun keeps the
+# proven 1D per-row vendor (2D broadcast stores hit the XPU LLVM
+# packing bug on T80).
 
 import torch
 import triton
@@ -24,33 +29,40 @@ def _fused_gate_sigmoid_mul_add(
     ss0,
     fs0,
     os0,
+    B_ROWS: tl.constexpr,
     BLOCK_H: tl.constexpr,
 ):
-    for row in range(tl.program_id(0), rows, tl.num_programs(0)):
-        base = row.to(tl.int64)
-        acc = tl.zeros((BLOCK_H,), dtype=tl.float32)
-        for h0 in range(0, hdim, BLOCK_H):
-            offs = h0 + tl.arange(0, BLOCK_H)
-            m = offs < hdim
-            hv = tl.load(hidden + base * hs0 + offs, m, other=0.0).to(
-                tl.float32
-            )
-            wv = tl.load(gate_w + offs * gs, m, other=0.0).to(tl.float32)
-            acc += hv * wv
-        gate = tl.sigmoid(tl.sum(acc, axis=0))
-        for h0 in range(0, hdim, BLOCK_H):
-            offs = h0 + tl.arange(0, BLOCK_H)
-            m = offs < hdim
-            sv = tl.load(shared + base * ss0 + offs, m, other=0.0).to(
-                tl.float32
-            )
-            fv = tl.load(final + base * fs0 + offs, m, other=0.0).to(
-                tl.float32
-            )
-            value = fv + gate * sv
-            tl.store(
-                out + base * os0 + offs, value.to(out.dtype.element_ty), m
-            )
+    row0 = tl.program_id(0) * B_ROWS
+    r = (row0 + tl.arange(0, B_ROWS)).to(tl.int64)
+    rm = r < rows
+    acc = tl.zeros((B_ROWS,), dtype=tl.float32)
+    for h0 in range(0, hdim, BLOCK_H):
+        offs = h0 + tl.arange(0, BLOCK_H)
+        m = offs < hdim
+        hv = tl.load(
+            hidden + r[:, None] * hs0 + offs[None, :],
+            rm[:, None] & m[None, :],
+            other=0.0,
+        ).to(tl.float32)
+        wv = tl.load(gate_w + offs * gs, m, other=0.0).to(tl.float32)
+        acc += tl.sum(hv * wv[None, :], axis=1)
+    gate = tl.sigmoid(acc)
+    for h0 in range(0, hdim, BLOCK_H):
+        offs = h0 + tl.arange(0, BLOCK_H)
+        m = offs < hdim
+        mask2 = rm[:, None] & m[None, :]
+        sv = tl.load(
+            shared + r[:, None] * ss0 + offs[None, :], mask2, other=0.0
+        ).to(tl.float32)
+        fv = tl.load(
+            final + r[:, None] * fs0 + offs[None, :], mask2, other=0.0
+        ).to(tl.float32)
+        value = fv + gate[:, None] * sv
+        tl.store(
+            out + r[:, None] * os0 + offs[None, :],
+            value.to(out.dtype.element_ty),
+            mask2,
+        )
 
 
 def fused_gate_sigmoid_mul_add(
@@ -71,7 +83,7 @@ def fused_gate_sigmoid_mul_add(
     assert shared_output.stride(1) == 1 and final_hidden_states.stride(1) == 1
     out = torch.empty_like(final_hidden_states)
     if rows and hdim:
-        _fused_gate_sigmoid_mul_add[(min(rows, 2048),)](
+        _fused_gate_sigmoid_mul_add[(triton.cdiv(rows, 4),)](
             hidden_states,
             gate_weight,
             shared_output,
@@ -84,7 +96,8 @@ def fused_gate_sigmoid_mul_add(
             shared_output.stride(0),
             final_hidden_states.stride(0),
             out.stride(0),
-            BLOCK_H=1024,
+            B_ROWS=4,
+            BLOCK_H=512,
         )
     return out
 
