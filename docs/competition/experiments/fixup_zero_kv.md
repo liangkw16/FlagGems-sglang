@@ -5,12 +5,12 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid
-platform: completed(17359,e5,8/8,198.06x<TB;保e4 200.92;HV展开中性,gap加固入库)
-candidate_stage: e5
+platform: completed(17397,e6,8/8,198.65x<TB;保e4;沐曦warps+19%但天数/燧原-10%)
+candidate_stage: e6
 team_best_stage: e4
 team_best_speedup: 200.920075
 sealed: no
-next: HV展开中性(拷贝循环memory-bound,与T81热点循环不同,机制边界记录);gap覆盖加固已随有效提交入库;剩窗口复测+昆仑vendor换融合1D形态可选;最后一掷留明确慢窗信号
+next: 明日首发e7组合=generic回默认warps+沐曦独享warps=8 vendor(投影TB~205.3,muxi 219/其余e5水位);慢窗最后一掷信号不变;额度30/30今日用尽
 updated: 2026-09-18
 ```
 
@@ -107,3 +107,15 @@ updated: 2026-09-18
   机制适用边界=循环体内是否有实质控制/计算开销。
 - 正确性加固意义：gap 覆盖修复已在有效提交中入库，防住隐藏 shape
   触发未初始化输出的风险。
+
+## 2026-09-18 E6 平台终态：warps 迁移混合判决（沐曦 +19%），明日组合待发
+
+- 结构（`d4a95b60`，单变量）：generic num_warps=8（T81 warps 饥饿机制
+  迁移；8×512 tile 默认 4 warps 时 32 元素/线程）。
+- submission **17397** completed/valid，8/8，均值 **198.65 < TB e4
+  200.92**（保 e4）。逐芯 vs e5：**沐曦 184.4→219.2（+19%！）** /
+  B +6% / A +5.5% / 昆仑 +1%；**天数 254.6→229.2（-10%）/ 燧原
+  24.7→22.0（-11%）** / 海光 -6% / 华为 -2%。
+- 判读：warps 饥饿跨题存在（T81/T80 的沐曦均 +19~28%），但**最优
+  warps 按芯分化**（天数/燧原偏好默认 4）。明日 e7 组合：generic 回
+  默认 + 新增 metax vendor（warps=8 字节），投影 TB ≈205.3。
