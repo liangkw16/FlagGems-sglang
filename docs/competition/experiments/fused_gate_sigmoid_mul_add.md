@@ -5,11 +5,11 @@ task: 81
 operator: fused_gate_sigmoid_mul_add
 batch: 6
 validity: valid
-platform: completed(17372,e6,8/8,3.94720833x新TB;燧原vendor静态化+26%过门)
-candidate_stage: e6
-team_best_stage: e6
+platform: completed(17378,e9,8/8,4.306075x新TB;上游warps形态+芯级上限组合)
+candidate_stage: e9
+team_best_stage: e9
 sealed: no
-next: 燧原静态化过门(1.56→1.96,+26%);昆仑轴判负关闭(0.733<门0.88,1D store近memory-bound与T80同理);静态机制三连兑现(TB 3.07→3.90→3.95);剩余=T81-B双链(代理前置)/T78维度特化(IR前置)/燧原vs c2flow 4.4仍2.2x
+next: GitHub情报三连兑现(e7上游形态→e8芯级warps上限→e9沐曦回退,TB 3.95→4.31);剩余缺口=燧原1.99vs4.4(2.2x)/沐曦4.11vs5.7/天数7.80vs8.5/华为2.31vs2.9;真实靶5.10差18.5%;A轴已平(5.91vs5.9)
 updated: 2026-09-18
 ```
 
@@ -145,3 +145,23 @@ updated: 2026-09-18
 - 关联：#26727（系列 1/N，共享专家门融合）、#36176（CUDA warp 向量化
   拷贝基建，T78 背景参考，Triton 不可移植）。竞赛上游 flagos-ai 无第 6
   批 PR（最新停在 batch3）。
+
+## 2026-09-18 E7/E8/E9 平台终态：上游 warps 形态三连击，TB 4.306075（+9.1%）
+
+- E7（17374，`3d840395`）：PR #26856 上游形态（全行无上限 tile +
+  `warps=max(min(next_pow2(cdiv(hdim,256)),32),4)`）。**6/8**：天数
+  6.63→7.75（+17%）/ A +7% / B +10% 兑现；**沐曦/海光 OutOfResources**
+  （线程上限 512/1024，海光 warpsize 64）；华为 -11%。
+- E8（17375，`9cedb6ca`）：组合修正——metax/hygon vendor 16-warp 上限、
+  ascend vendor 回 e6 字节。**7/8**：海光 6.00→**6.74（+12% 恢复且新
+  高）**、华为回 2.24、天数 7.77 保持；**沐曦仍挂**（warpsize 64 →
+  16 warps 仍要 1024 线程 > 512 上限，实际上限 8 warps）。
+- E9（17378，`403a852a`）：metax vendor 回 e6 已证字节（4.13）。
+  **8/8，均值 4.306075 新 TB**。逐芯：天数 7.80 / 沐曦 4.11 / 燧原
+  1.99 / 海光 6.76 / 昆仑 0.73 / 华为 2.31 / A 5.91 / B 4.83。
+- 判读：**e3 的"tile 宽度掩码浪费"判读被修正为 warps 饥饿**——上游
+  PR 的 warps 公式在 CUDA 类芯兑现 +17%（天数），按芯线程上限
+  （海光 16-warp、沐曦 8-warp 装不下→回退）拆 vendor 是正确组合。
+  A 轴已与 c2flow 打平（5.91 vs 5.9）。
+- 新增跨芯硬事实：沐曦线程上限 512@warpsize64、海光 1024@warpsize64
+  ——上游 warps 公式在国产芯需按 `threads_limit/warpsize` 换算封顶。
