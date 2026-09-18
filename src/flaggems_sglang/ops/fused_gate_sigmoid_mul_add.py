@@ -1,14 +1,14 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 # Adapted from SGLang d4ad368 kernels/ops/moe/fused_moe_triton_kernels.py
-# (the FUSE_GATE row-dot path). E2 splits the s0 single-kernel two-phase
-# form into two maximally-parallel launches: K1 is the fp32 row-dot
-# (gate = sum(hidden * gate_weight, -1), one program per row), K2 is a
-# pure streaming FMA (out = final + gate * shared) that never touches
-# hidden. The e1 multi-row experiment falsified tile widening on this
-# op (bandwidth chips -41..-49%), pointing at concurrency, not tile
-# shape, as the limiter - each phase now gets the full grid. All stores
-# stay 1D per-row spans.
+# (the FUSE_GATE row-dot path): gate = sum(hidden * gate_weight, -1) in
+# fp32, then final + sigmoid(gate) * shared per row. E3 returns to the
+# s0 single-kernel two-phase one-row-per-program form (the best of the
+# three tested structures) with a single variable: BLOCK_H widens from
+# the serial 1024-lane loop to one full-row tile (capped at 8192), so
+# the per-phase hidden-dim loop disappears. The e1 tile-widening and
+# e2 launch-split falsifications both pointed at loop/launch overheads
+# rather than tile shape on the bandwidth chips.
 
 import torch
 import triton
@@ -16,8 +16,20 @@ import triton.language as tl
 
 
 @triton.jit(do_not_specialize=["rows", "hdim"])
-def _gate_dot(
-    hidden, gate_w, gate, rows, hdim, hs0, gs, BLOCK_H: tl.constexpr
+def _fused_gate_sigmoid_mul_add(
+    hidden,
+    gate_w,
+    shared,
+    final,
+    out,
+    rows,
+    hdim,
+    hs0,
+    gs,
+    ss0,
+    fs0,
+    os0,
+    BLOCK_H: tl.constexpr,
 ):
     for row in range(tl.program_id(0), rows, tl.num_programs(0)):
         base = row.to(tl.int64)
@@ -30,15 +42,7 @@ def _gate_dot(
             )
             wv = tl.load(gate_w + offs * gs, m, other=0.0).to(tl.float32)
             acc += hv * wv
-        tl.store(gate + row, tl.sum(acc, axis=0))
-
-
-@triton.jit(do_not_specialize=["rows", "hdim"])
-def _gate_fma(gate, shared, final, out, rows, hdim, ss0, fs0, os0,
-              BLOCK_H: tl.constexpr):
-    for row in range(tl.program_id(0), rows, tl.num_programs(0)):
-        base = row.to(tl.int64)
-        g = tl.sigmoid(tl.load(gate + row))
+        gate = tl.sigmoid(tl.sum(acc, axis=0))
         for h0 in range(0, hdim, BLOCK_H):
             offs = h0 + tl.arange(0, BLOCK_H)
             m = offs < hdim
@@ -48,10 +52,9 @@ def _gate_fma(gate, shared, final, out, rows, hdim, ss0, fs0, os0,
             fv = tl.load(final + base * fs0 + offs, m, other=0.0).to(
                 tl.float32
             )
+            value = fv + gate * sv
             tl.store(
-                out + base * os0 + offs,
-                (fv + g * sv).to(out.dtype.element_ty),
-                m,
+                out + base * os0 + offs, value.to(out.dtype.element_ty), m
             )
 
 
@@ -68,33 +71,28 @@ def fused_gate_sigmoid_mul_add(
         shared_output.dtype == final_hidden_states.dtype == dtype
         and gate_weight.dtype == dtype
     )
+    # Row stride is passed in; the inner span must be contiguous.
     assert hidden_states.stride(1) == 1 and gate_weight.stride(0) == 1
     assert shared_output.stride(1) == 1 and final_hidden_states.stride(1) == 1
     out = torch.empty_like(final_hidden_states)
     if rows and hdim:
-        gate = torch.empty(rows, dtype=torch.float32, device=out.device)
-        grid = min(rows, 65535)
-        _gate_dot[(grid,)](
+        # One full-row tile per phase (8192-lane cap); the loop
+        # degenerates to one iteration for every width <= 8192.
+        block_h = min(8192, triton.next_power_of_2(max(1, hdim)))
+        _fused_gate_sigmoid_mul_add[(min(rows, 2048),)](
             hidden_states,
             gate_weight,
-            gate,
-            rows,
-            hdim,
-            hidden_states.stride(0),
-            gate_weight.stride(0),
-            BLOCK_H=1024,
-        )
-        _gate_fma[(grid,)](
-            gate,
             shared_output,
             final_hidden_states,
             out,
             rows,
             hdim,
+            hidden_states.stride(0),
+            gate_weight.stride(0),
             shared_output.stride(0),
             final_hidden_states.stride(0),
             out.stride(0),
-            BLOCK_H=1024,
+            BLOCK_H=block_h,
         )
     return out
 

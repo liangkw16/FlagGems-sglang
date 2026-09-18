@@ -1,9 +1,9 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Enflame vendor for fused_gate_sigmoid_mul_add: the s0-proven
-# single-kernel one-row-per-program form. The e2 generic splits into two
-# launches; GCU launch overhead cannot be hidden (vendor guide), so this
-# chip keeps one kernel.
+# Enflame vendor for fused_gate_sigmoid_mul_add: the s0 single-kernel
+# one-row-per-program form with the e3 full-row tile (BLOCK_H widened
+# to min(8192, next_pow2(hidden))) - GCU favours single wide passes
+# over serial block loops, the T63 BLOCK-ladder lesson.
 
 import torch
 import triton
@@ -71,6 +71,9 @@ def fused_gate_sigmoid_mul_add(
     assert shared_output.stride(1) == 1 and final_hidden_states.stride(1) == 1
     out = torch.empty_like(final_hidden_states)
     if rows and hdim:
+        # One full-row tile per phase (8192-lane cap); the loop
+        # degenerates to one iteration for every width <= 8192.
+        block_h = min(8192, triton.next_power_of_2(max(1, hdim)))
         _fused_gate_sigmoid_mul_add[(min(rows, 2048),)](
             hidden_states,
             gate_weight,
@@ -84,7 +87,7 @@ def fused_gate_sigmoid_mul_add(
             shared_output.stride(0),
             final_hidden_states.stride(0),
             out.stride(0),
-            BLOCK_H=1024,
+            BLOCK_H=block_h,
         )
     return out
 
