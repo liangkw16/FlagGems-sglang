@@ -34,13 +34,13 @@ def make_case(lengths=(0, 1, 511, 512, 513, 1025), has_prefix=True):
     prefix = [i % 17 for i in range(bs)]
     vectors = [
         torch.tensor(values, dtype=torch.int32, device="cuda")
-        for values in ([prefix], [lengths])
+        for values in (prefix, lengths)
     ]
     total = int(sum(lengths))
     if has_prefix:
         prefix_arg = vectors[0]
     else:
-        prefix_arg = torch.empty(0, torch.int32, device="cuda")
+        prefix_arg = torch.empty(0, dtype=torch.int32, device="cuda")
     return (prefix_arg, vectors[1], total)
 
 
