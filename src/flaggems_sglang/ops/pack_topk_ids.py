@@ -44,6 +44,7 @@ def pack_topk_ids(topk_ids, topk_weights):
             out,
             numel,
             BLOCK=2048,
+            num_warps=8,
         )
     return out
 
