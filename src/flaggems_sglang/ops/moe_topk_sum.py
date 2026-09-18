@@ -49,7 +49,7 @@ def moe_topk_sum(x, out):
             hdim,
             TOPK=topk,
             BLOCK=1024,
-            num_warps=8,
+            num_warps=16,
         )
     return out
 
