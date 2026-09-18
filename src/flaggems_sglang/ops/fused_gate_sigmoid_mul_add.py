@@ -76,9 +76,11 @@ def fused_gate_sigmoid_mul_add(
     assert shared_output.stride(1) == 1 and final_hidden_states.stride(1) == 1
     out = torch.empty_like(final_hidden_states)
     if rows and hdim:
-        # One full-row tile per phase (8192-lane cap); the loop
-        # degenerates to one iteration for every width <= 8192.
-        block_h = min(8192, triton.next_power_of_2(max(1, hdim)))
+        # E4: the generic returns to the s0-proven 1024-lane loop (the
+        # e3 full-row tile lifted enflame +46% but wasted 31-38% on the
+        # masked lanes of muxi/haiguang); the wide form lives on only
+        # in the enflame vendor.
+        block_h = 1024
         _fused_gate_sigmoid_mul_add[(min(rows, 2048),)](
             hidden_states,
             gate_weight,
