@@ -5,10 +5,12 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid
-candidate_stage: e2
-team_best_stage: e2
+platform: completed(17318,e4,8/8,200.920075x新TB;e3融合+e4燧原vendor)
+candidate_stage: e4
+team_best_stage: e4
+team_best_speedup: 200.920075
 sealed: no
-next: 同字节窗口重掷低滚1/2停(137.0≈136.0,快窗);榜首328为慢窗通胀(海光553/A638);沐曦 102 vs 128-240 为结构性缺口;窗口周期变化时可用最后一掷
+next: 燧原vendor兑现(14.1→23.5);榜首328为慢窗通胀;剩余=昆仑9.1(clone版vendor可换融合1D)+窗口;最后一掷留明确慢窗信号
 updated: 2026-09-18
 ```
 
