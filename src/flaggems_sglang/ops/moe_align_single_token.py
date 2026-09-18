@@ -20,6 +20,7 @@ def _moe_align_single_token(
     k_numel,
     total,
     TOPK: tl.constexpr,
+    KREAL: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
     offs = tl.arange(0, TOPK)
@@ -30,11 +31,13 @@ def _moe_align_single_token(
     # loop form avoids the [TOPK, TOPK] 2D compare tensor (uni_sram
     # overflow on XPU, linalg conversion failure on Ascend).
     rank = tl.zeros((TOPK,), dtype=tl.int32)
-    for j in tl.static_range(0, TOPK):
+    # KREAL is constexpr: padded j lanes compile away entirely (the
+    # codex-review P1 - an unmasked scalar read past the table for
+    # non-power-of-two topk - is closed at compile time).
+    for j in tl.static_range(0, KREAL):
         other = tl.load(topk + j)
-        if j < k_numel:
-            rank += (ids > other).to(tl.int32)
-            rank += (ids == other).to(tl.int32) * (offs < j).to(tl.int32)
+        rank += (ids > other).to(tl.int32)
+        rank += (ids == other).to(tl.int32) * (offs < j).to(tl.int32)
     tl.store(expert_ids + rank, ids, mk)
     sentinel_fill = tl.full((BLOCK,), k_numel, dtype=tl.int32)
     for base in range(0, total, BLOCK):
@@ -63,6 +66,7 @@ def moe_align_single_token(topk_ids, block_size):
         topk,
         topk * block_size,
         TOPK=triton.next_power_of_2(max(1, topk)),
+        KREAL=topk,
         BLOCK=1024,
     )
     return sorted_ids, expert_ids, num_post
