@@ -5,7 +5,6 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid
-platform: completed(17296,e2,8/8,137.0448x微幅新TB;窗口重掷未遇慢窗)
 candidate_stage: e2
 team_best_stage: e2
 sealed: no
@@ -74,3 +73,20 @@ updated: 2026-09-18
 - 榜单通胀对照：榜首 HAiWORLD 328（海光 553/A 638/B 457）为慢 reference
   窗口读数；我方 137 为 01:00 快窗读数，结构差距需同窗比较（沐曦
   102 是唯一明确落后轴）。
+
+## 2026-09-18 E3/E4 平台终态：融合+掩码修复 → 沐曦+91%/海光+110%，燧原 vendor 兜回，TB 200.92
+
+- codex-ask 第二轮指出 lse store 缺头掩码（非 2 幂头数越行写）与 clone
+  融合机会，均经源码核实与代理基准实证（old 在 heads=96 混合段
+  MISMATCH，new 全对；耗时 all-zero +19%/all-copy -13%）。
+- E3（17314，`a115c1db`）：clone 折入 kernel（每元素单写者，零 KV 段写
+  常量、未触碰段拷贝，流量 (2+z)D→(2-z)D，省两次 clone launch）+ lse
+  头掩码。逐芯 vs e1：**沐曦 100→191.4（+91%）/ 海光 197→413.8（+110%）/
+  华为 161→231.6（+43%）/ A 228→316 / B 135→159 / 天数 239→252**；
+  燧原 23.3→14.1（-40%，融合版 GCU 回退）。均值 **198.40 新 TB**（+45%）。
+- E4（17318，`6bcef5f4`）：`_enflame` vendor = e1 clone 结构 + 掩码修复
+  ——燧原 14.1→**23.5（+67%）**，其余保持。均值 **200.920075 新 TB**。
+  release 三路径全过；ZIP `e4-6bcef5f` 3 成员。
+- 判读：codex-ask 排序第一的建议超额兑现（目标沐曦 ≥128，实得 191）。
+  融合结构在 launch 敏感芯全面受益；GCU 偏好 clone+patch 分离形态
+  （与 T81 双 kernel 的 GCU 反例互补：**融合与否按 chip×op 组合定**）。

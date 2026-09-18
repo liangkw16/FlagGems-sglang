@@ -5,7 +5,6 @@ task: 79
 operator: create_flashmla_kv_indices
 batch: 6
 validity: valid
-platform: completed(17298,e2,8/8,167.19x<TB;保s0 173.36;华为persistent判负)
 candidate_stage: e2
 team_best_stage: s0
 sealed: no
@@ -75,3 +74,13 @@ updated: 2026-09-18
   gather 族（T63/T79）零或负。**配方适用性=按访存形态分类**，入跨芯知识库。
 - 榜单：榜首 c2flow 343.5 为华为 1212 慢窗彩票（次优同芯 182.6）；真实
   靶子 #2 GuanghuLab 196.7（华为 182.6 另有结构，未破译）。
+
+## 2026-09-18 E3 平台终态：split 修正中性，ascend vendor 移除，TB 保 s0
+
+- E3（17316，`975df79e`）：splits 分母 128→256 对齐 BLOCK_P（codex-ask
+  发现半数 split 空转）+ 删除已判负 ascend vendor（华为回 generic）。
+  逐芯：华为 93.68（回 generic 水位 ✓）/ 昆仑 15.4→**17.59（+14%，split
+  修正小幅正）**/ 沐曦 122.5 / 燧原 50.4（vendor 保持）。均值 173.2335
+  ≈ TB s0 173.3643（差 0.08%，保 s0 名义；e3 ZIP=generic+enflame 为后续
+  最佳基座）。
+- 判读：split 修正对昆仑有效、对总量中性；华为 182 结构缺口仍未破译。
