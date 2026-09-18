@@ -1,9 +1,11 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Metax vendor for fused_gate_sigmoid_mul_add: the e6-proven 1024-lane
-# static-loop form (muxi 4.13 on 17372) - this chip's thread limit is
-# 512 with warpsize 64 (max 8 warps), so the upstream warps pin cannot
-# fit; the e8 16-warp attempt still required 1024 threads (17375).
+# Metax vendor for fused_gate_sigmoid_mul_add: the upstream-form
+# full-row tile with the warps pin capped at 8 - this chip's thread
+# limit is 512 at warpsize 64 (max 8 warps; the e8 16-warp attempt
+# still required 1024 threads on 17375). The e6 1024-loop bytes banked
+# muxi 4.11 on 17378; the hygon 16-warp analogue recovered +12%, so
+# the 8-warp wide tile is the single-variable follow-up.
 
 import torch
 import triton
@@ -29,11 +31,6 @@ def _fused_gate_sigmoid_mul_add(
     for row in range(tl.program_id(0), rows, tl.num_programs(0)):
         base = row.to(tl.int64)
         acc = tl.zeros((BLOCK_H,), dtype=tl.float32)
-        # HDIM is constexpr: the hidden-dim loop fully unrolls and the
-        # tail mask folds away whenever BLOCK_H divides HDIM (5120 and
-        # 7168 both do) - the runtime-loop control cost the replan
-        # identified disappears without touching tile width, program
-        # count or launch count.
         for h0 in tl.static_range(0, HDIM, BLOCK_H):
             offs = h0 + tl.arange(0, BLOCK_H)
             m = offs < HDIM
@@ -71,16 +68,14 @@ def fused_gate_sigmoid_mul_add(
         shared_output.dtype == final_hidden_states.dtype == dtype
         and gate_weight.dtype == dtype
     )
-    # Row stride is passed in; the inner span must be contiguous.
     assert hidden_states.stride(1) == 1 and gate_weight.stride(0) == 1
     assert shared_output.stride(1) == 1 and final_hidden_states.stride(1) == 1
     out = torch.empty_like(final_hidden_states)
     if rows and hdim:
-        # E4: the generic returns to the s0-proven 1024-lane loop (the
-        # e3 full-row tile lifted enflame +46% but wasted 31-38% on the
-        # masked lanes of muxi/haiguang); the wide form lives on only
-        # in the enflame vendor.
-        block_h = 1024
+        block_h = triton.next_power_of_2(max(1, hdim))
+        warps = max(
+            min(triton.next_power_of_2(triton.cdiv(hdim, 256)), 8), 4
+        )
         _fused_gate_sigmoid_mul_add[(min(rows, 2048),)](
             hidden_states,
             gate_weight,
@@ -95,6 +90,7 @@ def fused_gate_sigmoid_mul_add(
             out.stride(0),
             HDIM=hdim,
             BLOCK_H=block_h,
+            num_warps=warps,
         )
     return out
 
