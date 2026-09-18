@@ -162,6 +162,11 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             ot,
             HV=hv,
             NH=nh,
+            # E6: warps pinned to 8 (the T81 warps-starvation lesson) -
+            # the 8x512 tile ran 32 elements per thread at the default
+            # 4 warps; 8 warps stays inside every chip's thread limit
+            # (8 x warpsize64 = 512).
+            num_warps=8,
             BLOCK_T=block_t,
             BLOCK_V=512,
             BLOCK_H=triton.next_power_of_2(max(1, nh)),
