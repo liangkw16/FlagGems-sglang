@@ -21,6 +21,8 @@ def _hash_topk(
     out_ids,
     rows,
     num_routed,
+    topk_real,
+    nshared_real,
     rs0,
     ts0,
     inv_scale,
@@ -30,8 +32,11 @@ def _hash_topk(
     for row in range(tl.program_id(0), rows, tl.num_programs(0)):
         base = row.to(tl.int64)
         token = tl.load(input_ids + row).to(tl.int64)
+        # masks use the REAL widths; TOPK/NSHARED are only pow2 pads
+        # (masking with the pad reads past the table row and gathers
+        # out-of-range expert ids).
         offs = tl.arange(0, TOPK)
-        mk = offs < TOPK
+        mk = offs < topk_real
         eids = tl.load(tid2eid + token * ts0 + offs, mk, other=0).to(
             tl.int64
         )
@@ -50,8 +55,8 @@ def _hash_topk(
         wn = w / total
         tl.store(out_weights + base * (TOPK + NSHARED) + offs, wn, mk)
         tl.store(out_ids + base * (TOPK + NSHARED) + offs, eids, mk)
-        shared = tl.arange(0, NSHARED) + TOPK
-        msh = shared < TOPK + NSHARED
+        shared = tl.arange(0, NSHARED) + topk_real
+        msh = (shared - topk_real) < nshared_real
         tl.store(
             out_weights + base * (TOPK + NSHARED) + shared,
             tl.full((NSHARED,), 0.0, tl.float32) + inv_scale,
@@ -94,6 +99,8 @@ def hash_topk(
             out_ids,
             num_tokens,
             num_routed,
+            topk_routed,
+            num_fused_shared_experts,
             router_logits.stride(0),
             tid2eid.stride(0),
             1.0 / routed_scaling_factor,

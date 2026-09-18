@@ -14,7 +14,7 @@ import triton.language as tl
 def _moe_topk_sum(x, out, rows, hdim, TOPK: tl.constexpr,
                   BLOCK: tl.constexpr):
     for row in range(tl.program_id(0), rows, tl.num_programs(0)):
-        base = row.to(tl.int64) * hdim
+        base = row.to(tl.int64) * (TOPK * hdim)
         for h0 in tl.range(
             tl.program_id(1) * BLOCK, hdim, tl.num_programs(1) * BLOCK
         ):
