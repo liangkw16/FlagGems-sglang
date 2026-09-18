@@ -5,12 +5,12 @@ task: 79
 operator: create_flashmla_kv_indices
 batch: 6
 validity: valid
-platform: completed(17336,e5,8/8,171.59x<TB;保s0 173.36;静态页块轴判负)
-candidate_stage: e5
+platform: completed(17619,e6,8/8,171.51x<TB;保s0;沐曦512页块更差)
+candidate_stage: e6
 team_best_stage: s0
 team_best_speedup: 173.3643125
 sealed: no
-next: 静态页块轴关闭(华为69.1<动态93.7,钳位乘法+全掩空tile浪费>控制流收益);e4双失败定性=507035(华为,钳位修复)+双互补掩码store(昆仑,e3字节vendor修复);华为93→182与沐曦122→165仍未破译;后续基座=e3字节(generic动态+enflame vendor)
+next: 沐曦页块轴关闭(512→114.9<256的122.5);华为101回generic水位;T79全部已知轴已尽,等新证据(T77探针/上游泄露);TB 173.36守
 updated: 2026-09-18
 ```
 

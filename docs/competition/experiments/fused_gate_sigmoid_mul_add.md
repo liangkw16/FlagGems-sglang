@@ -5,11 +5,11 @@ task: 81
 operator: fused_gate_sigmoid_mul_add
 batch: 6
 validity: valid
-platform: completed(17390,e10,8/8,4.34518333x新TB;沐曦8-warp微涨,超GuanghuLab升#4)
-candidate_stage: e10
+platform: completed(17611,e11,8/8,4.291x<TB;保e10;燧原单波消循环中性)
+candidate_stage: e11
 team_best_stage: e10
 sealed: no
-next: 距#3 HAiWORLD 4.3993差0.055;沐曦8-warp仅+1.7%(与海光+12%不同,宽tile收益芯间分化);剩余结构缺口=燧原1.96vs4.4/沐曦4.18vs5.7/天数7.90vs8.5;T81-B双链与T78维度特化待代理筛选
+next: 燧原单波轴关闭(外层行循环非GCU瓶颈,1.943≈1.99);T81剩余结构缺口(燧原vs4.4/沐曦vs5.7)无新假设,等情报;TB 4.345守
 updated: 2026-09-18
 ```
 

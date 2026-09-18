@@ -5,12 +5,12 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid
-platform: completed(17397,e6,8/8,198.65x<TB;保e4;沐曦warps+19%但天数/燧原-10%)
-candidate_stage: e6
+platform: completed(17607,e7,8/8,197.25x<TB;保e4;沐曦warps轴窗口混淆关轴)
+candidate_stage: e7
 team_best_stage: e4
 team_best_speedup: 200.920075
 sealed: no
-next: 明日首发e7组合=generic回默认warps+沐曦独享warps=8 vendor(投影TB~205.3,muxi 219/其余e5水位);慢窗最后一掷信号不变;额度30/30今日用尽
+next: 沐曦warps轴关闭(e6的219为窗口美化,e7同配置171.8,21%窗口摆动);燧原27.7/海光419今晚偏暖,慢窗最后一掷观察中;华为223回水位
 updated: 2026-09-18
 ```
 
