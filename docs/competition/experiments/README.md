@@ -14,6 +14,11 @@
 | [T80 fixup_zero_kv](fixup_zero_kv.md) | s0-370923b | 6 测试/16 launch ✓ | 就绪，09-18 首发 |
 | [T81 fused_gate_sigmoid_mul_add](fused_gate_sigmoid_mul_add.md) | s0-370923b | 5 测试/22 launch ✓ | 就绪，09-18 首发 |
 
+- **10:30 D1 结构轴收口**：T81 双 kernel 亦证伪（2.56 < TB 3.002，华为 -44%
+  双 launch 惩罚），s0 单 kernel 两阶段=三结构最优；T79 华为 persistent 判负
+  （gather 族反例）；T77 七芯 generic 代理验证通过（18 launch），燧原 vendor
+  阻塞于 GCU 探针（无燧原主机）。**额度 14/30 剩 16，无新高置信候选——按纪律
+  停止消耗，留待慢窗/新证据**。
 - **01:05 D1 首轮回执**：T79 8/8 **173.364x #2**（华为 97.54 反超榜首）；T78 8/8 1.073x；T81 8/8 3.002x（~#7，海光结构缺口）；T76 8/8 0.992x（~#8）；T80 **7/8 昆仑编译错**（ConvertTritonXPUToLLVM packing mismatch，lse 2D broadcast store）——flat-1D vendor 修复轴已排。额度 25/30 剩余。
 - T77 compute_position 未开发：燧原 int64 输出物理布局（A/B 假设）需目标机
   探针裁决后才定稿 wrapper（不耗额度），见 strategy-batch6 §T77。
