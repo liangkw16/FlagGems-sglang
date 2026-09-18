@@ -1,15 +1,9 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Adapted from SGLang 74338e9 kernels/ops/attention/fixup_zero_kv.py and
-# jit/csrc/attention/fixup_zero_kv.cuh (2D early-exit grid, vectorised
-# fills). The reference host-syncs on nonzero().tolist(); this variant
-# decides everything on-device in one launch over a 1D grid. E3 fuses
-# the clone into the same kernel: the output tensors are allocated
-# empty and every element is written exactly once - zero-KV segments
-# get constants (0 / -inf), untouched segments are copied from the
-# inputs - cutting wrapper traffic from (2+z)D to (2-z)D and removing
-# both clone launches. The lse stores now carry the head mask (the
-# e1/e2 bytes could overrun a non-power-of-two head row).
+# Metax vendor for fixup_zero_kv: the full-fix generic (gap coverage,
+# HV static unroll, batch=0 clone) with the 8-warp pin - the e6 verdict
+# banked muxi 184.4->219.2 (+19%) on this configuration while tianshu
+# regressed, so the pin lives here only (muxi threads limit 512@ws64).
 
 import torch
 import triton
@@ -162,8 +156,7 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             ot,
             HV=hv,
             NH=nh,
-            # E7: the 8-warp pin moves to the metax vendor only (the
-            # e6 verdict: muxi +19% but tianshu -10% on the generic).
+            num_warps=8,
             BLOCK_T=block_t,
             BLOCK_V=512,
             BLOCK_H=triton.next_power_of_2(max(1, nh)),
