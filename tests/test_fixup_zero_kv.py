@@ -125,6 +125,42 @@ class FixupZeroKVTest(unittest.TestCase):
         )
         self.check(args)
 
+    def test_uncovered_cum_boundaries(self):
+        # Tokens outside [cum[0], cum[batch]) keep the input bytes; the
+        # outputs are allocated empty, so every token needs a writer.
+        args = make_case(kv_lens=(0, 3), tok_lens=(3, 5))
+        head, tail = 2, 11 - (2 + 3 + 5)
+        self.check(args)
+        out2 = torch.randn(
+            11 + tail, 4, 8, dtype=torch.bfloat16, device="cuda"
+        )
+        lse2 = torch.randn(11 + tail, 4, dtype=torch.float32, device="cuda")
+        cum2 = [2, 5, 9]
+        cumt2 = torch.tensor(cum2 + [11], dtype=torch.int32, device="cuda")
+        self.check(
+            (
+                out2,
+                lse2,
+                torch.tensor((0, 3, 0), dtype=torch.int32, device="cuda"),
+                cumt2,
+                5,
+            )
+        )
+
+    def test_empty_batch_full_output(self):
+        # batch == 0 with tokens present returns a full clone.
+        out = torch.randn(7, 4, 8, dtype=torch.bfloat16, device="cuda")
+        lse = torch.randn(7, 4, dtype=torch.float32, device="cuda")
+        self.check(
+            (
+                out,
+                lse,
+                torch.empty(0, dtype=torch.int32, device="cuda"),
+                torch.tensor([0], dtype=torch.int32, device="cuda"),
+                7,
+            )
+        )
+
     def test_repeated_calls_reread_inputs(self):
         args = make_case()
         self.check(args)
@@ -139,6 +175,9 @@ RELEASE_REQUIRED_TESTS = [
     "FixupZeroKVTest.test_segment_length_boundaries",
     "FixupZeroKVTest.test_lying_max_seq_len",
     "FixupZeroKVTest.test_special_values_preserved",
+    "FixupZeroKVTest.test_non_power_of_two_heads",
+    "FixupZeroKVTest.test_uncovered_cum_boundaries",
+    "FixupZeroKVTest.test_empty_batch_full_output",
     "FixupZeroKVTest.test_repeated_calls_reread_inputs",
 ]
 

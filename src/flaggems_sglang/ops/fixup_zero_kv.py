@@ -166,7 +166,9 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             BLOCK_V=512,
             BLOCK_H=triton.next_power_of_2(max(1, nh)),
         )
-    elif batch:
+    else:
+        # batch == 0 with tokens present (or empty tensors): the
+        # reference clones everything, so nothing stays uninitialised.
         out_fixed.copy_(out)
         lse_fixed.copy_(lse)
     return out_fixed, lse_fixed
