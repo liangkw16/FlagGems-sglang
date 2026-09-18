@@ -14,6 +14,10 @@
 | [T80 fixup_zero_kv](fixup_zero_kv.md) | s0-370923b | 6 测试/16 launch ✓ | 就绪，09-18 首发 |
 | [T81 fused_gate_sigmoid_mul_add](fused_gate_sigmoid_mul_add.md) | s0-370923b | 5 测试/22 launch ✓ | 就绪，09-18 首发 |
 
+- **14:45 D1 收官（30/30 用尽）**：五题 8/8 全部刷新/守住——T81 4.345
+  （+44.8%，#4）、T80 200.92（+47%）、T76 1.0564、T78 1.091、T79 守
+  173.36；详见[作战记录](../optimization-batch6-day1-20260918.md)。
+  明日开局：T80 e7 组合（投影 205.3）→ T79 基座重建 → T77 探针 deadline。
 - **10:30 D1 结构轴收口**：T81 双 kernel 亦证伪（2.56 < TB 3.002，华为 -44%
   双 launch 惩罚），s0 单 kernel 两阶段=三结构最优；T79 华为 persistent 判负
   （gather 族反例）；T77 七芯 generic 代理验证通过（18 launch），燧原 vendor
