@@ -5,8 +5,10 @@ task: 79
 operator: create_flashmla_kv_indices
 batch: 6
 validity: valid
-candidate_stage: e2
+platform: completed(17316,e3,8/8,173.2335x≈TB;保s0 173.36;split修正中性)
+candidate_stage: e3
 team_best_stage: s0
+team_best_speedup: 173.3643125
 sealed: no
 next: 华为persistent轴关闭(79.0<门100,gather族反例与T63一致);燧原轴已关(52.2);未破译=华为93→182(GuanghuLab结构)与沐曦124→165;窗口期观察为主
 updated: 2026-09-18
