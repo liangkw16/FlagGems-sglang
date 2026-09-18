@@ -99,10 +99,14 @@ def stage3(device: str) -> dict:
             tl.store(ptr + offs, vals)
 
     results = {}
+    # 8 elements keep BOTH layouts' allocations >= the written span
+    # (A: 8*8B, B: 8*4B >= 32B written by the two-word variant).
     for two_word in (True, False):
-        out = torch.zeros(4, dtype=torch.int64, device=device)
-        _write_words[(1,)](out.view(torch.int32), 4, TWO_WORD=two_word)
-        results["two_word" if two_word else "one_word"] = out.cpu().tolist()
+        out = torch.zeros(8, dtype=torch.int64, device=device)
+        _write_words[(1,)](out.view(torch.int32), 8, TWO_WORD=two_word)
+        results["two_word" if two_word else "one_word"] = out.cpu()[
+            :4
+        ].tolist()
     want = [10, 20, 30, 40]
     verdict = "A" if results["two_word"] == want else ("B" if results["one_word"] == want else "unknown")
     return {"readings": results, "expected": want, "verdict": verdict}
@@ -110,13 +114,15 @@ def stage3(device: str) -> dict:
 
 def stage4(device: str) -> dict:
     prefix = 2**31 - 2  # legal int32 prefix; +arange(4) crosses 2^31
-    want = [prefix + i for i in range(4)]
+    want = [prefix + i for i in range(8)]
     src = torch.tensor(want, dtype=torch.int64, device=device)
     words = src.view(torch.int32)[:8].cpu().tolist()
     return {
         "values": want,
         "words_first8": words,
-        "note": "A: word[1]=1 appears; B: values are lossy/absent",
+        "note": ("A stores hi words (2^31 crossing keeps hi=0 for "
+                 "non-negative values; loss here indicates signed-int32 "
+                 "narrowing, not hi-word sign"),
     }
 
 

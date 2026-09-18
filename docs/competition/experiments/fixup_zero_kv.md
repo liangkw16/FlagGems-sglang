@@ -119,3 +119,12 @@ updated: 2026-09-18
 - 判读：warps 饥饿跨题存在（T81/T80 的沐曦均 +19~28%），但**最优
   warps 按芯分化**（天数/燧原偏好默认 4）。明日 e7 组合：generic 回
   默认 + 新增 metax vendor（warps=8 字节），投影 TB ≈205.3。
+
+### 订正（codex-ask 第五轮核实）
+
+- e6 的燧原 -11% **不能归因 warps**：`num_warps=8` 改在 generic，燧原走
+  独立 vendor（字节未变）——该读数是窗口/测量混淆信号，"燧原偏好默认 4"
+  的表述作废。天数 -10% 的归因保留（天数走 generic）。
+- e7 实施口径：从**当前完整修复版**（含 gap/batch=0/HV）仅撤掉 generic
+  的 `num_warps=8`，并把该配置放进新增 metax vendor——不是整文件回滚
+  e5。
