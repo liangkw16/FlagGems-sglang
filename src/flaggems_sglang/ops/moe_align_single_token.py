@@ -43,7 +43,7 @@ def _moe_align_single_token(
     for base in range(pid * BLOCK, total, nprog * BLOCK):
         o = base + tl.arange(0, BLOCK)
         v = tl.full((BLOCK,), k_numel, dtype=tl.int32)
-        tl.store(sorted_ids + o, v, (o % BLOCK_SZ) != 0)
+        tl.store(sorted_ids + o, v, ((o % BLOCK_SZ) != 0) & (o < total))
     if pid == 0:
         tl.store(num_post, total)
 
