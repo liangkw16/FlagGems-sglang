@@ -14,6 +14,10 @@
 | [T80 fixup_zero_kv](fixup_zero_kv.md) | s0-370923b | 6 测试/16 launch ✓ | 就绪，09-18 首发 |
 | [T81 fused_gate_sigmoid_mul_add](fused_gate_sigmoid_mul_add.md) | s0-370923b | 5 测试/22 launch ✓ | 就绪，09-18 首发 |
 
+- **03:15 D2 收官（30/30 用尽，批 6 扩容六新题全闭环）**：T82 6.131
+  /T85 30.591/T86 2.754/T87 2.761 四题 8/8 首有效或新 TB（T87 距榜首
+  0.8%）；T83 昆仑刀刃容差、T84 华为 reference 崩溃族封存。详见
+  [D2 作战记录](../optimization-batch6-day2-20260919.md)。
 - **14:45 D1 收官（30/30 用尽）**：五题 8/8 全部刷新/守住——T81 4.345
   （+44.8%，#4）、T80 200.92（+47%）、T76 1.0564、T78 1.091、T79 守
   173.36；详见[作战记录](../optimization-batch6-day1-20260918.md)。
