@@ -5,11 +5,11 @@ task: 76
 operator: add3
 batch: 6
 validity: valid
-platform: completed(17220,s0,8/8,0.99170833x;9队档0.91-1.16居~#8)
-candidate_stage: s0
-team_best_stage: s0
+platform: completed(17294,e1,8/8,1.042875x新TB;燧原+72%/华为+23%)
+candidate_stage: e1
+team_best_stage: e1
 sealed: no
-next: 华为0.296/燧原0.438/昆仑0.640 三弱轴 vendor(T73/T75 streaming 配方正例);min 0.2956 门槛无虞;均值>1.17才值得续投
+next: 燧原0.755(vs榜首~1.2)/华为0.363(vs0.462)/昆仑0.640(vs0.82)仍有差距但边际递减;榜首Sweetdeath 1.194;按配额盈余再投
 updated: 2026-09-18
 ```
 
@@ -49,3 +49,11 @@ updated: 2026-09-18
 - 状态：8/8 valid；均值 0.99170833。
 - 逐芯：天数 1.4622 / 沐曦 1.1103 / 燧原 0.4382 / 海光 1.3677 / 昆仑 0.6405 / 华为 0.2956 / A 1.3511 / B 1.2681。
 - 首回执与榜首 GuanghuLab 1.1611 对照：天数 1.46 vs 1.66、A 1.35 vs 1.38 接近；差距集中在华为（0.30 vs 0.42）、燧原（0.44 vs 1.20）、昆仑（0.64 vs 0.73）。
+
+## 2026-09-18 E1 平台终态：双 vendor 兑现，TB 1.042875
+
+- E1（17294，`8b65a43e`）：燧原 streaming vendor 0.4382→**0.7553（+72%）**、
+  华为 persistent vendor 0.2956→**0.3631（+23%）**、A 1.351→1.392；均值
+  **1.042875 新 TB**（vs s0 0.9917，+5.1%）。release 三路径 9+9+9 launch；
+  ZIP `e1-8b65a43` 3 成员。
+- 榜首 Sweetdeath 1.194（17 队过线）；我方差距集中在燧原/华为/昆仑。

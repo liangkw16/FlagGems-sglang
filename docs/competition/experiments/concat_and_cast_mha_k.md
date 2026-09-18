@@ -5,11 +5,11 @@ task: 78
 operator: concat_and_cast_mha_k
 batch: 6
 validity: valid
-platform: completed(17210,s0,8/8,1.07345x)
-candidate_stage: s0
-team_best_stage: s0
+platform: completed(17300,e2,8/8,1.090775x新TB;华为persistent+97%兑现)
+candidate_stage: e2
+team_best_stage: e2
 sealed: no
-next: 燧原 0.3716→0.96 BLOCK 阶梯轴(主战场)+海光 1.55→2.91(T62e12水位)+华为 persistent vendor;min 0.2464 门槛余量充足
+next: 华为轴关闭(0.327超c2flow 0.245);剩余缺口=海光 1.52→1.96+/天数 2.11→2.42/燧原 0.39→0.96;e3 候选=海光窗口观察+燧原结构(未破译)
 updated: 2026-09-18
 ```
 
@@ -49,3 +49,15 @@ updated: 2026-09-18
 - 状态：8/8 valid；均值 1.07345。
 - 逐芯：天数 2.049 / 沐曦 0.9992 / 燧原 0.3716 / 海光 1.5462 / 昆仑 0.281 / 华为 0.2464 / A 1.535 / B 1.5592。
 - 与 T62 e12 逐芯对照：燧原 0.151→0.372(+146%)、昆仑 0.182→0.281 改善；海光 2.911→1.546(-47%)、天数 2.317→2.049 回落——cast 改变 store 宽度或窗口；与榜首 c2flow 差距=燧原 0.59+海光 0.41+天数 0.37。
+
+## 2026-09-18 E1/E2 平台终态：燧原 +8% 后华为 persistent +97%，TB 1.090775
+
+- E1（17292，`8b65a43e`）：燧原 streaming vendor 0.3716→0.4016（+8%，远未及
+  c2flow 0.96）；华为 0.2464→0.1664（-32%，快窗回落）；均值 1.0663 < TB。
+- E2（17300，`0051b001`）：`_ascend` persistent（T62 e13 配方）华为
+  0.1664→**0.3272（+97%）**，超 c2flow 0.2454；均值 **1.090775 新 TB**
+  （vs s0 1.07345，+1.6%）。release 双路径（generic+ascend）37+37 launch；
+  ZIP `e2-0051b00` 含 3 成员（generic/ascend/enflame）。
+- 轴状态：华为 persistent **在 copy 族连续第三次兑现**（T62 e12/e13、
+  T78 e2）；燧原 streaming 配方在 T78 仅 +8%（与 T62 的 0.15-0.33 水位
+  相容，c2flow 0.96 结构未破译）。

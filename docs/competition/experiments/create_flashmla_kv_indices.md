@@ -5,11 +5,11 @@ task: 79
 operator: create_flashmla_kv_indices
 batch: 6
 validity: valid
-platform: completed(17225,e1,8/8,169.69x<TB;保s0 173.36;燧原轴兑现)
-candidate_stage: e1
+platform: completed(17298,e2,8/8,167.19x<TB;保s0 173.36;华为persistent判负)
+candidate_stage: e2
 team_best_stage: s0
 sealed: no
-next: 燧原轴关闭(51.54=榜首51.3持平);最大剩余缺口=沐曦 124→164(+5 avg);昆仑 15.3 稳;他芯窗口回落主导 e1 均值,不判结构
+next: 华为persistent轴关闭(79.0<门100,gather族反例与T63一致);燧原轴已关(52.2);未破译=华为93→182(GuanghuLab结构)与沐曦124→165;窗口期观察为主
 updated: 2026-09-18
 ```
 
@@ -65,3 +65,13 @@ updated: 2026-09-18
 - 判读：燧原轴目标达成即关闭；e1 均值回落是七芯窗口整体降温（同发 T80
   读数正常），不判 vendor 结构回归。下一轴：沐曦（124 vs 榜首 164，
   +5 avg 最大单项）。
+
+## 2026-09-18 E2 平台终态：华为 persistent 判负，gather 族反例第三次确认
+
+- E2（17298，`0051b001`）：`_ascend` persistent 华为 97.54→**78.99（-19%，
+  预注册门 ≥100 未过，轴关闭）**；燧原 52.22（vendor 保持）；均值 167.19
+  < TB s0 173.36（保）。release 双路径全过；ZIP `e2-0051b00` 3 成员。
+- 判读：persistent 增益按 op 族分化——copy/broadcast 族（T62/T78）+35~97%，
+  gather 族（T63/T79）零或负。**配方适用性=按访存形态分类**，入跨芯知识库。
+- 榜单：榜首 c2flow 343.5 为华为 1212 慢窗彩票（次优同芯 182.6）；真实
+  靶子 #2 GuanghuLab 196.7（华为 182.6 另有结构，未破译）。
