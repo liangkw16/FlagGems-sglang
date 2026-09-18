@@ -130,3 +130,18 @@ updated: 2026-09-18
   近 memory-bound，与 T80 HV 中性同理）；A 5.29→5.43；其余窗口持平。
 - 静态机制三连：TB 3.07→3.90（e5 generic）→3.95（e6 vendor）。燧原对
   c2flow 4.4 的差距 2.8x→2.2x。
+
+## 2026-09-18 GitHub 情报：PR #26856 上游同构 kernel 与 e3 判读重释
+
+- `sgl-project/sglang` PR #26856（open，Qwen3.5Opt 系列 2/N，2026-05-31）
+  提交了与本题同名的 `fused_gate_sigmoid_mul_add` Triton kernel：**单行/
+  program、HDIM constexpr、全行单 tile（next_pow2 无上限）、双相位**——
+  与我方 e5 同构；关键差异是 **num_warps 公式钉位**：
+  `max(min(next_pow2(cdiv(hdim,256)), 32 or HIP 16), 4)`（5120/7168 → 32）。
+- **e3 判读重释**：e3 全行 8192 tile 在沐曦/海光 -31/-38% 当时归因
+  "掩码 lane 浪费"；上游同 tile 配 32 warps 可跑——真实根因更可能是
+  **宽 tile × 默认 4 warps 线程不足**。e7 候选=generic 全行单 tile +
+  上游 warps 公式（燧原 vendor 不钉、昆仑 vendor 不动）。
+- 关联：#26727（系列 1/N，共享专家门融合）、#36176（CUDA warp 向量化
+  拷贝基建，T78 背景参考，Triton 不可移植）。竞赛上游 flagos-ai 无第 6
+  批 PR（最新停在 batch3）。
