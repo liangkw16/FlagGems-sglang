@@ -5,12 +5,12 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid
-platform: completed(17318,e4,8/8,200.920075x新TB;e3融合+e4燧原vendor)
-candidate_stage: e4
+platform: completed(17359,e5,8/8,198.06x<TB;保e4 200.92;HV展开中性,gap加固入库)
+candidate_stage: e5
 team_best_stage: e4
 team_best_speedup: 200.920075
 sealed: no
-next: 燧原vendor兑现(14.1→23.5);榜首328为慢窗通胀;剩余=昆仑9.1(clone版vendor可换融合1D)+窗口;最后一掷留明确慢窗信号
+next: HV展开中性(拷贝循环memory-bound,与T81热点循环不同,机制边界记录);gap覆盖加固已随有效提交入库;剩窗口复测+昆仑vendor换融合1D形态可选;最后一掷留明确慢窗信号
 updated: 2026-09-18
 ```
 
@@ -92,3 +92,18 @@ updated: 2026-09-18
 - 判读：codex-ask 排序第一的建议超额兑现（目标沐曦 ≥128，实得 191）。
   融合结构在 launch 敏感芯全面受益；GCU 偏好 clone+patch 分离形态
   （与 T81 双 kernel 的 GCU 反例互补：**融合与否按 chip×op 组合定**）。
+
+## 2026-09-18 E5 平台终态：HV 展开中性，gap 覆盖加固入库，TB 保 e4
+
+- 结构（`cb05292d`）：HV/NH constexpr 静态展开（T81-e5 机制迁移）+
+  **首/尾 gap 覆盖**（cum 边界外 token 由边界段程序拷贝——bench 实证
+  e3/e4 已提交字节在该形状下留下未初始化垃圾，平台形状恰好全覆盖故
+  一直 8/8，属潜伏漏洞）。release 三路径全过。
+- submission **17359** completed/valid，8/8，均值 **198.06 < TB e4
+  200.92**（保 e4）。逐芯 vs e4：燧原 23.5→24.7（+5%）/ 昆仑
+  9.06→9.41（+4%）/ 海光 399→414（+4%）；沐曦 -4%/A -5%/华为 -4%
+  （窗口漂移量级）。判读：**HV 展开机制中性**——T80 的内层循环是
+  trivial 拷贝（memory-bound），与 T81 的点积+FMA 热点循环不同；
+  机制适用边界=循环体内是否有实质控制/计算开销。
+- 正确性加固意义：gap 覆盖修复已在有效提交中入库，防住隐藏 shape
+  触发未初始化输出的风险。
