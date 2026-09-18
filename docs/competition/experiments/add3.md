@@ -5,11 +5,11 @@ task: 76
 operator: add3
 batch: 6
 validity: valid
-platform: completed(17294,e1,8/8,1.042875x新TB;燧原+72%/华为+23%)
-candidate_stage: e1
-team_best_stage: e1
+platform: completed(17393,e2,8/8,1.0564x新TB;燧原8192档+21%过门)
+candidate_stage: e2
+team_best_stage: e2
 sealed: no
-next: 燧原0.755(vs榜首~1.2)/华为0.363(vs0.462)/昆仑0.640(vs0.82)仍有差距但边际递减;榜首Sweetdeath 1.194;按配额盈余再投
+next: 燧原8192档兑现(0.755→0.914,门0.9刚过;纯streaming与T63 gather的8192回落成族边界对照);剩余=昆仑0.64→0.8/沐曦1.11→1.3无新假设;题边际递减,基本收官
 updated: 2026-09-18
 ```
 
@@ -57,3 +57,13 @@ updated: 2026-09-18
   **1.042875 新 TB**（vs s0 0.9917，+5.1%）。release 三路径 9+9+9 launch；
   ZIP `e1-8b65a43` 3 成员。
 - 榜首 Sweetdeath 1.194（17 队过线）；我方差距集中在燧原/华为/昆仑。
+
+## 2026-09-18 E2 平台终态：燧原 8192 档过门，TB 1.0564
+
+- 结构（`12de5169`，单变量）：enflame vendor BLOCK 4096→8192（阶梯越
+  过 T63 峰值档的一档——add3 是纯 streaming，与 T63 的 gather 不同族）。
+- submission **17393** completed/valid，8/8，均值 **1.0564 新 TB**
+  （vs 1.0429，+1.3%）。**燧原 0.7553→0.9139（+21%，预注册门 ≥0.9
+  刚过）**；其余芯窗口持平。
+- 族边界再证：BLOCK 阶梯的峰值档按访存形态分化——gather（T63）峰在
+  4096、纯 streaming（add3）8192 仍上行。
