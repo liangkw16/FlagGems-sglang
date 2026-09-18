@@ -1,59 +1,57 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Kunlun vendor for hash_topk: the tensor-index gather and i64 loads
-# produce garbage ids on XPU (submission 17691), so the wrapper stages it with torch
-# gathers (the T49 precomputed-pos precedent) and the scoring core -
-# sqrt(softplus), renormalisation, shared-expert append - runs as one
-# Triton row kernel over the pre-gathered logits.
+# Kunlun vendor for hash_topk: all three vector forms produced the same
+# garbage-ids fingerprint on XPU (runtime-width addressing suspected),
+# so this is the fully scalar serial form - one program, scalar loops
+# over tokens and slots, no vector ops at all (the T84 precedent).
 
 import torch
 import triton
 import triton.language as tl
 
 
-@triton.jit(do_not_specialize=["rows", "num_routed"])
-def _hash_topk_score(
-    logits_g,
+@triton.jit(do_not_specialize=["rows", "num_routed", "topk", "nshared"])
+def _hash_topk_scalar(
+    router_logits,
+    input_ids,
+    tid2eid,
     out_weights,
     out_ids,
-    eids,
     rows,
     num_routed,
-    topk_real,
-    nshared_real,
+    topk,
+    nshared,
+    rs0,
+    ts0,
     inv_scale,
-    TOPK: tl.constexpr,
-    NSHARED: tl.constexpr,
 ):
-    for row in range(tl.program_id(0), rows, tl.num_programs(0)):
-        base = row.to(tl.int64)
-        width = topk_real + nshared_real
-        offs = tl.arange(0, TOPK)
-        mk = offs < topk_real
-        logits = tl.load(logits_g + base * topk_real + offs, mk, other=0.0)
-        sp = tl.where(
-            logits > 20.0, logits, tl.log(1.0 + tl.exp(logits))
-        )
-        w = tl.sqrt(sp)
-        total = tl.sum(tl.where(mk, w, 0.0), axis=0)
-        wn = w / total
-        tl.store(out_weights + base * width + offs, wn, mk)
-        ids = tl.load(eids + base * topk_real + offs, mk, other=0)
-        tl.store(
-            out_ids + base * width + offs, ids.to(tl.int32), mk
-        )
-        shared = tl.arange(0, NSHARED) + topk_real
-        msh = (shared - topk_real) < nshared_real
-        tl.store(
-            out_weights + base * width + shared,
-            tl.full((NSHARED,), 0.0, tl.float32) + inv_scale,
-            msh,
-        )
-        tl.store(
-            out_ids + base * width + shared,
-            num_routed + (shared - topk_real),
-            msh,
-        )
+    for m in range(tl.program_id(0), rows, tl.num_programs(0)):
+        token = tl.load(input_ids + m).to(tl.int64)
+        total = 0.0
+        for j in range(0, topk):
+            e = tl.load(tid2eid + token * ts0 + j).to(tl.int64)
+            lg = tl.load(router_logits + m.to(tl.int64) * rs0 + e).to(
+                tl.float32
+            )
+            sp = tl.where(lg > 20.0, lg, tl.log(1.0 + tl.exp(lg)))
+            total += tl.sqrt(sp)
+        for j in range(0, topk):
+            e = tl.load(tid2eid + token * ts0 + j).to(tl.int64)
+            lg = tl.load(router_logits + m.to(tl.int64) * rs0 + e).to(
+                tl.float32
+            )
+            sp = tl.where(lg > 20.0, lg, tl.log(1.0 + tl.exp(lg)))
+            w = tl.sqrt(sp) / total
+            tl.store(out_weights + m * (topk + nshared) + j, w)
+            tl.store(out_ids + m * (topk + nshared) + j, e.to(tl.int32))
+        for j in range(0, nshared):
+            tl.store(
+                out_weights + m * (topk + nshared) + topk + j, inv_scale
+            )
+            tl.store(
+                out_ids + m * (topk + nshared) + topk + j,
+                num_routed + j,
+            )
 
 
 def hash_topk(
@@ -66,10 +64,8 @@ def hash_topk(
 ):
     assert scoring_func == "sqrtsoftplus"
     num_tokens, num_routed = router_logits.shape
-    topk_routed = tid2eid.shape[1]
-    expert_ids = tid2eid[input_ids.long()].long()
-    logits_g = torch.gather(router_logits.float(), 1, expert_ids).contiguous()
-    width = topk_routed + num_fused_shared_experts
+    topk = tid2eid.shape[1]
+    width = topk + num_fused_shared_experts
     out_weights = torch.empty(
         (num_tokens, width), dtype=torch.float32,
         device=router_logits.device,
@@ -79,20 +75,19 @@ def hash_topk(
         device=router_logits.device,
     )
     if num_tokens:
-        _hash_topk_score[(min(num_tokens, 2048),)](
-            logits_g,
+        _hash_topk_scalar[(min(num_tokens, 512),)](
+            router_logits,
+            input_ids,
+            tid2eid,
             out_weights,
             out_ids,
-            expert_ids.to(torch.int32),
             num_tokens,
             num_routed,
-            topk_routed,
+            topk,
             num_fused_shared_experts,
+            router_logits.stride(0),
+            tid2eid.stride(0),
             1.0 / routed_scaling_factor,
-            TOPK=triton.next_power_of_2(max(1, topk_routed)),
-            NSHARED=triton.next_power_of_2(
-                max(1, num_fused_shared_experts)
-            ),
         )
     return out_weights, out_ids
 
