@@ -5,12 +5,12 @@ task: 79
 operator: create_flashmla_kv_indices
 batch: 6
 validity: valid
-platform: completed(17316,e3,8/8,173.2335x≈TB;保s0 173.36;split修正中性)
-candidate_stage: e3
+platform: completed(17336,e5,8/8,171.59x<TB;保s0 173.36;静态页块轴判负)
+candidate_stage: e5
 team_best_stage: s0
 team_best_speedup: 173.3643125
 sealed: no
-next: 华为persistent轴关闭(79.0<门100,gather族反例与T63一致);燧原轴已关(52.2);未破译=华为93→182(GuanghuLab结构)与沐曦124→165;窗口期观察为主
+next: 静态页块轴关闭(华为69.1<动态93.7,钳位乘法+全掩空tile浪费>控制流收益);e4双失败定性=507035(华为,钳位修复)+双互补掩码store(昆仑,e3字节vendor修复);华为93→182与沐曦122→165仍未破译;后续基座=e3字节(generic动态+enflame vendor)
 updated: 2026-09-18
 ```
 
@@ -86,3 +86,17 @@ updated: 2026-09-18
   ≈ TB s0 173.3643（差 0.08%，保 s0 名义；e3 ZIP=generic+enflame 为后续
   最佳基座）。
 - 判读：split 修正对昆仑有效、对总量中性；华为 182 结构缺口仍未破译。
+
+## 2026-09-18 E4/E5 平台终态：静态页块轴判负，两起跨芯失败完成定性
+
+- E4（17332，`504e94ea`）：静态单页块/程序（每元素单写者、动态循环消除，
+  代理 +2-7%）。**6/8**：华为 `AclrtSynchronizeStreamWithTimeout 507035`
+  向量核崩溃（整块掩空的 masked load 未钳位地址——T63 generic 同款纪律）；
+  昆仑 8/8 case 全错（同一指针双互补掩码 store 踩 XPU 家族雷）。
+- E5（17336，`6fa9f882`）：masked load 算术钳位（T63 507035 纪律）+
+  `_kunlunxin` vendor 回 e3 动态循环字节——8/8 修复 ✓，但均值 171.59
+  < TB 173.36，**华为 69.1 < 动态形式 93.7（-26%）**：钳位乘法与全掩空
+  tile 的调度浪费超过控制流收益。**轴关闭**。
+- 新增跨芯硬事实：(1) 静态 grid 的整块掩空 tile 必须钳位 masked load
+  地址（华为 507035）；(2) 同指针双互补掩码 store 在昆仑产生全量垃圾
+  （与 2D broadcast store 同族）。两者均已入踩坑表候选。
