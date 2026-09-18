@@ -15,7 +15,7 @@ import triton
 import triton.language as tl
 
 
-@triton.jit(do_not_specialize=["rows", "hdim"])
+@triton.jit(do_not_specialize=["rows"])
 def _fused_gate_sigmoid_mul_add(
     hidden,
     gate_w,
@@ -23,29 +23,34 @@ def _fused_gate_sigmoid_mul_add(
     final,
     out,
     rows,
-    hdim,
     hs0,
     gs,
     ss0,
     fs0,
     os0,
+    HDIM: tl.constexpr,
     BLOCK_H: tl.constexpr,
 ):
     for row in range(tl.program_id(0), rows, tl.num_programs(0)):
         base = row.to(tl.int64)
         acc = tl.zeros((BLOCK_H,), dtype=tl.float32)
-        for h0 in range(0, hdim, BLOCK_H):
+        # HDIM is constexpr: the hidden-dim loop fully unrolls and the
+        # tail mask folds away whenever BLOCK_H divides HDIM (5120 and
+        # 7168 both do) - the runtime-loop control cost the replan
+        # identified disappears without touching tile width, program
+        # count or launch count.
+        for h0 in tl.static_range(0, HDIM, BLOCK_H):
             offs = h0 + tl.arange(0, BLOCK_H)
-            m = offs < hdim
+            m = offs < HDIM
             hv = tl.load(hidden + base * hs0 + offs, m, other=0.0).to(
                 tl.float32
             )
             wv = tl.load(gate_w + offs * gs, m, other=0.0).to(tl.float32)
             acc += hv * wv
         gate = tl.sigmoid(tl.sum(acc, axis=0))
-        for h0 in range(0, hdim, BLOCK_H):
+        for h0 in tl.static_range(0, HDIM, BLOCK_H):
             offs = h0 + tl.arange(0, BLOCK_H)
-            m = offs < hdim
+            m = offs < HDIM
             sv = tl.load(shared + base * ss0 + offs, m, other=0.0).to(
                 tl.float32
             )
@@ -88,12 +93,12 @@ def fused_gate_sigmoid_mul_add(
             final_hidden_states,
             out,
             rows,
-            hdim,
             hidden_states.stride(0),
             gate_weight.stride(0),
             shared_output.stride(0),
             final_hidden_states.stride(0),
             out.stride(0),
+            HDIM=hdim,
             BLOCK_H=block_h,
         )
     return out
