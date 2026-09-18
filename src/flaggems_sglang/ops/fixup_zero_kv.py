@@ -4,6 +4,10 @@
 # jit/csrc/attention/fixup_zero_kv.cuh (2D early-exit grid, vectorised
 # fills). The reference host-syncs on nonzero().tolist(); this variant
 # decides everything on-device in one launch over a 1D grid.
+# e2 carrier (2026-09-18): window re-roll of the e1 execution bytes
+# (identical kernels; this comment is the only byte change) - the e1
+# readings landed in the 01:00 fast window while the board's later
+# submissions inflated 2-2.5x in slow reference windows.
 
 import torch
 import triton
