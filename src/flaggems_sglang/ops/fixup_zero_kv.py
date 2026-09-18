@@ -24,14 +24,15 @@ def _fixup_zero_kv(
     src_lse,
     lens,
     cum,
-    hv,
-    nh,
+    total,
     os0,
     ls0,
     sos0,
     sls0,
     batch,
     ot,
+    HV: tl.constexpr,
+    NH: tl.constexpr,
     BLOCK_T: tl.constexpr,
     BLOCK_V: tl.constexpr,
     BLOCK_H: tl.constexpr,
@@ -48,7 +49,7 @@ def _fixup_zero_kv(
         tiles = tl.cdiv(tokens, BLOCK_T)
         v = tl.arange(0, BLOCK_V).to(tl.int64)
         h = tl.arange(0, BLOCK_H).to(tl.int64)
-        hm = h < nh
+        hm = h < NH
         zeros = tl.zeros((BLOCK_T, BLOCK_V), dtype=out.dtype.element_ty)
         ninf = tl.full(
             (BLOCK_T, BLOCK_H), float("-inf"), dtype=tl.float32
@@ -56,9 +57,12 @@ def _fixup_zero_kv(
         for tile in range(tl.program_id(0) % ot, tiles, ot):
             t = beg + tile * BLOCK_T + tl.arange(0, BLOCK_T).to(tl.int64)
             tm = t < end
-            for v0 in range(0, hv, BLOCK_V):
+            # HV is constexpr (the T81-e5 lesson): the inner sweep
+            # unrolls and the lane mask folds away whenever BLOCK_V
+            # divides the row width (96*128 = 24*512 does).
+            for v0 in tl.static_range(0, HV, BLOCK_V):
                 vv = v0 + v[None, :]
-                m = tm[:, None] & (vv < hv)
+                m = tm[:, None] & (vv < HV)
                 if zero:
                     tl.store(out + t[:, None] * os0 + vv, zeros, m)
                 else:
@@ -70,6 +74,50 @@ def _fixup_zero_kv(
             if zero:
                 tl.store(lse + t[:, None] * ls0 + h[None, :], ninf, m2)
             else:
+                value = tl.load(
+                    src_lse + t[:, None] * sls0 + h[None, :], m2, other=0
+                )
+                tl.store(lse + t[:, None] * ls0 + h[None, :], value, m2)
+        # Tokens outside the cum boundaries keep the input bytes (the
+        # reference clones them untouched): segment 0's programs copy
+        # the head gap [0, cum[0]), the last segment's copy the tail
+        # gap [cum[batch], total). Zero-iteration loops when covered.
+        if seg == 0:
+            for tile in range(
+                tl.program_id(0) % ot, tl.cdiv(beg, BLOCK_T), ot
+            ):
+                t = tile * BLOCK_T + tl.arange(0, BLOCK_T).to(tl.int64)
+                tm = t < beg
+                for v0 in tl.static_range(0, HV, BLOCK_V):
+                    vv = v0 + v[None, :]
+                    m = tm[:, None] & (vv < HV)
+                    value = tl.load(
+                        src_out + t[:, None] * sos0 + vv, m, other=0
+                    )
+                    tl.store(out + t[:, None] * os0 + vv, value, m)
+                m2 = tm[:, None] & hm[None, :]
+                value = tl.load(
+                    src_lse + t[:, None] * sls0 + h[None, :], m2, other=0
+                )
+                tl.store(lse + t[:, None] * ls0 + h[None, :], value, m2)
+        if seg == batch - 1:
+            for tile in range(
+                tl.program_id(0) % ot,
+                tl.cdiv(total - end, BLOCK_T),
+                ot,
+            ):
+                t = end + tile * BLOCK_T + tl.arange(0, BLOCK_T).to(
+                    tl.int64
+                )
+                tm = t < total
+                for v0 in tl.static_range(0, HV, BLOCK_V):
+                    vv = v0 + v[None, :]
+                    m = tm[:, None] & (vv < HV)
+                    value = tl.load(
+                        src_out + t[:, None] * sos0 + vv, m, other=0
+                    )
+                    tl.store(out + t[:, None] * os0 + vv, value, m)
+                m2 = tm[:, None] & hm[None, :]
                 value = tl.load(
                     src_lse + t[:, None] * sls0 + h[None, :], m2, other=0
                 )
@@ -105,14 +153,15 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             lse,
             kv_lens,
             cum_seq_lens,
-            hv,
-            nh,
+            total_tokens,
             out_fixed.stride(0),
             lse_fixed.stride(0),
             out.stride(0),
             lse.stride(0),
             batch,
             ot,
+            HV=hv,
+            NH=nh,
             BLOCK_T=block_t,
             BLOCK_V=512,
             BLOCK_H=triton.next_power_of_2(max(1, nh)),
