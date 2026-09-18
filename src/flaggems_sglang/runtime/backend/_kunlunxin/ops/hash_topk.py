@@ -5,6 +5,11 @@
 # suspect for XPU's garbage-ids fingerprint; constants fold at
 # compile time). Kernel bytes otherwise the generic e2 form.
 
+import torch
+import triton
+import triton.language as tl
+
+
 @triton.jit(do_not_specialize=["rows", "num_routed"])
 def _hash_topk(
     router_logits,
