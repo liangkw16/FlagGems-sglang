@@ -5,11 +5,11 @@ task: 81
 operator: fused_gate_sigmoid_mul_add
 batch: 6
 validity: valid
-platform: completed(17378,e9,8/8,4.306075x新TB;上游warps形态+芯级上限组合)
-candidate_stage: e9
-team_best_stage: e9
+platform: completed(17390,e10,8/8,4.34518333x新TB;沐曦8-warp微涨,超GuanghuLab升#4)
+candidate_stage: e10
+team_best_stage: e10
 sealed: no
-next: GitHub情报三连兑现(e7上游形态→e8芯级warps上限→e9沐曦回退,TB 3.95→4.31);剩余缺口=燧原1.99vs4.4(2.2x)/沐曦4.11vs5.7/天数7.80vs8.5/华为2.31vs2.9;真实靶5.10差18.5%;A轴已平(5.91vs5.9)
+next: 距#3 HAiWORLD 4.3993差0.055;沐曦8-warp仅+1.7%(与海光+12%不同,宽tile收益芯间分化);剩余结构缺口=燧原1.96vs4.4/沐曦4.18vs5.7/天数7.90vs8.5;T81-B双链与T78维度特化待代理筛选
 updated: 2026-09-18
 ```
 
@@ -165,3 +165,14 @@ updated: 2026-09-18
   A 轴已与 c2flow 打平（5.91 vs 5.9）。
 - 新增跨芯硬事实：沐曦线程上限 512@warpsize64、海光 1024@warpsize64
   ——上游 warps 公式在国产芯需按 `threads_limit/warpsize` 换算封顶。
+
+## 2026-09-18 E10 平台终态：沐曦 8-warp 全行 tile，TB 4.34518333（+0.9%）
+
+- 结构（`c66dd3e2`，单变量）：metax vendor 改 8-warp 上限的全行 tile
+  （线程上限 512@ws64 内的最大 warps）。release 六路径全过。
+- submission **17390** completed/valid，8/8，均值 **4.34518333 新 TB**
+  （vs 4.3061，+0.9%）。逐芯：沐曦 4.108→4.179（+1.7%，编译通过但收益
+  有限——与海光 16-warp 的 +12% 分化，宽 tile 收益按芯分化再添一例）；
+  天数 7.90 / A 5.98 / B 4.93 / 华为 2.36 小幅上漂（窗口）。
+- 排名：**超 GuanghuLab（4.32）升 #4**；距 #3 HAiWORLD（4.3993）差
+  0.055，距真实靶 c2flow 5.10 差 17.6%。
