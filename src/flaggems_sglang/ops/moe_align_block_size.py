@@ -1,5 +1,8 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
+# e2r carrier: the e2 execution bytes with a comment-only identity
+# change - submission 17709 scored huawei 0.0 from a reference-side
+# torch_npu RuntimeError (all seven other chips healthy, avg 95.28).
 # The sort/pad every block-tiled fused-MoE GEMM depends on: flatten
 # (token, slot) pairs, group them by expert and pad each expert's run to
 # a block multiple. The harness checks each expert range as a multiset
