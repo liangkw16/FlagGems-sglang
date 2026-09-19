@@ -5,10 +5,10 @@ task: 92
 operator: unpad_draft_extend_output
 batch: 6
 validity: valid
-platform: completed(18310,e1,8/8,109.45x新TB;燧原streaming 3.5→8.5)
-candidate_stage: e1
-team_best_stage: e1
-team_best_speedup: 109.45
+platform: completed(18321,e2,8/8,115.112x新TB;华为persistent 58→106 +83%)
+candidate_stage: e2
+team_best_stage: e2
+team_best_speedup: 115.112
 sealed: no
 next: 首发即108x;轴=燧原3.5/昆仑8.9 vendor(gather/streaming配方);榜首295.62窗口待判
 updated: 2026-09-20
@@ -30,3 +30,10 @@ updated: 2026-09-20
 - submission **18310** completed/valid，8/8，均值 **109.45 新 TB**（+1.1%）。
   **燧原 3.5→8.5（+143%，24-SIP+stages3 配方在 staged-gather 形态兑现）**；
   海光 170→184；华为 68.9→58.1（窗口回落）。
+
+## 2026-09-20 E2 平台终态：华为 persistent +83%，TB 115.112
+
+- submission **18321** completed/valid，8/8，均值 **115.112 新 TB**（vs
+  109.45，+5.2%）。**华为 58.1→106.1（+83%，persistent 配方在 staged-gather
+  形态兑现——与 T79 反例互补：gather 族的 persistent 效果按题分化）**；
+  天数 191.7/A 198.7 窗口新高；燧原 8.9 持平 e1。
