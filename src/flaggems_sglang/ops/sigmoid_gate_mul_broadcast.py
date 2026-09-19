@@ -49,6 +49,7 @@ def sigmoid_gate_mul_broadcast(x, gate):
             out.stride(0),
             HDIM=hdim,
             BLOCK=min(1024, triton.next_power_of_2(max(1, hdim))),
+            num_warps=8,
         )
     return out
 
