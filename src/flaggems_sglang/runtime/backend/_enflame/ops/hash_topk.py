@@ -79,7 +79,7 @@ def hash_topk(
         device=router_logits.device,
     )
     if num_tokens:
-        _hash_topk_score[(min(num_tokens, 2048),)](
+        _hash_topk_score[(min(num_tokens, 24),)](
             logits_g,
             out_weights,
             out_ids,
@@ -93,6 +93,7 @@ def hash_topk(
             NSHARED=triton.next_power_of_2(
                 max(1, num_fused_shared_experts)
             ),
+            num_stages=3,
         )
     return out_weights, out_ids
 
