@@ -1,8 +1,8 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Enflame vendor for moe_topk_sum: the T73/T75 streaming recipe - grid
-# held at the 24-SIP width with the row grid-stride already in the body,
-# BLOCK 4096, num_stages 3, no warps pin.
+# Enflame vendor for moe_topk_sum: 2D [TOPK, BLOCK] tile per row
+# summed over axis 0 - one wide pass over the contiguous topk*hdim
+# span (GCU single-wide-pass preference; leader reads 9.0 vs our 0.8).
 
 import torch
 import triton
@@ -19,20 +19,14 @@ def _moe_topk_sum(x, out, rows, hdim, TOPK: tl.constexpr,
         ):
             offs = h0 + tl.arange(0, BLOCK)
             m = offs < hdim
-            acc = tl.zeros((BLOCK,), dtype=tl.float32)
-            for t in tl.static_range(0, TOPK):
-                acc += tl.load(
-                    x + base + t * hdim + offs,
-                    m,
-                    other=0.0,
-                ).to(tl.float32)
-            tl.store(
-                out + row.to(tl.int64) * hdim + offs,
-                acc.to(out.dtype.element_ty),
-                m,
-            )
-
-
+            tile = tl.load(
+                x + base + tl.arange(0, TOPK)[:, None] * hdim + offs[None, :],
+                m[None, :],
+                other=0.0,
+            ).to(tl.float32)
+            acc = tl.sum(tile, axis=0)
+            tl.store(out + row.to(tl.int64) * hdim + offs,
+                     acc.to(out.dtype.element_ty), m)
 
 
 def moe_topk_sum(x, out):
@@ -42,15 +36,14 @@ def moe_topk_sum(x, out):
     assert x.dtype == out.dtype == torch.bfloat16
     assert x.is_contiguous() and out.is_contiguous()
     if rows and hdim:
-        splits = min(max(1, triton.cdiv(hdim, 4096)), 4)
-        _moe_topk_sum[(min(rows, max(1, 24 // splits)), splits)](
+        block = 512 if topk >= 8 else 1024
+        _moe_topk_sum[(min(rows, 2048), min(triton.cdiv(hdim, block), 255))](
             x,
             out,
             rows,
             hdim,
             TOPK=topk,
-            BLOCK=4096,
-            num_stages=3,
+            BLOCK=block,
         )
     return out
 
