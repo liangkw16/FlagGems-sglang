@@ -1,7 +1,8 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Generic-flat variant: widen the per-row copy to BLOCK 4096 (spans of
-# heads*dim loop 4x at 1024; the leader band suggests wide streaming).
+# Metax vendor for unpad_draft_extend_output: num_warps 8 (the
+# relu2/T86 positive precedents; our muxi reads 100-113 vs the
+# leader's 245).
 
 import torch
 import triton
@@ -63,6 +64,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
             row_span,
             out.stride(0),
             BLOCK=1024,
+            num_warps=8,
         )
     return out
 
