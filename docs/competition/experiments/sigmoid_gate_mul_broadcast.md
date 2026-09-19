@@ -5,10 +5,10 @@ task: 90
 operator: sigmoid_gate_mul_broadcast
 batch: 6
 validity: valid
-platform: completed(18336,e2,8/8,2.495x微幅新TB;hygon回退后恢复)
-candidate_stage: e2
-team_best_stage: e2
-team_best_speedup: 2.495
+platform: completed(18352,e3,8/8,2.517x新TB;天数4.7新高位)
+candidate_stage: e3
+team_best_stage: e3
+team_best_speedup: 2.517
 sealed: no
 next: 行门控HDIM静态展开;轴=燧原0.8/华为1.2(warps/persistent配方);昆仑0.8贴门槛
 updated: 2026-09-20
@@ -30,3 +30,9 @@ updated: 2026-09-20
 - submission **18336** completed/valid，8/8，均值 **2.495 微幅新 TB**（vs
   2.472）。海光 3.8→4.3（回退 warps16 后恢复）；燧原 0.9 持平。距榜首
   3.21 差 29%。
+
+## 2026-09-20 E3 平台终态：微幅新 TB 2.517
+
+- submission **18352** completed/valid，8/8，均值 **2.517 微幅新 TB**（+0.9%）。
+  天数 4.3→4.7；A 3.0 持平（warps8 在 sgmb 的 generic 路径收益小于 relu2
+  ——同配方跨 op 部分迁移）。
