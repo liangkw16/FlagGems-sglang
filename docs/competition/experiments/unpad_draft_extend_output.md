@@ -5,10 +5,10 @@ task: 92
 operator: unpad_draft_extend_output
 batch: 6
 validity: valid
-platform: completed(18329,e3,8/8,113.795x<TB;保e2 115.112;BLOCK4096中性偏负)
-candidate_stage: e3
-team_best_stage: e2
-team_best_speedup: 115.112
+platform: completed(18340,e4,8/8,115.661x新TB;BLOCK回1024+metax w8)
+candidate_stage: e4
+team_best_stage: e4
+team_best_speedup: 115.661
 sealed: no
 next: 首发即108x;轴=燧原3.5/昆仑8.9 vendor(gather/streaming配方);榜首295.62窗口待判
 updated: 2026-09-20
@@ -44,3 +44,9 @@ updated: 2026-09-20
   沐曦 99.9→113.0（+13%）但天数 191.7→184.3 / 海光 172.8→166.4 / B 133.7→
   129.1 同步回落——BLOCK 阶梯按芯分化再添一例。榜首 295.6 的逐芯形态
   （沐曦 245/海光 510）未破译，差距为结构级。
+
+## 2026-09-20 E4 平台终态：BLOCK 回 1024 + metax w8，TB 115.661
+
+- submission **18340** completed/valid，8/8，均值 **115.661 新 TB**（+0.5%）。
+  海光 172.8→201.2（+17%）、B 133.7→142.5（+7%）；沐曦 99.9→82.6（warps8
+  在此题为负——又一次 op×chip 分化）。榜首 295.6 结构差距仍在。
