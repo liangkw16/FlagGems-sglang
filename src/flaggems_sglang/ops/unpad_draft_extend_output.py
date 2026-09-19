@@ -12,22 +12,25 @@ import triton.language as tl
 
 
 @triton.jit
-def _unpad(
-    raw_out, src_row, out, rows, rs0, os0,
-    ROW_SPAN: tl.constexpr,
+def _copy_rows(
+    raw, src_row, out, rows, span, rs0, os0,
     BLOCK: tl.constexpr,
 ):
     for row in range(tl.program_id(0), rows, tl.num_programs(0)):
         src = tl.load(src_row + row) * rs0
         dst = row.to(tl.int64) * os0
+        # row_span stays a RUNTIME arg: the constexpr form of this
+        # loop/mask bound empirically miscompiles to a no-op on the
+        # proxy stack while the runtime form is correct (inverted from
+        # the static-unroll lesson - bounds tied to program_id axes).
         for base in range(
             tl.program_id(1) * BLOCK,
-            ROW_SPAN,
+            span,
             tl.num_programs(1) * BLOCK,
         ):
             offs = base + tl.arange(0, BLOCK)
-            m = offs < ROW_SPAN
-            v = tl.load(raw_out + src + offs, m, other=0)
+            m = offs < span
+            v = tl.load(raw + src + offs, m, other=0)
             tl.store(out + dst + offs, v, m)
 
 
@@ -51,14 +54,17 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
         tok = ar - cu64[seg]
         src_row = (seg * token_per_batch + tok).to(torch.int32)
         row_span = heads * dim
-        _unpad[(min(total, 65535), min(max(1, triton.cdiv(row_span, 1024)), 255))](
+        _copy_rows[(min(total, 65535), min(max(1, triton.cdiv(row_span, 1024)), 255))](
             raw_out,
             src_row,
             out,
             total,
-            raw_out.stride(0),
+            row_span,
+            # src_row is already the flat (b*tpb+t) row id, so the
+            # source row stride is the token-row span, NOT stride(0)
+            # (which counts tpb rows and double-flattens).
+            row_span,
             out.stride(0),
-            ROW_SPAN=row_span,
             BLOCK=1024,
         )
     return out
