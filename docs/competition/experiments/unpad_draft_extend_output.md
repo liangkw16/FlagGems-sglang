@@ -5,8 +5,8 @@ task: 92
 operator: unpad_draft_extend_output
 batch: 6
 validity: valid
-platform: completed(18340,e4,8/8,115.661x新TB;BLOCK回1024+metax w8)
-candidate_stage: e4
+platform: completed(18360,e5,8/8,110.055x<TB;保e4 115.661;metax回退验证-8%一致)
+candidate_stage: e5
 team_best_stage: e4
 team_best_speedup: 115.661
 sealed: no
@@ -50,3 +50,9 @@ updated: 2026-09-20
 - submission **18340** completed/valid，8/8，均值 **115.661 新 TB**（+0.5%）。
   海光 172.8→201.2（+17%）、B 133.7→142.5（+7%）；沐曦 99.9→82.6（warps8
   在此题为负——又一次 op×chip 分化）。榜首 295.6 结构差距仍在。
+
+## 2026-09-20 E5 平台终态：metax 回退一致，TB 保 e4 115.661
+
+- submission **18360** completed/valid，8/8，均值 110.055 < TB 115.661（保
+  e4）。沐曦 82.6→100.2（回退 warps8 后恢复 e2 水位，-18% 判决二次确认）；
+  燧原 8.4→6.2 / A 197→187 窗口回落。

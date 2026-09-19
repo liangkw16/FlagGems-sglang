@@ -5,8 +5,8 @@ task: 85
 operator: moe_align_single_token
 batch: 6
 validity: valid
-platform: completed(18349,e6,8/8,29.991x<TB;保e3;hygon vendor兑现30但窗口回落)
-candidate_stage: e6
+platform: completed(18361,e7,8/8,30.26x<TB;保e3;海光32.1新高位沐曦19.4回温)
+candidate_stage: e7
 team_best_stage: e3
 team_best_speedup: 30.591
 sealed: no
@@ -41,3 +41,11 @@ updated: 2026-09-19
   e3）。海光 29.9 / 燧原 14.3（vendor+generic 组合均健康）；回落来自
   天数 109.7（e3 窗口 117.6）与华为 7.4（e3 窗口 8.2）——**判读：TB
   30.591 含窗口溢价，当前组合结构不低于 e3**。距榜首 32.89 差 9%。
+
+## 2026-09-20 E7 平台终态（当日末发）：30.26 < TB 保 e3，海光 32.1 新高位
+
+- submission **18361** completed/valid（e6 组合的注释载体）。均值 30.26 <
+  TB 30.591（保 e3）。海光 30.3→**32.1**（超过榜首 e5 波段读数 30.8）；
+  沐曦 15.5→19.4 回温；天数仍在冷窗 105。**组合结构优于 e3 判断进一步
+  强化**（三发同字节族 29.9/30.3/32.1 稳定），差榜首 8% 主要是天数/华为
+  窗口项。
