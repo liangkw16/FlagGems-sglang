@@ -5,10 +5,10 @@ task: 89
 operator: relu2
 batch: 6
 validity: valid
-platform: completed(18331,e2,8/8,2.344x新TB;hygon+28% metax+20% warps8)
-candidate_stage: e2
-team_best_stage: e2
-team_best_speedup: 2.344
+platform: completed(18350,e3,8/8,2.497x新TB;天数/A +8% generic warps8)
+candidate_stage: e3
+team_best_stage: e3
+team_best_speedup: 2.497
 sealed: no
 next: 流式elementwise;轴=燧原0.8/昆仑0.8/华为1.1 vendors(streaming配方);榜首差距55%较大
 updated: 2026-09-20
@@ -31,3 +31,9 @@ updated: 2026-09-20
   +7.1%）。**海光 2.5→3.2（+28%）、沐曦 2.0→2.4（+20%，warps8 在 relu2
   双芯为正——与 sgmb 的海光 -10% 互补，确认按 op×chip 组合定）**；华为
   1.0→1.1。距榜首 3.17 差 26%。
+
+## 2026-09-20 E3 平台终态：generic warps8 再兑现，TB 2.497
+
+- submission **18350** completed/valid，8/8，均值 **2.497 新 TB**（vs 2.344，
+  +6.5%）。天数 4.3→4.4 / A 2.5→3.3（+32%，generic 路径芯片受益 warps8）；
+  海光 3.2→3.3 持平。距榜首 3.17 差 21%。
