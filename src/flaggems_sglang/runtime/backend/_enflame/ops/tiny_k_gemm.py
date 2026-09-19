@@ -1,8 +1,8 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Metax vendor for tiny_k_gemm: BLOCK_N 64->32 - the K=256 whole-K dot
-# tile needs 86KB shared memory at BLOCK_N 64, over muxi's 64KB limit
-# (submission 18271 OutOfResources); 32 fits with the same structure.
+# Enflame vendor for tiny_k_gemm: the GCU streaming shape - grid held
+# at the 24-SIP width with the n-block grid-stride already in the body
+# (leader band reads 0.9 vs our 0.6).
 
 import torch
 import triton
@@ -50,7 +50,7 @@ def tiny_k_gemm(x, w, out_dtype):
     assert out_dtype in (torch.bfloat16, torch.float32)
     out = torch.empty((m, n), dtype=out_dtype, device=x.device)
     if m and n:
-        _tiny_k_gemm[(min(triton.cdiv(n, 32), 2048),)](
+        _tiny_k_gemm[(min(triton.cdiv(n, 64), 24),)](
             x,
             w,
             out,
@@ -60,8 +60,8 @@ def tiny_k_gemm(x, w, out_dtype):
             w.stride(0),
             out.stride(0),
             K=k,
-            BLOCK_N=32,
-            num_warps=8,
+            BLOCK_N=64,
+            num_stages=3,
         )
     return out
 
