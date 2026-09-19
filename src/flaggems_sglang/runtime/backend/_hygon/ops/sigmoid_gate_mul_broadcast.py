@@ -1,7 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Hygon vendor for sigmoid_gate_mul_broadcast: num_warps 16 (the T86
-# precedent - hygon recovered +24% at 16 where 8 was not enough).
+# Hygon vendor reverted to generic bytes (warps16 read -10% on
+# submission 18315; the T86-positive recipe does not transfer here).
 
 import torch
 import triton
@@ -48,7 +48,6 @@ def sigmoid_gate_mul_broadcast(x, gate):
             out.stride(0),
             HDIM=hdim,
             BLOCK=min(1024, triton.next_power_of_2(max(1, hdim))),
-            num_warps=16,
         )
     return out
 
