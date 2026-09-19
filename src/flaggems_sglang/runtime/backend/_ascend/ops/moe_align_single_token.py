@@ -44,6 +44,7 @@ def _moe_align_ascend(
 def moe_align_single_token(topk_ids, block_size):
     assert topk_ids.ndim == 2 and topk_ids.shape[0] == 1
     topk = topk_ids.shape[1]
+    assert isinstance(block_size, int) and block_size >= 1
     device = topk_ids.device
     sorted_ids = torch.empty(
         topk * block_size, dtype=torch.int32, device=device
