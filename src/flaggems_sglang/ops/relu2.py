@@ -16,7 +16,9 @@ def _relu2(x, out, numel, BLOCK: tl.constexpr):
         offs = base + tl.arange(0, BLOCK)
         m = offs < numel
         v = tl.load(x + offs, m, other=0.0).to(tl.float32)
-        r = tl.maximum(v, 0.0)
+        # NaN-preserving relu: tl.maximum(nan, 0) returns 0 on this
+        # backend; the where form keeps NaN (nan < 0 is False).
+        r = tl.where(v < 0.0, 0.0, v)
         tl.store(out + offs, (r * r).to(out.dtype.element_ty), m)
 
 
