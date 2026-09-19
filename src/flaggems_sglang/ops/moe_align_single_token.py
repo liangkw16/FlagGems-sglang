@@ -6,6 +6,9 @@
 # ranks come from pairwise comparisons (distinct ids => strict order),
 # the sentinel fill and the per-slot scatter are all 1D stores.
 
+# e7 carrier: e6 composition bytes with a comment-only identity change
+# (the e6 verdict 29.991 carried a cool window; this is the day's final shot).
+
 import torch
 import triton
 import triton.language as tl
