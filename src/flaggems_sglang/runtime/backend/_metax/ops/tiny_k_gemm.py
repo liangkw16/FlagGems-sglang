@@ -50,7 +50,7 @@ def tiny_k_gemm(x, w, out_dtype):
     assert out_dtype in (torch.bfloat16, torch.float32)
     out = torch.empty((m, n), dtype=out_dtype, device=x.device)
     if m and n:
-        _tiny_k_gemm[(min(triton.cdiv(n, 16), 2048),)](
+        _tiny_k_gemm[(min(triton.cdiv(n, 64), 2048),)](
             x,
             w,
             out,
@@ -60,8 +60,9 @@ def tiny_k_gemm(x, w, out_dtype):
             w.stride(0),
             out.stride(0),
             K=k,
-            BLOCK_N=16,
+            BLOCK_N=64,
             num_warps=8,
+            num_stages=1,
         )
     return out
 
