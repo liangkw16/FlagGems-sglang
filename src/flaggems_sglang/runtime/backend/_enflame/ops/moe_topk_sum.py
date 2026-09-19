@@ -11,7 +11,7 @@ import triton.language as tl
 
 @triton.jit(do_not_specialize=["rows", "hdim"])
 def _moe_topk_sum(x, out, rows, hdim, TOPK: tl.constexpr,
-                  BLOCK: tl.constexpr):
+                  TOPK_PAD: tl.constexpr, BLOCK: tl.constexpr):
     for row in range(tl.program_id(0), rows, tl.num_programs(0)):
         base = row.to(tl.int64) * (TOPK * hdim)
         for h0 in tl.range(
@@ -19,9 +19,11 @@ def _moe_topk_sum(x, out, rows, hdim, TOPK: tl.constexpr,
         ):
             offs = h0 + tl.arange(0, BLOCK)
             m = offs < hdim
+            # TOPK_PAD is the pow2 padding; padded rows load 0.
+            tmask = (tl.arange(0, TOPK_PAD) < TOPK)[:, None] & m[None, :]
             tile = tl.load(
-                x + base + tl.arange(0, TOPK)[:, None] * hdim + offs[None, :],
-                m[None, :],
+                x + base + tl.arange(0, TOPK_PAD)[:, None] * hdim + offs[None, :],
+                tmask,
                 other=0.0,
             ).to(tl.float32)
             acc = tl.sum(tile, axis=0)
@@ -43,6 +45,7 @@ def moe_topk_sum(x, out):
             rows,
             hdim,
             TOPK=topk,
+            TOPK_PAD=triton.next_power_of_2(max(1, topk)),
             BLOCK=block,
         )
     return out
