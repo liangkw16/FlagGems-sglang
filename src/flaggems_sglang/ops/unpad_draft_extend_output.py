@@ -13,29 +13,30 @@ import triton.language as tl
 
 @triton.jit(do_not_specialize=["batch", "row_span"])
 def _unpad(
-    raw_out, lens, cum, out, batch, row_span, tps, rs0, os0,
+    raw_out, lens, cum, out, batch, row_span, rs0, os0,
+    TPS: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
     # 1D grid over (batch, token) pairs; token blocks via grid axis 1
-    # keeps the grid inside Enflame's 255 y-limit.
+    # keeps the grid inside Enflame's 255 y-limit. TPS is constexpr so
+    # the decode and the single combined guard fold cheaply.
     pid = tl.program_id(0)
-    seg = pid // tps
-    if seg < batch:
-        tok = pid % tps
-        s = tl.load(lens + seg)
-        if tok < s:
-            beg = tl.load(cum + seg).to(tl.int64)
-            src = (pid.to(tl.int64)) * rs0
-            dst = (beg + tok) * os0
-            for base in range(
-                tl.program_id(1) * BLOCK,
-                row_span,
-                tl.num_programs(1) * BLOCK,
-            ):
-                offs = base + tl.arange(0, BLOCK)
-                m = offs < row_span
-                v = tl.load(raw_out + src + offs, m, other=0)
-                tl.store(out + dst + offs, v, m)
+    seg = pid // TPS
+    tok = pid % TPS
+    s = tl.load(lens + seg)
+    beg = tl.load(cum + seg)
+    active = (seg < batch) & (tok < s)
+    src = tl.where(active, pid, 0).to(tl.int64) * rs0
+    dst = tl.where(active, beg + tok, 0).to(tl.int64) * os0
+    for base in range(
+        tl.program_id(1) * BLOCK,
+        row_span,
+        tl.num_programs(1) * BLOCK,
+    ):
+        offs = base + tl.arange(0, BLOCK)
+        m = (offs < row_span) & active
+        v = tl.load(raw_out + src + offs, m, other=0)
+        tl.store(out + dst + offs, v, m)
 
 
 def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q):
@@ -60,9 +61,9 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
             out,
             bs,
             row_span,
-            max(1, token_per_batch),
             raw_out.stride(0),
             out.stride(0),
+            TPS=max(1, token_per_batch),
             BLOCK=1024,
         )
     return out

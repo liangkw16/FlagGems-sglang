@@ -22,7 +22,10 @@ class Relu2Test(unittest.TestCase):
         for name, module in MODULES:
             with self.subTest(module=name):
                 got = module.relu2(x)
-                torch.testing.assert_close(got.float(), want.float(), rtol=2e-2, atol=2e-2)
+                torch.testing.assert_close(
+                    got.float(), want.float(), rtol=2e-2, atol=2e-2,
+                    equal_nan=(torch.isnan(want).any().item()),
+                )
 
     def test_shapes_and_specials(self):
         for shape in ((1, 1), (7, 1024), (513, 5120), (2049, 3584)):
