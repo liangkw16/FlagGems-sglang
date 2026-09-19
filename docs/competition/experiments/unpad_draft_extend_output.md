@@ -5,10 +5,10 @@ task: 92
 operator: unpad_draft_extend_output
 batch: 6
 validity: valid
-platform: completed(18302,s0,8/8,108.207x首个有效)
-candidate_stage: s0
-team_best_stage: s0
-team_best_speedup: 108.207
+platform: completed(18310,e1,8/8,109.45x新TB;燧原streaming 3.5→8.5)
+candidate_stage: e1
+team_best_stage: e1
+team_best_speedup: 109.45
 sealed: no
 next: 首发即108x;轴=燧原3.5/昆仑8.9 vendor(gather/streaming配方);榜首295.62窗口待判
 updated: 2026-09-20
@@ -24,3 +24,9 @@ updated: 2026-09-20
   等价"探针——均因探针无意改用了正确 stride 而通过，形成"后端随机
   miscompile"假象。教训入账：**怀疑编译器前先字符化每个索引的物理
   含义**（与 T48 维度角色教训同构）。
+
+## 2026-09-20 E1 平台终态：燧原 streaming vendor +143%，TB 109.45
+
+- submission **18310** completed/valid，8/8，均值 **109.45 新 TB**（+1.1%）。
+  **燧原 3.5→8.5（+143%，24-SIP+stages3 配方在 staged-gather 形态兑现）**；
+  海光 170→184；华为 68.9→58.1（窗口回落）。
