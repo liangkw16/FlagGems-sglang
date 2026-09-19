@@ -5,8 +5,8 @@ task: 86
 operator: moe_topk_sum
 batch: 6
 validity: valid
-platform: completed(18255,e5,8/8,2.908x新TB;hygon16-warp+34%)
-candidate_stage: e5
+platform: completed(18337,e6,8/8,2.84x<TB;保e5 2.908;燧原2D-tile中性偏负)
+candidate_stage: e6
 team_best_stage: e5
 team_best_speedup: 2.908
 sealed: no
@@ -44,3 +44,9 @@ updated: 2026-09-19
 - submission **18255** completed/valid，8/8，均值 **2.908 新 TB**（vs 2.754，
   +5.6%）。**海光 4.9→6.1（+24%，e1 后再 +34% 累计）**；天数 4.9；距榜首
   3.73 差 22%。
+
+## 2026-09-20 E6 平台终态：燧原 2D-tile 中性偏负，TB 保 e5 2.908
+
+- submission **18337** completed/valid，8/8，均值 2.84 < TB 2.908（保 e5）。
+  燧原 0.8→0.5（2D [TOPK_PAD, BLOCK] tile 形态在 GCU 为负——榜首 9.0 的
+  结构另有来源，轴关闭）；天数 4.9→5.0 / 海光 6.0 窗口新高。
