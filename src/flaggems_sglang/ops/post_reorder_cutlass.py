@@ -96,6 +96,7 @@ def post_reorder_cutlass(
             TOPK=topk,
             HDIM=hidden_size,
             BLOCK=min(1024, triton.next_power_of_2(max(1, hidden_size))),
+            num_warps=8,
         )
     return out
 
