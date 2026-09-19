@@ -1,0 +1,26 @@
+# Task 92 `unpad_draft_extend_output` 实验记录
+
+```current
+task: 92
+operator: unpad_draft_extend_output
+batch: 6
+validity: valid
+platform: completed(18302,s0,8/8,108.207x首个有效)
+candidate_stage: s0
+team_best_stage: s0
+team_best_speedup: 108.207
+sealed: no
+next: 首发即108x;轴=燧原3.5/昆仑8.9 vendor(gather/streaming配方);榜首295.62窗口待判
+updated: 2026-09-20
+```
+
+## 2026-09-20 S0 首发记录 + 根因复盘
+
+- 结构（`b7ae92fc`）：torch searchsorted 预计算行映射（T49 先例）+
+  纯 gather kernel（2D grid 行×块）。8/8 首个有效 108.207x。
+- **两小时"miscompile 追查"实为自身索引 bug**：src_row 已是展平行号
+  （b*tpb+t），源行 stride 应为 H*D 而非 stride(0)=tpb*H*D（双重展平）。
+  期间构造了 constexpr/runtime/if/mask/i32/i64 六维排查矩阵、多份"语义
+  等价"探针——均因探针无意改用了正确 stride 而通过，形成"后端随机
+  miscompile"假象。教训入账：**怀疑编译器前先字符化每个索引的物理
+  含义**（与 T48 维度角色教训同构）。

@@ -71,5 +71,6 @@
 | 89 | relu2 | valid | completed(18260,s0,8/8,2.043x首个有效;榜首3.17差55%) | s0 2.043x | no | 流式elementwise;轴=燧原0.8/昆仑0.8/华为1.1 vendors(streaming配方);榜首差距55%较大 | 2026-09-20 | [relu2](relu2.md) |
 | 90 | sigmoid_gate_mul_broadcast | valid | completed(18264,s0,8/8,2.472x首个有效;榜首3.21差30%) | s0 2.472x | no | 行门控HDIM静态展开;轴=燧原0.8/华为1.2(warps/persistent配方);昆仑0.8贴门槛 | 2026-09-20 | [sigmoid_gate_mul_broadcast](sigmoid_gate_mul_broadcast.md) |
 | 91 | tiny_k_gemm | valid | completed(18286,e1,8/8,1.953x首个有效#2;距榜首2.02仅3.4%) | s0 1.953x | no | metax BLOCK_N32修复smem后#2;距榜首3.4%:轴=BLOCK_N阶梯(64于非K256形状)/m16rows;昆仑1.1/华为0.8 vendor | 2026-09-20 | [tiny_k_gemm](tiny_k_gemm.md) |
+| 92 | unpad_draft_extend_output | valid | completed(18302,s0,8/8,108.207x首个有效) | s0 108.207x | no | 首发即108x;轴=燧原3.5/昆仑8.9 vendor(gather/streaming配方);榜首295.62窗口待判 | 2026-09-20 | [unpad_draft_extend_output](unpad_draft_extend_output.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md
