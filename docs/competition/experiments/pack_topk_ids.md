@@ -27,3 +27,16 @@ updated: 2026-09-19
   runtime 宽度寻址产生垃圾（hash_topk 三形态同指纹，标量串行为唯一
   可用形态）；GCU make_gcuir 拒张量索引 gather（torch 预 gather 先例
   再证）；XPU bf16 downcast 刀刃值与 eager 差 1 ulp（rtne 显式钉仍差）。
+
+## 2026-09-19 夜 e5 候选就绪（午夜首发第 1 弹）
+
+- 结构（`ced1bda`）：metax vendor = BLOCK 2048 + warps 8（e4 全局 warps8
+  只败在燧原，隔离到 vendor）——榜首逐芯显示**沐曦 1.9 vs 2.4（+26%）单
+  此一项即覆盖 0.8% 的榜差**。预注册门：沐曦 ≥2.2；均值 >2.783 夺 #1。
+- 五元组：commit `ced1bda534a85743285bcfa6178e32df9c1447d2`；
+  ZIP SHA `1cc3d95134785e9feac33520488beb3b9b56f2699c0d4ab3e842f609502ee06a`；
+  test SHA `d493f7af59e7f3605d1713741549510b260aa35a7b6eaf64bb2e67e39e38575a`；
+  回执 SHA `a51a032389eb653a0ac4ea1f383659643a77a6025bf557e0f8a5f666c0132697`
+  （`ready-wave-20260919-night/pack_topk_ids/`，双路径 2 成员）。
+- codex-review：本波 commit 唯一 P1 为已弃 T85 hygon 提取错版（OOB，
+ 亦解释 rw-mast 跨模块污染），与本弹无关；弃弹后重建于干净 commit。

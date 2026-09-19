@@ -27,3 +27,14 @@ updated: 2026-09-19
   runtime 宽度寻址产生垃圾（hash_topk 三形态同指纹，标量串行为唯一
   可用形态）；GCU make_gcuir 拒张量索引 gather（torch 预 gather 先例
   再证）；XPU bf16 downcast 刀刃值与 eager 差 1 ulp（rtne 显式钉仍差）。
+
+## 2026-09-19 夜 e5 候选就绪（午夜首发第 2 弹）
+
+- 结构（`ced1bda`）：hygon vendor = generic（warps 8）提升到 warps 16
+  （T81 先例：海光 16-warp 恢复 +12%）——榜首逐芯显示**海光 4.9 vs
+  6.4-7.1（+30-45%）**为最大缺口。预注册门：海光 ≥5.5；均值 >2.754 换 TB。
+- 五元组：commit `ced1bda534a85743285bcfa6178e32df9c1447d2`；
+  ZIP SHA `cab602040c838480c8b7f9eafc8d3c31f6b1b4751c81e2d077e2d93325239bee`；
+  test SHA `93fc9dd8d253aebafb93078eb81c56c275d254d4f24e05d332fdc009d523c807`；
+  回执 SHA `8a3b37216195275724a92fe846c2a6a9964c7cb8e78778ca4a57299ec215ed65`
+  （`ready-wave-20260919-night/moe_topk_sum/`，四路径 4 成员）。
