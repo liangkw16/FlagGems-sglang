@@ -5,8 +5,8 @@ task: 92
 operator: unpad_draft_extend_output
 batch: 6
 validity: valid
-platform: completed(18321,e2,8/8,115.112x新TB;华为persistent 58→106 +83%)
-candidate_stage: e2
+platform: completed(18329,e3,8/8,113.795x<TB;保e2 115.112;BLOCK4096中性偏负)
+candidate_stage: e3
 team_best_stage: e2
 team_best_speedup: 115.112
 sealed: no
@@ -37,3 +37,10 @@ updated: 2026-09-20
   109.45，+5.2%）。**华为 58.1→106.1（+83%，persistent 配方在 staged-gather
   形态兑现——与 T79 反例互补：gather 族的 persistent 效果按题分化）**；
   天数 191.7/A 198.7 窗口新高；燧原 8.9 持平 e1。
+
+## 2026-09-20 E3 平台终态：BLOCK 4096 中性偏负，TB 保 e2 115.112
+
+- submission **18329** completed/valid，8/8，均值 113.795 < TB 115.112（保 e2）。
+  沐曦 99.9→113.0（+13%）但天数 191.7→184.3 / 海光 172.8→166.4 / B 133.7→
+  129.1 同步回落——BLOCK 阶梯按芯分化再添一例。榜首 295.6 的逐芯形态
+  （沐曦 245/海光 510）未破译，差距为结构级。

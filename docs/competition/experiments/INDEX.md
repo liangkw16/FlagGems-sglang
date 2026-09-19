@@ -71,6 +71,6 @@
 | 89 | relu2 | valid | completed(18314,e1,8/8,2.189x新TB;燧原streaming 0.8→2.0 +150%) | e1 2.189x | no | 流式elementwise;轴=燧原0.8/昆仑0.8/华为1.1 vendors(streaming配方);榜首差距55%较大 | 2026-09-20 | [relu2](relu2.md) |
 | 90 | sigmoid_gate_mul_broadcast | valid | completed(18315,e1,8/8,2.433x≈TB;燧原+12%华为persist无增益) | s0 2.472x | no | 行门控HDIM静态展开;轴=燧原0.8/华为1.2(warps/persistent配方);昆仑0.8贴门槛 | 2026-09-20 | [sigmoid_gate_mul_broadcast](sigmoid_gate_mul_broadcast.md) |
 | 91 | tiny_k_gemm | valid | completed(18308,e2,8/8,1.951x≈TB;metax warps8/燧原streaming中性) | s0 1.953x | no | metax BLOCK_N32修复smem后#2;距榜首3.4%:轴=BLOCK_N阶梯(64于非K256形状)/m16rows;昆仑1.1/华为0.8 vendor | 2026-09-20 | [tiny_k_gemm](tiny_k_gemm.md) |
-| 92 | unpad_draft_extend_output | valid | completed(18321,e2,8/8,115.112x新TB;华为persistent 58→106 +83%) | e2 115.112x | no | 首发即108x;轴=燧原3.5/昆仑8.9 vendor(gather/streaming配方);榜首295.62窗口待判 | 2026-09-20 | [unpad_draft_extend_output](unpad_draft_extend_output.md) |
+| 92 | unpad_draft_extend_output | valid | completed(18329,e3,8/8,113.795x<TB;保e2 115.112;BLOCK4096中性偏负) | e2 115.112x | no | 首发即108x;轴=燧原3.5/昆仑8.9 vendor(gather/streaming配方);榜首295.62窗口待判 | 2026-09-20 | [unpad_draft_extend_output](unpad_draft_extend_output.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md
