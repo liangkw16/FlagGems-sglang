@@ -20,32 +20,28 @@ def _moe_align_single_token(
     k_numel,
     total,
     TOPK: tl.constexpr,
-    KREAL: tl.constexpr,
-    BLOCK_SZ: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
-    # E4: one program per slot (its rank via scalar comparisons against
-    # all others) plus a grid-strided sentinel fill - the single-program
-    # form serialised everything.
-    pid = tl.program_id(0)
-    nprog = tl.num_programs(0)
-    if pid < KREAL:
-        mine = tl.load(topk + pid)
-        rank = 0
-        for j in range(0, KREAL):
-            other = tl.load(topk + j)
-            if other < mine:
-                rank += 1
-        tl.store(expert_ids + rank, mine)
-        tl.store(sorted_ids + rank * BLOCK_SZ, pid)
-    # Sentinel fill skips the block heads (rank * BLOCK_SZ) - the
-    # slot programs own those elements; no ordering between programs.
-    for base in range(pid * BLOCK, total, nprog * BLOCK):
+    offs = tl.arange(0, TOPK)
+    mk = offs < k_numel
+    ids = tl.load(topk + offs, mk, other=2147483647)
+    # rank[i] = number of ids smaller than ids[i]; distinct ids make
+    # this a permutation of 0..k-1 without any sort call. The scalar-
+    # loop form avoids the [TOPK, TOPK] 2D compare tensor (uni_sram
+    # overflow on XPU, linalg conversion failure on Ascend).
+    rank = tl.zeros((TOPK,), dtype=tl.int32)
+    for j in tl.static_range(0, TOPK):
+        other = tl.load(topk + j)
+        if j < k_numel:
+            rank += (ids > other).to(tl.int32)
+            rank += (ids == other).to(tl.int32) * (offs < j).to(tl.int32)
+    tl.store(expert_ids + rank, ids, mk)
+    sentinel_fill = tl.full((BLOCK,), k_numel, dtype=tl.int32)
+    for base in range(0, total, BLOCK):
         o = base + tl.arange(0, BLOCK)
-        v = tl.full((BLOCK,), k_numel, dtype=tl.int32)
-        tl.store(sorted_ids + o, v, ((o % BLOCK_SZ) != 0) & (o < total))
-    if pid == 0:
-        tl.store(num_post, total)
+        tl.store(sorted_ids + o, sentinel_fill, o < total)
+    tl.store(sorted_ids + rank * (total // k_numel), offs, mk)
+    tl.store(num_post, total)
 
 
 def moe_align_single_token(topk_ids, block_size):
@@ -59,8 +55,7 @@ def moe_align_single_token(topk_ids, block_size):
     )
     expert_ids = torch.empty(topk, dtype=torch.int32, device=device)
     num_post = torch.empty(1, dtype=torch.int32, device=device)
-    fill_progs = min(4096, triton.cdiv(topk * block_size, 1024))
-    _moe_align_single_token[(max(topk, fill_progs),)](
+    _moe_align_single_token[(1,)](
         topk_ids,
         sorted_ids,
         expert_ids,
@@ -68,8 +63,6 @@ def moe_align_single_token(topk_ids, block_size):
         topk,
         topk * block_size,
         TOPK=triton.next_power_of_2(max(1, topk)),
-        KREAL=topk,
-        BLOCK_SZ=block_size,
         BLOCK=1024,
     )
     return sorted_ids, expert_ids, num_post
