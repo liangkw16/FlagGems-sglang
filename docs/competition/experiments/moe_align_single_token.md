@@ -5,8 +5,8 @@ task: 85
 operator: moe_align_single_token
 batch: 6
 validity: valid
-platform: completed(18347,e5,8/8,28.928x<TB;保e3;hygon scalar-if+并行填30.3新高位)
-candidate_stage: e5
+platform: completed(18349,e6,8/8,29.991x<TB;保e3;hygon vendor兑现30但窗口回落)
+candidate_stage: e6
 team_best_stage: e3
 team_best_speedup: 30.591
 sealed: no
@@ -34,3 +34,10 @@ updated: 2026-09-19
   e3）。**海光 22.2→30.3（+37%，scalar-if 单程序 ranks + 256 并行填充——
   已达榜首档 30.8）**；但燧原 15.6→7.7 / 华为 8.2→7.7 / 天数 117.6→107.8
   窗口回落抵消。组合弹（hygon vendor + e3 其余芯）为下一发明确候选。
+
+## 2026-09-20 E6 平台终态：组合兑现但仍低于窗口期 TB
+
+- submission **18349** completed/valid，8/8，均值 29.991 < TB 30.591（保
+  e3）。海光 29.9 / 燧原 14.3（vendor+generic 组合均健康）；回落来自
+  天数 109.7（e3 窗口 117.6）与华为 7.4（e3 窗口 8.2）——**判读：TB
+  30.591 含窗口溢价，当前组合结构不低于 e3**。距榜首 32.89 差 9%。
