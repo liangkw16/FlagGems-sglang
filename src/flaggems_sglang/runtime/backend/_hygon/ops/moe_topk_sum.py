@@ -1,9 +1,8 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Reduce each token's per-expert MoE output: out[m, k] =
-# sum_t x[m, t, k] accumulated in fp32 and rounded back to bf16.
-# Pure bandwidth; TOPK is constexpr so the reduction unrolls fully
-# (the batch-6 static-unroll mechanism).
+# Hygon vendor for moe_topk_sum: the warps pin raised to 16 (the T81
+# precedent: hygon recovered +12% at 16 warps where 8 was not enough;
+# hygon reads 4.9 vs the leader band 6.4-7.1).
 
 import torch
 import triton
@@ -49,7 +48,7 @@ def moe_topk_sum(x, out):
             hdim,
             TOPK=topk,
             BLOCK=1024,
-            num_warps=8,
+            num_warps=16,
         )
     return out
 

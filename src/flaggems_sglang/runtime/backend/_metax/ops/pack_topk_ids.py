@@ -1,10 +1,9 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Pack (expert_id, weight) route pairs into one int32 - the FlashInfer
-# TRT-LLM routed-MoE layout: out = (ids << 16) | (bf16 weight bits).
-# The bf16 truncation is the contract (low halfword is the bf16 bit
-# pattern, not a rounded fixed-point value). Pure elementwise int/bit
-# work; all stores 1D.
+# Metax vendor for pack_topk_ids: BLOCK 2048 with the 8-warp pin -
+# muxi reads 1.9 vs the leader's 2.4 (the e4 global warps-8 hurt only
+# enflame; isolated here it targets the +26% muxi gap that alone
+# covers the 0.8% distance to rank 1).
 
 import torch
 import triton
@@ -44,6 +43,7 @@ def pack_topk_ids(topk_ids, topk_weights):
             out,
             numel,
             BLOCK=2048,
+            num_warps=8,
         )
     return out
 

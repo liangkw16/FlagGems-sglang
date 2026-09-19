@@ -1,9 +1,9 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Scalar-serial vendor for moe_align_single_token (kunlun + haiguang):
-# XPU fails to translate the vector rank forms and haiguang showed a
-# 2/512 rank edge; this pure-scalar nested-loop form has no vector ops
-# at all and computes ranks by direct pairwise comparison.
+# Hygon vendor for moe_align_single_token: the parallel per-slot form
+# (one program per slot + grid-strided sentinel fill) - hygon reads
+# 22.2 on the scalar fallback vs the leader band 29.1-30.8; this form
+# was proxy-correct but never ran on hygon (the scalar vendor did).
 
 import torch
 import triton
@@ -11,50 +11,65 @@ import triton.language as tl
 
 
 @triton.jit
-def _moe_align_scalar(
+def _moe_align_single_token(
     topk,
     sorted_ids,
     expert_ids,
     num_post,
     k_numel,
     total,
-    block_sz,
-    buf_numel,
+    TOPK: tl.constexpr,
+    KREAL: tl.constexpr,
+    BLOCK_SZ: tl.constexpr,
+    BLOCK: tl.constexpr,
 ):
-    for base in range(0, buf_numel, 1024):
-        o = base + tl.arange(0, 1024)
-        v = tl.full((1024,), k_numel, dtype=tl.int32)
-        tl.store(sorted_ids + o, v, o < buf_numel)
-    for i in range(0, k_numel):
+    # E4: one program per slot (its rank via scalar comparisons against
+    # all others) plus a grid-strided sentinel fill - the single-program
+    # form serialised everything.
+    pid = tl.program_id(0)
+    nprog = tl.num_programs(0)
+    if pid < KREAL:
+        mine = tl.load(topk + pid)
         rank = 0
-        vi = tl.load(topk + i)
-        for j in range(0, k_numel):
-            vj = tl.load(topk + j)
-            if vj < vi:
+        for j in range(0, KREAL):
+            other = tl.load(topk + j)
+            if other < mine:
                 rank += 1
-        tl.store(expert_ids + rank, vi)
-        tl.store(sorted_ids + rank * block_sz, i)
-    tl.store(num_post, total)
+        tl.store(expert_ids + rank, mine)
+        tl.store(sorted_ids + rank * BLOCK_SZ, pid)
+    # Sentinel fill skips the block heads (rank * BLOCK_SZ) - the
+    # slot programs own those elements; no ordering between programs.
+    for base in range(pid * BLOCK, total, nprog * BLOCK):
+        o = base + tl.arange(0, BLOCK)
+        v = tl.full((BLOCK,), k_numel, dtype=tl.int32)
+        tl.store(sorted_ids + o, v, (o % BLOCK_SZ) != 0)
+    if pid == 0:
+        tl.store(num_post, total)
 
 
 def moe_align_single_token(topk_ids, block_size):
     assert topk_ids.ndim == 2 and topk_ids.shape[0] == 1
     topk = topk_ids.shape[1]
+    assert topk_ids.dtype == torch.int32
+    assert isinstance(block_size, int) and block_size >= 1
     device = topk_ids.device
     sorted_ids = torch.empty(
         topk * block_size, dtype=torch.int32, device=device
     )
     expert_ids = torch.empty(topk, dtype=torch.int32, device=device)
     num_post = torch.empty(1, dtype=torch.int32, device=device)
-    _moe_align_scalar[(1,)](
+    fill_progs = min(4096, triton.cdiv(topk * block_size, 1024))
+    _moe_align_single_token[(max(topk, fill_progs),)](
         topk_ids,
         sorted_ids,
         expert_ids,
         num_post,
         topk,
         topk * block_size,
-        block_size,
-        sorted_ids.numel(),
+        TOPK=triton.next_power_of_2(max(1, topk)),
+        KREAL=topk,
+        BLOCK_SZ=block_size,
+        BLOCK=1024,
     )
     return sorted_ids, expert_ids, num_post
 
