@@ -5,10 +5,10 @@ task: 87
 operator: pack_topk_ids
 batch: 6
 validity: valid
-platform: completed(17740,e3,8/8,2.761x新TB#3距榜首0.8%)
-candidate_stage: e3
-team_best_stage: e3
-team_best_speedup: 2.761
+platform: completed(18252,e5,8/8,2.77x微幅新TB;沐曦2.0未到门)
+candidate_stage: e5
+team_best_stage: e5
+team_best_speedup: 2.77
 sealed: no
 next: e1 i32位转换vendor修复昆仑→e3 BLOCK2048(+2.3%新TB);e2 4096回退/e4 warps8微回;距榜首2.783仅0.8%,BLOCK 2048为峰档
 updated: 2026-09-19
@@ -40,3 +40,9 @@ updated: 2026-09-19
   （`ready-wave-20260919-night/pack_topk_ids/`，双路径 2 成员）。
 - codex-review：本波 commit 唯一 P1 为已弃 T85 hygon 提取错版（OOB，
  亦解释 rw-mast 跨模块污染），与本弹无关；弃弹后重建于干净 commit。
+
+## 2026-09-20 E5 平台终态：微幅新 TB 2.77，沐曦门未过
+
+- submission **18252** completed/valid，8/8，均值 **2.77 新 TB**（+0.3%）。
+  沐曦 1.9→2.0（未到 2.2 门——8 warps 在此题收益有限）；榜首升至 3.58
+  （Sweetdeath 4096 档），差距扩至 29%。

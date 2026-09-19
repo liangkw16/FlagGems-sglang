@@ -5,10 +5,10 @@ task: 86
 operator: moe_topk_sum
 batch: 6
 validity: valid
-platform: completed(17752,e3,8/8,2.754x新TB;warps8第四次兑现)
-candidate_stage: e3
-team_best_stage: e3
-team_best_speedup: 2.754
+platform: completed(18255,e5,8/8,2.908x新TB;hygon16-warp+34%)
+candidate_stage: e5
+team_best_stage: e5
+team_best_speedup: 2.908
 sealed: no
 next: e1双vendor(燧原streaming+100%/华为persistent+27%)→e3 warps=8(+9.7%,海光+36%);e2 BLOCK2048回退/e4 warps16沐曦超限;距榜首3.729差26%;轴:天数4.8/沐曦2.6/海光4.9-6.0仍有空间
 updated: 2026-09-19
@@ -38,3 +38,9 @@ updated: 2026-09-19
   test SHA `93fc9dd8d253aebafb93078eb81c56c275d254d4f24e05d332fdc009d523c807`；
   回执 SHA `8a3b37216195275724a92fe846c2a6a9964c7cb8e78778ca4a57299ec215ed65`
   （`ready-wave-20260919-night/moe_topk_sum/`，四路径 4 成员）。
+
+## 2026-09-20 E5 平台终态：hygon 16-warp +34%，TB 2.908
+
+- submission **18255** completed/valid，8/8，均值 **2.908 新 TB**（vs 2.754，
+  +5.6%）。**海光 4.9→6.1（+24%，e1 后再 +34% 累计）**；天数 4.9；距榜首
+  3.73 差 22%。
