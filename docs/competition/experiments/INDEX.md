@@ -68,8 +68,8 @@
 | 86 | moe_topk_sum | valid | completed(18255,e5,8/8,2.908x新TB;hygon16-warp+34%) | e5 2.908x | no | e1双vendor(燧原streaming+100%/华为persistent+27%)→e3 warps=8(+9.7%,海光+36%);e2 BLOCK2048回退/e4 warps16沐曦超限;距榜首3.729差26%;轴:天数4.8/沐曦2.6/海光4.9-6.0仍有空间 | 2026-09-19 | [moe_topk_sum](moe_topk_sum.md) |
 | 87 | pack_topk_ids | valid | completed(18252,e5,8/8,2.77x微幅新TB;沐曦2.0未到门) | e5 2.77x | no | e1 i32位转换vendor修复昆仑→e3 BLOCK2048(+2.3%新TB);e2 4096回退/e4 warps8微回;距榜首2.783仅0.8%,BLOCK 2048为峰档 | 2026-09-19 | [pack_topk_ids](pack_topk_ids.md) |
 | 88 | post_reorder_cutlass | valid | completed(18312,e1,8/8,16.643x<TB;燧原streaming中性保s0) | s0 16.916x | no | slot静态展开fp32合并;海光48.9领先;轴=燧原1.1vs?/昆仑3.1 vendor;TOPK展开已用 | 2026-09-20 | [post_reorder_cutlass](post_reorder_cutlass.md) |
-| 89 | relu2 | valid | completed(18260,s0,8/8,2.043x首个有效;榜首3.17差55%) | s0 2.043x | no | 流式elementwise;轴=燧原0.8/昆仑0.8/华为1.1 vendors(streaming配方);榜首差距55%较大 | 2026-09-20 | [relu2](relu2.md) |
-| 90 | sigmoid_gate_mul_broadcast | valid | completed(18264,s0,8/8,2.472x首个有效;榜首3.21差30%) | s0 2.472x | no | 行门控HDIM静态展开;轴=燧原0.8/华为1.2(warps/persistent配方);昆仑0.8贴门槛 | 2026-09-20 | [sigmoid_gate_mul_broadcast](sigmoid_gate_mul_broadcast.md) |
+| 89 | relu2 | valid | completed(18314,e1,8/8,2.189x新TB;燧原streaming 0.8→2.0 +150%) | e1 2.189x | no | 流式elementwise;轴=燧原0.8/昆仑0.8/华为1.1 vendors(streaming配方);榜首差距55%较大 | 2026-09-20 | [relu2](relu2.md) |
+| 90 | sigmoid_gate_mul_broadcast | valid | completed(18315,e1,8/8,2.433x≈TB;燧原+12%华为persist无增益) | s0 2.472x | no | 行门控HDIM静态展开;轴=燧原0.8/华为1.2(warps/persistent配方);昆仑0.8贴门槛 | 2026-09-20 | [sigmoid_gate_mul_broadcast](sigmoid_gate_mul_broadcast.md) |
 | 91 | tiny_k_gemm | valid | completed(18308,e2,8/8,1.951x≈TB;metax warps8/燧原streaming中性) | s0 1.953x | no | metax BLOCK_N32修复smem后#2;距榜首3.4%:轴=BLOCK_N阶梯(64于非K256形状)/m16rows;昆仑1.1/华为0.8 vendor | 2026-09-20 | [tiny_k_gemm](tiny_k_gemm.md) |
 | 92 | unpad_draft_extend_output | valid | completed(18310,e1,8/8,109.45x新TB;燧原streaming 3.5→8.5) | e1 109.45x | no | 首发即108x;轴=燧原3.5/昆仑8.9 vendor(gather/streaming配方);榜首295.62窗口待判 | 2026-09-20 | [unpad_draft_extend_output](unpad_draft_extend_output.md) |
 
