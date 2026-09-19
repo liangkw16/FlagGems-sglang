@@ -1,9 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Small-K / large-N GEMM: out = x @ w.T with m <= 16 and k in
-# {128, 256}. One program per N block computes the full [M, BLOCK_N]
-# output tile with tl.dot over the whole (constexpr) K in a single
-# pass; x is padded to 16 rows by mask (tl.dot's minimum M).
+# tianshu vendor for tiny_k_gemm: BLOCK_N 64 (generic bytes) with
+# num_warps 8 (tianshu reads 2.8).
 
 import torch
 import triton
@@ -62,6 +60,7 @@ def tiny_k_gemm(x, w, out_dtype):
             out.stride(0),
             K=k,
             BLOCK_N=64,
+            num_warps=8,
         )
     return out
 
