@@ -198,3 +198,13 @@ updated: 2026-09-20
 - 五元组：commit `1558b04e8ae614f506c4cb86b826c0486625e72a`；ZIP SHA `a8a1fd51d436ccb02f0b40f8e5be5b78c71470333d0e493b6852a2e6601f3aed`；test
   `6c9f5e2624cde0d03723a01adee2f771af90bdadf2ff7cf5728dccb36ea467c6`；
   回执 `top1day-20260921f/` SHA `7604fc12f5d24e582577fea7065f7063ef045ce999ae191e85fd3f28496b9566`。
+
+## 2026-09-21 E13 候选就绪并发射（天数轴 + 六探针组装）
+
+- 结构（`55531b9c`）：generic（**天数专用**——七 vendor 槽齐备后 generic
+  只跑天数）BLOCK 4096→8192；同时吸收 e12 全部探针（ascend 16384+st2、
+  nvidia 16384、amd 2048、enflame 16384+st4、metax st4、kunlunxin 1024）。
+  e12 因上传中断未发射，探针并入本弹。预注册门：天数 ≥420；均值 >322。
+- 五元组：commit `55531b9c2ab30a10f900ea292abfad2af8519950`；ZIP SHA `74217bdb82107d48b95d8fe1ed884763b563b38119567499f2d5db1b690c5180`；test
+  `6c9f5e2624cde0d03723a01adee2f771af90bdadf2ff7cf5728dccb36ea467c6`；
+  回执 `top1day-20260921g/` SHA `4b49a510f52379dd3ece17d74cdfb2e8b20952ce3f54a8346f868950fe87ee03`。
