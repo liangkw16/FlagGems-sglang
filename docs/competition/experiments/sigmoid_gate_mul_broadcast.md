@@ -64,3 +64,10 @@ updated: 2026-09-20
   test `449328d06e44d64f3add4b2ee8c36db6c770140e7dedea3ef78d078ba5874d2d`；
   回执 `top1day-20260921/sigmoid_gate_mul_broadcast/` SHA
   `fc831bff01a55d3fbca07d36ea28267b86921c8af8eba2a65b7fa8a68df7956c`。
+
+## 2026-09-21 00:37 E5 平台终态：燧原 0.63 判负，行形式在 GCU 双向失败
+
+- submission completed/valid，均值 2.5205 ≈ e4（2.5247，保 e4 TB）。
+  燧原 0.77→**0.63**：24-SIP 封顶（0.77）与全网格 generic 字节（0.63）
+  均远低于场带 2.5-3.4——行形式+HDIM 静态展开在 GCU 病理，程序数多寡
+  两个方向都更差。**燧原轴关闭**（需第三方结构情报）。
