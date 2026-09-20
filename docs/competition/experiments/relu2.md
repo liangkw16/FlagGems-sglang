@@ -46,3 +46,10 @@ updated: 2026-09-20
 - 五元组：commit `f3b8cad1`；ZIP `e4-f3b8cad` SHA
   `df172a2c63c43e5de319b4e6790bfab311f011901af406ae5bb0567bf8176bd3`；
   回执 `ready2-wave-20260921/relu2/`（五路径）。
+
+## 2026-09-21 00:10 E4 平台终态：2.5536 新高（+0.057），TB 刷新
+
+- submission completed/valid。逐芯：天数 4.37 / 沐曦 2.37 / 燧原 2.61 /
+  海光 3.24 / 昆仑 0.78 / 华为 1.0 / A 3.33 / B 2.72（enflame 16384 +
+  ascend warps8 部分兑现）。榜首 3.241（EvokeAgent）：差 -0.69 均值，
+  逐芯均匀（-0.4~-1.5），需广谱结构非单芯补洞。
