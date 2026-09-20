@@ -50,3 +50,14 @@ updated: 2026-09-19
 - submission **18337** completed/valid，8/8，均值 2.84 < TB 2.908（保 e5）。
   燧原 0.8→0.5（2D [TOPK_PAD, BLOCK] tile 形态在 GCU 为负——榜首 9.0 的
   结构另有来源，轴关闭）；天数 4.9→5.0 / 海光 6.0 窗口新高。
+
+## 2026-09-21 E8 候选就绪并发射（燧原 vendor 回退 generic 扁平流）
+
+- 结构（`76982f26`）：_enflame 从 2D [TOPK_PAD, BLOCK] tile（读数 0.53，
+  跨步行 tile 违背 GCU flat streaming 偏好）回退 generic 字节（天数同源
+  读 4.96）。预注册门：燧原 ≥2.0；均值 >2.840 换 TB。
+- 五元组：commit `76982f269271ac4c0def557403940ddfe7610bd6`；ZIP `e8-76982f2` SHA
+  `e2696eff1d325c0d7277d5d077c2a6cd4ff5c232f21808d359f5bc622e3adc84`；
+  test `93fc9dd8d253aebafb93078eb81c56c275d254d4f24e05d332fdc009d523c807`；
+  回执 `top1day-20260921/moe_topk_sum/` SHA
+  `8276d759189e1dc7c5dc4b4f65e319761b76ec032fb8d643da71d0f706154c27`。
