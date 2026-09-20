@@ -1,10 +1,13 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Enflame vendor for unpad_draft_extend_output: fixed-P output partition
-# (codex-ask structural axis) - each of the <=24 programs owns a BLOCK-
-# aligned contiguous slab of the OUTPUT and walks segments with scalar
-# upper-bound steps, so per-program work no longer depends on which
-# segment the tiles land in. BLOCK 16384 stays at the measured peak.
+# s0r carrier (2026-09-21 07:20): identical bytes to the e13/e14
+# enflame path; the 2.3 read on submission e14 vs 56.5 on identical bytes
+# is the documented enflame slow window - one comment-carrier re-roll.
+# Enflame vendor for unpad_draft_extend_output: batch-segment copy at
+# BLOCK 16384 with the program count held near the 24-SIP width
+# (tiles = max(1, 24 // bs); the relu2-GCU form). Width ladder evidence:
+# 18.7 @4096 -> 33.6 @8192 -> 55.1 @16384 -> 51.9 @32768 (peak
+# 16384, stages 4 probes deeper pipelining); row/flat-many-program forms read 0.5-0.6.
 
 import torch
 import triton
@@ -12,36 +15,24 @@ import triton.language as tl
 
 
 @triton.jit
-def _unpad_part(
-    raw_out, cum, out, span, tpb, total, bs, cstride,
+def _unpad(
+    raw_out, lens, cum, out, span, tpb, lstride, cstride,
     BLOCK: tl.constexpr,
 ):
-    pid = tl.program_id(0).to(tl.int64)
-    nprog = tl.num_programs(0).to(tl.int64)
-    C = ((total + nprog * BLOCK - 1) // (nprog * BLOCK)) * BLOCK
-    lo = pid * C
-    hi = tl.minimum(lo + C, total)
-    if lo < hi:
-        seg = tl.zeros((), tl.int64)
-        pos = lo
-        while pos < hi:
-            # scalar upper bound: skip (possibly empty) segments ending
-            # at or before pos; pos < total keeps seg+1 within cum
-            while tl.load(cum + (seg + 1) * cstride).to(tl.int64) * span <= pos:
-                seg += 1
-            seg_start = tl.load(cum + seg * cstride).to(tl.int64) * span
-            seg_end = tl.load(cum + (seg + 1) * cstride).to(tl.int64) * span
-            end = tl.minimum(seg_end, hi)
-            src = seg * tpb * span + (pos - seg_start)
-            while pos < end:
-                offs = pos + tl.arange(0, BLOCK)
-                m = offs < end
-                v = tl.load(raw_out + src + (offs - pos), m, other=0)
-                tl.store(out + offs, v, m)
-                # a masked-short block ends exactly at the segment
-                # boundary; advancing by BLOCK would skip the head of
-                # the next segment
-                pos = tl.minimum(pos + BLOCK, end)
+    seg = tl.program_id(0)
+    tile = tl.program_id(1)
+    n = tl.load(lens + seg.to(tl.int64) * lstride)
+    beg = tl.load(cum + seg.to(tl.int64) * cstride)
+    src = seg.to(tl.int64) * tpb * span
+    dst = (beg.to(tl.int64) * span)
+    elems = n.to(tl.int64) * span
+    for base in range(
+        tile.to(tl.int64) * BLOCK, elems, tl.num_programs(1).to(tl.int64) * BLOCK
+    ):
+        offs = base + tl.arange(0, BLOCK)
+        m = offs < elems
+        v = tl.load(raw_out + src + offs, m, other=0)
+        tl.store(out + dst + offs, v, m)
 
 
 def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q):
@@ -56,17 +47,21 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
         dtype=raw_out.dtype,
         device=raw_out.device,
     )
+    span = heads * dim
     if bs and token_per_batch and out.numel():
-        _unpad_part[(min(24, triton.cdiv(out.numel(), 16384)),)](
+        spanchunks = max(1, (token_per_batch * span + 16383) // 16384)
+        tiles = min(spanchunks, max(1, 24 // bs))
+        _unpad[(bs, tiles)](
             raw_out,
+            seq_lens_q,
             cu_seqlens_q,
             out,
-            heads * dim,
+            span,
             token_per_batch,
-            out.numel(),
-            bs,
+            seq_lens_q.stride(0),
             cu_seqlens_q.stride(0),
             BLOCK=16384,
+            num_stages=4,
         )
     return out
 

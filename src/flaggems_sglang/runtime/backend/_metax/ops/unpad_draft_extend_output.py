@@ -42,46 +42,20 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
         dtype=raw_out.dtype,
         device=raw_out.device,
     )
-
-    def tiles_for(units, block):
-        return min(max(1, (token_per_batch * units + block - 1) // block), 255)
-
-
     span = heads * dim
     if bs and token_per_batch and out.numel():
-        # view(torch.uint32) halves the LAST dim, so dim (not span)
-        # must be even and the storage offset must stay aligned
-        if (
-            dim % 2 == 0
-            and raw_out.storage_offset() % 2 == 0
-            and out.storage_offset() % 2 == 0
-        ):
-            # uint32 datapath: same bytes, half the lanes per tile, so
-            # the compiler issues 32-bit accesses instead of 16-bit
-            # (codex-ask axis; element fallback keeps odd spans exact).
-            _unpad[(bs, tiles_for(span // 2, 4096))](
-                raw_out.view(torch.uint32),
-                seq_lens_q,
-                cu_seqlens_q,
-                out.view(torch.uint32),
-                span // 2,
-                token_per_batch,
-                seq_lens_q.stride(0),
-                cu_seqlens_q.stride(0),
-                BLOCK=4096,
-            )
-        else:
-            _unpad[(bs, tiles_for(span, 8192))](
-                raw_out,
-                seq_lens_q,
-                cu_seqlens_q,
-                out,
-                span,
-                token_per_batch,
-                seq_lens_q.stride(0),
-                cu_seqlens_q.stride(0),
-                BLOCK=8192,
-            )
+        tiles = min(max(1, (token_per_batch * span + 8191) // 8192), 255)
+        _unpad[(bs, tiles)](
+            raw_out,
+            seq_lens_q,
+            cu_seqlens_q,
+            out,
+            span,
+            token_per_batch,
+            seq_lens_q.stride(0),
+            cu_seqlens_q.stride(0),
+            BLOCK=8192,
+        )
     return out
 
 
