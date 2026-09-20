@@ -47,7 +47,7 @@ def relu2(input):
     numel = input.numel()
     if numel:
         _relu2[(min(triton.cdiv(numel, 1024), _worker_count(input)),)](
-            input, out, numel, BLOCK=1024
+            input, out, numel, BLOCK=1024, num_warps=8
         )
     return out
 

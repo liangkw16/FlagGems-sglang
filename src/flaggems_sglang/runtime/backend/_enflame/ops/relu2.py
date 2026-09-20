@@ -30,8 +30,8 @@ def relu2(input):
     out = torch.empty_like(input)
     numel = input.numel()
     if numel:
-        _relu2[(min(triton.cdiv(numel, 8192), 24),)](
-            input, out, numel, BLOCK=8192, num_stages=3
+        _relu2[(min(triton.cdiv(numel, 16384), 24),)](
+            input, out, numel, BLOCK=16384, num_stages=3
         )
     return out
 
