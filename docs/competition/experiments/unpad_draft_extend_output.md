@@ -110,3 +110,16 @@ updated: 2026-09-20
   streaming +21% 同源）；沐曦新增 _metax vendor + num_warps 8（relu2
   metax +20% 同源）；华为 BLOCK 2048（更小 tile 更多程序）。潜在
   +40~60 均值 → 330-350 进榜首带。
+
+## 2026-09-21 E8 候选就绪并发射（三 vendor 单变量 pin，一弹三芯归因）
+
+- 结构（`4e5cdc02`）：_enflame BLOCK 8192（T76 阶梯顶 +21% 同源）；
+  **新增 _metax** vendor（generic 字节 + num_warps 8，relu2 metax +20%
+  同源，对标 Fields 沐曦 379）；_ascend BLOCK 2048（更多驻留程序，
+  对标 506-701 带读数）。generic/海光/昆仑/天数/A/B 字节不动。
+- 预注册门：沐曦 ≥300 / 华为 ≥350 / 燧原 ≥40；均值 >320 进终段调优。
+- 五元组：commit `4e5cdc02b22f3c9654405160d648e02dc6182ab8`；ZIP `e8-4e5cdc0` SHA
+  `d0402fd9e0f16a2334c01791376c9d501be8b51537d4bd22cd9b1663ad7e6166`；
+  test `6c9f5e2624cde0d03723a01adee2f771af90bdadf2ff7cf5728dccb36ea467c6`；
+  回执 `top1day-20260921b/unpad_draft_extend_output/` SHA
+  `719f69b7d638c80d3cc5561017fdd6074c4d9ad5ab7229d8b5505c5dc6eb4106`。
