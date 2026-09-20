@@ -217,3 +217,13 @@ updated: 2026-09-20
   st4 无效（247.2）；卡A 16384 饱和（495.8）。
 - **E14 峰值组装**：generic 4096、ascend 16384 plain、enflame 16384+st4、
   metax 8192 plain、nvidia 16384、amd 1024 探窄、kunlunxin 16384 探宽。
+
+## 2026-09-21 E14 候选就绪并发射（峰值组装弹）
+
+- 结构（`c7973b17`）：各芯已知峰回填——generic 4096（天数）、ascend
+  16384 plain（华为 442 峰）、enflame 16384+st4（56.5）、metax 8192 plain、
+  nvidia 16384（卡A 495.8）、amd 1024（卡B 窄向探底）、kunlunxin 16384
+  （昆仑宽向探针）。预注册门：均值 >314.97 换 TB；昆仑 ≥25。
+- 五元组：commit `c7973b17ed109ab0ce6f354141a3531dacd630c8`；ZIP SHA `1b2fe4bc82f87b2d88be15f52f943d84aa20c4c137dff5cbf7f64ecda0decf6e`；test
+  `6c9f5e2624cde0d03723a01adee2f771af90bdadf2ff7cf5728dccb36ea467c6`；
+  回执 `top1day-20260921h/` SHA `afb7f57128d978bb40fdcf98e44861bdeb048a57482373f9bd30b357e79a0dd7`。
