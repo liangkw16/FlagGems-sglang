@@ -84,3 +84,17 @@ updated: 2026-09-20
 - **E7 轴（已锁定）**：把 e6 段拷贝内核移植进三个 vendor 文件
   （纯移植、逐芯同 generic 语义）→ 预计海光 ~600 / 华为 ~500 /
   燧原 ~150 / 昆仑 vendor 后续 → 均值 ~340+ 冲 Top1。
+
+## 2026-09-21 E7R 候选就绪并发射（段拷贝移植三 vendor + int64 修复）
+
+- 结构（`ea745b6d`）：e6 段拷贝内核逐字节移植进 _enflame/_hygon/_ascend
+  （e6 首判：generic 五芯 259-494 vs 旧 vendor 8/169/98）；codex-review
+  P2 修复——`elems = n*span` 与循环基座 int64 化（≥2^31 段元素数静默不写，
+  四文件同修，含 generic）。
+- 预注册门：海光 ≥400 / 华为 ≥300 / 燧原 ≥100（generic 带读数下限）；
+  均值 ≥300 进入 e8 精调（昆仑/沐曦 vendor，对标 Fields 379 / EvokeAgent 480）。
+- 五元组：commit `ea745b6db332ef3b2bd62822d6eca9e1d7862be0`；ZIP `e7r-ea745b6` SHA
+  `9dca7c26e2af189388601aa61b75046ae116ff14de4264c50781340d37206331`；
+  test `6c9f5e2624cde0d03723a01adee2f771af90bdadf2ff7cf5728dccb36ea467c6`；
+  回执 `top1day-20260921/unpad_draft_extend_output/` SHA
+  `07cfc0f5cfac54234d42f61cb94478ece0c0105a84ad06d2511b816cd071b163`。
