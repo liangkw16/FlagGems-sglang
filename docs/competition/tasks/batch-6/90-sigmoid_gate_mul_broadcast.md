@@ -1,12 +1,12 @@
-<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/sigmoid_gate_mul -->
+<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/sigmoid_gate_mul_broadcast -->
 <!-- synced_at: 2026-09-19T23:20:17+08:00 -->
 
-# sigmoid_gate_mul (elementwise/sigmoid_gate_mul)
+# sigmoid_gate_mul_broadcast (elementwise/sigmoid_gate_mul_broadcast)
 
 ## 任务描述
 
-逐元素门控乘，同形操作数：`out = x * sigmoid(gate)`。
-kernel 是对 `x.numel()` 的扁平 1D 扫描，只要两个张量连续，任意 shape 均可。
+行广播门控乘：每行一个标量门控，作用于整个 hidden 维 ——
+`out[n, :] = x[n, :] * sigmoid(gate[n])`。每行一个 program，`BLOCK_SIZE = next_pow2(D)`。
 
 ## 接口签名
 
@@ -14,15 +14,16 @@ kernel 是对 `x.numel()` 的扁平 1D 扫描，只要两个张量连续，任�
 def reference(x, gate)
 ```
 
-> 选手实现的函数签名需与上述 `reference(...)` 完全一致。
+> 选手实现的函数签名需与上述完全一致。
 
 ## 计算定义
 
-- `x` 与 `gate` 同 shape 同 dtype。
+- `x`：`[N, D]`；`gate`：`[N, 1]`。
 - 计算流程：
 
   ```
-  out = x.float() * sigmoid(gate.float())
+  g = sigmoid(gate.reshape(-1, 1).float())
+  out = x.float() * g
   ```
 
   fp32 计算，cast 回 `x.dtype` 存储。
@@ -38,7 +39,8 @@ import torch
 
 
 def reference(x, gate):
-    return (x.float() * torch.sigmoid(gate.float())).to(x.dtype)
+    g = torch.sigmoid(gate.reshape(-1, 1).float())
+    return (x.float() * g).to(x.dtype)
 ```
 
 ## 评分标准

@@ -1,31 +1,31 @@
-<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/sigmoid_gate_mul -->
+<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/relu2 -->
 <!-- synced_at: 2026-09-19T23:20:17+08:00 -->
 
-# sigmoid_gate_mul (elementwise/sigmoid_gate_mul)
+# relu2 (activation_norm/relu2)
 
 ## 任务描述
 
-逐元素门控乘，同形操作数：`out = x * sigmoid(gate)`。
-kernel 是对 `x.numel()` 的扁平 1D 扫描，只要两个张量连续，任意 shape 均可。
+平方 ReLU，逐元素：`out = max(0, x) ** 2`。无门控 —— 与 `*_and_mul` 激活不同，
+这里没有 gate/up 拆分，输出与输入同形。
 
 ## 接口签名
 
 ```python
-def reference(x, gate)
+def reference(input)
 ```
 
-> 选手实现的函数签名需与上述 `reference(...)` 完全一致。
+> 选手实现的函数签名需与上述完全一致。
 
 ## 计算定义
 
-- `x` 与 `gate` 同 shape 同 dtype。
+- 任意 2D fp16/bf16 输入，最后一维为向量化轴。
 - 计算流程：
 
   ```
-  out = x.float() * sigmoid(gate.float())
+  out = relu(x.float()) ** 2
   ```
 
-  fp32 计算，cast 回 `x.dtype` 存储。
+  fp32 计算，cast 回输入 dtype。
 
 ## 正确性判别标准
 
@@ -37,8 +37,9 @@ def reference(x, gate)
 import torch
 
 
-def reference(x, gate):
-    return (x.float() * torch.sigmoid(gate.float())).to(x.dtype)
+def reference(input):
+    x = torch.relu(input.float())
+    return (x * x).to(input.dtype)
 ```
 
 ## 评分标准

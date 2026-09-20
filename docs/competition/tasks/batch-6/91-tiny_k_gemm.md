@@ -1,31 +1,32 @@
-<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/sigmoid_gate_mul -->
+<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/tiny_k_gemm -->
 <!-- synced_at: 2026-09-19T23:20:17+08:00 -->
 
-# sigmoid_gate_mul (elementwise/sigmoid_gate_mul)
+# tiny_k_gemm (gemm/tiny_k_gemm)
 
 ## 任务描述
 
-逐元素门控乘，同形操作数：`out = x * sigmoid(gate)`。
-kernel 是对 `x.numel()` 的扁平 1D 扫描，只要两个张量连续，任意 shape 均可。
+`tiny_n_gemm` 的小 K / 大 N 兄弟：`out = x @ w.T`。一个 warp 的 `K / 8` 条 lane
+针对单个输出列归约 K 维；每个 block 覆盖 `split_n` 列，使 `N / split_n` 的 grid
+恰好填满 SM 且无 tail block。
 
 ## 接口签名
 
 ```python
-def reference(x, gate)
+def reference(x, w, out_dtype)
 ```
 
-> 选手实现的函数签名需与上述 `reference(...)` 完全一致。
+> 选手实现的函数签名需与上述完全一致。
 
 ## 计算定义
 
-- `x` 与 `gate` 同 shape 同 dtype。
+- `x`：`[m, k]` bf16，m <= 16；`w`：`[n, k]` bf16。
+- `k / 8` 必须是 2 的幂且 `<= 32` —— 即 `k` ∈ {128, 256}。
+- `out_dtype`：`torch.bfloat16` 或 `torch.float32`。
 - 计算流程：
 
   ```
-  out = x.float() * sigmoid(gate.float())
+  out = (x.float() @ w.float().t()).to(out_dtype)
   ```
-
-  fp32 计算，cast 回 `x.dtype` 存储。
 
 ## 正确性判别标准
 
@@ -34,11 +35,8 @@ def reference(x, gate)
 ## 参考实现
 
 ```python
-import torch
-
-
-def reference(x, gate):
-    return (x.float() * torch.sigmoid(gate.float())).to(x.dtype)
+def reference(x, w, out_dtype):
+    return (x.float() @ w.float().t()).to(out_dtype)
 ```
 
 ## 评分标准

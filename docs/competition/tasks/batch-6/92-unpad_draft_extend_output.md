@@ -1,35 +1,35 @@
-<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/sigmoid_gate_mul -->
+<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/unpad_draft_extend_output -->
 <!-- synced_at: 2026-09-19T23:20:17+08:00 -->
 
-# sigmoid_gate_mul (elementwise/sigmoid_gate_mul)
+# unpad_draft_extend_output (attention/unpad_draft_extend_output)
 
 ## 任务描述
 
-逐元素门控乘，同形操作数：`out = x * sigmoid(gate)`。
-kernel 是对 `x.numel()` 的扁平 1D 扫描，只要两个张量连续，任意 shape 均可。
+`pad_draft_extend_query` 的逆操作：把 padded 的 `[bs, token_per_batch, H, D]` attention
+输出中接受的行的 gather 成 ragged 的 `[total_tokens, H, D]` 张量。
 
 ## 接口签名
 
 ```python
-def reference(x, gate)
+def reference(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
 ```
 
-> 选手实现的函数签名需与上述 `reference(...)` 完全一致。
+> 选手实现的函数签名需与上述完全一致。
 
 ## 计算定义
 
-- `x` 与 `gate` 同 shape 同 dtype。
+- `raw_out`：`[bs, token_per_batch, H, D]`。
+- `seq_lens_q`：`[bs]` int32 接受长度；`cu_seqlens_q`：`[bs + 1]` int32。
+- `sum_seq_lens_q`：接受 token 总数（输出行数）。
 - 计算流程：
 
   ```
-  out = x.float() * sigmoid(gate.float())
+  output[cu_seqlens_q[b] + t] = raw_out[b, t]   for t < seq_lens_q[b]
   ```
-
-  fp32 计算，cast 回 `x.dtype` 存储。
 
 ## 正确性判别标准
 
-标准 per-dtype tolerance。
+精确（纯数据搬移）。
 
 ## 参考实现
 
@@ -37,8 +37,18 @@ def reference(x, gate)
 import torch
 
 
-def reference(x, gate):
-    return (x.float() * torch.sigmoid(gate.float())).to(x.dtype)
+def reference(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q):
+    bs = seq_lens_q.shape[0]
+    out = torch.empty(
+        (sum_seq_lens_q, raw_out.shape[2], raw_out.shape[3]),
+        dtype=raw_out.dtype,
+        device=raw_out.device,
+    )
+    for b in range(bs):
+        s = int(seq_lens_q[b])
+        beg = int(cu_seqlens_q[b])
+        out[beg : beg + s] = raw_out[b, :s]
+    return out
 ```
 
 ## 评分标准

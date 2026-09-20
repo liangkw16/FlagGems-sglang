@@ -65,15 +65,23 @@ class IndexedScaleShiftTest(unittest.TestCase):
                 self.check((x, shift, scale, idx))
 
     def test_double_round_boundary(self):
-        # 1 + scale lands exactly between two bf16 neighbours: the
-        # explicit intermediate round is the contract.
-        x = torch.ones(16, 16, dtype=torch.bfloat16, device="cuda")
-        scale = torch.full(
-            (1, 16), 2.0**-9, dtype=torch.bfloat16, device="cuda"
-        )
-        shift = torch.zeros(1, 16, dtype=torch.bfloat16, device="cuda")
-        idx = torch.zeros(16, dtype=torch.int32, device="cuda")
-        self.check((x, shift, scale, idx), exact=True)
+        # 1 + scale lands exactly on a bf16 halfway point, where the
+        # explicit intermediate round is the contract. Near 1.0 the bf16
+        # ULP is 2**-7, so 2**-8 ties 1.0 (even mantissa) against
+        # 1 + 2**-7 (odd) and 3*2**-8 ties 1 + 2**-7 (odd) against
+        # 1 + 2**-6 (even); below 1.0 the ULP halves, so -2**-9 ties
+        # 1 - 2**-8 against 1.0. Each tie must resolve round-to-nearest
+        # -even exactly like the reference (with x=1 and shift=0 the
+        # output pins the one_plus round bit-for-bit).
+        for scale_value in (2.0**-8, 3 * 2.0**-8, -(2.0**-9)):
+            with self.subTest(scale=scale_value):
+                x = torch.ones(16, 16, dtype=torch.bfloat16, device="cuda")
+                scale = torch.full(
+                    (1, 16), scale_value, dtype=torch.bfloat16, device="cuda"
+                )
+                shift = torch.zeros(1, 16, dtype=torch.bfloat16, device="cuda")
+                idx = torch.zeros(16, dtype=torch.int32, device="cuda")
+                self.check((x, shift, scale, idx), exact=True)
 
     def test_int32_indices(self):
         x = torch.randn(33, 2048, dtype=torch.bfloat16, device="cuda")
