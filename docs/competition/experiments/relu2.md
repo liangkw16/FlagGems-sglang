@@ -53,3 +53,12 @@ updated: 2026-09-20
   海光 3.24 / 昆仑 0.78 / 华为 1.0 / A 3.33 / B 2.72（enflame 16384 +
   ascend warps8 部分兑现）。榜首 3.241（EvokeAgent）：差 -0.69 均值，
   逐芯均匀（-0.4~-1.5），需广谱结构非单芯补洞。
+
+## 2026-09-21 E5 候选就绪并发射（燧原回退 flat generic 网格）
+
+- 结构（`4e5cdc02`）：_enflame 从 24-SIP 封顶 BLOCK 16384 回退 generic
+  字节（flat 1D，全网格 2048，warps8）——行形式在 GCU 已双败（T90/T86），
+  本弹验证 flat 形态全网格是否兑现（天数同字节读 4.37）。
+  预注册门：燧原 ≥3.0；均值 >2.5536 换 TB。
+- 五元组：commit `4e5cdc02b22f3c9654405160d648e02dc6182ab8`；ZIP `e5-4e5cdc0` SHA `ba5eba9ccb35651ed71519066b8b7fc86109c1361957d1e1b659f3bbfc727db2`；
+  test `37b246090e6274a43e5c2968e5bfa400987c2926e82a81ca42a019ce9f2cfa30`；回执 `top1day-20260921b/relu2/` SHA `eef3070d6f8fc4a765b2f6c68756d140d393674e4d45def066047993b29e6a22`。
