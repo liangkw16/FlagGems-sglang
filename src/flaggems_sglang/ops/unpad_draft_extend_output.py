@@ -15,13 +15,13 @@ import triton.language as tl
 
 @triton.jit
 def _unpad(
-    raw_out, lens, cum, out, span, tpb,
+    raw_out, lens, cum, out, span, tpb, lstride, cstride,
     BLOCK: tl.constexpr,
 ):
     seg = tl.program_id(0)
     tile = tl.program_id(1)
-    n = tl.load(lens + seg)
-    beg = tl.load(cum + seg)
+    n = tl.load(lens + seg.to(tl.int64) * lstride)
+    beg = tl.load(cum + seg.to(tl.int64) * cstride)
     src = seg.to(tl.int64) * tpb * span
     dst = (beg.to(tl.int64) * span)
     elems = n * span
@@ -54,6 +54,8 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
             out,
             span,
             token_per_batch,
+            seq_lens_q.stride(0),
+            cu_seqlens_q.stride(0),
             BLOCK=4096,
         )
     return out

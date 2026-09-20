@@ -45,6 +45,25 @@ class UnpadTest(unittest.TestCase):
                 got = module.unpad_draft_extend_output(*args)
                 torch.testing.assert_close(got.view(torch.uint8), want.contiguous().view(torch.uint8), rtol=0, atol=0)
 
+    def test_strided_len_tensors(self):
+        # lens/cum sliced views must keep semantics (kernel takes strides).
+        lens = (0, 3, 1, 5, 2)
+        heads, dim, tpb = 8, 128, 8
+        cum = [0]
+        for n in lens:
+            cum.append(cum[-1] + n)
+        raw = torch.randn(5, tpb, heads, dim, dtype=torch.bfloat16, device="cuda")
+        dense_lens = torch.tensor(lens + (0,) * 5, dtype=torch.int32, device="cuda")
+        dense_cum = torch.tensor(cum + (cum[-1],) * 5, dtype=torch.int32, device="cuda")
+        self.check(
+            (
+                raw,
+                dense_cum[::2],
+                dense_lens[::2],
+                cum[-1],
+            )
+        )
+
     def test_ragged_and_boundaries(self):
         self.check(make_case())
         self.check(make_case(lens=(0,), tpb=1))
