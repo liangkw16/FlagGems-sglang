@@ -52,3 +52,15 @@ updated: 2026-09-20
 - 榜首 3.206（金狐狸）Δ -0.68 集中四洞：燧原 -1.74、沐曦 -1.03、
   B -0.97、华为 -0.89。天数/昆仑已追平——**vendor 轴（燧原/沐曦/
   B=card_b 无 vendor 位）是下一弹**。
+
+## 2026-09-21 E5 候选就绪并发射（燧原 vendor 去 24-SIP 行封顶）
+
+- 结构（`76982f26`）：_enflame 回退 generic 字节——24-SIP 网格封顶使
+  one-program-per-row 只有 24 个程序（读数 0.77 vs 场带 2.5-3.4），
+  GCU 需要程序级并行而非 SIP 数行循环。预注册门：燧原 ≥2.0；均值
+  >2.5247 换 TB。
+- 五元组：commit `76982f269271ac4c0def557403940ddfe7610bd6`；ZIP `e5-76982f2` SHA
+  `cd0bd7a66201478b16c750df6564d161d397b9a134b9de4ff2fe4e6dc29b7e78`；
+  test `449328d06e44d64f3add4b2ee8c36db6c770140e7dedea3ef78d078ba5874d2d`；
+  回执 `top1day-20260921/sigmoid_gate_mul_broadcast/` SHA
+  `fc831bff01a55d3fbca07d36ea28267b86921c8af8eba2a65b7fa8a68df7956c`。
