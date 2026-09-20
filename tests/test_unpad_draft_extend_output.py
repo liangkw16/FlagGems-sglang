@@ -94,7 +94,7 @@ class UnpadTest(unittest.TestCase):
 
 
 RELEASE_REQUIRED_TESTS = [
-    "UnpadDraftExtendOutputTest.test_u32_fallback_conditions",
+    "UnpadTest.test_u32_fallback_conditions",
     "UnpadTest.test_ragged_and_boundaries",
 ]
 
