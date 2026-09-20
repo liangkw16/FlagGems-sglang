@@ -1,8 +1,9 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Enflame vendor for unpad_draft_extend_output: E6 batch-segment copy at
-# BLOCK 8192 (the T76 streaming ladder top, +21% there; e7r read 18.7 at
-# 4096 vs the 148 leader band - GCU wants wider flat passes).
+# Enflame vendor for unpad_draft_extend_output: batch-segment copy at
+# BLOCK 16384 with the program count held near the 24-SIP width
+# (tiles = max(1, 24 // bs); the relu2-GCU form). Width ladder evidence:
+# 18.7 @4096 -> 33.6 @8192; row/flat-many-program forms read 0.5-0.6.
 
 import torch
 import triton
@@ -44,7 +45,8 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
     )
     span = heads * dim
     if bs and token_per_batch and out.numel():
-        tiles = min(max(1, (token_per_batch * span + 8191) // 8192), 255)
+        spanchunks = max(1, (token_per_batch * span + 16383) // 16384)
+        tiles = min(spanchunks, max(1, 24 // bs))
         _unpad[(bs, tiles)](
             raw_out,
             seq_lens_q,
@@ -54,7 +56,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
             token_per_batch,
             seq_lens_q.stride(0),
             cu_seqlens_q.stride(0),
-            BLOCK=8192,
+            BLOCK=16384,
         )
     return out
 
