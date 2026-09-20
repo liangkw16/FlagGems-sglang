@@ -3,7 +3,7 @@
 # Enflame vendor for relu2: the T76 streaming recipe at BLOCK 32768 -
 # launch held at the 24-SIP width with num_stages 3. The 16384 form read
 # 2.61 (vs 0.5 for the flat full-grid port and 0.63 for row forms);
-# width ladder: 2.61 @16384, 3.3 @32768, targets the 3.8-4.1 field band.
+# width ladder: 2.61 @16384, 3.3 @32768, 3.9 @65536, targets the 3.8-4.1 field band.
 
 import torch
 import triton
@@ -31,8 +31,8 @@ def relu2(input):
     out = torch.empty_like(input)
     numel = input.numel()
     if numel:
-        _relu2[(min(triton.cdiv(numel, 65536), 24),)](
-            input, out, numel, BLOCK=65536, num_stages=3
+        _relu2[(min(triton.cdiv(numel, 131072), 24),)](
+            input, out, numel, BLOCK=131072, num_stages=3
         )
     return out
 

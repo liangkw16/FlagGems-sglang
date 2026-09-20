@@ -1,7 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Hygon vendor for relu2: width ladder BLOCK 4096 on the streaming form
-# (3.24-3.3 @1024 vs the 3.5-4.3 field band).
+# Hygon vendor for relu2: num_warps 8 on the streaming form at BLOCK
+# 1024 (4096 halved the read to 1.8; hygon wants narrow, unlike ascend).
 
 import torch
 import triton
@@ -29,8 +29,8 @@ def relu2(input):
     out = torch.empty_like(input)
     numel = input.numel()
     if numel:
-        _relu2[(min(triton.cdiv(numel, 4096), 2048),)](
-            input, out, numel, BLOCK=4096, num_warps=8
+        _relu2[(min(triton.cdiv(numel, 1024), 2048),)](
+            input, out, numel, BLOCK=1024, num_warps=8
         )
     return out
 

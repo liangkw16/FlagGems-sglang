@@ -1,8 +1,9 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Ascend vendor for unpad_draft_extend_output: batch-segment copy at
-# BLOCK 8192 (width ladder: 129.6 @2048, 257.9 @4096 - 129.6 @2048, 257.9 @4096, 315.6 @8192, 442 @16384
-# (+40%/doubling); 32768 targets the 506-701 band).
+# amd vendor for unpad_draft_extend_output: batch-segment copy at
+# BLOCK 8192 (width ladder from the ascend/enflame/metax evidence;
+# card band 266-494 at the 4096 generic targets the 298/515 leader
+# chips).
 
 import torch
 import triton
@@ -44,7 +45,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
     )
     span = heads * dim
     if bs and token_per_batch and out.numel():
-        tiles = min(max(1, (token_per_batch * span + 32767) // 32768), 255)
+        tiles = min(max(1, (token_per_batch * span + 8191) // 8192), 255)
         _unpad[(bs, tiles)](
             raw_out,
             seq_lens_q,
@@ -54,7 +55,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
             token_per_batch,
             seq_lens_q.stride(0),
             cu_seqlens_q.stride(0),
-            BLOCK=32768,
+            BLOCK=8192,
         )
     return out
 
