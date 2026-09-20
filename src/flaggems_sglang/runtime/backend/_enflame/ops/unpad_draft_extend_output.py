@@ -21,8 +21,10 @@ def _unpad(
     beg = tl.load(cum + seg.to(tl.int64) * cstride)
     src = seg.to(tl.int64) * tpb * span
     dst = (beg.to(tl.int64) * span)
-    elems = n * span
-    for base in range(tile * BLOCK, elems, tl.num_programs(1) * BLOCK):
+    elems = n.to(tl.int64) * span
+    for base in range(
+        tile.to(tl.int64) * BLOCK, elems, tl.num_programs(1).to(tl.int64) * BLOCK
+    ):
         offs = base + tl.arange(0, BLOCK)
         m = offs < elems
         v = tl.load(raw_out + src + offs, m, other=0)
