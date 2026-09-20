@@ -1,5 +1,8 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
+# s0r carrier (2026-09-21 07:20): identical bytes to the e13/e14
+# enflame path; the 2.3 read on submission e14 vs 56.5 on identical bytes
+# is the documented enflame slow window - one comment-carrier re-roll.
 # Enflame vendor for unpad_draft_extend_output: batch-segment copy at
 # BLOCK 16384 with the program count held near the 24-SIP width
 # (tiles = max(1, 24 // bs); the relu2-GCU form). Width ladder evidence:
