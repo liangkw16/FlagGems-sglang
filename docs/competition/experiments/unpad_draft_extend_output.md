@@ -154,3 +154,13 @@ updated: 2026-09-20
   华为 **315.6**（2048→129.6 / 4096→257.9 / 8192→315.6，边际递减）/
   A 488.8 / B 266.2。**E10 轴**：燧原 32768、华为 16384 续爬；
   沐曦换轴（宽度无效）、天数/昆仑待结构情报。
+
+## 2026-09-21 E10 候选就绪并发射（燧原 32768 / 华为 16384 续爬）
+
+- 结构（`36d980af`）：_enflame BLOCK 32768（55.1@16384 续爬）；_ascend
+  BLOCK 16384（315.6@8192 探拐点）。预注册门：燧原 ≥80 / 华为 ≥380。
+- 五元组：commit `36d980af7a95eae8143ca3e9e0e687a378d93155`；ZIP `e10-36d980a` SHA
+  `154b8252cad4eaf58bf34a55be382e97bc5c24dedc99a41e9bc24fc79e64dc1d`；
+  test `6c9f5e2624cde0d03723a01adee2f771af90bdadf2ff7cf5728dccb36ea467c6`；
+  回执 `top1day-20260921d/unpad_draft_extend_output/` SHA
+  `369a390218c44bb9f69adb9fbd1c9fe8749cc05eafa01887ac2451ac5f63d5ac`。
