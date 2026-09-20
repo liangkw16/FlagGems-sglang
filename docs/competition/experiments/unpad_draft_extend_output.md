@@ -135,3 +135,14 @@ updated: 2026-09-20
   少程序+超宽 2.61@relu2 / 33.6@unpad）——**E9 全走宽度阶梯**：
   燧原 BLOCK 16384 + ≤24 程序（relu2-GCU 同源）；华为 8192；沐曦 8192
   （去 warps pin 回默认）。
+
+## 2026-09-21 E9 候选就绪并发射（三 vendor 宽度阶梯）
+
+- 结构（`e380fc5b`）：_enflame BLOCK 16384 + tiles=min(需求数, max(1,24//bs))
+  （relu2-GCU 同源程序模型）；_ascend BLOCK 8192；_metax BLOCK 8192 回默认
+  warps。预注册门：华为 ≥400 / 沐曦 ≥300 / 燧原 ≥50；均值 >320。
+- 五元组：commit `e380fc5b5295ae43051354e45f9a2233d00deda1`；ZIP `e9-e380fc5` SHA
+  `87653e3005a1d4f5d96ef752f5627f1191ce74880bfcd5e8489fa90961a1033d`；
+  test `6c9f5e2624cde0d03723a01adee2f771af90bdadf2ff7cf5728dccb36ea467c6`；
+  回执 `top1day-20260921c/unpad_draft_extend_output/` SHA
+  `b484b622f08a1b239713707c7662467d2bd3992c22115c850ed2b1dabd3736bc`。
