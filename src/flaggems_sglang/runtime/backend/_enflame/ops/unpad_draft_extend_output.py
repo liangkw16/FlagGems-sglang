@@ -1,9 +1,8 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# 燧原 vendor for unpad_draft_extend_output: E6 batch-segment copy
-# ported verbatim from the generic (the staged-gather form this vendor
-# carried measured 8/169/98 vs the generic's 406-494 band on 2026-09-21;
-# pure structure swap, no per-chip pins yet).
+# Enflame vendor for unpad_draft_extend_output: E6 batch-segment copy at
+# BLOCK 8192 (the T76 streaming ladder top, +21% there; e7r read 18.7 at
+# 4096 vs the 148 leader band - GCU wants wider flat passes).
 
 import torch
 import triton
@@ -45,7 +44,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
     )
     span = heads * dim
     if bs and token_per_batch and out.numel():
-        tiles = min(max(1, (token_per_batch * span + 4095) // 4096), 255)
+        tiles = min(max(1, (token_per_batch * span + 8191) // 8192), 255)
         _unpad[(bs, tiles)](
             raw_out,
             seq_lens_q,
@@ -55,7 +54,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
             token_per_batch,
             seq_lens_q.stride(0),
             cu_seqlens_q.stride(0),
-            BLOCK=4096,
+            BLOCK=8192,
         )
     return out
 
