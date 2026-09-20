@@ -53,13 +53,20 @@ class UnpadTest(unittest.TestCase):
         for n in lens:
             cum.append(cum[-1] + n)
         raw = torch.randn(5, tpb, heads, dim, dtype=torch.bfloat16, device="cuda")
-        dense_lens = torch.tensor(lens + (0,) * 5, dtype=torch.int32, device="cuda")
-        dense_cum = torch.tensor(cum + [cum[-1]] * 5, dtype=torch.int32, device="cuda")
+        # interleave: real values at even indices, filler at odd, so the
+        # ::2 views carry exactly the real lens/cum entries
+        pad = 5
+        dense_lens = [0] * (len(lens) + pad)
+        dense_cum = [0] * (len(cum) + pad)
+        for i, v in enumerate(lens):
+            dense_lens[2 * i] = v
+        for i, v in enumerate(cum):
+            dense_cum[2 * i] = v
         self.check(
             (
                 raw,
-                dense_cum[::2],
-                dense_lens[::2],
+                torch.tensor(dense_cum, dtype=torch.int32, device="cuda")[::2],
+                torch.tensor(dense_lens, dtype=torch.int32, device="cuda")[::2],
                 cum[-1],
             )
         )
