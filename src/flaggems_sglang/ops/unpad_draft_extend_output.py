@@ -48,7 +48,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
     )
     span = heads * dim
     if bs and token_per_batch and out.numel():
-        tiles = min(max(1, (token_per_batch * span + 4095) // 4096), 255)
+        tiles = min(max(1, (token_per_batch * span + 8191) // 8192), 255)
         _unpad[(bs, tiles)](
             raw_out,
             seq_lens_q,
@@ -58,7 +58,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
             token_per_batch,
             seq_lens_q.stride(0),
             cu_seqlens_q.stride(0),
-            BLOCK=4096,
+            BLOCK=8192,
         )
     return out
 
