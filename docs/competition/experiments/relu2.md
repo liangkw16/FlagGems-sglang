@@ -37,3 +37,12 @@ updated: 2026-09-20
 - submission **18350** completed/valid，8/8，均值 **2.497 新 TB**（vs 2.344，
   +6.5%）。天数 4.3→4.4 / A 2.5→3.3（+32%，generic 路径芯片受益 warps8）；
   海光 3.2→3.3 持平。距榜首 3.17 差 21%。
+
+## 2026-09-21 夜 e4 候选就绪（午夜第 3 弹）
+
+- 结构（`f3b8cad1`）：enflame BLOCK 8192→**16384 档** + ascend vendor 加
+  num_warps=8——榜首燧原 4.0 vs 我方 2.0（2x）、华为 1.8 vs 1.1。预注册门：
+  燧原 ≥2.6 或华为 ≥1.4；均值 >2.497 换 TB。
+- 五元组：commit `f3b8cad1`；ZIP `e4-f3b8cad` SHA
+  `df172a2c63c43e5de319b4e6790bfab311f011901af406ae5bb0567bf8176bd3`；
+  回执 `ready2-wave-20260921/relu2/`（五路径）。

@@ -36,3 +36,11 @@ updated: 2026-09-20
 - submission **18352** completed/valid，8/8，均值 **2.517 微幅新 TB**（+0.9%）。
   天数 4.3→4.7；A 3.0 持平（warps8 在 sgmb 的 generic 路径收益小于 relu2
   ——同配方跨 op 部分迁移）。
+
+## 2026-09-21 夜 e4 候选就绪（午夜第 4 弹）
+
+- 结构（`f3b8cad1`）：`_ascend` persistent vendor（NVC 封顶）——榜首华为
+  2.1 vs 我方 1.2。预注册门：华为 ≥1.5；均值 >2.517 换 TB。
+- 五元组：commit `f3b8cad1`；ZIP `e4-f3b8cad` SHA
+  `66e2793d107769a3c02e7884d3b7f58562a5a78e20b13d8f686c24f36866e0ff`；
+  回执 `ready2-wave-20260921/sigmoid_gate_mul_broadcast/`（四路径）。
