@@ -38,7 +38,10 @@ def _unpad_part(
                 m = offs < end
                 v = tl.load(raw_out + src + (offs - pos), m, other=0)
                 tl.store(out + offs, v, m)
-                pos += BLOCK
+                # a masked-short block ends exactly at the segment
+                # boundary; advancing by BLOCK would skip the head of
+                # the next segment
+                pos = tl.minimum(pos + BLOCK, end)
 
 
 def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q):
