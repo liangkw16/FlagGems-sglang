@@ -74,3 +74,11 @@ updated: 2026-09-19
 - 8/8：天数 5.0 / 沐曦 2.6 / 燧原 **0.24**（flat generic 也病理，与 T90 e5
   行形式 0.63 互证 GCU 需少程序+超宽块）/ 海光 6.0 / 昆仑 0.6 / 华为 1.83 /
   A 3.24 / B 3.10。燧原轴待 GCU 模型（24-SIP + BLOCK 16384 形态）再试。
+
+## 2026-09-21 E9 候选就绪并发射（燧原 GCU 模型移植）
+
+- 结构（`985db4e4`）：_enflame = generic 内核 + GCU 程序模型（grid
+  min(rows,24) × splits≤4，BLOCK 16384，num_stages 3）——行形式/flat
+  全网格两败后的第三形态。预注册门：燧原 ≥1.5；均值 >2.840 换 TB。
+
+- 五元组：commit `985db4e49de59c57e5f6891af7ef0be4e20ae665`；ZIP SHA `641764b41de8035498a8b5ded89c75c171ca0cdf2c3f26ce243197593d5c06bf`；test `93fc9dd8d253aebafb93078eb81c56c275d254d4f24e05d332fdc009d523c807`；回执 SHA `478f07ac65c83a0fb95a7f5045953863967f09430f8213f42dc329daf6f97859`。
