@@ -1,8 +1,9 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 # Kunlunxin vendor for unpad_draft_extend_output: batch-segment copy at
-# BLOCK 1024 (narrow direction - the hygon lesson; generic 4096 reads
-# 16.6-17.8 vs the 26-39 field band on kunlunxin).
+# BLOCK 16384 (wide direction - 1024 crashed to 6.1 while the 4096 generic
+# reads 16.6-17.8 vs the 26-39 field band; kunlunxin wants wide, unlike
+# hygon).
 
 import torch
 import triton
@@ -44,7 +45,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
     )
     span = heads * dim
     if bs and token_per_batch and out.numel():
-        tiles = min(max(1, (token_per_batch * span + 1023) // 1024), 255)
+        tiles = min(max(1, (token_per_batch * span + 16383) // 16384), 255)
         _unpad[(bs, tiles)](
             raw_out,
             seq_lens_q,
@@ -54,7 +55,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
             token_per_batch,
             seq_lens_q.stride(0),
             cu_seqlens_q.stride(0),
-            BLOCK=1024,
+            BLOCK=16384,
         )
     return out
 

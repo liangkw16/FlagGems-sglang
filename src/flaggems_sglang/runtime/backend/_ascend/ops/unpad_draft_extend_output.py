@@ -55,7 +55,6 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
             seq_lens_q.stride(0),
             cu_seqlens_q.stride(0),
             BLOCK=16384,
-            num_stages=2,
         )
     return out
 

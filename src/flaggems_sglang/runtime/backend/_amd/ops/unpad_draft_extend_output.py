@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # amd vendor for unpad_draft_extend_output: batch-segment copy at
 # BLOCK 8192 (width ladder from the ascend/enflame/metax evidence;
-# card_b read 264.7 @8192 vs the 266-283 generic band - narrow
-# direction, like hygon).
+# card_b ladder: 264.7 @8192, 279.7 @2048 - narrow direction,
+# like hygon; 1024 probes the floor).
 
 import torch
 import triton
@@ -45,7 +45,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
     )
     span = heads * dim
     if bs and token_per_batch and out.numel():
-        tiles = min(max(1, (token_per_batch * span + 2047) // 2048), 255)
+        tiles = min(max(1, (token_per_batch * span + 1023) // 1024), 255)
         _unpad[(bs, tiles)](
             raw_out,
             seq_lens_q,
@@ -55,7 +55,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
             token_per_batch,
             seq_lens_q.stride(0),
             cu_seqlens_q.stride(0),
-            BLOCK=2048,
+            BLOCK=1024,
         )
     return out
 
