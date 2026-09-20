@@ -56,3 +56,19 @@ updated: 2026-09-20
 - submission **18360** completed/valid，8/8，均值 110.055 < TB 115.661（保
   e4）。沐曦 82.6→100.2（回退 warps8 后恢复 e2 水位，-18% 判决二次确认）；
   燧原 8.4→6.2 / A 197→187 窗口回落。
+
+## 2026-09-21 夜 e6 候选就绪（午夜第 5 弹，咨询第一优先结构轴）
+
+- 结构（`4c7b9fed`）：**batch 连续段拷贝**——题面 cu/seq_lens 直接表达
+  "每 batch 一段连续 H×D 拷贝"（padded 布局每 batch 接受前缀连续），
+  彻底删除 searchsorted 行映射的全部框架开销；内核只用标量段起点 +
+  连续向量偏移，无张量索引 gather。两个 decode bug 被数字探针在提交前
+  拦下；codex-review 抓出 P1（lens/cum 直接相邻读破坏切片语义）→
+  stride(0) 修复 + 交错切片回归测试。
+- 预注册门：映射阶段占比假设下 wrapper 中位耗时 -15%+；均值 >115.661
+  换 TB；八芯 exact（含 strided/零长度/非整除 tile 回归）。
+- 五元组：commit `4c7b9feda87e40cd9c51661e791ce75e28e95913`；ZIP
+  `e6-4c7b9fe` SHA `5914e4c4e7b3559d729c84d92151389e4170b4f84896d6ab8830f0621f1f7825`；
+  test SHA `6c9f5e2624cde0d03723a01adee2f771af90bdadf2ff7cf5728dccb36ea467c6`；
+  回执 SHA `51123accdda39b06e18f68fac5cb5549b168925f885989c0954e14caf2465c42`
+  （`ready3-wave-20260921/`，四路径）。
