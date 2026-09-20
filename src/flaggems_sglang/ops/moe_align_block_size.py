@@ -7,8 +7,10 @@
 # (token, slot) pairs, group them by expert and pad each expert's run to
 # a block multiple. The harness checks each expert range as a multiset
 # (atomic cursor placement allowed) and requires the sentinel tail.
-# Three launches: histogram -> single-program scan (aligned offsets,
-# expert blocks, sentinel fill) -> atomic-cursor scatter. The trailing
+# Four launches: histogram -> tiny single-program scan (aligned
+# offsets only) -> parallel fill (expert_ids runs + sentinel blanket)
+# -> atomic-cursor scatter. The scan used to fill the whole buffer
+# serially, which dominated every chip (8-100x behind the field). The trailing
 # "filtered expert" slot never receives tokens or blocks.
 
 import torch
@@ -32,13 +34,10 @@ def _hist(flat, counts, numel, num_routed, BLOCK: tl.constexpr):
 def _scan(
     counts,
     cursor,
-    sorted_ids,
-    expert_ids,
+    nblk,
     num_post,
     num_routed,
     block_size,
-    buf_numel,
-    sentinel,
     BLOCK: tl.constexpr,
 ):
     offset = 0
@@ -48,17 +47,43 @@ def _scan(
         # value is consumed here); the scatter reads the run starts.
         tl.store(counts + e, offset)
         aligned = ((n + block_size - 1) // block_size) * block_size
-        beg = offset // block_size
-        nblocks = aligned // block_size
-        for b in range(0, nblocks):
-            tl.store(expert_ids + beg + b, e)
+        tl.store(nblk + e, aligned // block_size)
         offset += aligned
         tl.store(cursor + e, 0)
     tl.store(num_post, offset)
-    fill = tl.full((BLOCK,), sentinel, dtype=tl.int32)
-    for base in range(0, buf_numel, BLOCK):
-        o = base + tl.arange(0, BLOCK)
-        tl.store(sorted_ids + o, fill, o < buf_numel)
+
+
+@triton.jit(do_not_specialize=["num_routed", "buf_numel"])
+def _fill(
+    expert_ids,
+    sorted_ids,
+    counts,
+    nblk,
+    block_size,
+    num_routed,
+    buf_numel,
+    sentinel,
+    BLOCK: tl.constexpr,
+):
+    # one program per expert writes its expert_ids run (the scan left
+    # each expert's block start in counts); the remaining programs
+    # blanket sorted_ids with the sentinel in parallel - the previous
+    # single-program scan filled the whole buffer serially
+    pid = tl.program_id(0)
+    if pid < num_routed:
+        beg = tl.load(counts + pid) // block_size
+        n = tl.load(nblk + pid)
+        e = pid.to(tl.int32)
+        for b0 in range(0, n, BLOCK):
+            offs = b0 + tl.arange(0, BLOCK)
+            tl.store(expert_ids + beg + offs, e, offs < n)
+    else:
+        base = (pid - num_routed).to(tl.int64) * BLOCK
+        offs = base + tl.arange(0, BLOCK)
+        m = offs < buf_numel
+        fill = tl.zeros((BLOCK,), dtype=tl.int32) + sentinel
+        tl.store(sorted_ids + offs, fill, m)
+
 
 
 @triton.jit(do_not_specialize=["numel", "num_routed"])
@@ -105,6 +130,7 @@ def moe_align_block_size(
     sorted_ids = torch.empty_like(sorted_token_ids)
     eids = expert_ids.clone()
     npost = torch.empty_like(num_tokens_post_pad)
+    nblk = torch.empty(num_experts, dtype=torch.int32, device=device)
     if numel:
         _hist[(min(triton.cdiv(numel, 1024), 2048),)](
             flat, counts, numel, num_routed, BLOCK=1024
@@ -112,11 +138,19 @@ def moe_align_block_size(
     _scan[(1,)](
         counts,
         cursor,
-        sorted_ids,
-        eids,
+        nblk,
         npost,
         num_routed,
         block_size,
+        BLOCK=1024,
+    )
+    _fill[(num_experts + triton.cdiv(sorted_ids.numel(), 1024),)](
+        eids,
+        sorted_ids,
+        counts,
+        nblk,
+        block_size,
+        num_routed,
         sorted_ids.numel(),
         numel,
         BLOCK=1024,
