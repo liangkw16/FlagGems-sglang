@@ -189,3 +189,12 @@ updated: 2026-09-20
   最佳保 e10 314.97。**E12 轴（六文件）**：ascend 16384+stages2、nvidia
   16384、amd 2048、enflame 16384+stages4、metax stages4、新增 _kunlunxin
   1024（昆仑窄向假设）。
+
+## 2026-09-21 E12 候选就绪并发射（六文件逐芯探针）
+
+- 结构（`1558b04e`）：ascend 16384+stages2（442 回峰点+流水探针）、
+  nvidia 16384（493.9@8192 续爬）、amd 2048（窄向）、enflame 16384+stages4
+  （55.1 回峰点+深流水）、metax st4、**新增 _kunlunxin 1024**（窄向假设）。
+- 五元组：commit `1558b04e8ae614f506c4cb86b826c0486625e72a`；ZIP SHA `a8a1fd51d436ccb02f0b40f8e5be5b78c71470333d0e493b6852a2e6601f3aed`；test
+  `6c9f5e2624cde0d03723a01adee2f771af90bdadf2ff7cf5728dccb36ea467c6`；
+  回执 `top1day-20260921f/` SHA `7604fc12f5d24e582577fea7065f7063ef045ce999ae191e85fd3f28496b9566`。
