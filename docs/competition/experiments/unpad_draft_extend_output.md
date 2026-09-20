@@ -171,3 +171,12 @@ updated: 2026-09-20
   昆仑 17.8 / 华为 **442.0**（129.6→257.9→315.6→442，每翻倍 +40% 再加速）/
   A 478.1 / B 282.7。**E11 轴**：华为 32768（冲 600+）+ _nvidia/_amd
   卡轴 8192（band 266-494 → 298/515）。
+
+## 2026-09-21 E11 候选就绪并发射（华为 32768 + 新增卡轴 vendor）
+
+- 结构（`8b47cce3`）：_ascend BLOCK 32768（442@16384 冲 600+）；新增
+  _nvidia/_amd（generic 字节 BLOCK 8192，若 card_a/b 映射即得卡轴宽度
+  阶梯，不映射则无害）。预注册门：华为 ≥550；卡任一 +20。
+- 五元组：commit `8b47cce370af2555d7060be37e17095b02e6e1bf`；ZIP `e11-8b47cce` SHA `416e50a33db6ee90a4e679f0994144518eefc05652eb6997c3d838f2625068f1`；
+  test `6c9f5e2624cde0d03723a01adee2f771af90bdadf2ff7cf5728dccb36ea467c6`；
+  回执 `top1day-20260921e/unpad_draft_extend_output/` SHA `cb2dd04e10408fa0f5a08bbeab69c7193554694efe8ee1f855614ace57344a45`。
