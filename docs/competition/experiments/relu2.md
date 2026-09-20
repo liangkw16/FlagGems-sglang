@@ -68,3 +68,11 @@ updated: 2026-09-20
 - flat generic 全网格在 GCU 读 **0.5**（< e4 的 24-SIP BLOCK 16384 的 2.61）。
   至此 GCU 三种形态三败（行形式/flat 多程序/仅少程序+超宽可行）。
   TB 保 e4 2.5536。E6 轴：燧原回 24-SIP 形态 + 宽度 32768 阶梯。
+
+## 2026-09-21 E6 候选就绪并发射（燧原回 24-SIP 形态，宽度 32768）
+
+- 结构（`ad9f2a29`）：_enflame 恢复 e4 的 24-SIP 形态（grid
+  min(cdiv(numel,32768),24)），BLOCK 16384→**32768**——e5 全网格判负
+  （0.5）后按宽度阶梯续爬。预注册门：燧原 ≥3.2；均值 >2.5536 换 TB。
+- 五元组：commit `ad9f2a298aea3675cade53171fb6c961c877be2e`；ZIP `e6-ad9f2a2` SHA `ec939dad275142380ec0c4ced44bd2805bd85fa5d619fbf638238074009e99b4`；
+  test `37b246090e6274a43e5c2968e5bfa400987c2926e82a81ca42a019ce9f2cfa30`；回执 `top1day-20260921c/relu2/` SHA `d86d2cb4b17da0a5d3eb70c9ab0d91176e7eb1ffd1852ae9b45e8ba4dca62e90`。
