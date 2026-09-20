@@ -2,8 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Metax vendor for unpad_draft_extend_output: batch-segment copy at
 # BLOCK 8192 with default warps (warps8 read 213.3 vs 242.3 default;
-# width ladder from the ascend/enflame evidence targets the Fields 379
-# band on muxi).
+# width saturated at 249.6; stages 4 probes deeper pipelining on muxi).
 
 import torch
 import triton
@@ -56,6 +55,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
             seq_lens_q.stride(0),
             cu_seqlens_q.stride(0),
             BLOCK=8192,
+            num_stages=4,
         )
     return out
 

@@ -180,3 +180,12 @@ updated: 2026-09-20
 - 五元组：commit `8b47cce370af2555d7060be37e17095b02e6e1bf`；ZIP `e11-8b47cce` SHA `416e50a33db6ee90a4e679f0994144518eefc05652eb6997c3d838f2625068f1`；
   test `6c9f5e2624cde0d03723a01adee2f771af90bdadf2ff7cf5728dccb36ea467c6`；
   回执 `top1day-20260921e/unpad_draft_extend_output/` SHA `cb2dd04e10408fa0f5a08bbeab69c7193554694efe8ee1f855614ace57344a45`。
+
+## 2026-09-21 01:25 E11 平台终态：310.56，华为 32768 过拐点，卡轴映射成功
+
+- 逐芯：天数 393.2 / 沐曦 247.5 / 燧原 53.5 / 海光 **637.0**（band 顶）/
+  昆仑 16.6 / 华为 **378.1**（峰值在 16384=442，32768 过头）/ A **493.9**
+  （_nvidia 8192 兑现 +16）/ B 264.7（_amd 8192 微负，需窄向）。
+  最佳保 e10 314.97。**E12 轴（六文件）**：ascend 16384+stages2、nvidia
+  16384、amd 2048、enflame 16384+stages4、metax stages4、新增 _kunlunxin
+  1024（昆仑窄向假设）。

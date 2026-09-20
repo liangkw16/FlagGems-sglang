@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # nvidia vendor for unpad_draft_extend_output: batch-segment copy at
 # BLOCK 8192 (width ladder from the ascend/enflame/metax evidence;
-# card band 266-494 at the 4096 generic targets the 298/515 leader
-# chips).
+# card_a read 493.9 @8192 vs the 515 leader chip; 16384 continues
+# the ladder).
 
 import torch
 import triton
@@ -45,7 +45,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
     )
     span = heads * dim
     if bs and token_per_batch and out.numel():
-        tiles = min(max(1, (token_per_batch * span + 8191) // 8192), 255)
+        tiles = min(max(1, (token_per_batch * span + 16383) // 16384), 255)
         _unpad[(bs, tiles)](
             raw_out,
             seq_lens_q,
@@ -55,7 +55,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
             token_per_batch,
             seq_lens_q.stride(0),
             cu_seqlens_q.stride(0),
-            BLOCK=8192,
+            BLOCK=16384,
         )
     return out
 
