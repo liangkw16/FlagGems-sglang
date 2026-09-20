@@ -1,9 +1,9 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Enflame vendor for relu2: generic bytes (full min(cdiv,2048) grid at
-# BLOCK 1024 warps 8). The 24-SIP cap with BLOCK 16384 read 2.61 vs the
-# 3.8-4.1 field band; one-program-per-element-chunk with the full grid
-# matches the tianshu reading (4.37) of the same bytes.
+# Enflame vendor for relu2: the T76 streaming recipe at BLOCK 32768 -
+# launch held at the 24-SIP width with num_stages 3. The 16384 form read
+# 2.61 (vs 0.5 for the flat full-grid port and 0.63 for row forms);
+# width ladder targets the 3.8-4.1 field band.
 
 import torch
 import triton
@@ -31,8 +31,8 @@ def relu2(input):
     out = torch.empty_like(input)
     numel = input.numel()
     if numel:
-        _relu2[(min(triton.cdiv(numel, 1024), 2048),)](
-            input, out, numel, BLOCK=1024, num_warps=8
+        _relu2[(min(triton.cdiv(numel, 32768), 24),)](
+            input, out, numel, BLOCK=32768, num_stages=3
         )
     return out
 
