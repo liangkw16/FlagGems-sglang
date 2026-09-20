@@ -45,6 +45,21 @@ class UnpadTest(unittest.TestCase):
                 got = module.unpad_draft_extend_output(*args)
                 torch.testing.assert_close(got.view(torch.uint8), want.contiguous().view(torch.uint8), rtol=0, atol=0)
 
+    def test_u32_fallback_conditions(self):
+        # H*D even but dim odd must take the element path (the u32 view
+        # halves the last dim, not the span); an odd storage offset on a
+        # contiguous slice must also fall back.
+        self.check(make_case(lens=(1, 3), heads=2, dim=3, tpb=4))
+        self.check(make_case(lens=(2,), heads=6, dim=5, tpb=2))
+        args = make_case(lens=(1, 2), heads=2, dim=4, tpb=3)
+        base = torch.randn(
+            3, args[0].shape[1], args[0].shape[2], args[0].shape[3],
+            dtype=args[0].dtype, device="cuda",
+        )
+        sliced = base[1:]
+        sliced.copy_(args[0])
+        self.check((sliced, *args[1:]))
+
     def test_strided_len_tensors(self):
         # lens/cum sliced views must keep semantics (kernel takes strides).
         lens = (0, 3, 1, 5, 2)
@@ -79,6 +94,7 @@ class UnpadTest(unittest.TestCase):
 
 
 RELEASE_REQUIRED_TESTS = [
+    "UnpadDraftExtendOutputTest.test_u32_fallback_conditions",
     "UnpadTest.test_ragged_and_boundaries",
 ]
 

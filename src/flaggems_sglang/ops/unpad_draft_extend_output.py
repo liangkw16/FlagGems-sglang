@@ -53,7 +53,13 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
 
     span = heads * dim
     if bs and token_per_batch and out.numel():
-        if span % 2 == 0:
+        # view(torch.uint32) halves the LAST dim, so dim (not span)
+        # must be even and the storage offset must stay aligned
+        if (
+            dim % 2 == 0
+            and raw_out.storage_offset() % 2 == 0
+            and out.storage_offset() % 2 == 0
+        ):
             # uint32 datapath: same bytes, half the lanes per tile, so
             # the compiler issues 32-bit accesses instead of 16-bit
             # (codex-ask axis; element fallback keeps odd spans exact).
