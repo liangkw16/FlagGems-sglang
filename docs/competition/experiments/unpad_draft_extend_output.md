@@ -255,3 +255,16 @@ updated: 2026-09-20
 - **E16（咨询第六轮后首个结构弹）**：燧原固定 P 输出分区内核（均衡
   slab + 段行走，codex 首选）；沐曦/天数 uint32 位宽重解释路径（指令
   数减半假设）；昆仑回 16384。
+
+## 2026-09-21 E16 候选就绪并发射（咨询结构弹：分区内核 + uint32 路径）
+
+- 结构（`0e79dd3f`）：_enflame 固定 P=24 输出分区内核（均衡 slab + 标量
+  段行走；两次内部修复：u32 view 守卫 dim 偶+偏移对齐、段边界 pos 推进
+  ——均被 release 门/审查拦截于发射前）；generic(天数)/_metax(沐曦)
+  uint32 位宽路径（指令数减半假设，奇维/奇偏移回退元素路径，新增
+  回归契约测试）；_kunlunxin 回 16384 峰。预注册门：沐曦 ≥300 /
+  天数 ≥420 / 燧原 ≥70；均值 >325 视为结构兑现。
+- 五元组：commit `0e79dd3f96a88700bad67efb87591beca722a04b`；ZIP SHA `c1f91600be744d82c51082623a374712af3bbd7f9b5799d00ab3c2246f74a1cd`；test
+  `6c9f5e26` 起版本以 verification commit 为准
+  （`0e79dd3f:tests/test_unpad_draft_extend_output.py`）；回执
+  `top1day-20260921j/` SHA `a426893954dda4d00e1dfbf21086887c664d2d30029439e50a97cc03ef3299f0`。
