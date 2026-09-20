@@ -54,7 +54,7 @@ class UnpadTest(unittest.TestCase):
             cum.append(cum[-1] + n)
         raw = torch.randn(5, tpb, heads, dim, dtype=torch.bfloat16, device="cuda")
         dense_lens = torch.tensor(lens + (0,) * 5, dtype=torch.int32, device="cuda")
-        dense_cum = torch.tensor(cum + (cum[-1],) * 5, dtype=torch.int32, device="cuda")
+        dense_cum = torch.tensor(cum + [cum[-1]] * 5, dtype=torch.int32, device="cuda")
         self.check(
             (
                 raw,
