@@ -1,8 +1,9 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Enflame vendor for moe_topk_sum: 2D [TOPK, BLOCK] tile per row
-# summed over axis 0 - one wide pass over the contiguous topk*hdim
-# span (GCU single-wide-pass preference; leader reads 9.0 vs our 0.8).
+# Enflame vendor for moe_topk_sum: generic bytes (flat 1D loads with
+# the TOPK static unroll). The 2D [TOPK_PAD, BLOCK] tile form read 0.53
+# (2026-09-20) vs the generic band 4.9+ on tianshu; GCU wants flat
+# streaming, not strided row tiles.
 
 import torch
 import triton
@@ -11,7 +12,7 @@ import triton.language as tl
 
 @triton.jit(do_not_specialize=["rows", "hdim"])
 def _moe_topk_sum(x, out, rows, hdim, TOPK: tl.constexpr,
-                  TOPK_PAD: tl.constexpr, BLOCK: tl.constexpr):
+                  BLOCK: tl.constexpr):
     for row in range(tl.program_id(0), rows, tl.num_programs(0)):
         base = row.to(tl.int64) * (TOPK * hdim)
         for h0 in tl.range(
@@ -19,16 +20,18 @@ def _moe_topk_sum(x, out, rows, hdim, TOPK: tl.constexpr,
         ):
             offs = h0 + tl.arange(0, BLOCK)
             m = offs < hdim
-            # TOPK_PAD is the pow2 padding; padded rows load 0.
-            tmask = (tl.arange(0, TOPK_PAD) < TOPK)[:, None] & m[None, :]
-            tile = tl.load(
-                x + base + tl.arange(0, TOPK_PAD)[:, None] * hdim + offs[None, :],
-                tmask,
-                other=0.0,
-            ).to(tl.float32)
-            acc = tl.sum(tile, axis=0)
-            tl.store(out + row.to(tl.int64) * hdim + offs,
-                     acc.to(out.dtype.element_ty), m)
+            acc = tl.zeros((BLOCK,), dtype=tl.float32)
+            for t in tl.static_range(0, TOPK):
+                acc += tl.load(
+                    x + base + t * hdim + offs,
+                    m,
+                    other=0.0,
+                ).to(tl.float32)
+            tl.store(
+                out + row.to(tl.int64) * hdim + offs,
+                acc.to(out.dtype.element_ty),
+                m,
+            )
 
 
 def moe_topk_sum(x, out):
@@ -38,15 +41,15 @@ def moe_topk_sum(x, out):
     assert x.dtype == out.dtype == torch.bfloat16
     assert x.is_contiguous() and out.is_contiguous()
     if rows and hdim:
-        block = 512 if topk >= 8 else 1024
-        _moe_topk_sum[(min(rows, 2048), min(triton.cdiv(hdim, block), 255))](
+        splits = min(max(1, triton.cdiv(hdim, 1024)), 255)
+        _moe_topk_sum[(min(rows, 2048), splits)](
             x,
             out,
             rows,
             hdim,
             TOPK=topk,
-            TOPK_PAD=triton.next_power_of_2(max(1, topk)),
-            BLOCK=block,
+            BLOCK=1024,
+            num_warps=8,
         )
     return out
 

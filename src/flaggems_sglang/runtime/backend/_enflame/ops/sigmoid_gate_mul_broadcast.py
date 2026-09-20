@@ -1,8 +1,9 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Enflame vendor for sigmoid_gate_mul_broadcast: grid capped at the
-# 24-SIP width (row grid-stride already in the body) with num_stages 3
-# and no warps pin.
+# Enflame vendor for sigmoid_gate_mul_broadcast: generic bytes. The
+# 24-SIP grid cap read 0.77 (submission 2026-09-21 00:13) - one program
+# per row needs the full min(rows,2048) grid, the cap starves the GCU
+# of program parallelism (field band 2.5-3.4).
 
 import torch
 import triton
@@ -39,7 +40,7 @@ def sigmoid_gate_mul_broadcast(x, gate):
     assert x.stride(1) == 1 and gate.is_contiguous()
     out = torch.empty_like(x)
     if rows and hdim:
-        _sigmoid_gate_mul_broadcast[(min(rows, 24),)](
+        _sigmoid_gate_mul_broadcast[(min(rows, 2048),)](
             x,
             gate,
             out,
@@ -49,7 +50,7 @@ def sigmoid_gate_mul_broadcast(x, gate):
             out.stride(0),
             HDIM=hdim,
             BLOCK=min(1024, triton.next_power_of_2(max(1, hdim))),
-            num_stages=3,
+            num_warps=8,
         )
     return out
 
