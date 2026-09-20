@@ -98,3 +98,15 @@ updated: 2026-09-20
   test `6c9f5e2624cde0d03723a01adee2f771af90bdadf2ff7cf5728dccb36ea467c6`；
   回执 `top1day-20260921/unpad_draft_extend_output/` SHA
   `07cfc0f5cfac54234d42f61cb94478ece0c0105a84ad06d2511b816cd071b163`。
+
+## 2026-09-21 00:33 E7R 平台终态：289.92（+74），海光 619.8 反超榜首同芯
+
+- submission completed/valid，8/8。逐芯：天数 395.8 / 沐曦 242.3 / 燧原
+  **18.7**（门 ≥100 未过，generic 字节仅 2.3×）/ 海光 **619.8**（>榜首
+  609.1）/ 昆仑 17.5 / 华为 **257.9**（门 ≥300 差 14%）/ A 492.8 / B 274.6。
+- 三 vendor 结构移植整体兑现（+74 均值）；天数/沐曦 -10~-17 属 int64 化
+  或窗口噪声（A/B 稳定）。
+- **E8 轴（三 vendor 单变量，一弹三芯归因）**：燧原 BLOCK 8192（T76
+  streaming +21% 同源）；沐曦新增 _metax vendor + num_warps 8（relu2
+  metax +20% 同源）；华为 BLOCK 2048（更小 tile 更多程序）。潜在
+  +40~60 均值 → 330-350 进榜首带。
