@@ -1,7 +1,12 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Generic-flat variant: widen the per-row copy to BLOCK 4096 (spans of
-# heads*dim loop 4x at 1024; the leader band suggests wide streaming).
+# Inverse of pad_draft_extend_query: gather accepted rows into a ragged
+# [total, H, D] tensor. E6 restructures to per-batch contiguous segment
+# copies: batch b contributes seq_lens_q[b] * H * D contiguous elements
+# from raw_out row b (the padded layout keeps each batch's accepted prefix
+# contiguous), which removes the whole searchsorted row-mapping staging
+# and the per-row gather; the kernel uses only scalar segment starts and
+# contiguous vector offsets (no tensor-index gather anywhere).
 
 import torch
 import triton
@@ -9,26 +14,22 @@ import triton.language as tl
 
 
 @triton.jit
-def _copy_rows(
-    raw, src_row, out, rows, span, rs0, os0,
+def _unpad(
+    raw_out, lens, cum, out, span, tpb,
     BLOCK: tl.constexpr,
 ):
-    for row in range(tl.program_id(0), rows, tl.num_programs(0)):
-        src = tl.load(src_row + row) * rs0
-        dst = row.to(tl.int64) * os0
-        # row_span stays a RUNTIME arg: the constexpr form of this
-        # loop/mask bound empirically miscompiles to a no-op on the
-        # proxy stack while the runtime form is correct (inverted from
-        # the static-unroll lesson - bounds tied to program_id axes).
-        for base in range(
-            tl.program_id(1) * BLOCK,
-            span,
-            tl.num_programs(1) * BLOCK,
-        ):
-            offs = base + tl.arange(0, BLOCK)
-            m = offs < span
-            v = tl.load(raw + src + offs, m, other=0)
-            tl.store(out + dst + offs, v, m)
+    seg = tl.program_id(0)
+    tile = tl.program_id(1)
+    n = tl.load(lens + seg)
+    beg = tl.load(cum + seg)
+    src = seg.to(tl.int64) * tpb * span
+    dst = (beg.to(tl.int64) * span)
+    elems = n * span
+    for base in range(tile * BLOCK, elems, tl.num_programs(1) * BLOCK):
+        offs = base + tl.arange(0, BLOCK)
+        m = offs < elems
+        v = tl.load(raw_out + src + offs, m, other=0)
+        tl.store(out + dst + offs, v, m)
 
 
 def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q):
@@ -43,26 +44,17 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
         dtype=raw_out.dtype,
         device=raw_out.device,
     )
+    span = heads * dim
     if bs and token_per_batch and out.numel():
-        total = int(sum_seq_lens_q)
-        ar = torch.arange(total, device=raw_out.device)
-        cu64 = cu_seqlens_q.to(torch.int64)
-        seg = torch.searchsorted(cu_seqlens_q[1:], ar, right=True).long()
-        tok = ar - cu64[seg]
-        src_row = (seg * token_per_batch + tok).to(torch.int32)
-        row_span = heads * dim
-        _copy_rows[(min(total, 65535), min(max(1, triton.cdiv(row_span, 1024)), 255))](
+        tiles = min(max(1, (token_per_batch * span + 4095) // 4096), 255)
+        _unpad[(bs, tiles)](
             raw_out,
-            src_row,
+            seq_lens_q,
+            cu_seqlens_q,
             out,
-            total,
-            row_span,
-            # src_row is already the flat (b*tpb+t) row id, so the
-            # source row stride is the token-row span, NOT stride(0)
-            # (which counts tpb rows and double-flattens).
-            row_span,
-            out.stride(0),
-            BLOCK=1024,
+            span,
+            token_per_batch,
+            BLOCK=4096,
         )
     return out
 
