@@ -1,9 +1,10 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Enflame vendor for moe_topk_sum: generic bytes (flat 1D loads with
-# the TOPK static unroll). The 2D [TOPK_PAD, BLOCK] tile form read 0.53
-# (2026-09-20) vs the generic band 4.9+ on tianshu; GCU wants flat
-# streaming, not strided row tiles.
+# Enflame vendor for moe_topk_sum: the generic flat reduction with the
+# GCU program model - launch held at the 24-SIP width with BLOCK 16384
+# and num_stages 3 (few programs + wide blocks; the 2D tile form read
+# 0.53 and the flat full-grid port 0.24, while relu2's 24-SIP form is
+# the only enflame recipe above the floor).
 
 import torch
 import triton
@@ -41,15 +42,15 @@ def moe_topk_sum(x, out):
     assert x.dtype == out.dtype == torch.bfloat16
     assert x.is_contiguous() and out.is_contiguous()
     if rows and hdim:
-        splits = min(max(1, triton.cdiv(hdim, 1024)), 255)
-        _moe_topk_sum[(min(rows, 2048), splits)](
+        splits = min(max(1, triton.cdiv(hdim, 16384)), 4)
+        _moe_topk_sum[(min(rows, 24), splits)](
             x,
             out,
             rows,
             hdim,
             TOPK=topk,
-            BLOCK=1024,
-            num_warps=8,
+            BLOCK=16384,
+            num_stages=3,
         )
     return out
 
