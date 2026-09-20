@@ -62,3 +62,9 @@ updated: 2026-09-20
   预注册门：燧原 ≥3.0；均值 >2.5536 换 TB。
 - 五元组：commit `4e5cdc02b22f3c9654405160d648e02dc6182ab8`；ZIP `e5-4e5cdc0` SHA `ba5eba9ccb35651ed71519066b8b7fc86109c1361957d1e1b659f3bbfc727db2`；
   test `37b246090e6274a43e5c2968e5bfa400987c2926e82a81ca42a019ce9f2cfa30`；回执 `top1day-20260921b/relu2/` SHA `eef3070d6f8fc4a765b2f6c68756d140d393674e4d45def066047993b29e6a22`。
+
+## 2026-09-21 00:47 E5 平台终态：燧原 0.5 三败，e4 的 24-SIP 形态才是 GCU 正解
+
+- flat generic 全网格在 GCU 读 **0.5**（< e4 的 24-SIP BLOCK 16384 的 2.61）。
+  至此 GCU 三种形态三败（行形式/flat 多程序/仅少程序+超宽可行）。
+  TB 保 e4 2.5536。E6 轴：燧原回 24-SIP 形态 + 宽度 32768 阶梯。
