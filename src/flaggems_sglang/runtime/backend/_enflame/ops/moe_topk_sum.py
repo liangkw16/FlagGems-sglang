@@ -43,13 +43,14 @@ def moe_topk_sum(x, out):
     assert x.is_contiguous() and out.is_contiguous()
     if rows and hdim:
         splits = min(max(1, triton.cdiv(hdim, 16384)), 4)
-        _moe_topk_sum[(min(rows, 24), splits)](
+        _moe_topk_sum[(min(rows, 12), splits)](
             x,
             out,
             rows,
             hdim,
             TOPK=topk,
             BLOCK=16384,
+            num_warps=2,
             num_stages=3,
         )
     return out
