@@ -1,5 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
+# s0r3 carrier (2026-09-21 09:00): same peak bytes again; last window
+# roll of the day (e17 drew huawei 507.4 / card_a 503.9).
 # s0r2 carrier (2026-09-21 08:30): e15 peak bytes unchanged; evening
 # window re-roll (huawei band 437-492, haiguang 588-643).
 # Inverse of pad_draft_extend_query: gather accepted rows into a ragged
