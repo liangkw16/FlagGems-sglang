@@ -31,7 +31,11 @@ def relu2(input):
     out = torch.empty_like(input)
     numel = input.numel()
     if numel:
-        _relu2[(min(triton.cdiv(numel, 131072), 24),)](
+        # gcu300 grid cap (12 CTAs); num_warps stays unpinned - the
+        # 131072-wide block with two warps made even the proxy compile
+        # pathological, so this vendor keeps the official grid geometry
+        # only
+        _relu2[(min(triton.cdiv(numel, 131072), 12),)](
             input, out, numel, BLOCK=131072, num_stages=3
         )
     return out
