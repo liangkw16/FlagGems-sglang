@@ -6,12 +6,12 @@ operator: relu2
 batch: 6
 validity: valid
 platform: completed(18350,e3,8/8,2.497x新TB;天数/A +8% generic warps8)
-candidate_stage: e3
+candidate_stage: e4
 team_best_stage: e3
 team_best_speedup: 2.497
 sealed: no
 next: 流式elementwise;轴=燧原0.8/昆仑0.8/华为1.1 vendors(streaming配方);榜首差距55%较大
-updated: 2026-09-20
+updated: 2026-09-21
 ```
 
 ## 2026-09-20 S0/E1 首发记录
@@ -114,3 +114,18 @@ updated: 2026-09-20
   在 65536，与场带 3.78-4.12 合）/ 海光 3.24（1024 回滚兑现）/ 昆仑 0.79 /
   华为 1.02 / A 3.33 / B 2.77。剩洞：沐曦 2.34 vs 3.14+、海光 3.24 vs
   3.5-4.3、华为 1.02 vs 1.25-1.9——结构未知，T89 进入 2.72-2.85 平台。
+
+
+## 2026-09-21 E4 候选就绪（燧原官方 gcu300 规则集，待 09-22 发射）
+
+- 官方源码调研（FlagGems _enflame gcu300 codegen / FlagTree enflame
+  backend）：max_grid_size=(12,1,1)（grid-stride 吸收超额）、
+  enflame_heuristics_for_num_warps 钉 2、stride 需编译期互整除才走 DMA。
+  本题 vendor 应用：grid 24→12（warps 不钉——2-warp 131072 块在代理编译即病态）。
+- 五元组：commit `245a7c65`；ZIP
+  `artifacts/competition/relu2/e4-f3b8cad/relu2.zip`
+  SHA `df172a2c63c43e5de319b4e6790bfab311f011901af406ae5bb0567bf8176bd3`；成员 generic/ascend/enflame/hygon/metax（generic 与非燧原 vendor 字节
+  不变，账本明确列全）；回执 `day5prep-20260921/relu2/verification.json`
+  SHA `698e909572e2d728…`。
+- 预注册门：燧原 3.86→≥7.7(×2)；其余七芯不动（vendor-only 单变量）。codex-review
+  零发现（grid-stride 边界模拟无漏算）。

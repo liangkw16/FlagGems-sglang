@@ -6,11 +6,11 @@ operator: add3
 batch: 6
 validity: valid
 platform: completed(17393,e2,8/8,1.0564x新TB;燧原8192档+21%过门)
-candidate_stage: e2
+candidate_stage: e3
 team_best_stage: e2
 sealed: no
 next: 燧原8192档兑现(0.755→0.914,门0.9刚过;纯streaming与T63 gather的8192回落成族边界对照);剩余=昆仑0.64→0.8/沐曦1.11→1.3无新假设;题边际递减,基本收官
-updated: 2026-09-18
+updated: 2026-09-21
 ```
 
 ## 契约与实现（S0）
@@ -67,3 +67,18 @@ updated: 2026-09-18
   刚过）**；其余芯窗口持平。
 - 族边界再证：BLOCK 阶梯的峰值档按访存形态分化——gather（T63）峰在
   4096、纯 streaming（add3）8192 仍上行。
+
+
+## 2026-09-21 E3 候选就绪（燧原官方 gcu300 规则集，待 09-22 发射）
+
+- 官方源码调研（FlagGems _enflame gcu300 codegen / FlagTree enflame
+  backend）：max_grid_size=(12,1,1)（grid-stride 吸收超额）、
+  enflame_heuristics_for_num_warps 钉 2、stride 需编译期互整除才走 DMA。
+  本题 vendor 应用：grid 24→12+ num_warps=2。
+- 五元组：commit `106517ef`；ZIP
+  `artifacts/competition/add3/e3-14437ad/add3.zip`
+  SHA `c93ebcc4a87b65647f7abde46e87a5303deaafa7a41dcba8f682ee40d75199d0`；成员 generic/ascend/enflame（generic 与非燧原 vendor 字节
+  不变，账本明确列全）；回执 `day5prep-20260921/add3/verification.json`
+  SHA `d9ed04149fb27554…`。
+- 预注册门：燧原 0.44→≥0.88(×2)；其余七芯不动（vendor-only 单变量）。codex-review
+  零发现（grid-stride 边界模拟无漏算）。

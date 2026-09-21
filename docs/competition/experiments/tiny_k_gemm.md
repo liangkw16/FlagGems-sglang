@@ -6,12 +6,12 @@ operator: tiny_k_gemm
 batch: 6
 validity: valid
 platform: completed(18345,e7,8/8,1.953x=TB;metax16/kunlunw8中性,阶梯到顶)
-candidate_stage: e7
+candidate_stage: e8
 team_best_stage: s0
 team_best_speedup: 1.953
 sealed: no
 next: metax BLOCK_N32修复smem后#2;距榜首3.4%:轴=BLOCK_N阶梯(64于非K256形状)/m16rows;昆仑1.1/华为0.8 vendor
-updated: 2026-09-20
+updated: 2026-09-21
 ```
 
 ## 2026-09-20 S0/E1 首发记录
@@ -50,3 +50,18 @@ updated: 2026-09-20
 - **榜首 2.032 → 2.2448**（EvokeAgent，天数 4.49 拉动）。Δ 归因：天数
   -1.76、燧原 -1.23 两洞合计 -0.37 均值 > 总差 0.27——**下一轴 = generic
   GCU 结构 + 燧原 vendor**。
+
+
+## 2026-09-21 E8 候选就绪（燧原官方 gcu300 规则集，待 09-22 发射）
+
+- 官方源码调研（FlagGems _enflame gcu300 codegen / FlagTree enflame
+  backend）：max_grid_size=(12,1,1)（grid-stride 吸收超额）、
+  enflame_heuristics_for_num_warps 钉 2、stride 需编译期互整除才走 DMA。
+  本题 vendor 应用：grid 24→12+ num_warps=2 + 运行时 stride 参数 constexpr 化（DMA 判定编译期可证）。
+- 五元组：commit `14437ad3`；ZIP
+  `artifacts/competition/tiny_k_gemm/e8-14437ad/tiny_k_gemm.zip`
+  SHA `14379b21bbf057d40c34581aaae829fabb0a9b67dd493ac3a955dfcdc5f69994`；成员 generic/enflame/kunlunxin/metax（generic 与非燧原 vendor 字节
+  不变，账本明确列全）；回执 `day5prep-20260921/tiny_k_gemm/verification.json`
+  SHA `8bb2c26447e6d7d4…`。
+- 预注册门：燧原 0.67→≥1.34(×2)；其余七芯不动（vendor-only 单变量）。codex-review
+  零发现（grid-stride 边界模拟无漏算）。

@@ -6,12 +6,12 @@ operator: moe_topk_sum
 batch: 6
 validity: valid
 platform: completed(18337,e6,8/8,2.84x<TB;保e5 2.908;燧原2D-tile中性偏负)
-candidate_stage: e6
+candidate_stage: e10
 team_best_stage: e5
 team_best_speedup: 2.908
 sealed: no
 next: e1双vendor(燧原streaming+100%/华为persistent+27%)→e3 warps=8(+9.7%,海光+36%);e2 BLOCK2048回退/e4 warps16沐曦超限;距榜首3.729差26%;轴:天数4.8/沐曦2.6/海光4.9-6.0仍有空间
-updated: 2026-09-19
+updated: 2026-09-21
 ```
 
 ## 过程摘要（2026-09-19 凌晨，题面 09-18 晚随批 6 扩容上线）
@@ -89,3 +89,18 @@ updated: 2026-09-19
   BLOCK 16384 已整行覆盖、宽度饱和，场带 2.4-2.9 仍差一倍——燧原归约
   归因待新情报）/ 海光 6.13 / 昆仑 0.6 / 华为 1.74 / A 3.13 / B 3.10。
   冲 cgzhou 3.729 需其燧原 9.0 专属结构，当前上限 ~3.3-3.4。
+
+
+## 2026-09-21 E10 候选就绪（燧原官方 gcu300 规则集，待 09-22 发射）
+
+- 官方源码调研（FlagGems _enflame gcu300 codegen / FlagTree enflame
+  backend）：max_grid_size=(12,1,1)（grid-stride 吸收超额）、
+  enflame_heuristics_for_num_warps 钉 2、stride 需编译期互整除才走 DMA。
+  本题 vendor 应用：grid 24→12+ num_warps=2。
+- 五元组：commit `e899971e`；ZIP
+  `artifacts/competition/moe_topk_sum/e10-14437ad/moe_topk_sum.zip`
+  SHA `c115b58a3eb1c5999e86a8213572675fb71cfbc8ba6f7ea76dcb6fba2f919496`；成员 generic/ascend/enflame/hygon（generic 与非燧原 vendor 字节
+  不变，账本明确列全）；回执 `day5prep-20260921/moe_topk_sum/verification.json`
+  SHA `280ee0706a050c4e…`。
+- 预注册门：燧原 1.03→≥2.06(×2)；其余七芯不动（vendor-only 单变量）。codex-review
+  零发现（grid-stride 边界模拟无漏算）。
