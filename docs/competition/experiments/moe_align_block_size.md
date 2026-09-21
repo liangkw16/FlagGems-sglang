@@ -27,3 +27,13 @@ updated: 2026-09-19
   runtime 宽度寻址产生垃圾（hash_topk 三形态同指纹，标量串行为唯一
   可用形态）；GCU make_gcuir 拒张量索引 gather（torch 预 gather 先例
   再证）；XPU bf16 downcast 刀刃值与 eager 差 1 ulp（rtne 显式钉仍差）。
+
+## 2026-09-21 E5 候选就绪并发射（串行 scan 尾部并行化）
+
+- 结构（`ac2cb311`）：_scan 只留 num_routed 偏移循环（每专家 5 标量
+  操作）；新增 _fill 并行内核（每专家一程序写 expert_ids 段 + 全网格
+  并行哨兵毯）。旧单程序串行填充整个 buf 是全芯 8-17×（燧原 100×）
+  落后的主嫌疑。预注册门：天数 ≥400 / 海光 ≥400；均值 >95.28×2 即
+  结构兑现。
+- 五元组：commit `ac2cb3115e85e74baa9163257018e163d5031063`；ZIP SHA `ebe9bd4c4cf876b2660d4908f5332d71d24c42c907bd6b1b009803d53173d800`；test
+  `f19789f3b167bea8cc936c5f86a285e2f8db5bce939e9a971c6ee182da37744c`；回执 `top1day-20260921k/` SHA `8ccb31fde66b089643e0f5bcc4e91a1f36867d4e8d41ad3b946f18883805f099`。
