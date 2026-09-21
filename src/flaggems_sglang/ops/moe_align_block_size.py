@@ -1,98 +1,89 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# e2r carrier: the e2 execution bytes with a comment-only identity
-# change - submission 17709 scored huawei 0.0 from a reference-side
-# torch_npu RuntimeError (all seven other chips healthy, avg 95.28).
-# Ascend fix (2026-09-21): drop sem="relaxed" from both atomic_add calls.
-# triton-ascend documents acquire/release/relaxed as UNSUPPORTED on the
-# Ascend backend; the relaxed lowering faulted the device asynchronously
-# and the error only surfaced at the reference's synchronize (hence the
-# misleading flaggems_reference frame and the huawei 0.0 across e5-e7).
-# The default acq_rel semantics are the supported form.
-# s0r3 carrier (2026-09-21 08:40): e6 bytes unchanged; e5/e6 both
-# drew the huawei reference-side crash family (0.0 with seven healthy
-# chips) - crash-family re-roll 1 of the allowed 2.
 # The sort/pad every block-tiled fused-MoE GEMM depends on: flatten
 # (token, slot) pairs, group them by expert and pad each expert's run to
 # a block multiple. The harness checks each expert range as a multiset
 # (atomic cursor placement allowed) and requires the sentinel tail.
-# Four launches: histogram -> tiny single-program scan (aligned
-# offsets only) -> parallel fill (expert_ids runs + sentinel blanket)
-# -> atomic-cursor scatter. The scan used to fill the whole buffer
-# serially, which dominated every chip (8-100x behind the field). The trailing
-# "filtered expert" slot never receives tokens or blocks.
+# The trailing "filtered expert" slot never receives tokens or blocks.
+# e12 structure: the reference-style per-expert Python loop is long gone;
+# this round collapses the launch count from five (memset + hist + scan +
+# fill + scatter, plus an expert_ids clone) to three - one tiny state
+# memset, one fused compute launch, one scatter - and writes the outputs
+# in place into the caller's buffers (the reference's clone exists only
+# to keep its own result pristine; the returned values are identical,
+# including the undefined expert_ids tail). In the fused kernel the
+# first P programs build the histogram with atomics and the last one
+# through the ticket carries the whole scan as one vectorized
+# tl.cumsum pass (the serial 256-iteration expert loop is gone), then
+# fills expert_ids with per-lane variable-length runs; the remaining
+# programs blanket sorted_ids with the sentinel in parallel. The scatter
+# keeps its proven bytes: an atomic cursor claim per (token, slot).
 
 import torch
 import triton
 import triton.language as tl
 
 
-@triton.jit(do_not_specialize=["numel", "num_routed"])
-def _hist(flat, counts, numel, num_routed, BLOCK: tl.constexpr):
-    for base in range(
-        tl.program_id(0) * BLOCK, numel, tl.num_programs(0) * BLOCK
-    ):
-        offs = base + tl.arange(0, BLOCK)
-        m = offs < numel
-        e = tl.load(flat + offs, m, other=0)
-        hit = m & (e >= 0) & (e < num_routed)
-        tl.atomic_add(counts + e, (hit).to(tl.int32))
-
-
-@triton.jit(do_not_specialize=["num_routed", "block_size", "buf_numel"])
-def _scan(
+@triton.jit(do_not_specialize=["numel", "num_routed", "buf_numel", "hist_programs"])
+def _compute(
+    flat,
+    sorted_ids,
+    eids,
+    npost_ptr,
     counts,
     cursor,
-    nblk,
-    num_post,
+    ticket,
+    numel,
     num_routed,
     block_size,
-    BLOCK: tl.constexpr,
-):
-    offset = 0
-    for e in range(0, num_routed):
-        n = tl.load(counts + e)
-        # counts[e] becomes this expert's run start (its own histogram
-        # value is consumed here); the scatter reads the run starts.
-        tl.store(counts + e, offset)
-        aligned = ((n + block_size - 1) // block_size) * block_size
-        tl.store(nblk + e, aligned // block_size)
-        offset += aligned
-        tl.store(cursor + e, 0)
-    tl.store(num_post, offset)
-
-
-@triton.jit(do_not_specialize=["num_routed", "buf_numel"])
-def _fill(
-    expert_ids,
-    sorted_ids,
-    counts,
-    nblk,
-    block_size,
-    num_routed,
     buf_numel,
+    hist_programs,
     sentinel,
-    BLOCK: tl.constexpr,
+    BLOCK_N: tl.constexpr,
+    BLOCK_E: tl.constexpr,
+    BLOCK_F: tl.constexpr,
 ):
-    # one program per expert writes its expert_ids run (the scan left
-    # each expert's block start in counts); the remaining programs
-    # blanket sorted_ids with the sentinel in parallel - the previous
-    # single-program scan filled the whole buffer serially
     pid = tl.program_id(0)
-    if pid < num_routed:
-        beg = tl.load(counts + pid) // block_size
-        n = tl.load(nblk + pid)
-        e = pid.to(tl.int32)
-        for b0 in range(0, n, BLOCK):
-            offs = b0 + tl.arange(0, BLOCK)
-            tl.store(expert_ids + beg + offs, e, offs < n)
+    if pid < hist_programs:
+        for base in range(
+            pid * BLOCK_N, numel, hist_programs * BLOCK_N
+        ):
+            offs = base + tl.arange(0, BLOCK_N)
+            m = offs < numel
+            e = tl.load(flat + offs, m, other=0)
+            hit = m & (e >= 0) & (e < num_routed)
+            safe_e = tl.where(hit, e, 0)
+            tl.atomic_add(counts + safe_e, (hit).to(tl.int32))
+        # the last histogram program through the ticket runs the scan;
+        # the acq_rel default on the ticket orders every other program's
+        # counts atomics before this read
+        done = tl.atomic_add(ticket, 1)
+        if done == hist_programs - 1:
+            lanes = tl.arange(0, BLOCK_E)
+            lm = lanes < num_routed
+            cnt = tl.load(counts + lanes, lm, other=0)
+            aligned = (
+                (cnt + block_size - 1) // block_size
+            ) * block_size
+            starts = tl.cumsum(aligned, 0) - aligned
+            total = tl.sum(aligned, 0)
+            # counts becomes the run starts (consumed by the scatter)
+            tl.store(counts + lanes, starts, lm)
+            # the caller's scratch buffer carries the scatter cursor
+            tl.store(cursor + lanes, tl.zeros((BLOCK_E,), tl.int32), lm)
+            nblk = aligned // block_size
+            start_blk = starts // block_size
+            max_nb = tl.max(nblk, 0)
+            for i in range(0, max_nb):
+                m = lm & (i < nblk)
+                tl.store(eids + start_blk + i, lanes.to(tl.int32), m)
+            tl.store(npost_ptr, total)
     else:
-        base = (pid - num_routed).to(tl.int64) * BLOCK
-        offs = base + tl.arange(0, BLOCK)
-        m = offs < buf_numel
-        fill = tl.zeros((BLOCK,), dtype=tl.int32) + sentinel
-        tl.store(sorted_ids + offs, fill, m)
-
+        fbase = (pid - hist_programs) * BLOCK_F
+        foffs = fbase + tl.arange(0, BLOCK_F)
+        fm = foffs < buf_numel
+        fill = tl.zeros((BLOCK_F,), dtype=tl.int32) + sentinel
+        tl.store(sorted_ids + foffs, fill, fm)
 
 
 @triton.jit(do_not_specialize=["numel", "num_routed"])
@@ -134,54 +125,45 @@ def moe_align_block_size(
     numel = flat.numel()
     num_routed = num_experts - 1
     device = flat.device
-    # one zero-fill covers counts/cursor/nblk instead of three separate
-    # device allocations (the bench is small enough that the wrapper's
-    # fill kernels compete with the four launches)
-    ccn = torch.zeros(3 * num_experts + 2, dtype=torch.int32, device=device)
-    counts, cursor, nblk = (
-        ccn[: num_experts + 1],
-        ccn[num_experts + 1 : 2 * num_experts + 2],
-        ccn[2 * num_experts + 2 :],
-    )
-    sorted_ids = torch.empty_like(sorted_token_ids)
-    eids = expert_ids.clone()
-    npost = torch.empty_like(num_tokens_post_pad)
-    if numel:
-        _hist[(min(triton.cdiv(numel, 1024), 2048),)](
-            flat, counts, numel, num_routed, BLOCK=1024
-        )
-    _scan[(1,)](
+    buf_numel = sorted_token_ids.numel()
+    # counts (zero-initialized for the atomic histogram) + the ticket in
+    # one small memset; the scatter cursor lives in the caller's scratch
+    state = torch.zeros(num_experts + 1, dtype=torch.int32, device=device)
+    counts = state[:num_experts]
+    ticket = state[num_experts:]
+    cursor = cumsum_buffer[:num_experts]
+    hist_programs = max(1, min(triton.cdiv(numel, 1024), 256))
+    fill_programs = triton.cdiv(buf_numel, 1024)
+    _compute[(hist_programs + fill_programs,)](
+        flat,
+        sorted_token_ids,
+        expert_ids,
+        num_tokens_post_pad,
         counts,
         cursor,
-        nblk,
-        npost,
-        num_routed,
-        block_size,
-        BLOCK=1024,
-    )
-    _fill[(num_experts + triton.cdiv(sorted_ids.numel(), 1024),)](
-        eids,
-        sorted_ids,
-        counts,
-        nblk,
-        block_size,
-        num_routed,
-        sorted_ids.numel(),
+        ticket,
         numel,
-        BLOCK=1024,
+        num_routed,
+        block_size,
+        buf_numel,
+        hist_programs,
+        numel,
+        BLOCK_N=1024,
+        BLOCK_E=triton.next_power_of_2(max(1, num_routed)),
+        BLOCK_F=1024,
     )
     if numel:
         _scatter[(min(triton.cdiv(numel, 1024), 2048),)](
             flat,
             counts,
             cursor,
-            sorted_ids,
+            sorted_token_ids,
             numel,
             num_routed,
             block_size,
             BLOCK=1024,
         )
-    return sorted_ids, eids, npost
+    return sorted_token_ids, expert_ids, num_tokens_post_pad
 
 
 __all__ = ["moe_align_block_size"]
