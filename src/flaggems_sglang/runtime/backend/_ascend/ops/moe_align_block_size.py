@@ -1,11 +1,14 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# e13: the no-atomic three-launch core (shared with the enflame vendor,
-# see that file for the full design note). The e12 generic proved the
-# launch-count thesis (163 -> 445 with atomics on the CUDA-like chips);
-# this port keeps the three-launch shape with zero atomics - the Ascend
-# stack faults atomic_add asynchronously (the e5-e9 chain) - and keeps
-# the Ascend-proven launch geometry: full-width grids, no num_warps pin.
+# e16: the no-atomic launch-count core for Ascend. The e13/e15 attempts
+# failed BiShengHIR with "ub overflow, requires 2686976 bits" - the
+# same number with and without expert chunking, so the unified-buffer
+# budget is consumed by the hist/fill if-else branch union, not the
+# compare tile alone. This round splits the histogram and the sentinel
+# blanket into separate kernels (four launches, still under the e10
+# vendor's five) and bakes epd as a constexpr so the compiler sees the
+# chunk trip count. Zero atomics anywhere (the Ascend stack faults
+# atomic_add asynchronously - the e5-e9 chain).
 
 import torch
 import triton
@@ -13,54 +16,45 @@ import triton.language as tl
 
 _BLOCK = 32
 _ROWS = 8
-@triton.jit(
-    do_not_specialize=["n", "num_routed", "epd", "num_blocks", "hist_rows"]
-)
-def _mabs_hist_fill(
+
+
+@triton.jit(do_not_specialize=["n", "num_blocks"])
+def _mabs_hist(
     flat,
     counts,
-    sorted_ids,
     n,
-    num_routed,
-    epd,
     num_blocks,
-    hist_rows,
-    buf_numel,
-    sentinel,
+    epd: tl.constexpr,
     BLOCK: tl.constexpr,
-    BLOCK_E: tl.constexpr,
     E_CHUNK: tl.constexpr,
-    BLOCK_F: tl.constexpr,
 ):
+    # the expert axis is walked in E_CHUNK-tall compare slices: each
+    # (BLOCK, E_CHUNK) tile with its live intermediates stays far below
+    # the 192KB unified buffer
     pid = tl.program_id(0)
-    if pid < hist_rows:
-        idx = tl.arange(0, BLOCK)
-        chunk = tl.arange(0, E_CHUNK)
-        # the Ascend unified buffer is 192KB: the full (BLOCK, BLOCK_E)
-        # compare matrix with its live intermediates needs 335KB and
-        # fails the BiShengHIR pipeline, so the expert axis is walked in
-        # E_CHUNK-tall slices
-        for block in range(pid, num_blocks, hist_rows):
-            offs = block * BLOCK + idx
-            e = tl.load(flat + offs, offs < n, other=-1).to(tl.int32)
-            for e0 in range(0, epd, E_CHUNK):
-                lanes = e0 + chunk
-                row = tl.sum(
-                    (
-                        (e[:, None] == lanes[None, :])
-                        & (offs[:, None] < n)
-                    ).to(tl.int32),
-                    axis=0,
-                )
-                tl.store(
-                    counts + block * epd + lanes, row, lanes < epd
-                )
-    else:
-        fbase = (pid - hist_rows) * BLOCK_F
-        foffs = fbase + tl.arange(0, BLOCK_F)
-        fm = foffs < buf_numel
-        fill = tl.zeros((BLOCK_F,), dtype=tl.int32) + sentinel
-        tl.store(sorted_ids + foffs, fill, fm)
+    idx = tl.arange(0, BLOCK)
+    chunk = tl.arange(0, E_CHUNK)
+    for block in range(pid, num_blocks, tl.num_programs(0)):
+        offs = block * BLOCK + idx
+        e = tl.load(flat + offs, offs < n, other=-1).to(tl.int32)
+        for e0 in tl.static_range(0, epd, E_CHUNK):
+            lanes = e0 + chunk
+            row = tl.sum(
+                ((e[:, None] == lanes[None, :]) & (offs[:, None] < n)).to(
+                    tl.int32
+                ),
+                axis=0,
+            )
+            tl.store(counts + block * epd + lanes, row, lanes < epd)
+
+
+@triton.jit(do_not_specialize=["buf_numel"])
+def _mabs_fill(sorted_ids, buf_numel, sentinel, BLOCK_F: tl.constexpr):
+    pid = tl.program_id(0)
+    foffs = pid * BLOCK_F + tl.arange(0, BLOCK_F)
+    fm = foffs < buf_numel
+    fill = tl.zeros((BLOCK_F,), dtype=tl.int32) + sentinel
+    tl.store(sorted_ids + foffs, fill, fm)
 
 
 @triton.jit(do_not_specialize=["epd", "num_blocks", "num_routed"])
@@ -159,10 +153,9 @@ def moe_align_block_size(
     num_routed = num_experts - 1
     device = flat.device
     buf_numel = sorted_token_ids.numel()
-    block_e = triton.next_power_of_2(max(1, num_routed))
+    epd = triton.next_power_of_2(max(1, num_routed))
     if n:
         num_blocks = triton.cdiv(n, _BLOCK)
-        epd = block_e
         tables = torch.empty(
             2 * num_blocks * epd, dtype=torch.int32, device=device
         )
@@ -172,24 +165,17 @@ def moe_align_block_size(
         )
         aux = torch.empty(2 * epd, dtype=torch.int32, device=device)
         base, nblk = aux[:epd], aux[epd:]
-        hist_rows = min(num_blocks, 256)
-        fill_programs = triton.cdiv(buf_numel, 2048)
-        grid1 = hist_rows + min(fill_programs, 512)
-        _mabs_hist_fill[(grid1,)](
+        _mabs_hist[(min(num_blocks, 2048),)](
             flat,
             counts,
-            sorted_token_ids,
             n,
-            num_routed,
-            epd,
             num_blocks,
-            hist_rows,
-            buf_numel,
-            n,
+            epd=epd,
             BLOCK=_BLOCK,
-            BLOCK_E=block_e,
             E_CHUNK=128,
-            BLOCK_F=2048,
+        )
+        _mabs_fill[(triton.cdiv(buf_numel, 1024),)](
+            sorted_token_ids, buf_numel, n, BLOCK_F=1024
         )
         _mabs_scan[(1,)](
             counts,
@@ -199,10 +185,10 @@ def moe_align_block_size(
             num_tokens_post_pad,
             expert_ids,
             epd,
-            num_blocks,
+            triton.cdiv(n, _BLOCK),
             num_routed,
             block_size,
-            BLOCK_E=block_e,
+            BLOCK_E=epd,
             ROWS=_ROWS,
         )
         _mabs_place[(min(num_blocks, 2048),)](
@@ -213,44 +199,26 @@ def moe_align_block_size(
             n,
             num_routed,
             epd,
-            num_blocks,
+            triton.cdiv(n, _BLOCK),
             BLOCK=_BLOCK,
         )
     else:
-        # empty input stays Triton-only: the blanket fill runs with no
-        # histogram programs and the scan walks zero rows
-        epd = block_e
-        aux = torch.empty(2 * epd, dtype=torch.int32, device=device)
-        base, nblk = aux[:epd], aux[epd:]
-        fill_programs = triton.cdiv(buf_numel, 2048)
-        _mabs_hist_fill[(fill_programs,)](
-            flat,
-            base,
-            sorted_token_ids,
-            0,
-            num_routed,
-            epd,
-            0,
-            0,
-            buf_numel,
-            0,
-            BLOCK=_BLOCK,
-            BLOCK_E=block_e,
-            E_CHUNK=128,
-            BLOCK_F=2048,
+        _mabs_fill[(triton.cdiv(buf_numel, 1024),)](
+            sorted_token_ids, buf_numel, 0, BLOCK_F=1024
         )
+        aux = torch.empty(2 * epd, dtype=torch.int32, device=device)
         _mabs_scan[(1,)](
-            base,
-            base,
-            base,
-            nblk,
+            aux,
+            aux,
+            aux[:epd],
+            aux[epd:],
             num_tokens_post_pad,
             expert_ids,
             epd,
             0,
             num_routed,
             block_size,
-            BLOCK_E=block_e,
+            BLOCK_E=epd,
             ROWS=_ROWS,
         )
     return sorted_token_ids, expert_ids, num_tokens_post_pad
