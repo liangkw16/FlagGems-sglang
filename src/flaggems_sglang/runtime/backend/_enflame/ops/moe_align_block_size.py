@@ -1,7 +1,11 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Atomic-free moe_align_block_size, shared verbatim by the _ascend,
-# _enflame and _kunlunxin vendors. The generic's atomic cursor faults
+# Atomic-free moe_align_block_size for enflame, on the shared no-atomic
+# template with the GCU program model applied: the three compute kernels
+# launch at most 24 programs with grid-stride loops (e9 read 11.7 with
+# 2048/256-program grids; every GCU recipe that landed ran <=24 programs),
+# and the per-expert prefix kernel gains the expert grid-stride it needs
+# for that cap. The parallel blanket fill stays wide (pure streaming). The generic's atomic cursor faults
 # the Ascend device asynchronously (the error surfaces at the reference's
 # synchronize - see the e5-e8 huawei 0.0 chain) and degrades GCU/XPU
 # runtimes (the batch-5 fused_moe_dispatch_index lesson, whose no-atomic
@@ -44,8 +48,7 @@ def _mabs_counts(
 def _mabs_prefix(
     counts, prefix, totals, num_routed, num_experts_pad, num_blocks,
 ):
-    e = tl.program_id(0)
-    if e < num_routed:
+    for e in range(tl.program_id(0), num_routed, tl.num_programs(0)):
         run = 0
         for block in range(0, num_blocks):
             off = block.to(tl.int64) * num_experts_pad + e
@@ -153,12 +156,12 @@ def moe_align_block_size(
         )
         base = torch.empty_like(totals)
         nblk = torch.empty_like(totals)
-        grid = min(num_blocks, 2048)
+        grid = min(num_blocks, 24)
         _mabs_counts[(grid,)](
             flat, counts, n, num_routed, num_experts_pad, num_blocks,
             BLOCK=_BLOCK,
         )
-        _mabs_prefix[(max(1, min(num_routed, 65535)),)](
+        _mabs_prefix[(max(1, min(num_routed, 24)),)](
             counts, prefix, totals, num_routed, num_experts_pad,
             num_blocks,
         )
