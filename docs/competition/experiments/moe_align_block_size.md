@@ -37,3 +37,13 @@ updated: 2026-09-19
   结构兑现。
 - 五元组：commit `ac2cb3115e85e74baa9163257018e163d5031063`；ZIP SHA `ebe9bd4c4cf876b2660d4908f5332d71d24c42c907bd6b1b009803d53173d800`；test
   `f19789f3b167bea8cc936c5f86a285e2f8db5bce939e9a971c6ee182da37744c`；回执 `top1day-20260921k/` SHA `8ccb31fde66b089643e0f5bcc4e91a1f36867d4e8d41ad3b946f18883805f099`。
+
+## 2026-09-21 08:06 E5 平台终态（7/8 时）：串行填充并行化兑现 +34%~+125%
+
+- 逐芯：天数 185→**298.1** / 沐曦 63→**141.7** / 燧原 4.7（vendor 未动，
+  原子禁令串行版）/ 海光 162→**217.1** / 昆仑 2.8 / A 161→**305.3** /
+  B 170→**182.5**；华为评估中（历史有 reference 侧 torch_npu 崩溃族）。
+- **E6**：wrapper 单次零填充合并 counts/cursor/nblk（减少设备端内核
+  数）。燧原/昆仑无原子并行重设计（+60 均值潜力）入账为明日首轴。
+- 五元组：commit `1dbebc9252817f167a0800c747e21ad89732515d`；ZIP SHA `b4b34419f4085b2c653542dea6241a754792cda52e2b14bf99337408fcf9b98f`；test
+  `f19789f3b167bea8cc936c5f86a285e2f8db5bce939e9a971c6ee182da37744c`；回执 `top1day-20260921l/` SHA `23d5c23e7257abc496c321656cad60fcb6b0bbb0b18bfc756277eed703696d7d`。
