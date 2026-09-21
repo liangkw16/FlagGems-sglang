@@ -4,13 +4,13 @@
 task: 80
 operator: fixup_zero_kv
 batch: 6
-validity: valid(8/8,e8,506.12x TB)
-platform: e8=506.12新TB(原位结构,天数1207/沐曦167/燧原25/海光893/昆仑8.6/华为303/A814/B631);e9 vendor原位(沐曦312/燧原42)但昆仑packing败;e10昆仑编译过数值败(3072失配=lse量,七芯原位e8全过→疑昆仑检查器差异)
-candidate_stage: e10
-team_best_stage: e8
-team_best_speedup: 506.12x
+validity: valid(8/8,e11,518.70x TB)
+platform: e11=518.70新TB(e9 vendor原位组合+昆仑e8字节:天数1205/沐曦294/燧原42/海光892/昆仑8.58/华为277/A815/B616)
+candidate_stage: e11
+team_best_stage: e11
+team_best_speedup: 518.70x
 sealed: no
-next: 当日200.92→506.12(+152%);距c2flow 569.3=11%;昆仑原位差异未解(vendor已回滚e8字节);沐曦409/燧原42的下一档=原位+宽块再探
+next: 距c2flow 569.3=9.8%;最大单芯缺口=燧原42vs193(-19均值);沐曦294-409波动vs473;华为277vs354
 updated: 2026-09-22
 ```
 
@@ -154,3 +154,11 @@ updated: 2026-09-22
   行为差异）。**止损**：昆仑 vendor 回滚 e8 字节（8.59 保底），TB 守住。
 - 残余差距 vs c2flow 569.3：沐曦 409（e9 已证 312→e10 408.7 水位）、
   燧原 42 vs 193、昆仑原位之谜。
+
+
+## 2026-09-22 E11 平台终态：518.70 新 TB
+
+- E11（19452）：e9 的 metax/enflame 原位 vendor + 昆仑 e8 老字节组合。
+  逐芯：天数 1205.2 / 沐曦 294.0（窗口回落，e9/e10 曾 312/409）/
+  燧原 41.96 / 海光 892.2 / 昆仑 8.58 / 华为 276.6 / A 814.9 / B 616.2。
+  **518.70 > 506.12 换 TB**。距 c2flow 569.3 = 9.8%。
