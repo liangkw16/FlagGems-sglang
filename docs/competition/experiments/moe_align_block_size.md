@@ -71,3 +71,16 @@ updated: 2026-09-19
   B 182-198。T84 今日定格 **150.52**（e6，95.28 起 +58%）。
 - 明日轴：燧原/昆仑无原子并行重设计（+60 均值潜力）+ 发射数压缩
   （榜首 883 的 5× 差主嫌疑）。
+
+## 2026-09-21 E8 候选就绪并发射（华为 0.0 根因修复：去 sem="relaxed"）
+
+- **根因链（联网取证）**：回执栈 `torch_npu/npu/utils.py:72` = synchronize()
+  （异步设备错误在同步点浮出）+ Triton-Ascend 官方文档明确 sem
+  acquire/release/**relaxed** 不支持——我方 atomic_add(sem="relaxed")
+  在昇腾 lowering 出错，错误延迟到 reference 同步点才爆，归因帧误导为
+  reference 侧。T85 华为健康（ascend vendor 无原子）为旁证。
+- 结构（`56fcd785`）：仅去掉两处 sem="relaxed"（回默认 acq_rel）。
+  预注册门：华为 >0（若仍 0 则 reference 平台侧当前损坏，转报告组委
+  会）；七芯不回退（150.52 基线）。
+- 五元组：commit `56fcd785d20da24afdc9884145eb4016ade80862`；ZIP SHA `10d6f634818171239de42b48e709de3dc333c08a4d79c287f5623f5319b66721`；test
+  `f19789f3b167bea8cc936c5f86a285e2f8db5bce939e9a971c6ee182da37744c`；回执 `top1day-20260921p/` SHA `958d9f1f1935fbf1a2c3f116194ce360227d778f18fc706ff9f70459df8d26d6`。
