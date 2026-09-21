@@ -11,7 +11,8 @@ import triton.language as tl
 
 @triton.jit(do_not_specialize=["m", "n"])
 def _tiny_k_gemm(
-    x, w, out, m, n, xs0, ws0, os0,
+    x, w, out, m, n,
+    xs0: tl.constexpr, ws0: tl.constexpr, os0: tl.constexpr,
     K: tl.constexpr, BLOCK_N: tl.constexpr,
 ):
     pid = tl.program_id(0)
@@ -50,17 +51,18 @@ def tiny_k_gemm(x, w, out_dtype):
     assert out_dtype in (torch.bfloat16, torch.float32)
     out = torch.empty((m, n), dtype=out_dtype, device=x.device)
     if m and n:
-        _tiny_k_gemm[(min(triton.cdiv(n, 64), 24),)](
+        _tiny_k_gemm[(min(triton.cdiv(n, 64), 12),)](
             x,
             w,
             out,
             m,
             n,
-            x.stride(0),
-            w.stride(0),
-            out.stride(0),
+            xs0=x.stride(0),
+            ws0=w.stride(0),
+            os0=out.stride(0),
             K=k,
             BLOCK_N=64,
+            num_warps=2,
             num_stages=3,
         )
     return out
