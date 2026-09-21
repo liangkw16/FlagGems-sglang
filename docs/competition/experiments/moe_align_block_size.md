@@ -97,3 +97,17 @@ updated: 2026-09-19
   （对齐 4.7/2.8 旧串行版）；其余五芯 150 基线不回退。
 - 五元组：commit `0d482ceeab5b6acda10bd71e162630ca0e3401df`；ZIP SHA `08404f5e29c3f724d4d6114535d186fceb1258af682c130c2edbe254c056951d`；test
   `f19789f3b167bea8cc936c5f86a285e2f8db5bce939e9a971c6ee182da37744c`；回执 `top1day-20260921q/` SHA `319acf002d4b312d91ac2370267f2be5a08bf85e8e69f6b66b4b873b97fc4628`。
+
+## 2026-09-21 14:23 E9 平台终态：华为 87.5 通过——异步原子致错根因确认
+
+- **华为 0→87.5**（e8 去 relaxed 仍 0.0 同栈 → e9 全无原子即通过：
+  该栈上 atomic_add 本身异步致错，错误浮出于 reference 同步点；
+  reference 本身健康，e2-e8 五发的"reference 侧"归因是异步故障的
+  归因错位）。燧原 4.7→**11.7**（无原子版 2.5×，但 K1 标量专家循环
+  grid 2048 未按 GCU 模型封顶——明日 24 程序化冲 462）。
+  昆仑 tl.sum 归约 PassManager 失败（XPU ban 清单 +1：K1 形态的
+  tl.sum）。
+- **E10**：昆仑回滚旧串行 vendor（2.8 健康），ascend/enflame 保共享
+  无原子版。预注册门：均值 >154（含昆仑 2.8 即 ~154.6）。
+- 五元组：commit `1e7e17c585ccf20428fbe1621f9c56c0410afdb6`；ZIP SHA `5719ca7b095fd52c63f6d9bcc90dae48a900acff7806ee631ad20d7893115024`；test
+  `f19789f3b167bea8cc936c5f86a285e2f8db5bce939e9a971c6ee182da37744c`；回执 `top1day-20260921r/` SHA `c7b046be209d38b023c191c3d14aeafe658244581d04ce60ef378aa352001fed`。
