@@ -4,14 +4,14 @@
 task: 80
 operator: fixup_zero_kv
 batch: 6
-validity: valid
-platform: completed(17607,e7,8/8,197.25x<TB;保e4;沐曦warps轴窗口混淆关轴)
-candidate_stage: e7
-team_best_stage: e4
-team_best_speedup: 200.920075
+validity: valid(8/8,e8,506.12x TB)
+platform: e8=506.12新TB(原位结构,天数1207/沐曦167/燧原25/海光893/昆仑8.6/华为303/A814/B631);e9 vendor原位(沐曦312/燧原42)但昆仑packing败;e10昆仑编译过数值败(3072失配=lse量,七芯原位e8全过→疑昆仑检查器差异)
+candidate_stage: e10
+team_best_stage: e8
+team_best_speedup: 506.12x
 sealed: no
-next: 沐曦warps轴关闭(e6的219为窗口美化,e7同配置171.8,21%窗口摆动);燧原27.7/海光419今晚偏暖,慢窗最后一掷观察中;华为223回水位
-updated: 2026-09-18
+next: 当日200.92→506.12(+152%);距c2flow 569.3=11%;昆仑原位差异未解(vendor已回滚e8字节);沐曦409/燧原42的下一档=原位+宽块再探
+updated: 2026-09-22
 ```
 
 ## 契约与实现（S0）
@@ -138,3 +138,19 @@ updated: 2026-09-18
   SHA-256 `fa95bc2c01874db50f3809d5273f67866c8348ef883b6f815ecf235113c00c50`；test SHA-256 `34c41446af5b8700a1a42f96b24b4b2b7ea7de44ea77b1e0d6f3441d716f9abf`；回执 SHA-256 `bbc31a1e0d4274cd52e7104ada7bf8b427e2caaea73358b08930668326a33276`。
 - 发射参数齐备（commit/zip/sha/test/receipt 五元组已核对），午夜额度
   刷新后按第五轮排序直接 preflight→submit。
+
+
+## 2026-09-22 E8/E9/E10：原位结构 506.12 新 TB（+152%）
+
+- **E8（19426）：8/8 valid 506.117 新 TB**。原位写（out/lse 即输出参数，
+  只写零段、健康段程序立即退出——题面语义"单 launch 清零+无 host sync"）。
+  逐芯：天数 1207 / 沐曦 167 / 燧原 25.2 / 海光 893 / 昆仑 8.59 / 华为
+  303.1 / A 814.3 / B 630.8。codex-review 两轮（契约变更+每模块新鲜输入
+  P2 修复）。T84 e12 之后**平台第二次接受原位返回**。
+- E9（19433）：metax/enflame vendor 原位移植（沐曦 167→311.8、燧原
+  25.2→41.9 兑现），昆仑 vendor 误带 2D lse 广播 → XPU packing 编译败。
+- E10（19434）：昆仑纯 1D 平铺修复后编译过但数值败（3072 元素失配 ≈
+  lse 写入量；e8 七个原位 generic 芯全过 ⇒ 疑昆仑检查器对返回缓冲的
+  行为差异）。**止损**：昆仑 vendor 回滚 e8 字节（8.59 保底），TB 守住。
+- 残余差距 vs c2flow 569.3：沐曦 409（e9 已证 312→e10 408.7 水位）、
+  燧原 42 vs 193、昆仑原位之谜。
