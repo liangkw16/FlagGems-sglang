@@ -7,10 +7,11 @@ batch: 6
 validity: valid
 platform: completed(17393,e2,8/8,1.0564x新TB;燧原8192档+21%过门)
 candidate_stage: e3
+platform: e3(19376)invalid_threshold:昆仑0.056环境崩(e2=0.64,generic字节未变);燧原0.44→1.06(+141%规则集兑现);重掷待昆仑恢复
 team_best_stage: e2
 sealed: no
 next: 燧原8192档兑现(0.755→0.914,门0.9刚过;纯streaming与T63 gather的8192回落成族边界对照);剩余=昆仑0.64→0.8/沐曦1.11→1.3无新假设;题边际递减,基本收官
-updated: 2026-09-21
+updated: 2026-09-22
 ```
 
 ## 契约与实现（S0）

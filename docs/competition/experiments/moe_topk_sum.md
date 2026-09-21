@@ -7,11 +7,12 @@ batch: 6
 validity: valid
 platform: completed(18337,e6,8/8,2.84x<TB;保e5 2.908;燧原2D-tile中性偏负)
 candidate_stage: e10
+platform: e10(19377)valid 2.8315<TB2.898;燧原1.03→1.38(+33%,未过×2门);昆仑0.117贴门
 team_best_stage: e5
 team_best_speedup: 2.908
 sealed: no
 next: e1双vendor(燧原streaming+100%/华为persistent+27%)→e3 warps=8(+9.7%,海光+36%);e2 BLOCK2048回退/e4 warps16沐曦超限;距榜首3.729差26%;轴:天数4.8/沐曦2.6/海光4.9-6.0仍有空间
-updated: 2026-09-21
+updated: 2026-09-22
 ```
 
 ## 过程摘要（2026-09-19 凌晨，题面 09-18 晚随批 6 扩容上线）

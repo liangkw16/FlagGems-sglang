@@ -7,11 +7,12 @@ batch: 6
 validity: valid
 platform: completed(18350,e3,8/8,2.497x新TB;天数/A +8% generic warps8)
 candidate_stage: e4
-team_best_stage: e3
+platform: e4(19379)valid 2.6397新TB(+5.7%);燧原3.94持平;昆仑0.135贴门
+team_best_stage: e4
 team_best_speedup: 2.497
 sealed: no
 next: 流式elementwise;轴=燧原0.8/昆仑0.8/华为1.1 vendors(streaming配方);榜首差距55%较大
-updated: 2026-09-21
+updated: 2026-09-22
 ```
 
 ## 2026-09-20 S0/E1 首发记录

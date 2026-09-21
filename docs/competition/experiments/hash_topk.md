@@ -7,11 +7,12 @@ batch: 6
 validity: valid
 platform: completed(18358,e6,8/8,6.316x新TB;e5泄漏字节教训+燧原24stages3)
 candidate_stage: e7
+platform: e7(19374)valid 6.2914<TB6.316;燧原0.85→0.97(+14%,未过×2门);昆仑0.132贴门
 team_best_stage: e6
 team_best_speedup: 6.316
 sealed: no
 next: e4 constexpr-width vendor判负(昆仑垃圾指纹不变,标量唯一形态0.3);燧原torch-pregather vendor 0.8;距榜首7.15差17%,rank5;轴:昆仑向量形态XPU不可用已三证
-updated: 2026-09-21
+updated: 2026-09-22
 ```
 
 ## 过程摘要（2026-09-19 凌晨，题面 09-18 晚随批 6 扩容上线）

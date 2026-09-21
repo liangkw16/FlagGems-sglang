@@ -4,14 +4,14 @@
 task: 77
 operator: compute_position
 batch: 6
-validity: candidate(未提交;代理双源全绿)
-platform: 未提交
-candidate_stage: s0
-team_best_stage: -
-team_best_speedup: -
+validity: valid(8/8,e2,344.34x)
+platform: e2终态344.34(天数585/沐曦160/燧原51.7/海光454/昆仑6.75/华为217/A649/B631);s0(19369)因模块级cache被反作弊扫描拒
+candidate_stage: e2
+team_best_stage: e2
+team_best_speedup: 344.34x
 sealed: no
-next: s0 待发(09-22 首发);燧原 int64 布局以首发为探针(B=打包/int64=标准);8/8 即成功,仅燧原数值失败则换双词形态补一发
-updated: 2026-09-21
+next: 补位成功上榜;轴=沐曦160vs榜首1181/昆仑6.75vs64/燧原51.7vs427;B布局打包写平台验证成立
+updated: 2026-09-22
 ```
 
 ## 过程摘要（2026-09-18 开发，09-21 补燧原 vendor 定稿）
@@ -63,3 +63,19 @@ updated: 2026-09-21
 - 发射预案（09-22 00:01 首发）：s0 = generic + enflame vendor 双成员 ZIP。
   预注册门：8/8 任意有效=成功；仅燧原数值失败 = 假设 A 成立，e2 换双词
   （A 布局）形态补一发。
+
+
+## 2026-09-22 S0/E2 平台终态：344.34 有效上榜（未提交题补位成功）
+
+- S0（19369）：**7/8 燧原被判反作弊扫描拒绝**——"Module-level mutable
+  container detected: '_packed_cache'. Global dict/set variables can cache
+  results across benchmark iterations"。布局假设根本没被执行；教训：探针
+  缓存这类全局可变容器直接踩扫描规则。
+- E2（19383，`8a514f1`，去全局缓存改每次调用探针）：**8/8 valid 344.34**。
+  逐芯：天数 584.9 / 沐曦 160.0 / **燧原 51.7（B 布局打包写平台验证
+  成立）** / 海光 453.8 / 昆仑 6.75 / 华为 217.5 / A 649.1 / B 630.9。
+  回执 `day5prep-20260921/compute_position-e2/`；ZIP
+  `compute_position/e2-8a514f1/`。
+- 榜首 EvokeAgent 1731（沐曦 1181/天数 4338 为大头）。后续轴：沐曦、
+  昆仑 6.75→64、燧原 51.7→427。per-call 探针成本（~100µs）在沐曦/天数
+  高分下不构成瓶颈的读数成立。

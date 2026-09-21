@@ -7,11 +7,12 @@ batch: 6
 validity: valid
 platform: completed(18345,e7,8/8,1.953x=TB;metax16/kunlunw8中性,阶梯到顶)
 candidate_stage: e8
+platform: e8(19380)valid 1.8201<TB1.953;燧原0.67→1.18(+75%,近门);昆仑0.149贴门拖均值
 team_best_stage: s0
 team_best_speedup: 1.953
 sealed: no
 next: metax BLOCK_N32修复smem后#2;距榜首3.4%:轴=BLOCK_N阶梯(64于非K256形状)/m16rows;昆仑1.1/华为0.8 vendor
-updated: 2026-09-21
+updated: 2026-09-22
 ```
 
 ## 2026-09-20 S0/E1 首发记录

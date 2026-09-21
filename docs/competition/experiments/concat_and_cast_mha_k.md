@@ -5,12 +5,12 @@ task: 78
 operator: concat_and_cast_mha_k
 batch: 6
 validity: valid
-platform: completed(17300,e2,8/8,1.090775x新TB;华为persistent+97%兑现)
+platform: e3(19373)invalid_threshold:昆仑0.024环境崩(e2=0.281,未变字节)+燧原0.547(+47%但<2门);待昆仑恢复重掷
 candidate_stage: e3
 team_best_stage: e2
 sealed: no
 next: e3 燧原规则集重构就绪待发;预注册门=燧原≥2保留/≥50基线病理确认;c2flow 15268x 燧原单芯=expand+cat 在 GCU stride 病理(CPU回退),规则集捕获路径
-updated: 2026-09-21
+updated: 2026-09-22
 ```
 
 ## 契约与实现（S0）
