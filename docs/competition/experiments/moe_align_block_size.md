@@ -4,14 +4,14 @@
 task: 84
 operator: moe_align_block_size
 batch: 6
-validity: candidate(7/8,华为reference崩)
-platform: completed(17721,e2r,7/8;七芯健康93.7-95.3)
-candidate_stage: e2r
-team_best_stage: -
-team_best_speedup: -
+validity: valid(8/8,e11,163.14x TB)
+platform: e11终态163.14(天数293/沐曦179/燧原10.5/海光231/昆仑2.8/华为97/A295/B196.5);榜首c2flow 917.8全芯均匀5-8x
+candidate_stage: e12
+team_best_stage: e11
+team_best_speedup: 163.14x
 sealed: no
-next: 华为两发同指纹reference侧torch_npu RuntimeError(score 0)=崩溃族,封存等健康窗;昆仑scalar-serial vendor 2.7-2.8兑现在库;燧原cumsum vendor 4.6-4.8;有效即~95x
-updated: 2026-09-19
+next: e12三发射结构就绪待发(原位输出+ticket向量化scan+去clone;5发射→3);预注册门=均值>163.14,任一generic芯回退>10%判负;c2flow=SGLang 2-kernel形态,匹配方向确认
+updated: 2026-09-21
 ```
 
 ## 过程摘要（2026-09-19 凌晨，题面 09-18 晚随批 6 扩容上线）
@@ -139,3 +139,28 @@ updated: 2026-09-19
   明日换宽度/批量形态再探）/ 海光 231.2 / 昆仑 2.8 / 华为 97.0 /
   A 295.1 / B 196.5。
 - 当日 T84 终值：95.28 → **163.14**（+71%）。
+
+
+## 2026-09-21 E12 候选就绪（launch/分配结构重构，待 09-22 发射）
+
+- 差距定性（逐芯快照）：c2flow 917.76 = 全芯均匀 5-8x（天数 2245/沐曦
+  718/燧原 240/海光 1329/昆仑 29/华为 248/A 1407/B 1126），非单芯彩票。
+  上游结构（GitHub agent 核对）：SGLang 现行 = 2 kernel + 0 memset + 0
+  clone（单块共享内存直方图 + 3 级 warp scan + 二分填 expert_ids；scatter
+  用 caller cumsum_buffer 当 cursor）。我方 e11 = memset + 4 kernel +
+  clone + 3 alloc ⇒ launch/分配主导。
+- e12（`eb1e2c6d`，generic-only 单变量，三 vendor 字节保持 e11 验证形态）：
+  输出**原位写**（返回传入 buffer；eids 未定义尾=原值，与 reference clone
+  语义逐位一致）；`_compute` 融合 launch（P 程序原子直方图 + ticket 最后
+  程序做向量化 `tl.cumsum` scan + 逐 lane 变长填 expert_ids；其余程序并行
+  毯填 sentinel）；cursor 落 caller `cumsum_buffer`；hist 原子加补 safe_e
+  钳制（原版 e=-1 会越界）；`_scatter` 字节不动。发射 5→3，alloc 4→1。
+- 五元组：commit `eb1e2c6d`；ZIP
+  `artifacts/competition/moe_align_block_size/e12-eb1e2c6/moe_align_block_size.zip`
+  SHA `02772ecd48f35516e9828890d2c8ce990a8bc52ed37c4f3f27fcab270bccd248`
+  （4 成员）；回执 `day5prep-20260921/moe_align_block_size/verification.json`
+  SHA `43502562067e7e0525d929f3b2bf4c1244a1f937bdce0dcc136ede7b9fb2838a`
+  （2 测试 0 失败；generic 10 / ascend 25 / enflame 25 / kunlunxin 5 launch）。
+- 预注册门：均值 >163.14 换 TB；任一走 generic 的芯（天数/沐曦/海光/A/B）
+  相对 e11（293/179/231/295/196.5）回退 >10% 判负回滚；昆仑/华为/燧原走
+  vendor 字节应复现 2.8/97/10.5。

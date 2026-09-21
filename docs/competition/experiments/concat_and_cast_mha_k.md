@@ -6,11 +6,11 @@ operator: concat_and_cast_mha_k
 batch: 6
 validity: valid
 platform: completed(17300,e2,8/8,1.090775x新TB;华为persistent+97%兑现)
-candidate_stage: e2
+candidate_stage: e3
 team_best_stage: e2
 sealed: no
-next: 华为轴关闭(0.327超c2flow 0.245);剩余缺口=海光 1.52→1.96+/天数 2.11→2.42/燧原 0.39→0.96;e3 候选=海光窗口观察+燧原结构(未破译)
-updated: 2026-09-18
+next: e3 燧原规则集重构就绪待发;预注册门=燧原≥2保留/≥50基线病理确认;c2flow 15268x 燧原单芯=expand+cat 在 GCU stride 病理(CPU回退),规则集捕获路径
+updated: 2026-09-21
 ```
 
 ## 契约与实现（S0）
@@ -69,3 +69,25 @@ updated: 2026-09-18
   编译器按 %16 特化桶已做等价强度削减，显式 constexpr 无增量。
   门（wrapper ≥10%）未过，不发射。T78 剩余可试轴仅一维输出 tile
   （需先过特化对照的新基线，现无正信号支撑）。
+
+
+## 2026-09-21 E3 候选就绪（燧原官方规则集重构，待 09-22 发射）
+
+- 榜单情报更新：c2flow 均值 1.276→**1909.92**，全部来自燧原单芯 15268x
+  （其余芯 0.28-2.96 与我方同量级）。机制（源码验证）：topsaten 非连续
+  stride 不受支持 + cat/copy 在 _enflame CUSTOMIZED_UNUSED_OPS 禁用 +
+  i64 NOT_SUPPORT 走 CPU——参考 `expand+cat+cast` 在 GCU 上病理。我方
+  0.37x = 自身 kernel 病理（运行时 stride 阻断 DMA 判定 + int64 寻址）。
+- e3（`1784de75`）：constexpr 化全部 shape/stride（连续性 wrapper 断言）、
+  int32 寻址、12 CTA + num_warps=2（官方 gcu300 几何）。2D per-head 行存储
+  保持 rope 间隔（codex-review P1：flat 跨头块在输出侧错误——已修，数值
+  矩阵绿）。复审仅剩理论 P2（2^31 元素 assert 边界，GCU 不可达，接受）。
+- 五元组：commit `1784de75`（HEAD `eb1e2c6d`）；ZIP
+  `artifacts/competition/concat_and_cast_mha_k/e3-eb1e2c6/concat_and_cast_mha_k.zip`
+  SHA `79709c72710d5a1bfe5394f045eefc7ee80a445c162976128b4016b7e4d9cb1f`
+  （3 成员 generic/ascend/enflame）；回执
+  `day5prep-20260921/concat_and_cast_mha_k/verification.json` SHA
+  `a5a12f0bd8b7e9644c5f85dc96ef9bdd9146e69a299198a2d05938e7dd5b6bbb`
+  （4 测试 0 失败，三源各 37 launch）。
+- 预注册门：燧原 ≥2 保留（当前 0.40）；≥50 视为基线病理捕获成功；其余
+  七芯不动（vendor-only 改动，generic/ascend 字节不变）。
