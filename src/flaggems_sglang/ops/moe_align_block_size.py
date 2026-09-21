@@ -3,6 +3,9 @@
 # e2r carrier: the e2 execution bytes with a comment-only identity
 # change - submission 17709 scored huawei 0.0 from a reference-side
 # torch_npu RuntimeError (all seven other chips healthy, avg 95.28).
+# s0r3 carrier (2026-09-21 08:40): e6 bytes unchanged; e5/e6 both
+# drew the huawei reference-side crash family (0.0 with seven healthy
+# chips) - crash-family re-roll 1 of the allowed 2.
 # The sort/pad every block-tiled fused-MoE GEMM depends on: flatten
 # (token, slot) pairs, group them by expert and pad each expert's run to
 # a block multiple. The harness checks each expert range as a multiset
