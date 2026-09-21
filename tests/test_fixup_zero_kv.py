@@ -58,9 +58,16 @@ class FixupZeroKVTest(unittest.TestCase):
         # since T84 e12). The reference clones only to keep its own
         # result pristine, so value equality against the clone is the
         # full contract; buffer identity is no longer asserted.
+        pristine_out, pristine_lse = args[0].clone(), args[1].clone()
         for name, module in MODULES:
             with self.subTest(module=name):
-                actual = module.fixup_zero_kv(*args)
+                # fresh inputs per module: the in-place generic would
+                # otherwise pre-fix the buffers a broken vendor reads
+                module_args = (
+                    pristine_out.clone(),
+                    pristine_lse.clone(),
+                ) + args[2:]
+                actual = module.fixup_zero_kv(*module_args)
                 for got, want in zip(actual, expected):
                     torch.testing.assert_close(
                         bits(got), bits(want), rtol=0, atol=0
