@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/fla_layernorm_gated -->
-<!-- synced_at: 2026-09-19T23:20:17+08:00 -->
+<!-- synced_at: 2026-09-21T00:02:02+08:00 -->
 
 # fla_layernorm_gated (fla/layernorm_gated)
 
