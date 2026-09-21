@@ -1,13 +1,11 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# KunlunXin vendor for fixup_zero_kv: the e8 in-place core (zero-KV
-# writes only, healthy segments exit immediately) in the XPU-safe flat
-# form. The e9 port kept the generic's (BLOCK_T, BLOCK_H) broadcast
-# lse store and hit the XPU LLVM packing bug ("size mismatch when
-# packing elements for LLVM struct expected 8 but got 1" - the same
-# family that sank e1/e2); every store here is a flat 1D span: the out
-# row as BLOCK_V chunks of the contiguous head*dim vector, the lse row
-# as one contiguous BLOCK_H span.
+# Kunlun vendor for fixup_zero_kv: the generic's 2D broadcast stores
+# ([BLOCK_T,1] + [1,BLOCK_H] pointers) hit the XPU LLVM packing bug
+# ("size mismatch when packing elements for LLVM struct expected 8 but
+# got 1", submission 17218, all 9 cases). This variant keeps every
+# store strictly 1D - per token row, flat spans with chunked masks -
+# the T53-proven Kunlun-safe vectorised-flat form.
 
 import torch
 import triton
@@ -20,34 +18,33 @@ def _fixup_zero_kv(
     lse,
     lens,
     cum,
-    batch,
-    ot,
+    hv,
+    nh,
     os0,
     ls0,
-    HV: tl.constexpr,
-    NH: tl.constexpr,
-    BLOCK_T: tl.constexpr,
+    batch,
+    ot,
     BLOCK_V: tl.constexpr,
     BLOCK_H: tl.constexpr,
 ):
-    seg = tl.program_id(0)
+    seg = tl.program_id(0) // ot
     if seg < batch:
-        zero = tl.load(lens + seg) == 0
-        if zero:
+        if tl.load(lens + seg) == 0:
             beg = tl.load(cum + seg).to(tl.int64)
             end = tl.load(cum + seg + 1).to(tl.int64)
+            tokens = end - beg
             v = tl.arange(0, BLOCK_V).to(tl.int64)
             h = tl.arange(0, BLOCK_H).to(tl.int64)
             zeros = tl.zeros((BLOCK_V,), dtype=out.dtype.element_ty)
             ninf = tl.full((BLOCK_H,), float("-inf"), dtype=tl.float32)
-            hm = h < NH
-            for t in range(beg, end):
-                base = t * os0
-                for v0 in tl.static_range(0, HV, BLOCK_V):
+            for token in range(tl.program_id(0) % ot, tokens, ot):
+                tok = beg + token
+                for v0 in range(0, hv, BLOCK_V):
                     vv = v0 + v
-                    m = vv < HV
-                    tl.store(out + base + vv, zeros, m)
-                tl.store(lse + t * ls0 + h, ninf, hm)
+                    tl.store(out + tok * os0 + vv, zeros, vv < hv)
+                for h0 in range(0, nh, BLOCK_H):
+                    hh = h0 + h
+                    tl.store(lse + tok * ls0 + hh, ninf, hh < nh)
 
 
 def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
@@ -61,24 +58,28 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
     batch = kv_lens.numel()
     assert cum_seq_lens.numel() == batch + 1
     assert kv_lens.dtype == cum_seq_lens.dtype == torch.int32
+    out_fixed, lse_fixed = out.clone(), lse.clone()
     if batch and total_tokens:
         hv, nh = num_heads * v_head_dim, num_heads
-        _fixup_zero_kv[(batch,)](
-            out,
-            lse,
+        # max_seq_len only sizes the launch (advisory); the token loop
+        # strides by ot so an understated span still covers every row.
+        span = max_seq_len if isinstance(max_seq_len, int) else total_tokens
+        ot = max(1, min(span, total_tokens))
+        _fixup_zero_kv[(batch * ot,)](
+            out_fixed,
+            lse_fixed,
             kv_lens,
             cum_seq_lens,
+            hv,
+            nh,
+            out_fixed.stride(0),
+            lse_fixed.stride(0),
             batch,
-            1,
-            out.stride(0),
-            lse.stride(0),
-            HV=hv,
-            NH=nh,
-            BLOCK_T=1,
+            ot,
             BLOCK_V=1024,
             BLOCK_H=triton.next_power_of_2(max(1, nh)),
         )
-    return out, lse
+    return out_fixed, lse_fixed
 
 
 __all__ = ["fixup_zero_kv"]
