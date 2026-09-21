@@ -1,5 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
+# s0r2 carrier (2026-09-21 08:30): e15 peak bytes unchanged; evening
+# window re-roll (huawei band 437-492, haiguang 588-643).
 # Inverse of pad_draft_extend_query: gather accepted rows into a ragged
 # [total, H, D] tensor. E6 restructures to per-batch contiguous segment
 # copies: batch b contributes seq_lens_q[b] * H * D contiguous elements
