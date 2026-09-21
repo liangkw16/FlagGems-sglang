@@ -4,13 +4,13 @@
 task: 84
 operator: moe_align_block_size
 batch: 6
-validity: valid(8/8,e12,444.82x TB)
-platform: e12=444.82新TB(天数784/沐曦568/燧原12.5/海光606/昆仑2.7/华为91.2/A779/B715);e13=燧原253.1新结构但华为UB溢出7/8;e14已发(19394,燧原253+老ascend/kunlun)
-candidate_stage: e14
-team_best_stage: e12
-team_best_speedup: 444.82x
+validity: valid(8/8,e14,492.17x TB)
+platform: e14=492.17新TB(天数782/沐曦479/燧原253.9/海光904.1/昆仑2.70/华为91.7/A753/B671);e15/e16华为BiShengHIR UB溢出三连败,华为轴止损封存
+candidate_stage: e16
+team_best_stage: e14
+team_best_speedup: 492.17x
 sealed: no
-next: e14判决中(预期~478);华为91→248需专家轴分块修复e13内核(32x512 compare超UB 335KB>192KB,e15分块128);昆仑2.7vs榜首29
+next: 当日163.14→492.17(+202%);剩距c2flow 917.8=1.87x,缺口=华为91.7vs248(ascend新核三连编译败,封存)+昆仑2.7vs29+沐曦479vs718;明日再评估
 updated: 2026-09-22
 ```
 
@@ -183,3 +183,18 @@ updated: 2026-09-22
   预期 ~478（若各芯复现）。
 - 剩余轴：华为 vendor 分块修复（e15，目标 91→248 场带）；昆仑 2.7→29
   （c2flow）；沐曦 568→718。
+
+
+## 2026-09-22 E14 平台终态：492.17 新 TB；E15/E16 华为三连败止损
+
+- **E14（19394）：8/8 valid 492.165 新 TB**。逐芯：天数 781.9 / 沐曦
+  478.7 / 燧原 253.9 / **海光 904.1**（结构+窗口双兑现）/ 昆仑 2.70 /
+  华为 91.7 / A 753.3 / B 671.0。当日 163.14 → 492.17（**+202%**）。
+- E15（19402，E_CHUNK=128 分块）：华为同样 2686976-bit UB 溢出——分块
+  未改变预算数字 ⇒ 消耗在分支联合缓冲，非 compare tile 本身。
+- E16（19417，hist/fill 拆分 + epd constexpr + static_range）：华为仍
+  BiShengHIR 失败（三连败）。**止损**：ascend 新核封存，华为轴以 e10
+  老模板 91.7 保底；昆仑 vendor 老字节 2.70 稳定。
+- 剩余差距解剖（vs c2flow 917.8）：华为 91.7 vs 248（+19.5 均值空间，
+  需全新 ascend 内核形态——避开 2D tile 归约）、昆仑 2.70 vs 29（+33）、
+  沐曦 478.7 vs 718（+30）。燧原 253.9 已反超 c2flow（240）。
