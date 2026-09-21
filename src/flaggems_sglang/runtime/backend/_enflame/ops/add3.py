@@ -35,8 +35,10 @@ def add3(a, b, c):
     if numel:
         # E2: BLOCK ladder one rung past the T63 peak (4096) - add3 is
         # pure streaming, unlike T63's gather; gate enflame >= 0.9.
-        _add3[(min(triton.cdiv(numel, 8192), 24),)](
-            a, b, c, out, numel, BLOCK=8192, num_stages=3
+        # official gcu300 launch geometry: max_grid_size=(12,1,1) and
+        # enflame_heuristics_for_num_warps pins 2
+        _add3[(min(triton.cdiv(numel, 8192), 12),)](
+            a, b, c, out, numel, BLOCK=8192, num_warps=2, num_stages=3
         )
     return out
 
