@@ -1,6 +1,9 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 # Enflame vendor for concat_and_cast_mha_k, e3 structural round.
+# e3r carrier (2026-09-22): e3 execution bytes unchanged; the first e3
+# draw (19373) was poisoned by a kunlun slow window (0.024x on generic
+# bytes that read 0.281 at e2) - crash-family re-roll 1 of 2.
 # Three GCU rules drive this form (FlagGems _enflame gcu300 codegen and
 # FlagTree enflame backend, verified in the flagos-ai sources):
 # 1. Runtime-valued strides keep FlagOfNotUseDMA from proving the
