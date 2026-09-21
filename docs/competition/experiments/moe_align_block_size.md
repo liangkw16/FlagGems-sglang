@@ -84,3 +84,16 @@ updated: 2026-09-19
   会）；七芯不回退（150.52 基线）。
 - 五元组：commit `56fcd785d20da24afdc9884145eb4016ade80862`；ZIP SHA `10d6f634818171239de42b48e709de3dc333c08a4d79c287f5623f5319b66721`；test
   `f19789f3b167bea8cc936c5f86a285e2f8db5bce939e9a971c6ee182da37744c`；回执 `top1day-20260921p/` SHA `958d9f1f1935fbf1a2c3f116194ce360227d778f18fc706ff9f70459df8d26d6`。
+
+## 2026-09-21 E9 候选就绪并发射（共享无原子 vendor：华为修复 + 双芯换血）
+
+- 背景：e8 去 relaxed 后华为仍 0.0 同栈——原子本身在该栈上异步致错
+  （batch-5 dispatch_index 先例："runtime degrades under atomic cursors
+  (Ascend)"，当年改为无原子三内核后华为 3.6-3.8 健康）。
+- 结构（`0d482cee`）：_ascend/_enflame/_kunlunxin 共享无原子版（batch-5
+  模板移植）：32 块计数表→每专家前缀→微串行 scan→并行毯→O(32²) 段内
+  rank 确定放置。修复了 _mabs_fill 的 block_size 换算（review 前自查）。
+  预注册门：华为 >0（同时检验 reference 健康）；燧原 ≥50 / 昆仑 ≥10
+  （对齐 4.7/2.8 旧串行版）；其余五芯 150 基线不回退。
+- 五元组：commit `0d482ceeab5b6acda10bd71e162630ca0e3401df`；ZIP SHA `08404f5e29c3f724d4d6114535d186fceb1258af682c130c2edbe254c056951d`；test
+  `f19789f3b167bea8cc936c5f86a285e2f8db5bce939e9a971c6ee182da37744c`；回执 `top1day-20260921q/` SHA `319acf002d4b312d91ac2370267f2be5a08bf85e8e69f6b66b4b873b97fc4628`。
