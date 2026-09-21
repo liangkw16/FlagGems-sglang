@@ -70,12 +70,12 @@ def _mabs_scan(
 
 @triton.jit(do_not_specialize=["num_routed", "buf_numel"])
 def _mabs_fill(
-    expert_ids, sorted_ids, base, nblk, num_routed, buf_numel, sentinel,
-    BLOCK: tl.constexpr,
+    expert_ids, sorted_ids, base, nblk, num_routed, block_size, buf_numel,
+    sentinel, BLOCK: tl.constexpr,
 ):
     pid = tl.program_id(0)
     if pid < num_routed:
-        beg = tl.load(base + pid) // 1
+        beg = tl.load(base + pid) // block_size
         n = tl.load(nblk + pid)
         e = pid.to(tl.int32)
         b0 = beg
@@ -173,6 +173,7 @@ def moe_align_block_size(
             base,
             nblk,
             num_routed,
+            block_size,
             sorted_ids.numel(),
             n,
             BLOCK=1024,
