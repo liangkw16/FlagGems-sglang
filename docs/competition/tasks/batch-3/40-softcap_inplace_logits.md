@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/softcap_inplace_logits -->
-<!-- synced_at: 2026-09-21T00:02:02+08:00 -->
+<!-- synced_at: 2026-09-21T20:56:26+08:00 -->
 
 # softcap_inplace_logits (activation_norm/softcap_inplace_logits)
 

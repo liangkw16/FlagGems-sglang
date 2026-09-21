@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/residual_gate_add -->
-<!-- synced_at: 2026-09-21T00:02:02+08:00 -->
+<!-- synced_at: 2026-09-21T20:56:26+08:00 -->
 
 # residual_gate_add (diffusion/residual_gate_add)
 
