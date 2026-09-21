@@ -3,6 +3,12 @@
 # e2r carrier: the e2 execution bytes with a comment-only identity
 # change - submission 17709 scored huawei 0.0 from a reference-side
 # torch_npu RuntimeError (all seven other chips healthy, avg 95.28).
+# Ascend fix (2026-09-21): drop sem="relaxed" from both atomic_add calls.
+# triton-ascend documents acquire/release/relaxed as UNSUPPORTED on the
+# Ascend backend; the relaxed lowering faulted the device asynchronously
+# and the error only surfaced at the reference's synchronize (hence the
+# misleading flaggems_reference frame and the huawei 0.0 across e5-e7).
+# The default acq_rel semantics are the supported form.
 # s0r3 carrier (2026-09-21 08:40): e6 bytes unchanged; e5/e6 both
 # drew the huawei reference-side crash family (0.0 with seven healthy
 # chips) - crash-family re-roll 1 of the allowed 2.
@@ -30,7 +36,7 @@ def _hist(flat, counts, numel, num_routed, BLOCK: tl.constexpr):
         m = offs < numel
         e = tl.load(flat + offs, m, other=0)
         hit = m & (e >= 0) & (e < num_routed)
-        tl.atomic_add(counts + e, (hit).to(tl.int32), sem="relaxed")
+        tl.atomic_add(counts + e, (hit).to(tl.int32))
 
 
 @triton.jit(do_not_specialize=["num_routed", "block_size", "buf_numel"])
@@ -108,7 +114,7 @@ def _scatter(
         e = tl.load(flat + offs, m, other=0)
         hit = m & (e >= 0) & (e < num_routed)
         safe_e = tl.where(hit, e, 0)
-        pos = tl.atomic_add(cursor + safe_e, hit.to(tl.int32), sem="relaxed")
+        pos = tl.atomic_add(cursor + safe_e, hit.to(tl.int32))
         run_start = tl.load(counts + safe_e)
         tl.store(sorted_ids + run_start + pos, offs, hit)
 
