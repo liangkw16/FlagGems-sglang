@@ -158,16 +158,13 @@ def _compute_position_striped_i32(
         cumsum_start += seq_len
 
 
-_packed_cache = {}
-
-
 def _int64_packed(device):
-    key = str(device)
-    if key not in _packed_cache:
-        probe = torch.arange(4, dtype=torch.int64, device=device)
-        head = probe.view(torch.int32)[:4].tolist()
-        _packed_cache[key] = head == [0, 1, 2, 3]
-    return _packed_cache[key]
+    # probed per call: a module-level cache dict is rejected by the
+    # platform's code-safety scan (global mutable container), and one
+    # tiny arange + readback is ~100us against a ms-scale reference
+    probe = torch.arange(4, dtype=torch.int64, device=device)
+    head = probe.view(torch.int32)[:4].tolist()
+    return head == [0, 1, 2, 3]
 
 
 def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
