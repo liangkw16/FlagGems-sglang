@@ -125,12 +125,18 @@ def moe_align_block_size(
     numel = flat.numel()
     num_routed = num_experts - 1
     device = flat.device
-    counts = torch.zeros(num_experts + 1, dtype=torch.int32, device=device)
-    cursor = torch.zeros(num_experts + 1, dtype=torch.int32, device=device)
+    # one zero-fill covers counts/cursor/nblk instead of three separate
+    # device allocations (the bench is small enough that the wrapper's
+    # fill kernels compete with the four launches)
+    ccn = torch.zeros(3 * num_experts + 2, dtype=torch.int32, device=device)
+    counts, cursor, nblk = (
+        ccn[: num_experts + 1],
+        ccn[num_experts + 1 : 2 * num_experts + 2],
+        ccn[2 * num_experts + 2 :],
+    )
     sorted_ids = torch.empty_like(sorted_token_ids)
     eids = expert_ids.clone()
     npost = torch.empty_like(num_tokens_post_pad)
-    nblk = torch.empty(num_experts, dtype=torch.int32, device=device)
     if numel:
         _hist[(min(triton.cdiv(numel, 1024), 2048),)](
             flat, counts, numel, num_routed, BLOCK=1024
