@@ -1,5 +1,22 @@
 # 第二批候选与提交队列
 
+## 2026-09-21 23:50 Day5 就绪：八候选全弹上膛（额度 30/30 已用尽，09-22 00:01 起按序发射）
+
+> 逐芯情报 + 官方 GCU 规则集调研 + 上游结构扫描的完整结论见
+> [day5 作战方案](../optimization-batch6-day5-20260921.md)。
+> 全部候选：release 回执绿（多源真实 launch）、ZIP 验签、codex-review
+> 通过、账本含预注册门。**token 过期待重登**（`platform_cli.py auth`）。
+
+| 发射序 | 候选 | ZIP | 预注册门 |
+| ---: | --- | --- | --- |
+| 1 | [T77 compute_position s0](compute_position.md)（未提交题，榜首 1731x） | s0-eb1e2c6 | 8/8 任意有效；仅燧原败=A/B 数据 |
+| 2 | [T84 moe_align_block_size e12](moe_align_block_size.md)（163.14→三发射结构） | e12-eb1e2c6 | 均值 >163.14；generic 芯回退 >10% 判负 |
+| 3 | [T78 concat_and_cast_mha_k e3](concat_and_cast_mha_k.md)（燧原规则集首验，榜首 15268x 单芯） | e3-eb1e2c6 | 燧原 ≥2 保留 / ≥50 病理捕获 |
+| 4-8 | [T76 add3 e3](add3.md) / [T82 hash_topk e7](hash_topk.md) / [T86 moe_topk_sum e10](moe_topk_sum.md) / [T89 relu2 e4](relu2.md) / [T91 tiny_k_gemm e8](tiny_k_gemm.md) | 各 stage-14437ad/f3b8cad | 燧原 ×2 且其余七芯不动 |
+
+- 华为线（T79/T92/T85/T87）**不盲投**：待 09-22 回执校准后定结构假设。
+- 回执目录：`artifacts/competition/day5prep-20260921/`。
+
 ## 2026-09-17 21:50 第六批开题：五个 s0 候选就绪待发（额度 0/30，09-18 首发）
 
 - T76–T81 开窗 20:00；本会话完成五题 generic + 测试 + NVIDIA 代理 release
