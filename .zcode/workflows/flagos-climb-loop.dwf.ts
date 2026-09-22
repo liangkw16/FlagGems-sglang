@@ -219,87 +219,108 @@ const armed: Armed[] = [];
 const findings: ClimbFinding[] = [];
 const submissions: SubmitOutcome[] = [];
 
-phase("开发候选并过独立评审");
-for (const cand of picked) {
-  // 开发员与评审员在每个候选内跨轮复用（累积上下文，名字在整跑内唯一）；
-  // 评审的独立性来自它没看过开发过程，而非每轮换人
-  const dev = agent(`开发员-T${cand.task}`, {
-    system:
-      "你是 FlagOS 冲榜候选开发员，全程遵守 .agents/skills/flagos-operator-race/SKILL.md 的闭环纪律。" +
-      "只改候选列出的文件与对应测试/账本；每步工具命令真实执行并引用输出；评审/外部主张必须逐条对源码核实后才采信（先例：声称改 2 条路径实为 3 条），核实后逐条修复才能进入下一步；" +
-      "若门禁不可能通过（环境/权限/额度），升级说明而不是绕过。",
+phase("并行开发各候选并过独立评审");
+// 候选间互不相干（不同文件/账本）：开发+评审并行跑；
+// 上膛含远端 release（远端纪律串行）放到汇合后的独立阶段
+interface Reviewed {
+  cand: Candidate;
+  approved: boolean;
+  commit: string;
+  summary: string;
+}
+const reviewed: Reviewed[] = (
+  await Promise.all(
+    picked.map(async (cand): Promise<Reviewed> => {
+      const dev = agent(`开发员-T${cand.task}`, {
+        system:
+          "你是 FlagOS 冲榜候选开发员，全程遵守 .agents/skills/flagos-operator-race/SKILL.md 的闭环纪律。" +
+          "只改候选列出的文件与对应测试/账本；每步工具命令真实执行并引用输出；评审/外部主张必须逐条对源码核实后才采信（先例：声称改 2 条路径实为 3 条），核实后逐条修复才能进入下一步；" +
+          "若门禁不可能通过（环境/权限/额度），升级说明而不是绕过。",
+      });
+      const reviewer = agent(`评审员-T${cand.task}`, {
+        system:
+          "你是独立评审员：没看过开发过程，只对 diff 与代码负责。运行 codex-review 脚本并叠加自己的判读；" +
+          "要求找会出错的点而不是表态同意；不得修改任何文件；P1/P2 必须列入 mustFix。",
+      });
+      let feedback = "无（首轮）";
+      let verdict: ReviewVerdict | null = null;
+      let headCommit = "";
+      for (let round = 1; round <= 2; round++) {
+        await dev.ask(
+          `为 T${cand.task} ${cand.operator} 实现该候选（第 ${round} 轮）。假设：${cand.hypothesis}。证据：${cand.evidence}。` +
+          `目标文件：${cand.files.join("、")}。预注册门：${cand.risk}。上轮评审意见：${feedback}。` +
+          `要求：1) 写实现与测试（沿用 tests/test_${cand.operator}.py 的矩阵，新语义须加回归）；` +
+          "` + `2) python3 -m py_compile 全部触碰文件通过；3) git add 这些明确路径并 commit（--only 隔离）。` +" +
+          "`开工前先 git status --short：目标文件若有归属不明的既有改动，升级询问而不是覆盖。` +" +
+          "`改账本前先 git log -1 -- <账本路径> 并重读最新字节再编辑（多会话并行防线）。` +" +
+          "`新增回归测试必须同时列入该测试模块的 RELEASE_REQUIRED_TESTS。` +" +
+          "先做完这些再结束。",
+        );
+        const compile = await world.run("python3", ["-m", "py_compile", ...cand.files], { timeoutMs: 60_000 });
+        if (compile.exitCode !== 0) {
+          feedback = "py_compile 失败：" + compile.stderr.slice(0, 400);
+          continue;
+        }
+        const head = await world.run("git", ["log", "-1", "--format=%H"]);
+        headCommit = head.stdout.trim();
+        verdict = await reviewer.ask<ReviewVerdict>(
+          `评审 commit ${headCommit}（git show ${headCommit}）。上下文：候选假设=${cand.hypothesis}；契约=docs/competition/tasks/batch-6/ 下该题题面。` +
+          `先跑：bash /Users/bytedance/.agents/skills/codex-review/scripts/run-review.sh --commit ${headCommit} --reasoning-effort high，` +
+          `再自己读 diff 与周边调用方，合并成一份判决。用中文。`,
+        );
+        if (verdict && verdict.approved && verdict.mustFix.length === 0) break;
+        feedback = verdict ? verdict.mustFix.join("；") : "评审无返回";
+      }
+      if (verdict && verdict.approved && verdict.mustFix.length === 0) {
+        return { cand, approved: true, commit: headCommit, summary: verdict.summary };
+      }
+      const consult = await agent(`咨询员-T${cand.task}`, {
+        system: "你是卡点咨询员：运行 codex-ask 脚本获取第二意见，核对后给出可执行的新方向。不改文件。",
+      }).ask(
+        `T${cand.task} 两轮评审未过（意见：${feedback}）。运行 ` +
+        `/Users/bytedance/.agents/skills/codex-ask/scripts/ask-codex.sh --question-file <你写的问题文件> ` +
+        `--context ${cand.files[0]} --reasoning-effort high，把候选假设、diff、评审意见、逐芯证据写进问题。` +
+        `总结新方向入账本候选备注即可，本轮不再开发。`,
+      );
+      report({ name: `T${cand.task}-${cand.axis}`, operator: cand.operator, stage: "开发评审", hypothesis: cand.hypothesis }, "cands");
+      return { cand, approved: false, commit: headCommit, summary: String(consult).slice(0, 300) };
+    }),
+  )
+).filter((r) => r.approved);
+for (const r of reviewed) {
+  findings.push({
+    task: r.cand.task, operator: r.cand.operator,
+    what: "候选过两轮独立评审",
+    evidence: `commit ${r.commit}；${r.summary}`,
+    status: "verified", severity: "high",
   });
-  const reviewer = agent(`评审员-T${cand.task}`, {
-    system:
-      "你是独立评审员：没看过开发过程，只对 diff 与代码负责。运行 codex-review 脚本并叠加自己的判读；" +
-      "要求找会出错的点而不是表态同意；不得修改任何文件；P1/P2 必须列入 mustFix。",
-  });
-  let feedback = "无（首轮）";
-  let verdict: ReviewVerdict | null = null;
-  for (let round = 1; round <= 2; round++) {
-    await dev.ask(
-      `为 T${cand.task} ${cand.operator} 实现该候选（第 ${round} 轮）。假设：${cand.hypothesis}。证据：${cand.evidence}。` +
-      `目标文件：${cand.files.join("、")}。预注册门：${cand.risk}。上轮评审意见：${feedback}。` +
-      `要求：1) 写实现与测试（沿用 tests/test_${cand.operator}.py 的矩阵，新语义须加回归）；` +
-      `2) python3 -m py_compile 全部触碰文件通过；3) git add 这些明确路径并 commit（--only 隔离）。` +
-      "` + `开工前先 git status --short：目标文件若有归属不明的既有改动，升级询问而不是覆盖。` + `改账本前先 git log -1 -- <账本路径> 并重读最新字节再编辑（多会话并行防线）。` + `新增回归测试必须同时列入该测试模块的 RELEASE_REQUIRED_TESTS。先做完这些再结束。",
-    );
-    const compile = await world.run("python3", ["-m", "py_compile", ...cand.files], { timeoutMs: 60_000 });
-    if (compile.exitCode !== 0) {
-      feedback = "py_compile 失败：" + compile.stderr.slice(0, 400);
-      continue;
-    }
-    const head = await world.run("git", ["log", "-1", "--format=%H"]);
-    const commit = head.stdout.trim();
-    verdict = await reviewer.ask<ReviewVerdict>(
-      `评审 commit ${commit}（git show ${commit}）。上下文：候选假设=${cand.hypothesis}；契约=docs/competition/tasks/batch-6/ 下该题题面。` +
-      `先跑：bash /Users/bytedance/.agents/skills/codex-review/scripts/run-review.sh --commit ${commit} --reasoning-effort high，` +
-      `再自己读 diff 与周边调用方，合并成一份判决。用中文。`,
-    );
-    if (verdict && verdict.approved && verdict.mustFix.length === 0) break;
-    feedback = verdict ? verdict.mustFix.join("；") : "评审无返回";
-  }
-  if (!(verdict && verdict.approved)) {
-    const consult = await agent(`咨询员-T${cand.task}`, {
-      system: "你是卡点咨询员：运行 codex-ask 脚本获取第二意见，核对后给出可执行的新方向。不改文件。",
-    }).ask(
-      `T${cand.task} 两轮评审未过（意见：${feedback}）。运行 ` +
-      `/Users/bytedance/.agents/skills/codex-ask/scripts/ask-codex.sh --question-file <你写的问题文件> ` +
-      `--context ${cand.files[0]} --reasoning-effort high，把候选假设、diff、评审意见、逐芯证据写进问题。` +
-      `总结新方向入账本候选备注即可，本轮不再开发。`,
-    );
-    findings.push({
-      task: cand.task, operator: cand.operator,
-      what: `候选两轮评审未过，已 codex-ask 咨询并记录新方向`,
-      evidence: String(consult).slice(0, 300),
-      status: "unconfirmed", severity: "medium",
-    });
-    report({ name: `T${cand.task}-${cand.axis}`, operator: cand.operator, stage: "开发评审", hypothesis: cand.hypothesis }, "cands");
-    continue;
-  }
-  report({ name: `T${cand.task}-${cand.axis}`, operator: cand.operator, stage: "开发评审", hypothesis: cand.hypothesis }, "cands");
+  report({ name: `T${r.cand.task}-${r.cand.axis}`, operator: r.cand.operator, stage: "开发评审", hypothesis: r.cand.hypothesis }, "cands");
+}
 
-  phase("上膛：远端回执与不可变 ZIP");
+phase("串行上膛：远端回执与不可变 ZIP");
+// 远端 release 纪律串行（gpu 主机资源独占），按分诊序逐个上膛
+for (const r of reviewed) {
+  const cand = r.cand;
   const arm = await agent(`上膛员-T${cand.task}`, {
     system:
       "你负责把已过审的候选走完上膛闭环：远端 release 回执、不可变 ZIP、账本五元组。逐条真实执行并保留输出；" +
       "任何一步失败如实报告卡在哪，不伪造产物路径；额度类失败直接如实记录。",
   }).ask<Armed>(
     `为 T${cand.task} ${cand.operator} 完成上膛（工作目录 /Users/bytedance/ccc/flagos，远端 ssh 别名 gpu，` +
-    `远端 python=/home/kevin/notebook/.venv/bin/python，按 SKILL.md 协议）：` +
+    `远端 python=/home/kevin/notebook/.venv/bin/python，按 SKILL.md 协议；注意与其他候选并行开发时只用 git --only 提交自己的路径）：` +
     `1) verify_release.py prepare ${cand.operator} --source-commit HEAD --verification-commit HEAD ` +
     `--proxy-vendor <该题现有全部 vendor> --directory /tmp/wf-${cand.operator}-release；` +
     `2) scp -q -r 该目录到 gpu:/tmp/wf-${cand.operator}-release（注意：远端若已有旧 verification.json 会拒覆盖，先 ssh 清目录）；` +
     `3) ssh gpu 'cd /tmp/wf-${cand.operator}-release && timeout 900 /home/kevin/notebook/.venv/bin/python ` +
     `.agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/wf-${cand.operator}-release'；exit 0 才继续；` +
     `4) scp 回执到 artifacts/competition/day5prep-20260921/${cand.operator}-wf/；` +
-    `5) stage 编号从账本 CURRENT 块 candidate_stage 递增取下一个（保持记账连续；注意平台元组去重键是 zip_sha256 而非 stage——新候选必须产生新 ZIP 字节，同字节重掷需载体 commit），` +
-    `build_submission.py ${cand.operator} --stage <该编号> --commit HEAD；` +
-    `6) 账本 docs/competition/experiments/${cand.operator}.md CURRENT 块更新 + 追加段（五元组+预注册门），` +
-    `五元组逐成员列出 ZIP 名单并与 zipfile 实际成员核对一致（防打包器夹带）；同步刷新 README 候选队列行。` +
-    `7) python tools/gen_experiment_index.py + git commit --only 明确路径；push 前核对 @{upstream}..HEAD ` +
-    `全部待推 commit，含无关既有 commit 则只本地 commit 不 push 并说明。` +
-    `返回的 commit 字段必须等于回执的 verification_commit（否则发射 preflight 会拒）。用中文。`,
+    "`5) stage 编号从账本 CURRENT 块 candidate_stage 递增取下一个（保持记账连续；注意平台元组去重键是 zip_sha256 而非 stage——新候选必须产生新 ZIP 字节，同字节重掷需载体 commit），` +" +
+    "`build_submission.py ${cand.operator} --stage <该编号> --commit HEAD；` +" +
+    "`6) 账本 docs/competition/experiments/${cand.operator}.md CURRENT 块更新 + 追加段（五元组+预注册门），` +" +
+    "`五元组逐成员列出 ZIP 名单并与 zipfile 实际成员核对一致（防打包器夹带）；同步刷新 README 候选队列行。` +" +
+    "`7) python tools/gen_experiment_index.py + git commit --only 明确路径；push 前核对 @{upstream}..HEAD ` +" +
+    "`全部待推 commit，含无关既有 commit 则只本地 commit 不 push 并说明。` +" +
+    "`返回的 commit 字段必须等于回执的 verification_commit（否则发射 preflight 会拒）。用中文。`,",
   );
   if (arm && arm.zipPath) {
     const zipOk = await world.run("unzip", ["-t", arm.zipPath], { timeoutMs: 60_000 });
