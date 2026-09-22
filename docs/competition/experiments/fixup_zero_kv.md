@@ -10,7 +10,7 @@ candidate_stage: e16
 team_best_stage: e16
 team_best_speedup: 558.04x
 sealed: no
-next: 距569.3差~11均值(2.0%);残差=燧原111vs193(-10,宽度阶梯到顶需新GCU形态)+华为297vs354(-7);e16r重掷534.4未中(窗口方差±24实证,停止掷窗);额度2发留结构性工作
+next: 距569.3差~11均值(2.0%);燧原warps阶梯闭合(1≈2),宽度到顶,flat-span证伪;codex-ask候选2(segment-band调度)留09-23;e18兜底修复(tile跨步)已入库;今日30/30
 updated: 2026-09-22
 ```
 
@@ -217,3 +217,16 @@ updated: 2026-09-22
   连续性收益；e8 的 (8,BLOCK_V) 2D 瓦片在行内本就合并访问。
   codex-review 仍抓到真 P2（advisory span 未截断，已修但随回滚入档）。
   树已回滚 e16 字节，TB 558.04 保持。
+
+
+## 2026-09-22 E18 平台终态：533.55 未超 TB；codex-ask 咨询闭环
+
+- E18（19716）：燧原 tile-stride 兜底修复（codex-ask 抓到的 e12 item
+  映射正确性缺口）+ warps 2→1。valid 533.55 < 558.04。燧原 110.7
+  （warps1≈warps2，阶梯闭合）；修复为契约健壮性（平台 shape 未触发），
+  回归测试 `test_understated_span_zero_segment` 入 RELEASE_REQUIRED。
+- codex-ask 咨询结论（gpt-6-astra, high）：候选 3（warps1）已随 e18
+  判平；候选 2（segment-band 调度：每条带一次元数据读+按段长定循环）
+  为 09-23 主攻；候选 1 被截断待重询。窗口判别：无对方整体慢窗强证据，
+  燧原单独窗口差异不可从 speedup 分离——需按相同 case 的 reference/
+  实现原始耗时判别（无渠道，接受未知）。
