@@ -184,6 +184,37 @@ class FixupZeroKVTest(unittest.TestCase):
         lens = torch.tensor([0], dtype=torch.int32, device="cuda")
         self.check((out, lse, lens, cum, 1))
 
+    def test_beyond_fp32_mask_domain(self):
+        # Ascend vendor: the fp32 tail mask is exact only below 2**24
+        # elements - past it the boundary offset rounds up (to an even
+        # multiple) and compares false, leaving the span's last element
+        # unwritten. The sub-2**24 scalar gate keeps such spans on the
+        # exact integer mask, so these spans must come back fully fixed.
+        # out stream: 1400 rows x (96*128) = 17,203,200 elements; the
+        # boundary offset 17,203,199 is odd and rounds up in fp32.
+        args = make_case(kv_lens=(0,), tok_lens=(1400,), heads=96, vdim=128)
+        self.assertGreater(args[0].numel(), 2**24)
+        self.check(args)
+        # lse stream: 131073 rows x 128 heads = 16,777,344 elements
+        # (boundary offset 16,777,343 likewise rounds up); vdim=1 keeps
+        # the out span at two bytes per row-head.
+        args = make_case(
+            kv_lens=(0,), tok_lens=(131073,), heads=128, vdim=1
+        )
+        self.assertGreater(args[1].numel(), 2**24)
+        self.check(args)
+
+    def test_capped_tile_grid_strided_coverage(self):
+        # Ascend vendor (batch, min(tiles, 255)) 2D grid: the axis-1
+        # tile cap must bind without losing elements, and the
+        # in-kernel tile stride must cover segments that overshoot the
+        # advisory span (500-row estimate vs a 1400-row zero segment).
+        args = make_case(
+            kv_lens=(0, 4, 0), tok_lens=(1400, 5, 33), heads=96, vdim=128
+        )
+        self.check(args)
+        self.check((args[0], args[1], args[2], args[3], 500))
+
 RELEASE_REQUIRED_TESTS = [
         "FixupZeroKVTest.test_understated_span_zero_segment",
     "FixupZeroKVTest.test_mixed_zero_and_nonzero",
@@ -195,6 +226,8 @@ RELEASE_REQUIRED_TESTS = [
     "FixupZeroKVTest.test_uncovered_cum_boundaries",
     "FixupZeroKVTest.test_empty_batch_full_output",
     "FixupZeroKVTest.test_repeated_calls_reread_inputs",
+    "FixupZeroKVTest.test_beyond_fp32_mask_domain",
+    "FixupZeroKVTest.test_capped_tile_grid_strided_coverage",
 ]
 
 
