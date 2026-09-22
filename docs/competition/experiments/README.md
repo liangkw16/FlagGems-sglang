@@ -1,5 +1,11 @@
 # 第二批候选与提交队列
 
+## 2026-09-22 T81 e12 上膛（climb-loop，待 09-23 额度刷新发射）
+
+| 候选 | ZIP | 回执 | 预注册门 |
+| --- | --- | --- | --- |
+| [T81 fused_gate_sigmoid_mul_add e12](fused_gate_sigmoid_mul_add.md)（上游 #26856 单波 launch，generic/metax/hygon/kunlun 四路径） | e12-fa77dbc（`d7b06976…19be`） | 8 测试 0 失败，6 路径 × 35 launch ✓（`day5prep-20260921/fused_gate_sigmoid_mul_add-wf/`） | 均值 >4.3452 换 TB 且 muxi≥4.6 / haiguang≥7.3 至少一芯；任一带宽芯 -5% 判负回滚 e10 |
+
 ## 2026-09-21 23:50 Day5 就绪：八候选全弹上膛（额度 30/30 已用尽，09-22 00:01 起按序发射）
 
 > 逐芯情报 + 官方 GCU 规则集调研 + 上游结构扫描的完整结论见

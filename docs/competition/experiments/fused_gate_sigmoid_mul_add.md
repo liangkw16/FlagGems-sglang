@@ -9,7 +9,7 @@ platform: completed(17611,e11,8/8,4.291x<TB;保e10;燧原单波消循环中性)
 candidate_stage: e12
 team_best_stage: e10
 sealed: no
-next: e12(上游#26856单波launch四路径)代码就绪待远端回执;09-23额度刷新后preflight→submit;回执后燧原GCU几何移植候选为下一发(文件互不重叠)
+next: e12已上膛(五元组齐:ZIP d7b06976,回执8测试0失败6路径x35launch);09-23额度刷新后preflight→submit;回执后燧原GCU几何移植候选为下一发(文件互不重叠)
 updated: 2026-09-22
 ```
 
@@ -225,3 +225,40 @@ updated: 2026-09-22
   release 回执）。
 - 额度：09-22 已用 30/30，09-23 刷新后发射；燧原 GCU 几何移植候选
   （天花板 +0.31）与本候选文件互不重叠，本候选回执后即为下一发。
+
+## 2026-09-22 E12 上膛完成：release 回执绿 + 不可变 ZIP，五元组齐备待发射
+
+- release 回执（NVIDIA 代理 RTX 5070 Ti / torch 2.13.0+cu130 / triton 3.7.1，
+  source=verification commit `fa77dbce34702f56f0759db09fc8d45c3f5e6021`）：
+  `artifacts/competition/day5prep-20260921/fused_gate_sigmoid_mul_add-wf/verification.json`
+  SHA-256 `bd159074f62f51a32d9e6b28bf7f4533b9ba8d46804bf96270a5b8e4b32c343a`；日志
+  SHA-256 `58113196b19ad3c1ccf264d4c814276c319b42ed5f3ac63311ff9abf532b8986`。
+  8 测试 0 失败 0 skip 0 xfail，RELEASE_REQUIRED_TESTS 8/8 进入 suite 且
+  通过（expected==passed 核对）；6 适用源（generic+ascend+enflame+hygon+
+  kunlunxin+metax）各 35 次非 warmup kernel launch，unexecuted 空；5 vendor
+  路径照例 target-runtime-unverified（NVIDIA 代理证据，裁决权在平台）。
+- 五元组（发射 preflight 依据）：
+  - commit（source=verification）：`fa77dbce34702f56f0759db09fc8d45c3f5e6021`；
+  - ZIP：`artifacts/competition/fused_gate_sigmoid_mul_add/e12-fa77dbc/fused_gate_sigmoid_mul_add.zip`
+    （32849B），SHA-256
+    `d7b06976465c7346c98ce9fe8b4ea013ad3bf11e7e924e4efc342671201719be`
+    （≠ e11 `13bc12c9…`，新 ZIP 字节，平台去重键 zip_sha256 不冲突）；
+  - test SHA-256：`ccde599a8406b398364fa4fe67f33193a75612388046c1294ebc5493c5f77ccc`；
+  - 回执：上述 verification.json（SHA-256 `bd159074…c343a`）；
+  - 预注册门：均值 >4.3452 换 TB 且 muxi≥4.6 与 haiguang≥7.3 至少一芯
+    兑现；任一带宽芯 -5% 判负回滚 e10 字节。
+- ZIP 成员逐项（zipfile 实际枚举 = 打包器 manifest = git `fa77dbce` 源字节
+  三方核对一致，unzip -t 无错，无夹带成员）：
+  - `fused_gate_sigmoid_mul_add.py`（generic，6680B，SHA-256
+    `7320436d39a08799cc8ca6f44c721ab585750b2ea88deea818f6c09e74710830`）；
+  - `fused_gate_sigmoid_mul_add_ascend.py`（3446B，
+    `aa48c034172dcdc122d1703918f70894a28d4388ac5c223d134503680e482c29`）；
+  - `fused_gate_sigmoid_mul_add_enflame.py`（3930B，
+    `638dab223d791a8ec3ff8579bc897c0394bd8b06f757970a633b2b2799751204`）；
+  - `fused_gate_sigmoid_mul_add_hygon.py`（6258B，
+    `30bab80e7a45e3606b560e7c2f3061797a44bc3f494cb01b9756a38001f72f8b`）；
+  - `fused_gate_sigmoid_mul_add_kunlunxin.py`（5771B，
+    `90949b70209008dab131bb300ca6dbcfe6526d1c463c605de8ce9ca7ce4b041c`）；
+  - `fused_gate_sigmoid_mul_add_metax.py`（5864B，
+    `8645794657aa4f03dc7e223fd97f51ba36b18d8402321280d2c6124cbe2d290d`）。
+  全部 UTF-8 `.py`、generic/vendor basename 精确合规、无目录前缀或垃圾文件。
