@@ -45,10 +45,14 @@ def _fill_positions(
         prefix_len = tl.load(prefix_lens + i) if HAS_PREFIX else 0
         for off in range(0, seq_len, BLOCK):
             o = off + tl.arange(0, BLOCK)
+            # Ascend's vector compare unit has no int path (it degrades
+            # to scalar) - the documented fix is running the mask
+            # compare in fp32 (triton-ascend performance_guidelines)
+            m = o.to(tl.float32) < seq_len.to(tl.float32)
             tl.store(
                 positions + start + o,
                 prefix_len.to(tl.int64) + o,
-                mask=o < seq_len,
+                mask=m,
             )
 
 
