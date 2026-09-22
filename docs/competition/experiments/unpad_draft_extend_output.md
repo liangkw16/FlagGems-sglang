@@ -326,3 +326,13 @@ updated: 2026-09-22
   `day5prep-20260921/unpad_draft_extend_output-e19r/verification.json`
   SHA `0ae3c379a5b55a4e5f91a1597541450a5cf0c8b3b2e1bec8edea380450249825`。
 - 重掷额度（1/1）用尽，该轴关闭。距榜首 12.3%（华为 843 单芯为主）。
+
+
+## 2026-09-22 深夜 E20 上膛（09-23 午夜首发第 2 发）
+
+- E20（`423699e`，ascend 规则集版）：int32 寻址（Vector ADD 无 i64）+
+  fp32 尾掩码（Vector CMP 无整数路径；标量分支门在 2^24 域内，codex-
+  review 抓的 fp32 边界漏写已修）+ 去 masked-load other 预填 + warps16
+  （≥4096 tile 档）。release 绿；ZIP `unpad_draft_extend_output/
+  e20-423699e/`；回执 `.../unpad_draft_extend_output-e20/`。
+  预注册门：华为 ≥500 换 TB 方向确认；均值 >331.10 换 TB。

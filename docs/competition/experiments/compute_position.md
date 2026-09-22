@@ -100,3 +100,13 @@ updated: 2026-09-22
   55→9.4）——二分的 log2(bs) 次掩码加载开销远超负载均衡收益；
   华为 static_range 展开编译失败（7/8 后判 invalid）。负结果入档：
   此题负载倾斜不是瓶颈，e3 的每请求并行形态即优。
+
+
+## 2026-09-22 深夜 E5 上膛（09-23 午夜首发第 3 发）
+
+- E5（`423699e`，新增 ascend vendor）：e3 两 kernel 核心 + fill 网格
+  封 64 程序请求跨步（block↔核强绑定，e2 striped ≤64 程序时华为曾读
+  217）+ 掩码 fp32 比较（Vector CMP 无整数）。codex-review 零发现
+  （14 边界 batch 调度模型恰一次覆盖）；release 绿；ZIP
+  `compute_position/e5-423699e/`；回执 `.../compute_position-e5/`。
+  预注册门：华为 ≥300 视为带突破；均值 >1051.15 换 TB。
