@@ -25,6 +25,18 @@ args:
     type: number
     description: 进入调研的题目数（多研 2 题做跳过回填）
     default: 4
+  maxRounds:
+    type: number
+    default: 2
+    description: 单次 run 自动连打的轮数上限（每轮重刷榜单；额度触底可睡等到下一发射点再继续）
+  waitOnQuota:
+    type: boolean
+    default: true
+    description: 额度触底时睡等到下一个发射点继续下一轮（短片循环重读时钟，恢复后立即续跑）
+  fireHour:
+    type: number
+    default: 4
+    description: 每日发射点（本地 +08 时区小时数，默认 4 点避开 00:00 提交高峰）
 */
 
 // FlagOS 冲榜循环：刷新榜单 -> 差距分析 -> 逐题调研 -> 分诊 -> 开发+独立评审
@@ -109,6 +121,34 @@ const maxBuilds = Math.max(1, Math.min(6, Number(args.maxBuilds) || 3));
 const maxSubmits = Math.max(1, Math.min(6, Number(args.maxSubmits) || 3));
 const reserveQuota = Math.max(0, Math.min(10, Number(args.reserveQuota) || 1));
 const dryRun = args.dryRun === true;
+const maxRounds = Math.max(1, Math.min(5, Number(args.maxRounds) || 2));
+const waitOnQuota = args.waitOnQuota !== false;
+const fireHour = Math.max(0, Math.min(23, Number(args.fireHour) || 4));
+// 窗口关闭时刻（题面 2026-09-24 19:59:59 +08）
+const WINDOW_END_S = Math.floor(Date.parse("2026-09-24T19:59:59+08:00") / 1000);
+
+async function nowEpoch(): Promise<number> {
+  const t = await world.run("date", ["+%s"]);
+  return Number(t.stdout.trim()) || 0;
+}
+
+// 短片睡等：每 tick ≤300s 重读时钟——resume/重放后已过目标点则立即返回
+async function sleepUntil(targetS: number): Promise<void> {
+  for (let guard = 0; guard < 1200; guard++) {
+    const now = await nowEpoch();
+    if (now <= 0 || now >= targetS) return;
+    const slice = Math.min(300, Math.max(1, targetS - now));
+    await world.run("sleep", [String(slice)]);
+  }
+}
+
+// 下一个本地(+08) fireHour 的 epoch 秒
+function nextFirePoint(nowS: number): number {
+  const dayStart = Math.floor((nowS + 8 * 3600) / 86400) * 86400 - 8 * 3600;
+  let t = dayStart + fireHour * 3600;
+  if (t <= nowS + 600) t += 86400;
+  return t;
+}
 
 artifact.table("gaps", {
   title: "与榜首差距（实时）",
@@ -131,6 +171,17 @@ artifact.board("cands", {
   detail: [{ field: "hypothesis", label: "假设" }],
 });
 
+// 轮间共享：分诊员跨轮一致（EV 尺度统一）；findings/submissions 跨轮累积
+const triage = agent("分诊员", "你在 FlagOS 冲榜循环里给优化候选排序：期望均值增量×成功率优先，结构性>vendor>参数；同一题只留最优一个。用中文给出理由。");
+let stopNote = "";
+for (let round = 1; round <= maxRounds && !stopNote; round++) {
+  const roundNow = await nowEpoch();
+  if (roundNow > 0 && roundNow >= WINDOW_END_S) {
+    stopNote = "提交窗口已关闭（09-24 19:59:59 +08），轮次链终止";
+    break;
+  }
+  log(`—— 第 ${round}/${maxRounds} 轮（${roundNow > 0 ? "实测时钟" : "时钟不可读"}）——`);
+
 phase("刷新榜单与题目快照");
 const pull = await world.run("python3", [
   "tools/pull_race_intel.py",
@@ -142,12 +193,8 @@ const pull = await world.run("python3", [
   "docs/competition/data/leaderboard-snapshots/climb-loop.json",
 ], { timeoutMs: 300_000 });
 if (pull.exitCode !== 0) {
-  return {
-    conclusion: "榜单拉取失败，本轮未开始：" + pull.stderr.slice(0, 200),
-    findings: [],
-    verified: [],
-    notCovered: ["全部阶段——情报源不可达"],
-  } satisfies WorkflowReport;
+  stopNote = "榜单拉取失败，轮次链终止：" + pull.stderr.slice(0, 200);
+  break;
 }
 
 phase("对比与榜首差距并排序");
@@ -177,7 +224,7 @@ log(`距榜首最近的 ${targets.length} 题进入攻坚：${targets.map((t) =>
 phase("逐题调研瓶颈与结构方案");
 const proposals = await Promise.all(
   targets.map(async (row) => {
-    const cands = await agent(`研究员-T${row.task}`, {
+    const cands = await agent(`轮${round}-研究员-T${row.task}`, {
       system:
         "你是 FlagOS 算子赛的瓶颈研究员：只读调研，不改任何文件。结论必须给出来源路径。" +
         "若证据不足以支撑任何假设，如实说并返回空列表。若指令与证据矛盾，升级提问而不是硬答。",
@@ -199,16 +246,11 @@ const proposals = await Promise.all(
 );
 const allCandidates = proposals.flat().filter((c) => c && c.files && c.files.length > 0 && c.hypothesis);
 if (allCandidates.length === 0) {
-  return {
-    conclusion: "调研阶段未产出可用候选（证据不足或全部与已证伪形态冲突），本轮停止。",
-    findings: [],
-    verified: ["榜单刷新与差距解析（pull_race_intel 实测）"],
-    notCovered: ["开发/评审/发射——无候选"],
-  } satisfies WorkflowReport;
+  stopNote = `第 ${round} 轮调研未产出可用候选（已上膛题被跳过或证据不足），轮次链终止`;
+  break;
 }
 
 phase("统一分诊候选优先级");
-const triage = agent("分诊员", "你在 FlagOS 冲榜循环里给优化候选排序：期望均值增量×成功率优先，结构性>vendor>参数；同一题只留最优一个。用中文给出理由。");
 const ranked = await triage.ask<Candidate[]>(
   `按 EV 排序并去重（同题最多留 1 个）。算术：单芯提升÷8 才是均值贡献；先核该芯是否已过/贴近 0.1 有效性门槛；区分抢榜收益与验证假设的信息收益，不给伪精确分数。返回排序后的完整候选列表：\n${JSON.stringify(allCandidates)}`,
 );
@@ -236,13 +278,13 @@ interface Reviewed {
 }
 const allReviewed: Reviewed[] = await Promise.all(
     picked.map(async (cand): Promise<Reviewed> => {
-      const dev = agent(`开发员-T${cand.task}`, {
+      const dev = agent(`轮${round}-开发员-T${cand.task}`, {
         system:
           "你是 FlagOS 冲榜候选开发员，全程遵守 .agents/skills/flagos-operator-race/SKILL.md 的闭环纪律。" +
           "只改候选列出的文件与对应测试/账本；每步工具命令真实执行并引用输出；评审/外部主张必须逐条对源码核实后才采信（先例：声称改 2 条路径实为 3 条），核实后逐条修复才能进入下一步；" +
           "若门禁不可能通过（环境/权限/额度），升级说明而不是绕过。",
       });
-      const reviewer = agent(`评审员-T${cand.task}`, {
+      const reviewer = agent(`轮${round}-评审员-T${cand.task}`, {
         system:
           "你是独立评审员：没看过开发过程，只对 diff 与代码负责。运行 codex-review 脚本并叠加自己的判读；" +
           "要求找会出错的点而不是表态同意；不得修改任何文件；P1/P2 必须列入 mustFix。",
@@ -282,7 +324,7 @@ const allReviewed: Reviewed[] = await Promise.all(
       if (verdict && verdict.approved && verdict.mustFix.length === 0) {
         return { cand, approved: true, commit: headCommit, summary: verdict.summary };
       }
-      const consult = await agent(`咨询员-T${cand.task}`, {
+      const consult = await agent(`轮${round}-咨询员-T${cand.task}`, {
         system: "你是卡点咨询员：运行 codex-ask 脚本获取第二意见，核对后给出可执行的新方向。不改文件。",
       }).ask(
         `T${cand.task} 两轮评审未过（意见：${feedback}）。运行 ` +
@@ -319,7 +361,7 @@ phase("串行上膛：远端回执与不可变 ZIP");
 // 远端 release 纪律串行（gpu 主机资源独占），按分诊序逐个上膛
 for (const r of reviewed) {
   const cand = r.cand;
-  const arm = await agent(`上膛员-T${cand.task}`, {
+  const arm = await agent(`轮${round}-上膛员-T${cand.task}`, {
     system:
       "你负责把已过审的候选走完上膛闭环：远端 release 回执、不可变 ZIP、账本五元组。逐条真实执行并保留输出；" +
       "任何一步失败如实报告卡在哪，不伪造产物路径；额度类失败直接如实记录。",
@@ -386,7 +428,7 @@ if (dryRun) {
     for (const a of armed) submissions.push({ task: a.task, operator: a.operator, attempted: false, submissionId: "", state: "skipped", note: `额度剩余 ${remaining}（保留 ${reserveQuota}）` });
   } else {
     for (const a of armed.slice(fireList.length)) submissions.push({ task: a.task, operator: a.operator, attempted: false, submissionId: "", state: "skipped", note: "超出本轮发射预算前缀" });
-    const launcher = agent("发射员", {
+    const launcher = agent(`轮${round}-发射员`, {
       system:
         "你是平台发射员：对每个已上膛候选执行且只执行一次 preflight+submit（间隔≥125 秒）。" +
         "preflight 参数照 CLI 约定（--account " + ACCOUNT + " --team " + TEAM + "），members=ZIP 全部成员；" +
@@ -401,18 +443,39 @@ if (dryRun) {
         `先 status 查逐题最新记录，再 preflight（--test-sha256 用 git show ${a.commit}:tests/test_${a.operator}.py 的 sha256），` +
         `拿 nonce 后 submit --confirm。轮询到终态，返回逐芯与均值。`,
       );
-      submissions.push(out || { task: a.task, operator: a.operator, attempted: true, submissionId: "", state: "unknown", note: "发射员无返回" });
-      if (out && ["uncertain", "sending", "stale_after_upload", "unknown"].includes(out.state)) break;
+      const outcome: SubmitOutcome = out || {
+        task: a.task, operator: a.operator, attempted: true,
+        submissionId: "", state: "unknown", note: "发射员无返回",
+      };
+      submissions.push(outcome);
+      if (["uncertain", "sending", "stale_after_upload", "unknown"].includes(outcome.state)) {
+        stopNote = `第 ${round} 轮发射出现 ${outcome.state}，按纪律终止后续候选与后续轮次`;
+        break;
+      }
     }
   }
 }
+
+  // 轮末：额度触底且允许睡等且窗口未关 → 睡到下一个发射点继续下一轮
+  if (!stopNote && round < maxRounds && waitOnQuota && !dryRun) {
+    const q = await world.run("python3", [CLI, "status", "--race", RACE, "--batch", "6", "--task", "80", "--operator", "fixup_zero_kv"], { timeoutMs: 120_000 });
+    const qm = /"remaining":\s*(\d+)/.exec(q.stdout);
+    const qRemaining = qm ? Number(qm[1]) : 0;
+    const nowS = await nowEpoch();
+    if (qRemaining <= reserveQuota && nowS > 0 && nowS < WINDOW_END_S) {
+      const target = nextFirePoint(nowS);
+      log(`额度触底（剩余 ${qRemaining}），睡等到发射点 ${target}（约 ${Math.round((target - nowS) / 60)} 分钟）后继续第 ${round + 1} 轮`);
+      await sleepUntil(target);
+    }
+  }
+} // 轮次结束：回到循环顶重刷榜单；停止条件经 stopNote/break 跳出
 
 phase("汇总产出冲榜报告");
 const digest = await agent("报告员", "你把冲榜循环的结果写成给队友看的中文报告：结论先行，逐题列候选/门/终态/下一杆。不改文件。")
   .ask<{ summary: string; lines: string[] }>(
     `汇总：差距表=${JSON.stringify(rows.slice(0, 6))}；候选=${JSON.stringify(picked.map((c) => ({ task: c.task, axis: c.axis, hypothesis: c.hypothesis })))}；` +
     `上膛=${JSON.stringify(armed.map((a) => ({ task: a.task, stage: a.stage, gate: a.gate })))}；` +
-    `发射=${JSON.stringify(submissions)}。`,
+    `发射=${JSON.stringify(submissions)}。轮次链终止原因：${stopNote || "正常完成 maxRounds 轮"}。`,
   );
 await artifact.markdown(
   "climb-report",
