@@ -1,15 +1,30 @@
 /* zcode-workflow
-description: FlagOS 算子赛冲榜循环——刷新榜单、逐芯差距分析、逐题调研瓶颈、统一分诊、开发并用 codex-review 独立评审、远端回执上膛、额度门控单次发射（uncertain 即停），产出冲榜报告。
-whenToUse: 需要对 FlagOS 竞赛批次执行一整轮"刷新榜单到发射候选"的闭环时；quota 为零时会自动只上膛不发射。
+description: FlagOS 算子赛冲榜闭环 v2：刷新榜单→逐芯差距排序→逐题调研瓶颈（chip-rulesets.md
+  证据底座+已上膛跳过回填）→统一分诊（逐芯算术）→开发+codex-review 独立评审（卡住走
+  codex-ask）→远端回执+确定性验签上膛→额度前缀发射（uncertain/sending/stale
+  即停）→中文冲榜报告。参数：researchLimit/maxBuilds/maxSubmits/reserveQuota/dryRun。
+whenToUse: 需要对 FlagOS 竞赛批次跑一整轮"刷新榜单到发射候选"的闭环时；额度不足自动只上膛不发射，已上膛未发射的题会被跳过并回填其他题。
 args:
-  maxCandidates:
-    type: number
-    default: 3
-    description: 本轮并行攻坚的题目数（按距榜首差距升序挑选）
   dryRun:
     type: boolean
-    default: false
     description: true 时只开发+上膛，不做平台提交
+    default: false
+  maxBuilds:
+    type: number
+    description: 最多开发的候选数
+    default: 3
+  maxSubmits:
+    type: number
+    description: 最多发射数（额外受剩余额度-保留额约束）
+    default: 3
+  reserveQuota:
+    type: number
+    description: 发射前保留的额度（给回执驱动的修复留弹药）
+    default: 1
+  researchLimit:
+    type: number
+    description: 进入调研的题目数（多研 2 题做跳过回填）
+    default: 4
 */
 
 // FlagOS 冲榜循环：刷新榜单 -> 差距分析 -> 逐题调研 -> 分诊 -> 开发+独立评审
@@ -89,7 +104,10 @@ const ACCOUNT = "15600308080";
 const TEAM = "SoulCoder";
 const CLI = ".agents/skills/flagos-operator-race/scripts/platform_cli.py";
 
-const maxCandidates = Math.max(1, Math.min(6, Number(args.maxCandidates) || 3));
+const researchLimit = Math.max(1, Math.min(8, Number(args.researchLimit) || 4));
+const maxBuilds = Math.max(1, Math.min(6, Number(args.maxBuilds) || 3));
+const maxSubmits = Math.max(1, Math.min(6, Number(args.maxSubmits) || 3));
+const reserveQuota = Math.max(0, Math.min(10, Number(args.reserveQuota) || 1));
 const dryRun = args.dryRun === true;
 
 artifact.table("gaps", {
@@ -114,7 +132,7 @@ artifact.board("cands", {
 });
 
 phase("刷新榜单与题目快照");
-const pull = await world.run("python", [
+const pull = await world.run("python3", [
   "tools/pull_race_intel.py",
   "--race",
   RACE,
@@ -151,7 +169,8 @@ for (const t of snap.tasks as Array<Record<string, unknown>>) {
   });
 }
 rows.sort((a, b) => a.gapPct - b.gapPct);
-const targets = rows.slice(0, maxCandidates);
+// 多研 2 题：研究员跳过已占用题后自然回填，避免整轮空转
+const targets = rows.slice(0, researchLimit + 2);
 for (const r of rows) report(r, "gaps");
 log(`距榜首最近的 ${targets.length} 题进入攻坚：${targets.map((t) => "T" + t.task).join("、")}`);
 
@@ -193,7 +212,7 @@ const triage = agent("分诊员", "你在 FlagOS 冲榜循环里给优化候选�
 const ranked = await triage.ask<Candidate[]>(
   `按 EV 排序并去重（同题最多留 1 个）。算术：单芯提升÷8 才是均值贡献；先核该芯是否已过/贴近 0.1 有效性门槛；区分抢榜收益与验证假设的信息收益，不给伪精确分数。返回排序后的完整候选列表：\n${JSON.stringify(allCandidates)}`,
 );
-const picked = ranked.filter((c) => c && c.files && c.hypothesis).slice(0, maxCandidates);
+const picked = ranked.filter((c) => c && c.files && c.hypothesis).slice(0, maxBuilds);
 log(`分诊选出 ${picked.length} 个候选：${picked.map((c) => "T" + c.task + "/" + c.axis).join("、")}`);
 
 const armed: Armed[] = [];
@@ -237,7 +256,7 @@ for (const cand of picked) {
       `先跑：bash /Users/bytedance/.agents/skills/codex-review/scripts/run-review.sh --commit ${commit} --reasoning-effort high，` +
       `再自己读 diff 与周边调用方，合并成一份判决。用中文。`,
     );
-    if (verdict && verdict.approved) break;
+    if (verdict && verdict.approved && verdict.mustFix.length === 0) break;
     feedback = verdict ? verdict.mustFix.join("；") : "评审无返回";
   }
   if (!(verdict && verdict.approved)) {
@@ -318,7 +337,7 @@ if (dryRun) {
 } else if (armed.length === 0) {
   log("无可发射候选");
 } else {
-  const quotaOut = await world.run("python", [CLI, "status", "--race", RACE, "--batch", "6", "--task", String(armed[0].task), "--operator", armed[0].operator], { timeoutMs: 120_000 });
+  const quotaOut = await world.run("python3", [CLI, "status", "--race", RACE, "--batch", "6", "--task", String(armed[0].task), "--operator", armed[0].operator], { timeoutMs: 120_000 });
   const quotaMatch = /"remaining":\s*(\d+)/.exec(quotaOut.stdout);
   const remaining = quotaMatch ? Number(quotaMatch[1]) : 0;
   const budget = Math.max(0, Math.min(remaining - reserveQuota, maxSubmits));
