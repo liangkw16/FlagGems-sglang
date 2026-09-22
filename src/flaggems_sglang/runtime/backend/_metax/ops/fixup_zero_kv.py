@@ -1,71 +1,51 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# fixup_zero_kv: the e8 in-place core (zero-KV writes only, healthy
-# segments exit immediately). e13 moved the store tile to (4,512)=2048
-# at the official max_tile_size (was 4096, over the limit) - muxi
-# 295->381.7; e14/e14r A/B the warp pin one rung up from the
-# zeros-heuristic 2 (the mixed out+lse store stream may want more
-# lanes). e14r measured warps 4 at muxi 359.6 < e13's 381.7 (warps 2)
-# - the ladder is closed 2>4>8 - so e15 restores the 2-warp pin; the
-# e14 tuple itself went uncertain and never reached the platform (its
-# intent stays untouched as a record).
+# Metax vendor for fixup_zero_kv: the e17 flat-span core with the measured-best 2-warp pin (e13/e14r closed the ladder 2>4>8) and the official max_tile_size honored by the 2048-wide CHUNK.
 
 import torch
 import triton
 import triton.language as tl
 
-
-@triton.jit
+@triton.jit(
+    do_not_specialize=["batch", "ot_out", "ot_lse", "hv", "nh", "items"]
+)
 def _fixup_zero_kv(
     out,
     lse,
     lens,
     cum,
     batch,
-    ot,
-    os0,
-    ls0,
-    HV: tl.constexpr,
-    NH: tl.constexpr,
-    BLOCK_T: tl.constexpr,
-    BLOCK_V: tl.constexpr,
-    BLOCK_H: tl.constexpr,
+    ot_out,
+    ot_lse,
+    hv,
+    nh,
+    items,
+    CHUNK: tl.constexpr,
 ):
-    # 1D grid: pid -> (segment, token-tile). Programs of healthy
-    # segments exit immediately; the tile loop strides by the host's ot
-    # estimate so an understated max_seq_len still covers every token.
-    seg = tl.program_id(0) // ot
-    if seg < batch:
-        zero = tl.load(lens + seg) == 0
-        if zero:
-            beg = tl.load(cum + seg).to(tl.int64)
-            end = tl.load(cum + seg + 1).to(tl.int64)
-            tiles = tl.cdiv(end - beg, BLOCK_T)
-            v = tl.arange(0, BLOCK_V).to(tl.int64)
-            h = tl.arange(0, BLOCK_H).to(tl.int64)
-            hm = h < NH
-            zeros = tl.zeros(
-                (BLOCK_T, BLOCK_V), dtype=out.dtype.element_ty
-            )
-            ninf = tl.full(
-                (BLOCK_T, BLOCK_H), float("-inf"), dtype=tl.float32
-            )
-            for tile in range(tl.program_id(0) % ot, tiles, ot):
-                t = beg + tile * BLOCK_T + tl.arange(0, BLOCK_T).to(
-                    tl.int64
-                )
-                tm = t < end
-                # HV is constexpr (the T81-e5 lesson): the inner sweep
-                # unrolls and the lane mask folds away whenever BLOCK_V
-                # divides the row width (96*128 = 24*512 does).
-                for v0 in tl.static_range(0, HV, BLOCK_V):
-                    vv = v0 + v[None, :]
-                    m = tm[:, None] & (vv < HV)
-                    tl.store(out + t[:, None] * os0 + vv, zeros, m)
-                tl.store(
-                    lse + t[:, None] * ls0 + h[None, :], ninf,
-                    tm[:, None] & hm[None, :],
-                )
+    per = ot_out + ot_lse
+    for it in range(tl.program_id(0), items, tl.num_programs(0)):
+        seg = it // per
+        sub = it % per
+        if tl.load(lens + seg) == 0:
+            beg = tl.load(cum + seg)
+            end = tl.load(cum + seg + 1)
+            if sub < ot_out:
+                base = beg * hv
+                total = (end - beg) * hv
+                for c in range(sub, tl.cdiv(total, CHUNK), ot_out):
+                    offs = c * CHUNK + tl.arange(0, CHUNK)
+                    zeros = tl.zeros((CHUNK,), dtype=out.dtype.element_ty)
+                    tl.store(out + base + offs, zeros, offs < total)
+            else:
+                s2 = sub - ot_out
+                base = beg * nh
+                total = (end - beg) * nh
+                for c in range(s2, tl.cdiv(total, CHUNK), ot_lse):
+                    offs = c * CHUNK + tl.arange(0, CHUNK)
+                    ninf = tl.full(
+                        (CHUNK,), float("-inf"), dtype=tl.float32
+                    )
+                    tl.store(lse + base + offs, ninf, offs < total)
 
 
 
@@ -77,29 +57,30 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
     assert lse.dtype == torch.float32
     assert out.stride(2) == 1 and out.stride(1) == v_head_dim
     assert lse.stride(1) == 1
+    assert out.numel() < 2**31 and lse.numel() < 2**31
     batch = kv_lens.numel()
     assert cum_seq_lens.numel() == batch + 1
     assert kv_lens.dtype == cum_seq_lens.dtype == torch.int32
+    hv, nh = num_heads * v_head_dim, num_heads
     if batch and total_tokens:
-        hv, nh = num_heads * v_head_dim, num_heads
+        chunk = 2048
         span = max_seq_len if isinstance(max_seq_len, int) else total_tokens
-        block_t = 4
-        ot = max(1, triton.cdiv(min(span, total_tokens), block_t))
-        _fixup_zero_kv[(batch * ot,)](
+        ot_out = max(1, (span * hv + chunk - 1) // chunk)
+        ot_lse = max(1, (span * nh + chunk - 1) // chunk)
+        items = batch * (ot_out + ot_lse)
+        _fixup_zero_kv[(min(items, 2048),)](
             out,
             lse,
             kv_lens,
             cum_seq_lens,
             batch,
-            ot,
-            out.stride(0),
-            lse.stride(0),
-            HV=hv,
-            NH=nh,
+            ot_out,
+            ot_lse,
+            hv,
+            nh,
+            items,
+            CHUNK=chunk,
             num_warps=2,
-            BLOCK_T=4,
-            BLOCK_V=512,
-            BLOCK_H=triton.next_power_of_2(max(1, nh)),
         )
     return out, lse
 
