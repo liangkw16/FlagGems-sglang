@@ -5,13 +5,12 @@ task: 82
 operator: hash_topk
 batch: 6
 validity: valid
-platform: completed(18358,e6,8/8,6.316x新TB;e5泄漏字节教训+燧原24stages3)
+platform: e7(19374)valid 6.2914<TB6.316;燧原0.97/kunlun0.132;e8已上膛待09-23
 candidate_stage: e8
-platform: e7(19374)valid 6.2914<TB6.316;燧原0.85→0.97(+14%,未过×2门);昆仑0.132贴门
 team_best_stage: e6
-team_best_speedup: 6.316
+team_best_speedup: 6.316x
 sealed: no
-next: e8 燧原 kernel 内 one-hot match-reduce 候选就绪(本地 py_compile 过,未上设备);发射前 kernelgen 失败神谕零额度预筛,拒收则本轮跳过让位 T86;09-23 发射(今日 0/30);kunlun 0.132 贴门,C8 防线候选本候选回执后无条件跟进或与重掷窗口合并
+next: e8(kernel内one-hot match-reduce替代wrapper torch预gather链,全constexpr+int32,ff252260)已上膛:6测试0失败3源x11launch;门=8/8有效且燧原>=2.0保留/>=3.0轴确认;评审绑定事故由v3.1修复,kernel代码两轮codex-review无kernel级P1/P2
 updated: 2026-09-22
 ```
 
@@ -87,3 +86,22 @@ updated: 2026-09-22
   昆仑评测环境劣化在册 chip-rulesets.md:33；再滑破 0.1 则 T82 全题按
   README.md:33 判无效），本候选回执后无条件跟进或与重掷窗口合并考虑；
   09-23 发射（今日 0/30）。
+
+
+## 2026-09-22 晚 E8 上膛（工作流试运行产出，人工补上膛）
+
+- E8（`ff252260`，_enflame 重写）：kernel 内 one-hot match-reduce——整行线性读
+  [NRTILE] + eids[k]==nrange 向量比较 + tl.sum(axis=1)，消灭 wrapper 的
+  torch 预 gather 链（tid2eid[...].long()+gather+contiguous+to(int32) 共
+  4-6 个 i64/非连续病理算子 = GCU CPU offload 根因，即 make_gcuir 拒收
+  tensor-index gather 的 17bf3fbc 教训）；全 constexpr 实值 stride、全
+  int32 寻址、grid=min(rows,12)+warps2、wrapper 零 torch 计算。
+  测试进 RELEASE_REQUIRED（duplicate/unsorted eids、1536/2048 tiling
+  边界、row-gapped、int32 ids）。
+- 五元组：commit `ff252260`；ZIP `artifacts/competition/hash_topk/e8-ff25226/hash_topk.zip`
+  SHA `509ae2d9b01050f24d45aa66042c8ad56142e67789f8cd03a5e04e9b9f401dcb`（3 成员）；回执
+  `day5prep-20260921/hash_topk-e8/verification.json`（6 测试 0 失败，
+  generic/enflame/kunlunxin 各 11 launch）。
+- 预注册门：8/8 有效且燧原 ≥2.0 保留 / ≥3.0 轴确认；其余成员字节冻结。
+  注：e8 在冲榜循环试运行中两轮评审未过系评审对象错绑（编排缺陷，
+  v3.1/v3.2 已修），kernel 代码本身两轮 codex-review 无 kernel 级发现。
