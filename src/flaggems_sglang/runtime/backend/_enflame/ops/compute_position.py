@@ -41,57 +41,42 @@ def _starts_scan(lens, starts, batch, BLOCK_BS: tl.constexpr):
         carry += tl.sum(seg, 0)
 
 
-@triton.jit(do_not_specialize=["batch", "total"])
+@triton.jit(do_not_specialize=["batch"])
 def _fill_positions_i64(
-    positions, starts, prefix_lens, lens, batch, total,
-    HAS_PREFIX: tl.constexpr, LOG_BS: tl.constexpr, BLOCK: tl.constexpr,
+    positions, starts, prefix_lens, lens, batch,
+    HAS_PREFIX: tl.constexpr, BLOCK: tl.constexpr,
 ):
-    # e4 flat form (see the generic): int64 stores, <=12 programs
-    for blk in range(
-        tl.program_id(0), tl.cdiv(total, BLOCK), tl.num_programs(0)
-    ):
-        j = blk * BLOCK + tl.arange(0, BLOCK)
-        jm = j < total
-        lo = tl.zeros((BLOCK,), dtype=tl.int32)
-        hi = tl.zeros((BLOCK,), dtype=tl.int32) + (batch - 1)
-        for _ in tl.static_range(LOG_BS):
-            mid = (lo + hi + 1) >> 1
-            sv = tl.load(starts + mid, jm, other=0)
-            take = jm & (sv <= j)
-            lo = tl.where(take, mid, lo)
-            hi = tl.where(take, hi, mid - 1)
-        seg_start = tl.load(starts + lo, jm, other=0)
-        prefix_len = tl.load(prefix_lens + lo, jm, other=0) if HAS_PREFIX else 0
-        tl.store(
-            positions + j, prefix_len.to(tl.int64) + (j - seg_start), jm
-        )
+    for i in range(tl.program_id(0), batch, tl.num_programs(0)):
+        start = tl.load(starts + i)
+        seq_len = tl.load(lens + i)
+        prefix_len = tl.load(prefix_lens + i) if HAS_PREFIX else 0
+        for off in range(0, seq_len, BLOCK):
+            o = off + tl.arange(0, BLOCK)
+            tl.store(
+                positions + start + o,
+                prefix_len.to(tl.int64) + o,
+                mask=o < seq_len,
+            )
 
 
-@triton.jit(do_not_specialize=["batch", "total"])
+@triton.jit(do_not_specialize=["batch"])
 def _fill_positions_i32(
-    positions_words, starts, prefix_lens, lens, batch, total,
-    HAS_PREFIX: tl.constexpr, LOG_BS: tl.constexpr, BLOCK: tl.constexpr,
+    positions_words, starts, prefix_lens, lens, batch,
+    HAS_PREFIX: tl.constexpr, BLOCK: tl.constexpr,
 ):
     # narrow-packed path: one int32 store per logical element at view
-    # index j (the physical slot of element j under the packed layout)
-    for blk in range(
-        tl.program_id(0), tl.cdiv(total, BLOCK), tl.num_programs(0)
-    ):
-        j = blk * BLOCK + tl.arange(0, BLOCK)
-        jm = j < total
-        lo = tl.zeros((BLOCK,), dtype=tl.int32)
-        hi = tl.zeros((BLOCK,), dtype=tl.int32) + (batch - 1)
-        for _ in tl.static_range(LOG_BS):
-            mid = (lo + hi + 1) >> 1
-            sv = tl.load(starts + mid, jm, other=0)
-            take = jm & (sv <= j)
-            lo = tl.where(take, mid, lo)
-            hi = tl.where(take, hi, mid - 1)
-        seg_start = tl.load(starts + lo, jm, other=0)
-        prefix_len = tl.load(prefix_lens + lo, jm, other=0) if HAS_PREFIX else 0
-        tl.store(
-            positions_words + j, prefix_len + (j - seg_start), jm
-        )
+    # index i (the physical slot of element i under the packed layout)
+    for i in range(tl.program_id(0), batch, tl.num_programs(0)):
+        start = tl.load(starts + i)
+        seq_len = tl.load(lens + i)
+        prefix_len = tl.load(prefix_lens + i) if HAS_PREFIX else 0
+        for off in range(0, seq_len, BLOCK):
+            o = off + tl.arange(0, BLOCK)
+            tl.store(
+                positions_words + start + o,
+                prefix_len + o,
+                mask=o < seq_len,
+            )
 
 
 def _int64_packed(device):
@@ -123,30 +108,25 @@ def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
             BLOCK_BS=triton.next_power_of_2(min(max(batch, 1), 8192)),
             num_warps=_NUM_WARPS,
         )
-        log_bs = max(1, (max(batch - 1, 1)).bit_length())
         if _int64_packed(device):
-            _fill_positions_i32[(_MAX_CTAS,)](
+            _fill_positions_i32[(min(batch, _MAX_CTAS),)](
                 positions.view(torch.int32),
                 extend_start_loc,
                 extend_prefix_lens,
                 extend_seq_lens,
                 batch,
-                extend_seq_lens_sum,
                 HAS_PREFIX=has_prefix,
-                LOG_BS=log_bs,
                 BLOCK=_BLOCK,
                 num_warps=_NUM_WARPS,
             )
         else:
-            _fill_positions_i64[(_MAX_CTAS,)](
+            _fill_positions_i64[(min(batch, _MAX_CTAS),)](
                 positions,
                 extend_start_loc,
                 extend_prefix_lens,
                 extend_seq_lens,
                 batch,
-                extend_seq_lens_sum,
                 HAS_PREFIX=has_prefix,
-                LOG_BS=log_bs,
                 BLOCK=_BLOCK,
                 num_warps=_NUM_WARPS,
             )
