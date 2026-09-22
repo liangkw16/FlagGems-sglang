@@ -70,7 +70,7 @@
 | 87 | pack_topk_ids | valid | completed(18252,e5,8/8,2.77x微幅新TB;沐曦2.0未到门) | e5 2.77x | no | e1 i32位转换vendor修复昆仑→e3 BLOCK2048(+2.3%新TB);e2 4096回退/e4 warps8微回;距榜首2.783仅0.8%,BLOCK 2048为峰档 | 2026-09-19 | [pack_topk_ids](pack_topk_ids.md) |
 | 88 | post_reorder_cutlass | valid | completed(18354,e3,8/8,15.192x<TB;保s0;天数21+24%但沐曦/海光/A回退) | s0 16.916x | no | slot静态展开fp32合并;海光48.9领先;轴=燧原1.1vs?/昆仑3.1 vendor;TOPK展开已用 | 2026-09-20 | [post_reorder_cutlass](post_reorder_cutlass.md) |
 | 89 | relu2 | valid | e4(19379)valid 2.6397新TB(+5.7%);燧原3.94持平;昆仑0.135贴门 | e4 2.497x | no | 流式elementwise;轴=燧原0.8/昆仑0.8/华为1.1 vendors(streaming配方);榜首差距55%较大 | 2026-09-22 | [relu2](relu2.md) |
-| 90 | sigmoid_gate_mul_broadcast | valid | completed(e4,8/8,2.5247新TB;e5 2.5205判负保e4) | e4 2.5247x | no | e6 燧原flat流式(relu2终态配方)待代理验证+ZIP上膛;轴=沐曦flat候选(e6回执后下一发)/华为1.25;昆仑0.75贴门槛 | 2026-09-22 | [sigmoid_gate_mul_broadcast](sigmoid_gate_mul_broadcast.md) |
+| 90 | sigmoid_gate_mul_broadcast | valid | completed(e4,8/8,2.5247新TB;e5 2.5205判负保e4) | e4 2.5247x | no | e6r2 燧原flat流式(relu2宽度顶档65536配方,P1/P2/P3已修)待代理验证+ZIP上膛;轴=沐曦flat候选(e6回执后下一发)/华为1.25;昆仑0.75贴门槛 | 2026-09-22 | [sigmoid_gate_mul_broadcast](sigmoid_gate_mul_broadcast.md) |
 | 91 | tiny_k_gemm | valid | e8(19380)valid 1.8201<TB1.953;燧原0.67→1.18(+75%,近门);昆仑0.149贴门拖均值 | s0 1.953x | no | metax BLOCK_N32修复smem后#2;距榜首3.4%:轴=BLOCK_N阶梯(64于非K256形状)/m16rows;昆仑1.1/华为0.8 vendor | 2026-09-22 | [tiny_k_gemm](tiny_k_gemm.md) |
 | 92 | unpad_draft_extend_output | valid(8/8,e19r,331.10x TB) | e19r(19475)重掷命中:天数394.6/沐曦247/燧原126.2/海光664/昆仑33.1/华为378/A527/B279;燧原54→126(+132%)=gcu300规则集第三题兑现 | e19r 331.10xx | no | 距榜首CosmosMind 372=12.3%;缺口=华为378vs843(单芯)与天数394vs441;重掷轴已关闭(1/1用尽) | 2026-09-22 | [unpad_draft_extend_output](unpad_draft_extend_output.md) |
 

@@ -10,7 +10,7 @@ candidate_stage: e6
 team_best_stage: e4
 team_best_speedup: 2.5247
 sealed: no
-next: e6 燧原flat流式(relu2终态配方)待代理验证+ZIP上膛;轴=沐曦flat候选(e6回执后下一发)/华为1.25;昆仑0.75贴门槛
+next: e6r2 燧原flat流式(relu2宽度顶档65536配方,P1/P2/P3已修)待代理验证+ZIP上膛;轴=沐曦flat候选(e6回执后下一发)/华为1.25;昆仑0.75贴门槛
 updated: 2026-09-22
 ```
 
@@ -94,3 +94,32 @@ updated: 2026-09-22
 - 待办：release 代理验证 + e6-<commit> ZIP 后上膛；同题落选的 _metax
   flat 候选（17/18 队 ≥2.88 场带先验，天花板 +0.14 均值）与本候选文件
   互不重叠，e6 回执后可作沐曦轴下一发。
+
+## 2026-09-22 e6 第 2 轮：评审修复（P1 int32 域 / P2 契约收窄 / P3 标注）
+
+- **P1（必修，已修）**：第 1 轮断言 `numel < 2^31-65536` 只保证尾 lane
+  （offs=base+65535）不回绕，未覆盖 grid-stride 归纳步进 base+12*65536。
+  本会话独立 int32 回绕扫描复现评审结论：安全上界精确为
+  `numel ≤ 2^31-786432 = 2146697216`（`safe(2146697216)=True`、
+  `safe(2146697217)=False` 边界对验证）；评审示例 262128x8192=
+  2147352576 落在不安全窗（回绕负 base 使 `offs<numel` 全真 → 负地址
+  OOB）。解析证明：visited base < numel，步进至多 786432，故
+  `base+step ≤ numel-1+786432 ≤ 2^31-1`。断言收紧为
+  `numel < 2^31 - 12*65536`（vendor 内注释同步写明归纳覆盖）。
+- **P2（已修）**：第 1 轮 `x.is_contiguous()` 硬断言把 generic 契约
+  （`x.stride(1)==1` 行间隙 x 走 xs0，ops/:39）收窄成 AssertionError。
+  改为：gate 连续断言保留（与 generic 同），行间隙 x 走
+  `x = x.contiguous()` 布局拷贝（gating 乘法仍在 Triton kernel 内，
+  反作弊合规）；新增回归 `test_row_gated_strided_x`
+  （base[::2] 行间隙，generic 与 _enflame 拷贝路径同测）。
+- **P3a（同批修）**：(33,2048) 注释失实——65536%2048==0 是行对齐边界；
+  换 (33,2047)（65536=32*2047+32，真 mid-row）并修正注释。
+- **P3b（同批修）**：头注释/launch 注释的 "relu2 final recipe/geometry"
+  改为 "宽度顶档 65536"——relu2 落地终态是 131072 档（relu2.py:38-39，
+  3.94 出自该形态），e6 选 65536 依据是宽度峰 3.9@65536。
+- **附带存量风险（不在本候选文件集，未改字节）**：relu2.py 同型循环
+  （:15-24）无任何 numel 断言，同病；已在此登记，T89 下一轮 vendor
+  改动时一并补 `numel < 2^31 - 12*65536`（其 BLOCK=131072、grid≤12，
+  步进同 12*BLOCK 量级，断言需按其几何取 12*131072）。
+- e6 候选身份更新为本轮 commit（第 1 轮 `9d080b0d` 字节作废，未上过
+  release/ZIP）；预注册门不变。

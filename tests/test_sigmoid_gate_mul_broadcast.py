@@ -48,8 +48,8 @@ class SGMBTest(unittest.TestCase):
         # blow the 2e-2 tolerance.
         for n, d in (
             (64, 1024),  # numel == 65536: one exact block, no tail
-            (65, 1024),  # first block ends exactly on a row boundary
-            (33, 2048),  # 67584: block boundary mid-row (row 32)
+            (65, 1024),  # 65536 % 1024 == 0: block ends on a row boundary
+            (33, 2047),  # 65536 = 32*2047 + 32: block ends mid-row
             (128, 8192),  # 16 blocks over 12 CTAs: grid-stride 2nd pass
             (70000, 1),  # hdim=1: every element its own gate row
         ):
@@ -66,10 +66,34 @@ class SGMBTest(unittest.TestCase):
                 )
                 self.check(x, gate)
 
+    def test_row_gated_strided_x(self):
+        # Row-gapped x (stride(1) == 1, stride(0) > hdim) is inside the
+        # generic contract (xs0 addressing); the _enflame flat vendor
+        # must not reject it - it takes a layout copy and still computes
+        # the gating multiply in the Triton kernel.
+        for n, d in ((7, 1023), (130, 1024)):
+            with self.subTest(shape=(n, d)):
+                base = torch.randn(
+                    2 * n, d, dtype=torch.bfloat16, device="cuda"
+                )
+                x = base[::2]
+                self.assertFalse(x.is_contiguous())
+                gate = (
+                    (
+                        torch.arange(n, device="cuda", dtype=torch.float32)
+                        % 7
+                        - 3
+                    )
+                    .to(torch.bfloat16)
+                    .reshape(n, 1)
+                )
+                self.check(x, gate)
+
 
 RELEASE_REQUIRED_TESTS = [
     "SGMBTest.test_shapes_and_saturation",
     "SGMBTest.test_flat_block_boundary_gate_gather",
+    "SGMBTest.test_row_gated_strided_x",
 ]
 
 
