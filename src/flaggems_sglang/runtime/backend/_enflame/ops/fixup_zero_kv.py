@@ -39,7 +39,6 @@ def _fixup_zero_kv(
 ):
     for item in range(tl.program_id(0), items, tl.num_programs(0)):
         seg = item // ot
-        tile = item % ot
         zero = tl.load(lens + seg) == 0
         if zero:
             beg = tl.load(cum + seg).to(tl.int64)
@@ -51,21 +50,27 @@ def _fixup_zero_kv(
             ninf = tl.full(
                 (BLOCK_T, BLOCK_H), float("-inf"), dtype=tl.float32
             )
-            t = (
-                beg
-                + tile * BLOCK_T
-                + tl.arange(0, BLOCK_T).to(tl.int64)
-            )
-            tm = t < end
-            for v0 in tl.static_range(0, HV, BLOCK_V):
-                vv = v0 + v[None, :]
-                m = tm[:, None] & (vv < HV)
-                tl.store(out + t[:, None] * os0 + vv, zeros, m)
-            tl.store(
-                lse + t[:, None] * ls0 + h[None, :],
-                ninf,
-                tm[:, None] & hm[None, :],
-            )
+            # tile-stride guard: the advisory span sizes the item count,
+            # so each item sweeps every ot-th tile of its segment - an
+            # understated max_seq_len still covers every token (the
+            # codex-ask round caught the e12+ item mapping dropping
+            # this guard the e8 form had)
+            for tile in range(item % ot, tl.cdiv(end - beg, BLOCK_T), ot):
+                t = (
+                    beg
+                    + tile * BLOCK_T
+                    + tl.arange(0, BLOCK_T).to(tl.int64)
+                )
+                tm = t < end
+                for v0 in tl.static_range(0, HV, BLOCK_V):
+                    vv = v0 + v[None, :]
+                    m = tm[:, None] & (vv < HV)
+                    tl.store(out + t[:, None] * os0 + vv, zeros, m)
+                tl.store(
+                    lse + t[:, None] * ls0 + h[None, :],
+                    ninf,
+                    tm[:, None] & hm[None, :],
+                )
 
 
 def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
