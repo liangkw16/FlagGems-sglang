@@ -6,12 +6,12 @@ operator: hash_topk
 batch: 6
 validity: valid
 platform: completed(18358,e6,8/8,6.316x新TB;e5泄漏字节教训+燧原24stages3)
-candidate_stage: e7
+candidate_stage: e8
 platform: e7(19374)valid 6.2914<TB6.316;燧原0.85→0.97(+14%,未过×2门);昆仑0.132贴门
 team_best_stage: e6
 team_best_speedup: 6.316
 sealed: no
-next: e4 constexpr-width vendor判负(昆仑垃圾指纹不变,标量唯一形态0.3);燧原torch-pregather vendor 0.8;距榜首7.15差17%,rank5;轴:昆仑向量形态XPU不可用已三证
+next: e8 燧原 kernel 内 one-hot match-reduce 候选就绪(本地 py_compile 过,未上设备);发射前 kernelgen 失败神谕零额度预筛,拒收则本轮跳过让位 T86;09-23 发射(今日 0/30);kunlun 0.132 贴门,C8 防线候选本候选回执后无条件跟进或与重掷窗口合并
 updated: 2026-09-22
 ```
 
@@ -52,3 +52,38 @@ updated: 2026-09-22
   SHA `de519ccf7e97049c…`。
 - 预注册门：燧原 0.85→≥1.7(×2)；其余七芯不动（vendor-only 单变量）。codex-review
   零发现（grid-stride 边界模拟无漏算）。
+
+## 2026-09-22 E8 候选就绪（燧原 kernel 内 one-hot match-reduce，待预筛 + 09-23 发射）
+
+- **假设**：燧原 0.85 的瓶颈是 wrapper 里 torch 预 gather 暂存链
+  （`tid2eid[input_ids.long()].long()` + `torch.gather` + `.contiguous()` +
+  `.to(int32)` 共 4-6 个 i64/非连续病理算子，GCU i64 NOT_SUPPORT 走 CPU），
+  而非 kernel 几何（grid=min(rows,12)+num_warps=2 已是官方 gcu300 规则集）。
+- **实现**（enflame vendor 单文件，其余 7 成员字节冻结）：gather 移入 kernel 做
+  one-hot match-reduce——整行线性读（NRTILE≤1024 分块，T21 先例）+
+  `eids[k]==nrange` 向量比较 + `tl.sum(axis=1)`，唯一命中 lane 使规约值与直接
+  gather 逐位相等；全 constexpr 实值 stride/宽度（RS0/TS0/NROUTED/WIDTH 实值，
+  TOPK/NSHARED 仍 pow2 pad）；全 int32 寻址（wrapper 四条域断言，T90 e6 边界
+  证明纪律：tile 松弛 ≤1024、pad lane <2× 实宽）；i64 input_ids 经 i32 指针
+  位转换读低半字（小端、token id 非负 <2^31，T87 bitcast 先例），kernel 内零
+  i64 类型算子；wrapper 零 torch 计算（仅两次 `torch.empty` + 发射）；消除
+  tensor-index gather（make_gcuir 拒收根因，17bf3fbc 实锤）与全部 i64 暂存。
+  行间隔布局（stride(1)==1、stride(0)>width）经 constexpr 实值 stride 原生支持，
+  内stride≠1 才做布局拷贝（T90 e6 round-2 契约类）。
+- **新回归**（tests/test_hash_topk.py，已列 RELEASE_REQUIRED_TESTS）：
+  重复/乱序 eids（match-reduce≡gather 语义）、宽路由 1536/2048 分块（部分尾
+  tile + 恰好整 tile，eids 钉 1023/1024/末 lane 边界）、行间隔 logits+表、
+  int32 ids + shared=0 边。本地无 GPU/CUDA，测试未在本机执行——数值验证走
+  既有远端代理回执。
+- **预注册门（原门保留）**：8/8 valid 且燧原 ≥2.0 保留 / ≥3.0 轴确认，其余
+  7 成员字节冻结；同指纹失败连续 2 次关轴；NROUTED tile 上限按 T21 BLOCK≤1024
+  分块。
+- **分诊附加**：expectedAvgGain 0.08 = EvokeAgent 档（燧原 0.850→3.0，
+  +2.15 单芯 ÷8=+0.27 均值）× 约三成成功率（make_gcuir 对向量比较+规约的
+  接受度未知是主要折扣，c2flow 18.667 大概率窗口水位不采信）；发射前先用
+  kernelgen MCP 失败神谕通道零额度预筛编译，预筛拒收则本轮跳过、发射额度让给
+  T86 候选；同题落选的 C8（昆仑标量 eids+行向规约）是全清单唯一贴近 0.1
+  有效性门槛芯的防线候选（榜上 kunlun 0.271、e7 同字节已滑至 0.1316，
+  昆仑评测环境劣化在册 chip-rulesets.md:33；再滑破 0.1 则 T82 全题按
+  README.md:33 判无效），本候选回执后无条件跟进或与重掷窗口合并考虑；
+  09-23 发射（今日 0/30）。

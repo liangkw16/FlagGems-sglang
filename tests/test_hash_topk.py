@@ -79,10 +79,78 @@ class HashTopkTest(unittest.TestCase):
         args = (logits.to(torch.bfloat16),) + args[1:]
         self.check(args)
 
+    def test_duplicate_and_unsorted_experts(self):
+        # the in-kernel one-hot match-reduce (enflame e8) must behave
+        # exactly like the tensor-index gather when a table row repeats
+        # an expert or lists ids out of order: slot order is preserved
+        # and both duplicate slots score the same logit.
+        args = make_case(tokens=33, routed=64, topk=8, vocab=128, shared=2)
+        logits, ids, table, shared = args
+        table[:, 0] = 7
+        table[:, 1] = 7
+        table[:, 2] = 63
+        table[:, 3:] = torch.flip(table[:, 3:], dims=[1])
+        self.check(args)
+
+    def test_wide_routed_tiling(self):
+        # num_routed above the 1024 NRTILE cap: a partial tail tile
+        # (1536) and an exact two-full-tile row (2048), with expert ids
+        # pinned on the tile boundary lanes.
+        for routed in (1536, 2048):
+            with self.subTest(routed=routed):
+                logits = torch.randn(
+                    9, routed, dtype=torch.bfloat16, device="cuda"
+                )
+                ids = torch.randint(
+                    0, 97, (9,), dtype=torch.int64, device="cuda"
+                )
+                table = torch.randint(
+                    0, routed, (97, 6), dtype=torch.int32, device="cuda"
+                )
+                table[0, 0] = 1023
+                table[0, 1] = 1024
+                table[0, 2] = routed - 1
+                self.check((logits, ids, table, 2))
+
+    def test_row_gapped_strided_inputs(self):
+        # row-gapped layouts (stride(1)==1, stride(0)>width) must run
+        # through the real constexpr/runtime stride values without a
+        # dense copy (T90 e6 round-2 contract class).
+        base_logits = torch.randn(
+            66, 64, dtype=torch.bfloat16, device="cuda"
+        )
+        base_table = torch.randint(
+            0, 64, (256, 8), dtype=torch.int32, device="cuda"
+        )
+        ids = torch.randint(
+            0, 128, (33,), dtype=torch.int64, device="cuda"
+        )
+        self.check(
+            (base_logits[::2], ids, base_table[::2], 2)
+        )
+
+    def test_int32_input_ids_and_zero_shared(self):
+        # int32 token ids (no i64 low-half path) and the zero shared
+        # experts edge (NSHARED pow2 pad fully masked, width==topk).
+        logits = torch.randn(
+            5, 32, dtype=torch.bfloat16, device="cuda"
+        )
+        ids = torch.randint(
+            0, 64, (5,), dtype=torch.int64, device="cuda"
+        ).to(torch.int32)
+        table = torch.randint(
+            0, 32, (64, 4), dtype=torch.int32, device="cuda"
+        )
+        self.check((logits, ids, table, 0))
+
 
 RELEASE_REQUIRED_TESTS = [
     "HashTopkTest.test_shapes",
     "HashTopkTest.test_softplus_threshold",
+    "HashTopkTest.test_duplicate_and_unsorted_experts",
+    "HashTopkTest.test_wide_routed_tiling",
+    "HashTopkTest.test_row_gapped_strided_inputs",
+    "HashTopkTest.test_int32_input_ids_and_zero_shared",
 ]
 
 
