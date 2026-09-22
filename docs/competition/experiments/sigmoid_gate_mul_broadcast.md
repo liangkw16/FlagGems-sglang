@@ -5,13 +5,13 @@ task: 90
 operator: sigmoid_gate_mul_broadcast
 batch: 6
 validity: valid
-platform: completed(e4,8/8,2.5247新TB;e5 2.5205判负保e4)
+platform: e6(20163)invalid_threshold:燧原0.033(flat流式在GCU崩,远低于2.0保留门);kunl0.118贴门;TB 2.5247(e4)守
 candidate_stage: e6
 team_best_stage: e4
 team_best_speedup: 2.5247
 sealed: no
 next: e6已上膛(回执绿3测试0失败/4源×12launch+ZIP e6-6aaa394验签)待发射;轴=沐曦flat候选(e6发射后下一发)/华为1.25;昆仑0.75贴门槛
-updated: 2026-09-22
+updated: 2026-09-23
 ```
 
 ## 2026-09-20 S0/E1 首发记录

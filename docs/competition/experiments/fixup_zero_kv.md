@@ -5,13 +5,13 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e16,558.04x TB)
-platform: e16(19661):沐曦503.7反超c2flow473!/天数1160(低档带1273曾达)/燧原111(宽度阶梯102→114→111到顶)/华为297/B671;距top1=2.0%
-candidate_stage: e16
-team_best_stage: e16
-team_best_speedup: 558.04x
+platform: e19(20168)valid 535.08<TB558.04;燧原110.3(segment-band未破130门,段带形式判平);天数1185/muxi388/haig894;TB守e16
+candidate_stage: e19
+team_best_stage: e19
+team_best_speedup: 535.08x
 sealed: no
 next: 距569.3差~11均值(2.0%);燧原warps阶梯闭合(1≈2),宽度到顶,flat-span证伪;codex-ask候选2(segment-band调度)留09-23;e18兜底修复(tile跨步)已入库;今日30/30
-updated: 2026-09-22
+updated: 2026-09-23
 ```
 
 ## 契约与实现（S0）

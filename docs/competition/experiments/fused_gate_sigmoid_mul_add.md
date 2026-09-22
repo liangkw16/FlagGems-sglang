@@ -5,12 +5,12 @@ task: 81
 operator: fused_gate_sigmoid_mul_add
 batch: 6
 validity: valid
-platform: completed(17611,e11,8/8,4.291x<TB;保e10;燧原单波消循环中性)
+platform: e12(20164)evaluating:天数waiting_callback;七芯已读muxi4.93(+42%!)/haig7.11(+41%!)/enfl1.98/huaw2.00/A5.90/B5.00;两门至少一芯兑现
 candidate_stage: e12
 team_best_stage: e10
 sealed: no
 next: e12已上膛(五元组齐:ZIP d7b06976,回执8测试0失败6路径x35launch);09-23额度刷新后preflight→submit;回执后燧原GCU几何移植候选为下一发(文件互不重叠)
-updated: 2026-09-22
+updated: 2026-09-23
 ```
 
 ## 契约与实现（S0）

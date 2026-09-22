@@ -5,13 +5,13 @@ task: 82
 operator: hash_topk
 batch: 6
 validity: valid
-platform: e7(19374)valid 6.2914<TB6.316;燧原0.97/kunlun0.132;e8已上膛待09-23
+platform: e8(20167)valid 6.428>TB6.316新TB(+1.8%);燧原0.97→1.85(+91%one-hot match-reduce兑现!);天数13.87/muxi4.39/haig11.97/A7.02/B9.37
 candidate_stage: e8
-team_best_stage: e6
-team_best_speedup: 6.316x
+team_best_stage: e8
+team_best_speedup: 6.42825x
 sealed: no
 next: e8(kernel内one-hot match-reduce替代wrapper torch预gather链,全constexpr+int32,ff252260)已上膛:6测试0失败3源x11launch;门=8/8有效且燧原>=2.0保留/>=3.0轴确认;评审绑定事故由v3.1修复,kernel代码两轮codex-review无kernel级P1/P2
-updated: 2026-09-22
+updated: 2026-09-23
 ```
 
 ## 过程摘要（2026-09-19 凌晨，题面 09-18 晚随批 6 扩容上线）

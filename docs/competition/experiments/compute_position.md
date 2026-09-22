@@ -5,13 +5,13 @@ task: 77
 operator: compute_position
 batch: 6
 validity: valid(8/8,e3,1051.15x TB)
-platform: e3=1051.15 TB保持;e4(19621)flat+二分实验判负:天数2696→1778/沐曦702→461/昆仑55→9.4(二分开销>负载均衡收益)+华为编译失败;字节已回滚e3
-candidate_stage: e3
+platform: e5(20169)invalid_correctness:华为数值100%失配(int64布局假设在ascend端不成立?);其余七芯强天数2694/muxi630/haig1628/kunl55;TB 1051.15(e3)守
+candidate_stage: e5
 team_best_stage: e3
 team_best_speedup: 1051.15x
 sealed: no
 next: 华为152vs682仍为最大缺口(需ascend专属形态,flat二分在ascend编译失败);天数2696vs4338;树已回滚e3字节,e4思路封存
-updated: 2026-09-22
+updated: 2026-09-23
 ```
 
 ## 过程摘要（2026-09-18 开发，09-21 补燧原 vendor 定稿）

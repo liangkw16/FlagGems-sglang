@@ -5,13 +5,13 @@ task: 91
 operator: tiny_k_gemm
 batch: 6
 validity: valid
-platform: e8(19380)valid 1.8201<TB1.953;燧原0.67→1.18(+75%,近门);昆仑0.149贴门拖均值
+platform: e9(20170)valid 1.885<TB1.974;燧原1.18→1.09(natural-layout未兑现,tl.trans可能被lowering折叠);天数2.75/A2.74/B2.86/muxi1.87;TB守
 candidate_stage: e9
 team_best_stage: s0
 team_best_speedup: 1.953
 sealed: no
 next: e9 已上膛待发射(燧原 w natural-layout [BLOCK_N,K]+tl.trans,launch字节冻结e8);门=燧原1.18→≥1.5且七芯不动;备用昆仑1.1/华为0.8 vendor
-updated: 2026-09-22
+updated: 2026-09-23
 ```
 
 ## 2026-09-20 S0/E1 首发记录

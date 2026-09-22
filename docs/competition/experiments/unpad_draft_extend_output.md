@@ -5,13 +5,13 @@ task: 92
 operator: unpad_draft_extend_output
 batch: 6
 validity: valid(8/8,e19r,331.10x TB)
-platform: e19r(19475)重掷命中:天数394.6/沐曦247/燧原126.2/海光664/昆仑33.1/华为378/A527/B279;燧原54→126(+132%)=gcu300规则集第三题兑现
-candidate_stage: e19r
+platform: e20(20162)invalid_correctness:华为MLIR编译败(ascend ruleset移植仍触BiShengHIR);其余七芯健康muxi246/enfl127/haig661/kunl33;TB 331.10守
+candidate_stage: e20
 team_best_stage: e19r
 team_best_speedup: 331.10x
 sealed: no
 next: 距榜首CosmosMind 372=12.3%;缺口=华为378vs843(单芯)与天数394vs441;重掷轴已关闭(1/1用尽)
-updated: 2026-09-22
+updated: 2026-09-23
 ```
 
 ## 2026-09-20 S0 首发记录 + 根因复盘
