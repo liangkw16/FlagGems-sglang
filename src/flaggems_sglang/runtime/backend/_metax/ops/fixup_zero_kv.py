@@ -1,8 +1,14 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# fixup_zero_kv: the e8 in-place core (zero-KV writes only,
-# healthy segments exit immediately) with the e6-banked 8-warp pin
-# (muxi 184.4->219.2 when this pin lived on the generic).
+# fixup_zero_kv: the e8 in-place core (zero-KV writes only, healthy
+# segments exit immediately). e13 moved the store tile to (4,512)=2048
+# at the official max_tile_size (was 4096, over the limit) - muxi
+# 295->381.7; e14/e14r A/B the warp pin one rung up from the
+# zeros-heuristic 2 (the mixed out+lse store stream may want more
+# lanes). e14r is also the new tuple for the warps-4 shot: the e14
+# upload went uncertain and demonstrably never reached the platform
+# (no submission record, no quota consumed), and the uncertain intent
+# stays untouched as a record.
 
 import torch
 import triton
