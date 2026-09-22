@@ -1,18 +1,15 @@
 /* zcode-workflow
-description: FlagOS 算子赛冲榜闭环：刷新榜单→逐芯差距排序→逐题调研瓶颈（仓内账本+vendor
-  规则集+上游）→统一分诊→开发+codex-review 独立评审（卡住走 codex-ask）→远端回执上膛→额度门控单次发射（uncertain
-  即停）→中文冲榜报告。quota 为零时自动只上膛不发射。
-whenToUse: 需要对 FlagOS
-  竞赛批次跑一整轮"刷新榜单到发射候选"的闭环时（如每日额度恢复后的首波、或需要系统性找新结构方向的冲刺）；已上膛未发射的候选不会重复开发。
+description: FlagOS 算子赛冲榜循环——刷新榜单、逐芯差距分析、逐题调研瓶颈、统一分诊、开发并用 codex-review 独立评审、远端回执上膛、额度门控单次发射（uncertain 即停），产出冲榜报告。
+whenToUse: 需要对 FlagOS 竞赛批次执行一整轮"刷新榜单到发射候选"的闭环时；quota 为零时会自动只上膛不发射。
 args:
-  dryRun:
-    type: boolean
-    description: true 时只开发+上膛，不做平台提交
-    default: false
   maxCandidates:
     type: number
-    description: 本轮并行攻坚的题目数（按距榜首差距升序挑选）
     default: 3
+    description: 本轮并行攻坚的题目数（按距榜首差距升序挑选）
+  dryRun:
+    type: boolean
+    default: false
+    description: true 时只开发+上膛，不做平台提交
 */
 
 // FlagOS 冲榜循环：刷新榜单 -> 差距分析 -> 逐题调研 -> 分诊 -> 开发+独立评审
@@ -205,17 +202,22 @@ const submissions: SubmitOutcome[] = [];
 
 phase("开发候选并过独立评审");
 for (const cand of picked) {
-  const devName = `开发员-T${cand.task}`;
-  const reviewerName = `评审员-T${cand.task}`;
+  // 开发员与评审员在每个候选内跨轮复用（累积上下文，名字在整跑内唯一）；
+  // 评审的独立性来自它没看过开发过程，而非每轮换人
+  const dev = agent(`开发员-T${cand.task}`, {
+    system:
+      "你是 FlagOS 冲榜候选开发员，全程遵守 .agents/skills/flagos-operator-race/SKILL.md 的闭环纪律。" +
+      "只改候选列出的文件与对应测试/账本；每步工具命令真实执行并引用输出；评审意见必须逐条修复后才能进入下一步；" +
+      "若门禁不可能通过（环境/权限/额度），升级说明而不是绕过。",
+  });
+  const reviewer = agent(`评审员-T${cand.task}`, {
+    system:
+      "你是独立评审员：没看过开发过程，只对 diff 与代码负责。运行 codex-review 脚本并叠加自己的判读；" +
+      "要求找会出错的点而不是表态同意；不得修改任何文件；P1/P2 必须列入 mustFix。",
+  });
   let feedback = "无（首轮）";
   let verdict: ReviewVerdict | null = null;
   for (let round = 1; round <= 2; round++) {
-    const dev = agent(devName, {
-      system:
-        "你是 FlagOS 冲榜候选开发员，全程遵守 .agents/skills/flagos-operator-race/SKILL.md 的闭环纪律。" +
-        "只改候选列出的文件与对应测试/账本；每步工具命令真实执行并引用输出；评审意见必须逐条修复后才能进入下一步；" +
-        "若门禁不可能通过（环境/权限/额度），升级说明而不是绕过。",
-    });
     await dev.ask(
       `为 T${cand.task} ${cand.operator} 实现该候选（第 ${round} 轮）。假设：${cand.hypothesis}。证据：${cand.evidence}。` +
       `目标文件：${cand.files.join("、")}。预注册门：${cand.risk}。上轮评审意见：${feedback}。` +
@@ -230,11 +232,7 @@ for (const cand of picked) {
     }
     const head = await world.run("git", ["log", "-1", "--format=%H"]);
     const commit = head.stdout.trim();
-    verdict = await agent(reviewerName, {
-      system:
-        "你是独立评审员：没看过开发过程，只对 diff 与代码负责。运行 codex-review 脚本并叠加自己的判读；" +
-        "要求找会出错的点而不是表态同意；不得修改任何文件；P1/P2 必须列入 mustFix。",
-    }).ask<ReviewVerdict>(
+    verdict = await reviewer.ask<ReviewVerdict>(
       `评审 commit ${commit}（git show ${commit}）。上下文：候选假设=${cand.hypothesis}；契约=docs/competition/tasks/batch-6/ 下该题题面。` +
       `先跑：bash /Users/bytedance/.agents/skills/codex-review/scripts/run-review.sh --commit ${commit} --reasoning-effort high，` +
       `再自己读 diff 与周边调用方，合并成一份判决。用中文。`,
