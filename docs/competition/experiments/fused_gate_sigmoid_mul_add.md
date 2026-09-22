@@ -6,11 +6,11 @@ operator: fused_gate_sigmoid_mul_add
 batch: 6
 validity: valid
 platform: completed(17611,e11,8/8,4.291x<TB;保e10;燧原单波消循环中性)
-candidate_stage: e11
+candidate_stage: e12
 team_best_stage: e10
 sealed: no
-next: 燧原单波轴关闭(外层行循环非GCU瓶颈,1.943≈1.99);T81剩余结构缺口(燧原vs4.4/沐曦vs5.7)无新假设,等情报;TB 4.345守
-updated: 2026-09-18
+next: e12(上游#26856单波launch四路径)代码就绪待远端回执;09-23额度刷新后preflight→submit;回执后燧原GCU几何移植候选为下一发(文件互不重叠)
+updated: 2026-09-22
 ```
 
 ## 契约与实现（S0）
@@ -193,3 +193,35 @@ updated: 2026-09-18
   SHA-256 `13bc12c9420198347e7c7931c77e08f9d3a5b8ec466f84abb8b1965b218d56b8`；test SHA-256 `0cc7c7af52c87ca0e3b6ec7e74c8b71f3d582ce3967204e6551da0e0f242efc2`；回执 SHA-256 `5f8691620c853108b43bc45d7c5eb787d2e49fd4e1a3990f46e3c8a297b4e675`。
 - 发射参数齐备（commit/zip/sha/test/receipt 五元组已核对），午夜额度
   刷新后按第五轮排序直接 preflight→submit。
+
+## 2026-09-22 E12 候选开发完成：上游 #26856 单波 launch 结构（generic/metax/hygon/kunlun 四路径），待远端回执
+
+- 结构（第 1 轮，四路径同构单变量=launch 结构）：grid=(rows,) 每行一
+  program（去 min(rows,2048) cap 与 grid-stride 行循环）、行偏移
+  pid*HDIM constexpr、寻址 int32；generic warps 公式按 #26856 对 HIP 族
+  （card_b 走 generic）封 16、CUDA 类仍 32；metax 8 / hygon 16 上限与
+  昆仑 BLOCK_H=1024（XPU packing 防御）均不动。守门：rows>65535、
+  rows*hdim≥2^31 或行 stride≠hdim 回 multi-wave 已证字节（e10 形态
+  kernel 原样保留为回退路径）。
+- 假设与证据：上游 PR #26856 实读 patch（单行/program、pid*hidden_dim、
+  HIP 16 warps 封顶）；16:37 快照前 12 队沐曦/海光/card_b 一致高我方
+  而 card_a 持平的形态指纹；e5 +27% 控制开销先证；昆仑 0.73 vs c2flow
+  0.988。四芯天花板算术（s2t1op081 快照）：muxi 4.179→4.883(+0.70)/
+  haiguang 6.712→7.700(+0.99)/kunlun 0.731→0.988(+0.26)/card_b
+  4.93→6.268(+1.34)，全对齐 +3.29 单芯和 ÷8=+0.41 均值；
+  expectedAvgGain 0.2 为天花板×约半成功率取整档，非全对齐承诺。
+  generic 改动波及 tianshu/card_a（无 vendor 覆盖），场榜 card_a
+  5.97-6.03 持平支持中性预期，-5% 回滚门兜底。
+- 预注册门：均值 >4.3452 换 TB 且 muxi≥4.6 与 haiguang≥7.3 至少一芯
+  兑现；任一带宽芯 -5% 判负回滚 e10 字节。
+- 测试：沿用全矩阵（现有形状全部走单波路径），新增
+  test_single_wave_grid_routing（65535/2^31 路由边界，纯 host 断言——
+  2^31 档无法在 16GB 代理上真实分配）、test_multiwave_fallback_above_
+  grid_limit（rows=65536 真实走 multi-wave 回退，bf16+fp32）、
+  test_single_wave_multi_wave_parity（同字节稠密/行间隙两分支逐位一致，
+  覆盖含燧原/华为全部 7 模块）；三项均列入 RELEASE_REQUIRED_TESTS。
+  py_compile 五文件通过；_single_wave_grid 路由算术自四文件实源提取
+  执行、边界断言全过（本机无 torch/triton，kernel 数值回归待远端
+  release 回执）。
+- 额度：09-22 已用 30/30，09-23 刷新后发射；燧原 GCU 几何移植候选
+  （天花板 +0.31）与本候选文件互不重叠，本候选回执后即为下一发。

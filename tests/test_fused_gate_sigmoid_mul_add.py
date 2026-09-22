@@ -127,6 +127,56 @@ class FusedGateSigmoidMulAddTest(unittest.TestCase):
         args[0][0, 0] = float("nan")
         self.check(args, equal_nan=True)
 
+    def test_single_wave_grid_routing(self):
+        # E12 host routing: the upstream single-wave launch (one program
+        # per row, pid * HDIM int32 addressing) is legal only inside the
+        # 65535 grid.x limit and while the element span rows * hdim
+        # stays below 2**31; anything larger must route multi-wave. The
+        # 2**31 arm cannot be allocated on the 16GB proxy, so the
+        # boundary is asserted on the routing arithmetic itself.
+        for name, module in MODULES:
+            if not hasattr(module, "_single_wave_grid"):
+                # Out-of-scope variants (ascend keeps the e6 form,
+                # enflame keeps its own e11 single-wave policy).
+                continue
+            with self.subTest(module=name):
+                route = module._single_wave_grid
+                self.assertEqual(route(1, 1), 1)
+                self.assertEqual(route(65535, 1), 65535)
+                # 65535 * 32768 == 2**31 - 2**15: largest legal span.
+                self.assertEqual(route(65535, 32768), 65535)
+                # One row past the grid.x limit routes multi-wave.
+                self.assertIsNone(route(65536, 64))
+                # 65536 * 32768 == 2**31 exactly: int32 span overflow.
+                self.assertIsNone(route(65536, 32768))
+                # Span overflow with tiny row counts routes multi-wave.
+                self.assertIsNone(route(2, 2**30))
+                self.assertIsNone(route(2**31, 1))
+
+    def test_multiwave_fallback_above_grid_limit(self):
+        # rows one past the 65535 grid.x limit: every module must route
+        # to its multi-wave grid-stride kernel and stay correct.
+        for dtype in (torch.bfloat16, torch.float32):
+            with self.subTest(dtype=dtype):
+                self.check(
+                    make_case(
+                        rows=65536, hidden=64, dtype=dtype, seed=11
+                    )
+                )
+
+    def test_single_wave_multi_wave_parity(self):
+        # Identical bytes through both branches: contiguous rows take
+        # the single-wave kernel, row-gapped strides take the multi-wave
+        # fallback (enflame: its own single-wave kernel either way) -
+        # branch choice must not move a bit.
+        dense = make_case(rows=97, hidden=2048, seed=5)
+        gapped = make_case(rows=97, hidden=2048, strided=True, seed=5)
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                a = module.fused_gate_sigmoid_mul_add(*dense)
+                b = module.fused_gate_sigmoid_mul_add(*gapped)
+                torch.testing.assert_close(a, b, rtol=0, atol=0)
+
 
 RELEASE_REQUIRED_TESTS = [
     "FusedGateSigmoidMulAddTest.test_dtype_matrix_and_shapes",
@@ -134,6 +184,9 @@ RELEASE_REQUIRED_TESTS = [
     "FusedGateSigmoidMulAddTest.test_gate_saturation_and_zero_rows",
     "FusedGateSigmoidMulAddTest.test_cancellation_and_tails",
     "FusedGateSigmoidMulAddTest.test_nan_propagation",
+    "FusedGateSigmoidMulAddTest.test_single_wave_grid_routing",
+    "FusedGateSigmoidMulAddTest.test_multiwave_fallback_above_grid_limit",
+    "FusedGateSigmoidMulAddTest.test_single_wave_multi_wave_parity",
 ]
 
 
