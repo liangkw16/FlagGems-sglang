@@ -1,6 +1,9 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Enflame vendor for fixup_zero_kv: the e8 in-place core (zero-KV rows
+# Enflame vendor for fixup_zero_kv. e16r carrier (2026-09-22): e16
+# execution bytes unchanged - a window re-roll (tianshu drew 1160 at
+# the low end of its 1160-1273 band; huawei's band is 256-315).
+# The e8 in-place core (zero-KV rows
 # only, healthy segments exit immediately) on the official gcu300
 # geometry - the e9 port kept the generic's batch*ot grid and only
 # pinned num_warps, which is not the 12-CTA clamp the GCU codegen
