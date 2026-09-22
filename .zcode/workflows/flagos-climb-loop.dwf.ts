@@ -222,6 +222,12 @@ const submissions: SubmitOutcome[] = [];
 phase("并行开发各候选并过独立评审");
 // 候选间互不相干（不同文件/账本）：开发+评审并行跑；
 // 上膛含远端 release（远端纪律串行）放到汇合后的独立阶段
+interface DevOutcome {
+  /** 开发员自己创建的 commit 全长哈希（它提交后立即 git rev-parse HEAD 记下并返回；并行分支共享工作树，全局 HEAD 可能是别的候选的 commit，禁止用它绑定评审） */
+  commit: string;
+  /** 本轮做了什么/卡在哪，一句话 */
+  note: string;
+}
 interface Reviewed {
   cand: Candidate;
   approved: boolean;
@@ -246,7 +252,7 @@ const reviewed: Reviewed[] = (
       let verdict: ReviewVerdict | null = null;
       let headCommit = "";
       for (let round = 1; round <= 2; round++) {
-        await dev.ask(
+        const outcome = await dev.ask<DevOutcome>(
           `为 T${cand.task} ${cand.operator} 实现该候选（第 ${round} 轮）。假设：${cand.hypothesis}。证据：${cand.evidence}。` +
           `目标文件：${cand.files.join("、")}。预注册门：${cand.risk}。上轮评审意见：${feedback}。` +
           `要求：1) 写实现与测试（沿用 tests/test_${cand.operator}.py 的矩阵，新语义须加回归）；` +
@@ -254,15 +260,18 @@ const reviewed: Reviewed[] = (
           "`开工前先 git status --short：目标文件若有归属不明的既有改动，升级询问而不是覆盖。` +" +
           "`改账本前先 git log -1 -- <账本路径> 并重读最新字节再编辑（多会话并行防线）。` +" +
           "`新增回归测试必须同时列入该测试模块的 RELEASE_REQUIRED_TESTS。` +" +
-          "先做完这些再结束。",
+          "` + `最后返回你刚创建的 commit 全长哈希（git rev-parse HEAD，在你 commit 之后立刻读）。并行分支共享工作树，全局 HEAD 随时可能变成别的候选的 commit——评审只认你返回的这个哈希。",
         );
+        if (!outcome || !outcome.commit) {
+          feedback = "开发员未返回自己的 commit 哈希，无法绑定评审";
+          continue;
+        }
         const compile = await world.run("python3", ["-m", "py_compile", ...cand.files], { timeoutMs: 60_000 });
         if (compile.exitCode !== 0) {
           feedback = "py_compile 失败：" + compile.stderr.slice(0, 400);
           continue;
         }
-        const head = await world.run("git", ["log", "-1", "--format=%H"]);
-        headCommit = head.stdout.trim();
+        headCommit = outcome.commit;
         verdict = await reviewer.ask<ReviewVerdict>(
           `评审 commit ${headCommit}（git show ${headCommit}）。上下文：候选假设=${cand.hypothesis}；契约=docs/competition/tasks/batch-6/ 下该题题面。` +
           `先跑：bash /Users/bytedance/.agents/skills/codex-review/scripts/run-review.sh --commit ${headCommit} --reasoning-effort high，` +
