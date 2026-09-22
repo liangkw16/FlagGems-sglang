@@ -181,6 +181,10 @@ const triage = agent("分诊员", "你在 FlagOS 冲榜循环里给优化候选�
 const findings: ClimbFinding[] = [];
 const submissions: SubmitOutcome[] = [];
 let stopNote = "";
+// 轮内变量的跨轮快照（digest 在循环外，作用域看不到轮内 rows/picked/armed）
+const rowsSnapshot: GapRow[] = [];
+const pickedAll: Array<{ task: number; axis: string; hypothesis: string }> = [];
+const armedAll: Armed[] = [];
 for (let round = 1; round <= maxRounds && !stopNote; round++) {
   const roundNow = await nowEpoch();
   if (roundNow > 0 && roundNow >= WINDOW_END_S) {
@@ -388,12 +392,12 @@ for (const r of reviewed) {
     `3) ssh gpu 'cd /tmp/wf-${cand.operator}-release && timeout 900 /home/kevin/notebook/.venv/bin/python ` +
     `.agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/wf-${cand.operator}-release'；exit 0 才继续；` +
     `4) scp 回执到 artifacts/competition/day5prep-20260921/${cand.operator}-wf/；` +
-    `5) stage 编号从账本 CURRENT 块 candidate_stage 递增取下一个（保持记账连续；注意平台元组去重键是 zip_sha256 而非 stage——新候选必须产生新 ZIP 字节，同字节重掷需载体 commit），` +" +
-    `build_submission.py ${cand.operator} --stage <该编号> --commit HEAD；` +" +
-    `6) 账本 docs/competition/experiments/${cand.operator}.md CURRENT 块更新 + 追加段（五元组+预注册门），` +" +
-    `五元组逐成员列出 ZIP 名单并与 zipfile 实际成员核对一致（防打包器夹带）；同步刷新 README 候选队列行。` +" +
-    `7) python tools/gen_experiment_index.py + git commit --only 明确路径；push 前核对 @{upstream}..HEAD ` +" +
-    `全部待推 commit，含无关既有 commit 则只本地 commit 不 push 并说明。` +" +
+    `5) stage 编号从账本 CURRENT 块 candidate_stage 递增取下一个（保持记账连续；注意平台元组去重键是 zip_sha256 而非 stage——新候选必须产生新 ZIP 字节，同字节重掷需载体 commit），` +
+    `build_submission.py ${cand.operator} --stage <该编号> --commit HEAD；` +
+    `6) 账本 docs/competition/experiments/${cand.operator}.md CURRENT 块更新 + 追加段（五元组+预注册门），` +
+    `五元组逐成员列出 ZIP 名单并与 zipfile 实际成员核对一致（防打包器夹带）；同步刷新 README 候选队列行。` +
+    `7) python tools/gen_experiment_index.py + git commit --only 明确路径；push 前核对 @{upstream}..HEAD ` +
+    `全部待推 commit，含无关既有 commit 则只本地 commit 不 push 并说明。` +
     `返回的 commit 字段必须等于回执的 verification_commit（否则发射 preflight 会拒）；prepare 前后若 HEAD 被其他提交改变，重跑 prepare 绑定新 HEAD。用中文。`,
   );
   if (arm && arm.zipPath) {
@@ -520,13 +524,18 @@ if (dryRun) {
       }
     }
   }
+  // 轮末快照供 digest 使用
+  rowsSnapshot.length = 0;
+  rowsSnapshot.push(...rows);
+  pickedAll.push(...picked.map((c) => ({ task: c.task, axis: c.axis, hypothesis: c.hypothesis })));
+  armedAll.push(...armed);
 } // 轮次结束：回到循环顶重刷榜单；停止条件经 stopNote/break 跳出
 
 phase("汇总产出冲榜报告");
 const digest = await agent("报告员", "你把冲榜循环的结果写成给队友看的中文报告：结论先行，逐题列候选/门/终态/下一杆。不改文件。")
   .ask<{ summary: string; lines: string[] }>(
-    `汇总：差距表=${JSON.stringify(rows.slice(0, 6))}；候选=${JSON.stringify(picked.map((c) => ({ task: c.task, axis: c.axis, hypothesis: c.hypothesis })))}；` +
-    `上膛=${JSON.stringify(armed.map((a) => ({ task: a.task, stage: a.stage, gate: a.gate })))}；` +
+    `汇总：差距表=${JSON.stringify(rowsSnapshot.slice(0, 6))}；候选=${JSON.stringify(pickedAll)}；` +
+    `上膛=${JSON.stringify(armedAll.map((a) => ({ task: a.task, stage: a.stage, gate: a.gate })))}；` +
     `发射=${JSON.stringify(submissions)}。轮次链终止原因：${stopNote || "正常完成 maxRounds 轮"}。`,
   );
 await artifact.markdown(
@@ -539,7 +548,7 @@ await artifact.markdown(
     ...digest.lines,
     "",
     "## 与榜首差距（前 6）",
-    ...rows.slice(0, 6).map((r) => `- T${r.task} ${r.operator}：#${r.ourRank} ${r.ourBest} vs ${r.topTeam} ${r.topBest}（+${r.gapPct}%）`),
+    ...rowsSnapshot.slice(0, 6).map((r) => `- T${r.task} ${r.operator}：#${r.ourRank} ${r.ourBest} vs ${r.topTeam} ${r.topBest}（+${r.gapPct}%）`),
     "",
     "## 发射结果",
     ...submissions.map((s) => `- T${s.task} ${s.operator}：${s.state}${s.submissionId ? "（sub " + s.submissionId + "）" : ""}——${s.note}`),
@@ -552,7 +561,7 @@ const result: WorkflowReport = {
   findings,
   verified: [
     "榜单刷新与差距解析由 pull_race_intel 实测驱动",
-    ...armed.map((a) => `T${a.task} 远端 release 回执 + 不可变 ZIP（${a.zipPath}）`),
+    ...armedAll.map((a) => `T${a.task} 远端 release 回执 + 不可变 ZIP（${a.zipPath}）`),
   ],
   notCovered: [
     "目标芯（燧原/昇腾等）上的实际性能——平台评测才裁决",
