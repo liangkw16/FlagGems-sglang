@@ -51,10 +51,10 @@ def _fill_positions(
     # its owning request with a branchless binary search over the
     # int64 starts (stable once lo == hi, so fixed LOG_BS iterations
     # are safe even when the tree is shallower).
-    for base in range(
-        tl.program_id(0) * BLOCK, total, tl.num_programs(0) * BLOCK
+    for blk in range(
+        tl.program_id(0), tl.cdiv(total, BLOCK), tl.num_programs(0)
     ):
-        j = base + tl.arange(0, BLOCK)
+        j = blk * BLOCK + tl.arange(0, BLOCK)
         jm = j < total
         lo = tl.zeros((BLOCK,), dtype=tl.int32)
         hi = tl.zeros((BLOCK,), dtype=tl.int32) + (batch - 1)

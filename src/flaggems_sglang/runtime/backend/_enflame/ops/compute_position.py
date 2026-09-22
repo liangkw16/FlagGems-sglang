@@ -47,10 +47,10 @@ def _fill_positions_i64(
     HAS_PREFIX: tl.constexpr, LOG_BS: tl.constexpr, BLOCK: tl.constexpr,
 ):
     # e4 flat form (see the generic): int64 stores, <=12 programs
-    for base in range(
-        tl.program_id(0) * BLOCK, total, tl.num_programs(0) * BLOCK
+    for blk in range(
+        tl.program_id(0), tl.cdiv(total, BLOCK), tl.num_programs(0)
     ):
-        j = base + tl.arange(0, BLOCK)
+        j = blk * BLOCK + tl.arange(0, BLOCK)
         jm = j < total
         lo = tl.zeros((BLOCK,), dtype=tl.int32)
         hi = tl.zeros((BLOCK,), dtype=tl.int32) + (batch - 1)
@@ -74,10 +74,10 @@ def _fill_positions_i32(
 ):
     # narrow-packed path: one int32 store per logical element at view
     # index j (the physical slot of element j under the packed layout)
-    for base in range(
-        tl.program_id(0) * BLOCK, total, tl.num_programs(0) * BLOCK
+    for blk in range(
+        tl.program_id(0), tl.cdiv(total, BLOCK), tl.num_programs(0)
     ):
-        j = base + tl.arange(0, BLOCK)
+        j = blk * BLOCK + tl.arange(0, BLOCK)
         jm = j < total
         lo = tl.zeros((BLOCK,), dtype=tl.int32)
         hi = tl.zeros((BLOCK,), dtype=tl.int32) + (batch - 1)
