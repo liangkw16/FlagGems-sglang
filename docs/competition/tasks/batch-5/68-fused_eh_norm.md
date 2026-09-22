@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/fused_eh_norm -->
-<!-- synced_at: 2026-09-22T02:22:45+08:00 -->
+<!-- synced_at: 2026-09-22T07:59:12+08:00 -->
 
 # fused_eh_norm (activation_norm/fused_eh_norm)
 
