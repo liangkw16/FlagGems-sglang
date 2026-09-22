@@ -1,6 +1,9 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 # Enflame vendor for unpad_draft_extend_output, e19 ruleset round.
+# e19r carrier (2026-09-22): e19 execution bytes unchanged; the first
+# draw hung tianshu in waiting_callback for 20+ minutes with the other
+# seven chips healthy (enflame 126.1) - evaluation-hang re-roll.
 # The e13-era form ran a (bs, tiles) grid at the empirical 24-SIP
 # width with runtime strides and full int64 addressing; per the
 # official gcu300 codegen rules (max_grid_size=(12,1,1),
