@@ -4,13 +4,13 @@
 task: 80
 operator: fixup_zero_kv
 batch: 6
-validity: valid(8/8,e12,527.85x TB)
-platform: e12=527.85新TB(enflame真gcu300几何:燧原42→102.6 +144%):天数1171/沐曦295/燧原102.6/海光901/昆仑8.7/华为310/A819/B616
-candidate_stage: e12
-team_best_stage: e12
-team_best_speedup: 527.85x
+validity: valid(8/8,e13,540.87x TB)
+platform: e13 metax官方限额(tile 2048+warps2):沐曦295→381.7(+29%);天数1200/燧原102/海光893/昆仑8.6/华为282/A845/B615
+candidate_stage: e13
+team_best_stage: e13
+team_best_speedup: 540.87x
 sealed: no
-next: 距c2flow 569.3=7.9%;燧原102.6vs193仍-11均值(BLOCK宽度档下一探);华为310vs354;沐曦295vs473波动带
+next: 距c2flow 569.3=5.3%;缺口=沐曦382vs473(-91)/燧原102vs193(-91)/华为282vs354(-72);metax warps4 A/B与燧原宽度档为下一发
 updated: 2026-09-22
 ```
 
@@ -170,3 +170,11 @@ updated: 2026-09-22
   ≤12 CTA 跨步 + warps2；e9 只钉了 warps 没封 grid）。**燧原 42→102.6
   （+144%）**；其余芯健康（天数 1171/海光 901/华为 310/A 819）。
   527.85 > 518.70 换 TB。距 c2flow 569.3 = **7.9%**。
+
+
+## 2026-09-22 E13 平台终态：540.87 新 TB（metax 官方限额兑现）
+
+- E13（19584）：metax vendor 存储瓦片 (8,512)=4096 → (4,512)=2048
+  （官方 max_tile_size）+ warps 8→2（官方 zeros/ones 写密集启发式）。
+  **沐曦 295→381.7（+29%）**，A 845。540.87 > 527.85 换 TB。
+  **距 c2flow 569.3 = 5.3%**。

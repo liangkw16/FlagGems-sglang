@@ -4,13 +4,13 @@
 task: 77
 operator: compute_position
 batch: 6
-validity: valid(8/8,e2,344.34x)
-platform: e2终态344.34(天数585/沐曦160/燧原51.7/海光454/昆仑6.75/华为217/A649/B631);s0(19369)因模块级cache被反作弊扫描拒
-candidate_stage: e2
-team_best_stage: e2
-team_best_speedup: 344.34x
+validity: valid(8/8,e3,1051.15x TB)
+platform: e3两kernel全并行:天数2696/沐曦702/燧原116/海光1582/昆仑55/华为152/A1602/B1503;O(bs^2)串行前缀链移除后天数4.6x沐曦4.4x昆仑8x
+candidate_stage: e3
+team_best_stage: e3
+team_best_speedup: 1051.15x
 sealed: no
-next: 补位成功上榜;轴=沐曦160vs榜首1181/昆仑6.75vs64/燧原51.7vs427;B布局打包写平台验证成立
+next: 距榜首EvokeAgent 1731=65%;缺口=天数2696vs4338(-205均值)/华为152vs682(-66,新结构回退,疑多程序launch或K1+K2开销)/燧原116vs427/沐曦702vs1181
 updated: 2026-09-22
 ```
 
@@ -79,3 +79,15 @@ updated: 2026-09-22
 - 榜首 EvokeAgent 1731（沐曦 1181/天数 4338 为大头）。后续轴：沐曦、
   昆仑 6.75→64、燧原 51.7→427。per-call 探针成本（~100µs）在沐曦/天数
   高分下不构成瓶颈的读数成立。
+
+
+## 2026-09-22 E3 平台终态：1051.15 新 TB（+205%，全并行结构引爆）
+
+- E3（19587，`405928ad`，codex-review P2 修复后发射：i64 扫描偏移 +
+  int32 契约输出截断同 reference）：8/8 valid **1051.15**（344.34 起
+  +205%）。逐芯：天数 2696 / 沐曦 702 / 燧原 116.3 / 海光 1582 /
+  昆仑 55.1 / 华为 152.3 / A 1602 / B 1503。K1 单程序向量化 cumsum +
+  K2 每请求一程序预 start 平铺——O(bs²) 串行链移除后大带宽芯全面
+  4-8x（天数 4.6x / 沐曦 4.4x / 昆仑 8x / 海光 3.5x）。
+- 华为 217→152 回退：ascend 对 bs 个小程序的 launch 或两段开销，
+  榜首 682 说明形态仍差——下一轴。
