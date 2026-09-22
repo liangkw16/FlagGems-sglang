@@ -250,7 +250,7 @@ const reviewed: Reviewed[] = (
           `为 T${cand.task} ${cand.operator} 实现该候选（第 ${round} 轮）。假设：${cand.hypothesis}。证据：${cand.evidence}。` +
           `目标文件：${cand.files.join("、")}。预注册门：${cand.risk}。上轮评审意见：${feedback}。` +
           `要求：1) 写实现与测试（沿用 tests/test_${cand.operator}.py 的矩阵，新语义须加回归）；` +
-          "` + `2) python3 -m py_compile 全部触碰文件通过；3) git add 这些明确路径并 commit（--only 隔离）。` +" +
+          `2) python3 -m py_compile 全部触碰文件通过；3) git add 这些明确路径并 commit（--only 隔离）。` +
           "`开工前先 git status --short：目标文件若有归属不明的既有改动，升级询问而不是覆盖。` +" +
           "`改账本前先 git log -1 -- <账本路径> 并重读最新字节再编辑（多会话并行防线）。` +" +
           "`新增回归测试必须同时列入该测试模块的 RELEASE_REQUIRED_TESTS。` +" +
