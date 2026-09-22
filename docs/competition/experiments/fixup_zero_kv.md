@@ -4,13 +4,13 @@
 task: 80
 operator: fixup_zero_kv
 batch: 6
-validity: valid(8/8,e11,518.70x TB)
-platform: e11=518.70新TB(e9 vendor原位组合+昆仑e8字节:天数1205/沐曦294/燧原42/海光892/昆仑8.58/华为277/A815/B616)
-candidate_stage: e11
-team_best_stage: e11
-team_best_speedup: 518.70x
+validity: valid(8/8,e12,527.85x TB)
+platform: e12=527.85新TB(enflame真gcu300几何:燧原42→102.6 +144%):天数1171/沐曦295/燧原102.6/海光901/昆仑8.7/华为310/A819/B616
+candidate_stage: e12
+team_best_stage: e12
+team_best_speedup: 527.85x
 sealed: no
-next: 距c2flow 569.3=9.8%;最大单芯缺口=燧原42vs193(-19均值);沐曦294-409波动vs473;华为277vs354
+next: 距c2flow 569.3=7.9%;燧原102.6vs193仍-11均值(BLOCK宽度档下一探);华为310vs354;沐曦295vs473波动带
 updated: 2026-09-22
 ```
 
@@ -162,3 +162,11 @@ updated: 2026-09-22
   逐芯：天数 1205.2 / 沐曦 294.0（窗口回落，e9/e10 曾 312/409）/
   燧原 41.96 / 海光 892.2 / 昆仑 8.58 / 华为 276.6 / A 814.9 / B 616.2。
   **518.70 > 506.12 换 TB**。距 c2flow 569.3 = 9.8%。
+
+
+## 2026-09-22 E12 平台终态：527.85 新 TB（燧原 12-CTA 几何兑现）
+
+- E12（19455）：enflame vendor 真 gcu300 几何（(seg,tile) 工作项平铺 +
+  ≤12 CTA 跨步 + warps2；e9 只钉了 warps 没封 grid）。**燧原 42→102.6
+  （+144%）**；其余芯健康（天数 1171/海光 901/华为 310/A 819）。
+  527.85 > 518.70 换 TB。距 c2flow 569.3 = **7.9%**。
