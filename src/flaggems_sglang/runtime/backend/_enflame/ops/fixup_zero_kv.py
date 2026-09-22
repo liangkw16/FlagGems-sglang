@@ -9,7 +9,8 @@
 # programs with num_warps=2 and wide flat stores; e15 doubles the
 # store width to BLOCK_V=2048 (the gcu300 tile guidance scales with
 # the element width and the e12 read 102.6 with 1024-wide stores -
-# the next width rung toward the 193 field band).
+# the width ladder is live: 102.6 @1024 -> 113.9 @2048, e16 takes
+# the 4096 rung toward the 193 field band).
 
 import torch
 import triton
@@ -98,7 +99,7 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             NH=nh,
             num_warps=_NUM_WARPS,
             BLOCK_T=block_t,
-            BLOCK_V=2048,
+            BLOCK_V=4096,
             BLOCK_H=triton.next_power_of_2(max(1, nh)),
         )
     return out, lse
