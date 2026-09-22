@@ -92,10 +92,22 @@ class UnpadTest(unittest.TestCase):
         self.check(make_case(lens=(tpb_len := 64,), tpb=64, heads=2, dim=64))
         self.check(make_case(lens=(7,) * 40, heads=4, dim=96, tpb=7))
 
+    def test_persistent_rotation(self):
+        # e21 ascend semantics: grid capped at 64 programs rotating over
+        # segments (p, p+num_programs, ...). bs > 64 forces some programs
+        # to serve several segments; ragged lens with zeros exercise the
+        # skipped segment and sub-BLOCK tails; the wide-span case crosses
+        # multiple BLOCK=16384 tiles with a non-divisible remainder.
+        ragged = tuple((i * 7) % 9 for i in range(100))  # 0..8, zeros at i%9==0
+        self.check(make_case(lens=ragged, heads=8, dim=128, tpb=9))
+        lens = [0, 33] + [64] * 30 + [17]
+        self.check(make_case(lens=tuple(lens), heads=16, dim=128, tpb=64))
+
 
 RELEASE_REQUIRED_TESTS = [
     "UnpadTest.test_u32_fallback_conditions",
     "UnpadTest.test_ragged_and_boundaries",
+    "UnpadTest.test_persistent_rotation",
 ]
 
 

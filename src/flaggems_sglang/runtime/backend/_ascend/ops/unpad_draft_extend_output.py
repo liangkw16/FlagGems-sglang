@@ -1,15 +1,22 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Ascend vendor for unpad_draft_extend_output, e20 ruleset round
-# (width ladder banked 442 @16384 at e17). The triton-ascend
-# performance guidelines: the vector compare unit has no int path
-# (int32/int64 compares degrade to scalar) and vector ADD has no
-# int64 - so every offset here is int32, the tail mask runs in fp32,
-# and the masked load drops its `other` fill (the undefined lanes are
-# never stored - the pre-fill otherwise serializes the MTE2 move).
-# num_warps=16 per the official >=4096-element tile rung; 2D grid
-# (bs, tiles) with the in-kernel tile stride retained so an
-# understated tile count still covers every element.
+# Ascend vendor for unpad_draft_extend_output, e21 candidate: the e20
+# ruleset bytes (int32 flat-span addressing since the vector ADD unit
+# has no int64 path, fp32 tail mask since the vector compare unit has
+# no int path - gated to the sub-2^24 domain by a scalar branch, no
+# masked-load `other` pre-fill, num_warps=16 at the >=4096 tile rung)
+# re-launched as the official capped grid-stride persistent kernel:
+# grid=(min(bs, CAP),) with CAP=64 pre-registered (the T77-e5 verified
+# shape; a 32/40/48 sweep is the only follow-up if this lands positive
+# but under the gate). Each program rotates over segments
+# p, p+num_programs, ... (vector_operator.md: "keep the launch close
+# to the number of physical Vector Cores and let each program process
+# multiple tiles in an inner loop"; "GPU-style small tiles with very
+# large grids often cause repeated dispatch overhead on NPUs"), reads
+# the segment's lens/cum pair exactly once per visit, and the inner
+# block loop walks only the real accepted length elems - the padded
+# tail beyond n tokens spawns zero idle tiles, unlike the (bs, tiles)
+# grid where tiles is derived from the padded tpb*span.
 
 import torch
 import triton
@@ -17,41 +24,37 @@ import triton.language as tl
 
 _BLOCK = 16384
 _NUM_WARPS = 16
+_MAX_PROGRAMS = 64  # pre-registered CAP; T77-e5 capped-request form
 
 
 @triton.jit
 def _unpad(
-    raw_out, lens, cum, out, span, tpb, lstride, cstride,
+    raw_out, lens, cum, out, span, tpb, lstride, cstride, bs,
     BLOCK: tl.constexpr,
 ):
-    seg = tl.program_id(0)
-    tile = tl.program_id(1)
-    n = tl.load(lens + seg * lstride)
-    beg = tl.load(cum + seg * cstride)
-    src = seg * tpb * span
-    dst = beg * span
-    elems = n * span
-    # fp32 compares lose precision past 2**24 elements (the boundary
-    # offset rounds up to elems and the last element goes unwritten -
-    # a codex-review find), so the vector-mask fast path is gated to
-    # the sub-2^24 domain by a scalar branch; larger inputs keep the
-    # exact integer mask
-    if elems < 16777216:
-        for base in range(
-            tile * BLOCK, elems, tl.num_programs(1) * BLOCK
-        ):
-            offs = base + tl.arange(0, BLOCK)
-            m = offs.to(tl.float32) < elems.to(tl.float32)
-            v = tl.load(raw_out + src + offs, m)
-            tl.store(out + dst + offs, v, m)
-    else:
-        for base in range(
-            tile * BLOCK, elems, tl.num_programs(1) * BLOCK
-        ):
-            offs = base + tl.arange(0, BLOCK)
-            m = offs < elems
-            v = tl.load(raw_out + src + offs, m)
-            tl.store(out + dst + offs, v, m)
+    for seg in range(tl.program_id(0), bs, tl.num_programs(0)):
+        n = tl.load(lens + seg * lstride)
+        beg = tl.load(cum + seg * cstride)
+        src = seg * tpb * span
+        dst = beg * span
+        elems = n * span
+        # fp32 compares lose precision past 2**24 elements (the boundary
+        # offset rounds up to elems and the last element goes unwritten -
+        # a codex-review find), so the vector-mask fast path is gated to
+        # the sub-2^24 domain by a scalar branch; larger inputs keep the
+        # exact integer mask
+        if elems < 16777216:
+            for base in range(0, elems, BLOCK):
+                offs = base + tl.arange(0, BLOCK)
+                m = offs.to(tl.float32) < elems.to(tl.float32)
+                v = tl.load(raw_out + src + offs, m)
+                tl.store(out + dst + offs, v, m)
+        else:
+            for base in range(0, elems, BLOCK):
+                offs = base + tl.arange(0, BLOCK)
+                m = offs < elems
+                v = tl.load(raw_out + src + offs, m)
+                tl.store(out + dst + offs, v, m)
 
 
 def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q):
@@ -69,8 +72,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
     )
     span = heads * dim
     if bs and token_per_batch and out.numel():
-        tiles = min(max(1, (token_per_batch * span + _BLOCK - 1) // _BLOCK), 255)
-        _unpad[(bs, tiles)](
+        _unpad[(min(bs, _MAX_PROGRAMS),)](
             raw_out,
             seq_lens_q,
             cu_seqlens_q,
@@ -79,6 +81,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
             token_per_batch,
             seq_lens_q.stride(0),
             cu_seqlens_q.stride(0),
+            bs,
             BLOCK=_BLOCK,
             num_warps=_NUM_WARPS,
         )
