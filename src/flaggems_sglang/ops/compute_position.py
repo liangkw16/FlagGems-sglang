@@ -37,21 +37,37 @@ def _starts_scan(
         carry += tl.sum(seg, 0)
 
 
-@triton.jit(do_not_specialize=["batch"])
+@triton.jit(
+    do_not_specialize=["batch", "total"]
+)
 def _fill_positions(
-    positions, starts64, prefix_lens, lens,
-    HAS_PREFIX: tl.constexpr, BLOCK: tl.constexpr,
+    positions, starts64, prefix_lens, lens, batch, total,
+    HAS_PREFIX: tl.constexpr, LOG_BS: tl.constexpr, BLOCK: tl.constexpr,
 ):
-    i = tl.program_id(0)
-    start = tl.load(starts64 + i)
-    seq_len = tl.load(lens + i)
-    prefix_len = tl.load(prefix_lens + i) if HAS_PREFIX else 0
-    for off in range(0, seq_len, BLOCK):
-        o = off + tl.arange(0, BLOCK)
+    # flat grid over positions: perfect load balance under skewed
+    # request lengths (the per-request grid serialized long requests
+    # into single programs) and a bounded program count on every chip
+    # (Ascend degraded when the grid grew with bs). Each element finds
+    # its owning request with a branchless binary search over the
+    # int64 starts (stable once lo == hi, so fixed LOG_BS iterations
+    # are safe even when the tree is shallower).
+    for base in range(
+        tl.program_id(0) * BLOCK, total, tl.num_programs(0) * BLOCK
+    ):
+        j = base + tl.arange(0, BLOCK)
+        jm = j < total
+        lo = tl.zeros((BLOCK,), dtype=tl.int32)
+        hi = tl.zeros((BLOCK,), dtype=tl.int32) + (batch - 1)
+        for _ in tl.static_range(LOG_BS):
+            mid = (lo + hi + 1) >> 1
+            sv = tl.load(starts64 + mid, jm, other=0)
+            take = jm & (sv <= j)
+            lo = tl.where(take, mid, lo)
+            hi = tl.where(take, hi, mid - 1)
+        seg_start = tl.load(starts64 + lo, jm, other=0)
+        prefix_len = tl.load(prefix_lens + lo, jm, other=0) if HAS_PREFIX else 0
         tl.store(
-            positions + start + o,
-            prefix_len.to(tl.int64) + o,
-            mask=o < seq_len,
+            positions + j, prefix_len.to(tl.int64) + (j - seg_start), jm
         )
 
 
@@ -78,12 +94,15 @@ def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
             batch,
             BLOCK_BS=triton.next_power_of_2(min(max(batch, 1), 8192)),
         )
-        _fill_positions[(batch,)](
+        _fill_positions[(min(triton.cdiv(extend_seq_lens_sum, 1024), 2048),)](
             positions,
             starts64,
             extend_prefix_lens,
             extend_seq_lens,
+            batch,
+            extend_seq_lens_sum,
             HAS_PREFIX=has_prefix,
+            LOG_BS=max(1, (max(batch - 1, 1)).bit_length()),
             BLOCK=1024,
         )
     return positions, extend_start_loc
