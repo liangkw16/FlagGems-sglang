@@ -4,13 +4,13 @@
 task: 80
 operator: fixup_zero_kv
 batch: 6
-validity: valid(8/8,e13,540.87x TB)
-platform: e13 metax官方限额(tile 2048+warps2):沐曦295→381.7(+29%);天数1200/燧原102/海光893/昆仑8.6/华为282/A845/B615
-candidate_stage: e13
-team_best_stage: e13
-team_best_speedup: 540.87x
+validity: valid(8/8,e14r,550.19x TB)
+platform: e14r(19636):天数1273.4窗口新高+沐曦359(warps4<warps2的381,轴关)+华为315;距c2flow 569.3=3.5%
+candidate_stage: e14r
+team_best_stage: e14r
+team_best_speedup: 550.19x
 sealed: no
-next: 距c2flow 569.3=5.3%;缺口=沐曦382vs473(-91)/燧原102vs193(-91)/华为282vs354(-72);metax warps4 A/B与燧原宽度档为下一发
+next: 距top1=3.5%(差~19均值);缺口=沐曦360vs473/燧原102vs193/华为315vs354;天数1273vs1216已反超;metax warps轴关(2>4>8);e14 uncertain元组永久封锁记录在案
 updated: 2026-09-22
 ```
 
@@ -178,3 +178,13 @@ updated: 2026-09-22
   （官方 max_tile_size）+ warps 8→2（官方 zeros/ones 写密集启发式）。
   **沐曦 295→381.7（+29%）**，A 845。540.87 > 527.85 换 TB。
   **距 c2flow 569.3 = 5.3%**。
+
+
+## 2026-09-22 E14（uncertain 封存）与 E14R 平台终态：550.19 新 TB
+
+- E14：上传 uncertain 未达平台（无提交记录/未扣额度），CLI 对该元组
+  永久封锁——intent 留档不再触碰；e14r 注释载体走新元组。
+- E14R（19636，`e14r` 载体 + warps4）：8/8 valid **550.19 > 540.87 换
+  TB**。天数 **1273.4**（挂起自行恢复 + 窗口新高，此前带 1199-1205）；
+  沐曦 359.6（warps4 < warps2 的 381.7——**metax warps 阶梯闭合：2>4>8**）；
+  华为 315.3。**距 c2flow 569.3 = 3.5%**（差 ~19 均值）。
