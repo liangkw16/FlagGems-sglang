@@ -4,13 +4,13 @@
 task: 92
 operator: unpad_draft_extend_output
 batch: 6
-validity: valid(8/8,e17,329.64x TB;e19天芯3630s评测超时挂死)
-platform: e19(19456)invalid_correctness:天芯执行超时3630s/3600s(子进程S态阻塞,锁/IO/驱动),其余七芯健康(沐曦247/燧原126.1+132%/海光666/昆仑33/华为427/A532/B270,投影~336);e19r载体已发(评测挂死族重掷1/1)
+validity: valid(8/8,e19r,331.10x TB)
+platform: e19r(19475)重掷命中:天数394.6/沐曦247/燧原126.2/海光664/昆仑33.1/华为378/A527/B279;燧原54→126(+132%)=gcu300规则集第三题兑现
 candidate_stage: e19r
-team_best_stage: e17
-team_best_speedup: 329.64x
+team_best_stage: e19r
+team_best_speedup: 331.10x
 sealed: no
-next: e19r判决中(等天芯正常评测);燧原126.1为gcu300规则集第三题兑现;榜首CosmosMind 372(华为843单芯)
+next: 距榜首CosmosMind 372=12.3%;缺口=华为378vs843(单芯)与天数394vs441;重掷轴已关闭(1/1用尽)
 updated: 2026-09-22
 ```
 
@@ -314,3 +314,15 @@ updated: 2026-09-22
   非字节问题（generic 未动，e17 同字节天数曾读 394）。
 - E19R：comment-only 载体重掷（挂死族 1/1）。回执
   `day5prep-20260921/unpad_draft_extend_output-e19r/`；发射后回执待判。
+
+
+## 2026-09-22 E19R 平台终态：331.10 新 TB（挂死重掷命中）
+
+- E19R（19475）：8/8 valid **331.10 > 329.64 换 TB**。逐芯：天数 394.6
+  （挂死恢复）/ 沐曦 247.4 / 燧原 126.2 / 海光 663.9 / 昆仑 33.1 /
+  华为 377.9 / A 526.7 / B 278.9。
+- 五元组：commit `075a0a5346dca01596829f0bed0febead55842b5`；ZIP `artifacts/competition/unpad_draft_extend_output/e19r-f9abadc/unpad_draft_extend_output.zip`
+  SHA `a9b2ba0a96e96036076bf8444d6466978cbc499654aa4449cf4d76cbc025734f`（8 成员）；回执
+  `day5prep-20260921/unpad_draft_extend_output-e19r/verification.json`
+  SHA `0ae3c379a5b55a4e5f91a1597541450a5cf0c8b3b2e1bec8edea380450249825`。
+- 重掷额度（1/1）用尽，该轴关闭。距榜首 12.3%（华为 843 单芯为主）。
