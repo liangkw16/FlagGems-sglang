@@ -75,7 +75,10 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
     hv, nh = num_heads * v_head_dim, num_heads
     if batch and total_tokens:
         chunk = 2048
-        span = max_seq_len if isinstance(max_seq_len, int) else total_tokens
+        span = min(
+            max_seq_len if isinstance(max_seq_len, int) else total_tokens,
+            total_tokens,
+        )
         ot_out = max(1, (span * hv + chunk - 1) // chunk)
         ot_lse = max(1, (span * nh + chunk - 1) // chunk)
         items = batch * (ot_out + ot_lse)
