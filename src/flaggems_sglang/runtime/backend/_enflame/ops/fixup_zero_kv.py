@@ -6,7 +6,10 @@
 # pinned num_warps, which is not the 12-CTA clamp the GCU codegen
 # documents (max_grid_size=(12,1,1)). This round flattens the
 # (segment, tile) work items and grid-strides them across at most 12
-# programs with num_warps=2 and wide flat stores.
+# programs with num_warps=2 and wide flat stores; e15 doubles the
+# store width to BLOCK_V=2048 (the gcu300 tile guidance scales with
+# the element width and the e12 read 102.6 with 1024-wide stores -
+# the next width rung toward the 193 field band).
 
 import torch
 import triton
@@ -95,7 +98,7 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             NH=nh,
             num_warps=_NUM_WARPS,
             BLOCK_T=block_t,
-            BLOCK_V=1024,
+            BLOCK_V=2048,
             BLOCK_H=triton.next_power_of_2(max(1, nh)),
         )
     return out, lse

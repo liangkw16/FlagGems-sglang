@@ -5,10 +5,10 @@
 # at the official max_tile_size (was 4096, over the limit) - muxi
 # 295->381.7; e14/e14r A/B the warp pin one rung up from the
 # zeros-heuristic 2 (the mixed out+lse store stream may want more
-# lanes). e14r is also the new tuple for the warps-4 shot: the e14
-# upload went uncertain and demonstrably never reached the platform
-# (no submission record, no quota consumed), and the uncertain intent
-# stays untouched as a record.
+# lanes). e14r measured warps 4 at muxi 359.6 < e13's 381.7 (warps 2)
+# - the ladder is closed 2>4>8 - so e15 restores the 2-warp pin; the
+# e14 tuple itself went uncertain and never reached the platform (its
+# intent stays untouched as a record).
 
 import torch
 import triton
@@ -96,7 +96,7 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             lse.stride(0),
             HV=hv,
             NH=nh,
-            num_warps=4,
+            num_warps=2,
             BLOCK_T=4,
             BLOCK_V=512,
             BLOCK_H=triton.next_power_of_2(max(1, nh)),
