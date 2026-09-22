@@ -33,9 +33,26 @@ class TKGTest(unittest.TestCase):
                         self.check(x, w, torch.bfloat16)
                         self.check(x, w, torch.float32)
 
+    def test_w_natural_layout_strides(self):
+        # e9 enflame semantics regression: the w tile is loaded in w's
+        # natural [BLOCK_N, K] row-major layout and transposed in-register
+        # (tl.trans) before tl.dot. Lock that morphology with row-padded
+        # (non-contiguous) x/w whose row strides (xs0/ws0) differ from k,
+        # plus the ragged n tail that pins the mask orientation of the
+        # natural-layout load (n % BLOCK_N != 0 masks rows, not columns).
+        for m in (1, 7, 16):
+            for k in (128, 256):
+                for n in (64, 1000):
+                    with self.subTest(m=m, k=k, n=n):
+                        x = torch.randn(m, k + 16, dtype=torch.bfloat16, device="cuda")[:, :k]
+                        w = torch.randn(n, k + 32, dtype=torch.bfloat16, device="cuda")[:, :k]
+                        self.check(x, w, torch.bfloat16)
+                        self.check(x, w, torch.float32)
+
 
 RELEASE_REQUIRED_TESTS = [
     "TKGTest.test_matrix",
+    "TKGTest.test_w_natural_layout_strides",
 ]
 
 

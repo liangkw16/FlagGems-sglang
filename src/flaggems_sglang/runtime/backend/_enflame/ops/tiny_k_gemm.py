@@ -1,8 +1,12 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Enflame vendor for tiny_k_gemm: the GCU streaming shape - grid held
-# at the 24-SIP width with the n-block grid-stride already in the body
-# (leader band reads 0.9 vs our 0.6).
+# Enflame vendor for tiny_k_gemm e9: keep the e8 launch shape (12 CTA
+# grid-stride, constexpr strides, num_warps=2, num_stages=3) and change
+# only the w access morphology - the tile is loaded in w's natural
+# [BLOCK_N, K] row-major layout so the contiguous k axis sits on the
+# tile's last axis (the GCU DMA streaming/vector shape) and reaches
+# tl.dot through tl.trans instead of a strided transposed load whose
+# contiguous axis lands on the tile's first axis.
 
 import torch
 import triton
@@ -27,13 +31,16 @@ def _tiny_k_gemm(
             xm[:, None],
             other=0.0,
         )
-        # w is [n, k] row-major; the dot needs [K, N] so load transposed
-        wt = tl.load(
-            w + rn[None, :] * ws0 + rk[:, None],
-            xn[None, :],
+        # w is [n, k] row-major: load the tile in its natural layout (k on
+        # the last, contiguous axis -> coalesced / DMA streaming vectors)
+        # and transpose in registers for tl.dot, rather than loading a
+        # [K, BLOCK_N] tile whose unit-stride axis is the tile's first axis.
+        wn = tl.load(
+            w + rn[:, None] * ws0 + rk[None, :],
+            xn[:, None],
             other=0.0,
         )
-        acc = tl.dot(xt, wt, out_dtype=tl.float32)
+        acc = tl.dot(xt, tl.trans(wn), out_dtype=tl.float32)
         tl.store(
             out + rm[:, None] * os0 + rn[None, :],
             acc.to(out.dtype.element_ty),
