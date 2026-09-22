@@ -28,6 +28,9 @@ _BLOCK = 2048
 
 @triton.jit(do_not_specialize=["batch"])
 def _starts_scan(lens, starts, batch, BLOCK_BS: tl.constexpr):
+    # int32 offsets by design: the GCU packed output cannot represent
+    # values beyond the int31 domain anyway, and a batch whose total
+    # exceeds 2^31 cannot allocate its positions tensor on this device
     carry = tl.zeros((), dtype=tl.int32)
     for c0 in range(0, batch, BLOCK_BS):
         lanes = c0 + tl.arange(0, BLOCK_BS)
