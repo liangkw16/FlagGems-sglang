@@ -1,5 +1,11 @@
 # 第二批候选与提交队列
 
+## 2026-09-22 T90 e6 上膛（燧原 flat 流式重开，待发射）
+
+| 候选 | ZIP | 回执 | 预注册门 |
+| --- | --- | --- | --- |
+| [T90 sigmoid_gate_mul_broadcast e6](sigmoid_gate_mul_broadcast.md)（round-2 commit `6aaa394f`：燧原 numel flat grid-stride + 12-CTA 封顶 + BLOCK 65536 宽度顶档，P1 int32 域/P2 行间隙 x 拷贝已修；generic+ascend/enflame/hygon 四路径） | e6-6aaa394（`320f3834…5955`，4 成员与 commit 字节一致） | 3 测试 0 失败（含两条新回归），4 源 × 12 launch ✓（`day5prep-20260921/sigmoid_gate_mul_broadcast-wf/`） | 燧原 ≥2.0 保留 / ≥2.5 进场带；均值 >2.5247 才换 TB；32768 回退档 |
+
 ## 2026-09-22 T81 e12 上膛（climb-loop，待 09-23 额度刷新发射）
 
 | 候选 | ZIP | 回执 | 预注册门 |

@@ -10,7 +10,7 @@ candidate_stage: e6
 team_best_stage: e4
 team_best_speedup: 2.5247
 sealed: no
-next: e6r2 燧原flat流式(relu2宽度顶档65536配方,P1/P2/P3已修)待代理验证+ZIP上膛;轴=沐曦flat候选(e6回执后下一发)/华为1.25;昆仑0.75贴门槛
+next: e6已上膛(回执绿3测试0失败/4源×12launch+ZIP e6-6aaa394验签)待发射;轴=沐曦flat候选(e6发射后下一发)/华为1.25;昆仑0.75贴门槛
 updated: 2026-09-22
 ```
 
@@ -123,3 +123,34 @@ updated: 2026-09-22
   步进同 12*BLOCK 量级，断言需按其几何取 12*131072）。
 - e6 候选身份更新为本轮 commit（第 1 轮 `9d080b0d` 字节作废，未上过
   release/ZIP）；预注册门不变。
+
+## 2026-09-22 e6 上膛（round-2 commit 回执绿 + ZIP 验签）
+
+- 回执（`artifacts/competition/day5prep-20260921/sigmoid_gate_mul_broadcast-wf/`）：
+  release 模式 NVIDIA 代理（RTX 5070 Ti，torch 2.13.0+cu130 / triton 3.7.1），
+  `run` exit 0；RELEASE_REQUIRED_TESTS 3 用例全过（`test_shapes_and_saturation` /
+  `test_flat_block_boundary_gate_gather` / `test_row_gated_strided_x`），
+  0 失败 / 0 错误 / 0 skip / 0 xfail；62 case ×4 模块
+  （generic/ascend/enflame/hygon）；4 源各 12 次 kernel launch；
+  三 vendor 路径 proxy-executed，目标芯 target-runtime-unverified 保守标注。
+  回执 SHA `3b721d286977c0004d6350eecd799ef03bdbc20619b52e5e6ea194dd64c3d908`，
+  log SHA `898678c6030d27de839254e911020b2924eee2cd89d840e08d3200a1e327f1a9`。
+- 五元组：source commit `6aaa394f33a522047bff5f54023c66de42e0175c`（=HEAD，
+  round-2 修复后单 commit，kernel 字节=9d080b0d 第 1 轮相同、注释/断言/
+  测试更新）；verification commit 同上；test
+  `tests/test_sigmoid_gate_mul_broadcast.py` SHA
+  `b0f26e58be5af427ae402f03992d21de0384d6005c4942ecee1ad787156e29f0`；
+  ZIP `e6-6aaa394/sigmoid_gate_mul_broadcast.zip` SHA
+  `320f38345988e79334dba051f97351aeae9698e10c497e46266bb2f5bf5a5955`
+  （9434 B，新字节 vs e5 `cd0bd7a6…`，平台元组 zip_sha256 去重无冲突）；
+  回执目录 `day5prep-20260921/sigmoid_gate_mul_broadcast-wf/`。发射
+  preflight 的 verification_commit 必须等于本回执的 `6aaa394f…`。
+- ZIP 成员名单（zipfile 实际 namelist 与预期 4 成员精确相等、无夹带；
+  逐成员字节与 `6aaa394f` git blob 比对一致；`unzip -t` 无错）：
+  `sigmoid_gate_mul_broadcast.py`（`7b653c1f`，← `src/flaggems_sglang/ops/`）/
+  `sigmoid_gate_mul_broadcast_ascend.py`（`32e9a26b`，← `_ascend/ops/`）/
+  `sigmoid_gate_mul_broadcast_enflame.py`（`090d7d46`，← `_enflame/ops/`）/
+  `sigmoid_gate_mul_broadcast_hygon.py`（`c9e3756e`，← `_hygon/ops/`）。
+- 预注册门（e6 两轮一致，发射前锁定）：燧原 ≥2.0 保留 / ≥2.5 进场带
+  （场带 2.5-3.39，EvokeAgent 3.2440）；均值 >2.5247 才换 TB；宽度阶梯
+  32768 为回退档；折扣因子见第 1 轮段（expectedAvgGain 0.1）。
