@@ -4,14 +4,14 @@
 task: 92
 operator: unpad_draft_extend_output
 batch: 6
-validity: valid
-platform: completed(18360,e5,8/8,110.055x<TB;保e4 115.661;metax回退验证-8%一致)
-candidate_stage: e5
-team_best_stage: e4
-team_best_speedup: 115.661
+validity: valid(8/8,e17,329.64x TB;e19天芯3630s评测超时挂死)
+platform: e19(19456)invalid_correctness:天芯执行超时3630s/3600s(子进程S态阻塞,锁/IO/驱动),其余七芯健康(沐曦247/燧原126.1+132%/海光666/昆仑33/华为427/A532/B270,投影~336);e19r载体已发(评测挂死族重掷1/1)
+candidate_stage: e19r
+team_best_stage: e17
+team_best_speedup: 329.64x
 sealed: no
-next: 首发即108x;轴=燧原3.5/昆仑8.9 vendor(gather/streaming配方);榜首295.62窗口待判
-updated: 2026-09-20
+next: e19r判决中(等天芯正常评测);燧原126.1为gcu300规则集第三题兑现;榜首CosmosMind 372(华为843单芯)
+updated: 2026-09-22
 ```
 
 ## 2026-09-20 S0 首发记录 + 根因复盘
@@ -303,3 +303,14 @@ updated: 2026-09-20
 - 当日 T92 战线收束：115.66 → **329.64**（+185%，7 个新 TB），距榜首
   350.30 差 6.2%；#5 居位（前四 350.3/349.9/349.3/336.0）。剩余结构洞：
   沐曦 -120、天数 -85、燧原 -94（今日已知轴穷尽，待新情报）。
+
+
+## 2026-09-22 E19/E19R：燧原规则集兑现 + 天芯评测挂死重掷
+
+- E19（19456，enflame 眧原生真 gcu300 几何：constexpr stride（含非连续
+  lens 契约）+ int32 + ≤12 CTA + warps2）：**燧原 54.3→126.1（+132%）**，
+  海光 666/华为 427/A 532 同发健康；**天芯评测执行超时 3630s/3600s**
+  （子进程 S 态阻塞：锁/IO/驱动）判 invalid_correctness——评测挂死族，
+  非字节问题（generic 未动，e17 同字节天数曾读 394）。
+- E19R：comment-only 载体重掷（挂死族 1/1）。回执
+  `day5prep-20260921/unpad_draft_extend_output-e19r/`；发射后回执待判。
