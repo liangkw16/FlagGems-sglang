@@ -119,7 +119,7 @@ const CLI = ".agents/skills/flagos-operator-race/scripts/platform_cli.py";
 const researchLimit = Math.max(1, Math.min(8, Number(args.researchLimit) || 4));
 const maxBuilds = Math.max(1, Math.min(6, Number(args.maxBuilds) || 3));
 const maxSubmits = Math.max(1, Math.min(6, Number(args.maxSubmits) || 3));
-const reserveQuota = Math.max(0, Math.min(10, Number(args.reserveQuota) || 1));
+const reserveQuota = Math.max(0, Math.min(10, Number(args.reserveQuota) || 0));
 const dryRun = args.dryRun === true;
 const maxRounds = Math.max(1, Math.min(5, Number(args.maxRounds) || 2));
 const waitOnQuota = args.waitOnQuota !== false;
