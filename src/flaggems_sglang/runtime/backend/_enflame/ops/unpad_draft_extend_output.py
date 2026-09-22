@@ -7,7 +7,8 @@
 # num_warps=2, compile-time stride divisibility for the DMA path,
 # enable_i64=False) this round: one flat 1D work-item axis over
 # (segment, tile) pairs grid-strided across at most 12 programs,
-# contiguous layout asserted so every stride is constexpr, int32
+# every stride (including the strided len/cum tensors the harness
+# exercises) baked as constexpr, int32
 # offsets throughout, BLOCK 16384 kept from the width ladder peak
 # (18.7 @4096 -> 33.6 @8192 -> 55.1 @16384).
 
@@ -30,13 +31,15 @@ def _unpad(
     tiles,
     SPAN: tl.constexpr,
     TPB: tl.constexpr,
+    LS: tl.constexpr,
+    CS: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
     for item in range(tl.program_id(0), items, tl.num_programs(0)):
         seg = item // tiles
         tile = item % tiles
-        n = tl.load(lens + seg)
-        beg = tl.load(cum + seg)
+        n = tl.load(lens + seg * LS)
+        beg = tl.load(cum + seg * CS)
         src = seg * TPB * SPAN
         dst = beg * SPAN
         elems = n * SPAN
@@ -54,7 +57,6 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
     assert seq_lens_q.dtype == cu_seqlens_q.dtype == torch.int32
     assert raw_out.dtype in (torch.float16, torch.bfloat16)
     assert raw_out.is_contiguous()
-    assert seq_lens_q.stride(0) == 1 and cu_seqlens_q.stride(0) == 1
     out = torch.empty(
         (sum_seq_lens_q, heads, dim),
         dtype=raw_out.dtype,
@@ -74,6 +76,8 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
             spanchunks,
             SPAN=span,
             TPB=token_per_batch,
+            LS=seq_lens_q.stride(0),
+            CS=cu_seqlens_q.stride(0),
             BLOCK=_BLOCK,
             num_warps=_NUM_WARPS,
             num_stages=4,
