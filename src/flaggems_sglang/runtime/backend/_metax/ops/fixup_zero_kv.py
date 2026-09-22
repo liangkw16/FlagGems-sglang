@@ -76,8 +76,8 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
     assert kv_lens.dtype == cum_seq_lens.dtype == torch.int32
     if batch and total_tokens:
         hv, nh = num_heads * v_head_dim, num_heads
-        block_t = 8
         span = max_seq_len if isinstance(max_seq_len, int) else total_tokens
+        block_t = 4
         ot = max(1, triton.cdiv(min(span, total_tokens), block_t))
         _fixup_zero_kv[(batch * ot,)](
             out,
@@ -90,8 +90,8 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             lse.stride(0),
             HV=hv,
             NH=nh,
-            num_warps=8,
-            BLOCK_T=block_t,
+            num_warps=2,
+            BLOCK_T=4,
             BLOCK_V=512,
             BLOCK_H=triton.next_power_of_2(max(1, nh)),
         )
