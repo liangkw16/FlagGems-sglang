@@ -5,13 +5,12 @@ task: 91
 operator: tiny_k_gemm
 batch: 6
 validity: valid
-platform: completed(18345,e7,8/8,1.953x=TB;metax16/kunlunw8中性,阶梯到顶)
-candidate_stage: e8
 platform: e8(19380)valid 1.8201<TB1.953;燧原0.67→1.18(+75%,近门);昆仑0.149贴门拖均值
+candidate_stage: e9
 team_best_stage: s0
 team_best_speedup: 1.953
 sealed: no
-next: metax BLOCK_N32修复smem后#2;距榜首3.4%:轴=BLOCK_N阶梯(64于非K256形状)/m16rows;昆仑1.1/华为0.8 vendor
+next: e9 已上膛待发射(燧原 w natural-layout [BLOCK_N,K]+tl.trans,launch字节冻结e8);门=燧原1.18→≥1.5且七芯不动;备用昆仑1.1/华为0.8 vendor
 updated: 2026-09-22
 ```
 
@@ -66,3 +65,42 @@ updated: 2026-09-22
   SHA `8bb2c26447e6d7d4…`。
 - 预注册门：燧原 0.67→≥1.34(×2)；其余七芯不动（vendor-only 单变量）。codex-review
   零发现（grid-stride 边界模拟无漏算）。
+
+## 2026-09-22 e9 候选就绪（燧原 w natural-layout DMA 流形态，上膛待发射）
+
+- 结构（`30386020`，enflame vendor 单变量）：launch 字节冻结 e8（12 CTA
+  grid-stride / constexpr stride / num_warps=2 / num_stages=3），仅改 w 的
+  访问形态——tile 按 w 自然 [BLOCK_N, K] 行主序加载（k 连续轴落在 tile
+  末轴 = GCU DMA streaming 向量形态），寄存器内 `tl.trans` 进 dot，替代
+  连续轴落在首轴的 stride 转置加载。测试新增非连续 stride / ragged-tail
+  回归并纳入 `RELEASE_REQUIRED_TESTS`。
+- 五元组：
+  - source/verification commit `30386020`（回执 source_commit =
+    verification_commit = `30386020e1c86347b4c23869141327b106b3dce8`，
+    = 上膛时 HEAD）；
+  - ZIP `artifacts/competition/tiny_k_gemm/e9-3038602/tiny_k_gemm.zip`
+    （8868 字节）SHA
+    `70656f2d75c785c70a0a067d5e135d3389bd3db98f647f5e8c860858268fe035`，
+    与 e8 `14379b21…` 不同字节（平台元组去重键 zip_sha256，新候选
+    确为新 ZIP）；
+  - 成员逐一（zipfile 实读核对一致，与回执 manifest 哈希逐项相等，
+    unzip -t/-l 无夹带）：`tiny_k_gemm.py`
+    `0aa069c9b04adc0c…474cdeda`（generic，字节同 e8）、
+    `tiny_k_gemm_enflame.py`
+    `818b59ce61d01a76…695e12f7`（唯一改动成员）、
+    `tiny_k_gemm_kunlunxin.py`
+    `8563c40cda846de4…0caa28d`（同 e8）、
+    `tiny_k_gemm_metax.py`
+    `a55fd82f1f763159…e799fc3`（同 e8）；
+  - 回执 `artifacts/competition/day5prep-20260921/tiny_k_gemm_e9_enflame_natural_layout-wf/verification.json`
+    SHA `b26d668cddfcc3aa5c4589c14a552d7f597c10d1f3cc4a204fe16d034c055dc6`；
+  - 远端 gpu（RTX 5070 Ti，torch 2.13.0+cu130 / triton 3.7.1）
+    timeout 900 run exit 0：四源路径（generic/enflame/kunlunxin/metax）
+    各 60 次真实 kernel launch、272 子用例 0 fail / 0 skip / 0 xfail、
+    RELEASE_REQUIRED_TESTS 两方法（test_matrix /
+    test_w_natural_layout_strides）在列通过、非空 bf16 shape 12 组
+    （m∈{1,7,16,64,1000,4096}×K∈{128,256}）；三 vendor 路径为 NVIDIA
+    代理执行，目标芯 unverified（交平台补齐）。
+- 预注册门：燧原 e8 平台 1.18 → ≥1.5；其余七芯不动（vendor-only
+  单变量）；均值 >1.9739 换 TB（取正文 e8-3337be6 平台记录值——CURRENT
+  块 TB 仍记 1.953@s0，两处为既有矛盾待平台侧核实，门取高值保守）。

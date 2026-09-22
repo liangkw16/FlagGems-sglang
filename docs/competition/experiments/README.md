@@ -1,5 +1,11 @@
 # 第二批候选与提交队列
 
+## 2026-09-22 T91 e9 上膛（燧原 w natural-layout DMA 流形态，待发射）
+
+| 候选 | ZIP | 回执 | 预注册门 |
+| --- | --- | --- | --- |
+| [T91 tiny_k_gemm e9](tiny_k_gemm.md)（commit `30386020`：enflame vendor 单变量，w tile 按 [BLOCK_N,K] 自然布局加载 + `tl.trans` 进 dot（k 连续轴=tile 末轴，GCU DMA 流形态），launch 字节冻结 e8；generic/kunlunxin/metax 字节不变） | e9-3038602（`70656f2d…e035`，4 成员与 commit 字节一致，≠e8 新字节） | 2 测试 272 子用例 0 失败，4 源 × 60 launch ✓（`day5prep-20260921/tiny_k_gemm_e9_enflame_natural_layout-wf/`） | 燧原 1.18→≥1.5 且其余七芯不动；均值 >1.9739 换 TB（保守取 e8 记录值） |
+
 ## 2026-09-22 T90 e6 上膛（燧原 flat 流式重开，待发射）
 
 | 候选 | ZIP | 回执 | 预注册门 |
