@@ -170,7 +170,7 @@ const proposals = await Promise.all(
       `docs/competition/session-mining-retrospective.md 与各 vendor 规则集注释（燧原 gcu300：12CTA/warps2/编译期stride/int32；` +
       `沐曦：tile<=2048；昇腾：Vector无整数比较与i64加法/192KB UB/32B对齐/block↔核绑定）。` +
       `可用 WebSearch/WebFetch 查上游（sglang/vllm/FlagGems/FlagTree），可用 gh api 读 GitHub 源码；网络不可用就只靠仓内证据。` +
-      `产出 1-2 个候选，优先结构性假设（launch 结构/访存形态/跨步映射），排除账本已证伪形态。用中文。`,
+      `产出 1-2 个候选，优先结构性假设（launch 结构/访存形态/跨步映射），排除账本已证伪形态。` + `先读 docs/competition/experiments/README.md 候选队列：已有上膛未发射候选的题直接跳过（返回空列表并说明原因），避免重复开发。` + `反作弊红线（平台代码安全扫描会拒收，违反即整发作废）：不用 try/except 或设备判断 fallback 到 PyTorch；核心计算必须全 Triton；禁止模块级全局可变容器（dict/set 缓存会被扫描拒收，T77 s0 实例）。用中文。`,
     );
     for (const c of cands) {
       report({ name: `T${c.task}-${c.axis}`, operator: c.operator, stage: "调研", hypothesis: c.hypothesis }, "cands");
@@ -207,7 +207,7 @@ for (const cand of picked) {
   const dev = agent(`开发员-T${cand.task}`, {
     system:
       "你是 FlagOS 冲榜候选开发员，全程遵守 .agents/skills/flagos-operator-race/SKILL.md 的闭环纪律。" +
-      "只改候选列出的文件与对应测试/账本；每步工具命令真实执行并引用输出；评审意见必须逐条修复后才能进入下一步；" +
+      "只改候选列出的文件与对应测试/账本；每步工具命令真实执行并引用输出；评审/外部主张必须逐条对源码核实后才采信（先例：声称改 2 条路径实为 3 条），核实后逐条修复才能进入下一步；" +
       "若门禁不可能通过（环境/权限/额度），升级说明而不是绕过。",
   });
   const reviewer = agent(`评审员-T${cand.task}`, {
@@ -223,7 +223,7 @@ for (const cand of picked) {
       `目标文件：${cand.files.join("、")}。预注册门：${cand.risk}。上轮评审意见：${feedback}。` +
       `要求：1) 写实现与测试（沿用 tests/test_${cand.operator}.py 的矩阵，新语义须加回归）；` +
       `2) python3 -m py_compile 全部触碰文件通过；3) git add 这些明确路径并 commit（--only 隔离）。` +
-      "先做完这三步再结束。",
+      "` + `开工前先 git status --short：目标文件若有归属不明的既有改动，升级询问而不是覆盖。` + `改账本前先 git log -1 -- <账本路径> 并重读最新字节再编辑（多会话并行防线）。` + `新增回归测试必须同时列入该测试模块的 RELEASE_REQUIRED_TESTS。先做完这些再结束。",
     );
     const compile = await world.run("python3", ["-m", "py_compile", ...cand.files], { timeoutMs: 60_000 });
     if (compile.exitCode !== 0) {
@@ -274,9 +274,13 @@ for (const cand of picked) {
     `3) ssh gpu 'cd /tmp/wf-${cand.operator}-release && timeout 900 /home/kevin/notebook/.venv/bin/python ` +
     `.agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/wf-${cand.operator}-release'；exit 0 才继续；` +
     `4) scp 回执到 artifacts/competition/day5prep-20260921/${cand.operator}-wf/；` +
-    `5) build_submission.py ${cand.operator} --stage wf --commit HEAD；` +
-    `6) 账本 docs/competition/experiments/${cand.operator}.md CURRENT 块更新 + 追加段（五元组+预注册门）+ ` +
-    `python tools/gen_experiment_index.py + git commit --only 明确路径 + push。返回结构化结果。`,
+    `5) stage 编号从账本 CURRENT 块 candidate_stage 递增取下一个（禁止固定名，防同题二跑撞平台元组去重），` +
+    `build_submission.py ${cand.operator} --stage <该编号> --commit HEAD；` +
+    `6) 账本 docs/competition/experiments/${cand.operator}.md CURRENT 块更新 + 追加段（五元组+预注册门），` +
+    `五元组逐成员列出 ZIP 名单并与 zipfile 实际成员核对一致（防打包器夹带）；同步刷新 README 候选队列行。` +
+    `7) python tools/gen_experiment_index.py + git commit --only 明确路径；push 前核对 @{upstream}..HEAD ` +
+    `全部待推 commit，含无关既有 commit 则只本地 commit 不 push 并说明。` +
+    `返回的 commit 字段必须等于回执的 verification_commit（否则发射 preflight 会拒）。用中文。`,
   );
   if (arm && arm.zipPath) {
     armed.push(arm);
@@ -314,7 +318,10 @@ if (dryRun) {
       system:
         "你是平台发射员：对每个已上膛候选执行且只执行一次 preflight+submit（间隔≥125 秒）。" +
         "preflight 参数照 CLI 约定（--account " + ACCOUNT + " --team " + TEAM + "），members=ZIP 全部成员；" +
-        "遇 interval 睡 70 秒重试 preflight；submit 后任一 uncertain/sending 状态立即停止后续并如实上报，绝不重试。",
+        "遇 interval 睡 70 秒重试 preflight；submit 成功后用返回的 watch_command 轮询终态（它绑定 file_url_sha256 与 " +
+        "after-epoch，防止把同题旧终态误读成本次结果）；失败详情从 status 输出的 raw_result 字段读取。" +
+        "任一 uncertain/sending 状态立即停止后续并如实上报，绝不重试（uncertain 元组会被 CLI 永久封锁；" +
+        "同字节重掷需新载体 commit，只在用户明示时做）。",
     });
     for (const a of armed) {
       const out = await launcher.ask<SubmitOutcome>(
