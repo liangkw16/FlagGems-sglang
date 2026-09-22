@@ -167,8 +167,8 @@ const proposals = await Promise.all(
       `必读：docs/competition/experiments/${row.operator}.md（账本，含逐芯读数与已证伪形态）、` +
       `docs/competition/tasks/batch-6/ 下该题题面、src/flaggems_sglang/ops/${row.operator}.py 与` +
       ` src/flaggems_sglang/runtime/backend/*/ops/${row.operator}.py（现状）、` +
-      `docs/competition/session-mining-retrospective.md 与各 vendor 规则集注释（燧原 gcu300：12CTA/warps2/编译期stride/int32；` +
-      `沐曦：tile<=2048；昇腾：Vector无整数比较与i64加法/192KB UB/32B对齐/block↔核绑定）。` +
+      `docs/competition/chip-rulesets.md（跨芯规则集索引：燧原/沐曦/昇腾/平台协议，含反例——硬约束以它为准不要凭记忆）` +
+      `与 docs/competition/session-mining-retrospective.md。逐芯情报用 platform_cli status 按题查询（只读不耗额度）。` +
       `可用 WebSearch/WebFetch 查上游（sglang/vllm/FlagGems/FlagTree），可用 gh api 读 GitHub 源码；网络不可用就只靠仓内证据。` +
       `产出 1-2 个候选，优先结构性假设（launch 结构/访存形态/跨步映射），排除账本已证伪形态。` + `先读 docs/competition/experiments/README.md 候选队列：已有上膛未发射候选的题直接跳过（返回空列表并说明原因），避免重复开发。` + `反作弊红线（平台代码安全扫描会拒收，违反即整发作废）：不用 try/except 或设备判断 fallback 到 PyTorch；核心计算必须全 Triton；禁止模块级全局可变容器（dict/set 缓存会被扫描拒收，T77 s0 实例）。用中文。`,
     );
@@ -191,7 +191,7 @@ if (allCandidates.length === 0) {
 phase("统一分诊候选优先级");
 const triage = agent("分诊员", "你在 FlagOS 冲榜循环里给优化候选排序：期望均值增量×成功率优先，结构性>vendor>参数；同一题只留最优一个。用中文给出理由。");
 const ranked = await triage.ask<Candidate[]>(
-  `按 EV 排序并去重（同题最多留 1 个），返回排序后的完整候选列表：\n${JSON.stringify(allCandidates)}`,
+  `按 EV 排序并去重（同题最多留 1 个）。算术：单芯提升÷8 才是均值贡献；先核该芯是否已过/贴近 0.1 有效性门槛；区分抢榜收益与验证假设的信息收益，不给伪精确分数。返回排序后的完整候选列表：\n${JSON.stringify(allCandidates)}`,
 );
 const picked = ranked.filter((c) => c && c.files && c.hypothesis).slice(0, maxCandidates);
 log(`分诊选出 ${picked.length} 个候选：${picked.map((c) => "T" + c.task + "/" + c.axis).join("、")}`);
@@ -274,7 +274,7 @@ for (const cand of picked) {
     `3) ssh gpu 'cd /tmp/wf-${cand.operator}-release && timeout 900 /home/kevin/notebook/.venv/bin/python ` +
     `.agents/skills/flagos-operator-race/scripts/verify_release.py run --directory /tmp/wf-${cand.operator}-release'；exit 0 才继续；` +
     `4) scp 回执到 artifacts/competition/day5prep-20260921/${cand.operator}-wf/；` +
-    `5) stage 编号从账本 CURRENT 块 candidate_stage 递增取下一个（禁止固定名，防同题二跑撞平台元组去重），` +
+    `5) stage 编号从账本 CURRENT 块 candidate_stage 递增取下一个（保持记账连续；注意平台元组去重键是 zip_sha256 而非 stage——新候选必须产生新 ZIP 字节，同字节重掷需载体 commit），` +
     `build_submission.py ${cand.operator} --stage <该编号> --commit HEAD；` +
     `6) 账本 docs/competition/experiments/${cand.operator}.md CURRENT 块更新 + 追加段（五元组+预注册门），` +
     `五元组逐成员列出 ZIP 名单并与 zipfile 实际成员核对一致（防打包器夹带）；同步刷新 README 候选队列行。` +
@@ -283,6 +283,17 @@ for (const cand of picked) {
     `返回的 commit 字段必须等于回执的 verification_commit（否则发射 preflight 会拒）。用中文。`,
   );
   if (arm && arm.zipPath) {
+    const zipOk = await world.run("unzip", ["-t", arm.zipPath], { timeoutMs: 60_000 });
+    const receiptOk = await world.run("python3", ["-c", "import sys,os;sys.exit(0 if os.path.exists(sys.argv[1]) and os.path.getsize(sys.argv[1])>0 else 1)", arm.receiptPath], { timeoutMs: 30_000 });
+    if (zipOk.exitCode !== 0 || receiptOk.exitCode !== 0) {
+      findings.push({
+        task: cand.task, operator: cand.operator,
+        what: "上膛产物确定性验签未过（unzip -t 或回执存在性失败）",
+        evidence: `zip=${arm.zipPath} exit=${zipOk.exitCode}; receipt=${arm.receiptPath} exit=${receiptOk.exitCode}`,
+        status: "unconfirmed", severity: "high",
+      });
+      continue;
+    }
     armed.push(arm);
     findings.push({
       task: cand.task, operator: cand.operator,
@@ -310,27 +321,30 @@ if (dryRun) {
   const quotaOut = await world.run("python", [CLI, "status", "--race", RACE, "--batch", "6", "--task", String(armed[0].task), "--operator", armed[0].operator], { timeoutMs: 120_000 });
   const quotaMatch = /"remaining":\s*(\d+)/.exec(quotaOut.stdout);
   const remaining = quotaMatch ? Number(quotaMatch[1]) : 0;
-  if (quotaOut.exitCode !== 0 || remaining < armed.length) {
-    log(`额度不足（剩余 ${remaining}，候选 ${armed.length} 发）——只上膛不发射`);
-    for (const a of armed) submissions.push({ task: a.task, operator: a.operator, attempted: false, submissionId: "", state: "skipped", note: `额度剩余 ${remaining}` });
+  const budget = Math.max(0, Math.min(remaining - reserveQuota, maxSubmits));
+  const fireList = armed.slice(0, budget);
+  if (quotaOut.exitCode !== 0 || fireList.length === 0) {
+    log(`额度不足或预算为零（剩余 ${remaining}，保留 ${reserveQuota}，上限 ${maxSubmits}）——只上膛不发射`);
+    for (const a of armed) submissions.push({ task: a.task, operator: a.operator, attempted: false, submissionId: "", state: "skipped", note: `额度剩余 ${remaining}（保留 ${reserveQuota}）` });
   } else {
+    for (const a of armed.slice(fireList.length)) submissions.push({ task: a.task, operator: a.operator, attempted: false, submissionId: "", state: "skipped", note: "超出本轮发射预算前缀" });
     const launcher = agent("发射员", {
       system:
         "你是平台发射员：对每个已上膛候选执行且只执行一次 preflight+submit（间隔≥125 秒）。" +
         "preflight 参数照 CLI 约定（--account " + ACCOUNT + " --team " + TEAM + "），members=ZIP 全部成员；" +
-        "遇 interval 睡 70 秒重试 preflight；submit 成功后用返回的 watch_command 轮询终态（它绑定 file_url_sha256 与 " +
+        "遇 interval 按 status 返回的 minimum_interval_seconds 剩余秒数等待后重试 preflight（不要盲睡）；submit 成功后用返回的 watch_command 轮询终态（它绑定 file_url_sha256 与 " +
         "after-epoch，防止把同题旧终态误读成本次结果）；失败详情从 status 输出的 raw_result 字段读取。" +
         "任一 uncertain/sending 状态立即停止后续并如实上报，绝不重试（uncertain 元组会被 CLI 永久封锁；" +
         "同字节重掷需新载体 commit，只在用户明示时做）。",
     });
-    for (const a of armed) {
+    for (const a of fireList) {
       const out = await launcher.ask<SubmitOutcome>(
         `发射 T${a.task} ${a.operator}：ZIP=${a.zipPath}，回执=${a.receiptPath}，commit=${a.commit}。` +
         `先 status 查逐题最新记录，再 preflight（--test-sha256 用 git show ${a.commit}:tests/test_${a.operator}.py 的 sha256），` +
         `拿 nonce 后 submit --confirm。轮询到终态，返回逐芯与均值。`,
       );
       submissions.push(out || { task: a.task, operator: a.operator, attempted: true, submissionId: "", state: "unknown", note: "发射员无返回" });
-      if (out && out.state === "uncertain") break;
+      if (out && ["uncertain", "sending", "stale_after_upload", "unknown"].includes(out.state)) break;
     }
   }
 }
