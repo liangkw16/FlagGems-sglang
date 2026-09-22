@@ -116,14 +116,18 @@ const ACCOUNT = "15600308080";
 const TEAM = "SoulCoder";
 const CLI = ".agents/skills/flagos-operator-race/scripts/platform_cli.py";
 
-const researchLimit = Math.max(1, Math.min(8, Number(args.researchLimit) || 4));
-const maxBuilds = Math.max(1, Math.min(6, Number(args.maxBuilds) || 3));
-const maxSubmits = Math.max(1, Math.min(6, Number(args.maxSubmits) || 3));
-const reserveQuota = Math.max(0, Math.min(10, Number(args.reserveQuota) || 0));
+function clampInt(v: unknown, lo: number, hi: number, dflt: number): number {
+  const n = typeof v === "number" && Number.isFinite(v) ? Math.round(v) : dflt;
+  return Math.max(lo, Math.min(hi, n));
+}
+const researchLimit = clampInt(args.researchLimit, 1, 8, 4);
+const maxBuilds = clampInt(args.maxBuilds, 1, 6, 3);
+const maxSubmits = clampInt(args.maxSubmits, 1, 6, 3);
+const reserveQuota = clampInt(args.reserveQuota, 0, 10, 0);
 const dryRun = args.dryRun === true;
-const maxRounds = Math.max(1, Math.min(5, Number(args.maxRounds) || 2));
+const maxRounds = clampInt(args.maxRounds, 1, 5, 2);
 const waitOnQuota = args.waitOnQuota !== false;
-const fireHour = Math.max(0, Math.min(23, Number(args.fireHour) || 3));
+const fireHour = clampInt(args.fireHour, 0, 23, 3);
 // 窗口关闭时刻（题面 2026-09-24 19:59:59 +08）
 const WINDOW_END_S = Math.floor(Date.parse("2026-09-24T19:59:59+08:00") / 1000);
 
@@ -142,11 +146,12 @@ async function sleepUntil(targetS: number): Promise<void> {
   }
 }
 
-// 下一个本地(+08) fireHour 的 epoch 秒
+// 下一个本地(+08) fireHour 的 epoch 秒；只跳过严格过去的发射点
+// （+600 宽限曾在 02:50 无声跳过当天 03:00——审查发现）
 function nextFirePoint(nowS: number): number {
   const dayStart = Math.floor((nowS + 8 * 3600) / 86400) * 86400 - 8 * 3600;
   let t = dayStart + fireHour * 3600;
-  if (t <= nowS + 600) t += 86400;
+  if (t <= nowS) t += 86400;
   return t;
 }
 
@@ -235,6 +240,7 @@ const proposals = await Promise.all(
       `必读：docs/competition/experiments/${row.operator}.md（账本，含逐芯读数与已证伪形态）、` +
       `docs/competition/tasks/batch-6/ 下该题题面、src/flaggems_sglang/ops/${row.operator}.py 与` +
       ` src/flaggems_sglang/runtime/backend/*/ops/${row.operator}.py（现状）、` +
+      `docs/competition/data/leaderboard-snapshots/climb-loop.json（本轮刚拉的全量快照，含各题榜单——我方与对手逐芯数据优先从这里读，读不到再用 platform_cli status 兜底）` +
       `docs/competition/chip-rulesets.md（跨芯规则集索引：燧原/沐曦/昇腾/平台协议，含反例——硬约束以它为准不要凭记忆）` +
       `与 docs/competition/session-mining-retrospective.md。逐芯情报用 platform_cli status 按题查询（只读不耗额度）。` +
       `可用 WebSearch/WebFetch 查上游（sglang/vllm/FlagGems/FlagTree），可用 gh api 读 GitHub 源码；网络不可用就只靠仓内证据。` +
@@ -256,7 +262,15 @@ phase("统一分诊候选优先级");
 const ranked = await triage.ask<Candidate[]>(
   `按 EV 排序并去重（同题最多留 1 个）。算术：单芯提升÷8 才是均值贡献；先核该芯是否已过/贴近 0.1 有效性门槛；区分抢榜收益与验证假设的信息收益，不给伪精确分数。返回排序后的完整候选列表：\n${JSON.stringify(allCandidates)}`,
 );
-const picked = ranked.filter((c) => c && c.files && c.hypothesis).slice(0, maxBuilds);
+// 代码级强制：候选必须来自输入集，且同轮同题只留分诊序最靠前的一个
+const rankedValid = ranked.filter((c) =>
+  c && c.files && c.files.length > 0 && c.hypothesis &&
+  allCandidates.some((o) => o.task === c.task && o.hypothesis === c.hypothesis),
+);
+const seenTasks = new Set<number>();
+const picked = rankedValid
+  .filter((c) => (seenTasks.has(c.task) ? false : (seenTasks.add(c.task), true)))
+  .slice(0, maxBuilds);
 log(`分诊选出 ${picked.length} 个候选：${picked.map((c) => "T" + c.task + "/" + c.axis).join("、")}`);
 
 const armed: Armed[] = [];
@@ -292,9 +306,9 @@ const allReviewed: Reviewed[] = await Promise.all(
       let feedback = "无（首轮）";
       let verdict: ReviewVerdict | null = null;
       let headCommit = "";
-      for (let round = 1; round <= 2; round++) {
+      for (let reviewRound = 1; reviewRound <= 2; reviewRound++) {
         const outcome = await dev.ask<DevOutcome>(
-          `为 T${cand.task} ${cand.operator} 实现该候选（第 ${round} 轮）。假设：${cand.hypothesis}。证据：${cand.evidence}。` +
+          `为 T${cand.task} ${cand.operator} 实现该候选（评审第 ${reviewRound} 轮）。假设：${cand.hypothesis}。证据：${cand.evidence}。` +
           `目标文件：${cand.files.join("、")}。预注册门：${cand.risk}。上轮评审意见：${feedback}。` +
           `要求：1) 写实现与测试（沿用 tests/test_${cand.operator}.py 的矩阵，新语义须加回归）；` +
           `2) python3 -m py_compile 全部触碰文件通过；3) git add 这些明确路径并 commit（--only 隔离）。` +
@@ -350,7 +364,7 @@ for (const r of allReviewed) {
 for (const r of reviewed) {
   findings.push({
     task: r.cand.task, operator: r.cand.operator,
-    what: "候选过两轮独立评审",
+    what: `候选过独立评审（${r.summary}）`,
     evidence: `commit ${r.commit}；${r.summary}`,
     status: "verified", severity: "high",
   });
@@ -383,6 +397,25 @@ for (const r of reviewed) {
     `返回的 commit 字段必须等于回执的 verification_commit（否则发射 preflight 会拒）；prepare 前后若 HEAD 被其他提交改变，重跑 prepare 绑定新 HEAD。用中文。`,
   );
   if (arm && arm.zipPath) {
+    // 身份绑定脚本级核验：回执 JSON 里记录的 source_commit 必须等于上膛员返回的
+    // commit（防过期回执/HEAD 漂移——审查第 9 条的最小闭环）
+    let receiptIdentityOk = false;
+    try {
+      const receiptRaw = await files.read(arm.receiptPath);
+      const receipt = JSON.parse(receiptRaw) as Record<string, unknown>;
+      receiptIdentityOk = receipt.source_commit === arm.commit;
+    } catch {
+      receiptIdentityOk = false;
+    }
+    if (!receiptIdentityOk) {
+      findings.push({
+        task: cand.task, operator: cand.operator,
+        what: "上膛身份绑定失败：回执 source_commit 与返回 commit 不一致（或回执不可解析）",
+        evidence: `arm.commit=${arm.commit}; receipt=${arm.receiptPath}`,
+        status: "unconfirmed", severity: "high",
+      });
+      continue;
+    }
     const zipOk = await world.run("unzip", ["-t", arm.zipPath], { timeoutMs: 60_000 });
     const receiptOk = await world.run("python3", ["-c", "import sys,os;sys.exit(0 if os.path.exists(sys.argv[1]) and os.path.getsize(sys.argv[1])>0 else 1)", arm.receiptPath], { timeoutMs: 30_000 });
     if (zipOk.exitCode !== 0 || receiptOk.exitCode !== 0) {
@@ -432,7 +465,7 @@ if (dryRun) {
       system:
         "你是平台发射员：对每个已上膛候选执行且只执行一次 preflight+submit（间隔≥125 秒）。" +
         "preflight 参数照 CLI 约定（--account " + ACCOUNT + " --team " + TEAM + "），members=ZIP 全部成员；" +
-        "遇 interval 按 status 返回的 minimum_interval_seconds 剩余秒数等待后重试 preflight（不要盲睡）；submit 成功后用返回的 watch_command 轮询终态（它绑定 file_url_sha256 与 " +
+        "遇 interval 按 status 返回的 minimum_interval_seconds 剩余秒数等待后重试 preflight（不要盲睡）；若 CLI 报 intent expired/stale 且上传尚未开始，允许重新 preflight 刷新 nonce（有界，至多 2 次）；submit 成功后用返回的 watch_command 轮询终态（它绑定 file_url_sha256 与 " +
         "after-epoch，防止把同题旧终态误读成本次结果）；失败详情从 status 输出的 raw_result 字段读取。" +
         "任一 uncertain/sending 状态立即停止后续并如实上报，绝不重试（uncertain 元组会被 CLI 永久封锁；" +
         "同字节重掷需新载体 commit，只在用户明示时做）。",
@@ -456,16 +489,35 @@ if (dryRun) {
   }
 }
 
+  // 发射落账：平台结果必须进 CURRENT/INDEX/commit，下一轮的跳过规则依赖新队列
+  if (submissions.some((x) => x.attempted)) {
+    const bookkeeper = agent(`轮${round}-落账员`, {
+      system:
+        "你把平台发射终态落进实验账本：逐题读最新字节再编辑，CURRENT 块+追加段（逐芯/均值/五元组/判决），" +
+        "刷新 README 候选队列行与 INDEX，git --only 明确路径 commit 并 push（待推审计）。已有内容的判决不得改写，只追加。",
+    });
+    await bookkeeper.ask(
+      `落账以下发射结果（工作目录 /Users/bytedance/ccc/flagos）：\n${JSON.stringify(submissions.filter((x) => x.attempted))}\n` +
+      "对每题：platform_cli status 用 watch_command/逐芯 raw_result 取终态；账本路径 docs/competition/experiments/<operator>.md；" +
+      "python3 tools/gen_experiment_index.py 刷新 INDEX。用中文报告每题落账 commit。",
+    );
+  }
+
   // 轮末：额度触底且允许睡等且窗口未关 → 睡到下一个发射点继续下一轮
   if (!stopNote && round < maxRounds && waitOnQuota && !dryRun) {
     const q = await world.run("python3", [CLI, "status", "--race", RACE, "--batch", "6", "--task", "80", "--operator", "fixup_zero_kv"], { timeoutMs: 120_000 });
     const qm = /"remaining":\s*(\d+)/.exec(q.stdout);
-    const qRemaining = qm ? Number(qm[1]) : 0;
+    const qRemaining = qm ? Number(qm[1]) : -1;
     const nowS = await nowEpoch();
-    if (qRemaining <= reserveQuota && nowS > 0 && nowS < WINDOW_END_S) {
-      const target = nextFirePoint(nowS);
-      log(`额度触底（剩余 ${qRemaining}），睡等到发射点 ${target}（约 ${Math.round((target - nowS) / 60)} 分钟）后继续第 ${round + 1} 轮`);
-      await sleepUntil(target);
+    // 探针失败（-1）不进睡等——宁可下一轮发射阶段自己再核
+    if (qRemaining >= 0 && qRemaining <= reserveQuota && nowS > 0 && nowS < WINDOW_END_S) {
+      const target = Math.min(nextFirePoint(nowS), WINDOW_END_S);
+      if (target <= nowS + 60) {
+        stopNote = "下一个发射点已越过提交窗口，轮次链终止";
+      } else {
+        log(`额度触底（剩余 ${qRemaining}），睡等到发射点 ${target}（约 ${Math.round((target - nowS) / 60)} 分钟）后继续第 ${round + 1} 轮`);
+        await sleepUntil(target);
+      }
     }
   }
 } // 轮次结束：回到循环顶重刷榜单；停止条件经 stopNote/break 跳出
