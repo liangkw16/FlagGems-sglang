@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/gelu_tanh_and_mul -->
-<!-- synced_at: 2026-09-22T07:59:12+08:00 -->
+<!-- synced_at: 2026-09-22T10:52:22+08:00 -->
 
 # gelu_tanh_and_mul (activation_norm/gelu_tanh_and_mul)
 

@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/indexed_scale_shift -->
-<!-- synced_at: 2026-09-22T07:59:12+08:00 -->
+<!-- synced_at: 2026-09-22T10:52:22+08:00 -->
 
 # indexed_scale_shift (diffusion/indexed_scale_shift)
 

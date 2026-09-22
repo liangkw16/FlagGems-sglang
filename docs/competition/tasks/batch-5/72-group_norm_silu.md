@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/group_norm_silu -->
-<!-- synced_at: 2026-09-22T07:59:12+08:00 -->
+<!-- synced_at: 2026-09-22T10:52:22+08:00 -->
 
 # group_norm_silu (diffusion/group_norm_silu)
 
