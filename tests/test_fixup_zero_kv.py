@@ -174,7 +174,18 @@ class FixupZeroKVTest(unittest.TestCase):
         self.check(args)
 
 
+    def test_understated_span_zero_segment(self):
+        # the advisory span sizes the launch; a zero-KV segment longer
+        # than max_seq_len*BLOCK_T must still be fully fixed (the e12
+        # enflame item mapping dropped the tile-stride guard)
+        out = torch.randn(33, 96, 128, dtype=torch.float16, device="cuda")
+        lse = torch.randn(33, 96, dtype=torch.float32, device="cuda")
+        cum = torch.tensor([0, 33], dtype=torch.int32, device="cuda")
+        lens = torch.tensor([0], dtype=torch.int32, device="cuda")
+        self.check((out, lse, lens, cum, 1))
+
 RELEASE_REQUIRED_TESTS = [
+        "FixupZeroKVTest.test_understated_span_zero_segment",
     "FixupZeroKVTest.test_mixed_zero_and_nonzero",
     "FixupZeroKVTest.test_all_zero_all_nonzero_and_empty",
     "FixupZeroKVTest.test_segment_length_boundaries",
