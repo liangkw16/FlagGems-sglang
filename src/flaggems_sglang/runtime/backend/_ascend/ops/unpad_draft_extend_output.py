@@ -31,11 +31,27 @@ def _unpad(
     src = seg * tpb * span
     dst = beg * span
     elems = n * span
-    for base in range(tile * BLOCK, elems, tl.num_programs(1) * BLOCK):
-        offs = base + tl.arange(0, BLOCK)
-        m = offs.to(tl.float32) < elems.to(tl.float32)
-        v = tl.load(raw_out + src + offs, m)
-        tl.store(out + dst + offs, v, m)
+    # fp32 compares lose precision past 2**24 elements (the boundary
+    # offset rounds up to elems and the last element goes unwritten -
+    # a codex-review find), so the vector-mask fast path is gated to
+    # the sub-2^24 domain by a scalar branch; larger inputs keep the
+    # exact integer mask
+    if elems < 16777216:
+        for base in range(
+            tile * BLOCK, elems, tl.num_programs(1) * BLOCK
+        ):
+            offs = base + tl.arange(0, BLOCK)
+            m = offs.to(tl.float32) < elems.to(tl.float32)
+            v = tl.load(raw_out + src + offs, m)
+            tl.store(out + dst + offs, v, m)
+    else:
+        for base in range(
+            tile * BLOCK, elems, tl.num_programs(1) * BLOCK
+        ):
+            offs = base + tl.arange(0, BLOCK)
+            m = offs < elems
+            v = tl.load(raw_out + src + offs, m)
+            tl.store(out + dst + offs, v, m)
 
 
 def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q):
