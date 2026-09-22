@@ -173,6 +173,8 @@ artifact.board("cands", {
 
 // 轮间共享：分诊员跨轮一致（EV 尺度统一）；findings/submissions 跨轮累积
 const triage = agent("分诊员", "你在 FlagOS 冲榜循环里给优化候选排序：期望均值增量×成功率优先，结构性>vendor>参数；同一题只留最优一个。用中文给出理由。");
+const findings: ClimbFinding[] = [];
+const submissions: SubmitOutcome[] = [];
 let stopNote = "";
 for (let round = 1; round <= maxRounds && !stopNote; round++) {
   const roundNow = await nowEpoch();
@@ -258,8 +260,6 @@ const picked = ranked.filter((c) => c && c.files && c.hypothesis).slice(0, maxBu
 log(`分诊选出 ${picked.length} 个候选：${picked.map((c) => "T" + c.task + "/" + c.axis).join("、")}`);
 
 const armed: Armed[] = [];
-const findings: ClimbFinding[] = [];
-const submissions: SubmitOutcome[] = [];
 
 phase("并行开发各候选并过独立评审");
 // 候选间互不相干（不同文件/账本）：开发+评审并行跑；
