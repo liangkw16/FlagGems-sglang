@@ -35,8 +35,8 @@ args:
     description: 额度触底时睡等到下一个发射点继续下一轮（短片循环重读时钟，恢复后立即续跑）
   fireHour:
     type: number
-    default: 4
-    description: 每日发射点（本地 +08 时区小时数，默认 4 点避开 00:00 提交高峰）
+    default: 3
+    description: 每日发射点（本地 +08 时区小时数，默认 3 点避开 00:00 提交高峰）
 */
 
 // FlagOS 冲榜循环：刷新榜单 -> 差距分析 -> 逐题调研 -> 分诊 -> 开发+独立评审
@@ -123,7 +123,7 @@ const reserveQuota = Math.max(0, Math.min(10, Number(args.reserveQuota) || 1));
 const dryRun = args.dryRun === true;
 const maxRounds = Math.max(1, Math.min(5, Number(args.maxRounds) || 2));
 const waitOnQuota = args.waitOnQuota !== false;
-const fireHour = Math.max(0, Math.min(23, Number(args.fireHour) || 4));
+const fireHour = Math.max(0, Math.min(23, Number(args.fireHour) || 3));
 // 窗口关闭时刻（题面 2026-09-24 19:59:59 +08）
 const WINDOW_END_S = Math.floor(Date.parse("2026-09-24T19:59:59+08:00") / 1000);
 
