@@ -5,13 +5,13 @@ task: 90
 operator: sigmoid_gate_mul_broadcast
 batch: 6
 validity: valid
-platform: completed(18352,e3,8/8,2.517x新TB;天数4.7新高位)
-candidate_stage: e3
-team_best_stage: e3
-team_best_speedup: 2.517
+platform: completed(e4,8/8,2.5247新TB;e5 2.5205判负保e4)
+candidate_stage: e6
+team_best_stage: e4
+team_best_speedup: 2.5247
 sealed: no
-next: 行门控HDIM静态展开;轴=燧原0.8/华为1.2(warps/persistent配方);昆仑0.8贴门槛
-updated: 2026-09-20
+next: e6 燧原flat流式(relu2终态配方)待代理验证+ZIP上膛;轴=沐曦flat候选(e6回执后下一发)/华为1.25;昆仑0.75贴门槛
+updated: 2026-09-22
 ```
 
 ## 2026-09-20 S0/E1 首发记录
@@ -71,3 +71,26 @@ updated: 2026-09-20
   燧原 0.77→**0.63**：24-SIP 封顶（0.77）与全网格 generic 字节（0.63）
   均远低于场带 2.5-3.4——行形式+HDIM 静态展开在 GCU 病理，程序数多寡
   两个方向都更差。**燧原轴关闭**（需第三方结构情报）。
+
+## 2026-09-22 e6 候选实现（第 1 轮：燧原重开，flat 流式形态）
+
+- 结构（本轮 commit）：`_enflame` 弃行形式，移植 T89 relu2 终态已验证
+  配方——numel 一维 flat grid-stride + `min(cdiv(numel,65536),12)` 12-CTA
+  封顶 + BLOCK 65536（relu2 阶梯宽度顶：2.61@16384→3.3@32768→
+  **3.9@65536**→3.86@131072，12-CTA 终态 3.94）+ num_stages 3 + warps
+  不钉。gate 经 `offs // HDIM`（constexpr 整除）gather 且带同一 m 掩码
+  （OOB 防线）；int32 寻址域断言 `numel < 2^31-65536`（含一个尾块余量，
+  防 masked lane 回绕）；vendor 内 assert x/gate row-major 连续（relu2
+  先例 relu2.py:30）。e5 关轴时缺的第三方结构情报 = 同芯 relu2 已验证
+  宽块阶梯 + 模板字节 8/8 先例。
+- 回归：`test_flat_block_boundary_gate_gather` 新增并列入
+  RELEASE_REQUIRED_TESTS——65536 整块无尾 / 块边界恰在行边界 / 块边界
+  跨行（67584）/ 16 块 >12 CTA grid-stride 二趟 / hdim=1 逐元 gate；行间
+  distinct gate（sigmoid 展布 0.047..0.953）使 gather 错位必超 2e-2 容差。
+- 预注册门（e5 原门保留）：燧原 ≥2.0 保留 / ≥2.5 进场带（场带 2.5-3.39，
+  EvokeAgent 3.2440）；均值 >2.5247 才换 TB；宽度阶梯 32768 为回退档。
+  折扣因子：relu2 无 sigmoid+gather 的额外 ALU 未实测；expectedAvgGain
+  0.1 = 进场带档 +0.22×约四成成功率（非 EvokeAgent 满配 +0.33）。
+- 待办：release 代理验证 + e6-<commit> ZIP 后上膛；同题落选的 _metax
+  flat 候选（17/18 队 ≥2.88 场带先验，天花板 +0.14 均值）与本候选文件
+  互不重叠，e6 回执后可作沐曦轴下一发。

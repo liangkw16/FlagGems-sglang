@@ -38,9 +38,38 @@ class SGMBTest(unittest.TestCase):
         ).reshape(32, 1)
         self.check(x, gate)
 
+    def test_flat_block_boundary_gate_gather(self):
+        # The _enflame flat-streaming vendor walks numel in BLOCK=65536
+        # streams and gathers gate via offs // hdim, so the misalignment
+        # axes are BLOCK boundaries landing exactly on a row boundary,
+        # mid-row, past the 12-CTA grid-stride second pass, and hdim=1
+        # where every element indexes its own gate row. Per-row distinct
+        # gates (sigmoid spread 0.047..0.953) make any gather off-by-one
+        # blow the 2e-2 tolerance.
+        for n, d in (
+            (64, 1024),  # numel == 65536: one exact block, no tail
+            (65, 1024),  # first block ends exactly on a row boundary
+            (33, 2048),  # 67584: block boundary mid-row (row 32)
+            (128, 8192),  # 16 blocks over 12 CTAs: grid-stride 2nd pass
+            (70000, 1),  # hdim=1: every element its own gate row
+        ):
+            with self.subTest(shape=(n, d)):
+                x = torch.randn(n, d, dtype=torch.bfloat16, device="cuda")
+                gate = (
+                    (
+                        torch.arange(n, device="cuda", dtype=torch.float32)
+                        % 7
+                        - 3
+                    )
+                    .to(torch.bfloat16)
+                    .reshape(n, 1)
+                )
+                self.check(x, gate)
+
 
 RELEASE_REQUIRED_TESTS = [
     "SGMBTest.test_shapes_and_saturation",
+    "SGMBTest.test_flat_block_boundary_gate_gather",
 ]
 
 
