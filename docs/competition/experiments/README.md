@@ -11,7 +11,11 @@
 - [T83 indexed_scale_shift e3rr](indexed_scale_shift.md)：评审与 release
   通过后平台 20438 仍为 7/8，昆仑 case 3 约 33% 失配主指纹与 e2
   相同，三段 bf16 物化假说判负；源码回滚 e2 ZIP 原字节（`fc5f7b3e`），
-  额度余 8/30。codex-ask 正复核 grid-stride 第二轮假说。
+  额度余 8/30。codex-ask 已将 grid-stride 第二轮列为下一单变量假说。
+- [T83 indexed_scale_shift e4](indexed_scale_shift.md)：codex-ask 建议从
+  e3rr 固定源码只改为每行一 program，消除第二轮 grid-stride；
+  2047/2048/2049 与 3072×4096 exact-bit 回归已加入，release 6/6、
+  ZIP `ef37e9df…7c15` 验签通过，codex-review 无缺陷，待实时 preflight。
 
 ## 2026-09-23 19:00 冲榜循环日终收口（额度 10/30 剩，窗口明日 19:59 关）
 

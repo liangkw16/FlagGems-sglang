@@ -4,13 +4,13 @@
 task: 83
 operator: indexed_scale_shift
 batch: 6
-validity: invalid_correctness(e3rr 20438,7/8)
+validity: candidate(e4待平台; e3rr 20438为7/8)
 platform: e3rr(20438)7/8;昆仑case3约33%仍失配，同e2主指纹，源码回滚e2
-candidate_stage: -
+candidate_stage: e4
 team_best_stage: -
 team_best_speedup: -
 sealed: no
-next: 三段跨kernel边界证伪；case3约33%似3072行中二次grid-stride的1024行，codex-ask复核后才立e4；e3rr不重试
+next: e4每行一program去grid-stride；release 6/6、ZIP验签、codex-review无缺陷，待实时preflight；若8/8有效保留，若仍失败则回e2，case3错数下降>99%时以e4固定ZIP作后续诊断基底
 updated: 2026-09-23
 ```
 
@@ -154,3 +154,40 @@ updated: 2026-09-23
   `44dc00e2e8a7816a8405ebf6bf02f4b5ce23f1c07ae501b3d01f1bf1c8d8c6a4`，
   与 e3 前源码 diff 为空；回滚 commit `fc5f7b3e`。e3rr ZIP/回执
   留档且不重传，下一候选必须另立假设与完整门禁。
+
+## E4：每行一 program 排除 XPU 第二轮 grid-stride
+
+- 第二次 `codex-ask` 独立判断：e2/e3rr case 3 错数均约 415 万，
+  12,582,912 **可能**为 3072×4096；若如此，`grid=min(rows,2048)`
+  后的 1024 行恰占三分之一，两个回执最大差均在 `(2508,793)`。
+  证据支持优先测行调度，却未公开真实 shape/失配位置分布，不能宣称
+  已定位 XPU 编译器错误。建议仅把三段 kernel 的外层 grid-stride
+  row 循环改为 `row=tl.program_id(0)`、`grid=(rows,)`；列块、bf16
+  舍入、out 原位复用与三次 launch 全保留，位级舍入后置。
+- 候选从 e3rr **不可变 ZIP 字节**重新取源，不从回滚后的 e2 拼接；
+  code/test commit `4d12ecf004eb23dc5d1f3ff4aed9205da274a409`。
+  kunlun SHA-256 `b5ee7f10b3b789fefcc9a63a681ddc200125f8ad93a1ae8e49582388f67ed4bf`，
+  generic 仍 `efd3fd554a953e8fe65b5299079d63d62f1dca4b830d99958215d72f8d5a49c0`，
+  test SHA-256 `67344c61d3ec1a3db3503357fe4c7d3a12d822d8f37dc3c87380433c1430a32e`。
+  新 exact-bit 行边界回归覆盖 rows 2047/2048/2049 与 3072×4096；
+  输入每行数值与 variant 均变化，第二轮漏算不能靠同值蒙混。
+- ZIP `artifacts/competition/indexed_scale_shift/e4-4d12ecf/indexed_scale_shift.zip`
+  6475 B、SHA-256
+  `ef37e9df56adc21105ad232bddea7fe4a9406fc85eae971f7d0bcd9e03b57c15`，
+  两成员 `indexed_scale_shift.py`/`indexed_scale_shift_kunlunxin.py`，
+  existing 验签与 `unzip -t` 均通过。
+- 同 commit release：
+  `artifacts/competition/indexed_scale_shift/e4-4d12ecf/verification.json`
+  SHA-256 `9d77c36bd65b8ced9a00b3f8018b1d38475cda357575e07e7ec960686d94b458`，
+  日志 SHA-256 `6a47a89d7575b5b6ead194c6122c3324c6e36f432ac29f3af681c37819f07fab`；
+  6 测试 0 失败/错误/skip，generic 17、kunlun 51 次真实 launch；
+  py_compile、Black、isort、flake8 通过，仍是 NVIDIA 数学代理。
+- **预注册门**：8/8 正确且每芯 speedup ≥0.1 才保留为有效成绩。
+  若昆仑仍失败，回滚仓库至 e2 vendor 原字节，不重投 e4；比较
+  case 3 失配数与 e3rr 的 4,154,953：若下降 >99%（<41,550），
+  grid 调度假说获得强支持，后续新候选可从 e4 ZIP 固定字节继续解决
+  残余舍入；若基本不变，转查索引/地址与计算。平台若编译/超时或
+  速度破 0.1，亦回滚。其他七芯复用旧 e2 generic 成员字节。
+- `codex-review --commit 4d12ecf0 --spec .../83-indexed_scale_shift.md`
+  已完成：Spec 和 Standards 均无可靠缺陷；评审明确 NVIDIA release
+  不等于昆仑目标验证。评审门通过。
