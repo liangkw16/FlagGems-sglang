@@ -11,9 +11,10 @@ import triton.language as tl
 def _round_scale(
     scale,
     indices,
-    one_plus,
+    out,
     rows,
     cs0,
+    os0,
     HDIM: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
@@ -25,13 +26,12 @@ def _round_scale(
             m = offs < HDIM
             sc = tl.load(scale + idx * cs0 + offs, m, other=0).to(tl.float32)
             rounded = (1.0 + sc).to(tl.bfloat16, fp_downcast_rounding="rtne")
-            tl.store(one_plus + base * HDIM + offs, rounded, m)
+            tl.store(out + base * os0 + offs, rounded, m)
 
 
 @triton.jit(do_not_specialize=["rows"])
 def _scale_rows(
     x,
-    one_plus,
     out,
     rows,
     xs0,
@@ -45,7 +45,7 @@ def _scale_rows(
             offs = h0 + tl.arange(0, BLOCK)
             m = offs < HDIM
             xv = tl.load(x + base * xs0 + offs, m, other=0).to(tl.float32)
-            factor = tl.load(one_plus + base * HDIM + offs, m, other=0).to(
+            factor = tl.load(out + base * os0 + offs, m, other=0).to(
                 tl.float32
             )
             scaled = (xv * factor).to(tl.bfloat16, fp_downcast_rounding="rtne")
@@ -90,21 +90,20 @@ def indexed_scale_shift(x, shift, scale, indices):
     assert x.stride(1) == shift.stride(1) == scale.stride(1) == 1
     out = torch.empty_like(x)
     if rows and hdim:
-        one_plus = torch.empty((rows, hdim), dtype=x.dtype, device=x.device)
         block = min(1024, triton.next_power_of_2(hdim))
         grid = (min(rows, 2048),)
         _round_scale[grid](
             scale,
             indices,
-            one_plus,
+            out,
             rows,
             scale.stride(0),
+            out.stride(0),
             HDIM=hdim,
             BLOCK=block,
         )
         _scale_rows[grid](
             x,
-            one_plus,
             out,
             rows,
             x.stride(0),
