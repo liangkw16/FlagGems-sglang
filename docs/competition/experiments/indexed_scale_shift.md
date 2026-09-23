@@ -4,13 +4,13 @@
 task: 83
 operator: indexed_scale_shift
 batch: 6
-validity: candidate(e5代理release 7/7、codex-review无缺陷；e4 20440为7/8)
-platform: e4(20440)7/8 invalid_correctness;昆仑大规模失配下降99.978%;e5未提交
-candidate_stage: e5
+validity: invalid(e5 20445为7/8；昆仑九case均编译失败)
+platform: e5(20445)7/8 invalid_correctness;XPU unpack缺bufPtr;源码回滚e2
+candidate_stage: e6待诊断
 team_best_stage: -
 team_best_speedup: -
 sealed: no
-next: e5只改昆仑三处有限值bf16 RTNE；实时preflight，8/8且各芯≥0.1保留，否则回滚e2，不重投e5
+next: e4仍为数值诊断基底；核实XPU可编译舍入路径后再立e6，e5不重投
 updated: 2026-09-23
 ```
 
@@ -242,3 +242,23 @@ updated: 2026-09-23
 - `codex-review --commit 7928c166 --spec .../83-indexed_scale_shift.md`
   完成：Spec 和 Standards 均未发现可确认的新增缺陷；评审明确昆仑目标
   尚未验证。审查门通过。
+
+## 2026-09-23 E5 平台终态（20445）：XPU 位转换编译墙
+
+- 实时 preflight 将 SoulCoder/T83/e5、源码/测试 `7928c166`、ZIP SHA
+  `b81636590ffb77708e00d5894944b4147b231adeb4483343f067a20993fb6ae6`
+  与 release SHA `5519414f35b88cd8cce812fe4848f653d9f33ef843e721634db4aebaf5db7ec3`
+  逐项绑定；一次性提交 **20445**，远端 ZIP 哈希/大小均验证一致。
+  平台终态 `invalid_correctness`、7/8，额度余 **6/30**。
+- 七芯通过且 speedup：天数 14.5266、沐曦 8.8072、燧原 0.9694、
+  海光 12.9590、华为 3.6436、A 11.3984、B 9.3922。昆仑选中
+  `indexed_scale_shift_kunlunxin.py`，九个 case 全部在 `_bf16_rtne_fp32`
+  的 `value.to(tl.uint32, bitcast=True)` 编译失败：
+  `triton_xpu.unpack reached lowering without a bufPtr; tritonxpu-alloca must attach one`
+  （`ConvertTritonXPUToLLVM`）。因此本弹**没有**检验位级 RTNE 能否消除
+  e4 的稀疏数值失配，不能据此判定该数值假说真假。
+- 按预注册门，从 e2 ZIP 还原 vendor 原字节 SHA
+  `44dc00e2e8a7816a8405ebf6bf02f4b5ce23f1c07ae501b3d01f1bf1c8d8c6a4`，
+  与 e3 前源码 diff 为空，回滚 commit `e1c44da8`。e5 不重投；已用
+  `codex-ask` 携本次编译错误与 T87 已成功的 f32→i32 位读先例，咨询
+  下一独立候选。目标芯可编译性仍是首门，数值门次之。

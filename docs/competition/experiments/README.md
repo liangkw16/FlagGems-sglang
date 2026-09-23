@@ -18,7 +18,9 @@
   （`8776374c`），e4 ZIP 保留为下一候选基底；额度余 7/30。
 - [T83 indexed_scale_shift e5](indexed_scale_shift.md)：从 e4 ZIP 只替换昆仑
   三处有限值 bf16 舍入为 u32 位级 RTNE；代理 release 7/7，ZIP
-  `b8163659…ae6` 验签通过，codex-review 无缺陷，待实时 preflight。
+  `b8163659…ae6` 与 codex-review 通过后平台 **20445 为 7/8**：昆仑九个
+  case 均在 u32 bitcast 的 `triton_xpu.unpack` lowering 编译失败，未到数值门。
+  源码回滚 e2 原字节（`e1c44da8`），额度余 6/30；后续候选先核实可编译路径。
 
 ## 2026-09-23 19:00 冲榜循环日终收口（额度 10/30 剩，窗口明日 19:59 关）
 
