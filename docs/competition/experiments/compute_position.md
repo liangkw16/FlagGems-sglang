@@ -5,16 +5,48 @@ task: 77
 operator: compute_position
 batch: 6
 validity: valid(8/8,e6,1100.744x TB)
-platform: e6(20390)valid 8/8 avg 1100.744075 TB; e7 release就绪、尚未提交(23:20额度0/30)
-candidate_stage: e7
+platform: e7(20655)valid 8/8 avg 1021.7663<TB e6(20390)1100.744075；e7源码已按e6 ZIP回滚
+candidate_stage: e6
 team_best_stage: e6
 team_best_speedup: 1100.744075
-sealed: no
-next: e7最终codex-review后，次日额度恢复时做实时preflight；若门禁全绿单次提交。8/8且均值>1100.744075才换TB，否则回滚e6字节；榜首1747.5001，缺646.756025。
-updated: 2026-09-23
+sealed: yes
+next: e7单核小批轴平台判负：天数-17.9%、昆仑-51.2%抵消华为+48.2%；保留e6最佳，不为单芯增益再耗额度；无新目标芯结构证据先转T80。
+updated: 2026-09-24
 ```
 
-## 2026-09-23 E7 小批量单发射候选（平台未提交）
+## 2026-09-24 E7 平台终态（20655）：8/8 有效但均分 1021.7663，低于 E6 最佳
+
+- 00:03:15+08 单次正式提交，八芯 00:05:16+08 全部 completed/valid；
+  均值 **1021.7663 < e6 1100.744075**，按预注册门判负（-78.977775，
+  -7.17%）。逐芯：天数 2403.631 / 沐曦 724.182 / 燧原 116.9506 /
+  海光 1552.9658 / 昆仑 51.3672 / 华为 218.8826 / A 1627.859 /
+  B 1478.2922。相对 e6：华为 +48.2%、沐曦 +7.3%，但天数 -17.9%、
+  昆仑 -51.2% 主导净退。NVIDIA 小批 1.14–1.96 倍的代理优势未跨芯兑现。
+- 最终 codex-review：`--base c31f5278..7395eea5` 首轮指出性能样本映射和
+  T80 账本两项 P2 证据问题；修正提交 `f2788b91` 经 `--commit` 复审为
+  “未发现可靠、可复现缺陷”。题面检查未发现可确认违规。两轮 review 均成功退出。
+- 00:00:53+08 preflight 绑定账号 15600308080 / 团队 SoulCoder / tid
+  `s2t1op077` / source+verification `0e2f173e` / ZIP SHA
+  `01bcb2d0…dc8d7` / release SHA `9b970ce4…3628ef4`，返回一次性 nonce。
+  首次执行在发送前实时 GET 网络超时，intent 仍 `prepared`，没有上传；
+  00:02:59+08 状态 GET 确认额度30/30、tuple未变，复用同 nonce 后
+  **仅一次上传与正式 POST** 成功，平台返回 20655。CLI 提交后远端验签
+  因未设置 `FLAGOS_REMOTE_ZIP_HOST` 显示 unavailable；随后用已核实
+  `flagos.ks3-cn-beijing.ksyuncs.com` 无认证只读 GET，远端 10,217 B、
+  SHA-256 `01bcb2d049e06a921e558f8f4f5e872a262b5f640d3e36df42930ff3ac3dc8d7`
+  与本地不可变 ZIP 完全一致。
+- 原始 watch `artifacts/competition/compute_position/e7-0e2f173/platform-watch-20655.jsonl`
+  SHA `a039c3cc8f26631391bd5a46d5672abe92fbc51d7782010c8fb1e61f1e2baa42`；
+  终态账户额度 29/30。源码/测试在 `675e6ec3` 按 e6 不可变 ZIP
+  两成员与 09-23 测试字节回滚，generic SHA
+  `186ca75b5bfee5c0c10309af0a9f42ee7781e2776c0e4701f1db19612f2a1ff2`、
+  enflame SHA `ea06d694d1627bff676c43e4afef0907679949a4f3a05eab362e21681920b714`，
+  与 e6 ZIP `c800163c7da6131f0ee620e832dc194cb475d7d085215d7f5143c94f87dd5044` 成员逐字节相同。
+- 决策：小批单核 generic 轴关闭。Huawei-only 分派即使完全保留其他 e6
+  读数，按本次增益仅约 +8.9 均分，离榜首 1747.5001 仍远；当前冲榜
+  额度优先给差距更窄的 T80。
+
+## 2026-09-23 E7 小批量单发射候选（历史开发证据）
 
 - 榜单：23:20 平台全量 GET 快照 `docs/competition/data/batch6-intel-20260923-2323.json`
   SHA `d3c7d96d881f9662f60f7136941d5cc22cc0e8e784e87a0241b4ac73fcde9ca3`；

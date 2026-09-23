@@ -1,14 +1,13 @@
 # 第二批候选与提交队列
 
-## 2026-09-23 夜间 T77 e7 待复审发射
+## 2026-09-24 T77 e7 终态与 T80 下一步
 
 - [实时第六批榜差](../optimization-batch6-live-20260923.md)：23:20 全量快照，
   T77 榜首 1747.5001、我方 1100.744075（第 10），当日额度 0/30。
-- [T77 compute_position e7](compute_position.md)：小批 `batch<=512` 单核前缀路径，
-  大批保留 e6 双核；NVIDIA 代理五轮配对，小批快 1.14–1.96 倍、大批持平。
-  精确 release 4/4、双源执行，ZIP `01bcb2d0…dc8d7` 验签通过；
-  最终 codex-review 和次日实时 preflight 后才发射，保留门为 8/8 且
-  均分 >1100.744075。
+- [T77 compute_position e7](compute_position.md)：release/ZIP/两轮 codex-review
+  闭环后单次提交 20655，8/8 有效但均分 1021.7663 < e6 最佳
+  1100.744075；华为提高、天数和昆仑大退，源码按 e6 ZIP 字节回滚，
+  单核小批轴封存。00:05 平台余 29/30。
 - [T80 fixup_zero_kv e24](fixup_zero_kv.md)：23:20 榜单确认 18:56:15
   新团队最佳 569.125575（8/8，第 3）；`codex/t80-top1` 固定源码、ZIP
   与回执已核，当前分支尚未移入该源码，后续门槛已更新。
