@@ -1,5 +1,11 @@
 # 第二批候选与提交队列
 
+## 2026-09-23 T80 e20 上膛（首个 _ascend vendor：UB-safe 重构，待发射）
+
+| 候选 | ZIP | 回执 | 预注册门 |
+| --- | --- | --- | --- |
+| [T80 fixup_zero_kv e20](fixup_zero_kv.md)（commit `f258168d`：首个 `_ascend` vendor 入包——e-round2 UB-safe 重构（整块无 mask 热路径 + 每流单 int-mask 尾块，BLOCK 4096/warps 8，grid 总量 65535 封顶），规避 T84/T92 'ub overflow multi-buffer' 编译错族；generic/enflame/kunlunxin/metax 四成员字节与 e19 逐项相同） | e20-f258168（`8d613582…624`，5 成员与 commit 字节一致，≠e19 新 zip_sha256） | 14 测试 210 case 0 失败，5 源 × 35 launch ✓（`day5prep-20260921/fixup_zero_kv_ascend_ub_safe_redesign-wf/`，verification_commit=f258168d） | 华为 8/8 正确且 ≥315（generic 最好窗 e14r 315.3，榜首 354）；'ub overflow' 编译错即回滚 ascend 回 e19 四成员；均值 >558.04 换 TB |
+
 ## 2026-09-23 T81 e13 上膛（按芯组合已证字节，待远端回执）
 
 | 候选 | ZIP | 回执 | 预注册门 |

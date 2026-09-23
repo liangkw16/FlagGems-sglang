@@ -6,11 +6,11 @@ operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e16,558.04x TB)
 platform: e19(20168)valid 535.08<TB558.04;燧原110.3(segment-band未破130门,段带形式判平);天数1185/muxi388/haig894;TB守e16
-candidate_stage: e19
+candidate_stage: e20
 team_best_stage: e19
 team_best_speedup: 535.08x
 sealed: no
-next: 距569.3差~11均值(2.0%);燧原warps阶梯闭合(1≈2),宽度到顶,flat-span证伪;codex-ask候选2(segment-band调度)留09-23;e18兜底修复(tile跨步)已入库;今日30/30
+next: e20(首个_ascend vendor,UB-safe重构)已上膛:ZIP e20-f258168 zip_sha=8d613582…,回执day5prep/fixup_zero_kv_ascend_ub_safe_redesign-wf,verification_commit=f258168d;预注册门=华为8/8且≥315,'ub overflow'编译错即回滚ascend回e19四成员,均值>558.04换TB;距569.3差~11均值(2.0%);燧原段带判平,宽度到顶
 updated: 2026-09-23
 ```
 
@@ -240,3 +240,51 @@ updated: 2026-09-23
   release 绿；ZIP `fixup_zero_kv/e19-423699e/`。回执
   `day5prep-20260921/fixup_zero_kv-e19/`。预注册门：燧原 ≥130 视为
   带突破；均值 >558.04 换 TB。
+
+
+## 2026-09-23 E20 上膛（首个 _ascend vendor 入包：UB-safe 重构，待发射）
+
+- 结构（e-round1 `48555b55` → e-round2 重构 `4a501c5d` + 复审修复
+  `f258168d`）：首个 `_ascend` vendor 进入 ZIP。e-round1 的 T92-e20
+  规则（int32 flat-span + fp32 尾掩码 2^24 双域门）被 e-round2 整体
+  重构为 T40-e16 存储形态：整块无 mask 热路径 + 每流单 int-mask 尾块，
+  删除双域门（4 个分支体合计 ~224KB 超 Ascend 192KB UB——T84 e15/e16 +
+  T92 e20 BiShengHIR 'ub overflow multi-buffer' 同族风险）；BLOCK
+  16384→4096、warps 16→8；grid 总上限 tiles=min(cdiv,255,65535//batch)
+  （Ascend 2D 展平 65535 轴，stride 保覆盖）。新增回归：多块精确/部分尾
+  （含全真尾掩码 + 空段）、grid 总量边界 257×255=65535 保留 vs 258→254，
+  均入 RELEASE_REQUIRED_TESTS（现 13 项）。
+- release v2（source=verification=`f258168d6f6d078364d648a719cfb8372b5b6c70`）：
+  14 测试 / 210 case 全过，0 失败/错误/skip/xfail；5 路径
+  （generic+ascend+enflame+kunlunxin+metax）各 35 次非 warmup kernel
+  launch，330 组非空张量 shape/dtype 覆盖，exit 0；NVIDIA RTX 5070 Ti /
+  torch 2.13.0+cu130 / triton 3.7.1。华为目标芯 target-runtime-unverified
+  （NVIDIA 代理证据）。回执
+  `artifacts/competition/day5prep-20260921/fixup_zero_kv_ascend_ub_safe_redesign-wf/verification.json`
+  SHA-256 `3d90cb76f946753e013a2529e33777f8cdb2a48a8fd1fa0b36b1825ff7a34972`；
+  日志 SHA-256 `87bb8251a402762d415c29314f0db37c570a5b95a6ee79d7fac3af1d80ece4b8`。
+- 五元组（commit / ZIP / ZIP SHA / test / receipt，verification_commit 同
+  commit `f258168d`）：ZIP
+  `artifacts/competition/fixup_zero_kv/e20-f258168/fixup_zero_kv.zip`
+  SHA-256 `8d613582f24470f87bfa05815e2178fe32d4b84930c089ebc844c6434a6d1624`
+  （21166 B）；test SHA-256
+  `87309f042c29171053ae1bf31416fc74e41c35f159becb5d126e60b307605ae4`。
+- ZIP 名单（5 成员，已与 `zipfile` 实际成员逐一核对一致且逐成员字节与
+  `git show HEAD:<path>` 相同——无打包器夹带；generic/enflame/kunlunxin/
+  metax 四成员哈希与 e19 逐项相同，仅 ascend 新增，单变量确认）：
+  - `fixup_zero_kv.py` =
+    `e3371c49e3ef6f9ba7b2321b094a738a208129a682fc29e837b6a17317035943`（同 e19）
+  - `fixup_zero_kv_ascend.py` =
+    `73b297643646c6ca90d8bd3bcdfda4f2cf09a37701af047c229c740bc5edd939`（新）
+  - `fixup_zero_kv_enflame.py` =
+    `ff9a42238d54c7d34b741350c281a83809b5e0d71d84fa79d1aa3ab774d03063`（同 e19）
+  - `fixup_zero_kv_kunlunxin.py` =
+    `b79e658780e02637372a5a84c1290b6bdddc3e8def54ae8ace5ba86030c6f0ff`（同 e19）
+  - `fixup_zero_kv_metax.py` =
+    `37a4d96256677a1899fc388d8b5ef8c07b7b610f4af148202093aef58af15bda`（同 e19）
+  - zip_sha256 `8d613582…` ≠ e19 `9f52025c…`：平台去重键（zip_sha256）
+    满足新元组，无需载体 commit。
+- 预注册门：华为 8/8 正确（UB-safe 设计的正向目标；任何 'ub overflow'
+  编译错/数值错即回滚 ascend vendor 回 e19 四成员字节）；华为读数 ≥315
+  视为轴兑现（超 generic 最好窗 e14r 315.3，榜首 354）；均值 >558.04
+  换 TB，未过门保 e16 TB。
