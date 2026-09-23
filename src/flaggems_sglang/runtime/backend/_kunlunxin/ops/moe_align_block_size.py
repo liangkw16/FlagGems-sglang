@@ -32,7 +32,7 @@ import triton
 import triton.language as tl
 
 _E_CHUNK_MAX = 64
-_TILE = 128
+_TILE = 64
 
 
 @triton.jit(do_not_specialize=["numel", "num_routed", "buf_numel"])
@@ -55,8 +55,10 @@ def _moe_counts(
             offs = base + tl.arange(0, TILE)
             m = offs < numel
             v = tl.load(flat + offs, m, other=-1)
-            hit = (v[:, None] == lanes[None, :]) & m[:, None]
-            acc += tl.sum(hit.to(tl.int32), 0)
+            # XPU rejects axis-0 reductions on 2D shapes, so the one-hot
+            # matrix lives expert-major and reduces on its last axis
+            hit = (lanes[:, None] == v[None, :]) & m[None, :]
+            acc += tl.sum(hit.to(tl.int32), 1)
         tl.store(cnt + pid * BLOCK_E + lanes, acc)
 
 
@@ -159,17 +161,19 @@ def _moe_place(
         for e0 in range(0, BLOCK_E, E_CHUNK):
             lanes = e0 + tl.arange(0, E_CHUNK)
             lm = lanes < num_routed
-            hit = (v[:, None] == lanes[None, :]) & m[:, None]
+            # expert-major one-hot keeps every reduction on the last
+            # axis (XPU rejects axis-0 reductions on 2D shapes)
+            hit = (lanes[:, None] == v[None, :]) & m[None, :]
             tb = tl.load(tilebase + pid * BLOCK_E + lanes)
-            dest = tb[None, :] + rank[:, None]
+            dest = tb[:, None] + rank[None, :]
             tl.store(
                 sorted_ids + dest,
                 tl.broadcast_to(
-                    offs.to(tl.int32)[:, None], (TILE, E_CHUNK)
+                    offs.to(tl.int32)[None, :], (E_CHUNK, TILE)
                 ),
-                hit & lm[None, :],
+                hit & lm[:, None],
             )
-            add = tl.sum(hit.to(tl.int32), 0)
+            add = tl.sum(hit.to(tl.int32), 1)
             tl.store(tilebase + pid * BLOCK_E + lanes, tb + add)
 
 
