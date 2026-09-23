@@ -20,13 +20,15 @@ _MAX_CTAS = 12
 _NUM_WARPS = 2
 
 
-@triton.jit(do_not_specialize=["batch", "os0", "ls0"])
+@triton.jit
 def _fixup_zero_kv(
     out,
     lse,
     lens,
     cum,
     batch,
+    ot,
+    items,
     os0,
     ls0,
     HV: tl.constexpr,
@@ -35,28 +37,22 @@ def _fixup_zero_kv(
     BLOCK_V: tl.constexpr,
     BLOCK_H: tl.constexpr,
 ):
-    # e19 segment-band scheduling (the codex-ask round's main
-    # candidate): each program owns every num_programs-th segment,
-    # reads that segment's metadata once, and sweeps all of its tiles
-    # - no per-item lens loads and no empty advisory tiles, at the
-    # cost of serializing a lone long zero segment into one program
-    for seg in range(tl.program_id(0), batch, tl.num_programs(0)):
-        if tl.load(lens + seg) == 0:
+    for item in range(tl.program_id(0), items, tl.num_programs(0)):
+        seg = item // ot
+        zero = tl.load(lens + seg) == 0
+        if zero:
             beg = tl.load(cum + seg).to(tl.int64)
             end = tl.load(cum + seg + 1).to(tl.int64)
             v = tl.arange(0, BLOCK_V).to(tl.int64)
             h = tl.arange(0, BLOCK_H).to(tl.int64)
             hm = h < NH
             zeros = tl.zeros((BLOCK_T, BLOCK_V), dtype=out.dtype.element_ty)
-            ninf = tl.full(
-                (BLOCK_T, BLOCK_H), float("-inf"), dtype=tl.float32
-            )
-            for tile in range(0, tl.cdiv(end - beg, BLOCK_T)):
-                t = (
-                    beg
-                    + tile * BLOCK_T
-                    + tl.arange(0, BLOCK_T).to(tl.int64)
-                )
+            ninf = tl.full((BLOCK_T, BLOCK_H), float("-inf"), dtype=tl.float32)
+            # max_seq_len only sizes the virtual grid. If it
+            # underestimates a zero-KV segment, every slot continues
+            # through that segment rather than dropping later rows.
+            for tile in range(item % ot, tl.cdiv(end - beg, BLOCK_T), ot):
+                t = beg + tile * BLOCK_T + tl.arange(0, BLOCK_T).to(tl.int64)
                 tm = t < end
                 for v0 in tl.static_range(0, HV, BLOCK_V):
                     vv = v0 + v[None, :]
@@ -83,12 +79,17 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
     if batch and total_tokens:
         hv, nh = num_heads * v_head_dim, num_heads
         block_t = 8
-        _fixup_zero_kv[(min(batch, _MAX_CTAS),)](
+        span = max_seq_len if isinstance(max_seq_len, int) else total_tokens
+        ot = max(1, triton.cdiv(min(span, total_tokens), block_t))
+        items = batch * ot
+        _fixup_zero_kv[(min(items, _MAX_CTAS),)](
             out,
             lse,
             kv_lens,
             cum_seq_lens,
             batch,
+            ot,
+            items,
             out.stride(0),
             lse.stride(0),
             HV=hv,
