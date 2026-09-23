@@ -43,13 +43,8 @@ def _starts_scan(lens, starts, batch, BLOCK_BS: tl.constexpr):
 
 @triton.jit(do_not_specialize=["batch"])
 def _fill_positions_i64(
-    positions,
-    starts,
-    prefix_lens,
-    lens,
-    batch,
-    HAS_PREFIX: tl.constexpr,
-    BLOCK: tl.constexpr,
+    positions, starts, prefix_lens, lens, batch,
+    HAS_PREFIX: tl.constexpr, BLOCK: tl.constexpr,
 ):
     for i in range(tl.program_id(0), batch, tl.num_programs(0)):
         start = tl.load(starts + i)
@@ -66,13 +61,8 @@ def _fill_positions_i64(
 
 @triton.jit(do_not_specialize=["batch"])
 def _fill_positions_i32(
-    positions_words,
-    starts,
-    prefix_lens,
-    lens,
-    batch,
-    HAS_PREFIX: tl.constexpr,
-    BLOCK: tl.constexpr,
+    positions_words, starts, prefix_lens, lens, batch,
+    HAS_PREFIX: tl.constexpr, BLOCK: tl.constexpr,
 ):
     # narrow-packed path: one int32 store per logical element at view
     # index i (the physical slot of element i under the packed layout)
@@ -107,7 +97,9 @@ def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
     positions = torch.empty(
         extend_seq_lens_sum, dtype=torch.int64, device=device
     )
-    extend_start_loc = torch.empty(batch, dtype=torch.int32, device=device)
+    extend_start_loc = torch.empty(
+        batch, dtype=torch.int32, device=device
+    )
     if batch:
         _starts_scan[(1,)](
             extend_seq_lens,
