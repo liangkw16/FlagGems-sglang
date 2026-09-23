@@ -27,12 +27,6 @@
 # the in-register int64 start - no second launch, no low/high split
 # buffer. Larger batches keep the e6 two-launch bytes unchanged (the
 # per-program whole-row load would go quadratic there).
-# e10 adds a tiled variant for small batches (<= 128): the loop form's
-# grid=(batch,) strands long segments on few CTAs (huawei reads 141x
-# while the field reads 612x there) and Ascend compiles the dynamic
-# trip-count range loop poorly; the tiled form fans each request out
-# over a second grid axis of BLOCK tiles (dead tiles exit after two
-# scalar loads), keeping one launch and the self-scan start.
 import torch
 import triton
 import triton.language as tl
@@ -103,36 +97,6 @@ def _fill_positions_fused(
         )
 
 
-@triton.jit(do_not_specialize=["batch"])
-def _fill_positions_tiled(
-    positions, start_loc, prefix_lens, lens, batch,
-    HAS_PREFIX: tl.constexpr, BLOCK: tl.constexpr,
-    BLOCK_BS: tl.constexpr,
-):
-    i = tl.program_id(0)
-    t = tl.program_id(1)
-    seq_len = tl.load(lens + i)
-    # dead tiles (their first offset is past the segment) exit after
-    # the two scalar loads above/below; only the row's first tile and
-    # live tiles pay the whole-row self-scan
-    if (t == 0) | (t * BLOCK < seq_len):
-        lanes = tl.arange(0, BLOCK_BS)
-        seg = tl.load(lens + lanes, lanes < batch, other=0).to(tl.int64)
-        start = tl.sum(tl.where(lanes < i, seg, 0), 0)
-        if t == 0:
-            tl.store(start_loc + i, start.to(tl.int32))
-        prefix_len = tl.load(prefix_lens + i) if HAS_PREFIX else 0
-        for off in range(
-            t * BLOCK, seq_len, tl.num_programs(1) * BLOCK
-        ):
-            o = off + tl.arange(0, BLOCK)
-            tl.store(
-                positions + start + o,
-                prefix_len.to(tl.int64) + o,
-                mask=o < seq_len,
-            )
-
-
 def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
     batch = extend_seq_lens.shape[0]
     has_prefix = extend_prefix_lens.shape[0] == batch
@@ -142,23 +106,6 @@ def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
     positions = torch.empty(
         extend_seq_lens_sum, dtype=torch.int64, device=device
     )
-    if batch <= 128:
-        extend_start_loc = torch.empty(batch, dtype=torch.int32, device=device)
-        if batch:
-            tiles = max(
-                1, min(triton.cdiv(extend_seq_lens_sum, 1024), 1024)
-            )
-            _fill_positions_tiled[(batch, tiles)](
-                positions,
-                extend_start_loc,
-                extend_prefix_lens,
-                extend_seq_lens,
-                batch,
-                HAS_PREFIX=has_prefix,
-                BLOCK=1024,
-                BLOCK_BS=triton.next_power_of_2(max(batch, 16)),
-            )
-        return positions, extend_start_loc
     if batch <= 2048:
         extend_start_loc = torch.empty(batch, dtype=torch.int32, device=device)
         if batch:
