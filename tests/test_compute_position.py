@@ -4,7 +4,6 @@
 import unittest
 
 import torch
-
 from tests._op_variants import load_operator_modules
 
 MODULES = load_operator_modules("compute_position")
@@ -53,13 +52,9 @@ class ComputePositionTest(unittest.TestCase):
             with self.subTest(module=name):
                 actual = module.compute_position(*args)
                 for got, want in zip(actual, expected):
-                    torch.testing.assert_close(
-                        got, want, rtol=0, atol=0
-                    )
+                    torch.testing.assert_close(got, want, rtol=0, atol=0)
                 for value, before in zip(args[:2], snapshots):
-                    torch.testing.assert_close(
-                        value, before, rtol=0, atol=0
-                    )
+                    torch.testing.assert_close(value, before, rtol=0, atol=0)
 
     def test_basic_and_boundaries(self):
         for has_prefix in (False, True):
@@ -67,14 +62,12 @@ class ComputePositionTest(unittest.TestCase):
                 self.check(make_case(has_prefix=has_prefix))
                 self.check(make_case(lengths=(0,), has_prefix=has_prefix))
                 self.check(make_case(lengths=(1,), has_prefix=has_prefix))
-                self.check(
-                    make_case(lengths=(8193,), has_prefix=has_prefix)
-                )
+                self.check(make_case(lengths=(8193,), has_prefix=has_prefix))
 
     def test_large_batch_striped(self):
-        # Cross the striped dispatch boundary from both sides and hit
-        # the >64-stripe row-widening path.
-        for bs in (63, 64, 65, 1023, 1024, 1025, 2049):
+        # Cross the single-launch/two-launch dispatch boundary and the
+        # scan's chunk boundary.
+        for bs in (63, 64, 65, 511, 512, 513, 1023, 1024, 1025, 2049):
             with self.subTest(bs=bs):
                 self.check(
                     make_case(
@@ -82,14 +75,12 @@ class ComputePositionTest(unittest.TestCase):
                         has_prefix=True,
                     )
                 )
-        self.check(
-            make_case(lengths=[513] * 65, has_prefix=False)
-        )
+        self.check(make_case(lengths=[513] * 65, has_prefix=False))
 
     def test_int32_boundary_prefix(self):
         # prefix + arange must be computed beyond the int32 domain:
         # 2**31-4 + [0..4] crosses 2**31 on the last lanes.
-        bs = 70  # striped path
+        bs = 70  # single-launch path
         prefix = [0] * bs
         prefix[0] = 2**31 - 4
         lengths = [5] + [1] * (bs - 1)
@@ -97,9 +88,7 @@ class ComputePositionTest(unittest.TestCase):
         args[0] = torch.tensor(prefix, dtype=torch.int32, device="cuda")
         self.check(tuple(args))
         args2 = list(make_case(lengths=(5,), has_prefix=True))
-        args2[0] = torch.tensor(
-            [2**31 - 4], dtype=torch.int32, device="cuda"
-        )
+        args2[0] = torch.tensor([2**31 - 4], dtype=torch.int32, device="cuda")
         self.check(tuple(args2))
 
     def test_all_zero_and_empty(self):
