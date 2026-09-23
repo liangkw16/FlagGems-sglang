@@ -5,12 +5,12 @@ task: 92
 operator: unpad_draft_extend_output
 batch: 6
 validity: valid(8/8,e19r,331.10x TB)
-platform: e20(20162)invalid_correctness:华为MLIR编译败(ascend ruleset移植仍触BiShengHIR);其余七芯健康muxi246/enfl127/haig661/kunl33;TB 331.10守
-candidate_stage: e20
+platform: e20(20162)invalid_correctness:华为BiShengHIR ub overflow(3145984bits>1572864bits)已修于e21r上膛待发射;TB 331.10守
+candidate_stage: e21r
 team_best_stage: e19r
 team_best_speedup: 331.10x
 sealed: no
-next: 距榜首CosmosMind 372=12.3%;缺口=华为378vs843(单芯)与天数394vs441;重掷轴已关闭(1/1用尽)
+next: e21r待发射;门=华为8/8正确且无ub-overflow且>=378(e19r水位),均值>331.10换TB;重掷轴已关闭(1/1用尽)
 updated: 2026-09-23
 ```
 
@@ -336,3 +336,48 @@ updated: 2026-09-23
   （≥4096 tile 档）。release 绿；ZIP `unpad_draft_extend_output/
   e20-423699e/`；回执 `.../unpad_draft_extend_output-e20/`。
   预注册门：华为 ≥500 换 TB 方向确认；均值 >331.10 换 TB。
+
+## 2026-09-23 E21R 上膛（ascend UB-fit：unmasked-main + 小 fp32 尾，待发射）
+
+- 结构（ascend 字节最早出现于 `91928ef1`，ZIP 打包自 `bcf63bbc`——其树中
+  `_ascend/ops/unpad_draft_extend_output.py` 与
+  `tests/test_unpad_draft_extend_output.py` 与 `91928ef1` 逐字节一致）：修
+  e20（20162）华为 BiShengHIR `ub overflow, requires 3145984 bits while
+  1572864 bits available`（384KB > 192KB UB；超额 ~196,640B = BLOCK=16384
+  宽度下物化的 fp32 offs 转换 + fp32 mask，16384×4B×3 量级——e14 同
+  BLOCK 整数 mask 形态曾编译并读 442-507，宽 fp32 向量是仅有的新大
+  buffer）。主循环整 BLOCK=16384 tile **无 mask** 流式拷贝（宽度阶梯峰
+  2048→129.6 / 8192→315.6 / 16384→442 / 32768→378，保 16384；接受前缀
+  内所有触及元素落在 `[src, src+full_end)`，内存安全；T40 E16
+  unmasked-main 结构先例华为 +130%），余量经单条 BLOCK_TAIL=2048 fp32
+  masked 尾循环排空——其比较操作数为循环局部且被 BLOCK 界定
+  （<16384<<2^24），e20 的 2^24 域 bug 无法触发，标量守卫分支删除；每个
+  循环的活跃向量集是 e14 已编译形态的子集，UB 需求单调不增。**e21 的
+  capped persistent rotation grid=(min(bs,64)) + warps16 一并在此字节内**
+  （`395c6d7f`，e21 本体未单独上膛）。新增回归
+  `test_unmasked_main_masked_tail_split` 进 RELEASE_REQUIRED_TESTS。
+- release v2 绿（回执 `day5prep-20260921/e21r-ascend-ubfit-unmasked-main-wf/`，
+  verification_commit=`bcf63bbc`）：5 测试 101 case 0 败 0 skip，8 源 ×
+  11 non-warmup kernel launch，RTX 5070 Ti / torch 2.13.0+cu130 /
+  triton 3.7.1（nvidia-proxy；ascend 仍 target-unverified，交平台）。
+- 五元组：commit（ZIP source=verification）`bcf63bbcb25babe654c2a29f23248c5067e2dd5f`；
+  ZIP `artifacts/competition/unpad_draft_extend_output/e21r-bcf63bb/unpad_draft_extend_output.zip`
+  SHA `e916ae46bd96ed9bfb782ab8573a69f3cf7c4551695fb908b3fa6c988c329fb1`
+  （22002B，canonical=实际哈希一致，≠e20 新 zip_sha256）；test
+  `c44c9a460d24060cd937a8c196d9a0f5dca76498e4c6d2c98740f69102147a84`；
+  回执 SHA `91aacb54caccde41a5e905ed26c91e0e49e81a6168e2f204dbbdbb236dd3415c`。
+- 逐成员（zipfile 实读 SHA 全部与 `bcf63bbc` git blob 一致，防打包器
+  夹带；前 7 成员与 e20 ZIP 逐字节相同——单变量；ascend 为新字节）：
+  - `unpad_draft_extend_output.py`（generic）`f1175d80…d0c0` — 同 e20
+  - `unpad_draft_extend_output_amd.py` `1e9dbfb5…4032` — 同 e20
+  - `unpad_draft_extend_output_ascend.py` `6d7b7aba…ec12` — **新**
+    （3118→5220B，e21r 本体）
+  - `unpad_draft_extend_output_enflame.py` `204c8208…9af7` — 同 e20
+  - `unpad_draft_extend_output_hygon.py` `031847ed…bda7` — 同 e20
+  - `unpad_draft_extend_output_kunlunxin.py` `c29bd06c…dbcf` — 同 e20
+  - `unpad_draft_extend_output_metax.py` `2ac05704…44ce` — 同 e20
+  - `unpad_draft_extend_output_nvidia.py` `f39143ac…ecdc` — 同 e20
+- 预注册门：华为 8/8 正确且无 'ub overflow' 编译错且读数 ≥378（e19r
+  水位带 378-507，峰对标 e14 BLOCK=16384 的 442）；任何 ub-overflow
+  判 invalid 即证伪，ascend 回滚至 e19r ZIP 的 ascend 字节（e14 整数
+  mask 形态）；均值 >331.10 换 TB。
