@@ -4,6 +4,7 @@
 import unittest
 
 import torch
+
 from tests._op_variants import load_operator_modules
 
 MODULES = load_operator_modules("compute_position")
