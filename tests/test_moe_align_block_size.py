@@ -118,11 +118,26 @@ class MoeAlignBlockSizeTest(unittest.TestCase):
         empty = torch.full((3, 8), 32, dtype=torch.int32, device="cuda")
         self.check((empty,) + args[1:])
 
+    def test_histogram_tile_boundary(self):
+        # topk=1 makes numel walkable one element at a time around the
+        # BLOCK_H=8192 histogram tiles: B-1/B/B+1 and the first element
+        # of a third, mostly-masked tile. E=33 keeps every case inside
+        # the adaptive 2-op window (16385*64 <= 2^23).
+        for tokens in (8191, 8192, 8193, 16385):
+            with self.subTest(tokens=tokens):
+                self.check(
+                    make_case(
+                        tokens=tokens, topk=1, num_experts=33,
+                        block_size=16,
+                    )
+                )
+
 
 RELEASE_REQUIRED_TESTS = [
     "MoeAlignBlockSizeTest.test_shapes_and_expert_grid",
     "MoeAlignBlockSizeTest.test_filtered_expert_bucket",
     "MoeAlignBlockSizeTest.test_dirty_scratch_reuse_and_tile_walk",
+    "MoeAlignBlockSizeTest.test_histogram_tile_boundary",
 ]
 
 
