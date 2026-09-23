@@ -103,11 +103,27 @@ class UnpadTest(unittest.TestCase):
         lens = [0, 33] + [64] * 30 + [17]
         self.check(make_case(lens=tuple(lens), heads=16, dim=128, tpb=64))
 
+    def test_unmasked_main_masked_tail_split(self):
+        # e21r ascend semantics: whole BLOCK=16384 tiles stream unmasked
+        # and only the remainder drains through the BLOCK_TAIL=2048 fp32
+        # masked loop. With span=1024 (heads=8, dim=128) the lens below
+        # walk every split shape: 41 -> 41984 = 2 full blocks + 9216
+        # remainder (4 full tail tiles + one partial); 48 -> 49152 = 3
+        # full blocks exactly (zero-length tail must write nothing);
+        # 35 -> 3072 remainder (one full + one partial tail tile); 34 ->
+        # 2048 remainder (exactly one tail tile, all-true mask); 1 ->
+        # 1024 < BLOCK_TAIL (main loop runs zero times); 0 -> both loops
+        # skip the segment. An odd span keeps the element path honest
+        # through the same split.
+        self.check(make_case(lens=(41, 48, 35, 34, 1, 0), heads=8, dim=128, tpb=64))
+        self.check(make_case(lens=(41,), heads=2, dim=3, tpb=64))
+
 
 RELEASE_REQUIRED_TESTS = [
     "UnpadTest.test_u32_fallback_conditions",
     "UnpadTest.test_ragged_and_boundaries",
     "UnpadTest.test_persistent_rotation",
+    "UnpadTest.test_unmasked_main_masked_tail_split",
 ]
 
 
