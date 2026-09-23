@@ -1,6 +1,11 @@
 # 第二批候选与提交队列
 
-## 2026-09-23 T92 e21r 上膛（ascend UB-fit：unmasked-main + 小 fp32 尾，待发射）
+## 2026-09-23 T92 e21r 平台终态（20313）：invalid_correctness 7/8——华为 ub-overflow 消除、转数值败
+
+- **终态**：华为编译错已消除（编译并运行，exec 32914ms）但
+  `test_unpad_draft_extend_output[3]` 数值失败（1520/164352 失配 0.9%，
+  max abs 4.515625）；其余七芯全过；均值 None 不计；TB 守 e19r 331.10；
+  ub-overflow 回滚条款未触发（数值错非编译错），ascend 修复或回滚归编排方。
 
 | 候选 | ZIP | 回执 | 预注册门 |
 | --- | --- | --- | --- |

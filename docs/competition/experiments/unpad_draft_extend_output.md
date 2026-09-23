@@ -5,12 +5,12 @@ task: 92
 operator: unpad_draft_extend_output
 batch: 6
 validity: valid(8/8,e19r,331.10x TB)
-platform: e20(20162)invalid_correctness:华为BiShengHIR ub overflow(3145984bits>1572864bits)已修于e21r上膛待发射;TB 331.10守
+platform: e21r(20313)invalid_correctness 7/8:华为ub-overflow已消除(编译并运行,exec 32914ms)但转数值败(test[3] 1520/164352失配,atol/rtol 0.015);TB 331.10守
 candidate_stage: e21r
 team_best_stage: e19r
 team_best_speedup: 331.10x
 sealed: no
-next: e21r待发射;门=华为8/8正确且无ub-overflow且>=378(e19r水位),均值>331.10换TB;重掷轴已关闭(1/1用尽)
+next: 华为ascend数值修复或回滚e19r ZIP字节归编排方裁决(预注册ub-overflow回滚条款未触发——是数值错非编译错);重掷轴已关闭(1/1用尽)
 updated: 2026-09-23
 ```
 
@@ -381,3 +381,32 @@ updated: 2026-09-23
   水位带 378-507，峰对标 e14 BLOCK=16384 的 442）；任何 ub-overflow
   判 invalid 即证伪，ascend 回滚至 e19r ZIP 的 ascend 字节（e14 整数
   mask 形态）；均值 >331.10 换 TB。
+
+## 2026-09-23 E21R 平台终态：invalid_correctness 7/8——华为 ub-overflow 已消除，转为数值失败
+
+- E21R（submission **20313**，daily_seq 9，created 2026-09-23T12:31:00+08）：
+  completed/invalid_correctness，7/8（华为失败），均值 None（无效提交不
+  计均值），is_team_best=false——TB 守 e19r 331.10。
+- 逐芯（七芯全过，括注平台 selected_file）：天数 389.2154（generic）/
+  沐曦 244.1776（_metax）/ 燧原 125.8252（_enflame）/ 海光 659.4556
+  （_hygon；唯一 raw errors 条目为 pytest-asyncio PytestDeprecationWarning
+  stderr 噪音，passed=true，0 failed_cases，良性）/ 昆仑 33.1278
+  （_kunlunxin）/ A 519.3046（_nvidia）/ B 280.1564（_amd）；华为失败
+  （`unpad_draft_extend_output_ascend.py` 被平台选中）。
+- 华为关键变化（raw_result failed_cases 实读）：e20（20162）的 BiShengHIR
+  `ub overflow, requires 3145984 bits while 1572864 bits available` 编译错
+  **已消除**——e21r UB-fit 修复在编译层兑现（编译并运行，
+  execution_time_ms=32914），但转为数值失败：
+  `test_unpad_draft_extend_output[3]`（case_idx 3，npu:0，bf16，容差
+  atol/rtol 0.015），Mismatched 1520/164352（0.9%），max abs diff
+  4.515625 @ (143,4,41)，max rel diff 631.8447265625 @ (143,3,7)。
+- 预注册门核对（b17f47a0 上膛时记录）：'华为 8/8 正确且无 ub-overflow
+  且 ≥378（e19r 水位带）'——无 ub-overflow ✓，但华为不正确 ✗（晋级门
+  失败），≥378 未达成；'any ub-overflow rolls ascend back to e19r ZIP
+  bytes' 触发条件**未发生**（是数值错非 ub-overflow），后续处置（修复
+  ascend 数值或回滚）按预注册条款归编排方裁决；重掷轴已关闭（1/1 用尽）。
+- 额度：本发后 21/30 remaining（observed_at 12:34:00+08，submission
+  20313/daily_seq 9）；三发全部落地后复核 20/30（used 10，observed_at
+  12:42:11+08，本次 status JSON 实读）。
+- remote_verification=unavailable（FLAGOS_REMOTE_ZIP_HOST 未设，仅远端
+  字节未复核，不影响已成功提交）；未出现 sending/uncertain，未重试。
