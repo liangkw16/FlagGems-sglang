@@ -9,7 +9,7 @@ platform: e12(20164)invalid_correctness:天数3630s评测挂死(同T92e19族);�
 candidate_stage: e13
 team_best_stage: e10
 sealed: no
-next: e13按芯组合已证字节(generic/_kunlunxin逐字节回滚e10,metax/hygon/enflame/ascend留e12)零新kernel逻辑;远端release回执+不可变ZIP后preflight→submit;不消耗天数挂死族1/1重掷配额
+next: e13已上膛(release回执绿+不可变ZIP e13-b17f47a,verification_commit=b17f47a0);preflight→submit;不消耗天数挂死族1/1重掷配额
 updated: 2026-09-23
 ```
 
@@ -309,3 +309,43 @@ updated: 2026-09-23
   平凡成立。仅更新两处因 e13 失真的注释（skip 集合与 parity 分支说明）。
   py_compile 三触碰文件 + 四保留成员共 7 文件通过（本机无 torch/triton，
   kernel 数值回归待远端 release 回执，同 e12 流程）。
+
+## 2026-09-23 E13 上膛完成：release 回执绿 + 不可变 ZIP，五元组齐备待发射
+
+- release 回执（NVIDIA 代理 RTX 5070 Ti / torch 2.13.0+cu130 / triton 3.7.1，
+  source=verification commit `b17f47a094bcf492b4f309ecefb9409feef28871`——e13
+  改动 commit `ef1c9912` 之后该树内算子/测试文件未被后续提交触碰，字节等价）：
+  `artifacts/competition/day5prep-20260921/fused_gate_sigmoid_mul_add-e13-wf/verification.json`
+  SHA-256 `709d12c5e4bf81bcf2d8fde6a5b1defc6fdb6b87e0a15efcaa1c63cc2d04d0b0`；日志
+  SHA-256 `733bac91cd099b622eb954646ea7997208a7abe13b871ebcfd84a004636e475a`。
+  8 测试 0 失败 0 skip 0 xfail（243 case），RELEASE_REQUIRED_TESTS 8/8 进入
+  suite 且通过（expected==passed 核对）；6 适用源（generic+ascend+enflame+hygon+
+  kunlunxin+metax）各 35 次非 warmup kernel launch，unexecuted 空；5 vendor
+  路径照例 target-runtime-unverified（NVIDIA 代理证据，裁决权在平台）。
+- 五元组（发射 preflight 依据）：
+  - commit（source=verification）：`b17f47a094bcf492b4f309ecefb9409feef28871`；
+  - ZIP：`artifacts/competition/fused_gate_sigmoid_mul_add/e13-b17f47a/fused_gate_sigmoid_mul_add.zip`
+    （27526B），SHA-256
+    `19fbb7b7584eab64b070826cace0dc0813de2f36522d12c03817b5d77d17ddc4`
+    （≠ e12 `d7b06976…`，新 ZIP 字节，平台去重键 zip_sha256 不冲突）；
+  - test SHA-256：`036884be56b84d43c1f0a38b279a3ad531dc5a5ef2861a86ed40221a391afdcb`；
+  - 回执：上述 verification.json（SHA-256 `709d12c5…d0b0`）；
+  - 预注册门：均值 >4.3452 换 TB 且**天数 ≥7.5 且昆仑 ≥0.65**；任一芯较其
+    已证读数 -5% 判负回滚 e10 全字节；本发不重掷单波路径，不消耗天数挂死族
+    1/1 重掷配额。
+- ZIP 成员逐项（zipfile 实际枚举 = 打包器 manifest = git `b17f47a0` 源字节
+  三方核对一致，unzip -t 无错，无夹带成员）：
+  - `fused_gate_sigmoid_mul_add.py`（generic，4113B，SHA-256
+    `1cc41e8b8d1eb642244b358c704e1f9f145abe952d63ecc961479d5bc9b4e4f8`，= e10 回滚字节）；
+  - `fused_gate_sigmoid_mul_add_ascend.py`（3446B，
+    `aa48c034172dcdc122d1703918f70894a28d4388ac5c223d134503680e482c29`，= e12 字节）；
+  - `fused_gate_sigmoid_mul_add_enflame.py`（3930B，
+    `638dab223d791a8ec3ff8579bc897c0394bd8b06f757970a633b2b2799751204`，= e12 字节）；
+  - `fused_gate_sigmoid_mul_add_hygon.py`（6258B，
+    `30bab80e7a45e3606b560e7c2f3061797a44bc3f494cb01b9756a38001f72f8b`，= e12 字节）；
+  - `fused_gate_sigmoid_mul_add_kunlunxin.py`（3015B，
+    `8aa1c28aa13f1ed7fb92da0908304a8cd027caaca146adc87ca1e1ae79d4fe1c`，= e10 回滚字节）；
+  - `fused_gate_sigmoid_mul_add_metax.py`（5864B，
+    `8645794657aa4f03dc7e223fd97f51ba36b18d8402321280d2c6124cbe2d290d`，= e12 字节）。
+  全部 UTF-8 `.py`、generic/vendor basename 精确合规、无目录前缀或垃圾文件、
+  ZIP <10MB。回执 manifest 中六个源文件 SHA-256 与 ZIP 成员逐项相同。

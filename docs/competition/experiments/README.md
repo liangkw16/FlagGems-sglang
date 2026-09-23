@@ -12,11 +12,11 @@
 | --- | --- | --- | --- |
 | [T80 fixup_zero_kv e20](fixup_zero_kv.md)（commit `f258168d`：首个 `_ascend` vendor 入包——e-round2 UB-safe 重构（整块无 mask 热路径 + 每流单 int-mask 尾块，BLOCK 4096/warps 8，grid 总量 65535 封顶），规避 T84/T92 'ub overflow multi-buffer' 编译错族；generic/enflame/kunlunxin/metax 四成员字节与 e19 逐项相同） | e20-f258168（`8d613582…624`，5 成员与 commit 字节一致，≠e19 新 zip_sha256） | 14 测试 210 case 0 失败，5 源 × 35 launch ✓（`day5prep-20260921/fixup_zero_kv_ascend_ub_safe_redesign-wf/`，verification_commit=f258168d） | 华为 8/8 正确且 ≥315（generic 最好窗 e14r 315.3，榜首 354）；'ub overflow' 编译错即回滚 ascend 回 e19 四成员；均值 >558.04 换 TB |
 
-## 2026-09-23 T81 e13 上膛（按芯组合已证字节，待远端回执）
+## 2026-09-23 T81 e13 上膛（按芯组合已证字节，待发射）
 
 | 候选 | ZIP | 回执 | 预注册门 |
 | --- | --- | --- | --- |
-| [T81 fused_gate_sigmoid_mul_add e13](fused_gate_sigmoid_mul_add.md)（generic/_kunlunxin 逐字节回滚 e10（`c66dd3e2`）多波，metax/hygon/enflame/ascend 留 e12 字节——零新 kernel 逻辑，八芯全部落在平台已证读数，组合均值 ~4.49 vs TB 4.3452） | 待远端 release 后打包 | 待远端 release | 均值 >4.3452 换 TB 且天数 ≥7.5 且昆仑 ≥0.65；任一芯较已证读数 -5% 判负回滚 e10 全字节；不消耗天数挂死族 1/1 重掷配额 |
+| [T81 fused_gate_sigmoid_mul_add e13](fused_gate_sigmoid_mul_add.md)（generic/_kunlunxin 逐字节回滚 e10（`c66dd3e2`）多波，metax/hygon/enflame/ascend 留 e12 字节——零新 kernel 逻辑，八芯全部落在平台已证读数，组合均值 ~4.49 vs TB 4.3452） | e13-b17f47a（`19fbb7b7…ddc4`，6 成员与 commit 字节一致，≠e12 新 zip_sha256） | 8 测试 243 case 0 失败 0 skip，6 源 × 35 launch ✓（`day5prep-20260921/fused_gate_sigmoid_mul_add-e13-wf/`，verification_commit=b17f47a0） | 均值 >4.3452 换 TB 且天数 ≥7.5 且昆仑 ≥0.65；任一芯较已证读数 -5% 判负回滚 e10 全字节；不消耗天数挂死族 1/1 重掷配额 |
 
 ## 2026-09-22 T91 e9 上膛（燧原 w natural-layout DMA 流形态，待发射）
 
