@@ -9,10 +9,33 @@ platform: e13(20320)valid 8/8 avg 4.38823333新TB(旧4.34518333=e10/17390);天�
 candidate_stage: e13
 team_best_stage: e13
 team_best_speedup: 4.38823333x
-sealed: no
-next: -5%回滚条款已触发(昆仑-75%/华为-12%)但昆仑成员实测=e10逐字节(sha 8aa1c28a)而读数停e12水平0.1821——非字节驱动,纯字节回滚无法恢复读数;回滚与否归编排方;天数挂死族1/1重掷配额未消耗
+sealed: yes
+next: e1多行/e2双kernel已证伪；constexpr stride不足以证明DMA收益，i32寻址仅可离线验GCU同版本IR。当前无目标芯证据不消耗4次额度，转T76；昆仑e10同字节0.73→0.18属环境波动
 updated: 2026-09-23
 ```
+
+## 2026-09-23 冲榜复核：旧多行方案撤销，暂无可发射新结构
+
+- 最新 17:50 榜单：我方 e13 **4.38823333** vs c2flow **5.206383**；
+  燧原 1.99373333 vs 4.4208 是最大单芯差。即使燧原追平榜首，其他
+  七芯停在 e13，我方均分只到 **4.69161666**，仍差 0.5148。
+- 本账本 e1 多行 2D 从 s0 3.002 降到 2.006、e2 双 kernel 到 2.56，
+  两个旧结构均不能再列为“优先开发”。e3/e5/e6/e11 已分别兑现整行、
+  静态维度和单波路径，现行 GCU 仍仅 1.99；没有新的 target runtime
+  trace 能分离归约、访存和地址成本。
+- [FlagGems GCU300 生成器](https://github.com/flagos-ai/FlagGems/blob/f148752746cee390bdbe53b3eaac44bbebb4220b/src/flag_gems/runtime/backend/_enflame/gcu300/utils/pointwise_dynamic.py)
+  对规则 stride 的 DMA 可用性先按形状判断；在 `FlagOfNotUseDMA=False`
+  时调用普通运行时 stride 版本，在无法走 DMA 的布局才调用
+  `stride_constexpr` 版本。因此“把 stride 改成 constexpr 就启用 DMA”
+  对本题没有源码支持。[GCU300 配置](https://github.com/flagos-ai/FlagGems/blob/d03a66b71cbd586e9408b81ff8f2c4f8329b77a1/src/flag_gems/runtime/backend/_enflame/gcu300/utils/codegen_config_utils.py)
+  的 12 CTA、2 warps 是代码生成启发式，不是 Triton launch 硬上限。
+- `codex-ask`（gpt-6-sol/max，成功退出）建议：若做免额度离线实验，仅
+  把 Enflame 行基址转 int32，并按全部张量的实际 stride 与 masked tile
+  上界设 i64 回退；但必须先在同版本 GCU IR 见到寻址 lowering 变化，
+  NVIDIA 代理只能排除明显回退，无法证明 GCU 2 倍收益。现无该目标芯
+  编译通道，故**封存 T81，转 T76**。咨询记录
+  `artifacts/competition/fused_gate_sigmoid_mul_add/research-20260923/codex-ask.txt`
+  SHA-256 `872125bf18587f5910ea263095328d9d1e37d9cfdbaa520771fd5cc88d8b0e3e`。
 
 ## 契约与实现（S0）
 

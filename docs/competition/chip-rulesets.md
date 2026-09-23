@@ -6,7 +6,10 @@
 ## 燧原 GCU（gcu300）
 - grid 封顶 **12 CTA**（`max_grid_size=(12,1,1)`，超额走 grid-stride）；`num_warps=2`（官方启发式钉死）
 - `max_tile_size` 32K 元素起，按位宽放大（4B×2、2B×4）
-- **stride 必须编译期互整除才走 DMA**，否则 tile 缩 4 倍走非 DMA——运行时 stride 传参 = DMA 判定失败
+- [FlagGems GCU300 pointwise 生成器](https://github.com/flagos-ai/FlagGems/blob/f148752746cee390bdbe53b3eaac44bbebb4220b/src/flag_gems/runtime/backend/_enflame/gcu300/utils/pointwise_dynamic.py)
+  按**张量实际 stride 互整除关系**判 DMA 适用性；
+  不可用时 tile 缩 4 倍并调用 `stride_constexpr` 路径，可用时调用运行时 stride
+  路径。编译期固定 stride **不能单独证明**当前 kernel 会启用 DMA。
 - `enable_i64=False`：int64 寻址算术软仿真，全链 int32
 - i64 原生算子全部 NOT_SUPPORT 走 CPU；非连续 stride 不受支持（参考实现 cat/copy 类在 GCU 病理 → 巨分来源）
 - 反例：T80 flat-span 双流（111→13 判负）；T84 24 程序 ≠ 更优（瓶颈在别处）

@@ -34,6 +34,10 @@
   华为整块无 mask、尾块沿用 e22；代理 release、ZIP 验签和 codex-review
   通过，平台 **20457 八芯正确但均分 329.8088 < e22 最佳 341.3097**；
   华为 −28.8%，源码已从 e22 不可变 ZIP 恢复（`47dc1382`），本轴封存。
+- [T81 fused_gate_sigmoid_mul_add 冲榜复核](fused_gate_sigmoid_mul_add.md)：
+  多行与双 kernel 已证伪；官方 GCU 生成器也不支持“constexpr stride
+  必然启用 DMA”的推断。codex-ask 建议先拿同版本 GCU IR；当前封存，
+  不消耗剩余 4 次额度。
 
 ## 2026-09-23 19:00 冲榜循环日终收口（额度 10/30 剩，窗口明日 19:59 关）
 
