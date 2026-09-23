@@ -12,7 +12,7 @@ _BLOCK_T = 8
 _BLOCK_V = 512
 # ponytail: fixed core-scale cap avoids a costly per-call device query;
 # revisit the cap only if target-chip timing shows idle cores.
-_MAX_WORKERS = 40
+_MAX_WORKERS = 48
 
 
 @triton.jit
