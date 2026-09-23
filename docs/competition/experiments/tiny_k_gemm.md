@@ -5,12 +5,12 @@ task: 91
 operator: tiny_k_gemm
 batch: 6
 validity: valid
-platform: e9(20170)valid 1.885<TB1.974;燧原1.18→1.09(natural-layout未兑现,tl.trans可能被lowering折叠);天数2.75/A2.74/B2.86/muxi1.87;TB守
-candidate_stage: e9
-team_best_stage: s0
-team_best_speedup: 1.953
-sealed: no
-next: e9 已上膛待发射(燧原 w natural-layout [BLOCK_N,K]+tl.trans,launch字节冻结e8);门=燧原1.18→≥1.5且七芯不动;备用昆仑1.1/华为0.8 vendor
+platform: e8-3337be6(18750)valid TB1.973925; e8-14437ad(19380)valid 1.8200625; e9(20170)valid 1.885275; e10/e10b 本地筛选负例未提交
+candidate_stage: e10b-screen-rejected
+team_best_stage: e8-3337be6
+team_best_speedup: 1.973925
+sealed: yes
+next: 待同版本 GCU 逐 shape 计时和 lowered IR，才考虑反转 dot 操作数；剩余 1 次额度不用于未过筛选门的 T91
 updated: 2026-09-23
 ```
 
@@ -102,5 +102,40 @@ updated: 2026-09-23
     （m∈{1,7,16,64,1000,4096}×K∈{128,256}）；三 vendor 路径为 NVIDIA
     代理执行，目标芯 unverified（交平台补齐）。
 - 预注册门：燧原 e8 平台 1.18 → ≥1.5；其余七芯不动（vendor-only
-  单变量）；均值 >1.9739 换 TB（取正文 e8-3337be6 平台记录值——CURRENT
-  块 TB 仍记 1.953@s0，两处为既有矛盾待平台侧核实，门取高值保守）。
+  单变量）；均值 >1.9739 换 TB（取正文 e8-3337be6 平台记录值；
+  彼时 CURRENT 块沿用 1.953@s0，已在下文依平台状态修正）。
+
+## 2026-09-23 平台终态与 e10 结构筛选
+
+- 实时平台状态：e8-3337be6 submission **18750** 8/8 有效，均分
+  **1.973925**，是我方有效最佳；e8-14437ad submission **19380**
+  8/8、1.8200625，燧原 1.1760 / 昆仑 0.1488；e9 submission **20170**
+  8/8、1.885275，燧原 1.0870 / 昆仑 0.1501。后两次昆仑源码字节未变，
+  相比 e8-3337be6 的 1.0891 出现低水位。e9 燧原优于团队最佳的
+  0.6745，故保留当前 e9 源码；总分最佳仍为 e8-3337be6。
+- 榜首 HAiWORLD 3.1755875、燧原 10.5105；第二名燧原 1.6158。
+  若其他七芯固定为我方最佳 18750 的逐芯分数，超越榜首要求燧原
+  **>10.2878**。10.5105 是相对其他队伍的离群读数，不能据此判定错误。
+- e10 依 [SGLang CUDA tiny-K](https://github.com/sgl-project/sglang/blob/2d257677598134fbb091ecf5f023d1d678ee8c26/python/sglang/kernels/jit/csrc/gemm/tiny_gemm.cuh) 的“每列归约 K、逐行 M”工作划分，
+  将 `tl.dot` 换成 `[BLOCK_N,K]` 权重一次加载和逐 M 行 `tl.sum`；
+  `tl.static_range` 与运行时 `range` 两版各通过 generic/燧原代理路径
+  2/2 正确性。回执分别为
+  `artifacts/competition/tiny_k_gemm/e10-screen-20260923/verification.json`
+  （SHA `4513eda5cf6418598f858224fe1a62531e876fa7c73a318b8c81bfbecf74693f`）
+  与 `e10b-screen-20260923/verification.json`
+  （SHA `895f1f75544ca98d472ed77546f2f16c368b3ea87a9160007fb05fde6ef03b22`）。
+- RTX 5070 Ti 五组 AB/BA wrapper 计时：相对 e9，静态版在
+  `(M,K,N)=(1,128,4096)/(7,128,4096)/(16,256,4096)/(16,256,1000)`
+  的速度比为 **1.016/0.595/0.106/0.281**；运行时版
+  **1.016/0.575/0.101/0.247**。两版 0 spill；主要风险是按 M
+  串行归约并失去矩阵乘吞吐。筛选负例，**未制作 ZIP、未调用 codex-review、
+  未提交平台**。e10 源码和测试工作区差异已撤销，当前燧原源码 SHA
+  `818b59ce61d01a761ef740405f8cc1df6090f57914238f3a9c33a980695e12f7`
+  与不可变 e9 ZIP 成员一致。
+- 遇阻后使用 `codex-ask`（gpt-6-sol / max，退出码 0；输出 SHA
+  `c75ddebfccb4be3e0c2f70453ca2dd33305d74d59e4a7b0b77e96c6030d8e91e`）。
+  独立意见同意封存：二维同时归约所有 M 会形成巨大 FP32 中间张量且
+  仍放弃 `tl.dot`。只在取得 GCU 逐 shape 时间和 lowered layout/dot IR
+  后，考虑 `W[64,K] @ X[K,16]` 再转置存储，以较小 X 转置替代 W 转置；
+  需先看到 GCU 大 shape 收益且 M=1、N=64 不显著倒退，才重启完整
+  release → codex-review → preflight → 单次提交闭环。
