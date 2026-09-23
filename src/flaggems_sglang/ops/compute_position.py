@@ -92,7 +92,9 @@ def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
     assert extend_prefix_lens.ndim == extend_seq_lens.ndim == 1
     assert extend_prefix_lens.dtype == extend_seq_lens.dtype == torch.int32
     device = extend_seq_lens.device
-    positions = torch.empty(extend_seq_lens_sum, dtype=torch.int64, device=device)
+    positions = torch.empty(
+        extend_seq_lens_sum, dtype=torch.int64, device=device
+    )
     if batch <= 512:
         extend_start_loc = torch.empty(batch, dtype=torch.int32, device=device)
         if batch:
