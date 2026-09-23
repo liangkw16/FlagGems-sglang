@@ -4,15 +4,27 @@
 task: 80
 operator: fixup_zero_kv
 batch: 6
-validity: valid(8/8,e16,558.04x TB)
-platform: e21(20362)valid 8/8 avg 526.66305<TB 558.04判负;华为186.93(e20 210.91/e19 generic 267.04再降——48-tile cap+warps16第五种形态仍败,ascend轴宣告死亡);天数1187.9(+2.4%)其余窗口回落;TB守e16
+validity: valid(8/8,2026-09-23T18:56:15并行提交,569.125575x TB)
+platform: e21(20362)valid 8/8 avg 526.66305判负；23:20榜单确认并行账户新TB 569.125575/8芯过，提交ID及源码身份待核；本地e21轴仍封存
 candidate_stage: e21
-team_best_stage: e16
-team_best_speedup: 558.04x
+team_best_stage: parallel-1856-source-unverified
+team_best_speedup: 569.125575
 sealed: no
-next: T80华为ascend轴封存(e15/e16编译败,e20/e21读数低于generic,5形态尽);剩余缺口=燧原110.6→233.8(+15avg)与华为297→733(+54avg)均需全新算法形态非launch调参;额度17/30(used 13,observed 14:04+08)
+next: 先核实18:56并行提交的源码/ZIP身份；新TB距榜首649.22145差80.095875，主要缺口华为270.67/沐曦151.33/燧原91.56芯分；旧ascend launch轴已封存，优先探跨芯结构新形态。
 updated: 2026-09-23
 ```
+
+## 2026-09-23 23:20 榜单校准：并行账户新团队最佳 569.125575
+
+- 全量榜单 `docs/competition/data/batch6-intel-20260923-2323.json` SHA
+  `d3c7d96d881f9662f60f7136941d5cc22cc0e8e784e87a0241b4ac73fcde9ca3`：
+  我方 18:56:15 最佳提交 8/8、均分 569.125575、第 3；榜首 c2flow
+  649.22145，差 80.095875。该提交由并行账户活动产生，当前快照没有
+  submission ID、源码 commit、ZIP SHA，暂不归因到 e16/e21 或工作树字节。
+- 该最佳逐芯：天数 1179.2426 / 沐曦 420.5914 / 燧原 109.4644 /
+  海光 892.8396 / 昆仑 14.1844 / 华为 495.6348 / A 814.0218 /
+  B 627.0256。榜首主要领先华为 270.6668、沐曦 151.3320、燧原
+  91.5638 芯分；后续晋级门改为 8/8 且均值 >569.125575。
 
 ## 2026-09-23 E21 平台终态（20362）：valid 8/8 均值 526.66 < TB 判负；ascend 轴五形态尽、封存
 

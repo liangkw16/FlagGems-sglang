@@ -8,7 +8,7 @@ validity: valid(8/8,e6,1100.744x TB)
 platform: e6(20390)valid 8/8 avg 1100.744075 TB; e7 release就绪、尚未提交(23:20额度0/30)
 candidate_stage: e7
 team_best_stage: e6
-team_best_speedup: 1100.744x
+team_best_speedup: 1100.744075
 sealed: no
 next: e7最终codex-review后，次日额度恢复时做实时preflight；若门禁全绿单次提交。8/8且均值>1100.744075才换TB，否则回滚e6字节；榜首1747.5001，缺646.756025。
 updated: 2026-09-23
@@ -46,10 +46,15 @@ updated: 2026-09-23
 - 五轮交替 AB/BA、wrapper 计时，候选与 e6 等值：远端
   `/tmp/flagos-t77-e7-bench-v2.1dRulD`，脚本 SHA
   `3144a2b941e94b3b0ae433e21ba6b66116d7a5c60bfa126e9428c610e9766b55`，
-  e6 对照 SHA `186ca75b5bfee5c0c10309af0a9f42ee7781e2776c0e4701f1db19612f2a1ff2`；
+  `old.py` = e7 候选 = 上列 generic SHA（留存
+  `artifacts/competition/compute_position/e7-0e2f173/old.py`，与 Git 源码逐字节相同）；
+  `new.py` = e6 对照 SHA
+  `186ca75b5bfee5c0c10309af0a9f42ee7781e2776c0e4701f1db19612f2a1ff2`
+  （留存 `artifacts/competition/compute_position/e7-0e2f173/new.py`）；
   原始样本 `artifacts/competition/compute_position/e7-0e2f173/bench.out` SHA
   `6de62bf0592ec0d13d4621a9fab2ae938c749558b88e7eaaee3984617c7782d3`。
-  e6/e7 中位比：batch 1/16/63/256 为 1.953/1.909/1.941/1.962，
+  `bench.py` 的 `new_us/old_us` 即 e6/e7；中位比：batch 1/16/63/256
+  为 1.953/1.909/1.941/1.962，
   512 短/长为 1.291/1.140，513/1024/2049 为 1.001/1.002/1.001；
   无 prefix batch16 为 1.960。以上仅 NVIDIA 代理性能证据。
 - 不可变 ZIP：`artifacts/competition/compute_position/e7-0e2f173/compute_position.zip`
