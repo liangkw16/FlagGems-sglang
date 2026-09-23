@@ -4,13 +4,13 @@
 task: 92
 operator: unpad_draft_extend_output
 batch: 6
-validity: candidate(e23代理release 6/6,8源各13次launch;有效TB仍e22 341.31x)
-platform: e22(20358)valid 8/8 avg 341.3097>TB 331.10新TB;华为444.15(进378-507水位带但<480目标;drop-other-prefill未到680+场带);天数406.9/昆仑33.1/海光662.3/A526.6/B281.3;燧原126.7/沐曦249.5窗口回落
-candidate_stage: e23
+validity: valid(8/8,e22,341.3097x TB);e23有效但均分329.8088判负
+platform: e23(20457)valid 8/8 avg329.8088<TB e22(20358)341.3097;华为316.2016 vs e22 444.1506(-28.8%);已回滚e22华为源码
+candidate_stage: e22
 team_best_stage: e22
 team_best_speedup: 341.31x
-sealed: no
-next: e23仅华为整BLOCK无mask、尾块保e22；codex-review后实时preflight；目标8/8、均分>341.31、华为≥575验结构；额度5/30(17:50观测)
+sealed: yes
+next: e23整块无mask轴判负，不重投；华为恢复e22 ZIP成员sha e11c6420(47dc1382)，等待新的目标芯证据再重开；剩余额度4/30(18:13观测)
 updated: 2026-09-23
 ```
 
@@ -59,6 +59,28 @@ updated: 2026-09-23
   成功完成，`gpt-6-sol/max`；Spec 和 Standards 均未发现可确认的新增缺陷。
   评审枚举 11,308 组长度、tile 与网格组合，完整 tile 和尾 tile 均恰好
   覆盖有效元素一次；评审不证明华为目标芯编译或性能。审查门通过。
+
+## 2026-09-23 E23 平台终态（20457）：8/8 有效，但结构判负并回滚
+
+- 一次性提交 **20457**（daily_seq 26，18:09:28 +08），远端 ZIP SHA/大小
+  验签通过。平台 18:13:05 终态 `completed/valid`，8/8 正确，每芯 ≥0.1；
+  均分 **329.8088 < e22 TB 341.3097**，排名仍按 e22。codex-review 的
+  静态正确性结论成立，但平台性能否定了本轴。
+- 逐芯 e23 / e22（同字节成员也记录波动）：天数 394.1164 / 406.8622，
+  沐曦 265.3566 / 249.4908，燧原 125.8396 / 126.704，海光
+  662.6268 / 662.2952，昆仑 **79.6568 / 33.1488**（同字节 +140%，
+  表明强窗口波动），华为 **316.2016 / 444.1506**（唯一变更成员，
+  −28.8%），A 527.9116 / 526.5542，B 266.761 / 281.2718。
+  净八芯和 −92.0072，华为独自贡献 −127.949；即使昆仑同字节读数升高，
+  仍未抵消华为下降。
+- 命中预注册“均分未超 e22”回滚门：从不可变 e22 ZIP
+  `e22-5d57614/unpad_draft_extend_output.zip` 取回
+  `unpad_draft_extend_output_ascend.py`，SHA-256
+  `e11c642072ac46164a38054f6b7747d814638f434c7e4b43f9d810a41cd9c03e`；
+  工作树同 SHA，源码回滚 commit `47dc1382`。e23 ZIP 和平台记录保留，不重试。
+  剩余额度 **4/30**。完整 GET 保存在
+  `artifacts/competition/unpad_draft_extend_output/e23-34dad5b/platform-status-20457.json`，
+  SHA-256 `9b03eda13ffee6984c6ccb41f1fadf11bf3c69e8d1750794a6e37833c3c2f829`。
 
 ## 2026-09-23 E22 平台终态（20358）：valid 8/8 均值 341.31 新 TB
 

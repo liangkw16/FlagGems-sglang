@@ -31,8 +31,9 @@
   codex-ask 建议缺少目标芯正收益证据时暂停此题，源码与测试已还原 e7，
   未打包或提交平台。
 - [T92 unpad_draft_extend_output e23](unpad_draft_extend_output.md)：
-  华为专属整块无 mask、尾块沿用 e22；代理 release 6/6、八成员各 13 次
-  启动，ZIP `e0e7e7dd…1728` 验签和 codex-review 通过，待实时 preflight。
+  华为整块无 mask、尾块沿用 e22；代理 release、ZIP 验签和 codex-review
+  通过，平台 **20457 八芯正确但均分 329.8088 < e22 最佳 341.3097**；
+  华为 −28.8%，源码已从 e22 不可变 ZIP 恢复（`47dc1382`），本轴封存。
 
 ## 2026-09-23 19:00 冲榜循环日终收口（额度 10/30 剩，窗口明日 19:59 关）
 
