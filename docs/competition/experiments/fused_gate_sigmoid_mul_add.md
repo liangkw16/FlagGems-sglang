@@ -5,7 +5,7 @@ task: 81
 operator: fused_gate_sigmoid_mul_add
 batch: 6
 validity: valid
-platform: e12(20164)evaluating:天数waiting_callback;七芯已读muxi4.93(+42%!)/haig7.11(+41%!)/enfl1.98/huaw2.00/A5.90/B5.00;两门至少一芯兑现
+platform: e12(20164)invalid_correctness:天数3630s评测挂死(同T92e19族);七芯已读muxi4.93(+42%)/haig7.11(+41%)门已兑现;挂死族1/1重掷=新载体commit
 candidate_stage: e12
 team_best_stage: e10
 sealed: no
@@ -262,3 +262,14 @@ updated: 2026-09-23
   - `fused_gate_sigmoid_mul_add_metax.py`（5864B，
     `8645794657aa4f03dc7e223fd97f51ba36b18d8402321280d2c6124cbe2d290d`）。
   全部 UTF-8 `.py`、generic/vendor basename 精确合规、无目录前缀或垃圾文件。
+
+
+## 2026-09-23 E12 平台终态：invalid_correctness（天数挂死）
+
+- E12（20164）：天数执行超时 3630s/3600s（子进程 S 态阻塞——同 T92 e19 的
+  评测挂死族）。七芯已读：**沐曦 4.93（+42%）/ 海光 7.11（+41%）**——两门
+  至少一芯兑现确认，但天数判负致整发 invalid。昆仑 0.183（e12 单波对
+  昆仑回退-75%）。
+- 修复路径：载体 commit 重掷天数（1/1）；或按调研板 T81-structural——
+  按芯组合已证字节（metax/hygon 留 e12 单波，generic/kunlunxin 回滚
+  e10 多波）即得新 TB ~4.45。
