@@ -8,8 +8,11 @@
   平台 **8/8 有效但均分 6.261475 < e8 TB 6.42825**；燧原标量间接读
   1.3048 < e8 one-hot 线性扫描 1.8538，预注册门失败。源码已按 e8 ZIP
   原样回滚（`bf4fea57`），该轴关闭；今日余量 9/30。
-- T83 优先破解昆仑 bf16 一元素容差：codex-ask 建议把三次舍入拆成
-  独立 kernel 的可测诊断；尚无独立 XPU 执行通道，先做可复现边界回归。
+- [T83 indexed_scale_shift e3rr](indexed_scale_shift.md)：三段跨 kernel
+  bf16 落地并复用唯一输出缓冲区；前两轮 codex-review 的整表/按行额外
+  分配 P2 和尾块 P3 已修复（`3015a0cd`）。代理 release 5/5、generic
+  13/kunlun 39 launch，ZIP `05705b45…86cf` 已验签；第三轮评审无缺陷，
+  待实时 preflight 与平台目标芯结果。
 
 ## 2026-09-23 19:00 冲榜循环日终收口（额度 10/30 剩，窗口明日 19:59 关）
 
