@@ -133,6 +133,25 @@ class IndexedScaleShiftTest(unittest.TestCase):
         idx = torch.tensor([0, 999_999], dtype=torch.int32, device="cuda")
         self.check((x[:2, :17], shift, scale, idx), exact=True)
 
+    def test_row_grid_boundary(self):
+        # Different values per row expose a missed or duplicated second pass.
+        for rows, hdim in ((2047, 17), (2048, 17), (2049, 17), (3072, 4096)):
+            with self.subTest(shape=(rows, hdim)):
+                values = (torch.arange(rows, device="cuda") % 8).to(
+                    torch.bfloat16
+                )
+                x = values[:, None].expand(rows, hdim).contiguous()
+                scale = torch.zeros(
+                    3, hdim, dtype=torch.bfloat16, device="cuda"
+                )
+                shift = torch.zeros_like(scale)
+                scale[1].fill_(0.5)
+                scale[2].fill_(1)
+                shift[1].fill_(-0.125)
+                shift[2].fill_(0.25)
+                idx = (torch.arange(rows, device="cuda") % 3).to(torch.int32)
+                self.check((x, shift, scale, idx), exact=True)
+
     def test_int32_indices(self):
         x = torch.randn(33, 2048, dtype=torch.bfloat16, device="cuda")
         shift = torch.randn(7, 2048, dtype=torch.bfloat16, device="cuda")
@@ -146,6 +165,7 @@ RELEASE_REQUIRED_TESTS = [
     "IndexedScaleShiftTest.test_double_round_boundary",
     "IndexedScaleShiftTest.test_each_bf16_boundary",
     "IndexedScaleShiftTest.test_sparse_table_and_second_tile_tail",
+    "IndexedScaleShiftTest.test_row_grid_boundary",
     "IndexedScaleShiftTest.test_int32_indices",
 ]
 
