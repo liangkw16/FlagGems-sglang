@@ -132,12 +132,28 @@ class MoeAlignBlockSizeTest(unittest.TestCase):
                     )
                 )
 
+    def test_multitile_program_walk(self):
+        # numel above 131072 gives the kunlun vendor's capped grid a
+        # second tile per program, exercising the tilebase
+        # read-modify-write advance; 131073 crosses the same boundary
+        # with a partial tail tile. E=33 keeps the expert fan-in low so
+        # both tiles of a program feed the same experts.
+        for tokens in (131072, 131073):
+            with self.subTest(tokens=tokens):
+                self.check(
+                    make_case(
+                        tokens=tokens, topk=1, num_experts=33,
+                        block_size=16,
+                    )
+                )
+
 
 RELEASE_REQUIRED_TESTS = [
     "MoeAlignBlockSizeTest.test_shapes_and_expert_grid",
     "MoeAlignBlockSizeTest.test_filtered_expert_bucket",
     "MoeAlignBlockSizeTest.test_dirty_scratch_reuse_and_tile_walk",
     "MoeAlignBlockSizeTest.test_histogram_tile_boundary",
+    "MoeAlignBlockSizeTest.test_multitile_program_walk",
 ]
 
 
