@@ -5,12 +5,12 @@ task: 82
 operator: hash_topk
 batch: 6
 validity: valid
-platform: e8(20167)valid 6.428>TB6.316新TB(+1.8%);燧原0.97→1.85(+91%one-hot match-reduce兑现!);天数13.87/muxi4.39/haig11.97/A7.02/B9.37
-candidate_stage: e9
+platform: e9(20431)valid 8/8 avg6.261475<e8 TB6.42825;燧原1.3048<e8 1.8538,已回滚e8字节
+candidate_stage: -
 team_best_stage: e8
 team_best_speedup: 6.42825x
 sealed: no
-next: e9标量间接读取取代整行one-hot扫描;release 6测试0失败、generic/enflame各11 launch、ZIP验签、codex-review无问题;待实时preflight;门=8/8且燧原>=3、均值>6.42825,否则回e8
+next: e9标量串行间接读在GCU慢于one-hot整行线性读，关闭该轴；要再优化先拿GCU内核计时/IR，维持e8已证字节
 updated: 2026-09-23
 ```
 
@@ -136,3 +136,21 @@ updated: 2026-09-23
   正确且各芯 ≥0.1；燧原 ≥3.0 且均值 >6.42825 才保留 e9，其他七芯
   若较 e8 已证读数回退 >5% 需核对平台水位；燧原编译/数值败或低于
   3.0 则回滚到 e8 已证 ZIP 字节，不自动重试本候选。
+
+## 2026-09-23 E9 平台终态与回滚
+
+- 实时 preflight 绑定账户 `15600308080`、SoulCoder、T82/e9、源码
+  `53627c98`、ZIP SHA `55ede0ab…a744a`、release 回执 SHA
+  `4f17bbcd…03b0`，一次性提交编号 **20431**；平台确认选择
+  `hash_topk_enflame.py`。8/8 全部通过且每芯超过 0.1，均分
+  **6.261475 < e8 TB 6.42825**，未换团队最佳。远端 ZIP 验签在提交
+  响应中因未设置可信主机变量而显示 unavailable；本地 ZIP 已独立验签，
+  平台所选成员与候选一致，不把 unavailable 写成远端通过。
+- 逐芯：天数 13.3102、沐曦 4.3584、燧原 **1.3048**、海光 11.8238、
+  昆仑 0.2314、华为 2.8020、A 6.9316、B 9.3296。相对 e8 燧原
+  1.8538 下降 29.6%，远低于预注册 ≥3.0；标量串行/随机寻址在
+  GCU 上输给了 one-hot 线性扫描，不能用读量阶数替代目标芯计时判断。
+- 源码 `_enflame` 成员已从 e8 ZIP 原样恢复，SHA-256
+  `e30e8d7616c45e87a972d5954e63b5da97b871f3d02af19b21821386c5c0f7bc`；
+  与 e8 源码 commit `ff252260` diff 为空，回滚 commit `bf4fea57`。
+  e9 ZIP 与回执继续留档，不重传候选。

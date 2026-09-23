@@ -30,8 +30,8 @@
 
 ## 发射顺序
 
-1. T82 e9：单芯 vendor 改动、其余成员冻结，代理 release 与不可变 ZIP 已备；
-   codex-review 通过后执行实时 preflight，门禁全绿才用一次性 submit。
+1. T82 e9：已依门禁提交 20431，8/8 有效但均分 6.261475 低于 e8
+   6.42825；燧原 1.3048 低于原 1.8538，已回滚 e8 源码并关闭标量间接读轴。
 2. T83：先解决昆仑一元素正确性；8/8 之前不烧性能弹。T84：先取得 XPU
    编译/执行通道，两次相同类型编译失败后不再用额度探编译器。
 3. 其余优先 T80/T90/T92 的已见结构增量；每题先声明受影响 shape、预计
@@ -41,6 +41,9 @@
 每个新候选按源码/测试提交 → 同 commit release 回执 → ZIP 三方验签 →
 `codex-review --commit` → 实时 preflight → 单次 submit → 逐芯终态入账。
 代理 NVIDIA 只证明已执行数值路径，目标芯未执行时明记 `target-runtime-unverified`。
+
+终态更新：16:29 平台 T82 e9 已完成，额度余 9/30；上表仍为 16:11
+采样的赛题榜差，历史快照未回写。
 
 资料：平台[赛题与榜单](https://flagos.io/race-detail-season2?id=782kzq4m)，
 [SGLang 内核目录](https://github.com/sgl-project/sglang/blob/main/python/sglang/kernels/README.md)，
