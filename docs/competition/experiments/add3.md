@@ -4,15 +4,36 @@
 task: 76
 operator: add3
 batch: 6
-validity: candidate(e4代理release 3/3,待平台);有效TB e2 1.0564x
-platform: e2(17393)valid 8/8 avg1.0564 TB; e3(19376)invalid_threshold昆仑0.056(同generic字节e2=0.64),燧原1.06
-candidate_stage: e4
+validity: valid(8/8,e2,1.0564x TB);e4有效但均分1.04864167判负
+platform: e4(20468)valid 8/8 avg1.04864167<TB e2(17393)1.0564;燧原1.2423<预注册1.5门；昆仑0.4549同字节低水位
+candidate_stage: e3
 team_best_stage: e2
 team_best_speedup: 1.0564x
-sealed: no
-next: e4燧原大输入tile 8192→16384；代理1.80-2.62x，release/ZIP/codex-review均通过；待实时preflight与一次提交；平台门8/8各芯≥0.1、均分>1.0564、燧原≥1.5；昆仑同字节0.056风险；额度4/30
+sealed: yes
+next: e4燧原16384 tile平台仅1.06→1.24、均分低于TB；源码和测试恢复e3原字节(60ddaeb7)，不重投该轴；缺GCU阶段/IR新证据时转T91；额度2/30(18:41)
 updated: 2026-09-23
 ```
+
+## 2026-09-23 E4 平台终态（20468）：八芯有效，但未达收益门
+
+- 一次性提交 **20468**（daily_seq 28，18:38:59 +08）；远端 ZIP SHA
+  `77f029e7…f4f` 和 4810 B 验签通过。18:41:27 终态
+  `completed/valid`、8/8 正确、各芯 ≥0.1，均分
+  **1.04864167 < e2 TB 1.0564**，`is_team_best=false`。
+- 逐芯 e4 / e2：天数 1.43693333 / 1.47126667，沐曦 1.011 /
+  1.11353333，燧原 **1.24226667 / 0.91393333**，海光 1.29706667 /
+  1.3738，昆仑 **0.45486667 / 0.6432**（generic 成员同字节），
+  华为 0.32626667 / 0.35，A 1.34853333 / 1.32533333，B 1.2722 /
+  1.26013333。八芯和净 −0.06206665；燧原比 e3 1.06 约 +17%，
+  远小于 NVIDIA 代理 1.80–2.62 倍，**未达预注册 ≥1.5 门**。
+- 从 e3 不可变 ZIP 恢复 Enflame 成员，SHA-256
+  `adc00b8cb7d9997f83d515e702e04ce03a54314f261a1f19d36b5cca003c79c3`；
+  测试也回到 e4 前字节，源码回滚 commit `60ddaeb7`。e4 成绩和 ZIP 保留，
+  不重投该轴。完整 GET
+  `artifacts/competition/add3/e4-cc81499/platform-status-20468.json` SHA-256
+  `a01c876f21135dff29460345210661027924cde22a2c931353919200f4685f9e`；
+  剩余 **2/30** 次。瓶颈从代理上的寄存器溢出收敛为目标芯不明的
+  访存/launch/编译 lowering；需要 GCU 阶段计时或 IR 后再开新结构。
 
 ## 2026-09-23 E4 候选：燧原满波后扩大流式 tile
 
