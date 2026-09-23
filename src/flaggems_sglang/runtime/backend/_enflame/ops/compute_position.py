@@ -79,13 +79,16 @@ def _fill_positions_i32(
             )
 
 
-def _int64_packed(device):
-    # probed per call: a module-level cache dict is rejected by the
-    # platform's code-safety scan (global mutable container), and one
-    # tiny arange + readback is ~100us against a ms-scale reference
-    probe = torch.arange(4, dtype=torch.int64, device=device)
-    head = probe.view(torch.int32)[:4].tolist()
-    return head == [0, 1, 2, 3]
+def _int64_packed(positions, numel):
+    # narrowed int64 packing is visible in pure tensor metadata with
+    # zero device work and zero host sync (the previous per-call
+    # arange/readback probe cost a ~100us D2H sync every call, which
+    # dominated the op on GCU): N int64 elements view as N int32 words
+    # under torch-gcu's narrowed 4-byte storage, 2N under the standard
+    # 8-byte pairs layout
+    if numel == 0:
+        return False
+    return positions.view(torch.int32).numel() == numel
 
 
 def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
@@ -108,7 +111,7 @@ def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
             BLOCK_BS=triton.next_power_of_2(min(max(batch, 1), 8192)),
             num_warps=_NUM_WARPS,
         )
-        if _int64_packed(device):
+        if _int64_packed(positions, extend_seq_lens_sum):
             _fill_positions_i32[(min(batch, _MAX_CTAS),)](
                 positions.view(torch.int32),
                 extend_start_loc,
