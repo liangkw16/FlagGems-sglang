@@ -1,10 +1,10 @@
 # 第二批候选与提交队列
 
-## 2026-09-23 T90 e7 候选实现（燧原 [RB,W] 行块瓦片整成员替换，待验证上膛）
+## 2026-09-23 T90 e7 候选实现（燧原 [RB,W] 行块瓦片整成员替换；round-2 评审通过，待验证上膛）
 
 | 候选 | ZIP | 回执 | 预注册门 |
 | --- | --- | --- | --- |
-| [T90 sigmoid_gate_mul_broadcast e7](sigmoid_gate_mul_broadcast.md)（本轮 commit：`_enflame` 整成员替换——[RB,W] 行块瓦片（W=HDIM 最大 2 幂因子封顶 65536、RB*W=65536 对齐 relu2 宽度带）、constexpr HDIM 行距→DMA 通路、gate [RB] 向量载入广播（无逐元素除法 gather）、零列掩码、行块 grid-stride+12-CTA+num_stages 3；int32 域断言 `(rows+RB)*hdim<2^31`；新增回归 `test_rowblock_tile_boundary`；generic/_ascend/_hygon 冻结 e4 字节，e6 字节绝不再入包） | 待 release 代理验证 + `e7-<commit>` ZIP | 待上膛回执 | 燧原 ≥2.0 保留 / ≥2.5 进场带（金狐狸 2.51 下沿）；均值 >2.5247 换 TB；任一其余芯 -5% 判负；回退档=纯 1D BLOCK=W 标量 row |
+| [T90 sigmoid_gate_mul_broadcast e7](sigmoid_gate_mul_broadcast.md)（代码 commit `f43cf87e`（round-1 实现；round-2 唯一发现=py_compile 口径，裁定门禁仅作用 .py、代码零发现字节不变）：`_enflame` 整成员替换——[RB,W] 行块瓦片（W=HDIM 最大 2 幂因子封顶 65536、RB*W=65536 对齐 relu2 宽度带）、constexpr HDIM 行距→DMA 通路、gate [RB] 向量载入广播（无逐元素除法 gather）、零列掩码、行块 grid-stride+12-CTA+num_stages 3；int32 域断言 `(rows+RB)*hdim<2^31`；新增回归 `test_rowblock_tile_boundary`；generic/_ascend/_hygon 冻结 e4 字节，e6 字节绝不再入包） | 待 release 代理验证 + `e7-<commit>` ZIP | 待上膛回执 | 燧原 ≥2.0 保留 / ≥2.5 进场带（金狐狸 2.51 下沿）；均值 >2.5247 换 TB；任一其余芯 -5% 判负；回退档=纯 1D BLOCK=W 标量 row |
 
 ## 2026-09-23 T92 e21r 平台终态（20313）：invalid_correctness 7/8——华为 ub-overflow 消除、转数值败
 

@@ -10,7 +10,7 @@ candidate_stage: e7
 team_best_stage: e4
 team_best_speedup: 2.5247
 sealed: no
-next: e7已实现(燧原_enflame整成员替换=[RB,W]行块瓦片,本轮commit待评审)待release代理验证+e7-ZIP上膛;门=燧原≥2.0保留/≥2.5进场带,均值>2.5247换TB,任一其余芯-5%判负,回退档=纯1D BLOCK=W标量row;e6字节绝不再入包
+next: e7评审2轮通过(唯一发现=py_compile口径,裁定门禁仅作用.py、markdown账本不在编译范围;代码零评审发现,字节=f43cf87e)待release代理验证+e7-ZIP上膛;门=燧原≥2.0保留/≥2.5进场带,均值>2.5247换TB,任一其余芯-5%判负,回退档=纯1D BLOCK=W标量row;e6字节绝不再入包
 updated: 2026-09-23
 ```
 
@@ -203,3 +203,23 @@ updated: 2026-09-23
   （e4/e6 三共同成员字节逐一相同已核实），任何提交均有 invalid_threshold
   连坐风险，非本候选可控。
 - 待办：评审通过后 release 代理验证 + `e7-<commit>` ZIP 验签上膛。
+
+## 2026-09-23 e7 第 2 轮：评审门禁口径裁定（代码零发现，候选字节不变）
+
+- 第 1 轮唯一评审发现：py_compile 失败——评审把命令作用到全部触碰文件，
+  账本 line 13 `≥`(U+2265)、README line 7 `（`(U+FF08) SyntaxError。本轮
+  会话原样复现（同文件同行同字符，`python3 -m py_compile` 实跑）；两个
+  .py 触碰文件 exit 0 通过。
+- 升级裁定（编排方）：py_compile 门禁只作用于触碰的 Python 源码文件；
+  markdown 账本/README 是记录文档，不在编译范围；为过 Python 编译重写冻结
+  历史账本会破坏 `gen_experiment_index.py` 的 ```current 解析契约，禁止。
+  该评审条按此口径驳回；.py 层面 round-1 实现零评审发现。
+- 候选身份不变：代码/测试字节 = round-1 commit `f43cf87e`（op sha256
+  `a4f8df21fdf86287eb29cfe50fe6bab63c96ec470f735cea75b36f0eea5df63a`、
+  test sha256 `e46a497908c440ecc1201baa0d91ea753c84b37a30e3dea6e0481d36a10c6313`，
+  本轮会话逐一核对工作树与该 commit git blob 逐字节相同）；本轮 commit
+  仅账本/README/INDEX 记录，四个 ZIP 源成员路径字节在两 commit 间不变。
+- 后续不变：release 代理验证 + `e7-<commit>` ZIP 上膛（source commit 取
+  载有上述 .py 字节的 commit，`f43cf87e` 与本轮 commit 等价）；预注册门
+  与回退档同第 1 轮（燧原 ≥2.0 保留 / ≥2.5 进场带；均值 >2.5247 换 TB；
+  任一其余芯 -5% 判负；回退档=纯 1D BLOCK=W 标量 row）。
