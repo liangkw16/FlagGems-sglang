@@ -19,7 +19,7 @@
 - 反例：T80 warps 阶梯 2>4>8>1（实测闭合）
 
 ## 华为 Ascend（Atlas A2 / triton-ascend）
-- **Vector CMP 不支持 int32/int64（降标量）**；**Vector ADD 无 int64**——掩码比较转 fp32（域内 <2^24，边界用标量分支保整数路径），寻址全 int32
+- **Vector CMP 不支持 int32/int64（降标量）**；**Vector ADD 无 int64**。文档建议可用 fp32 比较，但 T80 e27 的 `≤2^24` token 掩码实测 6 case 数值错；不能把类型转换当作通用等价替换。T80 e25 安全 i32 地址也未提升华为，须逐核验证。
 - UB **192KB**；`tl.static_range` 全展开按迭代累计占用（改 `tl.range` 只留 1 活 tile）
 - **block↔物理核强绑定**（AIV 40-48 核，每核 1 block），小程序网格 = 每程序固定 setup + 核闲置
 - 向量通路 **32B 对齐**（16 bf16）；masked load 的 other 预填会串行化 MTE2
