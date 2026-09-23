@@ -1,5 +1,11 @@
 # 第二批候选与提交队列
 
+## 2026-09-23 T81 e13 上膛（按芯组合已证字节，待远端回执）
+
+| 候选 | ZIP | 回执 | 预注册门 |
+| --- | --- | --- | --- |
+| [T81 fused_gate_sigmoid_mul_add e13](fused_gate_sigmoid_mul_add.md)（generic/_kunlunxin 逐字节回滚 e10（`c66dd3e2`）多波，metax/hygon/enflame/ascend 留 e12 字节——零新 kernel 逻辑，八芯全部落在平台已证读数，组合均值 ~4.49 vs TB 4.3452） | 待远端 release 后打包 | 待远端 release | 均值 >4.3452 换 TB 且天数 ≥7.5 且昆仑 ≥0.65；任一芯较已证读数 -5% 判负回滚 e10 全字节；不消耗天数挂死族 1/1 重掷配额 |
+
 ## 2026-09-22 T91 e9 上膛（燧原 w natural-layout DMA 流形态，待发射）
 
 | 候选 | ZIP | 回执 | 预注册门 |

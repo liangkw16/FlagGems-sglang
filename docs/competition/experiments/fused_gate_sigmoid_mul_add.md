@@ -6,10 +6,10 @@ operator: fused_gate_sigmoid_mul_add
 batch: 6
 validity: valid
 platform: e12(20164)invalid_correctness:天数3630s评测挂死(同T92e19族);七芯已读muxi4.93(+42%)/haig7.11(+41%)门已兑现;挂死族1/1重掷=新载体commit
-candidate_stage: e12
+candidate_stage: e13
 team_best_stage: e10
 sealed: no
-next: e12已上膛(五元组齐:ZIP d7b06976,回执8测试0失败6路径x35launch);09-23额度刷新后preflight→submit;回执后燧原GCU几何移植候选为下一发(文件互不重叠)
+next: e13按芯组合已证字节(generic/_kunlunxin逐字节回滚e10,metax/hygon/enflame/ascend留e12)零新kernel逻辑;远端release回执+不可变ZIP后preflight→submit;不消耗天数挂死族1/1重掷配额
 updated: 2026-09-23
 ```
 
@@ -273,3 +273,39 @@ updated: 2026-09-23
 - 修复路径：载体 commit 重掷天数（1/1）；或按调研板 T81-structural——
   按芯组合已证字节（metax/hygon 留 e12 单波，generic/kunlunxin 回滚
   e10 多波）即得新 TB ~4.45。
+
+## 2026-09-23 E13 候选开发完成：按芯组合已证字节（generic/kunlunxin 回滚 e10），待远端回执
+
+- 结构（零新 kernel 逻辑，修复路径第二条的落地）：`src/.../ops/
+  fused_gate_sigmoid_mul_add.py` 与 `src/.../_kunlunxin/ops/
+  fused_gate_sigmoid_mul_add.py` 两文件逐字节回滚 `c66dd3e2`（e10，
+  submission 17390 = 现 TB 4.34518333 的载体）——generic 恢复上游 warps
+  公式（无 e12 的 HIP 16 封顶）全行 tile + `min(rows,2048)` 多波
+  grid-stride；_kunlunxin 恢复多波 BLOCK_H=1024。metax/hygon/enflame/
+  ascend 四文件保留 e12 提交（20164）字节不动——天数逃离单波挂死族、
+  昆仑逃离 -75% 回退，沐曦/海光保留 +42%/+41% 收益。
+- 字节溯源（本会话实测）：回滚后 generic
+  `1cc41e8b8d1eb642244b358c704e1f9f145abe952d63ecc961479d5bc9b4e4f8`（4113B）
+  与 _kunlunxin
+  `8aa1c28aa13f1ed7fb92da0908304a8cd027caaca146adc87ca1e1ae79d4fe1c`（3015B）
+  与 e10 ZIP 成员 `cmp` 逐字节相同；ascend `aa48c034…` / enflame
+  `638dab22…` / hygon `30bab80e…` / metax `86457946…` 与 e12 ZIP 成员
+  哈希（本账本 254-263 行）逐项相同——八芯全部落在平台已证字节上。
+- 组合核算（全部取已证读数）：天数 7.90（e10）/ 沐曦 4.93（e12，读数
+  4.9293）/ 燧原 1.98（e12，1.9828）/ 海光 7.11（e12，7.1118）/ 昆仑
+  0.73（e10，多波 BLOCK_H=1024）/ 华为 2.36（e10 同字节窗 2.00-2.36）/
+  A 5.98（e10）/ B 4.93（e10），均值 (7.90+4.93+1.98+7.11+0.73+2.36+
+  5.98+4.93)/8 = **4.49** vs TB 4.3452。
+- 预注册门：均值 >4.3452 换 TB 且**天数 ≥7.5 且昆仑 ≥0.65**；任一芯较
+  其已证读数 -5% 判负回滚 e10 全字节。主风险：窗口波动（华为同字节
+  2.00-2.36 带宽）与组合本身的未知交互。本发不重掷单波路径，**不消耗
+  天数挂死族 1/1 重掷配额**。
+- 测试：沿用全矩阵，无新语义、无新增测试方法（RELEASE_REQUIRED_TESTS
+  维持 8 项，AST 静态核对 8/8 解析到真实方法）。回滚后 generic/kunlunxin
+  无 `_single_wave_grid`，`test_single_wave_grid_routing` 的 hasattr
+  跳过防御（tests/test_fused_gate_sigmoid_mul_add.py:138-141）天然覆盖，
+  metax/hygon 的路由边界仍被实际断言；`test_multiwave_fallback_above_
+  grid_limit`（rows=65536）与 dense/gapped 逐位 parity 对纯多波模块
+  平凡成立。仅更新两处因 e13 失真的注释（skip 集合与 parity 分支说明）。
+  py_compile 三触碰文件 + 四保留成员共 7 文件通过（本机无 torch/triton，
+  kernel 数值回归待远端 release 回执，同 e12 流程）。

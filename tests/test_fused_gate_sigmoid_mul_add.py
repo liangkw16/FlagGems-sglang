@@ -136,8 +136,11 @@ class FusedGateSigmoidMulAddTest(unittest.TestCase):
         # boundary is asserted on the routing arithmetic itself.
         for name, module in MODULES:
             if not hasattr(module, "_single_wave_grid"):
-                # Out-of-scope variants (ascend keeps the e6 form,
-                # enflame keeps its own e11 single-wave policy).
+                # Out-of-scope variants: e13 rolls generic and kunlunxin
+                # back to the e10 multi-wave-only bytes (the e12 single
+                # wave hung tianshu and cost kunlun -75%); ascend keeps
+                # the e6 form, enflame keeps its own e11 single-wave
+                # policy.
                 continue
             with self.subTest(module=name):
                 route = module._single_wave_grid
@@ -166,9 +169,12 @@ class FusedGateSigmoidMulAddTest(unittest.TestCase):
 
     def test_single_wave_multi_wave_parity(self):
         # Identical bytes through both branches: contiguous rows take
-        # the single-wave kernel, row-gapped strides take the multi-wave
-        # fallback (enflame: its own single-wave kernel either way) -
-        # branch choice must not move a bit.
+        # the single-wave kernel where the module has one (e13: metax
+        # and hygon; enflame runs its own single-wave policy either
+        # way), row-gapped strides take the multi-wave kernel - branch
+        # choice must not move a bit. Modules already on multi-wave-only
+        # bytes (e13 generic/kunlunxin, ascend) hold the same parity
+        # through the identical kernel.
         dense = make_case(rows=97, hidden=2048, seed=5)
         gapped = make_case(rows=97, hidden=2048, strided=True, seed=5)
         for name, module in MODULES:
