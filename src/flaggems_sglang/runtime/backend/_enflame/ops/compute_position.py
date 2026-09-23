@@ -78,12 +78,14 @@ def _fill_dual_layout(
             if packed:
                 tl.store(positions_words + idx, prefix_len + o, mask=m)
             else:
-                wide = prefix_len.to(tl.int64) + o
-                lo = (wide & 0xFFFFFFFF).to(tl.int32)
-                hi = (wide >> 32).to(tl.int32)
-                idx64 = idx.to(tl.int64)
-                tl.store(positions_words + 2 * idx64, lo, mask=m)
-                tl.store(positions_words + 2 * idx64 + 1, hi, mask=m)
+                # int32-only little-endian split: the wrapped sum IS the
+                # low word, and for non-negative addends the carry into
+                # bit 32 is exactly sum < 0 - int64 vector ALU ops
+                # (bitwise and/shift) fail make_gcuir on gcu300
+                lo = prefix_len + o
+                hi = (lo < 0).to(tl.int32)
+                tl.store(positions_words + 2 * idx, lo, mask=m)
+                tl.store(positions_words + 2 * idx + 1, hi, mask=m)
 
 
 def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
