@@ -32,7 +32,6 @@ def _fixup_zero_kv(
     BLOCK_T: tl.constexpr,
     BLOCK_V: tl.constexpr,
     BLOCK_H: tl.constexpr,
-    FP32_MASK: tl.constexpr,
 ):
     # Each virtual item owns one (segment, tile slot). Fixed workers
     # revisit items in a grid stride; slots split one long zero segment
@@ -43,20 +42,31 @@ def _fixup_zero_kv(
         if tl.load(lens + seg * KS0) == 0:
             beg = tl.load(cum + seg * CS0).to(tl.int64)
             end = tl.load(cum + (seg + 1) * CS0).to(tl.int64)
-            tiles = tl.cdiv(end - beg, BLOCK_T)
+            full_tiles = (end - beg) // BLOCK_T
             v = tl.arange(0, BLOCK_V).to(tl.int64)
             h = tl.arange(0, BLOCK_H).to(tl.int64)
             hm = h < NH
             zeros = tl.zeros((BLOCK_T, BLOCK_V), dtype=out.dtype.element_ty)
             ninf = tl.full((BLOCK_T, BLOCK_H), float("-inf"), dtype=tl.float32)
-            for tile in range(slot, tiles, SLOTS):
+            for tile in range(slot, full_tiles, SLOTS):
                 t = beg + tile * BLOCK_T + tl.arange(0, BLOCK_T).to(tl.int64)
-                # Ascend Vector Cmp handles fp32 but lowers integer
-                # comparisons to scalar work. Keep i64 addresses exact.
-                if FP32_MASK:
-                    tm = t.to(tl.float32) < end.to(tl.float32)
+                for v0 in tl.static_range(0, HV, BLOCK_V):
+                    vv = v0 + v[None, :]
+                    if v0 + BLOCK_V <= HV:
+                        tl.store(out + t[:, None] * OS0 + vv, zeros)
+                    else:
+                        tl.store(out + t[:, None] * OS0 + vv, zeros, vv < HV)
+                if NH == BLOCK_H:
+                    tl.store(lse + t[:, None] * LS0 + h[None, :], ninf)
                 else:
-                    tm = t < end
+                    tl.store(lse + t[:, None] * LS0 + h[None, :], ninf, hm)
+            # Only one slot owns the partial tail; full tiles need no
+            # token mask or per-element comparison on Vector Cores.
+            if full_tiles * BLOCK_T < end - beg and slot == full_tiles % SLOTS:
+                t = beg + full_tiles * BLOCK_T + tl.arange(0, BLOCK_T).to(
+                    tl.int64
+                )
+                tm = t < end
                 for v0 in tl.static_range(0, HV, BLOCK_V):
                     vv = v0 + v[None, :]
                     tl.store(
@@ -104,7 +114,6 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             BLOCK_T=_BLOCK_T,
             BLOCK_V=_BLOCK_V,
             BLOCK_H=triton.next_power_of_2(max(1, num_heads)),
-            FP32_MASK=total_tokens <= 2**24,
         )
     return out, lse
 
