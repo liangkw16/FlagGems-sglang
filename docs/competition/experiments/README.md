@@ -8,11 +8,10 @@
   平台 **8/8 有效但均分 6.261475 < e8 TB 6.42825**；燧原标量间接读
   1.3048 < e8 one-hot 线性扫描 1.8538，预注册门失败。源码已按 e8 ZIP
   原样回滚（`bf4fea57`），该轴关闭；今日余量 9/30。
-- [T83 indexed_scale_shift e3rr](indexed_scale_shift.md)：三段跨 kernel
-  bf16 落地并复用唯一输出缓冲区；前两轮 codex-review 的整表/按行额外
-  分配 P2 和尾块 P3 已修复（`3015a0cd`）。代理 release 5/5、generic
-  13/kunlun 39 launch，ZIP `05705b45…86cf` 已验签；第三轮评审无缺陷，
-  待实时 preflight 与平台目标芯结果。
+- [T83 indexed_scale_shift e3rr](indexed_scale_shift.md)：评审与 release
+  通过后平台 20438 仍为 7/8，昆仑 case 3 约 33% 失配主指纹与 e2
+  相同，三段 bf16 物化假说判负；源码回滚 e2 ZIP 原字节（`fc5f7b3e`），
+  额度余 8/30。codex-ask 正复核 grid-stride 第二轮假说。
 
 ## 2026-09-23 19:00 冲榜循环日终收口（额度 10/30 剩，窗口明日 19:59 关）
 

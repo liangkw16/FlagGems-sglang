@@ -4,13 +4,13 @@
 task: 83
 operator: indexed_scale_shift
 batch: 6
-validity: candidate(旧e2 7/8，新e3rr待平台)
-platform: completed(17729,e2,7/8;昆仑多case失败，含1元素刀刃及大shape失配)
-candidate_stage: e3rr
+validity: invalid_correctness(e3rr 20438,7/8)
+platform: e3rr(20438)7/8;昆仑case3约33%仍失配，同e2主指纹，源码回滚e2
+candidate_stage: -
 team_best_stage: -
 team_best_speedup: -
 sealed: no
-next: e3rr复用输出缓冲区跨三kernel落实bf16边界；release 5/5、ZIP验签、codex-review第三轮无缺陷；实时preflight后单次提交，门=8/8且每芯>=0.1，否则回旧e2源码
+next: 三段跨kernel边界证伪；case3约33%似3072行中二次grid-stride的1024行，codex-ask复核后才立e4；e3rr不重试
 updated: 2026-09-23
 ```
 
@@ -128,3 +128,29 @@ updated: 2026-09-23
 - 第三轮 `codex-review --base d915a42e --spec .../83-indexed_scale_shift.md`
   审 e3→e3r→e3rr 累积差异：Spec 与 Standards 均未发现符合报告门槛的
   缺陷；其结论明确不替代昆仑目标运行结果。评审门已通过。
+
+## 2026-09-23 E3rr 平台终态（20438）：7/8，三段边界假说证伪
+
+- 实时 preflight 绑定 SoulCoder/T83/e3rr、源码与测试
+  `3015a0cdf64282d39344a7bbf83a60e3b290ed8e`、ZIP SHA
+  `05705b45c1abba10068f0de026db6743c7c8b4bca1d55bcbdf31cd55684286cf`、
+  release SHA
+  `cb9c7a7df9e0ff16c3e9826ed543d2e29832622c779391b481c32b9c9c4ee310`；
+  一次性提交 **20438**。远端已上传 ZIP 哈希/大小双验签通过，昆仑选中
+  `indexed_scale_shift_kunlunxin.py` 并完成编译运行。终态
+  `invalid_correctness`、7/8、均分无效；额度余 8/30。
+- 逐芯通过且 speedup：天数 14.5882、沐曦 8.8402、燧原 0.9842、
+  海光 13.1402、华为 3.7456、A 11.2778、B 9.6418；昆仑失败无速度。
+  昆仑 case 1 为 7/75776（最大差 0.015625，阈值 0.015），
+  case 3 为 **4,154,953/12,582,912（33.0%）**；e2 同 case 是
+  4,154,643/12,582,912，且最大差同在 `(2508,793)`。
+  三个真实 kernel 边界仍保持这一主指纹，故“中间 bf16 未物化”为
+  主因的假设判负。
+- 12,582,912 可写成 3072×4096，约三分之一失配与 grid
+  `min(rows,2048)` 的第二次迭代 1024 行吻合；**这只是推断**，
+  平台没有公开 case 3 的完整 shape/输入。已用 codex-ask 询问是否
+  应优先改为每行一 program、去 grid-stride，再考虑位级 bf16 舍入。
+- 按预注册门，仓库昆仑 vendor 从 e2 ZIP 原样恢复，SHA-256
+  `44dc00e2e8a7816a8405ebf6bf02f4b5ce23f1c07ae501b3d01f1bf1c8d8c6a4`，
+  与 e3 前源码 diff 为空；回滚 commit `fc5f7b3e`。e3rr ZIP/回执
+  留档且不重传，下一候选必须另立假设与完整门禁。
