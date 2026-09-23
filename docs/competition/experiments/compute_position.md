@@ -4,15 +4,53 @@
 task: 77
 operator: compute_position
 batch: 6
-validity: valid(8/8,e6,1100.744x TB)
-platform: e7(20655)valid 8/8 avg 1021.7663<TB e6(20390)1100.744075；e7源码已按e6 ZIP回滚
-candidate_stage: e6
-team_best_stage: e6
-team_best_speedup: 1100.744075
-sealed: yes
-next: e7单核小批轴平台判负：天数-17.9%、昆仑-51.2%抵消华为+48.2%；保留e6最佳，不为单芯增益再耗额度；无新目标芯结构证据先转T80。
+validity: valid(8/8,e9,1233.7119x TB)
+platform: e9(20739)valid 8/8 avg 1233.7119新TB(旧1100.744075=e6);昆仑105.223回水位带;ts3089.8/muxi704.3/hg1626.0/A2088.8/B1999.1;燧原115.4(vendor)/华为141.1
+candidate_stage: e9
+team_best_stage: e9
+team_best_speedup: 1233.7119
+sealed: no
+next: 距c2flow 1747.5差513.8;下一轴e10=无循环2D grid平铺(攻华为141vs612与天数3090vs4773的fill吞吐/动态循环/并行度缺口);enflame vendor单launch化(115vs483)备选
 updated: 2026-09-24
 ```
+
+## 2026-09-24 E9 平台终态（20739）：8/8 valid 1233.71 新 TB（+12.1%），昆仑 vendor 隔离兑现
+
+- E9（submission **20739**，daily_seq 3，created 2026-09-24T07:2x+08，
+  commit `375fa767`）：completed/valid，8/8，均值 **1233.7119** 新
+  TB（+133.0 vs e6 1100.744075），is_team_best=true，rank 10→8。
+- 逐芯：天数 **3089.77** / 沐曦 704.28 / 燧原 115.39（vendor 未动）/
+  海光 **1625.96** / **昆仑 105.223**（vendor 隔离成功，e6 水位带
+  105.25 精确复现）/ 华为 141.14 / **A 2088.78** / **B 1999.15**。
+- 预注册门核对：8/8 ✓；昆仑 ~105 带 ✓；均值 >1100.744 ✓（+12.1%）。
+- 剩余缺口归因（vs c2flow 1747.5001，需 +4110 sum）：天数 +1683 /
+  海光 +899 / 华为 +471（141→612，4.3x）/ 燧原 +368（vendor，115→483）/
+  A +300 / 沐曦 +257 / B +107 / 昆仑 +25。华为与天数为主要结构缺口，
+  假说：fill 的 `range(0, seq_len, BLOCK)` 动态 trip-count 循环 +
+  grid=(batch,) 在小 batch 下 CTA 并行度不足 → e10 无循环 2D grid。
+
+## 2026-09-24 E8 平台终态（20738）：7/8——昆仑 fused 自扫数值错，单 launch 方向在七芯兑现
+
+- E8（submission **20738**，daily_seq 2，created 2026-09-24T07:09:31+08，
+  commit `c03cb3cc`）：completed/**invalid_correctness**（昆仑失败），TB 守
+  e6 1100.744075。
+- 逐芯（vs e6）：天数 **3206.93**（2927.56，+9.5%）/ 沐曦 687.41（674.68）/
+  燧原 115.17（116.42，vendor 未动）/ 海光 1616.69（1615.02，持平）/
+  **昆仑 None（失败）**/ 华为 146.58（147.71，持平）/ **A 2036.91**
+  （1687.14，+20.7%）/ **B 2036.14**（1532.17，+32.9%）。
+- 昆仑失败指纹（raw_result）：`test_compute_position[0/4/5]` 断言
+  mismatch 63-81%，第二输出（int32 extend_start_loc）出现垃圾大值——
+  fused 路径的 `tl.sum(tl.where(lanes < program_id, seg, 0), 0)` 标量
+  program_id 广播在 XPU 上错算（与向量整除、标量/向量混编同族的 XPU
+  lowering 缺陷）。单 launch 方向本身在七个芯兑现（B +33% 为最大）。
+- E9（commit `375fa767`）：generic e8 字节不动，新增
+  `compute_position_kunlunxin.py` vendor = e6 generic 函数体逐字节
+  （双 launch + low/high 拆分），隔离昆仑。codex-review 一条 P2
+  （tools/select_tests.py 不映射 vendor 路径→CI 不触发，属仓内 CI 覆盖
+  缺口，非提交门禁；release runner 以 `--proxy-vendor kunlunxin` 执行
+  vendor 字节补执行证据）。
+- 预注册门（e9）：8/8 正确；昆仑回到 ~105 水位带；均值 >1100.744 换 TB
+  （七芯 e8 读数 + 昆仑 105 外推 ≈1243，+13%）。
 
 ## 2026-09-24 E7 平台终态（20655）：8/8 有效但均分 1021.7663，低于 E6 最佳
 
