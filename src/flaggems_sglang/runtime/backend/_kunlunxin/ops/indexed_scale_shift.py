@@ -1,72 +1,85 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Kunlun vendor for indexed_scale_shift: the generic rounds fp32->bf16
-# with the backend default, which on XPU trails eager RTNE by one ulp
-# on knife-edge values (0.0156 vs 0.015 allowed across three rounds of
-# submissions). Every round-trip here passes fp_downcast_rounding="rtne"
-# explicitly.
+# Materialize eager bf16 intermediates and pin finite RTNE before XPU stores.
 
 import torch
 import triton
 import triton.language as tl
 
 
+@triton.jit
+def _bf16_rtne_fp32(value):
+    bits = value.to(tl.uint32, bitcast=True)
+    rounded = (bits + 0x7FFF + ((bits >> 16) & 1)) & 0xFFFF0000
+    # Leave Inf/NaN to the existing bf16 store conversion, including NaN payload handling.
+    rounded = tl.where((bits & 0x7F800000) == 0x7F800000, bits, rounded)
+    return rounded.to(tl.float32, bitcast=True)
+
+
 @triton.jit(do_not_specialize=["rows"])
-def _indexed_scale_shift(
-    x,
-    shift,
+def _round_scale(
     scale,
     indices,
     out,
     rows,
-    xs0,
-    ss0,
     cs0,
     os0,
     HDIM: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
-    for row in range(tl.program_id(0), rows, tl.num_programs(0)):
-        base = row.to(tl.int64)
-        idx = tl.load(indices + row).to(tl.int64)
-        for h0 in tl.static_range(0, HDIM, BLOCK):
-            offs = h0 + tl.arange(0, BLOCK)
-            m = offs < HDIM
-            xv = tl.load(x + base * xs0 + offs, m, other=0.0).to(
-                tl.float32
-            )
-            sc = tl.load(
-                scale + idx * cs0 + offs, m, other=0.0
-            ).to(tl.float32)
-            sh = tl.load(
-                shift + idx * ss0 + offs, m, other=0.0
-            ).to(tl.float32)
-            one_plus = (1.0 + sc).to(
-                tl.bfloat16, fp_downcast_rounding="rtne"
-            ).to(tl.float32)
-            tl.store(
-                out + base * os0 + offs,
-                (xv * one_plus).to(
-                out.dtype.element_ty, fp_downcast_rounding="rtne"
-            ),
-                m,
-            )
-        for h0 in tl.static_range(0, HDIM, BLOCK):
-            offs = h0 + tl.arange(0, BLOCK)
-            m = offs < HDIM
-            sv = tl.load(out + base * os0 + offs, m, other=0.0).to(
-                tl.float32
-            )
-            sh = tl.load(
-                shift + idx * ss0 + offs, m, other=0.0
-            ).to(tl.float32)
-            tl.store(
-                out + base * os0 + offs,
-                (sv + sh).to(
-                out.dtype.element_ty, fp_downcast_rounding="rtne"
-            ),
-                m,
-            )
+    row = tl.program_id(0)
+    idx = tl.load(indices + row).to(tl.int64)
+    base = row.to(tl.int64)
+    for h0 in tl.static_range(0, HDIM, BLOCK):
+        offs = h0 + tl.arange(0, BLOCK)
+        m = offs < HDIM
+        sc = tl.load(scale + idx * cs0 + offs, m, other=0).to(tl.float32)
+        rounded = _bf16_rtne_fp32(1.0 + sc)
+        tl.store(out + base * os0 + offs, rounded, m)
+
+
+@triton.jit(do_not_specialize=["rows"])
+def _scale_rows(
+    x,
+    out,
+    rows,
+    xs0,
+    os0,
+    HDIM: tl.constexpr,
+    BLOCK: tl.constexpr,
+):
+    row = tl.program_id(0)
+    base = row.to(tl.int64)
+    for h0 in tl.static_range(0, HDIM, BLOCK):
+        offs = h0 + tl.arange(0, BLOCK)
+        m = offs < HDIM
+        xv = tl.load(x + base * xs0 + offs, m, other=0).to(tl.float32)
+        factor = tl.load(out + base * os0 + offs, m, other=0).to(tl.float32)
+        scaled = _bf16_rtne_fp32(xv * factor)
+        tl.store(out + base * os0 + offs, scaled, m)
+
+
+@triton.jit(do_not_specialize=["rows"])
+def _shift_rows(
+    shift,
+    indices,
+    out,
+    rows,
+    ss0,
+    os0,
+    HDIM: tl.constexpr,
+    BLOCK: tl.constexpr,
+):
+    row = tl.program_id(0)
+    idx = tl.load(indices + row).to(tl.int64)
+    base = row.to(tl.int64)
+    for h0 in tl.static_range(0, HDIM, BLOCK):
+        offs = h0 + tl.arange(0, BLOCK)
+        m = offs < HDIM
+        scaled = tl.load(out + base * os0 + offs, m, other=0).to(tl.float32)
+        sh = tl.load(shift + idx * ss0 + offs, m, other=0).to(tl.float32)
+        rounded = _bf16_rtne_fp32(scaled + sh)
+        tl.store(out + base * os0 + offs, rounded, m)
 
 
 def indexed_scale_shift(x, shift, scale, indices):
@@ -77,23 +90,39 @@ def indexed_scale_shift(x, shift, scale, indices):
     assert indices.shape == (rows,)
     assert indices.dtype in (torch.int32, torch.int64)
     assert x.dtype == shift.dtype == scale.dtype == torch.bfloat16
-    assert x.stride(1) == 1 and shift.stride(1) == 1
-    assert scale.stride(1) == 1
+    assert x.stride(1) == shift.stride(1) == scale.stride(1) == 1
     out = torch.empty_like(x)
     if rows and hdim:
-        _indexed_scale_shift[(min(rows, 2048),)](
-            x,
-            shift,
+        block = min(1024, triton.next_power_of_2(hdim))
+        grid = (rows,)
+        _round_scale[grid](
             scale,
             indices,
             out,
             rows,
-            x.stride(0),
-            shift.stride(0),
             scale.stride(0),
             out.stride(0),
             HDIM=hdim,
-            BLOCK=min(1024, triton.next_power_of_2(max(1, hdim))),
+            BLOCK=block,
+        )
+        _scale_rows[grid](
+            x,
+            out,
+            rows,
+            x.stride(0),
+            out.stride(0),
+            HDIM=hdim,
+            BLOCK=block,
+        )
+        _shift_rows[grid](
+            shift,
+            indices,
+            out,
+            rows,
+            shift.stride(0),
+            out.stride(0),
+            HDIM=hdim,
+            BLOCK=block,
         )
     return out
 

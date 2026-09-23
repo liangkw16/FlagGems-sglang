@@ -92,6 +92,10 @@ class IndexedScaleShiftTest(unittest.TestCase):
             (129 / 64, 1 / 256, 0),
             (129 / 64, 1 / 2, -1 / 128),
             (2, 0, 1 / 128),
+            (2, 1 / 256, -2),
+            (-2, 1 / 256, 2),
+            (129 / 64, 1 / 2, -3),
+            (-129 / 64, 1 / 2, 3),
         ):
             with self.subTest(values=(x_value, scale_value, shift_value)):
                 x = torch.full(
@@ -152,6 +156,24 @@ class IndexedScaleShiftTest(unittest.TestCase):
                 idx = (torch.arange(rows, device="cuda") % 3).to(torch.int32)
                 self.check((x, shift, scale, idx), exact=True)
 
+    def test_special_values(self):
+        x = torch.tensor(
+            [[float("inf"), float("-inf"), float("nan")]],
+            dtype=torch.bfloat16,
+            device="cuda",
+        )
+        shift = torch.zeros(1, 3, dtype=torch.bfloat16, device="cuda")
+        scale = torch.zeros_like(shift)
+        idx = torch.zeros(1, dtype=torch.int32, device="cuda")
+        expected = reference(x, shift, scale, idx)
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                actual = module.indexed_scale_shift(x, shift, scale, idx)
+                torch.testing.assert_close(
+                    bits(actual[:, :2]), bits(expected[:, :2]), rtol=0, atol=0
+                )
+                self.assertTrue(torch.isnan(actual[0, 2]))
+
     def test_int32_indices(self):
         x = torch.randn(33, 2048, dtype=torch.bfloat16, device="cuda")
         shift = torch.randn(7, 2048, dtype=torch.bfloat16, device="cuda")
@@ -166,6 +188,7 @@ RELEASE_REQUIRED_TESTS = [
     "IndexedScaleShiftTest.test_each_bf16_boundary",
     "IndexedScaleShiftTest.test_sparse_table_and_second_tile_tail",
     "IndexedScaleShiftTest.test_row_grid_boundary",
+    "IndexedScaleShiftTest.test_special_values",
     "IndexedScaleShiftTest.test_int32_indices",
 ]
 
