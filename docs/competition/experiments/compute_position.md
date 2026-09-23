@@ -5,14 +5,61 @@ task: 77
 operator: compute_position
 batch: 6
 validity: valid(8/8,e6,1100.744x TB)
-platform: e6(20390)valid 8/8 avg 1100.744>TB 1051.15新TB(+4.7%);昆仑55.09→105.25(+91%,去alloc在昆仑兑现巨大);天数2696→2928(+8.6%)/A +5.3%/海光+2%/B+2%;沐曦-4%/华为-3%水内;燧原持平
-candidate_stage: e6
+platform: e6(20390)valid 8/8 avg 1100.744075 TB; e7 release就绪、尚未提交(23:20额度0/30)
+candidate_stage: e7
 team_best_stage: e6
 team_best_speedup: 1100.744x
 sealed: no
-next: 天数2928 vs EvokeAgent 4338仍1.5x;两alloc均为契约输出已无scratch可删;剩余轴=K2 per-request形态(代理无差)或平台形状特化;**可迁移洞察:每call的torch alloc在昆仑计价极高(T84/T86等的昆仑轴优先查alloc)**;额度12/30(used 18,observed 16:20+08)
+next: e7最终codex-review后，次日额度恢复时做实时preflight；若门禁全绿单次提交。8/8且均值>1100.744075才换TB，否则回滚e6字节；榜首1747.5001，缺646.756025。
 updated: 2026-09-23
 ```
+
+## 2026-09-23 E7 小批量单发射候选（平台未提交）
+
+- 榜单：23:20 平台全量 GET 快照 `docs/competition/data/batch6-intel-20260923-2323.json`
+  SHA `d3c7d96d881f9662f60f7136941d5cc22cc0e8e784e87a0241b4ac73fcde9ca3`；
+  榜首 c2flow 1747.5001、我方 e6 1100.744075（第 10），差 646.756025；
+  23:20 当日额度 0/30，目标截止 09-24 19:59:59+08。
+- 瓶颈与结构：e6 在小批量仍启动 scan/fill 两核并分配共享宽 start 缓冲；
+  e7 对 `batch<=512` 复用历史 e2 单核每请求前缀求和，直接写契约 start；
+  `batch>512` 保留 e6 双核和宽地址路径。小批量前缀总功为 O(batch²)，
+  因此 513 以上不进入单核路径。燧原 vendor 仅 Black 排版变化，
+  新旧源码 AST 完全相同；新测试覆盖 512/513、无 prefix 的 513、
+  两条路径的 int32 越界 prefix。
+- source commit = verification commit
+  `0e2f173e56d35173805f35c45bc237c7c472346e`；源码 SHA：generic
+  `35d57497d7c02689d914fcf4ee8a5597f14721704e0b5ecf7051988eac0e134f`，
+  enflame `d379122b303f0c2e30885b08b6b88718288fa3c958ceedb9f456a05a54ce1008`；
+  测试 SHA `1d1416ba221fdfe4385897e3152ed796b11a64a23db28cbb96f10b547cd1abc9`。
+- release：`python .agents/skills/flagos-operator-race/scripts/verify_release.py prepare
+  compute_position --source-commit 0e2f173e56d35173805f35c45bc237c7c472346e
+  --verification-commit 0e2f173e56d35173805f35c45bc237c7c472346e
+  --proxy-vendor enflame --directory /tmp/flagos-t77-e7-release-v4`；远端
+  `/tmp/flagos-t77-e7-release-v4.QHxUeH`，RTX 5070 Ti / PyTorch 2.13.0+cu130 /
+  Triton 3.7.1；`run` 4/4 测试、零失败/错误/skip/xfail，generic/enflame
+  各 26 次源码调用、32/50 次非预热 launch；目标芯仍未验证。
+  `artifacts/competition/compute_position/e7-0e2f173/verification.json` SHA
+  `9b970ce4db0b86d6c7fdac2cc38b6b1c74159ad8464006aa3699a7f893628ef4`，
+  相邻 `verification.log` SHA
+  `05a5f3e41eeda891f23e3d5fbd5d0603502543737513899977f419db2d627c3b`。
+  py_compile、Black、isort、flake8 均过；全部三份代码测试文件远端 SHA 与 Git 一致。
+- 五轮交替 AB/BA、wrapper 计时，候选与 e6 等值：远端
+  `/tmp/flagos-t77-e7-bench-v2.1dRulD`，脚本 SHA
+  `3144a2b941e94b3b0ae433e21ba6b66116d7a5c60bfa126e9428c610e9766b55`，
+  e6 对照 SHA `186ca75b5bfee5c0c10309af0a9f42ee7781e2776c0e4701f1db19612f2a1ff2`；
+  原始样本 `artifacts/competition/compute_position/e7-0e2f173/bench.out` SHA
+  `6de62bf0592ec0d13d4621a9fab2ae938c749558b88e7eaaee3984617c7782d3`。
+  e6/e7 中位比：batch 1/16/63/256 为 1.953/1.909/1.941/1.962，
+  512 短/长为 1.291/1.140，513/1024/2049 为 1.001/1.002/1.001；
+  无 prefix batch16 为 1.960。以上仅 NVIDIA 代理性能证据。
+- 不可变 ZIP：`artifacts/competition/compute_position/e7-0e2f173/compute_position.zip`
+  (10,217 bytes)，SHA
+  `01bcb2d049e06a921e558f8f4f5e872a262b5f640d3e36df42930ff3ac3dc8d7`；
+  成员仅 `compute_position.py` / `compute_position_enflame.py`，分别对应上列
+  generic/enflame SHA。dry-run、`--verify-existing` 和 `unzip -t` 一致。
+- 预注册：正式平台须 8/8 正确且每芯加速比 ≥0.1；均值 > e6 TB
+  1100.744075 才保留，否则恢复 e6 两成员字节。首轮 codex-review 的 P3
+  指出大批无 prefix/宽 prefix 测试缺口，已补回归；最终复审在提交前完成。
 
 ## 2026-09-23 E6 平台终态（20390）：valid 8/8 均值 1100.744 新 TB；昆仑 +91%
 
