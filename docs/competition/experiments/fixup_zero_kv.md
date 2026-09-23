@@ -5,16 +5,60 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e24,569.125575x TB)
-platform: e27(20711)invalid_correctness 7/8华为6 case数值失败; e28 发布门禁就绪待提交,当前#3
-candidate_stage: e28
+platform: e28(20715)valid 8/8 544.01925<TB; e29 发布门禁就绪待提交,当前#3
+candidate_stage: e29
 team_best_stage: e24
 team_best_speedup: 569.125575x
 sealed: no
-next: 榜首660.060825 vs TB569.125575差90.93525;e27华为FP32掩码数值败,回e24整数掩码;e28试全块无掩码+独立尾块;本轮已提交3/5
+next: 榜首660.060825 vs TB569.125575差90.93525;e28华为353.1706低于550保留线,回e24字节;e29试沐曦宽行2×1024 tile;本轮已提交4/5
 updated: 2026-09-24
 ```
 
-## 2026-09-24 E28 上膛：华为全块无 token mask、尾块独立写（本轮候选 4/5）
+## 2026-09-24 E29 上膛：沐曦宽行 2×1024 tile（本轮候选 5/5）
+
+- e28 华为跌破保留线后回到 e24 Ascend 字节。e29 仅修改沐曦
+  vendor：`hv >= 2048` 时把 tile 从 4×512 改为 2×1024，保持
+  2048 元素上限与 2 warps；窄行保持旧路径。generic、Ascend、
+  燧原、昆仑四成员与 e24 相同。假说是宽行减少列块碎片与重复
+  索引成本；沐曦目标运行时尚未验证。
+- source=verification commit
+  `d3429ad96230e052d4310b3a8133f80ccfc0edcc`；test SHA-256
+  `2bca30d528133d3b2fa4849c8afd3413ec5eb48d4e6dc58a9bfa6c37d99b8987`。
+  NVIDIA RTX 5070 Ti release：14 测试、5 源各 36 非 warmup launch，
+  0 failure/error/skip/xfail，exit 0。回执
+  `artifacts/competition/t80-e29-20260924/verification.json` SHA-256
+  `9bef2beb2826583d1acb69bcbe4dcd36b86c066d10af09ae130cdbc429f22cf6`；
+  日志 SHA-256
+  `dc469e1bddcacf010882c56ada4c33eb1569f7ace7760cbf85c63563de7af143`。
+- NVIDIA wrapper-inclusive 六轮 AB/BA：长段全零中位快 2.2%，混合
+  长段慢 1.3%，短段/健康段基本中性。仅作代理筛选，不外推沐曦。
+  原始样本 `artifacts/competition/t80-e29-20260924/benchmark.jsonl`
+  SHA-256 `848309d99e684a279d5561641c41a36e42b53e5514365c4884b60073c7ae9eec`。
+- 不可变 ZIP
+  `artifacts/competition/fixup_zero_kv/e29-d3429ad/fixup_zero_kv.zip`
+  SHA-256 `4952ee46e2ebb0d76c0e8f0a87073bac8fdbf81fb156d81bfa41278576ed78cc`，
+  18848 B，`--verify-existing`、`unzip -t` 与 commit 字节全过。
+  五成员 SHA-256：generic
+  `e3371c49e3ef6f9ba7b2321b094a738a208129a682fc29e837b6a17317035943`；
+  ascend `e3743d90ecbaa0f4f935ba1fb20b5ada7dea6e211ce9c32694ce687b5d3000d1`；
+  enflame `c8ccee9808ff5ed181ac5b5385800b9dc1b3808b80c2a8fcb713a5763365762d`；
+  kunlunxin `b79e658780e02637372a5a84c1290b6bdddc3e8def54ae8ace5ba86030c6f0ff`；
+  metax `bb458e3bd29081f788c01379a177c2a0e7d92965f288be276eec7ab23f3839c9`。
+- 预注册门：8/8 正确且各芯 ≥0.1；沐曦 ≥500 保留该 tile，≥570
+  为明显突破；均分 >569.125575 才换队内最佳。沐曦 <500 则
+  回滚 e24 沐曦字节。
+
+## 2026-09-24 E28 平台终态（20715）：544.01925 < TB（本轮尝试 4/5）
+
+- 01:10:06+08 单次提交（当日序号 5），平台 completed/valid、8/8 全过，
+  均分 **544.01925** < e24 TB 569.125575，仍第 3。逐芯：天数
+  1173.9994 / 沐曦 390.6494 / 燧原 109.8244 / 海光 892.7956 /
+  昆仑 14.373 / **华为 353.1706** / A 793.0456 / B 624.296。
+  华为 <550 保留线，整块去 mask 加尾块轴关闭，源码已回到 e24
+  华为字节。上传后受信对象存储无认证 HTTPS GET 19658 B，ZIP
+  SHA-256 与本地一致；单次上传与 POST。
+
+### E28 预注册方案与验证证据
 
 - e27 华为数值错误后回到 e24 Ascend 成员字节。e28 保留 48
   固定 worker 及整数精确地址/掩码，将每段 `floor(length/8)` 个
