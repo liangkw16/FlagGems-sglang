@@ -4,13 +4,13 @@
 task: 83
 operator: indexed_scale_shift
 batch: 6
-validity: candidate(e4待平台; e3rr 20438为7/8)
-platform: e3rr(20438)7/8;昆仑case3约33%仍失配，同e2主指纹，源码回滚e2
-candidate_stage: e4
+validity: invalid(e4 20440为7/8; 昆仑case3失配899/12582912)
+platform: e4(20440)7/8 invalid_correctness;昆仑大规模失配下降99.978%;源码回滚e2
+candidate_stage: e5待诊断
 team_best_stage: -
 team_best_speedup: -
 sealed: no
-next: e4每行一program去grid-stride；release 6/6、ZIP验签、codex-review无缺陷，待实时preflight；若8/8有效保留，若仍失败则回e2，case3错数下降>99%时以e4固定ZIP作后续诊断基底
+next: 从e4不可变ZIP诊断残余bf16数值误差，单变量e5须过release、review和preflight后才单次提交
 updated: 2026-09-23
 ```
 
@@ -191,3 +191,21 @@ updated: 2026-09-23
 - `codex-review --commit 4d12ecf0 --spec .../83-indexed_scale_shift.md`
   已完成：Spec 和 Standards 均无可靠缺陷；评审明确 NVIDIA release
   不等于昆仑目标验证。评审门通过。
+
+## 2026-09-23 E4 平台终态（20440）：行调度主因得到强支持，数值尾差待解
+
+- 实时 preflight 与 ZIP SHA `ef37e9df56adc21105ad232bddea7fe4a9406fc85eae971f7d0bcd9e03b57c15`
+  验签通过，远端上传字节哈希/大小复核一致；一次性提交 **20440**，昆仑选择
+  vendor 文件并运行。平台终态 `invalid_correctness`、7/8，通过七芯分别为
+  天数 14.6696、沐曦 8.8630、燧原 0.9666、海光 12.8904、华为 3.6368、
+  A 11.0744、B 9.7056。昆仑无速度，额度余 **7/30**。
+- 昆仑 case 3 失配从 e3rr 的 **4,154,953/12,582,912** 降至
+  **899/12,582,912**，下降 99.978%；case 1/2/4/5/6/7/8 分别失配
+  7/247/1/10/207/1859/6973 元素。case 3 最大绝对差 0.046875
+  位于 `(88,608)`，最大相对差为 inf 位于 `(4,1469)`。逐行调度修复了
+  主要错误的证据很强；平台未给原始张量，尚不能把根因定性为 XPU
+  grid-stride 编译器错误。剩余低密度误差需单独诊断。
+- 按预注册门，仓库昆仑源码从 e2 ZIP 原字节恢复，SHA
+  `44dc00e2e8a7816a8405ebf6bf02f4b5ce23f1c07ae501b3d01f1bf1c8d8c6a4`；
+  与 e3 前源码 diff 为空，回滚 commit `8776374c`。e4 ZIP/回执保留，
+  不重投 e4；下一候选从 e4 不可变 ZIP 取源，并另做验证和评审。
