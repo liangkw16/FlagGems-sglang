@@ -4,15 +4,61 @@
 task: 92
 operator: unpad_draft_extend_output
 batch: 6
-validity: valid(8/8,e22,341.31x TB)
+validity: candidate(e23代理release 6/6,8源各13次launch;有效TB仍e22 341.31x)
 platform: e22(20358)valid 8/8 avg 341.3097>TB 331.10新TB;华为444.15(进378-507水位带但<480目标;drop-other-prefill未到680+场带);天数406.9/昆仑33.1/海光662.3/A526.6/B281.3;燧原126.7/沐曦249.5窗口回落
-candidate_stage: e22
+candidate_stage: e23
 team_best_stage: e22
 team_best_speedup: 341.31x
 sealed: no
-next: 华为444→575+(c2flow)需超越drop-other-prefill的新结构证据;昆仑33→36微差;距榜首c2flow 400.92差15%;额度17/30(used 13,observed 14:04+08)
+next: e23仅华为整BLOCK无mask、尾块保e22；codex-review后实时preflight；目标8/8、均分>341.31、华为≥575验结构；额度5/30(17:50观测)
 updated: 2026-09-23
 ```
+
+## 2026-09-23 E23 候选：华为整块无掩码，尾块保留 e22 路径
+
+- 榜单 17:50：我方 e22 **341.3097** vs c2flow **400.920925**，总分需
+  增加 **476.8898**；华为 444.1506 vs 575.3874、B 281.2718 vs
+  441.9676 是最大两洞。仅把华为追到 c2flow 水位，均分预计只加
+  16.4，仍不能独立登顶；本弹检验能否突破 e22 的 444 水位，后续
+  仍需 B 等多芯收益。Triton [tl.load 语义](https://triton-lang.org/main/python-api/generated/triton.language.load.html)
+  明确未指定 `other` 的 masked-out lane 为未定义值；e22 已以同 mask store
+  安全处理尾块。
+- 结构只改 `_ascend`：保留已 8/8 有效的 e22 `(bs,tiles)` grid、
+  `BLOCK=16384`、int64 地址和尾块 mask；每个 base 若
+  `base+BLOCK<=elems`，load/store 整块不带 mask，否则沿用 e22 的
+  masked load/store。e21r 同时改 persistent rotation、fp32 尾和 warps16，
+  华为 case 3 有 1520/164352 失配；e23 不继承这些变量。平台未公开
+  该 case 的完整输入，现有 `test_unmasked_main_masked_tail_split` 精确覆盖
+  全块、单尾、跨段和零长，不能代替目标芯实测。
+- screening 源 SHA-256
+  `d8cc43d332e0d251d770b69374ab1daf2385228d8f56eb6d930de59c5f3cd7c8`；
+  代理回执 `e23-screen-20260923/verification.json` SHA-256
+  `42faadf9a5f9177e39298b49729da593d3a79f45e4617dfe2cf11a27746a4b02`，
+  6/6 方法、0 失败/错误/skip；三组五轮 AB/BA wrapper-inclusive
+  速度比 e22/e23 **0.991 / 1.001 / 1.002**，原始样本
+  `e23-screen-20260923/bench.out` SHA-256
+  `87859df4f4851fbb06c3285b8c44b303bff60786e82147097b4368a28724ba9d`。
+  NVIDIA 仅证明代理侧无明显退化，华为收益仍未知。
+- source/verification commit
+  `34dad5bad4421274216126101195d44c81e234be`；测试 SHA-256
+  `cd676efb1d1f525f5d0dce5e14f4df6398cb4564278e8ba9c79f982b870c3357`。
+  八成员 ZIP `e23-34dad5b/unpad_draft_extend_output.zip`，19090 B，
+  SHA-256 `e0e7e7dd12c996b9f33e20e4a9dde5d1795460ce64e997bfaa1907686aa51728`；
+  打包器 `--dry-run` / `--verify-existing` 与 `unzip -t` 通过。
+  release 回执 `e23-34dad5b/verification.json` SHA-256
+  `b3f29cd166ce6d30c03aa04cb48807998f938ab5a4351058f603f39450ebb6c6`，
+  日志 SHA-256 `8a5684a2fe0bc4b777013fad5fe70cf2763cfda0909178ca886716fc0cd2cad5`；
+  RTX 5070 Ti 代理 6/6、0 失败/错误/skip/xfail，八成员各 13 次真实
+  launch。华为目标 `target-runtime-unverified`。
+- **预注册门**：codex-review 无可靠缺陷才 preflight；平台 8/8 正确、
+  每芯 speedup≥0.1 才是有效候选；均分 > e22 的 341.3097 才保留新 TB。
+  华为 ≥575.3874 表示本结构达到榜首同芯水位。若华为编译/数值失败
+  或均分未超 e22，恢复 e22 `_ascend` 不可变 ZIP 字节，不重投 e23。
+  其他七芯源成员逐字节冻结；其读数变化先按同字节环境波动核对。
+- `codex-review --commit 34dad5ba --spec .../92-unpad_draft_extend_output.md`
+  成功完成，`gpt-6-sol/max`；Spec 和 Standards 均未发现可确认的新增缺陷。
+  评审枚举 11,308 组长度、tile 与网格组合，完整 tile 和尾 tile 均恰好
+  覆盖有效元素一次；评审不证明华为目标芯编译或性能。审查门通过。
 
 ## 2026-09-23 E22 平台终态（20358）：valid 8/8 均值 341.31 新 TB
 
