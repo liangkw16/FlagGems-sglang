@@ -5,16 +5,58 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e24,569.125575x TB)
-platform: e24(20472)valid 8/8 avg 569.125575,当前#3; e25 发布门禁就绪待提交
-candidate_stage: e25
+platform: e25(20699)valid 8/8 avg 562.318075<TB; e26 发布门禁就绪待提交,当前#3
+candidate_stage: e26
 team_best_stage: e24
 team_best_speedup: 569.125575x
 sealed: no
-next: 09-24 00:44榜首EvokeAgent660.060825;差90.93525均分;e25试Ascend安全i32寻址,后续按平台逐芯结果继续5发计划
+next: 榜首660.060825 vs TB569.125575差90.93525;e25华为429<550回滚;e26试燧原编译期stride;本轮已提交1/5
 updated: 2026-09-24
 ```
 
-## 2026-09-24 E25 上膛：华为安全范围内用 int32 寻址（本轮尝试 1/5）
+## 2026-09-24 E26 上膛：燧原编译期 stride（本轮候选 2/5）
+
+- e25 华为跌破保留线后回到 e24 的 Ascend 字节，仅将燧原 vendor 的
+  `os0/ls0` 从运行时参数改为 `tl.constexpr`。本地 GCU 规则集指出
+  stride 编译期可整除是 DMA 路径的必要条件；该假说尚未在目标芯证实。
+  相对 e24 ZIP 仅燧原成员变动，未同时改 grid/warps/tile。
+- source=verification commit
+  `b2dc96c692f05862165b569e1282e2b55480d7e4`；test SHA-256
+  `2bca30d528133d3b2fa4849c8afd3413ec5eb48d4e6dc58a9bfa6c37d99b8987`。
+  NVIDIA RTX 5070 Ti release：14 测试、5 源各 36 非 warmup launch，
+  0 failure/error/skip/xfail，exit 0；燧原目标 **target-runtime-unverified**。
+  回执 `artifacts/competition/t80-e26-20260924/verification.json` SHA-256
+  `352c512e59ec9a40e222c47ee7842f39c624c7b199a1b316d37fdf921fa411ca`；
+  日志 SHA-256
+  `c15f46b9c1dc358593a34eb58486169945934be1faa373e5970da33ae8a9fb38`。
+- NVIDIA wrapper-inclusive 六轮 AB/BA：长段中位耗时比 e24
+  67.2→67.3 µs、混合 75.2→75.4 µs，短段/健康段基本持平。
+  代理结果为中性，不外推到 GCU DMA。原始样本
+  `artifacts/competition/t80-e26-20260924/benchmark.jsonl` SHA-256
+  `855727ad81c78a67b32ab8503b473317d8cdceb69526b0b979b4e4e0d9affec3`。
+- 不可变 ZIP
+  `artifacts/competition/fixup_zero_kv/e26-b2dc96c/fixup_zero_kv.zip`
+  SHA-256 `acb396fb33034832177c18d33cef2de2adc83ffc36111886fbe48bc69a9bfbc3`，
+  18821 B，五成员：generic
+  `e3371c49e3ef6f9ba7b2321b094a738a208129a682fc29e837b6a17317035943`；
+  ascend `e3743d90ecbaa0f4f935ba1fb20b5ada7dea6e211ce9c32694ce687b5d3000d1`；
+  enflame `c25429b38484c6e97923b3ce11636599cac53170690a28717f7122e50cb23273`；
+  kunlunxin `b79e658780e02637372a5a84c1290b6bdddc3e8def54ae8ace5ba86030c6f0ff`；
+  metax `37a4d96256677a1899fc388d8b5ef8c07b7b610f4af148202093aef58af15bda`。
+- 预注册门：八芯正确且各 ≥0.1；燧原 ≥130 保留该轴，≥160
+  视为明显突破；均分 >569.125575 才换队内最佳。未到 130 回滚
+  燧原 e24 字节。
+
+## 2026-09-24 E25 平台终态（20699）：562.318075 < TB（本轮尝试 1/5）
+
+- 00:52:21+08 单次提交（当日序号 2），平台 completed/valid、8/8 全过，
+  均分 **562.318075** < e24 TB 569.125575，仍第 3。逐芯：天数
+  1166.5652 / 沐曦 392.592 / 燧原 110.3732 / 海光 893.9354 /
+  昆仑 14.1412 / **华为 428.9472** / A 814.0218 / B 677.9686。
+  华为低于预注册 ≥550 保留线，i32 轴关闭；跨次窗口变化不能把
+  全部差额归因于索引宽度。`status` 00:55:09+08 实读额度 **28/30**。
+  上传后受信对象存储主机的无认证 HTTPS GET 取回 19122 B，SHA-256
+  与本地不可变 ZIP 完全一致，未二次上传或提交。
 
 - 00:44+08 实时榜单：EvokeAgent **660.060825** #1，c2flow
   649.22145 #2，我方 e24 **569.125575** #3，差 90.93525 均分。
