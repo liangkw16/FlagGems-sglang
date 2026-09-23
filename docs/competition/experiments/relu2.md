@@ -4,16 +4,27 @@
 task: 89
 operator: relu2
 batch: 6
-validity: valid
-platform: completed(18350,e3,8/8,2.497x新TB;天数/A +8% generic warps8)
-candidate_stage: e4
-platform: e4(19379)valid 2.6397新TB(+5.7%);燧原3.94持平;昆仑0.135贴门
-team_best_stage: e4
-team_best_speedup: 2.497
+validity: valid(8/8,e8,2.7198x TB)
+platform: e9(20379)valid 8/8 avg 2.6600<TB判负:华为1.02→1.29(+26%,drop-prefill+4096/16在1载1存op兑现!)但昆仑0.135(vs e8字节同0.79,平台劣化)与B 2.75(-18%)吃掉增益;_ascend已回滚e8 ZIP字节;TB 2.7198守
+candidate_stage: e9
+team_best_stage: e8
+team_best_speedup: 2.7198x
 sealed: no
-next: 流式elementwise;轴=燧原0.8/昆仑0.8/华为1.1 vendors(streaming配方);榜首差距55%较大
-updated: 2026-09-22
+next: 华为1.29→1.9(金狐狸带)配方已证方向,待昆仑/B水位恢复可重试组合(e9字节+昆仑回温);真实靶CosmosMind 4.71(enfl 14.7/华为4.9);昆仑今日三题字节同一崩读(T90/T87/T89)=平台劣化窗;额度12/30(used 18,observed 16:10+08)
+updated: 2026-09-23
 ```
+
+## 2026-09-23 E9 平台终态（20379）：valid 8/8 均值 2.6600 判负；华为方向兑现
+
+- 结构（`f8e73c6d`）：`_ascend` = 去掉 masked-load `other=0.0` 预填
+  + BLOCK 1024→4096 + warps 8→16；kernel 体/generic/_enflame 冻结
+  e8 字节。
+- 逐芯：天数 4.31 / 沐曦 2.39 / 燧原 3.95 / 海光 3.20 / 昆仑 0.135
+  （generic sha `878e3ef9` 与 e8 相同——平台侧）/ **华为 1.289
+  （+26%）** / A 3.27 / B 2.75（-18%）。
+- 判定：均值 <TB 且昆仑/B 破水位带 → 预注册回滚条款触发，_ascend
+  已回滚 e8 ZIP 成员字节。华为 +26% 是真实结构增益（1 载 1 存 op
+  上 drop-prefill+宽档兑现，与 T87 pack 的 -11% 形成 op 形状对照）。
 
 ## 2026-09-20 S0/E1 首发记录
 

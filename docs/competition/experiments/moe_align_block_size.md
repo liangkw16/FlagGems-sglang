@@ -5,14 +5,33 @@ task: 84
 operator: moe_align_block_size
 batch: 6
 validity: valid(8/8,e14,492.17x TB)
-platform: e14=492.17新TB(天数782/沐曦479/燧原253.9/海光904.1/昆仑2.70/华为91.7/A753/B671);e15/e16华为BiShengHIR UB溢出三连败,华为轴止损封存
-candidate_stage: e16
+platform: e17(20370)invalid_correctness 7/8:华为编译败(repo _ascend文件停在e15/e16 UB-overflow字节,e17 ZIP夹带断裂ascend成员——e14时代"回滚e10模板"只发生在ZIP成员选择未回写仓库,本会话已字节级恢复953b2584);generic侧tl.histogram lowering芯间差2.3x(天数-11.6%/B -41%/沐曦+1.9%/海光+1.6%),-10%门触发,generic已回滚e14字节59679834;TB守e14
+candidate_stage: e17
 team_best_stage: e14
 team_best_speedup: 492.17x
 sealed: no
-next: 当日163.14→492.17(+202%);剩距c2flow 917.8=1.87x,缺口=华为91.7vs248(ascend新核三连编译败,封存)+昆仑2.7vs29+沐曦479vs718;明日再评估
-updated: 2026-09-22
+next: 遗留结构 intel: (a) tl.histogram 在 triton-ascend 存在 API 但本题 UB 预算未验证; (b) launch 数不是剩余2x主杠杆(3→2-op 在天数/B 反降)——榜首 973 的来源应在 kernel 效率或原子散射竞争; 仓库 ascend/generic 已恢复 e14 字节,后续 ZIP 不再夹带断裂成员;额度15/30(used 15,observed 15:15+08)
+updated: 2026-09-23
 ```
+
+## 2026-09-23 E17 平台终态（20370）：invalid_correctness 7/8；双缺陷定位与字节级回滚
+
+- 终态：华为 BiShengHIR 编译败（2686976-bit UB overflow，与 e15/e16
+  同指纹）；其余七芯 pass：天数 691.2（-11.6%）/ 沐曦 487.9（+1.9%）/
+  燧原 251.5 / 海光 918.8（+1.6%）/ 昆仑 2.71 / A 716.9（-4.8%）/
+  B 394.6（**-41%**）。
+- **缺陷 1（打包预检疏漏，已修复）**：仓库 `_ascend/ops/` 文件在
+  e15/e16 实验后从未回滚（e14 的"回滚 e10 模板"只发生在 ZIP 成员
+  选择），HEAD 打包必然夹带断裂 ascend 成员（sha `57b0ade1` ≠ e14
+  成员 `953b2584`）。已从 e14 ZIP 成员字节级恢复仓库文件。
+- **缺陷 2（假设证伪）**：tl.histogram 的 lowering 芯间差 2.3x——
+  天数/B 显著回退、沐曦/海光微升。launch 数 3→2 不是剩余 2x 差距
+  的主杠杆；generic 已回滚 e14 字节（`59679834` 与 e14 ZIP generic
+  成员一致）。e17 测试保留（形状边界用例与路径无关，恢复字节上
+  4/4 过）。
+- 五元组：source `3eb25b00`；verification `1d9bb107`；ZIP
+  `7b82c107…0480`（4 成员，ascend 成员断裂）；回执
+  `day6-climb-20260923/t84e17-wf/`（4 源 × launch，exit 0）。
 
 ## 2026-09-23 冲榜循环结构调研：上游 2-op 解剖 + e17 双变体设计（未提交）
 

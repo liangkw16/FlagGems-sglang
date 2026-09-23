@@ -5,14 +5,29 @@ task: 87
 operator: pack_topk_ids
 batch: 6
 validity: valid
-platform: completed(18252,e5,8/8,2.77x微幅新TB;沐曦2.0未到门)
-candidate_stage: e5
+platform: e6(20377)valid 8/8 avg 2.5149<TB 2.77判负:华为5.00(-11%,persistent+4096+16在pack反向);昆仑0.394(vs e5字节同1.27,平台劣化);_ascend已移除回e5成员集;TB 2.77守
+candidate_stage: e6
 team_best_stage: e5
 team_best_speedup: 2.77
 sealed: no
-next: e1 i32位转换vendor修复昆仑→e3 BLOCK2048(+2.3%新TB);e2 4096回退/e4 warps8微回;距榜首2.783仅0.8%,BLOCK 2048为峰档
-updated: 2026-09-19
+next: 华为轴已试(persistent家族在2载1存op反向,对照T89 +26%成功——ascend launch形态响应是op形状函数);榜首CosmosMind 5.64的华为27.3疑窗口;真实目标金狐狸3.578的华为10.75需非launch形态;额度12/30(used 18,observed 16:10+08)
+updated: 2026-09-23
 ```
+
+## 2026-09-23 E6 平台终态（20377）：valid 8/8 均值 2.5149 判负；ascend 形态反向
+
+- 结构（`4dd7f577`）：首个 `_ascend` vendor——persistent Vector-Core
+  网格 + BLOCK 4096 + warps 16 + 无 other 预填;kernel 用证明过的
+  f32→bf16→f32 转换链（整数 RNE 原型被代理复现证伪：torch CUDA 把
+  qNaN 规范化为 0x7FFF 而公式给 0x7FC0，NaN 语义芯片相关）。
+- 逐芯：天数 3.30（-5%）/ 沐曦 2.01 / 燧原 2.30 / 海光 2.22（-7%）/
+  昆仑 0.394（**字节同一崩读**，generic sha `83dc5944` 与 e5 相同）/
+  华为 5.00（**-11%**）/ A 2.33 / B 2.57。
+- 判定：预注册门（华为 ≥7.0）未达且均值 <TB；_ascend 移除，成员集回
+  e5（generic+_metax）。
+- 结构知识：**ascend launch 形态响应是 op 形状函数**——1 载 1 存的
+  relu2 上 drop-prefill+宽档 +26%，2 载 1 存的 pack 上同配方 -11%；
+  后续 ascend vendor 假设需按访存比分类。
 
 ## 过程摘要（2026-09-19 凌晨，题面 09-18 晚随批 6 扩容上线）
 

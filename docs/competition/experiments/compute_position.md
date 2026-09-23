@@ -4,15 +4,34 @@
 task: 77
 operator: compute_position
 batch: 6
-validity: valid(8/8,e3,1051.15x TB)
-platform: e5(20169)invalid_correctness:华为数值100%失配(int64布局假设在ascend端不成立?);其余七芯强天数2694/muxi630/haig1628/kunl55;TB 1051.15(e3)守
-candidate_stage: e5
-team_best_stage: e3
-team_best_speedup: 1051.15x
+validity: valid(8/8,e6,1100.744x TB)
+platform: e6(20390)valid 8/8 avg 1100.744>TB 1051.15新TB(+4.7%);昆仑55.09→105.25(+91%,去alloc在昆仑兑现巨大);天数2696→2928(+8.6%)/A +5.3%/海光+2%/B+2%;沐曦-4%/华为-3%水内;燧原持平
+candidate_stage: e6
+team_best_stage: e6
+team_best_speedup: 1100.744x
 sealed: no
-next: 华为152vs682仍为最大缺口(需ascend专属形态,flat二分在ascend编译失败);天数2696vs4338;树已回滚e3字节,e4思路封存
+next: 天数2928 vs EvokeAgent 4338仍1.5x;两alloc均为契约输出已无scratch可删;剩余轴=K2 per-request形态(代理无差)或平台形状特化;**可迁移洞察:每call的torch alloc在昆仑计价极高(T84/T86等的昆仑轴优先查alloc)**;额度12/30(used 18,observed 16:20+08)
 updated: 2026-09-23
 ```
+
+## 2026-09-23 E6 平台终态（20390）：valid 8/8 均值 1100.744 新 TB；昆仑 +91%
+
+- 结构（`68a5e3db` + P2 修复 + e5 残留清除）：3 alloc→2 alloc——单一
+  int32[2·batch] 共享缓冲，前半=契约输出 extend_start_loc（与
+  reference 返回的 int32 截断一致），后半=宽 start 高 32 位；K2 以
+  (hi<<32)|(lo&0xFFFFFFFF) 恢复 int64 地址（codex-review P2：累计
+  start 越 2^31 时 r1 形式会写越界）。e5 失败的 _ascend vendor
+  仓库残留已删（第二次打包夹带坑，本次打包前抓到）。
+- 逐芯：天数 2927.6 / 沐曦 674.7 / 燧原 116.4 / 海光 1615.0 /
+  **昆仑 105.25（+91%）** / 华为 147.7 / A 1687.1 / B 1532.2。
+- 门判定：均值 >1051.15 ✓ 换 TB；最差回退 -4%（沐曦）未破 -10% ✓。
+- 五元组：source/verification `HEAD（e6 终形）`；ZIP SHA
+  `c800163c…`（2 成员 generic+_enflame，e5 残留 ascend 已剔）；
+  回执 `day6-climb-20260923/t77e6-wf/`（2 源 4 测试 0 败）。
+- 可迁移结构知识：**每 call torch 分配在昆仑芯计价极高**（一个
+  batch 级 int64 scratch 的移除=+91%）；对各题昆仑轴先查 per-call
+  alloc。代理 GPU 对 alloc 数完全不敏感（全形状 ~14us 恒定）——
+  代理不可见该轴，只有平台逐芯能暴露。
 
 ## 过程摘要（2026-09-18 开发，09-21 补燧原 vendor 定稿）
 
