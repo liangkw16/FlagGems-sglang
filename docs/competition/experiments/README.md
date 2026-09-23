@@ -6,7 +6,12 @@
 | --- | --- | --- | --- |
 | [T92 unpad_draft_extend_output e21r](unpad_draft_extend_output.md)（ascend 字节 `91928ef1`、打包 `bcf63bbc`：主循环整 BLOCK=16384 tile 无 mask 流式 + 单条 BLOCK_TAIL=2048 fp32 masked 尾循环，消掉 e20（20162）华为 BiShengHIR ub overflow（384KB>192KB）的宽 fp32 向量；e21 capped persistent rotation grid=(min(bs,64)) + warps16 一并在内；其余 7 成员与 e20 逐字节相同） | e21r-bcf63bb（`e916ae46…5c1`，8 成员与 commit 字节一致，≠e20 新 zip_sha256） | 5 测试 101 case 0 失败 0 skip，8 源 × 11 launch ✓（`day5prep-20260921/e21r-ascend-ubfit-unmasked-main-wf/`，verification_commit=bcf63bbc） | 华为 8/8 正确且无 ub-overflow 且 ≥378（e19r 水位带，峰对标 e14 442）；ub-overflow 即回滚 ascend 至 e19r ZIP 字节；均值 >331.10 换 TB |
 
-## 2026-09-23 T80 e20 上膛（首个 _ascend vendor：UB-safe 重构，待发射）
+## 2026-09-23 T80 e20 平台终态（20305）：valid 8/8 均值 545.021175 < TB 558.04
+
+- **终态**：华为 `_ascend` vendor 被选中且 8/8 无 ub-overflow（UB-safe 正确
+  性目标达成），但读数 210.91 < 315 门且低于 e19 generic 267.04（-21%）；
+  均值 > e19 535.08 但 < 558.04 未换 TB；ub-overflow 回滚条款未触发，
+  ascend 回滚/保留归编排方。
 
 | 候选 | ZIP | 回执 | 预注册门 |
 | --- | --- | --- | --- |

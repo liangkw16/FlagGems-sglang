@@ -5,12 +5,12 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e16,558.04x TB)
-platform: e19(20168)valid 535.08<TB558.04;燧原110.3(segment-band未破130门,段带形式判平);天数1185/muxi388/haig894;TB守e16
+platform: e20(20305)valid 8/8 avg 545.021175<TB 558.04;华为_ascend被选中且8/8无ub-overflow(UB-safe正确性达成)但210.91<315门且<e19 generic 267.04(-21%);均值>e19 535.08;TB守e16
 candidate_stage: e20
-team_best_stage: e19
-team_best_speedup: 535.08x
+team_best_stage: e16
+team_best_speedup: 558.04x
 sealed: no
-next: e20(首个_ascend vendor,UB-safe重构)已上膛:ZIP e20-f258168 zip_sha=8d613582…,回执day5prep/fixup_zero_kv_ascend_ub_safe_redesign-wf,verification_commit=f258168d;预注册门=华为8/8且≥315,'ub overflow'编译错即回滚ascend回e19四成员,均值>558.04换TB;距569.3差~11均值(2.0%);燧原段带判平,宽度到顶
+next: 华为ascend vendor慢于其替换的generic路径(e19读数267.04)——回滚/保留归编排方裁决(ub-overflow回滚条款未触发);距TB 558.04差2.3%;额度20/30(used 10,observed 12:41+08)
 updated: 2026-09-23
 ```
 
@@ -288,3 +288,32 @@ updated: 2026-09-23
   编译错/数值错即回滚 ascend vendor 回 e19 四成员字节）；华为读数 ≥315
   视为轴兑现（超 generic 最好窗 e14r 315.3，榜首 354）；均值 >558.04
   换 TB，未过门保 e16 TB。
+
+## 2026-09-23 E20 平台终态：valid 8/8 均值 545.021175 < TB 558.04——华为 ascend vendor 正确性达成但慢于其替换的 generic 路径
+
+- E20（submission **20305**，daily_seq 8，created 2026-09-23T12:25:13+08）：
+  completed/valid，8/8 全过，均值 **545.021175**（> e19/20168 的
+  535.077325，< TB e16/19661 的 558.039775），is_team_best=false——TB
+  守 e16 558.04。
+- 逐芯（e20 vs e19=20168，括注平台 selected_file）：天数 1283.2118 vs
+  1185.29（generic）/ 沐曦 372.1516 vs 388.14（_metax）/ 燧原 110.0834 vs
+  110.29（_enflame）/ 海光 897.4726 vs 894.32（generic；唯一 raw errors
+  条目为 pytest-asyncio PytestDeprecationWarning stderr 噪音，passed=true，
+  0 failed_cases，良性）/ 昆仑 8.495 vs 8.43（_kunlunxin）/ **华为
+  210.9114 vs 267.04（`fixup_zero_kv_ascend.py` 被平台选中，-21%）** /
+  A 841.1382 vs 818.47（generic）/ B 636.7054 vs 608.64（generic）。
+- 预注册门核对（bcf63bbc 上膛时记录）：华为 8/8 正确且无 'ub overflow'
+  编译错——**达成**（UB-safe 重构的正确性目标兑现：首个 _ascend vendor
+  在华为编译并全部通过，T84/T92 ub-overflow 编译错族未复现）；华为读数
+  ≥315 轴兑现门——未达（210.91 < 315，且低于 e19 generic 读数 267.04，
+  ascend vendor 慢于其替换的 generic 路径）；均值 >558.04 换 TB——未达。
+  'ub overflow 编译错/数值错即回滚 ascend 回 e19' 的触发条件**未发生**；
+  ascend vendor 回滚与否按预注册条款由编排方裁决。
+- 额度：本发后 22/30 remaining（observed_at 12:27:30+08，submission
+  20305/daily_seq 8）；三发全部落地后复核 20/30（used 10，observed_at
+  12:41:42+08，本次 status JSON 实读）。
+- remote_verification=unavailable（FLAGOS_REMOTE_ZIP_HOST 未设，仅远端
+  字节未复核，不影响已成功提交）；未出现 sending/uncertain，未重试。
+- 订正：前次 CURRENT 块误写 team_best_stage=e19/535.08x——平台实读
+  is_team_best=true 记录为 19661（e16，558.039775），本次已订正为
+  e16/558.04x。
