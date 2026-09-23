@@ -56,9 +56,12 @@ class IndexedScaleShiftTest(unittest.TestCase):
                 shift = torch.randn(
                     variants, hdim, dtype=torch.bfloat16, device="cuda"
                 )
-                scale = torch.randn(
-                    variants, hdim, dtype=torch.bfloat16, device="cuda"
-                ) * 0.1
+                scale = (
+                    torch.randn(
+                        variants, hdim, dtype=torch.bfloat16, device="cuda"
+                    )
+                    * 0.1
+                )
                 idx = torch.randint(
                     0, variants, (rows,), dtype=torch.int64, device="cuda"
                 )
@@ -83,19 +86,44 @@ class IndexedScaleShiftTest(unittest.TestCase):
                 idx = torch.zeros(16, dtype=torch.int32, device="cuda")
                 self.check((x, shift, scale, idx), exact=True)
 
+    def test_each_bf16_boundary(self):
+        # Each tuple puts a different eager intermediate on a bf16 tie.
+        for x_value, scale_value, shift_value in (
+            (129 / 64, 1 / 256, 0),
+            (129 / 64, 1 / 2, -1 / 128),
+            (2, 0, 1 / 128),
+        ):
+            with self.subTest(values=(x_value, scale_value, shift_value)):
+                x = torch.full(
+                    (4, 17), x_value, dtype=torch.bfloat16, device="cuda"
+                )
+                scale = torch.full(
+                    (2, 17),
+                    scale_value,
+                    dtype=torch.bfloat16,
+                    device="cuda",
+                )
+                shift = torch.full(
+                    (2, 17),
+                    shift_value,
+                    dtype=torch.bfloat16,
+                    device="cuda",
+                )
+                idx = torch.ones(4, dtype=torch.int32, device="cuda")
+                self.check((x, shift, scale, idx), exact=True)
+
     def test_int32_indices(self):
         x = torch.randn(33, 2048, dtype=torch.bfloat16, device="cuda")
         shift = torch.randn(7, 2048, dtype=torch.bfloat16, device="cuda")
         scale = torch.randn(7, 2048, dtype=torch.bfloat16, device="cuda")
-        idx = torch.randint(
-            0, 7, (33,), dtype=torch.int32, device="cuda"
-        )
+        idx = torch.randint(0, 7, (33,), dtype=torch.int32, device="cuda")
         self.check((x, shift, scale, idx))
 
 
 RELEASE_REQUIRED_TESTS = [
     "IndexedScaleShiftTest.test_shapes_and_variants",
     "IndexedScaleShiftTest.test_double_round_boundary",
+    "IndexedScaleShiftTest.test_each_bf16_boundary",
     "IndexedScaleShiftTest.test_int32_indices",
 ]
 
