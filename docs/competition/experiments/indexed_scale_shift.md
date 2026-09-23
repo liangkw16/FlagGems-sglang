@@ -4,13 +4,13 @@
 task: 83
 operator: indexed_scale_shift
 batch: 6
-validity: invalid(e5 20445为7/8；昆仑九case均编译失败)
+validity: candidate(e6代理release 7/7、codex-review无缺陷；e5 20445为7/8)
 platform: e5(20445)7/8 invalid_correctness;XPU unpack缺bufPtr;源码回滚e2
-candidate_stage: e6待诊断
+candidate_stage: e6
 team_best_stage: -
 team_best_speedup: -
 sealed: no
-next: e4仍为数值诊断基底；核实XPU可编译舍入路径后再立e6，e5不重投
+next: e6以T87已成功的f32→i32位读和uint16原始存储避开e5的u32/reverse-bitcast；实时preflight，平台8/8且各芯≥0.1才保留，否则回滚e2
 updated: 2026-09-23
 ```
 
@@ -262,3 +262,38 @@ updated: 2026-09-23
   与 e3 前源码 diff 为空，回滚 commit `e1c44da8`。e5 不重投；已用
   `codex-ask` 携本次编译错误与 T87 已成功的 f32→i32 位读先例，咨询
   下一独立候选。目标芯可编译性仍是首门，数值门次之。
+
+## E6：有符号位读与原始 uint16 存储
+
+- 新 `codex-ask`（`gpt-6-sol`、`max`）对 e5 的 XPU `unpack` 编译错误
+  与 T87 的 f32→i32 已通过先例做区分：建议从 e4 不可变 ZIP 取源，
+  只把三处 bf16 转换/存储改为有符号 i32 位读、RTNE 加偏置、取高
+  16 位后经重类型化指针存原始半字。这样避开 e5 的 u32 位读、
+  i32→f32 反向 bitcast 和最终有限值 f32→bf16 转换。保持三段物化、
+  逐行 grid、索引和算式不变。XPU 是否接受 i32 位读的算术结果及
+  uint16 指针重类型化仍未知，不把 T87 的成功外推为本题通过。
+- 代码 commit `57cefa93a2b99c413e80f6e1ec760318039c1b34`；测试沿用
+  `7928c166` 的正负取消项、Inf/NaN 分类与全部行边界用例，测试 SHA-256
+  `8ffaff25cf4c4121dc15f6b4f12ddcd0a993dae9f01e35dbe621d893f09104e4`。
+  generic SHA-256 `efd3fd554a953e8fe65b5299079d63d62f1dca4b830d99958215d72f8d5a49c0`，
+  kunlun SHA-256 `db6af7089766ebd98c8b06cc3fe63ec413833f9d1d4baa3205d388d5294bdc09`。
+- ZIP `artifacts/competition/indexed_scale_shift/e6-57cefa9/indexed_scale_shift.zip`
+  6769 B、SHA-256 `eda724dda6782f1f9a6d1f03f6a36578b80801185b270df3bd3d952d749c35a4`，
+  两成员 `indexed_scale_shift.py`/`indexed_scale_shift_kunlunxin.py`；
+  existing 验签与 `unzip -t` 通过。
+- 同 commit release：
+  `artifacts/competition/indexed_scale_shift/e6-57cefa9/verification.json`
+  SHA-256 `8f89ef0459cbb9065fbe0ebdc5b318c96ead6f31fc332968f3ff932816275c54`，
+  日志 SHA-256 `6a2ec2c1f0ae7588b3088842b4c3e38c0dfe51dbff38856c53be37cec25cef04`；
+  NVIDIA RTX 5070 Ti 代理 7 测试 0 失败/错误/skip，generic 22、kunlun
+  66 次实际 kernel launch。py_compile、Black、isort、flake8 通过；三段
+  代理 PTX 均有 `st.global.b16`，无有限值 `cvt.rn.bf16.f32`。昆仑目标
+  仍 `target-runtime-unverified`。
+- **预注册门**：codex-review 无可靠缺陷后再 preflight；8/8 正确且每芯
+  speedup ≥0.1 才成为首个有效成绩。昆仑编译、数值或速度失败则
+  恢复 e2 vendor 原字节，不重投 e6；若能运行但数值失败，逐 case
+  与 e4 的 899/12,582,912 等稀疏失配对比。其他七芯 generic 成员
+  字节不变。
+- `codex-review --commit 57cefa93 --spec .../83-indexed_scale_shift.md`
+  完成：Spec 和 Standards 均未发现可确认的新增缺陷；评审明确 NVIDIA
+  回执不证明昆仑编译或性能。审查门通过。

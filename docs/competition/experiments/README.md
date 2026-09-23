@@ -21,6 +21,9 @@
   `b8163659…ae6` 与 codex-review 通过后平台 **20445 为 7/8**：昆仑九个
   case 均在 u32 bitcast 的 `triton_xpu.unpack` lowering 编译失败，未到数值门。
   源码回滚 e2 原字节（`e1c44da8`），额度余 6/30；后续候选先核实可编译路径。
+- [T83 indexed_scale_shift e6](indexed_scale_shift.md)：从 e4 ZIP 改为 i32 位读
+  并以 uint16 原始半字存储三轮舍入，避开 e5 编译点；NVIDIA 代理 release
+  7/7、ZIP `eda724dd…35a4` 验签通过，codex-review 无缺陷，待实时 preflight。
 
 ## 2026-09-23 19:00 冲榜循环日终收口（额度 10/30 剩，窗口明日 19:59 关）
 
