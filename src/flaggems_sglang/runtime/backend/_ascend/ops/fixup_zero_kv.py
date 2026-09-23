@@ -32,6 +32,7 @@ def _fixup_zero_kv(
     BLOCK_T: tl.constexpr,
     BLOCK_V: tl.constexpr,
     BLOCK_H: tl.constexpr,
+    FP32_MASK: tl.constexpr,
 ):
     # Each virtual item owns one (segment, tile slot). Fixed workers
     # revisit items in a grid stride; slots split one long zero segment
@@ -50,7 +51,12 @@ def _fixup_zero_kv(
             ninf = tl.full((BLOCK_T, BLOCK_H), float("-inf"), dtype=tl.float32)
             for tile in range(slot, tiles, SLOTS):
                 t = beg + tile * BLOCK_T + tl.arange(0, BLOCK_T).to(tl.int64)
-                tm = t < end
+                # Ascend Vector Cmp handles fp32 but lowers integer
+                # comparisons to scalar work. Keep i64 addresses exact.
+                if FP32_MASK:
+                    tm = t.to(tl.float32) < end.to(tl.float32)
+                else:
+                    tm = t < end
                 for v0 in tl.static_range(0, HV, BLOCK_V):
                     vv = v0 + v[None, :]
                     tl.store(
@@ -98,6 +104,7 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             BLOCK_T=_BLOCK_T,
             BLOCK_V=_BLOCK_V,
             BLOCK_H=triton.next_power_of_2(max(1, num_heads)),
+            FP32_MASK=total_tokens <= 2**24,
         )
     return out, lse
 
