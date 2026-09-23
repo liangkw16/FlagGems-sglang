@@ -4,12 +4,13 @@
 task: 81
 operator: fused_gate_sigmoid_mul_add
 batch: 6
-validity: valid
-platform: e12(20164)invalid_correctness:天数3630s评测挂死(同T92e19族);七芯已读muxi4.93(+42%)/haig7.11(+41%)门已兑现;挂死族1/1重掷=新载体commit
+validity: valid(8/8,e13,4.38823333x TB)
+platform: e13(20320)valid 8/8 avg 4.38823333新TB(旧4.34518333=e10/17390);天数8.0858(≥7.5门过,挂死未复现)/沐曦4.8848/海光7.1653兑现;昆仑0.1821(-75%)与华为2.074(-12%)双破-5%回滚条款
 candidate_stage: e13
-team_best_stage: e10
+team_best_stage: e13
+team_best_speedup: 4.38823333x
 sealed: no
-next: e13已上膛(release回执绿+不可变ZIP e13-b17f47a,verification_commit=b17f47a0);preflight→submit;不消耗天数挂死族1/1重掷配额
+next: -5%回滚条款已触发(昆仑-75%/华为-12%)但昆仑成员实测=e10逐字节(sha 8aa1c28a)而读数停e12水平0.1821——非字节驱动,纯字节回滚无法恢复读数;回滚与否归编排方;天数挂死族1/1重掷配额未消耗
 updated: 2026-09-23
 ```
 
@@ -349,3 +350,34 @@ updated: 2026-09-23
     `8645794657aa4f03dc7e223fd97f51ba36b18d8402321280d2c6124cbe2d290d`，= e12 字节）。
   全部 UTF-8 `.py`、generic/vendor basename 精确合规、无目录前缀或垃圾文件、
   ZIP <10MB。回执 manifest 中六个源文件 SHA-256 与 ZIP 成员逐项相同。
+
+## 2026-09-23 E13 平台终态：valid 8/8 均值 4.38823333 新 TB；昆仑/华为双破 -5% 条款（昆仑崩塌实测非字节驱动）
+
+- E13（submission **20320**，daily_seq 10，created 2026-09-23T12:36:41+08）：
+  completed/valid，8/8 全过，均值 **4.38823333 新 TB**（旧 TB
+  4.34518333 = e10/17390），is_team_best=true。
+- 逐芯（e13 vs e10 proven 括注，selected_file 实读）：天数 8.0858
+  （+2.3%，generic；e12 的 3630s 评测挂死**未复现**）/ 沐曦 4.8848
+  （+16.9%，_metax）/ 燧原 1.99373333（+1.5%，_enflame）/ 海光
+  7.16526667（+6.7%，_hygon；唯一 raw errors 条目为 pytest-asyncio
+  PytestDeprecationWarning stderr 噪音，passed=true，0 failed_cases，良性）/
+  **昆仑 0.18213333（−75.1%，_kunlunxin，破 −5% 条款）** / **华为 2.074
+  （−12.0%，_ascend，破 −5% 条款）** / A 5.8126（−2.9%，generic）/ B
+  4.90753333（−0.5%，generic）。
+- 预注册门核对（d7917f91 上膛时记录）：avg >4.3452 换 TB ✓（4.3882）；
+  天数 ≥7.5 ✓（8.0858，单波挂死族逃离成功）；昆仑 ≥0.65 ✗（0.1821）。
+  'any chip −5% vs proven reading rolls back to full e10 bytes' 触发：
+  昆仑 −75.1% 与华为 −12.0% 双破。
+- 关键情报（发射侧已实测）：e13 的昆仑成员与 e10 ZIP **逐字节相同**
+  （两包内 sha256 均
+  `8aa1c28aa13f1ed7fb92da0908304a8cd027caaca146adc87ca1e1ae79d4fe1c`，
+  `unzip -p` 对比），但读数停在 e12 水平（0.1821 ≈ e12 的 0.18253），
+  远低于 e10 时代 0.7308——**昆仑崩塌非字节驱动**，纯字节回滚无法恢复
+  该读数（评测窗口/reference 侧变化），后续处置归编排方；天数挂死族
+  1/1 重掷配额按上膛 CURRENT 预告未被本次消耗（e13 为按芯组合字节，
+  非单波路径重掷）。
+- 额度：本发后 20/30 remaining（observed_at 12:38:54+08，submission
+  20320/daily_seq 10）；复核同值（used 10，observed_at 12:42:35+08，
+  本次 status JSON 实读）。
+- remote_verification=unavailable（FLAGOS_REMOTE_ZIP_HOST 未设，仅远端
+  字节未复核，不影响已成功提交）；未出现 sending/uncertain，未重试。
