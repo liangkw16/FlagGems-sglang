@@ -41,54 +41,48 @@ def _starts_scan(lens, starts, batch, BLOCK_BS: tl.constexpr):
         carry += tl.sum(seg, 0)
 
 
+
+
+
+
 @triton.jit(do_not_specialize=["batch"])
-def _fill_positions_i64(
-    positions, starts, prefix_lens, lens, batch,
-    HAS_PREFIX: tl.constexpr, BLOCK: tl.constexpr,
+def _fill_dual_layout(
+    positions_words,
+    probe_words,
+    starts,
+    prefix_lens,
+    lens,
+    batch,
+    HAS_PREFIX: tl.constexpr,
+    BLOCK: tl.constexpr,
 ):
+    # the packed/standard decision reads the probe CONTENT on device:
+    # arange(4) viewed as int32 words is [0,1,2,3] under torch-gcu's
+    # narrowed packing and [0,0,1,0] under the standard pairs layout -
+    # the previous per-call host readback cost a ~100us D2H sync that
+    # dominated the op on GCU. narrowed keeps the int64 logical
+    # metadata, so numel/storage-size checks cannot distinguish the
+    # layouts (codex review on the first e11 cut). both store forms
+    # write through the int32 view only - no i64 pointer ever enters
+    # the signature, so the GCU300 verifier stays satisfied.
+    w = tl.load(probe_words + tl.arange(0, 4))
+    packed = tl.sum((w == tl.arange(0, 4)).to(tl.int32), 0) == 4
     for i in range(tl.program_id(0), batch, tl.num_programs(0)):
         start = tl.load(starts + i)
         seq_len = tl.load(lens + i)
         prefix_len = tl.load(prefix_lens + i) if HAS_PREFIX else 0
         for off in range(0, seq_len, BLOCK):
             o = off + tl.arange(0, BLOCK)
-            tl.store(
-                positions + start + o,
-                prefix_len.to(tl.int64) + o,
-                mask=o < seq_len,
-            )
-
-
-@triton.jit(do_not_specialize=["batch"])
-def _fill_positions_i32(
-    positions_words, starts, prefix_lens, lens, batch,
-    HAS_PREFIX: tl.constexpr, BLOCK: tl.constexpr,
-):
-    # narrow-packed path: one int32 store per logical element at view
-    # index i (the physical slot of element i under the packed layout)
-    for i in range(tl.program_id(0), batch, tl.num_programs(0)):
-        start = tl.load(starts + i)
-        seq_len = tl.load(lens + i)
-        prefix_len = tl.load(prefix_lens + i) if HAS_PREFIX else 0
-        for off in range(0, seq_len, BLOCK):
-            o = off + tl.arange(0, BLOCK)
-            tl.store(
-                positions_words + start + o,
-                prefix_len + o,
-                mask=o < seq_len,
-            )
-
-
-def _int64_packed(positions, numel):
-    # narrowed int64 packing is visible in pure tensor metadata with
-    # zero device work and zero host sync (the previous per-call
-    # arange/readback probe cost a ~100us D2H sync every call, which
-    # dominated the op on GCU): N int64 elements view as N int32 words
-    # under torch-gcu's narrowed 4-byte storage, 2N under the standard
-    # 8-byte pairs layout
-    if numel == 0:
-        return False
-    return positions.view(torch.int32).numel() == numel
+            m = o < seq_len
+            idx = start + o
+            if packed:
+                tl.store(positions_words + idx, prefix_len + o, mask=m)
+            else:
+                wide = prefix_len.to(tl.int64) + o
+                lo = (wide & 0xFFFFFFFF).to(tl.int32)
+                hi = (wide >> 32).to(tl.int32)
+                tl.store(positions_words + 2 * idx, lo, mask=m)
+                tl.store(positions_words + 2 * idx + 1, hi, mask=m)
 
 
 def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
@@ -111,28 +105,18 @@ def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
             BLOCK_BS=triton.next_power_of_2(min(max(batch, 1), 8192)),
             num_warps=_NUM_WARPS,
         )
-        if _int64_packed(positions, extend_seq_lens_sum):
-            _fill_positions_i32[(min(batch, _MAX_CTAS),)](
-                positions.view(torch.int32),
-                extend_start_loc,
-                extend_prefix_lens,
-                extend_seq_lens,
-                batch,
-                HAS_PREFIX=has_prefix,
-                BLOCK=_BLOCK,
-                num_warps=_NUM_WARPS,
-            )
-        else:
-            _fill_positions_i64[(min(batch, _MAX_CTAS),)](
-                positions,
-                extend_start_loc,
-                extend_prefix_lens,
-                extend_seq_lens,
-                batch,
-                HAS_PREFIX=has_prefix,
-                BLOCK=_BLOCK,
-                num_warps=_NUM_WARPS,
-            )
+        probe = torch.arange(4, dtype=torch.int64, device=device)
+        _fill_dual_layout[(min(max(batch, 1), _MAX_CTAS),)](
+            positions.view(torch.int32),
+            probe.view(torch.int32),
+            extend_start_loc,
+            extend_prefix_lens,
+            extend_seq_lens,
+            batch,
+            HAS_PREFIX=has_prefix,
+            BLOCK=_BLOCK,
+            num_warps=_NUM_WARPS,
+        )
     return positions, extend_start_loc
 
 
