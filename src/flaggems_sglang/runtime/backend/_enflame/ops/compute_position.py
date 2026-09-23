@@ -84,8 +84,12 @@ def _fill_dual_layout(
                 # (bitwise and/shift) fail make_gcuir on gcu300
                 lo = prefix_len + o
                 hi = (lo < 0).to(tl.int32)
-                tl.store(positions_words + 2 * idx, lo, mask=m)
-                tl.store(positions_words + 2 * idx + 1, hi, mask=m)
+                # widen only the address word index (arange/scalar-extsi
+                # addressing has platform precedent on gcu300; the int64
+                # vector ALU bitops were the compile wall)
+                widx = 2 * idx.to(tl.int64)
+                tl.store(positions_words + widx, lo, mask=m)
+                tl.store(positions_words + widx + 1, hi, mask=m)
 
 
 def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
