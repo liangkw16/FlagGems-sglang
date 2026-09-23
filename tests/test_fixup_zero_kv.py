@@ -185,11 +185,11 @@ class FixupZeroKVTest(unittest.TestCase):
         self.check((out, lse, lens, cum, 1))
 
     def test_beyond_fp32_mask_domain(self):
-        # Ascend vendor: the fp32 tail mask is exact only below 2**24
-        # elements - past it the boundary offset rounds up (to an even
-        # multiple) and compares false, leaving the span's last element
-        # unwritten. The sub-2**24 scalar gate keeps such spans on the
-        # exact integer mask, so these spans must come back fully fixed.
+        # Ascend vendor, e2 semantics: the only tail mask left is an
+        # exact int32 vector compare on the final block, so spans past
+        # 2**24 elements (where the e1 fp32 masks rounded the boundary
+        # offset up and left the last element unwritten) must come
+        # back fully fixed with no sub-2**24 gate at all.
         # out stream: 1400 rows x (96*128) = 17,203,200 elements; the
         # boundary offset 17,203,199 is odd and rounds up in fp32.
         args = make_case(kv_lens=(0,), tok_lens=(1400,), heads=96, vdim=128)
@@ -205,15 +205,73 @@ class FixupZeroKVTest(unittest.TestCase):
         self.check(args)
 
     def test_capped_tile_grid_strided_coverage(self):
-        # Ascend vendor (batch, min(tiles, 255)) 2D grid: the axis-1
-        # tile cap must bind without losing elements, and the
-        # in-kernel tile stride must cover segments that overshoot the
-        # advisory span (500-row estimate vs a 1400-row zero segment).
+        # Ascend vendor 2D grid: the axis-1 tile cap must bind without
+        # losing elements, and the in-kernel tile stride must cover
+        # segments that overshoot the advisory span (500-row estimate
+        # vs a 1400-row zero segment).
         args = make_case(
             kv_lens=(0, 4, 0), tok_lens=(1400, 5, 33), heads=96, vdim=128
         )
         self.check(args)
         self.check((args[0], args[1], args[2], args[3], 500))
+
+    def test_multiblock_unmasked_and_exact_tail(self):
+        # Ascend vendor e2 store form (T40-e16): non-final blocks are
+        # whole-block stores with no mask at all; only the final block
+        # of each stream masks with an exact int compare. 64 rows x
+        # (8*16) = 8192 out elements = two exactly-full blocks (the
+        # tail mask is all-true, the exact-multiple boundary); 65 rows
+        # adds a ragged one-row tail block; the lse stream (64*8 = 512)
+        # is a single partial block. A zero-KV segment with zero q
+        # tokens owns no blocks at all next to a full neighbour.
+        self.check(make_case(kv_lens=(0,), tok_lens=(64,)))
+        self.check(make_case(kv_lens=(0,), tok_lens=(65,)))
+        self.check(make_case(kv_lens=(0, 3), tok_lens=(64, 2)))
+        self.check(make_case(kv_lens=(0, 0), tok_lens=(64, 0)))
+
+    def test_grid_total_cap_boundary(self):
+        # Ascend flattens the (batch, tiles) 2D grid onto a single
+        # <=65535-program axis (chip-rulesets): the wrapper must cap
+        # the product, not just axis 1. batch=257 keeps the full 255
+        # tiles (257*255 = 65535 exactly, boundary-equal is legal);
+        # batch=258 must shrink to 254 tiles (258*254 = 65532). The
+        # advisory span (sum of token lengths, far above any single
+        # segment) drives natural tiles to the 255 cap so only the
+        # product cap distinguishes the two. The recorder pins the
+        # launched grid; the check proves the strided block loop still
+        # fixes every zero-KV row at the reduced tile count.
+        ascend = dict(MODULES).get("ascend")
+        if ascend is None:
+            self.skipTest("ascend vendor not present")
+        probe = {}
+
+        class _GridRecorder:
+            def __getitem__(self, grid):
+                def _record(*args, **kwargs):
+                    probe["grid"] = grid
+
+                return _record
+
+        original = ascend._fixup_zero_kv
+        ascend._fixup_zero_kv = _GridRecorder()
+        try:
+            for batch, want_tiles in ((257, 255), (258, 254)):
+                with self.subTest(batch=batch):
+                    kv = [0 if i % 3 == 0 else 4 for i in range(batch)]
+                    tok = [2 if i % 3 == 0 else 3 for i in range(batch)]
+                    args = make_case(
+                        kv_lens=kv, tok_lens=tok, heads=96, vdim=128
+                    )
+                    span = sum(tok)
+                    ascend.fixup_zero_kv(
+                        args[0], args[1], args[2], args[3], span
+                    )
+                    grid = probe["grid"]
+                    self.assertEqual(grid, (batch, want_tiles))
+                    self.assertLessEqual(grid[0] * grid[1], 65535)
+                    self.check((args[0], args[1], args[2], args[3], span))
+        finally:
+            ascend._fixup_zero_kv = original
 
 RELEASE_REQUIRED_TESTS = [
         "FixupZeroKVTest.test_understated_span_zero_segment",
@@ -228,6 +286,8 @@ RELEASE_REQUIRED_TESTS = [
     "FixupZeroKVTest.test_repeated_calls_reread_inputs",
     "FixupZeroKVTest.test_beyond_fp32_mask_domain",
     "FixupZeroKVTest.test_capped_tile_grid_strided_coverage",
+    "FixupZeroKVTest.test_multiblock_unmasked_and_exact_tail",
+    "FixupZeroKVTest.test_grid_total_cap_boundary",
 ]
 
 
