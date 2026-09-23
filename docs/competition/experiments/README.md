@@ -1,5 +1,11 @@
 # 第二批候选与提交队列
 
+## 2026-09-23 T90 e7 候选实现（燧原 [RB,W] 行块瓦片整成员替换，待验证上膛）
+
+| 候选 | ZIP | 回执 | 预注册门 |
+| --- | --- | --- | --- |
+| [T90 sigmoid_gate_mul_broadcast e7](sigmoid_gate_mul_broadcast.md)（本轮 commit：`_enflame` 整成员替换——[RB,W] 行块瓦片（W=HDIM 最大 2 幂因子封顶 65536、RB*W=65536 对齐 relu2 宽度带）、constexpr HDIM 行距→DMA 通路、gate [RB] 向量载入广播（无逐元素除法 gather）、零列掩码、行块 grid-stride+12-CTA+num_stages 3；int32 域断言 `(rows+RB)*hdim<2^31`；新增回归 `test_rowblock_tile_boundary`；generic/_ascend/_hygon 冻结 e4 字节，e6 字节绝不再入包） | 待 release 代理验证 + `e7-<commit>` ZIP | 待上膛回执 | 燧原 ≥2.0 保留 / ≥2.5 进场带（金狐狸 2.51 下沿）；均值 >2.5247 换 TB；任一其余芯 -5% 判负；回退档=纯 1D BLOCK=W 标量 row |
+
 ## 2026-09-23 T92 e21r 平台终态（20313）：invalid_correctness 7/8——华为 ub-overflow 消除、转数值败
 
 - **终态**：华为编译错已消除（编译并运行，exec 32914ms）但
@@ -40,7 +46,12 @@
 | --- | --- | --- | --- |
 | [T91 tiny_k_gemm e9](tiny_k_gemm.md)（commit `30386020`：enflame vendor 单变量，w tile 按 [BLOCK_N,K] 自然布局加载 + `tl.trans` 进 dot（k 连续轴=tile 末轴，GCU DMA 流形态），launch 字节冻结 e8；generic/kunlunxin/metax 字节不变） | e9-3038602（`70656f2d…e035`，4 成员与 commit 字节一致，≠e8 新字节） | 2 测试 272 子用例 0 失败，4 源 × 60 launch ✓（`day5prep-20260921/tiny_k_gemm_e9_enflame_natural_layout-wf/`） | 燧原 1.18→≥1.5 且其余七芯不动；均值 >1.9739 换 TB（保守取 e8 记录值） |
 
-## 2026-09-22 T90 e6 上膛（燧原 flat 流式重开，待发射）
+## 2026-09-22 T90 e6 上膛（燧原 flat 流式重开；09-23 终态 invalid_threshold，e7 重开）
+
+- **终态（09-23）**：sub 20163 invalid_threshold——燧原 0.033（flat 流式在
+  GCU 崩，远低于 2.0 保留门；崩因锁定逐元素 offs//HDIM 除法 gather）、昆仑
+  0.118 贴门；TB 2.5247（e4）守。e6 字节绝不再入包；轴以 e7
+  [RB,W] 行块瓦片重开（见顶部 e7 行）。
 
 | 候选 | ZIP | 回执 | 预注册门 |
 | --- | --- | --- | --- |

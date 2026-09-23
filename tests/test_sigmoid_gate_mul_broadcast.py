@@ -39,19 +39,53 @@ class SGMBTest(unittest.TestCase):
         self.check(x, gate)
 
     def test_flat_block_boundary_gate_gather(self):
-        # The _enflame flat-streaming vendor walks numel in BLOCK=65536
-        # streams and gathers gate via offs // hdim, so the misalignment
-        # axes are BLOCK boundaries landing exactly on a row boundary,
-        # mid-row, past the 12-CTA grid-stride second pass, and hdim=1
-        # where every element indexes its own gate row. Per-row distinct
-        # gates (sigmoid spread 0.047..0.953) make any gather off-by-one
-        # blow the 2e-2 tolerance.
+        # Boundary axes for the _enflame streaming vendor, kept from the
+        # e6 flat form (BLOCK=65536 streams, gate via offs // hdim) and
+        # re-read under the e7 [RB, W] row-block tile: an exact block
+        # with no tail, a one-row tail block, an odd-hdim degenerate
+        # tile, more row blocks than the 12-CTA grid-stride cap, and
+        # hdim=1 where every element addresses its own gate row. Per-row
+        # distinct gates (sigmoid spread 0.047..0.953) make any
+        # gate-indexing off-by-one blow the 2e-2 tolerance.
         for n, d in (
-            (64, 1024),  # numel == 65536: one exact block, no tail
-            (65, 1024),  # 65536 % 1024 == 0: block ends on a row boundary
-            (33, 2047),  # 65536 = 32*2047 + 32: block ends mid-row
-            (128, 8192),  # 16 blocks over 12 CTAs: grid-stride 2nd pass
+            (64, 1024),  # e7: rows == RB(64): one exact row block, no tail
+            (65, 1024),  # e7: second row block carrying a single row
+            (33, 2047),  # e7: W=1 degenerate tile, 2047 column iterations
+            (128, 8192),  # e7: 16 row blocks over 12 CTAs: 2nd pass
             (70000, 1),  # hdim=1: every element its own gate row
+        ):
+            with self.subTest(shape=(n, d)):
+                x = torch.randn(n, d, dtype=torch.bfloat16, device="cuda")
+                gate = (
+                    (
+                        torch.arange(n, device="cuda", dtype=torch.float32)
+                        % 7
+                        - 3
+                    )
+                    .to(torch.bfloat16)
+                    .reshape(n, 1)
+                )
+                self.check(x, gate)
+
+    def test_rowblock_tile_boundary(self):
+        # The _enflame e7 vendor tiles [RB, W] with W = the largest
+        # power-of-two factor of hdim (capped at 65536) and
+        # RB * W = 65536, so the new misalignment axes are row blocks
+        # ending exactly at/past the rows boundary, multi-column-block
+        # widths (W < hdim: the compile-time-counted column loop must
+        # cover the full row), the sub-512 W band, and the W=65536 cap
+        # where RB collapses to 1. Per-row distinct gates make any
+        # [RB]-vector-load or broadcast off-by-one blow the 2e-2
+        # tolerance; a missed column block fails zero-filled regions.
+        for n, d in (
+            (63, 1024),  # rows = RB-1: single row block, 1 masked lane
+            (64, 1024),  # rows = RB exactly: no row mask ever live
+            (65, 1024),  # rows = RB+1: tail row block with one row
+            (769, 1024),  # 13 row blocks > 12 CTAs: grid-stride 2nd pass
+            (513, 5120),  # W=1024: 5 column blocks + 1-row tail block
+            (3, 7168),  # W=1024: 7 column blocks
+            (5, 96),  # W=32 (sub-512 band): 3 column blocks
+            (3, 65536),  # W capped at 65536, RB=1: one row per block
         ):
             with self.subTest(shape=(n, d)):
                 x = torch.randn(n, d, dtype=torch.bfloat16, device="cuda")
@@ -68,7 +102,7 @@ class SGMBTest(unittest.TestCase):
 
     def test_row_gated_strided_x(self):
         # Row-gapped x (stride(1) == 1, stride(0) > hdim) is inside the
-        # generic contract (xs0 addressing); the _enflame flat vendor
+        # generic contract (xs0 addressing); the _enflame tile vendor
         # must not reject it - it takes a layout copy and still computes
         # the gating multiply in the Triton kernel.
         for n, d in ((7, 1023), (130, 1024)):
@@ -93,6 +127,7 @@ class SGMBTest(unittest.TestCase):
 RELEASE_REQUIRED_TESTS = [
     "SGMBTest.test_shapes_and_saturation",
     "SGMBTest.test_flat_block_boundary_gate_gather",
+    "SGMBTest.test_rowblock_tile_boundary",
     "SGMBTest.test_row_gated_strided_x",
 ]
 

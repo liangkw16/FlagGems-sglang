@@ -6,11 +6,11 @@ operator: sigmoid_gate_mul_broadcast
 batch: 6
 validity: valid
 platform: e6(20163)invalid_threshold:燧原0.033(flat流式在GCU崩,远低于2.0保留门);kunl0.118贴门;TB 2.5247(e4)守
-candidate_stage: e6
+candidate_stage: e7
 team_best_stage: e4
 team_best_speedup: 2.5247
 sealed: no
-next: e6已上膛(回执绿3测试0失败/4源×12launch+ZIP e6-6aaa394验签)待发射;轴=沐曦flat候选(e6发射后下一发)/华为1.25;昆仑0.75贴门槛
+next: e7已实现(燧原_enflame整成员替换=[RB,W]行块瓦片,本轮commit待评审)待release代理验证+e7-ZIP上膛;门=燧原≥2.0保留/≥2.5进场带,均值>2.5247换TB,任一其余芯-5%判负,回退档=纯1D BLOCK=W标量row;e6字节绝不再入包
 updated: 2026-09-23
 ```
 
@@ -154,3 +154,52 @@ updated: 2026-09-23
 - 预注册门（e6 两轮一致，发射前锁定）：燧原 ≥2.0 保留 / ≥2.5 进场带
   （场带 2.5-3.39，EvokeAgent 3.2440）；均值 >2.5247 才换 TB；宽度阶梯
   32768 为回退档；折扣因子见第 1 轮段（expectedAvgGain 0.1）。
+
+## 2026-09-23 e7 候选实现（第 1 轮：燧原行块流式形态，_enflame 整成员替换）
+
+- 逐芯差距复核（climb-loop.json `s2t1op090` 快照，本轮会话实读）：我方
+  enflame 0.77473333（rank 19）vs EvokeAgent 3.39373333（Δ-2.62，全题最大
+  单洞）；双峰确认：仅 4/20 队 ≥2.5（金狐狸 2.50533333/varphi 2.76406667/
+  c2flow 2.97546667/EvokeAgent 3.394），其余 16 队 0.771-1.504=结构门
+  （快照实测带宽，较启动假设的 0.77-1.24 略宽，结构门结论不变）。
+- 根因链（已证伪形态收口）：①行形式+运行时 xs0+逐行标量 gate=e4 0.77
+  （24-SIP 封顶）/e5 0.63（全网格）——chip-rulesets.md:9「stride 必须编译期
+  互整除才走 DMA，运行时 stride 传参=DMA 判定失败、tile 缩 4 倍」直接解释；
+  ②flat 65536+逐元素 offs//HDIM 除法 gather=e6 0.033（sub 20163
+  invalid_threshold）。同芯 T89 relu2 已着陆配方（relu2.py：numel flat
+  grid-stride、12-CTA、num_stages 3、warps 不钉）平台 3.94——与 e6 的唯一
+  结构差=逐元素除法+per-element gather（relu2 亦带掩码与 tl.where ALU，
+  证明掩码/ALU 非杀手），故 e6 崩因锁定除法 gather。
+- 结构（本轮 commit）：`_enflame` 整成员替换为 [RB,W] 行块瓦片——W=HDIM
+  最大 2 幂因子（`hdim & -hdim` 封顶 65536）、RB*W=65536 对齐 relu2 宽度带；
+  寻址 `(base_row+arange(RB))[:,None]*HDIM+(h0+arange(W))[None,:]`，HDIM
+  constexpr→编译期整除→DMA 通路，列向 W|HDIM 恒成立→零列掩码、列循环
+  `range(0,HDIM,W)` 编译期计数（奇数维 1023/2047 次迭代不静态展开）；gate
+  按行块一次 [RB] 向量载入+sigmoid+[RB,1] 广播（无逐元素 gather）；行尾
+  掩码仅末行块激活；launch 沿 T89 配方：行块 grid-stride + gcu300 12-CTA
+  封顶 + num_stages 3 + warps 不钉。
+- int32 域（e6 P1 纪律沿用）：断言 `(rows+RB)*hdim < 2^31`——覆盖行块归纳
+  与 masked 尾 lane 的全部计算地址（最大计算地址 =nblocks*RB*HDIM-1≤
+  (rows+RB)*hdim-1，全加法非负→不可能回绕成负索引过 `row_offs<rows` 检查）；
+  本轮纯 Python 循环结构仿真证明 17 个测试 shape 逐元素恰写一次、grid-stride
+  分发与尾行掩码正确。
+- 契约：gate 连续断言保留；行间隙 x（stride(1)==1, stride(0)>hdim）沿用
+  e6 P2 contiguous 拷贝先例（gating 乘法仍在 Triton kernel 内）。
+- 回归：新增 `test_rowblock_tile_boundary`（rows=RB-1/RB/RB+1、769 行块
+  >12 CTA 二趟、5120=5×1024/7168=7×1024 多列块、96=3×32 亚 512 宽带、
+  65536 W 封顶 RB=1；逐行 distinct gate sigmoid 展布 0.047..0.953）并列入
+  RELEASE_REQUIRED_TESTS；`test_flat_block_boundary_gate_gather` 矩阵保留、
+  注释改写为 e7 行块语义（e6 flat 语义已不适用）；`test_row_gated_strided_x`
+  保留。
+- 硬约束（单变量）：generic/_ascend/_hygon 三成员冻结 e4 字节；e6 字节
+  （0.033<0.1）绝不再入包——本候选即 _enflame 整成员替换。
+- 预注册门（e6 门沿用+连坐条款）：燧原 ≥2.0 保留 / ≥2.5 进场带（金狐狸
+  2.51 为场带下沿）；均值 >2.5247 换 TB；任一其余芯 -5% 判负；回退档=纯 1D
+  BLOCK=W 每迭代标量 row=base//HDIM（标量除法/迭代）+标量 gate。
+- 主要不确定性：GCU 对 2D 瓦片 lowering 未实测（无燧原主机，NVIDIA 代理仅
+  数值门，target-runtime-unverified），回退档纯 1D 标量 gate 形态兜底；
+  W<512 的奇数维退化为 [RB,1] 正确但慢（基准维 2048/4096/5120/7168 均
+  W≥1024 不受影响）；昆仑同字节读数 0.7476→0.118 贴门为平台方差
+  （e4/e6 三共同成员字节逐一相同已核实），任何提交均有 invalid_threshold
+  连坐风险，非本候选可控。
+- 待办：评审通过后 release 代理验证 + `e7-<commit>` ZIP 验签上膛。
