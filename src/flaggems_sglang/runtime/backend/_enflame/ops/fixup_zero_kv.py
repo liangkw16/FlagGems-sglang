@@ -85,14 +85,11 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
         items = batch * ot
         # ponytail: use i32 only while every row offset fits; oversized
         # tensors keep the existing i64 path.
-        index_t = (
-            tl.int32
-            if max(
-                (total_tokens - 1) * out.stride(0) + hv - 1,
-                (total_tokens - 1) * lse.stride(0) + nh - 1,
-            ) <= 2**31 - 1
-            else tl.int64
+        max_offset = max(
+            (total_tokens - 1) * out.stride(0) + hv - 1,
+            (total_tokens - 1) * lse.stride(0) + nh - 1,
         )
+        index_t = tl.int32 if max_offset <= 2**31 - 1 else tl.int64
         _fixup_zero_kv[(min(items, _MAX_CTAS),)](
             out,
             lse,
