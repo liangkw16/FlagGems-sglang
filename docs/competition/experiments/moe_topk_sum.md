@@ -4,16 +4,32 @@
 task: 86
 operator: moe_topk_sum
 batch: 6
-validity: valid
-platform: completed(18337,e6,8/8,2.84x<TB;保e5 2.908;燧原2D-tile中性偏负)
-candidate_stage: e10
-platform: e10(19377)valid 2.8315<TB2.898;燧原1.03→1.38(+33%,未过×2门);昆仑0.117贴门
-team_best_stage: e5
-team_best_speedup: 2.908
+validity: valid(8/8,e11,2.91855x TB)
+platform: e11(20422)valid 8/8 avg 2.91855>TB 2.908微幅新TB;燧原1.367(vs e10 1.38,T90-e7 GCU配方在TOPK归约op上无效——配方是op形状函数:elementwise 3.4x/归约±0%);昆仑0.556(vs午后0.117=**水位恢复信号**,e5带0.6附近);天数4.84/海光5.92/华为1.79(-8%水内)
+candidate_stage: e11
+team_best_stage: e11
+team_best_speedup: 2.91855x
 sealed: no
-next: e1双vendor(燧原streaming+100%/华为persistent+27%)→e3 warps=8(+9.7%,海光+36%);e2 BLOCK2048回退/e4 warps16沐曦超限;距榜首3.729差26%;轴:天数4.8/沐曦2.6/海光4.9-6.0仍有空间
-updated: 2026-09-22
+next: 距榜首金狐狸3.97差27%;燧原1.37→2.7需归约特异形态(TOPK多载瓶颈非DMA/int64);昆仑水位恢复→T89/T90同字节重掷窗开启;额度9/30(used 21,observed 20:20+08)
+updated: 2026-09-23
 ```
+
+## 2026-09-23 E11 平台终态（20422）：valid 8/8 均值 2.91855 微幅新 TB；GCU 配方在归约 op 证伪
+
+- 结构（e11 r2）：`_enflame` 应用 T90-e7 配方——HDIM constexpr
+  （编译期整除→DMA）+ int32 寻址（显式域分支，2^31 尺度回落
+  `_moe_topk_sum_i64` = 父代 e10 体，双 Triton 路径；codex-review
+  P1 修复：assert 在 python -O 下失效）。launch 几何不动。
+- 逐芯：天数 4.84 / 沐曦 2.58 / **燧原 1.367（e10 1.38——配方无
+  效）** / 海光 5.92 / **昆仑 0.556（e10 午后 0.117 → 恢复）** /
+  华为 1.79 / A 3.19 / B 3.11。均值 2.91855 > 2.908 换 TB（昆仑
+  恢复贡献为主）。
+- 结构知识：**GCU elementwise 配方（constexpr stride + int32 +
+  行向量）是 op 形状函数**——1 载 1 存 elementwise 3.4x（T90），
+  TOPK 多载归约 ±0%（本题瓶颈在多载/累加而非 DMA 判定）。
+- 五元组：source/verification `HEAD(e11r2)`；ZIP `769127777cb33300`
+  （4 成员，ascend/hygon/generic 与 e10 逐字节同，已验）；回执
+  `day6-climb-20260923/t86e11-wf/`（4 源 2 测试 0 败）。
 
 ## 过程摘要（2026-09-19 凌晨，题面 09-18 晚随批 6 扩容上线）
 
