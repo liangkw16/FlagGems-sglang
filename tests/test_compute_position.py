@@ -72,9 +72,10 @@ class ComputePositionTest(unittest.TestCase):
                 )
 
     def test_large_batch_striped(self):
-        # Cross the striped dispatch boundary from both sides and hit
-        # the >64-stripe row-widening path.
-        for bs in (63, 64, 65, 1023, 1024, 1025, 2049):
+        # Cross the striped dispatch boundary from both sides, hit the
+        # >64-stripe row-widening path, and cross the e8 fused/two-launch
+        # hybrid boundary (2048 -> 2049) from both sides.
+        for bs in (63, 64, 65, 1023, 1024, 1025, 2047, 2048, 2049):
             with self.subTest(bs=bs):
                 self.check(
                     make_case(

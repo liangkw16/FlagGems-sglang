@@ -19,6 +19,14 @@
 # correct position instead of writing before the allocation (codex
 # review P2); the prefix promotion keeps the a47602d2 boundary
 # contract.
+# e8 collapses the common batch <= 2048 range into ONE launch: every
+# program derives its own exclusive start as a single masked int64
+# vector sum over the whole lens row (vectorized O(batch) lanes, not
+# the s0 serial chain), truncates it into the int32 contract output
+# exactly like the reference's slicing, and streams its segment from
+# the in-register int64 start - no second launch, no low/high split
+# buffer. Larger batches keep the e6 two-launch bytes unchanged (the
+# per-program whole-row load would go quadratic there).
 import torch
 import triton
 import triton.language as tl
@@ -63,6 +71,32 @@ def _fill_positions(
         )
 
 
+@triton.jit(do_not_specialize=["batch"])
+def _fill_positions_fused(
+    positions, start_loc, prefix_lens, lens, batch,
+    HAS_PREFIX: tl.constexpr, BLOCK: tl.constexpr,
+    BLOCK_BS: tl.constexpr,
+):
+    i = tl.program_id(0)
+    # own exclusive start: one masked int64 vector sum over the row -
+    # wide enough for a cumulative start crossing 2^31 without the
+    # e6 low/high split, and truncated into the int32 contract output
+    # exactly like the reference's slicing
+    lanes = tl.arange(0, BLOCK_BS)
+    seg = tl.load(lens + lanes, lanes < batch, other=0).to(tl.int64)
+    start = tl.sum(tl.where(lanes < i, seg, 0), 0)
+    tl.store(start_loc + i, start.to(tl.int32))
+    seq_len = tl.load(lens + i)
+    prefix_len = tl.load(prefix_lens + i) if HAS_PREFIX else 0
+    for off in range(0, seq_len, BLOCK):
+        o = off + tl.arange(0, BLOCK)
+        tl.store(
+            positions + start + o,
+            prefix_len.to(tl.int64) + o,
+            mask=o < seq_len,
+        )
+
+
 def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
     batch = extend_seq_lens.shape[0]
     has_prefix = extend_prefix_lens.shape[0] == batch
@@ -72,6 +106,20 @@ def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
     positions = torch.empty(
         extend_seq_lens_sum, dtype=torch.int64, device=device
     )
+    if batch <= 2048:
+        extend_start_loc = torch.empty(batch, dtype=torch.int32, device=device)
+        if batch:
+            _fill_positions_fused[(batch,)](
+                positions,
+                extend_start_loc,
+                extend_prefix_lens,
+                extend_seq_lens,
+                batch,
+                HAS_PREFIX=has_prefix,
+                BLOCK=1024,
+                BLOCK_BS=triton.next_power_of_2(max(batch, 16)),
+            )
+        return positions, extend_start_loc
     wide_starts = torch.empty(
         2 * batch, dtype=torch.int32, device=device
     )
