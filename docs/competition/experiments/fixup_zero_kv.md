@@ -4,27 +4,44 @@
 task: 80
 operator: fixup_zero_kv
 batch: 6
-validity: valid(8/8,2026-09-23T18:56:15并行提交,569.125575x TB)
-platform: e21(20362)valid 8/8 avg 526.66305判负；23:20榜单确认并行账户新TB 569.125575/8芯过，提交ID及源码身份待核；本地e21轴仍封存
-candidate_stage: e21
-team_best_stage: parallel-1856-source-unverified
+validity: valid(8/8,e24,569.125575x TB)
+platform: e24(20472)valid 8/8 avg 569.125575新TB；e21(20362)526.66305判负；e24身份见codex/t80-top1固定commit
+candidate_stage: e24
+team_best_stage: e24
 team_best_speedup: 569.125575
 sealed: no
-next: 先核实18:56并行提交的源码/ZIP身份；新TB距榜首649.22145差80.095875，主要缺口华为270.67/沐曦151.33/燧原91.56芯分；旧ascend launch轴已封存，优先探跨芯结构新形态。
+next: 新TB距榜首649.22145差80.095875，主要缺口华为270.67/沐曦151.33/燧原91.56芯分；e24源码在codex/t80-top1，当前分支尚未移入；后续以该固定源码为基线探跨芯结构新形态。
 updated: 2026-09-23
 ```
 
-## 2026-09-23 23:20 榜单校准：并行账户新团队最佳 569.125575
+## 2026-09-23 23:20 榜单校准：E24 新团队最佳 569.125575
 
 - 全量榜单 `docs/competition/data/batch6-intel-20260923-2323.json` SHA
   `d3c7d96d881f9662f60f7136941d5cc22cc0e8e784e87a0241b4ac73fcde9ca3`：
   我方 18:56:15 最佳提交 8/8、均分 569.125575、第 3；榜首 c2flow
-  649.22145，差 80.095875。该提交由并行账户活动产生，当前快照没有
-  submission ID、源码 commit、ZIP SHA，暂不归因到 e16/e21 或工作树字节。
+  649.22145，差 80.095875。该提交对应 `codex/t80-top1` 分支账本
+  commit `db0fbc3b380fa0e1103b008b2f7cf897950660e9` 所记 E24
+  submission 20472；当前分支尚未移入 E24 源码。
 - 该最佳逐芯：天数 1179.2426 / 沐曦 420.5914 / 燧原 109.4644 /
   海光 892.8396 / 昆仑 14.1844 / 华为 495.6348 / A 814.0218 /
   B 627.0256。榜首主要领先华为 270.6668、沐曦 151.3320、燧原
   91.5638 芯分；后续晋级门改为 8/8 且均值 >569.125575。
+- E24 source=verification commit
+  `5426893ef656111e6d4969142c08dccf36a97def`；只将 Ascend worker
+  cap 40→48。release 回执
+  `artifacts/competition/t80-e24-20260923/verification.json` SHA
+  `18810586a084ef5bd786e2ae8014cec30ea78e91f48927e61e0853cb3f2b98a6`，
+  日志 SHA `4718c17a7686e1cdb6779dd45287e1b91794f6bbaf30b5b41b8a9885821c36ee`；
+  14 测试、零失败/错误/skip/xfail、五源码各 36 次非预热 launch。
+- 不可变 ZIP `artifacts/competition/fixup_zero_kv/e24-5426893/fixup_zero_kv.zip`
+  (18,793 bytes) SHA
+  `8783d9abc299a2cc785af2ecdb7c1324dbf53dd729dab8e0f12475656ceeab51`；
+  成员 SHA：generic `e3371c49e3ef6f9ba7b2321b094a738a208129a682fc29e837b6a17317035943`，
+  ascend `e3743d90ecbaa0f4f935ba1fb20b5ada7dea6e211ce9c32694ce687b5d3000d1`，
+  enflame `c8ccee9808ff5ed181ac5b5385800b9dc1b3808b80c2a8fcb713a5763365762d`，
+  kunlunxin `b79e658780e02637372a5a84c1290b6bdddc3e8def54ae8ace5ba86030c6f0ff`，
+  metax `37a4d96256677a1899fc388d8b5ef8c07b7b610f4af148202093aef58af15bda`。
+  详细 preflight、codex-review 与远端验签见上述固定分支账本；本次只读引用。
 
 ## 2026-09-23 E21 平台终态（20362）：valid 8/8 均值 526.66 < TB 判负；ascend 轴五形态尽、封存
 
