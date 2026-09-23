@@ -14,6 +14,43 @@ next: 当日163.14→492.17(+202%);剩距c2flow 917.8=1.87x,缺口=华为91.7vs2
 updated: 2026-09-22
 ```
 
+## 2026-09-23 冲榜循环结构调研：上游 2-op 解剖 + e17 双变体设计（未提交）
+
+- **逐芯情报（09-23 13:37 榜单）**：EvokeAgent 973.1 / c2flow 917.8 仍全芯
+  领先（天数 2120/2245 vs 我 781.9；昆仑 33.8/29.1 vs 2.70=12.5x；
+  华为 274.6/247.7 vs 91.7；沐曦 839.7 vs 478.7）。倍率散布 1.6x-12.5x
+  ⇒ 混合成因：均匀 ~1.7x 结构差 + 昆仑/华为平台病理。
+- **代理拆解（RTX 5070 Ti）**：小形状（128 tokens，buf 1552）full=20us
+  ≈ 纯 3-op 固定开销（noop launch 4.2us、zeros 3.1us）；8K tokens
+  21.9us；64K tokens（buf 540K）143us 转带宽主导。平台小形状档
+  launch 开销放大 ⇒ op 数是主杠杆（e12 已证 5→3 op 全 generic 芯翻倍）。
+- **上游解剖（本会话抓取）**：SGLang CUDA `moe_align_kernel.cu` =
+  **2 kernel + 0 memset + 0 alloc**——kernel1 grid=(2,)：block0 单 block
+  共享内存直方图（自零化！）+ warp 级 exclusive scan + 二分填 expert_ids +
+  cumsum 输出；block1 int4 向量化毯填 sentinel。kernel2 scatter 用
+  **cumsum[e+1] 自游标**（atomicAdd 直接返回 start+k，+1 偏移技巧，
+  无独立 cursor 无零化）。vLLM 同样 dispatch 到 CUDA op，无 Triton 版。
+- **tl.histogram 跨芯支持证据**：triton-ascend 官方 API 文档存在
+  `docs/zh/triton_api/Scan_Sort_Ops/histogram.md`（含 mask 参数规格，
+  pin 865691e），FlagTree pin 的 triton-lang 主线含 standard.histogram
+  ⇒ 单程序直方图（寄存器累加，免全局零化）在主流芯可用。
+- **e17 设计（双变体，hasattr(tl,"histogram") 能力检测在两条纯 Triton
+  路径间选择，非 torch fallback）**：
+  - 2-op 路径：launch A grid=(1+F,)——pid0 单程序 tl.histogram 累加
+    （BLOCK_H tile 循环）+ tl.cumsum scan + expert_ids/nport/starts 写
+    cumsum_buffer（caller scratch，零 alloc 零 memset）；pid≥1 并行毯填。
+    launch B scatter = sglang 自游标（atomic_add(cumsum[e]) 直接得
+    start+k，免 counts 载入免 cursor）。
+  - 3-op 兜底路径：e14 多程序原子直方图 + ticket scan 原样，唯一变化 =
+    state 并入 cumsum_buffer（counts[0..E-1] + ticket[E]），
+    `cumsum_buffer.zero_()` 免分配。
+  - 关键正确性点：masked lane 的 hist other 值必须落 num_routed 丢弃桶
+    （E-1 bin）；scatter 依赖 launch 边界序（counts 已被 scan 覆写为
+    starts 后才 atomic）；昆仑 2D broadcast 禁忌不触及（全 1D）。
+- **预注册门（待实现后上膛时定稿）**：均值 >492.17 换 TB；任一 generic
+  芯（天数/沐曦/海光/A/B）相对 e14（781.9/478.7/904.1/753.3/671.0）
+  回退 >10% 判负回滚 e14 字节；燧原/昆仑/华为 vendor 字节不动。
+
 ## 过程摘要（2026-09-19 凌晨，题面 09-18 晚随批 6 扩容上线）
 
 - 开发：s0 generic + 全 unittest 矩阵（commit `540b574a` 家族），代理
