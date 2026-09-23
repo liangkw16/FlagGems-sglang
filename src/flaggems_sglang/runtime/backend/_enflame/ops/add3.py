@@ -1,9 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Enflame vendor for add3: the T73/T75 streaming elementwise recipe -
-# BLOCK 4096 with the launch held at the 24-SIP physical width and
-# num_stages >= 3 (pingpong), no num_warps pin. The grid-stride loop
-# already lives in the kernel body.
+# Enflame streaming add3: use a full GCU wave before widening each
+# program's tile; short inputs keep the proven 8192-element layout.
 
 import torch
 import triton
@@ -33,12 +31,9 @@ def add3(a, b, c):
     assert numel % 16 == 0
     out = torch.empty_like(a)
     if numel:
-        # E2: BLOCK ladder one rung past the T63 peak (4096) - add3 is
-        # pure streaming, unlike T63's gather; gate enflame >= 0.9.
-        # official gcu300 launch geometry: max_grid_size=(12,1,1) and
-        # enflame_heuristics_for_num_warps pins 2
-        _add3[(min(triton.cdiv(numel, 8192), 12),)](
-            a, b, c, out, numel, BLOCK=8192, num_warps=2, num_stages=3
+        block = 16384 if numel >= 12 * 16384 else 8192
+        _add3[(min(triton.cdiv(numel, block), 12),)](
+            a, b, c, out, numel, BLOCK=block, num_warps=2, num_stages=3
         )
     return out
 
