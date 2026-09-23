@@ -6,13 +6,44 @@ operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e16,558.04x TB)
 platform: e23(20469)valid 8/8 avg 554.449675<TB 558.039775判负,燧原109.912<130门; e22(20462)仍7/8,B卡waiting_callback;TB守e16
-candidate_stage: e23
+candidate_stage: e24
 team_best_stage: e16
 team_best_speedup: 558.04x
 sealed: no
-next: e23燧原i32轴关闭并恢复e22原字节(8ad7b360);e22只读等B卡回调;余额1/30,停止低证据重投;下一结构目标华为733/沐曦560/燧原234
+next: e24华为固定worker40→48单变量,代理长段+11%;目标芯>=420保留/>=450突破,均分>558.039775换TB;e22等B卡回调;余额1/30(18:48+08)
 updated: 2026-09-23
 ```
+
+## 2026-09-23 E24 候选：华为全局 worker 40→48，待平台判定
+
+- e22 华为 40 个固定 worker 得 381.2182；e24 仅把 Ascend cap
+  40→48，其余四个 ZIP 成员与 e22 字节一致。40–48 处于本地芯片规则集
+  记录的物理 VectorCore 数范围。NVIDIA 代理 6 轮 AB/BA 配对：
+  1400 token 全零长段 24.70→22.27 µs（+11.0%），混合长段
+  28.90→26.09 µs（+10.8%），短段与健康段基本持平；24 worker
+  长段慢约 1.4–1.5 倍。代理提升不等于目标华为提升，仍标记
+  **target-runtime-unverified**。代理记录
+  `artifacts/competition/t80-e24-20260923/benchmark.jsonl` SHA-256
+  `eebe5fc6dbc6d06d11cbd6522c66a253a5ad3de99f0f844915cbf01d1a5df98f`。
+- 预注册门：八芯正确且每芯≥0.1；华为 ≥420 保留该 cap，≥450 为
+  有意义突破；总均分 > e16 558.039775 才换队内最佳。榜首当前
+  643.5257，e24 是华为资源利用率探针，不预言可单发夺首。
+- source commit = verification commit
+  `5426893ef656111e6d4969142c08dccf36a97def`；测试 SHA-256
+  `2bca30d528133d3b2fa4849c8afd3413ec5eb48d4e6dc58a9bfa6c37d99b8987`。
+  release 回执 `artifacts/competition/t80-e24-20260923/verification.json`
+  SHA-256 `18810586a084ef5bd786e2ae8014cec30ea78e91f48927e61e0853cb3f2b98a6`，
+  相邻日志 SHA-256 `4718c17a7686e1cdb6779dd45287e1b91794f6bbaf30b5b41b8a9885821c36ee`；
+  NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 / Triton 3.7.1，14 测试，
+  0 failure/error/skip/xfail，5 源各 36 次非 warmup kernel launch。
+- 不可变 ZIP `artifacts/competition/fixup_zero_kv/e24-5426893/fixup_zero_kv.zip`
+  SHA-256 `8783d9abc299a2cc785af2ecdb7c1324dbf53dd729dab8e0f12475656ceeab51`，
+  18793 B，`--verify-existing` 与 `unzip -t` 通过，成员与 commit 字节一致：
+  - `fixup_zero_kv.py` `e3371c49e3ef6f9ba7b2321b094a738a208129a682fc29e837b6a17317035943`
+  - `fixup_zero_kv_ascend.py` `e3743d90ecbaa0f4f935ba1fb20b5ada7dea6e211ce9c32694ce687b5d3000d1`
+  - `fixup_zero_kv_enflame.py` `c8ccee9808ff5ed181ac5b5385800b9dc1b3808b80c2a8fcb713a5763365762d`
+  - `fixup_zero_kv_kunlunxin.py` `b79e658780e02637372a5a84c1290b6bdddc3e8def54ae8ace5ba86030c6f0ff`
+  - `fixup_zero_kv_metax.py` `37a4d96256677a1899fc388d8b5ef8c07b7b610f4af148202093aef58af15bda`
 
 ## 2026-09-23 E23 平台终态（20469）：valid 8/8，均分 554.449675 < TB；燧原 i32 轴判负
 
