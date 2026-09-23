@@ -36,16 +36,15 @@ def _fixup_zero_kv(
     BLOCK_T: tl.constexpr,
     BLOCK_V: tl.constexpr,
     BLOCK_H: tl.constexpr,
-    INDEX_T: tl.constexpr,
 ):
     for item in range(tl.program_id(0), items, tl.num_programs(0)):
         seg = item // ot
         zero = tl.load(lens + seg) == 0
         if zero:
-            beg = tl.load(cum + seg).to(INDEX_T)
-            end = tl.load(cum + seg + 1).to(INDEX_T)
-            v = tl.arange(0, BLOCK_V).to(INDEX_T)
-            h = tl.arange(0, BLOCK_H).to(INDEX_T)
+            beg = tl.load(cum + seg).to(tl.int64)
+            end = tl.load(cum + seg + 1).to(tl.int64)
+            v = tl.arange(0, BLOCK_V).to(tl.int64)
+            h = tl.arange(0, BLOCK_H).to(tl.int64)
             hm = h < NH
             zeros = tl.zeros((BLOCK_T, BLOCK_V), dtype=out.dtype.element_ty)
             ninf = tl.full((BLOCK_T, BLOCK_H), float("-inf"), dtype=tl.float32)
@@ -53,7 +52,7 @@ def _fixup_zero_kv(
             # underestimates a zero-KV segment, every slot continues
             # through that segment rather than dropping later rows.
             for tile in range(item % ot, tl.cdiv(end - beg, BLOCK_T), ot):
-                t = beg + tile * BLOCK_T + tl.arange(0, BLOCK_T).to(INDEX_T)
+                t = beg + tile * BLOCK_T + tl.arange(0, BLOCK_T).to(tl.int64)
                 tm = t < end
                 for v0 in tl.static_range(0, HV, BLOCK_V):
                     vv = v0 + v[None, :]
@@ -83,13 +82,6 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
         span = max_seq_len if isinstance(max_seq_len, int) else total_tokens
         ot = max(1, triton.cdiv(min(span, total_tokens), block_t))
         items = batch * ot
-        # ponytail: use i32 only while every row offset fits; oversized
-        # tensors keep the existing i64 path.
-        max_offset = max(
-            (total_tokens - 1) * out.stride(0) + hv - 1,
-            (total_tokens - 1) * lse.stride(0) + nh - 1,
-        )
-        index_t = tl.int32 if max_offset <= 2**31 - 1 else tl.int64
         _fixup_zero_kv[(min(items, _MAX_CTAS),)](
             out,
             lse,
@@ -106,7 +98,6 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             BLOCK_T=block_t,
             BLOCK_V=4096,
             BLOCK_H=triton.next_power_of_2(max(1, nh)),
-            INDEX_T=index_t,
         )
     return out, lse
 
