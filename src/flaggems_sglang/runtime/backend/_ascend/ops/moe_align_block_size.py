@@ -1,140 +1,126 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# e16: the no-atomic launch-count core for Ascend. The e13/e15 attempts
-# failed BiShengHIR with "ub overflow, requires 2686976 bits" - the
-# same number with and without expert chunking, so the unified-buffer
-# budget is consumed by the hist/fill if-else branch union, not the
-# compare tile alone. This round splits the histogram and the sentinel
-# blanket into separate kernels (four launches, still under the e10
-# vendor's five) and bakes epd as a constexpr so the compiler sees the
-# chunk trip count. Zero atomics anywhere (the Ascend stack faults
-# atomic_add asynchronously - the e5-e9 chain).
+# Atomic-free moe_align_block_size, shared verbatim by the _ascend,
+# _enflame and _kunlunxin vendors. The generic's atomic cursor faults
+# the Ascend device asynchronously (the error surfaces at the reference's
+# synchronize - see the e5-e8 huawei 0.0 chain) and degrades GCU/XPU
+# runtimes (the batch-5 fused_moe_dispatch_index lesson, whose no-atomic
+# template this ports): per-32-block expert counts table, one program per
+# expert for the exclusive block prefix, the tiny serial scan for aligned
+# bases, the parallel sentinel/expert_ids fill, then an in-order per-lane
+# rank placement (in-bucket order is free - the harness compares each
+# expert range as a multiset).
 
 import torch
 import triton
 import triton.language as tl
 
 _BLOCK = 32
-_ROWS = 8
+_E_TILE = 64
 
 
-@triton.jit(do_not_specialize=["n", "num_blocks"])
-def _mabs_hist(
-    flat,
-    counts,
-    n,
-    num_blocks,
-    epd: tl.constexpr,
+@triton.jit(do_not_specialize=["n", "num_routed", "num_experts_pad"])
+def _mabs_counts(
+    flat, counts, n, num_routed, num_experts_pad, num_blocks,
     BLOCK: tl.constexpr,
-    E_CHUNK: tl.constexpr,
 ):
-    # the expert axis is walked in E_CHUNK-tall compare slices: each
-    # (BLOCK, E_CHUNK) tile with its live intermediates stays far below
-    # the 192KB unified buffer
+    pid = tl.program_id(0)
+    for block in range(pid, num_blocks, tl.num_programs(0)):
+        offs = block * BLOCK + tl.arange(0, BLOCK)
+        e = tl.load(flat + offs.to(tl.int64), offs < n, other=-1).to(
+            tl.int32
+        )
+        base = block.to(tl.int64) * num_experts_pad
+        for expert in range(0, num_routed):
+            hits = tl.sum((e == expert).to(tl.int32), axis=0)
+            tl.store(counts + base + expert, hits)
+
+
+@triton.jit(
+    do_not_specialize=[
+        "num_routed", "num_experts_pad", "num_blocks",
+    ]
+)
+def _mabs_prefix(
+    counts, prefix, totals, num_routed, num_experts_pad, num_blocks,
+):
+    e = tl.program_id(0)
+    if e < num_routed:
+        run = 0
+        for block in range(0, num_blocks):
+            off = block.to(tl.int64) * num_experts_pad + e
+            tl.store(prefix + off, run)
+            run += tl.load(counts + off)
+        tl.store(totals + e, run)
+
+
+@triton.jit(do_not_specialize=["num_routed", "block_size"])
+def _mabs_scan(
+    totals, base, nblk, npost, num_routed, block_size,
+):
+    offset = 0
+    for e in range(0, num_routed):
+        n = tl.load(totals + e)
+        tl.store(base + e, offset)
+        aligned = ((n + block_size - 1) // block_size) * block_size
+        tl.store(nblk + e, aligned // block_size)
+        offset += aligned
+    tl.store(npost, offset)
+
+
+@triton.jit(do_not_specialize=["num_routed", "buf_numel"])
+def _mabs_fill(
+    expert_ids, sorted_ids, base, nblk, num_routed, block_size, buf_numel,
+    sentinel, BLOCK: tl.constexpr,
+):
+    pid = tl.program_id(0)
+    if pid < num_routed:
+        beg = tl.load(base + pid) // block_size
+        n = tl.load(nblk + pid)
+        e = pid.to(tl.int32)
+        b0 = beg
+        for i in range(0, n, BLOCK):
+            offs = i + tl.arange(0, BLOCK)
+            tl.store(expert_ids + b0 + offs, e, offs < n)
+    else:
+        base_off = (pid - num_routed).to(tl.int64) * BLOCK
+        offs = base_off + tl.arange(0, BLOCK)
+        m = offs < buf_numel
+        fill = tl.zeros((BLOCK,), dtype=tl.int32) + sentinel
+        tl.store(sorted_ids + offs, fill, m)
+
+
+@triton.jit(
+    do_not_specialize=["n", "num_routed", "num_experts_pad", "num_blocks"]
+)
+def _mabs_place(
+    flat, prefix, base, sorted_ids, n, num_routed, num_experts_pad,
+    num_blocks, BLOCK: tl.constexpr,
+):
     pid = tl.program_id(0)
     idx = tl.arange(0, BLOCK)
-    chunk = tl.arange(0, E_CHUNK)
     for block in range(pid, num_blocks, tl.num_programs(0)):
         offs = block * BLOCK + idx
-        e = tl.load(flat + offs, offs < n, other=-1).to(tl.int32)
-        for e0 in tl.static_range(0, epd, E_CHUNK):
-            lanes = e0 + chunk
-            row = tl.sum(
-                ((e[:, None] == lanes[None, :]) & (offs[:, None] < n)).to(
-                    tl.int32
-                ),
-                axis=0,
-            )
-            tl.store(counts + block * epd + lanes, row, lanes < epd)
-
-
-@triton.jit(do_not_specialize=["buf_numel"])
-def _mabs_fill(sorted_ids, buf_numel, sentinel, BLOCK_F: tl.constexpr):
-    pid = tl.program_id(0)
-    foffs = pid * BLOCK_F + tl.arange(0, BLOCK_F)
-    fm = foffs < buf_numel
-    fill = tl.zeros((BLOCK_F,), dtype=tl.int32) + sentinel
-    tl.store(sorted_ids + foffs, fill, fm)
-
-
-@triton.jit(do_not_specialize=["epd", "num_blocks", "num_routed"])
-def _mabs_scan(
-    counts,
-    prefix,
-    base,
-    nblk,
-    npost_ptr,
-    eids,
-    epd,
-    num_blocks,
-    num_routed,
-    block_size,
-    BLOCK_E: tl.constexpr,
-    ROWS: tl.constexpr,
-):
-    lanes = tl.arange(0, BLOCK_E)
-    lm = lanes < num_routed
-    rows = tl.arange(0, ROWS)
-    totals = tl.zeros((BLOCK_E,), dtype=tl.int32)
-    for r0 in range(0, num_blocks, ROWS):
-        r = r0 + rows
-        rm = (r[:, None] < num_blocks) & lm[None, :]
-        tile = tl.load(
-            counts + r[:, None] * epd + lanes[None, :], rm, other=0
+        e = tl.load(flat + offs.to(tl.int64), offs < n, other=-1).to(
+            tl.int32
         )
-        # exclusive prefix per row along the block axis plus the carry
-        # from every earlier tile
-        pref = totals[None, :] + (
-            tl.cumsum(tile, axis=0) - tile
-        )
-        tl.store(
-            prefix + r[:, None] * epd + lanes[None, :], pref, rm
-        )
-        totals += tl.sum(tile, axis=0)
-    aligned = ((totals + block_size - 1) // block_size) * block_size
-    starts = tl.cumsum(aligned, 0) - aligned
-    total = tl.sum(aligned, 0)
-    tl.store(base + lanes, starts, lm)
-    tl.store(nblk + lanes, aligned // block_size, lm)
-    tl.store(npost_ptr, total)
-    nblk_v = aligned // block_size
-    start_blk = starts // block_size
-    max_nb = tl.max(nblk_v, 0)
-    for i in range(0, max_nb):
-        m = lm & (i < nblk_v)
-        tl.store(eids + start_blk + i, lanes.to(tl.int32), m)
-
-
-@triton.jit(do_not_specialize=["n", "num_routed", "epd", "num_blocks"])
-def _mabs_place(
-    flat,
-    prefix,
-    base,
-    sorted_ids,
-    n,
-    num_routed,
-    epd,
-    num_blocks,
-    BLOCK: tl.constexpr,
-):
-    idx = tl.arange(0, BLOCK)
-    for block in range(tl.program_id(0), num_blocks, tl.num_programs(0)):
-        offs = block * BLOCK + idx
-        m = offs < n
-        e = tl.load(flat + offs, m, other=-1).to(tl.int32)
-        hit = m & (e >= 0) & (e < num_routed)
-        # in-block rank: how many earlier lanes of this block share my
-        # expert (deterministic - original flat order within the block)
-        rank = tl.sum(
-            ((e[:, None] == e[None, :]) & (idx[None, :] < idx[:, None])).to(
-                tl.int32
-            ),
-            axis=1,
-        )
-        block_e = block * epd
-        pref = tl.load(prefix + block_e + e, hit, other=0)
-        b = tl.load(base + e, hit, other=0)
-        tl.store(sorted_ids + b + pref + rank, offs, hit)
+        for j in range(0, BLOCK):
+            off = block * BLOCK + j
+            if off < n:
+                e_j = tl.load(flat + off.to(tl.int64)).to(tl.int32)
+                if e_j >= 0:
+                    if e_j < num_routed:
+                        rank = tl.sum(
+                            ((e == e_j) & (idx < j)).to(tl.int32), axis=0
+                        )
+                        pref = tl.load(
+                            prefix + block.to(tl.int64) * num_experts_pad
+                            + e_j.to(tl.int64)
+                        )
+                        b = tl.load(base + e_j.to(tl.int64))
+                        tl.store(
+                            sorted_ids + b.to(tl.int64) + pref + rank, off
+                        )
 
 
 def moe_align_block_size(
@@ -152,76 +138,54 @@ def moe_align_block_size(
     n = flat.numel()
     num_routed = num_experts - 1
     device = flat.device
-    buf_numel = sorted_token_ids.numel()
-    epd = triton.next_power_of_2(max(1, num_routed))
+    sorted_ids = torch.empty_like(sorted_token_ids)
+    eids = expert_ids.clone()
+    npost = torch.empty_like(num_tokens_post_pad)
     if n:
+        num_experts_pad = triton.cdiv(num_routed, _E_TILE) * _E_TILE
         num_blocks = triton.cdiv(n, _BLOCK)
-        tables = torch.empty(
-            2 * num_blocks * epd, dtype=torch.int32, device=device
+        counts = torch.empty(
+            num_experts_pad * num_blocks, dtype=torch.int32, device=device
         )
-        counts, prefix = (
-            tables[: num_blocks * epd],
-            tables[num_blocks * epd :],
+        prefix = torch.empty_like(counts)
+        totals = torch.empty(
+            num_experts_pad, dtype=torch.int32, device=device
         )
-        aux = torch.empty(2 * epd, dtype=torch.int32, device=device)
-        base, nblk = aux[:epd], aux[epd:]
-        _mabs_hist[(min(num_blocks, 2048),)](
-            flat,
-            counts,
-            n,
-            num_blocks,
-            epd=epd,
+        base = torch.empty_like(totals)
+        nblk = torch.empty_like(totals)
+        grid = min(num_blocks, 2048)
+        _mabs_counts[(grid,)](
+            flat, counts, n, num_routed, num_experts_pad, num_blocks,
             BLOCK=_BLOCK,
-            E_CHUNK=128,
         )
-        _mabs_fill[(triton.cdiv(buf_numel, 1024),)](
-            sorted_token_ids, buf_numel, n, BLOCK_F=1024
+        _mabs_prefix[(max(1, min(num_routed, 65535)),)](
+            counts, prefix, totals, num_routed, num_experts_pad,
+            num_blocks,
         )
         _mabs_scan[(1,)](
-            counts,
-            prefix,
+            totals, base, nblk, npost, num_routed, block_size,
+        )
+        _mabs_fill[
+            (num_routed + triton.cdiv(sorted_ids.numel(), 1024),)
+        ](
+            eids,
+            sorted_ids,
             base,
             nblk,
-            num_tokens_post_pad,
-            expert_ids,
-            epd,
-            triton.cdiv(n, _BLOCK),
             num_routed,
             block_size,
-            BLOCK_E=epd,
-            ROWS=_ROWS,
-        )
-        _mabs_place[(min(num_blocks, 2048),)](
-            flat,
-            prefix,
-            base,
-            sorted_token_ids,
+            sorted_ids.numel(),
             n,
-            num_routed,
-            epd,
-            triton.cdiv(n, _BLOCK),
-            BLOCK=_BLOCK,
+            BLOCK=1024,
+        )
+        _mabs_place[(grid,)](
+            flat, prefix, base, sorted_ids, n, num_routed,
+            num_experts_pad, num_blocks, BLOCK=_BLOCK,
         )
     else:
-        _mabs_fill[(triton.cdiv(buf_numel, 1024),)](
-            sorted_token_ids, buf_numel, 0, BLOCK_F=1024
-        )
-        aux = torch.empty(2 * epd, dtype=torch.int32, device=device)
-        _mabs_scan[(1,)](
-            aux,
-            aux,
-            aux[:epd],
-            aux[epd:],
-            num_tokens_post_pad,
-            expert_ids,
-            epd,
-            0,
-            num_routed,
-            block_size,
-            BLOCK_E=epd,
-            ROWS=_ROWS,
-        )
-    return sorted_token_ids, expert_ids, num_tokens_post_pad
+        sorted_ids.fill_(n)
+        npost.fill_(0)
+    return sorted_ids, eids, npost
 
 
 __all__ = ["moe_align_block_size"]
