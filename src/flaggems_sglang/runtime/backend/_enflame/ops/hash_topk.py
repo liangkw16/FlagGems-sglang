@@ -1,7 +1,22 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# GCU rejects vector-index gather. Read each routed slot through a
-# scalar pointer instead of scanning the whole logits row per slot.
+# Enflame vendor for hash_topk (e8): the e5-e7 form staged the gather
+# with torch (tid2eid[input_ids.long()].long() + torch.gather +
+# .contiguous() + .to(int32) - 4-6 i64/non-contiguous temporaries that
+# GCU routes to CPU) and capped the chip at 0.85-0.97 while the
+# tensor-index gather itself fails GCU make_gcuir (17bf3fbc). The
+# gather now runs inside the kernel as a one-hot match-reduce: the
+# router row is read linearly in NRTILE<=1024 tiles (T21 BLOCK<=1024
+# precedent), each slot's expert id is compared against the position
+# range and reduced with tl.sum(axis=1) - exactly one lane matches, so
+# the reduced value is bit-equal to the direct gather. All widths and
+# strides are constexpr real values, all addressing is int32 (domain
+# asserted in the wrapper, T90 e6 bound discipline), int64 input ids
+# are read through a low-half i32 pointer bitcast (little-endian, T87
+# bitcast precedent) so no i64-typed op or torch temporary survives,
+# and the wrapper does zero torch compute: two output allocations and
+# the 12-CTA launch (gcu300 max_grid_size=(12,1,1), num_warps pinned
+# to 2, num_stages 3 - the e5-e7 geometry).
 
 import torch
 import triton
@@ -26,6 +41,7 @@ def _hash_topk_match(
     WIDTH: tl.constexpr,
     TOPK: tl.constexpr,
     NSHARED: tl.constexpr,
+    NRTILE: tl.constexpr,
     IDS_I64: tl.constexpr,
 ):
     for row in range(tl.program_id(0), rows, tl.num_programs(0)):
@@ -39,16 +55,26 @@ def _hash_topk_match(
         token = tl.load(ids32 + row * IDS_STEP)
         offs = tl.arange(0, TOPK)
         mk = offs < TOPK_REAL
-        weights = tl.zeros((TOPK,), dtype=tl.float32)
-        eids = tl.zeros((TOPK,), dtype=tl.int32)
-        for slot in tl.static_range(TOPK_REAL):
-            eid = tl.load(tid2eid + token * TS0 + slot)
-            logit = tl.load(router_logits + row * RS0 + eid).to(tl.float32)
-            sp = tl.where(logit > 20.0, logit, tl.log(1.0 + tl.exp(logit)))
-            weights = tl.where(offs == slot, tl.sqrt(sp), weights)
-            eids = tl.where(offs == slot, eid, eids)
-        total = tl.sum(weights, axis=0)
-        tl.store(out_weights + row * WIDTH + offs, weights / total, mk)
+        # other=-1 never equals a position, so padded slots stay 0
+        eids = tl.load(tid2eid + token * TS0 + offs, mk, other=-1)
+        # one-hot gather: full linear row read + eids[k]==nrange vector
+        # compare + tl.sum(axis=1), tiled to NRTILE<=1024 lanes.
+        acc = tl.zeros((TOPK,), dtype=tl.float32)
+        for start in range(0, NROUTED, NRTILE):
+            nrange = start + tl.arange(0, NRTILE)
+            mn = nrange < NROUTED
+            lrow = tl.load(
+                router_logits + row * RS0 + nrange, mn, other=0.0
+            ).to(tl.float32)
+            match = (eids[:, None] == nrange[None, :]) & mn[None, :]
+            acc += tl.sum(tl.where(match, lrow[None, :], 0.0), axis=1)
+        # F.softplus semantics: identity above threshold-20, else the
+        # expm1-stable form (unchanged from the validated e5-e7 core).
+        sp = tl.where(acc > 20.0, acc, tl.log(1.0 + tl.exp(acc)))
+        w = tl.sqrt(sp)
+        total = tl.sum(tl.where(mk, w, 0.0), axis=0)
+        wn = w / total
+        tl.store(out_weights + row * WIDTH + offs, wn, mk)
         tl.store(out_ids + row * WIDTH + offs, eids, mk)
         shared = tl.arange(0, NSHARED)
         msh = shared < NSHARED_REAL
@@ -89,23 +115,21 @@ def hash_topk(
     ids_i64 = input_ids.dtype == torch.int64
     ids_step = input_ids.stride(0) * (2 if ids_i64 else 1)
     # int32 addressing domain (T90 e6 bound discipline). Bound proofs:
-    # logits lanes <= (T-1)*RS0 + NROUTED-1 < T*RS0;
-    # table lanes <= (vocab-1)*TS0 +
+    # logits lanes <= (T-1)*RS0 + NROUTED+NRTILE-2 < T*RS0 + 1024
+    # (NRTILE<=1024, RS0>=NROUTED); table lanes <= (vocab-1)*TS0 +
     # TOPK-1 < (vocab+1)*TS0 (pow2 pad TOPK <= 2*topk <= 2*TS0);
     # output lanes <= (T-1)*W + TOPK_REAL+NSHARED-1 < (T+2)*W
     # (pow2 pads <= 2x real widths); ids lanes < T*IDS_STEP + 1.
-    assert num_tokens * router_logits.stride(0) < 2**31
+    assert num_tokens * router_logits.stride(0) + 1024 < 2**31
     assert (tid2eid.shape[0] + 1) * tid2eid.stride(0) < 2**31
     assert (num_tokens + 2) * width < 2**31
     assert num_tokens * ids_step + 1 < 2**31
     out_weights = torch.empty(
-        (num_tokens, width),
-        dtype=torch.float32,
+        (num_tokens, width), dtype=torch.float32,
         device=router_logits.device,
     )
     out_ids = torch.empty(
-        (num_tokens, width),
-        dtype=torch.int32,
+        (num_tokens, width), dtype=torch.int32,
         device=router_logits.device,
     )
     if num_tokens:
@@ -125,7 +149,12 @@ def hash_topk(
             NSHARED_REAL=num_fused_shared_experts,
             WIDTH=width,
             TOPK=triton.next_power_of_2(max(1, topk_routed)),
-            NSHARED=triton.next_power_of_2(max(1, num_fused_shared_experts)),
+            NSHARED=triton.next_power_of_2(
+                max(1, num_fused_shared_experts)
+            ),
+            NRTILE=min(
+                triton.next_power_of_2(max(1, num_routed)), 1024
+            ),
             IDS_I64=ids_i64,
             num_warps=2,
             num_stages=3,
