@@ -9,11 +9,16 @@
 # cumsum of extend_seq_lens into starts (chunked tl.cumsum with a
 # running carry, int32), K2 is one program per request that reads its
 # precomputed start and streams prefix_len + arange over its segment.
-# e6 drops the separate int64 starts scratch buffer: the scan writes
-# only the int32 extend_start_loc output, and K2 promotes that int32
-# start (and the prefix) to int64 before addressing so prefixes near
-# 2^31 stay exact (the a47602d2 boundary contract) - two allocations
-# per call instead of three, every allocation being an output.
+# e6 keeps two allocations per call (positions plus one shared int32
+# [2*batch] buffer) while preserving wide starts exactly like the
+# reference's wide-integer slicing: the first half of the shared
+# buffer IS the int32 extend_start_loc contract output (same
+# truncation the reference returns), and the second half carries the
+# high 32 bits of each exclusive start. K2 recombines low|high into an
+# int64 address so a cumulative start crossing 2^31 addresses the
+# correct position instead of writing before the allocation (codex
+# review P2); the prefix promotion keeps the a47602d2 boundary
+# contract.
 import torch
 import triton
 import triton.language as tl
@@ -21,30 +26,32 @@ import triton.language as tl
 
 @triton.jit(do_not_specialize=["batch"])
 def _starts_scan(
-    lens, starts32, batch, BLOCK_BS: tl.constexpr
+    lens, starts32, starts_hi, batch, BLOCK_BS: tl.constexpr
 ):
-    # the running offsets stay int64 so addressing never wraps even
-    # when a hypothetical batch exceeds the int32 domain; the int32
-    # contract output truncates exactly like the reference's int32
-    # exclusive cumsum (such batches are outside the reference's own
-    # valid domain - its start tensor and slice bounds break too)
+    # the running offsets stay int64; the int32 contract output
+    # truncates exactly like the reference's returned int32 start
+    # while the high half preserves the wide value for K2 addressing
     carry = tl.zeros((), dtype=tl.int64)
     for c0 in range(0, batch, BLOCK_BS):
         lanes = c0 + tl.arange(0, BLOCK_BS)
         m = lanes < batch
         seg = tl.load(lens + lanes, m, other=0).to(tl.int64)
         incl = tl.cumsum(seg, 0) + carry
-        tl.store(starts32 + lanes, (incl - seg).to(tl.int32), m)
+        wide = incl - seg
+        tl.store(starts32 + lanes, wide.to(tl.int32), m)
+        tl.store(starts_hi + lanes, (wide >> 32).to(tl.int32), m)
         carry += tl.sum(seg, 0)
 
 
 @triton.jit(do_not_specialize=["batch"])
 def _fill_positions(
-    positions, starts32, prefix_lens, lens,
+    positions, starts32, starts_hi, prefix_lens, lens,
     HAS_PREFIX: tl.constexpr, BLOCK: tl.constexpr,
 ):
     i = tl.program_id(0)
-    start = tl.load(starts32 + i).to(tl.int64)
+    lo = tl.load(starts32 + i).to(tl.int64) & 0xFFFFFFFF
+    hi = tl.load(starts_hi + i).to(tl.int64)
+    start = (hi << 32) | lo
     seq_len = tl.load(lens + i)
     prefix_len = tl.load(prefix_lens + i) if HAS_PREFIX else 0
     for off in range(0, seq_len, BLOCK):
@@ -65,19 +72,23 @@ def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
     positions = torch.empty(
         extend_seq_lens_sum, dtype=torch.int64, device=device
     )
-    extend_start_loc = torch.empty(
-        batch, dtype=torch.int32, device=device
+    wide_starts = torch.empty(
+        2 * batch, dtype=torch.int32, device=device
     )
+    extend_start_loc = wide_starts[:batch]
+    starts_hi = wide_starts[batch:]
     if batch:
         _starts_scan[(1,)](
             extend_seq_lens,
             extend_start_loc,
+            starts_hi,
             batch,
             BLOCK_BS=triton.next_power_of_2(min(max(batch, 1), 8192)),
         )
         _fill_positions[(batch,)](
             positions,
             extend_start_loc,
+            starts_hi,
             extend_prefix_lens,
             extend_seq_lens,
             HAS_PREFIX=has_prefix,
