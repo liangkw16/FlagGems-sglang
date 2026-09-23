@@ -5,14 +5,54 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e24,569.125575x TB)
-platform: e24(20472)valid 8/8 avg 569.125575>旧TB 558.039775,华为495.6348越过450突破门,当前#3
-candidate_stage: e24
+platform: e24(20472)valid 8/8 avg 569.125575,当前#3; e25 发布门禁就绪待提交
+candidate_stage: e25
 team_best_stage: e24
 team_best_speedup: 569.125575x
 sealed: no
-next: 距榜首643.5257仍差74.400125均分;下一结构靶芯华为495→733/沐曦421→560/燧原109→234/海光893→992;今日额度0/30(18:57+08),不再提交
-updated: 2026-09-23
+next: 09-24 00:44榜首EvokeAgent660.060825;差90.93525均分;e25试Ascend安全i32寻址,后续按平台逐芯结果继续5发计划
+updated: 2026-09-24
 ```
+
+## 2026-09-24 E25 上膛：华为安全范围内用 int32 寻址（本轮尝试 1/5）
+
+- 00:44+08 实时榜单：EvokeAgent **660.060825** #1，c2flow
+  649.22145 #2，我方 e24 **569.125575** #3，差 90.93525 均分。
+  榜首逐芯为天数 1190.0224 / 沐曦 398.5976 / 燧原 234.61 /
+  海光 979.2436 / 昆仑 56.195 / **华为 983.794** / A 818.7858 /
+  B 619.2382。华为差 488.1592，燧原差 125.1456，海光差
+  86.404，三个芯片仍有可观察的结构空间。榜首逐芯无 20 倍彩票尖峰。
+- 假说：e24 已用 48 个固定 worker，但华为热路径的 `beg/end`、
+  token、列和 head 索引全部显式 i64。Ascend 官方指南指出 Vector Add
+  不支持 int64；e25 在 host 可证明 out/lse 相对地址 <2³¹ 时，将这组索引
+  编译为 int32，否则保留 e24 i64 路径。仅华为 vendor 字节变化；
+  generic/燧原/昆仑/沐曦四源均与 e24 相同。
+- source=verification commit
+  `2e270b95edcb051dbc248fa3aea67da6ddb6629c`；test SHA-256
+  `2bca30d528133d3b2fa4849c8afd3413ec5eb48d4e6dc58a9bfa6c37d99b8987`。
+  NVIDIA RTX 5070 Ti 代理 release：14 测试、5 源各执行、0
+  failure/error/skip/xfail，exit 0，华为目标仍 **target-runtime-unverified**。
+  回执 `artifacts/competition/t80-e25-20260924/verification.json` SHA-256
+  `11d4a2a4fc98bb82c0e202771de7f07d52b4fd9d8b9aa17ae1589002ac158b61`；
+  日志 SHA-256
+  `76b9d36c04eac20989cff851adeeefa77e37d2b0a2bcd01725f4cff56eb5b994`。
+- NVIDIA wrapper-inclusive 六轮 AB/BA 代理，基线 e24 同机同源：
+  1400-token 全零长段中位快 2.6%，混合长段快 0.6%；128 个短段慢
+  6.4%，健康段慢 6.0%。这不是华为性能结论。原始配对样本
+  `artifacts/competition/t80-e25-20260924/benchmark.jsonl` SHA-256
+  `3001f1e285e92866903dc0522472575402b96fb0bd343637fd0a162030974405`。
+- 不可变 ZIP
+  `artifacts/competition/fixup_zero_kv/e25-2e270b9/fixup_zero_kv.zip`
+  SHA-256 `854e0fa2c6ec202a8144ef8b3c10066f72fcd81e953eeeacbcb01755f6be79d6`，
+  19122 B，`--verify-existing`、`unzip -t` 与 commit 成员字节均通过。
+  五成员 SHA-256：generic `e3371c49e3ef6f9ba7b2321b094a738a208129a682fc29e837b6a17317035943`；
+  ascend `d2e577f0272dd2c52af54d24174fe44800ff2dfd5355313bd46b898043ccc301`；
+  enflame `c8ccee9808ff5ed181ac5b5385800b9dc1b3808b80c2a8fcb713a5763365762d`；
+  kunlunxin `b79e658780e02637372a5a84c1290b6bdddc3e8def54ae8ace5ba86030c6f0ff`；
+  metax `37a4d96256677a1899fc388d8b5ef8c07b7b610f4af148202093aef58af15bda`。
+- 预注册门：8/8 正确、各芯 ≥0.1；华为 ≥550 保留 i32 轴，≥650
+  视为明显突破；均分 >569.125575 才换队内最佳。若华为未到 550，
+  下一发回滚 e24 华为字节，改试 FP32 尾掩码或其他独立结构。
 
 ## 2026-09-23 E24 平台终态（20472）：569.125575 新 TB，仍第 3
 
