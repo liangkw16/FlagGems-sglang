@@ -90,6 +90,12 @@ class ComputePositionTest(unittest.TestCase):
         self.check(
             make_case(lengths=[4097, 1, 2049], has_prefix=True)
         )
+        # tile-axis B-1/B/B+1 against BLOCK=1024 and the tiles=1024 cap
+        for n in (1023, 1024, 1025):
+            self.check(make_case(lengths=(n, 2), has_prefix=True))
+        self.check(
+            make_case(lengths=(1024 * 1024 + 1,), has_prefix=True)
+        )
 
     def test_int32_boundary_prefix(self):
         # prefix + arange must be computed beyond the int32 domain:
