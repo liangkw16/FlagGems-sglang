@@ -5,16 +5,67 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e24,569.125575x TB)
-platform: e26(20705)valid 8/8 avg 568.37505<TB; e27 发布门禁就绪待提交,当前#3
-candidate_stage: e27
+platform: e27(20711)invalid_correctness 7/8华为6 case数值失败; e28 发布门禁就绪待提交,当前#3
+candidate_stage: e28
 team_best_stage: e24
 team_best_speedup: 569.125575x
 sealed: no
-next: 榜首660.060825 vs TB569.125575差90.93525;e25/e26均未过预注册门,回e24字节;e27试Ascend精确FP32尾掩码;本轮已提交2/5
+next: 榜首660.060825 vs TB569.125575差90.93525;e27华为FP32掩码数值败,回e24整数掩码;e28试全块无掩码+独立尾块;本轮已提交3/5
 updated: 2026-09-24
 ```
 
-## 2026-09-24 E27 上膛：华为 FP32 向量尾掩码（本轮候选 3/5）
+## 2026-09-24 E28 上膛：华为全块无 token mask、尾块独立写（本轮候选 4/5）
+
+- e27 华为数值错误后回到 e24 Ascend 成员字节。e28 保留 48
+  固定 worker 及整数精确地址/掩码，将每段 `floor(length/8)` 个
+  完整 tile 无 token mask 直接写 out/lse，至多一个余数 tile 由
+  `slot = full_tiles % SLOTS` 独占并用 e24 整数 mask 写。
+  典型 HV=96×128 时完整 out 瓦片连列 mask 也可编译掉；
+  其他四个 ZIP 成员与 e24 相同。纯 CPU 槽位模型检查
+  257 段长 × 8 种 slot 数 = 2056 组合，每个 token 恰写一次。
+- source=verification commit
+  `f8a8b7cc93d3786ea2b9e209356b938f5f355a9e`；test SHA-256
+  `2bca30d528133d3b2fa4849c8afd3413ec5eb48d4e6dc58a9bfa6c37d99b8987`。
+  NVIDIA RTX 5070 Ti release：14 测试、5 源各 36 非 warmup launch，
+  0 failure/error/skip/xfail，exit 0；Ascend 目标
+  **target-runtime-unverified**。回执
+  `artifacts/competition/t80-e28-20260924/verification.json` SHA-256
+  `6624d294b53b99c26646f23cd78841ec11be17414eb1c58b8e2685af1d92ca0b`；
+  日志 SHA-256
+  `58a8383940d01851142a56056cc50e58d78334d8fa556a98035339879203f8cb`。
+- NVIDIA wrapper-inclusive 六轮 AB/BA：1400 token 全零长段
+  中位快 2.7%，混合长段快 0.7%，短段与健康段基本持平；仅作
+  代理筛选，不能排除 Ascend UB/lowering 风险。原始样本
+  `artifacts/competition/t80-e28-20260924/benchmark.jsonl` SHA-256
+  `b14732b0faf8603b819c2fe8dfabf7cd9d21191da63260cfdae10faefde9669a`。
+- 不可变 ZIP
+  `artifacts/competition/fixup_zero_kv/e28-f8a8b7c/fixup_zero_kv.zip`
+  SHA-256 `3e7c5469b57b8615750fbe10ef14006f122578c792bb27ee2a7a40cb5c09ee86`，
+  19658 B，`--verify-existing`、`unzip -t` 与 commit 字节全过。
+  五成员 SHA-256：generic
+  `e3371c49e3ef6f9ba7b2321b094a738a208129a682fc29e837b6a17317035943`；
+  ascend `1eaed5c2f25c1463cde68c03b6ec17df7df0d50c9b3b7b10f4f74465e07db655`；
+  enflame `c8ccee9808ff5ed181ac5b5385800b9dc1b3808b80c2a8fcb713a5763365762d`；
+  kunlunxin `b79e658780e02637372a5a84c1290b6bdddc3e8def54ae8ace5ba86030c6f0ff`；
+  metax `37a4d96256677a1899fc388d8b5ef8c07b7b610f4af148202093aef58af15bda`。
+- 预注册门：八芯正确且各 ≥0.1；华为 ≥550 保留此结构，≥650
+  为明显突破；均分 >569.125575 才换队内最佳。数值/编译失败或
+  华为未达 550 则回滚 e24 华为字节。
+
+## 2026-09-24 E27 平台终态（20711）：华为数值错误，7/8 无排名（本轮尝试 3/5）
+
+- 01:04:09+08 单次提交（当日序号 4）；平台 completed/
+  **invalid_correctness**，7/8 芯正确、无有效均分。华为选中
+  `fixup_zero_kv_ascend.py`，6 个 case 数值失败；case1 out
+  6144/43008 元素不匹配，case2 3072/335872 元素不匹配，
+  错误为未写零段行，非编译或平台异常。FP32 token mask 在
+  目标 lowering 下不符合精确语义，已回滚。其余 7 芯：天数
+  1200.456 / 沐曦 379.0472 / 燧原 109.9634 / 海光 893.8046 /
+  昆仑 14.493 / A 819.043 / B 611.649，均通过。
+  01:07:41+08 只读 quota API **26/30**；上传后受信对象存储
+  无认证 HTTPS GET 19126 B，SHA-256 与本地 ZIP 完全一致。
+
+### E27 预注册方案与验证证据
 
 - Ascend 官方性能指南明确 A2/A3 Vector Cmp 不支持 int32/int64，
   会把整数向量比较降为标量。e25 只改 i32 寻址但保留整数尾掩码，
