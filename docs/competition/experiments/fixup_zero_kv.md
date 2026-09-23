@@ -5,14 +5,33 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e16,558.04x TB)
-platform: e20(20305)valid 8/8 avg 545.021175<TB 558.04;华为_ascend被选中且8/8无ub-overflow(UB-safe正确性达成)但210.91<315门且<e19 generic 267.04(-21%);均值>e19 535.08;TB守e16
-candidate_stage: e20
+platform: e21(20362)valid 8/8 avg 526.66305<TB 558.04判负;华为186.93(e20 210.91/e19 generic 267.04再降——48-tile cap+warps16第五种形态仍败,ascend轴宣告死亡);天数1187.9(+2.4%)其余窗口回落;TB守e16
+candidate_stage: e21
 team_best_stage: e16
 team_best_speedup: 558.04x
 sealed: no
-next: 华为ascend vendor慢于其替换的generic路径(e19读数267.04)——回滚/保留归编排方裁决(ub-overflow回滚条款未触发);距TB 558.04差2.3%;额度20/30(used 10,observed 12:41+08)
+next: T80华为ascend轴封存(e15/e16编译败,e20/e21读数低于generic,5形态尽);剩余缺口=燧原110.6→233.8(+15avg)与华为297→733(+54avg)均需全新算法形态非launch调参;额度17/30(used 13,observed 14:04+08)
 updated: 2026-09-23
 ```
+
+## 2026-09-23 E21 平台终态（20362）：valid 8/8 均值 526.66 < TB 判负；ascend 轴五形态尽、封存
+
+- 结构（`da470e93` + 评审 r2 测试修正 `b8ec953c`）：e20 字节基础上
+  axis-1 tiles cap 255→48（core-scale K）+ num_warps 8→16。预注册门
+  「华为 ≥450 keep」未达（186.93），均值 526.66 < 558.04 未换 TB。
+- 逐芯：天数 1187.9 / 沐曦 390.7 / 燧原 110.6 / 海光 891.6 / 昆仑
+  8.7 / 华为 186.9 / A 814.0 / B 622.9。八芯全部 pass（无编译错）。
+- 华为 ascend 轴终审：e15（E_CHUNK=128 分块）/e16（hist/fill 拆分）
+  BiShengHIR UB 编译败 ×2；e20（UB-safe 整块无 mask）210.91；e21
+  （48-tile core-scale + warps16）186.93——四种内核形态 + e19 generic
+  267.04，全部低于 generic 路径。EvokeAgent 733/c2flow 778 的华为
+  读数需要的是不同算法形态（如整个 op 单核化），非 launch 几何。
+  T80 ascend vendor 轴封存；下一发（若有）只走燧原（110.6→233.8）。
+- 五元组：commit `da470e936baa58a87d032a6bd5ad8a49c11b6473`；ZIP SHA
+  `5383510a0125429f879d213e88977a316d28f5d1604bb93583138ef818eb5336`
+  （5 成员）；verification_commit `b8ec953c`（test
+  `ac8f136f133158f7830ef2affa0457aa3d537754a2e29d204cd98c712a077e69`）；
+  回执 `day6-climb-20260923/t80e21-wf/`（5 源 × 46 launch）。
 
 ## 契约与实现（S0）
 

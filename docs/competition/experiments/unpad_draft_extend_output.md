@@ -4,15 +4,34 @@
 task: 92
 operator: unpad_draft_extend_output
 batch: 6
-validity: valid(8/8,e19r,331.10x TB)
-platform: e21r(20313)invalid_correctness 7/8:华为ub-overflow已消除(编译并运行,exec 32914ms)但转数值败(test[3] 1520/164352失配,atol/rtol 0.015);TB 331.10守
-candidate_stage: e21r
-team_best_stage: e19r
-team_best_speedup: 331.10x
+validity: valid(8/8,e22,341.31x TB)
+platform: e22(20358)valid 8/8 avg 341.3097>TB 331.10新TB;华为444.15(进378-507水位带但<480目标;drop-other-prefill未到680+场带);天数406.9/昆仑33.1/海光662.3/A526.6/B281.3;燧原126.7/沐曦249.5窗口回落
+candidate_stage: e22
+team_best_stage: e22
+team_best_speedup: 341.31x
 sealed: no
-next: 华为ascend数值修复或回滚e19r ZIP字节归编排方裁决(预注册ub-overflow回滚条款未触发——是数值错非编译错);重掷轴已关闭(1/1用尽)
+next: 华为444→575+(c2flow)需超越drop-other-prefill的新结构证据;昆仑33→36微差;距榜首c2flow 400.92差15%;额度17/30(used 13,observed 14:04+08)
 updated: 2026-09-23
 ```
+
+## 2026-09-23 E22 平台终态（20358）：valid 8/8 均值 341.31 新 TB
+
+- 结构（`5d576147`）：e19r 证明形态（(bs,tiles) grid + BLOCK=16384 +
+  int64 offs/elems integer mask）+ 单变量 drop `other=0` masked-load
+  预填（chip-rulesets.md:25 MTE2 串行化）。预注册门达成：均值
+  >331.10 换 TB ✓；华为 444.15 落在 [378, 480) 区间——未触判负
+  （<378 或数值失败）也未达 480 大胜带。
+- 逐芯：天数 406.9 / 沐曦 249.5 / 燧原 126.7 / 海光 662.3 / 昆仑
+  33.1 / **华为 444.2** / A 526.6 / B 281.3。八芯全部 pass。
+- 五元组：commit `5d576147da38822458fd7d911e2ec4053ac4caf1`；ZIP SHA
+  `02c6855acd1c2b13507b09fa1359cfef156f4c767dfd721760ed68787a213d99`
+  （8 成员）；test `cd676efb1d1f525f5d0dce5e14f4df6398cb4564278e8ba9c79f982b870c3357`；
+  回执 `day6-climb-20260923/t92e22-wf/`（8 源 × 13 launch，
+  verification_commit=5d576147）。
+- 判读：华为轴 drop-other-prefill 兑现部分（e19r ~378-442 → 444，
+  带内上沿）但 680+ 场带（金狐狸/CosmosMind）未破——纯 copy 的
+  MTE2 串行化只是华为缺口的一部分，剩余疑在 launch/网格形态。
+  e21r 数值败未复现（e22 = e19r 字节 + 单 token 差异，八芯过）。
 
 ## 2026-09-20 S0 首发记录 + 根因复盘
 

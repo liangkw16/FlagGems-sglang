@@ -1,5 +1,17 @@
 # 第二批候选与提交队列
 
+## 2026-09-23 14:20 冲榜循环战果：T92/T90 双新 TB，T80 判负封 ascend 轴（额度 17/30 剩）
+
+- [T92 unpad e22（20358）](unpad_draft_extend_output.md)：valid 8/8
+  **341.31 新 TB**（华为 444 进水位带，drop-other-prefill 部分兑现）。
+- [T90 sigmoid_gate_mul_broadcast e7（20359）](sigmoid_gate_mul_broadcast.md)：
+  valid 8/8 **2.6857 新 TB**（燧原 0.77→2.64=3.4x，[RB,W] 行块瓦片
+  GCU 配方兑现 ≥2.5 进场带；昆仑 0.118 为字节同一的平台劣化族）。
+- [T80 fixup_zero_kv e21（20362）](fixup_zero_kv.md)：valid 8/8 526.66
+  < TB 558.04 判负；华为 186.9 五形态尽，ascend 轴封存。
+- 结构资产：GCU elementwise 配方（除法 gather 消灭 + constexpr 行距 +
+  行向量 gate 广播）可迁移 T78/T89。
+
 ## 2026-09-23 T90 e7 候选实现（燧原 [RB,W] 行块瓦片整成员替换；round-2 评审通过，待验证上膛）
 
 | 候选 | ZIP | 回执 | 预注册门 |

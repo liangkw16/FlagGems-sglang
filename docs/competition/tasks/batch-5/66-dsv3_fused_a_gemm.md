@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/dsv3_fused_a_gemm -->
-<!-- synced_at: 2026-09-22T10:52:22+08:00 -->
+<!-- synced_at: 2026-09-23T13:37:15+08:00 -->
 
 # dsv3_fused_a_gemm (gemm/dsv3_fused_a_gemm)
 

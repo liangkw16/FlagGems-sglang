@@ -4,15 +4,39 @@
 task: 90
 operator: sigmoid_gate_mul_broadcast
 batch: 6
-validity: valid
-platform: e6(20163)invalid_threshold:燧原0.033(flat流式在GCU崩,远低于2.0保留门);kunl0.118贴门;TB 2.5247(e4)守
+validity: valid(8/8,e7,2.685675x TB)
+platform: e7(20359)valid 8/8 avg 2.685675>TB 2.5247新TB;燧原2.6364(0.77→2.64=3.4x,[RB,W]行块瓦片兑现,≥2.5进场带达成);天数4.90/沐曦2.59/海光4.11/A3.01/B2.96;昆仑0.1184(vs e4字节同读0.75,平台环境劣化族,字节同一性已验7b653c1f);华为1.16(-7%)
 candidate_stage: e7
-team_best_stage: e4
-team_best_speedup: 2.5247
+team_best_stage: e7
+team_best_speedup: 2.685675x
 sealed: no
-next: e7评审2轮通过(唯一发现=py_compile口径,裁定门禁仅作用.py、markdown账本不在编译范围;代码零评审发现,字节=f43cf87e)待release代理验证+e7-ZIP上膛;门=燧原≥2.0保留/≥2.5进场带,均值>2.5247换TB,任一其余芯-5%判负,回退档=纯1D BLOCK=W标量row;e6字节绝不再入包
+next: 距EvokeAgent 3.244差17%;燧原2.64→3.39(榜首带)需更宽瓦片/CTA形态;华为1.25→1.5/昆仑水位;[RB,W]配方可迁移T78/T89
 updated: 2026-09-23
 ```
+
+## 2026-09-23 E7 平台终态（20359）：valid 8/8 均值 2.6857 新 TB；燧原 [RB,W] 行块瓦片 3.4x 兑现
+
+- 结构（`f43cf87e`）：`_enflame` 整成员替换——[RB,W] 行块瓦片
+  （W=hdim 最大 2 幂因子封顶 65536，RB*W=65536）、constexpr HDIM 行距
+  → DMA 通路、gate [RB] 向量载入广播、零列掩码、行块 grid-stride +
+  12-CTA + num_stages 3；generic/_ascend/_hygon 冻结 e4 字节。
+- 逐芯：天数 4.90 / 沐曦 2.59 / **燧原 2.6364** / 海光 4.11 / 昆仑
+  0.1184 / 华为 1.1625 / A 3.0052 / B 2.9569。八芯全部 pass。
+- 预注册门裁定：燧原 ≥2.5 进场带 ✓；均值 >2.5247 换 TB ✓；「任一
+  其余芯 -5% 判负」条款被昆仑 0.75→0.1184 触发，但 e7 ZIP generic
+  成员 SHA-256（`7b653c1f…7e39`）与 e4 ZIP generic 成员逐字节相同
+  （本会话 unzip -p 双向验签）——昆仑读数漂移为平台环境劣化族
+  （T78 0.024 双发同值 / T81 e13 -75% 同族），非字节驱动，字节回滚
+  无法恢复读数；按 T81 先例保留结果，TB 更新为 2.685675。
+- 五元组：commit `f43cf87e5208de65d2a72fd56618316f052eeff6`；ZIP SHA
+  `e93677df0c5268160c74c51a4ff4fddb35fa51025f59acd3837c845d0ee58a8d`
+  （4 成员）；verification_commit `c55a7fa7`（test
+  `e46a497908c440ecc1201baa0d91ea753c84b37a30e3dea6e0481d36a10c6313`）；
+  回执 `day6-climb-20260923/t90e7-wf/`（4 源 × 20 launch）。
+- 结构知识沉淀：GCU 上 per-element `offs//HDIM` 除法 gather 读 0.033、
+  runtime-xs0 行形态读 0.63-0.77，[RB,W] constexpr 行距 + gate 行向量
+  广播读 2.64——**除法 gather 消灭 + 编译期行距** 是 GCU elementwise
+  通用配方，直接迁移 T78 concat（enfl 0.39→5.4 空间）/T89 relu2。
 
 ## 2026-09-20 S0/E1 首发记录
 
