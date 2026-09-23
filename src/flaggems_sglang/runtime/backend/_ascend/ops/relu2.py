@@ -1,10 +1,7 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Ascend vendor for relu2 (e9 form): persistent launch capped at the
-# Vector Core count (copy-family recipe) on the >=4096 ladder rung
-# (BLOCK=4096, num_warps=16) with no masked-load other prefill - the
-# other=0.0 prefill serializes MTE2 on Ascend (chip-rulesets) and the
-# masked lanes never reach the equally-masked store.
+# Ascend vendor for relu2: persistent launch capped at the Vector Core
+# count (copy-family recipe); kernel bytes are the generic form.
 
 import torch
 import triton
@@ -35,7 +32,7 @@ def _relu2(x, out, numel, BLOCK: tl.constexpr):
     ):
         offs = base + tl.arange(0, BLOCK)
         m = offs < numel
-        v = tl.load(x + offs, m).to(tl.float32)
+        v = tl.load(x + offs, m, other=0.0).to(tl.float32)
         # NaN-preserving relu: tl.maximum(nan, 0) returns 0 on this
         # backend; the where form keeps NaN (nan < 0 is False).
         r = tl.where(v < 0.0, 0.0, v)
@@ -49,8 +46,8 @@ def relu2(input):
     out = torch.empty_like(input)
     numel = input.numel()
     if numel:
-        _relu2[(min(triton.cdiv(numel, 4096), _worker_count(input)),)](
-            input, out, numel, BLOCK=4096, num_warps=16
+        _relu2[(min(triton.cdiv(numel, 1024), _worker_count(input)),)](
+            input, out, numel, BLOCK=1024, num_warps=8
         )
     return out
 
