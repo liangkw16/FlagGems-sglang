@@ -25,20 +25,46 @@
 # falsification was the 1D item tiling that reloaded lens/cum per
 # item) - but Ascend flattens a 2D grid onto a single <=65535-program
 # axis, so the wrapper now caps the product, not just axis 1:
-# tiles = min(cdiv(rows*hv, BLOCK), 255, 65535 // batch), and the
-# in-kernel block stride keeps coverage whatever tile count the caps
-# pick (a batch beyond the axis-0 limit cannot launch on any 2D grid
-# shape; the generic 1D launch hits the same wall at batch*ot). This
-# op is pure store (constants 0 / -inf), so the T92 masked-load
+# tiles = min(cdiv(rows*hv, BLOCK), _MAX_TILES, 65535 // batch), and
+# the in-kernel block stride keeps coverage whatever tile count the
+# caps pick (a batch beyond the axis-0 limit cannot launch on any 2D
+# grid shape; the generic 1D launch hits the same wall at batch*ot).
+# This op is pure store (constants 0 / -inf), so the T92 masked-load
 # other/MTE2 serialization pitfall does not apply.
+#
+# E21, launch-geometry bundle (review round 1): e20 proved the store
+# form on huawei - 8/8 correct, zero ub-overflow - but read 210.91
+# against the 267.04 generic reading it replaced: launch count
+# dominates, the correct store form is dragged by program count.
+# Both e20 paths paid ten-thousand-program grids (generic batch*ot at
+# fixup_zero_kv.py:92-93; this vendor batch*255 with the
+# advisory-rows tile estimate pinned at the cap while all zero
+# segments combined own only a few hundred blocks), and chip-rulesets
+# bills every Ascend program a fixed setup against 40-48 single-block
+# cores - the four-team 617-778 leaderboard band reads as core-scale
+# launch geometry. This round deep-compresses the axis-1 cap 255 ->
+# core-scale K and restores num_warps to the >=4096 ladder rung the
+# e2 design had stepped below; the kernel body below is untouched,
+# so range(tile, nsub, tl.num_programs(1)) keeps coverage at any K
+# and the same zero-segment writes amortize over 4-16x fewer, longer
+# programs.
 
 import torch
 import triton
 import triton.language as tl
 
 _BLOCK = 4096
-_NUM_WARPS = 8
-_MAX_TILES = 255
+# e21 restores the >=4096 ladder rung (chip-rulesets: tile >= 4096 ->
+# 16 warps) that the e2 design had stepped below to halve per-program
+# lane pressure; the pre-registered gate rolls the vendor back to the
+# e19 four-member bytes on any compile/numeric error.
+_NUM_WARPS = 16
+# e21 core-scale axis-1 cap: AIV bills a fixed per-program setup
+# against 40-48 single-block cores, so axis 1 collapses 255 -> 48
+# (the upper core count). The release proxy scans K over
+# {16, 32, 48, 64} by rebinding this plain int constant; the wrapper
+# reads it at every call and nothing mutates it in place.
+_MAX_TILES = 48
 _MAX_GRID = 65535
 
 

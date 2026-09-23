@@ -232,14 +232,16 @@ class FixupZeroKVTest(unittest.TestCase):
     def test_grid_total_cap_boundary(self):
         # Ascend flattens the (batch, tiles) 2D grid onto a single
         # <=65535-program axis (chip-rulesets): the wrapper must cap
-        # the product, not just axis 1. batch=257 keeps the full 255
-        # tiles (257*255 = 65535 exactly, boundary-equal is legal);
-        # batch=258 must shrink to 254 tiles (258*254 = 65532). The
-        # advisory span (sum of token lengths, far above any single
-        # segment) drives natural tiles to the 255 cap so only the
-        # product cap distinguishes the two. The recorder pins the
-        # launched grid; the check proves the strided block loop still
-        # fixes every zero-KV row at the reduced tile count.
+        # the product, not just axis 1. Since e21 the axis-1 cap is
+        # core-scale (48), so the product cap only binds past
+        # batch=1365: 1365*48 = 65520 <= 65535 keeps all 48 tiles
+        # (boundary-equal is legal); 1366 must shrink to 47 tiles
+        # (1366*47 = 64202). batch=257 shows the axis-1 cap binding
+        # with the product allowance slack (65535//257 = 255 >> 48).
+        # Every case sizes natural tiles above 48 so only the caps
+        # pick axis 1. The recorder pins the launched grid; the check
+        # proves the strided block loop still fixes every zero-KV row
+        # at the reduced tile count.
         # Release runs scope FLAGOS_TEST_SOURCES to the applicable
         # sources (verify_release.py forces it), so ascend may be
         # legitimately absent from MODULES: pass normally instead of
@@ -268,12 +270,19 @@ class FixupZeroKVTest(unittest.TestCase):
         cases = []
         ascend._fixup_zero_kv = _GridRecorder()
         try:
-            for batch, want_tiles in ((257, 255), (258, 254)):
+            # The four-digit-batch cases keep the tensors small with
+            # heads=8 vdim=16 while natural tiles still clear every
+            # cap (cdiv(3640*128, 4096) = 114 > 48).
+            for batch, want_tiles, heads, vdim in (
+                (257, 48, 96, 128),
+                (1365, 48, 8, 16),
+                (1366, 47, 8, 16),
+            ):
                 with self.subTest(batch=batch):
                     kv = [0 if i % 3 == 0 else 4 for i in range(batch)]
                     tok = [2 if i % 3 == 0 else 3 for i in range(batch)]
                     args = make_case(
-                        kv_lens=kv, tok_lens=tok, heads=96, vdim=128
+                        kv_lens=kv, tok_lens=tok, heads=heads, vdim=vdim
                     )
                     span = sum(tok)
                     ascend.fixup_zero_kv(
@@ -287,6 +296,67 @@ class FixupZeroKVTest(unittest.TestCase):
             ascend._fixup_zero_kv = original
         for args, span in cases:
             self.check((args[0], args[1], args[2], args[3], span))
+
+    def test_deep_tile_compression_scan(self):
+        # e21 launch-geometry bundle: the axis-1 tile cap deep-
+        # compresses from 255 to core-scale K (AIV 40-48 cores), and
+        # the release proxy scans K over {16, 32, 48, 64} by rebinding
+        # the vendor's _MAX_TILES constant. For every K in the scan
+        # set this regression pins that the launch really collapses
+        # to (batch, K) when natural tiles overshoot the cap and the
+        # 65535 product cap stays slack, then proves the strided
+        # block loop fixes every zero-KV row at that K - both for the
+        # truthful advisory span and for the lying-span form whose
+        # understated span sizes a smaller launch (the e12 enflame
+        # drop). The 1400-row zero segment owns cdiv(1400*12288,
+        # 4096) = 4200 out blocks, so each program strides ~nsub/K
+        # blocks: the deep-compression execution shape itself. ascend
+        # may be legitimately absent from MODULES on scoped release
+        # runs (see test_grid_total_cap_boundary).
+        ascend = dict(MODULES).get("ascend")
+        if ascend is None:
+            return
+        probe = {}
+
+        class _GridRecorder:
+            def __getitem__(self, grid):
+                def _record(*args, **kwargs):
+                    probe["grid"] = grid
+
+                return _record
+
+        original = ascend._fixup_zero_kv
+        original_tiles = ascend._MAX_TILES
+        cases = []
+        ascend._fixup_zero_kv = _GridRecorder()
+        try:
+            for k in (16, 32, 48, 64):
+                with self.subTest(k=k):
+                    ascend._MAX_TILES = k
+                    # natural tiles: cdiv(1438*12288, 4096) = 4312 at
+                    # the truthful span and cdiv(500*12288, 4096) =
+                    # 1500 at the lying span, both above 64; the
+                    # product allowance 65535//3 = 21845 never binds,
+                    # so the scan K is the sole axis-1 limiter.
+                    args = make_case(
+                        kv_lens=(0, 4, 0),
+                        tok_lens=(1400, 5, 33),
+                        heads=96,
+                        vdim=128,
+                    )
+                    span = sum((1400, 5, 33))
+                    for advisory in (span, 500):
+                        ascend.fixup_zero_kv(
+                            args[0], args[1], args[2], args[3], advisory
+                        )
+                        self.assertEqual(probe["grid"], (3, k))
+                    cases.append((args, span))
+        finally:
+            ascend._fixup_zero_kv = original
+            ascend._MAX_TILES = original_tiles
+        for args, span in cases:
+            self.check((args[0], args[1], args[2], args[3], span))
+            self.check((args[0], args[1], args[2], args[3], 500))
 
 RELEASE_REQUIRED_TESTS = [
         "FixupZeroKVTest.test_understated_span_zero_segment",
@@ -303,6 +373,7 @@ RELEASE_REQUIRED_TESTS = [
     "FixupZeroKVTest.test_capped_tile_grid_strided_coverage",
     "FixupZeroKVTest.test_multiblock_unmasked_and_exact_tail",
     "FixupZeroKVTest.test_grid_total_cap_boundary",
+    "FixupZeroKVTest.test_deep_tile_compression_scan",
 ]
 
 
