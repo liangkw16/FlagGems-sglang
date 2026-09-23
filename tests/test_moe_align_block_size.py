@@ -85,6 +85,9 @@ class MoeAlignBlockSizeTest(unittest.TestCase):
             (7, 8, 17, 16),
             (128, 8, 33, 16),
             (513, 4, 257, 32),
+            # 32768 x 512 crosses the adaptive crossover, so this case
+            # exercises the parallel-atomic fallback path as well
+            (4096, 8, 257, 64),
         ):
             with self.subTest(shape=(tokens, topk, experts, bs)):
                 self.check(make_case(tokens, topk, experts, bs))
@@ -97,10 +100,29 @@ class MoeAlignBlockSizeTest(unittest.TestCase):
         ids[:, 1:] = 0
         self.check((ids,) + args[1:])
 
+    def test_dirty_scratch_reuse_and_tile_walk(self):
+        # the self-cursor scatter advances cumsum_buffer in place; a
+        # second call must be exact on the same (now dirty) scratch
+        # because the histogram path rewrites starts, never accumulates.
+        # 2048*8 = 16384 elements walks two BLOCK_H=8192 histogram tiles;
+        # 33 routed experts hits the next-power-of-2 boundary (BLOCK_E
+        # must cover the num_routed discard bucket as well).
+        args = make_case(tokens=2048, topk=8, num_experts=33, block_size=16)
+        self.check(args)
+        torch.manual_seed(1234)
+        rerun = make_case(tokens=2048, topk=8, num_experts=33, block_size=16)
+        self.check(
+            (rerun[0],) + args[1:]
+        )
+        # a third call through the same buffers with an empty grid
+        empty = torch.full((3, 8), 32, dtype=torch.int32, device="cuda")
+        self.check((empty,) + args[1:])
+
 
 RELEASE_REQUIRED_TESTS = [
     "MoeAlignBlockSizeTest.test_shapes_and_expert_grid",
     "MoeAlignBlockSizeTest.test_filtered_expert_bucket",
+    "MoeAlignBlockSizeTest.test_dirty_scratch_reuse_and_tile_walk",
 ]
 
 
