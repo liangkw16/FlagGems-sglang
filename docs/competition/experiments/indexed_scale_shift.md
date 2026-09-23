@@ -4,13 +4,13 @@
 task: 83
 operator: indexed_scale_shift
 batch: 6
-validity: invalid(e4 20440为7/8; 昆仑case3失配899/12582912)
-platform: e4(20440)7/8 invalid_correctness;昆仑大规模失配下降99.978%;源码回滚e2
-candidate_stage: e5待诊断
+validity: candidate(e5代理release 7/7、codex-review无缺陷；e4 20440为7/8)
+platform: e4(20440)7/8 invalid_correctness;昆仑大规模失配下降99.978%;e5未提交
+candidate_stage: e5
 team_best_stage: -
 team_best_speedup: -
 sealed: no
-next: 从e4不可变ZIP诊断残余bf16数值误差，单变量e5须过release、review和preflight后才单次提交
+next: e5只改昆仑三处有限值bf16 RTNE；实时preflight，8/8且各芯≥0.1保留，否则回滚e2，不重投e5
 updated: 2026-09-23
 ```
 
@@ -209,3 +209,36 @@ updated: 2026-09-23
   `44dc00e2e8a7816a8405ebf6bf02f4b5ce23f1c07ae501b3d01f1bf1c8d8c6a4`；
   与 e3 前源码 diff 为空，回滚 commit `8776374c`。e4 ZIP/回执保留，
   不重投 e4；下一候选从 e4 不可变 ZIP 取源，并另做验证和评审。
+
+## E5：逐位钉有限值 RTNE，保持 e4 结构
+
+- 第三次 `codex-ask`（`gpt-6-sol`、`max`）审 e4 平台稀疏失配、三段真实
+  bf16 写入和代码后，建议三处有限值 f32→bf16 舍入统一改为整数位级 RTNE：
+  f32 位重解释为 u32，加 `0x7fff + ((bits>>16)&1)` 后清低 16 位，再
+  重解释为 f32 供原 bf16 store；Inf/NaN 仍交给原转换。该方案是推断，
+  昆仑目标无中间值，不能排除稀疏地址或算术错误。e5 从 e4 ZIP 原字节取源，
+  保留逐行 grid、三 kernel、out 复用、索引和算式不变。
+- 代码/测试 commit `7928c166b56cc3fe8ad82680ac0da40b444654f2`；
+  generic SHA-256 `efd3fd554a953e8fe65b5299079d63d62f1dca4b830d99958215d72f8d5a49c0`，
+  kunlun SHA-256 `caae63a45932e6cf31b1aeda13d8e63e2e5f8c9b2c9dbf9fe83ff6fdd1e4de60`，
+  test SHA-256 `8ffaff25cf4c4121dc15f6b4f12ddcd0a993dae9f01e35dbe621d893f09104e4`。
+  测试加正负取消项与 Inf/NaN 分类，保留行边界 exact-bit 回归。
+- ZIP `artifacts/competition/indexed_scale_shift/e5-7928c16/indexed_scale_shift.zip`
+  6749 B、SHA-256 `b81636590ffb77708e00d5894944b4147b231adeb4483343f067a20993fb6ae6`，
+  两成员 `indexed_scale_shift.py`/`indexed_scale_shift_kunlunxin.py`；
+  `--verify-existing`、`unzip -t` 通过。
+- 同 commit release：
+  `artifacts/competition/indexed_scale_shift/e5-7928c16/verification.json`
+  SHA-256 `5519414f35b88cd8cce812fe4848f653d9f33ef843e721634db4aebaf5db7ec3`，
+  日志 SHA-256 `25bc702f5de19bd8afc8857526abdf93177501e8b3b6dd5cbeba11c30b234e95`；
+  NVIDIA RTX 5070 Ti 代理 7 测试 0 失败/错误/skip，generic 22、kunlun
+  66 次实际 kernel launch。py_compile、Black、isort、flake8 均通过。
+  代理 PTX 见 u32 取位、加偏置、掩码与最终 bf16 store；昆仑目标仍是
+  `target-runtime-unverified`。
+- **预注册门**：codex-review 无可靠缺陷后才 preflight；平台 8/8 正确且
+  每芯 speedup ≥0.1 才建立首个有效成绩。昆仑编译、数值或速度失败则
+  从 e2 ZIP 恢复 vendor 源码，不重投 e5；若数值仍失败，逐 case 对照 e4
+  的 899/12,582,912 等错数。其他七芯 generic 成员字节保持不变。
+- `codex-review --commit 7928c166 --spec .../83-indexed_scale_shift.md`
+  完成：Spec 和 Standards 均未发现可确认的新增缺陷；评审明确昆仑目标
+  尚未验证。审查门通过。
