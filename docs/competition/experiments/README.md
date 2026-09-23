@@ -39,8 +39,8 @@
   必然启用 DMA”的推断。codex-ask 建议先拿同版本 GCU IR；当前封存，
   不消耗剩余 4 次额度。
 - [T76 add3 e4](add3.md)：燧原大输入 16384 tile；65536 档 spill 严重已淘汰，
-  16384 档 NVIDIA 代理配对快 1.80–2.62 倍；release 3/3、ZIP 验签通过，
-  待 codex-review 和实时 preflight。昆仑同字节低水位仍是有效性风险。
+  16384 档 NVIDIA 代理配对快 1.80–2.62 倍；release 3/3、ZIP 验签及
+  codex-review 通过，待实时 preflight。昆仑同字节低水位仍是有效性风险。
 
 ## 2026-09-23 19:00 冲榜循环日终收口（额度 10/30 剩，窗口明日 19:59 关）
 
