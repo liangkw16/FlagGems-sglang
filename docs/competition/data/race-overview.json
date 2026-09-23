@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-09-23T16:11:24.700888",
+  "as_of": "2026-09-23T17:49:07.348620",
   "current_batch": {
     "batch_no": 6,
     "task_count": 17,
@@ -24,7 +24,7 @@
     "status": "submitting",
     "is_current": true,
     "countdown_target_at": "2026-09-24T19:59:59",
-    "remaining_seconds": 100114
+    "remaining_seconds": 94251
   },
   "gpu_catalog": {
     "tianshu": {
@@ -78,8 +78,8 @@
     "occupied_count": 57,
     "breakthrough_only_count": 0,
     "invalid_count": 1,
-    "total_submission_count": 18162,
-    "evaluating_submission_count": 5,
+    "total_submission_count": 18187,
+    "evaluating_submission_count": 3,
     "participating_team_count": 239,
     "daily_submission_limit": 15,
     "min_submission_interval_seconds": 120

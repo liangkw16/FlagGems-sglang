@@ -1,6 +1,6 @@
 # 第二届 FlagOS 算子赛题索引
 
-> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-09-23T16:11:23+08:00`。
+> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-09-23T17:49:06+08:00`。
 > 状态和榜单会变化，运行 `python tools/sync_flagos_season2_docs.py` 更新。
 
 ## 第 1 批
@@ -107,22 +107,22 @@
 
 | 题号 | 算子 | 状态 | 提交/队伍 | 达标队伍 | 当前第一 | 平均加速比 |
 | ---: | --- | --- | ---: | ---: | --- | ---: |
-| 76 | [add3](tasks/batch-6/76-add3.md) | competing | 437/57 | 30 | varphi | 1.9831x |
-| 77 | [compute_position](tasks/batch-6/77-compute_position.md) | competing | 301/40 | 17 | c2flow | 1747.5001x |
+| 76 | [add3](tasks/batch-6/76-add3.md) | competing | 438/57 | 30 | varphi | 1.9831x |
+| 77 | [compute_position](tasks/batch-6/77-compute_position.md) | competing | 304/40 | 17 | c2flow | 1747.5001x |
 | 78 | [concat_and_cast_mha_k](tasks/batch-6/78-concat_and_cast_mha_k.md) | competing | 201/31 | 15 | c2flow | 1909.9204x |
 | 79 | [create_flashmla_kv_indices](tasks/batch-6/79-create_flashmla_kv_indices.md) | competing | 216/31 | 25 | c2flow | 343.5152x |
 | 80 | [fixup_zero_kv](tasks/batch-6/80-fixup_zero_kv.md) | competing | 212/37 | 21 | EvokeAgent | 643.5257x |
-| 81 | [fused_gate_sigmoid_mul_add](tasks/batch-6/81-fused_gate_sigmoid_mul_add.md) | competing | 236/30 | 25 | c2flow | 5.2064x |
-| 82 | [hash_topk](tasks/batch-6/82-hash_topk.md) | competing | 128/27 | 14 | c2flow | 9.1347x |
-| 83 | [indexed_scale_shift](tasks/batch-6/83-indexed_scale_shift.md) | competing | 124/26 | 9 | c2flow | 143.3986x |
-| 84 | [moe_align_block_size](tasks/batch-6/84-moe_align_block_size.md) | competing | 199/26 | 11 | c2flow | 977.7128x |
-| 85 | [moe_align_single_token](tasks/batch-6/85-moe_align_single_token.md) | competing | 196/29 | 17 | EvokeAgent | 54.5297x |
+| 81 | [fused_gate_sigmoid_mul_add](tasks/batch-6/81-fused_gate_sigmoid_mul_add.md) | competing | 237/30 | 25 | c2flow | 5.2064x |
+| 82 | [hash_topk](tasks/batch-6/82-hash_topk.md) | competing | 130/27 | 14 | EvokeAgent | 9.4771x |
+| 83 | [indexed_scale_shift](tasks/batch-6/83-indexed_scale_shift.md) | competing | 129/26 | 9 | c2flow | 143.3986x |
+| 84 | [moe_align_block_size](tasks/batch-6/84-moe_align_block_size.md) | competing | 202/26 | 11 | EvokeAgent | 995.7957x |
+| 85 | [moe_align_single_token](tasks/batch-6/85-moe_align_single_token.md) | competing | 204/30 | 17 | EvokeAgent | 54.5297x |
 | 86 | [moe_topk_sum](tasks/batch-6/86-moe_topk_sum.md) | competing | 126/28 | 19 | 金狐狸 | 3.9687x |
 | 87 | [pack_topk_ids](tasks/batch-6/87-pack_topk_ids.md) | competing | 102/25 | 19 | CosmosMind | 5.6440x |
 | 88 | [post_reorder_cutlass](tasks/batch-6/88-post_reorder_cutlass.md) | competing | 137/27 | 13 | 金狐狸 | 30.4585x |
 | 89 | [relu2](tasks/batch-6/89-relu2.md) | competing | 219/30 | 28 | KLANG2026 | 13569.1417x |
 | 90 | [sigmoid_gate_mul_broadcast](tasks/batch-6/90-sigmoid_gate_mul_broadcast.md) | competing | 107/27 | 20 | EvokeAgent | 3.2440x |
-| 91 | [tiny_k_gemm](tasks/batch-6/91-tiny_k_gemm.md) | competing | 313/42 | 16 | HAiWORLD | 3.1756x |
+| 91 | [tiny_k_gemm](tasks/batch-6/91-tiny_k_gemm.md) | competing | 315/42 | 16 | HAiWORLD | 3.1756x |
 | 92 | [unpad_draft_extend_output](tasks/batch-6/92-unpad_draft_extend_output.md) | competing | 251/36 | 22 | c2flow | 400.9209x |
 
 ## 第 7 批

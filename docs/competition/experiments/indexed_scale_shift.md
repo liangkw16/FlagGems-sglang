@@ -4,13 +4,13 @@
 task: 83
 operator: indexed_scale_shift
 batch: 6
-validity: candidate(e6代理release 7/7、codex-review无缺陷；e5 20445为7/8)
-platform: e5(20445)7/8 invalid_correctness;XPU unpack缺bufPtr;源码回滚e2
-candidate_stage: e6
+validity: invalid(7/8,e6昆仑XPU编译失败)
+platform: e6(20448)7/8 invalid_correctness;arith.select类型校验失败;源码回滚e2
+candidate_stage: -
 team_best_stage: -
 team_best_speedup: -
-sealed: no
-next: e6以T87已成功的f32→i32位读和uint16原始存储避开e5的u32/reverse-bitcast；实时preflight，平台8/8且各芯≥0.1才保留，否则回滚e2
+sealed: yes
+next: 昆仑XPU目标编译通道可用后再审e4稀疏舍入；当前额度转T90/T92/T81/T76/T91
 updated: 2026-09-23
 ```
 
@@ -297,3 +297,23 @@ updated: 2026-09-23
 - `codex-review --commit 57cefa93 --spec .../83-indexed_scale_shift.md`
   完成：Spec 和 Standards 均未发现可确认的新增缺陷；评审明确 NVIDIA
   回执不证明昆仑编译或性能。审查门通过。
+
+## 2026-09-23 E6 平台终态（20448）：XPU `arith.select` 编译墙，回滚
+
+- 实时 preflight 绑定 SoulCoder/T83/e6、源码/测试 `57cefa93`、ZIP SHA
+  `eda724dda6782f1f9a6d1f03f6a36578b80801185b270df3bd3d952d749c35a4`
+  与代理回执 SHA `8f89ef0459cbb9065fbe0ebdc5b318c96ead6f31fc332968f3ff932816275c54`；
+  一次性提交 **20448**，远端 ZIP 哈希/大小 `verified`。平台终态
+  `invalid_correctness`、7/8，观测于 `2026-09-23T17:48:48+08:00`，
+  额度余 **5/30**。
+- 七芯通过且 speedup：天数 14.3794、沐曦 8.8504、燧原 0.9848、
+  海光 12.936、华为 3.951、A 11.3984、B 9.6582。昆仑选中
+  `indexed_scale_shift_kunlunxin.py`，8 个 case 在 `_store_bf16_rtne`
+  的 `tl.where(special, 0, bits)` 触发 `TritonXPUUnrollControl`：
+  `'arith.select' op failed to verify that all of {true_value, false_value,
+  result} have same type`。因此没有数值读数，e4 的 899 个 case 3 尾差
+  仍未被位级 RTNE 假说检验。
+- 按预注册门，从 e2 不可变 ZIP 恢复 Kunlun vendor SHA
+  `44dc00e2e8a7816a8405ebf6bf02f4b5ce23f1c07ae501b3d01f1bf1c8d8c6a4`，
+  与 e3 前源码 diff 为空，回滚 commit `c39eecf7`。e6 不重投；没有可
+  绑定源码的 XPU 编译通道前，暂停 T83 平台试错，把额度转向已有效题目。

@@ -1,9 +1,9 @@
 # 第二批候选与提交队列
 
-## 2026-09-23 T82 e9、T83 e4/e5 终态与下一步
+## 2026-09-23 T82 e9、T83 e4/e5/e6 终态与下一步
 
 - [实时第六批 17 题榜差与逐题结构方案](../optimization-batch6-live-20260923.md)：
-  17:32 平台逐芯快照，剩余 6/30 次，窗口至 09-24 19:59:59。
+  17:50 平台逐芯快照，剩余 5/30 次，窗口至 09-24 19:59:59。
 - [T82 hash_topk e9](hash_topk.md)：review 与 release 通过后单次提交，
   平台 **8/8 有效但均分 6.261475 < e8 TB 6.42825**；燧原标量间接读
   1.3048 < e8 one-hot 线性扫描 1.8538，预注册门失败。源码已按 e8 ZIP
@@ -23,7 +23,9 @@
   源码回滚 e2 原字节（`e1c44da8`），额度余 6/30；后续候选先核实可编译路径。
 - [T83 indexed_scale_shift e6](indexed_scale_shift.md)：从 e4 ZIP 改为 i32 位读
   并以 uint16 原始半字存储三轮舍入，避开 e5 编译点；NVIDIA 代理 release
-  7/7、ZIP `eda724dd…35a4` 验签通过，codex-review 无缺陷，待实时 preflight。
+  7/7、ZIP `eda724dd…35a4` 验签及 codex-review 通过；平台 **20448 为 7/8**，
+  昆仑在 `TritonXPUUnrollControl` 的 `arith.select` 类型校验失败。源码回滚 e2
+  原字节（`c39eecf7`），余 5/30 次，T83 暂停。
 
 ## 2026-09-23 19:00 冲榜循环日终收口（额度 10/30 剩，窗口明日 19:59 关）
 
