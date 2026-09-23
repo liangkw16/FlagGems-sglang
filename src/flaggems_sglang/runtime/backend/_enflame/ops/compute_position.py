@@ -7,15 +7,15 @@
 # official gcu300 geometry (max_grid_size=(12,1,1), num_warps=2).
 # The GCU type verifier rejects !tt.ptr<i64> at the signature level
 # (T60 eight-round evidence), so the int64 output is written through
-# an int32 view: a per-call host probe (arange(4) read back through
-# the view - [0,1,2,3] means torch-gcu's narrowed packing, [0,0,1,0]
-# the standard pairs; a module-level cache dict is rejected by the
-# platform's code-safety scan, and ~100us is nothing against the
-# ms-scale reference) dispatches between the packed-int32 kernel
-# (element i at view index i, the only representable form under the
-# narrowed storage) and the standard int64 kernel. Both compute paths
-# are Triton; the NVIDIA proxy takes the int64 branch so the numeric
-# matrix covers both sources.
+# an int32 view. The packed/standard layout decision happens ON
+# DEVICE inside the fill kernel (arange(4) viewed as int32 words:
+# [0,1,2,3] = torch-gcu's narrowed packing, [0,0,1,0] = standard
+# pairs): the earlier per-call host readback (~100us D2H sync)
+# dominated the op time on GCU, and narrowed tensors keep the int64
+# logical metadata so numel/storage checks cannot distinguish the
+# layouts. Both store forms stay Triton and no i64 pointer enters any
+# signature, so the GCU300 verifier stays satisfied; the NVIDIA proxy
+# takes the standard branch so the numeric matrix covers both forms.
 
 import torch
 import triton
@@ -81,8 +81,9 @@ def _fill_dual_layout(
                 wide = prefix_len.to(tl.int64) + o
                 lo = (wide & 0xFFFFFFFF).to(tl.int32)
                 hi = (wide >> 32).to(tl.int32)
-                tl.store(positions_words + 2 * idx, lo, mask=m)
-                tl.store(positions_words + 2 * idx + 1, hi, mask=m)
+                idx64 = idx.to(tl.int64)
+                tl.store(positions_words + 2 * idx64, lo, mask=m)
+                tl.store(positions_words + 2 * idx64 + 1, hi, mask=m)
 
 
 def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
