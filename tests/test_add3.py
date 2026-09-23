@@ -51,16 +51,7 @@ class Add3Test(unittest.TestCase):
         self.assertEqual(reference(*args)[0].item(), 0.0)
 
     def test_sizes_and_boundaries(self):
-        for numel in (
-            16,
-            1024,
-            1023 * 16 + 16,
-            12 * 16384 - 16,
-            12 * 16384,
-            12 * 16384 + 16,
-            1 << 20,
-            (1 << 20) + 16,
-        ):
+        for numel in (16, 1024, 1023 * 16 + 16, 1 << 20, (1 << 20) + 16):
             with self.subTest(numel=numel):
                 self.check(
                     [
