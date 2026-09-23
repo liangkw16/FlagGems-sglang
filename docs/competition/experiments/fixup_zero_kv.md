@@ -5,16 +5,64 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e24,569.125575x TB)
-platform: e25(20699)valid 8/8 avg 562.318075<TB; e26 发布门禁就绪待提交,当前#3
-candidate_stage: e26
+platform: e26(20705)valid 8/8 avg 568.37505<TB; e27 发布门禁就绪待提交,当前#3
+candidate_stage: e27
 team_best_stage: e24
 team_best_speedup: 569.125575x
 sealed: no
-next: 榜首660.060825 vs TB569.125575差90.93525;e25华为429<550回滚;e26试燧原编译期stride;本轮已提交1/5
+next: 榜首660.060825 vs TB569.125575差90.93525;e25/e26均未过预注册门,回e24字节;e27试Ascend精确FP32尾掩码;本轮已提交2/5
 updated: 2026-09-24
 ```
 
-## 2026-09-24 E26 上膛：燧原编译期 stride（本轮候选 2/5）
+## 2026-09-24 E27 上膛：华为 FP32 向量尾掩码（本轮候选 3/5）
+
+- Ascend 官方性能指南明确 A2/A3 Vector Cmp 不支持 int32/int64，
+  会把整数向量比较降为标量。e25 只改 i32 寻址但保留整数尾掩码，
+  华为读数下降；e27 回到 e24 的 i64 精确地址，**仅**当
+  `total_tokens ≤ 2²⁴` 时把 token 尾掩码的比较转 FP32，超过精确域
+  保留整数比较。相对 e24 仅 Ascend 成员字节变化。
+- source=verification commit
+  `37348331d6883a32ef643da4ad314defed9b9250`；test SHA-256
+  `2bca30d528133d3b2fa4849c8afd3413ec5eb48d4e6dc58a9bfa6c37d99b8987`。
+  NVIDIA RTX 5070 Ti release：14 测试、5 源各 36 非 warmup launch，
+  0 failure/error/skip/xfail，exit 0；Ascend 目标
+  **target-runtime-unverified**。回执
+  `artifacts/competition/t80-e27-20260924/verification.json` SHA-256
+  `507ecdba6cce3b19d6e6b5b8de16ffcfb84ccdd8a666113fdddfe43011a865dc`；
+  日志 SHA-256
+  `1aa67243f733faab51ad5429be2b22bed673e4fe6d4dd6dc3f9b23dac96b0d09`。
+- NVIDIA wrapper-inclusive 六轮 AB/BA：全零长段中位快 1.3%，
+  混合长段基本持平，128 短段慢 1.2%，健康段慢 2.0%；代理
+  不代表华为 Cmp lowering。原始样本
+  `artifacts/competition/t80-e27-20260924/benchmark.jsonl` SHA-256
+  `ff68d7c03998a5abc5fe51d235c64b4426eb899cdabc9cc08a5f4703f4aded64`。
+- 不可变 ZIP
+  `artifacts/competition/fixup_zero_kv/e27-3734833/fixup_zero_kv.zip`
+  SHA-256 `7bea9444f13892c98a0fc393a9d7035514bcda9dd16a796f9aa628265e453868`，
+  19126 B，`--verify-existing`、`unzip -t` 与 commit 字节全过。
+  五成员 SHA-256：generic
+  `e3371c49e3ef6f9ba7b2321b094a738a208129a682fc29e837b6a17317035943`；
+  ascend `ff179504d12d861e5e69b096e2245df932af97f0429128321f9d44dc0c6c522f`；
+  enflame `c8ccee9808ff5ed181ac5b5385800b9dc1b3808b80c2a8fcb713a5763365762d`；
+  kunlunxin `b79e658780e02637372a5a84c1290b6bdddc3e8def54ae8ace5ba86030c6f0ff`；
+  metax `37a4d96256677a1899fc388d8b5ef8c07b7b610f4af148202093aef58af15bda`。
+- 预注册门：八芯正确且各 ≥0.1；华为 ≥550 保留该轴，≥650
+  视为明显突破；均分 >569.125575 才换队内最佳。未到 550
+  回滚 e24 华为字节。榜首仍按 00:44 逐芯快照作对照，提交前
+  重新实时预检。
+
+## 2026-09-24 E26 平台终态（20705）：568.37505 < TB（本轮尝试 2/5）
+
+- 00:57:57+08 单次提交（当日序号 3），completed/valid、8/8 全过，
+  均分 **568.37505** < e24 TB 569.125575，仍第 3。逐芯：天数
+  1201.0082 / 沐曦 378.584 / **燧原 111.8246** / 海光 893.8782 /
+  昆仑 14.101 / 华为 442.2064 / A 888.607 / B 616.791。
+  燧原未达 ≥130 保留线，相对 e25 110.3732 仅 +1.3%，编译期
+  stride 轴关闭并回滚 e24 字节。01:02:22+08 只读 quota API
+  **27/30**。提交后的受信对象存储无认证 HTTPS GET：18821 B，
+  SHA-256 与本地 ZIP 完全一致；每候选一次上传和 POST。
+
+### E26 预注册方案与验证证据
 
 - e25 华为跌破保留线后回到 e24 的 Ascend 字节，仅将燧原 vendor 的
   `os0/ls0` 从运行时参数改为 `tl.constexpr`。本地 GCU 规则集指出
