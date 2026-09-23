@@ -1,13 +1,15 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 # Ascend vendor for pack_topk_ids: persistent launch capped at the
-# physical Vector Core count (the copy-family recipe) with the bf16
-# truncation computed as pure integer round-to-nearest-even bit math -
-# (u32 + 0x7FFF + lsb(u32 >> 16)) >> 16 - instead of the
-# f32 -> bf16 -> f32 convert chain, so the bit pattern never touches a
-# float convert (exact for finite values, +/-Inf and quiet NaN; no
-# masked-load other prefill, MTE2 serialization avoided per
-# chip-rulesets).
+# physical Vector Core count (the copy-family recipe) with the
+# >=4096-element ladder rung (BLOCK=4096, num_warps=16) and no
+# masked-load other prefill (MTE2 serialization, chip-rulesets). The
+# bf16 truncation keeps the proven f32 -> bf16 -> f32 convert chain:
+# the integer round-to-nearest-even form was prototyped and rejected -
+# torch's own f32->bf16 canonicalizes quiet NaN to the 0x7FFF bit
+# pattern on CUDA while the integer formula yields 0x7FC0, and NaN
+# canonicalization is chip-torch-specific, which an exact-int contract
+# cannot tolerate.
 
 import torch
 import triton
@@ -40,8 +42,11 @@ def _pack_topk_ids_ascend(
         m = offs < numel
         ids = tl.load(topk_ids + offs, m)
         w = tl.load(topk_weights + offs, m)
-        u = w.to(tl.int32, bitcast=True)
-        bits = ((u + 0x7FFF + ((u >> 16) & 1)) >> 16) & 0xFFFF
+        # bf16 bits via the exact f32 widening: the bf16 pattern is the
+        # high half of the widened float's bit pattern (NaN
+        # canonicalization follows the device torch convert).
+        wf = w.to(tl.bfloat16).to(tl.float32)
+        bits = (wf.to(tl.int32, bitcast=True) >> 16) & 0xFFFF
         tl.store(out + offs, (ids << 16) | bits, m)
 
 

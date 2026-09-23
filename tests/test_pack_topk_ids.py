@@ -65,8 +65,11 @@ class PackTopkIdsTest(unittest.TestCase):
         ids = torch.arange(
             len(patterns), dtype=torch.int32, device="cuda"
         )
+        signed = [
+            p - (1 << 32) if p >= (1 << 31) else p for p in patterns
+        ]
         w = (
-            torch.tensor(patterns, dtype=torch.int32, device="cuda")
+            torch.tensor(signed, dtype=torch.int32, device="cuda")
             .view(torch.float32)
         )
         self.check((ids, w))
