@@ -48,10 +48,34 @@ class PackTopkIdsTest(unittest.TestCase):
         )
         self.check((ids, w))
 
+    def test_rounding_carry_bits(self):
+        # exact f32 bit patterns pinning the integer round-to-nearest
+        # -even form to torch's bfloat16 cast: ties with even/odd high
+        # half lsb, the round-up that carries into the exponent, and a
+        # tie inside the subnormal band
+        patterns = [
+            0x40008000,  # tie, lsb 0 -> round down (0x4000)
+            0x40018000,  # tie, lsb 1 -> round up (0x4002)
+            0x3F7FFFFF,  # just below 1.0 -> carries up to 0x3F80
+            0xBF7FFFFF,  # negative mirror
+            0x00008000,  # subnormal-band tie
+            0x00017FFF,  # subnormal-band near tie
+            0x3F800001,  # just above 1.0 -> truncates to 0x3F80
+        ]
+        ids = torch.arange(
+            len(patterns), dtype=torch.int32, device="cuda"
+        )
+        w = (
+            torch.tensor(patterns, dtype=torch.int32, device="cuda")
+            .view(torch.float32)
+        )
+        self.check((ids, w))
+
 
 RELEASE_REQUIRED_TESTS = [
     "PackTopkIdsTest.test_sizes_and_bit_patterns",
     "PackTopkIdsTest.test_special_weight_bits",
+    "PackTopkIdsTest.test_rounding_carry_bits",
 ]
 
 
