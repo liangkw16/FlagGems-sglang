@@ -4,12 +4,35 @@
 # T90-e7 GCU recipe applied - HDIM baked as a constexpr so every
 # stride (t*HDIM row pitch, HDIM output pitch) is compile-time
 # divisible and the DMA path engages (runtime strides forfeit it per
-# chip-rulesets), and all addressing kept int32 (enable_i64=False
-# emulates int64 arithmetic; the wrapper guards the domain).
+# chip-rulesets), and in-domain addressing kept int32 (enable_i64=False
+# emulates int64 arithmetic). Shapes whose element count reaches 2^31
+# take the int64 fallback kernel (the parent e10 body) through an
+# explicit branch - not an assert, which python -O would strip.
 
 import torch
 import triton
 import triton.language as tl
+
+
+@triton.jit(do_not_specialize=["rows", "hdim"])
+def _moe_topk_sum_i64(x, out, rows, hdim, TOPK: tl.constexpr,
+                      BLOCK: tl.constexpr):
+    for row in range(tl.program_id(0), rows, tl.num_programs(0)):
+        base = row.to(tl.int64) * (TOPK * hdim)
+        for h0 in tl.range(
+            tl.program_id(1) * BLOCK, hdim, tl.num_programs(1) * BLOCK
+        ):
+            offs = h0 + tl.arange(0, BLOCK)
+            m = offs < hdim
+            acc = tl.zeros((BLOCK,), dtype=tl.float32)
+            for t in tl.static_range(0, TOPK):
+                acc += tl.load(
+                    x + base + t * hdim + offs, m, other=0.0,
+                ).to(tl.float32)
+            tl.store(
+                out + row.to(tl.int64) * hdim + offs,
+                acc.to(out.dtype.element_ty), m,
+            )
 
 
 @triton.jit(do_not_specialize=["rows"])
@@ -43,21 +66,33 @@ def moe_topk_sum(x, out):
     assert x.dtype == out.dtype == torch.bfloat16
     assert x.is_contiguous() and out.is_contiguous()
     if rows and hdim:
-        # int32 addressing domain: the largest computed offset is
-        # rows*TOPK*HDIM (the wrapper-level product, not the runtime
-        # value), guarded once here
-        assert rows * topk * hdim < 2**31 and rows * hdim < 2**31
         splits = min(max(1, triton.cdiv(hdim, 16384)), 4)
-        _moe_topk_sum[(min(rows, 12), splits)](
-            x,
-            out,
-            rows,
-            TOPK=topk,
-            HDIM=hdim,
-            BLOCK=16384,
-            num_warps=2,
-            num_stages=3,
-        )
+        # explicit domain branch (survives python -O): the int32 fast
+        # path covers every realistic MoE shape; 2^31-scale inputs take
+        # the int64 fallback kernel - the parent e10 body, both paths
+        # Triton kernels
+        if rows * topk * hdim < 2**31 and rows * hdim < 2**31:
+            _moe_topk_sum[(min(rows, 12), splits)](
+                x,
+                out,
+                rows,
+                TOPK=topk,
+                HDIM=hdim,
+                BLOCK=16384,
+                num_warps=2,
+                num_stages=3,
+            )
+        else:
+            _moe_topk_sum_i64[(min(rows, 12), splits)](
+                x,
+                out,
+                rows,
+                hdim,
+                TOPK=topk,
+                BLOCK=16384,
+                num_warps=2,
+                num_stages=3,
+            )
     return out
 
 
