@@ -32,7 +32,6 @@ def _fixup_zero_kv(
     BLOCK_T: tl.constexpr,
     BLOCK_V: tl.constexpr,
     BLOCK_H: tl.constexpr,
-    INDEX_DTYPE: tl.constexpr,
 ):
     # Each virtual item owns one (segment, tile slot). Fixed workers
     # revisit items in a grid stride; slots split one long zero segment
@@ -41,16 +40,16 @@ def _fixup_zero_kv(
         seg = item // SLOTS
         slot = item % SLOTS
         if tl.load(lens + seg * KS0) == 0:
-            beg = tl.load(cum + seg * CS0).to(INDEX_DTYPE)
-            end = tl.load(cum + (seg + 1) * CS0).to(INDEX_DTYPE)
+            beg = tl.load(cum + seg * CS0).to(tl.int64)
+            end = tl.load(cum + (seg + 1) * CS0).to(tl.int64)
             tiles = tl.cdiv(end - beg, BLOCK_T)
-            v = tl.arange(0, BLOCK_V).to(INDEX_DTYPE)
-            h = tl.arange(0, BLOCK_H).to(INDEX_DTYPE)
+            v = tl.arange(0, BLOCK_V).to(tl.int64)
+            h = tl.arange(0, BLOCK_H).to(tl.int64)
             hm = h < NH
             zeros = tl.zeros((BLOCK_T, BLOCK_V), dtype=out.dtype.element_ty)
             ninf = tl.full((BLOCK_T, BLOCK_H), float("-inf"), dtype=tl.float32)
             for tile in range(slot, tiles, SLOTS):
-                t = beg + tile * BLOCK_T + tl.arange(0, BLOCK_T).to(INDEX_DTYPE)
+                t = beg + tile * BLOCK_T + tl.arange(0, BLOCK_T).to(tl.int64)
                 tm = t < end
                 for v0 in tl.static_range(0, HV, BLOCK_V):
                     vv = v0 + v[None, :]
@@ -99,14 +98,6 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             BLOCK_T=_BLOCK_T,
             BLOCK_V=_BLOCK_V,
             BLOCK_H=triton.next_power_of_2(max(1, num_heads)),
-            INDEX_DTYPE=(
-                tl.int32
-                if max(
-                    total_tokens * out.stride(0) + num_heads * v_head_dim,
-                    total_tokens * lse.stride(0) + num_heads,
-                ) < 2**31
-                else tl.int64
-            ),
         )
     return out, lse
 

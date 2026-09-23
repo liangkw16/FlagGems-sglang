@@ -29,8 +29,8 @@ def _fixup_zero_kv(
     batch,
     ot,
     items,
-    os0,
-    ls0,
+    OS0: tl.constexpr,
+    LS0: tl.constexpr,
     HV: tl.constexpr,
     NH: tl.constexpr,
     BLOCK_T: tl.constexpr,
@@ -57,9 +57,9 @@ def _fixup_zero_kv(
                 for v0 in tl.static_range(0, HV, BLOCK_V):
                     vv = v0 + v[None, :]
                     m = tm[:, None] & (vv < HV)
-                    tl.store(out + t[:, None] * os0 + vv, zeros, m)
+                    tl.store(out + t[:, None] * OS0 + vv, zeros, m)
                 tl.store(
-                    lse + t[:, None] * ls0 + h[None, :],
+                    lse + t[:, None] * LS0 + h[None, :],
                     ninf,
                     tm[:, None] & hm[None, :],
                 )
