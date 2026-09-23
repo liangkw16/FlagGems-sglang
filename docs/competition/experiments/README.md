@@ -1,5 +1,16 @@
 # 第二批候选与提交队列
 
+## 2026-09-23 T82 e9 上膛（待平台 preflight）
+
+- [实时第六批 17 题榜差与逐题结构方案](../optimization-batch6-live-20260923.md)：
+  16:11 平台快照，剩余 10/30 次，窗口至 09-24 19:59:59。
+- [T82 hash_topk e9](hash_topk.md)：燧原标量间接读取替代整行 one-hot
+  扫描；source/verification commit `53627c98`，ZIP
+  `e9-53627c9` SHA `55ede0abf8d9258199e9136b437cd74c7cef206a008d62164d522358be8a744a`，
+  release 6 测试 0 失败、generic/enflame 各 11 launch；
+  codex-review 无可确认问题。预注册门：8/8、燧原 ≥3.0、均值 >6.42825；
+  目标燧原同源执行证据待平台补齐。
+
 ## 2026-09-23 19:00 冲榜循环日终收口（额度 10/30 剩，窗口明日 19:59 关）
 
 - **三个新 TB**：T92 e22 **341.31**（华为 444，drop-other-prefill 部分

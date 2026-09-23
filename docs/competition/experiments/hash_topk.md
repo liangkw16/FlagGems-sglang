@@ -6,11 +6,11 @@ operator: hash_topk
 batch: 6
 validity: valid
 platform: e8(20167)valid 6.428>TB6.316新TB(+1.8%);燧原0.97→1.85(+91%one-hot match-reduce兑现!);天数13.87/muxi4.39/haig11.97/A7.02/B9.37
-candidate_stage: e8
+candidate_stage: e9
 team_best_stage: e8
 team_best_speedup: 6.42825x
 sealed: no
-next: e8(kernel内one-hot match-reduce替代wrapper torch预gather链,全constexpr+int32,ff252260)已上膛:6测试0失败3源x11launch;门=8/8有效且燧原>=2.0保留/>=3.0轴确认;评审绑定事故由v3.1修复,kernel代码两轮codex-review无kernel级P1/P2
+next: e9标量间接读取取代整行one-hot扫描;release 6测试0失败、generic/enflame各11 launch、ZIP验签、codex-review无问题;待实时preflight;门=8/8且燧原>=3、均值>6.42825,否则回e8
 updated: 2026-09-23
 ```
 
@@ -105,3 +105,34 @@ updated: 2026-09-23
 - 预注册门：8/8 有效且燧原 ≥2.0 保留 / ≥3.0 轴确认；其余成员字节冻结。
   注：e8 在冲榜循环试运行中两轮评审未过系评审对象错绑（编排缺陷，
   v3.1/v3.2 已修），kernel 代码本身两轮 codex-review 无 kernel 级发现。
+
+## 2026-09-23 E9 候选：燧原标量间接读取
+
+- 瓶颈与单变量：e8 已删掉 Torch 预 gather，但对每个 top-k 槽仍扫描
+  `num_routed` 个 logits 并做 one-hot 归约。e9 在同一 kernel 内逐槽标量
+  `tl.load(router_logits + row * RS0 + eid)`，把读量从
+  `O(topk × num_routed)` 降到 `O(topk)`；输出归一化、wrapper、GCU
+  12-CTA/2-warp 几何保持。上游 SGLang `triton_hash_topk.py` 固定提交
+  `d4dcce12` 用向量间接 load；我方 GCU 历史拒该形态，故仅试标量指针。
+- 源码/验证 commit：`53627c98cf479a71b0f63debee68339d4185131b`；
+  generic SHA-256 `d1f9520506b4590ee8585f0d652704b75d5d05d4c47a3e28976663c005515bf4`，
+  enflame `c1a9e40cc2d8997ddeac8a046bcfb9232cbab122f88501f3edcea4d92f675b4b`，
+  kunlunxin `567f94257f13b4b504beba5f053ce3df9fb5fb12f6997cc2e88d2844e911a7cd`，
+  test `8e685f1219e4dd21e00e0e9eef9929137a34cacd5d5385985beafb21c5223624`。
+  generic/kunlunxin 与 e8 ZIP 对应成员逐字节相同，只有 enflame 变化。
+- ZIP：`artifacts/competition/hash_topk/e9-53627c9/hash_topk.zip`，11703 B，
+  SHA-256 `55ede0abf8d9258199e9136b437cd74c7cef206a008d62164d522358be8a744a`；
+  三成员 `hash_topk.py` / `hash_topk_enflame.py` /
+  `hash_topk_kunlunxin.py`，打包器 `--verify-existing` 与 `unzip -t` 均通过。
+- release：`artifacts/competition/hash_topk/e9-53627c9/verification.json`，
+  SHA-256 `4f17bbcd1870d8e197665e5da6f2fd17a6a7cb0eeb683d53a0d1f14ad01c03b0`；
+  日志 SHA-256 `247437ee0da717b84c2254e033519870c08caf97101bf49f3475c4ebd22d0a25`。
+  RTX 5070 Ti / torch 2.13.0+cu130 / Triton 3.7.1，6 测试、0 失败、0 skip，
+  generic/enflame 各 11 次真实 kernel launch。Black/isort/flake8 均通过。
+  燧原目标为 `target-runtime-unverified`；KernelGen 当前 schema 不提供
+  固定本仓源码字节的执行接口，不把改写代码的服务结果当作同源验证。
+- `codex-review --commit 53627c98 --spec .../82-hash_topk.md`：
+  gpt-6-sol/max，只读审查完成，未发现可确认的问题。预注册门：平台 8/8
+  正确且各芯 ≥0.1；燧原 ≥3.0 且均值 >6.42825 才保留 e9，其他七芯
+  若较 e8 已证读数回退 >5% 需核对平台水位；燧原编译/数值败或低于
+  3.0 则回滚到 e8 已证 ZIP 字节，不自动重试本候选。
