@@ -42,30 +42,14 @@ def _fixup_zero_kv(
         if tl.load(lens + seg * KS0) == 0:
             beg = tl.load(cum + seg * CS0).to(tl.int64)
             end = tl.load(cum + (seg + 1) * CS0).to(tl.int64)
-            full_tiles = (end - beg) // BLOCK_T
+            tiles = tl.cdiv(end - beg, BLOCK_T)
             v = tl.arange(0, BLOCK_V).to(tl.int64)
             h = tl.arange(0, BLOCK_H).to(tl.int64)
             hm = h < NH
             zeros = tl.zeros((BLOCK_T, BLOCK_V), dtype=out.dtype.element_ty)
             ninf = tl.full((BLOCK_T, BLOCK_H), float("-inf"), dtype=tl.float32)
-            for tile in range(slot, full_tiles, SLOTS):
+            for tile in range(slot, tiles, SLOTS):
                 t = beg + tile * BLOCK_T + tl.arange(0, BLOCK_T).to(tl.int64)
-                for v0 in tl.static_range(0, HV, BLOCK_V):
-                    vv = v0 + v[None, :]
-                    if v0 + BLOCK_V <= HV:
-                        tl.store(out + t[:, None] * OS0 + vv, zeros)
-                    else:
-                        tl.store(out + t[:, None] * OS0 + vv, zeros, vv < HV)
-                if NH == BLOCK_H:
-                    tl.store(lse + t[:, None] * LS0 + h[None, :], ninf)
-                else:
-                    tl.store(lse + t[:, None] * LS0 + h[None, :], ninf, hm)
-            # Only one slot owns the partial tail; full tiles need no
-            # token mask or per-element comparison on Vector Cores.
-            if full_tiles * BLOCK_T < end - beg and slot == full_tiles % SLOTS:
-                t = beg + full_tiles * BLOCK_T + tl.arange(0, BLOCK_T).to(
-                    tl.int64
-                )
                 tm = t < end
                 for v0 in tl.static_range(0, HV, BLOCK_V):
                     vv = v0 + v[None, :]
