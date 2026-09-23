@@ -5,16 +5,55 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e16,558.04x TB)
-platform: e21(20362)valid 8/8 avg 526.66305<TB 558.04判负;华为186.93;TB守e16
-candidate_stage: e22
+platform: e22(20462)评测中7/8已通过,B卡waiting_callback,均分未定;华为381.2182>=315保留线,燧原110.1916;TB暂守e16
+candidate_stage: e23
 team_best_stage: e16
 team_best_speedup: 558.04x
 sealed: no
-next: e22固定40个全局worker跨段扫描的全新调度形态，平台目标芯待验证；华为>=315保留、>=450兑现，均分>558.039775换TB；额度4/30(18:20+08只读观察，可能变化)
+next: e22等待B卡终态; e23燧原安全i32地址算术待目标芯验证,目标>=160且均分>558.039775换TB;额度3/30(18:38+08只读观察)
 updated: 2026-09-23
 ```
 
-## 2026-09-23 E22 候选：全局固定 worker 扫描，待平台逐芯判定
+## 2026-09-23 E23 候选：燧原有界 int32 地址计算，待平台逐芯判定
+
+- 假说：e22 GCU kernel 将 `cum_seq_lens`、token/列 offset 全部转 i64；
+  gcu300 的 64 位整数算术走软仿真。e23 仅把安全范围内的地址计算转
+  int32，实际最后一行 out/lse offset 超过 `2^31-1` 时保留旧 i64 路径。
+  Ascend/global worker 与其余三个成员和 e22 ZIP 字节相同。
+- NVIDIA 代理配对计时：长段 i32/i64 基本持平，短段 wrapper i32 慢约
+  5–6%；这不支持在 NVIDIA 晋级，但也不能预测 gcu300 的软仿真收益。
+  目标芯仍 **target-runtime-unverified**。预注册门：八芯全过且每芯≥0.1；
+  燧原 ≥130 保留该轴，≥160 视为实质收益；均分 >558.039775 换 TB。
+- source commit = verification commit：
+  `38499d58e417d530c0611014105abb66c68c3d3e`；测试 SHA-256
+  `2bca30d528133d3b2fa4849c8afd3413ec5eb48d4e6dc58a9bfa6c37d99b8987`。
+  release 回执 `artifacts/competition/t80-e23-20260923/verification.json`
+  SHA-256 `6e7a295d366827991ccf346305a2c054912698a827d23a9590f18599c6fa7cbd`，
+  相邻日志 SHA-256 `a4fd4b1bd0eea883e8dd3b60348bd518000324945ca2a1703ee1fd1330ad0ea5`；
+  NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 / Triton 3.7.1，14 测试，
+  0 failure/error/skip/xfail，5 源各 36 次非 warmup kernel launch。
+- 不可变 ZIP `artifacts/competition/fixup_zero_kv/e23-38499d5/fixup_zero_kv.zip`
+  SHA-256 `bb40df546c84689a421a41ea1cb577d6d9c06836f541eea10718ca373f0790f2`，
+  19180 B，`--verify-existing` 与 `unzip -t` 通过，成员与 commit 字节一致：
+  - `fixup_zero_kv.py` `e3371c49e3ef6f9ba7b2321b094a738a208129a682fc29e837b6a17317035943`
+  - `fixup_zero_kv_ascend.py` `44f18d95e949fb131de932ad2858a5a442cc94709aeef0ce7108d33227d7f498`
+  - `fixup_zero_kv_enflame.py` `62dea421902ffd17999f68d41c3579af35d563ad6b12633aeda45ba94733bdfb`
+  - `fixup_zero_kv_kunlunxin.py` `b79e658780e02637372a5a84c1290b6bdddc3e8def54ae8ace5ba86030c6f0ff`
+  - `fixup_zero_kv_metax.py` `37a4d96256677a1899fc388d8b5ef8c07b7b610f4af148202093aef58af15bda`
+
+## 2026-09-23 E22 平台中间态（20462）：7/8 已通过，B 卡等回调
+
+- 09-23 18:27:59+08 单次提交（当日序号 27）；18:38+08 只读状态为
+  evaluating/pending，天数 1189.3998 / 沐曦 389.7132 / 燧原 110.1916 /
+  海光 893.9844 / 昆仑 13.988 / **华为 381.2182** / A 814.279
+  均通过，B 卡 `waiting_callback`、`next_status_query_at=20:28:02`。
+  华为越过 ≥315 保留线，未到 ≥450 突破线；在 B 终态前均分与有效性未知，
+  不将 7/8 计作有效排名。额度余 3/30。
+- 提交时 CLI `remote_verification=unavailable`（未设置受信 host）；其后以
+  既有平台 status 中的对象存储主机名作白名单，独立无认证 HTTPS GET
+  下载本次文件，18793 B 与本地 ZIP SHA-256 完全一致；未重试上传/提交。
+
+## 2026-09-23 E22 候选：全局固定 worker 扫描
 
 - 假说：e20/e21 以 `(batch, tile)` 发射，即使 tile cap 缩到 48 仍使总
   program 数随 batch 增长；e22 Ascend 改为最多 40 个全局 worker，worker
