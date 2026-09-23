@@ -1,5 +1,13 @@
 # 第二批候选与提交队列
 
+## 2026-09-23 T80 e22 待目标芯验证
+
+- [T80 fixup_zero_kv e22](fixup_zero_kv.md)：Ascend 固定 40 全局 worker
+  跨段扫描，燧原恢复 e16 12 CTA 并补谎报 span 覆盖；源码/测试
+  `f109f3b8`，ZIP `e22-f109f3b` SHA `9b804a01…0759`（5 成员），
+  NVIDIA 代理 release 14/14、5 源各 36 launch。目标四芯未实测；
+  华为 ≥315 保留，均分 >558.039775 换队内最佳。
+
 ## 2026-09-23 T82 e9、T83 e4/e5/e6 终态与下一步
 
 - [实时第六批 17 题榜差与逐题结构方案](../optimization-batch6-live-20260923.md)：

@@ -5,14 +5,48 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e16,558.04x TB)
-platform: e21(20362)valid 8/8 avg 526.66305<TB 558.04判负;华为186.93(e20 210.91/e19 generic 267.04再降——48-tile cap+warps16第五种形态仍败,ascend轴宣告死亡);天数1187.9(+2.4%)其余窗口回落;TB守e16
-candidate_stage: e21
+platform: e21(20362)valid 8/8 avg 526.66305<TB 558.04判负;华为186.93;TB守e16
+candidate_stage: e22
 team_best_stage: e16
 team_best_speedup: 558.04x
 sealed: no
-next: T80华为ascend轴封存(e15/e16编译败,e20/e21读数低于generic,5形态尽);剩余缺口=燧原110.6→233.8(+15avg)与华为297→733(+54avg)均需全新算法形态非launch调参;额度17/30(used 13,observed 14:04+08)
+next: e22固定40个全局worker跨段扫描的全新调度形态，平台目标芯待验证；华为>=315保留、>=450兑现，均分>558.039775换TB；额度4/30(18:20+08只读观察，可能变化)
 updated: 2026-09-23
 ```
+
+## 2026-09-23 E22 候选：全局固定 worker 扫描，待平台逐芯判定
+
+- 假说：e20/e21 以 `(batch, tile)` 发射，即使 tile cap 缩到 48 仍使总
+  program 数随 batch 增长；e22 Ascend 改为最多 40 个全局 worker，worker
+  跨段及段内 tile 循环，保留 e16 的 `[8,512]` 2D 写形态与真实
+  `cum_seq_lens` 覆盖。固定 40 避免每次 wrapper 查询设备属性的约 0.8ms
+  主机开销。此形态不同于此前的单段 CTA、逐段 tile 与 capped 2D grid。
+- 燧原从 e16 最佳 ZIP 恢复 12 CTA / 2 warps / `BLOCK_V=4096`，补齐
+  `max_seq_len` 谎报时的段内 tile-stride 覆盖；其余 generic、昆仑、沐曦
+  沿用已验证字节。NVIDIA 代理配对计时：Ascend wrapper 在四个 shape
+  的耗时为 generic 的 1.05–1.19 倍，**不是华为加速证据**；全局 worker
+  假说只由目标芯平台判定。
+- source commit = verification commit：
+  `f109f3b8ef4998229ac4e675ef934f55e78ffc71`；测试 SHA-256
+  `2bca30d528133d3b2fa4849c8afd3413ec5eb48d4e6dc58a9bfa6c37d99b8987`。
+  release 回执 `artifacts/competition/t80-e22-20260923/verification.json`
+  SHA-256 `a09d415473e472e7f4d5059545b8a1f27ae577d43a476d913c1b9f48198828e2`，
+  相邻日志 SHA-256 `fb4ef9427c110a1bf92af0077c6d19420b083a657aa6027da41936551e5935ac`。
+  NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 / Triton 3.7.1；release 14
+  测试，0 failure/error/skip/xfail，5 源各 36 次非 warmup kernel launch；
+  Ascend/Enflame/Kunlunxin/Metax 均为 **target-runtime-unverified**。
+- 不可变 ZIP `artifacts/competition/fixup_zero_kv/e22-f109f3b/fixup_zero_kv.zip`
+  SHA-256 `9b804a0198e32eef66fcf1e30f5359a4964d7b117bf989cfb166b11c50a90759`，
+  18793 B，`--verify-existing` 与 `unzip -t` 通过；成员与 commit 字节一致：
+  - `fixup_zero_kv.py` `e3371c49e3ef6f9ba7b2321b094a738a208129a682fc29e837b6a17317035943`
+  - `fixup_zero_kv_ascend.py` `44f18d95e949fb131de932ad2858a5a442cc94709aeef0ce7108d33227d7f498`
+  - `fixup_zero_kv_enflame.py` `c8ccee9808ff5ed181ac5b5385800b9dc1b3808b80c2a8fcb713a5763365762d`
+  - `fixup_zero_kv_kunlunxin.py` `b79e658780e02637372a5a84c1290b6bdddc3e8def54ae8ace5ba86030c6f0ff`
+  - `fixup_zero_kv_metax.py` `37a4d96256677a1899fc388d8b5ef8c07b7b610f4af148202093aef58af15bda`
+- 预注册门：八芯全部正确且每芯 ≥0.1；华为 ≥315 保留该调度方向，
+  ≥450 视为有意义突破；均分 > e16 558.039775 才换队内最佳。当前
+  榜首约 643.53，若其余芯不变，华为需额外约 +684 才可仅靠此芯夺首；
+  小于门槛或编译/数值失败即回到 e16 最佳 ZIP 分支继续寻找新结构。
 
 ## 2026-09-23 E21 平台终态（20362）：valid 8/8 均值 526.66 < TB 判负；ascend 轴五形态尽、封存
 
