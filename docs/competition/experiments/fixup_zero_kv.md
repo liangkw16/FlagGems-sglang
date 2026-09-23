@@ -5,16 +5,30 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e16,558.04x TB)
-platform: e22(20462)评测中7/8已通过,B卡waiting_callback,均分未定;华为381.2182>=315保留线,燧原110.1916;TB暂守e16
+platform: e23(20469)valid 8/8 avg 554.449675<TB 558.039775判负,燧原109.912<130门; e22(20462)仍7/8,B卡waiting_callback;TB守e16
 candidate_stage: e23
 team_best_stage: e16
 team_best_speedup: 558.04x
 sealed: no
-next: e22等待B卡终态; e23燧原安全i32地址算术待目标芯验证,目标>=160且均分>558.039775换TB;额度3/30(18:38+08只读观察)
+next: e23燧原i32轴关闭并恢复e22原字节(8ad7b360);e22只读等B卡回调;余额1/30,停止低证据重投;下一结构目标华为733/沐曦560/燧原234
 updated: 2026-09-23
 ```
 
-## 2026-09-23 E23 候选：燧原有界 int32 地址计算，待平台逐芯判定
+## 2026-09-23 E23 平台终态（20469）：valid 8/8，均分 554.449675 < TB；燧原 i32 轴判负
+
+- 09-23 18:45:21+08 单次提交（当日序号 29），18:46:53+08 平台
+  completed/valid、8/8 全过，均分 **554.449675**，低于 e16 队内最佳
+  558.039775，未换 TB、仍为第 3。逐芯：天数 1197.9026 / 沐曦
+  381.6966 / **燧原 109.912** / 海光 893.4904 / 昆仑 14.6098 /
+  华为 378.4904 / A 845.5846 / B 613.911。燧原低于预注册
+  ≥130 保留线，与 e22 110.1916 基本持平；i32 地址轴关闭。
+- 源码在提交后按 e22 `f109f3b8` 的 GCU blob 原字节回滚，commit
+  `8ad7b360`；E23 ZIP/回执仍保留，不再以同字节重投。提交时 CLI
+  `remote_verification=unavailable`，其后受信旧 status 主机的独立
+  无认证 HTTPS GET 验证远端 19180 B 与本地 SHA-256 完全一致。
+  18:46:53+08 平台额度余 1/30。
+
+### E23 预注册方案与验证证据
 
 - 假说：e22 GCU kernel 将 `cum_seq_lens`、token/列 offset 全部转 i64；
   gcu300 的 64 位整数算术走软仿真。e23 仅把安全范围内的地址计算转
@@ -22,7 +36,7 @@ updated: 2026-09-23
   Ascend/global worker 与其余三个成员和 e22 ZIP 字节相同。
 - NVIDIA 代理配对计时：长段 i32/i64 基本持平，短段 wrapper i32 慢约
   5–6%；这不支持在 NVIDIA 晋级，但也不能预测 gcu300 的软仿真收益。
-  目标芯仍 **target-runtime-unverified**。预注册门：八芯全过且每芯≥0.1；
+  提交前目标芯 **target-runtime-unverified**。预注册门：八芯全过且每芯≥0.1；
   燧原 ≥130 保留该轴，≥160 视为实质收益；均分 >558.039775 换 TB。
 - source commit = verification commit：
   `38499d58e417d530c0611014105abb66c68c3d3e`；测试 SHA-256
