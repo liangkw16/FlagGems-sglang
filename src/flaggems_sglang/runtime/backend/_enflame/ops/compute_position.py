@@ -79,11 +79,13 @@ def _fill_dual_layout(
                 tl.store(positions_words + idx, prefix_len + o, mask=m)
             else:
                 # int32-only little-endian split: the wrapped sum IS the
-                # low word, and for non-negative addends the carry into
-                # bit 32 is exactly sum < 0 - int64 vector ALU ops
-                # (bitwise and/shift) fail make_gcuir on gcu300
+                # low word; the carry-out of the unsigned addition is the
+                # sign bit of the classic adder expression (a&b)|((a|b)&~s)
+                # - NOT the sign of the sum (2^31 itself carries nothing).
+                # int64 vector ALU bitops fail make_gcuir on gcu300
                 lo = prefix_len + o
-                hi = (lo < 0).to(tl.int32)
+                carry = (prefix_len & o) | ((prefix_len | o) & ~lo)
+                hi = (carry < 0).to(tl.int32)
                 # widen only the address word index (arange/scalar-extsi
                 # addressing has platform precedent on gcu300; the int64
                 # vector ALU bitops were the compile wall)
