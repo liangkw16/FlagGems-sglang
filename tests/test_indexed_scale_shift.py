@@ -112,6 +112,27 @@ class IndexedScaleShiftTest(unittest.TestCase):
                 idx = torch.ones(4, dtype=torch.int32, device="cuda")
                 self.check((x, shift, scale, idx), exact=True)
 
+    def test_sparse_table_and_second_tile_tail(self):
+        x = torch.full((4, 1025), 2, dtype=torch.bfloat16, device="cuda")
+        scale = torch.zeros(3, 1025, dtype=torch.bfloat16, device="cuda")
+        shift = torch.zeros_like(scale)
+        scale[1].fill_(0.5)
+        scale[2].fill_(1)
+        shift[1].fill_(-0.125)
+        shift[2].fill_(0.25)
+        idx = torch.tensor([0, 1, 2, 1], dtype=torch.int32, device="cuda")
+        self.check((x, shift, scale, idx), exact=True)
+
+        # A large logical table with two selected rows must not be materialized.
+        scale = torch.full(
+            (1, 17), 0.5, dtype=torch.bfloat16, device="cuda"
+        ).expand(1_000_000, 17)
+        shift = torch.zeros(1, 17, dtype=torch.bfloat16, device="cuda").expand(
+            1_000_000, 17
+        )
+        idx = torch.tensor([0, 999_999], dtype=torch.int32, device="cuda")
+        self.check((x[:2, :17], shift, scale, idx), exact=True)
+
     def test_int32_indices(self):
         x = torch.randn(33, 2048, dtype=torch.bfloat16, device="cuda")
         shift = torch.randn(7, 2048, dtype=torch.bfloat16, device="cuda")
@@ -124,6 +145,7 @@ RELEASE_REQUIRED_TESTS = [
     "IndexedScaleShiftTest.test_shapes_and_variants",
     "IndexedScaleShiftTest.test_double_round_boundary",
     "IndexedScaleShiftTest.test_each_bf16_boundary",
+    "IndexedScaleShiftTest.test_sparse_table_and_second_tile_tail",
     "IndexedScaleShiftTest.test_int32_indices",
 ]
 
