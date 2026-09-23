@@ -1,83 +1,49 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Ascend vendor for unpad_draft_extend_output, e21r candidate: the e20/e21
-# int32+fp32 ruleset bytes died on UB capacity, not on the ruleset itself -
-# submission 20162's raw_result huawei failed_cases[0] reads "ub overflow,
-# requires 3145984 bits while 1572864 bits available" (384KB demand vs the
-# 192KB Unified Buffer of chip-rulesets.md), and the ~196,640B excess is the
-# fp32 offs conversion + fp32 mask materialised at BLOCK=16384 width
-# (16384*4B*3-class extra buffers; e14's same-BLOCK form with an integer
-# mask compiled and read 442-507, so the fp32 vectors are the only new
-# large buffers). Fix: stop materialising wide fp32 vectors at all -
-#   - the main loop streams whole BLOCK=16384 tiles UNMASKED (the width
-#     peak of the ladder 2048->129.6 / 8192->315.6 / 16384->442 /
-#     32768->378 is kept); every touched element lies in
-#     [src, src+full_end) which is inside the accepted prefix, and the
-#     prefix is inside the raw_out segment / the segment's out rows by
-#     contract, so an unmasked whole block is memory-safe (structure
-#     precedent: T40 E16 unmasked main + masked last sub-block, huawei
-#     +130% - hot path carries zero compares);
-#   - a single small BLOCK_TAIL=2048 masked loop drains the remainder,
-#     where the fp32 compare operands are loop-local quantities bounded
-#     by BLOCK (< 16384 << 2**24) and thus always exactly representable
-#     in fp32 - the e20 2**24-domain boundary bug cannot trigger, so the
-#     scalar guard branch is deleted (Vector CMP has no int path; Vector
-#     ADD has no int64 - addressing stays int32 behind the numel<2**31
-#     assert).
-# Each loop's live vector set is a subset of e14's already-compiled form
-# (int mask + other-filled load at the same width), so UB demand is
-# monotonically non-increasing. Kept verbatim from the submitted e21
-# (commit 395c6d7f): the official capped grid-stride persistent rotation
-# grid=(min(bs, CAP),) with CAP=64 pre-registered (the T77-e5 verified
-# shape; a 32/40/48 sweep is the only follow-up if this lands positive
-# but under the gate). Each program rotates over segments
-# p, p+num_programs, ... (vector_operator.md: "keep the launch close
-# to the number of physical Vector Cores and let each program process
-# multiple tiles in an inner loop"; "GPU-style small tiles with very
-# large grids often cause repeated dispatch overhead on NPUs"), reads
-# the segment's lens/cum pair exactly once per visit, and the inner
-# loops walk only the real accepted length elems - the padded tail
-# beyond n tokens spawns zero idle tiles.
+# Ascend vendor for unpad_draft_extend_output, e22 candidate: revert the
+# ascend bytes to the e19r proven form (submission 19541 water band
+# 378-507; ZIP e19r-f9abadc ascend member == git f9abadc, (bs, tiles)
+# grid + BLOCK=16384 + int64 offs/elems integer mask, the e14 lineage)
+# and apply exactly ONE variable on top: drop the other=0 prefill of the
+# masked load. chip-rulesets.md:25 - "masked load 的 other 预填会串行化
+# MTE2": this pure copy kernel has carried other=0 in every round since
+# e14, and load-side MTE2 serialisation is the prime suspect for the
+# huawei 442-507 band vs the 金狐狸/CosmosMind 684-792 band (per-chip
+# gap decomposition, climb-loop.json s2t1op092: huawei 684.79 vs 377.9
+# is 56% of the total avg gap). Numerics: masked-out lanes now hold
+# undef instead of 0, and the store carries the same mask m, so those
+# lanes never reach memory - output bytes are identical (NVIDIA proxy
+# verifies). Nothing from the e21r failure surface is inherited: no
+# unmasked main loop, no fp32 tail, no persistent rotation, no warps16
+# (e21r 20313 failed test[3] 1520/164352 with those variables present);
+# the live vector set is a subset of e19r's already-compiled form, so
+# UB demand is monotonically non-increasing vs the 192KB budget the
+# e20/e21 int32+fp32 bytes overflowed.
 
 import torch
 import triton
 import triton.language as tl
 
-_BLOCK = 16384
-_BLOCK_TAIL = 2048
-_NUM_WARPS = 16
-_MAX_PROGRAMS = 64  # pre-registered CAP; T77-e5 capped-request form
-
 
 @triton.jit
 def _unpad(
-    raw_out, lens, cum, out, span, tpb, lstride, cstride, bs,
+    raw_out, lens, cum, out, span, tpb, lstride, cstride,
     BLOCK: tl.constexpr,
-    BLOCK_TAIL: tl.constexpr,
 ):
-    for seg in range(tl.program_id(0), bs, tl.num_programs(0)):
-        n = tl.load(lens + seg * lstride)
-        beg = tl.load(cum + seg * cstride)
-        src = seg * tpb * span
-        dst = beg * span
-        elems = n * span
-        full_end = (elems // BLOCK) * BLOCK
-        # unmasked main loop: whole BLOCK tiles strictly inside the
-        # accepted prefix; no fp32 offs/mask vector at BLOCK width, which
-        # is what overflowed the 192KB UB in e20/e21 (submission 20162)
-        for base in range(0, full_end, BLOCK):
-            offs = base + tl.arange(0, BLOCK)
-            v = tl.load(raw_out + src + offs)
-            tl.store(out + dst + offs, v)
-        # masked tail drain: offs and rem are loop-local and bounded by
-        # BLOCK (< 2**24), so the fp32 compares stay exact - the Vector
-        # CMP ruleset path without the e20 boundary bug
-        rem = elems - full_end
-        for base in range(0, rem, BLOCK_TAIL):
-            offs = base + tl.arange(0, BLOCK_TAIL)
-            m = offs.to(tl.float32) < rem.to(tl.float32)
-            v = tl.load(raw_out + src + full_end + offs, m)
-            tl.store(out + dst + full_end + offs, v, m)
+    seg = tl.program_id(0)
+    tile = tl.program_id(1)
+    n = tl.load(lens + seg.to(tl.int64) * lstride)
+    beg = tl.load(cum + seg.to(tl.int64) * cstride)
+    src = seg.to(tl.int64) * tpb * span
+    dst = (beg.to(tl.int64) * span)
+    elems = n.to(tl.int64) * span
+    for base in range(
+        tile.to(tl.int64) * BLOCK, elems, tl.num_programs(1).to(tl.int64) * BLOCK
+    ):
+        offs = base + tl.arange(0, BLOCK)
+        m = offs < elems
+        v = tl.load(raw_out + src + offs, m)
+        tl.store(out + dst + offs, v, m)
 
 
 def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q):
@@ -87,7 +53,6 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
     assert seq_lens_q.dtype == cu_seqlens_q.dtype == torch.int32
     assert raw_out.dtype in (torch.float16, torch.bfloat16)
     assert raw_out.is_contiguous()
-    assert raw_out.numel() < 2**31  # int32 element offsets
     out = torch.empty(
         (sum_seq_lens_q, heads, dim),
         dtype=raw_out.dtype,
@@ -95,7 +60,8 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
     )
     span = heads * dim
     if bs and token_per_batch and out.numel():
-        _unpad[(min(bs, _MAX_PROGRAMS),)](
+        tiles = min(max(1, (token_per_batch * span + 16383) // 16384), 255)
+        _unpad[(bs, tiles)](
             raw_out,
             seq_lens_q,
             cu_seqlens_q,
@@ -104,10 +70,7 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
             token_per_batch,
             seq_lens_q.stride(0),
             cu_seqlens_q.stride(0),
-            bs,
-            BLOCK=_BLOCK,
-            BLOCK_TAIL=_BLOCK_TAIL,
-            num_warps=_NUM_WARPS,
+            BLOCK=16384,
         )
     return out
 

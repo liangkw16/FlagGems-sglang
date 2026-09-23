@@ -118,12 +118,32 @@ class UnpadTest(unittest.TestCase):
         self.check(make_case(lens=(41, 48, 35, 34, 1, 0), heads=8, dim=128, tpb=64))
         self.check(make_case(lens=(41,), heads=2, dim=3, tpb=64))
 
+    def test_masked_tail_no_other_prefill(self):
+        # e22 ascend semantics: the masked load carries NO other=0
+        # prefill (chip-rulesets.md:25 - the prefill serialises MTE2 on
+        # Ascend), so masked-out lanes hold undef values that must never
+        # reach memory: the store carries the same mask m. With span=1024
+        # (heads=8, dim=128) one BLOCK=16384 tile is 16 tokens, so every
+        # lens % 16 != 0 forces a partial final tile whose undef tail
+        # sits immediately before the NEXT segment's rows - a dropped or
+        # loosened store mask would overwrite the following segment's
+        # correct prefix and fail the byte-exact check. 64 is the
+        # exact-multiple control (65536 = 4 tiles exactly, zero-length
+        # tail must write nothing extra); 1 is the single-row all-tail
+        # minimum; 63 leaves a near-full 15360-element tail; tpb=64 with
+        # small lens also launches idle tile programs whose loop never
+        # runs. The odd-span case keeps the element path honest through
+        # the same undef-tail exposure.
+        self.check(make_case(lens=(33, 17, 1, 64, 40, 63, 15), heads=8, dim=128, tpb=64))
+        self.check(make_case(lens=(41,), heads=2, dim=3, tpb=64))
+
 
 RELEASE_REQUIRED_TESTS = [
     "UnpadTest.test_u32_fallback_conditions",
     "UnpadTest.test_ragged_and_boundaries",
     "UnpadTest.test_persistent_rotation",
     "UnpadTest.test_unmasked_main_masked_tail_split",
+    "UnpadTest.test_masked_tail_no_other_prefill",
 ]
 
 
