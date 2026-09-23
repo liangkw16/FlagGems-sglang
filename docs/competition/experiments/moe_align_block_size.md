@@ -5,14 +5,30 @@ task: 84
 operator: moe_align_block_size
 batch: 6
 validity: valid(8/8,e14,492.17x TB)
-platform: e17(20370)invalid_correctness 7/8:华为编译败(repo _ascend文件停在e15/e16 UB-overflow字节,e17 ZIP夹带断裂ascend成员——e14时代"回滚e10模板"只发生在ZIP成员选择未回写仓库,本会话已字节级恢复953b2584);generic侧tl.histogram lowering芯间差2.3x(天数-11.6%/B -41%/沐曦+1.9%/海光+1.6%),-10%门触发,generic已回滚e14字节59679834;TB守e14
-candidate_stage: e17
+platform: e18(20412)/e18r(20416)均invalid_correctness 7/8:昆仑vendor重写连撞两堵XPU编译墙(axis-0归约禁令→tt.addptr编码),散射探针未及执行;其余七芯逐字节复现e14(785/474/249/975/91/749/665)证明隔离正确;昆仑vendor已回滚s0标量字节;TB守e14
+candidate_stage: e18r
 team_best_stage: e14
 team_best_speedup: 492.17x
 sealed: no
-next: 遗留结构 intel: (a) tl.histogram 在 triton-ascend 存在 API 但本题 UB 预算未验证; (b) launch 数不是剩余2x主杠杆(3→2-op 在天数/B 反降)——榜首 973 的来源应在 kernel 效率或原子散射竞争; 仓库 ascend/generic 已恢复 e14 字节,后续 ZIP 不再夹带断裂成员;额度15/30(used 15,observed 15:15+08)
+next: 昆仑轴(2.70vs29-33=10x)需XPU执行通道免额度迭代(KernelGen/目标机);两条XPU硬事实:tl.sum axis=0 2D=编译错需转置;标量/向量混编addptr行索引存储=同编码失败;其余缺口=天数782vs2120(全板结构,tl.histogram方案已证伪)+华为91.7vs275(五形态尽);额度10/30(used 20,observed 18:50+08)
 updated: 2026-09-23
 ```
+
+## 2026-09-23 E18/E18R 平台终态（20412/20416）：昆仑 vendor 重写两连编译墙，轴封存
+
+- 结构：gather-free 四 launch（memset 毯填 + 计数[one-hot 矩阵私有行]
+  + scan拆两核[三角矩阵代 tt.scan，永不回读自写] + 散射 placement 探针）
+  + 单 scratch alloc；代理 36-1300x、5/5 测试过。
+- **20412**：昆仑 `tl.sum(axis=0)` 2D 编译错（"consider manually
+  transpose"）；转置修复后 **20416** 撞 `tt.addptr same encoding`（计数核
+  `cnt + pid*BLOCK_E + lanes` 行索引存储）；散射探针（per-lane 计算
+  sorted_ids+dest）从未执行到。两发均 7 芯 byte 同一复现 e14（隔离正确）。
+- bring-up 期间修的三个 bug 已入库为通用知识：E_CHUNK 须钳到 BLOCK_E
+  （越界）、scan 的 nprog 须传参（tl.num_programs=1 陷阱）、**同 launch
+  写后读 starts 返回核前字节（载入提升；zeros 初始化会掩盖）**——拆核
+  结构性规避。
+- 昆仑 vendor 回滚 s0 标量字节（`237ba785`）；e18/e18r ZIP 及回执在
+  `day6-climb-20260923/t84e18-wf|t84e18r-wf/`。
 
 ## 2026-09-23 E17 平台终态（20370）：invalid_correctness 7/8；双缺陷定位与字节级回滚
 

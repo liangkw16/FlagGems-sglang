@@ -1,22 +1,21 @@
 # 第二批候选与提交队列
 
-## 2026-09-23 14:20 冲榜循环战果：T92/T90 双新 TB，T80 判负封 ascend 轴（额度 17/30 剩）
+## 2026-09-23 19:00 冲榜循环日终收口（额度 10/30 剩，窗口明日 19:59 关）
 
-- [T92 unpad e22（20358）](unpad_draft_extend_output.md)：valid 8/8
-  **341.31 新 TB**（华为 444 进水位带，drop-other-prefill 部分兑现）。
-- [T90 sigmoid_gate_mul_broadcast e7（20359）](sigmoid_gate_mul_broadcast.md)：
-  valid 8/8 **2.6857 新 TB**（燧原 0.77→2.64=3.4x，[RB,W] 行块瓦片
-  GCU 配方兑现 ≥2.5 进场带；昆仑 0.118 为字节同一的平台劣化族）。
-- [T80 fixup_zero_kv e21（20362）](fixup_zero_kv.md)：valid 8/8 526.66
-  < TB 558.04 判负；华为 186.9 五形态尽，ascend 轴封存。
-- 结构资产：GCU elementwise 配方（除法 gather 消灭 + constexpr 行距 +
-  行向量 gate 广播）可迁移 T78/T89。
-
-## 2026-09-23 T90 e7 候选实现（燧原 [RB,W] 行块瓦片整成员替换；round-2 评审通过，待验证上膛）
-
-| 候选 | ZIP | 回执 | 预注册门 |
-| --- | --- | --- | --- |
-| [T90 sigmoid_gate_mul_broadcast e7](sigmoid_gate_mul_broadcast.md)（代码 commit `f43cf87e`（round-1 实现；round-2 唯一发现=py_compile 口径，裁定门禁仅作用 .py、代码零发现字节不变）：`_enflame` 整成员替换——[RB,W] 行块瓦片（W=HDIM 最大 2 幂因子封顶 65536、RB*W=65536 对齐 relu2 宽度带）、constexpr HDIM 行距→DMA 通路、gate [RB] 向量载入广播（无逐元素除法 gather）、零列掩码、行块 grid-stride+12-CTA+num_stages 3；int32 域断言 `(rows+RB)*hdim<2^31`；新增回归 `test_rowblock_tile_boundary`；generic/_ascend/_hygon 冻结 e4 字节，e6 字节绝不再入包） | 待 release 代理验证 + `e7-<commit>` ZIP | 待上膛回执 | 燧原 ≥2.0 保留 / ≥2.5 进场带（金狐狸 2.51 下沿）；均值 >2.5247 换 TB；任一其余芯 -5% 判负；回退档=纯 1D BLOCK=W 标量 row |
+- **三个新 TB**：T92 e22 **341.31**（华为 444，drop-other-prefill 部分
+  兑现）/ T90 e7 **2.6857**（燧原 0.77→2.64=3.4x，[RB,W] GCU 配方）/
+  T77 e6 **1100.744**（昆仑 +91%、天数 +8.6%——去 alloc 昆仑计价极高）。
+- **四发判负已全部回滚+账本**：T80 e21（华为五形态尽，ascend 轴封存）、
+  T84 e17（tl.histogram 芯间 2.3x 差 + 仓库 ascend 残留夹带坑）、
+  T87 e6（ascend 形态在 2 载 1 存 op 反向 -11%）、T89 e9（华为 +26% 方向
+  兑现但昆仑/B 水位吃掉均值）。
+- **T84 昆仑重写两连 XPU 编译墙**（axis-0 归约禁令 → tt.addptr 编码），
+  散射探针未及执行，vendor 回滚 s0 字节；两条 XPU 硬事实+同核写后读
+  （载入提升）陷阱入库。
+- **可迁移结构知识**：per-call alloc 昆仑计价极高（代理不可见）；
+  ascend launch 形态响应是 op 访存形状函数；GCU elementwise 配方
+  （除法 gather 消灭+constexpr 行距+行向量广播）；仓库 vendor 文件
+  ≠已证 ZIP 成员的两例打包坑（打包前必验字节）。
 
 ## 2026-09-23 T92 e21r 平台终态（20313）：invalid_correctness 7/8——华为 ub-overflow 消除、转数值败
 
