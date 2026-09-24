@@ -1,0 +1,104 @@
+{
+ "76": {
+  "my_rank": 17,
+  "my_best": 1.0564,
+  "leader": "varphi",
+  "leader_best": 1.98311667
+ },
+ "77": {
+  "my_rank": 8,
+  "my_best": 1266.24055,
+  "leader": "c2flow",
+  "leader_best": 1747.5001
+ },
+ "78": {
+  "my_rank": 13,
+  "my_best": 1.090775,
+  "leader": "c2flow",
+  "leader_best": 1909.920425
+ },
+ "79": {
+  "my_rank": 17,
+  "my_best": 173.3643125,
+  "leader": "c2flow",
+  "leader_best": 343.5151875
+ },
+ "80": {
+  "my_rank": 3,
+  "my_best": 581.2321,
+  "leader": "EvokeAgent",
+  "leader_best": 660.060825
+ },
+ "81": {
+  "my_rank": 11,
+  "my_best": 4.38823333,
+  "leader": "EvokeAgent",
+  "leader_best": 8.30725833
+ },
+ "82": {
+  "my_rank": 13,
+  "my_best": 6.42825,
+  "leader": "EvokeAgent",
+  "leader_best": 9.47705
+ },
+ "83": {
+  "my_rank": null,
+  "my_best": null,
+  "leader": "c2flow",
+  "leader_best": 143.3986
+ },
+ "84": {
+  "my_rank": 7,
+  "my_best": 492.16514583,
+  "leader": "EvokeAgent",
+  "leader_best": 1036.69760417
+ },
+ "85": {
+  "my_rank": 10,
+  "my_best": 30.59072222,
+  "leader": "EvokeAgent",
+  "leader_best": 54.52975
+ },
+ "86": {
+  "my_rank": 11,
+  "my_best": 2.975225,
+  "leader": "金狐狸",
+  "leader_best": 3.9687125
+ },
+ "87": {
+  "my_rank": 3,
+  "my_best": 3.43741667,
+  "leader": "CosmosMind",
+  "leader_best": 5.64402083
+ },
+ "88": {
+  "my_rank": 13,
+  "my_best": 16.91585,
+  "leader": "EvokeAgent",
+  "leader_best": 45.139875
+ },
+ "89": {
+  "my_rank": 16,
+  "my_best": 2.83910833,
+  "leader": "KLANG2026",
+  "leader_best": 13569.14166667
+ },
+ "90": {
+  "my_rank": 5,
+  "my_best": 2.80056667,
+  "leader": "EvokeAgent",
+  "leader_best": 3.24404167
+ },
+ "91": {
+  "my_rank": 8,
+  "my_best": 1.973925,
+  "leader": "HAiWORLD",
+  "leader_best": 3.1755875
+ },
+ "92": {
+  "my_rank": 6,
+  "my_best": 346.347075,
+  "leader": "c2flow",
+  "leader_best": 416.57755
+ }
+}

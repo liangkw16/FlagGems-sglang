@@ -4,13 +4,13 @@
 task: 87
 operator: pack_topk_ids
 batch: 6
-validity: valid(8/8,e5r,3.3715x TB)
-platform: e5r(20786)valid 8/8 avg 3.3715>TB 2.77新TB(+21.6%,rank#10→#3):昆仑1.27→7.0395(5.5x水位爆发,当日最大单芯水位移动);华为5.17(未动,水位论部分成立);其余芯e5水带内(天数3.50/沐曦2.02/燧原2.28)
-candidate_stage: e5r
-team_best_stage: e5r
-team_best_speedup: 3.3715x
-sealed: no
-next: 距金狐狸3.578差6%(#2位);榜首CosmosMind 5.64华为27.3疑窗口;额度2/30(used 28,observed 10:35+08,窗口19:59关)
+validity: valid(8/8,e5r2,3.43741667x TB)
+platform: 并行会话水位重滚链:e5r(20786)3.3715(kunlun 1.27→7.04=5.5x)→e5r2(20793)3.43741667再新TB;rank 10→3
+candidate_stage: e5r2
+team_best_stage: e5r2
+team_best_speedup: 3.43741667
+sealed: yes
+next: 当日额度耗尽;距CosmosMind 5.644差39%;华为27.27带未破
 updated: 2026-09-24
 ```
 

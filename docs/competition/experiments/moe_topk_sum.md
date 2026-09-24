@@ -5,13 +5,13 @@ task: 86
 operator: moe_topk_sum
 batch: 6
 validity: valid(8/8,e11r,2.975225x TB)
-platform: e11r(20788)valid 8/8 avg 2.975225>TB 2.91855微幅新TB(+1.9%):昆仑0.5407(未续T87的5.5x爆发——任务特异水位);增益=全板水涨(天数4.96/沐曦2.63/海光6.02/华为2.03+13.7%);燧原1.367持平;额度1/30(used 29,observed 11:05+08,窗口19:59关)
+platform: e11r(20788)valid 8/8 avg 2.975225新TB(+1.9%):昆仑0.5407(<1.0门,水位未爆)但华为2.0323(+13.5%水位)兑现
 candidate_stage: e11r
 team_best_stage: e11r
-team_best_speedup: 2.975225x
-sealed: no
-next: 距榜首金狐狸3.97差27%;燧原1.37→2.7需归约特异形态(TOPK多载瓶颈非DMA/int64);昆仑水位恢复→T89/T90同字节重掷窗开启;额度9/30(used 21,observed 20:20+08)
-updated: 2026-09-23
+team_best_speedup: 2.975225
+sealed: yes
+next: 当日30/30额度10:11耗尽;距金狐狸3.9687差25%;燧原1.37→2.7归约特异形态与华为结构缺口待新证据
+updated: 2026-09-24
 ```
 
 ## 2026-09-23 E11 平台终态（20422）：valid 8/8 均值 2.91855 微幅新 TB；GCU 配方在归约 op 证伪

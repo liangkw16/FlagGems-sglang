@@ -5,13 +5,13 @@ task: 82
 operator: hash_topk
 batch: 6
 validity: valid
-platform: e9(20431)valid 8/8 avg6.261475<e8 TB6.42825;燧原1.3048<e8 1.8538,已回滚e8字节
-candidate_stage: -
+platform: e8r载体已上膛未发射(commit fb97b3da,注释only,与e8 ZIP成员逐字节同源):昆仑水位假说(e8/e9读0.13vs e5窗~1.2;T87当日昆仑1.27→7.04);预注册门kunlun≥0.4/avg>6.42825换TB——当日30/30额度于10:11耗尽,未发射
+candidate_stage: e8r-armed-unfired
 team_best_stage: e8
-team_best_speedup: 6.42825x
-sealed: no
-next: e9标量串行间接读在GCU慢于one-hot整行线性读，关闭该轴；要再优化先拿GCU内核计时/IR，维持e8已证字节
-updated: 2026-09-23
+team_best_speedup: 6.42825
+sealed: yes
+next: 窗口19:59关闭且当日额度耗尽,载体封存;若第七批重开或明日额度赶得上其他窗口,e8r ZIP可复用
+updated: 2026-09-24
 ```
 
 ## 过程摘要（2026-09-19 凌晨，题面 09-18 晚随批 6 扩容上线）
