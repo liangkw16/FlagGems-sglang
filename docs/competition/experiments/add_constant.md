@@ -10,7 +10,7 @@ candidate_stage: s0
 team_best_stage: -
 team_best_speedup: -
 sealed: yes
-next: s0 已封存待投：quota>0 即 preflight+提交（每候选一次）；E1 轴=华为专配(job 6e09dda3)/BLOCK 扫描
+next: s0 已封存待投：quota 0/30（观测至 21:56 未重置，watcher 运行中）；quota>0 即按 artifacts/competition/b7-s0-release-20260924/submit-batch7-s0.sh 提交（六题已烘焙）；E1 轴=华为专配（kernelgen 3 轮失败详情不可得）/BLOCK 扫描
 updated: 2026-09-24
 ```
 
@@ -35,7 +35,8 @@ kunlun 0.910 / huawei 0.988 / A 1.005 / B 1.008。全芯 ~1.0+ 即可拿 5.5+ �
 
 - NVIDIA 代理 screening（BLOCK=4096 旧配置）4 测试 0 失败；1024/4 新配置复筛中。
 - 代理 launch 开销实测：Triton ~4.8µs vs torch.add ~2.6µs（小 shape 全场 <1.0 的成因假设）。
-- KernelGen 华为 autotune job `6e09dda3`（探华为专配）；昆仑后端仍 502。
+- KernelGen 华为 autotune job `6e09dda3`：3 轮后 failed，服务端已清理记录（poll 404），失败详情不可恢复；华为专配轴待平台逐芯反馈后重开（generate_kernel 新 job 或依 s0 华为读数定位）。
+- KernelGen 昆仑后端仍 502（T98 请求已归档 `t98-kunlun-tune-req.json`）。
 
 ## 情报
 
