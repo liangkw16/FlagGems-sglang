@@ -5,12 +5,12 @@ task: 77
 operator: compute_position
 batch: 6
 validity: valid(8/8,e11r,1266.24055x TB)
-platform: e13(20747)invalid:燧原scan融合156.79(-25%)判负+华为UB墙(旧ascend成员);e14(20749)valid 8/8但1246.80<TB:华为双字98.64(-32%)证伪宽store假说;ascend vendor已移除(d0a3d8b1)
+platform: e15(20783)valid 1190.64<TB判负:metax tiled vendor丢batch≤128守卫,大batch二次自扫使muxi崩至92.2(vendor已移除);并行会话同窗打了T89/T90水位重滚(20781/20782双双新TB)
 candidate_stage: e11r
 team_best_stage: e11r
 team_best_speedup: 1266.24055
 sealed: no
-next: 今日已试轴:tiled✗/scan融合✗/双字store✗✗;剩余未解=ts 2858vs4773与hg1669vs2525(1.6-1.7x);无新结构证据前停止主动开发,收盘前视水位可对e11r字节做1次防御重掷
+next: 今日已耗10发(T77线),TB 1100.74→1266.24(+15%);剩余额度与并行会话共享(今日总24/30);收盘前视天数/沐曦水位可对e11r字节重掷≤1次;ts/hg 1.65x结构缺口今日未破(4假说判负)
 updated: 2026-09-24
 ```
 
