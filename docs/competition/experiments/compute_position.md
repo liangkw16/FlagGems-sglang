@@ -5,14 +5,24 @@ task: 77
 operator: compute_position
 batch: 6
 validity: valid(8/8,e11r,1266.24055x TB)
-platform: e11(20741)7/8 gcu编译墙(int64向量位运算);e11r(20743)valid 8/8 avg 1266.24055新TB:燧原207.79(+80%,host-sync假说兑现),muxi 957.3(+36%水位),ts 2792.6(-9.6%水位);e12上膛=ascend int32双字store vendor
-candidate_stage: e12
+platform: e12(20745)7/8华为UB墙(1605632>1572864bits,BLOCK1024双字store超预算)已修(BLOCK512/BLOCK_BS256=19b8e92f);e13(20747)上膛=燧原scan融合fill(3→2launch),但其ZIP含UB修复前ascend成员,预计华为仍挂,燧原读数为该发主读数
+candidate_stage: e14
 team_best_stage: e11r
 team_best_speedup: 1266.24055
 sealed: no
-next: e12预注册门:华为≥200视为int64 store假说兑现,均值>1266.24换TB;之后e13=enflame scan融入fill(2 launch);剩余大缺口ts 2793vs4773/hg 1638vs2525/燧原208vs483
+next: e14(19b8e92f)=燧原融合+ascend UB修复双收;e13燧原≥240视为launch次要增益;华为双字store假说待e14检验;剩余大缺口ts 2841vs4773/hg1612vs2525
 updated: 2026-09-24
 ```
+
+## 2026-09-24 E12 平台终态（20745）：7/8——华为双字 store 撞 UB 墙，已修待 e14
+
+- E12（submission **20745**，commit `89ecdd11`）：7/8 invalid——华为
+  `ub overflow, requires 1605632 bits while 1572864 available`：BLOCK=1024
+  的双 int32 store 使 BiShengHIR tile 预算超限（已知墙族）。修复
+  `19b8e92f`：BLOCK=512 + 自扫 BLOCK_BS 上限 256。
+- 教训：e13（20747，commit `f88daa72`）的 ZIP 在 UB 修复 commit 之前
+  打包，ascend 成员仍是 1024 版——**该发预计华为仍挂**；其燧原读数
+  仍是 scan 融合轴的有效证据。候选 ZIP 必须携带最新 vendor 修复。
 
 ## 2026-09-24 E11/E11R 平台终态：gcu 编译墙一次后，1266.24 新 TB（燧原 +80% 兑现）
 
