@@ -4,13 +4,13 @@
 task: 80
 operator: fixup_zero_kv
 batch: 6
-validity: valid(8/8,e25,570.305775x TB)
-platform: e26(20756)valid 550.562<TB判负:燧原解钉warps 68.1(-38%,pin承重)+沐曦ot-cap 383.7(-10%)双双回退;e27(20760)上膛=昆仑BLOCK_V 16384(T92昆仑阶梯+5.7x跨题证据)
-candidate_stage: e27
-team_best_stage: e25
-team_best_speedup: 570.305775
+validity: valid(8/8,e28,581.2321x TB)
+platform: e27(20760)7/8:昆仑16384宽数值崩(39%garbage,int64大向量XPU写坏)已回退;e28(20765)valid 8/8 avg 581.2321新TB:昆仑16.94(4096档微增)+华为563.8/沐曦441.4水位上抬
+candidate_stage: e28
+team_best_stage: e28
+team_best_speedup: 581.2321
 sealed: no
-next: e27昆仑门:≥30视为阶梯兑现;华为509vs984/燧原109vs235/沐曦428vs572仍缺结构证据;GCU warp pin在此store形态承重(unpin判负入档)
+next: 距EvokeAgent 660.06差78.8(-12%);华为564vs984与燧原110vs235仍为两大缺口,下一假说=ascend vendor逐token int64循环改int32偏移(T92 e24同构,待其华为读数验证);昆仑阶梯16384=数值雷,4096=微增,关闭
 updated: 2026-09-24
 ```
 

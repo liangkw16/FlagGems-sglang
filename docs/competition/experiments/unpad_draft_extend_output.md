@@ -4,14 +4,14 @@
 task: 92
 operator: unpad_draft_extend_output
 batch: 6
-validity: valid(8/8,e22,341.3097x TB);e23有效但均分329.8088判负
-platform: e23(20457)valid 8/8 avg329.8088<TB e22(20358)341.3097;华为316.2016 vs e22 444.1506(-28.8%);已回滚e22华为源码
-candidate_stage: e22
+validity: valid(8/8,e22,341.3097x TB)
+platform: e24(20768)上膛=ascend vendor向量偏移管线int64→int32(标量基址保持i64;tpb*span<2^31域守卫分派i64回退核);攻华为444vs665主缺口
+candidate_stage: e24
 team_best_stage: e22
-team_best_speedup: 341.31x
-sealed: yes
-next: e23整块无mask轴判负，不重投；华为恢复e22 ZIP成员sha e11c6420(47dc1382)，等待新的目标芯证据再重开；剩余额度4/30(18:13观测)
-updated: 2026-09-23
+team_best_speedup: 341.3097
+sealed: no
+next: e24华为门:≥520视为i64向量ALU假说兑现(全量缺口665);兑现则同构传播到amd(b 281vs437)/kunlun(33vs89)与T80 ascend vendor
+updated: 2026-09-24
 ```
 
 ## 2026-09-23 E23 候选：华为整块无掩码，尾块保留 e22 路径
