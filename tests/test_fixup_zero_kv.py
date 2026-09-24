@@ -97,6 +97,18 @@ class FixupZeroKVTest(unittest.TestCase):
                     make_case(kv_lens=(2, 0), tok_lens=(5, 4), heads=heads)
                 )
 
+    def test_row_width_around_ascend_block(self):
+        # B-1/B/B+1 around the ascend vendor's 8192 flat-store rung and
+        # the empty-value-dim edge that must still write lse rows
+        for heads, vdim in ((65, 127 - 16), (64, 128), (65, 128)):
+            with self.subTest(hv=heads * vdim):
+                self.check(
+                    make_case(
+                        kv_lens=(0, 3), tok_lens=(4, 5), heads=heads,
+                        vdim=vdim,
+                    )
+                )
+
     def test_row_width_around_wide_block(self):
         # B-1/B/B+1 around the widest vendor flat-store rung (16384):
         # below it the tail mask folds away, above it the sweep loops
