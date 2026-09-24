@@ -5,12 +5,12 @@ task: 93
 operator: add_constant
 batch: 7
 validity: valid(7/7,s0)
-platform: s0(21120)valid 7/7:天数1.005/沐曦1.040/海光0.963/昆仑0.442/华为0.131/A0.978/B0.993;华为与昆仑是分差项(EA榜0.988/0.910)
+platform: e1(21164)valid 7/7 双vendor兑现:昆仑0.442->0.685(+55%,16384flat)/华为0.131->0.282(+115%,persistent1024w4);其余芯水位持平
 candidate_stage: s0
-team_best_stage: s0
-team_best_speedup: -
+team_best_stage: e1
+team_best_speedup: 0.841(avg)
 sealed: yes
-next: E1轴=华为persistent面积1024+昆仑BLOCK16384 vendor;华为0.131 vs 榜首0.988为最大rank增量
+next: 华为0.28->0.98仍3.5x差(persistent参数可再调:grid/tile);昆仑0.685->0.91;增量有限按quota择机
 updated: 2026-09-25
 ```
 

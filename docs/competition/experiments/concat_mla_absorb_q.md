@@ -4,13 +4,13 @@
 task: 94
 operator: concat_mla_absorb_q
 batch: 7
-validity: valid(候选e2在途)
-platform: e4(21159)在途;kunlun轴实测:e1(1024地板,双store)0.0814>e2(RPP8)0.0656>e3(精确512/64)0.0278=>=1024宽向量是昆仑硬规律(T98 e2平行证:0.350->0.124);e4=单1024向量单store流+w4;华为grid修复兑现0.16(榜0.98);天数1.82/海光2.31已过榜首水位
+validity: invalid(kunlun轴5发未破0.1)
+platform: 昆仑全梯:e1(1024地板,标量行)0.0814>e4(单store融合)0.0712>e2(RPP8)0.0656>e3(精确512/64)0.0278>e5(平坦16384+constexpr除法)0.009;华为grid修复0.16-0.17;天数1.45-1.91/海光2.17-2.31;他队昆仑0.62-1.41可达,结构未破译
 candidate_stage: s0
 team_best_stage: e1(21144,无效但天数1.774#1/海光2.256平榜首)
 team_best_speedup: -
 sealed: yes
-next: watch e4 昆仑>=0.1;若过线即有效(天数/海光#1,昆仑次优0.62仍需结构);华为0.16->0.98留E5(persistent)
+next: 昆仑盲试轴关闭(5发);重开条件=他队代码泄露/KernelGen kunlun恢复/新结构证据;其余6芯byte已达标
 updated: 2026-09-25
 ```
 

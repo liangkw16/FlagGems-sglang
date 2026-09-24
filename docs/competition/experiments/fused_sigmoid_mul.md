@@ -5,12 +5,12 @@ task: 97
 operator: fused_sigmoid_mul
 batch: 7
 validity: valid(7/7,s0)
-platform: s0(21140)valid 7/7:天数3.42/沐曦2.98/海光4.02/昆仑1.166/华为1.022/A3.75/B3.14
+platform: e1(21167)valid 7/7 avg2.905新TB:华为1.022->1.340(+31%,persistent兑现)/天数3.42->5.25(水位)/昆仑1.166->0.821(16384配方在sigmoid计算型反噬,与PR#69计算受限论互证)
 candidate_stage: s0
-team_best_stage: s0
+team_best_stage: e1
 team_best_speedup: -
 sealed: yes
-next: E1轴=昆仑1.166→2.007与华为1.022→1.486(EA独占两芯;华为ascend子块/昆仑tanh lowering)
+next: 昆仑回1.166需撤vendor或换2048(已证16384反噬);华为1.34->1.49(EA)再调persistent参数;天数5.25>榜首5.30逼近
 updated: 2026-09-25
 ```
 
