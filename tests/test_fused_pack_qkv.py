@@ -103,10 +103,11 @@ class FusedPackQkvTest(unittest.TestCase):
     def test_row_elems_beyond_block_cap(self):
         # H*D=70000 exceeds the 65536 vendor lane cap; the chunked
         # column loop must cover it (review finding)
-        q = torch.randn(1, 350, 200, 1, dtype=torch.float16, device="cuda")
+        q = torch.randn(1, 2, 350, 200, dtype=torch.float16, device="cuda")
         k = torch.randn_like(q)
         v = torch.randn_like(q)
-        idx = torch.tensor([3, 70000 - 1], dtype=torch.int64, device="cuda")
+        self.assertEqual(q.shape[-2] * q.shape[-1], 70000)
+        idx = torch.tensor([0, 1], dtype=torch.int64, device="cuda")
         self.check(q, k, v, idx)
 
     def test_row_elems_wider_than_block(self):
