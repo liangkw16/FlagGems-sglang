@@ -4,11 +4,11 @@
 task: 86
 operator: moe_topk_sum
 batch: 6
-validity: valid(8/8,e11,2.91855x TB)
-platform: e11(20422)valid 8/8 avg 2.91855>TB 2.908微幅新TB;燧原1.367(vs e10 1.38,T90-e7 GCU配方在TOPK归约op上无效——配方是op形状函数:elementwise 3.4x/归约±0%);昆仑0.556(vs午后0.117=**水位恢复信号**,e5带0.6附近);天数4.84/海光5.92/华为1.79(-8%水内)
-candidate_stage: e11
-team_best_stage: e11
-team_best_speedup: 2.91855x
+validity: valid(8/8,e11r,2.975225x TB)
+platform: e11r(20788)valid 8/8 avg 2.975225>TB 2.91855微幅新TB(+1.9%):昆仑0.5407(未续T87的5.5x爆发——任务特异水位);增益=全板水涨(天数4.96/沐曦2.63/海光6.02/华为2.03+13.7%);燧原1.367持平;额度1/30(used 29,observed 11:05+08,窗口19:59关)
+candidate_stage: e11r
+team_best_stage: e11r
+team_best_speedup: 2.975225x
 sealed: no
 next: 距榜首金狐狸3.97差27%;燧原1.37→2.7需归约特异形态(TOPK多载瓶颈非DMA/int64);昆仑水位恢复→T89/T90同字节重掷窗开启;额度9/30(used 21,observed 20:20+08)
 updated: 2026-09-23

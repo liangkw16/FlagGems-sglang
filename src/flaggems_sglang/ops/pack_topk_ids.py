@@ -7,6 +7,7 @@
 # work; all stores 1D.
 
 # e5r carrier: re-rolled for the 09-24 huawei water (T80 evidence: +162% on unchanged bytes).
+# e5r2: second draw on the kunlun water (7.04 at e5r; 9+ takes #2 from Golden Fox 3.578).
 import torch
 import triton
 import triton.language as tl
