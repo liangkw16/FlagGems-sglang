@@ -65,8 +65,8 @@ def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
             extend_seq_lens,
             batch,
             HAS_PREFIX=has_prefix,
-            BLOCK=1024,
-            BLOCK_BS=triton.next_power_of_2(max(min(batch, 1024), 16)),
+            BLOCK=512,
+            BLOCK_BS=triton.next_power_of_2(max(min(batch, 256), 16)),
         )
     return positions, extend_start_loc
 
