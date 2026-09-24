@@ -94,7 +94,6 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             lse.stride(0),
             HV=hv,
             NH=nh,
-            num_warps=_NUM_WARPS,
             BLOCK_T=block_t,
             BLOCK_V=4096,
             BLOCK_H=triton.next_power_of_2(max(1, nh)),
