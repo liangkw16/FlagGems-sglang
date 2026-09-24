@@ -5,12 +5,12 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e28,581.2321x TB)
-platform: e27(20760)7/8:昆仑16384宽数值崩(39%garbage,int64大向量XPU写坏)已回退;e28(20765)valid 8/8 avg 581.2321新TB:昆仑16.94(4096档微增)+华为563.8/沐曦441.4水位上抬
+platform: e29(20776)valid 568.728375<TB判负:ascend 1D-flat int32重写华为501.8(中性,2D i64广播store假说亦证伪);ascend vendor已回滚e28字节
 candidate_stage: e28
 team_best_stage: e28
 team_best_speedup: 581.2321
 sealed: no
-next: 距EvokeAgent 660.06差78.8(-12%);华为564vs984与燧原110vs235仍为两大缺口,下一假说=ascend vendor逐token int64循环改int32偏移(T92 e24同构,待其华为读数验证);昆仑阶梯16384=数值雷,4096=微增,关闭
+next: 距EvokeAgent 660.06差78.8(-12%);今日已试轴:clone✓(小)/warps unpin✗/ot-cap✗/BLOCK_V阶梯✗(16384雷,4096微)/flat-int32✗;华为564vs984与燧原109vs235两结构缺口今日未破;收盘前视水位对e28字节防御重掷≤1次
 updated: 2026-09-24
 ```
 
