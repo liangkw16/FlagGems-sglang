@@ -20,6 +20,7 @@
 # W >= 1024). Launch stays on the T89 recipe: grid-stride over row
 # blocks with the gcu300 12-CTA cap, num_stages 3, warps unpinned.
 
+# e7r carrier: same e7 execution bytes, re-rolled for the recovered kunlun water.
 import torch
 import triton
 import triton.language as tl
