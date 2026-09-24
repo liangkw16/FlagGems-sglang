@@ -4,13 +4,13 @@
 task: 92
 operator: unpad_draft_extend_output
 batch: 6
-validity: valid(8/8,e25,344.59575x TB)
-platform: e25(20780)valid 8/8 avg 344.59575微幅新TB:amd int32中性(280.9)/昆仑80.2(水位站稳,兼除i64大向量雷)/沐曦248.1回温/华为435.5(窗内回落)
-candidate_stage: e25
-team_best_stage: e25
-team_best_speedup: 344.59575
-sealed: no
-next: 距c2flow 416.58差72(-17.3%);b 281vs437与华为435-465vs665两结构缺口未破;收盘前视水位对e25字节防御重掷≤2次(昆仑≥80且沐曦≥248为进场带)
+validity: valid(8/8,e26,346.347075x TB)
+platform: e26(20787)valid 8/8 avg 346.347075新TB:ascend num_warps=16钉(chip-rulesets阶梯)华为438.2(带内中性,阶梯规则在此store形态不响应);沐曦253.4/A538.8/hg667.0水位续升
+candidate_stage: e26
+team_best_stage: e26
+team_best_speedup: 346.347075
+sealed: yes
+next: T92今日收口:TB 341.31→346.35(+1.5%),rank 6;华为435-465vs665与b 273-283vs437两结构缺口今日int32管线/warps阶梯两假说均中性,待新证据;额度1/30(10:06)
 updated: 2026-09-24
 ```
 
