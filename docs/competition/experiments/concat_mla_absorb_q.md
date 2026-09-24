@@ -4,13 +4,13 @@
 task: 94
 operator: concat_mla_absorb_q
 batch: 7
-validity: candidate-wip
-platform: 未提交（窗口开时 quota 0/30，等重置）
+validity: candidate-sealed
+platform: 未提交（quota 0/30 未重置；release 门禁全过，候选封存待投）
 candidate_stage: s0
 team_best_stage: -
 team_best_speedup: -
-sealed: no
-next: codex-review 通过后 seal（字节未变复筛沿用 21:15 回执）；quota>0 投 s0
+sealed: yes
+next: s0 已封存待投：华为 #1=0.42 低垂果实；E1 轴=大 shape 宽度调优
 updated: 2026-09-24
 ```
 
@@ -39,3 +39,11 @@ EvokeAgent 5.50 分（仅 2 队）：tianshu 1.700 / muxi 1.216 / haiguang 2.258
 ## 情报
 
 - 快照 SHA-256 `061475d31505bb81f16a5a212fa7cfd6e4b1142188cb02da2c202962efedadb2`。
+
+## 不可变身份（s0，2026-09-24）
+
+- source commit = verification commit = `90d732fabdfe198b82bbfd5be662cc4ee77904b4`。
+- ZIP：`artifacts/competition/concat_mla_absorb_q/s0-90d732f/concat_mla_absorb_q.zip`，SHA-256 `924da41ce714a9b230a904025e44e633c6c314a39000c50a9e0142d54326ae3f`（单成员 `concat_mla_absorb_q.py`，generic-only）。
+- release 回执：`artifacts/competition/b7-s0-release-20260924/concat_mla_absorb_q/verification.json`（mode=release，exit 0，绑定该 commit 字节），SHA-256 `039a181b3cd3073f55ee70259a1466d1299d68e31b7930c498f6b39e8788690a`；
+  日志 SHA-256 `c9917f2ff8081d1142bd55d61c889d737a713968c5e7f5d41def35cef3ff9cf1`。NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 / triton 3.7.1。
+- codex-review（commit 级，gpt-6-astra）：4 项发现（1×P1 grid/块失配、3×P2）全部修复后复筛/release 全绿。

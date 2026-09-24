@@ -4,13 +4,13 @@
 task: 97
 operator: fused_sigmoid_mul
 batch: 7
-validity: candidate-wip
-platform: 未提交（窗口开时 quota 0/30，等重置）
+validity: candidate-sealed
+platform: 未提交（quota 0/30 未重置；release 门禁全过，候选封存待投）
 candidate_stage: s0
 team_best_stage: -
 team_best_speedup: -
-sealed: no
-next: 复筛+codex-review 通过后 seal；E1 轴=昆仑/华为专配（EA 独占两芯第一）；quota>0 投 s0
+sealed: yes
+next: s0 已封存待投；E1 轴=昆仑 2.007/华为 1.486（EA 独占）专配+exp2 快路径
 updated: 2026-09-24
 ```
 
@@ -40,3 +40,11 @@ T90/T81 华为经验（子块结构 1.23→1.5 轴）可迁移。
 ## 情报
 
 - 快照 SHA-256 `061475d31505bb81f16a5a212fa7cfd6e4b1142188cb02da2c202962efedadb2`。
+
+## 不可变身份（s0，2026-09-24）
+
+- source commit = verification commit = `90d732fabdfe198b82bbfd5be662cc4ee77904b4`。
+- ZIP：`artifacts/competition/fused_sigmoid_mul/s0-90d732f/fused_sigmoid_mul.zip`，SHA-256 `48fbb9085319d6b4b0cae8c6260158f53c6337636239e336110e2901c495d533`（单成员 `fused_sigmoid_mul.py`，generic-only）。
+- release 回执：`artifacts/competition/b7-s0-release-20260924/fused_sigmoid_mul/verification.json`（mode=release，exit 0，绑定该 commit 字节），SHA-256 `879c4a2f512fb7dacd0e9a00ac811a8ad77e61833e65e81316f1cccf1af8ed00`；
+  日志 SHA-256 `3d558a719885c01772797ed37f14589db988cbfda3f718a4174caadccbc499f3`。NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 / triton 3.7.1。
+- codex-review（commit 级，gpt-6-astra）：4 项发现（1×P1 grid/块失配、3×P2）全部修复后复筛/release 全绿。

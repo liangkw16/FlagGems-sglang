@@ -4,13 +4,13 @@
 task: 93
 operator: add_constant
 batch: 7
-validity: candidate-wip
-platform: 未提交（窗口开时 quota 0/30，等重置）
+validity: candidate-sealed
+platform: 未提交（quota 0/30 未重置；release 门禁全过，候选封存待投）
 candidate_stage: s0
 team_best_stage: -
 team_best_speedup: -
-sealed: no
-next: codex-review + 复筛通过后 seal s0；quota>0 即 preflight+提交；E1 轴=BLOCK/warps 扫描与华为专配
+sealed: yes
+next: s0 已封存待投：quota>0 即 preflight+提交（每候选一次）；E1 轴=华为专配(job 6e09dda3)/BLOCK 扫描
 updated: 2026-09-24
 ```
 
@@ -41,3 +41,11 @@ kunlun 0.910 / huawei 0.988 / A 1.005 / B 1.008。全芯 ~1.0+ 即可拿 5.5+ �
 
 - 快照 `docs/competition/data/batch7-intel-20260924.json`
   SHA-256 `061475d31505bb81f16a5a212fa7cfd6e4b1142188cb02da2c202962efedadb2`。
+
+## 不可变身份（s0，2026-09-24）
+
+- source commit = verification commit = `90d732fabdfe198b82bbfd5be662cc4ee77904b4`。
+- ZIP：`artifacts/competition/add_constant/s0-90d732f/add_constant.zip`，SHA-256 `cad85701d335dbe17a747e10280eec4920859563391c783cfd5c523b1ede6cf9`（单成员 `add_constant.py`，generic-only）。
+- release 回执：`artifacts/competition/b7-s0-release-20260924/add_constant/verification.json`（mode=release，exit 0，绑定该 commit 字节），SHA-256 `5945ee549634da93ff46313857b997200cfc9f671864aef303a09708dbacd707`；
+  日志 SHA-256 `8fe03ef84ac38f55e533cc69a0e77f74a7d2dcb4f34fb945081f95bf4ebe3693`。NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 / triton 3.7.1。
+- codex-review（commit 级，gpt-6-astra）：4 项发现（1×P1 grid/块失配、3×P2）全部修复后复筛/release 全绿。
