@@ -54,8 +54,6 @@ def _concat_rows_kernel(
     pid = tl.program_id(0).to(tl.int64)
     acols = tl.arange(0, BLOCK_A).to(tl.int64)
     bcols = tl.arange(0, BLOCK_B).to(tl.int64)
-    ma = acols < a_last
-    mb = bcols < b_last
     row0 = pid * rows_per_prog
     for r in range(0, rows_per_prog):
         row = row0 + r
@@ -65,10 +63,16 @@ def _concat_rows_kernel(
             a_base = i0 * a_s0 + i1 * a_s1
             b_base = i0 * b_s0 + i1 * b_s1
             o_base = row * (a_last + b_last)
-            value = tl.load(a + a_base + acols * a_s2, mask=ma, other=0)
-            tl.store(out + o_base + acols, value, mask=ma)
-            value = tl.load(b + b_base + bcols * b_s2, mask=mb, other=0)
-            tl.store(out + o_base + a_last + bcols, value, mask=mb)
+            for ca in range(0, a_last, BLOCK_A):
+                cc = ca + acols
+                ma = cc < a_last
+                value = tl.load(a + a_base + cc * a_s2, mask=ma, other=0)
+                tl.store(out + o_base + cc, value, mask=ma)
+            for cb in range(0, b_last, BLOCK_B):
+                cc = cb + bcols
+                mb = cc < b_last
+                value = tl.load(b + b_base + cc * b_s2, mask=mb, other=0)
+                tl.store(out + o_base + a_last + cc, value, mask=mb)
 
 
 def concat_mla_absorb_q(a, b):
