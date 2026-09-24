@@ -4,15 +4,68 @@
 task: 77
 operator: compute_position
 batch: 6
-validity: valid(8/8,e9,1233.7119x TB)
-platform: e9(20739)valid 8/8 avg 1233.7119新TB(旧1100.744075=e6);昆仑105.223回水位带;ts3089.8/muxi704.3/hg1626.0/A2088.8/B1999.1;燧原115.4(vendor)/华为141.1
-candidate_stage: e9
-team_best_stage: e9
-team_best_speedup: 1233.7119
+validity: valid(8/8,e11r,1266.24055x TB)
+platform: e11(20741)7/8 gcu编译墙(int64向量位运算);e11r(20743)valid 8/8 avg 1266.24055新TB:燧原207.79(+80%,host-sync假说兑现),muxi 957.3(+36%水位),ts 2792.6(-9.6%水位);e12上膛=ascend int32双字store vendor
+candidate_stage: e12
+team_best_stage: e11r
+team_best_speedup: 1266.24055
 sealed: no
-next: 距c2flow 1747.5差513.8;下一轴e10=无循环2D grid平铺(攻华为141vs612与天数3090vs4773的fill吞吐/动态循环/并行度缺口);enflame vendor单launch化(115vs483)备选
+next: e12预注册门:华为≥200视为int64 store假说兑现,均值>1266.24换TB;之后e13=enflame scan融入fill(2 launch);剩余大缺口ts 2793vs4773/hg 1638vs2525/燧原208vs483
 updated: 2026-09-24
 ```
+
+## 2026-09-24 E11/E11R 平台终态：gcu 编译墙一次后，1266.24 新 TB（燧原 +80% 兑现）
+
+- E11（submission **20741**，commit `d8502a70`）：7/8 invalid——燧原
+  `make_gcuir Pipeline run failed`：标准布局分支的 int64 向量位运算
+  （`wide & 0xFFFFFFFF` / `>> 32`）触发 gcu300 编译墙。本地矩阵未拦住
+  （NVIDIA lowering 不报）。
+- E11R（submission **20743**，commit `bd0f9693`）：**valid 8/8，均值
+  1266.24055 新 TB**（+32.5 vs e9）。逐芯：天数 2792.62（水位 -9.6%）/
+  沐曦 957.33（水位 +36%）/ **燧原 207.79（115.39，+80%——去 host-sync
+  探针假说主兑现）**/ 海光 1637.53 / 昆仑 106.09 / 华为 145.23 /
+  A 2177.86 / B 2105.47（≈榜首 2105.78 达顶）。
+- 中间迭代：e11s 本地 release 矩阵抓出 `(lo<0)` 进位误判（2^31 恰好
+  无符号不进位，元素 4 差 2^32）——改加法器进位公式
+  `sign((a&b)|((a|b)&~s))` 后全绿；**本地矩阵省下一发平台额度**。
+- 寻址宽度权衡：`2*idx` 先 `to(tl.int64)`（arange/标量 extsi 寻址在
+  gcu300 有 kv_indices 121x 平台实证；值运算保持纯 int32）。
+- 剩余缺口（vs c2flow 1747.5）：天数 2793 vs 4773、海光 1638 vs 2525、
+  燧原 208 vs 483（vendor 仍 3 launch：arange+scan+fill）、华为 145 vs
+  612（e12 假说=int64 向量 store 低效）。
+
+## 2026-09-24 E10 平台终态（20740）：valid 但 1192.73 < TB 判负，tiled 假说证伪
+
+- E10（submission **20740**，commit `b993a147`）：valid 8/8，均值
+  **1192.730125** < e9 TB 1233.7119（-3.3%）。逐芯（vs e9）：天数
+  2742.93（3089.77，**-11.2%**）/ 沐曦 847.71（704.28，**+20.4%**）/
+  燧原 115.26 / 海光 1615.20 / 昆仑 105.98 / **华为 139.64（141.14，
+  持平——tiled 完全无效）** / A 2016.71（-3.4%）/ B 1958.42（-2.0%）。
+- 判定：华为 4.3x 缺口**不是**动态 trip-count 循环或 grid=(batch,)
+  CTA 饥饿（2D 平铺 + 无循环形态读数不动）；天数反而受损（死瓦片
+  自扫开销）。沐曦 +20% 单芯收益被天数回退吃掉。generic 已回滚 e9
+  字节（`0aa297d3`）。
+- 华为新假说：昇腾 int64 向量 store 低效 → e12 候选 = int32 双字
+  （lo/hi）store 的 ascend vendor。
+
+## 2026-09-24 E11 上膛（enflame vendor 去 host-sync 探针，commit `d8502a70`）
+
+- 根因发现：vendor 每次调用 `_int64_packed` 用
+  `arange(4).view(int32)[:4].tolist()` 做 host 读回（~100us D2H
+  sync/call），在 GCU 上主导 op 时间（燧原 115 vs 榜首 483 = 4.2x
+  的主嫌疑）。
+- 第一版 e11（`e6bf22fb`）用 `view(int32).numel()` 元数据判断，被
+  codex-review 证伪后撤回：pinned torch-gcu 源码
+  （t60 审计 `gcu_empty_tensor.cpp`）显示窄化分配保留 int64 逻辑
+  元数据且 storage nbytes 报 8N——元数据不可分辨；另 numel==0 会误选
+  GCU 拒绝的 int64 内核。
+- 正式 e11（`d8502a70`）：fill kernel 内读探针内容做 packed 判定
+  （[0,1,2,3]=窄化 / [0,0,1,0]=标准），双 store 形态都只经 int32
+  view（签名无 i64 指针，GCU300 verifier 满足）；标准分支 2*idx
+  先 `to(tl.int64)`（review P2 修复）；scan kernel 字节不动。
+  arange 探针（1 个微型 launch）+ scan + fill = 3 launch，无 sync。
+- 预注册门：燧原 ≥200 视为 sync 假说兑现（4.2x 缺口的主成分）；
+  均值 >1233.7119 换 TB；任何他芯回退 >5% 判负回滚 vendor 字节。
 
 ## 2026-09-24 E9 平台终态（20739）：8/8 valid 1233.71 新 TB（+12.1%），昆仑 vendor 隔离兑现
 
