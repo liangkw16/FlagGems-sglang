@@ -1,15 +1,17 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# T80 e22: keep e16's per-row stores, but distribute segment/tile slots
-# through one physical-VectorCore-sized worker grid. The earlier e21
-# (batch, 48) launch still started up to batch*48 programs.
+# T80 e29: the per-row 2D broadcast stores (i64 t[:,None]*OS0 + vv
+# pointer grid) lower poorly on AscendVector; this rewrite goes 1D-flat
+# per (row, v-chunk) item with int32 offset vectors and int64 scalar
+# bases only, at a wide BLOCK_V (the T92 ascend vendor proved 1D wide
+# bf16 stores fit the 192KB UB budget). The 48-worker grid stride and
+# the zero-KV early exit stay.
 
 import torch
 import triton
 import triton.language as tl
 
-_BLOCK_T = 8
-_BLOCK_V = 512
+_BLOCK_V = 8192
 # ponytail: fixed core-scale cap avoids a costly per-call device query;
 # revisit the cap only if target-chip timing shows idle cores.
 _MAX_WORKERS = 48
@@ -29,40 +31,33 @@ def _fixup_zero_kv(
     CS0: tl.constexpr,
     HV: tl.constexpr,
     NH: tl.constexpr,
-    BLOCK_T: tl.constexpr,
     BLOCK_V: tl.constexpr,
     BLOCK_H: tl.constexpr,
 ):
-    # Each virtual item owns one (segment, tile slot). Fixed workers
-    # revisit items in a grid stride; slots split one long zero segment
-    # across cores without launching batch*SLOTS physical programs.
+    # Each virtual item owns one (segment, row*v-chunk) flat slot; the
+    # int64 pipeline lives only in the scalar row bases, every lane
+    # vector is int32.
+    chunks = tl.cdiv(HV, BLOCK_V)
     for item in range(tl.program_id(0), BATCH * SLOTS, tl.num_programs(0)):
         seg = item // SLOTS
         slot = item % SLOTS
         if tl.load(lens + seg * KS0) == 0:
             beg = tl.load(cum + seg * CS0).to(tl.int64)
             end = tl.load(cum + (seg + 1) * CS0).to(tl.int64)
-            tiles = tl.cdiv(end - beg, BLOCK_T)
-            v = tl.arange(0, BLOCK_V).to(tl.int64)
-            h = tl.arange(0, BLOCK_H).to(tl.int64)
+            rows = (end - beg).to(tl.int32)
+            v = tl.arange(0, BLOCK_V)
+            h = tl.arange(0, BLOCK_H)
             hm = h < NH
-            zeros = tl.zeros((BLOCK_T, BLOCK_V), dtype=out.dtype.element_ty)
-            ninf = tl.full((BLOCK_T, BLOCK_H), float("-inf"), dtype=tl.float32)
-            for tile in range(slot, tiles, SLOTS):
-                t = beg + tile * BLOCK_T + tl.arange(0, BLOCK_T).to(tl.int64)
-                tm = t < end
-                for v0 in tl.static_range(0, HV, BLOCK_V):
-                    vv = v0 + v[None, :]
-                    tl.store(
-                        out + t[:, None] * OS0 + vv,
-                        zeros,
-                        tm[:, None] & (vv < HV),
-                    )
-                tl.store(
-                    lse + t[:, None] * LS0 + h[None, :],
-                    ninf,
-                    tm[:, None] & hm[None, :],
-                )
+            zeros = tl.zeros((BLOCK_V,), dtype=out.dtype.element_ty)
+            ninf = tl.full((BLOCK_H,), float("-inf"), dtype=tl.float32)
+            for work in range(slot, rows * chunks, SLOTS):
+                row = work // chunks
+                vchunk = work % chunks
+                off = vchunk * BLOCK_V + v
+                base = (beg + row) * OS0
+                tl.store(out + base + off, zeros, off < HV)
+                if vchunk == 0:
+                    tl.store(lse + (beg + row) * LS0 + h, ninf, hm)
 
 
 def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
@@ -78,8 +73,16 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
     assert kv_lens.dtype == cum_seq_lens.dtype == torch.int32
     if batch and total_tokens:
         workers = _MAX_WORKERS
+        # one slot per ~(rows*chunks) work quantum: enough fanout to
+        # split long zero segments, bounded by the core-scale grid
+        rows_per_seg = max(1, total_tokens // batch)
         slots = min(
-            workers, max(1, triton.cdiv(total_tokens, batch * _BLOCK_T))
+            workers,
+            max(
+                1,
+                (rows_per_seg * triton.cdiv(num_heads * v_head_dim, _BLOCK_V))
+                // workers,
+            ),
         )
         grid = (min(workers, batch * slots),)
         _fixup_zero_kv[grid](
@@ -95,7 +98,6 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             CS0=cum_seq_lens.stride(0),
             HV=num_heads * v_head_dim,
             NH=num_heads,
-            BLOCK_T=_BLOCK_T,
             BLOCK_V=_BLOCK_V,
             BLOCK_H=triton.next_power_of_2(max(1, num_heads)),
         )
