@@ -1,28 +1,72 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
-# Enflame vendor for fixup_zero_kv: the e8 in-place core (zero-KV rows
-# only, healthy segments exit immediately) on the official gcu300
-# geometry - the e9 port kept the generic's batch*ot grid and only
-# pinned num_warps, which is not the 12-CTA clamp the GCU codegen
-# documents (max_grid_size=(12,1,1)). This round flattens the
-# (segment, tile) work items and grid-strides them across at most 12
-# programs with num_warps=2 and wide flat stores; the e26 unpin read
-# 68.1 vs 109.5 - the pin is load-bearing on this store shape - so the
-# warp count stays pinned; e15 doubles the
-# store width to BLOCK_V=2048 (the gcu300 tile guidance scales with
-# the element width and the e12 read 102.6 with 1024-wide stores -
-# the width ladder is live: 102.6 @1024 -> 113.9 @2048, e16 takes
-# the 4096 rung toward the 193 field band).
+# Enflame vendor for fixup_zero_kv, e22 flat-span round: a zero-KV
+# segment's out rows are one CONTIGUOUS flat span (beg*HV .. end*HV)
+# and its lse rows another, so the fill streams each span as pure 1D
+# wide stores - the maximal DMA shape - instead of the e8-e16
+# [BLOCK_T, BLOCK_V] 2D tiles that interleave the out and lse streams
+# per tile. All addressing is int32 with an explicit wrapper domain
+# branch (enable_i64=False emulates int64; 2^31-scale inputs take the
+# _fixup_zero_kv_i64 fallback = the e16 tile form, both paths Triton).
+# Launch keeps the gcu300 12-CTA cap, warps 2 pinned (the e26 unpin
+# lost 68.1 vs 109.5), num_stages 3.
 
 import torch
 import triton
 import triton.language as tl
 
 _MAX_CTAS = 12
+_BLOCK_F = 16384
 
 
-@triton.jit
-def _fixup_zero_kv(
+@triton.jit(do_not_specialize=["batch", "oct", "lct"])
+def _fixup_zero_kv_flat(
+    out,
+    lse,
+    lens,
+    cum,
+    batch,
+    oct,
+    lct,
+    HV: tl.constexpr,
+    NH: tl.constexpr,
+    BLOCK_F: tl.constexpr,
+    BLOCK_L: tl.constexpr,
+):
+    # out pass: each item is one (segment, flat chunk) pair; the pass
+    # bound is batch * oct (its own chunk pitch - sharing the other
+    # pass's bound would push seg past batch); oct is the host's
+    # chunks-per-span estimate and the chunk loop strides by it, so an
+    # understated estimate still covers every chunk
+    for item in range(tl.program_id(0), batch * oct, tl.num_programs(0)):
+        seg = item // oct
+        if tl.load(lens + seg) == 0:
+            beg = tl.load(cum + seg)
+            end = tl.load(cum + seg + 1)
+            base = beg * HV
+            span = (end - beg) * HV
+            zeros = tl.zeros((BLOCK_F,), dtype=out.dtype.element_ty)
+            for c in range(item % oct, tl.cdiv(span, BLOCK_F), oct):
+                offs = c * BLOCK_F + tl.arange(0, BLOCK_F)
+                tl.store(out + base + offs, zeros, offs < span)
+    # lse pass: flat span over tokens*NH with its own batch * lct
+    # bound; lct is the host's per-span chunk estimate with the same
+    # stride-cover property
+    for item in range(tl.program_id(0), batch * lct, tl.num_programs(0)):
+        seg = item // lct
+        if tl.load(lens + seg) == 0:
+            beg = tl.load(cum + seg)
+            end = tl.load(cum + seg + 1)
+            base = beg * NH
+            span = (end - beg) * NH
+            ninf = tl.full((BLOCK_L,), float("-inf"), dtype=tl.float32)
+            for c in range(item % lct, tl.cdiv(span, BLOCK_L), lct):
+                offs = c * BLOCK_L + tl.arange(0, BLOCK_L)
+                tl.store(lse + base + offs, ninf, offs < span)
+
+
+@triton.jit(do_not_specialize=["items", "ot"])
+def _fixup_zero_kv_i64(
     out,
     lse,
     lens,
@@ -49,9 +93,6 @@ def _fixup_zero_kv(
             hm = h < NH
             zeros = tl.zeros((BLOCK_T, BLOCK_V), dtype=out.dtype.element_ty)
             ninf = tl.full((BLOCK_T, BLOCK_H), float("-inf"), dtype=tl.float32)
-            # max_seq_len only sizes the virtual grid. If it
-            # underestimates a zero-KV segment, every slot continues
-            # through that segment rather than dropping later rows.
             for tile in range(item % ot, tl.cdiv(end - beg, BLOCK_T), ot):
                 t = beg + tile * BLOCK_T + tl.arange(0, BLOCK_T).to(tl.int64)
                 tm = t < end
@@ -81,9 +122,34 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
         hv, nh = num_heads * v_head_dim, num_heads
         block_t = 8
         span = max_seq_len if isinstance(max_seq_len, int) else total_tokens
+        # explicit domain branch (survives python -O): the flat int32
+        # fast path covers every realistic KV cache shape; 2^31-scale
+        # inputs take the int64 tile fallback - both paths Triton
+        if total_tokens * hv < 2**31 and total_tokens * nh < 2**31:
+            fs = min(span, total_tokens)
+            oct_ = max(1, triton.cdiv(fs * hv, _BLOCK_F))
+            lct = max(1, triton.cdiv(fs * nh, triton.next_power_of_2(max(1, nh))))
+            _fixup_zero_kv_flat[
+                (min(batch * max(oct_, lct), _MAX_CTAS),)
+            ](
+                out,
+                lse,
+                kv_lens,
+                cum_seq_lens,
+                batch,
+                oct_,
+                lct,
+                HV=hv,
+                NH=nh,
+                BLOCK_F=_BLOCK_F,
+                BLOCK_L=triton.next_power_of_2(max(1, nh)),
+                num_warps=2,
+                num_stages=3,
+            )
+            return out, lse
         ot = max(1, triton.cdiv(min(span, total_tokens), block_t))
         items = batch * ot
-        _fixup_zero_kv[(min(items, _MAX_CTAS),)](
+        _fixup_zero_kv_i64[(min(items, _MAX_CTAS),)](
             out,
             lse,
             kv_lens,
