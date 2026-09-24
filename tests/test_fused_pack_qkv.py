@@ -100,6 +100,15 @@ class FusedPackQkvTest(unittest.TestCase):
         indices = torch.zeros(1, dtype=torch.int64, device="cuda")
         self.check(qt, kt, vt, indices)
 
+    def test_row_elems_beyond_block_cap(self):
+        # H*D=70000 exceeds the 65536 vendor lane cap; the chunked
+        # column loop must cover it (review finding)
+        q = torch.randn(1, 350, 200, 1, dtype=torch.float16, device="cuda")
+        k = torch.randn_like(q)
+        v = torch.randn_like(q)
+        idx = torch.tensor([3, 70000 - 1], dtype=torch.int64, device="cuda")
+        self.check(q, k, v, idx)
+
     def test_row_elems_wider_than_block(self):
         # H*D=2048 == BLOCK_C forces at least two column iterations
         args = self.make_case(1, 512, 16, 128, 700)
@@ -120,6 +129,7 @@ RELEASE_REQUIRED_TESTS = [
     "FusedPackQkvTest.test_diffusion_shapes_and_tails",
     "FusedPackQkvTest.test_indices_int64_and_duplicates",
     "FusedPackQkvTest.test_fp32_and_bf16",
+    "FusedPackQkvTest.test_row_elems_beyond_block_cap",
     "FusedPackQkvTest.test_row_elems_wider_than_block",
     "FusedPackQkvTest.test_sliced_indices",
     "FusedPackQkvTest.test_non_contiguous_qkv",

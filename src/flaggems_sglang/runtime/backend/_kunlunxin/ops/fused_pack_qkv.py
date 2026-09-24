@@ -47,19 +47,21 @@ def _pack_rows_kernel(
 ):
     pid = tl.program_id(0).to(tl.int64)
     cols = tl.arange(0, BLOCK_C).to(tl.int64)
-    mask = cols < row_elems
     row0 = pid * rows_per_prog
     for r in range(0, rows_per_prog):
         row = row0 + r
         if row < n_rows:
             idx = tl.load(indices + row * idx_s0).to(tl.int64)
             src = idx * row_elems
-            qv = tl.load(q + src + cols, mask=mask, other=0)
-            tl.store(q_out + row * row_elems + cols, qv, mask=mask)
-            kv = tl.load(k + src + cols, mask=mask, other=0)
-            tl.store(k_out + row * row_elems + cols, kv, mask=mask)
-            vv = tl.load(v + src + cols, mask=mask, other=0)
-            tl.store(v_out + row * row_elems + cols, vv, mask=mask)
+            for c0 in range(0, row_elems, BLOCK_C):
+                cc = c0 + cols
+                mask = cc < row_elems
+                qv = tl.load(q + src + cc, mask=mask, other=0)
+                tl.store(q_out + row * row_elems + cc, qv, mask=mask)
+                kv = tl.load(k + src + cc, mask=mask, other=0)
+                tl.store(k_out + row * row_elems + cc, kv, mask=mask)
+                vv = tl.load(v + src + cc, mask=mask, other=0)
+                tl.store(v_out + row * row_elems + cc, vv, mask=mask)
 
 
 def fused_pack_qkv(q, k, v, indices):
@@ -75,7 +77,7 @@ def fused_pack_qkv(q, k, v, indices):
     k_out = torch.empty(shape, dtype=k.dtype, device=k.device)
     v_out = torch.empty(shape, dtype=v.dtype, device=v.device)
     if n:
-        block_c = max(1024, triton.next_power_of_2(row_elems))
+        block_c = min(65536, max(1024, triton.next_power_of_2(row_elems)))
         rows_per_prog = triton.cdiv(n, _MAX_GRID)
         grid = (triton.cdiv(n, rows_per_prog),)
         _pack_rows_kernel[grid](

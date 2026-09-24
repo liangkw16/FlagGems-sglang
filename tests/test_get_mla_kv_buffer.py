@@ -106,6 +106,13 @@ class GetMlaKvBufferTest(unittest.TestCase):
         self.check(kv, loc, 2, torch.float16, torch.float16)
         self.check(kv, loc, 1, torch.float16, torch.float16)
 
+    def test_wide_half_beyond_block_cap(self):
+        # nope_dim=70000 exceeds the 65536 vendor lane cap; the chunked
+        # loop must cover it (review finding)
+        kv = torch.randn(6, 70000 + 100, dtype=torch.float16, device="cuda")
+        loc = torch.arange(5, dtype=torch.int32, device="cuda")
+        self.check(kv, loc, 70000, torch.float16, torch.float16)
+
     def test_zero_width_half(self):
         # one half empty must not skip the kernel: the other half still
         # has to be written (review finding, b6641097)
@@ -139,6 +146,7 @@ RELEASE_REQUIRED_TESTS = [
     "GetMlaKvBufferTest.test_strided_kv_buffer",
     "GetMlaKvBufferTest.test_dim_edges",
     "GetMlaKvBufferTest.test_column_strided_kv_buffer",
+    "GetMlaKvBufferTest.test_wide_half_beyond_block_cap",
     "GetMlaKvBufferTest.test_zero_width_half",
     "GetMlaKvBufferTest.test_empty_rows",
 ]

@@ -50,28 +50,32 @@ def _kv_rows_kernel(
     pid = tl.program_id(0).to(tl.int64)
     ncols = tl.arange(0, BLOCK_N).to(tl.int64)
     rcols = tl.arange(0, BLOCK_R).to(tl.int64)
-    mn = ncols < nope_dim
-    mr = rcols < rope_dim
     row0 = pid * rows_per_prog
     for r in range(0, rows_per_prog):
         row = row0 + r
         if row < n_rows:
             idx = tl.load(loc + row * loc_s0).to(tl.int64)
             src = idx * kv_s0
-            nv = tl.load(kv_buffer + src + ncols * kv_s1, mask=mn, other=0)
-            tl.store(
-                nope_out + row * nope_dim + ncols,
-                nv.to(nope_out.dtype.element_ty),
-                mask=mn,
-            )
-            rv = tl.load(
-                kv_buffer + src + (nope_dim + rcols) * kv_s1, mask=mr, other=0
-            )
-            tl.store(
-                rope_out + row * rope_dim + rcols,
-                rv.to(rope_out.dtype.element_ty),
-                mask=mr,
-            )
+            for cn in range(0, nope_dim, BLOCK_N):
+                cc = cn + ncols
+                mn = cc < nope_dim
+                nv = tl.load(kv_buffer + src + cc * kv_s1, mask=mn, other=0)
+                tl.store(
+                    nope_out + row * nope_dim + cc,
+                    nv.to(nope_out.dtype.element_ty),
+                    mask=mn,
+                )
+            for cr in range(0, rope_dim, BLOCK_R):
+                cc = cr + rcols
+                mr = cc < rope_dim
+                rv = tl.load(
+                    kv_buffer + src + (nope_dim + cc) * kv_s1, mask=mr, other=0
+                )
+                tl.store(
+                    rope_out + row * rope_dim + cc,
+                    rv.to(rope_out.dtype.element_ty),
+                    mask=mr,
+                )
 
 
 def get_mla_kv_buffer(kv_buffer, loc, cache_k_nope, cache_k_rope):
@@ -85,8 +89,8 @@ def get_mla_kv_buffer(kv_buffer, loc, cache_k_nope, cache_k_rope):
         (n, rope_dim), dtype=cache_k_rope.dtype, device=kv_buffer.device
     )
     if n and (nope_dim or rope_dim):
-        block_n = max(1024, triton.next_power_of_2(max(nope_dim, 1)))
-        block_r = max(1024, triton.next_power_of_2(max(rope_dim, 1)))
+        block_n = min(65536, max(1024, triton.next_power_of_2(max(nope_dim, 1))))
+        block_r = min(65536, max(1024, triton.next_power_of_2(max(rope_dim, 1))))
         rows_per_prog = triton.cdiv(n, _MAX_GRID)
         grid = (triton.cdiv(n, rows_per_prog),)
         _kv_rows_kernel[grid](

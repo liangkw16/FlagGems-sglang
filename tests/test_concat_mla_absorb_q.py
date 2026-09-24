@@ -86,6 +86,13 @@ class ConcatMlaAbsorbQTest(unittest.TestCase):
         b2 = torch.randn(2, 5, 192 * 2, dtype=torch.bfloat16, device="cuda")[..., ::2]
         self.check(a2, b2)
 
+    def test_wide_row_beyond_block_cap(self):
+        # vendor whole-row vectors are capped at 65536 lanes; a wider row
+        # must fall through the chunked column loop (review finding)
+        a = torch.randn(1, 2, 70000, dtype=torch.bfloat16, device="cuda")
+        b = torch.randn(1, 2, 70000, dtype=torch.bfloat16, device="cuda")
+        self.check(a, b)
+
     def test_huge_rows_ascend_grid_cap(self):
         # 300000 rows would launch 75000 programs at BLOCK_R=4, past the
         # Ascend coreDim cap of 65535; the wrapper must grow the row tile
@@ -110,6 +117,7 @@ RELEASE_REQUIRED_TESTS = [
     "ConcatMlaAbsorbQTest.test_strided_sources",
     "ConcatMlaAbsorbQTest.test_fp16_dtype",
     "ConcatMlaAbsorbQTest.test_innermost_stride_slice",
+    "ConcatMlaAbsorbQTest.test_wide_row_beyond_block_cap",
     "ConcatMlaAbsorbQTest.test_huge_rows_ascend_grid_cap",
     "ConcatMlaAbsorbQTest.test_empty_rows",
 ]
