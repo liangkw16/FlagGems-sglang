@@ -57,7 +57,7 @@ def get_mla_kv_buffer(kv_buffer, loc, cache_k_nope, cache_k_rope):
     rope = torch.empty(
         (n, rope_dim), dtype=cache_k_rope.dtype, device=kv_buffer.device
     )
-    if n and nope_dim and rope_dim:
+    if n and (nope_dim or rope_dim):
         _get_mla_kv_buffer_kernel[(triton.cdiv(n, 8),)](
             kv_buffer,
             loc,

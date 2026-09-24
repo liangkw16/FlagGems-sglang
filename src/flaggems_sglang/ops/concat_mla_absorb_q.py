@@ -20,8 +20,10 @@ def _concat_mla_absorb_q_kernel(
     d1,
     a_s0,
     a_s1,
+    a_s2,
     b_s0,
     b_s1,
+    b_s2,
     a_last,
     b_last,
     BLOCK_R: tl.constexpr,
@@ -39,12 +41,12 @@ def _concat_mla_absorb_q_kernel(
     for c0 in range(0, a_last, BLOCK_C):
         cc = c0 + cols
         m = rmask[:, None] & (cc[None, :] < a_last)
-        value = tl.load(a + a_base[:, None] + cc[None, :], mask=m, other=0)
+        value = tl.load(a + a_base[:, None] + cc[None, :] * a_s2, mask=m, other=0)
         tl.store(out + o_base[:, None] + cc[None, :], value, mask=m)
     for c0 in range(0, b_last, BLOCK_C):
         cc = c0 + cols
         m = rmask[:, None] & (cc[None, :] < b_last)
-        value = tl.load(b + b_base[:, None] + cc[None, :], mask=m, other=0)
+        value = tl.load(b + b_base[:, None] + cc[None, :] * b_s2, mask=m, other=0)
         tl.store(out + o_base[:, None] + a_last + cc[None, :], value, mask=m)
 
 
@@ -68,8 +70,10 @@ def concat_mla_absorb_q(a, b):
             d1,
             a.stride(0),
             a.stride(1),
+            a.stride(2),
             b.stride(0),
             b.stride(1),
+            b.stride(2),
             a_last,
             b_last,
             BLOCK_R=4,

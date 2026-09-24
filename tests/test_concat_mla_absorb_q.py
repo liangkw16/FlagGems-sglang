@@ -73,6 +73,19 @@ class ConcatMlaAbsorbQTest(unittest.TestCase):
         b = torch.randn(2, 8, 64, dtype=torch.float16, device="cuda")
         self.check(a, b)
 
+    def test_innermost_stride_slice(self):
+        # a sliced last dim carries stride(2)=2: the kernel must scale
+        # column offsets by the runtime innermost strides
+        a = torch.arange(12, device="cuda", dtype=torch.bfloat16).reshape(1, 1, 12)[
+            ..., ::2
+        ]
+        b = torch.zeros(1, 1, 1, dtype=torch.bfloat16, device="cuda")
+        self.assertEqual(a.stride(2), 2)
+        self.check(a, b)
+        a2 = torch.randn(2, 5, 96, dtype=torch.bfloat16, device="cuda")
+        b2 = torch.randn(2, 5, 192 * 2, dtype=torch.bfloat16, device="cuda")[..., ::2]
+        self.check(a2, b2)
+
     def test_empty_rows(self):
         a = torch.randn(0, 8, 128, dtype=torch.bfloat16, device="cuda")
         b = torch.randn(0, 8, 64, dtype=torch.bfloat16, device="cuda")
@@ -86,6 +99,7 @@ RELEASE_REQUIRED_TESTS = [
     "ConcatMlaAbsorbQTest.test_mla_shapes_and_tails",
     "ConcatMlaAbsorbQTest.test_strided_sources",
     "ConcatMlaAbsorbQTest.test_fp16_dtype",
+    "ConcatMlaAbsorbQTest.test_innermost_stride_slice",
     "ConcatMlaAbsorbQTest.test_empty_rows",
 ]
 

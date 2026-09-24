@@ -96,6 +96,17 @@ class GetMlaKvBufferTest(unittest.TestCase):
                 kv, loc = self.make_case(70, nope_dim, rope_dim)
                 self.check(kv, loc, nope_dim, torch.float16, torch.float16)
 
+    def test_zero_width_half(self):
+        # one half empty must not skip the kernel: the other half still
+        # has to be written (review finding, b6641097)
+        kv = torch.randn(8, 64, dtype=torch.float16, device="cuda")
+        loc = torch.tensor([3, 1, 5], dtype=torch.int32, device="cuda")
+        self.check(kv, loc, 0, torch.float16, torch.float16)
+        self.check(kv, loc, 64, torch.float16, torch.float16)
+        kv2 = torch.randn(8, 96, dtype=torch.bfloat16, device="cuda")
+        loc2 = torch.arange(4, dtype=torch.int32, device="cuda")
+        self.check(kv2, loc2, 1, torch.bfloat16, torch.bfloat16)
+
     def test_empty_rows(self):
         kv, _ = self.make_case(8, 64, 16)
         loc = torch.empty(0, dtype=torch.int64, device="cuda")
@@ -117,6 +128,7 @@ RELEASE_REQUIRED_TESTS = [
     "GetMlaKvBufferTest.test_loc_int64_and_duplicates",
     "GetMlaKvBufferTest.test_strided_kv_buffer",
     "GetMlaKvBufferTest.test_dim_edges",
+    "GetMlaKvBufferTest.test_zero_width_half",
     "GetMlaKvBufferTest.test_empty_rows",
 ]
 

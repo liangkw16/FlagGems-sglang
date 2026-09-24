@@ -70,6 +70,23 @@ class FusedSigmoidMulTest(unittest.TestCase):
         gate = torch.randn(256, 1024, dtype=torch.float16, device="cuda")
         self.check(attn, gate, 2e-2, 1e-3)
 
+    def test_grid_boundaries(self):
+        # BLOCK=2048: every case must fully cover the flat range
+        for numel in (2047, 2048, 2049, 4096, 4097, 8191):
+            with self.subTest(numel=numel):
+                attn = torch.randn(1, numel, dtype=torch.bfloat16, device="cuda")
+                gate = torch.randn(1, numel, dtype=torch.bfloat16, device="cuda")
+                self.check(attn, gate, 2e-2, 1e-3)
+
+    def test_transposed_attn(self):
+        # empty_like would keep the dense-transpose strides; the output
+        # must still be value-correct for a non-contiguous attn input
+        base = torch.arange(12, device="cuda", dtype=torch.float32).reshape(3, 4)
+        attn = base.t().to(torch.bfloat16)
+        self.assertFalse(attn.is_contiguous())
+        gate = torch.randn(4, 3, dtype=torch.bfloat16, device="cuda")
+        self.check(attn, gate, 2e-2, 1e-3)
+
     def test_extreme_values(self):
         # sigmoid saturates; inf/nan propagate per fp32 math
         attn = torch.tensor(
@@ -94,6 +111,8 @@ RELEASE_REQUIRED_TESTS = [
     "FusedSigmoidMulTest.test_strided_3d_gate",
     "FusedSigmoidMulTest.test_contiguous_3d_gate",
     "FusedSigmoidMulTest.test_strided_attn",
+    "FusedSigmoidMulTest.test_grid_boundaries",
+    "FusedSigmoidMulTest.test_transposed_attn",
     "FusedSigmoidMulTest.test_extreme_values",
     "FusedSigmoidMulTest.test_empty",
 ]

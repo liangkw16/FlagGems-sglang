@@ -49,7 +49,9 @@ def _fused_sigmoid_mul_kernel(
 def fused_sigmoid_mul(attn_output, gate):
     assert attn_output.numel() == gate.numel()
     numel = attn_output.numel()
-    out = torch.empty_like(attn_output)
+    out = torch.empty(
+        attn_output.shape, dtype=attn_output.dtype, device=attn_output.device
+    )
     if numel:
         attn_cont = attn_output.is_contiguous()
         gate_cont = gate.is_contiguous()
@@ -62,7 +64,8 @@ def fused_sigmoid_mul(attn_output, gate):
             g_s0 = gate.stride(0) if gate.dim() > 1 else 1
             g_s1 = gate.stride(-1)
             g_s2 = 0
-        _fused_sigmoid_mul_kernel[(triton.cdiv(numel, 4096),)](
+        block = 2048
+        _fused_sigmoid_mul_kernel[(triton.cdiv(numel, block),)](
             attn_output,
             gate,
             out,
@@ -76,7 +79,7 @@ def fused_sigmoid_mul(attn_output, gate):
             g_s2,
             ATTN_CONT=attn_cont,
             GATE_CONT=gate_cont,
-            BLOCK=2048,
+            BLOCK=block,
             num_warps=8,
         )
     return out
