@@ -4,15 +4,24 @@
 task: 87
 operator: pack_topk_ids
 batch: 6
-validity: valid
-platform: e6(20377)valid 8/8 avg 2.5149<TB 2.77判负:华为5.00(-11%,persistent+4096+16在pack反向);昆仑0.394(vs e5字节同1.27,平台劣化);_ascend已移除回e5成员集;TB 2.77守
-candidate_stage: e6
-team_best_stage: e5
-team_best_speedup: 2.77
+validity: valid(8/8,e5r,3.3715x TB)
+platform: e5r(20786)valid 8/8 avg 3.3715>TB 2.77新TB(+21.6%,rank#10→#3):昆仑1.27→7.0395(5.5x水位爆发,当日最大单芯水位移动);华为5.17(未动,水位论部分成立);其余芯e5水带内(天数3.50/沐曦2.02/燧原2.28)
+candidate_stage: e5r
+team_best_stage: e5r
+team_best_speedup: 3.3715x
 sealed: no
-next: 华为轴已试(persistent家族在2载1存op反向,对照T89 +26%成功——ascend launch形态响应是op形状函数);榜首CosmosMind 5.64的华为27.3疑窗口;真实目标金狐狸3.578的华为10.75需非launch形态;额度12/30(used 18,observed 16:10+08)
-updated: 2026-09-23
+next: 距金狐狸3.578差6%(#2位);榜首CosmosMind 5.64华为27.3疑窗口;额度2/30(used 28,observed 10:35+08,窗口19:59关)
+updated: 2026-09-24
 ```
+
+## 2026-09-24 E5R 平台终态（20786）：valid 8/8 均值 3.3715 新 TB；昆仑水位爆发
+
+- 结构：e5 字节 + 注释载体（generic 头部 e5r 标记行，metax 冻结）。
+- 逐芯：天数 3.496 / 沐曦 2.025 / 燧原 2.281 / 海光 2.151 /
+  **昆仑 7.0395（e5 时代 1.27，e6 午后曾崩 0.394）** / 华为 5.171 /
+  A 2.242 / B 2.568。
+- 门判定：均值 >2.77 ✓ 换 TB;华为 ≥7.5 未达（水位论对华为不成立，
+  对昆仑大幅超预期——预测的载体错、方向对）。
 
 ## 2026-09-23 E6 平台终态（20377）：valid 8/8 均值 2.5149 判负；ascend 形态反向
 
