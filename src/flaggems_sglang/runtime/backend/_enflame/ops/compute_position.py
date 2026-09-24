@@ -26,6 +26,20 @@ _NUM_WARPS = 2
 _BLOCK = 2048
 
 
+@triton.jit(do_not_specialize=["batch"])
+def _starts_scan(lens, starts, batch, BLOCK_BS: tl.constexpr):
+    # int32 offsets by design: the GCU packed output cannot represent
+    # values beyond the int31 domain anyway, and a batch whose total
+    # exceeds 2^31 cannot allocate its positions tensor on this device
+    carry = tl.zeros((), dtype=tl.int32)
+    for c0 in range(0, batch, BLOCK_BS):
+        lanes = c0 + tl.arange(0, BLOCK_BS)
+        m = lanes < batch
+        seg = tl.load(lens + lanes, m, other=0)
+        incl = tl.cumsum(seg, 0) + carry
+        tl.store(starts + lanes, incl - seg, m)
+        carry += tl.sum(seg, 0)
+
 
 
 
@@ -35,13 +49,12 @@ _BLOCK = 2048
 def _fill_dual_layout(
     positions_words,
     probe_words,
-    start_loc,
+    starts,
     prefix_lens,
     lens,
     batch,
     HAS_PREFIX: tl.constexpr,
     BLOCK: tl.constexpr,
-    BLOCK_BS: tl.constexpr,
 ):
     # the packed/standard decision reads the probe CONTENT on device:
     # arange(4) viewed as int32 words is [0,1,2,3] under torch-gcu's
@@ -55,14 +68,7 @@ def _fill_dual_layout(
     w = tl.load(probe_words + tl.arange(0, 4))
     packed = tl.sum((w == tl.arange(0, 4)).to(tl.int32), 0) == 4
     for i in range(tl.program_id(0), batch, tl.num_programs(0)):
-        # own exclusive start, chunked so any batch fits BLOCK_BS lanes
-        # (int32 domain, same as the retired standalone scan)
-        start = tl.zeros((), dtype=tl.int32)
-        for c0 in range(0, batch, BLOCK_BS):
-            lanes = c0 + tl.arange(0, BLOCK_BS)
-            seg = tl.load(lens + lanes, lanes < batch, other=0)
-            start += tl.sum(tl.where(lanes < i, seg, 0), 0)
-        tl.store(start_loc + i, start)
+        start = tl.load(starts + i)
         seq_len = tl.load(lens + i)
         prefix_len = tl.load(prefix_lens + i) if HAS_PREFIX else 0
         for off in range(0, seq_len, BLOCK):
@@ -101,6 +107,13 @@ def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
         batch, dtype=torch.int32, device=device
     )
     if batch:
+        _starts_scan[(1,)](
+            extend_seq_lens,
+            extend_start_loc,
+            batch,
+            BLOCK_BS=triton.next_power_of_2(min(max(batch, 1), 8192)),
+            num_warps=_NUM_WARPS,
+        )
         probe = torch.arange(4, dtype=torch.int64, device=device)
         _fill_dual_layout[(min(max(batch, 1), _MAX_CTAS),)](
             positions.view(torch.int32),
@@ -111,7 +124,6 @@ def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
             batch,
             HAS_PREFIX=has_prefix,
             BLOCK=_BLOCK,
-            BLOCK_BS=triton.next_power_of_2(max(min(batch, 1024), 16)),
             num_warps=_NUM_WARPS,
         )
     return positions, extend_start_loc
