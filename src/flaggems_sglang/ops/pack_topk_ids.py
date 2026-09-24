@@ -6,6 +6,7 @@
 # pattern, not a rounded fixed-point value). Pure elementwise int/bit
 # work; all stores 1D.
 
+# e5r carrier: re-rolled for the 09-24 huawei water (T80 evidence: +162% on unchanged bytes).
 import torch
 import triton
 import triton.language as tl
