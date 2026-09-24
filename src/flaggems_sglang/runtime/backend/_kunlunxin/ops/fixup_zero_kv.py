@@ -90,7 +90,7 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             lse_fixed.stride(0),
             batch,
             ot,
-            BLOCK_V=1024,
+            BLOCK_V=16384,
             BLOCK_H=triton.next_power_of_2(max(1, nh)),
         )
     return out_fixed, lse_fixed
