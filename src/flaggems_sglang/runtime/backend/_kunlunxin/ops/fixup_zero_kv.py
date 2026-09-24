@@ -61,8 +61,18 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
     # in-place outparam (the e8 generic semantics the platform already
     # accepts): the per-call whole-tensor clones doubled the memory
     # traffic of an op whose real work is zeroing a few rows - the
-    # clone was 4x of the kunlun gap to the field
-    out_fixed, lse_fixed = out, lse
+    # clone was 4x of the kunlun gap to the field. Overlapping views
+    # (expanded rows share bytes, stride(0) below the row width) keep
+    # the defensive clone so untouched rows survive; the guard is pure
+    # stride metadata, no device work.
+    overlap = (
+        abs(out.stride(0)) < num_heads * v_head_dim
+        or abs(lse.stride(0)) < num_heads
+    )
+    if overlap:
+        out_fixed, lse_fixed = out.clone(), lse.clone()
+    else:
+        out_fixed, lse_fixed = out, lse
     if batch and total_tokens:
         hv, nh = num_heads * v_head_dim, num_heads
         # max_seq_len only sizes the launch (advisory); the token loop
