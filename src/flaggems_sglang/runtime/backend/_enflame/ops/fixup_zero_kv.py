@@ -6,7 +6,9 @@
 # pinned num_warps, which is not the 12-CTA clamp the GCU codegen
 # documents (max_grid_size=(12,1,1)). This round flattens the
 # (segment, tile) work items and grid-strides them across at most 12
-# programs with num_warps=2 and wide flat stores; e15 doubles the
+# programs with the backend-default warp count (the pin was lifted in
+# e26: two platform rounds on other GCU ops measured the default
+# ahead of pinned warps) and wide flat stores; e15 doubles the
 # store width to BLOCK_V=2048 (the gcu300 tile guidance scales with
 # the element width and the e12 read 102.6 with 1024-wide stores -
 # the width ladder is live: 102.6 @1024 -> 113.9 @2048, e16 takes
@@ -17,7 +19,6 @@ import triton
 import triton.language as tl
 
 _MAX_CTAS = 12
-_NUM_WARPS = 2
 
 
 @triton.jit
