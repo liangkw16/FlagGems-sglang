@@ -4,14 +4,14 @@
 task: 80
 operator: fixup_zero_kv
 batch: 6
-validity: valid(8/8,e24,569.125575x TB)
-platform: e24(20472)valid 8/8 avg 569.125575新TB；e21(20362)526.66305判负；e24身份见codex/t80-top1固定commit
-candidate_stage: e24
-team_best_stage: e24
-team_best_speedup: 569.125575
+validity: valid(8/8,e25,570.305775x TB)
+platform: e25(20753)valid 8/8 avg 570.305775新TB:昆仑14.18→16.47(+16%,去clone部分兑现,vendor内核仍3.4x慢);e26(20756)上膛=燧原解钉warps+沐曦ot上限32
+candidate_stage: e26
+team_best_stage: e25
+team_best_speedup: 570.305775
 sealed: no
-next: 新TB距榜首649.22145差80.095875，主要缺口华为270.67/沐曦151.33/燧原91.56芯分；e24源码在codex/t80-top1，当前分支尚未移入；后续以该固定源码为基线探跨芯结构新形态。
-updated: 2026-09-23
+next: e27候选=昆仑BLOCK_V 1024→16384(T92昆仑阶梯1024→16384=+5.7x跨题证据);华为509vs984与燧原109vs235待结构证据
+updated: 2026-09-24
 ```
 
 ## 2026-09-23 23:20 榜单校准：E24 新团队最佳 569.125575
