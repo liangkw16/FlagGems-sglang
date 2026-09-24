@@ -1,5 +1,8 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
+# e8 re-roll carrier (comment-only): e8/e9 read kunlun 0.13 on the
+# e8 execution bytes whose earlier window read ~1.2; today's kunlun
+# water moves are the day's largest (T87 1.27->7.04, T86 +13% huawei).
 # Hash-routed MoE gate (DeepSeek-V4 style): the token's expert set is
 # looked up in a precomputed tid2eid table (no top-k search), then
 # route logits are gathered, scored with sqrt(softplus(.)), renormalised
