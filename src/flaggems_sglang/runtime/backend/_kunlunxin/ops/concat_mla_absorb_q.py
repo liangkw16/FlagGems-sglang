@@ -14,68 +14,59 @@
 
 """Kunlunxin vendor for Task 94 concat_mla_absorb_q.
 
-The generic 2D row-tile kernel read 0.0044x on the platform's kunlunxin
-evaluator while every other chip passed at 1.0-2.2x, so the XPU backend
-handles the broadcast 2D tile shape pathologically. This variant keeps
-every access a 1D vector op - the shape the same batch's
-create_chunked_prefix_cache_kv_indices kernel used to reach 27x on
-kunlunxin: one program owns a few consecutive rows, each row is two
-masked 1D segment copies through the runtime strides, and the launch
-stays under the 65535 program cap. Not compiled on kunlunxin hardware
-locally; the platform evaluator is the arbiter.
+Platform-measured history on this chip: generic 2D tile 0.0044x, 1D
+scalar-row vendor with a 1024-lane floor 0.0814x, RPP=8 packing
+0.0656x, exact-width 512/64 segments 0.0278x, fused single-store 1024
+vector 0.0712x - scalar-row 1D vectors win, 2D tiles and narrow
+vectors lose, and the successful kunlunxin kernels in this batch are
+flat and wide (T95 27x, T96 0.583x, T98 0.350x; PR#56 validates
+16384-lane flat blocks, PR#69 validates constexpr divisions).
+
+This variant is fully flat over the output tensor: one BLOCK-wide
+vector per program covers whole rows at a time; the per-element row
+and column come from divisions by JIT-constant widths so they
+strength-reduce to multiply-shifts instead of the XPU
+software-division path. Launch stays under the 65535-program cap for
+any realistic shape (172.8M-element platform case 8 needs 10547).
 """
 
 import torch
 import triton
 import triton.language as tl
 
-_MAX_GRID = 65535
+_BLOCK = 16384
 
 
 @triton.jit
-def _concat_rows_kernel(
+def _concat_flat_kernel(
     a,
     b,
     out,
-    n_rows,
+    numel,
     d1: tl.constexpr,
-    rows_per_prog,
+    width: tl.constexpr,
+    a_last: tl.constexpr,
     a_s0,
     a_s1,
     a_s2,
     b_s0,
     b_s1,
     b_s2,
-    a_last,
-    b_last,
     BLOCK: tl.constexpr,
 ):
-    pid = tl.program_id(0).to(tl.int64)
-    cols = tl.arange(0, BLOCK).to(tl.int64)
-    width = a_last + b_last
-    row0 = pid * rows_per_prog
-    for r in range(0, rows_per_prog):
-        row = row0 + r
-        if row < n_rows:
-            i0 = row // d1
-            i1 = row - i0 * d1
-            a_base = i0 * a_s0 + i1 * a_s1
-            b_base = i0 * b_s0 + i1 * b_s1
-            o_base = row * width
-            for c0 in range(0, width, BLOCK):
-                cc = c0 + cols
-                mo = cc < width
-                av = tl.load(
-                    a + a_base + cc * a_s2, mask=mo & (cc < a_last), other=0
-                )
-                bv = tl.load(
-                    b + b_base + (cc - a_last) * b_s2,
-                    mask=mo & (cc >= a_last),
-                    other=0,
-                )
-                tl.store(
-                    out + o_base + cc, tl.where(cc < a_last, av, bv), mask=mo
-                )
+    offs = tl.program_id(0).to(tl.int64) * BLOCK + tl.arange(0, BLOCK)
+    m = offs < numel
+    row = offs // width
+    col = offs - row * width
+    i0 = row // d1
+    i1 = row - i0 * d1
+    ma = m & (col < a_last)
+    mb = m & (col >= a_last)
+    av = tl.load(a + i0 * a_s0 + i1 * a_s1 + col * a_s2, mask=ma, other=0)
+    bv = tl.load(
+        b + i0 * b_s0 + i1 * b_s1 + (col - a_last) * b_s2, mask=mb, other=0
+    )
+    tl.store(out + offs, tl.where(col < a_last, av, bv), mask=m)
 
 
 def concat_mla_absorb_q(a, b):
@@ -89,32 +80,24 @@ def concat_mla_absorb_q(a, b):
     out = torch.empty(
         (d0, d1, a_last + b_last), dtype=a.dtype, device=a.device
     )
-    if n_rows and (a_last + b_last):
-        # e2/e3 falsified both narrow vectors (exact-width 512/64 read
-        # 0.0278 vs 0.0814) and row packing (RPP=8 read 0.0656):
-        # kunlunxin wants >=1024-lane vectors and one row per program.
-        # e4 keeps one 1024+ vector per row but fuses the two segment
-        # stores into a single masked store stream
-        block = min(65536, max(1024, triton.next_power_of_2(a_last + b_last)))
-        rows_per_prog = triton.cdiv(n_rows, _MAX_GRID)
-        grid = (triton.cdiv(n_rows, rows_per_prog),)
-        _concat_rows_kernel[grid](
+    numel = n_rows * (a_last + b_last)
+    if numel:
+        _concat_flat_kernel[(triton.cdiv(numel, _BLOCK),)](
             a,
             b,
             out,
-            n_rows,
+            numel,
             d1,
-            rows_per_prog,
+            a_last + b_last,
+            a_last,
             a.stride(0),
             a.stride(1),
             a.stride(2),
             b.stride(0),
             b.stride(1),
             b.stride(2),
-            a_last,
-            b_last,
-            BLOCK=block,
-            num_warps=4,
+            BLOCK=_BLOCK,
+            num_warps=8,
         )
     return out
 
