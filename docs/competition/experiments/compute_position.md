@@ -5,14 +5,31 @@ task: 77
 operator: compute_position
 batch: 6
 validity: valid(8/8,e11r,1266.24055x TB)
-platform: e12(20745)7/8华为UB墙(1605632>1572864bits,BLOCK1024双字store超预算)已修(BLOCK512/BLOCK_BS256=19b8e92f);e13(20747)上膛=燧原scan融合fill(3→2launch),但其ZIP含UB修复前ascend成员,预计华为仍挂,燧原读数为该发主读数
-candidate_stage: e14
+platform: e13(20747)invalid:燧原scan融合156.79(-25%)判负+华为UB墙(旧ascend成员);e14(20749)valid 8/8但1246.80<TB:华为双字98.64(-32%)证伪宽store假说;ascend vendor已移除(d0a3d8b1)
+candidate_stage: e11r
 team_best_stage: e11r
 team_best_speedup: 1266.24055
 sealed: no
-next: e14(19b8e92f)=燧原融合+ascend UB修复双收;e13燧原≥240视为launch次要增益;华为双字store假说待e14检验;剩余大缺口ts 2841vs4773/hg1612vs2525
+next: 今日已试轴:tiled✗/scan融合✗/双字store✗✗;剩余未解=ts 2858vs4773与hg1669vs2525(1.6-1.7x);无新结构证据前停止主动开发,收盘前视水位可对e11r字节做1次防御重掷
 updated: 2026-09-24
 ```
+
+## 2026-09-24 E13/E14 平台终态：两个结构假说判负，TB 守 e11r 1266.24
+
+- E13（submission **20747**，commit `f88daa72`）：invalid 7/8——燧原
+  **156.79**（e11r 207.79，**-24.5%**：≤12 CTA 上的逐行 chunked 自扫
+  成本超过省下的 launch，scan 融合判负）；华为沿用 UB 修复前 ascend
+  成员再撞 ub-overflow（预期内，见 e12 条目教训）。
+- E14（submission **20749**，commit `f7c594d3`）：valid 8/8，均值
+  **1246.80** < TB——**华为 98.64**（e11r 145.23，-32.1%）：BLOCK=512
+  双 int32 字 store 修复 UB 后可编译可运行，但**慢于**被替换的 int64
+  generic 路径。宽 store 假说在 AscendVector 上证伪（同时也削弱了
+  ts/hg 同构假说）。逐芯其余：ts 2857.9 / muxi 898.9（水位回落）/
+  燧原 207.70（e11r 字节精确复现）/ hg 1668.8 / 昆仑 105.05 /
+  A 2071.5 / B 2066.0。
+- ascend vendor 已移除（`d0a3d8b1`）；当前最佳成员集 = e9 generic +
+  e11r enflame + kunlunxin。今日 T77 合计 9 发：TB 1100.74 →
+  1266.24（+15.0%），rank 10 → 8。
 
 ## 2026-09-24 E12 平台终态（20745）：7/8——华为双字 store 撞 UB 墙，已修待 e14
 
