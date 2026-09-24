@@ -19,50 +19,48 @@ _MAX_CTAS = 12
 _BLOCK_F = 16384
 
 
-@triton.jit(do_not_specialize=["batch", "oct", "lct"])
+@triton.jit(do_not_specialize=["batch", "ot2"])
 def _fixup_zero_kv_flat(
     out,
     lse,
     lens,
     cum,
     batch,
-    oct,
-    lct,
+    ot2,
     HV: tl.constexpr,
     NH: tl.constexpr,
+    GR: tl.constexpr,
     BLOCK_F: tl.constexpr,
     BLOCK_L: tl.constexpr,
 ):
-    # out pass: each item is one (segment, flat chunk) pair; the pass
-    # bound is batch * oct (its own chunk pitch - sharing the other
-    # pass's bound would push seg past batch); oct is the host's
-    # chunks-per-span estimate and the chunk loop strides by it, so an
-    # understated estimate still covers every chunk
-    for item in range(tl.program_id(0), batch * oct, tl.num_programs(0)):
-        seg = item // oct
+    # item = (segment, row group): the lens check runs once per GR
+    # rows exactly like the parent tile form (the per-flat-chunk item
+    # form paid one lens load per chunk - a 16x check inflation on
+    # healthy spans); the group loop strides by ot2 so an understated
+    # host estimate still covers every group, and each group's out/lse
+    # extents stream as flat contiguous stores (the DMA-pure shape).
+    for item in range(tl.program_id(0), batch * ot2, tl.num_programs(0)):
+        seg = item // ot2
         if tl.load(lens + seg) == 0:
             beg = tl.load(cum + seg)
             end = tl.load(cum + seg + 1)
-            base = beg * HV
-            span = (end - beg) * HV
+            rows = end - beg
+            groups = tl.cdiv(rows, GR)
             zeros = tl.zeros((BLOCK_F,), dtype=out.dtype.element_ty)
-            for c in range(item % oct, tl.cdiv(span, BLOCK_F), oct):
-                offs = c * BLOCK_F + tl.arange(0, BLOCK_F)
-                tl.store(out + base + offs, zeros, offs < span)
-    # lse pass: flat span over tokens*NH with its own batch * lct
-    # bound; lct is the host's per-span chunk estimate with the same
-    # stride-cover property
-    for item in range(tl.program_id(0), batch * lct, tl.num_programs(0)):
-        seg = item // lct
-        if tl.load(lens + seg) == 0:
-            beg = tl.load(cum + seg)
-            end = tl.load(cum + seg + 1)
-            base = beg * NH
-            span = (end - beg) * NH
             ninf = tl.full((BLOCK_L,), float("-inf"), dtype=tl.float32)
-            for c in range(item % lct, tl.cdiv(span, BLOCK_L), lct):
-                offs = c * BLOCK_L + tl.arange(0, BLOCK_L)
-                tl.store(lse + base + offs, ninf, offs < span)
+            for g in range(item % ot2, groups, ot2):
+                r0 = g * GR
+                rr = tl.minimum(GR, rows - r0)
+                base = (beg + r0) * HV
+                spano = rr * HV
+                for c0 in range(0, spano, BLOCK_F):
+                    offs = c0 + tl.arange(0, BLOCK_F)
+                    tl.store(out + base + offs, zeros, offs < spano)
+                basel = (beg + r0) * NH
+                spanl = rr * NH
+                for c0 in range(0, spanl, BLOCK_L):
+                    offs = c0 + tl.arange(0, BLOCK_L)
+                    tl.store(lse + basel + offs, ninf, offs < spanl)
 
 
 @triton.jit(do_not_specialize=["items", "ot"])
@@ -125,22 +123,28 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
         # explicit domain branch (survives python -O): the flat int32
         # fast path covers every realistic KV cache shape; 2^31-scale
         # inputs take the int64 tile fallback - both paths Triton
-        if total_tokens * hv < 2**31 and total_tokens * nh < 2**31:
-            fs = min(span, total_tokens)
-            oct_ = max(1, triton.cdiv(fs * hv, _BLOCK_F))
-            lct = max(1, triton.cdiv(fs * nh, triton.next_power_of_2(max(1, nh))))
-            _fixup_zero_kv_flat[
-                (min(batch * max(oct_, lct), _MAX_CTAS),)
-            ](
+        # flat fast path gates: dense row pitch on both outputs (a
+        # strided view would place beg*HV at the wrong physical row -
+        # the tile fallback carries the real stride(0)), the int32
+        # element domain, and an int32-safe item bound batch*ot2
+        ot2 = max(1, triton.cdiv(min(span, total_tokens), 8))
+        if (
+            out.stride(0) == hv
+            and lse.stride(0) == nh
+            and total_tokens * hv < 2**31
+            and total_tokens * nh < 2**31
+            and batch * ot2 < 2**31
+        ):
+            _fixup_zero_kv_flat[(min(batch * ot2, _MAX_CTAS),)](
                 out,
                 lse,
                 kv_lens,
                 cum_seq_lens,
                 batch,
-                oct_,
-                lct,
+                ot2,
                 HV=hv,
                 NH=nh,
+                GR=8,
                 BLOCK_F=_BLOCK_F,
                 BLOCK_L=triton.next_power_of_2(max(1, nh)),
                 num_warps=2,
