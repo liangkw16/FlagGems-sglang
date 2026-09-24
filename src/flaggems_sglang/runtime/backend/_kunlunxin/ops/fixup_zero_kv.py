@@ -58,7 +58,11 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
     batch = kv_lens.numel()
     assert cum_seq_lens.numel() == batch + 1
     assert kv_lens.dtype == cum_seq_lens.dtype == torch.int32
-    out_fixed, lse_fixed = out.clone(), lse.clone()
+    # in-place outparam (the e8 generic semantics the platform already
+    # accepts): the per-call whole-tensor clones doubled the memory
+    # traffic of an op whose real work is zeroing a few rows - the
+    # clone was 4x of the kunlun gap to the field
+    out_fixed, lse_fixed = out, lse
     if batch and total_tokens:
         hv, nh = num_heads * v_head_dim, num_heads
         # max_seq_len only sizes the launch (advisory); the token loop
