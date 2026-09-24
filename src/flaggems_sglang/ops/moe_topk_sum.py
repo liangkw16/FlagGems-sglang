@@ -5,6 +5,7 @@
 # Pure bandwidth; TOPK is constexpr so the reduction unrolls fully
 # (the batch-6 static-unroll mechanism).
 
+# e11r carrier: re-rolled for the 09-24 kunlun water (T87 evidence: 1.27 -> 7.04 on proven bytes).
 import torch
 import triton
 import triton.language as tl
