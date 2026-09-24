@@ -365,3 +365,13 @@ updated: 2026-09-24
 - 订正：前次 CURRENT 块误写 team_best_stage=e19/535.08x——平台实读
   is_team_best=true 记录为 19661（e16，558.039775），本次已订正为
   e16/558.04x。
+
+## 2026-09-24 并行会话 E22R2 补记（20785）：flat-span 燧原重写判负
+
+- E22R2（submission **20785**，commit `bc49acef`，燧原 vendor flat-span
+  int32 重写 + codex-review 三修复）：valid 8/8，均值 **570.49** <
+  TB 581.23——燧原 **98.73**（109.5，-10%）：flat 1D 宽 store 形态在
+  GCU 上亦不敌原 [BLOCK_T,BLOCK_V] 2D 形态。逐芯其余：天数 1258.2 /
+  沐曦 379.7 / 海光 893.9 / 昆仑 16.34 / 华为 489.7 / A 818.2 /
+  B 609.0。燧原轴（110 vs 234）今日三形态（unpin/16384 宽/flat-span）
+  全负。
