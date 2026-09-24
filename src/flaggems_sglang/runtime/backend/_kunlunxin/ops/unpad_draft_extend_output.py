@@ -71,8 +71,12 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
     span = heads * dim
     if bs and token_per_batch and out.numel():
         tiles = min(max(1, (token_per_batch * span + 16383) // 16384), 255)
+        # headroom: the scf.for induction variable can step past elems
+        # by up to nprog*BLOCK (<= 255*BLOCK) before exiting, so the
+        # int32 pipeline needs that margin below 2^31
+        headroom = 2**31 - 256 * 16384
         kernel = (
-            _unpad if token_per_batch * span < 2**31 else _unpad_wide
+            _unpad if token_per_batch * span < headroom else _unpad_wide
         )
         kernel[(bs, tiles)](
             raw_out,
