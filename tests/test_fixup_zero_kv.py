@@ -97,6 +97,18 @@ class FixupZeroKVTest(unittest.TestCase):
                     make_case(kv_lens=(2, 0), tok_lens=(5, 4), heads=heads)
                 )
 
+    def test_row_width_around_wide_block(self):
+        # B-1/B/B+1 around the widest vendor flat-store rung (16384):
+        # below it the tail mask folds away, above it the sweep loops
+        for heads, vdim in ((129, 127), (128, 128), (129, 128)):
+            with self.subTest(hv=heads * vdim):
+                self.check(
+                    make_case(
+                        kv_lens=(0, 3), tok_lens=(4, 5), heads=heads,
+                        vdim=vdim,
+                    )
+                )
+
     def test_segment_length_boundaries(self):
         for tok_lens in ((7, 8, 9), (1,), (16, 15, 17), (8, 8, 8, 8)):
             with self.subTest(tok_lens=tok_lens):
