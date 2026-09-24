@@ -77,7 +77,7 @@
 | 94 | concat_mla_absorb_q | candidate-sealed | 未提交（quota 0/30 未重置；release 门禁全过，候选封存待投） | - -x | yes | s0 已封存待投：华为 #1=0.42 低垂果实；E1 轴=大 shape 宽度调优 | 2026-09-24 | [concat_mla_absorb_q](concat_mla_absorb_q.md) |
 | 95 | create_chunked_prefix_cache_kv_indices | candidate-sealed | 未提交（quota 0/30 未重置；release 门禁全过，候选封存待投） | - -x | yes | s0 已封存待投；E1 轴=昆仑 34.6 结构项与 huawei #2（>139.9） | 2026-09-24 | [create_chunked_prefix_cache_kv_indices](create_chunked_prefix_cache_kv_indices.md) |
 | 96 | fused_pack_qkv | candidate-sealed | 未提交（quota 0/30 未重置；release 门禁全过，候选封存待投） | - -x | yes | s0 已封存待投：kunlun/huawei #1 <0.62 首发争分；E1 轴=BLOCK_R/C 扫描与 muxi 调优 | 2026-09-24 | [fused_pack_qkv](fused_pack_qkv.md) |
-| 97 | fused_sigmoid_mul | candidate-sealed | 未提交（quota 0/30 未重置；release 门禁全过，候选封存待投） | - -x | yes | s0 已封存待投；E1 轴=昆仑 2.007/华为 1.486（EA 独占）专配+exp2 快路径 | 2026-09-24 | [fused_sigmoid_mul](fused_sigmoid_mul.md) |
+| 97 | fused_sigmoid_mul | candidate-sealed | 未提交（quota 0/30 未重置；release 门禁全过，候选封存待投） | - -x | yes | s0 已封存待投；E1 轴=昆仑 tanh 原生 lowering 假设/华为 EA 专配——Padé sigmoid 已被 codex-ask+本地实证否决入 generic（gate=-6 误差 8%、gate=-8 翻号，详见 plan §6） | 2026-09-24 | [fused_sigmoid_mul](fused_sigmoid_mul.md) |
 | 98 | get_mla_kv_buffer | candidate-sealed | 未提交（quota 0/30 未重置；release 门禁全过，候选封存待投） | - -x | yes | s0 已封存待投：kunlun/huawei #1 均 <0.51 首发争分；E1 轴=nope_dim constexpr 特化/昆仑专配 | 2026-09-24 | [get_mla_kv_buffer](get_mla_kv_buffer.md) |
 
 缺 CURRENT 块（未计入索引）：apply_token_bitmask.md、bmm_chunk.md、chunk_cumsum.md、chunk_local_cumsum_vector.md、chunk_state.md、chunk_state_varlen.md、context_attention.md、decode_attention.md、decode_grouped_attention.md、embedding_lora_a.md、fused_recurrent_gdn.md、fused_rmsnorm.md、mamba_layernorm_gated.md、moe_sum_reduce.md、qkv_lora_b.md、sgemm_lora_b.md、softcap_out.md

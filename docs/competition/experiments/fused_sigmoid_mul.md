@@ -10,7 +10,7 @@ candidate_stage: s0
 team_best_stage: -
 team_best_speedup: -
 sealed: yes
-next: s0 已封存待投；E1 轴=昆仑 2.007/华为 1.486（EA 独占）专配+exp2 快路径
+next: s0 已封存待投；E1 轴=昆仑 tanh 原生 lowering 假设/华为 EA 专配——Padé sigmoid 已被 codex-ask+本地实证否决入 generic（gate=-6 误差 8%、gate=-8 翻号，详见 plan §6）
 updated: 2026-09-24
 ```
 
