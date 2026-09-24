@@ -88,7 +88,11 @@ def concat_mla_absorb_q(a, b):
         block_c = min(
             65536, max(1024, triton.next_power_of_2(max(a_last, b_last)))
         )
-        rows_per_prog = triton.cdiv(n_rows, _MAX_GRID)
+        # pack at least 8 rows per program: e1 measured 0.0814x with one
+        # row per program (576-element rows underfill the launch) and the
+        # platform-validated PR#69 RPP sweep shows 4-16 rows amortize XPU
+        # dispatch best
+        rows_per_prog = max(8, triton.cdiv(n_rows, _MAX_GRID))
         grid = (triton.cdiv(n_rows, rows_per_prog),)
         _concat_rows_kernel[grid](
             a,
