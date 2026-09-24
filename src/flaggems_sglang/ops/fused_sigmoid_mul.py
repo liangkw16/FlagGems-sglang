@@ -28,11 +28,12 @@ def _fused_sigmoid_mul_kernel(
     GATE_CONT: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
-    offs = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
+    offs = tl.program_id(0).to(tl.int64) * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
     mask = offs < numel
     a_ptr = attn + offs
     g_ptr = gate + offs
     if not (ATTN_CONT and GATE_CONT):
+        # stride math in i64: large strides or numel can overflow i32
         row = offs // hidden
         rem = offs - row * hidden
         if not ATTN_CONT:

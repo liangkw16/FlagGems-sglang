@@ -20,20 +20,25 @@ def _create_chunked_prefix_cache_kv_indices_kernel(
     chunk_seq_lens,
     chunk_cu_seq_lens,
     out,
-    r2t_stride,
+    pool_s0,
+    start_s0,
+    len_s0,
+    cu_s0,
+    r2t_s0,
+    r2t_s1,
     BLOCK_C: tl.constexpr,
 ):
     row = tl.program_id(0).to(tl.int64)
-    pool = tl.load(req_pool_indices + row).to(tl.int64)
-    start = tl.load(chunk_start_idx + row).to(tl.int64)
-    length = tl.load(chunk_seq_lens + row).to(tl.int64)
-    beg = tl.load(chunk_cu_seq_lens + row).to(tl.int64)
+    pool = tl.load(req_pool_indices + row * pool_s0).to(tl.int64)
+    start = tl.load(chunk_start_idx + row * start_s0).to(tl.int64)
+    length = tl.load(chunk_seq_lens + row * len_s0).to(tl.int64)
+    beg = tl.load(chunk_cu_seq_lens + row * cu_s0).to(tl.int64)
     cols = tl.arange(0, BLOCK_C).to(tl.int64)
     for c0 in range(0, length, BLOCK_C):
         cc = c0 + cols
         m = cc < length
         value = tl.load(
-            req_to_token + pool * r2t_stride + start + cc, mask=m, other=0
+            req_to_token + pool * r2t_s0 + (start + cc) * r2t_s1, mask=m, other=0
         )
         tl.store(out + beg + cc, value, mask=m)
 
@@ -56,7 +61,12 @@ def create_chunked_prefix_cache_kv_indices(
             chunk_seq_lens,
             chunk_cu_seq_lens,
             out,
+            req_pool_indices.stride(0),
+            chunk_start_idx.stride(0) if chunk_start_idx.dim() else 1,
+            chunk_seq_lens.stride(0) if chunk_seq_lens.dim() else 1,
+            chunk_cu_seq_lens.stride(0) if chunk_cu_seq_lens.dim() else 1,
             req_to_token.stride(0),
+            req_to_token.stride(1),
             BLOCK_C=1024,
             num_warps=4,
         )

@@ -18,7 +18,9 @@ def _get_mla_kv_buffer_kernel(
     nope_out,
     rope_out,
     n_rows,
-    kv_stride,
+    loc_s0,
+    kv_s0,
+    kv_s1,
     nope_dim,
     rope_dim,
     BLOCK_R: tl.constexpr,
@@ -27,21 +29,25 @@ def _get_mla_kv_buffer_kernel(
     pid = tl.program_id(0)
     rows = pid.to(tl.int64) * BLOCK_R + tl.arange(0, BLOCK_R).to(tl.int64)
     rmask = rows < n_rows
-    idx = tl.load(loc + rows, mask=rmask, other=0).to(tl.int64)
-    base = idx * kv_stride
+    idx = tl.load(loc + rows * loc_s0, mask=rmask, other=0).to(tl.int64)
+    base = idx * kv_s0
 
     cols = tl.arange(0, BLOCK_C).to(tl.int64)
     for c0 in range(0, nope_dim, BLOCK_C):
         cc = c0 + cols
         m = rmask[:, None] & (cc[None, :] < nope_dim)
-        value = tl.load(kv_buffer + base[:, None] + cc[None, :], mask=m, other=0)
+        value = tl.load(
+            kv_buffer + base[:, None] + cc[None, :] * kv_s1, mask=m, other=0
+        )
         dst = rows[:, None] * nope_dim + cc[None, :]
         tl.store(nope_out + dst, value.to(nope_out.dtype.element_ty), mask=m)
     for c0 in range(0, rope_dim, BLOCK_C):
         cc = c0 + cols
         m = rmask[:, None] & (cc[None, :] < rope_dim)
         value = tl.load(
-            kv_buffer + base[:, None] + nope_dim + cc[None, :], mask=m, other=0
+            kv_buffer + base[:, None] + (nope_dim + cc[None, :]) * kv_s1,
+            mask=m,
+            other=0,
         )
         dst = rows[:, None] * rope_dim + cc[None, :]
         tl.store(rope_out + dst, value.to(rope_out.dtype.element_ty), mask=m)
@@ -64,7 +70,9 @@ def get_mla_kv_buffer(kv_buffer, loc, cache_k_nope, cache_k_rope):
             nope,
             rope,
             n,
+            loc.stride(0),
             kv_buffer.stride(0),
+            kv_buffer.stride(1),
             nope_dim,
             rope_dim,
             BLOCK_R=8,

@@ -96,6 +96,16 @@ class GetMlaKvBufferTest(unittest.TestCase):
                 kv, loc = self.make_case(70, nope_dim, rope_dim)
                 self.check(kv, loc, nope_dim, torch.float16, torch.float16)
 
+    def test_column_strided_kv_buffer(self):
+        # a column-sliced cache view carries stride(1)=2: both halves
+        # must follow the runtime column stride (review finding)
+        big = torch.arange(32, device="cuda", dtype=torch.float16).reshape(4, 8)
+        kv = big[:, ::2]
+        self.assertEqual(kv.stride(1), 2)
+        loc = torch.tensor([2, 0], dtype=torch.int32, device="cuda")
+        self.check(kv, loc, 2, torch.float16, torch.float16)
+        self.check(kv, loc, 1, torch.float16, torch.float16)
+
     def test_zero_width_half(self):
         # one half empty must not skip the kernel: the other half still
         # has to be written (review finding, b6641097)
@@ -128,6 +138,7 @@ RELEASE_REQUIRED_TESTS = [
     "GetMlaKvBufferTest.test_loc_int64_and_duplicates",
     "GetMlaKvBufferTest.test_strided_kv_buffer",
     "GetMlaKvBufferTest.test_dim_edges",
+    "GetMlaKvBufferTest.test_column_strided_kv_buffer",
     "GetMlaKvBufferTest.test_zero_width_half",
     "GetMlaKvBufferTest.test_empty_rows",
 ]

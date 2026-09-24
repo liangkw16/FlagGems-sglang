@@ -22,13 +22,14 @@ def _fused_pack_qkv_kernel(
     v_out,
     n_rows,
     row_elems,
+    idx_s0,
     BLOCK_R: tl.constexpr,
     BLOCK_C: tl.constexpr,
 ):
     pid = tl.program_id(0)
     rows = pid.to(tl.int64) * BLOCK_R + tl.arange(0, BLOCK_R).to(tl.int64)
     rmask = rows < n_rows
-    idx = tl.load(indices + rows, mask=rmask, other=0).to(tl.int64)
+    idx = tl.load(indices + rows * idx_s0, mask=rmask, other=0).to(tl.int64)
     src = idx * row_elems
     dst = rows * row_elems
     cols = tl.arange(0, BLOCK_C).to(tl.int64)
@@ -47,7 +48,12 @@ def _fused_pack_qkv_kernel(
 def fused_pack_qkv(q, k, v, indices):
     assert q.shape == k.shape == v.shape
     assert q.dtype == k.dtype == v.dtype
-    assert q.is_contiguous() and k.is_contiguous() and v.is_contiguous()
+    # the gather treats each row as a contiguous H*D run; a non-contiguous
+    # input is normalized with an explicit copy so the flat addressing
+    # stays exact (reference's reshape has the same effect)
+    q = q if q.is_contiguous() else q.contiguous()
+    k = k if k.is_contiguous() else k.contiguous()
+    v = v if v.is_contiguous() else v.contiguous()
     n = indices.shape[0]
     row_elems = q.shape[-2] * q.shape[-1]
     shape = (n, q.shape[-2], q.shape[-1])
@@ -65,6 +71,7 @@ def fused_pack_qkv(q, k, v, indices):
             v_out,
             n,
             row_elems,
+            indices.stride(0) if indices.dim() else 1,
             BLOCK_R=4,
             BLOCK_C=1024,
             num_warps=4,

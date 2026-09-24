@@ -77,6 +77,29 @@ class FusedPackQkvTest(unittest.TestCase):
                 args = self.make_case(2, 128, 16, 64, 200, dtype=dtype)
                 self.check(*args)
 
+    def test_sliced_indices(self):
+        # indices may arrive as a strided view: reads must follow
+        # indices.stride(0) (review finding)
+        q, k, v, _ = self.make_case(1, 8, 4, 16, 4)
+        idx = torch.arange(8, dtype=torch.int32, device="cuda")[::2]
+        self.assertEqual(idx.stride(0), 2)
+        self.check(q, k, v, idx)
+
+    def test_non_contiguous_qkv(self):
+        # reference's reshape accepts non-contiguous inputs; the wrapper
+        # must normalize instead of asserting (review finding)
+        base = torch.arange(16, device="cuda", dtype=torch.float16).reshape(1, 2, 2, 4)
+        qt = base.transpose(-1, -2)
+        self.assertFalse(qt.is_contiguous())
+        kt = torch.randn(1, 2, 2, 4, dtype=torch.float16, device="cuda").transpose(
+            -1, -2
+        )
+        vt = torch.randn(1, 2, 2, 4, dtype=torch.float16, device="cuda").transpose(
+            -1, -2
+        )
+        indices = torch.zeros(1, dtype=torch.int64, device="cuda")
+        self.check(qt, kt, vt, indices)
+
     def test_row_elems_wider_than_block(self):
         # H*D=2048 == BLOCK_C forces at least two column iterations
         args = self.make_case(1, 512, 16, 128, 700)
@@ -98,6 +121,8 @@ RELEASE_REQUIRED_TESTS = [
     "FusedPackQkvTest.test_indices_int64_and_duplicates",
     "FusedPackQkvTest.test_fp32_and_bf16",
     "FusedPackQkvTest.test_row_elems_wider_than_block",
+    "FusedPackQkvTest.test_sliced_indices",
+    "FusedPackQkvTest.test_non_contiguous_qkv",
     "FusedPackQkvTest.test_all_tokens_and_empty",
 ]
 

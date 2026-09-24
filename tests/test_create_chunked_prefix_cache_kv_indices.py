@@ -137,6 +137,19 @@ class CreateChunkedPrefixCacheKvIndicesTest(unittest.TestCase):
             actual[written:], kv_indices[written:], rtol=0, atol=0
         )
 
+    def test_column_strided_req_to_token(self):
+        # a column-sliced pool view carries stride(1)=2: token windows
+        # must follow the runtime column stride (review finding)
+        base = torch.arange(64, device="cuda", dtype=torch.int32).reshape(4, 16)
+        req_to_token = base[:, ::2]
+        self.assertEqual(req_to_token.stride(1), 2)
+        pool_idx = torch.tensor([1], dtype=torch.int32, device="cuda")
+        starts = torch.tensor([2], dtype=torch.int32, device="cuda")
+        lens = torch.tensor([3], dtype=torch.int32, device="cuda")
+        cus = torch.tensor([0], dtype=torch.int32, device="cuda")
+        kv_indices = torch.full((5,), -1, dtype=torch.int32, device="cuda")
+        self.check(req_to_token, pool_idx, starts, lens, cus, kv_indices)
+
     def test_empty_requests(self):
         req_to_token = torch.randint(
             0, 100, (8, 64), dtype=torch.int32, device="cuda"
@@ -162,6 +175,7 @@ RELEASE_REQUIRED_TESTS = [
     "CreateChunkedPrefixCacheKvIndicesTest.test_len_crossing_block",
     "CreateChunkedPrefixCacheKvIndicesTest.test_zero_length_row",
     "CreateChunkedPrefixCacheKvIndicesTest.test_tail_sentinel_preserved",
+    "CreateChunkedPrefixCacheKvIndicesTest.test_column_strided_req_to_token",
     "CreateChunkedPrefixCacheKvIndicesTest.test_empty_requests",
 ]
 
