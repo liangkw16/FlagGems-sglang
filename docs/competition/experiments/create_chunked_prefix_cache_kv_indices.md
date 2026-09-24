@@ -4,14 +4,14 @@
 task: 95
 operator: create_chunked_prefix_cache_kv_indices
 batch: 7
-validity: candidate-sealed
-platform: 未提交（quota 0/30 未重置；release 门禁全过，候选封存待投）
+validity: valid(7/7,s0)
+platform: s0(21123)valid 7/7:天数82.3/沐曦19.7/海光33.3/昆仑27.4/华为15.8/A25.4/B25.5;昆仑27.4>旧榜34.6的次优同量级
 candidate_stage: s0
-team_best_stage: -
+team_best_stage: s0
 team_best_speedup: -
 sealed: yes
-next: s0 已封存待投；E1 轴=昆仑 34.6 结构项与 huawei #2（>139.9）
-updated: 2026-09-24
+next: E1轴=天数82→133与海光33→48(榜首水位);华为15.8 vs 139.9 差距大需结构
+updated: 2026-09-25
 ```
 
 ## 契约

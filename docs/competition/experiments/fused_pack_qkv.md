@@ -4,14 +4,14 @@
 task: 96
 operator: fused_pack_qkv
 batch: 7
-validity: candidate-sealed
-platform: 未提交（quota 0/30 未重置；release 门禁全过，候选封存待投）
+validity: valid(7/7,e1)
+platform: s0(21124)invalid_threshold昆仑0.010;e1(21146)valid 7/7:昆仑0.010→0.583(57x,vendor 1D结构兑现)/华为0.950/天数2.95/海光3.15
 candidate_stage: s0
-team_best_stage: -
+team_best_stage: e1
 team_best_speedup: -
 sealed: yes
-next: s0 已封存待投：kunlun/huawei #1 <0.62 首发争分；E1 轴=BLOCK_R/C 扫描与 muxi 调优
-updated: 2026-09-24
+next: E1轴=昆仑0.583→榜首0.606(RPP扫)+沐曦1.92→2.45;e1已有效,增量优化
+updated: 2026-09-25
 ```
 
 ## 契约

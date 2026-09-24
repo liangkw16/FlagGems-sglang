@@ -4,14 +4,14 @@
 task: 98
 operator: get_mla_kv_buffer
 batch: 7
-validity: candidate-sealed
-platform: 未提交（quota 0/30 未重置；release 门禁全过，候选封存待投）
+validity: valid(候选e1在途)
+platform: s0(21130)invalid_threshold昆仑0.045;e1(21148)evaluating:昆仑0.350(7.8x)/华为0.722/沐曦1.37/海光1.85,天数pending
 candidate_stage: s0
-team_best_stage: -
+team_best_stage: e1(在途)
 team_best_speedup: -
 sealed: yes
-next: s0 已封存待投：kunlun/huawei #1 均 <0.51 首发争分；E1 轴=nope_dim constexpr 特化/昆仑专配
-updated: 2026-09-24
+next: watch e1 天数;过则valid且昆仑0.350>旧榜首0.131=昆仑#1
+updated: 2026-09-25
 ```
 
 ## 契约

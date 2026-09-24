@@ -4,14 +4,14 @@
 task: 93
 operator: add_constant
 batch: 7
-validity: candidate-sealed
-platform: 未提交（quota 0/30 未重置；release 门禁全过，候选封存待投）
+validity: valid(7/7,s0)
+platform: s0(21120)valid 7/7:天数1.005/沐曦1.040/海光0.963/昆仑0.442/华为0.131/A0.978/B0.993;华为与昆仑是分差项(EA榜0.988/0.910)
 candidate_stage: s0
-team_best_stage: -
+team_best_stage: s0
 team_best_speedup: -
 sealed: yes
-next: s0 已封存待投：quota 0/30（观测至 21:56 未重置，watcher 运行中）；quota>0 即按 artifacts/competition/b7-s0-release-20260924/submit-batch7-s0.sh 提交（六题已烘焙）；E1 轴=华为专配（kernelgen 3 轮失败详情不可得）/BLOCK 扫描
-updated: 2026-09-24
+next: E1轴=华为persistent面积1024+昆仑BLOCK16384 vendor;华为0.131 vs 榜首0.988为最大rank增量
+updated: 2026-09-25
 ```
 
 ## 契约

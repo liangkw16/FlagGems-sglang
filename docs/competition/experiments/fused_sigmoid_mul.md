@@ -4,14 +4,14 @@
 task: 97
 operator: fused_sigmoid_mul
 batch: 7
-validity: candidate-sealed
-platform: 未提交（quota 0/30 未重置；release 门禁全过，候选封存待投）
+validity: valid(7/7,s0)
+platform: s0(21140)valid 7/7:天数3.42/沐曦2.98/海光4.02/昆仑1.166/华为1.022/A3.75/B3.14
 candidate_stage: s0
-team_best_stage: -
+team_best_stage: s0
 team_best_speedup: -
 sealed: yes
-next: s0 已封存待投；E1 轴=昆仑 tanh 原生 lowering 假设/华为 EA 专配——Padé sigmoid 已被 codex-ask+本地实证否决入 generic（gate=-6 误差 8%、gate=-8 翻号，详见 plan §6）
-updated: 2026-09-24
+next: E1轴=昆仑1.166→2.007与华为1.022→1.486(EA独占两芯;华为ascend子块/昆仑tanh lowering)
+updated: 2026-09-25
 ```
 
 ## 契约

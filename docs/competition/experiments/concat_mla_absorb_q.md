@@ -4,14 +4,14 @@
 task: 94
 operator: concat_mla_absorb_q
 batch: 7
-validity: candidate-sealed
-platform: 未提交（quota 0/30 未重置；release 门禁全过，候选封存待投）
+validity: valid(候选e2在途)
+platform: s0(21121)invalid_correctness:华为grid 131072>65535(EE1003)+昆仑0.0044;e1(21144)华为修复0.161但昆仑0.0814<0.1;e2(21150)RPP>=8已提交
 candidate_stage: s0
-team_best_stage: -
+team_best_stage: e1(21144,无效但天数1.774#1/海光2.256平榜首)
 team_best_speedup: -
 sealed: yes
-next: s0 已封存待投：华为 #1=0.42 低垂果实；E1 轴=大 shape 宽度调优
-updated: 2026-09-24
+next: watch e2 昆仑是否>=0.1;过门槛即有效且天数/海光即#1
+updated: 2026-09-25
 ```
 
 ## 契约
