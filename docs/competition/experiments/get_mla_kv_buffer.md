@@ -4,13 +4,13 @@
 task: 98
 operator: get_mla_kv_buffer
 batch: 7
-validity: valid(候选e1在途)
-platform: s0(21130)invalid_threshold昆仑0.045;e1(21148)evaluating:昆仑0.350(7.8x)/华为0.722/沐曦1.37/海光1.85,天数pending
+validity: valid(7/7,e1)
+platform: e1(21148)valid 7/7 昆仑0.350(#2,旧榜0.131)/华为0.722(#2)/天数2.37/沐曦1.37/海光1.85;e2(21156)精确宽度证伪(昆仑0.124<0.350,1024地板必要),TB保e1
 candidate_stage: s0
 team_best_stage: e1(在途)
 team_best_speedup: -
 sealed: yes
-next: watch e1 天数;过则valid且昆仑0.350>旧榜首0.131=昆仑#1
+next: 昆仑0.350->OpeGoodn 0.976与华为0.722->1.19是rank增量;e3轴=单向量单store流(T94 e4同构)或RPP
 updated: 2026-09-25
 ```
 
