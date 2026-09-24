@@ -86,6 +86,16 @@ class ConcatMlaAbsorbQTest(unittest.TestCase):
         b2 = torch.randn(2, 5, 192 * 2, dtype=torch.bfloat16, device="cuda")[..., ::2]
         self.check(a2, b2)
 
+    def test_huge_rows_ascend_grid_cap(self):
+        # 300000 rows would launch 75000 programs at BLOCK_R=4, past the
+        # Ascend coreDim cap of 65535; the wrapper must grow the row tile
+        # (platform case 8 failure, EE1003 kernel-launch invalid coreDim)
+        d0, d1 = 6000, 50
+        self.assertEqual(d0 * d1, 300000)
+        a = torch.randn(d0, d1, 8, dtype=torch.bfloat16, device="cuda")
+        b = torch.randn(d0, d1, 8, dtype=torch.bfloat16, device="cuda")
+        self.check(a, b)
+
     def test_empty_rows(self):
         a = torch.randn(0, 8, 128, dtype=torch.bfloat16, device="cuda")
         b = torch.randn(0, 8, 64, dtype=torch.bfloat16, device="cuda")
@@ -100,6 +110,7 @@ RELEASE_REQUIRED_TESTS = [
     "ConcatMlaAbsorbQTest.test_strided_sources",
     "ConcatMlaAbsorbQTest.test_fp16_dtype",
     "ConcatMlaAbsorbQTest.test_innermost_stride_slice",
+    "ConcatMlaAbsorbQTest.test_huge_rows_ascend_grid_cap",
     "ConcatMlaAbsorbQTest.test_empty_rows",
 ]
 

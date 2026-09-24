@@ -62,7 +62,13 @@ def concat_mla_absorb_q(a, b):
         (d0, d1, a_last + b_last), dtype=a.dtype, device=a.device
     )
     if n_rows and (a_last + b_last):
-        _concat_mla_absorb_q_kernel[(triton.cdiv(n_rows, 4),)](
+        # Ascend hard-caps coreDim (grid.x) at 65535; grow the row tile
+        # just enough to keep the launch under the cap (platform case 8
+        # needs 131072 programs at BLOCK_R=4)
+        block_r = 4
+        while block_r < 64 and triton.cdiv(n_rows, block_r) > 65535:
+            block_r *= 2
+        _concat_mla_absorb_q_kernel[(triton.cdiv(n_rows, block_r),)](
             a,
             b,
             out,
@@ -76,7 +82,7 @@ def concat_mla_absorb_q(a, b):
             b.stride(2),
             a_last,
             b_last,
-            BLOCK_R=4,
+            BLOCK_R=block_r,
             BLOCK_C=512,
             num_warps=8,
         )
