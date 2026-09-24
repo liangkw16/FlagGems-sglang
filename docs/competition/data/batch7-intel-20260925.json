@@ -1,0 +1,3883 @@
+{
+  "observed_at": "2026-09-25T01:50:49.343923+08:00",
+  "race_id": "782kzq4m",
+  "batch_no": 7,
+  "quota": {
+    "used": 16,
+    "total": 30,
+    "remaining": 14,
+    "min_interval_seconds": 120,
+    "retry_after_seconds": 0
+  },
+  "tasks": [
+    {
+      "tid": "s2t1op093",
+      "task_no": 93,
+      "batch_task_no": 1,
+      "operator": "add_constant",
+      "name": "add_constant",
+      "description": "第二阶段算子赛题：add_constant",
+      "batch_no": 7,
+      "supported_gpus": [
+        "tianshu",
+        "muxi",
+        "haiguang",
+        "kunlunxin",
+        "huawei",
+        "card_a",
+        "card_b"
+      ],
+      "supported_gpu_count": 7,
+      "submit_start_at": "2026-09-24T20:00:00",
+      "submit_end_at": "2026-10-01T19:59:59",
+      "status": "submitting",
+      "competition_status": "competing",
+      "speedup_threshold": 0.1,
+      "submission_count": 21,
+      "participating_team_count": 11,
+      "current_leader_team_id": 1772,
+      "current_leader_team_name": "wangteam",
+      "current_best_speedup": 0.94867857,
+      "current_leader_passed_gpu_count": 7,
+      "is_participated": true,
+      "my_best_speedup": 0.79303571,
+      "my_rank": 4,
+      "status_detail": {
+        "scenario": "competing_submitted",
+        "team_participated": true,
+        "can_submit": true,
+        "action_codes": [
+          "challenge_other_operator",
+          "continue_challenge_operator"
+        ],
+        "threshold_team_count": 11,
+        "submit_end_at": "2026-10-01T19:59:59",
+        "review_start_at": "2026-10-08T00:00:00",
+        "review_end_at": "2026-10-15T23:59:59",
+        "leader_team_id": 1772,
+        "leader_team_name": "wangteam",
+        "leader_average_speedup": 0.94867857,
+        "my_rank": 4,
+        "my_best_speedup": 0.79303571,
+        "gap_to_leader": 0.15564286000000005,
+        "cutoff_leader_team_id": 1772,
+        "cutoff_leader_team_name": "wangteam",
+        "cutoff_best_speedup": 0.94867857,
+        "cutoff_my_rank": 4,
+        "cutoff_my_best_speedup": 0.79303571,
+        "breakthrough_team_id": null,
+        "breakthrough_team_name": null,
+        "breakthrough_average_speedup": null,
+        "breakthrough_submitted_at": null,
+        "occupation_team_id": null,
+        "occupation_team_name": null,
+        "occupation_average_speedup": null,
+        "is_effective_occupation_team": false
+      }
+    },
+    {
+      "tid": "s2t1op094",
+      "task_no": 94,
+      "batch_task_no": 2,
+      "operator": "concat_mla_absorb_q",
+      "name": "concat_mla_absorb_q",
+      "description": "第二阶段算子赛题：concat_mla_absorb_q",
+      "batch_no": 7,
+      "supported_gpus": [
+        "tianshu",
+        "muxi",
+        "haiguang",
+        "kunlunxin",
+        "huawei",
+        "card_a",
+        "card_b"
+      ],
+      "supported_gpu_count": 7,
+      "submit_start_at": "2026-09-24T20:00:00",
+      "submit_end_at": "2026-10-01T19:59:59",
+      "status": "submitting",
+      "competition_status": "competing",
+      "speedup_threshold": 0.1,
+      "submission_count": 54,
+      "participating_team_count": 13,
+      "current_leader_team_id": 2723,
+      "current_leader_team_name": "OpeGoodn",
+      "current_best_speedup": 1.31225714,
+      "current_leader_passed_gpu_count": 7,
+      "is_participated": true,
+      "my_best_speedup": null,
+      "my_rank": null,
+      "status_detail": {
+        "scenario": "competing_submitted",
+        "team_participated": true,
+        "can_submit": true,
+        "action_codes": [
+          "challenge_other_operator",
+          "continue_challenge_operator"
+        ],
+        "threshold_team_count": 3,
+        "submit_end_at": "2026-10-01T19:59:59",
+        "review_start_at": "2026-10-08T00:00:00",
+        "review_end_at": "2026-10-15T23:59:59",
+        "leader_team_id": 2723,
+        "leader_team_name": "OpeGoodn",
+        "leader_average_speedup": 1.31225714,
+        "my_rank": null,
+        "my_best_speedup": null,
+        "gap_to_leader": null,
+        "cutoff_leader_team_id": 2723,
+        "cutoff_leader_team_name": "OpeGoodn",
+        "cutoff_best_speedup": 1.31225714,
+        "cutoff_my_rank": null,
+        "cutoff_my_best_speedup": null,
+        "breakthrough_team_id": null,
+        "breakthrough_team_name": null,
+        "breakthrough_average_speedup": null,
+        "breakthrough_submitted_at": null,
+        "occupation_team_id": null,
+        "occupation_team_name": null,
+        "occupation_average_speedup": null,
+        "is_effective_occupation_team": false
+      }
+    },
+    {
+      "tid": "s2t1op095",
+      "task_no": 95,
+      "batch_task_no": 3,
+      "operator": "create_chunked_prefix_cache_kv_indices",
+      "name": "create_chunked_prefix_cache_kv_indices",
+      "description": "第二阶段算子赛题：create_chunked_prefix_cache_kv_indices",
+      "batch_no": 7,
+      "supported_gpus": [
+        "tianshu",
+        "muxi",
+        "haiguang",
+        "kunlunxin",
+        "huawei",
+        "card_a",
+        "card_b"
+      ],
+      "supported_gpu_count": 7,
+      "submit_start_at": "2026-09-24T20:00:00",
+      "submit_end_at": "2026-10-01T19:59:59",
+      "status": "submitting",
+      "competition_status": "competing",
+      "speedup_threshold": 0.1,
+      "submission_count": 24,
+      "participating_team_count": 14,
+      "current_leader_team_id": 2196,
+      "current_leader_team_name": "thunguo",
+      "current_best_speedup": 49.10953571,
+      "current_leader_passed_gpu_count": 7,
+      "is_participated": true,
+      "my_best_speedup": 32.79078571,
+      "my_rank": 7,
+      "status_detail": {
+        "scenario": "competing_submitted",
+        "team_participated": true,
+        "can_submit": true,
+        "action_codes": [
+          "challenge_other_operator",
+          "continue_challenge_operator"
+        ],
+        "threshold_team_count": 10,
+        "submit_end_at": "2026-10-01T19:59:59",
+        "review_start_at": "2026-10-08T00:00:00",
+        "review_end_at": "2026-10-15T23:59:59",
+        "leader_team_id": 2196,
+        "leader_team_name": "thunguo",
+        "leader_average_speedup": 49.10953571,
+        "my_rank": 7,
+        "my_best_speedup": 32.79078571,
+        "gap_to_leader": 16.31875,
+        "cutoff_leader_team_id": 2196,
+        "cutoff_leader_team_name": "thunguo",
+        "cutoff_best_speedup": 49.10953571,
+        "cutoff_my_rank": 7,
+        "cutoff_my_best_speedup": 32.79078571,
+        "breakthrough_team_id": null,
+        "breakthrough_team_name": null,
+        "breakthrough_average_speedup": null,
+        "breakthrough_submitted_at": null,
+        "occupation_team_id": null,
+        "occupation_team_name": null,
+        "occupation_average_speedup": null,
+        "is_effective_occupation_team": false
+      }
+    },
+    {
+      "tid": "s2t1op096",
+      "task_no": 96,
+      "batch_task_no": 4,
+      "operator": "fused_pack_qkv",
+      "name": "fused_pack_qkv",
+      "description": "第二阶段算子赛题：fused_pack_qkv",
+      "batch_no": 7,
+      "supported_gpus": [
+        "tianshu",
+        "muxi",
+        "haiguang",
+        "kunlunxin",
+        "huawei",
+        "card_a",
+        "card_b"
+      ],
+      "supported_gpu_count": 7,
+      "submit_start_at": "2026-09-24T20:00:00",
+      "submit_end_at": "2026-10-01T19:59:59",
+      "status": "submitting",
+      "competition_status": "competing",
+      "speedup_threshold": 0.1,
+      "submission_count": 66,
+      "participating_team_count": 14,
+      "current_leader_team_id": 2106,
+      "current_leader_team_name": "c2flow",
+      "current_best_speedup": 2.3555,
+      "current_leader_passed_gpu_count": 7,
+      "is_participated": true,
+      "my_best_speedup": 1.72675,
+      "my_rank": 7,
+      "status_detail": {
+        "scenario": "competing_submitted",
+        "team_participated": true,
+        "can_submit": true,
+        "action_codes": [
+          "challenge_other_operator",
+          "continue_challenge_operator"
+        ],
+        "threshold_team_count": 10,
+        "submit_end_at": "2026-10-01T19:59:59",
+        "review_start_at": "2026-10-08T00:00:00",
+        "review_end_at": "2026-10-15T23:59:59",
+        "leader_team_id": 2106,
+        "leader_team_name": "c2flow",
+        "leader_average_speedup": 2.3555,
+        "my_rank": 7,
+        "my_best_speedup": 1.72675,
+        "gap_to_leader": 0.6287500000000001,
+        "cutoff_leader_team_id": 2106,
+        "cutoff_leader_team_name": "c2flow",
+        "cutoff_best_speedup": 2.3555,
+        "cutoff_my_rank": 7,
+        "cutoff_my_best_speedup": 1.72675,
+        "breakthrough_team_id": null,
+        "breakthrough_team_name": null,
+        "breakthrough_average_speedup": null,
+        "breakthrough_submitted_at": null,
+        "occupation_team_id": null,
+        "occupation_team_name": null,
+        "occupation_average_speedup": null,
+        "is_effective_occupation_team": false
+      }
+    },
+    {
+      "tid": "s2t1op097",
+      "task_no": 97,
+      "batch_task_no": 5,
+      "operator": "fused_sigmoid_mul",
+      "name": "fused_sigmoid_mul",
+      "description": "第二阶段算子赛题：fused_sigmoid_mul",
+      "batch_no": 7,
+      "supported_gpus": [
+        "tianshu",
+        "muxi",
+        "haiguang",
+        "kunlunxin",
+        "huawei",
+        "card_a",
+        "card_b"
+      ],
+      "supported_gpu_count": 7,
+      "submit_start_at": "2026-09-24T20:00:00",
+      "submit_end_at": "2026-10-01T19:59:59",
+      "status": "submitting",
+      "competition_status": "competing",
+      "speedup_threshold": 0.1,
+      "submission_count": 26,
+      "participating_team_count": 14,
+      "current_leader_team_id": 2123,
+      "current_leader_team_name": "EvokeAgent",
+      "current_best_speedup": 3.18556349,
+      "current_leader_passed_gpu_count": 7,
+      "is_participated": true,
+      "my_best_speedup": 2.78718254,
+      "my_rank": 10,
+      "status_detail": {
+        "scenario": "competing_submitted",
+        "team_participated": true,
+        "can_submit": true,
+        "action_codes": [
+          "challenge_other_operator",
+          "continue_challenge_operator"
+        ],
+        "threshold_team_count": 12,
+        "submit_end_at": "2026-10-01T19:59:59",
+        "review_start_at": "2026-10-08T00:00:00",
+        "review_end_at": "2026-10-15T23:59:59",
+        "leader_team_id": 2123,
+        "leader_team_name": "EvokeAgent",
+        "leader_average_speedup": 3.18556349,
+        "my_rank": 10,
+        "my_best_speedup": 2.78718254,
+        "gap_to_leader": 0.39838094999999996,
+        "cutoff_leader_team_id": 2123,
+        "cutoff_leader_team_name": "EvokeAgent",
+        "cutoff_best_speedup": 3.18556349,
+        "cutoff_my_rank": 10,
+        "cutoff_my_best_speedup": 2.78718254,
+        "breakthrough_team_id": null,
+        "breakthrough_team_name": null,
+        "breakthrough_average_speedup": null,
+        "breakthrough_submitted_at": null,
+        "occupation_team_id": null,
+        "occupation_team_name": null,
+        "occupation_average_speedup": null,
+        "is_effective_occupation_team": false
+      }
+    },
+    {
+      "tid": "s2t1op098",
+      "task_no": 98,
+      "batch_task_no": 6,
+      "operator": "get_mla_kv_buffer",
+      "name": "get_mla_kv_buffer",
+      "description": "第二阶段算子赛题：get_mla_kv_buffer",
+      "batch_no": 7,
+      "supported_gpus": [
+        "tianshu",
+        "muxi",
+        "haiguang",
+        "kunlunxin",
+        "huawei",
+        "card_a",
+        "card_b"
+      ],
+      "supported_gpu_count": 7,
+      "submit_start_at": "2026-09-24T20:00:00",
+      "submit_end_at": "2026-10-01T19:59:59",
+      "status": "submitting",
+      "competition_status": "competing",
+      "speedup_threshold": 0.1,
+      "submission_count": 26,
+      "participating_team_count": 13,
+      "current_leader_team_id": 3017,
+      "current_leader_team_name": "eatabigwatermelon",
+      "current_best_speedup": 1.28228571,
+      "current_leader_passed_gpu_count": 7,
+      "is_participated": true,
+      "my_best_speedup": 1.25542857,
+      "my_rank": 4,
+      "status_detail": {
+        "scenario": "competing_submitted",
+        "team_participated": true,
+        "can_submit": true,
+        "action_codes": [
+          "challenge_other_operator",
+          "continue_challenge_operator"
+        ],
+        "threshold_team_count": 9,
+        "submit_end_at": "2026-10-01T19:59:59",
+        "review_start_at": "2026-10-08T00:00:00",
+        "review_end_at": "2026-10-15T23:59:59",
+        "leader_team_id": 3017,
+        "leader_team_name": "eatabigwatermelon",
+        "leader_average_speedup": 1.28228571,
+        "my_rank": 4,
+        "my_best_speedup": 1.25542857,
+        "gap_to_leader": 0.026857139999999946,
+        "cutoff_leader_team_id": 3017,
+        "cutoff_leader_team_name": "eatabigwatermelon",
+        "cutoff_best_speedup": 1.28228571,
+        "cutoff_my_rank": 4,
+        "cutoff_my_best_speedup": 1.25542857,
+        "breakthrough_team_id": null,
+        "breakthrough_team_name": null,
+        "breakthrough_average_speedup": null,
+        "breakthrough_submitted_at": null,
+        "occupation_team_id": null,
+        "occupation_team_name": null,
+        "occupation_average_speedup": null,
+        "is_effective_occupation_team": false
+      }
+    }
+  ],
+  "leaderboards": {
+    "s2t1op093": [
+      {
+        "rank": 1,
+        "team_id": 1772,
+        "team_name": "wangteam",
+        "is_mine": false,
+        "best_average_speedup": 0.94867857,
+        "ranking_score": 2.86868687,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:40:22",
+        "first_valid_submitted_at": "2026-09-24T20:40:22",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.88325,
+            "rank": 12
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.98125,
+            "rank": 12
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9255,
+            "rank": 9
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.91025,
+            "rank": 1
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.98775,
+            "rank": 1
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9445,
+            "rank": 11
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.00825,
+            "rank": 2
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "team_id": 2123,
+        "team_name": "EvokeAgent",
+        "is_mine": false,
+        "best_average_speedup": 0.86035714,
+        "ranking_score": 2.54848485,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:24:45",
+        "first_valid_submitted_at": "2026-09-24T20:24:45",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.88575,
+            "rank": 11
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.012,
+            "rank": 2
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.92,
+            "rank": 11
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.86425,
+            "rank": 2
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.339,
+            "rank": 5
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.0045,
+            "rank": 1
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.997,
+            "rank": 6
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "team_id": 2220,
+        "team_name": "GuanghuLab",
+        "is_mine": false,
+        "best_average_speedup": 0.83767857,
+        "ranking_score": 2.31805556,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:19:00",
+        "first_valid_submitted_at": "2026-09-24T20:49:59",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.087,
+            "rank": 3
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9865,
+            "rank": 9
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.932,
+            "rank": 5
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.53825,
+            "rank": 9
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.388,
+            "rank": 2
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.91925,
+            "rank": 16
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.01275,
+            "rank": 1
+          }
+        ]
+      },
+      {
+        "rank": 4,
+        "team_id": 2223,
+        "team_name": "SoulCoder",
+        "is_mine": true,
+        "best_average_speedup": 0.79303571,
+        "ranking_score": 2.15178571,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:13:43",
+        "first_valid_submitted_at": "2026-09-25T00:13:43",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.00525,
+            "rank": 8
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.03975,
+            "rank": 1
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9625,
+            "rank": 2
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.442,
+            "rank": 14
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.131,
+            "rank": 16
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.978,
+            "rank": 4
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.99275,
+            "rank": 7
+          }
+        ]
+      },
+      {
+        "rank": 5,
+        "team_id": 2993,
+        "team_name": "SGZhang",
+        "is_mine": false,
+        "best_average_speedup": 0.77707143,
+        "ranking_score": 1.76233766,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:37:20",
+        "first_valid_submitted_at": "2026-09-24T20:37:20",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9215,
+            "rank": 10
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.005,
+            "rank": 3
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.971,
+            "rank": 1
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.4825,
+            "rank": 12
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.1575,
+            "rank": 12
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9445,
+            "rank": 11
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9575,
+            "rank": 14
+          }
+        ]
+      },
+      {
+        "rank": 6,
+        "team_id": 2106,
+        "team_name": "c2flow",
+        "is_mine": false,
+        "best_average_speedup": 0.82367857,
+        "ranking_score": 1.21739927,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:20:51",
+        "first_valid_submitted_at": "2026-09-24T20:20:51",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.038,
+            "rank": 5
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9935,
+            "rank": 7
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.89925,
+            "rank": 13
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.72075,
+            "rank": 4
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.1375,
+            "rank": 14
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.96875,
+            "rank": 7
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.008,
+            "rank": 3
+          }
+        ]
+      },
+      {
+        "rank": 7,
+        "team_id": 3017,
+        "team_name": "eatabigwatermelon",
+        "is_mine": false,
+        "best_average_speedup": 0.7865,
+        "ranking_score": 1.0459707,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T23:54:57",
+        "first_valid_submitted_at": "2026-09-24T23:54:57",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.007,
+            "rank": 7
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.99975,
+            "rank": 4
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9305,
+            "rank": 6
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.4645,
+            "rank": 13
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.1365,
+            "rank": 15
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.96875,
+            "rank": 7
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9985,
+            "rank": 5
+          }
+        ]
+      },
+      {
+        "rank": 8,
+        "team_id": 2719,
+        "team_name": "cgzhou",
+        "is_mine": false,
+        "best_average_speedup": 0.74160714,
+        "ranking_score": 1.04583333,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T21:49:56",
+        "first_valid_submitted_at": "2026-09-24T21:49:56",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9535,
+            "rank": 9
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.86225,
+            "rank": 15
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.93475,
+            "rank": 4
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.1855,
+            "rank": 16
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.2885,
+            "rank": 9
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.98025,
+            "rank": 3
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9865,
+            "rank": 9
+          }
+        ]
+      },
+      {
+        "rank": 9,
+        "team_id": 2692,
+        "team_name": "AICity",
+        "is_mine": false,
+        "best_average_speedup": 0.76953571,
+        "ranking_score": 0.90459957,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T22:41:36",
+        "first_valid_submitted_at": "2026-09-24T22:41:36",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.68525,
+            "rank": 16
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.98175,
+            "rank": 11
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.93525,
+            "rank": 3
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.574,
+            "rank": 7
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.302,
+            "rank": 8
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.93525,
+            "rank": 15
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.97325,
+            "rank": 12
+          }
+        ]
+      },
+      {
+        "rank": 10,
+        "team_id": 2723,
+        "team_name": "OpeGoodn",
+        "is_mine": false,
+        "best_average_speedup": 0.73360714,
+        "ranking_score": 0.86068931,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:35:14",
+        "first_valid_submitted_at": "2026-09-25T00:35:14",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.6865,
+            "rank": 15
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.99725,
+            "rank": 6
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.92675,
+            "rank": 7
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.43725,
+            "rank": 15
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.13925,
+            "rank": 13
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9445,
+            "rank": 11
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.00375,
+            "rank": 4
+          }
+        ]
+      },
+      {
+        "rank": 11,
+        "team_id": 2440,
+        "team_name": "aiaijiaolvle",
+        "is_mine": false,
+        "best_average_speedup": 0.81510714,
+        "ranking_score": 0.8459707,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T21:59:19",
+        "first_valid_submitted_at": "2026-09-24T21:59:19",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.87375,
+            "rank": 13
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.93275,
+            "rank": 14
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.90375,
+            "rank": 12
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.8015,
+            "rank": 3
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.32225,
+            "rank": 7
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.94225,
+            "rank": 14
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9295,
+            "rank": 15
+          }
+        ]
+      }
+    ],
+    "s2t1op094": [
+      {
+        "rank": 1,
+        "team_id": 2723,
+        "team_name": "OpeGoodn",
+        "is_mine": false,
+        "best_average_speedup": 1.31225714,
+        "ranking_score": 4.83333333,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:43:21",
+        "first_valid_submitted_at": "2026-09-25T00:43:21",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.9818,
+            "rank": 1
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.8926,
+            "rank": 3
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.7852,
+            "rank": 2
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.0004,
+            "rank": 2
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9846,
+            "rank": 1
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.0974,
+            "rank": 2
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.4438,
+            "rank": 1
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "team_id": 2123,
+        "team_name": "EvokeAgent",
+        "is_mine": false,
+        "best_average_speedup": 1.34608571,
+        "ranking_score": 4.5,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:42:12",
+        "first_valid_submitted_at": "2026-09-24T20:42:12",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.638,
+            "rank": 3
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.2156,
+            "rank": 1
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.258,
+            "rank": 1
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.4094,
+            "rank": 1
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.4202,
+            "rank": 2
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.096,
+            "rank": 3
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.3854,
+            "rank": 3
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "team_id": 2106,
+        "team_name": "c2flow",
+        "is_mine": false,
+        "best_average_speedup": 1.13368571,
+        "ranking_score": 3.5,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:34:42",
+        "first_valid_submitted_at": "2026-09-24T20:34:42",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.7002,
+            "rank": 2
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9884,
+            "rank": 2
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.7536,
+            "rank": 3
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.6214,
+            "rank": 3
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.3508,
+            "rank": 3
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.1014,
+            "rank": 1
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.42,
+            "rank": 2
+          }
+        ]
+      }
+    ],
+    "s2t1op095": [
+      {
+        "rank": 1,
+        "team_id": 2196,
+        "team_name": "thunguo",
+        "is_mine": false,
+        "best_average_speedup": 49.10953571,
+        "ranking_score": 3.36111111,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:08:20",
+        "first_valid_submitted_at": "2026-09-24T20:28:18",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 127.6715,
+            "rank": 6
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 25.86975,
+            "rank": 1
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 46.57825,
+            "rank": 9
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 37.837,
+            "rank": 1
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 32.926,
+            "rank": 4
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 36.1,
+            "rank": 2
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 36.78425,
+            "rank": 3
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "team_id": 2220,
+        "team_name": "GuanghuLab",
+        "is_mine": false,
+        "best_average_speedup": 45.94,
+        "ranking_score": 2.46978022,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:53:30",
+        "first_valid_submitted_at": "2026-09-24T20:53:30",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 133.1795,
+            "rank": 3
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 23.7745,
+            "rank": 4
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 48.386,
+            "rank": 3
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 7.815,
+            "rank": 13
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 35.3355,
+            "rank": 3
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 36.97225,
+            "rank": 1
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 36.11725,
+            "rank": 7
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "team_id": 2106,
+        "team_name": "c2flow",
+        "is_mine": false,
+        "best_average_speedup": 116.99175,
+        "ranking_score": 2.45952381,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:25:32",
+        "first_valid_submitted_at": "2026-09-24T20:25:32",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 124.10725,
+            "rank": 7
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 25.027,
+            "rank": 2
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 48.175,
+            "rank": 4
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 31.4865,
+            "rank": 5
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 519.56725,
+            "rank": 1
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 34.02,
+            "rank": 6
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 36.55925,
+            "rank": 5
+          }
+        ]
+      },
+      {
+        "rank": 4,
+        "team_id": 2692,
+        "team_name": "AICity",
+        "is_mine": false,
+        "best_average_speedup": 42.67282143,
+        "ranking_score": 1.79960317,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T22:45:55",
+        "first_valid_submitted_at": "2026-09-24T22:45:55",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 106.051,
+            "rank": 9
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 21.858,
+            "rank": 7
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 50.288,
+            "rank": 1
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 28.85675,
+            "rank": 6
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 24.66675,
+            "rank": 7
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 31.29725,
+            "rank": 9
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 35.692,
+            "rank": 8
+          }
+        ]
+      },
+      {
+        "rank": 5,
+        "team_id": 1806,
+        "team_name": "金狐狸",
+        "is_mine": false,
+        "best_average_speedup": 61.20671429,
+        "ranking_score": 1.37063492,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:54:58",
+        "first_valid_submitted_at": "2026-09-24T20:54:58",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 129.1345,
+            "rank": 5
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 20.24275,
+            "rank": 9
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 47.3345,
+            "rank": 7
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 22.50475,
+            "rank": 8
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 139.95375,
+            "rank": 2
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 32.961,
+            "rank": 8
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 36.31575,
+            "rank": 6
+          }
+        ]
+      },
+      {
+        "rank": 6,
+        "team_id": 2123,
+        "team_name": "EvokeAgent",
+        "is_mine": false,
+        "best_average_speedup": 39.99546429,
+        "ranking_score": 0.85753968,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:45:11",
+        "first_valid_submitted_at": "2026-09-24T20:45:11",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 116.60775,
+            "rank": 8
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 21.0415,
+            "rank": 8
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 47.2205,
+            "rank": 8
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 7.055,
+            "rank": 14
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 18.7435,
+            "rank": 10
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 34.317,
+            "rank": 5
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 34.983,
+            "rank": 9
+          }
+        ]
+      },
+      {
+        "rank": 7,
+        "team_id": 2223,
+        "team_name": "SoulCoder",
+        "is_mine": true,
+        "best_average_speedup": 32.79078571,
+        "ranking_score": 0.71558442,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:19:04",
+        "first_valid_submitted_at": "2026-09-25T00:19:04",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 82.3425,
+            "rank": 10
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 19.7075,
+            "rank": 11
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 33.32,
+            "rank": 10
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 27.37475,
+            "rank": 7
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 15.81525,
+            "rank": 11
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 25.4495,
+            "rank": 10
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 25.526,
+            "rank": 11
+          }
+        ]
+      },
+      {
+        "rank": 8,
+        "team_id": 2723,
+        "team_name": "OpeGoodn",
+        "is_mine": false,
+        "best_average_speedup": 27.01332143,
+        "ranking_score": 0.58089133,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:23:38",
+        "first_valid_submitted_at": "2026-09-25T00:23:38",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 64.54375,
+            "rank": 14
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 18.49525,
+            "rank": 12
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 29.69625,
+            "rank": 12
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 18.8185,
+            "rank": 9
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 13.05975,
+            "rank": 12
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 20.68225,
+            "rank": 13
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 23.7975,
+            "rank": 14
+          }
+        ]
+      },
+      {
+        "rank": 9,
+        "team_id": 2993,
+        "team_name": "SGZhang",
+        "is_mine": false,
+        "best_average_speedup": 26.37989286,
+        "ranking_score": 0.57272727,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T01:10:50",
+        "first_valid_submitted_at": "2026-09-25T01:10:50",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 74.3025,
+            "rank": 11
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 14.66975,
+            "rank": 15
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 25.90125,
+            "rank": 15
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 11.7995,
+            "rank": 11
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 7.43,
+            "rank": 15
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 24.57975,
+            "rank": 11
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 25.9765,
+            "rank": 10
+          }
+        ]
+      },
+      {
+        "rank": 10,
+        "team_id": 2719,
+        "team_name": "cgzhou",
+        "is_mine": false,
+        "best_average_speedup": 23.36653571,
+        "ranking_score": 0.52454212,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T21:21:08",
+        "first_valid_submitted_at": "2026-09-24T21:21:08",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 58.17025,
+            "rank": 15
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 19.8305,
+            "rank": 10
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 29.54625,
+            "rank": 14
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.11275,
+            "rank": 15
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 11.13675,
+            "rank": 14
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 20.336,
+            "rank": 14
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 24.43325,
+            "rank": 13
+          }
+        ]
+      }
+    ],
+    "s2t1op096": [
+      {
+        "rank": 1,
+        "team_id": 2106,
+        "team_name": "c2flow",
+        "is_mine": false,
+        "best_average_speedup": 2.3555,
+        "ranking_score": 4.7,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T23:55:06",
+        "first_valid_submitted_at": "2026-09-24T21:30:34",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 5.5245,
+            "rank": 2
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.12825,
+            "rank": 5
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.288,
+            "rank": 1
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.6235,
+            "rank": 2
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.40525,
+            "rank": 2
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.57675,
+            "rank": 1
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.94225,
+            "rank": 1
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "team_id": 2993,
+        "team_name": "SGZhang",
+        "is_mine": false,
+        "best_average_speedup": 2.07903571,
+        "ranking_score": 1.90357143,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:30:43",
+        "first_valid_submitted_at": "2026-09-24T20:30:43",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.9515,
+            "rank": 7
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.4455,
+            "rank": 1
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.25625,
+            "rank": 4
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.46575,
+            "rank": 10
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.6165,
+            "rank": 7
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.43625,
+            "rank": 8
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.3815,
+            "rank": 7
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "team_id": 2723,
+        "team_name": "OpeGoodn",
+        "is_mine": false,
+        "best_average_speedup": 1.83096429,
+        "ranking_score": 1.5531857,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:41:14",
+        "first_valid_submitted_at": "2026-09-25T00:41:14",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.48625,
+            "rank": 10
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.64375,
+            "rank": 12
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.79275,
+            "rank": 11
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9815,
+            "rank": 1
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.42675,
+            "rank": 11
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.42825,
+            "rank": 9
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.0575,
+            "rank": 13
+          }
+        ]
+      },
+      {
+        "rank": 4,
+        "team_id": 2123,
+        "team_name": "EvokeAgent",
+        "is_mine": false,
+        "best_average_speedup": 2.13725,
+        "ranking_score": 1.42619048,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:19:23",
+        "first_valid_submitted_at": "2026-09-24T20:19:23",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 5.51225,
+            "rank": 3
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.09875,
+            "rank": 8
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.26625,
+            "rank": 3
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.606,
+            "rank": 5
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.60475,
+            "rank": 8
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.48075,
+            "rank": 7
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.392,
+            "rank": 6
+          }
+        ]
+      },
+      {
+        "rank": 5,
+        "team_id": 2719,
+        "team_name": "cgzhou",
+        "is_mine": false,
+        "best_average_speedup": 1.85042857,
+        "ranking_score": 1.16303419,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T21:29:57",
+        "first_valid_submitted_at": "2026-09-24T21:29:57",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.57175,
+            "rank": 9
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.18375,
+            "rank": 2
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.852,
+            "rank": 10
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.16125,
+            "rank": 13
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.313,
+            "rank": 12
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.504,
+            "rank": 6
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.36725,
+            "rank": 8
+          }
+        ]
+      },
+      {
+        "rank": 6,
+        "team_id": 3017,
+        "team_name": "eatabigwatermelon",
+        "is_mine": false,
+        "best_average_speedup": 1.93960714,
+        "ranking_score": 1.14560995,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T01:34:29",
+        "first_valid_submitted_at": "2026-09-25T01:34:29",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 5.003,
+            "rank": 6
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.14225,
+            "rank": 4
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.85425,
+            "rank": 9
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.46375,
+            "rank": 11
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.171,
+            "rank": 13
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.53075,
+            "rank": 4
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.41225,
+            "rank": 5
+          }
+        ]
+      },
+      {
+        "rank": 7,
+        "team_id": 2223,
+        "team_name": "SoulCoder",
+        "is_mine": true,
+        "best_average_speedup": 1.72675,
+        "ranking_score": 0.87576868,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:52:49",
+        "first_valid_submitted_at": "2026-09-25T00:52:49",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.9505,
+            "rank": 13
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.92,
+            "rank": 9
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.1485,
+            "rank": 7
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.583,
+            "rank": 7
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.9495,
+            "rank": 5
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.236,
+            "rank": 11
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.29975,
+            "rank": 9
+          }
+        ]
+      },
+      {
+        "rank": 8,
+        "team_id": 2220,
+        "team_name": "GuanghuLab",
+        "is_mine": false,
+        "best_average_speedup": 1.90639286,
+        "ranking_score": 0.84166667,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T21:16:48",
+        "first_valid_submitted_at": "2026-09-24T21:16:48",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.83075,
+            "rank": 8
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.7365,
+            "rank": 10
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.941,
+            "rank": 8
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.56375,
+            "rank": 8
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.673,
+            "rank": 6
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.39825,
+            "rank": 10
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.2015,
+            "rank": 10
+          }
+        ]
+      },
+      {
+        "rank": 9,
+        "team_id": 2440,
+        "team_name": "aiaijiaolvle",
+        "is_mine": false,
+        "best_average_speedup": 1.58785714,
+        "ranking_score": 0.66161616,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T22:30:52",
+        "first_valid_submitted_at": "2026-09-24T22:30:52",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.447,
+            "rank": 11
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.69575,
+            "rank": 11
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.579,
+            "rank": 12
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.472,
+            "rank": 9
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.56625,
+            "rank": 9
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.22325,
+            "rank": 12
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.13175,
+            "rank": 11
+          }
+        ]
+      },
+      {
+        "rank": 10,
+        "team_id": 2692,
+        "team_name": "AICity",
+        "is_mine": false,
+        "best_average_speedup": 1.4665,
+        "ranking_score": 0.58076923,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T22:48:00",
+        "first_valid_submitted_at": "2026-09-24T22:48:00",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.29075,
+            "rank": 12
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.49975,
+            "rank": 13
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.23475,
+            "rank": 13
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.41575,
+            "rank": 12
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.55025,
+            "rank": 10
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.17525,
+            "rank": 13
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.099,
+            "rank": 12
+          }
+        ]
+      }
+    ],
+    "s2t1op097": [
+      {
+        "rank": 1,
+        "team_id": 2123,
+        "team_name": "EvokeAgent",
+        "is_mine": false,
+        "best_average_speedup": 3.18556349,
+        "ranking_score": 2.89087302,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:22:38",
+        "first_valid_submitted_at": "2026-09-24T20:22:38",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.88038889,
+            "rank": 9
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.03338889,
+            "rank": 8
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.102,
+            "rank": 1
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.00705556,
+            "rank": 1
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.48572222,
+            "rank": 2
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.72183333,
+            "rank": 12
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.06855556,
+            "rank": 14
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "team_id": 2196,
+        "team_name": "thunguo",
+        "is_mine": false,
+        "best_average_speedup": 3.17172222,
+        "ranking_score": 2.72619048,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:50:02",
+        "first_valid_submitted_at": "2026-09-25T00:50:02",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 5.25638889,
+            "rank": 3
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.09994444,
+            "rank": 7
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.08127778,
+            "rank": 3
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.24077778,
+            "rank": 3
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.47755556,
+            "rank": 3
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.87888889,
+            "rank": 1
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.16722222,
+            "rank": 4
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "team_id": 2719,
+        "team_name": "cgzhou",
+        "is_mine": false,
+        "best_average_speedup": 2.87321429,
+        "ranking_score": 2.3672619,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T21:54:58",
+        "first_valid_submitted_at": "2026-09-24T21:54:58",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 5.33077778,
+            "rank": 1
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.76894444,
+            "rank": 15
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.57366667,
+            "rank": 15
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.94633333,
+            "rank": 14
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.524,
+            "rank": 16
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.75255556,
+            "rank": 10
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.21622222,
+            "rank": 1
+          }
+        ]
+      },
+      {
+        "rank": 4,
+        "team_id": 3017,
+        "team_name": "eatabigwatermelon",
+        "is_mine": false,
+        "best_average_speedup": 2.94966667,
+        "ranking_score": 1.98374126,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:52:57",
+        "first_valid_submitted_at": "2026-09-25T00:52:57",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.70105556,
+            "rank": 10
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.43038889,
+            "rank": 1
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.92561111,
+            "rank": 11
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.0085,
+            "rank": 11
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.65472222,
+            "rank": 13
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.75561111,
+            "rank": 8
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.17177778,
+            "rank": 2
+          }
+        ]
+      },
+      {
+        "rank": 5,
+        "team_id": 2220,
+        "team_name": "GuanghuLab",
+        "is_mine": false,
+        "best_average_speedup": 2.96846825,
+        "ranking_score": 1.93452381,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T21:22:19",
+        "first_valid_submitted_at": "2026-09-24T21:22:19",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.64566667,
+            "rank": 15
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.99194444,
+            "rank": 10
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.03888889,
+            "rank": 4
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.18277778,
+            "rank": 4
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.01277778,
+            "rank": 1
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.75777778,
+            "rank": 7
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.14944444,
+            "rank": 8
+          }
+        ]
+      },
+      {
+        "rank": 6,
+        "team_id": 2723,
+        "team_name": "OpeGoodn",
+        "is_mine": false,
+        "best_average_speedup": 3.02340476,
+        "ranking_score": 1.76035354,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:26:13",
+        "first_valid_submitted_at": "2026-09-25T00:26:13",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.92494444,
+            "rank": 8
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.36333333,
+            "rank": 2
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.92888889,
+            "rank": 10
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.01622222,
+            "rank": 9
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.94633333,
+            "rank": 11
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.81538889,
+            "rank": 2
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.16872222,
+            "rank": 3
+          }
+        ]
+      },
+      {
+        "rank": 7,
+        "team_id": 2106,
+        "team_name": "c2flow",
+        "is_mine": false,
+        "best_average_speedup": 2.90862699,
+        "ranking_score": 1.508171,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:32:38",
+        "first_valid_submitted_at": "2026-09-24T20:32:38",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 5.3005,
+            "rank": 2
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.49316667,
+            "rank": 16
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.08883333,
+            "rank": 2
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.96255556,
+            "rank": 12
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.60405556,
+            "rank": 14
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.77272222,
+            "rank": 5
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.13855556,
+            "rank": 11
+          }
+        ]
+      },
+      {
+        "rank": 8,
+        "team_id": 2539,
+        "team_name": "kaohongshu",
+        "is_mine": false,
+        "best_average_speedup": 3.0296508,
+        "ranking_score": 1.08644689,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T23:07:16",
+        "first_valid_submitted_at": "2026-09-24T22:44:15",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.613,
+            "rank": 12
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.13516667,
+            "rank": 5
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.98755556,
+            "rank": 7
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.09366667,
+            "rank": 6
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.46916667,
+            "rank": 4
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.77061111,
+            "rank": 6
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.13838889,
+            "rank": 13
+          }
+        ]
+      },
+      {
+        "rank": 9,
+        "team_id": 2993,
+        "team_name": "SGZhang",
+        "is_mine": false,
+        "best_average_speedup": 2.94763492,
+        "ranking_score": 0.8967033,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:28:31",
+        "first_valid_submitted_at": "2026-09-24T20:28:31",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 5.20677778,
+            "rank": 5
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.88277778,
+            "rank": 13
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.87033333,
+            "rank": 13
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.87833333,
+            "rank": 15
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.86883333,
+            "rank": 12
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.77616667,
+            "rank": 4
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.15022222,
+            "rank": 7
+          }
+        ]
+      },
+      {
+        "rank": 10,
+        "team_id": 2223,
+        "team_name": "SoulCoder",
+        "is_mine": true,
+        "best_average_speedup": 2.78718254,
+        "ranking_score": 0.8645202,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:44:05",
+        "first_valid_submitted_at": "2026-09-25T00:44:05",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.41827778,
+            "rank": 16
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.9845,
+            "rank": 11
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.02144444,
+            "rank": 5
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.16644444,
+            "rank": 5
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.02172222,
+            "rank": 10
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.75338889,
+            "rank": 9
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.1445,
+            "rank": 10
+          }
+        ]
+      },
+      {
+        "rank": 11,
+        "team_id": 2692,
+        "team_name": "AICity",
+        "is_mine": false,
+        "best_average_speedup": 2.90740476,
+        "ranking_score": 0.65281385,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T22:50:14",
+        "first_valid_submitted_at": "2026-09-24T22:50:14",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.65327778,
+            "rank": 11
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.84333333,
+            "rank": 14
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.73466667,
+            "rank": 14
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.07222222,
+            "rank": 7
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.33472222,
+            "rank": 7
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.65961111,
+            "rank": 15
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.054,
+            "rank": 15
+          }
+        ]
+      },
+      {
+        "rank": 12,
+        "team_id": 2440,
+        "team_name": "aiaijiaolvle",
+        "is_mine": false,
+        "best_average_speedup": 2.7936508,
+        "ranking_score": 0.64835165,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T22:03:16",
+        "first_valid_submitted_at": "2026-09-24T22:03:16",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 4.10427778,
+            "rank": 14
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.10311111,
+            "rank": 6
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.92327778,
+            "rank": 12
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.95927778,
+            "rank": 13
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.33116667,
+            "rank": 8
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 3.25427778,
+            "rank": 16
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.88016667,
+            "rank": 16
+          }
+        ]
+      }
+    ],
+    "s2t1op098": [
+      {
+        "rank": 1,
+        "team_id": 3017,
+        "team_name": "eatabigwatermelon",
+        "is_mine": false,
+        "best_average_speedup": 1.28228571,
+        "ranking_score": 3.18730159,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T01:43:19",
+        "first_valid_submitted_at": "2026-09-25T00:59:36",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.36766667,
+            "rank": 10
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.53183333,
+            "rank": 1
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.88533333,
+            "rank": 3
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.4905,
+            "rank": 2
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.4915,
+            "rank": 7
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.149,
+            "rank": 1
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.06016667,
+            "rank": 9
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "team_id": 2723,
+        "team_name": "OpeGoodn",
+        "is_mine": false,
+        "best_average_speedup": 0.99192857,
+        "ranking_score": 2.34551282,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:49:26",
+        "first_valid_submitted_at": "2026-09-25T00:29:43",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.14033333,
+            "rank": 16
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.96083333,
+            "rank": 13
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.1285,
+            "rank": 13
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.976,
+            "rank": 1
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.19016667,
+            "rank": 1
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.7485,
+            "rank": 15
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.79916667,
+            "rank": 16
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "team_id": 2719,
+        "team_name": "cgzhou",
+        "is_mine": false,
+        "best_average_speedup": 1.12466667,
+        "ranking_score": 1.96858974,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:38:35",
+        "first_valid_submitted_at": "2026-09-24T20:29:37",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.6705,
+            "rank": 4
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.07433333,
+            "rank": 12
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.374,
+            "rank": 10
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.11883333,
+            "rank": 13
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.45183333,
+            "rank": 8
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.09116667,
+            "rank": 3
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.092,
+            "rank": 1
+          }
+        ]
+      },
+      {
+        "rank": 4,
+        "team_id": 2223,
+        "team_name": "SoulCoder",
+        "is_mine": true,
+        "best_average_speedup": 1.25542857,
+        "ranking_score": 1.73535354,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:55:21",
+        "first_valid_submitted_at": "2026-09-25T00:55:21",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.3695,
+            "rank": 9
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.3715,
+            "rank": 5
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.8545,
+            "rank": 4
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.35033333,
+            "rank": 3
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.72166667,
+            "rank": 2
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.06833333,
+            "rank": 4
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.05216667,
+            "rank": 11
+          }
+        ]
+      },
+      {
+        "rank": 5,
+        "team_id": 2106,
+        "team_name": "c2flow",
+        "is_mine": false,
+        "best_average_speedup": 1.18647619,
+        "ranking_score": 1.69368687,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:30:29",
+        "first_valid_submitted_at": "2026-09-24T20:30:29",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.911,
+            "rank": 1
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.22633333,
+            "rank": 9
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.58483333,
+            "rank": 8
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.12833333,
+            "rank": 10
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.40083333,
+            "rank": 10
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.99,
+            "rank": 11
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.064,
+            "rank": 6
+          }
+        ]
+      },
+      {
+        "rank": 6,
+        "team_id": 2123,
+        "team_name": "EvokeAgent",
+        "is_mine": false,
+        "best_average_speedup": 1.20447619,
+        "ranking_score": 1.61230159,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:26:46",
+        "first_valid_submitted_at": "2026-09-24T20:26:46",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.412,
+            "rank": 8
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.4175,
+            "rank": 3
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.88616667,
+            "rank": 2
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.13133333,
+            "rank": 7
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.50766667,
+            "rank": 5
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.01083333,
+            "rank": 9
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.06583333,
+            "rank": 5
+          }
+        ]
+      },
+      {
+        "rank": 7,
+        "team_id": 2993,
+        "team_name": "SGZhang",
+        "is_mine": false,
+        "best_average_speedup": 1.15283333,
+        "ranking_score": 1.16035354,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T20:32:55",
+        "first_valid_submitted_at": "2026-09-24T20:32:55",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.69266667,
+            "rank": 3
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.2295,
+            "rank": 8
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.6615,
+            "rank": 6
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.1305,
+            "rank": 9
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.375,
+            "rank": 11
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.91233333,
+            "rank": 12
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.06833333,
+            "rank": 4
+          }
+        ]
+      },
+      {
+        "rank": 8,
+        "team_id": 2220,
+        "team_name": "GuanghuLab",
+        "is_mine": false,
+        "best_average_speedup": 1.02109524,
+        "ranking_score": 1.1145202,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-24T21:08:02",
+        "first_valid_submitted_at": "2026-09-24T21:08:02",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 2.3405,
+            "rank": 11
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.3735,
+            "rank": 4
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.78283333,
+            "rank": 16
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.12833333,
+            "rank": 10
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.42766667,
+            "rank": 9
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.02616667,
+            "rank": 6
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.06866667,
+            "rank": 3
+          }
+        ]
+      },
+      {
+        "rank": 9,
+        "team_id": 2692,
+        "team_name": "AICity",
+        "is_mine": false,
+        "best_average_speedup": 0.71033333,
+        "ranking_score": 0.66144689,
+        "expected_gpu_count": 7,
+        "passed_gpu_count": 7,
+        "best_submitted_at": "2026-09-25T00:28:25",
+        "first_valid_submitted_at": "2026-09-24T22:52:19",
+        "gpu_results": [
+          {
+            "gpu": "tianshu",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.19316667,
+            "rank": 15
+          },
+          {
+            "gpu": "muxi",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.64233333,
+            "rank": 16
+          },
+          {
+            "gpu": "haiguang",
+            "status": "completed",
+            "passed": true,
+            "speedup": 1.07066667,
+            "rank": 14
+          },
+          {
+            "gpu": "kunlunxin",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.25416667,
+            "rank": 4
+          },
+          {
+            "gpu": "huawei",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.23433333,
+            "rank": 16
+          },
+          {
+            "gpu": "card_a",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.76066667,
+            "rank": 14
+          },
+          {
+            "gpu": "card_b",
+            "status": "completed",
+            "passed": true,
+            "speedup": 0.817,
+            "rank": 13
+          }
+        ]
+      }
+    ]
+  }
+}
