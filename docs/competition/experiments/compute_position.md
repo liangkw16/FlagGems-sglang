@@ -5,12 +5,12 @@ task: 77
 operator: compute_position
 batch: 6
 validity: valid(8/8,e11r,1266.24055x TB)
-platform: e15(20783)valid 1190.64<TB判负:metax tiled vendor丢batch≤128守卫,大batch二次自扫使muxi崩至92.2(vendor已移除);并行会话同窗打了T89/T90水位重滚(20781/20782双双新TB)
+platform: e16(20784)注释载体重掷valid 1219.19<TB判负:ts水位未保持(2794vs进场假说≥3000);e11r字节重掷轴关闭(1/1用尽)
 candidate_stage: e11r
 team_best_stage: e11r
 team_best_speedup: 1266.24055
-sealed: no
-next: 今日已耗10发(T77线),TB 1100.74→1266.24(+15%);剩余额度与并行会话共享(今日总24/30);收盘前视天数/沐曦水位可对e11r字节重掷≤1次;ts/hg 1.65x结构缺口今日未破(4假说判负)
+sealed: yes
+next: T77今日收口:TB 1100.74→1266.24(+15.0%),rank 10→8;已证伪轴:2D平铺/燧原scan融合/ascend双字store/metax无守卫tiled/水位重掷;ts(2794-3298带)与hg(1612-1669带)对c2flow(4773/2525)的1.65x结构缺口今日四假说全负,待新证据
 updated: 2026-09-24
 ```
 
