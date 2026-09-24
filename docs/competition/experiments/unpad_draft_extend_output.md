@@ -4,13 +4,13 @@
 task: 92
 operator: unpad_draft_extend_output
 batch: 6
-validity: valid(8/8,e22,341.3097x TB)
-platform: e24(20768)上膛=ascend vendor向量偏移管线int64→int32(标量基址保持i64;tpb*span<2^31域守卫分派i64回退核);攻华为444vs665主缺口
-candidate_stage: e24
-team_best_stage: e22
-team_best_speedup: 341.3097
+validity: valid(8/8,e25,344.59575x TB)
+platform: e25(20780)valid 8/8 avg 344.59575微幅新TB:amd int32中性(280.9)/昆仑80.2(水位站稳,兼除i64大向量雷)/沐曦248.1回温/华为435.5(窗内回落)
+candidate_stage: e25
+team_best_stage: e25
+team_best_speedup: 344.59575
 sealed: no
-next: e24华为门:≥520视为i64向量ALU假说兑现(全量缺口665);兑现则同构传播到amd(b 281vs437)/kunlun(33vs89)与T80 ascend vendor
+next: 距c2flow 416.58差72(-17.3%);b 281vs437与华为435-465vs665两结构缺口未破;收盘前视水位对e25字节防御重掷≤2次(昆仑≥80且沐曦≥248为进场带)
 updated: 2026-09-24
 ```
 
