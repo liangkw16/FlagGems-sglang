@@ -42,10 +42,12 @@ tianshu 133.2 / muxi 25.0 / haiguang 48.4 / **kunlun 34.6(thunguo)** / huawei 51
 - T95 榜单 rank/均值错位是 ranking_score 公式的直接体现（见 plan 文档第 0 节）。
 - 快照 SHA-256 `061475d31505bb81f16a5a212fa7cfd6e4b1142188cb02da2c202962efedadb2`。
 
-## 不可变身份（s0，2026-09-24）
+## 不可变身份（s0 v2，2026-09-24，契约 spec 高阶复审后）
 
-- source commit = verification commit = `90d732fabdfe198b82bbfd5be662cc4ee77904b4`。
-- ZIP：`artifacts/competition/create_chunked_prefix_cache_kv_indices/s0-90d732f/create_chunked_prefix_cache_kv_indices.zip`，SHA-256 `b5ca8359221be0eb71512a668fadcc862dc10e227df46d1dd59120c363acda11`（单成员 `create_chunked_prefix_cache_kv_indices.py`，generic-only）。
-- release 回执：`artifacts/competition/b7-s0-release-20260924/create_chunked_prefix_cache_kv_indices/verification.json`（mode=release，exit 0，绑定该 commit 字节），SHA-256 `cb5679f7713d9330ad8a109d8bf3f7184009048b59acc57fb28ef19b1224c369`；
-  日志 SHA-256 `42f38379b1134175ff361d127b747a2a35062d12acee84d89447902e8ef59f4d`。NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 / triton 3.7.1。
-- codex-review（commit 级，gpt-6-astra）：4 项发现（1×P1 grid/块失配、3×P2）全部修复后复筛/release 全绿。
+- source commit = verification commit = `daf77923f6913447b65a8c226f34297ce13b4440`（review v2：补 req_to_token.stride(1) 列偏移 + 四元数据向量 stride）。
+- ZIP：`artifacts/competition/create_chunked_prefix_cache_kv_indices/s0-daf7792/create_chunked_prefix_cache_kv_indices.zip`，SHA-256 `017cd27f3128b31a52ca42ea67b643b44daf031233ff337bcdd87609db763559`（单成员 `create_chunked_prefix_cache_kv_indices.py`，generic-only）。
+- release 回执：`artifacts/competition/b7-s0-release2-20260924/create_chunked_prefix_cache_kv_indices/verification.json`（mode=release，exit 0，绑定该 commit 字节），SHA-256 `56854353527d6e930ade59b4fbe407926a4fb5758eea4ae4190f03ae9e075200`；
+  日志 SHA-256 `1a10d59e66404b57858898a429b35b5c42422d6de5c6eaba2e89bc9bec657439`。NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 / triton 3.7.1。
+- 提交脚本：`artifacts/competition/b7-s0-release2-20260924/submit-batch7-s0.sh`（v2，全部参数预烘焙）。
+- review 历史：v1（commit 级，gpt-6-astra medium）4 项全修；v2（--base 对照契约 spec，high）5 项 P2 全修；
+  三轮修复均经 screening + release 双门禁复跑全绿。

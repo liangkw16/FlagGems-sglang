@@ -42,10 +42,12 @@ EvokeAgent 4.59 分：muxi 1.418 / haiguang 1.886 / **kunlun 0.131** / **huawei 
 
 - 快照 SHA-256 `061475d31505bb81f16a5a212fa7cfd6e4b1142188cb02da2c202962efedadb2`。
 
-## 不可变身份（s0，2026-09-24）
+## 不可变身份（s0 v2，2026-09-24，契约 spec 高阶复审后）
 
-- source commit = verification commit = `90d732fabdfe198b82bbfd5be662cc4ee77904b4`。
-- ZIP：`artifacts/competition/get_mla_kv_buffer/s0-90d732f/get_mla_kv_buffer.zip`，SHA-256 `a3643b550f444e117ca19075d1084fdf71551bcc4766bc129e84f2df0ac74906`（单成员 `get_mla_kv_buffer.py`，generic-only）。
-- release 回执：`artifacts/competition/b7-s0-release-20260924/get_mla_kv_buffer/verification.json`（mode=release，exit 0，绑定该 commit 字节），SHA-256 `7fe288110ae159099458d60bbd6398c7eff42578447536fa73a2833bffe068d4`；
-  日志 SHA-256 `a66f5499902fc5c088a1e065303a90763bd7dec0545e0b15578980fa1cabbd1b`。NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 / triton 3.7.1。
-- codex-review（commit 级，gpt-6-astra）：4 项发现（1×P1 grid/块失配、3×P2）全部修复后复筛/release 全绿。
+- source commit = verification commit = `daf77923f6913447b65a8c226f34297ce13b4440`（review v1 零宽半边已修；review v2：补 kv_buffer.stride(1) 与 loc.stride(0)）。
+- ZIP：`artifacts/competition/get_mla_kv_buffer/s0-daf7792/get_mla_kv_buffer.zip`，SHA-256 `1d6e5fe55092e2a1081283b1448c1b918480af1c22b229c9bfa07a728f017002`（单成员 `get_mla_kv_buffer.py`，generic-only）。
+- release 回执：`artifacts/competition/b7-s0-release2-20260924/get_mla_kv_buffer/verification.json`（mode=release，exit 0，绑定该 commit 字节），SHA-256 `64ff8b794bf824abcab0e096a9d5eb6848008f6391972532756373d89fd5bcce`；
+  日志 SHA-256 `bc5213f527c79040273dd9e5c225fde3ccc97d24a10c4493f105e8f3df74fa16`。NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 / triton 3.7.1。
+- 提交脚本：`artifacts/competition/b7-s0-release2-20260924/submit-batch7-s0.sh`（v2，全部参数预烘焙）。
+- review 历史：v1（commit 级，gpt-6-astra medium）4 项全修；v2（--base 对照契约 spec，high）5 项 P2 全修；
+  三轮修复均经 screening + release 双门禁复跑全绿。

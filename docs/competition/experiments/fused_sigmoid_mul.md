@@ -41,10 +41,12 @@ T90/T81 华为经验（子块结构 1.23→1.5 轴）可迁移。
 
 - 快照 SHA-256 `061475d31505bb81f16a5a212fa7cfd6e4b1142188cb02da2c202962efedadb2`。
 
-## 不可变身份（s0，2026-09-24）
+## 不可变身份（s0 v2，2026-09-24，契约 spec 高阶复审后）
 
-- source commit = verification commit = `90d732fabdfe198b82bbfd5be662cc4ee77904b4`。
-- ZIP：`artifacts/competition/fused_sigmoid_mul/s0-90d732f/fused_sigmoid_mul.zip`，SHA-256 `48fbb9085319d6b4b0cae8c6260158f53c6337636239e336110e2901c495d533`（单成员 `fused_sigmoid_mul.py`，generic-only）。
-- release 回执：`artifacts/competition/b7-s0-release-20260924/fused_sigmoid_mul/verification.json`（mode=release，exit 0，绑定该 commit 字节），SHA-256 `879c4a2f512fb7dacd0e9a00ac811a8ad77e61833e65e81316f1cccf1af8ed00`；
-  日志 SHA-256 `3d558a719885c01772797ed37f14589db988cbfda3f718a4174caadccbc499f3`。NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 / triton 3.7.1。
-- codex-review（commit 级，gpt-6-astra）：4 项发现（1×P1 grid/块失配、3×P2）全部修复后复筛/release 全绿。
+- source commit = verification commit = `daf77923f6913447b65a8c226f34297ce13b4440`（review v1 grid/块失配已修；review v2：strided 分支与 flat offs 全面 i64 化）。
+- ZIP：`artifacts/competition/fused_sigmoid_mul/s0-daf7792/fused_sigmoid_mul.zip`，SHA-256 `40003a157420b8a5598fede4bc02aea5051d149da29d451bac0043116a720b51`（单成员 `fused_sigmoid_mul.py`，generic-only）。
+- release 回执：`artifacts/competition/b7-s0-release2-20260924/fused_sigmoid_mul/verification.json`（mode=release，exit 0，绑定该 commit 字节），SHA-256 `96836a78ee559aac6c11889a5b03ddcc97d0482aea0f3149f57fbeb9eb7ae122`；
+  日志 SHA-256 `4cb32043bbc3d80ad5babd5a2bc8626c048a93a13a9fbb69869428ae698e8922`。NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 / triton 3.7.1。
+- 提交脚本：`artifacts/competition/b7-s0-release2-20260924/submit-batch7-s0.sh`（v2，全部参数预烘焙）。
+- review 历史：v1（commit 级，gpt-6-astra medium）4 项全修；v2（--base 对照契约 spec，high）5 项 P2 全修；
+  三轮修复均经 screening + release 双门禁复跑全绿。
