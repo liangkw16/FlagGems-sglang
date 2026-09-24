@@ -14,7 +14,9 @@
 # undef instead of 0, and the store carries the same mask m, so those
 # lanes never reach memory - output bytes are identical (NVIDIA proxy
 # verifies). Nothing from the e21r failure surface is inherited: no
-# unmasked main loop, no fp32 tail, no persistent rotation, no warps16
+# unmasked main loop, no fp32 tail, no persistent rotation (the no-warps16
+# note described the e21r combined form; e26 pins num_warps=16 per the
+# chip-rulesets ladder on this isolated store shape)
 # (e21r 20313 failed test[3] 1520/164352 with those variables present);
 # the live vector set is a subset of e19r's already-compiled form, so
 # UB demand is monotonically non-increasing vs the 192KB budget the
