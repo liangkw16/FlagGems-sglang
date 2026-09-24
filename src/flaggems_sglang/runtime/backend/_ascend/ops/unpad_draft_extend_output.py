@@ -48,6 +48,30 @@ def _unpad(
         tl.store(out + dst + offs, v, m)
 
 
+@triton.jit
+def _unpad_wide(
+    raw_out, lens, cum, out, span, tpb, lstride, cstride,
+    BLOCK: tl.constexpr,
+):
+    # int64 pipeline for segments whose element count can reach 2^31
+    # (the wrapper dispatches on token_per_batch*span); numerically the
+    # pre-e24 bytes
+    seg = tl.program_id(0)
+    tile = tl.program_id(1)
+    n = tl.load(lens + seg.to(tl.int64) * lstride)
+    beg = tl.load(cum + seg.to(tl.int64) * cstride)
+    src = seg.to(tl.int64) * tpb * span
+    dst = (beg.to(tl.int64) * span)
+    elems = n.to(tl.int64) * span
+    for base in range(
+        tile.to(tl.int64) * BLOCK, elems, tl.num_programs(1).to(tl.int64) * BLOCK
+    ):
+        offs = base + tl.arange(0, BLOCK)
+        m = offs < elems
+        v = tl.load(raw_out + src + offs, m)
+        tl.store(out + dst + offs, v, m)
+
+
 def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q):
     assert raw_out.ndim == 4
     bs, token_per_batch, heads, dim = raw_out.shape
@@ -63,7 +87,15 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
     span = heads * dim
     if bs and token_per_batch and out.numel():
         tiles = min(max(1, (token_per_batch * span + 16383) // 16384), 255)
-        _unpad[(bs, tiles)](
+        # int32 offsets only when every in-segment element count fits
+        # the signed domain (n <= token_per_batch bounds elems by
+        # token_per_batch*span); otherwise the int64 pipeline
+        kernel = (
+            _unpad
+            if token_per_batch * span < 2**31
+            else _unpad_wide
+        )
+        kernel[(bs, tiles)](
             raw_out,
             seq_lens_q,
             cu_seqlens_q,
