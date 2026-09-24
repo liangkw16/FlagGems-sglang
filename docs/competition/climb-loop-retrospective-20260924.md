@@ -99,6 +99,16 @@ T87 2.77→3.437（**+24%**）、T77 1100.7→1266.2（+15%）、T90
    极端分浪费了早期对标注意力；应把"榜首某芯>次优同芯 20x"写进
    开题第一小时的动作清单。
 
+**三条根因的落地状态**（09-24 收官补记）：根因 2/3（彩票判据 +
+额度口径实测）已制度化进 skill 阶段 A 开题清单（36/36 测试过）；
+根因 1 的免额度执行通道已完成只读调研并落盘
+[next-season-prep-targetchip-channels-20260924.md](next-season-prep-targetchip-channels-20260924.md)
+——KernelGen 实测定存活且设备表含 kunlun/huawei（昆仑/华为通道
+现成，T84 昆仑 10x 的启动协议已写明：generate_kernel device=kunlun
+携带契约 + 两堵编译墙原始报错 + s0 标量源码，免额度迭代散射探针，
+再一发平台银行化）；gpu 容器路径覆盖昇腾但不覆盖昆仑/燧原；
+**燧原无免额度通道 = 常设建设缺口**。
+
 ## 6. 资产清单
 
 - 账本：`docs/competition/experiments/`（17 题全部 CURRENT 收口）+
