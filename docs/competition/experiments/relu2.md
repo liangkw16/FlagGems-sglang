@@ -4,15 +4,24 @@
 task: 89
 operator: relu2
 batch: 6
-validity: valid(8/8,e8,2.7198x TB)
-platform: e9(20379)valid 8/8 avg 2.6600<TB判负:华为1.02→1.29(+26%,drop-prefill+4096/16在1载1存op兑现!)但昆仑0.135(vs e8字节同0.79,平台劣化)与B 2.75(-18%)吃掉增益;_ascend已回滚e8 ZIP字节;TB 2.7198守
-candidate_stage: e9
-team_best_stage: e8
-team_best_speedup: 2.7198x
+validity: valid(8/8,e9r,2.8391x TB)
+platform: e9r(20781)valid 8/8 avg 2.8391>TB 2.7198新TB(+4.4%);昆仑0.135→1.0037(水位恢复超过e8带0.79)且华为1.3401(ascend形态保持+26%上方);燧原3.91/天数4.94/B2.77
+candidate_stage: e9r
+team_best_stage: e9r
+team_best_speedup: 2.8391x
 sealed: no
-next: 华为1.29→1.9(金狐狸带)配方已证方向,待昆仑/B水位恢复可重试组合(e9字节+昆仑回温);真实靶CosmosMind 4.71(enfl 14.7/华为4.9);昆仑今日三题字节同一崩读(T90/T87/T89)=平台劣化窗;额度12/30(used 18,observed 16:10+08)
+next: 距真实#2 stellar 3.348差18%(KLANG 13569彩票不计);轴=燧原3.91→6.3(stellar/CYKernel 5.0多队在4-5带)/华为1.34→1.9/muxi 2.31→3.1/海光3.23→4.2;额度6/30(used 24,observed 21:40+08)
 updated: 2026-09-23
 ```
+
+## 2026-09-23 E9R 平台终态（20781）：valid 8/8 均值 2.8391 新 TB；水位重掷兑现
+
+- 结构：e9 字节（ascend drop-prefill+4096/16）+ 注释级载体；重掷
+  前提=昆仑水位恢复（T86 e11 0.117→0.556 信号）。
+- 逐芯：天数 4.944 / 沐曦 2.307 / 燧原 3.912 / 海光 3.235 /
+  **昆仑 1.0037** / **华为 1.3401** / A 3.201 / B 2.770。
+- 门判定：昆仑 ≥0.5 ✓（水位前提成立）；华为 ≥1.2 ✓（形态保持）；
+  均值 >2.7198 ✓ 换 TB。午后水位窗判读得到平台侧确认。
 
 ## 2026-09-23 E9 平台终态（20379）：valid 8/8 均值 2.6600 判负；华为方向兑现
 

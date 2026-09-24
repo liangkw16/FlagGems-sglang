@@ -4,15 +4,22 @@
 task: 90
 operator: sigmoid_gate_mul_broadcast
 batch: 6
-validity: valid(8/8,e7,2.685675x TB)
-platform: e7(20359)valid 8/8 avg 2.685675>TB 2.5247新TB;燧原2.6364(0.77→2.64=3.4x,[RB,W]行块瓦片兑现,≥2.5进场带达成);天数4.90/沐曦2.59/海光4.11/A3.01/B2.96;昆仑0.1184(vs e4字节同读0.75,平台环境劣化族,字节同一性已验7b653c1f);华为1.16(-7%)
-candidate_stage: e7
-team_best_stage: e7
-team_best_speedup: 2.685675x
-sealed: yes
-next: e8宽瓦片代理四shape全负且已丢弃；无沐曦及另一目标芯同源收益证据前不再用5次额度，工程顺序转T92/T81
+validity: valid(8/8,e7r,2.8006x TB)
+platform: e7r(20782)valid 8/8 avg 2.8006>TB 2.6857新TB(+4.3%);昆仑0.1184→0.9044(水位恢复)且天数4.90→5.135(+4.7%);燧原2.621(形态保持)/沐曦2.54/海光4.01
+candidate_stage: e7r
+team_best_stage: e7r
+team_best_speedup: 2.8006x
+sealed: no
+next: 距EvokeAgent 3.2441差15.8%≈榜眼位;轴=燧原2.62→3.39([RB,W]W/RB/stages调优)/muxi 2.54→3.2/华为1.23→1.5;额度6/30(used 24,observed 21:40+08)
 updated: 2026-09-23
 ```
+
+## 2026-09-23 E7R 平台终态（20782）：valid 8/8 均值 2.8006 新 TB；水位重掷兑现
+
+- 结构：e7 字节 + 注释级载体（enflame 成员头部 e7r 标记行）。
+- 逐芯：天数 5.135 / 沐曦 2.542 / 燧原 2.621 / 海光 4.008 /
+  **昆仑 0.9044** / 华为 1.227 / A 3.049 / B 2.918。
+- 门判定：昆仑 ≥0.4 ✓；燧原 ≥2.3 ✓；均值 >2.6857 ✓ 换 TB。
 
 ## 2026-09-23 E8 结构初筛判负：131072 元素行块，未上膛
 
