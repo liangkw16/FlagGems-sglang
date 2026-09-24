@@ -6,9 +6,9 @@
 # pinned num_warps, which is not the 12-CTA clamp the GCU codegen
 # documents (max_grid_size=(12,1,1)). This round flattens the
 # (segment, tile) work items and grid-strides them across at most 12
-# programs with the backend-default warp count (the pin was lifted in
-# e26: two platform rounds on other GCU ops measured the default
-# ahead of pinned warps) and wide flat stores; e15 doubles the
+# programs with num_warps=2 and wide flat stores; the e26 unpin read
+# 68.1 vs 109.5 - the pin is load-bearing on this store shape - so the
+# warp count stays pinned; e15 doubles the
 # store width to BLOCK_V=2048 (the gcu300 tile guidance scales with
 # the element width and the e12 read 102.6 with 1024-wide stores -
 # the width ladder is live: 102.6 @1024 -> 113.9 @2048, e16 takes
@@ -95,6 +95,7 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             lse.stride(0),
             HV=hv,
             NH=nh,
+            num_warps=2,
             BLOCK_T=block_t,
             BLOCK_V=4096,
             BLOCK_H=triton.next_power_of_2(max(1, nh)),

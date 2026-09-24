@@ -84,10 +84,7 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
         hv, nh = num_heads * v_head_dim, num_heads
         span = max_seq_len if isinstance(max_seq_len, int) else total_tokens
         block_t = 4
-        # cap the per-segment tile fanout: batch*ot dead-program launches
-        # dominated the healthy-segment cost; 32 tiles per segment keeps
-        # the stride loop covering any span with a bounded grid
-        ot = max(1, min(triton.cdiv(min(span, total_tokens), block_t), 32))
+        ot = max(1, triton.cdiv(min(span, total_tokens), block_t))
         _fixup_zero_kv[(batch * ot,)](
             out,
             lse,
