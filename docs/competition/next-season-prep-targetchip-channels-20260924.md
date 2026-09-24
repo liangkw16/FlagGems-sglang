@@ -30,6 +30,23 @@ nvidia/huawei/haiguang/tianshu/muxi/moore/sunrise/**kunlun**/amd,
    kunlun ≥2.0 保留 / ≥5 轴确认);
 3. 同协议适用于其它 XPU 假设(hash_topk 的标量串行限制等)。
 
+## 通道实测补记(09-24 11:15,收官后首轮探测)
+
+按上述协议实打了 T84 昆仑重开的第一发探测(请求/响应字节已存
+`artifacts/competition/nextseason-kernelgen-20260924/`,req sha
+`363515ef…`/`8f08a099…`):
+
+- `generate_kernel`(device=kunlun):schema 要求 arg_names/arg_type/
+  arg_descs 为字符串;服务 3 轮生成失败("No code to verify")——
+  **多输出 in-place 契约超出其生成器能力**,非通道问题。
+- `autotune_kernel`:正确入口字段为 `operator_name`(不是
+  kernel_name)+pytorch_code/test_func_code/input_specs;约束文本
+  折进 input_specs;**请求成功路由到 kunlun 专用后端
+  (10.1.12.93:8890)但该后端当前 HTTP 502**——通道地址正确、
+  服务端暂不可用,重试请求字节已就绪,下一轮开题即可重发。
+- 结论:昆仑通道"地址已打通、后端待复机";autotune 路线(从参考
+  实现迭代)比 generate 路线更适合本题这类非标准契约。
+
 ## 优先级排序(按本季缺口×通道可得性)
 
 1. **昆仑**(T84 10x + T78 昆仑环境族 + hash_topk XPU 限制)→
