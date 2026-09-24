@@ -1,47 +1,50 @@
-<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/add3 -->
+<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/concat_mla_absorb_q -->
 <!-- synced_at: 2026-09-24T20:58:34+08:00 -->
 
-# add3 (elementwise/add3)
+# concat_mla_absorb_q (attention/concat_mla_absorb_q)
 
 ## 任务描述
 
-三路 elementwise 加法，保留双重舍入：`out = bf16(bf16(a + b) + c)`。
-两步舍入是契约的一部分 —— 与未融合的 `(a + b) + c` 逐位一致，因此提交不得
-在 fp32 中累加后只舍入一次。
+沿最后一维拼接 absorbed-Q 的 NoPE 与 RoPE 两半：`out = cat([a, b], dim=-1)`。
+关键点在存储模式：两个不同 stride 的源行喂给一个连续的 dest 行，MLA head 数规模。
 
 ## 接口签名
 
 ```python
-def reference(a, b, c)
+def reference(a, b)
 ```
 
 > 选手实现的函数签名需与上述完全一致。
 
 ## 计算定义
 
-- `a`、`b`、`c`：同 shape 连续 CUDA bf16 张量；numel 为 16 的倍数。
+- `a`：`[dim0, dim1, a_last]` bf16；`b`：`[dim0, dim1, b_last]` bf16。
+- 输出：`[dim0, dim1, a_last + b_last]` bf16。
 - 计算流程：
 
   ```
-  out = (a + b) + c
+  out = torch.cat([a, b], dim=-1)
   ```
 
 ## 正确性判别标准
 
-标准 per-dtype tolerance（bf16 主导）。
+精确（纯数据搬移）。
 
 ## 参考实现
 
 ```python
-def reference(a, b, c):
-    return (a + b) + c
+import torch
+
+
+def reference(a, b):
+    return torch.cat([a, b], dim=-1)
 ```
 
 ## 评分标准
 
 本题评分标准仅展示赛题级补充信息；全赛道统一的正确性、加速比、性能门槛与排名规则请参阅「赛制规则 - 评分规则」。
 
-**本题支持芯片：** 天数、沐曦、燧原、海光、昆仑芯、华为、国际通用芯片A、国际通用芯片B。不同赛题支持芯片可能不同，以该题的题目说明为准。
+**本题支持芯片：** 天数、沐曦、海光、昆仑芯、华为、国际通用芯片A、国际通用芯片B。不同赛题支持芯片可能不同，以该题的题目说明为准。
 
 **反作弊规则：**
 

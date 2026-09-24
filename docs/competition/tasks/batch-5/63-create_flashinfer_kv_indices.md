@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/create_flashinfer_kv_indices -->
-<!-- synced_at: 2026-09-24T06:53:27+08:00 -->
+<!-- synced_at: 2026-09-24T20:58:34+08:00 -->
 
 # create_flashinfer_kv_indices (kvcache/create_flashinfer_kv_indices)
 

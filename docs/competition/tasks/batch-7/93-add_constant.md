@@ -1,47 +1,49 @@
-<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/add3 -->
+<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/add_constant -->
 <!-- synced_at: 2026-09-24T20:58:34+08:00 -->
 
-# add3 (elementwise/add3)
+# add_constant (elementwise/add_constant)
 
 ## 任务描述
 
-三路 elementwise 加法，保留双重舍入：`out = bf16(bf16(a + b) + c)`。
-两步舍入是契约的一部分 —— 与未融合的 `(a + b) + c` 逐位一致，因此提交不得
-在 fp32 中累加后只舍入一次。
+给每个元素加一个编译期整型常量：`dst = src + constant`。
+常量是 C++ 模板参数，每个不同值触发一次 JIT 编译并折叠进 kernel 体内；
+超过 2^20 元素时切换到 `kMaxVecBytes` 宽的向量化路径。
 
 ## 接口签名
 
 ```python
-def reference(a, b, c)
+def reference(src, constant)
 ```
 
 > 选手实现的函数签名需与上述完全一致。
 
 ## 计算定义
 
-- `a`、`b`、`c`：同 shape 连续 CUDA bf16 张量；numel 为 16 的倍数。
+- `src`：1D 连续 CUDA int32 张量，非空。
 - 计算流程：
 
   ```
-  out = (a + b) + c
+  out = src + constant
   ```
+
+- 输出与输入同 shape 同 dtype。
 
 ## 正确性判别标准
 
-标准 per-dtype tolerance（bf16 主导）。
+精确（整数运算）。
 
 ## 参考实现
 
 ```python
-def reference(a, b, c):
-    return (a + b) + c
+def reference(src, constant):
+    return src + constant
 ```
 
 ## 评分标准
 
 本题评分标准仅展示赛题级补充信息；全赛道统一的正确性、加速比、性能门槛与排名规则请参阅「赛制规则 - 评分规则」。
 
-**本题支持芯片：** 天数、沐曦、燧原、海光、昆仑芯、华为、国际通用芯片A、国际通用芯片B。不同赛题支持芯片可能不同，以该题的题目说明为准。
+**本题支持芯片：** 天数、沐曦、海光、昆仑芯、华为、国际通用芯片A、国际通用芯片B。不同赛题支持芯片可能不同，以该题的题目说明为准。
 
 **反作弊规则：**
 

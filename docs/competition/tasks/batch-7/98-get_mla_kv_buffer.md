@@ -1,24 +1,25 @@
-<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/concat_and_cast_mha_k -->
+<!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/get_mla_kv_buffer -->
 <!-- synced_at: 2026-09-24T20:58:34+08:00 -->
 
-# concat_and_cast_mha_k (kvcache/concat_and_cast_mha_k)
+# get_mla_kv_buffer (kvcache/get_mla_kv_buffer)
 
 ## 任务描述
 
-Triton 版 `concat_mla_k`：从 per-head NoPE 部分和 broadcast 单头 RoPE 部分构建 MHA key 张量，store 时隐式 dtype cast（目标可能是低精度 cache）。
+`set_mla_kv_buffer` 的 gather 对应：读 paged MLA KV cache 的 `loc[i]` 行并拆回 NoPE 和 RoPE 两半。
 
 ## 接口签名
 
 ```python
-def reference(k, k_nope, k_rope)
+def reference(kv_buffer, loc, cache_k_nope, cache_k_rope)
 ```
 
 > 选手实现的函数签名需与上述完全一致。
 
 ## 计算定义
 
-- `k[t, h, :nope_dim] = k_nope[t, h, :]`；`k[t, h, nope_dim:] = k_rope[t, 0, :]`
-- 三个张量都是 3D；`k.shape[1] == k_nope.shape[1]`，`k_rope.shape[1] == 1`，`k.shape[-1] == k_nope.shape[-1] + k_rope.shape[-1]`
+- `cache_k_nope[i] = kv_buffer[loc[i], :nope_dim]`；`cache_k_rope[i] = kv_buffer[loc[i], nope_dim:]`
+- 目标 dtype 可与 `kv_buffer` 不同——store 时隐式转换
+- 返回 `(nope, rope)` 两个新张量
 
 ## 正确性判别标准
 
@@ -27,20 +28,19 @@ exact（纯数据搬运）
 ## 参考实现
 
 ```python
-import torch
-
-
-def reference(k, k_nope, k_rope):
-    num_heads = k.shape[1]
-    rope = k_rope.expand(-1, num_heads, -1)
-    return torch.cat([k_nope, rope], dim=-1).to(k.dtype)
+def reference(kv_buffer, loc, cache_k_nope, cache_k_rope):
+    nope_dim = cache_k_nope.shape[-1]
+    rows = kv_buffer[loc.long()]
+    nope = rows[:, :nope_dim].to(cache_k_nope.dtype)
+    rope = rows[:, nope_dim:].to(cache_k_rope.dtype)
+    return nope, rope
 ```
 
 ## 评分标准
 
 本题评分标准仅展示赛题级补充信息；全赛道统一的正确性、加速比、性能门槛与排名规则请参阅「赛制规则 - 评分规则」。
 
-**本题支持芯片：** 天数、沐曦、燧原、海光、昆仑芯、华为、国际通用芯片A、国际通用芯片B。不同赛题支持芯片可能不同，以该题的题目说明为准。
+**本题支持芯片：** 天数、沐曦、海光、昆仑芯、华为、国际通用芯片A、国际通用芯片B。不同赛题支持芯片可能不同，以该题的题目说明为准。
 
 **反作弊规则：**
 
