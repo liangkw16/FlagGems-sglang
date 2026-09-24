@@ -48,12 +48,11 @@ def _concat_rows_kernel(
     b_s2,
     a_last,
     b_last,
-    BLOCK_A: tl.constexpr,
-    BLOCK_B: tl.constexpr,
+    BLOCK: tl.constexpr,
 ):
     pid = tl.program_id(0).to(tl.int64)
-    acols = tl.arange(0, BLOCK_A).to(tl.int64)
-    bcols = tl.arange(0, BLOCK_B).to(tl.int64)
+    cols = tl.arange(0, BLOCK).to(tl.int64)
+    width = a_last + b_last
     row0 = pid * rows_per_prog
     for r in range(0, rows_per_prog):
         row = row0 + r
@@ -62,17 +61,21 @@ def _concat_rows_kernel(
             i1 = row - i0 * d1
             a_base = i0 * a_s0 + i1 * a_s1
             b_base = i0 * b_s0 + i1 * b_s1
-            o_base = row * (a_last + b_last)
-            for ca in range(0, a_last, BLOCK_A):
-                cc = ca + acols
-                ma = cc < a_last
-                value = tl.load(a + a_base + cc * a_s2, mask=ma, other=0)
-                tl.store(out + o_base + cc, value, mask=ma)
-            for cb in range(0, b_last, BLOCK_B):
-                cc = cb + bcols
-                mb = cc < b_last
-                value = tl.load(b + b_base + cc * b_s2, mask=mb, other=0)
-                tl.store(out + o_base + a_last + cc, value, mask=mb)
+            o_base = row * width
+            for c0 in range(0, width, BLOCK):
+                cc = c0 + cols
+                mo = cc < width
+                av = tl.load(
+                    a + a_base + cc * a_s2, mask=mo & (cc < a_last), other=0
+                )
+                bv = tl.load(
+                    b + b_base + (cc - a_last) * b_s2,
+                    mask=mo & (cc >= a_last),
+                    other=0,
+                )
+                tl.store(
+                    out + o_base + cc, tl.where(cc < a_last, av, bv), mask=mo
+                )
 
 
 def concat_mla_absorb_q(a, b):
@@ -87,13 +90,12 @@ def concat_mla_absorb_q(a, b):
         (d0, d1, a_last + b_last), dtype=a.dtype, device=a.device
     )
     if n_rows and (a_last + b_last):
-        # e3: exact-width segment vectors (BLOCK_A/BLOCK_B) replace the
-        # 1024-lane floor that idled half the threads on 576-wide rows;
-        # d1 is a JIT constant so the per-row division strength-reduces.
-        # e2 showed row packing hurts (0.0656 at RPP=8 vs 0.0814 at 1),
-        # so one row per program stays
-        block_a = min(65536, max(16, triton.next_power_of_2(a_last)))
-        block_b = min(65536, max(16, triton.next_power_of_2(b_last)))
+        # e2/e3 falsified both narrow vectors (exact-width 512/64 read
+        # 0.0278 vs 0.0814) and row packing (RPP=8 read 0.0656):
+        # kunlunxin wants >=1024-lane vectors and one row per program.
+        # e4 keeps one 1024+ vector per row but fuses the two segment
+        # stores into a single masked store stream
+        block = min(65536, max(1024, triton.next_power_of_2(a_last + b_last)))
         rows_per_prog = triton.cdiv(n_rows, _MAX_GRID)
         grid = (triton.cdiv(n_rows, rows_per_prog),)
         _concat_rows_kernel[grid](
@@ -111,9 +113,8 @@ def concat_mla_absorb_q(a, b):
             b.stride(2),
             a_last,
             b_last,
-            BLOCK_A=block_a,
-            BLOCK_B=block_b,
-            num_warps=8,
+            BLOCK=block,
+            num_warps=4,
         )
     return out
 
