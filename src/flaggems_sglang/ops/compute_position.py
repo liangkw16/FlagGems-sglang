@@ -19,6 +19,9 @@
 # correct position instead of writing before the allocation (codex
 # review P2); the prefix promotion keeps the a47602d2 boundary
 # contract.
+# re-roll carrier (comment-only): the e11r platform window read
+# tianshu 2793-3209 while the e15 window hit 3298 with sha-identical
+# generic bytes - water re-roll of the team-best set.
 # e8 collapses the common batch <= 2048 range into ONE launch: every
 # program derives its own exclusive start as a single masked int64
 # vector sum over the whole lens row (vectorized O(batch) lanes, not
