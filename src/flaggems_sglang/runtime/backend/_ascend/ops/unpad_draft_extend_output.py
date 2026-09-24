@@ -34,14 +34,16 @@ def _unpad(
     tile = tl.program_id(1)
     n = tl.load(lens + seg.to(tl.int64) * lstride)
     beg = tl.load(cum + seg.to(tl.int64) * cstride)
+    # segment bases stay int64 scalars (raw_out can exceed 2^31 elements)
+    # but the per-lane offset pipeline runs int32: a 16384-lane int64
+    # vector is 128KB of slow i64 ALU/UB on AscendVector, and the
+    # in-segment offsets are bounded by token_per_batch*span << 2^31
     src = seg.to(tl.int64) * tpb * span
     dst = (beg.to(tl.int64) * span)
-    elems = n.to(tl.int64) * span
-    for base in range(
-        tile.to(tl.int64) * BLOCK, elems, tl.num_programs(1).to(tl.int64) * BLOCK
-    ):
+    elems32 = n * span
+    for base in range(tile * BLOCK, elems32, tl.num_programs(1) * BLOCK):
         offs = base + tl.arange(0, BLOCK)
-        m = offs < elems
+        m = offs < elems32
         v = tl.load(raw_out + src + offs, m)
         tl.store(out + dst + offs, v, m)
 
