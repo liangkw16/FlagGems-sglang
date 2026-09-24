@@ -19,6 +19,31 @@ def _unpad(
     tile = tl.program_id(1)
     n = tl.load(lens + seg.to(tl.int64) * lstride)
     beg = tl.load(cum + seg.to(tl.int64) * cstride)
+    # int64 only for the scalar segment bases; the lane pipeline is
+    # int32 (in-segment offsets are bounded by token_per_batch*span,
+    # guarded by the wrapper) - the i64 lane vector is slow ALU and, on
+    # XPU at extreme widths, numerically unsafe
+    src = seg.to(tl.int64) * tpb * span
+    dst = (beg.to(tl.int64) * span)
+    elems32 = n * span
+    for base in range(tile * BLOCK, elems32, tl.num_programs(1) * BLOCK):
+        offs = base + tl.arange(0, BLOCK)
+        m = offs < elems32
+        v = tl.load(raw_out + src + offs, m, other=0)
+        tl.store(out + dst + offs, v, m)
+
+
+@triton.jit
+def _unpad_wide(
+    raw_out, lens, cum, out, span, tpb, lstride, cstride,
+    BLOCK: tl.constexpr,
+):
+    # i64 pipeline for segments reaching the int32 lane domain; the
+    # wrapper dispatches on token_per_batch*span
+    seg = tl.program_id(0)
+    tile = tl.program_id(1)
+    n = tl.load(lens + seg.to(tl.int64) * lstride)
+    beg = tl.load(cum + seg.to(tl.int64) * cstride)
     src = seg.to(tl.int64) * tpb * span
     dst = (beg.to(tl.int64) * span)
     elems = n.to(tl.int64) * span
@@ -46,7 +71,10 @@ def unpad_draft_extend_output(raw_out, cu_seqlens_q, seq_lens_q, sum_seq_lens_q)
     span = heads * dim
     if bs and token_per_batch and out.numel():
         tiles = min(max(1, (token_per_batch * span + 16383) // 16384), 255)
-        _unpad[(bs, tiles)](
+        kernel = (
+            _unpad if token_per_batch * span < 2**31 else _unpad_wide
+        )
+        kernel[(bs, tiles)](
             raw_out,
             seq_lens_q,
             cu_seqlens_q,
