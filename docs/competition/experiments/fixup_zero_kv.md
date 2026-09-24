@@ -5,12 +5,12 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e25,570.305775x TB)
-platform: e25(20753)valid 8/8 avg 570.305775新TB:昆仑14.18→16.47(+16%,去clone部分兑现,vendor内核仍3.4x慢);e26(20756)上膛=燧原解钉warps+沐曦ot上限32
-candidate_stage: e26
+platform: e26(20756)valid 550.562<TB判负:燧原解钉warps 68.1(-38%,pin承重)+沐曦ot-cap 383.7(-10%)双双回退;e27(20760)上膛=昆仑BLOCK_V 16384(T92昆仑阶梯+5.7x跨题证据)
+candidate_stage: e27
 team_best_stage: e25
 team_best_speedup: 570.305775
 sealed: no
-next: e27候选=昆仑BLOCK_V 1024→16384(T92昆仑阶梯1024→16384=+5.7x跨题证据);华为509vs984与燧原109vs235待结构证据
+next: e27昆仑门:≥30视为阶梯兑现;华为509vs984/燧原109vs235/沐曦428vs572仍缺结构证据;GCU warp pin在此store形态承重(unpin判负入档)
 updated: 2026-09-24
 ```
 
