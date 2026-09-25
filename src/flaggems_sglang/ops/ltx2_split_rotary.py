@@ -77,7 +77,9 @@ def ltx2_split_rotary(x, cos, sin):
     head_dim = half * 2
     assert inner == num_heads * head_dim
     # fresh contiguous output: empty_like would inherit a sliced or
-    # transposed input's strides and the flat row writes would go OOB
+    # transposed input's strides and the flat row writes would go OOB;
+    # the kernel reads x with flat inner offsets, so normalize it too
+    x = x if x.is_contiguous() else x.contiguous()
     out = torch.empty(x.shape, dtype=x.dtype, device=x.device)
     if out.numel():
         grid = (batch * seq_len * num_heads,)
