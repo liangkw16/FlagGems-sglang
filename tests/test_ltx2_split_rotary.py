@@ -68,7 +68,7 @@ class Ltx2SplitRotaryTest(unittest.TestCase):
 
     def test_sliced_x(self):
         gen = torch.Generator(device="cuda").manual_seed(4)
-        big = torch.randn(1, 8, 256, dtype=torch.bfloat16, device="cuda", generator=gen)
+        big = torch.randn(1, 8, 1024, dtype=torch.bfloat16, device="cuda", generator=gen)
         x = big[..., ::2]  # inner stride 2
         self.assertFalse(x.is_contiguous())
         c = torch.randn(1, 4, 8, 64, dtype=torch.bfloat16, device="cuda", generator=gen)
