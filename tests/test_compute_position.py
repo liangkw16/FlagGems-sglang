@@ -9,6 +9,13 @@ from tests._op_variants import load_operator_modules
 
 MODULES = load_operator_modules("compute_position")
 
+# Variants carrying the e17 single-allocation contract: positions and
+# the int32 contract start_loc are disjoint views of ONE int64 buffer
+# (a tail 1-D int32 view). The enflame vendor keeps separate
+# allocations by design (GCU narrowed-layout probe structure) and is
+# not part of this contract.
+SINGLE_ALLOC_VARIANTS = frozenset({"generic", "kunlunxin"})
+
 
 def reference(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
     bs = extend_seq_lens.shape[0]
@@ -117,12 +124,71 @@ class ComputePositionTest(unittest.TestCase):
         for lengths in ((), (0, 0, 0), (0, 1, 0)):
             self.check(make_case(lengths=lengths))
 
+    def test_single_allocation_views(self):
+        # e17 semantics: the contract outputs must be disjoint views of
+        # one allocation - the int64 positions buffer with a 1-D int32
+        # tail view carrying start_loc (and the wide hi half on the
+        # two-launch path). Covers the odd fused batch (padded tail
+        # word), the 2048/2049 dispatch boundary, zero-length segments
+        # and the empty batch, and re-checks numerics on the same call
+        # so the shared-buffer layout itself is validated.
+        for lengths in (
+            (),
+            (0,),
+            (0, 0, 0),
+            (0, 1, 0),
+            (0, 1, 511, 512, 513, 1025),
+            (5,) * 2047,
+            (5,) * 2048,
+            (5,) * 2049,
+        ):
+            args = make_case(lengths=lengths)
+            with self.subTest(bs=len(lengths)):
+                expected = reference(*args)
+                for name, module in MODULES:
+                    if name not in SINGLE_ALLOC_VARIANTS:
+                        continue
+                    with self.subTest(module=name):
+                        got = module.compute_position(*args)
+                        for actual, want in zip(got, expected):
+                            torch.testing.assert_close(
+                                actual, want, rtol=0, atol=0
+                            )
+                        positions, extend_start_loc = got
+                        storage = positions.untyped_storage()
+                        self.assertEqual(
+                            extend_start_loc.untyped_storage().data_ptr(),
+                            storage.data_ptr(),
+                        )
+                        self.assertEqual(positions.dtype, torch.int64)
+                        self.assertEqual(
+                            extend_start_loc.dtype, torch.int32
+                        )
+                        self.assertEqual(
+                            extend_start_loc.shape[0], args[1].shape[0]
+                        )
+                        self.assertTrue(positions.is_contiguous())
+                        self.assertTrue(extend_start_loc.is_contiguous())
+                        # disjoint regions, tail fully inside the one
+                        # allocation (odd fused batches pad the tail to
+                        # a whole int64 word)
+                        self.assertGreaterEqual(
+                            extend_start_loc.data_ptr(),
+                            positions.data_ptr() + positions.numel() * 8,
+                        )
+                        self.assertLessEqual(
+                            extend_start_loc.data_ptr()
+                            + extend_start_loc.numel() * 4,
+                            storage.data_ptr() + storage.nbytes(),
+                        )
+
 
 RELEASE_REQUIRED_TESTS = [
     "ComputePositionTest.test_basic_and_boundaries",
     "ComputePositionTest.test_large_batch_striped",
     "ComputePositionTest.test_int32_boundary_prefix",
     "ComputePositionTest.test_all_zero_and_empty",
+    "ComputePositionTest.test_single_allocation_views",
 ]
 
 

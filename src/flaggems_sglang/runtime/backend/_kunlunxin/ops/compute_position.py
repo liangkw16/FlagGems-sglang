@@ -23,6 +23,16 @@
 # correct position instead of writing before the allocation (codex
 # review P2); the prefix promotion keeps the a47602d2 boundary
 # contract.
+# e17 (reserve candidate, review round 1): ONE allocation per call -
+# the positions int64 buffer grows a batch-word tail whose 1-D int32
+# view is exactly the old int32[2*batch] wide-start buffer (low half =
+# contract start_loc, high half = hi scratch). Kernel bytes unchanged;
+# only the per-call alloc count drops 2 -> 1, the axis e6 already
+# proved expensive on this chip (3 -> 2 allocs read +91% kunlunxin;
+# e11r gap vs c2flow 106.1 vs 130.2). Stores stay 1-D and the view is
+# 1-D, so the XPU 2D-broadcast packing bug does not apply; the 1-D
+# int32 tail view on a non-zero storage offset still needs target-chip
+# verification before release (target-runtime-unverified).
 import torch
 import triton
 import triton.language as tl
@@ -73,14 +83,17 @@ def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
     assert extend_prefix_lens.ndim == extend_seq_lens.ndim == 1
     assert extend_prefix_lens.dtype == extend_seq_lens.dtype == torch.int32
     device = extend_seq_lens.device
-    positions = torch.empty(
-        extend_seq_lens_sum, dtype=torch.int64, device=device
+    # one allocation per call: positions plus a batch-word tail whose
+    # 1-D int32 view is exactly the old int32[2*batch] wide-start
+    # buffer - low half = contract start_loc, high half = hi scratch.
+    # Disjoint regions, identical kernel bytes.
+    buf = torch.empty(
+        extend_seq_lens_sum + batch, dtype=torch.int64, device=device
     )
-    wide_starts = torch.empty(
-        2 * batch, dtype=torch.int32, device=device
-    )
-    extend_start_loc = wide_starts[:batch]
-    starts_hi = wide_starts[batch:]
+    positions = buf[:extend_seq_lens_sum]
+    tail32 = buf[extend_seq_lens_sum:].view(torch.int32)
+    extend_start_loc = tail32[:batch]
+    starts_hi = tail32[batch:]
     if batch:
         _starts_scan[(1,)](
             extend_seq_lens,

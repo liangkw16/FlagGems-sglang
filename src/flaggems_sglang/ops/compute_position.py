@@ -30,6 +30,19 @@
 # the in-register int64 start - no second launch, no low/high split
 # buffer. Larger batches keep the e6 two-launch bytes unchanged (the
 # per-program whole-row load would go quadratic there).
+# e17 (reserve candidate, review round 1): ONE allocation per call on
+# both dispatch paths - the int64 positions buffer grows a small tail
+# (ceil(batch/2) words on the fused path, batch words on the two-launch
+# path) whose 1-D int32 view carries the contract start_loc (plus the
+# wide hi half on the two-launch path). The regions are disjoint and
+# the kernels are byte-identical, so only the per-call allocation count
+# drops 2 -> 1: per-call allocs are priced heavily on
+# tianshu/haiguang/huawei/kunlunxin (e6 3->2 allocs read +91% on
+# kunlunxin, tianshu +8.6% in the same window; e11r gap vs c2flow:
+# tianshu 2792.6 vs 4773.1, kunlunxin 106.1 vs 130.2, huawei 145.2 vs
+# 612.0), while muxi (957.3 vs 961.0) and card_b (2105.47 vs 2105.78)
+# sit at parity with the leader - alloc-insensitive chips that act as
+# the rollback guards (any of them -5% fails the candidate).
 import torch
 import triton
 import triton.language as tl
@@ -106,11 +119,22 @@ def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
     assert extend_prefix_lens.ndim == extend_seq_lens.ndim == 1
     assert extend_prefix_lens.dtype == extend_seq_lens.dtype == torch.int32
     device = extend_seq_lens.device
-    positions = torch.empty(
-        extend_seq_lens_sum, dtype=torch.int64, device=device
-    )
+    # one allocation per call: the int64 buffer is positions followed by
+    # a tail whose 1-D int32 view carries the contract start_loc (and
+    # the wide hi half on the two-launch path). The tail is padded to a
+    # whole int64 word so an odd fused batch views cleanly; regions are
+    # disjoint and the kernels see the same bytes as the two-alloc form.
     if batch <= 2048:
-        extend_start_loc = torch.empty(batch, dtype=torch.int32, device=device)
+        tail_words = (batch + 1) // 2
+    else:
+        tail_words = batch
+    buf = torch.empty(
+        extend_seq_lens_sum + tail_words, dtype=torch.int64, device=device
+    )
+    positions = buf[:extend_seq_lens_sum]
+    tail32 = buf[extend_seq_lens_sum:].view(torch.int32)
+    if batch <= 2048:
+        extend_start_loc = tail32[:batch]
         if batch:
             _fill_positions_fused[(batch,)](
                 positions,
@@ -123,11 +147,8 @@ def compute_position(extend_prefix_lens, extend_seq_lens, extend_seq_lens_sum):
                 BLOCK_BS=triton.next_power_of_2(max(batch, 16)),
             )
         return positions, extend_start_loc
-    wide_starts = torch.empty(
-        2 * batch, dtype=torch.int32, device=device
-    )
-    extend_start_loc = wide_starts[:batch]
-    starts_hi = wide_starts[batch:]
+    extend_start_loc = tail32[:batch]
+    starts_hi = tail32[batch:]
     if batch:
         _starts_scan[(1,)](
             extend_seq_lens,
