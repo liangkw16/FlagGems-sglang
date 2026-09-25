@@ -81,13 +81,13 @@ def _concat_segment_kernel(
     a,
     b,
     out,
-    d1: tl.constexpr,
-    a_last: tl.constexpr,
-    b_last: tl.constexpr,
+    d1,
+    a_last,
+    b_last,
+    a_blks,
+    blk_total,
     LOG_A: tl.constexpr,
     LOG_B: tl.constexpr,
-    a_blks: tl.constexpr,
-    blk_total: tl.constexpr,
     a_s0,
     a_s1,
     a_s2,
@@ -108,7 +108,7 @@ def _concat_segment_kernel(
         e = j * BLOCK + offs
         i1 = e >> LOG_A
         col = e & (a_last - 1)
-        valid = e < (d1 << LOG_A)
+        valid = e < (d1 * a_last)
         src = a + i0 * a_s0 + i1 * a_s1 + col * a_s2
         value = tl.load(src, mask=valid, other=0)
         tl.store(
@@ -120,7 +120,7 @@ def _concat_segment_kernel(
         e = (j - a_blks) * BLOCK + offs
         i1 = e >> LOG_B
         col = e & (b_last - 1)
-        valid = e < (d1 << LOG_B)
+        valid = e < (d1 * b_last)
         src = b + i0 * b_s0 + i1 * b_s1 + col * b_s2
         value = tl.load(src, mask=valid, other=0)
         tl.store(
@@ -165,10 +165,10 @@ def concat_mla_absorb_q(a, b):
                     d1,
                     a_last,
                     b_last,
-                    a_last.bit_length() - 1,
-                    b_last.bit_length() - 1,
                     a_blks,
                     blk_total,
+                    a_last.bit_length() - 1,
+                    b_last.bit_length() - 1,
                     a.stride(0),
                     a.stride(1),
                     a.stride(2),
