@@ -1,5 +1,17 @@
 # 第二批候选与提交队列
 
+## 2026-09-26 T101 E1 上膛（armed-unfired）
+
+- [T101 post_reorder_deepgemm E1](post_reorder_deepgemm.md)：launch 结构
+  重排 + BLOCK 阶梯候选（hidden 块上 grid.y、BLOCK 1024→2048、昆仑冻结
+  s0 vendor 护航）完成上膛：远端 release 矩阵 **8 测试 / 70 case 全过**
+  （`--proxy-vendor kunlunxin`，generic/kunlunxin 各 23 入口调用 / 20
+  kernel launch，verification_commit `0f9cf744`），不可变 ZIP
+  `e1-0f9cf74`（zip_sha256 `67f83c2f…`，vs s0 成员 1→2 且 generic 重排，
+  逐成员与 git blob 核对无夹带）。armed-unfired 待实时 preflight 发射；
+  预注册门：任一芯 -5% 回滚、均值 >11.10205714（榜首 c2flow）换 TB，
+  四主靶（天数/沐曦/A/B，T65-E10 同构锚）至少两芯 ≥+5% 才判轴兑现。
+
 ## 2026-09-26 T80 e30 上膛（armed-unfired）
 
 - [T80 fixup_zero_kv e30](fixup_zero_kv.md)：燧原寻址域单变量 i32 化
