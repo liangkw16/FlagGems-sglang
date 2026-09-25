@@ -42,3 +42,30 @@
 2. 反作弊红线：是否存在任何 fallback 路径或非 Triton 计算路径。
 3. wrapper 契约断言是否可能与平台传入形态冲突（如平台传非连续 attn、int64 loc 等）。
 4. 测试矩阵是否覆盖上述全部边界且 RELEASE_REQUIRED_TESTS 与实际方法一致。
+
+## T100 pad_draft_extend_query（diffusion/pad_draft_extend_query）
+- `(q, padded_q, seq_lens_q, cu_seqlens_q)`：q `[total,H,D]`；padded_q `[bs,max_seq,H,D]`；
+  `padded_q[b,:s] = q[cu[b]:cu[b]+s]`；**reference 先 clone 再写 clone 并返回**（越 s 的行保持基底）；
+  exact 纯搬移。题面明示 SGLang baseline 3D grid 早退浪费是优化目标。
+
+## T101 post_reorder_deepgemm（moe/post_reorder_deepgemm）
+- `(down_output, output, src2dst, topk_ids, topk_weights, topk, num_tokens, hidden_size, routed_scaling_factor)`：
+  `output[t,:] = scaling * Σ_{i: ids[t,i]>=0} down[src2dst[t,i],:] * w[t,i]`；
+  **-1=padding 跳过，ids==num_experts（fused shared expert）有效**；reference 对无效槽 dst 取 clamp(min=0)；
+  返回**新张量**（output 仅作 dtype/device 模板）；per-dtype tolerance。
+
+## T102 pre_reorder_cutlass（moe/pre_reorder_cutlass）
+- `(input, gateup_input, src2dst, topk_ids, a1_scales, num_local_experts, topk, num_tokens, hidden_size)`：
+  对每个 `ids[t,i] != num_local_experts` 的 slot：`gateup[dst[t,i],:] = (input[t,:] * (1/a1_scales)).to(dtype)`；
+  **a1_scales 可为 None（scale=1.0）或 1 元素 fp32**；clone-first 语义（未写入行保持基底）；per-dtype tolerance。
+
+## T104 rmsnorm_hf（norm/rmsnorm_hf）
+- `(input, weight, eps)`：`y=(x.float()*rsqrt(mean(x²)+eps)).to(input.dtype)`；**`out = weight * y`**
+  ——归一化结果先 cast 回输入 dtype 再乘 weight（HF 语义，区别于全 fp32 fused_rmsnorm）；
+  input 2D fp16/bf16；per-dtype tolerance。
+
+## 审查重点补充（第二批六题）
+- T100/T102 的 clone-first：未写入区域必须等于基底字节（含 gap/乱序/零长度情形）。
+- T101 无效槽（ids<0）：不得产生越界读（dst 可能 -1）；ids==num_experts 是有效槽。
+- T102 的 a1_scales=None 路径与标量读取；slot→(t,i) 的 2D stride 寻址正确性。
+- T104 的 cast 顺序（先 cast 再乘 weight）与行归约精度。
