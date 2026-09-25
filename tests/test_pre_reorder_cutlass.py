@@ -62,6 +62,16 @@ class PreReorderCutlassTest(unittest.TestCase):
         s2d[:, :] = perm.view(N, topk)
         self.check(x, gate, s2d, ids, scale, E, topk, N, H)
 
+    def test_transposed_destination(self):
+        # a transposed gateup buffer: unwritten rows must keep their
+        # base VALUES (the kernel writes through a contiguous clone)
+        x = torch.tensor([[1.0, 2.0, 3.0]], dtype=torch.bfloat16, device="cuda")
+        gate_t = torch.full((3, 2), 99.0, dtype=torch.bfloat16, device="cuda").t()
+        self.assertFalse(gate_t.is_contiguous())
+        ids = torch.tensor([[0, 1]], dtype=torch.int32, device="cuda")
+        s2d = torch.tensor([[2, 1]], dtype=torch.int32, device="cuda")
+        self.check(x, gate_t, s2d, ids, None, 5, 2, 1, 3)
+
     def test_empty_tokens(self):
         x = torch.empty(0, 64, dtype=torch.bfloat16, device="cuda")
         gate = torch.randn(4, 64, dtype=torch.bfloat16, device="cuda")
@@ -76,6 +86,7 @@ class PreReorderCutlassTest(unittest.TestCase):
 RELEASE_REQUIRED_TESTS = [
     "PreReorderCutlassTest.test_matrix",
     "PreReorderCutlassTest.test_no_offrank_slots",
+    "PreReorderCutlassTest.test_transposed_destination",
     "PreReorderCutlassTest.test_empty_tokens",
 ]
 

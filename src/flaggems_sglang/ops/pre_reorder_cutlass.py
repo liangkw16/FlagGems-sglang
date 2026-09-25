@@ -69,7 +69,7 @@ def pre_reorder_cutlass(
     num_tokens,
     hidden_size,
 ):
-    out = gateup_input.clone()
+    out = gateup_input.clone(memory_format=torch.contiguous_format)
     slots = num_tokens * topk
     if slots:
         row_elems = input.shape[-1]

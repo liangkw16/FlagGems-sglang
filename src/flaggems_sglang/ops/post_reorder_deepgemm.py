@@ -26,8 +26,11 @@ def _post_reorder_deepgemm(
     scale,
     ds0,
     ss0,
+    ss1,
     is0,
+    is1,
     ws0,
+    ws1,
     os0,
     TOPK: tl.constexpr,
     HDIM: tl.constexpr,
@@ -42,10 +45,10 @@ def _post_reorder_deepgemm(
             hm = ho < HDIM
             acc = tl.zeros((BLOCK,), dtype=tl.float32)
             for i in tl.static_range(0, TOPK):
-                eid = tl.load(topk_ids + base * is0 + i)
-                dst = tl.load(src2dst + base * ss0 + i).to(tl.int64)
+                eid = tl.load(topk_ids + base * is0 + i * is1)
+                dst = tl.load(src2dst + base * ss0 + i * ss1).to(tl.int64)
                 dst = tl.maximum(dst, 0)
-                w = tl.load(topk_weights + base * ws0 + i).to(tl.float32)
+                w = tl.load(topk_weights + base * ws0 + i * ws1).to(tl.float32)
                 keep = (eid >= 0).to(tl.float32)
                 v = tl.load(
                     down_output + dst * ds0 + ho, hm, other=0.0
@@ -74,7 +77,9 @@ def post_reorder_deepgemm(
     assert src2dst.shape == (num_tokens, topk)
     assert topk_ids.shape == (num_tokens, topk)
     assert topk_weights.shape == (num_tokens, topk)
-    out = torch.empty_like(output)
+    out = torch.empty(
+        (rows, hdim), dtype=output.dtype, device=output.device
+    )
     if rows and hdim:
         block = min(1024, triton.next_power_of_2(hdim))
         grid = (min(rows, 1024),)
@@ -88,8 +93,11 @@ def post_reorder_deepgemm(
             float(routed_scaling_factor),
             down_output.stride(0),
             src2dst.stride(0),
+            src2dst.stride(1),
             topk_ids.stride(0),
+            topk_ids.stride(1),
             topk_weights.stride(0),
+            topk_weights.stride(1),
             out.stride(0),
             TOPK=topk,
             HDIM=hdim,

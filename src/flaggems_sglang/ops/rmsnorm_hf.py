@@ -44,7 +44,12 @@ def _rmsnorm_hf_kernel(
 def rmsnorm_hf(input, weight, eps):
     assert input.dim() == 2
     rows, hidden = input.shape
-    out = torch.empty_like(input)
+    # torch promotes weight * y per type rules: a wider weight dtype
+    # widens the result beyond the input dtype
+    out_dtype = torch.promote_types(weight.dtype, input.dtype)
+    out = torch.empty(
+        (rows, hidden), dtype=out_dtype, device=input.device
+    )
     if rows and hidden:
         block = max(16, triton.next_power_of_2(hidden))
         _rmsnorm_hf_kernel[(rows,)](

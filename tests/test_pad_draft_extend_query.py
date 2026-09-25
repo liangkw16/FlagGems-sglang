@@ -60,6 +60,20 @@ class PadDraftExtendQueryTest(unittest.TestCase):
         cu = torch.zeros(4, dtype=torch.int32, device="cuda")
         self.check(q, pad, lens, cu)
 
+    def test_transposed_q_layout(self):
+        # q with swapped H/D axes: the copy must follow the values, not
+        # the raw bytes (review finding)
+        q = (
+            torch.arange(1, 13, dtype=torch.float16, device="cuda")
+            .reshape(2, 3, 2)
+            .transpose(1, 2)
+        )  # logical [2, 2, 3], non-contiguous
+        self.assertFalse(q.is_contiguous())
+        pad = torch.randn(1, 2, 2, 3, dtype=torch.float16, device="cuda") * 5
+        lens = torch.tensor([2], dtype=torch.int32, device="cuda")
+        cu = torch.tensor([0, 2], dtype=torch.int32, device="cuda")
+        self.check(q, pad, lens, cu)
+
     def test_bf16(self):
         gen = torch.Generator(device="cuda").manual_seed(3)
         q = torch.randn(10, 4, 16, dtype=torch.bfloat16, device="cuda", generator=gen)
@@ -72,6 +86,7 @@ class PadDraftExtendQueryTest(unittest.TestCase):
 RELEASE_REQUIRED_TESTS = [
     "PadDraftExtendQueryTest.test_typical_and_edges",
     "PadDraftExtendQueryTest.test_all_full_and_all_empty",
+    "PadDraftExtendQueryTest.test_transposed_q_layout",
     "PadDraftExtendQueryTest.test_bf16",
 ]
 

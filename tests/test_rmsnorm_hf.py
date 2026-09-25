@@ -39,6 +39,17 @@ class RmsnormHfTest(unittest.TestCase):
         w = torch.randn(512, dtype=torch.bfloat16, device="cuda")
         self.check(x, w)
 
+    def test_wider_weight_dtype_promotes(self):
+        # weight * y follows torch promotion: an fp32 weight widens the
+        # output beyond the bf16 input (review finding)
+        x = torch.randn(8, 256, dtype=torch.bfloat16, device="cuda")
+        w = torch.randn(256, dtype=torch.float32, device="cuda")
+        expected_dtype = torch.promote_types(w.dtype, x.dtype)
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                out = module.rmsnorm_hf(x, w, 1e-6)
+                self.assertEqual(out.dtype, expected_dtype)
+
     def test_eps_and_zero_row(self):
         x = torch.zeros(4, 128, dtype=torch.bfloat16, device="cuda")
         x[0, 0] = 1.0
@@ -50,6 +61,7 @@ class RmsnormHfTest(unittest.TestCase):
 RELEASE_REQUIRED_TESTS = [
     "RmsnormHfTest.test_shapes_and_dtypes",
     "RmsnormHfTest.test_strided_input",
+    "RmsnormHfTest.test_wider_weight_dtype_promotes",
     "RmsnormHfTest.test_eps_and_zero_row",
 ]
 

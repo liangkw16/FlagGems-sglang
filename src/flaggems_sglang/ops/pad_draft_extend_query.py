@@ -49,7 +49,10 @@ def _pad_rows_kernel(
 
 def pad_draft_extend_query(q, padded_q, seq_lens_q, cu_seqlens_q):
     total = q.shape[0]
-    out = padded_q.clone()
+    q = q if q.is_contiguous() else q.contiguous()
+    # a contiguous clone: value-identical to the reference clone while
+    # keeping the kernel's flat row addressing valid for any base layout
+    out = padded_q.clone(memory_format=torch.contiguous_format)
     if total:
         bs = cu_seqlens_q.shape[0] - 1
         row_elems = q.shape[-2] * q.shape[-1]
