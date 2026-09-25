@@ -6,12 +6,12 @@ operator: fused_sigmoid_mul
 batch: 7
 validity: valid(7/7,s0)
 platform: e2(21267)valid avg3.052(水位推高天数5.26/沐曦3.16):grid48中性(华为1.311≈1.340);昆仑vendor字节错误带16384(0.821)已回滚2048;TB=e2(avg口径)但昆仑rank最优在s0的1.166
-candidate_stage: s0
+candidate_stage: e3(开发员r1已commit未发射:ascend flat两段式无mask+同包昆仑2048恢复;远端release验证未做)
 team_best_stage: e2
 team_best_speedup: -
 sealed: yes
-next: 打包规则修正:每发前逐芯核对vendor字节=测量最优;华为2.01/昆仑2.01均需结构证据;额度转新题
-updated: 2026-09-25
+next: 先跑release门禁绑定本commit字节;等T93 E3平台裁决校准华为方向后发射;门:华为≥1.6保留/≥1.9判轴兑现,<1.311或数值失败回滚_ascend至5cfdb654字节(blob ab88bc50);昆仑<1.0判水位重掷(chip-rulesets:58)不归因2048
+updated: 2026-09-26
 ```
 
 ## 契约
@@ -50,3 +50,44 @@ T90/T81 华为经验（子块结构 1.23→1.5 轴）可迁移。
 - 提交脚本：`artifacts/competition/b7-s0-release2-20260924/submit-batch7-s0.sh`（v2，全部参数预烘焙）。
 - review 历史：v1（commit 级，gpt-6-astra medium）4 项全修；v2（--base 对照契约 spec，high）5 项 P2 全修；
   三轮修复均经 screening + release 双门禁复跑全绿。
+
+## E3 候选预注册（开发员 r1，2026-09-26；已 commit 未验证未发射）
+
+**缺口构成**（climb-loop.json s2t1op097，逐芯核对）：我方 3.05257936(#10) vs 金狐狸
+3.31494444(#1)，差 0.2624 = huawei(1.311 vs 2.185 全榜#1，-0.1249) + card_b(3.122 vs
+4.156 断层#1，-0.1477) + kunlunxin(0.821 vs 1.113，-0.0417) + card_a(3.705 vs 3.835，
+-0.0186)；天数/沐曦/海光我方领先合计 +0.0705，四芯之和与榜均差精确相等。
+
+**字节变更**（单 commit，`git log -1 -- 本账本` 即 source commit）：
+
+- `_ascend/ops/fused_sigmoid_mul.py`：flat 连续热路径（attn 且 gate 连续）改两段式无
+  mask——kernel 内 `pid < n_full` 标量分支、整块 2 载 1 存双无 mask 无 `other`、尾块
+  masked 不带 `other`（store 同 mask，undef lane 不落存）、BLOCK=16384/w16
+  （chip-rulesets.md:40 阶梯）、int32 寻址（:36 域内）；wrapper host 静态分派，两臂皆
+  Triton kernel，无 try/except/设备判断。strided 路径保留 E2 persistent 字节不动
+  （_TILE=1024/_PERSISTENT=48/w4）。回滚锚：改前 _ascend blob SHA-256
+  `ab88bc50632db1b20f842849892881a3875a79ae49790b1572a519aae873ef8c`（git 5cfdb654）。
+- `_kunlunxin/ops/fused_sigmoid_mul.py`：**本 commit 零改动**——树内已是回滚后的
+  `_BLOCK=2048` 已证字节（1.166 两连 vs 16384 的 0.821），随同包恢复提交，不发新字节。
+- 测试：`tests/test_fused_sigmoid_mul.py` 新增
+  `FusedSigmoidMulTest.test_two_segment_block_boundaries`（numel=16383/16384/16385/
+  32767/32768/32769/65536，覆盖标量分支两侧与无尾块整除格点），已列入
+  RELEASE_REQUIRED_TESTS。py_compile 双文件通过（本地无 CUDA，远端 release 门禁未做）。
+
+**依据**：三次提交差分锁定——b2db48ca(纯 generic) kunlun=1.166/huawei=1.022 →
+e1e241c0(昆仑 16384) kunlun=0.821 → 9ab3c5c4(华为 persistent+grid48) huawei=1.311；
+persistent 化 +28% 而 CTA 数轴中性，剩余瓶颈=每 tile 的 `offs<numel` 向量比较
+（chip-rulesets.md:36 Vector CMP 降标量）+ `other=0` 预填（:39 MTE2 串行化）。迁移
+模板=T93 E3 上膛字节（`_ascend/ops/add_constant.py`，树内核验同形态）；家族证据 T40
+E16 零比较热路径华为+130%、T39 e10 整块标量跳过+246%（见 add_constant.py docstring
+所引 experiments README:984-990/:735）。
+
+**负证据披露**：T92 E23 同概念（整块无 mask + masked 尾块）华为 -28.8% 平台实证——
+彼为 int64 + 2D grid-stride + per-base 守卫，本候选 int32 + 1D 单 tile + kernel 级单
+分支，家族证据未分解哪一因子致败，华为符号开放。T93 E3（同族 1 载 1 存）armed-
+unfired，**等其平台裁决校准后再发射本候选**（昆仑 2048 恢复分量不必等）。
+
+**预注册门**：华为 ≥1.6 保留 / ≥1.9 判轴兑现；<1.311 或数值失败 → 回滚 _ascend 至
+5cfdb654 字节；昆仑 <1.0 判水位重掷（chip-rulesets.md:58 昆仑 ±10-35%）不归因字节。
+保守核算：昆仑恢复 +0.049 + 华为按 GuanghuLab 水位 2.0 半成功率折算 ≈+0.05，均值
+3.0526 → ~3.15。

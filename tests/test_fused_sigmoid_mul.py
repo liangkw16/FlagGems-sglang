@@ -78,6 +78,20 @@ class FusedSigmoidMulTest(unittest.TestCase):
                 gate = torch.randn(1, numel, dtype=torch.bfloat16, device="cuda")
                 self.check(attn, gate, 2e-2, 1e-3)
 
+    def test_two_segment_block_boundaries(self):
+        # regression for the flat two-segment no-mask hot path
+        # (_ascend vendor, BLOCK=16384): numel at B-1/B/B+1 and
+        # 2B-1/2B/2B+1 straddles the scalar branch, and exact
+        # multiples (32768, 65536) run a grid with no tail program
+        # at all - pure unmasked tiles. A single sub-BLOCK numel
+        # (8191 also covered by test_grid_boundaries) runs the
+        # tail arm alone (n_full=0).
+        for numel in (16383, 16384, 16385, 32767, 32768, 32769, 65536):
+            with self.subTest(numel=numel):
+                attn = torch.randn(1, numel, dtype=torch.bfloat16, device="cuda")
+                gate = torch.randn(1, numel, dtype=torch.bfloat16, device="cuda")
+                self.check(attn, gate, 2e-2, 1e-3)
+
     def test_transposed_attn(self):
         # empty_like would keep the dense-transpose strides; the output
         # must still be value-correct for a non-contiguous attn input
@@ -112,6 +126,7 @@ RELEASE_REQUIRED_TESTS = [
     "FusedSigmoidMulTest.test_contiguous_3d_gate",
     "FusedSigmoidMulTest.test_strided_attn",
     "FusedSigmoidMulTest.test_grid_boundaries",
+    "FusedSigmoidMulTest.test_two_segment_block_boundaries",
     "FusedSigmoidMulTest.test_transposed_attn",
     "FusedSigmoidMulTest.test_extreme_values",
     "FusedSigmoidMulTest.test_empty",
