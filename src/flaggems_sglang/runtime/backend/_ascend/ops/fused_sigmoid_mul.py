@@ -34,9 +34,21 @@ programs take a `pid < n_full` scalar branch (uniform per program)
 through a mask-free/other-free 2-load-1-store body, and the single
 tail program runs a masked load/store with no `other` (undef lanes
 never reach memory - the store carries the same mask). BLOCK=16384 /
-num_warps=16 per the chip-rulesets.md:40 ladder; int32 addressing
-stays in-domain (chip-rulesets.md:36). The strided path keeps the
-proven persistent bytes unchanged (1024-area tiles, 48 CTAs, w4).
+num_warps=16 per the chip-rulesets.md:40 ladder. The int32 hot
+variant is dispatched only inside its exact no-overflow domain:
+BLOCK=16384 divides 2^31, so for numel <= 2^31 no computed offset
+exceeds INT32_MAX (at exactly 2^31 the grid has no tail program and
+max offs == INT32_MAX), while at numel = 2^31 + 1 the tail base
+wraps to -2^31 and every lane passes `offs < numel` (review r2
+finding, reproduced by a local int32 wraparound simulation). Above
+the bound the host routes to an i64-offset cold twin carrying the
+same cast form as the generic/kunlunxin kernels - the flat path in
+this file was previously the library's only unguarded one. The
+strided arm keeps the proven persistent bytes unchanged (1024-area
+tiles, 48 CTAs, w4); that arm's flat addressing remains int32 as
+before (pre-existing, safety beyond 2^31 not verifiable locally;
+triggering needs a single >=4GiB bf16 input, which competition
+shapes do not reach - disclosure, not a launch gate).
 
 Family evidence for the two-segment shape (as carried in the T93 E3
 armed docstring, _ascend/ops/add_constant.py): T40 E16 hot path with
@@ -66,6 +78,17 @@ import triton.language as tl
 _TILE = 1024
 _PERSISTENT = 48
 _BLOCK = 16384
+# exact no-overflow domain of the int32 hot path: BLOCK=16384 divides
+# 2^31 (131072 * 16384 = 2147483648), so numel <= 2^31 never computes
+# an offset above INT32_MAX, while numel = 2^31 + 1 wraps the tail
+# base to -2^31 (all lanes then pass `offs < numel` -> OOB)
+_INT32_NUMEL_MAX = 2**31
+
+
+def _flat_cold(numel):
+    """Host dispatch: route flat inputs past the int32 hot path's
+    exact no-overflow domain to the i64-offset cold twin."""
+    return numel > _INT32_NUMEL_MAX
 
 
 @triton.jit
@@ -89,6 +112,32 @@ def _fused_sigmoid_mul_two_segment(
     else:
         # single tail program: masked load without `other` (undef
         # lanes are never stored - the store carries the same mask)
+        m = offs < numel
+        a = tl.load(attn + offs, mask=m).to(tl.float32)
+        g = tl.load(gate + offs, mask=m).to(tl.float32)
+        tl.store(
+            out + offs, (a * tl.sigmoid(g)).to(out.dtype.element_ty), mask=m
+        )
+
+
+@triton.jit
+def _fused_sigmoid_mul_two_segment_i64(
+    attn,
+    gate,
+    out,
+    numel,
+    n_full,
+    BLOCK: tl.constexpr,
+):
+    # cold twin for numel > _INT32_NUMEL_MAX: same two-segment body,
+    # offsets computed in i64 (the generic/kunlunxin cast form)
+    pid = tl.program_id(0).to(tl.int64)
+    offs = pid * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
+    if pid < n_full:
+        a = tl.load(attn + offs).to(tl.float32)
+        g = tl.load(gate + offs).to(tl.float32)
+        tl.store(out + offs, (a * tl.sigmoid(g)).to(out.dtype.element_ty))
+    else:
         m = offs < numel
         a = tl.load(attn + offs, mask=m).to(tl.float32)
         g = tl.load(gate + offs, mask=m).to(tl.float32)
@@ -150,10 +199,16 @@ def fused_sigmoid_mul(attn_output, gate):
         gate_cont = gate.is_contiguous()
         if attn_cont and gate_cont:
             # flat hot path: two-segment no-mask grid (host-side
-            # static dispatch; both arms are Triton kernels)
+            # static dispatch; both arms are Triton kernels). Past
+            # the int32 domain the i64 cold twin takes over.
             n_full = numel // _BLOCK
             grid = (n_full + (1 if numel % _BLOCK else 0),)
-            _fused_sigmoid_mul_two_segment[grid](
+            kernel = (
+                _fused_sigmoid_mul_two_segment_i64
+                if _flat_cold(numel)
+                else _fused_sigmoid_mul_two_segment
+            )
+            kernel[grid](
                 attn_output,
                 gate,
                 out,

@@ -92,6 +92,56 @@ class FusedSigmoidMulTest(unittest.TestCase):
                 gate = torch.randn(1, numel, dtype=torch.bfloat16, device="cuda")
                 self.check(attn, gate, 2e-2, 1e-3)
 
+    def test_two_segment_dispatch_boundary(self):
+        # numel=2^31 boundary dispatch regression (review r2): BLOCK
+        # divides 2^31, so numel <= 2^31 is exactly the no-overflow
+        # domain of the int32 hot path (at 2^31 the grid has no tail
+        # program and max offs == INT32_MAX); above it the host must
+        # route to the i64 cold twin. Analytical wraparound check:
+        # at 2^31+1 the tail base wraps to -2^31 and every lane
+        # passes `offs < numel` (OOB) - the bug this dispatch fixes.
+        # A real 2^31-element execution needs 3x4GiB (bf16) and does
+        # not fit the release device; the cold kernel's numerics are
+        # covered by test_two_segment_i64_cold_variant_numerics.
+        for name, module in MODULES:
+            if not hasattr(module, "_INT32_NUMEL_MAX"):
+                # generic/kunlunxin are single all-i64 kernels (no
+                # dispatch seam to guard)
+                continue
+            with self.subTest(module=name):
+                bound = module._INT32_NUMEL_MAX
+                self.assertEqual(bound % module._BLOCK, 0)
+                self.assertFalse(module._flat_cold(bound - 1))
+                self.assertFalse(module._flat_cold(bound))
+                self.assertTrue(module._flat_cold(bound + 1))
+                self.assertTrue(module._flat_cold(bound + module._BLOCK))
+
+    def test_two_segment_i64_cold_variant_numerics(self):
+        # numel=2^31 boundary regression (review r2), execution arm:
+        # force the i64 cold twin through the public seam by lowering
+        # the module's dispatch bound (restored in finally), then run
+        # the full numeric check on both a tail grid (2*BLOCK+7) and
+        # a no-tail grid (3*BLOCK).
+        for name, module in MODULES:
+            if not hasattr(module, "_INT32_NUMEL_MAX"):
+                continue
+            block = module._BLOCK
+            saved = module._INT32_NUMEL_MAX
+            module._INT32_NUMEL_MAX = block
+            try:
+                for numel in (2 * block + 7, 3 * block):
+                    with self.subTest(module=name, numel=numel):
+                        self.assertTrue(module._flat_cold(numel))
+                        attn = torch.randn(
+                            1, numel, dtype=torch.bfloat16, device="cuda"
+                        )
+                        gate = torch.randn(
+                            1, numel, dtype=torch.bfloat16, device="cuda"
+                        )
+                        self.check(attn, gate, 2e-2, 1e-3)
+            finally:
+                module._INT32_NUMEL_MAX = saved
+
     def test_transposed_attn(self):
         # empty_like would keep the dense-transpose strides; the output
         # must still be value-correct for a non-contiguous attn input
@@ -127,6 +177,8 @@ RELEASE_REQUIRED_TESTS = [
     "FusedSigmoidMulTest.test_strided_attn",
     "FusedSigmoidMulTest.test_grid_boundaries",
     "FusedSigmoidMulTest.test_two_segment_block_boundaries",
+    "FusedSigmoidMulTest.test_two_segment_dispatch_boundary",
+    "FusedSigmoidMulTest.test_two_segment_i64_cold_variant_numerics",
     "FusedSigmoidMulTest.test_transposed_attn",
     "FusedSigmoidMulTest.test_extreme_values",
     "FusedSigmoidMulTest.test_empty",

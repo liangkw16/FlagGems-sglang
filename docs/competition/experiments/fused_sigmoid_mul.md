@@ -6,7 +6,7 @@ operator: fused_sigmoid_mul
 batch: 7
 validity: valid(7/7,s0)
 platform: e2(21267)valid avg3.052(水位推高天数5.26/沐曦3.16):grid48中性(华为1.311≈1.340);昆仑vendor字节错误带16384(0.821)已回滚2048;TB=e2(avg口径)但昆仑rank最优在s0的1.166
-candidate_stage: e3(开发员r1已commit未发射:ascend flat两段式无mask+同包昆仑2048恢复;远端release验证未做)
+candidate_stage: e3(开发员r2已commit未发射:ascend flat两段式无mask+r2 int32溢出防护(2^31域分派+i64冷备)+同包昆仑2048恢复;远端release验证未做)
 team_best_stage: e2
 team_best_speedup: -
 sealed: yes
@@ -91,3 +91,29 @@ unfired，**等其平台裁决校准后再发射本候选**（昆仑 2048 恢复
 5cfdb654 字节；昆仑 <1.0 判水位重掷（chip-rulesets.md:58 昆仑 ±10-35%）不归因字节。
 保守核算：昆仑恢复 +0.049 + 华为按 GuanghuLab 水位 2.0 半成功率折算 ≈+0.05，均值
 3.0526 → ~3.15。
+
+### r2 评审修复（开发员，2026-09-26）：int32 寻址溢出防护
+
+**发现（P2-1）**：r1 的 flat 两段式 `offs = pid*BLOCK + tl.arange(0,BLOCK)` 为纯
+int32 且 host 无 numel 上限检查；numel ≥ 2^31+1 时尾块 base 回绕为 -2^31，全部 lane
+通过 `offs < numel` → OOB 读写。generic/kunlunxin 均有 `.to(tl.int64)` 防护，本路径
+是库内唯一例外，docstring "int32 addressing stays in-domain" 无代码保证。
+
+**修复**（同 commit）：`_INT32_NUMEL_MAX = 2^31` + host 分派函数 `_flat_cold(numel)`
++ i64 冷备 kernel `_fused_sigmoid_mul_two_segment_i64`（同两段式结构、generic/昆仑
+同款 cast），超限走冷备。域推导本地解析验证（逐 program 极值 int32 回绕模拟）：
+numel=2^31-1/2^31 全 program 干净（2^31 时无尾块、max offs=INT32_MAX），2^31+1 尾块
+base=-2^31 全 lane 过比较（复现评审发现），2^31+BLOCK 整块 OOB——`numel ≤ 2^31` 为
+BLOCK=16384 的精确无溢出域（BLOCK 整除 2^31）。
+
+**回归**：`test_two_segment_dispatch_boundary`（边界分派真值表 + 域整除性）与
+`test_two_segment_i64_cold_variant_numerics`（临时下调模块分派界强制冷备走公共
+seam，尾块/无尾块两格点全数值校验，finally 恢复）均入 RELEASE_REQUIRED_TESTS。
+真实 2^31 元素执行需 3×4GiB(bf16) 超释放设备显存，不作为 skip 门禁（skip 会阻断
+release 晋级），执行覆盖由强制冷备测试承担。
+
+**如实陈述**：本地无 torch/triton（远端验证仓），分派 seam 本地仅 py_compile+AST
+核验（module 级无 try、分派读模块全局为动态 seam），执行证据待远端 release 回执；
+strided persistent 臂 flat 寻址维持 int32 旧字节（先在，>2^31 安全性本地不可验，
+触发需单张 ≥4GiB bf16，竞赛 shape 不达，不阻塞发射门禁）；热路径 int32 是
+chip-rulesets.md:36 的有意权衡，防护不改变 ≤2^31 域内字节行为。
