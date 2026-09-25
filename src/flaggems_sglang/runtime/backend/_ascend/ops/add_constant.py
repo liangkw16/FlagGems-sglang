@@ -30,7 +30,7 @@ import triton
 import triton.language as tl
 
 _TILE = 1024
-_PERSISTENT = 512
+_PERSISTENT = 48
 
 
 @triton.jit
