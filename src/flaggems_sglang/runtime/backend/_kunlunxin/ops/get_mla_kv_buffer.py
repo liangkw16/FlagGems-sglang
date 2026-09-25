@@ -89,11 +89,10 @@ def get_mla_kv_buffer(kv_buffer, loc, cache_k_nope, cache_k_rope):
         (n, rope_dim), dtype=cache_k_rope.dtype, device=kv_buffer.device
     )
     if n and (nope_dim or rope_dim):
-        # exact-width segments (no 1024 floor): T94's e3 measurement
-        # showed the floor idles half the lanes on 576-wide rows and the
-        # exact-width vectors recovered kunlunxin throughput
-        block_n = min(65536, max(16, triton.next_power_of_2(max(nope_dim, 1))))
-        block_r = min(65536, max(16, triton.next_power_of_2(max(rope_dim, 1))))
+        # the 1024-lane floor is the measured-best form on kunlunxin
+        # (e1 0.350x vs exact-width e2 0.124x - narrow vectors invert)
+        block_n = min(65536, max(1024, triton.next_power_of_2(max(nope_dim, 1))))
+        block_r = min(65536, max(1024, triton.next_power_of_2(max(rope_dim, 1))))
         rows_per_prog = triton.cdiv(n, _MAX_GRID)
         grid = (triton.cdiv(n, rows_per_prog),)
         _kv_rows_kernel[grid](
