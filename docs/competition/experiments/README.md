@@ -1,5 +1,19 @@
 # 第二批候选与提交队列
 
+## 2026-09-26 T104 E1 上膛（armed-unfired）
+
+- [T104 rmsnorm_hf E1](rmsnorm_hf.md)：generic 精确子块两遍候选
+  （hidden>1024 且 256 整除走 `D_TILE=min(hidden&-hidden,1024)` 两遍
+  kernel，≤1024/非整除整行路径字节保持 S0）完成上膛：远端 release
+  矩阵 **7 测试 / 84 case 全过**（7/7 RELEASE_REQUIRED，该题无 vendor
+  文件故无 proxy-vendor，41 kernel launch 与评审回执一致，
+  verification_commit `a29ab7e6`），不可变 ZIP `e1-a29ab7e`
+  （zip_sha256 `a3cdec46…`，≠ s0 `58d41527…`，成员 1→1 仅
+  `rmsnorm_hf.py` 重排，逐成员与 git blob 核对无夹带）。
+  armed-unfired 待实时 preflight 发射；预注册门：7 芯无 -5% 回退、
+  华为 ≥1.70 判轴兑现、均值 >4.25246667 换 TB，单芯回退走
+  `_metax`/`_tianshu`/`_ascend` vendor 切分回滚旋钮。
+
 ## 2026-09-26 T101 E1 上膛（armed-unfired）
 
 - [T101 post_reorder_deepgemm E1](post_reorder_deepgemm.md)：launch 结构

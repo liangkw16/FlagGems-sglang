@@ -10,7 +10,7 @@ candidate_stage: e1
 team_best_stage: s0
 team_best_speedup: 见platform行
 sealed: no
-next: E1 generic精确子块两遍(79ade34d)代理门全绿(7/7回执+配对中性),待平台arm;预注册各芯签名/回滚预留见E1节
+next: E1上膛待发射(armed-unfired,回执绑定a29ab7e6,ZIP e1-a29ab7e);按预注册门判读后定E2轴
 updated: 2026-09-26
 ```
 
@@ -92,3 +92,43 @@ updated: 2026-09-26
     华为若 tl.range 出问题，同机制回 `_ascend` vendor（range 版 T51 字节）。
   - 本节之前无该轴任何平台读数；以上门与签名在平台提交前落账，读数后不得
     改判据。
+
+### E1 上膛（2026-09-26 01:38，armed-unfired）
+
+- **远端 release 矩阵（绑定 HEAD）**：`verify_release.py prepare rmsnorm_hf
+  --source-commit HEAD --verification-commit HEAD`（该题现有 vendor 为空，
+  无 `--proxy-vendor`；mode=release，schema v2），上传
+  `/tmp/wf-E1-generic-exact-subblock-release` 后远端
+  `/home/kevin/notebook/.venv/bin/python` 执行 `run`，**RC=0**：
+  **7 测试 / 84 case 全过**（7/7 RELEASE_REQUIRED，0 fail/error/skip/xfail），
+  **41 次 kernel launch**（与评审 r2 回执 41 精确一致，逐 subTest 推算
+  10+1+1+2+16+10+1 吻合），71 条非空张量 shape 记录，环境 NVIDIA RTX
+  5070 Ti / torch 2.13.0+cu130 / triton 3.7.1 / cuda 13.0。回执
+  `artifacts/competition/day5prep-20260921/E1-generic-exact-subblock-wf/verification.json`
+  （sha256 `4f8fe186e008f253ec9a8c98d81527733d807ef79529a5d739d9735141360035`）
+  / `verification.log`（sha256
+  `64a8250c177dc288fdd8fa72cb2f2db363d3a21cddfedf35a1ae954f18841a29`，
+  `Ran 7 tests in 0.738s OK`）。源码字节 = 79ade34d（0f9cf744→a29ab7e6
+  仅 docs 改动，`git diff 79ade34d HEAD -- src/…/rmsnorm_hf.py tests/…`
+  为空）。
+- **五元组（上膛身份）**：
+  - source_commit：`a29ab7e6ccd4ba865958e30face0e1dbf7f4b4b5`
+  - verification_commit：`a29ab7e6ccd4ba865958e30face0e1dbf7f4b4b5`（=本回执，
+    发射 preflight 要求 commit 字段等于它）
+  - ledger_commit：本 commit（E1 上膛记账）
+  - ZIP：`artifacts/competition/rmsnorm_hf/e1-a29ab7e/rmsnorm_hf.zip`
+    （4621 字节，zip_sha256 =
+    `a3cdec46275f33eae3479582dd1f82647af860016ebe265f5045ac5098b8439c` =
+    canonical_zip_sha256；≠ s0 `58d41527…`（2097 字节），generic 源码
+    重排后新 ZIP 字节，平台 zip_sha256 去重键成立）
+  - stage：`e1`（CURRENT candidate_stage 已预写 e1 且无 e1 ZIP 存在，
+    上膛即落 e1，序列 s0→e1 连续不跳号）
+  - ZIP 成员名单（与 `zipfile.namelist()` 实际核对一致，无夹带；
+    `unzip -t` 无错；UTF-8 `.py`，无测试/缓存/目录前缀/macOS 垃圾；
+    成员字节 = git blob @a29ab7e6 = 回执 files 哈希 = 远端实际执行字节）：
+    | 成员 | 字节 | sha256 |
+    |---|---|---|
+    | `rmsnorm_hf.py` | 4497 | `adfe9ff11059ba46d18136b509eccfd73add627e50b0284a88a2f8197304f58d` |
+- **状态**：armed-unfired——发射前预注册门不变（上节：7 芯无 -5% 回退；
+  华为 ≥1.70 判轴兑现；平台均值 >4.25246667 换 TB；单芯回退走
+  vendor 切分回滚旋钮），发射 preflight 通过后执行一次性 submit。
