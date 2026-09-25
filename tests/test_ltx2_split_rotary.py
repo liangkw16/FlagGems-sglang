@@ -55,23 +55,16 @@ class Ltx2SplitRotaryTest(unittest.TestCase):
         self.assertFalse(cos.is_contiguous())
         self.check(x, cos, sin)
 
-    def test_sliced_and_independent_layouts(self):
-        # a sliced x (stride-2 inner) plus cos/sin built with different
-        # independent layouts: the output must be contiguous and both
-        # tables must be read through their OWN strides
+    def test_independent_sin_layout(self):
+        # cos contiguous, sin built via permute: both must be read
+        # through their OWN strides (review finding)
         gen = torch.Generator(device="cuda").manual_seed(9)
-        big = torch.randn(1, 8, 4, 128 * 2, dtype=torch.bfloat16, device="cuda", generator=gen)
-        x3 = big[..., ::2].reshape(1, 8, 4, 128)  # sliced then reshaped
-        x = x3.permute(0, 1, 3, 2).reshape(1, 8, 512).contiguous()
-        cos = big[..., 0::2].permute(0, 2, 1, 3).contiguous().permute(0, 2, 1, 3)
-        sin_big = torch.randn(8, 4, 8, 128, dtype=torch.bfloat16, device="cuda", generator=gen)
-        sin = sin_big.permute(2, 1, 0, 3)  # [8, 4, 8, 128] -> [T? no] keep shapes right
-        # build legal tables: cos/sin [B=1, H=4, T=8, half=128]
-        c = torch.randn(1, 4, 8, 128, dtype=torch.bfloat16, device="cuda", generator=gen)
-        s2 = torch.randn(8, 4, 1, 128, dtype=torch.bfloat16, device="cuda", generator=gen)
-        sin = s2.permute(2, 1, 0, 3)  # [1, 4, 8, 128] non-contiguous
+        x = torch.randn(1, 8, 512, dtype=torch.bfloat16, device="cuda", generator=gen)
+        cos = torch.randn(1, 4, 8, 64, dtype=torch.bfloat16, device="cuda", generator=gen)
+        raw_sin = torch.randn(8, 4, 1, 64, dtype=torch.bfloat16, device="cuda", generator=gen)
+        sin = raw_sin.permute(2, 1, 0, 3)  # [1, 4, 8, 64] non-contiguous
         self.assertFalse(sin.is_contiguous())
-        self.check(x, c, sin)
+        self.check(x, cos, sin)
 
     def test_sliced_x(self):
         gen = torch.Generator(device="cuda").manual_seed(4)
