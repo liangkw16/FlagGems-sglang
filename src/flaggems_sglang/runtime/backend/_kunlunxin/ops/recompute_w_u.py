@@ -68,11 +68,15 @@ def _recompute_wu_exact(
     for k0 in range(0, K, BK):
         kk = k0 + ko
         km = kk < K
-        acc = tl.zeros((BT, BK), dtype=tl.float64)
+        # Kahan-compensated fp32 accumulation: fp64 was silently
+        # demoted on the XPU backend (third platform shot's 37-element
+        # miss), so compensation carries the near-zero precision
+        acc = tl.zeros((BT, BK), dtype=tl.float32)
+        corr = tl.zeros((BT, BK), dtype=tl.float32)
         for col in tl.static_range(0, BT):
             acol = tl.load(
                 A + a_base + arows * (H * BT) + col,
-            ).to(tl.float64)
+            ).to(tl.float32)
             krow = tl.load(
                 k + k_base + col * (Hg * K) + kk,
                 mask=km,
@@ -81,9 +85,12 @@ def _recompute_wu_exact(
             bscale = tl.load(beta + bh_base + col * H).to(tl.float32)
             gscale = tl.load(g_cumsum + bh_base + col * H).to(tl.float32)
             prod = (krow * bscale * tl.exp(gscale)).to(tl.bfloat16).to(
-                tl.float64
+                tl.float32
             )
-            acc += acol[:, None] * prod[None, :]
+            term = acol[:, None] * prod[None, :] - corr
+            t = acc + term
+            corr = (t - acc) - term
+            acc = t
         tl.store(
             w + w_base + arows[:, None] * (H * K) + kk[None, :],
             acc.to(w.dtype.element_ty),
@@ -94,19 +101,23 @@ def _recompute_wu_exact(
     for v0 in range(0, V, BV):
         vv = v0 + vo
         vm = vv < V
-        acc = tl.zeros((BT, BV), dtype=tl.float64)
+        acc = tl.zeros((BT, BV), dtype=tl.float32)
+        corr = tl.zeros((BT, BV), dtype=tl.float32)
         for col in tl.static_range(0, BT):
             acol = tl.load(
                 A + a_base + arows * (H * BT) + col,
-            ).to(tl.float64)
+            ).to(tl.float32)
             vrow = tl.load(
                 v + v_base + col * (H * V) + vv,
                 mask=vm,
                 other=0,
             ).to(tl.float32)
             scale = tl.load(beta + bh_base + col * H).to(tl.float32)
-            prod = (vrow * scale).to(tl.bfloat16).to(tl.float64)
-            acc += acol[:, None] * prod[None, :]
+            prod = (vrow * scale).to(tl.bfloat16).to(tl.float32)
+            term = acol[:, None] * prod[None, :] - corr
+            t = acc + term
+            corr = (t - acc) - term
+            acc = t
         tl.store(
             u + v_base + arows[:, None] * (H * V) + vv[None, :],
             acc.to(u.dtype.element_ty),
