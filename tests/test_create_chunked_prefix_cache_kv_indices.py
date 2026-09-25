@@ -164,6 +164,20 @@ class CreateChunkedPrefixCacheKvIndicesTest(unittest.TestCase):
         kv_indices = torch.arange(12, device="cuda", dtype=torch.int32) * 7
         self.check(req_to_token, pool_idx, starts, lens, cus, kv_indices)
 
+    def test_nested_windows_consistent_sources(self):
+        # nested windows whose sources agree at the overlap: the fill
+        # must not restore base bytes inside the union (protects the
+        # intersection-scan fix; positions 5-7 would regress otherwise)
+        base = torch.arange(16, device="cuda", dtype=torch.int32) * 100
+        req_to_token = torch.arange(
+            64, device="cuda", dtype=torch.int32
+        ).reshape(1, 64)
+        pool_idx = torch.tensor([0, 0], dtype=torch.int32, device="cuda")
+        starts = torch.tensor([1, 3], dtype=torch.int32, device="cuda")
+        lens = torch.tensor([7, 2], dtype=torch.int32, device="cuda")
+        cus = torch.tensor([1, 3], dtype=torch.int32, device="cuda")
+        self.check(req_to_token, pool_idx, starts, lens, cus, base)
+
     def test_strided_base(self):
         # a non-contiguous base view: preserved bytes must come from the
         # base's own stride, not a flat memcpy (review finding)
@@ -217,6 +231,7 @@ RELEASE_REQUIRED_TESTS = [
     "CreateChunkedPrefixCacheKvIndicesTest.test_gapped_cu_layout",
     "CreateChunkedPrefixCacheKvIndicesTest.test_unsorted_and_overlapping_windows",
     "CreateChunkedPrefixCacheKvIndicesTest.test_strided_base",
+    "CreateChunkedPrefixCacheKvIndicesTest.test_nested_windows_consistent_sources",
     "CreateChunkedPrefixCacheKvIndicesTest.test_empty_requests",
 ]
 
