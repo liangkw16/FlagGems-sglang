@@ -6,11 +6,11 @@ operator: fused_sigmoid_mul
 batch: 7
 validity: valid(7/7,s0)
 platform: e2(21267)valid avg3.052(水位推高天数5.26/沐曦3.16):grid48中性(华为1.311≈1.340);昆仑vendor字节错误带16384(0.821)已回滚2048;TB=e2(avg口径)但昆仑rank最优在s0的1.166
-candidate_stage: e3(开发员r2已commit未发射:ascend flat两段式无mask+r2 int32溢出防护(2^31域分派+i64冷备)+同包昆仑2048恢复;远端release验证未做)
+candidate_stage: e3(armed未发射:ascend两段式+r2 int32防护+同包昆仑2048恢复;release@770b1745全绿11/11/34launch每源;ZIP e3-770b174 sha256 5daf87fc)
 team_best_stage: e2
 team_best_speedup: -
 sealed: yes
-next: 先跑release门禁绑定本commit字节;等T93 E3平台裁决校准华为方向后发射;门:华为≥1.6保留/≥1.9判轴兑现,<1.311或数值失败回滚_ascend至5cfdb654字节(blob ab88bc50);昆仑<1.0判水位重掷(chip-rulesets:58)不归因2048
+next: E3上膛完成待发射(armed-unfired,回执绑定770b1745,ZIP e3-770b174 sha256 5daf87fc,五元组见E3上膛节;11/11全绿零skip,--proxy-vendor ascend+kunlunxin);等T93 E3平台裁决校准华为方向后发射;门:华为≥1.6保留/≥1.9判轴兑现,<1.311或数值失败回滚_ascend至5cfdb654字节(blob ab88bc50);昆仑<1.0判水位重掷(chip-rulesets:58)不归因2048
 updated: 2026-09-26
 ```
 
@@ -117,3 +117,42 @@ release 晋级），执行覆盖由强制冷备测试承担。
 strided persistent 臂 flat 寻址维持 int32 旧字节（先在，>2^31 安全性本地不可验，
 触发需单张 ≥4GiB bf16，竞赛 shape 不达，不阻塞发射门禁）；热路径 int32 是
 chip-rulesets.md:36 的有意权衡，防护不改变 ≤2^31 域内字节行为。
+
+## E3 上膛（上膛员，2026-09-26）
+
+**远端 release 回执**（source=verification=`770b1745`，含 r2 字节；该 commit 未改
+本题三源与测试，文件字节与 r2 commit `3a1fe387` 一致）：
+`artifacts/competition/day5prep-20260921/fused_sigmoid_mul-wf/verification.json`（SHA-256
+`2e3cadc4436298271fbba89d13784afd3241a2559af2ef5944b083f5840130b5`）与
+`verification.log`（SHA-256 `0bc3f5404c3778e0f99ba766ac9ed6b3179156cd5b7e1d5210b7e40ca5f0c4ef`，
+与回执内 log_sha256 逐字一致）。mode=release、exit_code=0、NVIDIA RTX 5070 Ti /
+torch 2.13.0+cu130 / triton 3.7.1、proxy_vendors=[ascend, kunlunxin]。
+**11/11 用例通过**（tests_run=11=passed，RELEASE_REQUIRED_TESTS 11 项与 expected_tests
+集合全等，r2 三个 two_segment 回归全在列），0 failures / 0 errors / 0 skipped /
+0 expected_failures；generic/_ascend/_kunlunxin 三源各 **34 kernel launches / 35
+entry calls**（实际 kernel 执行，非空 bfloat16 张量）。r2 遗留的「seam 执行证据待
+远端回执」至此补齐。
+
+**不可变 ZIP**：`artifacts/competition/fused_sigmoid_mul/e3-770b174/fused_sigmoid_mul.zip`，
+15948 字节，zip_sha256 = canonical =
+`5daf87fccffaadfe2671a5a7ce95cf212ab6faf85daa8b9e9eba9f94ef15e7de`，≠ e2
+`90b254648aa83bafecceb065ecdb330fc726afb14a0afd407464a42d707d8af0` ≠ e1
+`47824d60beddd1a7a8852ce31c64de5b0a05bafec143da3ab02fa660c8a19780` ≠ s0
+`40003a157420b8a5598fede4bc02aea5051d149da29d451bac0043116a720b51`（平台去重键
+为 zip_sha256，新候选字节成立）。**成员三枚**（zipfile namelist 与构建清单逐一
+核对相等，无夹带文件；每成员与 git blob `770b1745` 逐字节一致；testzip 干净；
+成员 sha256 与回执 files 哈希一致，即 ZIP 字节=验证字节=git 字节）：
+
+| ZIP 成员 | 字节 | SHA-256 | 变更说明 |
+| --- | ---: | --- | --- |
+| `fused_sigmoid_mul.py` | 2729 | `e18f4567…` | 自 s0 review `daf77923` 起字节冻结（= e2 同哈希） |
+| `fused_sigmoid_mul_ascend.py` | 9530 | `0f2492c0…` | 本候选唯一重写：r1 两段式无 mask + r2 int32 域分派/i64 冷备（e2 内为回滚锚 `ab88bc50`） |
+| `fused_sigmoid_mul_kunlunxin.py` | 3285 | `3c8a650a…` | `aef2c1f1` 恢复的 `_BLOCK=2048` 已证字节（e2 ZIP 内为 16384 错误带 `71630ea4`）——预注册「同包昆仑 2048 恢复」兑现 |
+
+**发射命令约束**：verify/发射须带 `--proxy-vendor ascend --proxy-vendor kunlunxin`。
+
+**预注册门**（沿用 E3 预注册，一字未改）：华为 ≥1.6 保留 / ≥1.9 判轴兑现；
+<1.311 或数值失败 → 回滚 `_ascend` 至 5cfdb654 字节（blob `ab88bc50`）；昆仑 <1.0
+判水位重掷（chip-rulesets.md:58，昆仑 ±10-35%）不归因 2048 字节。armed-unfired：
+发射时机等 T93 E3 平台裁决校准华为方向（负证据披露见上）；发射后以平台
+status/watch JSON 回写逐芯结果。
