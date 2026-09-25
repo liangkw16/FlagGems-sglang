@@ -5,12 +5,12 @@ task: 93
 operator: add_constant
 batch: 7
 validity: valid(7/7,s0)
-platform: e2(21266)valid:grid48 vs 512无差(华为0.247 vs 0.282,昆仑0.656 vs 0.685,均噪声内);TB保e1; ascend参数轴关闭-榜首0.99是结构优势非grid数
+platform: e3(21510)valid:华为0.332(+34%,两段式无mask兑现,门0.5-0.9保留带)/昆仑0.652;avg0.838 vs榜首0.919
 candidate_stage: e3
-team_best_stage: e1
+team_best_stage: e3
 team_best_speedup: 0.841(avg)
 sealed: no
-next: E3上膛待发射(armed-unfired,回执绑定8b7394af,ZIP e3-8b7394a,五元组见下方E3上膛节);门=数值失败或华为<0.5或均分<=0.841回滚_ascend至5cfdb654字节(SHA-256 7b3ee54b),华为>=0.9换TB,0.5-0.9保留;同概念负证据T92 E23华为-28.8%已披露(下方E3节)
+next: 华为0.33→0.92仍2.8x;方向已二次验证(T97同族+28%)
 updated: 2026-09-26
 ```
 

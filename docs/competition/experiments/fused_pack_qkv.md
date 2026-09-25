@@ -5,12 +5,12 @@ task: 96
 operator: fused_pack_qkv
 batch: 7
 validity: valid(7/7,e1)
-platform: s0(21124)invalid_threshold昆仑0.010;e1(21146)valid 7/7:昆仑0.010→0.583(57x,vendor 1D结构兑现)/华为0.950/天数2.95/海光3.15
+platform: e2(21508)valid:天数4.17(+41%,iluvatar vendor兑现)/昆仑0.556/华为0.824;avg1.89仍距c2flow 2.36
 candidate_stage: e2
-team_best_stage: e1
+team_best_stage: e2
 team_best_speedup: -
 sealed: yes
-next: E2上膛完成待发射(armed-unfired,回执绑定fde2d02c,ZIP e2-fde2d02,五元组见下方E2上膛节;9测试/64case全过零skip,--proxy-vendor iluvatar+kunlunxin);门=数值失败或天数<2.95回滚删vendor文件回e1字节,天数≥4.0保留/≥4.6进场带/均值>1.72675换TB;同字节重掷≤2;其余六芯vendor隔离仅tianshu选中;E3-generic-i32单变量归因留后续
+next: 沐曦1.91/华为0.82→榜首2.60/1.41;天数轴已兑现
 updated: 2026-09-26
 ```
 

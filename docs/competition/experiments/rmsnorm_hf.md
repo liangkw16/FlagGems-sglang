@@ -5,12 +5,12 @@ task: 104
 operator: rmsnorm_hf
 batch: 7
 validity: valid
-platform: s0(21439)valid 7/7 avg4.25:沐曦4.26(#1!)/天数6.4/海光6.2;昆仑1.36/华为1.57是拖累(榜首Nectar 4.58)
+platform: e1(21513)valid但多芯回退(沐曦4.26→3.04/-29%,昆仑1.36→0.68,华为1.57→1.34,天数6.41→6.09)触发-5%回滚门;TB保s0(21439 avg4.25);generic已回滚s0字节
 candidate_stage: e1
 team_best_stage: s0
 team_best_speedup: 见platform行
 sealed: no
-next: E1上膛待发射(armed-unfired,回执绑定a29ab7e6,ZIP e1-a29ab7e);按预注册门判读后定E2轴
+next: 精确子块两遍结构证伪(整行单遍masked反而更优);沐曦#1丢失,s0字节为最优
 updated: 2026-09-26
 ```
 

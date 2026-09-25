@@ -5,12 +5,12 @@ task: 98
 operator: get_mla_kv_buffer
 batch: 7
 validity: valid(7/7,e1)
-platform: e3(21269)valid:ascend persistent vendor+7%(华为0.722->0.770)但昆仑vendor字节错误带精确宽(0.130)已回滚1024地板;TB保e1(avg1.669);教训:打包前未核对vendor字节
+platform: e4(21514)valid但昆仑0.131<0.350触发预注册回滚门(sglang行形态窄向量倒挂第三次复现);华为0.726;TB保e1(avg1.669,昆仑0.350#2)
 candidate_stage: e4(armed未发射:昆仑单行骨架上行形状,轮2臂2f071f41;release@1c564ceb全绿14测试/144case零skip;ZIP e4-1c564ce sha256 a1820da0)
-team_best_stage: e1(在途)
+team_best_stage: e1
 team_best_speedup: -
 sealed: yes
-next: E4上膛完成待发射(armed-unfired,回执绑定1c564ceb,ZIP e4-1c564ce sha256 a1820da0,五元组见E4上膛节;14/14全绿零skip,--proxy-vendor ascend+kunlunxin);门:昆仑<0.350回滚_kunlunxin至aef2c1f1字节,0.350-0.49观察,>=0.49判骨架轴兑现,0.976天花板,E4b备用
+next: 昆仑窄向量墙三证(s0 0.045/e2 0.124/e4 0.131)——行形态在该芯死路;vendor已回滚aef2c1f1字节
 updated: 2026-09-26
 ```
 

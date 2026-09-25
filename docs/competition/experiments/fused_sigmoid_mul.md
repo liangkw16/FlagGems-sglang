@@ -5,12 +5,12 @@ task: 97
 operator: fused_sigmoid_mul
 batch: 7
 validity: valid(7/7,s0)
-platform: e2(21267)valid avg3.052(水位推高天数5.26/沐曦3.16):grid48中性(华为1.311≈1.340);昆仑vendor字节错误带16384(0.821)已回滚2048;TB=e2(avg口径)但昆仑rank最优在s0的1.166
+platform: e3(21516)valid avg3.095新TB:华为1.674(+28%,≥1.6门过)/昆仑1.122(2048字节修正);榜首3.315
 candidate_stage: e3(armed未发射:ascend两段式+r2 int32防护+同包昆仑2048恢复;release@770b1745全绿11/11/34launch每源;ZIP e3-770b174 sha256 5daf87fc)
-team_best_stage: e2
+team_best_stage: e3
 team_best_speedup: -
 sealed: yes
-next: E3上膛完成待发射(armed-unfired,回执绑定770b1745,ZIP e3-770b174 sha256 5daf87fc,五元组见E3上膛节;11/11全绿零skip,--proxy-vendor ascend+kunlunxin);等T93 E3平台裁决校准华为方向后发射;门:华为≥1.6保留/≥1.9判轴兑现,<1.311或数值失败回滚_ascend至5cfdb654字节(blob ab88bc50);昆仑<1.0判水位重掷(chip-rulesets:58)不归因2048
+next: 华为1.67→2.19/昆仑1.12→2.01;天数4.86→5.33
 updated: 2026-09-26
 ```
 

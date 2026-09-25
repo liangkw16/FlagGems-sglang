@@ -5,12 +5,12 @@ task: 101
 operator: post_reorder_deepgemm
 batch: 7
 validity: valid
-platform: s0(21443)valid 7/7 avg10.02:昆仑11.4(#2)/华为12.3(#2)/海光15.0/天数11.0;均值距榜首11.10一步之遥
+platform: e1(21509)valid avg11.50疑登顶:海光20.61(+38%)/card_a10.79(+49%)/天数12.12/沐曦6.34/昆仑11.45/华为12.39;T65-E10同构阶梯全面兑现
 candidate_stage: e1
-team_best_stage: s0
+team_best_stage: e1
 team_best_speedup: 见platform行
 sealed: no
-next: E1上膛待发射(hidden块上grid.y+BLOCK 2048,昆仑冻结s0 vendor);按预注册门判读后定E2轴
+next: 守榜;若榜首反超需新结构证据
 updated: 2026-09-26
 ```
 
