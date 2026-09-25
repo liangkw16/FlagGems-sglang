@@ -10,7 +10,7 @@ candidate_stage: e3
 team_best_stage: e1
 team_best_speedup: 0.841(avg)
 sealed: no
-next: e3华为两段式无mask热路径已预注册(source 72364b4c)待screening→评审→preflight:标量if分支+BLOCK16384/w16+尾块masked无other;门=数值失败或华为<0.5或均分<=0.841回滚_ascend至5cfdb654字节(SHA-256 7b3ee54b),华为>=0.9换TB;同概念负证据T92 E23华为-28.8%已披露(下方E3节)
+next: E3上膛待发射(armed-unfired,回执绑定8b7394af,ZIP e3-8b7394a,五元组见下方E3上膛节);门=数值失败或华为<0.5或均分<=0.841回滚_ascend至5cfdb654字节(SHA-256 7b3ee54b),华为>=0.9换TB,0.5-0.9保留;同概念负证据T92 E23华为-28.8%已披露(下方E3节)
 updated: 2026-09-26
 ```
 
@@ -52,6 +52,54 @@ updated: 2026-09-26
   2) 华为 <0.5 → 回滚同上；华为 ≥0.9 → 换 TB；0.5–0.9 保留；
   3) 均分 ≤0.841（e1 TB）→ 回滚 `_ascend` 字节；同字节他芯读数按
      ±10-35% 水位波动同窗判读（chip-rulesets.md:58），不得单点判涨跌。
+
+### E3 上膛（2026-09-26 01:46，armed-unfired）
+
+- **远端 release 矩阵（绑定 HEAD）**：`verify_release.py prepare add_constant
+  --source-commit HEAD --verification-commit HEAD --proxy-vendor ascend
+  --proxy-vendor kunlunxin`（该题现有全部 vendor；mode=release，schema v2），
+  上传 `/tmp/wf-e3-huawei-two-segment-nomask-release` 后远端
+  `/home/kevin/notebook/.venv/bin/python` 执行 `run`，**RC=0**：
+  **5 测试 / 127 case 全过**（5/5 RELEASE_REQUIRED，含
+  `test_two_segment_block_boundaries`，0 fail/error/skip/xfail），
+  **每源 31 次 kernel launch**（generic/`_ascend`/`_kunlunxin` 各 31，
+  source_calls 同为 31×3），69 条非空张量 shape 记录，环境 NVIDIA RTX
+  5070 Ti / torch 2.13.0+cu130 / triton 3.7.1 / cuda 13.0。回执
+  `artifacts/competition/day5prep-20260921/e3-huawei-two-segment-nomask-wf/verification.json`
+  （sha256 `a7e760ce27b90b0713cb6cbbaea76e50b579dc58a15cbc5c1a25e18a22846379`）
+  / `verification.log`（sha256
+  `aa7eed6b13ca71e94963149fa5c48ad54492f2ab8235dc77e7a1cfa37f5dbc3e`，
+  `Ran 5 tests in 1.957s OK`）。源码字节谱系 = 72364b4c（候选）→
+  d8b13f67（评审 r2 docstring 披露）→ HEAD 8b7394af
+  （`git diff d8b13f67 HEAD -- src/…/add_constant*.py tests/…` 为空，
+  其后两个 commit 均为纯 docs）。
+- **五元组（上膛身份）**：
+  - source_commit：`8b7394af73c9489061de0bda06f269356e63c583`
+  - verification_commit：`8b7394af73c9489061de0bda06f269356e63c583`（=本回执，
+    发射 preflight 要求 commit 字段等于它）
+  - ledger_commit：本 commit（E3 上膛记账）
+  - ZIP：`artifacts/competition/add_constant/e3-8b7394a/add_constant.zip`
+    （8628 字节，zip_sha256 =
+    `4543911ea8c4d1d4cad0e0d5e891e8b01b070fdc4dd960e3c58f53054e7a6bb6` =
+    canonical_zip_sha256；≠ e2 `dcd04a21…` ≠ e1 `74fd8b45…` ≠ s0
+    `cad85701…`；vs e2 仅 `_ascend` 成员由 `7b3ee54b`（回滚档字节）变为
+    `b8ce66f2`，generic `a2c0b1ba` 与 kunlunxin `3e5d489c` 冻结——单变量
+    纪律成立，平台 zip_sha256 去重键成立）
+  - stage：`e3`（CURRENT candidate_stage 已预写 e3 且无 e3 ZIP 存在，
+    上膛即落 e3，序列 s0→e1→e2→e3 连续不跳号）
+  - ZIP 成员名单（与 `zipfile.namelist()` 实际核对一致，无夹带；
+    `unzip -t` 无错；UTF-8 `.py`，无测试/缓存/目录前缀/macOS 垃圾；
+    成员字节 = git blob @8b7394af = 回执 files 哈希 = 远端实际执行字节）：
+    | 成员 | 字节 | sha256 |
+    |---|---|---|
+    | `add_constant.py` | 1182 | `a2c0b1baf3633464b4fda27955f8376c1c076f9274e2a6cbb88c7883835d31fb` |
+    | `add_constant_ascend.py` | 5297 | `b8ce66f22b47eded68ea4c7aa7f15436e2189fdbc71e3ae3d62032b63087e106` |
+    | `add_constant_kunlunxin.py` | 1775 | `3e5d489c951c38abe030bf0c95b3ef21e9dd22b888166c0861ec8caacb90fc5b` |
+- **状态**：armed-unfired——发射前预注册门不变（上节三条：数值失败或华为
+  <0.5 或均分 ≤0.841（e1 TB）→ 回滚 `_ascend` 至 `5cfdb654` 字节
+  `7b3ee54b…`；华为 ≥0.9 → 换 TB；0.5–0.9 保留，同字节他芯 ±10-35%
+  水位同窗判读），发射 preflight 通过后执行一次性 submit；华为
+  target-runtime-unverified 状态不变（NVIDIA 代理不背书目标芯）。
 
 ## 契约
 

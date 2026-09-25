@@ -1,5 +1,21 @@
 # 第二批候选与提交队列
 
+## 2026-09-26 T93 E3 上膛（armed-unfired）
+
+- [T93 add_constant E3](add_constant.md)：华为两段式无mask热路径
+  （`_ascend` vendor 重写：kernel 内 `pid < n_full` 标量分支，整块
+  load/store 双无 mask 无 other，尾块 masked load 不带 other，
+  BLOCK=16384/w16，int32 寻址）完成上膛：远端 release 矩阵
+  **5 测试 / 127 case 全过**（5/5 RELEASE_REQUIRED 含新增
+  `test_two_segment_block_boundaries`，`--proxy-vendor
+  ascend+kunlunxin`，每源 31 kernel launch，verification_commit
+  `8b7394af`），不可变 ZIP `e3-8b7394a`（zip_sha256 `4543911e…`，
+  ≠ e2 `dcd04a21…`，vs e2 仅 `_ascend` 成员变化（`7b3ee54b`→
+  `b8ce66f2`），逐成员与 git blob 核对无夹带）。armed-unfired 待实时
+  preflight 发射；预注册门：数值失败 / 华为 <0.5 / 均值 ≤0.841（e1 TB）
+  回滚 `_ascend` 至 5cfdb654 字节，华为 ≥0.9 换 TB，0.5–0.9 保留，
+  同概念负证据 T92 E23 华为 -28.8% 已披露、华为方向真开放。
+
 ## 2026-09-26 T104 E1 上膛（armed-unfired）
 
 - [T104 rmsnorm_hf E1](rmsnorm_hf.md)：generic 精确子块两遍候选
