@@ -1,13 +1,15 @@
 # 第二批候选与提交队列
 
-## 2026-09-25 T77 e17 储备实现（评审第 1 轮）
+## 2026-09-26 T77 e17 上膛（armed-unfired）
 
-- [T77 compute_position e17](compute_position.md)：窗口已关（reviewing/
-  can_submit=false），单 alloc 融合候选作为下窗口储备完成实现——
-  generic + kunlunxin 每调用 2 alloc→1（尾部 1-D int32 view 承载契约
-  start_loc/hi 半区，kernel 字节不动），新增
-  `test_single_allocation_views` 回归。发射前须补 release 矩阵
-  （含 `--proxy-vendor kunlunxin`）与不可变 ZIP。
+- [T77 compute_position e17](compute_position.md)：单 alloc 融合候选
+  （generic + kunlunxin 每调用 2 alloc→1，kernel 字节不动）完成上膛：
+  远端 release 矩阵 5 测试 / 144 case 全过（含 e17 新增
+  `test_single_allocation_views` 与 `--proxy-vendor enflame+kunlunxin`
+  路径），不可变 ZIP `e17-783de02`（zip_sha256 `007b9630…`，
+  verification_commit `783de025`）。armed-unfired 待下窗口实时
+  preflight 发射；门=均值 >1266.24055 换 TB，沐曦/B 任一 -5% 判负
+  回滚。
 
 ## 2026-09-24 T77 e7 终态与 T80 下一步
 

@@ -5,14 +5,59 @@ task: 77
 operator: compute_position
 batch: 6
 validity: valid(8/8,e11r,1266.24055x TB)
-platform: e16(20784)注释载体重掷valid 1219.19<TB判负:ts水位未保持(2794vs进场假说≥3000);e11r字节重掷轴关闭(1/1用尽);e17储备已实现(单alloc融合2→1,generic+kunlunxin,评审1轮),待窗口+release矩阵
-candidate_stage: e17
+platform: e16(20784)注释载体重掷valid 1219.19<TB判负:ts水位未保持(2794vs进场假说≥3000);e11r字节重掷轴关闭(1/1用尽);e17已上膛armed-unfired(release矩阵5测试/144case全过+ZIP e17-783de02 zip_sha256=007b9630,verification_commit=783de025),待下窗口发射
+candidate_stage: e17-armed-unfired
 team_best_stage: e11r
 team_best_speedup: 1266.24055
 sealed: yes
-next: e17单alloc储备待下窗口:门=均值>1266.24055换TB,沐曦/B任一-5%判负回滚,昆仑1-D view须release矩阵(--proxy-vendor kunlunxin)+平台逐芯;ts/hg对c2flow(4773/2525)的1.65x结构缺口旧四假说全负,alloc计价假说待平台证;提交前须verify_release+ZIP
-updated: 2026-09-25
+next: e17 armed待下窗口发射:实时preflight一次性提交;门=均值>1266.24055换TB,沐曦/B任一-5%判负回滚,天数/昆仑为读数主芯;昆仑1-D view平台逐芯复核;ts/hg对c2flow(4773/2525)的1.65x结构缺口旧四假说全负,alloc计价假说待平台证
+updated: 2026-09-26
 ```
+
+## 2026-09-26 E17 上膛：release 矩阵 + 不可变 ZIP（armed-unfired）
+
+- release v2（source=verification=
+  `783de025cb530d1937a803d40cc749ecd062d170`=本轮 HEAD；三源文件与
+  e17 实现 commit `32f2c59b` 逐字节相同，`git diff --stat
+  32f2c59b..HEAD -- <四路径>` 为空，本会话已核）：**5 测试 / 144
+  case 全过，0 失败/错误/skip/xfail**；3 路径 kernel launch =
+  generic 41 / enflame 64 / kunlunxin 78；54 组非空张量
+  shape/dtype；exit 0。e17 新增 `test_single_allocation_views` 在
+  generic+kunlunxin 覆盖 bs=0/1/3/6/2047/2048/2049——尾部 1-D
+  `view(torch.int32)` 代理侧已过；燧原按设计排除（分离分配+GCU
+  探针不在契约内）。环境 NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 /
+  triton 3.7.1 / cuda 13.0；enflame+kunlunxin 仍
+  **target-runtime-unverified**（NVIDIA 代理证据，平台逐芯补齐）。
+  回执
+  `artifacts/competition/day5prep-20260921/compute_position-wf/verification.json`
+  SHA-256 `4e0806c9567de8a3168077aaf0bfea9a3a8803724a949f5f519e81776b02b711`；
+  日志 SHA-256
+  `f8139dcf0e6863c35370e620b5fd57f0517ae4961ec46fc49166213d5e5e7273`。
+- 五元组（commit / ZIP / ZIP SHA / test / receipt，verification_commit
+  同 commit `783de025`）：ZIP
+  `artifacts/competition/compute_position/e17-783de02/compute_position.zip`
+  SHA-256
+  `007b9630b7a92fd537c7279e8535d2d1d7072c39a859548e939590c22499e79b`
+  （18323 B，actual=canonical）；test SHA-256
+  `29752930c1b005f5871396c65368ee700985e5b5fce5958d6c635563c9cec459`
+  （`tests/test_compute_position.py`）。
+- ZIP 名单（3 成员，已与 `zipfile` 实际成员逐一核对一致，且逐成员
+  字节与 `git show HEAD:<path>` 相同——无打包器夹带；`unzip -t` 通过）：
+  - `compute_position.py` =
+    `a14f497677619c43c997ea6611165cea5ca821b786d379018671933848c00aad`
+    （7435 B；vs e11r `aa09a5ea…` 变化=2→1 alloc wrapper）
+  - `compute_position_enflame.py` =
+    `4db01f2dccd1bdd6c27d8ab11470862dded761e968baba3e364f31123f7bb8ff`
+    （5437 B；与 e11r 相同——e17 未动燧原，单变量确认）
+  - `compute_position_kunlunxin.py` =
+    `c3f8b1359b5323668ef4e028eeabf47c41bf53266df0b28dc27a154bd69b4943`
+    （5051 B；vs e11r `f0ee169e…` 变化）
+  - zip_sha256 `007b9630…` ≠ e11r `43185900…` ≠ e16 `ac38b644…`：
+    平台去重键（zip_sha256）满足新元组，无需载体 commit。
+- 预注册门（沿用储备段原门）：均值 **>1266.24055** 换 TB；沐曦/B
+  任一 **-5%** 判负回滚；天数/昆仑为读数主芯；昆仑 1-D view 须平台
+  逐芯复核。2→1 是否复现 3→2 的线性收益仍未经平台证。
+- 状态：**armed-unfired**，待下窗口实时 preflight 一次性发射。
 
 ## 2026-09-25 E17 储备实现（评审第 1 轮，未提交）：单 alloc 融合
 
