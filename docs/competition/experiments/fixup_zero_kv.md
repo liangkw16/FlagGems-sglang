@@ -5,13 +5,13 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e28,581.2321x TB)
-platform: e29(20776)valid 568.728375<TB判负:ascend 1D-flat int32重写华为501.8(中性,2D i64广播store假说亦证伪);ascend vendor已回滚e28字节
-candidate_stage: e28
+platform: 窗口已关(s2t1op080 submit_end_at=2026-09-24T19:59:59,status=reviewing,climb-loop.json实读)——本季不可发射;e29(20776)valid 568.728375<TB判负:ascend 1D-flat int32重写华为501.8(中性,2D i64广播store假说亦证伪);ascend vendor已回滚e28字节
+candidate_stage: e30
 team_best_stage: e28
 team_best_speedup: 581.2321
 sealed: no
-next: 距EvokeAgent 660.06差78.8(-12%);今日已试轴:clone✓(小)/warps unpin✗/ot-cap✗/BLOCK_V阶梯✗(16384雷,4096微)/flat-int32✗;华为564vs984与燧原109vs235两结构缺口今日未破;收盘前视水位对e28字节防御重掷≤1次
-updated: 2026-09-24
+next: e30就绪待发射(燧原寻址域单变量i32化:i64核44行字节冻结+host侧域分支双路Triton,只动寻址域;门沿用e22档:燧原≥130保留/≥190轴确认/233场带,均值>581.2321换TB,数值失败回滚e28;发射前逐成员sha核对= e28除_enflame寻址域外diff为零);窗口重开才可发射;华为563.8vs983.8缺口列下季需IR/计时证据的线索
+updated: 2026-09-25
 ```
 
 ## 2026-09-23 23:20 榜单校准：E24 新团队最佳 569.125575
@@ -375,3 +375,51 @@ updated: 2026-09-24
   沐曦 379.7 / 海光 893.9 / 昆仑 16.34 / 华为 489.7 / A 818.2 /
   B 609.0。燧原轴（110 vs 234）今日三形态（unpin/16384 宽/flat-span）
   全负。
+
+## 2026-09-25 E30 候选就绪（评审第 1 轮：燧原寻址域单变量 i32 化；本题窗口已关，暂存待发）
+
+- 动机与证据：`docs/competition/chip-rulesets.md:13` 硬规则
+  `enable_i64=False：int64 寻址算术软仿真，全链 int32`；e28 燧原核
+  全链 i64（beg/end/arange/t*os0，原 `_enflame/ops/fixup_zero_kv.py`
+  45-48/56 行，本轮实读）。逐芯榜 s2t1op080（climb-loop.json 本轮
+  实读复核）：燧原 109.5754 vs EvokeAgent 234.61，我方均值 581.2321
+  rank3 vs 660.06——两队在 ~110、两队在 200+，是两个结构族而非窗口
+  噪声。跨题先例 session-mining-retrospective §1：T17 燧原
+  int64→int32 化 13.86x。e22r2（20785）四变量连坐 -10%（store 形态/
+  item 粒度/寻址域/…），组合判负不能证伪单变量 int32。
+- 结构（单变量）：[BLOCK_T=8, BLOCK_V=4096] 2D tile、item 映射、
+  warps2、12-CTA launch 全部不变；新增 `_fixup_zero_kv32`——与
+  `_fixup_zero_kv` 逐行相同、仅去掉 5 处 `.to(tl.int64)`（程序化
+  unified-diff 比对确认）；原 i64 核 44 行函数体与 HEAD 逐字节相同
+  （程序化比对确认）。wrapper 以 host 侧纯形状/步幅算术分支
+  `_fits_int32(total_tokens, os0, ls0, hv, block_h, items)`：界为
+  `(total_tokens+8)*os0+hv+4096 < 2^31` 且 `(total_tokens+8)*ls0+
+  block_h < 2^31` 且 `items < 2^31`——按**计算偏移**而非存储偏移设界
+  （ragged 尾 tile 的 t 通道越 end 至多 BLOCK_T、折叠值尾越 HV 至多
+  BLOCK_V，被 mask 通道仍计算地址），按 stride 而非仅 shape（防垫步幅
+  视图把大 os0 带进 i32 核）。超域走 i64 核原字节；无 try/except、
+  无设备判断 fallback、无模块级缓存（T86 e11 r2 审查先例形态，
+  反作弊合规）。T80 平台几何（HV=12288）域上限 total_tokens=174753，
+  全部平台/bench 形状深度在域内。
+- 测试：新增 3 回归全部列入 RELEASE_REQUIRED_TESTS（现 17 项）——
+  `test_enflame_int32_domain_boundary`（t_ok=174753→+1 精确翻域；
+  2×os0、2^30 ls0、items=2^31 各自独立触发出域）、
+  `test_enflame_domain_branch_selection`（recorder 钉死双路选择；
+  出域 case 用 1 行张量 as_strided 膨胀行步幅构造，仅 24KB 存储、
+  只有 row 0 可寻址）、`test_enflame_out_of_domain_i64_path`（出域
+  数值回归——check() 会 clone 抹掉步幅，故 bespoke 直接比对 strided
+  视图）。既有全矩阵对 enflame 模块自动改走 i32 路径（沿用矩阵）。
+  本机无 torch/CUDA：py_compile 过；谓词算术、界值与 17 项名单解析
+  已离线程序化验证（ast 抽取执行）；GPU 数值矩阵未跑——发射前须
+  远端 release 验证。
+- 发射前置（窗口重开时）：逐成员 sha 核对其余 7 成员与 e28 逐字节
+  相同；_enflame kernel 除寻址域外 diff 为零（本轮已程序化确认）。
+  预注册门沿用 e22 档：燧原 ≥130 保留（+2.6 均值）/ ≥190 轴确认
+  （+10 均值）/ 233=场带；均值 >581.2321 换 TB；数值失败回滚 e28
+  字节。
+- 窗口事实：climb-loop.json s2t1op080 `submit_end_at=
+  2026-09-24T19:59:59`、`status=reviewing`——本题本季不可发射，
+  候选就绪暂存；燧原+昆仑全部兑现仅到 ~592，登顶仍需华为面破译
+  （563.8 vs 983.8，ascend 轴五形态全负、chip-rulesets 判另有成因，
+  列下季需目标芯 IR/计时证据的线索）。
+- source/verification/ledger：同一 commit（本轮评审返回哈希）。

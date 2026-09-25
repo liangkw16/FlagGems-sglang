@@ -4,6 +4,7 @@
 import unittest
 
 import torch
+import triton
 
 from tests._op_variants import load_operator_modules
 
@@ -275,6 +276,125 @@ class FixupZeroKVTest(unittest.TestCase):
             ascend._fixup_zero_kv = original_kernel
             ascend._MAX_WORKERS = original_workers
 
+    def test_enflame_int32_domain_boundary(self):
+        # e30: the enflame wrapper's addressing-domain predicate. At the
+        # T80 geometry (HV=12288 >> NH=96) the out stream binds: the
+        # last in-domain total_tokens is the largest t with
+        # (t+BLOCK_T)*HV + HV + BLOCK_V < 2^31, and one token more must
+        # flip the branch to the i64 kernel. Strides (not just shapes)
+        # participate, and so does the flattened work-item count.
+        enflame = dict(MODULES).get("enflame")
+        if enflame is None:
+            return
+        hv, nh = 96 * 128, 96
+        block_h = triton.next_power_of_2(nh)
+        t_ok = (2**31 - 1 - hv - 4096) // hv - 8
+        self.assertTrue(
+            enflame._fits_int32(t_ok, hv, nh, hv, block_h, 1)
+        )
+        self.assertFalse(
+            enflame._fits_int32(t_ok + 1, hv, nh, hv, block_h, 1)
+        )
+        # a padded row stride exits the domain even at the in-domain
+        # token count, and an inflated lse stride binds on its own
+        self.assertFalse(
+            enflame._fits_int32(t_ok, hv * 2, nh, hv, block_h, 1)
+        )
+        self.assertFalse(
+            enflame._fits_int32(1, hv, 2**30, hv, block_h, 1)
+        )
+        # the item count gate: at or beyond 2^31 the i64 kernel returns
+        self.assertTrue(
+            enflame._fits_int32(t_ok, hv, nh, hv, block_h, 2**31 - 1)
+        )
+        self.assertFalse(
+            enflame._fits_int32(t_ok, hv, nh, hv, block_h, 2**31)
+        )
+
+    def test_enflame_domain_branch_selection(self):
+        # e30: in-domain shapes must launch the all-int32 kernel;
+        # out-of-domain shapes must keep the original i64 kernel. The
+        # out-of-domain case inflates the out row stride on a one-row
+        # tensor so the computed offsets cross 2^31 while only row 0 is
+        # ever addressable (24KB of storage).
+        enflame = dict(MODULES).get("enflame")
+        if enflame is None:
+            return
+        counters = [0, 0]
+
+        class _Recorder:
+            def __init__(self, slot):
+                self._slot = slot
+
+            def __getitem__(self, grid):
+                def _launch(*args, **kwargs):
+                    counters[self._slot] += 1
+
+                return _launch
+
+        original32 = enflame._fixup_zero_kv32
+        original64 = enflame._fixup_zero_kv
+        enflame._fixup_zero_kv32 = _Recorder(0)
+        enflame._fixup_zero_kv = _Recorder(1)
+        try:
+            enflame.fixup_zero_kv(*make_case())
+            self.assertEqual(counters, [1, 0])
+            heads, vdim = 96, 128
+            hv = heads * vdim
+            t_hi = 1 + 8  # total_tokens + BLOCK_T ragged-tail lanes
+            stride0 = 2 * (-(-(2**31 - hv - 4096) // t_hi))
+            row = torch.randn(1, 1, hv, dtype=torch.float16, device="cuda")
+            out = row.as_strided((1, heads, vdim), (stride0, vdim, 1))
+            lse = torch.randn(1, heads, dtype=torch.float32, device="cuda")
+            args = (
+                out,
+                lse,
+                torch.tensor((0,), dtype=torch.int32, device="cuda"),
+                torch.tensor((0, 1), dtype=torch.int32, device="cuda"),
+                1,
+            )
+            self.assertFalse(
+                enflame._fits_int32(
+                    1, stride0, lse.stride(0), hv,
+                    triton.next_power_of_2(heads), 1,
+                )
+            )
+            enflame.fixup_zero_kv(*args)
+            self.assertEqual(counters, [1, 1])
+        finally:
+            enflame._fixup_zero_kv32 = original32
+            enflame._fixup_zero_kv = original64
+
+    def test_enflame_out_of_domain_i64_path(self):
+        # e30 numeric regression for the kept i64 kernel through the new
+        # branched wrapper: the inflated row stride routes this call to
+        # _fixup_zero_kv (verified above), and the fix must still land
+        # exactly. check() would clone the buffers and erase the stride,
+        # so this compares the strided view directly against the
+        # reference.
+        enflame = dict(MODULES).get("enflame")
+        if enflame is None:
+            return
+        heads, vdim = 96, 128
+        hv = heads * vdim
+        t_hi = 1 + 8
+        stride0 = 2 * (-(-(2**31 - hv - 4096) // t_hi))
+        row = torch.randn(1, 1, hv, dtype=torch.float16, device="cuda")
+        out = row.as_strided((1, heads, vdim), (stride0, vdim, 1))
+        lse = torch.randn(1, heads, dtype=torch.float32, device="cuda")
+        lens = torch.tensor((0,), dtype=torch.int32, device="cuda")
+        cum = torch.tensor((0, 1), dtype=torch.int32, device="cuda")
+        expected = reference(out, lse, lens, cum, 1)
+        self.assertFalse(
+            enflame._fits_int32(
+                1, stride0, lse.stride(0), hv,
+                triton.next_power_of_2(heads), 1,
+            )
+        )
+        actual = enflame.fixup_zero_kv(out, lse, lens, cum, 1)
+        for got, want in zip(actual, expected):
+            torch.testing.assert_close(bits(got), bits(want), rtol=0, atol=0)
+
 
 RELEASE_REQUIRED_TESTS = [
     "FixupZeroKVTest.test_understated_span_zero_segment",
@@ -291,6 +411,9 @@ RELEASE_REQUIRED_TESTS = [
     "FixupZeroKVTest.test_long_segment_with_understated_span",
     "FixupZeroKVTest.test_full_and_partial_token_tile",
     "FixupZeroKVTest.test_global_worker_grid_and_slot_coverage",
+    "FixupZeroKVTest.test_enflame_int32_domain_boundary",
+    "FixupZeroKVTest.test_enflame_domain_branch_selection",
+    "FixupZeroKVTest.test_enflame_out_of_domain_i64_path",
 ]
 
 

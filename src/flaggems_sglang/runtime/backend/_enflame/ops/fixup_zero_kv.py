@@ -13,12 +13,77 @@
 # the element width and the e12 read 102.6 with 1024-wide stores -
 # the width ladder is live: 102.6 @1024 -> 113.9 @2048, e16 takes
 # the 4096 rung toward the 193 field band).
+# E30 (2026-09-25): single-variable addressing-domain candidate. The
+# chip ruleset pins GCU `enable_i64=False` (int64 addressing arithmetic
+# is soft-emulated; all-int32 is the documented form), and the whole
+# offset chain here is i64 (beg/end/arange/t*os0). This round keeps the
+# [BLOCK_T=8, BLOCK_V=4096] tile, the item mapping, warps2 and the
+# 12-CTA launch byte-for-byte and only swaps that chain for int32 on
+# shapes whose every computed offset fits signed int32; the wrapper
+# picks the kernel by host-side shape/stride arithmetic (no device
+# probe, no try/except, no cache) and out-of-domain shapes keep the
+# original i64 kernel bytes. Unlike the e22r2 flat-span rewrite (four
+# variables at once, -10%), this changes exactly one variable.
 
 import torch
 import triton
 import triton.language as tl
 
 _MAX_CTAS = 12
+_BLOCK_T = 8
+_BLOCK_V = 4096
+_INT32_LIMIT = 2**31
+
+
+@triton.jit
+def _fixup_zero_kv32(
+    out,
+    lse,
+    lens,
+    cum,
+    batch,
+    ot,
+    items,
+    os0,
+    ls0,
+    HV: tl.constexpr,
+    NH: tl.constexpr,
+    BLOCK_T: tl.constexpr,
+    BLOCK_V: tl.constexpr,
+    BLOCK_H: tl.constexpr,
+):
+    # The e30 twin of _fixup_zero_kv with the addressing chain in
+    # int32: beg/end load as the cum dtype's native i32, the arange
+    # lanes stay i32, and t*os0 is an i32 multiply. The wrapper only
+    # selects this kernel when every lane offset (masked lanes
+    # included - they still compute their addresses) stays inside
+    # signed int32.
+    for item in range(tl.program_id(0), items, tl.num_programs(0)):
+        seg = item // ot
+        zero = tl.load(lens + seg) == 0
+        if zero:
+            beg = tl.load(cum + seg)
+            end = tl.load(cum + seg + 1)
+            v = tl.arange(0, BLOCK_V)
+            h = tl.arange(0, BLOCK_H)
+            hm = h < NH
+            zeros = tl.zeros((BLOCK_T, BLOCK_V), dtype=out.dtype.element_ty)
+            ninf = tl.full((BLOCK_T, BLOCK_H), float("-inf"), dtype=tl.float32)
+            # max_seq_len only sizes the virtual grid. If it
+            # underestimates a zero-KV segment, every slot continues
+            # through that segment rather than dropping later rows.
+            for tile in range(item % ot, tl.cdiv(end - beg, BLOCK_T), ot):
+                t = beg + tile * BLOCK_T + tl.arange(0, BLOCK_T)
+                tm = t < end
+                for v0 in tl.static_range(0, HV, BLOCK_V):
+                    vv = v0 + v[None, :]
+                    m = tm[:, None] & (vv < HV)
+                    tl.store(out + t[:, None] * os0 + vv, zeros, m)
+                tl.store(
+                    lse + t[:, None] * ls0 + h[None, :],
+                    ninf,
+                    tm[:, None] & hm[None, :],
+                )
 
 
 @triton.jit
@@ -66,6 +131,23 @@ def _fixup_zero_kv(
                 )
 
 
+def _fits_int32(total_tokens, os0, ls0, hv, block_h, items):
+    # Host-side addressing-domain predicate (pure shape/stride
+    # arithmetic, no device read). It bounds every offset the tile
+    # lanes compute, not just the stored ones: the ragged token tail
+    # runs t lanes up to end + BLOCK_T - 1 and the folded value tail
+    # runs v lanes up to HV + BLOCK_V - 1 past the row, and masked
+    # lanes still compute their addresses. Stride-based (not
+    # shape-based) so a padded-row view cannot smuggle a huge os0
+    # into the i32 kernel.
+    t_hi = total_tokens + _BLOCK_T
+    return (
+        items < _INT32_LIMIT
+        and t_hi * os0 + hv + _BLOCK_V < _INT32_LIMIT
+        and t_hi * ls0 + block_h < _INT32_LIMIT
+    )
+
+
 def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
     assert out.ndim == 3 and lse.ndim == 2
     total_tokens, num_heads, v_head_dim = out.shape
@@ -79,11 +161,23 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
     assert kv_lens.dtype == cum_seq_lens.dtype == torch.int32
     if batch and total_tokens:
         hv, nh = num_heads * v_head_dim, num_heads
-        block_t = 8
+        block_h = triton.next_power_of_2(max(1, nh))
         span = max_seq_len if isinstance(max_seq_len, int) else total_tokens
-        ot = max(1, triton.cdiv(min(span, total_tokens), block_t))
+        ot = max(1, triton.cdiv(min(span, total_tokens), _BLOCK_T))
         items = batch * ot
-        _fixup_zero_kv[(min(items, _MAX_CTAS),)](
+        kern = (
+            _fixup_zero_kv32
+            if _fits_int32(
+                total_tokens,
+                out.stride(0),
+                lse.stride(0),
+                hv,
+                block_h,
+                items,
+            )
+            else _fixup_zero_kv
+        )
+        kern[(min(items, _MAX_CTAS),)](
             out,
             lse,
             kv_lens,
@@ -96,9 +190,9 @@ def fixup_zero_kv(out, lse, kv_lens, cum_seq_lens, max_seq_len):
             HV=hv,
             NH=nh,
             num_warps=2,
-            BLOCK_T=block_t,
-            BLOCK_V=4096,
-            BLOCK_H=triton.next_power_of_2(max(1, nh)),
+            BLOCK_T=_BLOCK_T,
+            BLOCK_V=_BLOCK_V,
+            BLOCK_H=block_h,
         )
     return out, lse
 
