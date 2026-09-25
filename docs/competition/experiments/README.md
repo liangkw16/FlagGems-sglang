@@ -1,5 +1,17 @@
 # 第二批候选与提交队列
 
+## 2026-09-26 T80 e30 上膛（armed-unfired）
+
+- [T80 fixup_zero_kv e30](fixup_zero_kv.md)：燧原寻址域单变量 i32 化
+  候选（评审 r2 修 P2 零步幅绕过后）完成上膛：远端 release 矩阵
+  **20 测试 / 258 case 全过**（含 r1/r2 新增 4 项 enflame 域回归，
+  5 源 × 42/44 launch，verification_commit `9b3006aa`），不可变 ZIP
+  `e30-9b3006a`（zip_sha256 `411f9396…`，vs e28 仅 `_enflame` 寻址域
+  变化，逐成员与 git blob 核对无夹带）。窗口已关（submit_end
+  2026-09-24），armed-unfired 暂存；门沿用 e22 档：燧原 ≥130 保留 /
+  ≥190 轴确认 / 233 场带，均值 >581.2321 换 TB，数值失败回滚
+  _enflame 至 e28 字节。
+
 ## 2026-09-26 T92 e27 上膛（armed-unfired）
 
 - [T92 unpad_draft_extend_output e27](unpad_draft_extend_output.md)：

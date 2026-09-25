@@ -5,12 +5,12 @@ task: 80
 operator: fixup_zero_kv
 batch: 6
 validity: valid(8/8,e28,581.2321x TB)
-platform: 窗口已关(s2t1op080 submit_end_at=2026-09-24T19:59:59,status=reviewing,climb-loop.json实读)——本季不可发射;e29(20776)valid 568.728375<TB判负:ascend 1D-flat int32重写华为501.8(中性,2D i64广播store假说亦证伪);ascend vendor已回滚e28字节
-candidate_stage: e30
+platform: 窗口已关(s2t1op080 submit_end_at=2026-09-24T19:59:59,status=reviewing,climb-loop.json实读)——本季不可发射;e29(20776)valid 568.728375<TB判负:ascend 1D-flat int32重写华为501.8(中性,2D i64广播store假说亦证伪);ascend vendor已回滚e28字节;e30已上膛armed-unfired(release矩阵20测试/258case全过+ZIP e30-9b3006a zip_sha256=411f9396,verification_commit=9b3006aa)
+candidate_stage: e30-armed-unfired
 team_best_stage: e28
 team_best_speedup: 581.2321
 sealed: no
-next: e30就绪待发射(燧原寻址域单变量i32化:i64核44行字节冻结+host侧域分支双路Triton,只动寻址域;r2已修P2零步幅绕过:谓词独立加token上界,平台形状路由零变化;门沿用e22档:燧原≥130保留/≥190轴确认/233场带,均值>581.2321换TB,数值失败回滚e28;发射前逐成员sha核对= e28除_enflame寻址域外diff为零);窗口重开才可发射;华为563.8vs983.8缺口列下季需IR/计时证据的线索
+next: e30 armed待窗口重开:实时preflight一次性提交;门沿用e22档:燧原≥130保留/≥190轴确认/233场带,均值>581.2321换TB,数值失败回滚_enflame至e28-f1a88d3 ZIP成员字节(e63a400b);华为563.8vs983.8缺口列下季需IR/计时证据的线索
 updated: 2026-09-26
 ```
 
@@ -455,3 +455,49 @@ updated: 2026-09-26
   发射前须远端 release。
 - source/verification/ledger：r2 修复同一 commit（本轮返回哈希）；
   r1 实现见 `a4c506c9d8a63d5be92907d3cd245e331fa21517`。
+
+## 2026-09-26 E30 上膛（燧原寻址域 i32 候选 release 全绿 + 不可变 ZIP；窗口已关，armed-unfired）
+
+- release v2（source=verification=HEAD `9b3006aa7d4fae1953ad79512de0c8ed9f209ffe`；
+  该 commit 中本题五源/测试字节与评审 r2 `783de025` 相同——其后两个
+  commit 为 T77/T92 账本更新，不触本题文件）：**20 测试 / 258 case
+  全过，0 失败/错误/skip/xfail**（RELEASE_REQUIRED_TESTS 18 项在列，
+  含 r2 新增 `test_enflame_zero_stride_broadcast` 与 r1 新增 3 项
+  enflame 域回归）；5 路径（generic+ascend+enflame+kunlunxin+metax，
+  `--proxy-vendor` 四 vendor）非预热 kernel launch 42/42/44/42/42；
+  389 组非空张量 shape/dtype；exit 0；NVIDIA RTX 5070 Ti /
+  torch 2.13.0+cu130 / triton 3.7.1。华为/燧原/昆仑/沐曦目标芯
+  target-runtime-unverified（NVIDIA 代理证据）。回执
+  `artifacts/competition/day5prep-20260921/fixup_zero_kv-wf/verification.json`
+  SHA-256 `d32a80de70bf13a5b1a159a740f31fdcb3910bb65c14131651ec3b955b817a81`；
+  日志 SHA-256 `a623bb77b8a93cc4952ac5cef8ac1974b1c42abf16942b243e0ade5a9ed07121`
+  （=回执内 log_sha256）。
+- 五元组（commit / ZIP / ZIP SHA / test / receipt，verification_commit 同
+  commit `9b3006aa`）：ZIP
+  `artifacts/competition/fixup_zero_kv/e30-9b3006a/fixup_zero_kv.zip`
+  （23899 B，`unzip -t` 通过）SHA-256
+  `411f9396d5a4f463df7dca74e302a3b80e12b12074e73fa9492779f800299a5d`；
+  test SHA-256
+  `1361106897ea0599ab62eef4fdef7acb5d479a4f877f821eb2d116c67e2d8995`。
+- ZIP 名单（5 成员，已与 `zipfile` 实际 `namelist()` 逐一核对一致，且
+  逐成员字节与 `git show HEAD:<path>` 相同、全 UTF-8 `.py`——无打包器
+  夹带；除 enflame 外四成员与 e28-f1a88d3 TB 载体 ZIP 逐字节相同，
+  单变量确认，即上膛前置「逐成员 sha 核对」条款已执行）：
+  - `fixup_zero_kv.py` =
+    `e3371c49e3ef6f9ba7b2321b094a738a208129a682fc29e837b6a17317035943`（同 e28）
+  - `fixup_zero_kv_ascend.py` =
+    `e3743d90ecbaa0f4f935ba1fb20b5ada7dea6e211ce9c32694ce6857b5d3000d1`（同 e28，e29 回滚后字节）
+  - `fixup_zero_kv_enflame.py` =
+    `3041bc3f0cbe4cb8db8b0be036f3979feef7fffe63ee9967207014cdf7dbbc54`（新：i32 寻址域候选）
+  - `fixup_zero_kv_kunlunxin.py` =
+    `2ab96f9fd24dc3e74a1432d74d7308a3f242949a561ce7816bc768ffc2885613`（同 e28）
+  - `fixup_zero_kv_metax.py` =
+    `37a4d96256677a1899fc388d8b5ef8c07b7b610f4af148202093aef58af15bda`（同 e28）
+  - zip_sha256 `411f9396…` ≠ e28 ≠ e29：平台去重键（zip_sha256）
+    满足新元组，无需载体 commit。
+- 预注册门（沿用 e22 档，上膛时冻结）：燧原 ≥130 保留（+2.6 均值）/
+  ≥190 轴确认（+10 均值）/ 233=场带；均值 >581.2321 换 TB；数值失败
+  即回滚 `_enflame` 至 e28-f1a88d3 ZIP 成员字节（`e63a400b`）。
+- 窗口事实不变：climb-loop.json s2t1op080 `submit_end_at=
+  2026-09-24T19:59:59`——本题本季不可发射，armed-unfired 暂存，
+  窗口重开才可实时 preflight 发射。
