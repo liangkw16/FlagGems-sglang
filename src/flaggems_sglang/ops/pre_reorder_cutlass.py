@@ -25,7 +25,9 @@ def _pre_reorder_kernel(
     topk,
     out_s0,
     is0,
+    is1,
     ss0,
+    ss1,
     HAS_SCALE: tl.constexpr,
     BLOCK_C: tl.constexpr,
 ):
@@ -34,13 +36,14 @@ def _pre_reorder_kernel(
     # slots clamp their destination to row 0 and multiply by keep=0 -
     # the write becomes a harmless rewrite of an already-cloned row
     slot = tl.program_id(0).to(tl.int64)
-    eid = tl.load(topk_ids + slot * is0)
+    t = slot // topk
+    i = slot - t * topk
+    eid = tl.load(topk_ids + t * is0 + i * is1)
     keep = (eid != num_local_experts).to(tl.int64)
     dst = tl.maximum(
-        tl.load(src2dst + slot * ss0).to(tl.int64) * keep, 0
+        tl.load(src2dst + t * ss0 + i * ss1).to(tl.int64) * keep, 0
     )
     inv = 1.0 / tl.load(scales).to(tl.float32) if HAS_SCALE else 1.0
-    t = slot // topk
     src_base = t * row_elems
     cols = tl.arange(0, BLOCK_C).to(tl.int64)
     for c0 in range(0, row_elems, BLOCK_C):
@@ -81,7 +84,9 @@ def pre_reorder_cutlass(
             topk,
             out.stride(0),
             topk_ids.stride(0),
+            topk_ids.stride(1),
             src2dst.stride(0),
+            src2dst.stride(1),
             HAS_SCALE=a1_scales is not None,
             BLOCK_C=1024,
             num_warps=4,
