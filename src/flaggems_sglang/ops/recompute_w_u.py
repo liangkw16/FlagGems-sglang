@@ -121,6 +121,11 @@ def recompute_w_u(k, v, beta, g_cumsum, A, cu_seqlens):
     _, _, H, V = v.shape
     BT = A.shape[-1]
     assert T % BT == 0
+    k = k if k.is_contiguous() else k.contiguous()
+    v = v if v.is_contiguous() else v.contiguous()
+    beta = beta if beta.is_contiguous() else beta.contiguous()
+    g_cumsum = g_cumsum if g_cumsum.is_contiguous() else g_cumsum.contiguous()
+    A = A if A.is_contiguous() else A.contiguous()
     w = torch.empty(B, T, H, K, dtype=k.dtype, device=k.device)
     u = torch.empty(B, T, H, V, dtype=v.dtype, device=v.device)
     if T:

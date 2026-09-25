@@ -43,8 +43,8 @@ class RecomputeWUTest(unittest.TestCase):
         for name, module in MODULES:
             with self.subTest(module=name):
                 w, u = module.recompute_w_u(k, v, beta, g, A, None)
-                torch.testing.assert_close(w, ew, rtol=2e-2, atol=2e-2)
-                torch.testing.assert_close(u, eu, rtol=2e-2, atol=2e-2)
+                torch.testing.assert_close(w, ew, rtol=1.5e-2, atol=1.5e-2)
+                torch.testing.assert_close(u, eu, rtol=1.5e-2, atol=1.5e-2)
 
     def make(self, B, T, Hg, H, K, V, BT, seed=0):
         gen = torch.Generator(device="cuda").manual_seed(seed)
@@ -78,6 +78,13 @@ class RecomputeWUTest(unittest.TestCase):
         # non-pow2 K/V, BT=32
         self.check(*self.make(1, 96, 2, 4, 48, 40, 32, seed=3))
 
+    def test_non_contiguous_beta(self):
+        # strided beta/g must scale the right rows
+        k0, v0, beta0, g0, A0 = self.make(1, 64, 2, 4, 32, 32, 64, seed=8)
+        beta = beta0.transpose(1, 2).contiguous().transpose(1, 2)
+        self.assertFalse(beta.is_contiguous())
+        self.check(k0, v0, beta, g0, A0)
+
     def test_single_chunk(self):
         self.check(*self.make(1, 64, 2, 2, 64, 64, 64, seed=7))
 
@@ -85,6 +92,7 @@ class RecomputeWUTest(unittest.TestCase):
 RELEASE_REQUIRED_TESTS = [
     "RecomputeWUTest.test_mqa_and_gqa",
     "RecomputeWUTest.test_odd_dims_and_tail",
+    "RecomputeWUTest.test_non_contiguous_beta",
     "RecomputeWUTest.test_single_chunk",
 ]
 

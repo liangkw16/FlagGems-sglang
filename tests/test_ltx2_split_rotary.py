@@ -55,6 +55,33 @@ class Ltx2SplitRotaryTest(unittest.TestCase):
         self.assertFalse(cos.is_contiguous())
         self.check(x, cos, sin)
 
+    def test_sliced_and_independent_layouts(self):
+        # a sliced x (stride-2 inner) plus cos/sin built with different
+        # independent layouts: the output must be contiguous and both
+        # tables must be read through their OWN strides
+        gen = torch.Generator(device="cuda").manual_seed(9)
+        big = torch.randn(1, 8, 4, 128 * 2, dtype=torch.bfloat16, device="cuda", generator=gen)
+        x3 = big[..., ::2].reshape(1, 8, 4, 128)  # sliced then reshaped
+        x = x3.permute(0, 1, 3, 2).reshape(1, 8, 512).contiguous()
+        cos = big[..., 0::2].permute(0, 2, 1, 3).contiguous().permute(0, 2, 1, 3)
+        sin_big = torch.randn(8, 4, 8, 128, dtype=torch.bfloat16, device="cuda", generator=gen)
+        sin = sin_big.permute(2, 1, 0, 3)  # [8, 4, 8, 128] -> [T? no] keep shapes right
+        # build legal tables: cos/sin [B=1, H=4, T=8, half=128]
+        c = torch.randn(1, 4, 8, 128, dtype=torch.bfloat16, device="cuda", generator=gen)
+        s2 = torch.randn(8, 4, 1, 128, dtype=torch.bfloat16, device="cuda", generator=gen)
+        sin = s2.permute(2, 1, 0, 3)  # [1, 4, 8, 128] non-contiguous
+        self.assertFalse(sin.is_contiguous())
+        self.check(x, c, sin)
+
+    def test_sliced_x(self):
+        gen = torch.Generator(device="cuda").manual_seed(4)
+        big = torch.randn(1, 8, 256, dtype=torch.bfloat16, device="cuda", generator=gen)
+        x = big[..., ::2]  # inner stride 2
+        self.assertFalse(x.is_contiguous())
+        c = torch.randn(1, 4, 8, 64, dtype=torch.bfloat16, device="cuda", generator=gen)
+        s2 = torch.randn(1, 4, 8, 64, dtype=torch.bfloat16, device="cuda", generator=gen)
+        self.check(x, c, s2)
+
     def test_extreme_angles(self):
         x = torch.tensor(
             [[[100.0, -100.0, 1e-4, 5.0]]], dtype=torch.bfloat16, device="cuda"
@@ -67,6 +94,8 @@ class Ltx2SplitRotaryTest(unittest.TestCase):
 RELEASE_REQUIRED_TESTS = [
     "Ltx2SplitRotaryTest.test_shapes",
     "Ltx2SplitRotaryTest.test_non_contiguous_tables",
+    "Ltx2SplitRotaryTest.test_sliced_and_independent_layouts",
+    "Ltx2SplitRotaryTest.test_sliced_x",
     "Ltx2SplitRotaryTest.test_extreme_angles",
 ]
 

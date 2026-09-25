@@ -27,6 +27,10 @@ def _ltx2_split_rotary_kernel(
     c_s1,
     c_s2,
     c_s3,
+    s_s0,
+    s_s1,
+    s_s2,
+    s_s3,
     o_s0,
     o_s1,
     HEAD_DIM: tl.constexpr,
@@ -47,7 +51,11 @@ def _ltx2_split_rotary_kernel(
         x + row + h * HEAD_DIM + half + d, mask=m, other=0
     ).to(tl.float32)
     c = tl.load(cos + crow + d * c_s3, mask=m, other=0).to(tl.float32)
-    s = tl.load(sin + crow + d * c_s3, mask=m, other=0).to(tl.float32)
+    s = tl.load(
+        sin + b * s_s0 + h * s_s1 + t * s_s2 + d * s_s3,
+        mask=m,
+        other=0,
+    ).to(tl.float32)
     o1 = (x1 * c).to(out.dtype.element_ty).to(tl.float32) - x2 * s
     o2 = (x2 * c).to(out.dtype.element_ty).to(tl.float32) + x1 * s
     tl.store(
@@ -68,7 +76,9 @@ def ltx2_split_rotary(x, cos, sin):
     _, num_heads, _, half = cos.shape
     head_dim = half * 2
     assert inner == num_heads * head_dim
-    out = torch.empty_like(x)
+    # fresh contiguous output: empty_like would inherit a sliced or
+    # transposed input's strides and the flat row writes would go OOB
+    out = torch.empty(x.shape, dtype=x.dtype, device=x.device)
     if out.numel():
         grid = (batch * seq_len * num_heads,)
         _ltx2_split_rotary_kernel[grid](
@@ -85,6 +95,10 @@ def ltx2_split_rotary(x, cos, sin):
             cos.stride(1),
             cos.stride(2),
             cos.stride(3),
+            sin.stride(0),
+            sin.stride(1),
+            sin.stride(2),
+            sin.stride(3),
             out.stride(0),
             out.stride(1),
             HEAD_DIM=head_dim,
