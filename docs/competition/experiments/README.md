@@ -1,5 +1,24 @@
 # 第二批候选与提交队列
 
+## 2026-09-26 T98 E4 上膛（armed-unfired）
+
+- [T98 get_mla_kv_buffer E4](get_mla_kv_buffer.md)：昆仑臂换骨架为上游
+  sglang 官方单行 kernel 形状（`grid=(n,)` 标量 loc 铸 i64 行基、两段
+  exact-width `tl.arange` 零 mask 零循环，host 形状分支，其余形状保留
+  aef2c1f1 地板字节；轮2臂 commit `2f071f41`，其上仅 docs 无本题改动）
+  完成上膛：远端 release 矩阵 **14 测试 / 144 case 全过**（14/14
+  RELEASE_REQUIRED 含 5 个新 `test_row_form_*`，`--proxy-vendor
+  ascend+kunlunxin`，三源各 36 调用 / 35 kernel launch，
+  verification_commit `1c564ceb`），不可变 ZIP `e4-1c564ce`
+  （zip_sha256 `a1820da0…`，≠ e3 `30498e69…` / e2 `67983fe5…` /
+  e1 `37cec89b…`，vs e3 仅 `_kunlunxin` 成员重写、generic+`_ascend`
+  冻结，逐成员与 git blob 核对无夹带）。armed-unfired 待实时
+  preflight 发射；预注册门：平台昆仑 <0.350 回滚 `_kunlunxin` 至
+  aef2c1f1 字节，0.350–0.49 观察，≥0.49（过 eatabigwatermelon
+  0.4905）判骨架轴兑现，0.976 OpeGoodn 天花板；窄向量倒挂复现则
+  E4b 备用（同骨架 + 单次 1024 宽整行 load + 两次移位 store）；发射
+  命令必须 `--proxy-vendor` 含 ascend + kunlunxin。
+
 ## 2026-09-26 T96 E2 上膛（armed-unfired）
 
 - [T96 fused_pack_qkv E2](fused_pack_qkv.md)：天数 `_iluvatar` vendor
