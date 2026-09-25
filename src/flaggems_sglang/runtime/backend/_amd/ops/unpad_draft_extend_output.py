@@ -1,9 +1,25 @@
 # Copyright 2026 FlagOS Contributors
 # SPDX-License-Identifier: Apache-2.0
 # amd vendor for unpad_draft_extend_output: batch-segment copy at
-# BLOCK 8192 (width ladder from the ascend/enflame/metax evidence;
-# card_b ladder: 264.7 @8192, 279.7 @2048 - narrow direction,
-# like hygon; 1024 probes the floor).
+# BLOCK 1024 (the card_b width axis is exhausted and flat - the e14
+# ladder read 264-283 across 1024/2048/8192 and the e25 int32 lane
+# pipeline was neutral at 280.9 - so the residual card_b gap to the
+# 469-470 leader band sits in the masked-access form, not parameters).
+#
+# e27 load-unmask (store-only mask): on AMD the masked load's per-lane
+# predication plus the other=0 prefill are the prime suspects for the
+# small-copy cost (platform case 3 is only 164352 elements, where
+# predication/select overhead dominates). Full tiles (base+BLOCK<=elems)
+# now load WITHOUT a mask - the mask was all-true there anyway, and the
+# unguarded read stays inside this segment's own slot because every
+# lane is below the segment extent. The store ALWAYS keeps the mask m:
+# only the load side is de-masked (e23 dropped both on _ascend and lost
+# -28.8% on huawei; this candidate keeps the store masked and is
+# confined to _amd/_metax). The partial tail tile keeps a masked load -
+# an unguarded tail read could cross the raw_out allocation end by up
+# to BLOCK-1 elements on the last segment - and drops the other=0
+# prefill: masked-out lanes hold undef values that the store mask keeps
+# out of memory (e22 semantics, byte-identical output).
 
 import torch
 import triton
@@ -29,7 +45,14 @@ def _unpad(
     for base in range(tile * BLOCK, elems32, tl.num_programs(1) * BLOCK):
         offs = base + tl.arange(0, BLOCK)
         m = offs < elems32
-        v = tl.load(raw_out + src + offs, m, other=0)
+        if base + BLOCK <= elems32:
+            # e27 full tile: mask was all-true; drop the predication
+            v = tl.load(raw_out + src + offs)
+        else:
+            # partial tail: masked read (an unguarded one could cross
+            # the raw_out end by BLOCK-1 on the last segment); no
+            # other= prefill - the store mask keeps undef lanes out
+            v = tl.load(raw_out + src + offs, m)
         tl.store(out + dst + offs, v, m)
 
 
@@ -39,7 +62,8 @@ def _unpad_wide(
     BLOCK: tl.constexpr,
 ):
     # i64 pipeline for segments reaching the int32 lane domain; the
-    # wrapper dispatches on token_per_batch*span
+    # wrapper dispatches on token_per_batch*span. Same e27 store-only
+    # mask form as _unpad.
     seg = tl.program_id(0)
     tile = tl.program_id(1)
     n = tl.load(lens + seg.to(tl.int64) * lstride)
@@ -52,7 +76,10 @@ def _unpad_wide(
     ):
         offs = base + tl.arange(0, BLOCK)
         m = offs < elems
-        v = tl.load(raw_out + src + offs, m, other=0)
+        if base + BLOCK <= elems:
+            v = tl.load(raw_out + src + offs)
+        else:
+            v = tl.load(raw_out + src + offs, m)
         tl.store(out + dst + offs, v, m)
 
 

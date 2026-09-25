@@ -6,13 +6,49 @@ operator: unpad_draft_extend_output
 batch: 6
 validity: valid(8/8,e26,346.347075x TB)
 platform: e26(20787)valid 8/8 avg 346.347075新TB:ascend num_warps=16钉(chip-rulesets阶梯)华为438.2(带内中性,阶梯规则在此store形态不响应);沐曦253.4/A538.8/hg667.0水位续升
-candidate_stage: e26
+candidate_stage: e27
 team_best_stage: e26
 team_best_speedup: 346.347075
 sealed: yes
-next: T92今日收口:TB 341.31→346.35(+1.5%),rank 6;华为435-465vs665与b 273-283vs437两结构缺口今日int32管线/warps阶梯两假说均中性,待新证据;额度1/30(10:06)
-updated: 2026-09-24
+next: e27(card_b/muxi load侧去掩码,store-only mask)已实现待评审+代理验证;提交窗口已关(submit_end 2026-09-24),只能入库待下一窗口;预注册门card_b≥320且muxi≥270
+updated: 2026-09-25
 ```
+
+## 2026-09-25 E27 候选实现：card_b/沐曦 load 侧去掩码（store-only mask）
+
+- 动机（差距分解，climb-loop.json s2t1op092，2026-09-25T23:33 快照，
+  分诊会话实读复核）：card_b 273.886 vs 金狐狸 469.1868、沐曦 253.352
+  vs 391.9616，两洞合计 -334/8 ≈ 总差距 42%，我方 mean 346.347 rank7。
+  两芯宽度/参数轴已全部穷尽且平坦（账本：card_b BLOCK 1024/2048/8192
+  全平 264-283、e25 int32 中性 280.9；沐曦 BLOCK 8192 饱和、warps8 负
+  213.3 vs 242.3、stages4 无效、u32 无效）——剩余差距在掩码访存形态。
+  e21r 平台实锤 case 3 仅 164352 元素（raw_result failed_cases），
+  小 case 下 masked load 的 per-lane predication + other 预填开销占比高。
+- 结构：只改 `_amd`/`_metax` 两文件。整块 tile（标量守卫
+  `base+BLOCK<=elems`）load 完全无掩码（该处 mask 本就全真，无界读也
+  限于本段自身槽位），store **恒带** mask m；部分尾块保留 masked load
+  但去掉 `other=0` 预填（undef lane 由 store mask 挡住，e22 语义，
+  字节不变）——尾块无守卫全量读会越 raw_out 末尾最多 BLOCK-1 元素，
+  是本守卫存在的唯一原因。与已证伪形态不重叠：e22 只在 _ascend 删
+  other 不删 mask；e23 是 load+store 双去掩码且只在华为（-28.8% 判负，
+  回滚 47dc1382）；AMD/沐曦从未试过任何去掩码形态。_enflame 字节冻结
+  （chip-rulesets 运行期分支约束禁标量守卫分支）；_ascend/_nvidia/
+  _kunlunxin/_hygon/_enflame/generic 全部不动，保持逐芯归因。
+- 测试：新增 `UnpadTest.test_load_unmask_full_tiles_masked_tail`（列入
+  RELEASE_REQUIRED_TESTS），矩阵同时踩两芯守卫双分支——span=1024 时
+  amd BLOCK=1024 全走无掩码整块路（含 0 段跳过与闲置 tile 程序）、
+  metax BLOCK=8192 走 5整+尾/6整恰尽/单尾；span=384 与奇 span=6 迫使
+  amd 同段双分支。本会话 `python3 -m py_compile` 三文件通过；本机无
+  torch/CUDA，回归未在本地执行——NVIDIA 代理回归留待验证轮（垃圾被
+  store mask 挡，代理可完整验证正确性）。
+- 预注册门（分诊#2·EV≈3-5·储备位，算术修正后 +62.7 芯分 ÷8≈7.8 均值，
+  声明值 14 为近带外推不计入排序）：**card_b ≥320 且 muxi ≥270 才保留，
+  均值 >346.347 换 TB**；任一芯回退或失败即回滚两文件字节。已知风险：
+  seq 利用率低的大 case 读 padding 的额外带宽可能小负；e23 邻近形态
+  在华为的前科不外推到 AMD/沐曦（结构不同：本候选 store 恒掩码）。
+- 窗口状态：platform_cli status 实读 task_can_submit=False（submit_end
+  2026-09-24T19:59:59，quota 28/30）——本候选只入库，不可发射；
+  下一窗口开启后走常规 screening → 评审 → preflight 流程。
 
 ## 2026-09-23 E23 候选：华为整块无掩码，尾块保留 e22 路径
 

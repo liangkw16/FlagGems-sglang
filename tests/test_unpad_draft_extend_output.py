@@ -137,6 +137,33 @@ class UnpadTest(unittest.TestCase):
         self.check(make_case(lens=(33, 17, 1, 64, 40, 63, 15), heads=8, dim=128, tpb=64))
         self.check(make_case(lens=(41,), heads=2, dim=3, tpb=64))
 
+    def test_load_unmask_full_tiles_masked_tail(self):
+        # e27 amd/metax semantics: load-side de-masking with a
+        # store-only mask. Full tiles (base+BLOCK <= elems) load with
+        # NO mask at all - the mask was all-true there - and only the
+        # partial tail tile keeps a masked load (an unguarded tail read
+        # could cross the raw_out allocation end by up to BLOCK-1
+        # elements on the last segment), with no other= prefill. The
+        # store ALWAYS carries the mask m, so any lane the load picked
+        # up beyond elems must be dropped at the store: a loosened or
+        # dropped store mask would overwrite the NEXT segment's prefix
+        # and fail the byte-exact check. The matrix walks both guard
+        # branches for every module width in one pass: with span=1024
+        # (heads=8, dim=128) amd BLOCK=1024 makes every n*1024 segment
+        # all-full tiles (pure unmasked-load path, 0-skip and idle-tile
+        # programs), while metax BLOCK=8192 gets 41 -> 41984 = 5 full +
+        # 1024 tail, 48 -> 49152 = 6 full exactly (zero-length tail
+        # must write nothing), 35/34 -> full + tail, 1 -> single
+        # all-tail tile, 0 -> loop skip. span=384 (heads=4, dim=96)
+        # then forces amd onto both branches in one segment (3 -> 1152
+        # = 1 full + 128 tail; 21 -> 7 full + 576; 2 -> 768 tail-only)
+        # and metax to 22 -> 8448 = 1 full + 256 tail. The odd-span
+        # case (span=6, 200 -> 1200 = 1 full + 176 tail on amd) keeps
+        # the element path honest through the same split.
+        self.check(make_case(lens=(41, 48, 35, 34, 1, 0), heads=8, dim=128, tpb=64))
+        self.check(make_case(lens=(3, 21, 2, 22, 1, 0), heads=4, dim=96, tpb=22))
+        self.check(make_case(lens=(200, 7, 0), heads=2, dim=3, tpb=200))
+
 
 RELEASE_REQUIRED_TESTS = [
     "UnpadTest.test_u32_fallback_conditions",
@@ -144,6 +171,7 @@ RELEASE_REQUIRED_TESTS = [
     "UnpadTest.test_persistent_rotation",
     "UnpadTest.test_unmasked_main_masked_tail_split",
     "UnpadTest.test_masked_tail_no_other_prefill",
+    "UnpadTest.test_load_unmask_full_tiles_masked_tail",
 ]
 
 

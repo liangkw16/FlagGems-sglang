@@ -3,6 +3,22 @@
 # Metax vendor for unpad_draft_extend_output: batch-segment copy at
 # BLOCK 8192 with default warps (warps8 read 213.3 vs 242.3 default;
 # width saturated at 249.6; stages 4 probes deeper pipelining on muxi).
+#
+# e27 load-unmask (store-only mask): the muxi width/parameter axes are
+# exhausted (BLOCK 8192 saturated, warps8 negative, stages4 and u32
+# no-ops), so the residual gap to the 391-392 leader band sits in the
+# masked-access form. Full tiles (base+BLOCK<=elems) load WITHOUT a
+# mask - the mask was all-true there, and every lane stays inside the
+# segment's own slot - removing the per-lane predication and the
+# other=0 prefill that dominate small copies (platform case 3 is only
+# 164352 elements). The store ALWAYS keeps the mask m: only the load
+# side is de-masked (e23 dropped both sides on _ascend and lost -28.8%
+# on huawei; this form is confined to _amd/_metax). The partial tail
+# tile keeps a masked load - an unguarded tail read could cross the
+# raw_out allocation end by up to BLOCK-1 elements on the last
+# segment - without the other= prefill: masked-out lanes hold undef
+# values that the store mask keeps out of memory (e22 semantics,
+# byte-identical output).
 
 import torch
 import triton
@@ -26,7 +42,14 @@ def _unpad(
     ):
         offs = base + tl.arange(0, BLOCK)
         m = offs < elems
-        v = tl.load(raw_out + src + offs, m, other=0)
+        if base + BLOCK <= elems:
+            # e27 full tile: mask was all-true; drop the predication
+            v = tl.load(raw_out + src + offs)
+        else:
+            # partial tail: masked read (an unguarded one could cross
+            # the raw_out end by BLOCK-1 on the last segment); no
+            # other= prefill - the store mask keeps undef lanes out
+            v = tl.load(raw_out + src + offs, m)
         tl.store(out + dst + offs, v, m)
 
 
