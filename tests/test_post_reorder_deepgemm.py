@@ -119,6 +119,9 @@ class PostReorderDeepgemmGridTest(unittest.TestCase):
                 self.shape = shape
                 self.dtype = dtype
                 self.ndim = len(shape)
+                # the wrappers evaluate output.device as a torch.empty
+                # argument before the mocked call can intercept it
+                self.device = torch.device("cpu")
 
             def stride(self, dimension):
                 return self.shape[1] if dimension == 0 else 1
