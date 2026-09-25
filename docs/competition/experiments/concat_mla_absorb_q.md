@@ -5,12 +5,12 @@ task: 94
 operator: concat_mla_absorb_q
 batch: 7
 validity: invalid(kunlun轴5发未破0.1)
-platform: 昆仑全梯:e1(1024地板,标量行)0.0814>e4(单store融合)0.0712>e2(RPP8)0.0656>e3(精确512/64)0.0278>e5(平坦16384+constexpr除法)0.009;华为grid修复0.16-0.17;天数1.45-1.91/海光2.17-2.31;他队昆仑0.62-1.41可达,结构未破译
+platform: 昆仑轴硬关闭(8发):测量梯 0.0044/0.0814(天花板)/0.0656/0.0278/0.0712/0.009 + 段分解结构两次XPU编译墙(TritonXPUOffsetAnalysis i32/i64标量混型,修型后仍拒);vendor回滚e1字节;他队0.62-1.41可达但结构未破译;其余6芯水位天数1.82/海光2.20/华为0.165
 candidate_stage: s0
 team_best_stage: e1(21144,无效但天数1.774#1/海光2.256平榜首)
 team_best_speedup: -
 sealed: yes
-next: 昆仑盲试轴关闭(5发);重开条件=他队代码泄露/KernelGen kunlun恢复/新结构证据;其余6芯byte已达标
+next: 重开条件=竞队代码泄露/昆仑目标机/全新结构证据;额度转向新题与其余题rank增量
 updated: 2026-09-25
 ```
 

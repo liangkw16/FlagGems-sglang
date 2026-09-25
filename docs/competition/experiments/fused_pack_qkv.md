@@ -10,7 +10,7 @@ candidate_stage: s0
 team_best_stage: e1
 team_best_speedup: -
 sealed: yes
-next: E1轴=昆仑0.583→榜首0.606(RPP扫)+沐曦1.92→2.45;e1已有效,增量优化
+next: Q/K/V三程序分工代理测无增益(0.94-0.97)跳过;mask消除代理无增益(Triton已向量化);天数2.95->5.52的1.9x均匀差未定位,需EA结构证据
 updated: 2026-09-25
 ```
 

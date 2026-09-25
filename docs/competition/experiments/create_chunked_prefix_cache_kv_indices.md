@@ -5,12 +5,12 @@ task: 95
 operator: create_chunked_prefix_cache_kv_indices
 batch: 7
 validity: valid(7/7,s0)
-platform: s0(21123)valid 7/7:天数82.3/沐曦19.7/海光33.3/昆仑27.4/华为15.8/A25.4/B25.5;昆仑27.4>旧榜34.6的次优同量级
+platform: e2(21223)invalid_correctness:fill kernel逐块标量窗口扫描全芯减速2x+昆仑编译墙(100%失配);已回滚s0字节,TB保s0(21123,valid 82x)
 candidate_stage: s0
 team_best_stage: s0
 team_best_speedup: -
 sealed: yes
-next: E1轴=天数82→133与海光33→48(榜首水位);华为15.8 vs 139.9 差距大需结构
+next: e2教训入册:结构假设代理自证后还需全链路代理计时;融合填充轴关闭(需排序无关且O(1)每元素的成员判定才能复活);榜首水位天数133/海光50仍1.6x,结构未破译
 updated: 2026-09-25
 ```
 
