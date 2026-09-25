@@ -125,21 +125,29 @@ def recompute_w_u(k, v, beta, g_cumsum, A, cu_seqlens):
     u = torch.empty(B, T, H, V, dtype=v.dtype, device=v.device)
     if T:
         grid = (B * (T // BT) * H,)
-        _recompute_w_u_kernel[grid](
+        _recompute_w_kernel[grid](
             k,
-            v,
             beta,
             g_cumsum,
             A,
             w,
-            u,
             T,
             H,
             Hg,
-            K=triton.next_power_of_2(K),
-            V=triton.next_power_of_2(V),
+            K,
             BT=BT,
             BK=max(16, triton.next_power_of_2(K)),
+            num_warps=4,
+        )
+        _recompute_u_kernel[grid](
+            v,
+            beta,
+            A,
+            u,
+            T,
+            H,
+            V,
+            BT=BT,
             BV=max(16, triton.next_power_of_2(V)),
             num_warps=4,
         )
