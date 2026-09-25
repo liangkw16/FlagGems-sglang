@@ -150,6 +150,33 @@ class CreateChunkedPrefixCacheKvIndicesTest(unittest.TestCase):
         kv_indices = torch.full((5,), -1, dtype=torch.int32, device="cuda")
         self.check(req_to_token, pool_idx, starts, lens, cus, kv_indices)
 
+    def test_unsorted_and_overlapping_windows(self):
+        # cu is not guaranteed sorted and windows may not tile: the fill
+        # must preserve base bytes everywhere outside the union, even
+        # with out-of-order and zero-length requests (review findings)
+        req_to_token = torch.arange(
+            512, device="cuda", dtype=torch.int32
+        ).reshape(8, 64)
+        pool_idx = torch.tensor([2, 0, 5], dtype=torch.int32, device="cuda")
+        starts = torch.tensor([1, 7, 3], dtype=torch.int32, device="cuda")
+        lens = torch.tensor([3, 0, 2], dtype=torch.int32, device="cuda")
+        cus = torch.tensor([6, 2, 2], dtype=torch.int32, device="cuda")
+        kv_indices = torch.arange(12, device="cuda", dtype=torch.int32) * 7
+        self.check(req_to_token, pool_idx, starts, lens, cus, kv_indices)
+
+    def test_strided_base(self):
+        # a non-contiguous base view: preserved bytes must come from the
+        # base's own stride, not a flat memcpy (review finding)
+        req_to_token = torch.arange(128, device="cuda", dtype=torch.int32).reshape(2, 64)
+        pool_idx = torch.tensor([1], dtype=torch.int32, device="cuda")
+        starts = torch.tensor([2], dtype=torch.int32, device="cuda")
+        lens = torch.tensor([2], dtype=torch.int32, device="cuda")
+        cus = torch.tensor([0], dtype=torch.int32, device="cuda")
+        big = torch.arange(40, device="cuda", dtype=torch.int32) * 3
+        kv_indices = big[::2]
+        self.assertFalse(kv_indices.is_contiguous())
+        self.check(req_to_token, pool_idx, starts, lens, cus, kv_indices)
+
     def test_gapped_cu_layout(self):
         # windows need not tile the buffer from zero: elements outside
         # every window keep the base bytes (fill kernel must cover gaps)
@@ -188,6 +215,8 @@ RELEASE_REQUIRED_TESTS = [
     "CreateChunkedPrefixCacheKvIndicesTest.test_tail_sentinel_preserved",
     "CreateChunkedPrefixCacheKvIndicesTest.test_column_strided_req_to_token",
     "CreateChunkedPrefixCacheKvIndicesTest.test_gapped_cu_layout",
+    "CreateChunkedPrefixCacheKvIndicesTest.test_unsorted_and_overlapping_windows",
+    "CreateChunkedPrefixCacheKvIndicesTest.test_strided_base",
     "CreateChunkedPrefixCacheKvIndicesTest.test_empty_requests",
 ]
 

@@ -8,9 +8,10 @@
 # bytes are ~99% overwritten under the canonical packed layout the
 # reference uses); e2 replaces the clone with a fill kernel that copies
 # base bytes ONLY where no window lands - membership decided by a
-# fixed-step binary search (searchsorted-right) over the non-decreasing
-# cu array, so gapped layouts stay correct too. Two launches total,
-# same as clone+window, but a third less traffic.
+# a per-block scalar intersection scan over every window, so unsorted,
+# gapped, overlapping and zero-length layouts stay exact, and the base
+# is read through its own stride. Two launches total, same as
+# clone+window, but a third less traffic under packed layouts.
 
 import torch
 import triton
@@ -56,43 +57,32 @@ def _fill_non_window_kernel(
     out,
     total,
     n_req,
+    base_s0,
     cu_s0,
     len_s0,
     BLOCK: tl.constexpr,
-    STEPS: tl.constexpr,
 ):
     # copy base bytes into every destination element not covered by any
-    # window [cu_i, cu_i + n_i). cu is non-decreasing (cumsum layout),
-    # so the covering window, if one exists, is index (count of cu<=e)
-    # minus one - found by a fixed-step searchsorted-right loop over
-    # ceil(log2(n_req+1)) iterations that all lanes run to convergence.
+    # window [cu_i, cu_i + n_i). Each block first runs a scalar
+    # intersection test against every window (cheap: one load and two
+    # compares per window) and only folds vector masks for the windows
+    # that actually overlap the block - so unsorted, gapped, overlapping
+    # and zero-length layouts are all exact, with no sortedness
+    # assumption. The base tensor is read through its own stride.
     pid = tl.program_id(0).to(tl.int64)
     offs = pid * BLOCK + tl.arange(0, BLOCK).to(tl.int64)
     m = offs < total
-    big = 9223372036854775807
-    lo = tl.zeros((BLOCK,), dtype=tl.int64)
-    hi = tl.full((BLOCK,), n_req, dtype=tl.int64)
-    for _ in range(0, STEPS):
-        mid = (lo + hi) // 2
-        valid = m & (mid < n_req) & (lo < hi)
-        cuv = tl.load(
-            chunk_cu_seq_lens + mid * cu_s0,
-            mask=valid,
-            other=big,
-        ).to(tl.int64)
-        le = cuv <= offs
-        lo = tl.where(valid & le, mid + 1, lo)
-        hi = tl.where(valid & (~le), mid, hi)
-    j = lo - 1
-    has = lo > 0
-    cu_start = tl.load(
-        chunk_cu_seq_lens + j * cu_s0, mask=m & has, other=0
-    ).to(tl.int64)
-    nv = tl.load(
-        chunk_seq_lens + j * len_s0, mask=m & has, other=0
-    ).to(tl.int64)
-    covered = has & (offs >= cu_start) & (offs < cu_start + nv)
-    value = tl.load(chunk_kv_indices + offs, mask=m & (~covered), other=0)
+    block_start = pid * BLOCK
+    block_end = block_start + BLOCK
+    covered = tl.zeros((BLOCK,), dtype=tl.int1)
+    for i in range(0, n_req):
+        cu_i = tl.load(chunk_cu_seq_lens + i * cu_s0).to(tl.int64)
+        n_i = tl.load(chunk_seq_lens + i * len_s0).to(tl.int64)
+        if (cu_i < block_end) & (cu_i + n_i > block_start) & (n_i > 0):
+            covered = covered | ((offs >= cu_i) & (offs < cu_i + n_i))
+    value = tl.load(
+        chunk_kv_indices + offs * base_s0, mask=m & (~covered), other=0
+    )
     tl.store(out + offs, value, mask=m & (~covered))
 
 
@@ -124,7 +114,6 @@ def create_chunked_prefix_cache_kv_indices(
             BLOCK_C=1024,
             num_warps=4,
         )
-        steps = max(1, (n_req + 1).bit_length())
         _fill_non_window_kernel[(triton.cdiv(total, 4096),)](
             chunk_cu_seq_lens,
             chunk_seq_lens,
@@ -132,10 +121,10 @@ def create_chunked_prefix_cache_kv_indices(
             out,
             total,
             n_req,
+            chunk_kv_indices.stride(0) if chunk_kv_indices.dim() else 1,
             chunk_cu_seq_lens.stride(0) if chunk_cu_seq_lens.dim() else 1,
             chunk_seq_lens.stride(0) if chunk_seq_lens.dim() else 1,
             BLOCK=4096,
-            STEPS=steps,
             num_warps=4,
         )
     elif total:
