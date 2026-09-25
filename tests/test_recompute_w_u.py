@@ -52,11 +52,18 @@ class RecomputeWUTest(unittest.TestCase):
         v = torch.randn(B, T, H, V, dtype=torch.bfloat16, device="cuda", generator=gen) * 0.5
         beta = torch.rand(B, T, H, dtype=torch.float32, device="cuda", generator=gen)
         g = torch.randn(B, T, H, dtype=torch.float32, device="cuda", generator=gen) * 0.1
-        # A: well-conditioned UT-ish matrices via cholesky of random SPD
-        raw = torch.randn(B, T, H, BT, BT, dtype=torch.float32, device="cuda", generator=gen) * 0.1
+        # contract: A is [B, T, H, BT] - token t carries row t of its
+        # chunk's UT matrix; build chunk matrices then scatter rows
+        nc = T // BT
+        raw = torch.randn(
+            B, nc, H, BT, BT, dtype=torch.float32, device="cuda", generator=gen
+        ) * 0.1
         eye = torch.eye(BT, device="cuda", dtype=torch.float32)
-        A = (raw.triu() + eye).to(torch.bfloat16)
-        return k, v, beta, g, A
+        mats = (raw.triu() + eye).to(torch.bfloat16)  # [B, nc, H, BT, BT]
+        # A[b, c*BT+r, h, :] = mats[b, c, h, r, :]
+        A4 = torch.empty(B, T, H, BT, dtype=torch.bfloat16, device="cuda")
+        A4.view(B, nc, BT, H, BT).copy_(mats.permute(0, 1, 3, 2, 4))
+        return k, v, beta, g, A4
 
     def test_mqa_and_gqa(self):
         # H == Hg (MQA-free) and 2:1 GQA

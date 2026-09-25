@@ -47,7 +47,7 @@ class Ltx2SplitRotaryTest(unittest.TestCase):
 
     def test_non_contiguous_tables(self):
         gen = torch.Generator(device="cuda").manual_seed(5)
-        x = torch.randn(2, 16, 8 * 128, dtype=torch.bfloat16, device="cuda", generator=gen)
+        x = torch.randn(2, 16, 8 * 256, dtype=torch.bfloat16, device="cuda", generator=gen)
         big_c = torch.randn(2, 16, 8, 128, dtype=torch.bfloat16, device="cuda", generator=gen)
         cos = big_c.permute(0, 2, 1, 3)
         big_s = torch.randn(2, 16, 8, 128, dtype=torch.bfloat16, device="cuda", generator=gen)
