@@ -138,6 +138,87 @@ class GetMlaKvBufferTest(unittest.TestCase):
                 self.assertEqual(nope.shape, (0, 64))
                 self.assertEqual(rope.shape, (0, 16))
 
+    # ------------------------------------------------------------------
+    # round-2 kunlun arm regressions: the kunlunxin vendor moved to the
+    # upstream sglang single-row kernel (one row per program, exact
+    # pow2 arange widths, zero masks/loops) behind a host shape branch;
+    # these pin the new kernel semantics and the branch predicate.
+    # ------------------------------------------------------------------
+
+    def test_row_form_int64_loc_and_duplicates(self):
+        # pow2 half widths take the single-row kernel: i64 loc values,
+        # duplicates and unsorted gather order must survive the scalar
+        # loc load (new-kernel semantics regression)
+        kv = torch.randn(16, 576, dtype=torch.float16, device="cuda")
+        loc = torch.tensor(
+            [9, 9, 2, 15, 2, 0, 9], dtype=torch.int64, device="cuda"
+        )
+        self.check(kv, loc, 512, torch.float16, torch.float16)
+        loc32 = torch.tensor([3, 3, 7], dtype=torch.int32, device="cuda")
+        self.check(kv, loc32, 512, torch.float16, torch.float16)
+
+    def test_row_form_dim_boundary(self):
+        # exact pow2 widths take the single-row kernel; the +-1
+        # neighbours must fall back to the masked rows kernel - both
+        # arms match the reference (host branch boundary regression)
+        for nope_dim, rope_dim in (
+            (64, 64),
+            (65, 63),
+            (63, 65),
+            (128, 32),
+            (127, 33),
+        ):
+            with self.subTest(nope=nope_dim, rope=rope_dim):
+                kv, loc = self.make_case(33, nope_dim, rope_dim)
+                self.check(kv, loc, nope_dim, torch.float16, torch.float16)
+
+    def test_row_form_stride_fallbacks(self):
+        # pow2 widths with a column-strided kv view or a strided loc
+        # view must leave the single-row kernel via the host branch and
+        # stay exact through the masked rows kernel
+        big = torch.randn(48, 256, dtype=torch.float16, device="cuda")
+        kv = big[:, ::2]  # shape (48, 128), stride(1) == 2
+        self.assertEqual(kv.stride(1), 2)
+        loc = torch.randperm(kv.shape[0], device="cuda").to(torch.int32)
+        self.check(kv, loc, 64, torch.float16, torch.float16)
+
+        kv2 = torch.randn(64, 576, dtype=torch.float16, device="cuda")
+        loc2 = (
+            torch.randperm(64, device="cuda").to(torch.int32).repeat(2)[::2]
+        )
+        self.assertEqual(loc2.stride(0), 2)
+        self.check(kv2, loc2, 512, torch.float16, torch.float16)
+
+    def test_row_form_host_branch_predicate(self):
+        # pin the host-branch predicate itself: exact pow2 widths within
+        # the lane cap, unit column/loc strides, one program per row
+        checked = 0
+        for name, module in MODULES:
+            predicate = getattr(module, "_upstream_row_form", None)
+            if predicate is None:
+                continue
+            with self.subTest(module=name):
+                checked += 1
+                self.assertTrue(predicate(4096, 512, 64, 1, 1))
+                self.assertTrue(predicate(1, 1, 1, 1, 1))
+                self.assertFalse(predicate(4096, 575, 64, 1, 1))  # nope
+                self.assertFalse(predicate(4096, 512, 96, 1, 1))  # rope
+                self.assertFalse(predicate(4096, 512, 0, 1, 1))  # empty half
+                self.assertFalse(predicate(4096, 512, 64, 1, 2))  # kv_s1
+                self.assertFalse(predicate(4096, 512, 64, 2, 1))  # loc_s0
+                self.assertFalse(predicate(0, 512, 64, 1, 1))  # n == 0
+                self.assertFalse(predicate(65536, 512, 64, 1, 1))  # grid cap
+                self.assertFalse(predicate(16, 131072, 64, 1, 1))  # lanes
+        if not checked:
+            self.skipTest("no applicable source exposes _upstream_row_form")
+
+    def test_row_form_grid_cap_fallback(self):
+        # n past the 65535-program cap drops to the masked rows kernel
+        n = 65536 + 16
+        kv = torch.randn(n + 4, 128, dtype=torch.float16, device="cuda")
+        loc = torch.randperm(n, device="cuda").to(torch.int32)
+        self.check(kv, loc, 64, torch.float16, torch.float16)
+
 
 RELEASE_REQUIRED_TESTS = [
     "GetMlaKvBufferTest.test_mla_realistic_shapes",
@@ -149,6 +230,11 @@ RELEASE_REQUIRED_TESTS = [
     "GetMlaKvBufferTest.test_wide_half_beyond_block_cap",
     "GetMlaKvBufferTest.test_zero_width_half",
     "GetMlaKvBufferTest.test_empty_rows",
+    "GetMlaKvBufferTest.test_row_form_int64_loc_and_duplicates",
+    "GetMlaKvBufferTest.test_row_form_dim_boundary",
+    "GetMlaKvBufferTest.test_row_form_stride_fallbacks",
+    "GetMlaKvBufferTest.test_row_form_host_branch_predicate",
+    "GetMlaKvBufferTest.test_row_form_grid_cap_fallback",
 ]
 
 if __name__ == "__main__":
