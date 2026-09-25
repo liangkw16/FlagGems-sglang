@@ -87,7 +87,7 @@ class Ltx2SplitRotaryTest(unittest.TestCase):
 RELEASE_REQUIRED_TESTS = [
     "Ltx2SplitRotaryTest.test_shapes",
     "Ltx2SplitRotaryTest.test_non_contiguous_tables",
-    "Ltx2SplitRotaryTest.test_sliced_and_independent_layouts",
+    "Ltx2SplitRotaryTest.test_independent_sin_layout",
     "Ltx2SplitRotaryTest.test_sliced_x",
     "Ltx2SplitRotaryTest.test_extreme_angles",
 ]
