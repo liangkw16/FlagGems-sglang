@@ -310,6 +310,22 @@ class FixupZeroKVTest(unittest.TestCase):
         self.assertFalse(
             enflame._fits_int32(t_ok, hv, nh, hv, block_h, 2**31)
         )
+        # e30 review r2: expand()-built broadcast views carry zero row
+        # strides on both streams (the stride(1)==1 assertions then
+        # force NH=1), so the stride products cannot bound the token
+        # count; the independent token clause must. The round-1 bytes
+        # returned True for (2^31-1, 0, 0, 1, 1, 1) and the wrapped i32
+        # cdiv turned the tile-loop bound negative - every write
+        # silently skipped.
+        self.assertTrue(
+            enflame._fits_int32(2**31 - 9, 0, 0, 1, 1, 1)
+        )
+        self.assertFalse(
+            enflame._fits_int32(2**31 - 8, 0, 0, 1, 1, 1)
+        )
+        self.assertFalse(
+            enflame._fits_int32(2**31 - 1, 0, 0, 1, 1, 1)
+        )
 
     def test_enflame_domain_branch_selection(self):
         # e30: in-domain shapes must launch the all-int32 kernel;
@@ -395,6 +411,40 @@ class FixupZeroKVTest(unittest.TestCase):
         for got, want in zip(actual, expected):
             torch.testing.assert_close(bits(got), bits(want), rtol=0, atol=0)
 
+    def test_enflame_zero_stride_broadcast(self):
+        # e30 review r2 numeric companion for the zero-stride family:
+        # expand()-built (T,1,V)/(T,1) broadcast views pass every
+        # wrapper assertion with stride(0)==0 on both streams. A fully
+        # zero-KV batch is required - aliased rows cannot represent
+        # distinct healthy bytes - and the in-place fix through the
+        # alias must still land every logical row. This small T routes
+        # to the i32 kernel; the huge-T routing is pinned by the
+        # boundary test's token cliff. check() would clone the expand
+        # away, so compare directly like the strided case.
+        enflame = dict(MODULES).get("enflame")
+        if enflame is None:
+            return
+        total, vdim = 33, 128
+        out = torch.randn(1, 1, vdim, dtype=torch.float16, device="cuda")
+        out = out.expand(total, 1, vdim)
+        lse = torch.randn(1, 1, dtype=torch.float32, device="cuda")
+        lse = lse.expand(total, 1)
+        lens = torch.tensor((0,), dtype=torch.int32, device="cuda")
+        cum = torch.tensor((0, total), dtype=torch.int32, device="cuda")
+        self.assertEqual(out.stride(0), 0)
+        self.assertEqual(lse.stride(0), 0)
+        self.assertEqual(out.stride(1), vdim)
+        self.assertEqual(lse.stride(1), 1)
+        self.assertTrue(
+            enflame._fits_int32(
+                total, out.stride(0), lse.stride(0), vdim, 1, 1
+            )
+        )
+        expected = reference(out, lse, lens, cum, total)
+        actual = enflame.fixup_zero_kv(out, lse, lens, cum, total)
+        for got, want in zip(actual, expected):
+            torch.testing.assert_close(bits(got), bits(want), rtol=0, atol=0)
+
 
 RELEASE_REQUIRED_TESTS = [
     "FixupZeroKVTest.test_understated_span_zero_segment",
@@ -414,6 +464,7 @@ RELEASE_REQUIRED_TESTS = [
     "FixupZeroKVTest.test_enflame_int32_domain_boundary",
     "FixupZeroKVTest.test_enflame_domain_branch_selection",
     "FixupZeroKVTest.test_enflame_out_of_domain_i64_path",
+    "FixupZeroKVTest.test_enflame_zero_stride_broadcast",
 ]
 
 

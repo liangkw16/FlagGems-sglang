@@ -10,8 +10,8 @@ candidate_stage: e30
 team_best_stage: e28
 team_best_speedup: 581.2321
 sealed: no
-next: e30就绪待发射(燧原寻址域单变量i32化:i64核44行字节冻结+host侧域分支双路Triton,只动寻址域;门沿用e22档:燧原≥130保留/≥190轴确认/233场带,均值>581.2321换TB,数值失败回滚e28;发射前逐成员sha核对= e28除_enflame寻址域外diff为零);窗口重开才可发射;华为563.8vs983.8缺口列下季需IR/计时证据的线索
-updated: 2026-09-25
+next: e30就绪待发射(燧原寻址域单变量i32化:i64核44行字节冻结+host侧域分支双路Triton,只动寻址域;r2已修P2零步幅绕过:谓词独立加token上界,平台形状路由零变化;门沿用e22档:燧原≥130保留/≥190轴确认/233场带,均值>581.2321换TB,数值失败回滚e28;发射前逐成员sha核对= e28除_enflame寻址域外diff为零);窗口重开才可发射;华为563.8vs983.8缺口列下季需IR/计时证据的线索
+updated: 2026-09-26
 ```
 
 ## 2026-09-23 23:20 榜单校准：E24 新团队最佳 569.125575
@@ -423,3 +423,35 @@ updated: 2026-09-25
   （563.8 vs 983.8，ascend 轴五形态全负、chip-rulesets 判另有成因，
   列下季需目标芯 IR/计时证据的线索）。
 - source/verification/ledger：同一 commit（本轮评审返回哈希）。
+
+### 评审 r2（2026-09-26）：P2 零步幅绕过修复
+
+- 发现（codex，本轮独立复核成立）：`_fits_int32` 只经 `t_hi*os0`/
+  `t_hi*ls0` 乘积间接约束 token 数——expand 构造的双零步幅广播
+  视图（wrapper 的 stride(1)==1 断言迫使 NH=1，如 (T,1,V)/(T,1)）
+  下 total_tokens 无界。实测 round-1 字节
+  `_fits_int32(2^31-1, 0, 0, 1, 1, 1)` 返回 True；而
+  `_fixup_zero_kv32` 的循环界 `tl.cdiv(end-beg, BLOCK_T)` 中间量
+  `end-beg+7` 在 i32 回绕为负 → tile 循环整体跳过 → 零与 -inf
+  全部漏写（静默错误答案）。旧 i64 核先 `.to(tl.int64)` 无此
+  问题。触发面极窄（双零步幅 + ≈2^31 长 zero-KV 段，平台不可能
+  构造），但属公开 API 断言全过即达的静默丢写，与注释完备性
+  声明相悖，弱于本仓先例 sigmoid_gate_mul_broadcast.py:91 的
+  形状积守卫 `assert (rows+rb)*hdim < 2^31`（与步幅无关）。
+- 修复（单变量纪律保持）：`_fits_int32` 独立加
+  `total_tokens + BLOCK_T < 2^31` 子句——在 cum[-1] ≤ total_tokens
+  契约（各核 OOB 安全已依赖）下同时覆盖 t 通道与 cdiv 中间量；
+  谓词注释改述为「约束核内全部 i32 计算值」。程序化复核：round-1
+  repro 变 False；零步幅 token 崖 2^31-9 True / 2^31-8 False；
+  27 组 shape/stride 组合与 round-1 路由逐位一致（唯一翻转在
+  tt≥2^31-8）——平台/bench 形状路由零变化。
+- 测试：`test_enflame_int32_domain_boundary` 增零步幅 token 崖
+  三断言（含 round-1 repro）；新增
+  `test_enflame_zero_stride_broadcast`（expand (33,1,128)/(33,1)
+  全零-KV 段数值回归——别名行无法表示健康段差异故须全覆盖；
+  check() 会 clone 掉 expand，bespoke 比对），入
+  RELEASE_REQUIRED_TESTS（现 18 项）。本机无 torch/CUDA：
+  py_compile 过、谓词与名单离线程序化验证；GPU 矩阵未跑，
+  发射前须远端 release。
+- source/verification/ledger：r2 修复同一 commit（本轮返回哈希）；
+  r1 实现见 `a4c506c9d8a63d5be92907d3cd245e331fa21517`。

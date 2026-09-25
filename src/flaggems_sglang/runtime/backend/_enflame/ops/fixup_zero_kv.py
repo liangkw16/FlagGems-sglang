@@ -133,16 +133,27 @@ def _fixup_zero_kv(
 
 def _fits_int32(total_tokens, os0, ls0, hv, block_h, items):
     # Host-side addressing-domain predicate (pure shape/stride
-    # arithmetic, no device read). It bounds every offset the tile
-    # lanes compute, not just the stored ones: the ragged token tail
-    # runs t lanes up to end + BLOCK_T - 1 and the folded value tail
-    # runs v lanes up to HV + BLOCK_V - 1 past the row, and masked
-    # lanes still compute their addresses. Stride-based (not
-    # shape-based) so a padded-row view cannot smuggle a huge os0
-    # into the i32 kernel.
+    # arithmetic, no device read). It bounds every value the kernel
+    # computes in i32, not just the stored offsets: the ragged token
+    # tail runs t lanes up to end + BLOCK_T - 1, the folded value tail
+    # runs v lanes up to HV + BLOCK_V - 1 past the row (masked lanes
+    # still compute their addresses), and the tile-loop bound
+    # tl.cdiv(end - beg, BLOCK_T) computes end - beg + BLOCK_T - 1 -
+    # an intermediate, not an offset. The stride products alone cannot
+    # bound the token count: expand()-built broadcast views carry
+    # stride(0)==0 on both streams (the wrapper's stride(1)==1
+    # assertions then force NH=1), and review r2 showed
+    # _fits_int32(2**31-1, 0, 0, 1, 1, 1) was True while the wrapped
+    # cdiv turned the loop bound negative, silently skipping every
+    # write. The token clause bounds both the t lanes and - given
+    # cum[-1] <= total_tokens, the contract every kernel's OOB safety
+    # already assumes - the cdiv intermediate. Stride-based products
+    # stay so a padded-row view cannot smuggle a huge os0 into the
+    # i32 kernel.
     t_hi = total_tokens + _BLOCK_T
     return (
-        items < _INT32_LIMIT
+        t_hi < _INT32_LIMIT
+        and items < _INT32_LIMIT
         and t_hi * os0 + hv + _BLOCK_V < _INT32_LIMIT
         and t_hi * ls0 + block_h < _INT32_LIMIT
     )
