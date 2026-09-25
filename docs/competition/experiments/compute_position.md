@@ -5,14 +5,54 @@ task: 77
 operator: compute_position
 batch: 6
 validity: valid(8/8,e11r,1266.24055x TB)
-platform: e16(20784)注释载体重掷valid 1219.19<TB判负:ts水位未保持(2794vs进场假说≥3000);e11r字节重掷轴关闭(1/1用尽)
-candidate_stage: e11r
+platform: e16(20784)注释载体重掷valid 1219.19<TB判负:ts水位未保持(2794vs进场假说≥3000);e11r字节重掷轴关闭(1/1用尽);e17储备已实现(单alloc融合2→1,generic+kunlunxin,评审1轮),待窗口+release矩阵
+candidate_stage: e17
 team_best_stage: e11r
 team_best_speedup: 1266.24055
 sealed: yes
-next: T77今日收口:TB 1100.74→1266.24(+15.0%),rank 10→8;已证伪轴:2D平铺/燧原scan融合/ascend双字store/metax无守卫tiled/水位重掷;ts(2794-3298带)与hg(1612-1669带)对c2flow(4773/2525)的1.65x结构缺口今日四假说全负,待新证据
-updated: 2026-09-24
+next: e17单alloc储备待下窗口:门=均值>1266.24055换TB,沐曦/B任一-5%判负回滚,昆仑1-D view须release矩阵(--proxy-vendor kunlunxin)+平台逐芯;ts/hg对c2flow(4773/2525)的1.65x结构缺口旧四假说全负,alloc计价假说待平台证;提交前须verify_release+ZIP
+updated: 2026-09-25
 ```
+
+## 2026-09-25 E17 储备实现（评审第 1 轮，未提交）：单 alloc 融合
+
+- 动机（climb-loop.json s2t1op077 本会话实读复核）：我方 TB e11r
+  **1266.24055**（rank 8）vs c2flow 1747.5001，缺口集中在天数
+  2792.6224 vs 4773.1096、华为 145.2322 vs 612.0046、昆仑 106.094
+  vs 130.2218；沐曦 957.3346 vs 961.012、B 2105.47 vs 2105.782 与
+  榜首持平（= alloc 不敏感芯，作回滚门）。已证机制：e6 per-call
+  alloc 3→2 昆仑 **+91%**（代理不可见，本账本 E6 节）、天数同窗
+  +8.6%；e8 launch 融合 B +33%/A +21%。
+- 实现（source commit 见本节末）：generic 与 kunlunxin vendor 每调用
+  **2 alloc→1 alloc**——`buf = torch.empty(sum+tail, int64)`，
+  `positions = buf[:sum]`，尾部 1-D `view(torch.int32)` 承载契约
+  start_loc（generic fused 尾 = `ceil(batch/2)` 字、两 launch 尾 =
+  `batch` 字含 hi 半区；kunlunxin 恒两 launch 形）。**kernel 字节
+  逐字节不动**（三个 jit 函数签名与函数体未改）。
+- 已核先例：非零 storage offset 张量传 Triton 内核在 e6/e9/e11r
+  平台 8 芯均已跑通（旧 `wide_starts[batch:]` 即 offset=batch*4）；
+  本候选新增 API 面仅尾部 1-D `view(torch.int32)`（燧原 vendor 已用
+  `view(int32)`，torch 标准实现）。昆仑 XPU 2D-broadcast packing
+  bug 不适用（全 1-D store/view）；1-D view 本身
+  **target-runtime-unverified**，release 矩阵须覆盖
+  （`--proxy-vendor kunlunxin` + 平台逐芯）。
+- 回归：`tests/test_compute_position.py` 新增
+  `test_single_allocation_views`（数值复验 + 单 storage / 区域不重叠 /
+  尾区在界内断言；覆盖奇偶批、2047/2048/2049 分派边界、零长度段、
+  空批；燧原按设计排除——分离分配+GCU 探针结构不在本契约内），
+  已列入 `RELEASE_REQUIRED_TESTS`。py_compile 三文件通过；本地无
+  torch，数值矩阵未在本机执行，须由远端 release 矩阵覆盖。
+- 预注册门（评审稿）：均值 **>1266.24055** 换 TB；天数/昆仑为读数
+  主芯；沐曦/B 任一 **-5%** 判负回滚。算术外推：天数 2792.6 × e6
+  同窗 +8.6% ≈ +240 芯分（+30 均值）+ 昆仑/海光/A 分摊；**2→1 是否
+  复现 3→2 的线性收益未经平台证**。
+- 状态：窗口已关（s2t1op077 status=reviewing、can_submit=false、
+  submit_end 2026-09-24T19:59:59，本会话实读），候选为下窗口储备；
+  本轮未打包、未跑远端矩阵，提交前须补 verify_release + 不可变 ZIP。
+  INDEX.md 未随本条目重生成（另一并行会话正持有 experiments 区
+  未提交改动，避免夹带），下次账本终态更新时补。
+  source commit =
+  `32f2c59b8df56e45d850736d118176b4dcf0bf20`（本轮 code+tests 提交）。
 
 ## 2026-09-24 E13/E14 平台终态：两个结构假说判负，TB 守 e11r 1266.24
 

@@ -1,5 +1,14 @@
 # 第二批候选与提交队列
 
+## 2026-09-25 T77 e17 储备实现（评审第 1 轮）
+
+- [T77 compute_position e17](compute_position.md)：窗口已关（reviewing/
+  can_submit=false），单 alloc 融合候选作为下窗口储备完成实现——
+  generic + kunlunxin 每调用 2 alloc→1（尾部 1-D int32 view 承载契约
+  start_loc/hi 半区，kernel 字节不动），新增
+  `test_single_allocation_views` 回归。发射前须补 release 矩阵
+  （含 `--proxy-vendor kunlunxin`）与不可变 ZIP。
+
 ## 2026-09-24 T77 e7 终态与 T80 下一步
 
 - [实时第六批榜差](../optimization-batch6-live-20260923.md)：23:20 全量快照，
