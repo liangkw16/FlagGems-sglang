@@ -4,21 +4,11 @@
 # gather-weighted-sum arithmetic as our 8/8-validated T88
 # post_reorder_cutlass (346x team best) with the validity gate changed
 # to topk_ids >= 0 (DeepGEMM pads with -1 and treats num_experts as
-# the fused shared expert, so both stay valid here). src2dst entries
-# of invalid slots are clamped to 0 before addressing (reference
-# semantics).
-#
-# E1: hidden blocks move onto grid.y and BLOCK rises 1024 -> 2048 -
-# the platform-validated T65-E10 sibling structure (deepep_post_reorder
-# read +67.16% mean: tianshu x1.80 / muxi x1.49 / haiguang x1.96 /
-# card_a x1.86 / card_b x1.54). gy = min(cdiv(hdim, BLOCK), 255) and
-# gx = min(rows, 65535 // gy) keep total programs <= 65535; hidden is
-# walked with a tl.range dual-axis stride. The arithmetic form is
-# preserved from s0 byte-for-byte: TOPK static unroll, scalar slot
-# reads, clamp + keep gate, fp32 accumulation, scale folded into the
-# store, all strides as parameters. Kunlunxin runs the frozen s0
-# vendor (wide BLOCK was a compile-stage SIGABRT there; see the
-# deepep_post_reorder ledger).
+# the fused shared expert, so both stay valid here). One program per
+# token strides the token axis; each hidden tile gathers topk source
+# rows, zeroes invalid slots through the gate, applies the routed
+# scaling once at the store. src2dst entries of invalid slots are
+# clamped to 0 before addressing (reference semantics).
 
 import torch
 import triton
@@ -34,7 +24,6 @@ def _post_reorder_deepgemm(
     out,
     rows,
     scale,
-    hdim,
     ds0,
     ss0,
     ss1,
@@ -44,17 +33,16 @@ def _post_reorder_deepgemm(
     ws1,
     os0,
     TOPK: tl.constexpr,
+    HDIM: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
     for row in range(tl.program_id(0), rows, tl.num_programs(0)):
         base = row.to(tl.int64)
         obase = base * os0
         offs = tl.arange(0, BLOCK)
-        for h0 in tl.range(
-            tl.program_id(1) * BLOCK, hdim, tl.num_programs(1) * BLOCK
-        ):
+        for h0 in tl.static_range(0, HDIM, BLOCK):
             ho = h0 + offs
-            hm = ho < hdim
+            hm = ho < HDIM
             acc = tl.zeros((BLOCK,), dtype=tl.float32)
             for i in tl.static_range(0, TOPK):
                 eid = tl.load(topk_ids + base * is0 + i * is1)
@@ -93,11 +81,9 @@ def post_reorder_deepgemm(
         (rows, hdim), dtype=output.dtype, device=output.device
     )
     if rows and hdim:
-        # E1: bounded hidden-grid launch (T65-E10 sibling form); the
-        # grid product stays <= 65535 on every chip.
-        grid_y = min(triton.cdiv(hdim, 2048), 255)
-        grid_x = min(rows, max(1, 65535 // grid_y))
-        _post_reorder_deepgemm[(grid_x, grid_y)](
+        block = min(1024, triton.next_power_of_2(hdim))
+        grid = (min(rows, 1024),)
+        _post_reorder_deepgemm[grid](
             down_output,
             src2dst,
             topk_ids,
@@ -105,7 +91,6 @@ def post_reorder_deepgemm(
             out,
             rows,
             float(routed_scaling_factor),
-            hdim,
             down_output.stride(0),
             src2dst.stride(0),
             src2dst.stride(1),
@@ -115,7 +100,8 @@ def post_reorder_deepgemm(
             topk_weights.stride(1),
             out.stride(0),
             TOPK=topk,
-            BLOCK=2048,
+            HDIM=hdim,
+            BLOCK=block,
             num_warps=8,
         )
     return out

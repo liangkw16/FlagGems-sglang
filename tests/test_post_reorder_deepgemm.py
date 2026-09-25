@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import unittest
+from unittest import mock
 
 import torch
 
@@ -72,12 +73,105 @@ class PostReorderDeepgemmTest(unittest.TestCase):
         out_tpl = out_tpl.to(torch.float16)
         self.check(down, out_tpl, s2d, ids, w, topk, N, H, sc)
 
+    def test_hidden_program_boundaries(self):
+        # E1: hidden blocks live on grid.y with BLOCK=2048 - cover the
+        # tile edges, multi-tile strides and the gy=255 cap boundary.
+        for h in (
+            2047,
+            2048,
+            2049,
+            4095,
+            4096,
+            4097,
+            7168,
+            255 * 2048 - 1,
+            255 * 2048,
+            255 * 2048 + 1,
+        ):
+            with self.subTest(hidden=h):
+                self.check(*self.make(1, 8, 2, h))
+
+    def test_token_program_boundaries(self):
+        # E1: grid.x is capped at 65535 // gy, so token counts above the
+        # cap must be covered by the grid-stride row loop.
+        for n in (65535, 65536, 65537):
+            with self.subTest(num_tokens=n):
+                self.check(*self.make(n, 8, 1, 8, padding=False))
+
+    def test_grid_product_boundary(self):
+        # rows=32768, hidden=2049 -> grid (32767, 2): the final row is
+        # only reachable through the grid-stride iteration.
+        args = list(self.make(32768, 8, 1, 2049, padding=False))
+        args[0][-1, :].fill_(0.25)
+        args[2][-1, 0] = 32767
+        args[4][-1, 0] = 1.0
+        args[8] = 1.0
+        self.check(*args)
+
+
+class PostReorderDeepgemmGridTest(unittest.TestCase):
+    def test_grid_product_cap(self):
+        # Metadata stubs capture launch dimensions on CPU without
+        # allocating the large token x hidden combinations or claiming
+        # numerical coverage.
+        class TensorMetadata:
+            def __init__(self, shape, dtype):
+                self.shape = shape
+                self.dtype = dtype
+                self.ndim = len(shape)
+
+            def stride(self, dimension):
+                return self.shape[1] if dimension == 0 else 1
+
+        class CaptureKernel:
+            def __init__(self):
+                self.grids = []
+
+            def __getitem__(self, grid):
+                self.grids.append(grid)
+                return lambda *args, **kwargs: None
+
+        for rows, hidden, expected_grid in (
+            (32768, 2049, (32767, 2)),
+            (258, 255 * 2048, (257, 255)),
+            (65537, 255 * 2048 + 1, (257, 255)),
+        ):
+            down = TensorMetadata((rows, hidden), torch.bfloat16)
+            out_tpl = TensorMetadata((rows, hidden), torch.bfloat16)
+            s2d = TensorMetadata((rows, 1), torch.int32)
+            ids = TensorMetadata((rows, 1), torch.int32)
+            w = TensorMetadata((rows, 1), torch.float32)
+            for name, module in MODULES:
+                with self.subTest(module=name, rows=rows, hidden=hidden):
+                    capture = CaptureKernel()
+                    with mock.patch.object(
+                        module, "_post_reorder_deepgemm", capture
+                    ), mock.patch.object(
+                        module.torch, "empty", return_value=out_tpl
+                    ):
+                        module.post_reorder_deepgemm(
+                            down, out_tpl, s2d, ids, w, 1, rows, hidden, 1.0
+                        )
+                    self.assertEqual(len(capture.grids), 1)
+                    grid = capture.grids[0]
+                    product = 1
+                    for size in grid:
+                        self.assertGreater(size, 0)
+                        product *= size
+                    self.assertLessEqual(product, 65535)
+                    if name == "generic":
+                        self.assertEqual(grid, expected_grid)
+
 
 RELEASE_REQUIRED_TESTS = [
     "PostReorderDeepgemmTest.test_matrix",
     "PostReorderDeepgemmTest.test_all_valid",
     "PostReorderDeepgemmTest.test_transposed_routing_tables",
     "PostReorderDeepgemmTest.test_fp16",
+    "PostReorderDeepgemmTest.test_hidden_program_boundaries",
+    "PostReorderDeepgemmTest.test_token_program_boundaries",
+    "PostReorderDeepgemmTest.test_grid_product_boundary",
+    "PostReorderDeepgemmGridTest.test_grid_product_cap",
 ]
 
 if __name__ == "__main__":
