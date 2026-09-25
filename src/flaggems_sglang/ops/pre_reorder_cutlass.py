@@ -29,23 +29,29 @@ def _pre_reorder_kernel(
     HAS_SCALE: tl.constexpr,
     BLOCK_C: tl.constexpr,
 ):
+    # branch-free (the T88-validated keep-factor pattern): a scalar if
+    # on a loaded value faulted the launch on the proxy, so invalid
+    # slots clamp their destination to row 0 and multiply by keep=0 -
+    # the write becomes a harmless rewrite of an already-cloned row
     slot = tl.program_id(0).to(tl.int64)
     eid = tl.load(topk_ids + slot * is0)
-    if eid != num_local_experts:
-        dst = tl.load(src2dst + slot * ss0).to(tl.int64)
-        inv = 1.0 / tl.load(scales).to(tl.float32) if HAS_SCALE else 1.0
-        t = slot // topk
-        src_base = t * row_elems
-        cols = tl.arange(0, BLOCK_C).to(tl.int64)
-        for c0 in range(0, row_elems, BLOCK_C):
-            cc = c0 + cols
-            m = cc < row_elems
-            v = tl.load(src + src_base + cc, mask=m, other=0).to(tl.float32)
-            tl.store(
-                out + dst * out_s0 + cc,
-                (v * inv).to(out.dtype.element_ty),
-                mask=m,
-            )
+    keep = (eid != num_local_experts).to(tl.int64)
+    dst = tl.maximum(
+        tl.load(src2dst + slot * ss0).to(tl.int64) * keep, 0
+    )
+    inv = 1.0 / tl.load(scales).to(tl.float32) if HAS_SCALE else 1.0
+    t = slot // topk
+    src_base = t * row_elems
+    cols = tl.arange(0, BLOCK_C).to(tl.int64)
+    for c0 in range(0, row_elems, BLOCK_C):
+        cc = c0 + cols
+        m = cc < row_elems
+        v = tl.load(src + src_base + cc, mask=m, other=0).to(tl.float32)
+        tl.store(
+            out + dst * out_s0 + cc,
+            (v * inv).to(out.dtype.element_ty),
+            mask=m,
+        )
 
 
 def pre_reorder_cutlass(
