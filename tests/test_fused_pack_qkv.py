@@ -115,6 +115,29 @@ class FusedPackQkvTest(unittest.TestCase):
         args = self.make_case(1, 512, 16, 128, 700)
         self.check(*args)
 
+    def test_iluvatar_int32_domain_guard(self):
+        # E2 iluvatar vendor host dispatch: int32 addressing is only
+        # legal while every flat offset stays below 2**31. A wrong
+        # boundary compare silently turns into out-of-bounds writes on
+        # the target chip, so the boundary arithmetic itself is the
+        # regression (the full matrix above already exercises the
+        # int32 kernel path; the i64 twin only fires past 2**31
+        # elements, which does not fit CI memory)
+        iluvatar = next(
+            (mod for name, mod in MODULES if name == "iluvatar"), None
+        )
+        if iluvatar is None:
+            self.skipTest("iluvatar vendor not in FLAGOS_TEST_SOURCES")
+        # largest legal domain still dispatches int32
+        self.assertTrue(iluvatar._use_int32((1 << 31) - 1, 4, 1))
+        # q.numel() == 2**31 must widen to int64 addressing
+        self.assertFalse(iluvatar._use_int32(1 << 31, 4, 1))
+        # a strided indices view can push its own load offset past the
+        # limit even when q is far below it
+        self.assertFalse(iluvatar._use_int32(1024, 3, 1 << 31))
+        # empty gather never overflows
+        self.assertTrue(iluvatar._use_int32(1024, 0, 1))
+
     def test_all_tokens_and_empty(self):
         q, k, v, _ = self.make_case(2, 128, 8, 64, 128)
         full = torch.randperm(2 * 128, device="cuda").to(torch.int32)
@@ -135,6 +158,7 @@ RELEASE_REQUIRED_TESTS = [
     "FusedPackQkvTest.test_sliced_indices",
     "FusedPackQkvTest.test_non_contiguous_qkv",
     "FusedPackQkvTest.test_all_tokens_and_empty",
+    "FusedPackQkvTest.test_iluvatar_int32_domain_guard",
 ]
 
 if __name__ == "__main__":
