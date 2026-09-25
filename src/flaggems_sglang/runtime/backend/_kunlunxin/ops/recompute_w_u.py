@@ -100,7 +100,7 @@ def _recompute_wu_exact(
                 A + a_base + arows * (H * BT) + col,
             ).to(tl.float64)
             vrow = tl.load(
-                v + v_base + (c * BT + col) * (H * V) + vv,
+                v + v_base + col * (H * V) + vv,
                 mask=vm,
                 other=0,
             ).to(tl.float32)
