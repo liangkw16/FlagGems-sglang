@@ -150,6 +150,17 @@ class CreateChunkedPrefixCacheKvIndicesTest(unittest.TestCase):
         kv_indices = torch.full((5,), -1, dtype=torch.int32, device="cuda")
         self.check(req_to_token, pool_idx, starts, lens, cus, kv_indices)
 
+    def test_gapped_cu_layout(self):
+        # windows need not tile the buffer from zero: elements outside
+        # every window keep the base bytes (fill kernel must cover gaps)
+        req_to_token = torch.arange(256, device="cuda", dtype=torch.int32).reshape(4, 64)
+        pool_idx = torch.tensor([1, 3], dtype=torch.int32, device="cuda")
+        starts = torch.tensor([2, 5], dtype=torch.int32, device="cuda")
+        lens = torch.tensor([2, 3], dtype=torch.int32, device="cuda")
+        cus = torch.tensor([1, 5], dtype=torch.int32, device="cuda")
+        kv_indices = torch.arange(10, device="cuda", dtype=torch.int32) * 10
+        self.check(req_to_token, pool_idx, starts, lens, cus, kv_indices)
+
     def test_empty_requests(self):
         req_to_token = torch.randint(
             0, 100, (8, 64), dtype=torch.int32, device="cuda"
@@ -176,6 +187,7 @@ RELEASE_REQUIRED_TESTS = [
     "CreateChunkedPrefixCacheKvIndicesTest.test_zero_length_row",
     "CreateChunkedPrefixCacheKvIndicesTest.test_tail_sentinel_preserved",
     "CreateChunkedPrefixCacheKvIndicesTest.test_column_strided_req_to_token",
+    "CreateChunkedPrefixCacheKvIndicesTest.test_gapped_cu_layout",
     "CreateChunkedPrefixCacheKvIndicesTest.test_empty_requests",
 ]
 
