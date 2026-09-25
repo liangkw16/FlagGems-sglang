@@ -13,23 +13,23 @@ import triton.language as tl
 
 
 @triton.jit
-def _recompute_w_u_kernel(
+def _recompute_w_kernel(
     k,
-    v,
     beta,
     g_cumsum,
     A,
     w,
-    u,
     T,
     H,
     Hg,
     K,
-    V,
     BT: tl.constexpr,
     BK: tl.constexpr,
-    BV: tl.constexpr,
 ):
+    # split kernels: two tl.dot calls in one program miscompiled the
+    # second dot's masked tail on triton 3.7.1 (same codegen family as
+    # the platform's multi-trip K-loop hard fact), so w and u each get
+    # a single-dot kernel
     pid = tl.program_id(0).to(tl.int64)
     n_chunks = T // BT
     h = pid % H
@@ -38,21 +38,17 @@ def _recompute_w_u_kernel(
     b = hc // n_chunks
     hk = h // (H // Hg)
 
-    # beta/g are [B, T, H]
     bh_base = (b * T + c * BT) * H + h
     bvec = tl.load(beta + bh_base + tl.arange(0, BT) * H).to(tl.float32)
     gvec = tl.load(g_cumsum + bh_base + tl.arange(0, BT) * H).to(tl.float32)
 
     arows = tl.arange(0, BT).to(tl.int64)
-    # A is [B, T, H, BT]: row r of the chunk at [b, c*BT+r, h, :]
     a_base = ((b * T + c * BT) * H + h) * BT
     a_tile = tl.load(
         A + a_base + arows[:, None] * (H * BT) + tl.arange(0, BT)[None, :]
     )
-
-    v_base = ((b * T + c * BT) * H + h) * V
-    w_base = ((b * T + c * BT) * H + h) * K
     k_base = ((b * T + c * BT) * Hg + hk) * K
+    w_base = ((b * T + c * BT) * H + h) * K
 
     ko = tl.arange(0, BK).to(tl.int64)
     for k0 in range(0, K, BK):
@@ -70,6 +66,36 @@ def _recompute_w_u_kernel(
             acc.to(w.dtype.element_ty),
             mask=km[None, :],
         )
+
+
+@triton.jit
+def _recompute_u_kernel(
+    v,
+    beta,
+    A,
+    u,
+    T,
+    H,
+    V,
+    BT: tl.constexpr,
+    BV: tl.constexpr,
+):
+    pid = tl.program_id(0).to(tl.int64)
+    n_chunks = T // BT
+    h = pid % H
+    hc = pid // H
+    c = hc % n_chunks
+    b = hc // n_chunks
+
+    bh_base = (b * T + c * BT) * H + h
+    bvec = tl.load(beta + bh_base + tl.arange(0, BT) * H).to(tl.float32)
+
+    arows = tl.arange(0, BT).to(tl.int64)
+    a_base = ((b * T + c * BT) * H + h) * BT
+    a_tile = tl.load(
+        A + a_base + arows[:, None] * (H * BT) + tl.arange(0, BT)[None, :]
+    )
+    v_base = ((b * T + c * BT) * H + h) * V
 
     vo = tl.arange(0, BV).to(tl.int64)
     for v0 in range(0, V, BV):
