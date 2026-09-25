@@ -42,9 +42,11 @@ int32 single-variable follow-up is reserved as E3):
    tianshu +8.6%).
 
 Every offset bounded by the guard: source reads idx * row_elems +
-cc < q.numel() (indices are semantic B*S positions), output writes
-row * row_elems + cc < n * row_elems <= q.numel(), and the indices
-load reaches (n - 1) * idx_s0 elements deep (strided views included).
+cc < q.numel() (indices hold semantic B*S positions), output writes
+row * row_elems + cc < n * row_elems < 2**31 checked directly (a
+pure gather allows duplicate indices, so the output side is bounded
+on its own rather than derived from q.numel()), and the indices load
+reaches (n - 1) * idx_s0 elements deep (strided views included).
 Not compiled on iluvatar hardware locally (target-runtime-unverified
 for lowering); the NVIDIA proxy validates math/JIT only and cannot
 predict tianshu performance - the platform single shot decides.
@@ -117,16 +119,19 @@ def _pack_row_i64_kernel(
         tl.store(v_out + dst + cc, vv, mask=m)
 
 
-def _use_int32(q_numel, n_rows, idx_s0):
+def _use_int32(q_numel, n_rows, row_elems, idx_s0):
     """True when every flat offset stays below 2**31.
 
     Bounds q/k/v source reads (idx * row_elems < q_numel for semantic
-    B*S indices), the three output writes (n_rows * row_elems <=
-    q_numel because a valid gather needs n_rows <= B*S) and the
-    indices load ((n_rows - 1) * idx_s0 elements deep, strided views
-    included).
+    B*S index values), the three output writes (n_rows * row_elems
+    elements total, checked on its own: a pure gather allows duplicate
+    indices, so the output can be arbitrarily larger than the input)
+    and the indices load ((n_rows - 1) * idx_s0 elements deep,
+    strided views included).
     """
     if q_numel >= _INT32_LIMIT:
+        return False
+    if n_rows * row_elems >= _INT32_LIMIT:
         return False
     return n_rows == 0 or (n_rows - 1) * idx_s0 < _INT32_LIMIT
 
@@ -150,7 +155,7 @@ def fused_pack_qkv(q, k, v, indices):
     if n:
         block_c = min(_MAX_LANES, max(_MIN_LANES, triton.next_power_of_2(row_elems)))
         grid = (n,)
-        if _use_int32(q.numel(), n, idx_s0):
+        if _use_int32(q.numel(), n, row_elems, idx_s0):
             _pack_row_i32_kernel[grid](
                 q,
                 k,

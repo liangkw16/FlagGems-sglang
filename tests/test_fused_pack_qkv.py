@@ -70,6 +70,12 @@ class FusedPackQkvTest(unittest.TestCase):
         self.check(q, k, v, idx32.long())
         dup = torch.full((64,), 5, dtype=torch.int64, device="cuda")
         self.check(q, k, v, dup)
+        # a pure gather may also repeat indices so often that the
+        # output exceeds the input (n > B*S); the iluvatar guard must
+        # still bound the output side on its own (review r1 P1)
+        inflate = torch.zeros(2048, dtype=torch.int32, device="cuda")
+        self.assertGreater(inflate.shape[0], 2 * 256)
+        self.check(q, k, v, inflate)
 
     def test_fp32_and_bf16(self):
         for dtype in (torch.float32, torch.bfloat16):
@@ -126,17 +132,31 @@ class FusedPackQkvTest(unittest.TestCase):
         iluvatar = next(
             (mod for name, mod in MODULES if name == "iluvatar"), None
         )
-        if iluvatar is None:
-            self.skipTest("iluvatar vendor not in FLAGOS_TEST_SOURCES")
+        # hard presence pin, not a skip: the vendor file ships in the
+        # ZIP, so any release/screening of this tree must keep the
+        # iluvatar source in FLAGOS_TEST_SOURCES (verify_release
+        # rejects skipped tests; absence here is a misconfiguration)
+        self.assertIsNotNone(
+            iluvatar, "iluvatar vendor missing from FLAGOS_TEST_SOURCES"
+        )
         # largest legal domain still dispatches int32
-        self.assertTrue(iluvatar._use_int32((1 << 31) - 1, 4, 1))
+        self.assertTrue(iluvatar._use_int32((1 << 31) - 1, 4, 8, 1))
         # q.numel() == 2**31 must widen to int64 addressing
-        self.assertFalse(iluvatar._use_int32(1 << 31, 4, 1))
+        self.assertFalse(iluvatar._use_int32(1 << 31, 4, 8, 1))
         # a strided indices view can push its own load offset past the
         # limit even when q is far below it
-        self.assertFalse(iluvatar._use_int32(1024, 3, 1 << 31))
+        self.assertFalse(iluvatar._use_int32(1024, 3, 8, 1 << 31))
+        # inflated duplicate indices can push the OUTPUT past the
+        # limit while q stays far below it (review r1 P1: q=(1,1,1,
+        # 32768) with 65537 zero indices wraps dst=65536*32768=2**31
+        # to a negative offset -> OOB write under the old guard)
+        self.assertFalse(iluvatar._use_int32(32768, 65537, 32768, 1))
+        # exact output-side boundary: n * row_elems == 2**31 widens,
+        # one element below stays int32
+        self.assertFalse(iluvatar._use_int32(1024, 2, 1 << 30, 1))
+        self.assertTrue(iluvatar._use_int32(1024, 2, (1 << 30) - 1, 1))
         # empty gather never overflows
-        self.assertTrue(iluvatar._use_int32(1024, 0, 1))
+        self.assertTrue(iluvatar._use_int32(1024, 0, 8, 1))
 
     def test_all_tokens_and_empty(self):
         q, k, v, _ = self.make_case(2, 128, 8, 64, 128)

@@ -10,7 +10,7 @@ candidate_stage: e2
 team_best_stage: e1
 team_best_speedup: -
 sealed: yes
-next: E2天数_iluvatar vendor(per-row 1D+int32域+单alloc,评审r1)armed-unfired,平台单发裁决;预注册门:天数≥4.0保留/≥4.6进场带/均值>1.72675换TB/数值失败或<2.95回滚删vendor文件回e1字节;同字节重掷≤2;其余六芯vendor隔离仅tianshu选中;E3-generic-i32单变量归因留后续
+next: E2天数_iluvatar vendor(per-row 1D+int32域+单alloc)评审r2两P全修(P1守卫补输出侧n*row_elems<2^31+膨胀重复索引回归,P2删skipTest改硬断言固化iluvatar源入release配置)后armed-unfired,平台单发裁决;预注册门不变:天数≥4.0保留/≥4.6进场带/均值>1.72675换TB/数值失败或<2.95回滚删vendor文件回e1字节;同字节重掷≤2;其余六芯vendor隔离仅tianshu选中;release必须--proxy-vendor含iluvatar;E3-generic-i32单变量归因留后续
 updated: 2026-09-26
 ```
 
@@ -109,3 +109,27 @@ i64 孪生 kernel 在 CI 域（<2^31 元素）不可达、未被执行，仅靠�
 **归因注记**：三变量打包（形态+i32+单 alloc）归因模糊，E3-generic-i32 单变量留作
 后续归因补充而非本轮同题并发。单芯兑现不翻榜（均值→约 2.09 < 榜首 2.3555），
 属大幅抢分 + 打开天数轴。
+
+### E2 评审 r2 修复（2026-09-26）
+
+**P1（正确性，必修）**：`_use_int32` 漏检输出侧寻址域。原 guard 只查
+`q_numel<2^31` 与 `(n-1)*idx_s0<2^31`，依赖「n≤B*S ⇒ n*row_elems≤q.numel()」——
+该不变量题面并未强加：纯 gather 允许重复/膨胀 indices（本题矩阵自测 duplicates），
+评审实跑复现 q=(1,1,1,32768)、indices=65537 个零时 guard 放行 i32，kernel 内
+`dst=65536*32768=2^31` int32 回绕为 -2^31 → 负偏移 OOB 写；generic int64 同输入
+正确，属 vendor 相对 generic 的正确性回归（且账本预告 E3 将把 i32 引入 generic，
+缺陷会扩散）。修复：`_use_int32` 增参 `row_elems` 并直接检查
+`n_rows*row_elems<2^31`（输出侧独立设界，不再从 q.numel() 推导），docstring 的
+错误论证同步改正；wrapper 调用点更新。测试：守卫测试补评审复现值
+`(32768,65537,32768,1)→False` 与精确边界 `2*2^30→False / 2*(2^30-1)→True`
+（纯 host 断言，OOB 复现不可安全执行）；`test_indices_int64_and_duplicates`
+补 GPU 膨胀回归（n=2048>B*S=512 全零索引，域内走 i32 真跑）。
+**P2（发布配置陷阱，必修）**：守卫测试原 `skipTest("iluvatar not in
+FLAGOS_TEST_SOURCES")` 违反仓库零 skip 规范——verify_release.py require_success
+拒绝任何 skipped（e1 回执 8 测试零 skip），评审实跑复现默认 nvidia 域
+execution_sources=[generic] → skipped=1 → ValueError『verification contains
+skipped』，即任何不带 iluvatar 源的该题 release/screening 必然以误导性错误失败。
+修复：删 skip 分支改 `assertIsNotNone` 硬断言——vendor 文件进 ZIP 则其源必须进
+验证配置，缺席即响亮失败（信息指明 FLAGOS_TEST_SOURCES 缺 iluvatar），不放宽
+全局 skip 门禁；后续本题 release/screening 命令必须以 --proxy-vendor 含
+iluvatar（连同既有 kunlunxin）。
