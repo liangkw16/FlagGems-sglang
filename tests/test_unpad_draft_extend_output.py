@@ -156,7 +156,7 @@ class UnpadTest(unittest.TestCase):
         # must write nothing), 35/34 -> full + tail, 1 -> single
         # all-tail tile, 0 -> loop skip. span=384 (heads=4, dim=96)
         # then forces amd onto both branches in one segment (3 -> 1152
-        # = 1 full + 128 tail; 21 -> 7 full + 576; 2 -> 768 tail-only)
+        # = 1 full + 128 tail; 21 -> 7 full + 896; 2 -> 768 tail-only)
         # and metax to 22 -> 8448 = 1 full + 256 tail. The odd-span
         # case (span=6, 200 -> 1200 = 1 full + 176 tail on amd) keeps
         # the element path honest through the same split.
