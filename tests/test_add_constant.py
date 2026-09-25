@@ -62,12 +62,22 @@ class AddConstantTest(unittest.TestCase):
         low = torch.full((64,), -(2**31), dtype=torch.int32, device="cuda")
         self.check(low, -1)
 
+    def test_two_segment_block_boundaries(self):
+        # regression for the two-segment no-mask hot path (_ascend,
+        # BLOCK=16384): numel at B-1/B/B+1 and 2B-1/2B/2B+1 straddles
+        # the scalar branch, and exact multiples (32768, 65536) run a
+        # grid with no tail program at all - pure unmasked tiles.
+        for numel in (16383, 16384, 16385, 32767, 32768, 32769, 65536):
+            with self.subTest(numel=numel):
+                self.check(self.make(numel), 7)
+
 
 RELEASE_REQUIRED_TESTS = [
     "AddConstantTest.test_tiny_and_tail_boundaries",
     "AddConstantTest.test_large_crossing_persistent_cap",
     "AddConstantTest.test_constant_values",
     "AddConstantTest.test_int32_wraparound_matches_reference",
+    "AddConstantTest.test_two_segment_block_boundaries",
 ]
 
 if __name__ == "__main__":
