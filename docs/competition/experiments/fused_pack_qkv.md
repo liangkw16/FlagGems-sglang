@@ -10,7 +10,7 @@ candidate_stage: e2
 team_best_stage: e1
 team_best_speedup: -
 sealed: yes
-next: E2天数_iluvatar vendor(per-row 1D+int32域+单alloc)评审r2两P全修(P1守卫补输出侧n*row_elems<2^31+膨胀重复索引回归,P2删skipTest改硬断言固化iluvatar源入release配置)后armed-unfired,平台单发裁决;预注册门不变:天数≥4.0保留/≥4.6进场带/均值>1.72675换TB/数值失败或<2.95回滚删vendor文件回e1字节;同字节重掷≤2;其余六芯vendor隔离仅tianshu选中;release必须--proxy-vendor含iluvatar;E3-generic-i32单变量归因留后续
+next: E2上膛完成待发射(armed-unfired,回执绑定fde2d02c,ZIP e2-fde2d02,五元组见下方E2上膛节;9测试/64case全过零skip,--proxy-vendor iluvatar+kunlunxin);门=数值失败或天数<2.95回滚删vendor文件回e1字节,天数≥4.0保留/≥4.6进场带/均值>1.72675换TB;同字节重掷≤2;其余六芯vendor隔离仅tianshu选中;E3-generic-i32单变量归因留后续
 updated: 2026-09-26
 ```
 
@@ -133,3 +133,55 @@ skipped』，即任何不带 iluvatar 源的该题 release/screening 必然以�
 验证配置，缺席即响亮失败（信息指明 FLAGOS_TEST_SOURCES 缺 iluvatar），不放宽
 全局 skip 门禁；后续本题 release/screening 命令必须以 --proxy-vendor 含
 iluvatar（连同既有 kunlunxin）。
+
+### E2 上膛（2026-09-26 02:37，armed-unfired）
+
+- **远端 release 矩阵（绑定 HEAD）**：`verify_release.py prepare fused_pack_qkv
+  --source-commit HEAD --verification-commit HEAD --proxy-vendor iluvatar
+  --proxy-vendor kunlunxin`（该题现有全部 vendor；mode=release，schema v2），
+  上传 `/tmp/wf-e2-iluvatar-perrow-1d-release` 后远端
+  `/home/kevin/notebook/.venv/bin/python` 执行 `run`，**RC=0**：
+  **9 测试 / 64 case 全过**（9/9 RELEASE_REQUIRED，含 r2 加固的
+  `test_iluvatar_int32_domain_guard` 与 `test_indices_int64_and_duplicates`
+  膨胀重复索引 GPU 回归，0 fail/error/skip/xfail/unexpected-success），
+  **每源 16 次入口调用 / 15 次 kernel launch**（generic/`_iluvatar`/
+  `_kunlunxin` 三源各自实际执行），环境 NVIDIA RTX 5070 Ti /
+  torch 2.13.0+cu130 / triton 3.7.1 / cuda 13.0 / python 3.12.13。
+  回执 `artifacts/competition/day5prep-20260921/e2-iluvatar-perrow-1d-wf/verification.json`
+  （sha256 `bb0dfc1a4bfabd630a361e6a242f3eabe2f0b1c1975bad7a4766528b583d1d1b`）
+  / `verification.log`（sha256
+  `9cc40ce0fe3b21edb46fd5d0cd8005a6c93eb2703ba6318d81a8b88b8612f97e`，
+  `Ran 9 tests in 1.482s OK`，与回执内 log_sha256 一致）。
+  `target_unverified_sources` = iluvatar + kunlunxin（目标芯未验证，维持
+  E2 节披露口径）；`unexecuted_sources` = 空。源码字节谱系 =
+  ef74f308（r1 候选）→ fde2d02c（r2 修复）= HEAD，回执直接绑定 r2 字节。
+- **五元组（上膛身份）**：
+  - source_commit：`fde2d02c51c9879370b6024ba2a8cae7941bba34`
+  - verification_commit：`fde2d02c51c9879370b6024ba2a8cae7941bba34`（=本回执，
+    发射 preflight 要求 commit 字段等于它）
+  - ledger_commit：本 commit（E2 上膛记账）
+  - ZIP：`artifacts/competition/fused_pack_qkv/e2-fde2d02/fused_pack_qkv.zip`
+    （13180 字节，zip_sha256 =
+    `15e4006625bc0069d384a88048ba1fc609468a83a7878b1b83694fc09ea1c585` =
+    canonical_zip_sha256；≠ e1 `00cac1db…`（5abd626）/ `711be763…`
+    （d3e86e9）≠ s0 `4edde6d3…`（daf7792）/ `81767f23…`（90d732f）；
+    vs e1-5abd626（昆仑 vendor 现行字节）generic 与 kunlunxin 成员逐字节
+    冻结（`db53db9a`/`bf011714` 不变），仅新增 `_iluvatar` 成员
+    `1bc958df`——单芯 vendor 追加纪律成立，平台 zip_sha256 去重键成立）
+  - stage：`e2`（CURRENT candidate_stage 已预写 e2 且无 e2 ZIP 存在，
+    上膛即落 e2，序列 s0→e1→e2 连续不跳号；账本已预留 E3-generic-i32
+    后续归因候选名号不受挤占）
+  - ZIP 成员名单（与 `zipfile.namelist()` 实际核对一致，无夹带；
+    `unzip -t` 无错；UTF-8 `.py`，无测试/缓存/目录前缀/macOS 垃圾；
+    成员字节 = git blob @fde2d02c = 回执 files 哈希 = 远端实际执行字节）：
+    | 成员 | 字节 | sha256 |
+    |---|---|---|
+    | `fused_pack_qkv.py` | 2703 | `db53db9a196e3fb08206725bf945c34aac22dec186f119fa0d0bab913c286e52` |
+    | `fused_pack_qkv_iluvatar.py` | 6746 | `1bc958dfa1676da41becd7cee725965ec2eed8a90bbcf910da9231c9f16a8cc4` |
+    | `fused_pack_qkv_kunlunxin.py` | 3341 | `bf01171404b813b9792938716b24a214f3a130f14c618951cd00ca4cae51812c` |
+- **状态**：armed-unfired——发射前预注册门不变（E2 节原文：数值失败或
+  天数 <2.95（回退）→ 回滚删 `_iluvatar` vendor 文件、树回 e1字节；
+  天数 ≥4.0 保留 / ≥4.6 进场带（13 队群众带下沿）/ 均值 >1.72675 换 TB；
+  同字节重掷 ≤2 次；其余六芯 vendor 隔离（仅 tianshu 选中 `_iluvatar`）
+  读数应不变）。发射命令必须带 `--proxy-vendor iluvatar
+  --proxy-vendor kunlunxin`（P2 修复后该源缺席会响亮失败）。

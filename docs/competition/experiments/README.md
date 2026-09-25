@@ -1,5 +1,21 @@
 # 第二批候选与提交队列
 
+## 2026-09-26 T96 E2 上膛（armed-unfired）
+
+- [T96 fused_pack_qkv E2](fused_pack_qkv.md)：天数 `_iluvatar` vendor
+  （per-row 1D 上游形态 + int32 寻址域守卫（r2 补输出侧
+  `n*row_elems<2^31`）+ 单 alloc 三 view，评审 r2 两 P 全修后）完成
+  上膛：远端 release 矩阵 **9 测试 / 64 case 全过**（9/9
+  RELEASE_REQUIRED，`--proxy-vendor iluvatar+kunlunxin`，三源各
+  16 调用 / 15 kernel launch，verification_commit `fde2d02c`），
+  不可变 ZIP `e2-fde2d02`（zip_sha256 `15e40066…`，≠ e1 `00cac1db…`/
+  `711be763…`，vs e1-5abd626 generic+kunlunxin 成员逐字节冻结、
+  仅新增 `_iluvatar` 成员，逐成员与 git blob 核对无夹带）。
+  armed-unfired 待实时 preflight 发射；预注册门：数值失败或天数
+  <2.95 回滚删 vendor 文件回 e1 字节，天数 ≥4.0 保留 / ≥4.6 进场带，
+  均值 >1.72675 换 TB，同字节重掷 ≤2，其余六芯 vendor 隔离仅
+  tianshu 选中；发射命令必须 `--proxy-vendor` 含 iluvatar。
+
 ## 2026-09-26 T93 E3 上膛（armed-unfired）
 
 - [T93 add_constant E3](add_constant.md)：华为两段式无mask热路径
