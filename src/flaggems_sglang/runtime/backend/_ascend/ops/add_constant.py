@@ -42,6 +42,21 @@ Family evidence for the two-segment shape this file adopts:
   geometry, no fp32 anywhere, and a single scalar branch, so none of
   that failure surface is inherited; the preregistered numeric gate
   rolls _ascend back to the 5cfdb654 bytes on any failure.
+- The closest same-concept precedent is NEGATIVE and weighs equally:
+  T92 E23 (ledger unpad_draft_extend_output.md, "E23 平台终态
+  (20457)") ran whole-block unmasked load/store plus a masked tail on
+  the same huawei Ascend, passed 8/8 correct, yet huawei read 316.2016
+  vs e22's 444.1506 (-28.8%, net -92.0072 across eight chips), hit its
+  preregistered avg gate and was rolled back (commit 47dc1382).
+  Differences that plausibly matter here: E23 carried int64 addressing
+  on a (bs,tiles) 2D grid-stride loop with a per-base scalar guard,
+  while this file uses int32 addressing, a 1D one-tile-per-program grid
+  and a single kernel-level pid branch. The family evidence does not
+  decompose which factor drove E23's regression, so the huawei sign of
+  this candidate is genuinely open; the preregistered gates bound the
+  downside (see ledger add_constant.md e3): numeric failure, huawei
+  <0.5, or avg <= 0.841 (e1 team best) rolls _ascend back to the
+  5cfdb654 bytes; huawei >=0.9 swaps the team best.
 
 Structure: grid = numel // BLOCK full-tile programs plus exactly one
 tail program when numel % BLOCK != 0. A kernel-internal scalar branch

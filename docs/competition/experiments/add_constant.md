@@ -6,13 +6,52 @@ operator: add_constant
 batch: 7
 validity: valid(7/7,s0)
 platform: e2(21266)valid:grid48 vs 512无差(华为0.247 vs 0.282,昆仑0.656 vs 0.685,均噪声内);TB保e1; ascend参数轴关闭-榜首0.99是结构优势非grid数
-candidate_stage: s0
+candidate_stage: e3
 team_best_stage: e1
 team_best_speedup: 0.841(avg)
-sealed: yes
-next: 华为0.28->0.99需新结构证据(persistent参数空间已证伪);额度转新题
-updated: 2026-09-25
+sealed: no
+next: e3华为两段式无mask热路径已预注册(source 72364b4c)待screening→评审→preflight:标量if分支+BLOCK16384/w16+尾块masked无other;门=数值失败或华为<0.5或均分<=0.841回滚_ascend至5cfdb654字节(SHA-256 7b3ee54b),华为>=0.9换TB;同概念负证据T92 E23华为-28.8%已披露(下方E3节)
+updated: 2026-09-26
 ```
+
+## 2026-09-26 E3 预注册：华为两段式无mask热路径（_ascend vendor重写）
+
+- 缺口（分诊员实跑核验 climb-loop.json s2t1op093）：我方 huawei 0.2472 vs
+  wangteam 0.9878 / OpeGoodn 0.9860；第三名 GuanghuLab 0.388 断崖 = 结构分化。
+  我方 avg 0.83271429（#6）vs 榜首 RSI 0.91932143——单芯全额兑现
+  +0.739/7 = +0.106 即 0.9384 反超。
+- 病理双证：旧 `_ascend` 字节（`5cfdb654`）每 tile `m = offs < numel`
+  int32 向量比较（chip-rulesets.md:36 Vector CMP 不支持 int32 降标量）+
+  `tl.load other=0` 预填（chip-rulesets.md:39 串行化 MTE2）。已排除轴：
+  persistent cap 48 vs 512 无差（e1/e2，上current块）；chip-rulesets.md:43-45
+  四假说全负（int32 化/launch 数/并行度族）不含热路径去 mask。
+- 结构（source commit `72364b4c`，评审 r2 docstring 补披露后为本轮 commit）：
+  grid = numel//16384 整块 program + 恰 1 个尾块 program；kernel 内标量分支
+  `pid < n_full`（两路均 Triton 计算，非 PyTorch fallback，无模块级可变容器）：
+  热路径 load/store 双无 mask 无 other，尾块 masked load 不带 other + 同 mask
+  store（T92 e22 与 FlagGems pointwise_dynamic 形态，上游 masked load 无
+  other 已 `gh api` 核对 L608）。BLOCK=16384/num_warps=16 预注册（T92 e22
+  华为现行已证字节档；chip-rulesets.md:40 阶梯 ≥4096→16）。int32 寻址。
+- 测试：新增 `AddConstantTest.test_two_segment_block_boundaries`
+  （16383/16384/16385/32767/32768/32769/65536：B±1、2B±1 与整倍数纯热路径）
+  并列入 RELEASE_REQUIRED_TESTS；既有矩阵 1023/1025/4097/2^20+1/3*2^20+7
+  覆盖双臂与尾块。本地 `python3 -m py_compile` 两文件通过（工作树与提交
+  字节均验）；本机无 torch/CUDA，代理回归与华为首验留待验证轮（华为
+  target-runtime-unverified）。
+- 负证据披露（评审 r2 P2-1）：同概念同芯先例 **T92 E23**（本目录
+  unpad_draft_extend_output.md「E23 平台终态（20457）」）：整块 load+store
+  双去掩码 + 尾块保留 mask，平台 8/8 正确，但华为 316.2016 vs e22 444.1506
+  （−28.8%，八芯净 −92.0072，华为独自 −127.949），命中预注册均分门，自
+  不可变 e22 ZIP 回滚（source 回滚 commit `47dc1382`）。与本候选差异：E23
+  int64 地址 + (bs,tiles) 2D grid-stride + 循环内逐 base 标量守卫；本候选
+  int32 + 1D 每 program 一 tile + kernel 级 pid 分支。家族证据无法分解 E23
+  回归由哪个因子驱动，故本候选华为方向真开放，以下性能门约束下行风险。
+- 预注册门（评审 r2 P2-2，screening/preflight 前锁定）：
+  1) 数值失败 → 回滚 `_ascend` 至 `5cfdb654` 字节（member SHA-256
+     `7b3ee54ba624ad0d7bac434ea3b2a3d3fa68986a4ac17d903c01aadaa0997040`）；
+  2) 华为 <0.5 → 回滚同上；华为 ≥0.9 → 换 TB；0.5–0.9 保留；
+  3) 均分 ≤0.841（e1 TB）→ 回滚 `_ascend` 字节；同字节他芯读数按
+     ±10-35% 水位波动同窗判读（chip-rulesets.md:58），不得单点判涨跌。
 
 ## 契约
 
