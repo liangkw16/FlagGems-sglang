@@ -59,8 +59,13 @@ def _recompute_w_kernel(
             mask=km[None, :],
             other=0,
         ).to(tl.float32)
-        scaled = (kvec * (bvec * tl.exp(gvec))[:, None]).to(tl.bfloat16)
-        acc = tl.dot(a_tile, scaled, out_dtype=tl.float32)
+        scaled = kvec * (bvec * tl.exp(gvec))[:, None]
+        acc = tl.dot(
+            a_tile.to(tl.float32),
+            scaled,
+            input_precision="ieee",
+            out_dtype=tl.float32,
+        )
         tl.store(
             w + w_base + arows[:, None] * (H * K) + kk[None, :],
             acc.to(w.dtype.element_ty),
@@ -106,8 +111,13 @@ def _recompute_u_kernel(
             mask=vm[None, :],
             other=0,
         ).to(tl.float32)
-        scaled = (vvec * bvec[:, None]).to(tl.bfloat16)
-        acc = tl.dot(a_tile, scaled, out_dtype=tl.float32)
+        scaled = vvec * bvec[:, None]
+        acc = tl.dot(
+            a_tile.to(tl.float32),
+            scaled,
+            input_precision="ieee",
+            out_dtype=tl.float32,
+        )
         tl.store(
             u + v_base + arows[:, None] * (H * V) + vv[None, :],
             acc.to(u.dtype.element_ty),

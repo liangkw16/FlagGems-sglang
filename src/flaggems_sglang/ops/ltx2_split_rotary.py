@@ -11,6 +11,8 @@ import torch
 import triton
 import triton.language as tl
 
+_MAX_GRID = 65535
+
 
 @triton.jit
 def _ltx2_split_rotary_kernel(
@@ -18,6 +20,7 @@ def _ltx2_split_rotary_kernel(
     cos,
     sin,
     out,
+    total,
     T,
     inner,
     half,
@@ -36,38 +39,40 @@ def _ltx2_split_rotary_kernel(
     HEAD_DIM: tl.constexpr,
     BLOCK_H: tl.constexpr,
 ):
-    pid = tl.program_id(0).to(tl.int64)
     n_heads = inner // HEAD_DIM
-    bt = pid // n_heads
-    h = pid - bt * n_heads
-    t = bt % T
-    b = bt // T
-    row = b * x_s0 + t * x_s1
-    crow = b * c_s0 + h * c_s1 + t * c_s2
-    d = tl.arange(0, BLOCK_H).to(tl.int64)
-    m = d < half
-    x1 = tl.load(x + row + h * HEAD_DIM + d, mask=m, other=0).to(tl.float32)
-    x2 = tl.load(
-        x + row + h * HEAD_DIM + half + d, mask=m, other=0
-    ).to(tl.float32)
-    c = tl.load(cos + crow + d * c_s3, mask=m, other=0).to(tl.float32)
-    s = tl.load(
-        sin + b * s_s0 + h * s_s1 + t * s_s2 + d * s_s3,
-        mask=m,
-        other=0,
-    ).to(tl.float32)
-    o1 = (x1 * c).to(out.dtype.element_ty).to(tl.float32) - x2 * s
-    o2 = (x2 * c).to(out.dtype.element_ty).to(tl.float32) + x1 * s
-    tl.store(
-        out + row + h * HEAD_DIM + d,
-        o1.to(out.dtype.element_ty),
-        mask=m,
-    )
-    tl.store(
-        out + row + h * HEAD_DIM + half + d,
-        o2.to(out.dtype.element_ty),
-        mask=m,
-    )
+    for pid in range(
+        tl.program_id(0).to(tl.int64), total, tl.num_programs(0)
+    ):
+        bt = pid // n_heads
+        h = pid - bt * n_heads
+        t = bt % T
+        b = bt // T
+        row = b * x_s0 + t * x_s1
+        crow = b * c_s0 + h * c_s1 + t * c_s2
+        srow = b * s_s0 + h * s_s1 + t * s_s2
+        d = tl.arange(0, BLOCK_H).to(tl.int64)
+        m = d < half
+        x1 = tl.load(
+            x + row + h * HEAD_DIM + d, mask=m, other=0
+        ).to(tl.float32)
+        x2 = tl.load(
+            x + row + h * HEAD_DIM + half + d, mask=m, other=0
+        ).to(tl.float32)
+        c = tl.load(cos + crow + d * c_s3, mask=m, other=0).to(tl.float32)
+        s = tl.load(sin + srow + d * s_s3, mask=m, other=0).to(tl.float32)
+        o1 = (x1 * c).to(out.dtype.element_ty).to(tl.float32) - x2 * s
+        o2 = (x2 * c).to(out.dtype.element_ty).to(tl.float32) + x1 * s
+        tl.store(
+            out + row + h * HEAD_DIM + d,
+            o1.to(out.dtype.element_ty),
+            mask=m,
+        )
+        tl.store(
+            out + row + h * HEAD_DIM + half + d,
+            o2.to(out.dtype.element_ty),
+            mask=m,
+        )
+
 
 
 def ltx2_split_rotary(x, cos, sin):
@@ -81,13 +86,14 @@ def ltx2_split_rotary(x, cos, sin):
     # the kernel reads x with flat inner offsets, so normalize it too
     x = x if x.is_contiguous() else x.contiguous()
     out = torch.empty(x.shape, dtype=x.dtype, device=x.device)
-    if out.numel():
-        grid = (batch * seq_len * num_heads,)
-        _ltx2_split_rotary_kernel[grid](
+    total = batch * seq_len * num_heads
+    if total:
+        _ltx2_split_rotary_kernel[(min(total, _MAX_GRID),)](
             x,
             cos,
             sin,
             out,
+            total,
             seq_len,
             inner,
             half,
