@@ -64,12 +64,16 @@ def _concat_rows_kernel(
             a_base = i0 * a_s0 + i1 * a_s1
             b_base = i0 * b_s0 + i1 * b_s1
             o_base = row * (a_last + b_last)
-            ma = cols < a_last
-            value = tl.load(a + a_base + cols * a_s2, mask=ma, other=0)
-            tl.store(out + o_base + cols, value, mask=ma)
-            mb = cols < b_last
-            value = tl.load(b + b_base + cols * b_s2, mask=mb, other=0)
-            tl.store(out + o_base + a_last + cols, value, mask=mb)
+            for ca in range(0, a_last, BLOCK):
+                cc = ca + cols
+                ma = cc < a_last
+                value = tl.load(a + a_base + cc * a_s2, mask=ma, other=0)
+                tl.store(out + o_base + cc, value, mask=ma)
+            for cb in range(0, b_last, BLOCK):
+                cc = cb + cols
+                mb = cc < b_last
+                value = tl.load(b + b_base + cc * b_s2, mask=mb, other=0)
+                tl.store(out + o_base + a_last + cc, value, mask=mb)
 
 
 @triton.jit
