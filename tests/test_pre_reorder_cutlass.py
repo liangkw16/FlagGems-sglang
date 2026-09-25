@@ -67,9 +67,12 @@ class PreReorderCutlassTest(unittest.TestCase):
         # base VALUES (the kernel writes through a contiguous clone)
         x = torch.tensor([[1.0, 2.0, 3.0]], dtype=torch.bfloat16, device="cuda")
         gate_t = torch.full((3, 2), 99.0, dtype=torch.bfloat16, device="cuda").t()
+        self.assertEqual(gate_t.shape, (2, 3))
         self.assertFalse(gate_t.is_contiguous())
-        ids = torch.tensor([[0, 1]], dtype=torch.int32, device="cuda")
-        s2d = torch.tensor([[2, 1]], dtype=torch.int32, device="cuda")
+        # first slot routes to row 1; second is off-rank and must not
+        # touch row 0's base bytes
+        ids = torch.tensor([[0, 5]], dtype=torch.int32, device="cuda")
+        s2d = torch.tensor([[1, 0]], dtype=torch.int32, device="cuda")
         self.check(x, gate_t, s2d, ids, None, 5, 2, 1, 3)
 
     def test_empty_tokens(self):
