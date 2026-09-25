@@ -5,12 +5,12 @@ task: 93
 operator: add_constant
 batch: 7
 validity: valid(7/7,s0)
-platform: e1(21164)valid 7/7 双vendor兑现:昆仑0.442->0.685(+55%,16384flat)/华为0.131->0.282(+115%,persistent1024w4);其余芯水位持平
+platform: e2(21266)valid:grid48 vs 512无差(华为0.247 vs 0.282,昆仑0.656 vs 0.685,均噪声内);TB保e1; ascend参数轴关闭-榜首0.99是结构优势非grid数
 candidate_stage: s0
 team_best_stage: e1
 team_best_speedup: 0.841(avg)
 sealed: yes
-next: 华为0.28->0.98仍3.5x差(persistent参数可再调:grid/tile);昆仑0.685->0.91;增量有限按quota择机
+next: 华为0.28->0.99需新结构证据(persistent参数空间已证伪);额度转新题
 updated: 2026-09-25
 ```
 

@@ -5,12 +5,12 @@ task: 98
 operator: get_mla_kv_buffer
 batch: 7
 validity: valid(7/7,e1)
-platform: e1(21148)valid 7/7 昆仑0.350(#2,旧榜0.131)/华为0.722(#2)/天数2.37/沐曦1.37/海光1.85;e2(21156)精确宽度证伪(昆仑0.124<0.350,1024地板必要),TB保e1
+platform: e3(21269)valid:ascend persistent vendor+7%(华为0.722->0.770)但昆仑vendor字节错误带精确宽(0.130)已回滚1024地板;TB保e1(avg1.669);教训:打包前未核对vendor字节
 candidate_stage: s0
 team_best_stage: e1(在途)
 team_best_speedup: -
 sealed: yes
-next: 昆仑0.350->OpeGoodn 0.976与华为0.722->1.19是rank增量;e3轴=单向量单store流(T94 e4同构)或RPP
+next: 昆仑0.35->0.98与华为0.77->1.19均需结构证据;额度转新题
 updated: 2026-09-25
 ```
 

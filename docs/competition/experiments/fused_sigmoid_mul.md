@@ -5,12 +5,12 @@ task: 97
 operator: fused_sigmoid_mul
 batch: 7
 validity: valid(7/7,s0)
-platform: e1(21167)valid 7/7 avg2.905新TB:华为1.022->1.340(+31%,persistent兑现)/天数3.42->5.25(水位)/昆仑1.166->0.821(16384配方在sigmoid计算型反噬,与PR#69计算受限论互证)
+platform: e2(21267)valid avg3.052(水位推高天数5.26/沐曦3.16):grid48中性(华为1.311≈1.340);昆仑vendor字节错误带16384(0.821)已回滚2048;TB=e2(avg口径)但昆仑rank最优在s0的1.166
 candidate_stage: s0
-team_best_stage: e1
+team_best_stage: e2
 team_best_speedup: -
 sealed: yes
-next: 昆仑回1.166需撤vendor或换2048(已证16384反噬);华为1.34->1.49(EA)再调persistent参数;天数5.25>榜首5.30逼近
+next: 打包规则修正:每发前逐芯核对vendor字节=测量最优;华为2.01/昆仑2.01均需结构证据;额度转新题
 updated: 2026-09-25
 ```
 
