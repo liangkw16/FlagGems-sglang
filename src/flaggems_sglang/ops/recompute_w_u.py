@@ -51,6 +51,7 @@ def _recompute_w_u_kernel(
     )
 
     v_base = ((b * T + c * BT) * H + h) * V
+    w_base = ((b * T + c * BT) * H + h) * K
     k_base = ((b * T + c * BT) * Hg + hk) * K
 
     ko = tl.arange(0, BK).to(tl.int64)
@@ -65,7 +66,7 @@ def _recompute_w_u_kernel(
         scaled = (kvec * (bvec * tl.exp(gvec))[:, None]).to(tl.bfloat16)
         acc = tl.dot(a_tile, scaled, out_dtype=tl.float32)
         tl.store(
-            w + v_base + arows[:, None] * (H * K) + kk[None, :],
+            w + w_base + arows[:, None] * (H * K) + kk[None, :],
             acc.to(w.dtype.element_ty),
             mask=km[None, :],
         )
