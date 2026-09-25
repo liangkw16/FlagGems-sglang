@@ -1,5 +1,17 @@
 # 第二批候选与提交队列
 
+## 2026-09-26 T92 e27 上膛（armed-unfired）
+
+- [T92 unpad_draft_extend_output e27](unpad_draft_extend_output.md)：
+  card_b/沐曦 load 侧去掩码（store-only mask）候选完成上膛：远端
+  release 矩阵 **7 测试 / 143 case 全过**（含 e27 新增
+  `test_load_unmask_full_tiles_masked_tail`，8 源 ×16 launch，
+  verification_commit `9231011d`），不可变 ZIP `e27-9231011`
+  （zip_sha256 `cfc6789a…`，vs e26 仅 `_amd`/`_metax` 两成员变化，
+  逐成员与 git blob 核对无夹带）。armed-unfired 待下窗口实时
+  preflight 发射；门=card_b ≥320 且 muxi ≥270 才保留，均值
+  >346.347075 换 TB，任一芯回退或失败回滚两文件至 e26 字节。
+
 ## 2026-09-26 T77 e17 上膛（armed-unfired）
 
 - [T77 compute_position e17](compute_position.md)：单 alloc 融合候选

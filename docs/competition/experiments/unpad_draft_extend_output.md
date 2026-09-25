@@ -5,14 +5,72 @@ task: 92
 operator: unpad_draft_extend_output
 batch: 6
 validity: valid(8/8,e26,346.347075x TB)
-platform: e26(20787)valid 8/8 avg 346.347075新TB:ascend num_warps=16钉(chip-rulesets阶梯)华为438.2(带内中性,阶梯规则在此store形态不响应);沐曦253.4/A538.8/hg667.0水位续升
-candidate_stage: e27
+platform: e26(20787)valid 8/8 avg 346.347075新TB:ascend num_warps=16钉(chip-rulesets阶梯)华为438.2(带内中性,阶梯规则在此store形态不响应);沐曦253.4/A538.8/hg667.0水位续升;e27已上膛armed-unfired(release矩阵7测试/143case全过+ZIP e27-9231011 zip_sha256=cfc6789a,verification_commit=9231011d),待下窗口发射
+candidate_stage: e27-armed-unfired
 team_best_stage: e26
 team_best_speedup: 346.347075
 sealed: yes
-next: e27(card_b/muxi load侧去掩码,store-only mask)已实现待评审+代理验证;提交窗口已关(submit_end 2026-09-24),只能入库待下一窗口;预注册门card_b≥320且muxi≥270
-updated: 2026-09-25
+next: e27 armed待下窗口发射:实时preflight一次性提交;门=card_b≥320且muxi≥270才保留,均值>346.347075换TB,任一芯回退或失败即回滚_amd/_metax两文件字节至e26 ZIP成员
+updated: 2026-09-26
 ```
+
+## 2026-09-26 E27 上膛：release 矩阵 + 不可变 ZIP（armed-unfired）
+
+- release v2（source=verification=
+  `9231011d737400b8fc781ee60cc45507eb608fc1`=本轮 HEAD；8 源文件与
+  e27 实现 commit `fdc1a592` 逐字节相同，`git diff --stat
+  fdc1a592..HEAD -- <8 源路径>` 为空，本会话已核；tests 相对实现
+  commit 仅 review r2 `0b9e07ff` 的 1 行回归注释修正——tile-split
+  算术，无用例变化）：**7 测试 / 143 case 全过，0
+  失败/错误/skip/xfail**（RELEASE_REQUIRED_TESTS 7/7，含 e27 新增
+  `test_load_unmask_full_tiles_masked_tail`）；8 源 kernel launch =
+  各 16（non-warmup）；232 组非空张量 shape/dtype；exit 0。环境
+  NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 / triton 3.7.1 / cuda
+  13.0（nvidia-proxy，`--proxy-vendor` 传入该题全部 7 vendor；
+  amd/metax 仍 **target-runtime-unverified**，平台逐芯补齐）。回执
+  `artifacts/competition/day5prep-20260921/unpad_draft_extend_output:e27-load-unmask-wf/verification.json`
+  SHA-256
+  `b6b8ab8a0f8aacd4c1abc34a6733895ec65c90886b11c59aa25d5196fa535580`；
+  日志 SHA-256
+  `5168461a6068519955484cfb90c9dbb77fbb398373b3a6e228369a6f2cb95efb`
+  （与回执内 log_sha256 一致）。
+- 五元组（commit / ZIP / ZIP SHA / test / receipt，verification_commit
+  同 commit `9231011d`）：ZIP
+  `artifacts/competition/unpad_draft_extend_output/e27-9231011/unpad_draft_extend_output.zip`
+  SHA-256
+  `cfc6789a7393cec47b402327b21bad0ef8d076ad67311aeb6e4aebf5b1e9e51b`
+  （26950 B，actual=canonical；`unzip -t`、UTF-8、`.py`-only、
+  `<10MB`、`--dry-run` verified-existing 同哈希复核全过）；test
+  SHA-256
+  `62829c2c84c8d73cd09d5c97e01d08bc8a6d0a20a8845feef2da81737b078c90`
+  （`tests/test_unpad_draft_extend_output.py`）。
+- ZIP 名单（8 成员，已与 `zipfile` 实际成员逐一核对一致，且逐成员
+  字节与 `git show 9231011d:<path>` 相同——无打包器夹带；vs e26 ZIP
+  仅 2 成员变化，单变量确认）：
+  - `unpad_draft_extend_output.py`（generic）
+    `f1175d80…d0c0`（2534 B）— 同 e26
+  - `unpad_draft_extend_output_amd.py` `70810bce…79f7`（4908 B）—
+    **新**（e26 `e02c5131…`；e27 本体：整块 tile 标量守卫无掩码
+    load + store 恒掩码）
+  - `unpad_draft_extend_output_ascend.py` `81725d63…b2bf`（4607 B）—
+    同 e26
+  - `unpad_draft_extend_output_enflame.py` `204c8208…9af7`（3004 B）—
+    同 e26
+  - `unpad_draft_extend_output_hygon.py` `031847ed…bda7`（2039 B）—
+    同 e26
+  - `unpad_draft_extend_output_kunlunxin.py` `eb3328b8…34d0`（3350 B）—
+    同 e26
+  - `unpad_draft_extend_output_metax.py` `a58accf4…66c2`（3334 B）—
+    **新**（e26 `2ac05704…`）
+  - `unpad_draft_extend_output_nvidia.py` `f39143ac…ecdc`（2000 B）—
+    同 e26
+  - zip_sha256 `cfc6789a…` ≠ e26 `751a7fd4…`：平台去重键
+    （zip_sha256）满足新元组，无需载体 commit。
+- 预注册门（沿用 09-25 储备段原门）：**card_b ≥320 且 muxi ≥270
+  才保留，均值 >346.347075 换 TB**；任一芯回退或失败即回滚
+  `_amd`/`_metax` 两文件字节至 e26 ZIP 成员。
+- 状态：**armed-unfired**，提交窗口已关（submit_end 2026-09-24），
+  待下窗口实时 preflight 一次性发射。
 
 ## 2026-09-25 E27 候选实现：card_b/沐曦 load 侧去掩码（store-only mask）
 
