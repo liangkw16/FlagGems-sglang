@@ -198,6 +198,23 @@ class FusedPackQkvTest(unittest.TestCase):
         self.assertTrue(generic._use_int32(1024, 2, (1 << 30) - 1, 1))
         # empty gather never overflows
         self.assertTrue(generic._use_int32(1024, 0, 8, 1))
+        # guard x grid interaction (review r2): the fallback row loop
+        # computes row numbers up to grid*rows_per_prog-1 in int32 even
+        # though only n are real. With row_elems=1 and n=2**31-1
+        # (rows_per_prog=32769, grid=65535) the padded value 2147516414
+        # wraps at r=2 of the last program to -2**31, still passes
+        # row < n_rows and re-enters the copy body with a negative dst
+        # -> OOB write, while every single-axis bound above holds
+        # (q_numel / n*row_elems / (n-1)*idx_s0 all < 2**31), so only
+        # the padded-product bound can catch it (fixed-width repro on
+        # the r1 bytes confirmed the wrap before this fix)
+        self.assertFalse(generic._use_int32((1 << 31) - 1, (1 << 31) - 1, 1, 1))
+        # one row below, the padded space fits int32 exactly
+        # (grid*rows_per_prog = 2**31-2) and stays on the int32 path
+        self.assertTrue(generic._use_int32((1 << 31) - 2, (1 << 31) - 2, 1, 1))
+        # evaluation-like domain (10**7 rows of 1 element) is far from
+        # the padded bound and keeps the int32 hot path
+        self.assertTrue(generic._use_int32(10**7, 10**7, 1, 1))
         # muxi compliance pin: the per-row tile must never exceed the
         # max_tile_size=2048 elements/program rule (chip-rulesets.md:29);
         # the s0 2D tile (4x1024=4096) was 2x over the limit

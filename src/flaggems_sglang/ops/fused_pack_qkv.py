@@ -26,8 +26,10 @@
 #    sites (rows/idx/src/dst/cols) to int64. The i32 twin keeps the
 #    same arithmetic in int32 whenever every flat offset provably
 #    stays below 2**31 (numeric-domain host dispatch, not a device
-#    check); the i64 twin mirrors the proven s0 int64 math site by
-#    site for the overflow domain.
+#    check), including the padded row space grid*rows_per_prog that
+#    the fallback loop computes beyond n (review r2); the i64 twin
+#    mirrors the proven s0 int64 math site by site for the overflow
+#    domain, keeping row numbers int64 from program_id onward.
 # 4. Single allocation: one flat buffer backs q_out/k_out/v_out as
 #    three contiguous views (3 torch.empty -> 1).
 
@@ -117,15 +119,30 @@ def _use_int32(q_numel, n_rows, row_elems, idx_s0):
     Bounds q/k/v source reads (idx * row_elems < q_numel for semantic
     B*S index values), the three output writes (n_rows * row_elems
     elements total, checked on its own: a pure gather allows duplicate
-    indices, so the output can be arbitrarily larger than the input)
-    and the indices load ((n_rows - 1) * idx_s0 elements deep,
-    strided views included).
+    indices, so the output can be arbitrarily larger than the input),
+    the indices load ((n_rows - 1) * idx_s0 elements deep, strided
+    views included) and the padded row space: the last program's row
+    loop computes row numbers up to grid * rows_per_prog - 1 in int32
+    even though only n_rows of them are real. With row_elems=1 and
+    n_rows = 2**31 - 1 (rows_per_prog=32769, grid=65535) the padded
+    value wraps at r=2 to -2**31, still passes ``row < n_rows`` and
+    re-enters the copy body with a negative dst (review r2; every
+    logical offset above is individually in bounds, so the padded
+    product is bounded on its own, not derived from them).
     """
     if q_numel >= _INT32_LIMIT:
         return False
     if n_rows * row_elems >= _INT32_LIMIT:
         return False
-    return n_rows == 0 or (n_rows - 1) * idx_s0 < _INT32_LIMIT
+    if n_rows == 0:
+        return True
+    if (n_rows - 1) * idx_s0 >= _INT32_LIMIT:
+        return False
+    rows_per_prog = -(-n_rows // _MAX_GRID)
+    grid = -(-n_rows // rows_per_prog)
+    if grid * rows_per_prog >= _INT32_LIMIT:
+        return False
+    return True
 
 
 def fused_pack_qkv(q, k, v, indices):
