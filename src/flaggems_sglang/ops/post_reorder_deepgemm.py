@@ -19,10 +19,32 @@
 # store, all strides as parameters. Kunlunxin runs the frozen s0
 # vendor (wide BLOCK was a compile-stage SIGABRT there; see the
 # deepep_post_reorder ledger).
+#
+# E3: invalid slots skip the whole gather. The scalar `if eid >= 0`
+# branch carries the reference validity gate (topk_ids >= 0, the same
+# predicate the branchless `keep` multiply encoded), so a padding slot
+# no longer pays the full-block gather + the dst/weight scalar loads +
+# the keep multiply - the SGLang main post_reorder_deepgemm form
+# (ep_moe_kernels.py at 5f6dd44 wraps the weight+gather in
+# `if dst_idx >= 0`). We deliberately keep the gate on topk_ids and the
+# clamp: the reference includes down[clamp(dst)] * w for a VALID slot
+# whose src2dst is -1, which upstream's dst-gate would drop. The token
+# grid-stride row loop becomes tl.range(..., num_stages=3) software
+# pipelining (upstream NUM_STAGES=3 on the same loop); the E1 geometry
+# is untouched (grid.y hidden reorder, BLOCK=2048 / num_warps=8, fp32
+# accumulation, scale folded into the store, parameterized strides).
+# Divergence vs the literal torch reference is confined to non-finite
+# data on INVALID slots (reference 0*NaN/Inf propagates NaN, the skip
+# yields exactly 0); the platform harness feeds randn (finite) data -
+# pinned and disclosed in test_slot_skip_nonfinite_semantics.
 
 import torch
 import triton
 import triton.language as tl
+
+# e3 slot-skip marker consulted by tests/test_post_reorder_deepgemm.py
+# to tell the skip semantics apart from the frozen s0 branchless bytes.
+SLOT_SKIP_SEMANTICS = True
 
 
 @triton.jit(do_not_specialize=["rows", "scale"])
@@ -46,7 +68,9 @@ def _post_reorder_deepgemm(
     TOPK: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
-    for row in range(tl.program_id(0), rows, tl.num_programs(0)):
+    for row in tl.range(
+        tl.program_id(0), rows, tl.num_programs(0), num_stages=3
+    ):
         base = row.to(tl.int64)
         obase = base * os0
         offs = tl.arange(0, BLOCK)
@@ -58,14 +82,21 @@ def _post_reorder_deepgemm(
             acc = tl.zeros((BLOCK,), dtype=tl.float32)
             for i in tl.static_range(0, TOPK):
                 eid = tl.load(topk_ids + base * is0 + i * is1)
-                dst = tl.load(src2dst + base * ss0 + i * ss1).to(tl.int64)
-                dst = tl.maximum(dst, 0)
-                w = tl.load(topk_weights + base * ws0 + i * ws1).to(tl.float32)
-                keep = (eid >= 0).to(tl.float32)
-                v = tl.load(
-                    down_output + dst * ds0 + ho, hm, other=0.0
-                ).to(tl.float32)
-                acc += v * (w * keep)
+                if eid >= 0:
+                    # e3 slot-skip: the reference validity gate as a
+                    # scalar branch - invalid slots pay no gather and
+                    # no dst/weight loads at all
+                    dst = tl.load(src2dst + base * ss0 + i * ss1).to(
+                        tl.int64
+                    )
+                    dst = tl.maximum(dst, 0)
+                    w = tl.load(
+                        topk_weights + base * ws0 + i * ws1
+                    ).to(tl.float32)
+                    v = tl.load(
+                        down_output + dst * ds0 + ho, hm, other=0.0
+                    ).to(tl.float32)
+                    acc += v * w
             tl.store(
                 out + obase + ho,
                 (acc * scale).to(out.dtype.element_ty),

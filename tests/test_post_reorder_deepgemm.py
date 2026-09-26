@@ -110,6 +110,86 @@ class PostReorderDeepgemmTest(unittest.TestCase):
             with self.subTest(N=n, topk=topk, H=h):
                 self.check(*self.make(n, e, topk, h))
 
+    def test_slot_skip_reference_gate(self):
+        # e3 slot-skip: an invalid slot (topk_ids < 0) contributes
+        # nothing - the whole gather is skipped. The gate stays on
+        # topk_ids (the reference validity predicate), NOT on the
+        # src2dst value (upstream SGLang main gates on dst_idx >= 0):
+        # row 3 below is a VALID slot with dst == -1, which must still
+        # contribute down[clamp(-1)] = down[0] - a dst-gated port would
+        # silently drop it. Row 0 has every slot invalid and must read
+        # exactly zero. All data is finite, so the branchless s0
+        # semantics and the skip semantics agree; this pins the gate
+        # and the skip branch against every loaded module.
+        gen = torch.Generator(device="cuda").manual_seed(21)
+        N, topk, H = 8, 4, 96
+        down = torch.randn(N * topk, H, dtype=torch.bfloat16, device="cuda", generator=gen)
+        down[0].fill_(0.25)  # clamp target: finite and nonzero
+        out_tpl = torch.empty(N, H, dtype=torch.bfloat16, device="cuda")
+        ids = torch.full((N, topk), 3, dtype=torch.int32, device="cuda")
+        w = torch.randn(N, topk, dtype=torch.float32, device="cuda", generator=gen)
+        # valid dsts avoid row 0 so the clamped contribution of row 3 is
+        # the only place down[0] may enter
+        s2d = torch.randint(1, N * topk, (N, topk), dtype=torch.int32, device="cuda", generator=gen)
+        ids[0] = -1  # row 0: every slot invalid -> output row == 0
+        s2d[0] = -1
+        ids[1, 0] = -1  # row 1: mixed padding
+        s2d[1, 0] = -1
+        ids[2, 1:] = -1  # row 2: only slot 0 stays valid
+        s2d[2, 1:] = -1
+        s2d[3, 2] = -1  # row 3: VALID eid with dst=-1 -> clamped row 0
+        self.check(down, out_tpl, s2d, ids, w, topk, N, H, 2.5)
+        # pipelined tl.range row loop x live skip branches: rows beyond
+        # the grid.x cap revisit the row loop for a second grid-stride
+        # iteration with half the slots padded
+        self.check(*self.make(65537, 8, 2, 64, seed=22))
+
+    def test_slot_skip_nonfinite_semantics(self):
+        # e3 disclosed divergence: an INVALID slot whose clamped gather
+        # row (dst=-1 -> row 0) or weight is non-finite. The literal
+        # torch reference computes down[clamp(dst)] * (w * 0), and
+        # 0 * NaN/Inf propagates NaN; the slot-skip kernel skips the
+        # slot entirely and returns the bare valid-slot sum. Platform
+        # harness data is randn (finite), so both semantics agree on
+        # every platform case - this regression pins the skip form.
+        # Modules WITHOUT SLOT_SKIP_SEMANTICS (the frozen kunlunxin s0
+        # branchless vendor) keep the literal NaN-propagating semantics
+        # and are checked against the literal reference with equal_nan.
+        gen = torch.Generator(device="cuda").manual_seed(23)
+        N, topk, H = 5, 4, 96
+        down = torch.randn(N * topk, H, dtype=torch.bfloat16, device="cuda", generator=gen)
+        down[0].fill_(float("nan"))  # clamp target poisoned
+        out_tpl = torch.empty(N, H, dtype=torch.bfloat16, device="cuda")
+        ids = torch.full((N, topk), 3, dtype=torch.int32, device="cuda")
+        w = torch.randn(N, topk, dtype=torch.float32, device="cuda", generator=gen)
+        # valid dsts avoid the poisoned row 0
+        s2d = torch.randint(1, N * topk, (N, topk), dtype=torch.int32, device="cuda", generator=gen)
+        ids[:, 0] = -1  # invalid slots clamp onto the poisoned row 0
+        s2d[:, 0] = -1
+        ids[:, 2] = -1
+        s2d[:, 2] = -1
+        w[:, 2] = float("inf")  # non-finite weight on an invalid slot
+        scaling = 2.5
+        # skip semantics: only the valid slots 1 and 3 gather
+        skip_expected = torch.zeros(N, H, dtype=torch.float32, device="cuda")
+        for i in (1, 3):
+            skip_expected += down[s2d[:, i].long()].float() * w[:, i][:, None]
+        skip_expected = (skip_expected * scaling).to(out_tpl.dtype)
+        literal = reference(down, out_tpl, s2d, ids, w, topk, N, H, scaling)
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                actual = module.post_reorder_deepgemm(
+                    down, out_tpl, s2d, ids, w, topk, N, H, scaling
+                )
+                if getattr(module, "SLOT_SKIP_SEMANTICS", False):
+                    torch.testing.assert_close(
+                        actual, skip_expected, rtol=2e-2, atol=2e-3
+                    )
+                else:
+                    torch.testing.assert_close(
+                        actual, literal, rtol=2e-2, atol=2e-3, equal_nan=True
+                    )
+
     def test_token_program_boundaries(self):
         # E1: grid.x is capped at 65535 // gy, so token counts above the
         # cap must be covered by the grid-stride row loop.
@@ -192,6 +272,8 @@ RELEASE_REQUIRED_TESTS = [
     "PostReorderDeepgemmTest.test_fp16",
     "PostReorderDeepgemmTest.test_hidden_program_boundaries",
     "PostReorderDeepgemmTest.test_two_segment_hidden_semantics",
+    "PostReorderDeepgemmTest.test_slot_skip_reference_gate",
+    "PostReorderDeepgemmTest.test_slot_skip_nonfinite_semantics",
     "PostReorderDeepgemmTest.test_token_program_boundaries",
     "PostReorderDeepgemmTest.test_grid_product_boundary",
     "PostReorderDeepgemmGridTest.test_grid_product_cap",
