@@ -6,11 +6,11 @@ operator: fused_sigmoid_mul
 batch: 7
 validity: valid(7/7,s0)
 platform: e3(21516)valid avg3.095新TB:华为1.674(+28%,≥1.6门过)/昆仑1.122(2048字节修正);榜首3.315
-candidate_stage: e4(armed未发射:amd两段式无mask移植e3结构+int32域分派i64冷备;BLOCK/warps档未定,代理预筛8192/16384×w4/w8后定档;门card_b≥3.4保留/≥3.7判轴,<3.158或数值失败删文件回滚generic)
+candidate_stage: e4(armed未发射:amd两段式无mask初档16384/w8,回执22/22+ZIP e4-fa70a9e zip42eda60a;代理预筛8192/16384×w4/w8改档则新commit重上膛;门card_b≥3.4保留/≥3.7判轴,<3.158或数值失败删文件回滚generic)
 team_best_stage: e3
 team_best_speedup: -
 sealed: yes
-next: card_b 3.158→3.4/4.156金狐狸断层;华为1.67→2.19/昆仑1.12→2.01;天数4.86→5.33
+next: 发射/验证必须--proxy-vendor amd+ascend+kunlunxin且--dependency tests/test_e4_amd_two_segment_flat.py;card_b 3.158→3.4/4.156金狐狸断层;华为1.67→2.19/昆仑1.12→2.01;天数4.86→5.33
 updated: 2026-09-26
 ```
 
@@ -246,3 +246,55 @@ suite 收集 **22 项**（FusedSigmoidMul 11 + E4Amd 11，id 全部主模块前�
 `--proxy-vendor amd --proxy-vendor ascend --proxy-vendor kunlunxin` 并
 `--dependency tests/test_e4_amd_two_segment_flat.py`**（execution_scope 按
 device+proxy 过滤：缺 amd 则 e4 seam 测试因模块缺席硬失败——有意的门禁行为）。
+
+## E4 上膛（上膛员，2026-09-26）
+
+**远端 release 回执**（source=verification=`fa70a9ebfa3498865f4355dff9e7a02654d27cfe`，
+含 r1 候选 + r2 主模块 import/`__module__` 重绑修复字节）：
+`artifacts/competition/day5prep-20260921/e4_amd_two_segment_flat-wf/verification.json`
+（SHA-256 `7137acb1759756e5c843450db7b2766e75da10bbdfdaf3d6e3def9cebbc394e8`）与
+`verification.log`（SHA-256
+`9b637f04b0fecd665cb8c7afc967f823be5891c6632416a0637ea4f8da69bc0b`，与回执内
+log_sha256 逐字一致）。mode=release、exit_code=0、NVIDIA RTX 5070 Ti /
+torch 2.13.0+cu130 / triton 3.7.1、proxy_vendors=[amd, ascend, kunlunxin]、
+`--dependency tests/test_e4_amd_two_segment_flat.py`。**22/22 用例通过**
+（tests_run=22=passed，RELEASE_REQUIRED_TESTS 22 项与 expected_tests 集合全等；
+0 failures / 0 errors / 0 skipped / 0 expected_failures，`Ran 22 tests in
+3.987s OK`）。r2 的主模块并表+重绑在真实 runner 上兑现：11 项 e4 类全部以
+`tests.test_fused_sigmoid_mul.E4*` 入口模块 id 收集执行（含 seam 注册+界整除、
+BLOCK 相对 flat 边界、strided 2048 边界、强制 i64 冷备四条新回归），11 项主矩阵
+含 e3 三条 two_segment 回归。四源 kernel launches / entry calls：generic 36/37、
+_amd 68/70、_ascend 36/37、_kunlunxin 36/37（全部实际 kernel 执行；_amd 加倍=
+E4 测试矩阵叠加主矩阵）；153 条张量 shape 记录中 **149 条非空**（_amd 38 /
+generic 37 / _ascend 37 / _kunlunxin 37；bf16 113 / fp16 20 / fp32 16）。r2
+遗留的「stub 仅证集合逻辑、执行证据待远端回执」至此补齐。
+
+**不可变 ZIP**：
+`artifacts/competition/fused_sigmoid_mul/e4-fa70a9e/fused_sigmoid_mul.zip`，
+25404 字节，zip_sha256 = canonical =
+`42eda60a2fa1667595c3c7b46da133a464e2c1d658b73b3fdf18651fc2657a5a`，≠ e3
+`5daf87fccffaadfe2671a5a7ce95cf212ab6faf85daa8b9e9eba9f94ef15e7de` ≠ e2
+`90b254648aa83bafecceb065ecdb330fc726afb14a0afd407464a42d707d8af0` ≠ e1
+`47824d60beddd1a7a8852ce31c64de5b0a05bafec143da3ab02fa660c8a19780` ≠ s0
+`40003a157420b8a5598fede4bc02aea5051d149da29d451bac0043116a720b51`（平台去重键
+为 zip_sha256，新候选字节成立）。**成员四枚**（zipfile namelist 与构建清单逐一
+核对相等，无夹带文件；每成员与 git blob `fa70a9eb` 逐字节一致，且与回执 files
+哈希一致，即 ZIP 字节=验证字节=git 字节；`unzip -t` 干净）：
+
+| ZIP 成员 | 字节 | SHA-256 | 变更说明 |
+| --- | ---: | --- | --- |
+| `fused_sigmoid_mul.py` | 2729 | `e18f4567adce7f33d4508f29bb4420704256484b4cba13fa06b22217cbbeab9f` | 自 s0 review `daf77923` 起字节冻结（= e2/e3 同哈希） |
+| `fused_sigmoid_mul_amd.py` | 9332 | `203a590ddaeb16db56d13df0bea176894c51ad0a44328e22588acc0f3f340e7b` | 本候选唯一新增成员：card_b flat 两段式无 mask（初档 BLOCK=16384/w8）+ `_INT32_NUMEL_MAX=2^31` 域分派 i64 冷备；strided 臂=generic kernel 字节 |
+| `fused_sigmoid_mul_ascend.py` | 9530 | `0f2492c0a36511470e787bec8924274e43b54f3210f1c673682082f35e79b9bb` | E3 上膛字节冻结（vendor-only delta 不触碰） |
+| `fused_sigmoid_mul_kunlunxin.py` | 3285 | `3c8a650a05729488af850119ee137c8f4911a80a2479ce6a8cda7e3a3d705039` | E3 上膛字节冻结（`aef2c1f1` 恢复的 `_BLOCK=2048` 已证字节） |
+
+**发射命令约束**：verify/发射须带 `--proxy-vendor amd --proxy-vendor ascend
+--proxy-vendor kunlunxin` 并 `--dependency tests/test_e4_amd_two_segment_flat.py`
+（缺 amd 则 e4 seam 测试因模块缺席硬失败——r2 有意门禁行为）。
+
+**预注册门**（沿用 E4 预注册，一字未改）：card_b ≥3.4 保留 / ≥3.7 判轴兑现；
+<3.158 或数值失败 → 删 `_amd/ops/fused_sigmoid_mul.py`，card_b 回滚至 generic
+字节（vendor 文件删除即 fallback，无其他芯受影响）。armed-unfired：初档
+16384/w8 已过全数值矩阵；r1 预注册的 NVIDIA 代理预筛 8192/16384×w4/w8（灾难
+门，性能不可外推）若改档，则字节变更需新 commit 重新上膛（新 ZIP/新回执），
+本 ZIP 不冒名顶替。发射后以平台 status/watch JSON 回写逐芯结果。

@@ -1,5 +1,24 @@
 # 第二批候选与提交队列
 
+## 2026-09-26 T97 E4 上膛（armed-unfired）
+
+- [T97 fused_sigmoid_mul E4](fused_sigmoid_mul.md)：AMD `_amd` vendor
+  （card_b flat 热路径移植 e3 两段式无 mask 结构：`pid<n_full` 标量
+  分支、整块 2 载 1 存零 mask 零 `other`、尾块 masked 无 `other`、
+  int32 寻址 + `2^31` 域分派 i64 冷备；strided 臂=generic 字节，
+  初档 BLOCK=16384/w8；r2 修复使 11 项 e4 测试经主模块
+  import+`__module__` 重绑进入发布回执）完成上膛：远端 release
+  矩阵 **22 测试全过**（22/22 RELEASE_REQUIRED，`--proxy-vendor
+  amd+ascend+kunlunxin` + `--dependency
+  tests/test_e4_amd_two_segment_flat.py`，四源 launch
+  generic/ascend/kunlunxin 各 36、amd 68，149 非空 shape，
+  verification_commit `fa70a9eb`），不可变 ZIP `e4-fa70a9e`
+  （zip_sha256 `42eda60a…`，≠ e3 `5daf87fc…`，成员 3→4 仅新增
+  amd vendor，逐成员与 git blob 核对无夹带）。armed-unfired 待
+  实时 preflight 发射；预注册门：card_b <3.158 或数值失败删
+  vendor 文件回滚 generic（fallback 语义），≥3.4 保留 / ≥3.7 判
+  轴兑现；代理预筛改档则新 commit 重上膛。
+
 ## 2026-09-26 T104 E2 上膛（armed-unfired）
 
 - [T104 rmsnorm_hf E2](rmsnorm_hf.md)：整行 exact-unmask 候选（e1
