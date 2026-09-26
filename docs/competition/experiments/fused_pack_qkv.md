@@ -10,7 +10,7 @@ candidate_stage: e3(fired,读数落账见E3平台终态节)
 team_best_stage: e3
 team_best_speedup: 1.95460714(21628)
 sealed: yes
-next: 华为rider回滚门已触发(0.50075<0.7828):按门文本generic回滚e2字节(db53db9a@fde2d02c);判轴门华为≥1.1/≥1.40525两线均未达,沐曦距对手带线2.181差0.0095未进带;回滚执行与均值/单芯取舍归orchestrator(平台TB已由21628取得,回滚不撤销该提交)
+next: 华为回滚门已执行(generic+tests回fde2d02c字节,blob db53db9a验签通过);平台TB e3(21628,1.9546)已锁定不受影响;下轮决策=四rider增益(+7.9%~+16.7%)vs华为-39.2%的取舍(可华为单芯vendor切分保四rider)
 updated: 2026-09-26
 ```
 

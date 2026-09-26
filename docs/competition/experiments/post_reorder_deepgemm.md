@@ -10,7 +10,7 @@ candidate_stage: e3(fired,读数落账见E3平台终态节)
 team_best_stage: e1
 team_best_speedup: 见platform行
 sealed: no
-next: 预注册generic-rider回滚门已触发(四芯破-5%):按门文本generic回滚e1字节(blob b405f3cf@0f9cf744);天数exec227983ms vs e2同芯152283ms慢窗未排除(海光读数腰斩但exec仅+21%),窗口归因与回滚执行归orchestrator
+next: generic回滚门已执行(generic+tests回87d0e627字节,blob b405f3cf验签通过;_ascend按门保留);TB守e1(21509);昆仑-0.57%噪声带内只排查
 updated: 2026-09-26
 ```
 
