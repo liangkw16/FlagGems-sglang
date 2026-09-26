@@ -83,14 +83,24 @@ E1/E2 geometry preserved: grid.y hidden reorder, BLOCK=2048 /
 num_warps=8, TOPK static unroll, fp32 accumulation, scale folded into
 the store, parameterized strides. Divergence vs the literal torch
 reference is confined to non-finite data on INVALID slots (reference
-0*NaN/Inf propagates NaN, the skip yields exactly 0); platform harness
-data is randn (finite) - pinned and disclosed in
-test_slot_skip_nonfinite_semantics. Preregistered e3 gates (locked
-before screening): numeric failure or huawei < 12.08 (e2 -5%) -> roll
-_ascend back to the e2 bytes; any generic chip -5% vs the e1 per-chip
-reading (tianshu 12.1168 / muxi 6.342 / haiguang 20.6092 / card_a
-10.7918 / card_b 7.7752) -> roll generic back to the e1 bytes;
-platform average > 11.63934286 swaps TB.
+0*NaN/Inf propagates NaN, the skip yields exactly 0); pinned in
+test_slot_skip_nonfinite_semantics and PREREGISTERED in the T101
+ledger (E3 candidate record) as intentionally accepted - the platform
+harness data generator is not a documented contract ("randn/finite"
+stays an unverified assumption), and the same submission keeps the
+frozen kunlunxin s0 branchless bytes, so the two backends
+intentionally disagree on non-finite invalid-slot data within one
+interface. Preregistered e3 gates (locked before screening): numeric
+failure on huawei or huawei < 12.08 (e2 -5%) -> roll _ascend back to
+the e2 bytes; numeric failure OR a -5% drop on ANY generic-rider chip
+vs the e1 per-chip reading (tianshu 12.1168 / muxi 6.342 / haiguang
+20.6092 / card_a 10.7918 / card_b 7.7752) -> roll generic back to the
+e1 bytes - loop-level num_stages has no platform precedent on those
+riders' Triton forks (in-repo tl.range(num_stages=) exists only in
+_enflame vendor files; group_norm_silu E12 fired valid on enflame and
+read as a perf no-op there), so a rider compile/numeric failure is a
+live risk these gates convert into a byte rollback; platform average
+> 11.63934286 swaps TB.
 """
 
 import torch

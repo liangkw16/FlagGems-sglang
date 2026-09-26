@@ -10,7 +10,7 @@ candidate_stage: e2(已发射,读数落中间带)
 team_best_stage: e1
 team_best_speedup: 见platform行
 sealed: no
-next: e2门判决已落:无数值败不删vendor/华为中间带轴未确认/均值<=TB不换;[11.77,15)处置(沿轴e3或删vendor收敛)预注册未申报,待编排
+next: e3预注册已落账(slot-skip+num_stages沿轴推进,含评审P2-1非有限分歧有意接受+P2-2 generic数值失败门,见E3候选记录节);源就绪未上膛(无ZIP/回执),待编排建ZIP+release回执后单发
 updated: 2026-09-26
 ```
 
@@ -199,3 +199,64 @@ updated: 2026-09-26
   T104/T97 各一发）。
 - **遗留（orchestrator 待决）**：预注册门对 [11.77,15) 未申报动作——沿轴
   继续（e3）或删 vendor 收敛 generic 均不违规，本账本不擅自判决。
+
+## E3 候选记录（2026-09-26 评审 r1/r2 修订，源就绪未上膛，armed 前预注册）
+
+- **假设**：e2 落 [11.77,15) 中间带后沿轴继续——slot-skip + num_stages
+  移植上游 SGLang main 主形态到 E1/E2 几何（grid.y hidden / BLOCK2048 /
+  w8 / 两段式臂保留），主靶华为（-17.7304 vs 金狐狸 30.1178，占毛缺口
+  72.0%）。无效槽（topk_ids<0）整槽跳过：`if eid >= 0` 标量分支包住
+  dst/weight 标量读与整块 gather，padding 槽不再白付 gather+2 标量读+1
+  乘法；门保持题面 reference 语义（topk_ids>=0 且 clamp 保留——上游
+  `if dst_idx>=0` 门会丢掉 eid>=0∧dst=-1 的 clamped 贡献，由
+  `test_slot_skip_reference_gate` 钉死）。行（token）grid-stride 循环改
+  `tl.range(..., num_stages=3)` 软件流水（上游 ep_moe_kernels.py@
+  5f6dd44 实读核验：`tl.range(start, num_tokens, step,
+  num_stages=NUM_STAGES)`，NUM_STAGES=3，weight+gather 包在标量分支内）。
+  generic 改动同时作用于现跑 generic 的 rider 芯（e2 逐芯
+  selected_file=generic：天数/沐曦/海光/card_a/card_b）。
+- **实现状态**：generic 与 _ascend vendor（两段式双臂）同改，
+  _kunlunxin 冻结 s0 字节不动。r1 commit `4e817d95`（实现+回归
+  RELEASE_REQUIRED_TESTS 9→11）；r2 commit（本 commit）=评审两项 P2
+  处置：P2-1 非有限分歧落账为预注册有意接受、P2-2 generic 数值失败门
+  补进两处 docstring+本账本。**未建 ZIP、无 release 回执、未消耗额度**；
+  上膛时另立五元组（candidate_stage 届时 e2→e3 递增）。
+- **评审 P2-1 判决（预注册，armed 前锁定）**：literal reference 对无效槽
+  计算 `down[clamp(-1)]*(w*0)`，down[0] 或 w 非有限时 0×NaN/Inf 传播
+  NaN；slot-skip 分支输出 0。该分歧为**有意接受**：题面与 skill/参考
+  文档均无 harness 数据生成器书面契约（"randn/有限"系未验证的开发者
+  假设，评审已检索核实），randn 族数据下两语义逐位一致；同一提交内
+  _kunlunxin 冻结 vendor 仍 NaN 传播——同接口跨后端在非有限无效槽数据
+  上不一致同样有意接受（昆仑字节不因 e3 解冻）。**护栏**：任何芯平台
+  数值失败即触发下述回滚门，不靠 docstring 单独披露；回归钉在
+  `test_slot_skip_nonfinite_semantics`（`SLOT_SKIP_SEMANTICS` 模块标记
+  分派期望：generic/_ascend 断言 skip 语义，冻结 kunlunxin 按 literal
+  reference + equal_nan 校验）。
+- **评审 P2-2 判决（预注册，armed 前锁定）**：generic 臂数值失败门原缺、
+  现补死——**任一 generic-rider 芯（天数/沐曦/海光/card_a/card_b）数值
+  失败或编译失败 → generic 回滚 e1 字节**（e1 generic blob sha256
+  `b405f3cf8c8d25f67208372ea1a5099631f785290bf91c5a50738af2ad889827`
+  @0f9cf744）。风险披露：循环级 `tl.range(num_stages=)` 在仓库内仅
+  _enflame vendor 有平台兑现先例（group_norm_silu E12 sub 16770 valid，
+  且在燧原读数为性能 no-op：0.45866667 vs E11 0.459；本仓 grep 核验
+  tl.range+num_stages 仅命中 _enflame 三文件与本候选两文件），
+  muxi/haiguang/card_a/card_b 四个 Triton fork 从未执行过该 kwarg——
+  任一 fork 编译/数值失败将按 T104 e2 先例使整发 invalid_correctness
+  （烧一发额度）；NVIDIA 代理只做灾难门。评审给出的拆分选项（先发
+  slot-skip A、正信号再叠 num_stages B）已评估**不采用**：一次发射同时
+  取抢榜与 [11.77,15) 处置的信息收益，两风险均已预注册字节级回滚路径。
+- **晋级门（预注册，读数前锁定，读数后不得改判据）**：
+  1. 华为数值失败或 <12.08（e2 12.7198 的 -5%）→ _ascend 回滚 e2 字节
+     （vendor blob sha256
+     `607a80b46ec5511a2f93596f958c099e0c299ef2251a01c0f897df699adcd0bf`
+     @87d0e627）；
+  2. 任一 generic-rider 芯数值失败或较 e1 逐芯基线（天数 12.1168/沐曦
+     6.342/海光 20.6092/card_a 10.7918/card_b 7.7752）-5% → generic
+     回滚 e1 字节；
+  3. 平台均值 >11.63934286 → 换 TB（TB 自 e1 21509）；
+  4. 昆仑字节未变（冻结），读数异常只排查不回滚。
+- **回归矩阵增量**（r1 已入 RELEASE_REQUIRED_TESTS，9→11）：
+  `test_slot_skip_reference_gate`（全无效行精确 0、eid≥0∧dst=-1 clamped
+  贡献钉 reference 门防 dst 门误植、65537 行 pipelined 第二遍
+  grid-stride 含活跃 skip 分支）、`test_slot_skip_nonfinite_semantics`
+  （非有限分歧按 SLOT_SKIP_SEMANTICS 分派期望）。

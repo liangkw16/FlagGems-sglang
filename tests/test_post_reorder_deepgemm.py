@@ -150,11 +150,15 @@ class PostReorderDeepgemmTest(unittest.TestCase):
         # torch reference computes down[clamp(dst)] * (w * 0), and
         # 0 * NaN/Inf propagates NaN; the slot-skip kernel skips the
         # slot entirely and returns the bare valid-slot sum. Platform
-        # harness data is randn (finite), so both semantics agree on
-        # every platform case - this regression pins the skip form.
-        # Modules WITHOUT SLOT_SKIP_SEMANTICS (the frozen kunlunxin s0
-        # branchless vendor) keep the literal NaN-propagating semantics
-        # and are checked against the literal reference with equal_nan.
+        # harness data is ASSUMED finite (randn family - the generator
+        # is not a documented contract), so both semantics are expected
+        # to agree on platform cases; the divergence is preregistered
+        # as intentionally accepted with numeric-failure rollback in
+        # the T101 ledger E3 candidate record. This regression pins the
+        # skip form. Modules WITHOUT SLOT_SKIP_SEMANTICS (the frozen
+        # kunlunxin s0 branchless vendor) keep the literal
+        # NaN-propagating semantics and are checked against the literal
+        # reference with equal_nan.
         gen = torch.Generator(device="cuda").manual_seed(23)
         N, topk, H = 5, 4, 96
         down = torch.randn(N * topk, H, dtype=torch.bfloat16, device="cuda", generator=gen)

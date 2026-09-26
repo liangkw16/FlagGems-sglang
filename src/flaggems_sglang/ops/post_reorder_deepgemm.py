@@ -35,8 +35,19 @@
 # accumulation, scale folded into the store, parameterized strides).
 # Divergence vs the literal torch reference is confined to non-finite
 # data on INVALID slots (reference 0*NaN/Inf propagates NaN, the skip
-# yields exactly 0); the platform harness feeds randn (finite) data -
-# pinned and disclosed in test_slot_skip_nonfinite_semantics.
+# yields exactly 0); pinned in test_slot_skip_nonfinite_semantics and
+# PREREGISTERED in the T101 ledger (E3 candidate record) as
+# intentionally accepted - the platform harness data generator is not
+# a documented contract, so "randn/finite" stays an unverified
+# assumption guarded by the numeric-failure rollback gates (any
+# numeric failure on a generic-rider chip rolls generic back to the
+# e1 bytes). Loop-level num_stages has NO platform precedent on the
+# generic riders' Triton forks: in-repo tl.range(num_stages=) exists
+# only in _enflame vendor files (group_norm_silu E12 fired valid on
+# enflame and read as a perf no-op there); a rider fork failing to
+# compile or producing wrong numbers would invalidate the whole
+# firing (T104 e2 precedent), so the NVIDIA proxy screens this as a
+# disaster gate only and the platform is the arbiter.
 
 import torch
 import triton
