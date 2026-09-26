@@ -69,3 +69,23 @@
 - T101 无效槽（ids<0）：不得产生越界读（dst 可能 -1）；ids==num_experts 是有效槽。
 - T102 的 a1_scales=None 路径与标量读取；slot→(t,i) 的 2D stride 寻址正确性。
 - T104 的 cast 顺序（先 cast 再乘 weight）与行归约精度。
+
+## T105 set_mla_kv_buffer（kvcache/set_mla_kv_buffer）
+- `(kv_buffer, loc, cache_k_nope, cache_k_rope)`：`out[loc[i], :nd]=nope[i]`、`out[loc[i], nd:]=rope[i]`；
+  **clone 后写 clone 返回**（未被写的 slot 保持基底）；loc int64；kv bf16，源 dtype 可不同（cat 后 .to(out.dtype)）；exact。
+
+## T106 tiny_n_gemm（gemm/tiny_n_gemm）
+- `(x, w, out_dtype)`：`out = (x.float() @ w.float().t()).to(out_dtype)`；x `[m,k]` bf16 **m<=16**；w `[n,k]` bf16；
+  out_dtype ∈ {bf16, fp32}；per-dtype tolerance。注意 tl.dot M>=16 下限与共享内存约束。
+
+## T107 tma_align_input_scale（quant/tma_align_input_scale）
+- `(input_scale)`：2D fp32，返回值等于输入（exact），但为 column-major——pad M 到 (16/elem_size) 倍数后 buffer 的转置视图。
+
+## T108 topk_sigmoid（moe/topk_sigmoid）
+- `(topk_weights, topk_ids, gating_output, renormalize, routed_scaling_factor)`：
+  **destination-passing**（原地写 fp32 weights / int32 ids 并返回）；scores=sigmoid(logits.float())，topk 降序；
+  renormalize 时 `w*scale/(sum+1e-20)`；tie 不在契约内（fp32 logits 无同分行）；weights per-dtol、ids exact。
+
+## T109 zero_experts_identity（moe/zero_experts_identity）
+- `(expert_indices, expert_scales, num_experts, zero_expert_type, hidden_states)`：
+  `out[t,:] = hidden[t,:] * Σ where(idx>=num_experts, scales, 0)`；hidden_dim 为 256 倍数；per-dtype tolerance。
