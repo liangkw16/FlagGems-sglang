@@ -61,8 +61,11 @@ def _topk_sigmoid_kernel(
     sel = (rank[:, None] == ks[None, :]) & km[None, :]
     w2 = tl.broadcast_to(scores[:, None], (BLOCK_E, BLOCK_K))
     i2 = tl.broadcast_to(es[:, None], (BLOCK_E, BLOCK_K))
-    tl.store(topk_weights + row * ws0 + ks[None, :] * ws1, w2, mask=sel)
-    tl.store(topk_ids + row * is0 + ks[None, :] * is1, i2, mask=sel)
+    # the pointer must carry the same (BLOCK_E, BLOCK_K) shape as the
+    # value; a (1, K) offset expression is not auto-broadcast by store
+    zpad = tl.zeros((BLOCK_E, BLOCK_K), dtype=tl.int64)
+    tl.store(topk_weights + row * ws0 + ks[None, :] * ws1 + zpad, w2, mask=sel)
+    tl.store(topk_ids + row * is0 + ks[None, :] * is1 + zpad, i2, mask=sel)
     if renorm:
         wv = tl.load(topk_weights + row * ws0 + ks * ws1, mask=km, other=0.0)
         total = tl.sum(wv, axis=0)
