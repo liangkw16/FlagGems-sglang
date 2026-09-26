@@ -6,11 +6,11 @@ operator: fused_sigmoid_mul
 batch: 7
 validity: valid(7/7,s0)
 platform: e3(21516)valid avg3.095新TB:华为1.674(+28%,≥1.6门过)/昆仑1.122(2048字节修正);榜首3.315
-candidate_stage: e3(armed未发射:ascend两段式+r2 int32防护+同包昆仑2048恢复;release@770b1745全绿11/11/34launch每源;ZIP e3-770b174 sha256 5daf87fc)
+candidate_stage: e4(armed未发射:amd两段式无mask移植e3结构+int32域分派i64冷备;BLOCK/warps档未定,代理预筛8192/16384×w4/w8后定档;门card_b≥3.4保留/≥3.7判轴,<3.158或数值失败删文件回滚generic)
 team_best_stage: e3
 team_best_speedup: -
 sealed: yes
-next: 华为1.67→2.19/昆仑1.12→2.01;天数4.86→5.33
+next: card_b 3.158→3.4/4.156金狐狸断层;华为1.67→2.19/昆仑1.12→2.01;天数4.86→5.33
 updated: 2026-09-26
 ```
 
@@ -156,3 +156,56 @@ entry calls**（实际 kernel 执行，非空 bfloat16 张量）。r2 遗留的�
 判水位重掷（chip-rulesets.md:58，昆仑 ±10-35%）不归因 2048 字节。armed-unfired：
 发射时机等 T93 E3 平台裁决校准华为方向（负证据披露见上）；发射后以平台
 status/watch JSON 回写逐芯结果。
+
+## E4 候选预注册（开发员 r1，2026-09-26；已 commit 未验证未发射）
+
+**缺口实体**（climb-loop.json s2t1op097，2026-09-26T09:42 快照，本轮实读）：card_b
+我方 3.1582(#6) vs 金狐狸 4.1558(#1) **-0.9976**，全题最大单芯缺口；次名 cgzhou 仅
+3.216，其余队 3.07-3.17 聚集（eatabigwatermelon 3.172 / OpeGoodn 3.169 / thunguo
+3.167 / SGZhang 3.150 / GuanghuLab 3.149）——断层=金狐狸独占结构而非参数轴。
+card_b 3.158 远超 0.1 有效性门槛，非门槛型；expectedAvgGain 0.07 居中（保守
+3.158→3.5 为 0.043，满兑现 4.156 为 0.125），偏乐观但在缺口实体内。
+
+**字节变更**（单 commit）：
+
+- 新增 `_amd/ops/fused_sigmoid_mul.py`（card_b 现走 generic——session-mining §3:59
+  「card_b 按 _amd 建 fallback」）：flat 连续热路径移植 e3 两段式无 mask——kernel 内
+  `pid < n_full` 标量分支、整块 2 载 1 存零 mask 零 `other`、尾块 masked 无 `other`
+  （store 同 mask，undef lane 不落存）、int32 寻址 + `_INT32_NUMEL_MAX=2^31` 域分派
+  i64 冷备（e3 r2 已验模式原样复用）；strided 臂字节=generic kernel（BLOCK=2048/w8、
+  i64 offs、masked other=0）——flat 重写是 card_b 上唯一 delta。初档 BLOCK=16384/w8；
+  **档未定**，发射前 NVIDIA 代理预筛 8192/16384×w4/w8（单行模块常量改档）；代理仅
+  灾难门，性能不可外推（session-mining §4.1：T24 代理 5x→燧原 -24.5%）。
+- 测试：新增 `tests/test_e4_amd_two_segment_flat.py`——沿用主矩阵（dtype×shape /
+  strided 3D gate / strided·transposed attn / 极值 / 空）amd 臂 + 新回归：
+  `test_amd_vendor_registered_with_dispatch_seam`（矩阵注册 + seam 名 + 界整除性——
+  预筛改非整除 BLOCK 必须在此失败而不是平台）、`test_amd_flat_block_boundaries`
+  （按 `AMD._BLOCK` 运行时推导 B±1 / 2B±1 / 3B 无尾格点 / 7 单尾，改档后仍守界）、
+  `test_amd_strided_block_boundaries`（vendor 自带 strided 臂 2048 边界）、
+  `test_amd_i64_cold_variant_numerics`（下调分派界强制 i64 冷备过公共 seam，finally
+  恢复）；11 项全列该模块 RELEASE_REQUIRED_TESTS。主文件
+  `test_two_segment_dispatch_boundary` / `test_two_segment_i64_cold_variant_numerics`
+  经 `_op_variants` 自动发现自动覆盖 amd（hasattr 守卫满足）。release 入口仍为主
+  测试文件，e4 文件以 runner `--dependency tests/test_e4_amd_two_segment_flat.py`
+  入同一回执。
+
+**依据**：generic 三重成本 = offs 双 `.to(tl.int64)`（ops/fused_sigmoid_mul.py:31）+
+masked load `other=0`（:45-46）；AMD 64-bit 整数地址算术降为成对 32-bit VALU 指令
+（架构级：向量 ALU 无原生 64-bit 整数通路）。结构家族平台证据：**本题**华为 e3
++28%（1.311→1.674，sub 21516）；T40 E16 零比较热路径华为 +130%、T39 e10 整块标量
+跳过 +246%（`_ascend/ops/add_constant.py` docstring 家族引证）。AMD 与 NVIDIA 形态
+最近，远端 NVIDIA 代理可预筛 BLOCK 档与方向。
+
+**负证据披露**：同概念 AMD 字节 armed-unfired（T92 e27 load 侧去掩码，限
+_amd/_metax，无平台裁决——其读数应与本候选互相校准）；T92 E23 双侧去 mask
+（_ascend、int64 + 2D grid-stride + per-base 守卫）华为 -28.8% 已回滚——本文件
+int32 + 1D 单 tile + kernel 级单分支，结构孪生 = 本题 e3 华为正验证（+28%）。
+
+**预注册门**：card_b ≥3.4 保留 / ≥3.7 判轴兑现；<3.158 或数值失败 → 删
+`_amd/ops/fused_sigmoid_mul.py`，card_b 回滚至 generic 字节（vendor 文件删除即
+fallback，无其他芯受影响）。保守核算 card_b 3.158→3.5 即 +0.049 均值（3.0954→
+3.144），满兑现 4.156 为 +0.143（→3.238）。反作弊合规：纯 Triton 双臂、host 静态
+分派、无 try/except、无模块级可变容器。
+
+**如实陈述**：本地无 torch/triton（远端验证仓），已做 py_compile + AST 级核验，
+执行证据待远端 release 回执（发射/验证命令须带 `--proxy-vendor amd`）。
