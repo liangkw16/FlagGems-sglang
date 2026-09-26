@@ -37,12 +37,19 @@ def _topk_sigmoid_kernel(
     g = tl.load(gating + row * gs0 + es * gs1, mask=em, other=0.0).to(tl.float32)
     scores = tl.sigmoid(g)
     scores = tl.where(em, scores, float("-inf"))
+    # rank each expert by how many others beat it: rank r means exactly
+    # r experts score higher - a pure vector reduction with no per-round
+    # scalar stores (the kunlun legalize pass rejected the argmax loop).
+    # Ties break toward the lower expert id, matching torch.topk.
+    higher = (scores[None, :] < scores[:, None]).to(tl.int32)
+    eq_lower = (scores[None, :] == scores[:, None]) & (es[None, :] < es[:, None])
+    rank = higher.sum(axis=1) + eq_lower.to(tl.int32).sum(axis=1)
     for i in range(0, k):
-        v = tl.max(scores, axis=0)
-        idx = tl.argmax(scores, axis=0)
+        pick = rank == i
+        v = tl.max(tl.where(pick, scores, float("-inf")), axis=0)
         tl.store(topk_weights + row * ws0 + i * ws1, v)
+        idx = tl.min(tl.where(pick, es, BLOCK_E), axis=0)
         tl.store(topk_ids + row * is0 + i * is1, idx)
-        scores = tl.where(es == idx, float("-inf"), scores)
     if renorm:
         ks = tl.arange(0, BLOCK_K)
         km = ks < k

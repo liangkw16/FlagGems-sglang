@@ -22,24 +22,18 @@ def _transpose_pad_kernel(
     ss1,
     ds0,
     BLOCK_K: tl.constexpr,
-    BLOCK_M: tl.constexpr,
 ):
     pid = tl.program_id(0)
-    ks = pid.to(tl.int64) * BLOCK_K + tl.arange(0, BLOCK_K).to(tl.int64)
-    km = ks < K
-    ms = tl.arange(0, BLOCK_M).to(tl.int64)
-    for m0 in range(0, m_pad, BLOCK_M):
-        mm = (m0 + ms) < M
-        v = tl.load(
-            src + (m0 + ms)[:, None] * ss0 + ks[None, :] * ss1,
-            mask=mm[:, None] & km[None, :],
-            other=0.0,
-        )
-        tl.store(
-            dst + ks[:, None] * ds0 + (m0 + ms)[None, :],
-            tl.trans(v),
-            mask=km[:, None] & mm[None, :],
-        )
+    # one program per padded-m column: a 1D K-run load/store pair with
+    # no transpose op and no 2D tile (the kunlunxin MLIR pipeline
+    # rejected tl.trans and the shared-memory tiles blew limits)
+    m = pid.to(tl.int64)
+    ks = tl.arange(0, BLOCK_K).to(tl.int64)
+    for k0 in range(0, K, BLOCK_K):
+        kk = k0 + ks
+        km = kk < K
+        v = tl.load(src + m * ss0 + kk * ss1, mask=km, other=0.0)
+        tl.store(dst + kk * ds0 + m, v, mask=km)
 
 
 def tma_align_input_scale(input_scale):
@@ -50,7 +44,7 @@ def tma_align_input_scale(input_scale):
     m_pad = (m + align - 1) // align * align
     buf = torch.zeros((k, m_pad), dtype=input_scale.dtype, device=input_scale.device)
     if m and k:
-        _transpose_pad_kernel[(triton.cdiv(k, 64),)](
+        _transpose_pad_kernel[(m_pad,)](
             input_scale,
             buf,
             m,
@@ -59,8 +53,7 @@ def tma_align_input_scale(input_scale):
             input_scale.stride(0),
             input_scale.stride(1),
             buf.stride(0),
-            BLOCK_K=64,
-            BLOCK_M=max(16, min(1024, triton.next_power_of_2(m_pad))),
+            BLOCK_K=min(1024, max(16, triton.next_power_of_2(k))),
             num_warps=4,
         )
     return buf.t()[:m]

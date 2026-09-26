@@ -33,9 +33,10 @@ def _zero_experts_kernel(
     row = tl.program_id(0).to(tl.int64)
     ks = tl.arange(0, BLOCK_K)
     km = ks < top_k
-    idx = tl.load(indices + row * ns0 + ks, mask=km, other=0)
+    idx = tl.load(indices + row * ns0 + ks, mask=km, other=0).to(tl.int64)
     sc = tl.load(scales + row * ss0 + ks, mask=km, other=0.0).to(tl.float32)
-    zero_sum = tl.sum(tl.where(idx >= num_experts, sc, 0.0), axis=0)
+    ne = num_experts.to(tl.int64)
+    zero_sum = tl.sum(tl.where(idx >= ne, sc, 0.0), axis=0)
     cols = tl.arange(0, BLOCK_D).to(tl.int64)
     for c0 in range(0, hidden_dim, BLOCK_D):
         cc = c0 + cols
