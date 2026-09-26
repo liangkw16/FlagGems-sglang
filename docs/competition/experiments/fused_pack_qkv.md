@@ -6,11 +6,11 @@ operator: fused_pack_qkv
 batch: 7
 validity: valid(7/7,e1)
 platform: e2(21508)valid:天数4.17(+41%,iluvatar vendor兑现)/昆仑0.556/华为0.824;avg1.89仍距c2flow 2.36
-candidate_stage: e2
+candidate_stage: e3
 team_best_stage: e2
 team_best_speedup: -
 sealed: yes
-next: 沐曦1.91/华为0.82→榜首2.60/1.41;天数轴已兑现
+next: e3 generic-perrow 已上膛待发射（五 rider 芯，预注册门见 E3 节；发射须 --proxy-vendor iluvatar+kunlunxin）；沐曦1.91/华为0.82→榜首2.60/1.41 轴待平台兑现
 updated: 2026-09-26
 ```
 
@@ -185,3 +185,101 @@ iluvatar（连同既有 kunlunxin）。
   同字节重掷 ≤2 次；其余六芯 vendor 隔离（仅 tianshu 选中 `_iluvatar`）
   读数应不变）。发射命令必须带 `--proxy-vendor iluvatar
   --proxy-vendor kunlunxin`（P2 修复后该源缺席会响亮失败）。
+
+## E3 候选与上膛：generic-perrow（2026-09-26 16:07，armed-unfired）
+
+**候选**（r1 `e03934bd` → 评审 r2 修复 `9bad92cb`，实现细节见两 commit）：
+把 s0 2D 行瓦片（BLOCK_R=4×1024、int64 全链、3 alloc）换成与 E2
+`_iluvatar` vendor 同构、平台已在天数兑现 +41% 的 per-row 1D 三件套，一次抬
+五个仍乘 generic 字节的 rider 芯（muxi/huawei/card_a/card_b/haiguang）：
+per-row 1D 程序 + 65535 程序数帽（`rows_per_prog=cdiv(n,65535)`，Ascend
+coreDim）；kernel 内全 1D 张量（拆 muxi「1D grid + in-kernel 2D tensor」
+TTGIR 险与 Ascend Vector CMP int64 罚，chip-rulesets.md:29/31/36）；
+BLOCK_C 帽 2048（muxi max_tile_size，旧 4096 超 2 倍），宽行走分块列循环
+（H*D=70000 回归）；int32 寻址域 `_use_int32`（r2 补 padded row space
+`grid*rows_per_prog<2^31` 域界与输出侧 `n*row_elems<2^31` 独立设界）+
+i64 孪生逐位镜像 s0 数学；单 alloc 三 view；`_iluvatar`/`_kunlunxin`
+vendor 字节冻结。测试 +2：`test_generic_int32_domain_guard`、
+`test_generic_rows_per_prog_multirow`（RELEASE_REQUIRED 9→11）。
+本轮为 E2 节预告的归因补充臂（三变量打包 → generic 臂单变量迁移），非同题
+并发新轴。
+
+### 上膛证据（远端 release，绑定 HEAD `7e0c58b0`）
+
+`verify_release.py prepare fused_pack_qkv --source-commit HEAD
+--verification-commit HEAD --proxy-vendor iluvatar --proxy-vendor
+kunlunxin`（该题现有全部 vendor；mode=release，schema v2），目录
+`/tmp/wf-fused_pack_qkv E3 generic-perrow-release` 上传 gpu 后以
+`/home/kevin/notebook/.venv/bin/python` 执行 `run`（timeout 900），**RC=0**：
+
+- **11 测试 / 83 case 全过**（11/11 RELEASE_REQUIRED，含两个 E3 新回归与
+  r2 加固的 padded-row-space 守卫断言；0 fail/error/skip/xfail/
+  unexpected-success）。
+- **每源 20 次入口调用 / 19 次 kernel launch**（generic/`_iluvatar`/
+  `_kunlunxin` 三源各自实际执行）；96 非空 shape。
+- 环境 NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 / triton 3.7.1 /
+  cuda 13.0 / python 3.12.13；`Ran 11 tests in 1.515s OK`（与 E2 的
+  1.482s 同量级，无墙钟异常需披露）。
+- 回执 `artifacts/competition/day5prep-20260921/fused_pack_qkv E3
+  generic-perrow-wf/verification.json`（sha256
+  `a81e89182aee0d3b8de826515d2e7fd4e42bc3ae29c3d78549bc0e7c32faf646`）
+  / `verification.log`（sha256
+  `c5b76917c0b5f50c1341e71e7a43eb33481215be41692dd8cd21d80f05f45b9c`，
+  与回执内 `log_sha256` 一致，本地落盘后逐字节复核）。
+- `target_unverified_sources` = `_iluvatar` + `_kunlunxin`（目标芯未验证，
+  维持 E2 节披露口径）；`unexecuted_sources` = 空。
+- 源码字节谱系 = `e03934bd`（r1 候选）→ `9bad92cb`（r2 修复）→ HEAD
+  `7e0c58b0`：r2 之后 4 个并行会话提交均未触及本题五路径
+  （`git log 9bad92cb..HEAD -- <generic/tests/两vendor/账本>` 为空），
+  回执直接绑定 r2 字节。
+
+### 五元组（上膛身份）
+
+- source_commit：`7e0c58b061b639568f7b817c678906affe0b1566`
+- verification_commit：`7e0c58b061b639568f7b817c678906affe0b1566`（=本回执；
+  发射 preflight 要求 commit 字段等于它）
+- ledger_commit：本 commit（E3 上膛记账）
+- ZIP：`artifacts/competition/fused_pack_qkv/e3-7e0c58b/fused_pack_qkv.zip`
+  （18182 字节，zip_sha256 =
+  `bbfe10ece54c527831ae032d2d04dd35d4363d24f9f147e89fbcf2a5ab06421c` =
+  canonical_zip_sha256；≠ e2 `15e40066…`（fde2d02）≠ e1 `00cac1db…`
+  （5abd626）/ `711be763…`（d3e86e9）≠ s0 `4edde6d3…`（daf7792）/
+  `81767f23…`（90d732f）——平台 zip_sha256 去重键成立，新候选产出了
+  新 ZIP 字节、非同字节重掷；vs e2-fde2d02 仅 generic 成员重写
+  （`db53db9a`→`e6fe9f40`），`_iluvatar` 成员 `1bc958df` 与
+  `_kunlunxin` 成员 `bf011714` 逐字节冻结——generic 臂单变量纪律成立）
+- stage：`e3`（CURRENT candidate_stage 由 e2 递增一号；上膛前无 e3 ZIP
+  存在，s0→e1→e2→e3 连续不跳号）
+
+ZIP 成员名单（与 `zipfile.namelist()` 实际核对一致，无夹带；`unzip -t`
+无错；UTF-8 `.py`，无测试/缓存/目录前缀/macOS 垃圾；成员字节 = git blob
+@7e0c58b0 = 回执 files 哈希 = 远端实际执行字节，三方核对全中）：
+
+| 成员 | 字节 | sha256 |
+|---|---|---|
+| `fused_pack_qkv.py` | 7705 | `e6fe9f407712979eee16ac939be1ae83aa192207d9db35459d00cd997464ffc7` |
+| `fused_pack_qkv_iluvatar.py` | 6746 | `1bc958dfa1676da41becd7cee725965ec2eed8a90bbcf910da9231c9f16a8cc4` |
+| `fused_pack_qkv_kunlunxin.py` | 3341 | `bf01171404b813b9792938716b24a214f3a130f14c618951cd00ca4cae51812c` |
+
+### 预注册门（armed-unfired，发射后判决）
+
+- **影响面**：generic 重写只落在五个 rider 芯（muxi/huawei/card_a/
+  card_b/haiguang）；tianshu 选 `_iluvatar`、kunlunxin 选 `_kunlunxin`
+  （两 vendor 字节冻结）——隔离芯读数异常只排查不回滚（T101 e3 同处置）。
+- **回滚门**：任一 rider 芯数值或编译失败，或较 e2 读数 -5% → 回滚
+  generic 至 e2 字节（`db53db9a` @fde2d02c）。基线与回滚线：huawei
+  e2=0.824（本账本 CURRENT 记读）→ <0.7828；muxi 1.920 / haiguang
+  3.1485 / card_a 1.236 / card_b 1.29975（climb-loop s2t1op096 我队
+  my-best 行 2026-09-25T00:52:49；四芯 e1→e2 乘同一 generic 字节、e2
+  提交未单列四芯读数，以同字节 my-best 行为基线并披露来源）→
+  分别 <1.824 / <2.9911 / <1.1742 / <1.23476。
+- **判轴（记账性，非回滚）**：huawei ≥1.1 记 per-row 轴在 generic 臂
+  显著兑现（2D-tile 地板 0.824）；huawei ≥1.40525（c2flow 读数）或
+  muxi ≥2.181（现榜首 EvokeAgent 读数）记进对手带。
+- **换 TB**：均值 >1.89（e2 账本记读）。口径披露：平台 `my_best` 双快照
+  （batch7-intel-20260926-day 13:26 与 climb-loop 2026-09-26T15:15）仍读
+  1.72675（best_submitted_at 09-25T00:52:49），与账本 e2 avg 1.89 存差；
+  取较高者为换线避免假记 TB，差异留观，发射后以 platform status 实读对账。
+- 同字节重掷 ≤2 次。
+- 发射命令必须带 `--proxy-vendor iluvatar --proxy-vendor kunlunxin`
+  （E2 P2 修复后 vendor 源缺席会响亮失败）。

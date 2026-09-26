@@ -36,6 +36,27 @@
   平台动态字段双记：发射侧终轮 is_team_best=true/1.98333，11:07 复核
   false/1.4167。额度 17/30 剩（三发后）。
 
+## 2026-09-26 T96 E3 上膛（armed-unfired；e2 平台态见其账本 CURRENT：21508 valid 7/7，天数 4.17 / 昆仑 0.556 / 华为 0.824，avg 1.89）
+
+- [T96 fused_pack_qkv E3](fused_pack_qkv.md)：generic-perrow（s0 2D 行瓦片换
+  E2 `_iluvatar` 同构 per-row 1D 三件套：kernel 内全 1D 张量 + BLOCK_C 帽
+  2048（muxi max_tile_size）+ int32 寻址域（r2 补 padded 域界与输出侧独立
+  设界）+ 单 alloc 三 view，一次抬 muxi/huawei/card_a/card_b/haiguang 五个
+  rider 芯；两 vendor 字节冻结；r1 `e03934bd` + r2 `9bad92cb`，E2 节预告的
+  归因补充臂）完成上膛：远端 release 矩阵 **11 测试 / 83 case 全过**
+  （11/11 RELEASE_REQUIRED 含两个 E3 新回归，`--proxy-vendor
+  iluvatar+kunlunxin`，三源各 20 调用 / 19 kernel launch，96 非空 shape，
+  `Ran 11 tests in 1.515s OK`，verification_commit `7e0c58b0`），不可变
+  ZIP `e3-7e0c58b`（18182 字节，zip_sha256 `bbfe10ec…`，≠ e2
+  `15e40066…`，vs e2 仅 generic 成员重写、iluvatar/kunlunxin 成员冻结，
+  逐成员与 git blob + 回执 files 哈希三方核对无夹带）。armed-unfired 待
+  实时 preflight 发射；预注册门：任一 rider 芯数值/编译失败或较 e2 逐芯
+  -5%（huawei<0.7828 / muxi<1.824 / haiguang<2.9911 / card_a<1.1742 /
+  card_b<1.23476）回滚 generic 至 e2 字节 `db53db9a`，huawei ≥1.1 判轴 /
+  ≥1.40525 进对手带，均值 >1.89 换 TB（平台 my_best 双快照仍读 1.72675
+  的口径差异已披露留观），tianshu/kunlunxin 隔离芯异常只排查，同字节重掷
+  ≤2；发射命令必须 `--proxy-vendor` 含 iluvatar + kunlunxin。
+
 ## 2026-09-26 T101 E3 上膛（armed-unfired；e2 终态见顶部节：21551 valid 7/7 avg 11.5677，华为 12.7198 落未申报中间带，TB 守 e1）
 
 - [T101 post_reorder_deepgemm E3](post_reorder_deepgemm.md)：slot-skip +
