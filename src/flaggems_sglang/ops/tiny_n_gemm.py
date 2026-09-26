@@ -4,8 +4,9 @@
 # with m <= 16. One program per N block: the full [16, BK] x tile (M
 # padded to tl.dot's minimum, masked) is multiplied against a [BN, BK]
 # w tile with fp32 accumulation - numerically the reference's fp32
-# matmul of bf16-representable values. Single K trip when k <= BK
-# (the known Triton multi-trip codegen hazard), chunked otherwise.
+# matmul of bf16-representable values. BLOCK_K is capped at 128 so a
+# single-trip next_pow2(k) tile never blows shared memory (k=4096
+# demanded 1.3MB); larger k takes the masked multi-trip loop.
 
 import torch
 import triton
@@ -74,7 +75,7 @@ def tiny_n_gemm(x, w, out_dtype):
             out.stride(0),
             BLOCK_M=16,
             BLOCK_N=64,
-            BLOCK_K=max(16, triton.next_power_of_2(k)),
+            BLOCK_K=min(128, max(16, triton.next_power_of_2(k))),
             num_warps=4,
         )
     return out

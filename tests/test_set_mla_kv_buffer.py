@@ -44,9 +44,18 @@ class SetMlaKvBufferTest(unittest.TestCase):
         self.check(kv, loc.long(), 512, 64, torch.float32, torch.bfloat16)
 
     def test_duplicates_and_empty(self):
+        # duplicate slots must carry IDENTICAL source rows: differing
+        # values racing on one slot are unordered even in the reference
         kv = torch.randn(12, 576, dtype=torch.float16, device="cuda")
         dup = torch.full((5,), 7, dtype=torch.int64, device="cuda")
-        self.check(kv, dup, 512, 64)
+        single = torch.randn(1, 5, dtype=torch.float16, device="cuda")
+        nope = single[:, :4].expand(5, 4).contiguous()
+        rope = single[:, 4:].expand(5, 1).contiguous()
+        expected = reference(kv, dup, nope, rope)
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                actual = module.set_mla_kv_buffer(kv, dup, nope, rope)
+                torch.testing.assert_close(actual, expected, rtol=0, atol=0)
         empty = torch.empty(0, dtype=torch.int64, device="cuda")
         for name, module in MODULES:
             with self.subTest(module=name):

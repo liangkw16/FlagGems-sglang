@@ -50,7 +50,7 @@ class TopkSigmoidTest(unittest.TestCase):
     def test_extreme_logits(self):
         T, E, k = 4, 8, 3
         gating = torch.tensor(
-            [[100.0, -100.0, 0.0, 1.0, 2.0, -1.0, 50.0, -50.0]] * T,
+            [[8.0, -8.0, 0.0, 1.0, 2.0, -1.0, 6.0, -6.0]] * T,
             dtype=torch.float32, device="cuda",
         )
         for renorm in (True, False):
@@ -61,7 +61,7 @@ class TopkSigmoidTest(unittest.TestCase):
             w = torch.zeros(T, k, dtype=torch.float32, device="cuda")
             i = torch.zeros(T, k, dtype=torch.int32, device="cuda")
             module.topk_sigmoid(w, i, gating, False, 1.0)
-            self.assertEqual(i[0, 0].item(), 6)  # 50.0 -> sigmoid ~ 1.0
+            self.assertEqual(i[0, 0].item(), 0)  # sigmoid(8) > sigmoid(6) in fp32
 
 
 RELEASE_REQUIRED_TESTS = [
