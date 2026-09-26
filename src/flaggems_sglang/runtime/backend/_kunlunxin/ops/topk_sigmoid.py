@@ -59,21 +59,21 @@ def _topk_sigmoid_kernel(
     ks = tl.arange(0, BLOCK_K)
     km = ks < k
     sel = (rank[:, None] == ks[None, :]) & km[None, :]
-    w2 = tl.broadcast_to(scores[:, None], (BLOCK_E, BLOCK_K))
     i2 = tl.broadcast_to(es[:, None], (BLOCK_E, BLOCK_K))
     # the pointer must carry the same (BLOCK_E, BLOCK_K) shape as the
     # value; a (1, K) offset expression is not auto-broadcast by store
     zpad = tl.zeros((BLOCK_E, BLOCK_K), dtype=tl.int64)
-    tl.store(topk_weights + row * ws0 + ks[None, :] * ws1 + zpad, w2, mask=sel)
     tl.store(topk_ids + row * is0 + ks[None, :] * is1 + zpad, i2, mask=sel)
     if renorm:
-        wv = tl.load(topk_weights + row * ws0 + ks * ws1, mask=km, other=0.0)
-        total = tl.sum(wv, axis=0)
-        tl.store(
-            topk_weights + row * ws0 + ks * ws1,
-            wv * scale / (total + 1e-20),
-            mask=km,
-        )
+        # never read the scattered weights back (cross-lane store->load
+        # races): the top-k sum is a 1-D reduction over rank<k lanes and
+        # the scatter is repeated with rescaled values
+        tot = tl.sum(tl.where(rank < k, scores, 0.0), axis=0)
+        wv = scores * scale / (tot + 1e-20)
+    else:
+        wv = scores
+    w2 = tl.broadcast_to(wv[:, None], (BLOCK_E, BLOCK_K))
+    tl.store(topk_weights + row * ws0 + ks[None, :] * ws1 + zpad, w2, mask=sel)
 
 
 def topk_sigmoid(topk_weights, topk_ids, gating_output, renormalize, routed_scaling_factor):
