@@ -38,7 +38,7 @@ def _zero_experts_rowsum_kernel(
     z = tl.where(idx.to(tl.int32) >= num_experts, sc, 0.0)
     s = tl.sum(z, axis=0)
     sv = s + tl.zeros((BLOCK_K,), dtype=tl.float32)
-    tl.store(rowsum + offs, sv, mask=km & (slot == 0))
+    tl.store(rowsum + row, sv, mask=km & (slot == 0))
 
 
 @triton.jit
