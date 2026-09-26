@@ -219,6 +219,45 @@ class GetMlaKvBufferTest(unittest.TestCase):
         loc = torch.randperm(n, device="cuda").to(torch.int32)
         self.check(kv, loc, 64, torch.float16, torch.float16)
 
+    # ------------------------------------------------------------------
+    # e5 iluvatar arm regression: the vendor's single-row kernel comes
+    # in an int32 and an int64 flavor; the host guard below is the only
+    # thing deciding which one runs, so its truth table is pinned here
+    # (T96 test_iluvatar_int32_domain_guard pattern). The guard is a
+    # numeric-domain check on tensor sizes, not a device check.
+    # ------------------------------------------------------------------
+
+    def test_iluvatar_int32_domain_guard(self):
+        checked = 0
+        for name, module in MODULES:
+            guard = getattr(module, "_use_int32", None)
+            if guard is None:
+                continue
+            with self.subTest(module=name):
+                checked += 1
+                # typical MLA page-pool shape stays int32
+                self.assertTrue(guard(160, 576, 576, 160, 512, 64, 1))
+                # source-depth edge: deepest read (kv_rows-1)*kv_s0 +
+                # total_dim must stay strictly below 2**31
+                self.assertTrue(guard((1 << 31) - 1, 1, 1, 1, 1, 1, 1))
+                self.assertFalse(guard(1 << 31, 1, 1, 1, 1, 1, 1))
+                # row-strided depth (kv_s0 > total_dim) is bounded by
+                # the depth expression, not by numel (r2 lesson)
+                self.assertTrue(guard(512, 1 << 21, 1 << 21, 8, 512, 64, 1))
+                self.assertFalse(guard(1024, 1 << 21, 1 << 21, 8, 512, 64, 1))
+                # output sides are bounded on their own (duplicates
+                # allowed: output size is not derived from input size)
+                self.assertTrue(guard(8, 576, 576, 1 << 30, 1, 1, 1))
+                self.assertFalse(guard(8, 576, 576, 1 << 30, 2, 1, 1))
+                self.assertTrue(guard(8, 576, 576, 16, 512, 1 << 26, 1))
+                self.assertFalse(guard(8, 576, 576, 32, 512, 1 << 26, 1))
+                # loc load depth: (n-1)*loc_s0, one row deep is safe
+                self.assertTrue(guard(8, 576, 576, 2, 512, 64, 1 << 30))
+                self.assertFalse(guard(8, 576, 576, 2, 512, 64, 1 << 31))
+                self.assertTrue(guard(8, 576, 576, 1, 512, 64, 1 << 40))
+        if not checked:
+            self.skipTest("no applicable source exposes _use_int32")
+
 
 RELEASE_REQUIRED_TESTS = [
     "GetMlaKvBufferTest.test_mla_realistic_shapes",
@@ -235,6 +274,7 @@ RELEASE_REQUIRED_TESTS = [
     "GetMlaKvBufferTest.test_row_form_stride_fallbacks",
     "GetMlaKvBufferTest.test_row_form_host_branch_predicate",
     "GetMlaKvBufferTest.test_row_form_grid_cap_fallback",
+    "GetMlaKvBufferTest.test_iluvatar_int32_domain_guard",
 ]
 
 if __name__ == "__main__":

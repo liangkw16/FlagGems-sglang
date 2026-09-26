@@ -6,11 +6,11 @@ operator: get_mla_kv_buffer
 batch: 7
 validity: valid(7/7,e1)
 platform: e4(21514)valid但昆仑0.131<0.350触发预注册回滚门(sglang行形态窄向量倒挂第三次复现);华为0.726;TB保e1(avg1.669,昆仑0.350#2)
-candidate_stage: e4(armed未发射:昆仑单行骨架上行形状,轮2臂2f071f41;release@1c564ceb全绿14测试/144case零skip;ZIP e4-1c564ce sha256 a1820da0)
+candidate_stage: e5(dev就绪待验证:天数iluvatar单行骨架+T96三变量包,轮1开发员;源码+回归已commit,NVIDIA代理release/ZIP/发射待上膛轮)
 team_best_stage: e1
 team_best_speedup: -
 sealed: yes
-next: 昆仑窄向量墙三证(s0 0.045/e2 0.124/e4 0.131)——行形态在该芯死路;vendor已回滚aef2c1f1字节
+next: e5天数轴单发裁决(预期avg1.34-1.38>1.328可翻榜);昆仑墙三证不动,芯走已回滚地板字节;发射须--proxy-vendor iluvatar ascend kunlunxin
 updated: 2026-09-26
 ```
 
@@ -119,3 +119,74 @@ OpeGoodn 天花板。若窄向量倒挂复现，备用 E4b = 同骨架 + 单次 
 unverified 状态不变（NVIDIA 代理不背书目标芯，vendor docstring 亦自记「Not
 compiled on kunlunxin hardware locally」），发射 preflight 通过后执行一次性
 submit，发射后以平台 status/watch JSON 回写逐芯结果。
+
+## E5 开发（轮1开发员-T98-e5-iluvatar-perrow-1d，2026-09-26）
+
+**候选**：天数（iluvatar）装 per-row 1D vendor——上游 sglang 官方单行骨架
+（2026-09-26 经 gh api 复核 `sgl-project/sglang`
+`python/sglang/kernels/ops/kvcache/mla_buffer.py::get_mla_kv_buffer_kernel`：
+`grid=(n_loc,)` 每程序一行、标量 loc load、constexpr 维度/步长、两段
+exact-width `tl.arange` 零 mask 零循环）+ T96 已平台兑现的三变量包（int32
+寻址域守卫 + nope/rope 单 alloc 双 view；T96 fused_pack_qkv e2 平台天数
+2.95→4.17 +41%，本题为该包第二个载体），替换 generic 的 (8,512) 2D masked
+全链 i64 行瓦片（`src/flaggems_sglang/ops/get_mla_kv_buffer.py:29-53` 五处
+`.to(tl.int64)`）。
+
+**缺口结构**（快照 climb-loop.json s2t1op098 @2026-09-26T15:15:23，本会话实读）：
+EA（EvokeAgent）#1 avg 1.32814286，天数 2.7945（芯内 #4）；我方 #6 avg 1.212，
+天数 2.305（芯内 #25）/muxi 1.37133333/kunlunxin 0.13016667/huawei 0.7695。
+EA−我 天数 +0.4895（+21.2%）为单芯最大；天数榜首 c2flow 2.911、Sweetdeath
+2.88783333 佐证 2.9+ 可达。÷7 算术：天数 +30~41% → avg +0.099~0.135，昆仑
+地板恢复 0.130→0.350 → +0.031，合计 +0.13~0.166（申报 0.13，带内中低段）；
+单发可翻榜（1.212+0.13>1.328）。成功率支撑：同芯同构三变量包 T96 E2 平台
+兑现 +41%（唯一在天数平台兑现过的同族先例，其机制证据 4 条中 2 条直接点名
+本题——T98 2D int64 2.37 vs c2flow 2.91、int64 全链天数系统性落后，
+`fused_pack_qkv.md` CURRENT 与机制证据节本会话复核）；T51 E9 行块在天数
+-20% 佐证 per-row 偏好。
+
+**实现**（`src/flaggems_sglang/runtime/backend/_iluvatar/ops/get_mla_kv_buffer.py`，
+新增文件，本 commit）：
+- `_mla_split_row_i32_kernel` / `_mla_split_row_i64_kernel` 双 Triton 孪生：
+  上游单行骨架逐行镜像（标量 loc、constexpr KV_S0/NOPE_DIM/ROPE_DIM/双出
+  步长、exact-width arange 零 mask）；i32 版 `row/idx` 全链不升 i64，
+  i64 孪生承接溢出域（公开测试矩阵不可达，镜像 e4 已证 i64 行数学）。
+  num_warps=4（上游默认档，与 T96 兑现 launch 同值）。
+- `_use_int32(kv_rows, kv_s0, total_dim, n, nope_dim, rope_dim, loc_s0)`
+  数值域守卫：源深 `(kv_rows-1)*kv_s0+total_dim < 2^31`（r2 教训：按
+  stride 深度而非 numel——行步长视图 kv_s0>total_dim 时 numel 低估深度）；
+  输出侧 `n*nope_dim` / `n*rope_dim` 各自独立 < 2^31（纯 gather 允许重复
+  索引，输出不由输入规模导出）；loc 深 `(n-1)*loc_s0 < 2^31`。
+- `_upstream_row_form(n, nope_dim, rope_dim, loc_s0, kv_s1)`：host 形状
+  分支，与 e4 昆仑臂同一谓词同一签名（pow2 宽度 ≤65536 lane、kv 列步长=1、
+  loc 步长=1、1≤n≤65535）。
+- `_mla_rows_kernel`：generic 逐字节镜像回退（(8,512) 2D masked i64 全链，
+  launch 参数同 generic）——不满足行形态的一切形状落回平台已在天数读过
+  2.21-2.37 的字节，单变量纪律（vs e4：generic/_ascend/_kunlunxin 三源零改动）。
+- 单 alloc 双 view：nope/rope 同 dtype 时一份平坦 buffer 两个连续 view
+  （2×torch.empty→1，T77/T96 先例）；dtype 域分支——nope/rope dtype 交叉
+  （`test_cross_dtype_store` 三组合）回退双 empty。
+- 反作弊合规：int32 走数值域守卫非设备判断；无 try/except fallback；
+  无模块级可变容器。
+
+**测试**（`tests/test_get_mla_kv_buffer.py`，本 commit）：新
+`test_iluvatar_int32_domain_guard`（守卫真值表 12 例：源深/行步长深/输出
+两侧/loc 深各自边界，T96 同名测试模式）加入 RELEASE_REQUIRED_TESTS（现
+15 项）；e4 五项 `test_row_form_*` 回归原样复用（谓词签名一致，现由本
+vendor 的 `_upstream_row_form` 承接——本会话核实回滚后的 `_kunlunxin`
+树内字节 = aef2c1f1 地板（blob `05459d36`），不再暴露该谓词）；全矩阵经
+`tests/_op_variants.py` 自动装载新模块（generic/_ascend/_kunlunxin/
+_iluvatar 四源同跑）。本地无 triton/torch，CUDA 数值矩阵未在本机执行
+（远端 release 阶段补齐）；本会话已跑：`python3 -m py_compile` 两源码文件
+通过，stub 导入验证谓词 10/10、守卫 12/12 真值表与平台形状族（n≤4096、
+512/64、单位步长）全部走 i32 单行 kernel。
+
+**预注册门**（按平台天数 speedup 裁决）：≥2.9（超 EA 2.7945）判轴兑现；
+≥4.0 进场带（T96 兑现带）；<2.19（-5% vs 2.305）或任何数值失败 → 删本
+vendor 文件，天数回 generic 字节（e1 地板组合）；其余六芯 vendor 隔离读数
+应不变（昆仑走已回滚地板字节，发射背景本身含 0.130→0.350 恢复）。发射
+命令必须 `--proxy-vendor iluvatar --proxy-vendor ascend --proxy-vendor
+kunlunxin`。备选臂（预注册，rope 段 64-lane 窄段风险——天数无 exact-width
+前科亦无窄段正证据）：同 vendor 改整行 1024-lane masked 单 load + 两次
+移位 store（账本 E4b 同思路，load lane 减半）。归因补充预留：generic-i32
+单变量（T96 同样打包，E3 位）。天数 lowering target-runtime-unverified
+（NVIDIA 代理只验数学/JIT），平台单发裁决。
