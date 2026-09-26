@@ -5,12 +5,12 @@ task: 104
 operator: rmsnorm_hf
 batch: 7
 validity: valid
-platform: e1(21513)valid但多芯回退(沐曦4.26→3.04/-29%,昆仑1.36→0.68,华为1.57→1.34,天数6.41→6.09)触发-5%回滚门;TB保s0(21439 avg4.25);generic已回滚s0字节
-candidate_stage: e1
+platform: e1(21513)valid但多芯回退(沐曦4.26→3.04/-29%,昆仑1.36→0.68,华为1.57→1.34,天数6.41→6.09)触发-5%回滚门;TB保s0(21439 avg4.25);generic已回滚s0字节;e2整行exact-unmask已上膛未发射
+candidate_stage: e2
 team_best_stage: s0
 team_best_speedup: 见platform行
 sealed: no
-next: 精确子块两遍结构证伪(整行单遍masked反而更优);沐曦#1丢失,s0字节为最优
+next: e2发射,预注册门见E2节(数值败或任一芯-5%回滚s0字节;华为>=1.70判轴;均值>4.25246667换TB);沐曦#1丢失,s0字节为TB最优
 updated: 2026-09-26
 ```
 
@@ -132,3 +132,76 @@ updated: 2026-09-26
 - **状态**：armed-unfired——发射前预注册门不变（上节：7 芯无 -5% 回退；
   华为 ≥1.70 判轴兑现；平台均值 >4.25246667 换 TB；单芯回退走
   vendor 切分回滚旋钮），发射 preflight 通过后执行一次性 submit。
+
+## E2 整行 exact-unmask（2026-09-26，候选 935b55fc + 上膛 armed-unfired）
+
+- **假设**：e1 判定"整行单遍 masked 反而更优"后，整行路径的剩余成本是
+  mask 本身——`cols < hidden` 是 int32 向量比较，华为 Vector CMP 无
+  int32 形态降标量执行（chip-rulesets.md:36），且两个 masked load 的
+  `other` 预填串行 MTE2（chip-rulesets.md:39）。全部平台 pow2 hidden
+  （16/64/128/256/512/1024/2048/4096/8192）满足 BLOCK==hidden，mask
+  全真，该成本是纯开销。
+- **实现**（候选 commit `935b55fc`，仅 generic
+  `src/flaggems_sglang/ops/rmsnorm_hf.py` + `tests/test_rmsnorm_hf.py`，
+  建基于回滚后的 s0 字节 f5b7add4，e1 子块结构不在其中）：
+  - `EXACT: tl.constexpr` 编译期分支（`EXACT=block == hidden`，host 侧
+    常量，无运行时分支；log_scaling_tau EVEN / T40 E16 先例）：pow2
+    形状编译全裸 kernel——零边界 mask、零 `other` 预填、零逐 lane
+    比较；ragged hidden（333/1280/1536/3072/5120）保 mask 但比较改
+    fp32（域内 <2^24 精确，官方 Ascend CMP 修复）且权重 load 去
+    `other`（未定义 lane 只流入被 mask 丢弃的 store，不进归约）；x
+    load 保 `other=0.0` 保护 sumsq。语义顺序（fp32 sumsq → rsqrt →
+    round → fp32 权重乘 → 单次 store round）逐位保持，num_warps=8
+    不动（单变量轴）。
+  - 回归：`test_exact_pow2_unmasked_whole_row`（pow2 档扫）、
+    `test_exact_block_minus_one_boundary`（hidden==BLOCK/BLOCK-1 对
+    15/16..2047/2048 加 hidden<16 的 max(16,) 地板 7/8）、
+    `test_strided_exact_pow2`（列步 2 hidden 2048、行步翻倍
+    hidden 1024）——RELEASE_REQUIRED_TESTS 共 **10** 项。
+- **代理证据（远端 release 矩阵，NVIDIA RTX 5070 Ti / torch
+  2.13.0+cu130 / triton 3.7.1 / cuda 13.0 / python 3.12.13）**：
+  `verify_release.py prepare rmsnorm_hf --source-commit HEAD
+  --verification-commit HEAD`（该题无 vendor 文件，无 --proxy-vendor；
+  mode=release，schema v2），上传 `/tmp/wf-E2-exact-unmask-whole-row-release`
+  远端执行 `run`，**RC=0**：**10 测试 / 173 case 全过**（10/10
+  RELEASE_REQUIRED，0 fail/error/skip/xfail/unexpected_success），
+  **85 次 kernel launch = 85 次入口调用**（单 generic 源），121 条
+  非空张量 shape 记录，`Ran 10 tests in 2.412s OK`。回执
+  `artifacts/competition/day5prep-20260921/E2-exact-unmask-whole-row-wf/verification.json`
+  (sha256 `7b0e0140527b736f673c8cf87215f101d0ec2fa8851d4a89a5ec3364312bcc1b`)
+  / `verification.log` (sha256
+  `5824186ff8462d60bb685294d1506bb1b01455dd758ae181f0c1db7f58e2b565`)。
+  源码字节 = 935b55fc（`git diff 935b55fc 29c61107 --
+  src/…/rmsnorm_hf.py tests/test_rmsnorm_hf.py` 为空，期间仅他题
+  commit）。
+- **五元组（上膛身份）**：
+  - source_commit：`29c61107ee8618084065e15926897983193eb232`
+  - verification_commit：`29c61107ee8618084065e15926897983193eb232`
+    （=回执，发射 preflight 要求 commit 字段等于它）
+  - ledger_commit：本 commit（E2 上膛记账）
+  - ZIP：`artifacts/competition/rmsnorm_hf/e2-29c6110/rmsnorm_hf.zip`
+    （4434 字节，zip_sha256 =
+    `797bceaaa486e2bde55c0615adbc8fe4b466a51de656447ba69ee2429973f98f` =
+    canonical_zip_sha256；≠ e1 `a3cdec46…` ≠ s0 `58d41527…`——generic
+    源码改写后新 ZIP 字节，平台 zip_sha256 去重键成立，非同字节重掷）
+  - stage：`e2`（CURRENT candidate_stage e1→e2，序列 s0→e1→e2 连续
+    不跳号）
+  - ZIP 成员名单（与 `zipfile.namelist()` 实际核对一致，无夹带；
+    `unzip -t` 无错；UTF-8 `.py`，无测试/缓存/目录前缀/macOS 垃圾；
+    成员字节 = git blob @29c61107 = 回执 files 哈希 = 远端实际执行
+    字节）：
+    | 成员 | 字节 | sha256 |
+    |---|---|---|
+    | `rmsnorm_hf.py` | 4310 | `f8de4ff668e436bd9a269db9ee1bf8d6b1266929cb2ae8ce07640efe6751e5f1` |
+- **预注册门（发射前落账，读数后不得改判据；本节之前该轴无任何平台
+  读数；基线 = s0 21439 逐芯，climb-loop s2t1op104）**：
+  - **数值失败**（平台 correctness 不通过）或**任一芯相对 s0 基线
+    -5% 回退** → 回滚 generic 至 s0 字节 f5b7add4（e1 多芯倒挂前科，
+    判据保持保守；单芯回退也可走 vendor 切分旋钮只冻结该芯 s0 字节）。
+  - 华为 ≥1.70 判轴兑现（CMP 降标量 + 去 MTE2 预填双机制主靶，
+    阈值沿用 e1 节同一锚）；1.5687–1.70 之间保留观察、不判轴。
+  - 平台均值 >4.25246667（s0 TB）换 TB。
+  - ragged 臂的 fp32 比较与权重去 other 波及 333/1280/1536/3072/5120
+    全芯——昆仑（e1 0.68 前科）与沐曦（e1 -29% 前科）正确性/回退
+    优先观察。
+- **状态**：armed-unfired——发射 preflight 通过后执行一次性 submit。

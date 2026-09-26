@@ -1,5 +1,21 @@
 # 第二批候选与提交队列
 
+## 2026-09-26 T104 E2 上膛（armed-unfired）
+
+- [T104 rmsnorm_hf E2](rmsnorm_hf.md)：整行 exact-unmask 候选（e1
+  回滚后的 s0 整行字节上加 `EXACT` 编译期分支：pow2 hidden 全裸臂
+  零 mask 零 `other` 零比较，ragged 臂 fp32 比较 + 权重 load 去
+  other；单变量轴，num_warps 不动）完成上膛：远端 release 矩阵
+  **10 测试 / 173 case 全过**（10/10 RELEASE_REQUIRED 含 3 个新
+  exact 回归，该题无 vendor 文件故无 proxy-vendor，85 kernel
+  launch = 85 入口调用，121 非空 shape，verification_commit
+  `29c61107`），不可变 ZIP `e2-29c6110`（zip_sha256 `797bceaa…`，
+  ≠ e1 `a3cdec46…` ≠ s0 `58d41527…`，成员 1→1 仅 `rmsnorm_hf.py`
+  改写，逐成员与 git blob 核对无夹带）。armed-unfired 待实时
+  preflight 发射；预注册门：数值败或任一芯 -5%（vs s0 逐芯）回滚
+  generic 至 s0 字节，华为 ≥1.70 判轴兑现，均值 >4.25246667（s0
+  TB）换 TB，昆仑/沐曦（e1 倒挂前科）优先观察。
+
 ## 2026-09-26 T101 E2 上膛（armed-unfired）
 
 - [T101 post_reorder_deepgemm E2](post_reorder_deepgemm.md)：华为
