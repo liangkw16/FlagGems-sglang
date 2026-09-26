@@ -50,7 +50,11 @@ def _topk_sigmoid_kernel(
         cs = tl.broadcast_to(sj[None, :], (BLOCK_E, BLOCK_J))
         ri = tl.broadcast_to(es[:, None], (BLOCK_E, BLOCK_J))
         ci = tl.broadcast_to(js[None, :], (BLOCK_E, BLOCK_J))
-        beats = (rs > cs) | ((rs == cs) & (ri < ci))
+        # count how many OTHER experts beat lane i (generic-kernel
+        # direction): rank 0 is the winner. Padded other-lanes carry
+        # -inf and never beat a real score; padded candidate lanes
+        # accumulate rank >= num_experts and stay outside the k slots.
+        beats = (cs > rs) | ((cs == rs) & (ci < ri))
         rank += tl.sum(beats.to(tl.int32), axis=1)
     ks = tl.arange(0, BLOCK_K)
     km = ks < k
