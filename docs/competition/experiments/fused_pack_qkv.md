@@ -4,13 +4,13 @@
 task: 96
 operator: fused_pack_qkv
 batch: 7
-validity: valid(7/7,e1)
-platform: e2(21508)valid:天数4.17(+41%,iluvatar vendor兑现)/昆仑0.556/华为0.824;avg1.89仍距c2flow 2.36
-candidate_stage: e3
-team_best_stage: e2
-team_best_speedup: -
+validity: valid(7/7,e3)
+platform: e3(21628)valid 7/7 avg1.95460714 is_team_best=True(TB换e3;my_best 1.72675旧口径差已由本次实读对齐):沐曦2.1715(+13.10%)/海光3.45875(+9.85%)/card_a1.44175(+16.65%)/card_b1.40175(+7.85%)四rider升,华为0.50075(-39.23%,破回滚线0.7828→generic回滚门触发待执行)/天数4.138(-0.78%,_iluvatar冻结)/昆仑0.56975(+2.47%,冻结);vs e2平台实读1.88703571=+3.58%
+candidate_stage: e3(fired,读数落账见E3平台终态节)
+team_best_stage: e3
+team_best_speedup: 1.95460714(21628)
 sealed: yes
-next: e3 generic-perrow 已上膛待发射（五 rider 芯，预注册门见 E3 节；发射须 --proxy-vendor iluvatar+kunlunxin）；沐曦1.91/华为0.82→榜首2.60/1.41 轴待平台兑现
+next: 华为rider回滚门已触发(0.50075<0.7828):按门文本generic回滚e2字节(db53db9a@fde2d02c);判轴门华为≥1.1/≥1.40525两线均未达,沐曦距对手带线2.181差0.0095未进带;回滚执行与均值/单芯取舍归orchestrator(平台TB已由21628取得,回滚不撤销该提交)
 updated: 2026-09-26
 ```
 
@@ -283,3 +283,57 @@ ZIP 成员名单（与 `zipfile.namelist()` 实际核对一致，无夹带；`un
 - 同字节重掷 ≤2 次。
 - 发射命令必须带 `--proxy-vendor iluvatar --proxy-vendor kunlunxin`
   （E2 P2 修复后 vendor 源缺席会响亮失败）。
+
+## E3 平台终态（2026-09-26 发射，sub 21628）：valid 7/7 avg 1.95460714，is_team_best=True——均值/TB 双升，华为单独触发 generic 回滚门
+
+- **发射记录（单 preflight + 单 submit，无 uncertain/sending）**：与
+  T101 e3（sub 21627，16:16:26）间隔约 9 分钟（≥125s 最小间隔）；
+  发射链 status 预查（16:23:42）task=competing / can_submit=true /
+  额度 16/30 → preflight（nonce `c2a08f24`，tuple 与 E3 上膛五元组
+  全匹配：commit `7e0c58b` / zip `bbfe10ec…` / 3 成员
+  generic+iluvatar+kunlunxin / test-sha `4af416d8…` / receipt
+  `a81e8918…`，回执 source=verification=`7e0c58b`，11/11，proxy
+  iluvatar+kunlunxin）→ submit --confirm → submission_id **21628**
+  （daily_seq 15，created 16:25:43）→ watch（发射侧原样 watch_command）
+  绑定 file_url_sha256
+  `274d388d05053633dc287cf959d815e9d8c89d5ba106cb070c04f830a4c7495b` /
+  after-epoch 1790410586 轮询至终态（发射侧 observed 16:29:09）。
+- **终态（落账员独立复核：`platform_cli.py status --race 782kzq4m
+  --batch 7 --task 96`，observed 2026-09-26T16:32:08）**：status=
+  completed，validity=valid，**7/7 GPU passed**（raw_result errors/
+  failed_cases 全空），average_speedup **1.95460714**，is_team_best=
+  **True**，ranking_score 1.1777369；额度 15/30 剩。
+- **逐芯（e3 21628 vs 预注册基线；基线与回滚线见上方 E3 预注册门节；
+  selected_file/exec_ms 取自逐芯 raw_result）**：
+  | 芯 | e3 | 基线 | Δ | selected_file（exec_ms） |
+  |---|---|---|---|---|
+  | 天数 tianshu | 4.138 | e2 4.17075 | -0.78% | `_iluvatar` 冻结字节（163333ms，vs e2 同芯 220720ms） |
+  | 沐曦 muxi | 2.1715 | 1.920 | **+13.10%**（>回滚线 1.824；距对手带线 2.181 差 0.0095 未进带） | generic（29402ms） |
+  | 海光 haiguang | 3.45875 | 3.1485 | **+9.85%**（>2.9911） | generic（9173ms） |
+  | 昆仑 kunlunxin | 0.56975 | e2 0.556 | +2.47% | `_kunlunxin` 冻结字节（9886ms） |
+  | 华为 huawei | 0.50075 | 0.824 | **-39.23%（<0.7828，破回滚线）** | generic（28872ms） |
+  | card_a | 1.44175 | 1.236 | **+16.65%**（>1.1742） | generic（6705ms） |
+  | card_b | 1.40175 | 1.29975 | **+7.85%**（>1.23476） | generic（19063ms） |
+- **均值验算**：(4.138+2.1715+3.45875+0.56975+0.50075+1.44175+
+  1.40175)/7 = 13.68225/7 = 1.954607143，与平台 1.95460714 一致
+  （截位）；vs e2 平台实读 avg 1.88703571 = **+3.58%**，vs 账本 e2
+  记读 1.89 = +3.42%。
+- **预注册门判决（判据=E3 预注册门节原文，发射后未改；本节只记录门
+  触发事实，判决执行归 orchestrator/上膛会话）**：
+  1. **回滚门触发**：华为 0.50075 < 0.7828（-39.23%；数值/编译均无
+     失败，纯读数破 -5% 线）→ 按门文本 **generic 回滚 e2 字节**
+     （`db53db9a196e3fb08206725bf945c34aac22dec186f119fa0d0bab913c286e52`
+     @fde2d02c）；
+  2. 判轴门：华为 ≥1.1 与 ≥1.40525 均未达（0.50075）——per-row 轴在
+     华为 generic 臂未兑现反大幅回退；沐曦 ≥2.181 未达（2.1715，差
+     0.0095）；
+  3. **换 TB 门触发**：均值 1.95460714 > 1.89，且本次 status 实读
+     is_team_best=True——E3 预注册门节披露的平台 my_best 双快照仍读
+     1.72675 的口径差异已由本次实读对齐（留观项闭环）；
+  4. 隔离冻结芯：天数 -0.78% / 昆仑 +2.47% 噪声带内 → 只排查不回滚。
+- **混合结局读数**：五 rider 芯四升（沐曦 +13.10% / 海光 +9.85% /
+  card_a +16.65% / card_b +7.85%）一大幅回退（华为 -39.23%）；均值与
+  TB 双升。平台 TB 已由 21628（e3 字节）取得，回滚树字节不撤销该提交，
+  但下一发回到 e2 generic 字节将同时回吐四芯增益与均值——回滚执行与
+  「整臂回滚 vs 保均值」取舍归 orchestrator（预注册门文本为回滚，未
+  申报保留选项，如实留痕）。

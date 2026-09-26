@@ -1,5 +1,38 @@
 # 第二批候选与提交队列
 
+## 2026-09-26 T96 E3 平台终态（21628）：valid 7/7 avg 1.95460714，is_team_best=True——均值/TB 双升，华为单独触发 generic 回滚门
+
+- **终态**：[T96 fused_pack_qkv e3](fused_pack_qkv.md)（generic-perrow，
+  sub 21628，daily_seq 15）completed / valid **7/7**，avg **1.95460714**
+  （vs e2 平台实读 1.88703571 **+3.58%**），**is_team_best=True →
+  TB 换 e3**（平台 my_best 双快照 1.72675 旧口径差已由本次实读对齐）。
+  五 rider 芯四升一大幅回退：沐曦 **2.1715**（+13.10%，>回滚线 1.824，
+  距对手带线 2.181 差 0.0095 未进带）/ 海光 **3.45875**（+9.85%）/
+  card_a **1.44175**（+16.65%）/ card_b **1.40175**（+7.85%）/
+  华为 **0.50075**（**-39.23%，<0.7828 破回滚线**，selected_file=
+  generic 佐证实跑，无数值/编译失败）→ **门触发：generic 回滚 e2 字节
+  `db53db9a`@fde2d02c**（orchestrator 待执行；平台 TB 已由 21628 取得，
+  回滚树字节不撤销提交，但下一发回 e2 字节将回吐四芯增益，取舍待编排）。
+  判轴门华为 ≥1.1/≥1.40525 均未达（per-row 轴在华为 generic 臂未兑现）。
+  隔离冻结芯：天数 4.138（-0.78%，`_iluvatar`）/ 昆仑 0.56975（+2.47%）
+  噪声带内只排查。额度 15/30 剩。
+
+## 2026-09-26 T101 E3 平台终态（21627）：valid 7/7 avg 9.74534286——四 rider 芯破 -5% 触发 generic 回滚门，TB 守 e1
+
+- **终态**：[T101 post_reorder_deepgemm e3](post_reorder_deepgemm.md)
+  （slot-skip + num_stages，sub 21627，daily_seq 14）completed / valid
+  **7/7**，avg **9.74534286**（vs e1 TB 11.63934286 **-16.27%**，
+  is_team_best=False）。华为 **12.7202**（+0.003% vs e2，
+  selected_file=`post_reorder_deepgemm_ascend.py` 佐证 vendor 实跑）
+  ≥12.08 回滚线 → `_ascend` 不回滚；**generic-rider 门触发**：天数
+  9.306（**-23.20%**）/ 沐曦 5.3242（**-16.05%**）/ 海光 12.4122
+  （**-39.77%**）/ card_a 9.607（**-10.98%**）四芯破 e1 基线 -5% 线
+  （card_b 7.46，-4.05% 未单独破）→ **门触发：generic 回滚 e1 字节
+  `b405f3cf`@0f9cf744**（orchestrator 待执行）。均值 ≤TB → **TB 守
+  e1(21509)**；昆仑 11.3878（-0.57%，冻结字节）噪声带内只排查。
+  exec_ms 线索：天数 227983ms vs e2 同芯 152283ms 显著拉长、海光读数
+  腰斩但 exec 仅 +21%——慢窗贡献未排除，窗口归因待排查。额度 15/30 剩。
+
 ## 2026-09-26 T97 E4 平台终态（21556）：valid 7/7 avg 3.05696825——card_b 2.911 跌破 3.158 回滚线
 
 - **终态**：[T97 fused_sigmoid_mul e4](fused_sigmoid_mul.md)（AMD `_amd`

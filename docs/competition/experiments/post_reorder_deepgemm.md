@@ -5,12 +5,12 @@ task: 101
 operator: post_reorder_deepgemm
 batch: 7
 validity: valid
-platform: e2(21551)valid 7/7 avg11.56768571(-0.62% vs e1);华为12.7198(+2.68%,_ascend vendor实跑,落[11.77,15)未申报中间带,轴未确认)/天数11.9694/海光19.8214/昆仑11.5302/card_a10.8056/沐曦6.4378/card_b7.6896;TB仍e1(21509)avg11.63934286;发射侧终轮is_team_best=true/1.98333与11:07复核false/1.4167双记(动态字段)
-candidate_stage: e3(armed-unfired,已建ZIP+release回执,未发射未耗额度)
+platform: e3(21627)valid 7/7 avg9.74534286(-16.27% vs e1 TB);天数9.306(-23.20%)/沐曦5.3242(-16.05%)/海光12.4122(-39.77%)/card_a9.607(-10.98%)四rider芯破e1基线-5%线(card_b7.46,-4.05%未单独破)/昆仑11.3878(-0.57%,冻结字节)/华为12.7202(+0.003% vs e2,_ascend实跑,≥12.08不回滚);TB仍e1(21509)avg11.63934286;is_team_best=False/ranking0.71112221(16:31复核)
+candidate_stage: e3(fired,读数落账见E3平台终态节)
 team_best_stage: e1
 team_best_speedup: 见platform行
 sealed: no
-next: e3已上膛(slot-skip+num_stages,五元组与回执见E3上膛节;预注册门锁定于E3候选记录节);待发射侧实时preflight单发,读数后按门判读不改判据
+next: 预注册generic-rider回滚门已触发(四芯破-5%):按门文本generic回滚e1字节(blob b405f3cf@0f9cf744);天数exec227983ms vs e2同芯152283ms慢窗未排除(海光读数腰斩但exec仅+21%),窗口归因与回滚执行归orchestrator
 updated: 2026-09-26
 ```
 
@@ -314,3 +314,51 @@ updated: 2026-09-26
   card_a/card_b）数值失败或较 e1 逐芯基线 -5% → generic 回滚 e1 字节
   （blob `b405f3cf…`@0f9cf744）；平台均值 >11.63934286 → 换 TB；昆仑
   冻结字节读数异常只排查不回滚。
+
+## E3 平台终态（2026-09-26 发射，sub 21627）：valid 7/7 avg 9.74534286——四 rider 芯破 -5% 触发 generic 回滚门，TB 守 e1
+
+- **发射记录（单 preflight + 单 submit，无 uncertain/sending）**：发射链
+  status 预查（16:15:07）task=competing / can_submit=true / 额度 17/30 /
+  最小间隔久过 → preflight（nonce `d19045b5`，tuple 与 E3 上膛五元组
+  全匹配）→ submit --confirm → submission_id **21627**（daily_seq 14，
+  created 16:16:26）→ watch 绑定 file_url_sha256
+  `cd52c3a2f6388f618c0ec85c71bc6d9685dace1f1c087e7a64010e31a99666bc` /
+  after-epoch 1790391527 轮询至终态（发射侧 observed 16:21:16）。
+- **终态（落账员独立复核：`platform_cli.py status --race 782kzq4m
+  --batch 7 --task 101`，observed 2026-09-26T16:31:22）**：status=
+  completed，validity=valid，**7/7 GPU passed**（raw_result errors/
+  failed_cases 全空），average_speedup **9.74534286**，is_team_best=
+  **False**，ranking_score 0.71112221；额度 15/30 剩（本次复核时点，
+  已含同窗 T96 sub 21628 一发；发射侧发射后读数为 16/30，如实双记）。
+- **逐芯（e3 21627 vs e1 逐芯基线〔预注册门基准〕vs e2 21551；
+  selected_file/exec_ms 取自逐芯 raw_result）**：
+  | 芯 | e3 | e1 基线 | Δ vs e1 | e2 | Δ vs e2 | selected_file（exec_ms） |
+  |---|---|---|---|---|---|---|
+  | 天数 tianshu | 9.306 | 12.1168 | **-23.20%** | 11.9694 | -22.25% | generic（227983ms，vs e2 同芯 152283ms） |
+  | 沐曦 muxi | 5.3242 | 6.342 | **-16.05%** | 6.4378 | -17.30% | generic（31493ms） |
+  | 海光 haiguang | 12.4122 | 20.6092 | **-39.77%** | 19.8214 | -37.38% | generic（10923ms，vs e2 9013ms） |
+  | 昆仑 kunlunxin | 11.3878 | 11.453 | -0.57% | 11.5302 | -1.23% | `_kunlunxin` 冻结字节（15866ms） |
+  | 华为 huawei | 12.7202 | 12.3874 | +2.68% | 12.7198（门基准） | +0.003% | `_ascend` vendor 实跑（39635ms） |
+  | card_a | 9.607 | 10.7918 | **-10.98%** | 10.8056 | -11.09% | generic（8714ms） |
+  | card_b | 7.46 | 7.7752 | -4.05% | 7.6896 | -2.99% | generic（21955ms） |
+  （华为门基准为 e2 12.7198：`_ascend` 自 E2 起实跑，E3 同改双臂。）
+- **均值验算**：(9.306+5.3242+12.4122+11.3878+12.7202+9.607+7.46)/7
+  = 68.2174/7 = 9.745342857，与平台 9.74534286 一致（截位）；vs e1 TB
+  11.63934286 = -16.27%。
+- **预注册门判决（判据=E3 候选记录节原文，读数后未改；本节只记录门
+  触发事实，回滚执行归 orchestrator）**：
+  1. 华为 12.7202 ≥12.08（e2 -5% 回滚线）且 7/7 无数值失败 →
+     `_ascend` **不回滚**；
+  2. **generic-rider 门触发**：天数 -23.20% / 沐曦 -16.05% / 海光
+     -39.77% / card_a -10.98% 四芯破 e1 基线 -5% 线（card_b -4.05%
+     未单独破）→ 按预注册文本 **generic 回滚 e1 字节**（blob
+     `b405f3cf8c8d25f67208372ea1a5099631f785290bf91c5a50738af2ad889827`
+     @0f9cf744）；
+  3. 均值 9.74534286 ≤11.63934286 → **TB 不换**，e1(21509) 仍为我队
+     按均值最优；
+  4. 昆仑 11.3878（-0.57%）冻结字节噪声带内 → 只排查不回滚。
+- **exec_ms 观察（窗口归因线索，非判决）**：天数 exec 227983ms 显著
+  拉长（e2 同芯 152283ms，约 +50%）；海光读数较 e1 腰斩（-39.77%）但
+  exec 10923ms 仅 +21%（vs e2 9013ms）——评测慢窗（reference 同窗
+  退化）对读数的贡献未排除；读数如实上报，窗口归因与回滚执行归
+  orchestrator/后续账本会话。
