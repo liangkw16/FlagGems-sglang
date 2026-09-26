@@ -5,12 +5,12 @@ task: 104
 operator: rmsnorm_hf
 batch: 7
 validity: valid
-platform: e1(21513)valid但多芯回退(沐曦4.26→3.04/-29%,昆仑1.36→0.68,华为1.57→1.34,天数6.41→6.09)触发-5%回滚门;TB保s0(21439 avg4.25);generic已回滚s0字节;e2整行exact-unmask已上膛未发射
-candidate_stage: e2
+platform: e2(21553)invalid_correctness 5/7:昆仑6例(case_idx3/6/9/12/15/18,失配57.7-100%,abs至19.5,含nan/inf)+华为4例(9/12/15/18,失配3.2-4.0%,rel至1.8e4)双数值败,重叠case9/12/15/18指向ragged臂fp32比较;通过5芯也全跌破-5%(沐曦-28.7%/海光-22.0%);TB保s0(21439 avg4.25246667)
+candidate_stage: e2(已发射,数值败触发回滚门)
 team_best_stage: s0
 team_best_speedup: 见platform行
 sealed: no
-next: e2发射,预注册门见E2节(数值败或任一芯-5%回滚s0字节;华为>=1.70判轴;均值>4.25246667换TB);沐曦#1丢失,s0字节为TB最优
+next: 预注册门已触发:generic回滚s0字节f5b7add4(orchestrator待执行);ragged臂fp32比较+权重去other为失败主嫌;e2字节不再入包,轴重开需新预注册
 updated: 2026-09-26
 ```
 
@@ -205,3 +205,35 @@ updated: 2026-09-26
     全芯——昆仑（e1 0.68 前科）与沐曦（e1 -29% 前科）正确性/回退
     优先观察。
 - **状态**：armed-unfired——发射 preflight 通过后执行一次性 submit。
+
+## E2 平台终态（2026-09-26 发射，sub 21553）：invalid_correctness 5/7——ragged 臂 fp32 比较双芯数值败，回滚门触发
+
+- **发射记录（单 preflight + 单 submit）**：一次 preflight（nonce
+  `7816fbd5509470ea67af5138399e013b`，tuple 与上膛五元组匹配：commit=
+  verification commit `29c61107` / zip `797bceaa…` / test-sha `825a3cef…` /
+  receipt `7b0e0140…`）+ 一次 submit → state=submitted，submission_id
+  **21553**，daily_seq 12；watch 绑定 file_url_sha256 `9aac2356…`、
+  after-epoch 1790390915。无 uncertain/sending 状态。
+- **终态（落账员独立复核：`platform_cli.py status --race 782kzq4m
+  --batch 7 --task 104`，observed 2026-09-26T11:07）**：status=completed，
+  validity=**invalid_correctness**，**5/7 passed**，avg=None。
+- **失败芯（raw_result 实读，case_idx 逐例核对）**：
+  - 昆仑 6 例：`test_rmsnorm_hf[3/6/9/12/15/18]`，失配 57.7%–100%，
+    greatest absolute difference 13.4–19.5，含 nan/inf；
+  - 华为 4 例：`test_rmsnorm_hf[9/12/15/18]`，失配 3.2%–4.0%，
+    greatest absolute difference 6.34–18.22（发射报告另记 greatest
+    relative difference 至 1.8e4）；
+  - 两芯重叠 `case_idx 9/12/15/18` → 指向 ragged hidden
+    （333/1280/1536/3072/5120）的 **fp32 比较臂 + 权重 load 去 other**
+    ——E2 节"ragged 臂波及全芯，昆仑/沐曦优先观察"预警命中（昆仑命中，
+    沐曦仅性能回退未见数值失败）。
+- **通过芯（speedup vs s0 TB 21439，括号 Δ）**：tianshu 6.15913333
+  （-3.9%）、muxi 3.03433333（**-28.7%**）、haiguang 4.8062（-22.0%）、
+  card_a 4.42606667（-11.1%）、card_b 4.64686667（-7.8%）——通过芯也
+  全数跌破 -5%，与数值败同向，轴整体判负。
+- **预注册门判决（判据=上节原文，读数后未改）**："数值失败（平台
+  correctness 不通过）"成立 → **generic 回滚至 s0 字节 f5b7add4**
+  （orchestrator 待执行动作；e2 字节不再入包）；华为 ≥1.70 判轴与均值
+  >4.25246667 换 TB 条款因 invalid 不适用；**TB 保 s0(21439
+  avg4.25246667) 不变**。
+- **额度**：发射后 18/30 剩余（本轮 11:07 复核 17/30，已含 T97 一发）。

@@ -4,13 +4,13 @@
 task: 97
 operator: fused_sigmoid_mul
 batch: 7
-validity: valid(7/7,s0)
-platform: e3(21516)valid avg3.095新TB:华为1.674(+28%,≥1.6门过)/昆仑1.122(2048字节修正);榜首3.315
-candidate_stage: e4(armed未发射:amd两段式无mask初档16384/w8,回执22/22+ZIP e4-fa70a9e zip42eda60a;代理预筛8192/16384×w4/w8改档则新commit重上膛;门card_b≥3.4保留/≥3.7判轴,<3.158或数值失败删文件回滚generic)
+validity: valid(7/7,e3)
+platform: e4(21556)valid 7/7 avg3.05696825(-1.2% vs e3):card_b 2.911(-7.8%,_amd vendor实跑,跌破3.158回滚线)→门触发删_amd/ops/fused_sigmoid_mul.py回滚card_b至generic;沐曦3.178(+7.8%)/华为1.6768与昆仑1.114(冻结e3字节)/天数4.874/海光3.957/card_a3.688;TB仍e3(21516 avg3.09542857);榜首3.315
+candidate_stage: e4(已发射,card_b性能回滚门触发)
 team_best_stage: e3
-team_best_speedup: -
+team_best_speedup: 见platform行
 sealed: yes
-next: 发射/验证必须--proxy-vendor amd+ascend+kunlunxin且--dependency tests/test_e4_amd_two_segment_flat.py;card_b 3.158→3.4/4.156金狐狸断层;华为1.67→2.19/昆仑1.12→2.01;天数4.86→5.33
+next: 删_amd/ops/fused_sigmoid_mul.py为orchestrator待执行动作(删除即fallback,card_b回generic字节,无其他芯受影响);≥3.4保留/≥3.7判轴均未达,AMD flat两段式同构轴平台负证据入档
 updated: 2026-09-26
 ```
 
@@ -298,3 +298,37 @@ generic 37 / _ascend 37 / _kunlunxin 37；bf16 113 / fp16 20 / fp32 16）。r2
 16384/w8 已过全数值矩阵；r1 预注册的 NVIDIA 代理预筛 8192/16384×w4/w8（灾难
 门，性能不可外推）若改档，则字节变更需新 commit 重新上膛（新 ZIP/新回执），
 本 ZIP 不冒名顶替。发射后以平台 status/watch JSON 回写逐芯结果。
+
+## E4 平台终态（2026-09-26 发射，sub 21556）：valid 7/7 但 card_b 2.911 跌破 3.158 性能回滚线
+
+- **发射记录（单 preflight + 单 submit）**：一次 preflight（nonce
+  `7969c31b24fc29836626efa63dd98951`，tuple 与上膛五元组匹配：commit=
+  verification commit `fa70a9eb` / zip `42eda60a…` / 4 成员含新
+  `fused_sigmoid_mul_amd.py` / test-sha `c577a229…` / receipt `7137acb1…`）
+  + 一次 submit → state=submitted，submission_id **21556**，daily_seq 13；
+  watch 绑定 file_url_sha256 `d926a8e6…`、after-epoch 1790391205。submit 时
+  vendor 选择确认：card_b→`fused_sigmoid_mul_amd.py`、huawei→ascend、
+  kunlunxin→kunlunxin、其余 generic。无 uncertain/sending 状态。
+- **终态（落账员独立复核：`platform_cli.py status --race 782kzq4m
+  --batch 7 --task 97`，observed 2026-09-26T11:07）**：status=completed，
+  validity=valid，**7/7 passed**（raw_result failed_cases 全空），avg
+  **3.05696825**（vs e3 TB 3.09542857 = **-1.2%**；is_TB=False，e3 仍
+  team best）。
+- **逐芯（e4 21556 vs e3 21516；selected_file 佐证字节实跑）**：
+  | 芯 | e4 | e3 | Δ | selected_file |
+  |---|---|---|---|---|
+  | card_b | **2.911** | 3.15822222 | **-7.8%** | `fused_sigmoid_mul_amd.py`（vendor 实跑） |
+  | 天数 tianshu | 4.874 | 4.86105556 | +0.3% | generic（冻结字节） |
+  | 沐曦 muxi | 3.17788889 | 2.94744444 | +7.8% | generic（冻结字节） |
+  | 海光 haiguang | 3.95677778 | 4.09088889 | -3.3% | generic（冻结字节） |
+  | 昆仑 kunlunxin | 1.11422222 | 1.12216667 | -0.7% | `_kunlunxin`（e3 冻结字节） |
+  | 华为 huawei | 1.67683333 | 1.674 | +0.2% | `_ascend`（e3 冻结字节） |
+  | card_a | 3.68805556 | 3.81422222 | -3.3% | generic（冻结字节） |
+- **预注册门判决（判据=上节原文，读数后未改）**：card_b 2.911 **< 3.158
+  回滚线** → **删 `_amd/ops/fused_sigmoid_mul.py`、card_b 回滚至 generic
+  字节**（删除即 fallback，无其他芯受影响；orchestrator 待执行动作）。
+  数值失败未发生（7/7 passed），纯性能下限触发；≥3.4 保留 / ≥3.7 判轴
+  均未达——AMD flat 两段式同构轴获平台负证据（E4 节披露的同概念 T92 e27
+  armed-unfired 读数校准义务由此获得本题为负的参照）。沐曦 +7.8% 与
+  card_a/海光 -3.3% 均读自冻结 e3 字节，按预注册归平台漂移不归因字节。
+- **额度**：发射后 17/30 剩余（本轮 11:07 复核同值）。

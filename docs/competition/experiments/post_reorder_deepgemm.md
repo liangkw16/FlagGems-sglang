@@ -5,12 +5,12 @@ task: 101
 operator: post_reorder_deepgemm
 batch: 7
 validity: valid
-platform: e1(21509)valid avg11.63934286;海光20.61/card_a10.79/天数12.12/沐曦6.34/昆仑11.45/华为12.39/card_b7.78;快照rank4(OpeGoodn13.24于09-26T07:34反超,night-fire时11.50疑r1已过时);T65-E10同构阶梯全面兑现
-candidate_stage: e2
+platform: e2(21551)valid 7/7 avg11.56768571(-0.62% vs e1);华为12.7198(+2.68%,_ascend vendor实跑,落[11.77,15)未申报中间带,轴未确认)/天数11.9694/海光19.8214/昆仑11.5302/card_a10.8056/沐曦6.4378/card_b7.6896;TB仍e1(21509)avg11.63934286;发射侧终轮is_team_best=true/1.98333与11:07复核false/1.4167双记(动态字段)
+candidate_stage: e2(已发射,读数落中间带)
 team_best_stage: e1
 team_best_speedup: 见platform行
 sealed: no
-next: E2(华为_ascend两段式)已上膛待发射;门:数值败或华为<11.77回退删vendor/>=15保留/>=18判轴;均值>11.63934286换TB
+next: e2门判决已落:无数值败不删vendor/华为中间带轴未确认/均值<=TB不换;[11.77,15)处置(沿轴e3或删vendor收敛)预注册未申报,待编排
 updated: 2026-09-26
 ```
 
@@ -161,3 +161,41 @@ updated: 2026-09-26
     >11.63934286（我队当前 TB）换 TB；其余 6 芯字节未变，任一 -5% 只可能是
     噪声/平台漂移，触发异常排查而非结构回退。本节之前无该轴任何平台读数；
     门与签名在平台提交前落账，读数后不得改判据。
+
+## E2 平台终态（2026-09-26 发射，sub 21551）：valid 7/7 avg 11.56768571——华为 +2.68% 落未申报中间带，TB 守 e1
+
+- **发射记录（单 preflight + 单 submit）**：一次 preflight（nonce
+  `e26efa416acab32a6e04906fff223a99`，tuple 与上膛五元组全匹配：commit
+  `87d0e627` / zip `c53082a0…` / 3 成员 / test-sha `3f5e02a0…` / receipt
+  `579feb0c…`）+ 一次 submit --confirm → state=submitted，submission_id
+  **21551**，daily_seq 11；watch 绑定 file_url_sha256 `8cdc7d30…`、
+  after-epoch 1790366407。无 uncertain/sending 状态。
+- **终态（落账员独立复核：`platform_cli.py status --race 782kzq4m
+  --batch 7 --task 101`，observed 2026-09-26T11:07）**：status=completed，
+  validity=valid，**7/7 GPU passed**（raw_result failed_cases 全空），
+  average_speedup **11.56768571**（vs e1 11.63934286 = **-0.62%**）。
+- **逐芯（e2 21551 vs e1 21509；selected_file 佐证字节实跑）**：
+  | 芯 | e2 | e1 | Δ | selected_file |
+  |---|---|---|---|---|
+  | 华为 huawei | **12.7198** | 12.3874 | **+2.68%** | `post_reorder_deepgemm_ascend.py`（vendor 实跑；exec 39239ms vs e1 39378ms） |
+  | 天数 tianshu | 11.9694 | 12.1168 | -1.22% | generic（E1 字节） |
+  | 沐曦 muxi | 6.4378 | 6.342 | +1.51% | generic（E1 字节） |
+  | 海光 haiguang | 19.8214 | 20.6092 | -3.82% | generic（E1 字节） |
+  | 昆仑 kunlunxin | 11.5302 | 11.453 | +0.67% | `_kunlunxin`（e1/s0 冻结字节） |
+  | card_a | 10.8056 | 10.7918 | +0.13% | generic（E1 字节） |
+  | card_b | 7.6896 | 7.7752 | -1.10% | generic（E1 字节） |
+- **预注册门判决（判据=上节原文，读数后未改）**：
+  1. 数值失败未发生（7/7 passed）→ 不触发删 vendor；
+  2. 华为 12.7198 ≥11.77 回滚下限（不删）但 <15 保留线、<18 判轴线 →
+     落在**预注册未申报的中间带 [11.77,15)**，轴**未确认**；
+  3. 均值 11.56768571 ≤11.63934286 → **TB 不换**，e1(21509) 仍为我队
+     按均值最优；
+  4. 六个字节未变芯最大跌幅海光 -3.82%，未破 -5% 异常排查线。
+- **平台动态字段双记（两次读数均如实保留，不互改）**：发射侧最终轮询记
+  21551 `is_team_best=true / ranking_score 1.98333333`；本轮 11:07 status
+  复核记 `is_team_best=False / ranking_score 1.41666667`（榜单相对动态
+  字段，随榜单变动）。
+- **额度**：发射后 19/30 剩余；本轮 11:07 复核时 17/30（已含同窗
+  T104/T97 各一发）。
+- **遗留（orchestrator 待决）**：预注册门对 [11.77,15) 未申报动作——沿轴
+  继续（e3）或删 vendor 收敛 generic 均不违规，本账本不擅自判决。

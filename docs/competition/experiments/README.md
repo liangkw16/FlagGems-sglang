@@ -1,6 +1,42 @@
 # 第二批候选与提交队列
 
-## 2026-09-26 T97 E4 上膛（armed-unfired）
+## 2026-09-26 T97 E4 平台终态（21556）：valid 7/7 avg 3.05696825——card_b 2.911 跌破 3.158 回滚线
+
+- **终态**：[T97 fused_sigmoid_mul e4](fused_sigmoid_mul.md)（AMD `_amd`
+  vendor，sub 21556，daily_seq 13）completed / valid **7/7**，avg
+  3.05696825（vs e3 TB 3.09542857 -1.2%，is_TB=False）。card_b **2.911**
+  （-7.8% vs e3 3.1582，selected_file=`fused_sigmoid_mul_amd.py` 佐证
+  vendor 实跑）< 预注册 3.158 回滚线 → **门触发：删
+  `_amd/ops/fused_sigmoid_mul.py`，card_b 回滚 generic 字节**（删除即
+  fallback；orchestrator 待执行）。≥3.4 保留 / ≥3.7 判轴均未达，AMD
+  flat 两段式同构轴平台负证据入档。沐曦 +7.8% / 天数 +0.3% / 华为昆仑
+  冻结字节 -0.7%/+0.2% / 海光、card_a -3.3%（漂移带）。TB 守 e3(21516)。
+
+## 2026-09-26 T104 E2 平台终态（21553）：invalid_correctness 5/7——ragged 臂双芯数值败，回滚 s0 字节
+
+- **终态**：[T104 rmsnorm_hf e2](rmsnorm_hf.md)（整行 exact-unmask，sub
+  21553，daily_seq 12）completed / **invalid_correctness 5/7**，avg=None。
+  昆仑 6 例（case_idx 3/6/9/12/15/18，失配 57.7-100%，abs 至 19.5，含
+  nan/inf）+ 华为 4 例（case_idx 9/12/15/18，失配 3.2-4.0%，rel 至 1.8e4），
+  重叠 case 9/12/15/18 指向 ragged 臂 fp32 比较 + 权重去 other；通过 5 芯
+  也全跌破 -5%（沐曦 -28.7%/海光 -22.0%/card_a -11.1%/card_b -7.8%/
+  天数 -3.9%）。**门触发：generic 回滚 s0 字节 `f5b7add4`**（orchestrator
+  待执行；e2 字节不再入包）。TB 保 s0(21439 avg4.25246667)。
+
+## 2026-09-26 T101 E2 平台终态（21551）：valid 7/7 avg 11.56768571——华为 +2.68% 落未申报中间带，TB 守 e1
+
+- **终态**：[T101 post_reorder_deepgemm e2](post_reorder_deepgemm.md)
+  （华为 `_ascend` 两段式 vendor，sub 21551，daily_seq 11）completed /
+  valid **7/7**，avg 11.56768571（vs e1 11.63934286 **-0.62%**）。华为
+  **12.7198**（+2.68%，selected_file=`post_reorder_deepgemm_ascend.py`
+  佐证 vendor 实跑，exec 39239ms vs e1 39378ms）≥11.77 回滚下限（不删）
+  但 <15 保留线、<18 判轴线 → 落**预注册未申报中间带 [11.77,15)**，轴
+  未确认；沿轴 e3 或删 vendor 收敛均不违规，待编排。均值 ≤TB →
+  **TB 守 e1(21509)**；六冻结/未变芯最大跌幅海光 -3.82% 未破 -5% 异常线。
+  平台动态字段双记：发射侧终轮 is_team_best=true/1.98333，11:07 复核
+  false/1.4167。额度 17/30 剩（三发后）。
+
+## 2026-09-26 T97 E4 上膛（armed-unfired；09-26 终态见顶部节：21556 valid 7/7，card_b 2.911 跌破回滚线→删 _amd 回 generic）
 
 - [T97 fused_sigmoid_mul E4](fused_sigmoid_mul.md)：AMD `_amd` vendor
   （card_b flat 热路径移植 e3 两段式无 mask 结构：`pid<n_full` 标量
@@ -19,7 +55,7 @@
   vendor 文件回滚 generic（fallback 语义），≥3.4 保留 / ≥3.7 判
   轴兑现；代理预筛改档则新 commit 重上膛。
 
-## 2026-09-26 T104 E2 上膛（armed-unfired）
+## 2026-09-26 T104 E2 上膛（armed-unfired；09-26 终态见顶部节：21553 invalid_correctness 5/7，ragged 臂双芯数值败→回滚 s0 字节）
 
 - [T104 rmsnorm_hf E2](rmsnorm_hf.md)：整行 exact-unmask 候选（e1
   回滚后的 s0 整行字节上加 `EXACT` 编译期分支：pow2 hidden 全裸臂
@@ -35,7 +71,7 @@
   generic 至 s0 字节，华为 ≥1.70 判轴兑现，均值 >4.25246667（s0
   TB）换 TB，昆仑/沐曦（e1 倒挂前科）优先观察。
 
-## 2026-09-26 T101 E2 上膛（armed-unfired）
+## 2026-09-26 T101 E2 上膛（armed-unfired；09-26 终态见顶部节：21551 valid 7/7 avg 11.5677，华为 12.7198 落未申报中间带，TB 守 e1）
 
 - [T101 post_reorder_deepgemm E2](post_reorder_deepgemm.md)：华为
   `_ascend` vendor 两段式 hidden 循环候选（T93 E3 同构模板迁移：
