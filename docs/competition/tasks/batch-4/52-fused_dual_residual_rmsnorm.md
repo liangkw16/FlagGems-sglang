@@ -1,5 +1,5 @@
 <!-- source: https://flagos.io/flagos/api/v1/races/782kzq4m/operator-tasks/fused_dual_residual_rmsnorm -->
-<!-- synced_at: 2026-09-24T20:58:34+08:00 -->
+<!-- synced_at: 2026-09-26T22:45:04+08:00 -->
 
 # fused_dual_residual_rmsnorm (activation_norm/fused_dual_residual_rmsnorm)
 

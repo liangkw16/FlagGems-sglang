@@ -1,6 +1,6 @@
 # 第二届 FlagOS 算子赛题索引
 
-> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-09-26T13:26:36+08:00`。
+> 来源：[比赛页](https://flagos.io/race-detail-season2?id=782kzq4m)；同步时间：`2026-09-26T22:45:04+08:00`。
 > 状态和榜单会变化，运行 `python tools/sync_flagos_season2_docs.py` 更新。
 
 ## 第 1 批
@@ -129,15 +129,20 @@
 
 | 题号 | 算子 | 状态 | 提交/队伍 | 达标队伍 | 当前第一 | 平均加速比 |
 | ---: | --- | --- | ---: | ---: | --- | ---: |
-| 93 | [add_constant](tasks/batch-7/93-add_constant.md) | competing | 43/15 | 15 | RSI | 0.9193x |
-| 94 | [concat_mla_absorb_q](tasks/batch-7/94-concat_mla_absorb_q.md) | competing | 120/19 | 7 | OpeGoodn | 1.3123x |
-| 95 | [create_chunked_prefix_cache_kv_indices](tasks/batch-7/95-create_chunked_prefix_cache_kv_indices.md) | competing | 58/18 | 14 | AICity | 50.9023x |
-| 96 | [fused_pack_qkv](tasks/batch-7/96-fused_pack_qkv.md) | competing | 114/19 | 15 | c2flow | 2.3555x |
-| 97 | [fused_sigmoid_mul](tasks/batch-7/97-fused_sigmoid_mul.md) | competing | 46/20 | 18 | 金狐狸 | 3.3149x |
-| 98 | [get_mla_kv_buffer](tasks/batch-7/98-get_mla_kv_buffer.md) | competing | 54/18 | 13 | eatabigwatermelon | 1.2823x |
-| 99 | [ltx2_split_rotary](tasks/batch-7/99-ltx2_split_rotary.md) | competing | 25/11 | 8 | GuanghuLab | 6.5709x |
-| 100 | [pad_draft_extend_query](tasks/batch-7/100-pad_draft_extend_query.md) | competing | 40/12 | 11 | liokingo | 15.6952x |
-| 101 | [post_reorder_deepgemm](tasks/batch-7/101-post_reorder_deepgemm.md) | competing | 22/11 | 9 | 金狐狸 | 13.9512x |
-| 102 | [pre_reorder_cutlass](tasks/batch-7/102-pre_reorder_cutlass.md) | competing | 37/10 | 7 | c2flow | 21.2085x |
-| 103 | [recompute_w_u](tasks/batch-7/103-recompute_w_u.md) | competing | 42/15 | 4 | EvokeAgent | 10.4801x |
-| 104 | [rmsnorm_hf](tasks/batch-7/104-rmsnorm_hf.md) | competing | 29/13 | 10 | 金狐狸 | 4.7960x |
+| 93 | [add_constant](tasks/batch-7/93-add_constant.md) | competing | 54/16 | 16 | RSI | 0.9257x |
+| 94 | [concat_mla_absorb_q](tasks/batch-7/94-concat_mla_absorb_q.md) | competing | 125/19 | 7 | EvokeAgent | 1.4558x |
+| 95 | [create_chunked_prefix_cache_kv_indices](tasks/batch-7/95-create_chunked_prefix_cache_kv_indices.md) | competing | 62/18 | 14 | RSI | 67.1202x |
+| 96 | [fused_pack_qkv](tasks/batch-7/96-fused_pack_qkv.md) | competing | 121/19 | 15 | c2flow | 2.3555x |
+| 97 | [fused_sigmoid_mul](tasks/batch-7/97-fused_sigmoid_mul.md) | competing | 56/20 | 18 | EvokeAgent | 3.5259x |
+| 98 | [get_mla_kv_buffer](tasks/batch-7/98-get_mla_kv_buffer.md) | competing | 61/19 | 14 | EvokeAgent | 1.3281x |
+| 99 | [ltx2_split_rotary](tasks/batch-7/99-ltx2_split_rotary.md) | competing | 30/14 | 11 | RSI | 8.2660x |
+| 100 | [pad_draft_extend_query](tasks/batch-7/100-pad_draft_extend_query.md) | competing | 59/15 | 14 | Sweetdeath | 17.2634x |
+| 101 | [post_reorder_deepgemm](tasks/batch-7/101-post_reorder_deepgemm.md) | competing | 30/14 | 10 | RSI | 13.9981x |
+| 102 | [pre_reorder_cutlass](tasks/batch-7/102-pre_reorder_cutlass.md) | competing | 44/13 | 10 | c2flow | 21.2085x |
+| 103 | [recompute_w_u](tasks/batch-7/103-recompute_w_u.md) | competing | 58/19 | 5 | EvokeAgent | 10.4801x |
+| 104 | [rmsnorm_hf](tasks/batch-7/104-rmsnorm_hf.md) | competing | 36/15 | 12 | RSI | 4.6977x |
+| 105 | [set_mla_kv_buffer](tasks/batch-7/105-set_mla_kv_buffer.md) | competing | 8/5 | 2 | EvokeAgent | 1.2841x |
+| 106 | [tiny_n_gemm](tasks/batch-7/106-tiny_n_gemm.md) | competing | 13/7 | 4 | Nectar | 2.9519x |
+| 107 | [tma_align_input_scale](tasks/batch-7/107-tma_align_input_scale.md) | pending_challenge | 96/17 | 0 | - | - |
+| 108 | [topk_sigmoid](tasks/batch-7/108-topk_sigmoid.md) | competing | 7/4 | 1 | EvokeAgent | 4.4711x |
+| 109 | [zero_experts_identity](tasks/batch-7/109-zero_experts_identity.md) | competing | 13/7 | 4 | EvokeAgent | 3.9279x |
