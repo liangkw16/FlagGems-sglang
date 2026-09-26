@@ -91,6 +91,25 @@ class PostReorderDeepgemmTest(unittest.TestCase):
             with self.subTest(hidden=h):
                 self.check(*self.make(1, 8, 2, h))
 
+    def test_two_segment_hidden_semantics(self):
+        # _ascend vendor: each hidden tl.range iteration branches on the
+        # uniform scalar `h0 + BLOCK <= hdim` - full blocks take the
+        # no-mask/no-other load/store, only the tail block keeps the
+        # masked load (without other) and masked store. Pin both arms
+        # with multi-row, multi-expert gathers including padded slots
+        # (-1 dst), and force the tail block to land in the SAME
+        # grid-stride program as full blocks (hidden > 255*2048 gives
+        # some pid a second tl.range pass). A dropped tail-store mask
+        # would spill uninit lanes into the next row and fail here.
+        for n, e, topk, h in (
+            (3, 8, 3, 2048 + 1),
+            (5, 16, 4, 2 * 2048 - 1),
+            (2, 8, 2, 255 * 2048 + 2049),
+            (2, 8, 2, 255 * 2048 + 4097),
+        ):
+            with self.subTest(N=n, topk=topk, H=h):
+                self.check(*self.make(n, e, topk, h))
+
     def test_token_program_boundaries(self):
         # E1: grid.x is capped at 65535 // gy, so token counts above the
         # cap must be covered by the grid-stride row loop.
@@ -172,6 +191,7 @@ RELEASE_REQUIRED_TESTS = [
     "PostReorderDeepgemmTest.test_transposed_routing_tables",
     "PostReorderDeepgemmTest.test_fp16",
     "PostReorderDeepgemmTest.test_hidden_program_boundaries",
+    "PostReorderDeepgemmTest.test_two_segment_hidden_semantics",
     "PostReorderDeepgemmTest.test_token_program_boundaries",
     "PostReorderDeepgemmTest.test_grid_product_boundary",
     "PostReorderDeepgemmGridTest.test_grid_product_cap",
