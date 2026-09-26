@@ -5,12 +5,12 @@ task: 97
 operator: fused_sigmoid_mul
 batch: 7
 validity: valid(7/7,e3)
-platform: e4(21556)valid 7/7 avg3.05696825(-1.2% vs e3):card_b 2.911(-7.8%,_amd vendor实跑,跌破3.158回滚线)→门触发删_amd/ops/fused_sigmoid_mul.py回滚card_b至generic;沐曦3.178(+7.8%)/华为1.6768与昆仑1.114(冻结e3字节)/天数4.874/海光3.957/card_a3.688;TB仍e3(21516 avg3.09542857);榜首3.315
+platform: e4(21556)valid 7/7 avg3.057(-1.2%):card_b2.911(-7.8%)跌破3.158回滚线(vendor实跑但负效应);按预注册门已删_amd vendor回generic;TB守e3(21516 avg3.095)
 candidate_stage: e4(已发射,card_b性能回滚门触发)
 team_best_stage: e3
 team_best_speedup: 见platform行
 sealed: yes
-next: 删_amd/ops/fused_sigmoid_mul.py为orchestrator待执行动作(删除即fallback,card_b回generic字节,无其他芯受影响);≥3.4保留/≥3.7判轴均未达,AMD flat两段式同构轴平台负证据入档
+next: card_b结构假设证伪(_amd两段式在该芯负效应);华为1.67→2.19/昆仑1.12→2.01仍开放;e5 persistent假说已在调研库
 updated: 2026-09-26
 ```
 

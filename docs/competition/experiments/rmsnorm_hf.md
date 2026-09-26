@@ -5,12 +5,12 @@ task: 104
 operator: rmsnorm_hf
 batch: 7
 validity: valid
-platform: e2(21553)invalid_correctness 5/7:昆仑6例(case_idx3/6/9/12/15/18,失配57.7-100%,abs至19.5,含nan/inf)+华为4例(9/12/15/18,失配3.2-4.0%,rel至1.8e4)双数值败,重叠case9/12/15/18指向ragged臂fp32比较;通过5芯也全跌破-5%(沐曦-28.7%/海光-22.0%);TB保s0(21439 avg4.25246667)
+platform: e2(21553)invalid_correctness:昆仑6例+华为4例数值双败(ragged臂fp32比较"<2^24精确等价"被平台证伪)+通过5芯亦全负(4芯跌破-5%);按预注册门已回滚generic至s0字节f5b7add4;TB守s0(21439 avg4.25)
 candidate_stage: e2(已发射,数值败触发回滚门)
 team_best_stage: s0
 team_best_speedup: 见platform行
 sealed: no
-next: 预注册门已触发:generic回滚s0字节f5b7add4(orchestrator待执行);ragged臂fp32比较+权重去other为失败主嫌;e2字节不再入包,轴重开需新预注册
+next: fp32比较等价性证伪入册(该形态在昆仑/华为不可用);沐曦#1与榜首4.58需新结构证据
 updated: 2026-09-26
 ```
 
