@@ -38,12 +38,17 @@ def _topk_sigmoid_kernel(
     scores = tl.sigmoid(g)
     scores = tl.where(em, scores, float("-inf"))
     # rank each expert by how many others beat it: rank r means exactly
-    # r experts score higher - a pure vector reduction with no per-round
+    # r experts rank above - a pure vector reduction with no per-round
     # scalar stores (the kunlun legalize pass rejected the argmax loop).
-    # Ties break toward the lower expert id, matching torch.topk.
-    higher = (scores[None, :] < scores[:, None]).to(tl.int32)
-    eq_lower = (scores[None, :] == scores[:, None]) & (es[None, :] < es[:, None])
-    rank = higher.sum(axis=1) + eq_lower.to(tl.int32).sum(axis=1)
+    # Broadcasts are explicit: axis 1 is expert j, axis 0 is expert i.
+    row_scores = tl.broadcast_to(scores[None, :], (BLOCK_E, BLOCK_E))
+    col_scores = tl.broadcast_to(scores[:, None], (BLOCK_E, BLOCK_E))
+    row_ids = tl.broadcast_to(es[None, :].to(tl.int64), (BLOCK_E, BLOCK_E))
+    col_ids = tl.broadcast_to(es[:, None].to(tl.int64), (BLOCK_E, BLOCK_E))
+    beats = (row_scores > col_scores) | (
+        (row_scores == col_scores) & (row_ids < col_ids)
+    )
+    rank = tl.sum(beats.to(tl.int32), axis=1)
     for i in range(0, k):
         pick = rank == i
         v = tl.max(tl.where(pick, scores, float("-inf")), axis=0)
