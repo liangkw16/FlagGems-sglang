@@ -7,6 +7,32 @@ import torch
 
 from tests._op_variants import load_operator_modules
 
+# The release runner (verify_release.py run_suite) loads ONLY this
+# module and consumes only THIS module's RELEASE_REQUIRED_TESTS
+# (verify_release.py:225-251); the e4 candidate matrix in
+# tests/test_e4_amd_two_segment_flat.py would never enter the receipt
+# on its own -- --dependency only stages and hashes the file
+# (verify_release.py:113-118). Import its classes here so
+# loadTestsFromModule collects them into this suite, and rebind
+# __module__: test.id() is built from class.__module__, so without the
+# rebind the imported tests carry tests.test_e4_amd_two_segment_flat.*
+# ids while the runner's required check only accepts
+# f"{module.__name__}.{name}" == tests.test_fused_sigmoid_mul.* ->
+# "required contract test missing from suite". The e4 file itself must
+# still be staged via the runner's --dependency flag or the post-run
+# unbound-imported-dependency check (verify_release.py:264-277)
+# fails. Rebinding mutates the class objects' reported module for the
+# whole process; the e4 module's own RELEASE_REQUIRED_TESTS remains
+# the standalone manifest of that file and is not consumed by any
+# runner path.
+from tests.test_e4_amd_two_segment_flat import (
+    E4AmdTwoSegmentFlatTest,
+    E4AmdVendorSeamTest,
+)
+
+E4AmdVendorSeamTest.__module__ = __name__
+E4AmdTwoSegmentFlatTest.__module__ = __name__
+
 MODULES = load_operator_modules("fused_sigmoid_mul")
 
 
@@ -182,6 +208,20 @@ RELEASE_REQUIRED_TESTS = [
     "FusedSigmoidMulTest.test_transposed_attn",
     "FusedSigmoidMulTest.test_extreme_values",
     "FusedSigmoidMulTest.test_empty",
+    # e4 amd-arm classes imported above (review r2 fix: these entries
+    # are only enforceable because the classes are imported AND their
+    # __module__ is rebound to this module's name)
+    "E4AmdVendorSeamTest.test_amd_vendor_registered_with_dispatch_seam",
+    "E4AmdTwoSegmentFlatTest.test_flat_same_shape",
+    "E4AmdTwoSegmentFlatTest.test_strided_3d_gate",
+    "E4AmdTwoSegmentFlatTest.test_contiguous_3d_gate",
+    "E4AmdTwoSegmentFlatTest.test_strided_attn",
+    "E4AmdTwoSegmentFlatTest.test_transposed_attn",
+    "E4AmdTwoSegmentFlatTest.test_extreme_values",
+    "E4AmdTwoSegmentFlatTest.test_empty",
+    "E4AmdTwoSegmentFlatTest.test_amd_flat_block_boundaries",
+    "E4AmdTwoSegmentFlatTest.test_amd_strided_block_boundaries",
+    "E4AmdTwoSegmentFlatTest.test_amd_i64_cold_variant_numerics",
 ]
 
 if __name__ == "__main__":

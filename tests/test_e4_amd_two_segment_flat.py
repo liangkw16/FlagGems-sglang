@@ -21,10 +21,18 @@ BLOCK/warps pre-screen (8192/16384 x w4/w8) retiers the module:
 - the i64 cold twin forced through the public seam by lowering the
   module's dispatch bound (restored in ``finally``).
 
-The release gate's entry module remains tests/test_fused_sigmoid_mul.py
-(which auto-discovers this vendor via tests/_op_variants.py); stage
-this file alongside it with the runner's ``--dependency`` flag so the
-e4 regressions execute in the same receipt.
+Release wiring (review r2 fix): the gate runner loads ONLY
+tests/test_fused_sigmoid_mul.py and consumes only that entry module's
+RELEASE_REQUIRED_TESTS (verify_release.py:225-251) - a bare
+``--dependency`` of this file only stages and hashes it
+(verify_release.py:113-118) and would never execute these tests. The
+entry module therefore IMPORTS the two classes below (rebinding their
+``__module__`` to the entry module's name: ``test.id()`` is built from
+``class.__module__``, and the runner's required check only accepts
+entry-module ids), and this file is staged via the runner's
+``--dependency`` flag so the post-run unbound-imported-dependency
+check (verify_release.py:264-277) passes. The RELEASE_REQUIRED_TESTS
+below remains this module's standalone manifest.
 """
 
 import unittest

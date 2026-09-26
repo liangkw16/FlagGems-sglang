@@ -209,3 +209,40 @@ fallback，无其他芯受影响）。保守核算 card_b 3.158→3.5 即 +0.049
 
 **如实陈述**：本地无 torch/triton（远端验证仓），已做 py_compile + AST 级核验，
 执行证据待远端 release 回执（发射/验证命令须带 `--proxy-vendor amd`）。
+
+### r2 评审修复（开发员，2026-09-26）：e4 测试从未进入发布回执
+
+**发现（P2，评审与 codex-review 一致，本轮对源码逐条核实）**：r1 的
+`tests/test_e4_amd_two_segment_flat.py` 11 项测试与其 RELEASE_REQUIRED_TESTS
+不会出现在发布回执——`verify_release.py:225-237` run_suite 只 spec-load
+`tests/test_fused_sigmoid_mul.py`，`:247-251` 只消费该主模块的
+RELEASE_REQUIRED_TESTS，`:113-118` 的 `--dependency` 仅把文件暂存并计入 manifest
+哈希；全仓 grep 无任何代码 import 该 e4 文件（本轮 stub 复现 r1 状态：主 suite
+收集 11 项、e4 模块未被 import、其清单无 runner 消费）。r1 账本「11 项全列该模块
+RELEASE_REQUIRED_TESTS……入同一回执」为不存在的门禁声明，本节即为更正；评审指出的
+风险成立：预筛改档 BLOCK 16384→8192 后，retier-proof 边界回归与 strided 臂 2048
+回归将静默失效。
+
+**修复（评审方案 1 + 一处评审未覆盖的补强）**：主测试模块 import
+`E4AmdVendorSeamTest`/`E4AmdTwoSegmentFlatTest` 并把 11 项并入主模块
+RELEASE_REQUIRED_TESTS（合计 22 项）。**补强**：`test.id()` 取自
+`class.__module__`，裸 import 的类 id 为 `tests.test_e4_amd_two_segment_flat.*`，
+而 runner 必查项只接受 `{module.__name__}.{name}`（即
+`tests.test_fused_sigmoid_mul.*` 前缀，verify_release.py:248-251），裸 import+并表
+会直接炸「required contract test missing from suite」——故在 import 处把两类的
+`__module__` 重绑到主模块名（负控实证：去重绑后必查项确实失败）。e4 文件仍须
+`--dependency tests/test_e4_amd_two_segment_flat.py` 暂存，否则 `:264-277`
+unbound-imported-dependency 检查报错（stub 复现：不暂存即
+`unbound imported dependency: tests/test_e4_amd_two_segment_flat.py`）。e4 文件
+自带的 RELEASE_REQUIRED_TESTS 保留为该文件独立清单（无 runner 消费路径，如实
+标注）；重绑使全进程内该两类的上报模块名变为主模块——release 只 load 主模块，
+无重复收集路径，全仓 discover 场景下会出现重复 id 执行，无正确性影响（披露）。
+
+**本地 stub 验证（torch/triton 桩，逐行复刻 run_suite:222-237 加载路径）**：主
+suite 收集 **22 项**（FusedSigmoidMul 11 + E4Amd 11，id 全部主模块前缀），22 项
+必查全过，`:264-277` 检查过；负控 A（裸 import 无重绑）正确失败、负控 B（r1 状态）
+仅收集 11 项。py_compile 双测试文件通过。stub 仅证集合/门禁逻辑（无数值执行），
+真实执行仍待远端 release 回执；**发射/验证命令必须带
+`--proxy-vendor amd --proxy-vendor ascend --proxy-vendor kunlunxin` 并
+`--dependency tests/test_e4_amd_two_segment_flat.py`**（execution_scope 按
+device+proxy 过滤：缺 amd 则 e4 seam 测试因模块缺席硬失败——有意的门禁行为）。
