@@ -36,6 +36,23 @@
   平台动态字段双记：发射侧终轮 is_team_best=true/1.98333，11:07 复核
   false/1.4167。额度 17/30 剩（三发后）。
 
+## 2026-09-26 T101 E3 上膛（armed-unfired；e2 终态见顶部节：21551 valid 7/7 avg 11.5677，华为 12.7198 落未申报中间带，TB 守 e1）
+
+- [T101 post_reorder_deepgemm E3](post_reorder_deepgemm.md)：slot-skip +
+  num_stages 沿轴候选（无效槽整槽跳过 gather+标量读、token 环
+  `tl.range(num_stages=3)` 软件流水，generic 与 `_ascend` vendor 同改、
+  昆仑冻结；评审 P2-1 非有限分歧预注册有意接受 + P2-2 generic 数值失败
+  门见账本 E3 候选记录节）完成上膛：远端 release 矩阵 **11 测试 / 121
+  case 全过**（`--proxy-vendor ascend --proxy-vendor kunlunxin`，三源各
+  30 入口调用 / 27 kernel launch，249 非空 shape，verification_commit
+  `ffe2b99e`），不可变 ZIP `e3-ffe2b99`（zip_sha256 `46cfc990…`，≠ e2
+  `c53082a0…`，成员 3→3 但 generic/ascend 字节全变，逐成员与 git blob
+  核对无夹带，kunlunxin 成员 `c14b806e…` 与 e1/e2 冻结字节相同）。
+  armed-unfired 待实时 preflight 发射；预注册门：华为数值败或 <12.08
+  （e2 -5%）回滚 _ascend 至 e2 字节，任一 generic-rider 芯数值败或较
+  e1 逐芯 -5% 回滚 generic 至 e1 字节，均值 >11.63934286（我队 TB）换
+  TB，昆仑冻结只排查不回滚。
+
 ## 2026-09-26 T97 E4 上膛（armed-unfired；09-26 终态见顶部节：21556 valid 7/7，card_b 2.911 跌破回滚线→删 _amd 回 generic）
 
 - [T97 fused_sigmoid_mul E4](fused_sigmoid_mul.md)：AMD `_amd` vendor

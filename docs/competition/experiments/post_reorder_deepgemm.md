@@ -6,11 +6,11 @@ operator: post_reorder_deepgemm
 batch: 7
 validity: valid
 platform: e2(21551)valid 7/7 avg11.56768571(-0.62% vs e1);华为12.7198(+2.68%,_ascend vendor实跑,落[11.77,15)未申报中间带,轴未确认)/天数11.9694/海光19.8214/昆仑11.5302/card_a10.8056/沐曦6.4378/card_b7.6896;TB仍e1(21509)avg11.63934286;发射侧终轮is_team_best=true/1.98333与11:07复核false/1.4167双记(动态字段)
-candidate_stage: e2(已发射,读数落中间带)
+candidate_stage: e3(armed-unfired,已建ZIP+release回执,未发射未耗额度)
 team_best_stage: e1
 team_best_speedup: 见platform行
 sealed: no
-next: e3预注册已落账(slot-skip+num_stages沿轴推进,含评审P2-1非有限分歧有意接受+P2-2 generic数值失败门,见E3候选记录节);源就绪未上膛(无ZIP/回执),待编排建ZIP+release回执后单发
+next: e3已上膛(slot-skip+num_stages,五元组与回执见E3上膛节;预注册门锁定于E3候选记录节);待发射侧实时preflight单发,读数后按门判读不改判据
 updated: 2026-09-26
 ```
 
@@ -260,3 +260,57 @@ updated: 2026-09-26
   贡献钉 reference 门防 dst 门误植、65537 行 pipelined 第二遍
   grid-stride 含活跃 skip 分支）、`test_slot_skip_nonfinite_semantics`
   （非有限分歧按 SLOT_SKIP_SEMANTICS 分派期望）。
+
+## E3 上膛（2026-09-26，armed-unfired）
+
+- **候选**：slot-skip + num_stages（假设、实现、评审 P2-1/P2-2 判决与
+  预注册门全部锁定于上文 E3 候选记录节，本节不复述判据——读数后按该节
+  原文判读，不得改判据）。generic 与 `_ascend` vendor 为 r1 `4e817d95`
+  + r2 `b0b927f0` 字节；`_kunlunxin` 冻结 s0 字节不动。
+- **代理证据（NVIDIA RTX 5070 Ti / torch 2.13.0+cu130 / triton 3.7.1 /
+  python 3.12.13）**：release v2 回执（source=verification commit
+  `ffe2b99e75b6d70da61d58d7159c81ba6588c389`，mode=release，
+  `--proxy-vendor ascend --proxy-vendor kunlunxin`）：**11/11
+  RELEASE_REQUIRED 全过**（expected=passed=11，含
+  `test_slot_skip_reference_gate` / `test_slot_skip_nonfinite_semantics`
+  两个新回归），0 fail/0 error/0 skip，121 case；入口调用与实际 kernel
+  launch generic/_ascend/_kunlunxin 各 30/27（30-27=3 为 grid 捕获
+  mock 拦截，与 E1/E2 同口径）；非空张量 shape 249 条；远端
+  `Ran 11 tests in 2.626s OK`，exit 0（log sha256
+  `7b4886ebe26e600f998ac01baaef4c6f93befa52d00e9e664b20259fce5ab4cf`，
+  与本地回执 log 逐字节重算一致）。**壁钟披露**：2.626s 显著快于 E1
+  225.865s / E2 159.539s；kernel launch 与 shape 计数由 runner 从实际
+  执行 hook 记录（非零、三源对称），执行真实性以回执为准；两数量级差
+  推测为远端 triton 编译缓存已热——评审期同字节是否曾远端执行无法从
+  本会话证据排除，如实留痕。回执
+  `artifacts/competition/day5prep-20260921/post_reorder_deepgemm e3 slot-skip+num_stages-wf/verification.json`
+  / `verification.log`。_ascend 与 _kunlunxin 均在
+  target_unverified_sources——NVIDIA 代理不构成华为/昆仑背书：华为由
+  e2 平台 12.7198 逐芯通过 + 本候选同构几何延续佐证；昆仑由 s0 平台
+  通过 + 字节冻结（成员 sha256 与 e1/e2 ZIP 相同）保证。
+- **五元组（上膛身份）**：
+  - source_commit：`ffe2b99e75b6d70da61d58d7159c81ba6588c389`
+  - verification_commit：`ffe2b99e75b6d70da61d58d7159c81ba6588c389`（=本回执）
+  - ledger_commit：本 commit（E3 上膛记账）
+  - ZIP：`artifacts/competition/post_reorder_deepgemm/e3-ffe2b99/post_reorder_deepgemm.zip`
+    （20937 字节，zip_sha256 =
+    `46cfc990496cf8e386be57e1f1dce07f71bd6ac909fb700ff2d43a7fc6377489` =
+    canonical_zip_sha256；≠ e2 `c53082a0…` 且成员字节数全变（generic
+    3954→6325、ascend 8206→10948、kunlunxin 3236 冻结），平台去重键
+    zip_sha256 成立）
+  - stage：`e3`（CURRENT candidate_stage e2→e3 递增）
+  - ZIP 成员名单（与 `zipfile.namelist()` 实际核对一致，无夹带；`unzip -t`
+    无错；均为 UTF-8 `.py`，无测试/缓存/目录前缀/macOS 垃圾；逐成员
+    sha256 = 打包器申报 = git blob @ffe2b99e = 回执 files 哈希 = 远端实际
+    执行字节）：
+    | 成员 | 字节 | sha256 |
+    |---|---|---|
+    | `post_reorder_deepgemm.py` | 6325 | `933499b326616f3e993fb591edbefa5b29d7531f0567b554db2050af913dcbdc`（E3 slot-skip+num_stages，=回执执行字节） |
+    | `post_reorder_deepgemm_ascend.py` | 10948 | `f74aac822e54e5cbe9378391289480cfc764d6f4ff2d4d3649a4d07b5a7c14f5`（E3 同改双臂，=回执执行字节） |
+    | `post_reorder_deepgemm_kunlunxin.py` | 3236 | `c14b806eb825cc11db35f71d1a59128ce89790e60614061025260e2bc579d879`（=e1/e2/s0 冻结字节） |
+- **预注册门（引用 E3 候选记录节原文，读数前已锁定）**：华为数值失败或
+  <12.08（e2 -5%）→ _ascend 回滚 e2 字节（blob
+  `607a80b4…`@87d0e627）；任一 generic-rider 芯（天数/沐曦/海光/
+  card_a/card_b）数值失败或较 e1 逐芯基线 -5% → generic 回滚 e1 字节
+  （blob `b405f3cf…`@0f9cf744）；平台均值 >11.63934286 → 换 TB；昆仑
+  冻结字节读数异常只排查不回滚。
