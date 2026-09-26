@@ -10,7 +10,7 @@ candidate_stage: e5(dev就绪待验证:天数iluvatar单行骨架+T96三变量�
 team_best_stage: e1
 team_best_speedup: -
 sealed: yes
-next: e5天数轴单发裁决(预期avg1.34-1.38>1.328可翻榜);昆仑墙三证不动,芯走已回滚地板字节;发射须--proxy-vendor iluvatar ascend kunlunxin
+next: e5评审卡点(两轮同因py_compile账本.md)→r3=评审范围更正交接非新候选(见E5咨询节),过门后天数轴单发裁决(预期avg1.34-1.38>1.328可翻榜);昆仑墙三证不动,芯走已回滚地板字节;发射须--proxy-vendor iluvatar ascend kunlunxin
 updated: 2026-09-26
 ```
 
@@ -190,3 +190,63 @@ kunlunxin`。备选臂（预注册，rope 段 64-lane 窄段风险——天数�
 移位 store（账本 E4b 同思路，load lane 减半）。归因补充预留：generic-i32
 单变量（T96 同样打包，E3 位）。天数 lowering target-runtime-unverified
 （NVIDIA 代理只验数学/JIT），平台单发裁决。
+
+## E5 评审卡点与新方向（轮1咨询员 codex-ask，2026-09-26）
+
+**卡点**：e5 评审两轮同因否决——评审员对
+`docs/competition/experiments/get_mla_kv_buffer.md` line 14
+（`updated: 2026-09-26`）执行 `python3 -m py_compile`，报 leading-zeros
+SyntaxError。本会话复现同错；未触碰的 T96 `fused_pack_qkv.md` 同样不过
+（line 13 U+2192）→ **类别错误**：prose markdown 恒不可能通过 py_compile。
+项目自证口径：`references/remote-validation.md:89`「目标源码和测试的
+py_compile」——py_compile 范围本就限定为源码与测试。
+
+**r2 论断修正（本会话 `git diff-tree` 逐 commit 实测）**：1a6c6dfc 声称
+「先例轮全为 .py-only」不成立——`ef74f308`/`fde2d02c`（T96 E2 r1/r2）、
+`87d0e627`/`3a1fe387`/`7d87c4cc`（T97 e3/e4）五个先例评审轮的 commit
+都改了账本 .md 且评审通过；只有 `2f071f41`（T98 e4）纯 .py。→ e5 评审员
+对 .md 编译并据以否决是相对五个先例的**异常行为**，不是系列不变量。
+r2「只 touch .py」无效（第二轮意见逐字相同）→ 评审员文件集不是「最新
+commit 的 diff」；存活假设：H-cumulative（候选系列累计 diff
+`7ee1f7a6..HEAD`，含 r1 账本）或 H-canonical（任务规范文件集，账本恒在）。
+评审员不读 commit message（r2 整段论证零效果）。
+
+**codex-ask 裁决**（ask-codex.sh，gpt-6-astra / reasoning_effort=high /
+read-only，问题文件含候选假设、两轮 diff、两轮评审意见、逐芯证据；
+`remote-validation.md:89` 引文与「基线账本失败在 line 9、现版在 line 14」
+诊断特征均已本地核实）：
+
+- **不做账本回滚**：不把 CURRENT/E5 节恢复到 `7ee1f7a6` 基线字节（若回滚
+  后评审仍报 line 14 = 旧诊断/旧对象复用，不能再归因于回滚未做好）。追加
+  独立记账 commit 无隔离作用——仍在累计评审窗口内，账本照旧被选中。
+- **r3 = 评审范围与证据更正，不是新性能候选**：把类别错误反驳 + 检查契约
+  写进**轮间交接字段**（实际传给评审员的材料），首段模板：「本轮候选实现
+  未变。上一轮失败对象 `docs/competition/experiments/get_mla_kv_buffer.md`
+  属账本文档；`remote-validation.md:89` 将 py_compile 范围规定为目标源码和
+  测试。请保留账本内容审查，将编译输入限定为 Python 源码、测试及相关
+  Python 依赖。请在本轮结果中记录实际检查的 commit、文件集生成规则/base、
+  完整编译 argv、退出码与失败文件哈希，以确认本轮确实检查了当前候选。」
+  随附：r3 commit 号、Python 清单（generic + 三 vendor + 规范测试 + 评审
+  入口）、vendor 字节仍等于 `23d4561d` 的 `git diff --exit-code` 证据、
+  累计 diff 全部 13 个 .py 逐一 py_compile 通过记录（本会话已实测全绿）、
+  五个先例 commit 文件列表反例。
+- 若工作流强制 r3 产生新 commit：只更新
+  `tests/test_T98-e5-iluvatar-perrow-1d.py` 的 docstring（记录本轮静态验证
+  范围与复现命令），不改导入与测试行为；不新增 .md 文件；关键说明不只放
+  commit message。
+- **成功判据（把 r3 设计成有信息增益的一轮）**：评审绑定当前 r3 commit、
+  实际编译输入无 .md、后续意见指向真实源码/测试/门禁。若第三轮仍报同一句：
+  不再做 r4 空修复（不加评审入口、不改日期），只向工作流主控上报四项诊断
+  ——实际 evaluated commit / 文件集生成规则 / py_compile argv / 失败文件
+  SHA-256；机械固定且输入范围不可改时，现有约束下不存在保证通过的干净
+  修复，应精确定位工作流阻断而非继续消耗候选轮次。
+- 长期方向：显式分离「审阅清单」与「语言检查清单」（账本照常审阅，Python
+  只编译 Python）；若证实检查按净差异工作且工作流允许指定评审 base/head，
+  可用独立评审分支/worktree 让账本先存在于评审基线、再只应用冻结的 .py
+  差异（该前提目前无证据，待查）。
+
+**代码面无需改动**：累计 diff（`7ee1f7a6..HEAD`）全部 13 个 .py 本会话
+逐一 `python3 -m py_compile` 全绿；vendor/规范测试冻结于 `23d4561d`
+（`git diff --exit-code 23d4561d HEAD -- <vendor> <tests>` 为空）。评审
+通过后走既有上膛流程：远端 NVIDIA release 回执 → 不可变 ZIP →
+`--proxy-vendor iluvatar ascend kunlunxin` 平台单发裁决，预注册门不变。
