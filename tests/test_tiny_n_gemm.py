@@ -33,6 +33,22 @@ class TinyNGemmTest(unittest.TestCase):
                 with self.subTest(m=m, k=k, n=n, dt=out_dtype):
                     self.check(m, k, n, out_dtype)
 
+    def test_strided_k_and_k0(self):
+        gen = torch.Generator(device="cuda").manual_seed(21)
+        x = torch.randn(64, 2, dtype=torch.bfloat16, device="cuda", generator=gen).t()  # [2,64] col-major
+        w = torch.randn(32, 64, dtype=torch.bfloat16, device="cuda", generator=gen)
+        expected = reference(x, w, torch.float32)
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                torch.testing.assert_close(module.tiny_n_gemm(x, w, torch.float32), expected, rtol=2e-2, atol=2e-2)
+        # K=0 -> zero output (review finding: uninitialized empty returned)
+        x0 = torch.empty(2, 0, dtype=torch.bfloat16, device="cuda")
+        w0 = torch.empty(32, 0, dtype=torch.bfloat16, device="cuda")
+        for name, module in MODULES:
+            with self.subTest(module=name, case="k0"):
+                out = module.tiny_n_gemm(x0, w0, torch.float32)
+                torch.testing.assert_close(out, torch.zeros(2, 32, device="cuda"), rtol=0, atol=0)
+
     def test_m1_and_m16_bounds(self):
         self.check(1, 128, 64, torch.bfloat16)
         self.check(16, 128, 64, torch.float32)
@@ -41,6 +57,7 @@ class TinyNGemmTest(unittest.TestCase):
 
 RELEASE_REQUIRED_TESTS = [
     "TinyNGemmTest.test_decode_shapes",
+    "TinyNGemmTest.test_strided_k_and_k0",
     "TinyNGemmTest.test_m1_and_m16_bounds",
 ]
 

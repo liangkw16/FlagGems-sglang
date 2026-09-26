@@ -19,6 +19,7 @@ def _transpose_pad_kernel(
     K,
     m_pad,
     ss0,
+    ss1,
     ds0,
     BLOCK_K: tl.constexpr,
     BLOCK_M: tl.constexpr,
@@ -30,7 +31,7 @@ def _transpose_pad_kernel(
     for m0 in range(0, m_pad, BLOCK_M):
         mm = (m0 + ms) < M
         v = tl.load(
-            src + (m0 + ms)[:, None] * ss0 + ks[None, :],
+            src + (m0 + ms)[:, None] * ss0 + ks[None, :] * ss1,
             mask=mm[:, None] & km[None, :],
             other=0.0,
         )
@@ -56,6 +57,7 @@ def tma_align_input_scale(input_scale):
             k,
             m_pad,
             input_scale.stride(0),
+            input_scale.stride(1),
             buf.stride(0),
             BLOCK_K=64,
             BLOCK_M=max(16, min(1024, triton.next_power_of_2(m_pad))),

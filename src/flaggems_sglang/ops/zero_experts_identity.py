@@ -24,7 +24,9 @@ def _zero_experts_kernel(
     ns0,
     ss0,
     hs0,
+    hs1,
     os0,
+    os1,
     BLOCK_K: tl.constexpr,
     BLOCK_D: tl.constexpr,
 ):
@@ -38,14 +40,20 @@ def _zero_experts_kernel(
     for c0 in range(0, hidden_dim, BLOCK_D):
         cc = c0 + cols
         m = cc < hidden_dim
-        h = tl.load(hidden + row * hs0 + cc, mask=m, other=0.0).to(tl.float32)
-        tl.store(out + row * os0 + cc, (h * zero_sum).to(out.dtype.element_ty), mask=m)
+        h = tl.load(
+            hidden + row * hs0 + cc * hs1, mask=m, other=0.0
+        ).to(tl.float32)
+        tl.store(
+            out + row * os0 + cc * os1,
+            (h * zero_sum).to(out.dtype.element_ty),
+            mask=m,
+        )
 
 
 def zero_experts_identity(expert_indices, expert_scales, num_experts, zero_expert_type, hidden_states):
     num_tokens, hidden_dim = hidden_states.shape
     top_k = expert_indices.shape[1]
-    out = torch.empty_like(hidden_states)
+    out = torch.empty(hidden_states.shape, dtype=hidden_states.dtype, device=hidden_states.device)
     if num_tokens and hidden_dim:
         _zero_experts_kernel[(num_tokens,)](
             expert_indices,
@@ -58,7 +66,9 @@ def zero_experts_identity(expert_indices, expert_scales, num_experts, zero_exper
             expert_indices.stride(0),
             expert_scales.stride(0),
             hidden_states.stride(0),
+            hidden_states.stride(1),
             out.stride(0),
+            out.stride(1),
             BLOCK_K=max(16, triton.next_power_of_2(top_k)),
             BLOCK_D=1024,
             num_warps=8,

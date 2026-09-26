@@ -23,6 +23,10 @@ def _set_mla_kv_buffer_kernel(
     kv_s1,
     nope_dim,
     rope_dim,
+    ns0,
+    ns1,
+    rs0,
+    rs1,
     BLOCK_R: tl.constexpr,
     BLOCK_C: tl.constexpr,
 ):
@@ -35,12 +39,16 @@ def _set_mla_kv_buffer_kernel(
     for c0 in range(0, nope_dim, BLOCK_C):
         cc = c0 + cols
         m = rmask[:, None] & (cc[None, :] < nope_dim)
-        v = tl.load(nope + rows[:, None] * nope_dim + cc[None, :], mask=m, other=0)
+        v = tl.load(
+            nope + rows[:, None] * ns0 + cc[None, :] * ns1, mask=m, other=0
+        )
         tl.store(kv_buffer + base[:, None] + cc[None, :] * kv_s1, v, mask=m)
     for c0 in range(0, rope_dim, BLOCK_C):
         cc = c0 + cols
         m = rmask[:, None] & (cc[None, :] < rope_dim)
-        v = tl.load(rope + rows[:, None] * rope_dim + cc[None, :], mask=m, other=0)
+        v = tl.load(
+            rope + rows[:, None] * rs0 + cc[None, :] * rs1, mask=m, other=0
+        )
         tl.store(kv_buffer + base[:, None] + (nope_dim + cc[None, :]) * kv_s1, v, mask=m)
 
 
@@ -61,6 +69,10 @@ def set_mla_kv_buffer(kv_buffer, loc, cache_k_nope, cache_k_rope):
             out.stride(1),
             nope_dim,
             rope_dim,
+            cache_k_nope.stride(0),
+            cache_k_nope.stride(1),
+            cache_k_rope.stride(0),
+            cache_k_rope.stride(1),
             BLOCK_R=8,
             BLOCK_C=512,
             num_warps=8,

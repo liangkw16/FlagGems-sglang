@@ -22,7 +22,9 @@ def _tiny_n_gemm_kernel(
     N,
     K,
     xs0,
+    xs1,
     ws0,
+    ws1,
     os0,
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
@@ -38,12 +40,12 @@ def _tiny_n_gemm_kernel(
         rk = k0 + tl.arange(0, BLOCK_K)
         km = rk < K
         xv = tl.load(
-            x + rm[:, None] * xs0 + rk[None, :],
+            x + rm[:, None] * xs0 + rk[None, :] * xs1,
             mask=mm[:, None] & km[None, :],
             other=0,
         )
         wv = tl.load(
-            w + rn[:, None] * ws0 + rk[None, :],
+            w + rn[:, None] * ws0 + rk[None, :] * ws1,
             mask=nm[:, None] & km[None, :],
             other=0,
         )
@@ -61,7 +63,11 @@ def tiny_n_gemm(x, w, out_dtype):
     n = w.shape[0]
     assert m <= 16
     assert x.dtype == w.dtype == torch.bfloat16
-    out = torch.empty((m, n), dtype=out_dtype, device=x.device)
+    out = (
+        torch.zeros((m, n), dtype=out_dtype, device=x.device)
+        if k == 0
+        else torch.empty((m, n), dtype=out_dtype, device=x.device)
+    )
     if m and n and k:
         _tiny_n_gemm_kernel[(triton.cdiv(n, 64),)](
             x,
@@ -71,7 +77,9 @@ def tiny_n_gemm(x, w, out_dtype):
             n,
             k,
             x.stride(0),
+            x.stride(1),
             w.stride(0),
+            w.stride(1),
             out.stride(0),
             BLOCK_M=16,
             BLOCK_N=64,

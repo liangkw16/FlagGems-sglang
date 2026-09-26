@@ -23,29 +23,33 @@ def _topk_sigmoid_kernel(
     renorm,
     scale,
     gs0,
+    gs1,
     ws0,
+    ws1,
     is0,
+    is1,
     BLOCK_E: tl.constexpr,
+    BLOCK_K: tl.constexpr,
 ):
     row = tl.program_id(0).to(tl.int64)
     es = tl.arange(0, BLOCK_E)
     em = es < num_experts
-    g = tl.load(gating + row * gs0 + es, mask=em, other=0.0).to(tl.float32)
+    g = tl.load(gating + row * gs0 + es * gs1, mask=em, other=0.0).to(tl.float32)
     scores = tl.sigmoid(g)
     scores = tl.where(em, scores, float("-inf"))
     for i in range(0, k):
         v = tl.max(scores, axis=0)
         idx = tl.argmax(scores, axis=0)
-        tl.store(topk_weights + row * ws0 + i, v)
-        tl.store(topk_ids + row * is0 + i, idx)
+        tl.store(topk_weights + row * ws0 + i * ws1, v)
+        tl.store(topk_ids + row * is0 + i * is1, idx)
         scores = tl.where(es == idx, float("-inf"), scores)
     if renorm:
-        ks = tl.arange(0, 16)
+        ks = tl.arange(0, BLOCK_K)
         km = ks < k
-        wv = tl.load(topk_weights + row * ws0 + ks, mask=km, other=0.0)
+        wv = tl.load(topk_weights + row * ws0 + ks * ws1, mask=km, other=0.0)
         total = tl.sum(wv, axis=0)
         tl.store(
-            topk_weights + row * ws0 + ks,
+            topk_weights + row * ws0 + ks * ws1,
             wv * scale / (total + 1e-20),
             mask=km,
         )
@@ -65,9 +69,13 @@ def topk_sigmoid(topk_weights, topk_ids, gating_output, renormalize, routed_scal
             renormalize,
             float(routed_scaling_factor),
             gating_output.stride(0),
+            gating_output.stride(1),
             topk_weights.stride(0),
+            topk_weights.stride(1),
             topk_ids.stride(0),
+            topk_ids.stride(1),
             BLOCK_E=max(16, triton.next_power_of_2(num_experts)),
+            BLOCK_K=max(16, triton.next_power_of_2(k)),
             num_warps=4,
         )
     return topk_weights, topk_ids

@@ -36,6 +36,19 @@ class ZeroExpertsIdentityTest(unittest.TestCase):
                 with self.subTest(T=T, topk=topk, E=E, H=H, dt=dtype):
                     self.check(T, topk, E, H, dtype)
 
+    def test_transposed_hidden(self):
+        T, topk, E, H = 8, 4, 16, 256
+        gen = torch.Generator(device="cuda").manual_seed(31)
+        idx = torch.randint(0, E + 4, (T, topk), dtype=torch.int32, device="cuda", generator=gen)
+        sc = torch.rand(T, topk, dtype=torch.float32, device="cuda", generator=gen)
+        h = torch.randn(H, T, dtype=torch.bfloat16, device="cuda", generator=gen).t()
+        self.assertFalse(h.is_contiguous())
+        expected = reference(idx, sc, E, 1, h)
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                out = module.zero_experts_identity(idx, sc, E, 1, h)
+                torch.testing.assert_close(out, expected, rtol=2e-2, atol=2e-2)
+
     def test_all_and_none_zero(self):
         T, topk, E, H = 16, 4, 8, 512
         # all slots identity
@@ -56,6 +69,7 @@ class ZeroExpertsIdentityTest(unittest.TestCase):
 
 RELEASE_REQUIRED_TESTS = [
     "ZeroExpertsIdentityTest.test_shapes",
+    "ZeroExpertsIdentityTest.test_transposed_hidden",
     "ZeroExpertsIdentityTest.test_all_and_none_zero",
 ]
 

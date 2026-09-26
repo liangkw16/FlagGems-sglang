@@ -47,6 +47,26 @@ class TopkSigmoidTest(unittest.TestCase):
             self.check(32, 16, 4, True, dtype, seed=3)
             self.check(32, 16, 4, False, dtype, seed=4)
 
+    def test_k17_renorm_and_strided(self):
+        # k>16 renorm must cover every weight (review finding: arange(0,16)
+        # left the 17th raw) and a transposed logits matrix must read
+        # through its column stride
+        self.check(8, 32, 17, True, torch.float32, seed=11)
+        self.check(16, 16, 32, True, torch.float32, seed=12)
+        gen = torch.Generator(device="cuda").manual_seed(13)
+        base = torch.randn(16, 8, dtype=torch.float32, device="cuda", generator=gen)
+        gating = base.t()  # [8, 16] non-contiguous
+        ew = torch.zeros(8, 4, dtype=torch.float32, device="cuda")
+        ei = torch.zeros(8, 4, dtype=torch.int32, device="cuda")
+        exp_w, exp_i = reference(ew.clone(), ei.clone(), gating, True, 2.5)
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                w = torch.zeros(8, 4, dtype=torch.float32, device="cuda")
+                i = torch.zeros(8, 4, dtype=torch.int32, device="cuda")
+                module.topk_sigmoid(w, i, gating, True, 2.5)
+                torch.testing.assert_close(w, exp_w, rtol=2e-2, atol=2e-3)
+                torch.testing.assert_close(i, exp_i, rtol=0, atol=0)
+
     def test_extreme_logits(self):
         T, E, k = 4, 8, 3
         gating = torch.tensor(
@@ -67,6 +87,7 @@ class TopkSigmoidTest(unittest.TestCase):
 RELEASE_REQUIRED_TESTS = [
     "TopkSigmoidTest.test_matrix",
     "TopkSigmoidTest.test_dtypes",
+    "TopkSigmoidTest.test_k17_renorm_and_strided",
     "TopkSigmoidTest.test_extreme_logits",
 ]
 

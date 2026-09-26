@@ -43,6 +43,19 @@ class SetMlaKvBufferTest(unittest.TestCase):
         self.check(kv, loc, 512, 64, torch.bfloat16, torch.float16)
         self.check(kv, loc.long(), 512, 64, torch.float32, torch.bfloat16)
 
+    def test_transposed_sources(self):
+        kv = torch.randn(8, 576, dtype=torch.float16, device="cuda")
+        loc = torch.arange(4, dtype=torch.int64, device="cuda")
+        nd = torch.randn(4, 512, dtype=torch.float16, device="cuda").t().contiguous().t()  # values keep, stride col-major
+        nope = torch.randn(512, 4, dtype=torch.float16, device="cuda").t()
+        rope = torch.randn(64, 4, dtype=torch.float16, device="cuda").t()
+        self.assertFalse(nope.is_contiguous())
+        expected = reference(kv, loc, nope, rope)
+        for name, module in MODULES:
+            with self.subTest(module=name):
+                actual = module.set_mla_kv_buffer(kv, loc, nope, rope)
+                torch.testing.assert_close(actual, expected, rtol=0, atol=0)
+
     def test_duplicates_and_empty(self):
         # duplicate slots must carry IDENTICAL source rows: differing
         # values racing on one slot are unordered even in the reference
@@ -69,6 +82,7 @@ class SetMlaKvBufferTest(unittest.TestCase):
 RELEASE_REQUIRED_TESTS = [
     "SetMlaKvBufferTest.test_shapes_and_tails",
     "SetMlaKvBufferTest.test_cross_dtype_and_int32_loc",
+    "SetMlaKvBufferTest.test_transposed_sources",
     "SetMlaKvBufferTest.test_duplicates_and_empty",
 ]
 
