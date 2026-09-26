@@ -117,9 +117,16 @@ class FusedPackQkvTest(unittest.TestCase):
         self.check(q, k, v, idx)
 
     def test_row_elems_wider_than_block(self):
-        # H*D=2048 == BLOCK_C forces at least two column iterations
-        args = self.make_case(1, 512, 16, 128, 700)
-        self.check(*args)
+        # E3 generic caps BLOCK_C at 2048 (muxi max_tile_size,
+        # chip-rulesets.md:29): H*D=2048 sits exactly at the cap (single
+        # segment) and H*D=4096 forces the chunked two-segment loop
+        for h, d in ((16, 128), (32, 128)):
+            with self.subTest(h=h, d=d):
+                args = self.make_case(1, 512, h, d, 700)
+                self.assertEqual(
+                    args[0].shape[-2] * args[0].shape[-1], h * d
+                )
+                self.check(*args)
 
     def test_iluvatar_int32_domain_guard(self):
         # E2 iluvatar vendor host dispatch: int32 addressing is only
@@ -158,6 +165,63 @@ class FusedPackQkvTest(unittest.TestCase):
         # empty gather never overflows
         self.assertTrue(iluvatar._use_int32(1024, 0, 8, 1))
 
+    def test_generic_int32_domain_guard(self):
+        # E3 generic host dispatch (same reviewed _use_int32 as the E2
+        # iluvatar vendor, output side bounded on its own): int32
+        # addressing is only legal while every flat offset stays below
+        # 2**31. A wrong boundary compare silently turns into
+        # out-of-bounds writes on the five generic-rider chips, so the
+        # boundary arithmetic itself is the regression (the GPU matrix
+        # above exercises the int32 kernel path; the i64 twin only
+        # fires past 2**31 elements, which does not fit CI memory)
+        generic = next(
+            (mod for name, mod in MODULES if name == "generic"), None
+        )
+        # the generic module is always the first entry from
+        # load_operator_modules; absence is a loader misconfiguration
+        self.assertIsNotNone(generic, "generic module missing from MODULES")
+        # largest legal domain still dispatches int32
+        self.assertTrue(generic._use_int32((1 << 31) - 1, 4, 8, 1))
+        # q.numel() == 2**31 must widen to int64 addressing
+        self.assertFalse(generic._use_int32(1 << 31, 4, 8, 1))
+        # a strided indices view can push its own load offset past the
+        # limit even when q is far below it
+        self.assertFalse(generic._use_int32(1024, 3, 8, 1 << 31))
+        # inflated duplicate indices can push the OUTPUT past the
+        # limit while q stays far below it (q=(1,1,1,32768) with 65537
+        # zero indices wraps dst=65536*32768=2**31 to a negative
+        # offset -> OOB write under a q.numel()-only guard)
+        self.assertFalse(generic._use_int32(32768, 65537, 32768, 1))
+        # exact output-side boundary: n * row_elems == 2**31 widens,
+        # one element below stays int32
+        self.assertFalse(generic._use_int32(1024, 2, 1 << 30, 1))
+        self.assertTrue(generic._use_int32(1024, 2, (1 << 30) - 1, 1))
+        # empty gather never overflows
+        self.assertTrue(generic._use_int32(1024, 0, 8, 1))
+        # muxi compliance pin: the per-row tile must never exceed the
+        # max_tile_size=2048 elements/program rule (chip-rulesets.md:29);
+        # the s0 2D tile (4x1024=4096) was 2x over the limit
+        self.assertLessEqual(generic._MAX_LANES, 2048)
+
+    def test_generic_rows_per_prog_multirow(self):
+        # E3 generic grid fallback: the launch stays under the 65535
+        # Ascend coreDim cap via rows_per_prog = cdiv(n, 65535). The
+        # evaluation domain (n <= B*S) rides rows_per_prog == 1, so the
+        # multi-row loop body is pinned here explicitly with row_elems=1
+        # (memory-cheap) across the cap boundary: 65535 keeps the pure
+        # per-row grid exactly at the cap, 65536/65537 take 2 rows per
+        # program
+        cap = 65535
+        for total in (65535, 65536, 65537):
+            with self.subTest(total=total):
+                rows_per_prog = (total + cap - 1) // cap
+                grid = (total + rows_per_prog - 1) // rows_per_prog
+                self.assertLessEqual(grid, cap)
+                if total > cap:
+                    self.assertGreaterEqual(rows_per_prog, 2)
+                args = self.make_case(1, 65540, 1, 1, total)
+                self.check(*args)
+
     def test_all_tokens_and_empty(self):
         q, k, v, _ = self.make_case(2, 128, 8, 64, 128)
         full = torch.randperm(2 * 128, device="cuda").to(torch.int32)
@@ -179,6 +243,8 @@ RELEASE_REQUIRED_TESTS = [
     "FusedPackQkvTest.test_non_contiguous_qkv",
     "FusedPackQkvTest.test_all_tokens_and_empty",
     "FusedPackQkvTest.test_iluvatar_int32_domain_guard",
+    "FusedPackQkvTest.test_generic_int32_domain_guard",
+    "FusedPackQkvTest.test_generic_rows_per_prog_multirow",
 ]
 
 if __name__ == "__main__":
