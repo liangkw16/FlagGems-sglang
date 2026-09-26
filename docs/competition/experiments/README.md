@@ -1,5 +1,18 @@
 # 第二批候选与提交队列
 
+## 2026-09-26 T101 E2 上膛（armed-unfired）
+
+- [T101 post_reorder_deepgemm E2](post_reorder_deepgemm.md)：华为
+  `_ascend` vendor 两段式 hidden 循环候选（T93 E3 同构模板迁移：
+  full 块 no-mask/no-other、仅 tail 保 masked，vendor-only——generic 与
+  昆仑冻结字节不动）完成上膛：远端 release 矩阵 **9 测试 / 110 case
+  全过**（`--proxy-vendor ascend --proxy-vendor kunlunxin`，三源各 27
+  入口调用 / 24 kernel launch，verification_commit `87d0e627`），
+  不可变 ZIP `e2-87d0e62`（zip_sha256 `c53082a0…`，vs e1 成员 2→3
+  仅新增 ascend vendor，逐成员与 git blob 核对无夹带）。armed-unfired
+  待实时 preflight 发射；预注册门：数值败或华为 <11.77（-5%）回退删
+  vendor、≥15 保留 / ≥18 判轴确认，均值 >11.63934286（我队 TB）换 TB。
+
 ## 2026-09-26 T98 E4 上膛（armed-unfired）
 
 - [T98 get_mla_kv_buffer E4](get_mla_kv_buffer.md)：昆仑臂换骨架为上游
