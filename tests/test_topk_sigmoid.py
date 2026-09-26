@@ -52,7 +52,7 @@ class TopkSigmoidTest(unittest.TestCase):
         # left the 17th raw) and a transposed logits matrix must read
         # through its column stride
         self.check(8, 32, 17, True, torch.float32, seed=11)
-        self.check(16, 16, 32, True, torch.float32, seed=12)
+        self.check(16, 64, 32, True, torch.float32, seed=12)
         gen = torch.Generator(device="cuda").manual_seed(13)
         base = torch.randn(16, 8, dtype=torch.float32, device="cuda", generator=gen)
         gating = base.t()  # [8, 16] non-contiguous
