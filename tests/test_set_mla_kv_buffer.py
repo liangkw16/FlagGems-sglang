@@ -48,9 +48,8 @@ class SetMlaKvBufferTest(unittest.TestCase):
         # values racing on one slot are unordered even in the reference
         kv = torch.randn(12, 576, dtype=torch.float16, device="cuda")
         dup = torch.full((5,), 7, dtype=torch.int64, device="cuda")
-        single = torch.randn(1, 5, dtype=torch.float16, device="cuda")
-        nope = single[:, :4].expand(5, 4).contiguous()
-        rope = single[:, 4:].expand(5, 1).contiguous()
+        nope = torch.randn(1, 512, dtype=torch.float16, device="cuda").expand(5, 512).contiguous()
+        rope = torch.randn(1, 64, dtype=torch.float16, device="cuda").expand(5, 64).contiguous()
         expected = reference(kv, dup, nope, rope)
         for name, module in MODULES:
             with self.subTest(module=name):
