@@ -1,8 +1,8 @@
 {
-  "as_of": "2026-09-24T20:58:35.203969",
+  "as_of": "2026-09-26T13:26:37.863452",
   "current_batch": {
     "batch_no": 7,
-    "task_count": 6,
+    "task_count": 12,
     "task_release_time": "2026.09.24 / 09.25 / 09.26 20:00:00",
     "supported_gpus": [
       "tianshu",
@@ -23,7 +23,7 @@
     "status": "submitting",
     "is_current": true,
     "countdown_target_at": "2026-10-01T19:59:59",
-    "remaining_seconds": 601283
+    "remaining_seconds": 455601
   },
   "gpu_catalog": {
     "tianshu": {
@@ -68,18 +68,18 @@
     }
   },
   "stats": {
-    "total_task_count": 98,
-    "released_task_count": 98,
+    "total_task_count": 104,
+    "released_task_count": 104,
     "chip_count": 8,
     "pending_challenge_count": 0,
-    "competing_count": 6,
-    "reviewing_count": 34,
-    "occupied_count": 57,
+    "competing_count": 12,
+    "reviewing_count": 17,
+    "occupied_count": 74,
     "breakthrough_only_count": 0,
     "invalid_count": 1,
-    "total_submission_count": 18748,
-    "evaluating_submission_count": 9,
-    "participating_team_count": 241,
+    "total_submission_count": 19320,
+    "evaluating_submission_count": 0,
+    "participating_team_count": 243,
     "daily_submission_limit": 15,
     "min_submission_interval_seconds": 120
   }
